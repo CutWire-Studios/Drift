@@ -3210,6 +3210,10 @@
         <translation>Anulowano nagrywanie</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4504,6 +4508,18 @@
     <message>
         <source>Track shown</source>
         <translation>Pokazano ścieżkę</translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move track</source>
@@ -23595,6 +23611,18 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Dodaj nową ścieżkę</translation>
     </message>
     <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>Zmień nazwę zakładki</translation>
     </message>
@@ -24150,6 +24178,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Wycisz ścieżkę</translation>
     </message>
     <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation type="unfinished">Zatrzymaj nagrywanie</translation>
     </message>
@@ -24172,6 +24208,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Hide track</source>
         <translation>Ukryj ścieżkę</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24206,8 +24250,8 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Wyższa</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>Przewiń nad nagłówkiem, aby dostroić</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24272,6 +24316,17 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Turn adjustment off</source>
         <translation>Wyłącz regulację</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24355,6 +24410,21 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Hide track</source>
         <translation>Ukryj ścieżkę</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>

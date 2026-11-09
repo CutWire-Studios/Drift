@@ -3194,6 +3194,10 @@
         <translation>録音をキャンセルしました</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip can&apos;t completely cover another</source>
         <translation>クリップを別のクリップの上に完全に重ねることはできません</translation>
     </message>
@@ -4482,6 +4486,18 @@
     <message>
         <source>Track shown</source>
         <translation>トラックを表示しました</translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move track</source>
@@ -23439,6 +23455,18 @@ If playback stutters, try another.</source>
         <translation>新しいトラックを追加</translation>
     </message>
     <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>ブックマーク名を変更</translation>
     </message>
@@ -23990,6 +24018,14 @@ If playback stutters, try another.</source>
         <translation>トラックをミュート</translation>
     </message>
     <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation type="unfinished">録音を停止</translation>
     </message>
@@ -24012,6 +24048,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Hide track</source>
         <translation>トラックを非表示</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24046,8 +24090,8 @@ If playback stutters, try another.</source>
         <translation>さらに高い</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>ヘッダー上でスクロールして微調整</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24110,6 +24154,17 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>調整をオフにする</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24193,6 +24248,21 @@ If playback stutters, try another.</source>
     <message>
         <source>Hide track</source>
         <translation>トラックを非表示</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>

@@ -3209,6 +3209,10 @@
         <translation>Enregistrement annulé</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4498,6 +4502,18 @@
     <message>
         <source>Track shown</source>
         <translation>Piste affichée</translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move track</source>
@@ -23520,6 +23536,18 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Ajouter une piste</translation>
     </message>
     <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close Gap</source>
         <translation>Fermer l&apos;écart</translation>
     </message>
@@ -24073,6 +24101,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Mettre la piste en sourdine</translation>
     </message>
     <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation type="unfinished">Arrêter l&apos;enregistrement</translation>
     </message>
@@ -24095,6 +24131,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Hide track</source>
         <translation>Masquer la piste</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24129,8 +24173,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Plus haute</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>Faites défiler sur l&apos;en-tête pour un réglage fin</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24194,6 +24238,17 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Turn adjustment off</source>
         <translation>Désactiver l’ajustement</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24277,6 +24332,21 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Hide track</source>
         <translation>Masquer la piste</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>

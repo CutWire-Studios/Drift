@@ -3198,6 +3198,10 @@
         <translation>录制已取消</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4482,6 +4486,18 @@
     <message>
         <source>Track shown</source>
         <translation>轨道已显示</translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move track</source>
@@ -23439,6 +23455,18 @@ If playback stutters, try another.</source>
         <translation>添加新轨道</translation>
     </message>
     <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>重命名标记</translation>
     </message>
@@ -23990,6 +24018,14 @@ If playback stutters, try another.</source>
         <translation>静音轨道</translation>
     </message>
     <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation type="unfinished">停止录制</translation>
     </message>
@@ -24012,6 +24048,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Hide track</source>
         <translation>隐藏轨道</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24046,8 +24090,8 @@ If playback stutters, try another.</source>
         <translation>更高</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>在轨道头上滚动可微调</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24110,6 +24154,17 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>关闭调整</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24193,6 +24248,21 @@ If playback stutters, try another.</source>
     <message>
         <source>Hide track</source>
         <translation>隐藏轨道</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>

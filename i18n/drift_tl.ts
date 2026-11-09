@@ -3200,6 +3200,10 @@
         <translation>Kinansela ang pag-record</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip can&apos;t completely cover another</source>
         <translation>Hindi maaaring ganap na takpan ng clip ang isa pa</translation>
     </message>
@@ -4497,6 +4501,18 @@
     <message>
         <source>Track renamed</source>
         <translation>Napalitan ang pangalan ng track</translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move track</source>
@@ -5992,7 +6008,7 @@
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Magdagdag</translation>
     </message>
     <message>
         <source>Lighter Color</source>
@@ -11648,7 +11664,7 @@
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Magdagdag</translation>
     </message>
 </context>
 <context>
@@ -23517,6 +23533,18 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Magdagdag ng bagong track</translation>
     </message>
     <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>Palitan ang pangalan ng bookmark</translation>
     </message>
@@ -24070,6 +24098,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-mute ang track</translation>
     </message>
     <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation type="unfinished">Ihinto ang pag-record</translation>
     </message>
@@ -24092,6 +24128,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Hide track</source>
         <translation>Itago ang track</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24126,8 +24170,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Mas matangkad</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>Mag-scroll sa ibabaw ng header upang mag-fine-tune</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24191,6 +24235,17 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Turn adjustment off</source>
         <translation>I-off ang adjustment</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24274,6 +24329,21 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Hide track</source>
         <translation>Itago ang track</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>

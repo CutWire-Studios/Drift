@@ -3204,6 +3204,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4492,6 +4496,18 @@
     </message>
     <message>
         <source>Track shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -23508,6 +23524,18 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation type="unfinished"></translation>
     </message>
@@ -24061,6 +24089,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation type="unfinished"></translation>
     </message>
@@ -24082,6 +24118,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Hide track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24117,7 +24161,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24181,6 +24225,17 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Turn adjustment off</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -24264,6 +24319,21 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Hide track</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

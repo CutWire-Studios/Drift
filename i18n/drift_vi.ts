@@ -3198,6 +3198,10 @@
         <translation>Đã hủy bỏ ghi âm</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4490,6 +4494,18 @@
     <message>
         <source>Track shown</source>
         <translation>Hiện track</translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move track</source>
@@ -23439,6 +23455,18 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Thêm track mới</translation>
     </message>
     <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>Đổi tên dấu trang</translation>
     </message>
@@ -23990,6 +24018,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Tắt tiếng track</translation>
     </message>
     <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation type="unfinished">Dừng ghi</translation>
     </message>
@@ -24012,6 +24048,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Hide track</source>
         <translation>Ẩn track</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24046,8 +24090,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Cao hơn</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>Cuộn trên thanh tiêu đề để tinh chỉnh</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24110,6 +24154,17 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Turn adjustment off</source>
         <translation>Tắt điều chỉnh</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24193,6 +24248,21 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Hide track</source>
         <translation>Ẩn track</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>

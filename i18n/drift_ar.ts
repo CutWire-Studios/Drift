@@ -2739,6 +2739,10 @@
         <translation>حدد مقطعًا للموازنة الصوتية</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clip added</source>
         <translation>تمت إضافة المقطع</translation>
     </message>
@@ -4509,6 +4513,18 @@
     <message>
         <source>Track unsoloed</source>
         <translation>تم إلغاء عزل المسار</translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track volume</source>
@@ -23828,6 +23844,18 @@ If playback stutters, try another.</source>
         <translation>إضافة مسار جديد</translation>
     </message>
     <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>إعادة تسمية الإشارة المرجعية</translation>
     </message>
@@ -24389,6 +24417,14 @@ If playback stutters, try another.</source>
         <translation>كتم المسار</translation>
     </message>
     <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation type="unfinished">إيقاف التسجيل</translation>
     </message>
@@ -24411,6 +24447,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Hide track</source>
         <translation>إخفاء المسار</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24445,8 +24489,8 @@ If playback stutters, try another.</source>
         <translation>أطول</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>مرّر فوق رأس المسار للضبط الدقيق</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24514,6 +24558,17 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>إيقاف الضبط</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24597,6 +24652,21 @@ If playback stutters, try another.</source>
     <message>
         <source>Hide track</source>
         <translation>إخفاء المسار</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>

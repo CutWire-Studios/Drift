@@ -3198,6 +3198,10 @@
         <translation>녹음이 취소됨</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4482,6 +4486,18 @@
     <message>
         <source>Track shown</source>
         <translation>트랙 표시</translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move track</source>
@@ -23430,6 +23446,18 @@ If playback stutters, try another.</source>
         <translation>새 트랙 추가</translation>
     </message>
     <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>책갈피 이름 변경</translation>
     </message>
@@ -23981,6 +24009,14 @@ If playback stutters, try another.</source>
         <translation>트랙 음소거</translation>
     </message>
     <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation type="unfinished">녹음 중지</translation>
     </message>
@@ -24003,6 +24039,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Hide track</source>
         <translation>트랙 숨기기</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24037,8 +24081,8 @@ If playback stutters, try another.</source>
         <translation>더 높게</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>헤더 위에서 스크롤하여 미세 조정</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24101,6 +24145,17 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>조정 끄기</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24184,6 +24239,21 @@ If playback stutters, try another.</source>
     <message>
         <source>Hide track</source>
         <translation>트랙 숨기기</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>
