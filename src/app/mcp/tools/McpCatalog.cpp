@@ -710,7 +710,8 @@ const QList<Op> &ops()
           "downstream; read back in/out/dur from the reply. ripple:true (default false) also trims the "
           "clip's linked audio the same way and moves every later clip on its track (and on the tracks "
           "of their linked audio) by the change in length, whatever set_ripple says, in the same undo "
-          "step; the reply then adds moved:[{id, start}]. A locked track it would change refuses it.",
+          "step; the reply then adds moved:[{id, start}]. A locked track it would change refuses it, "
+          "and so does a clip sitting in the space a shorter trim would close.",
           objectSchema(mergeProps({{QStringLiteral("in"), numberProp(QStringLiteral("Source in seconds"))},
                                    {QStringLiteral("out"), numberProp(QStringLiteral("Source out seconds"))},
                                    {QStringLiteral("ripple"),

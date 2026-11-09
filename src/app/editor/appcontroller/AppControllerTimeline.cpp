@@ -2732,9 +2732,16 @@ QStringList AppController::setClipTrimRippled(int trackIndex, int clipIndex, dou
     drift::Clip &target = m_project.tracks()[trackIndex].clips[clipIndex];
     applyClipTrim(target, inPoint, outPoint);
     const drift::Clip trimmed = target;
+    // Only the partners the sync actually trims stay out of the ripple: loose links keep their own
+    // timing, so a loose partner moves (or blocks) like any other clip of the group.
     QSet<QString> skip{id};
-    for (const drift::ClipRef &ref : drift::linkedPartners(m_project, trimmed))
-        skip.insert(m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
+    if (!trimmed.linkLoose) {
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, trimmed)) {
+            const drift::Clip &partner = m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+            if (!partner.linkLoose)
+                skip.insert(partner.id);
+        }
+    }
     syncLinkedPartnersFrom(m_project, trimmed);
     const drift::TimeUs delta = trimmed.timelineEnd() - oldEnd;
     // Shorter: the clips after it close the space it gave up, on every track of the group, so
@@ -2744,15 +2751,31 @@ QStringList AppController::setClipTrimRippled(int trackIndex, int clipIndex, dou
             for (const drift::Clip &clip : m_project.tracks().at(t).clips) {
                 if (skip.contains(clip.id) || clip.timelineStart >= oldEnd || clip.timelineEnd() <= oldEnd + delta)
                     continue;
+                // Copied first: restoring the project frees the clip this reference points into.
+                const QString blockerId = clip.id;
                 m_project = before;
                 if (error)
                     *error = QStringLiteral("Clip %1 sits in the space this would close; trim without ripple, or move it")
-                                 .arg(clip.id);
+                                 .arg(blockerId);
                 return moved;
             }
         }
     }
-    drift::rippleTracks(m_project, tracks, oldEnd, delta, skip);
+    bool clamped = false;
+    drift::rippleTracks(m_project, tracks, oldEnd, delta, skip, &clamped);
+    // An earlier linked clip moved with its partner can land on a clip that stayed (or a longer
+    // clip on the next one): refused, as is a clip that would have to move before 0.
+    const QString collision = drift::rippleCollision(before, m_project, tracks);
+    if (!collision.isEmpty() || clamped) {
+        m_project = before;
+        if (error)
+            *error = collision.isEmpty()
+                         ? QStringLiteral("The ripple would move a clip before the start of the timeline")
+                         : QStringLiteral("The ripple would push clip %1 onto another; move it first, or trim "
+                                          "without ripple")
+                               .arg(collision);
+        return moved;
+    }
     syncOverlapTransitions(m_project);
     pushProjectEdit(before, tr("Ripple trim"));
     finishEdit(tr("Ripple trim"));

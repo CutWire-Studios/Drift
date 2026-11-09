@@ -1289,6 +1289,24 @@ void McpTest::rippleTrimMovesTheRest()
     QCOMPARE(blocked.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     QCOMPARE(startOf(ids.at(2)), 5.0);
     QCOMPARE(durOf(ids.at(1)), 3.0);
+
+    // A loose partner keeps its own length, so a shorter trim that would close the following clip
+    // onto it is refused rather than overlap.
+    {
+        // The clip in the way makes room for a loose partner of the middle clip.
+        const QPair<int, int> loc = state.mcp()->locateClip(ids.at(1));
+        drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+        video.linkLoose = true;
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("audio-1");
+        partner.type = drift::ClipType::Audio;
+        state.project()->tracks().last().clips.removeFirst();
+        state.project()->tracks().last().clips.insert(0, partner);
+    }
+    const QJsonObject loose = trim(2.0, 3.0, true);
+    QCOMPARE(loose.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(durOf(ids.at(1)), 3.0);
+    QCOMPARE(startOf(QStringLiteral("audio-2")), 5.0);
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
