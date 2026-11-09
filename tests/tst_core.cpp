@@ -7473,6 +7473,10 @@ void CoreTest::diffProjectsReportsClipChanges()
     cached.assets()[asset.id].frameRateKnown = true;
     cached.assets()[asset.id].variableFrameRate = true;
     QVERIFY(drift::diffProjects(withAsset, cached).isEmpty());
+    // A refresh of the file changed in place (same name and path, new length) is a change.
+    drift::Project refreshed = withAsset;
+    refreshed.assets()[asset.id].durationUs = drift::secondsToUs(12.0);
+    QCOMPARE(drift::diffProjects(withAsset, refreshed).assets.size(), 1);
 }
 
 QTEST_MAIN(CoreTest)

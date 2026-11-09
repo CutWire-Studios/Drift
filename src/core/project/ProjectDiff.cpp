@@ -64,15 +64,13 @@ struct Located
     const Clip *clip = nullptr;
 };
 
-// An asset as edits change it: name, path, bin trim, rotation override, folder, rating, ranges,
-// markers, ... Facts read from the file (probe results, fingerprint) and the caches background
-// jobs fill (thumbnail, filmstrip, the frame-rate probe) change without an edit, so they're left out.
+// An asset as the project holds it, minus the caches background jobs fill without an edit
+// (thumbnail, filmstrip, the frame-rate probe). Facts read from the file stay: a refresh of a
+// file changed in place is a change to its asset.
 QJsonObject editableAsset(const MediaAsset &asset)
 {
     QJsonObject json = assetJson(asset);
-    for (const char *key : {"kind", "durationUs", "duration", "width", "height", "fps", "rotationDegrees",
-                            "sampleRate", "channels", "codecName", "thumbnailPath", "filmstripPath", "hasAudio",
-                            "variableFrameRate", "sourceSize", "sourceModifiedMs"})
+    for (const char *key : {"thumbnailPath", "filmstripPath", "variableFrameRate"})
         json.remove(QLatin1String(key));
     return json;
 }
