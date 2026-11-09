@@ -73,6 +73,7 @@ private:
     QJsonObject opRemoveTrack(const QJsonObject &args);
     QJsonObject opSetTrack(const QJsonObject &args);
     QJsonObject opPlaceClip(const QJsonObject &args);
+    QJsonObject opInsertClip(const QJsonObject &args);
     QJsonObject opMoveClip(const QJsonObject &args);
     QJsonObject opSetDuration(const QJsonObject &args);
     QJsonObject opSetTrim(const QJsonObject &args);

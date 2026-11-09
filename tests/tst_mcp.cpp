@@ -99,6 +99,7 @@ private slots:
     void proxySuggestionFollowsThePreference();
     void captureFilesStayOutOfTheProject();
     void subtitleClipKeepsItsChosenName();
+    void insertClipRipplesTheTrack();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
@@ -901,6 +902,71 @@ void McpTest::subtitleClipKeepsItsChosenName()
     cues.removeLast();
     state.setSubtitleCues(0, 0, cues);
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("Subtitles (002)"));
+}
+
+void McpTest::insertClipRipplesTheTrack()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto insert = [&](QJsonObject args) {
+        args.insert(QStringLiteral("asset"), 0);
+        return dispatcher.applyOne(QStringLiteral("insert_clip"), args);
+    };
+
+    // Three 2 s clips laid end to end.
+    QJsonObject first = insert({{QStringLiteral("at"), 0.0}, {QStringLiteral("out"), 2.0}});
+    QVERIFY2(first.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(first).toJson()));
+    const QString a = first.value(QStringLiteral("id")).toString();
+    const int track = first.value(QStringLiteral("track")).toInt();
+    const QString b = insert({{QStringLiteral("after"), a}, {QStringLiteral("in"), 2.0}, {QStringLiteral("out"), 4.0}})
+                          .value(QStringLiteral("id")).toString();
+    const QString c = insert({{QStringLiteral("after"), b}, {QStringLiteral("in"), 4.0}, {QStringLiteral("out"), 6.0}})
+                          .value(QStringLiteral("id")).toString();
+    QVERIFY(!b.isEmpty() && !c.isEmpty());
+    const int steps = state.undoHistory().size();
+
+    // A 1.5 s clip before b pushes b and c right; the reply says where they went.
+    const QJsonObject mid = insert({{QStringLiteral("before"), b}, {QStringLiteral("in"), 7.0}, {QStringLiteral("out"), 8.5}});
+    QVERIFY2(mid.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(mid).toJson()));
+    QCOMPARE(mid.value(QStringLiteral("start")).toDouble(), 2.0);
+    QCOMPARE(mid.value(QStringLiteral("dur")).toDouble(), 1.5);
+    QCOMPARE(mid.value(QStringLiteral("in")).toDouble(), 7.0);
+    QCOMPARE(mid.value(QStringLiteral("moved")).toArray().size(), 2);
+    const auto startOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineStart);
+    };
+    QCOMPARE(startOf(a), 0.0);
+    QCOMPARE(startOf(b), 3.5);
+    QCOMPARE(startOf(c), 5.5);
+    QCOMPARE(state.undoHistory().size(), steps + 1); // one step for the insert and the ripple
+
+    // Inside a clip is refused with ripple; no room is refused without it.
+    QCOMPARE(insert({{QStringLiteral("at"), 1.0}, {QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(insert({{QStringLiteral("at"), 3.5}, {QStringLiteral("out"), 1.0}, {QStringLiteral("ripple"), false}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    // Without ripple into a gap that fits.
+    QVERIFY(insert({{QStringLiteral("at"), 9.0}, {QStringLiteral("out"), 1.0}, {QStringLiteral("ripple"), false}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(c), 5.5);
+    QVERIFY(!insert({{QStringLiteral("at"), 1.0}, {QStringLiteral("before"), a}}).value(QStringLiteral("ok")).toBool());
+
+    // Undo takes the insert and its ripple back together.
+    state.undo();
+    state.undo();
+    QCOMPARE(startOf(b), 2.0);
+    QCOMPARE(startOf(c), 4.0);
+    QCOMPARE(state.project()->tracks().at(track).clips.size(), 3);
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

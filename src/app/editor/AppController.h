@@ -931,6 +931,15 @@ public:
     Q_INVOKABLE int trimClipLeft(int trackIndex, int clipIndex, double newStart);
     Q_INVOKABLE int trimClipRight(int trackIndex, int clipIndex, double newEnd);
     Q_INVOKABLE void setClipTrim(int trackIndex, int clipIndex, double inPoint, double outPoint);
+    // Inserts a clip of `assetIndex` on `trackIndex` starting exactly at `atUs`, with source range
+    // [srcInUs, srcOutUs) (srcOutUs < 0: the asset's own, bin-trimmed length), in one undo step.
+    // With `ripple`, every later clip on the track (and on tracks holding their linked partners)
+    // first moves right by the new clip's length; `atUs` must then be at a clip boundary or in a
+    // gap, not inside a clip. Without it the space must already be free. Returns the new clip's
+    // id, or empty with `error` set; `moved` receives the ids the ripple moved.
+    QString insertClipFromAsset(int assetIndex, int trackIndex, drift::TimeUs atUs, drift::TimeUs srcInUs,
+                                drift::TimeUs srcOutUs, bool ripple, QString *error = nullptr,
+                                QStringList *moved = nullptr);
     Q_INVOKABLE void setClipStart(int trackIndex, int clipIndex, double start);
     Q_INVOKABLE void setClipDuration(int trackIndex, int clipIndex, double duration);
     Q_INVOKABLE void setClipTextContent(int trackIndex, int clipIndex, const QString &text);

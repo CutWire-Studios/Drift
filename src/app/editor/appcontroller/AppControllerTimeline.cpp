@@ -1130,6 +1130,89 @@ void AppController::addClipFromAssetAt(int assetIndex, int trackIndex, double at
     selectClip(trackIndex, newClipIndex);
 }
 
+QString AppController::insertClipFromAsset(int assetIndex, int trackIndex, drift::TimeUs atUs,
+                                           drift::TimeUs srcInUs, drift::TimeUs srcOutUs, bool ripple,
+                                           QString *error, QStringList *moved)
+{
+    const auto fail = [error](const QString &message) {
+        if (error)
+            *error = message;
+        return QString();
+    };
+    if (!m_assetLibrary)
+        return fail(QStringLiteral("No media bin"));
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return fail(QStringLiteral("No such track"));
+    const QVariantMap asset = m_assetLibrary->assetAt(assetIndex);
+    if (asset.isEmpty())
+        return fail(QStringLiteral("No such asset"));
+    if (!compositeAssetPlaceable(asset))
+        return fail(QStringLiteral("A composite goes on the main timeline only"));
+    const drift::ClipType clipType = drift::clipTypeFromString(asset.value(QStringLiteral("kind")).toString());
+    if (!m_project.tracks().at(trackIndex).allowsClipType(clipType))
+        return fail(QStringLiteral("This track does not take that kind of clip"));
+    if (atUs < 0)
+        return fail(QStringLiteral("The time is before the start of the timeline"));
+
+    const drift::TimeUs fullUs = clipDurationForAssetIndex(assetIndex);
+    const drift::TimeUs minUs = drift::minClipDurationUs(m_project.fps());
+    drift::TimeUs inUs = qBound<drift::TimeUs>(0, srcInUs, qMax<drift::TimeUs>(0, fullUs - minUs));
+    drift::TimeUs outUs = srcOutUs < 0 ? inUs + trimmedClipDurationUs(asset, fullUs) : srcOutUs;
+    outUs = qBound(inUs + minUs, outUs, fullUs);
+    const drift::TimeUs lengthUs = outUs - inUs;
+    if (lengthUs < minUs)
+        return fail(QStringLiteral("The source range is shorter than a frame"));
+
+    const drift::Track &target = m_project.tracks().at(trackIndex);
+    for (const drift::Clip &clip : target.clips) {
+        if (ripple) {
+            if (clip.timelineStart < atUs && clip.timelineEnd() > atUs)
+                return fail(QStringLiteral("%1 is inside clip %2 (%3–%4 s): insert before or after it, or split it first")
+                                .arg(drift::usToSeconds(atUs))
+                                .arg(clip.id)
+                                .arg(drift::usToSeconds(clip.timelineStart))
+                                .arg(drift::usToSeconds(clip.timelineEnd())));
+        } else if (clip.timelineStart < atUs + lengthUs && clip.timelineEnd() > atUs) {
+            return fail(QStringLiteral("No room at %1 s: clip %2 is in the way (pass ripple:true to make room)")
+                            .arg(drift::usToSeconds(atUs))
+                            .arg(clip.id));
+        }
+    }
+
+    m_assetLibrary->ensureMedia(assetIndex);
+    const drift::Project before = m_project;
+    QStringList shifted;
+    if (ripple)
+        shifted = drift::rippleShiftFrom(m_project, trackIndex, atUs, lengthUs);
+
+    drift::Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.assetId = m_assetLibrary->assetIdAt(assetIndex);
+    clip.type = clipType;
+    clip.name = asset.value(QStringLiteral("name")).toString();
+    clip.path = asset.value(QStringLiteral("path")).toString();
+    attachAssetSource(clip);
+    clip.sequenceId = asset.value(QStringLiteral("sequenceId")).toString();
+    clip.thumbnailPath = m_assetLibrary->thumbnailAt(assetIndex);
+    clip.filmstripPath = m_assetLibrary->filmstripAt(assetIndex);
+    clip.timelineStart = atUs;
+    clip.timelineDuration = lengthUs;
+    clip.srcIn = inUs;
+    clip.srcOut = outUs;
+    applyAssetLayout(clip, asset, m_project.width(), m_project.height());
+
+    drift::Track &track = m_project.tracks()[trackIndex];
+    int at = 0;
+    while (at < track.clips.size() && track.clips.at(at).timelineStart <= atUs)
+        ++at;
+    track.clips.insert(at, clip);
+    pushProjectEdit(before, ripple ? tr("Clip inserted") : tr("Clip added"));
+    finishEdit(ripple ? tr("Clip inserted") : tr("Clip added"));
+    if (moved)
+        *moved = shifted;
+    return clip.id;
+}
+
 AppController::GeneratedAudioImport AppController::importGeneratedAudio(
     const QString &path, const QJsonObject &generator, bool place, double atSeconds, int track)
 {

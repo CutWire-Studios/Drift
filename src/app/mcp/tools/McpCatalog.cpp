@@ -667,6 +667,26 @@ const QList<Op> &ops()
                                    {QStringLiteral("track"), integerProp(QStringLiteral("Destination track, or insert position when new_track is true"))},
                                    {QStringLiteral("new_track"), boolProp(QStringLiteral("Insert a new matching track above"))}},
                                   {})) },
+        { "insert_clip", "timeline", "Insert media and push the rest along",
+          "Insert an asset as a clip at an exact point, in one undo step. The point is `at` (seconds), "
+          "or `before`/`after` a clip id. With ripple (default true) every later clip on the track "
+          "moves right by the new clip's length, and so do the clips on tracks holding their linked "
+          "audio, so A/V stays in sync; effect adjustments follow their clips. With ripple the "
+          "point must be at a clip boundary or in a gap, not inside a clip (split it first); "
+          "without it the space must already be free. `in`/`out` are source seconds (default: the "
+          "asset's own length). `track` defaults to the track of `before`/`after`, else the first "
+          "that accepts the asset. Returns the new clip {id, track, index, start, dur, in, out} and "
+          "moved:[{id, start}] with the final start of every clip the ripple moved.",
+          objectSchema(mergeProps({{QStringLiteral("asset"), assetRefProp()},
+                                   {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds to insert at"))},
+                                   {QStringLiteral("before"), stringProp(QStringLiteral("Clip id to insert before (its start)"))},
+                                   {QStringLiteral("after"), stringProp(QStringLiteral("Clip id to insert after (its end)"))},
+                                   {QStringLiteral("track"), integerProp(QStringLiteral("Destination track"))},
+                                   {QStringLiteral("in"), numberProp(QStringLiteral("Source in, seconds (default 0)"))},
+                                   {QStringLiteral("out"), numberProp(QStringLiteral("Source out, seconds (default: the asset's length)"))},
+                                   {QStringLiteral("ripple"), propWithDefault(boolProp(QStringLiteral("Push later clips right to make room")), true)}},
+                                  {}),
+                       {QStringLiteral("asset")}) },
         { "move_clip", "timeline", "Change a clip's start time",
           "Move a clip on its track. When overlap is off (default) the start may be pushed forward to "
           "the next gap; the reply carries requested, placed, and reason:\"gap\" when they differ.",
