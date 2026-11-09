@@ -5933,15 +5933,15 @@
     <name>BlendModes</name>
     <message>
         <source>Normal</source>
-        <translation type="unfinished">ノーマル</translation>
+        <translation>ノーマル</translation>
     </message>
     <message>
         <source>Darken</source>
-        <translation type="unfinished">比較 (暗)</translation>
+        <translation>比較 (暗)</translation>
     </message>
     <message>
         <source>Multiply</source>
-        <translation type="unfinished">乗算</translation>
+        <translation>乗算</translation>
     </message>
     <message>
         <source>Color Burn</source>
@@ -5957,11 +5957,11 @@
     </message>
     <message>
         <source>Lighten</source>
-        <translation type="unfinished">比較 (明)</translation>
+        <translation>比較 (明)</translation>
     </message>
     <message>
         <source>Screen</source>
-        <translation type="unfinished">スクリーン</translation>
+        <translation>スクリーン</translation>
     </message>
     <message>
         <source>Color Dodge</source>
@@ -5969,7 +5969,7 @@
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished">加算</translation>
+        <translation>加算</translation>
     </message>
     <message>
         <source>Lighter Color</source>
@@ -5977,11 +5977,11 @@
     </message>
     <message>
         <source>Contrast</source>
-        <translation type="unfinished">コントラスト</translation>
+        <translation>コントラスト</translation>
     </message>
     <message>
         <source>Overlay</source>
-        <translation type="unfinished">オーバーレイ</translation>
+        <translation>オーバーレイ</translation>
     </message>
     <message>
         <source>Soft Light</source>
@@ -6021,7 +6021,7 @@
     </message>
     <message>
         <source>Subtract</source>
-        <translation type="unfinished">減算</translation>
+        <translation>減算</translation>
     </message>
     <message>
         <source>Divide</source>
@@ -6033,15 +6033,15 @@
     </message>
     <message>
         <source>Hue</source>
-        <translation type="unfinished">色相</translation>
+        <translation>色相</translation>
     </message>
     <message>
         <source>Saturation</source>
-        <translation type="unfinished">彩度</translation>
+        <translation>彩度</translation>
     </message>
     <message>
         <source>Color</source>
-        <translation type="unfinished">カラー</translation>
+        <translation>カラー</translation>
     </message>
     <message>
         <source>Luminosity</source>
@@ -16061,7 +16061,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Windows</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows</translation>
     </message>
     <message>
         <source>Recommended</source>
@@ -22098,15 +22098,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished">速度</translation>
+        <translation>速度</translation>
     </message>
     <message>
         <source>lines/s</source>
-        <translation type="unfinished"></translation>
+        <translation>行/秒</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished">サイズ</translation>
+        <translation>サイズ</translation>
     </message>
     <message>
         <source>Follow recording</source>
@@ -25707,15 +25707,15 @@ If playback stutters, try another.</source>
     <name>Vec2Param</name>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">%1 を編集</translation>
+        <translation>%1 を編集</translation>
     </message>
     <message>
         <source>Reset %1</source>
-        <translation type="unfinished">%1 をリセット</translation>
+        <translation>%1 をリセット</translation>
     </message>
     <message>
         <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
-        <translation type="unfinished">ドラッグで色合いを調整、Shift で微調整、ダブルクリックで色をリセットします。</translation>
+        <translation>ドラッグで色合いを調整、Shift で微調整、ダブルクリックで色をリセットします。</translation>
     </message>
 </context>
 <context>
