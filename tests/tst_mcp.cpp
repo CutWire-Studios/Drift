@@ -1255,6 +1255,40 @@ void McpTest::rippleTrimMovesTheRest()
     state.undo();
     state.undo();
     QCOMPARE(startOf(ids.at(2)), 4.0);
+
+    // Linked audio: the middle clip's partner takes the same trim, and the last clip's partner
+    // moves with it. A clip in the space a shorter trim gives up refuses it.
+    drift::Track audioTrack{.type = drift::TrackType::Audio};
+    for (const int i : {1, 2}) {
+        const QPair<int, int> loc = state.mcp()->locateClip(ids.at(i));
+        drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+        video.linkId = QStringLiteral("link-%1").arg(i);
+        drift::Clip audio = video;
+        audio.id = QStringLiteral("audio-%1").arg(i);
+        audio.type = drift::ClipType::Audio;
+        audioTrack.clips.append(audio);
+    }
+    state.project()->tracks().append(audioTrack);
+    QVERIFY(trim(2.0, 5.0, true).value(QStringLiteral("ok")).toBool());
+    const auto durOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineDuration);
+    };
+    QCOMPARE(durOf(QStringLiteral("audio-1")), 3.0);
+    QCOMPARE(startOf(ids.at(2)), 5.0);
+    QCOMPARE(startOf(QStringLiteral("audio-2")), 5.0);
+
+    drift::Clip inside = state.project()->tracks().last().clips.first();
+    inside.id = QStringLiteral("in-the-way");
+    inside.linkId.clear();
+    inside.timelineStart = drift::secondsToUs(4.5);
+    inside.timelineDuration = drift::secondsToUs(0.5);
+    state.project()->tracks().last().clips.removeFirst();
+    state.project()->tracks().last().clips.insert(0, inside);
+    const QJsonObject blocked = trim(2.0, 3.0, true);
+    QCOMPARE(blocked.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(startOf(ids.at(2)), 5.0);
+    QCOMPARE(durOf(ids.at(1)), 3.0);
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

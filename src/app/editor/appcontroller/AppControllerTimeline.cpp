@@ -2717,22 +2717,10 @@ QStringList AppController::setClipTrimRippled(int trackIndex, int clipIndex, dou
     const QString id = original.id;
     const drift::TimeUs oldEnd = original.timelineEnd();
 
-    // The tracks that move: the clip's own, and those holding linked partners of it or of any
-    // clip after it, so partners stay in sync and nothing moved lands on a clip that stayed.
-    QSet<int> tracks{trackIndex};
-    const auto addPartnerTracks = [&](const drift::Clip &clip) {
-        if (clip.linkId.isEmpty())
-            return;
-        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip)) {
-            if (!m_project.tracks().at(ref.trackIndex).isAdjustment())
-                tracks.insert(ref.trackIndex);
-        }
-    };
-    for (const drift::Clip &clip : m_project.tracks().at(trackIndex).clips) {
-        if (clip.id == id || clip.timelineStart >= oldEnd)
-            addPartnerTracks(clip);
-    }
-    for (const int t : std::as_const(tracks)) {
+    // The tracks that move: every track that ripples with the clip's (joined to it by linked
+    // clips), so its partners and their followers keep their place.
+    const QSet<int> tracks = drift::rippleTrackGroup(m_project, trackIndex);
+    for (const int t : tracks) {
         if (m_project.tracks().at(t).locked) {
             if (error)
                 *error = QStringLiteral("Track %1 is locked").arg(t);
@@ -2749,7 +2737,22 @@ QStringList AppController::setClipTrimRippled(int trackIndex, int clipIndex, dou
         skip.insert(m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
     syncLinkedPartnersFrom(m_project, trimmed);
     const drift::TimeUs delta = trimmed.timelineEnd() - oldEnd;
-    rippleTracksFrom(m_project, tracks, oldEnd, delta, skip);
+    // Shorter: the clips after it close the space it gave up, on every track of the group, so
+    // nothing may sit in that space (refused, as delete does, rather than overlap it).
+    if (delta < 0) {
+        for (const int t : tracks) {
+            for (const drift::Clip &clip : m_project.tracks().at(t).clips) {
+                if (skip.contains(clip.id) || clip.timelineStart >= oldEnd || clip.timelineEnd() <= oldEnd + delta)
+                    continue;
+                m_project = before;
+                if (error)
+                    *error = QStringLiteral("Clip %1 sits in the space this would close; trim without ripple, or move it")
+                                 .arg(clip.id);
+                return moved;
+            }
+        }
+    }
+    drift::rippleTracks(m_project, tracks, oldEnd, delta, skip);
     syncOverlapTransitions(m_project);
     pushProjectEdit(before, tr("Ripple trim"));
     finishEdit(tr("Ripple trim"));
