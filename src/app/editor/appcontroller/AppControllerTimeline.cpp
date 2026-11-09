@@ -2735,64 +2735,91 @@ QStringList AppController::setClipTrimRippled(int trackIndex, int clipIndex, dou
     const drift::Project before = m_project;
     drift::Clip &target = m_project.tracks()[trackIndex].clips[clipIndex];
     applyClipTrim(target, inPoint, outPoint);
-    const drift::Clip trimmed = target;
-    // Only the partners the sync actually trims stay out of the ripple: loose links keep their own
-    // timing, so a loose partner moves (or blocks) like any other clip of the group.
+    syncLinkedPartnersFrom(m_project, target);
+    if (!rippleResizedClip(before, trackIndex, id, oldEnd, true, QStringLiteral("trim"), error))
+        return moved;
+    syncOverlapTransitions(m_project);
+    pushProjectEdit(before, tr("Ripple trim"));
+    finishEdit(tr("Ripple trim"));
+    return movedClipIds(before, m_project);
+}
+
+QStringList AppController::movedClipIds(const drift::Project &before, const drift::Project &after)
+{
+    QHash<QString, drift::TimeUs> starts;
+    for (const drift::Track &track : before.tracks())
+        for (const drift::Clip &clip : track.clips)
+            starts.insert(clip.id, clip.timelineStart);
+    QStringList moved;
+    for (const drift::Track &track : after.tracks())
+        for (const drift::Clip &clip : track.clips)
+            if (starts.contains(clip.id) && starts.value(clip.id) != clip.timelineStart)
+                moved.append(clip.id);
+    return moved;
+}
+
+bool AppController::rippleResizedClip(const drift::Project &before, int trackIndex, const QString &id,
+                                      drift::TimeUs oldEnd, bool ripple, const QString &verb, QString *error)
+{
+    int t = -1;
+    int c = -1;
+    if (!findClipById(m_project, id, &t, &c))
+        return true;
+    const drift::Clip resized = m_project.tracks().at(t).clips.at(c);
+    const QSet<int> tracks = drift::rippleTrackGroup(before, trackIndex);
+    const drift::TimeUs delta = resized.timelineEnd() - oldEnd;
+    // Only the partners the sync actually resized stay out of the ripple: loose links keep their
+    // own timing, so a loose partner moves (or blocks) like any other clip of the group.
     QSet<QString> skip{id};
-    if (!trimmed.linkLoose) {
-        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, trimmed)) {
+    if (!resized.linkLoose) {
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, resized)) {
             const drift::Clip &partner = m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
             if (!partner.linkLoose)
                 skip.insert(partner.id);
         }
     }
-    syncLinkedPartnersFrom(m_project, trimmed);
-    const drift::TimeUs delta = trimmed.timelineEnd() - oldEnd;
-    // Shorter: the clips after it close the space it gave up, on every track of the group, so
-    // nothing may sit in that space (refused, as delete does, rather than overlap it).
-    if (delta < 0) {
-        for (const int t : tracks) {
-            for (const drift::Clip &clip : m_project.tracks().at(t).clips) {
-                if (skip.contains(clip.id) || clip.timelineStart >= oldEnd || clip.timelineEnd() <= oldEnd + delta)
-                    continue;
-                // Copied first: restoring the project frees the clip this reference points into.
-                const QString blockerId = clip.id;
-                m_project = before;
-                if (error)
-                    *error = QStringLiteral("Clip %1 sits in the space this would close; trim without ripple, or move it")
-                                 .arg(blockerId);
-                return moved;
+    if (ripple) {
+        // Shorter: the clips after it close the space it gave up, on every track of the group, so
+        // nothing may sit in that space (refused, as delete does, rather than overlap it).
+        if (delta < 0) {
+            for (const int g : tracks) {
+                for (const drift::Clip &clip : m_project.tracks().at(g).clips) {
+                    if (skip.contains(clip.id) || clip.timelineStart >= oldEnd || clip.timelineEnd() <= oldEnd + delta)
+                        continue;
+                    // Copied first: restoring the project frees the clip this reference points into.
+                    const QString blockerId = clip.id;
+                    m_project = before;
+                    if (error)
+                        *error = QStringLiteral("Clip %1 sits in the space this would close; %2 without ripple, or move it")
+                                     .arg(blockerId, verb);
+                    return false;
+                }
             }
         }
+        bool clamped = false;
+        drift::rippleTracks(m_project, tracks, oldEnd, delta, skip, &clamped);
+        if (clamped) {
+            m_project = before;
+            if (error)
+                *error = QStringLiteral("The ripple would move a clip before the start of the timeline");
+            return false;
+        }
     }
-    bool clamped = false;
-    drift::rippleTracks(m_project, tracks, oldEnd, delta, skip, &clamped);
-    // An earlier linked clip moved with its partner can land on a clip that stayed (or a longer
-    // clip on the next one): refused, as is a clip that would have to move before 0.
-    const QString collision = drift::rippleCollision(before, m_project, tracks);
-    if (!collision.isEmpty() || clamped) {
+    // An earlier linked clip moved with its partner can land on a clip that stayed, and a longer
+    // clip (without ripple) on the next one: refused.
+    QSet<int> checked = tracks;
+    checked.insert(trackIndex);
+    const QString collision = drift::rippleCollision(before, m_project, checked);
+    if (!collision.isEmpty()) {
         m_project = before;
         if (error)
-            *error = collision.isEmpty()
-                         ? QStringLiteral("The ripple would move a clip before the start of the timeline")
-                         : QStringLiteral("The ripple would push clip %1 onto another; move it first, or trim "
-                                          "without ripple")
-                               .arg(collision);
-        return moved;
+            *error = ripple ? QStringLiteral("The ripple would push clip %1 onto another; move it first, or %2 "
+                                             "without ripple")
+                                  .arg(collision, verb)
+                            : QStringLiteral("Clip %1 would overlap another; use ripple, or make room first").arg(collision);
+        return false;
     }
-    syncOverlapTransitions(m_project);
-    pushProjectEdit(before, tr("Ripple trim"));
-    finishEdit(tr("Ripple trim"));
-
-    QHash<QString, drift::TimeUs> starts;
-    for (const drift::Track &track : before.tracks())
-        for (const drift::Clip &clip : track.clips)
-            starts.insert(clip.id, clip.timelineStart);
-    for (const drift::Track &track : m_project.tracks())
-        for (const drift::Clip &clip : track.clips)
-            if (starts.contains(clip.id) && starts.value(clip.id) != clip.timelineStart)
-                moved.append(clip.id);
-    return moved;
+    return true;
 }
 
 AppController::GapCloseResult AppController::closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs)
@@ -3191,25 +3218,42 @@ QVariantList AppController::replaceCandidatesForClip(int trackIndex, int clipInd
 // link kind that tolerates partners with unrelated media and lengths.
 bool AppController::replaceClipMedia(int trackIndex, int clipIndex, int assetIndex)
 {
+    const drift::Project before = m_project.detachedCopy();
+    if (!rebindClipMedia(trackIndex, clipIndex, assetIndex))
+        return false;
+    pushProjectEdit(before, tr("Replace clip"));
+    finishEdit(tr("Replace clip"));
+    return true;
+}
+
+bool AppController::canReplaceClipMedia(int trackIndex, int clipIndex, int assetIndex) const
+{
     if (!m_assetLibrary || !isValidClipIndex(trackIndex, clipIndex))
         return false;
     const drift::MediaAsset *asset = m_project.asset(m_assetLibrary->assetIdAt(assetIndex));
     if (!asset)
         return false;
-    const drift::Clip target = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const drift::Clip &target = m_project.tracks().at(trackIndex).clips.at(clipIndex);
     if (!target.sequenceId.isEmpty() || target.assetId.isEmpty())
         return false;
+    return replacementClipType(m_project, m_assetLibrary, m_project.tracks().at(trackIndex), target, *asset)
+        .has_value();
+}
+
+bool AppController::rebindClipMedia(int trackIndex, int clipIndex, int assetIndex)
+{
+    if (!canReplaceClipMedia(trackIndex, clipIndex, assetIndex))
+        return false;
+    const drift::MediaAsset *asset = m_project.asset(m_assetLibrary->assetIdAt(assetIndex));
+    const drift::Clip target = m_project.tracks().at(trackIndex).clips.at(clipIndex);
     const auto newType = replacementClipType(m_project, m_assetLibrary, m_project.tracks().at(trackIndex),
                                              target, *asset);
-    if (!newType)
-        return false;
 
     m_assetLibrary->ensureMedia(assetIndex);
     const drift::MediaAsset assetCopy = *asset;
     const QVariantMap info = m_assetLibrary->assetAt(assetIndex);
     const bool newHasAudio = assetHasAudioStreams(m_project, m_assetLibrary, assetCopy.id);
 
-    const drift::Project before = m_project.detachedCopy();
     const QString oldAssetId = target.assetId;
     const QString linkId = target.linkId;
     const QString oldName = m_project.asset(oldAssetId) ? m_project.asset(oldAssetId)->name : QString();
@@ -3273,10 +3317,82 @@ bool AppController::replaceClipMedia(int trackIndex, int clipIndex, int assetInd
             m_project.tracks()[trackIndex].clips[clipIndex].linkLoose = true;
         }
     }
+    return true;
+}
 
+AppController::ReplaceResult AppController::replaceClipRippled(int trackIndex, int clipIndex, int assetIndex,
+                                                               drift::TimeUs srcInUs, drift::TimeUs srcOutUs,
+                                                               bool ripple)
+{
+    ReplaceResult result;
+    const auto fail = [&result](const char *code, const QString &message) {
+        result.errorCode = QString::fromLatin1(code);
+        result.error = message;
+        return result;
+    };
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return fail("not_found", QStringLiteral("No such clip"));
+    if (!m_assetLibrary || assetIndex < 0 || assetIndex >= m_assetLibrary->rowCount())
+        return fail("not_found", QStringLiteral("Unknown asset"));
+    const drift::Clip original = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (!original.sequenceId.isEmpty() || original.assetId.isEmpty())
+        return fail("type_mismatch", QStringLiteral("Only video, image and audio clips can take new media"));
+    if (original.assetId == m_assetLibrary->assetIdAt(assetIndex))
+        return fail("bad_args", QStringLiteral("The clip already uses this asset; use set_trim for a new range"));
+    if (!canReplaceClipMedia(trackIndex, clipIndex, assetIndex))
+        return fail("type_mismatch", QStringLiteral("This asset cannot stand in for the clip (its kind, or what the track takes)"));
+
+    QSet<int> lockChecked = drift::rippleTrackGroup(m_project, trackIndex);
+    lockChecked.insert(trackIndex);
+    for (const int t : std::as_const(lockChecked)) {
+        if (m_project.tracks().at(t).locked)
+            return fail("bad_args", QStringLiteral("Track %1 is locked").arg(t));
+    }
+
+    const bool ranged = srcInUs >= 0 || srcOutUs >= 0;
+    const drift::MediaAsset *asset = m_project.asset(m_assetLibrary->assetIdAt(assetIndex));
+    if (ranged && asset->kind == drift::MediaKind::Image)
+        return fail("bad_args", QStringLiteral("in/out apply to video and audio; a still takes the clip's length"));
+    m_assetLibrary->ensureMedia(assetIndex);
+    const drift::TimeUs fullUs = clipDurationForAssetIndex(assetIndex);
+    const drift::TimeUs minUs = drift::minClipDurationUs(m_project.fps());
+    const drift::TimeUs inUs = qMax<drift::TimeUs>(0, srcInUs);
+    drift::TimeUs outUs = srcOutUs >= 0 ? srcOutUs : fullUs;
+    if (ranged) {
+        if (inUs >= fullUs)
+            return fail("bad_args", QStringLiteral("in (%1 s) is at or past the end of the media (%2 s)")
+                                        .arg(drift::usToSeconds(inUs))
+                                        .arg(drift::usToSeconds(fullUs)));
+        // Up to a frame of slack for times that went through seconds and back.
+        if (outUs > fullUs + minUs)
+            return fail("bad_args", QStringLiteral("out (%1 s) is past the end of the media (%2 s)")
+                                        .arg(drift::usToSeconds(outUs))
+                                        .arg(drift::usToSeconds(fullUs)));
+        outUs = qMin(outUs, fullUs);
+        if (outUs - inUs < minUs)
+            return fail("bad_args", QStringLiteral("The source range is shorter than a frame"));
+    }
+
+    const drift::Project before = m_project.detachedCopy();
+    const drift::TimeUs oldEnd = original.timelineEnd();
+    if (!rebindClipMedia(trackIndex, clipIndex, assetIndex)) {
+        m_project = before;
+        return fail("type_mismatch", QStringLiteral("This asset cannot stand in for the clip"));
+    }
+    drift::Clip &target = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (ranged) {
+        applyClipTrim(target, drift::usToSeconds(inUs), drift::usToSeconds(outUs));
+        syncLinkedPartnersFrom(m_project, target);
+    }
+    QString error;
+    if (!rippleResizedClip(before, trackIndex, original.id, oldEnd, ripple, QStringLiteral("replace"), &error))
+        return fail("bad_args", error);
+    syncOverlapTransitions(m_project);
     pushProjectEdit(before, tr("Replace clip"));
     finishEdit(tr("Replace clip"));
-    return true;
+    result.moved = movedClipIds(before, m_project);
+    result.removedTransitions = removedTransitionsSince(before, m_project);
+    return result;
 }
 
 void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart)

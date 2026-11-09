@@ -702,6 +702,19 @@ const QList<Op> &ops()
                                    {QStringLiteral("after"), stringProp(QStringLiteral("Clip id to move behind"))}},
                                   clipRefProps()),
                        {}) },
+        { "replace_clip", "timeline", "Put new media under a clip",
+          "Swap the clip's media for another asset in place, in one undo step. The clip keeps its "
+          "name, transform, effects and keyframes; linked audio follows when the new file has sound. "
+          "in/out set the new source range (default: the clip's length, shorter if the file runs "
+          "out). With ripple (default) later clips, linked tracks too, move by the change in length; "
+          "without, a longer clip must not land on the next. Returns moved:[{id, start}] and any "
+          "removed_transitions.",
+          objectSchema(mergeProps({{QStringLiteral("asset"), assetRefProp()},
+                                   {QStringLiteral("in"), numberProp(QStringLiteral("Source in, seconds"))},
+                                   {QStringLiteral("out"), numberProp(QStringLiteral("Source out, seconds"))},
+                                   {QStringLiteral("ripple"), propWithDefault(boolProp(QStringLiteral("Move later clips by the change in length")), true)}},
+                                  clipRefProps()),
+                       {QStringLiteral("asset")}) },
         { "swap_clips", "timeline", "Exchange two clips' places",
           "Swap two clips on one track in one undo step: each takes the other's place, the clips "
           "between them move by the difference in length, and linked A/V moves along. Refused for "

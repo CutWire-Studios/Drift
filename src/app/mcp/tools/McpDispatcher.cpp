@@ -819,6 +819,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opMoveClip(args);
     if (tool == QLatin1String("swap_clips"))
         return opSwapClips(args);
+    if (tool == QLatin1String("replace_clip"))
+        return opReplaceClip(args);
     if (tool == QLatin1String("set_duration"))
         return opSetDuration(args);
     if (tool == QLatin1String("set_trim"))
@@ -1621,6 +1623,35 @@ QJsonObject reorderReply(const AppController::ReorderResult &result, const drift
 }
 
 } // namespace
+
+QJsonObject McpDispatcher::opReplaceClip(const QJsonObject &args)
+{
+    const ClipRef ref = resolveClip(args);
+    if (!ref.valid())
+        return clipRefError(args);
+    const int asset = resolveAsset(args.value(QStringLiteral("asset")));
+    if (asset < 0)
+        return err("not_found", QStringLiteral("Unknown asset"));
+    const drift::TimeUs inUs = args.contains(QStringLiteral("in"))
+                                   ? drift::secondsToUs(jsonNumber(args.value(QStringLiteral("in")), 0))
+                                   : -1;
+    const drift::TimeUs outUs = args.contains(QStringLiteral("out"))
+                                    ? drift::secondsToUs(jsonNumber(args.value(QStringLiteral("out")), 0))
+                                    : -1;
+    if ((args.contains(QStringLiteral("in")) && inUs < 0) || (args.contains(QStringLiteral("out")) && outUs < 0))
+        return err("bad_args", QStringLiteral("in and out must be 0 or more"));
+    if (outUs >= 0 && outUs <= qMax<drift::TimeUs>(0, inUs))
+        return err("bad_args", QStringLiteral("out must be after in"));
+    const AppController::ReplaceResult replaced = m_controller->replaceClipRippled(
+        ref.track, ref.clip, asset, inUs, outUs, jsonBool(args.value(QStringLiteral("ripple")), true));
+    if (!replaced.error.isEmpty())
+        return err(replaced.errorCode.toLatin1().constData(), replaced.error);
+    const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
+    AppController::ReorderResult moved;
+    moved.moved = replaced.moved;
+    moved.removedTransitions = replaced.removedTransitions;
+    return ok(clipFeedback(after, reorderReply(moved, *m_controller->project())));
+}
 
 QJsonObject McpDispatcher::opSwapClips(const QJsonObject &args)
 {

@@ -104,6 +104,7 @@ private slots:
     void rippleTrimMovesTheRest();
     void closeGapsClosesEveryHole();
     void reorderClipsKeepsTheSpacing();
+    void replaceClipKeepsTheSlot();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
@@ -1646,6 +1647,88 @@ void McpTest::reorderClipsKeepsTheSpacing()
         QCOMPARE(startOf(a), 0.0);
         QCOMPARE(startOf(QStringLiteral("a-audio")), 0.0);
     }
+}
+
+void McpTest::replaceClipKeepsTheSlot()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    for (const auto &[name, seconds] : {std::pair{"shot.mp4", 10.0}, std::pair{"other.mp4", 6.0}}) {
+        drift::MediaAsset media;
+        media.name = QString::fromLatin1(name);
+        media.kind = drift::MediaKind::Video;
+        media.path = QStringLiteral("/nonexistent/") + media.name;
+        media.durationUs = drift::secondsToUs(seconds);
+        state.project()->addAsset(media);
+    }
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    // A [0,2), B [2,3), both from shot.mp4.
+    QStringList ids;
+    for (const auto &[at, out] : {std::pair{0.0, 2.0}, std::pair{2.0, 1.0}}) {
+        const QJsonObject placed = dispatcher.applyOne(
+            QStringLiteral("insert_clip"),
+            {{QStringLiteral("asset"), 0}, {QStringLiteral("at"), at}, {QStringLiteral("out"), out}, {QStringLiteral("ripple"), false}});
+        QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson()));
+        ids.append(placed.value(QStringLiteral("id")).toString());
+    }
+    const QString a = ids.at(0), b = ids.at(1);
+    const int track = state.mcp()->locateClip(a).first;
+    const auto clipOf = [&](const QString &id) {
+        return state.project()->tracks().at(track).clips.at(state.mcp()->locateClip(id).second);
+    };
+    const QString otherId = library.assetIdAt(1);
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second].name = QStringLiteral("Hero");
+    const auto replace = [&](QJsonObject args) {
+        args.insert(QStringLiteral("clip"), a);
+        if (!args.contains(QStringLiteral("asset")))
+            args.insert(QStringLiteral("asset"), 1);
+        return dispatcher.applyOne(QStringLiteral("replace_clip"), args);
+    };
+
+    // No range: same length, settings kept, nothing moves.
+    const QJsonObject same = replace({});
+    QVERIFY2(same.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(same).toJson()));
+    QCOMPARE(clipOf(a).assetId, otherId);
+    QCOMPARE(clipOf(a).name, QStringLiteral("Hero"));
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(2.0));
+    QVERIFY(same.value(QStringLiteral("moved")).toArray().isEmpty());
+    state.undo();
+    QVERIFY(clipOf(a).assetId != otherId);
+
+    // A longer range ripples B right, in one undo step.
+    const QJsonObject longer = replace({{QStringLiteral("in"), 1.0}, {QStringLiteral("out"), 4.0}});
+    QVERIFY2(longer.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(longer).toJson()));
+    QCOMPARE(clipOf(a).srcIn, drift::secondsToUs(1.0));
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(3.0));
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(longer.value(QStringLiteral("moved")).toArray().size(), 1);
+    state.undo();
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(2.0));
+    QVERIFY(clipOf(a).assetId != otherId);
+
+    // A shorter one closes up; without ripple it leaves the gap, and a longer one is refused.
+    QVERIFY(replace({{QStringLiteral("out"), 1.0}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(1.0));
+    state.undo();
+    QVERIFY(replace({{QStringLiteral("out"), 1.0}, {QStringLiteral("ripple"), false}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(2.0));
+    state.undo();
+    QCOMPARE(replace({{QStringLiteral("out"), 4.0}, {QStringLiteral("ripple"), false}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QVERIFY(clipOf(a).assetId != otherId);
+
+    // Errors change nothing.
+    QCOMPARE(replace({{QStringLiteral("out"), 7.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(replace({{QStringLiteral("in"), 3.0}, {QStringLiteral("out"), 2.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(replace({{QStringLiteral("asset"), 0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(replace({{QStringLiteral("asset"), 9}}).value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    state.project()->tracks()[track].locked = true;
+    QCOMPARE(replace({}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    state.project()->tracks()[track].locked = false;
+    QVERIFY(clipOf(a).assetId != otherId);
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(2.0));
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
