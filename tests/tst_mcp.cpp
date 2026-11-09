@@ -1165,7 +1165,11 @@ void McpTest::deleteClipsClosesTheSpace()
         inside.timelineStart = drift::secondsToUs(4.5);
         inside.timelineDuration = drift::secondsToUs(1.0);
         audio.clips.insert(1, inside);
+        const QPair<int, int> selected = state.mcp()->locateClip(ids.at(0));
+        state.selectClip(selected.first, selected.second);
         const QJsonObject blocked = dispatcher.applyOne(QStringLiteral("delete_clips"), {{QStringLiteral("clips"), QJsonArray{ids.at(2)}}});
+        QCOMPARE(state.selectedTrack(), selected.first); // a refused delete leaves the selection alone
+        QCOMPARE(state.selectedClip(), selected.second);
         QCOMPARE(blocked.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
         QVERIFY(blocked.value(QStringLiteral("detail")).toString().contains(QStringLiteral("in-the-way")));
         QCOMPARE(startOf(ids.at(2)), 4.0);

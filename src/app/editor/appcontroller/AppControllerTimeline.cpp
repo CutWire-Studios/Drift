@@ -1592,11 +1592,19 @@ int AppController::deleteClipsById(const QStringList &ids, bool withEffects, boo
     }
     if (pairs.isEmpty())
         return 0;
+    // Deleting goes through the selection; a refused delete puts the user's back.
+    const QList<QPair<int, int>> previousSelection = m_selection;
+    const int previousTrack = m_selectedTrack;
+    const int previousClip = m_selectedClip;
     m_selection = pairs;
     m_selectedTrack = pairs.constFirst().first;
     m_selectedClip = pairs.constFirst().second;
-    if (!deleteSelection(withEffects, ripple, error))
+    if (!deleteSelection(withEffects, ripple, error)) {
+        m_selection = previousSelection;
+        m_selectedTrack = previousTrack;
+        m_selectedClip = previousClip;
         return -1;
+    }
     return int(pairs.size());
 }
 
@@ -1655,24 +1663,30 @@ bool AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bo
     if (ripple.has_value()) {
         // Agent ops: linked tracks close together, each merged range once; refused (and undone)
         // rather than overlap a clip in the way or move a locked track.
+        // Groups and locks come from before the delete: a link held only by a deleted clip still
+        // joins its tracks. Without ripple only the tracks losing a clip count.
+        QList<drift::RippleRange> ranges;
+        QSet<int> affected;
+        for (const RemovedRange &range : std::as_const(removedRanges)) {
+            ranges.append({range.track, range.start, range.start + range.duration});
+            affected.insert(range.track);
+            if (*ripple)
+                affected.unite(drift::rippleTrackGroup(before, range.track));
+        }
+        QString problem;
+        for (const int t : std::as_const(affected)) {
+            if (before.tracks().at(t).locked) {
+                problem = QStringLiteral("Track %1 is locked").arg(t);
+                break;
+            }
+        }
         if (*ripple) {
-            QList<drift::RippleRange> ranges;
-            QSet<int> affected;
-            for (const RemovedRange &range : std::as_const(removedRanges)) {
-                ranges.append({range.track, range.start, range.start + range.duration});
-                affected.unite(drift::rippleTrackGroup(m_project, range.track));
-            }
-            QString problem;
-            for (const int t : std::as_const(affected)) {
-                if (m_project.tracks().at(t).locked) {
-                    problem = QStringLiteral("Track %1 is locked").arg(t);
-                    break;
-                }
-            }
             QString blocker;
-            if (problem.isEmpty() && !drift::closeRippleRanges(m_project, ranges, &blocker))
-                problem = QStringLiteral("Clip %1 sits in the space this would close; delete it too, or pass ripple:false")
+            if (problem.isEmpty() && !drift::closeRippleRanges(m_project, ranges, &blocker, nullptr, &before))
+                problem = QStringLiteral("Clip %1 is in the way of closing that space; move or delete it, or pass ripple:false")
                               .arg(blocker);
+        }
+        {
             if (!problem.isEmpty()) {
                 m_project = before;
                 if (error)
