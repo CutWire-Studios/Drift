@@ -3,6 +3,7 @@
 #include "app/editor/AppController.h"
 #include "app/editor/AppControllerDetail.h"
 #include "app/bin/AssetLibrary.h"
+#include "app/mcp/McpController.h"
 #include "app/editor/ProjectFileController.h"
 #include "engine/platform/AndroidUri.h"
 #include "engine/encode/MediaEditor.h"
@@ -377,6 +378,9 @@ bool MediaBinController::replaceSource(int assetIndex, const QUrl &url)
     // Reading a file off a slow disk is the one part of this the user waits on with nothing to
     // show for it, so the row it belongs to goes busy until the probe lands.
     m_replacingAssetId = assetId;
+    // The probe lands outside the agent's call (its wait runs a nested event loop), so the change
+    // feed learns whose replace it was from here.
+    m_replaceByAgent = m_app->mcp() && m_app->mcp()->inAgentCall();
     // applyProbedSource overwrites the whole struct from the probe result, which knows nothing
     // about where the file came from — so the URI is held here and put back in finalizeReplace.
     m_replacingAssetSourceUri = sourceUri;
@@ -927,6 +931,7 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
     // whichever replace runs next.
     const QString replacementSourceUri =
         refresh ? QString() : std::exchange(m_replacingAssetSourceUri, QString());
+    const bool byAgent = !refresh && std::exchange(m_replaceByAgent, false);
 
     std::function<void(drift::MediaAsset &)> adjust = std::exchange(m_replaceAdjust, nullptr);
     if (refresh)
@@ -1050,6 +1055,8 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
     const QString label = fromEdit ? tr("Media edited")
                                    : (refresh ? tr("Media refreshed") : tr("Media replaced"));
     m_app->pushProjectEdit(before, label);
+    if (byAgent && m_app->mcp())
+        m_app->mcp()->markNextChangeByAgent();
     m_app->finishEdit(label);
     finishEditJob(true, newName);
     if (!fromEdit && !refresh)
@@ -1095,6 +1102,9 @@ void MediaBinController::relinkSiblings()
     m_app->projectFile()->remapProjectPaths(remap);
     m_app->pushProjectEdit(before, tr("Relink media"));
     m_app->settleUndoRefresh();
+    // Not a finishEdit, so the revision (and the change feed) moves here.
+    if (m_app->mcp())
+        m_app->mcp()->bumpEditRevision();
     m_app->m_assetLibrary->setProject(&m_app->m_project);
     m_folderModel.setProject(&m_app->m_project);
     m_app->restoreFilmstripsAfterLoad();

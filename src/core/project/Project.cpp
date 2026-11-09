@@ -680,6 +680,11 @@ QJsonObject clipJson(const Clip &clip)
     return clipToJson(clip);
 }
 
+QJsonObject assetJson(const MediaAsset &asset)
+{
+    return assetToJson(asset);
+}
+
 QJsonObject transitionJson(const Transition &transition)
 {
     return transitionToJson(transition);

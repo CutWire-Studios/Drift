@@ -7447,6 +7447,26 @@ void CoreTest::diffProjectsReportsClipChanges()
     QCOMPARE(twinDiff.clips.size(), 1);
     QCOMPARE(twinDiff.clips.first().change, QStringLiteral("removed"));
     QCOMPARE(twinDiff.clips.first().track, 1);
+
+    // A real id that looks like a duplicate's key ("a#1") is still its own clip.
+    drift::Project lookalike = twins;
+    drift::Track lookalikeTrack{.id = QStringLiteral("v4"), .type = drift::TrackType::Video};
+    lookalikeTrack.clips = {clip("a#1", 20, 3)};
+    lookalike.tracks().append(lookalikeTrack);
+    QVERIFY(drift::diffProjects(lookalike, lookalike).isEmpty());
+
+    // An asset's bin trim is a change to it, though its name and path stay.
+    drift::Project withAsset = from;
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("asset");
+    asset.name = QStringLiteral("Take 1");
+    asset.path = QStringLiteral("/media/take1.mp4");
+    withAsset.assets().insert(asset.id, asset);
+    drift::Project binTrimmed = withAsset;
+    binTrimmed.assets()[asset.id].trimInUs = drift::secondsToUs(1.0);
+    const drift::ProjectDiff assetDiff = drift::diffProjects(withAsset, binTrimmed);
+    QCOMPARE(assetDiff.assets.size(), 1);
+    QCOMPARE(assetDiff.assets.first().change, QStringLiteral("changed"));
 }
 
 QTEST_MAIN(CoreTest)

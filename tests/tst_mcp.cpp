@@ -984,6 +984,18 @@ void McpTest::changeFeedListsEditsBySource()
     QVERIFY2(later.at(1).toObject().value(QStringLiteral("label")).toString().contains(QStringLiteral("set_clip_name")),
              qPrintable(later.at(1).toObject().value(QStringLiteral("label")).toString()));
 
+    // An async op the agent started (a replace_asset probe) lands outside its call; it is still
+    // the agent's, and only that one change is.
+    const int beforeAsync = dispatcher.applyOne(QStringLiteral("changes"), {}).value(QStringLiteral("revision")).toInt();
+    state.mcp()->markNextChangeByAgent();
+    state.setClipName(0, 1, QStringLiteral("Async"));
+    state.setClipName(0, 1, QStringLiteral("User again"));
+    const QJsonArray async = dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), beforeAsync}})
+                                 .value(QStringLiteral("changes")).toArray();
+    QCOMPARE(async.size(), 2);
+    QCOMPARE(async.at(0).toObject().value(QStringLiteral("source")).toString(), QStringLiteral("mcp"));
+    QCOMPARE(async.at(1).toObject().value(QStringLiteral("source")).toString(), QStringLiteral("ui"));
+
     // Reading a later entry first leaves the earlier one's detail intact.
     const int beforeTwo = dispatcher.applyOne(QStringLiteral("changes"), {}).value(QStringLiteral("revision")).toInt();
     state.setClipName(0, 1, QStringLiteral("R1"));

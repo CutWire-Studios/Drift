@@ -313,6 +313,8 @@ private:
 
 // A clip as the project file stores it (without its id's owner track); for comparing clips.
 QJsonObject clipJson(const Clip &clip);
+// A media asset as the project file stores it; for comparing assets.
+QJsonObject assetJson(const MediaAsset &asset);
 QJsonObject transitionJson(const Transition &transition);
 
 } // namespace drift

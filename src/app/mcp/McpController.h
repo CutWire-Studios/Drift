@@ -117,6 +117,9 @@ public:
     // feed on, it also logs what changed since the last one.
     enum class ChangeKind { Edit, Undo, Redo };
     void bumpEditRevision(ChangeKind kind = ChangeKind::Edit);
+    // The next logged change is the agent's even outside its call: an async op it started (a
+    // replace_asset probe) lands from a nested event loop, where inAgentCall() is false.
+    void markNextChangeByAgent() { m_nextChangeByAgent = true; }
     // The change feed: the edits after revision `since`, oldest first, each with its source ("mcp"
     // or "ui"), kind (edit, undo, redo), label and clip/track/asset diff. The log starts at the
     // first agent call and keeps the newest kChangeLogSize entries; an older `since` reports
@@ -433,6 +436,7 @@ private:
     static constexpr int kChangeSnapshotClips = 20000; // clip copies across unread snapshots
     std::optional<ChangeKind> m_batchKind;
     bool m_changeFeedOn = false;
+    bool m_nextChangeByAgent = false;
     int m_changeFeedFloor = 0; // the oldest revision `since` may name and still get every change
     std::shared_ptr<const drift::Project> m_changeBase; // the state before the first entry
     QString m_pendingChangeLabel;

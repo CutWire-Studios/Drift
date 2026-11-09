@@ -189,6 +189,7 @@ private:
     // The content:// URI the in-flight replace picked, held across the probe so it can be put back
     // on the asset once applyProbedSource has overwritten the struct.
     QString m_replacingAssetSourceUri;
+    bool m_replaceByAgent = false; // the in-flight replace was started by an agent call
     std::function<void(drift::MediaAsset &)> m_replaceAdjust;
     QSet<QString> m_refreshFailed;
     QHash<QString, QString> m_siblingRelink;

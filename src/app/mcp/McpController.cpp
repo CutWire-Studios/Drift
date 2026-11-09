@@ -1134,6 +1134,7 @@ void McpController::startChangeFeed()
 
 void McpController::recordChange(ChangeKind kind)
 {
+    const bool byAgent = std::exchange(m_nextChangeByAgent, false) || inAgentCall();
     // A batch is one entry, logged when it ends (its ops' own finishes are inside it). It takes
     // the kind its ops share (a batch of undos is an undo); mixed kinds read as an edit.
     if (m_batchDepth > 0) {
@@ -1152,7 +1153,7 @@ void McpController::recordChange(ChangeKind kind)
         label = kind == ChangeKind::Undo ? m_app->m_undoStack.redoText() : m_app->m_undoStack.undoText();
     ChangeEntry entry;
     entry.revision = m_editRevision;
-    entry.source = inAgentCall() ? QStringLiteral("mcp") : QStringLiteral("ui");
+    entry.source = byAgent ? QStringLiteral("mcp") : QStringLiteral("ui");
     entry.kind = kind == ChangeKind::Undo   ? QStringLiteral("undo")
                  : kind == ChangeKind::Redo ? QStringLiteral("redo")
                                             : QStringLiteral("edit");

@@ -64,8 +64,9 @@ struct Located
     const Clip *clip = nullptr;
 };
 
-// Each clip's key: its id, or for a duplicated id (an imported file can carry one) the id and its
-// occurrence across the whole timeline, in track order.
+// Each clip's key: its id's occurrence across the whole timeline, in track order, then the id
+// (an imported file can carry a duplicated id). The count leads and holds no ':', so two clips
+// share a key only when they are the same occurrence of the same id: "1:a" can't be a real id's key.
 QList<QStringList> clipKeys(const QList<Track> &tracks)
 {
     QList<QStringList> keys;
@@ -74,7 +75,7 @@ QList<QStringList> clipKeys(const QList<Track> &tracks)
         QStringList row;
         for (const Clip &clip : track.clips) {
             const int n = seen[clip.id]++;
-            row.append(n == 0 ? clip.id : clip.id + QLatin1Char('#') + QString::number(n));
+            row.append(QString::number(n) + QLatin1Char(':') + clip.id);
         }
         keys.append(row);
     }
@@ -267,7 +268,7 @@ ProjectDiff diffProjects(const Project &from, const Project &to)
         const auto was = from.assets().constFind(it.key());
         if (was == from.assets().constEnd())
             diff.assets.append({it.key(), QStringLiteral("added"), it->name});
-        else if (was->name != it->name || was->path != it->path)
+        else if (assetJson(*was) != assetJson(*it)) // name, path, bin trim, rotation, folder, ...
             diff.assets.append({it.key(), QStringLiteral("changed"), it->name});
     }
     for (auto it = from.assets().constBegin(); it != from.assets().constEnd(); ++it)
