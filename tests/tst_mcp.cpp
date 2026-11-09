@@ -1718,6 +1718,13 @@ void McpTest::replaceClipKeepsTheSlot()
              QStringLiteral("bad_args"));
     QVERIFY(clipOf(a).assetId != otherId);
 
+    // in alone runs to the media's end; the reply carries the final starts.
+    const QJsonObject tail = replace({{QStringLiteral("in"), 3.0}});
+    QVERIFY2(tail.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(tail).toJson()));
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(3.0));
+    QCOMPARE(tail.value(QStringLiteral("moved")).toArray().at(0).toObject().value(QStringLiteral("start")).toDouble(), 3.0);
+    state.undo();
+
     // Errors change nothing.
     QCOMPARE(replace({{QStringLiteral("out"), 7.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     QCOMPARE(replace({{QStringLiteral("in"), 3.0}, {QStringLiteral("out"), 2.0}}).value(QStringLiteral("error")).toString(),
@@ -1729,6 +1736,29 @@ void McpTest::replaceClipKeepsTheSlot()
     state.project()->tracks()[track].locked = false;
     QVERIFY(clipOf(a).assetId != otherId);
     QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(2.0));
+
+    // Linked audio: the new file is silent, so the audio keeps its media and the link turns loose;
+    // a shorter replacement would close up over that audio, so ripple refuses it.
+    {
+        drift::Clip &video = state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second];
+        video.linkId = QStringLiteral("a-link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("a-audio");
+        partner.type = drift::ClipType::Audio;
+        const QString oldAsset = partner.assetId;
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        audioTrack.clips = {partner};
+        state.project()->tracks().append(audioTrack);
+        QVERIFY(replace({}).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(clipOf(a).assetId, otherId);
+        QVERIFY(clipOf(a).linkLoose);
+        QCOMPARE(state.project()->tracks().last().clips.first().assetId, oldAsset);
+        QVERIFY(state.project()->tracks().last().clips.first().linkLoose);
+        state.undo();
+        QVERIFY(!clipOf(a).linkLoose);
+        QCOMPARE(replace({{QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY(clipOf(a).assetId != otherId);
+    }
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

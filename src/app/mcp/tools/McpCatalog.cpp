@@ -705,13 +705,14 @@ const QList<Op> &ops()
         { "replace_clip", "timeline", "Put new media under a clip",
           "Swap the clip's media for another asset in place, in one undo step. The clip keeps its "
           "name, transform, effects and keyframes; linked audio follows when the new file has sound. "
-          "in/out set the new source range (default: the clip's length, shorter if the file runs "
-          "out). With ripple (default) later clips, linked tracks too, move by the change in length; "
+          "A silent file leaves linked audio in place, loosely linked. in/out set the new source "
+          "range (neither: the clip's length, shorter if the file runs out; a still takes none). "
+          "With ripple (default) later clips, linked tracks too, move by the change in length; "
           "without, a longer clip must not land on the next. Returns moved:[{id, start}] and any "
           "removed_transitions.",
           objectSchema(mergeProps({{QStringLiteral("asset"), assetRefProp()},
-                                   {QStringLiteral("in"), numberProp(QStringLiteral("Source in, seconds"))},
-                                   {QStringLiteral("out"), numberProp(QStringLiteral("Source out, seconds"))},
+                                   {QStringLiteral("in"), numberProp(QStringLiteral("Source in, seconds (alone: to the media's end)"))},
+                                   {QStringLiteral("out"), numberProp(QStringLiteral("Source out, seconds (alone: from 0)"))},
                                    {QStringLiteral("ripple"), propWithDefault(boolProp(QStringLiteral("Move later clips by the change in length")), true)}},
                                   clipRefProps()),
                        {QStringLiteral("asset")}) },

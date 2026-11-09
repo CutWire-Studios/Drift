@@ -3334,6 +3334,12 @@ AppController::ReplaceResult AppController::replaceClipRippled(int trackIndex, i
         return fail("not_found", QStringLiteral("No such clip"));
     if (!m_assetLibrary || assetIndex < 0 || assetIndex >= m_assetLibrary->rowCount())
         return fail("not_found", QStringLiteral("Unknown asset"));
+    QSet<int> lockChecked = drift::rippleTrackGroup(m_project, trackIndex);
+    lockChecked.insert(trackIndex);
+    for (const int t : std::as_const(lockChecked)) {
+        if (m_project.tracks().at(t).locked)
+            return fail("bad_args", QStringLiteral("Track %1 is locked").arg(t));
+    }
     const drift::Clip original = m_project.tracks().at(trackIndex).clips.at(clipIndex);
     if (!original.sequenceId.isEmpty() || original.assetId.isEmpty())
         return fail("type_mismatch", QStringLiteral("Only video, image and audio clips can take new media"));
@@ -3342,12 +3348,6 @@ AppController::ReplaceResult AppController::replaceClipRippled(int trackIndex, i
     if (!canReplaceClipMedia(trackIndex, clipIndex, assetIndex))
         return fail("type_mismatch", QStringLiteral("This asset cannot stand in for the clip (its kind, or what the track takes)"));
 
-    QSet<int> lockChecked = drift::rippleTrackGroup(m_project, trackIndex);
-    lockChecked.insert(trackIndex);
-    for (const int t : std::as_const(lockChecked)) {
-        if (m_project.tracks().at(t).locked)
-            return fail("bad_args", QStringLiteral("Track %1 is locked").arg(t));
-    }
 
     const bool ranged = srcInUs >= 0 || srcOutUs >= 0;
     const drift::MediaAsset *asset = m_project.asset(m_assetLibrary->assetIdAt(assetIndex));
@@ -3380,10 +3380,10 @@ AppController::ReplaceResult AppController::replaceClipRippled(int trackIndex, i
         return fail("type_mismatch", QStringLiteral("This asset cannot stand in for the clip"));
     }
     drift::Clip &target = m_project.tracks()[trackIndex].clips[clipIndex];
-    if (ranged) {
+    if (ranged)
         applyClipTrim(target, drift::usToSeconds(inUs), drift::usToSeconds(outUs));
-        syncLinkedPartnersFrom(m_project, target);
-    }
+    // Tight partners take the clip's new timing (a loose one, as when the new file is silent, keeps its own).
+    syncLinkedPartnersFrom(m_project, target);
     QString error;
     if (!rippleResizedClip(before, trackIndex, original.id, oldEnd, ripple, QStringLiteral("replace"), &error))
         return fail("bad_args", error);
