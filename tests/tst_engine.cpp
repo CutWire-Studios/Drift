@@ -197,6 +197,7 @@ private slots:
     void mediaEditorAppliesGainAndNormalizes();
     void mediaEditorDownscalesAndChoosesContainers();
     void mediaEditorMuxesReplacementAudio();
+    void audioReadAfterSeekHonoursStreamStartTime();
     void mediaEditorRemuxStartsOnAKeyframe();
     void denoiseAudioRangeWritesFlac();
     void reverseProxyLookupIsByContainmentAndSourceIdentity();
@@ -6411,6 +6412,43 @@ void EngineTest::mediaEditorMuxesReplacementAudio()
     info = MediaProbe::probe(spec.outputPath);
     QVERIFY(qAbs(info.durationUs - 2 * drift::kUsPerSecond) <= 30'000);
     QVERIFY(peakOf(spec.outputPath) > 0.7f);
+}
+
+void EngineTest::audioReadAfterSeekHonoursStreamStartTime()
+{
+    if (ffmpegExe().isEmpty())
+        QSKIP("ffmpeg not on PATH");
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    // Silence, then a tone from 1.0 s of content; the audio stream's own start_time is 0.3 s.
+    const QString wav = dir.filePath(QStringLiteral("onset.wav"));
+    QVERIFY(runProcess(ffmpegExe(),
+                       {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                        QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                        QStringLiteral("aevalsrc='if(gte(t,1),0.8*sin(2*PI*440*t),0)':d=3:s=48000:c=stereo"),
+                        wav}));
+    const QString path = dir.filePath(QStringLiteral("offset.mkv"));
+    QVERIFY(runProcess(ffmpegExe(),
+                       {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                        QStringLiteral("-itsoffset"), QStringLiteral("0.3"), QStringLiteral("-i"),
+                        wav, QStringLiteral("-c:a"), QStringLiteral("pcm_s16le"), path}));
+
+    constexpr int kRate = 48000;
+    constexpr int kFrames = kRate;
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    QVector<float> buf(kFrames * 2, 0.0f);
+    QCOMPARE(reader.readAudioInterleaved(500'000, kFrames, kRate, buf.data()), kFrames);
+    int onset = -1;
+    for (int i = 0; i < kFrames; ++i) {
+        if (std::abs(buf[i * 2]) > 0.1f) {
+            onset = i;
+            break;
+        }
+    }
+    QVERIFY(onset >= 0);
+    // Tone starts 0.5 s after the requested position.
+    QVERIFY2(qAbs(onset - kRate / 2) <= 200, qPrintable(QString::number(onset)));
 }
 
 void EngineTest::mediaEditorRemuxStartsOnAKeyframe()
