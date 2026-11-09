@@ -3278,14 +3278,6 @@
         <translation>Корректирующая дорожка добавлена</translation>
     </message>
     <message>
-        <source>Add adjustment lane</source>
-        <translation>Добавить корректирующую полосу</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>Корректирующая полоса добавлена</translation>
-    </message>
-    <message>
         <source>Nest adjustment in track</source>
         <translation>Вложить коррекцию в дорожку</translation>
     </message>
@@ -23554,6 +23546,25 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Аудиоэффекты</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Маска</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Эффекты</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
@@ -24169,6 +24180,14 @@ If playback stutters, try another.</source>
         <translation>Переименовать…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>Включить звук дорожки</translation>
     </message>
@@ -24315,6 +24334,32 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>Выключить корректирующий слой</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Аудиоэффекты</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Маска</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Эффекты</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

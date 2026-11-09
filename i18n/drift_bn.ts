@@ -3272,14 +3272,6 @@
         <translation>অ্যাডজাস্টমেন্ট ট্র্যাক যোগ করা হয়েছে</translation>
     </message>
     <message>
-        <source>Add adjustment lane</source>
-        <translation>অ্যাডজাস্টমেন্ট লেন যোগ করুন</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>অ্যাডজাস্টমেন্ট লেন যোগ করা হয়েছে</translation>
-    </message>
-    <message>
         <source>Nest adjustment in track</source>
         <translation>ট্র্যাকে নেস্ট সমন্বয়</translation>
     </message>
@@ -23476,6 +23468,25 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">অডিও ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">মাস্ক</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
@@ -24089,6 +24100,14 @@ If playback stutters, try another.</source>
         <translation>নাম পরিবর্তন করুন…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>ট্র্যাক আনমিউট করুন</translation>
     </message>
@@ -24234,6 +24253,32 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>সমন্বয় বন্ধ করুন</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">অডিও ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">মাস্ক</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

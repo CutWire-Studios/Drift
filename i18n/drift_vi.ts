@@ -3266,14 +3266,6 @@
         <translation>Đã thêm track điều chỉnh</translation>
     </message>
     <message>
-        <source>Add adjustment lane</source>
-        <translation>Thêm làn điều chỉnh</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>Đã thêm làn điều chỉnh</translation>
-    </message>
-    <message>
         <source>Nest adjustment in track</source>
         <translation>Lồng track điều chỉnh vào dải</translation>
     </message>
@@ -23399,6 +23391,25 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Mặt nạ</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Hiệu ứng</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
@@ -24010,6 +24021,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Đổi tên…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>Bật tiếng track</translation>
     </message>
@@ -24154,6 +24173,32 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Turn adjustment off</source>
         <translation>Tắt điều chỉnh</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Mặt nạ</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Hiệu ứng</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -3272,14 +3272,6 @@
         <translation>ගැලපුම් ට්‍රැකය එක් කරන ලදී</translation>
     </message>
     <message>
-        <source>Add adjustment lane</source>
-        <translation>ගැලපුම් පථයක් එක් කරන්න</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>ගැලපුම් පථය එක් කරන ලදී</translation>
-    </message>
-    <message>
         <source>Nest adjustment in track</source>
         <translation>ට්‍රැකය තුළට ගැලපුම කාවද්දන්න (Nest)</translation>
     </message>
@@ -23476,6 +23468,25 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">ශ්‍රව්‍ය ප්‍රයෝග</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">ආවරණය (Mask)</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ප්‍රයෝග</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
@@ -24089,6 +24100,14 @@ If playback stutters, try another.</source>
         <translation>නම වෙනස් කරන්න…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>ට්‍රැකයේ නිහඬ බව ඉවත් කරන්න</translation>
     </message>
@@ -24234,6 +24253,32 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>ගැලපුම අක්‍රිය කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">ශ්‍රව්‍ය ප්‍රයෝග</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">ආවරණය (Mask)</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ප්‍රයෝග</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

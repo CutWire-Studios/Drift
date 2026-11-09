@@ -3266,14 +3266,6 @@
         <translation>보정 트랙이 추가됨</translation>
     </message>
     <message>
-        <source>Add adjustment lane</source>
-        <translation>보정 레인 추가</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>보정 레인이 추가됨</translation>
-    </message>
-    <message>
         <source>Nest adjustment in track</source>
         <translation>트랙 안에 보정 중첩</translation>
     </message>
@@ -23390,6 +23382,25 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">오디오 효과</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">마스크</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
@@ -24001,6 +24012,14 @@ If playback stutters, try another.</source>
         <translation>이름 변경…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>트랙 음소거 해제</translation>
     </message>
@@ -24145,6 +24164,32 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>조정 끄기</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">오디오 효과</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">마스크</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

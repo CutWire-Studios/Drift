@@ -3272,14 +3272,6 @@
         <translation>Naidagdag ang adjustment track</translation>
     </message>
     <message>
-        <source>Add adjustment lane</source>
-        <translation>Magdagdag ng adjustment lane</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>Naidagdag ang adjustment lane</translation>
-    </message>
-    <message>
         <source>Nest adjustment in track</source>
         <translation>I-nest ang adjustment sa track</translation>
     </message>
@@ -23477,6 +23469,25 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Epektong audyo</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Mask</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
@@ -24090,6 +24101,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Palitan ang pangalan…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>I-unmute ang track</translation>
     </message>
@@ -24235,6 +24254,32 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Turn adjustment off</source>
         <translation>I-off ang adjustment</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Epektong audyo</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Mask</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

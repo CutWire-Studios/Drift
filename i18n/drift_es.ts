@@ -3272,14 +3272,6 @@
         <translation>Pista de ajuste añadida</translation>
     </message>
     <message>
-        <source>Add adjustment lane</source>
-        <translation>Añadir carril de ajuste</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>Carril de ajuste añadido</translation>
-    </message>
-    <message>
         <source>Nest adjustment in track</source>
         <translation>Anidar ajuste en la pista</translation>
     </message>
@@ -23476,6 +23468,25 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Efectos de audio</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Máscara</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Efectos</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
@@ -24089,6 +24100,14 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Cambiar nombre…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>Reactivar audio de pista</translation>
     </message>
@@ -24234,6 +24253,32 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Turn adjustment off</source>
         <translation>Desactivar ajuste</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Efectos de audio</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Máscara</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Efectos</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

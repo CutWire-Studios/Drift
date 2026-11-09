@@ -3266,14 +3266,6 @@
         <translation>調整トラックが追加されました</translation>
     </message>
     <message>
-        <source>Add adjustment lane</source>
-        <translation>調整用レーンを追加</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>調整用レーンが追加されました</translation>
-    </message>
-    <message>
         <source>Nest adjustment in track</source>
         <translation>調整をトラック内にネスト</translation>
     </message>
@@ -23399,6 +23391,25 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">オーディオ FX</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">マスク</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
@@ -24010,6 +24021,14 @@ If playback stutters, try another.</source>
         <translation>名前の変更…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>トラックのミュートを解除</translation>
     </message>
@@ -24154,6 +24173,32 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>調整をオフにする</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">オーディオ FX</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">マスク</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

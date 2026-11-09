@@ -3266,14 +3266,6 @@
         <translation>已添加调整轨道</translation>
     </message>
     <message>
-        <source>Add adjustment lane</source>
-        <translation>添加调整通道</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>已添加调整通道</translation>
-    </message>
-    <message>
         <source>Nest adjustment in track</source>
         <translation>将调整图层嵌入轨道</translation>
     </message>
@@ -23399,6 +23391,25 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">音效</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">蒙版</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
@@ -24010,6 +24021,14 @@ If playback stutters, try another.</source>
         <translation>重命名…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>取消静音轨道</translation>
     </message>
@@ -24154,6 +24173,32 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>关闭调整</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">音效</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">蒙版</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

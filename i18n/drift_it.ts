@@ -3272,14 +3272,6 @@
         <translation>Traccia di regolazione aggiunta</translation>
     </message>
     <message>
-        <source>Add adjustment lane</source>
-        <translation>Aggiungi corsia di regolazione</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>Corsia di regolazione aggiunta</translation>
-    </message>
-    <message>
         <source>Nest adjustment in track</source>
         <translation>Annida regolazione nella traccia</translation>
     </message>
@@ -23476,6 +23468,25 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Effetti audio</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Maschera</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Effetti</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
@@ -24089,6 +24100,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Rinomina…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>Riattiva audio traccia</translation>
     </message>
@@ -24234,6 +24253,32 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Turn adjustment off</source>
         <translation>Disattiva regolazione</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Effetti audio</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Maschera</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Effetti</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
