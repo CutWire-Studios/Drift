@@ -2343,8 +2343,6 @@ protected:
     // sending it twice.
     bool m_quietUndoPush = false;
     bool m_undoRefreshOwed = false;
-    // An undo step was pushed and finishEdit hasn't bumped the revision for it yet (pushProjectEdit).
-    bool m_revisionOwed = false;
     // Set while commitPreviewDrag finishes a drag that left the selection on the same clip:
     // finishEdit then skips selectionChanged.
     bool m_quietSelection = false;

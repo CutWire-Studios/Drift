@@ -3,6 +3,7 @@
 #include "app/editor/AppController.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/bin/MediaBinController.h"
+#include "app/mcp/McpController.h"
 #include "app/jobs/JobRegistry.h"
 #include "app/jobs/audio/DenoiseController.h"
 #include "app/jobs/vision/RestoreController.h"
@@ -427,6 +428,8 @@ bool SourceLabController::edit(const QString &text, Fn &&change)
     if (!change(*asset))
         return false;
     m_app->pushProjectEdit(before, text);
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    m_app->mcp()->bumpEditRevision();
     m_app->settleUndoRefresh();
     if (m_app->m_assetLibrary)
         m_app->m_assetLibrary->refreshLabRoles();
@@ -655,6 +658,8 @@ QStringList SourceLabController::makeSubclips(const QStringList &rangeIds)
     if (created.isEmpty())
         return created;
     m_app->pushProjectEdit(before, tr("Make sub-clips"));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    m_app->mcp()->bumpEditRevision();
     m_app->settleUndoRefresh();
     if (m_app->m_assetLibrary)
         m_app->m_assetLibrary->refreshLabRoles();
@@ -1078,6 +1083,8 @@ bool SourceLabController::applyWithoutEncode(const QString &mode)
         if (!changed)
             return false;
         m_app->pushProjectEdit(before, tr("Apply source edit"));
+        // An undo step without finishEdit: the revision (and the change feed) moves here.
+        m_app->mcp()->bumpEditRevision();
         m_app->settleUndoRefresh();
     } else {
         const QString name = tr("%1 (edited)").arg(asset->name);
@@ -1090,6 +1097,8 @@ bool SourceLabController::applyWithoutEncode(const QString &mode)
         if (copy->kind == drift::MediaKind::Video)
             copy->sourceFrame = r.crop;
         m_app->pushProjectEdit(before, tr("Add edited copy"));
+        // An undo step without finishEdit: the revision (and the change feed) moves here.
+        m_app->mcp()->bumpEditRevision();
         m_app->settleUndoRefresh();
     }
     if (m_app->m_assetLibrary)

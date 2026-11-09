@@ -767,20 +767,6 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     // Normally finishEdit settles it straight after; this catches an edit that never calls it.
     if (m_undoRefreshOwed)
         QTimer::singleShot(0, this, &AppController::settleUndoRefresh);
-    // The same for the revision (and the change feed): finishEdit bumps it, and an undoable edit
-    // that never calls finishEdit (bin trims, folders, Source Lab, relinks, ...) gets its bump on
-    // the next turn of the event loop instead of folding into the next edit's entry.
-    if (!m_revisionOwed) {
-        m_revisionOwed = true;
-        const bool byAgent = m_mcpController->inAgentCall();
-        QTimer::singleShot(0, this, [this, byAgent]() {
-            if (!std::exchange(m_revisionOwed, false))
-                return;
-            if (byAgent)
-                m_mcpController->markNextChangeByAgent();
-            m_mcpController->bumpEditRevision();
-        });
-    }
 }
 
 void AppController::settleUndoRefresh()
@@ -839,7 +825,6 @@ void AppController::finishEdit(const QString &message)
     // stack, so an edit now only clears a stale warning from an earlier attempt.
     Q_UNUSED(message)
     setLastMessage(QString());
-    m_revisionOwed = false;
     m_mcpController->bumpEditRevision();
 }
 
