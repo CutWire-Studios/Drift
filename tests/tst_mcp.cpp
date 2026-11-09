@@ -961,6 +961,29 @@ void McpTest::changeFeedListsEditsBySource()
     QCOMPARE(dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), start}, {QStringLiteral("limit"), 1}})
                  .value(QStringLiteral("changes")).toArray().size(), 1);
 
+    // A new edit after an undo is an edit, not a redo; a batch is one entry with its own label.
+    const int mark = feed.value(QStringLiteral("revision")).toInt();
+    state.setClipName(0, 1, QStringLiteral("After the undo"));
+    state.mcp()->beginAgentCall();
+    const QJsonObject batch = dispatcher.apply(QJsonObject{
+        {QStringLiteral("ops"),
+         QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_clip_name")},
+                                {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), QStringLiteral("clip-1")},
+                                                                     {QStringLiteral("name"), QStringLiteral("One")}}}},
+                    QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_clip_name")},
+                                {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), QStringLiteral("clip-1")},
+                                                                     {QStringLiteral("name"), QStringLiteral("Two")}}}}}}});
+    QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    const QJsonArray later = dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), mark}})
+                                 .value(QStringLiteral("changes")).toArray();
+    state.mcp()->endAgentCall();
+    QCOMPARE(later.size(), 2);
+    QCOMPARE(later.at(0).toObject().value(QStringLiteral("kind")).toString(), QStringLiteral("edit"));
+    QCOMPARE(later.at(0).toObject().value(QStringLiteral("source")).toString(), QStringLiteral("ui"));
+    QCOMPARE(later.at(1).toObject().value(QStringLiteral("source")).toString(), QStringLiteral("mcp"));
+    QVERIFY2(later.at(1).toObject().value(QStringLiteral("label")).toString().contains(QStringLiteral("set_clip_name")),
+             qPrintable(later.at(1).toObject().value(QStringLiteral("label")).toString()));
+
     // diff between a history version and head.
     const QJsonArray history = dispatcher.applyOne(QStringLiteral("list_history"), {}).value(QStringLiteral("entries")).toArray();
     const QString origin = history.last().toObject().value(QStringLiteral("short")).toString();

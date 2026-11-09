@@ -680,6 +680,11 @@ QJsonObject clipJson(const Clip &clip)
     return clipToJson(clip);
 }
 
+QJsonObject transitionJson(const Transition &transition)
+{
+    return transitionToJson(transition);
+}
+
 void Project::resetToDefaultTimeline()
 {
     m_tracks = {

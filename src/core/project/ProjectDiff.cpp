@@ -59,16 +59,30 @@ QString fieldName(const QString &key)
 struct Located
 {
     int track = -1;
+    int index = -1;
+    const QList<Clip> *list = nullptr;
     const Clip *clip = nullptr;
 };
 
-QHash<QString, Located> clipsById(const Project &project)
+// Clips by id; a duplicated id (an imported file can carry one) is told apart by its occurrence.
+QHash<QString, Located> clipsById(const QList<Track> &tracks)
 {
     QHash<QString, Located> out;
-    for (int t = 0; t < project.tracks().size(); ++t)
-        for (const Clip &clip : project.tracks().at(t).clips)
-            out.insert(clip.id, {t, &clip});
+    QHash<QString, int> seen;
+    for (int t = 0; t < tracks.size(); ++t) {
+        const QList<Clip> &clips = tracks.at(t).clips;
+        for (int c = 0; c < clips.size(); ++c) {
+            const QString &id = clips.at(c).id;
+            const int n = seen[id]++;
+            out.insert(n == 0 ? id : id + QLatin1Char('#') + QString::number(n), {t, c, &clips, &clips.at(c)});
+        }
+    }
     return out;
+}
+
+QString trackKey(const Track &track, int index)
+{
+    return track.id.isEmpty() ? QStringLiteral("#%1").arg(index) : track.id;
 }
 
 QStringList changedFields(const Clip &a, const Clip &b)
@@ -92,6 +106,16 @@ QStringList changedFields(const Clip &a, const Clip &b)
     return fields;
 }
 
+bool sameTransitions(const Track &a, const Track &b)
+{
+    if (a.transitions.size() != b.transitions.size())
+        return false;
+    for (int i = 0; i < a.transitions.size(); ++i)
+        if (transitionJson(a.transitions.at(i)) != transitionJson(b.transitions.at(i)))
+            return false;
+    return true;
+}
+
 QStringList changedTrackFields(const Track &a, const Track &b, int fromIndex, int toIndex)
 {
     QStringList fields;
@@ -109,38 +133,62 @@ QStringList changedTrackFields(const Track &a, const Track &b, int fromIndex, in
         fields.append(QStringLiteral("solo"));
     if (!qFuzzyCompare(a.volume, b.volume) || !qFuzzyCompare(1.0 + a.pan, 1.0 + b.pan))
         fields.append(QStringLiteral("audio"));
+    if (!sameTransitions(a, b))
+        fields.append(QStringLiteral("transitions"));
+    if (a.adjustmentScope != b.adjustmentScope || a.parentTrackId != b.parentTrackId || a.spanEndTrackId != b.spanEndTrackId)
+        fields.append(QStringLiteral("scope"));
+    // How the track draws: saved, but not part of the cut.
+    if (!qFuzzyCompare(a.heightScale, b.heightScale) || a.clipDisplay != b.clipDisplay
+        || a.showChannelWaveforms != b.showChannelWaveforms)
+        fields.append(QStringLiteral("view"));
     return fields;
 }
 
-} // namespace
-
-ProjectDiff diffProjects(const Project &from, const Project &to)
+void diffTimeline(const QString &sequence, const QList<Track> &from, const QList<Track> &to, ProjectDiff &diff)
 {
-    ProjectDiff diff;
     const QHash<QString, Located> before = clipsById(from);
     const QHash<QString, Located> after = clipsById(to);
 
+    // Split heads: clips that stayed and got shorter from the end, by (track, media, new end).
+    QHash<QString, QString> splitHeads;
+    const auto headKey = [](int track, const QString &asset, TimeUs end) {
+        return QStringLiteral("%1|%2|%3").arg(track).arg(asset).arg(end);
+    };
+    for (auto it = after.constBegin(); it != after.constEnd(); ++it) {
+        const auto was = before.constFind(it.key());
+        const Clip &now = *it->clip;
+        if (was == before.constEnd() || was->track != it->track
+            || was->clip->timelineStart != now.timelineStart || was->clip->timelineEnd() <= now.timelineEnd())
+            continue;
+        splitHeads.insert(headKey(it->track, now.assetId, now.timelineEnd()), it.key());
+    }
+
     // In timeline order: by track, then by start.
-    for (int t = 0; t < to.tracks().size(); ++t) {
-        QList<const Clip *> clips;
-        for (const Clip &clip : to.tracks().at(t).clips)
-            clips.append(&clip);
-        std::stable_sort(clips.begin(), clips.end(),
-                         [](const Clip *a, const Clip *b) { return a->timelineStart < b->timelineStart; });
-        for (const Clip *clip : std::as_const(clips)) {
-            const auto was = before.constFind(clip->id);
+    for (int t = 0; t < to.size(); ++t) {
+        QList<QPair<QString, const Clip *>> clips;
+        {
+            QHash<QString, int> seen;
+            for (const Clip &clip : to.at(t).clips) {
+                const int n = seen[clip.id]++;
+                clips.append({n == 0 ? clip.id : clip.id + QLatin1Char('#') + QString::number(n), &clip});
+            }
+        }
+        std::stable_sort(clips.begin(), clips.end(), [](const auto &a, const auto &b) {
+            return a.second->timelineStart < b.second->timelineStart;
+        });
+        for (const auto &[key, clip] : std::as_const(clips)) {
+            const auto was = before.constFind(key);
             if (was == before.constEnd()) {
-                ClipDiff added{clip->id, QStringLiteral("added"), t, -1, {}, clip->name, {}};
-                // A split: a clip that stayed (and got shorter) on this track, on the same media,
-                // now ends where this one starts.
-                for (const Clip &other : to.tracks().at(t).clips) {
-                    const auto otherWas = before.constFind(other.id);
-                    if (other.id == clip->id || otherWas == before.constEnd() || other.assetId != clip->assetId
-                        || other.timelineEnd() != clip->timelineStart
-                        || otherWas->clip->timelineDuration <= other.timelineDuration)
-                        continue;
-                    added.splitFrom = other.id;
-                    break;
+                ClipDiff added{clip->id, sequence, QStringLiteral("added"), t, -1, {}, clip->name, {}};
+                // A split: the head kept its start, ends where this one starts, and this one carries
+                // on its media from there to where the head used to end.
+                const QString head = splitHeads.value(headKey(t, clip->assetId, clip->timelineStart));
+                if (!head.isEmpty()) {
+                    const Located &headWas = before.value(head);
+                    const Clip &headNow = *after.value(head).clip;
+                    if (clip->type == headNow.type && clip->timelineEnd() == headWas.clip->timelineEnd()
+                        && clip->srcIn == headNow.srcOut && clip->srcOut == headWas.clip->srcOut)
+                        added.splitFrom = headNow.id;
                 }
                 diff.clips.append(added);
                 continue;
@@ -148,7 +196,7 @@ ProjectDiff diffProjects(const Project &from, const Project &to)
             const QStringList fields = changedFields(*was->clip, *clip);
             if (fields.isEmpty() && was->track == t)
                 continue;
-            ClipDiff changed{clip->id, QStringLiteral("changed"), t, -1, fields, clip->name, {}};
+            ClipDiff changed{clip->id, sequence, QStringLiteral("changed"), t, -1, fields, clip->name, {}};
             if (was->track != t) {
                 changed.fromTrack = was->track;
                 changed.fields.prepend(QStringLiteral("track"));
@@ -156,31 +204,56 @@ ProjectDiff diffProjects(const Project &from, const Project &to)
             diff.clips.append(changed);
         }
     }
-    for (int t = 0; t < from.tracks().size(); ++t)
-        for (const Clip &clip : from.tracks().at(t).clips)
-            if (!after.contains(clip.id))
-                diff.clips.append({clip.id, QStringLiteral("removed"), t, -1, {}, clip.name, {}});
+    for (int t = 0; t < from.size(); ++t) {
+        QHash<QString, int> seen;
+        for (const Clip &clip : from.at(t).clips) {
+            const int n = seen[clip.id]++;
+            if (!after.contains(n == 0 ? clip.id : clip.id + QLatin1Char('#') + QString::number(n)))
+                diff.clips.append({clip.id, sequence, QStringLiteral("removed"), t, -1, {}, clip.name, {}});
+        }
+    }
 
     QHash<QString, int> trackBefore;
-    for (int t = 0; t < from.tracks().size(); ++t)
-        trackBefore.insert(from.tracks().at(t).id, t);
+    for (int t = 0; t < from.size(); ++t)
+        trackBefore.insert(trackKey(from.at(t), t), t);
     QSet<QString> trackAfter;
-    for (int t = 0; t < to.tracks().size(); ++t) {
-        const Track &track = to.tracks().at(t);
-        trackAfter.insert(track.id);
-        const auto was = trackBefore.constFind(track.id);
-        if (track.id.isEmpty() || was == trackBefore.constEnd()) {
-            diff.tracks.append({track.id, QStringLiteral("added"), t, {}});
+    for (int t = 0; t < to.size(); ++t) {
+        const Track &track = to.at(t);
+        const QString key = trackKey(track, t);
+        trackAfter.insert(key);
+        const auto was = trackBefore.constFind(key);
+        if (was == trackBefore.constEnd()) {
+            diff.tracks.append({track.id, sequence, QStringLiteral("added"), t, {}});
             continue;
         }
-        const QStringList fields = changedTrackFields(from.tracks().at(*was), track, *was, t);
+        const QStringList fields = changedTrackFields(from.at(*was), track, *was, t);
         if (!fields.isEmpty())
-            diff.tracks.append({track.id, QStringLiteral("changed"), t, fields});
+            diff.tracks.append({track.id, sequence, QStringLiteral("changed"), t, fields});
     }
-    for (int t = 0; t < from.tracks().size(); ++t) {
-        const Track &track = from.tracks().at(t);
-        if (!track.id.isEmpty() && !trackAfter.contains(track.id))
-            diff.tracks.append({track.id, QStringLiteral("removed"), t, {}});
+    for (int t = 0; t < from.size(); ++t)
+        if (!trackAfter.contains(trackKey(from.at(t), t)))
+            diff.tracks.append({from.at(t).id, sequence, QStringLiteral("removed"), t, {}});
+}
+
+} // namespace
+
+ProjectDiff diffProjects(const Project &from, const Project &to)
+{
+    ProjectDiff diff;
+    QStringList sequences{QString()};
+    QSet<QString> seen;
+    for (const QString &id : to.sequenceIds() + from.sequenceIds())
+        if (!seen.contains(id)) {
+            seen.insert(id);
+            sequences.append(id);
+        }
+    bool sequencesChanged = false;
+    for (const QString &id : std::as_const(sequences)) {
+        if (!id.isEmpty() && (!from.hasSequence(id) || !to.hasSequence(id))) {
+            sequencesChanged = true;
+            continue;
+        }
+        diffTimeline(id, from.sequenceTracks(id), to.sequenceTracks(id), diff);
     }
 
     for (auto it = to.assets().constBegin(); it != to.assets().constEnd(); ++it) {
@@ -198,6 +271,26 @@ ProjectDiff diffProjects(const Project &from, const Project &to)
         diff.settings.append(QStringLiteral("fps"));
     if (from.width() != to.width() || from.height() != to.height())
         diff.settings.append(QStringLiteral("resolution"));
+    if (from.sampleRate() != to.sampleRate())
+        diff.settings.append(QStringLiteral("sample_rate"));
+    const Background &bgA = from.background();
+    const Background &bgB = to.background();
+    if (bgA.kind != bgB.kind || bgA.color != bgB.color || !qFuzzyCompare(bgA.blurStrength, bgB.blurStrength))
+        diff.settings.append(QStringLiteral("background"));
+    bool marks = from.bookmarks().size() != to.bookmarks().size();
+    for (int i = 0; !marks && i < to.bookmarks().size(); ++i)
+        marks = from.bookmarks().at(i).timeUs != to.bookmarks().at(i).timeUs
+                || from.bookmarks().at(i).label != to.bookmarks().at(i).label;
+    if (marks)
+        diff.settings.append(QStringLiteral("bookmarks"));
+    if (from.workAreaInUs() != to.workAreaInUs() || from.workAreaOutUs() != to.workAreaOutUs())
+        diff.settings.append(QStringLiteral("work_area"));
+    if (from.name() != to.name() || from.author() != to.author() || from.description() != to.description())
+        diff.settings.append(QStringLiteral("project_info"));
+    if (from.openSequenceTabs() != to.openSequenceTabs())
+        diff.settings.append(QStringLiteral("sequence_tabs"));
+    if (sequencesChanged)
+        diff.settings.append(QStringLiteral("sequences"));
     return diff;
 }
 
@@ -210,6 +303,8 @@ QJsonObject projectDiffToJson(const ProjectDiff &diff)
             QJsonObject row{{QStringLiteral("id"), clip.id},
                             {QStringLiteral("change"), clip.change},
                             {QStringLiteral("track"), clip.track}};
+            if (!clip.sequence.isEmpty())
+                row.insert(QStringLiteral("sequence"), clip.sequence);
             if (!clip.name.isEmpty())
                 row.insert(QStringLiteral("name"), clip.name);
             if (!clip.fields.isEmpty())
@@ -228,6 +323,8 @@ QJsonObject projectDiffToJson(const ProjectDiff &diff)
             QJsonObject row{{QStringLiteral("id"), track.id},
                             {QStringLiteral("change"), track.change},
                             {QStringLiteral("index"), track.index}};
+            if (!track.sequence.isEmpty())
+                row.insert(QStringLiteral("sequence"), track.sequence);
             if (!track.fields.isEmpty())
                 row.insert(QStringLiteral("fields"), QJsonArray::fromStringList(track.fields));
             tracks.append(row);

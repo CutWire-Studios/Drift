@@ -1045,7 +1045,8 @@ std::optional<drift::Project> AppController::historyProjectAt(int stackIndex) co
 {
     if (stackIndex < 0 || stackIndex > m_undoStack.count())
         return std::nullopt;
-    if (m_undoStack.count() == 0 || stackIndex == m_undoStack.index())
+    // The recorded states, as historyHashAt hashes them; "head" is the live project.
+    if (m_undoStack.count() == 0)
         return m_project;
     const auto *cmd = historyCommand(m_undoStack, stackIndex == 0 ? 0 : stackIndex - 1);
     if (!cmd)

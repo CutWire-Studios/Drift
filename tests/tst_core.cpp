@@ -7371,6 +7371,7 @@ void CoreTest::diffProjectsReportsClipChanges()
     a.srcOut = a.timelineDuration;
     drift::Clip a2 = clip("a2", 2, 2);
     a2.srcIn = drift::secondsToUs(2);
+    a2.srcOut = drift::secondsToUs(4);
     to.tracks()[0].clips.append(a2);
     // "b" renamed and moved to a new track; "c" deleted.
     drift::Clip b = to.tracks()[0].clips[1];
@@ -7403,6 +7404,35 @@ void CoreTest::diffProjectsReportsClipChanges()
     const QJsonObject json = drift::projectDiffToJson(diff);
     QCOMPARE(json.value(QStringLiteral("clips")).toArray().size(), 4);
     QVERIFY(!json.contains(QStringLiteral("assets")));
+
+    // A trimmed clip with an unrelated piece of the same media after it is not a split.
+    drift::Project trimmed = from;
+    trimmed.tracks()[0].clips[2].timelineDuration = drift::secondsToUs(0.5);
+    drift::Clip unrelated = clip("u", 6.5, 0.5);
+    unrelated.srcIn = drift::secondsToUs(8);
+    trimmed.tracks()[0].clips.append(unrelated);
+    for (const drift::ClipDiff &row : drift::diffProjects(from, trimmed).clips)
+        QVERIFY(row.splitFrom.isEmpty());
+
+    // Opening a composite swaps the open tracks: not an edit. An edit inside it is reported with
+    // its sequence.
+    drift::Project nested = from;
+    drift::Track inner{.id = QStringLiteral("inner"), .type = drift::TrackType::Video};
+    inner.clips = {clip("n", 0, 1)};
+    const QString sequence = nested.addSequence({inner});
+    drift::Project opened = nested;
+    QVERIFY(opened.activateSequence(sequence));
+    QVERIFY(drift::diffProjects(nested, opened).isEmpty());
+    opened.tracks()[0].clips[0].name = QStringLiteral("Inner renamed");
+    const drift::ProjectDiff insideDiff = drift::diffProjects(nested, opened);
+    QCOMPARE(insideDiff.clips.size(), 1);
+    QCOMPARE(insideDiff.clips.first().sequence, sequence);
+    QCOMPARE(insideDiff.clips.first().fields, QStringList{QStringLiteral("name")});
+
+    // Project-level state: bookmarks and the background are edits too.
+    drift::Project marked = from;
+    marked.bookmarks().append({drift::secondsToUs(1), QStringLiteral("here")});
+    QCOMPARE(drift::diffProjects(from, marked).settings, QStringList{QStringLiteral("bookmarks")});
 }
 
 QTEST_MAIN(CoreTest)

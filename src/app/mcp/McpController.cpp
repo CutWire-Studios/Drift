@@ -1117,10 +1117,10 @@ QJsonObject McpController::captureFrame(double atSeconds, bool full, bool editor
     return {{QStringLiteral("content"), content}, {QStringLiteral("isError"), false}};
 }
 
-void McpController::bumpEditRevision()
+void McpController::bumpEditRevision(ChangeKind kind)
 {
     ++m_editRevision;
-    recordChange();
+    recordChange(kind);
 }
 
 void McpController::startChangeFeed()
@@ -1129,58 +1129,90 @@ void McpController::startChangeFeed()
         return;
     m_changeFeedOn = true;
     m_changeFeedFloor = m_editRevision;
-    m_changeBase = m_app->m_project;
-    m_changeUndoIndex = m_app->m_undoStack.index();
-    m_changeUndoCount = m_app->m_undoStack.count();
+    m_changeBase = std::make_shared<const drift::Project>(m_app->m_project);
 }
 
-void McpController::recordChange()
+void McpController::recordChange(ChangeKind kind)
 {
-    if (!m_changeFeedOn)
+    // A batch is one entry, logged when it ends (its ops' own finishes are inside it).
+    if (!m_changeFeedOn || m_batchDepth > 0)
         return;
-    const drift::ProjectDiff diff = drift::diffProjects(m_changeBase, m_app->m_project);
-    const int index = m_app->m_undoStack.index();
-    const int count = m_app->m_undoStack.count();
-    QString kind = QStringLiteral("edit");
-    QString label = m_app->m_undoStack.undoText();
-    if (count == m_changeUndoCount && index < m_changeUndoIndex) {
-        kind = QStringLiteral("undo");
-        label = m_app->m_undoStack.redoText();
-    } else if (count == m_changeUndoCount && index > m_changeUndoIndex) {
-        kind = QStringLiteral("redo");
+    QString label = std::exchange(m_pendingChangeLabel, QString());
+    if (label.isEmpty())
+        label = kind == ChangeKind::Undo ? m_app->m_undoStack.redoText() : m_app->m_undoStack.undoText();
+    ChangeEntry entry;
+    entry.revision = m_editRevision;
+    entry.source = inAgentCall() ? QStringLiteral("mcp") : QStringLiteral("ui");
+    entry.kind = kind == ChangeKind::Undo   ? QStringLiteral("undo")
+                 : kind == ChangeKind::Redo ? QStringLiteral("redo")
+                                            : QStringLiteral("edit");
+    entry.label = label;
+    entry.state = std::make_shared<const drift::Project>(m_app->m_project);
+    m_changeLog.append(entry);
+
+    // Unread snapshots are bounded: past the limit the oldest go, and the entry that needed one as
+    // its starting point keeps only its label.
+    int held = m_changeBase ? 1 : 0;
+    for (const ChangeEntry &e : std::as_const(m_changeLog))
+        held += e.state ? 1 : 0;
+    for (int i = -1; held > kChangeSnapshots && i < m_changeLog.size() - 1; ++i) {
+        std::shared_ptr<const drift::Project> &state = i < 0 ? m_changeBase : m_changeLog[i].state;
+        if (!state)
+            continue;
+        state.reset();
+        --held;
+        ChangeEntry &next = m_changeLog[i + 1];
+        if (!next.computed)
+            next.detailDropped = true;
     }
-    m_changeUndoIndex = index;
-    m_changeUndoCount = count;
-    m_changeBase = m_app->m_project;
-    if (diff.isEmpty())
-        return;
-    m_changeLog.append({m_editRevision, inAgentCall() ? QStringLiteral("mcp") : QStringLiteral("ui"), kind, label,
-                        drift::projectDiffToJson(diff)});
     if (m_changeLog.size() > kChangeLogSize) {
+        m_changeFeedFloor = m_changeLog.first().revision;
+        m_changeBase = m_changeLog.first().state;
         m_changeLog.removeFirst();
-        m_changeFeedFloor = m_changeLog.first().revision - 1;
     }
 }
 
-QJsonObject McpController::changesSince(int since, int limit) const
+void McpController::computeChange(int index)
+{
+    ChangeEntry &entry = m_changeLog[index];
+    if (entry.computed)
+        return;
+    std::shared_ptr<const drift::Project> &from = index == 0 ? m_changeBase : m_changeLog[index - 1].state;
+    if (!entry.detailDropped && from && entry.state)
+        entry.diff = drift::projectDiffToJson(drift::diffProjects(*from, *entry.state));
+    else
+        entry.detailDropped = true;
+    entry.computed = true;
+    // That starting point is needed by nothing else now.
+    from.reset();
+}
+
+QJsonObject McpController::changesSince(int since, int limit)
 {
     using namespace drift::mcp;
     QJsonArray changes;
     int returned = 0;
     bool more = false;
-    for (const ChangeEntry &entry : m_changeLog) {
-        if (entry.revision <= since)
+    for (int i = 0; i < m_changeLog.size(); ++i) {
+        if (m_changeLog.at(i).revision <= since)
             continue;
         if (returned == limit) {
             more = true;
             break;
         }
+        computeChange(i);
+        const ChangeEntry &entry = m_changeLog.at(i);
+        // Nothing in the project changed (a timeline switch, a refresh): not an edit to report.
+        if (!entry.detailDropped && entry.diff.isEmpty())
+            continue;
         QJsonObject row = entry.diff;
         row.insert(QStringLiteral("revision"), entry.revision);
         row.insert(QStringLiteral("source"), entry.source);
         row.insert(QStringLiteral("kind"), entry.kind);
         if (!entry.label.isEmpty())
             row.insert(QStringLiteral("label"), entry.label);
+        if (entry.detailDropped)
+            row.insert(QStringLiteral("detail"), false);
         changes.append(row);
         ++returned;
     }
@@ -1324,6 +1356,7 @@ void McpController::endBatch(const QString &text, bool pushUndo)
     }
     if (pushUndo)
         m_app->pushProjectEdit(m_batchBefore, text);
+    m_pendingChangeLabel = text;
     m_app->finishEdit(text);
     m_batchBefore = {};
     // After the finishEdit above, which clears the status line.
@@ -1885,9 +1918,11 @@ QJsonObject McpController::undoTo(int index, const QString &hash)
     // Same as AppController::undo()/redo(): the selection is carried across by clip id, or the
     // jump leaves it on whatever clip now sits at the old indices.
     m_app->captureSelectionClipIds();
+    const int from = m_app->m_undoStack.index();
     m_app->m_undoStack.setIndex(target);
     m_app->m_undoSelectionCaptured = false;
-    bumpEditRevision();
+    m_pendingChangeLabel = QStringLiteral("Jump to version %1").arg(target);
+    bumpEditRevision(target < from ? ChangeKind::Undo : ChangeKind::Redo);
     // Redoing forward can take the applied steps past the limit again; settle it before replying.
     m_app->flushUndoHistoryTrim();
     const QString at = m_app->historyHashAt(m_app->m_undoStack.index());
