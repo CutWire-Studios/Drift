@@ -123,6 +123,7 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("copyEffects"), QStringLiteral("Ctrl+Alt+C")},
         {QStringLiteral("pasteEffects"), QStringLiteral("Ctrl+Shift+V")},
         {QStringLiteral("pasteAttributes"), QStringLiteral("Ctrl+Alt+V")},
+        {QStringLiteral("addTransitionAtPlayhead"), QStringLiteral("Ctrl+Shift+D")},
         {QStringLiteral("split"), QStringLiteral("S")},
         {QStringLiteral("merge"), QStringLiteral("Ctrl+M")},
         {QStringLiteral("unlink"), QStringLiteral("Ctrl+Shift+U")},
@@ -1763,6 +1764,8 @@ void AppController::triggerAction(const QString &actionId)
         requestPasteAttributes();
     else if (actionId == QStringLiteral("split"))
         splitAtPlayhead();
+    else if (actionId == QStringLiteral("addTransitionAtPlayhead"))
+        addTransitionAtPlayhead();
     else if (actionId == QStringLiteral("merge"))
         mergeSelectedClips();
     else if (actionId == QStringLiteral("separateAudio"))

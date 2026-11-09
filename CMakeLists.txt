@@ -1611,6 +1611,7 @@ qt_add_qml_module(drift
         src/qml/AndroidMoreToolsSheet.qml
         src/qml/AndroidFadeSheet.qml
         src/qml/AndroidEasingSheet.qml
+        src/qml/AndroidTransitionPickerSheet.qml
         src/qml/AndroidProjectSheet.qml
         src/qml/AndroidHome.qml
         src/qml/AndroidEditor.qml
@@ -1823,6 +1824,8 @@ qt_add_qml_module(drift
         src/qml/components/assets/AssetFavoriteButton.qml
         src/qml/components/assets/AssetQuickAddButton.qml
         src/qml/components/assets/TransitionPresetCard.qml
+        src/qml/components/transitions/TransitionPickerGrid.qml
+        src/qml/components/transitions/TransitionPickerPopup.qml
         src/qml/components/assets/TextStyleUserCard.qml
         src/qml/components/assets/TextStylePackCard.qml
         src/qml/components/assets/StockAudioRow.qml
@@ -2005,8 +2008,8 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineTrimHandle.qml
         src/qml/components/timeline/TimelineTrimGrip.qml
         src/qml/components/timeline/TimelineTransitionRegion.qml
-        src/qml/components/timeline/TimelineTransitionLabel.qml
-        src/qml/components/timeline/TimelineTransitionHatch.qml
+        src/qml/components/timeline/TimelineTransitionToffee.qml
+        src/qml/components/timeline/TimelineCutButton.qml
         src/qml/components/timeline/TimelineTransitionDropOutline.qml
         src/qml/components/timeline/TimelineTrackTransformWash.qml
         src/qml/components/timeline/TimelineToolbarZoomSlider.qml

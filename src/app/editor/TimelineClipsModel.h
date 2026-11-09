@@ -115,6 +115,9 @@ public:
         int rightClip = -1;
         double start = 0.0;
         double end = 0.0;
+        // Touching clips: the cut. Overlapping clips: the midpoint of the overlap. Always set, so
+        // a cut with no transition yet (start == end) still has a position.
+        double cut = 0.0;
         bool hasTransition = false;
         // The clips physically overlap, so the window is the overlap and only its start can move.
         bool overlap = false;

@@ -1612,19 +1612,21 @@
       "borderWidth": "$metrics.borderWidthFocus",
       "border": "$semantic.clip.transitionOverlap"
     },
-    "timelineTransitionHatch": {
-      "borderWidth": "$metrics.borderWidth",
-      "foreground": "$semantic.onMedia"
-    },
-    "timelineTransitionLabel": {
-      "foreground": "$semantic.onMedia"
-    },
-    "timelineTransitionRegion": {
-      "radius": "$metrics.radius.sm",
+    "timelineTransitionToffee": {
       "background": "$semantic.clip.transitionOverlap",
-      "borderWidthSelected": "$metrics.borderWidthFocus",
+      "border": "$semantic.onMedia",
       "borderWidth": "$metrics.borderWidth",
-      "border": "$semantic.clip.transitionOverlap"
+      "borderWidthSelected": "$metrics.borderWidthFocus",
+      "outline": "$semantic.timeline.scrimStrong",
+      "grip": "$semantic.onMedia",
+      "foreground": "$semantic.onMedia"
+    },
+    "timelineCutButton": {
+      "background": "$semantic.clip.transitionOverlap",
+      "border": "$semantic.onMedia",
+      "outline": "$semantic.timeline.scrimStrong",
+      "borderWidth": "$metrics.borderWidth",
+      "foreground": "$semantic.onMedia"
     },
     "timelineTrimGrip": {
       "radius": 1.5,
@@ -3686,6 +3688,14 @@
       "foregroundHover": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground"
     },
+    "transitionPicker": {
+      "background": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "divider": "$semantic.panel.border",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "radius": "$metrics.radius.md"
+    },
     "transitionPresetCard": {
       "background": "$semantic.panel.accent",
       "backgroundHover": "$semantic.panel.secondary.background",
@@ -3694,7 +3704,8 @@
       "dragOpacity": 0.85,
       "foreground": "$semantic.panel.foreground",
       "icon": "$semantic.clip.transitionOverlap",
-      "radius": "$metrics.radius.sm"
+      "radius": "$metrics.radius.sm",
+      "selectedBorder": "$semantic.primary"
     },
     "upscaleModelCard": {
       "accent": "$semantic.primary",
@@ -3945,13 +3956,16 @@
     },
     "androidTimelineTransitionMark": {
       "background": "$semantic.clip.transitionOverlap",
-      "radius": "$metrics.radius.sm",
-      "border": "$semantic.clip.transitionOverlap",
+      "border": "$semantic.onMedia",
       "borderWidth": "$metrics.borderWidth",
       "borderWidthSelected": "$metrics.borderWidthFocus",
-      "hatch": "$semantic.onMedia",
-      "hatchWidth": "$metrics.borderWidth",
-      "foreground": "$semantic.onMedia"
+      "outline": "$semantic.timeline.scrimStrong",
+      "grip": "$semantic.onMedia",
+      "foreground": "$semantic.onMedia",
+      "addBackground": "$semantic.clip.transitionOverlap",
+      "addBorder": "$semantic.onMedia",
+      "addBorderWidth": "$metrics.borderWidth",
+      "addForeground": "$semantic.onMedia"
     },
     "androidTimelineNewTrackGhost": {
       "background": "$semantic.surface.panel",

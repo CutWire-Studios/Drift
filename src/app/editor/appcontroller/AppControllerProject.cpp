@@ -117,6 +117,10 @@ void AppController::resetSessionState()
     m_previewDragAuto = false;
     m_previewDragDirty = false;
     m_previewAutoCommit->stop();
+    if (m_transitionPreview.active) {
+        m_transitionPreview = {};
+        m_playback.clearPreviewRange();
+    }
     m_keyframeGraphHiddenProperties.clear();
     m_preview->setCanvasCropMode(false);
     m_preview->setGuideEditSetId(QString());

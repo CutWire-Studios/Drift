@@ -1,4 +1,5 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "app/editor/PreferencesController.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/render3d/models/ModelAsset.h"
 #include "engine/render2d/pdf/PdfiumRuntime.h"
@@ -1068,6 +1069,7 @@ drift::TransformParent AppController::transformParentFor(int trackIndex) const
 void AppController::addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds,
                                   bool linkedAudio)
 {
+    endTransitionPreview();
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
 
@@ -1120,6 +1122,7 @@ void AppController::addTransition(int trackIndex, int clipIndex, const QString &
                    transitionKindFitsTrack(drift::TrackType::Audio, kindId) ? kindId : QStringLiteral("crossfade"));
     }
     pushProjectEdit(before, replaced ? tr("Replace transition") : tr("Add transition"));
+    m_preferences->pushRecentTransition(kindId);
     finishEdit(replaced ? tr("Transition updated") : tr("Transition added"));
     selectTransition(trackIndex, clipIndex);
 }
@@ -1205,6 +1208,7 @@ void AppController::setTransitionKind(int trackIndex, const QString &transitionI
     if (!transitionDefForId(kind))
         return;
 
+    endTransitionPreview();
     drift::Track &track = m_project.tracks()[trackIndex];
     if (!transitionKindFitsTrack(track.type, kind))
         return;
@@ -1220,6 +1224,7 @@ void AppController::setTransitionKind(int trackIndex, const QString &transitionI
                 mirror->parameters.clear();
             }
             pushProjectEdit(before, tr("Transition kind"));
+            m_preferences->pushRecentTransition(kind);
             finishEdit(tr("Transition kind updated"));
             emit selectedTransitionDataChanged();
             return;
@@ -1393,6 +1398,267 @@ void AppController::selectTransition(int trackIndex, int leftClipIndex)
     m_selection = {qMakePair(trackIndex, leftClipIndex)};
     notifySelectionChanged();
     emit selectedTransitionDataChanged();
+}
+
+QList<int> AppController::eligibleCutLefts(int trackIndex, bool selectionOnly) const
+{
+    QList<int> lefts;
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return lefts;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (!trackAllowsTransitions(track.type))
+        return lefts;
+    for (int left = 0; left < track.clips.size(); ++left) {
+        const int right = findTransitionPartnerIndex(track, left);
+        if (right < 0)
+            continue;
+        if (selectionOnly
+            && !(m_selection.contains(qMakePair(trackIndex, left))
+                 && m_selection.contains(qMakePair(trackIndex, right))))
+            continue;
+        lefts.append(left);
+    }
+    return lefts;
+}
+
+int AppController::selectedCutCount(int trackIndex) const
+{
+    return int(eligibleCutLefts(trackIndex, true).size());
+}
+
+void AppController::applyTransitionToCuts(int trackIndex, const QString &kind, bool selectionOnly)
+{
+    endTransitionPreview();
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size() || !transitionDefForId(kind))
+        return;
+    if (!transitionKindFitsTrack(m_project.tracks().at(trackIndex).type, kind)) {
+        setLastMessage(tr("That transition has no sound; audio tracks take crossfade or dip"),
+                       QStringLiteral("warning"));
+        return;
+    }
+    const QList<int> lefts = eligibleCutLefts(trackIndex, selectionOnly);
+    if (lefts.isEmpty())
+        return;
+
+    const drift::Project before = m_project;
+    const drift::TimeUs defaultUs =
+        qMax<drift::TimeUs>(drift::secondsToUs(0.1), drift::secondsToUs(m_preferences->transitionDurationSeconds()));
+    const auto upsert = [&](int t, const QString &a, const QString &b, const QString &kindForTrack,
+                            drift::TimeUs durationUs) {
+        drift::Track &target = m_project.tracks()[t];
+        if (drift::Transition *existing = findTransitionBetween(target, a, b)) {
+            if (existing->kindId == kindForTrack)
+                return;
+            existing->kindId = kindForTrack;
+            existing->parameters.clear();
+            return;
+        }
+        drift::Transition transition;
+        transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        transition.fromClipId = a;
+        transition.toClipId = b;
+        transition.kindId = kindForTrack;
+        transition.durationUs = durationUs;
+        target.transitions.append(transition);
+    };
+    for (const int left : lefts) {
+        const drift::Track &track = m_project.tracks().at(trackIndex);
+        const int right = findTransitionPartnerIndex(track, left);
+        if (right < 0)
+            continue;
+        const QString fromId = track.clips.at(left).id;
+        const QString toId = track.clips.at(right).id;
+        const drift::TimeUs overlapUs = drift::physicalOverlapDurationUs(track.clips.at(left), track.clips.at(right));
+        const drift::TimeUs durationUs = overlapUs > 0 ? overlapUs : defaultUs;
+        const LinkedAudioPair pair = linkedAudioPairFor(m_project, track, fromId, toId);
+        upsert(trackIndex, fromId, toId, kind, durationUs);
+        if (pair.valid())
+            upsert(pair.track, pair.fromId, pair.toId,
+                   transitionKindFitsTrack(drift::TrackType::Audio, kind) ? kind : QStringLiteral("crossfade"),
+                   durationUs);
+    }
+    pushProjectEdit(before, tr("Apply transition to cuts"));
+    m_preferences->pushRecentTransition(kind);
+    finishEdit(tr("Transitions updated"));
+}
+
+void AppController::refreshAfterTransitionPreview()
+{
+    m_tracksCacheValid = false;
+    m_durationCacheValid = false;
+    m_playback.notifyProjectEdited();
+    notifyTracksChanged();
+}
+
+void AppController::beginTransitionPreview(int trackIndex, int leftClipIndex, const QString &kind)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size() || !transitionDefForId(kind))
+        return;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (!trackAllowsTransitions(track.type) || !transitionKindFitsTrack(track.type, kind))
+        return;
+    const int partnerIndex = findTransitionPartnerIndex(track, leftClipIndex);
+    if (partnerIndex < 0)
+        return;
+    const QString fromId = track.clips.at(leftClipIndex).id;
+    const QString toId = track.clips.at(partnerIndex).id;
+
+    TransitionPreviewState &state = m_transitionPreview;
+    if (state.active) {
+        drift::Transition *current = state.track >= 0 && state.track < m_project.tracks().size()
+                                         ? findTransitionBetween(m_project.tracks()[state.track], state.fromClipId,
+                                                                 state.toClipId)
+                                         : nullptr;
+        if (current && state.track == trackIndex && state.fromClipId == fromId && state.toClipId == toId) {
+            if (current->kindId == kind)
+                return;
+            current->kindId = kind;
+            current->parameters.clear();
+            m_tracksCacheValid = false;
+            m_playback.notifyProjectEdited();
+            return;
+        }
+        endTransitionPreview();
+        if (trackIndex >= m_project.tracks().size())
+            return;
+    }
+
+    drift::Track &target = m_project.tracks()[trackIndex];
+    const drift::Clip &fromClip = target.clips.at(leftClipIndex);
+    const drift::Clip &toClip = target.clips.at(partnerIndex);
+    state = {};
+    state.track = trackIndex;
+    state.fromClipId = fromId;
+    state.toClipId = toId;
+    state.playheadUs = m_playheadUs;
+    if (drift::Transition *existing = findTransitionBetween(target, fromId, toId)) {
+        state.existed = true;
+        state.transitionId = existing->id;
+        state.originalKind = existing->kindId;
+        state.originalParameters = existing->parameters;
+        existing->kindId = kind;
+        existing->parameters.clear();
+    } else {
+        const drift::TimeUs overlapUs = drift::physicalOverlapDurationUs(fromClip, toClip);
+        drift::Transition transition;
+        transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        transition.fromClipId = fromId;
+        transition.toClipId = toId;
+        transition.kindId = kind;
+        transition.durationUs =
+            overlapUs > 0 ? overlapUs
+                          : qMax<drift::TimeUs>(drift::secondsToUs(0.1),
+                                                drift::secondsToUs(m_preferences->transitionDurationSeconds()));
+        state.transitionId = transition.id;
+        target.transitions.append(transition);
+    }
+    state.active = true;
+
+    drift::TimeUs windowStartUs = 0;
+    drift::TimeUs windowEndUs = 0;
+    const drift::Transition *placed = findTransitionBetween(target, fromId, toId);
+    const bool windowOk = placed && drift::transitionWindow(target, *placed, windowStartUs, windowEndUs);
+    refreshAfterTransitionPreview();
+    if (!windowOk) {
+        endTransitionPreview();
+        return;
+    }
+
+    constexpr drift::TimeUs kPad = drift::secondsToUs(0.5);
+    const drift::TimeUs rangeStart = qMax<drift::TimeUs>(0, windowStartUs - kPad);
+    const drift::TimeUs rangeEnd = qMin(windowEndUs + kPad, m_project.durationUs());
+    if (rangeEnd > rangeStart) {
+        m_playback.setPreviewRange(rangeStart, rangeEnd);
+        setPlayheadUs(rangeStart);
+    }
+    setPlaying(true);
+}
+
+void AppController::endTransitionPreview()
+{
+    TransitionPreviewState &state = m_transitionPreview;
+    if (!state.active)
+        return;
+    const TransitionPreviewState saved = state;
+    state = {};
+
+    m_playback.clearPreviewRange();
+    setPlaying(false);
+
+    if (saved.track >= 0 && saved.track < m_project.tracks().size()) {
+        drift::Track &track = m_project.tracks()[saved.track];
+        if (saved.existed) {
+            if (drift::Transition *t = findTransition(track, saved.transitionId)) {
+                t->kindId = saved.originalKind;
+                t->parameters = saved.originalParameters;
+            }
+        } else {
+            for (int i = track.transitions.size() - 1; i >= 0; --i) {
+                if (track.transitions.at(i).id == saved.transitionId)
+                    track.transitions.removeAt(i);
+            }
+        }
+    }
+    refreshAfterTransitionPreview();
+    setPlayheadUs(saved.playheadUs);
+}
+
+void AppController::addTransitionAtPlayhead()
+{
+    endTransitionPreview();
+    const double seconds = drift::usToSeconds(m_playheadUs);
+
+    const auto nearestCut = [&](int trackIndex, int &leftOut) {
+        const drift::Track &track = m_project.tracks().at(trackIndex);
+        double bestDistance = 1e18;
+        leftOut = -1;
+        for (const int left : eligibleCutLefts(trackIndex, false)) {
+            const int right = findTransitionPartnerIndex(track, left);
+            const drift::Clip &a = track.clips.at(left);
+            const drift::Clip &b = track.clips.at(right);
+            const double cut = drift::clipsPhysicallyOverlap(a, b)
+                                   ? drift::usToSeconds((b.timelineStart + a.timelineEnd()) / 2)
+                                   : drift::usToSeconds(a.timelineEnd());
+            const double distance = qAbs(cut - seconds);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                leftOut = left;
+            }
+        }
+        return leftOut >= 0;
+    };
+
+    int trackIndex = -1;
+    int left = -1;
+    if (m_selectedTrack >= 0 && m_selectedTrack < m_project.tracks().size() && nearestCut(m_selectedTrack, left))
+        trackIndex = m_selectedTrack;
+    for (int t = 0; trackIndex < 0 && t < m_project.tracks().size(); ++t) {
+        if (m_project.tracks().at(t).type != drift::TrackType::Audio && nearestCut(t, left))
+            trackIndex = t;
+    }
+    if (trackIndex < 0) {
+        setLastMessage(tr("No cut between two clips to add a transition to"), QStringLiteral("warning"));
+        return;
+    }
+
+    if (!transitionBetweenClips(trackIndex, left).isEmpty()) {
+        selectTransition(trackIndex, left);
+        return;
+    }
+
+    QStringList valid;
+    for (const QVariant &entry : transitionKindsForTrack(trackIndex))
+        valid.append(entry.toMap().value(QStringLiteral("kind")).toString());
+    QString kind = QStringLiteral("crossfade");
+    for (const QString &recent : m_preferences->recentTransitions()) {
+        if (valid.contains(recent)) {
+            kind = recent;
+            break;
+        }
+    }
+    if (!valid.contains(kind) && !valid.isEmpty())
+        kind = valid.first();
+    addTransition(trackIndex, left, kind, m_preferences->transitionDurationSeconds());
 }
 
 void AppController::clearTransitionSelection()

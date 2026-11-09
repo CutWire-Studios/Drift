@@ -1254,6 +1254,17 @@ public:
     Q_INVOKABLE QVariantList transitionKindsForTrack(int trackIndex) const;
     Q_INVOKABLE QVariantList transitionCategories() const;
     Q_INVOKABLE void selectTransition(int trackIndex, int leftClipIndex);
+    // selectionOnly: only cuts between two clips that are both in the multi-selection on this
+    // track; otherwise every eligible cut. Existing transitions are re-kinded, empty cuts get one
+    // at the preferred duration. One undo step.
+    Q_INVOKABLE void applyTransitionToCuts(int trackIndex, const QString &kind, bool selectionOnly);
+    Q_INVOKABLE int selectedCutCount(int trackIndex) const;
+    // Hover preview: swaps the kind at a cut (or inserts a temporary transition), loops playback
+    // around it. Nothing is pushed to the undo stack; endTransitionPreview restores the project and
+    // the playhead. Any committed transition edit ends a running preview first.
+    Q_INVOKABLE void beginTransitionPreview(int trackIndex, int leftClipIndex, const QString &kind);
+    Q_INVOKABLE void endTransitionPreview();
+    Q_INVOKABLE void addTransitionAtPlayhead();
     Q_INVOKABLE void clearTransitionSelection();
     // A colour property ("text.color") fans out to its four channel tracks (<prop>.r/g/b/a) as
     // one undo step. Clears every channel when the colour is invalid.
@@ -2340,6 +2351,20 @@ protected:
     int inlineRenderedPos(int modelPos) const;
     int inlineModelPos(int renderedPos) const;
     bool m_previewDragActive = false;
+    QList<int> eligibleCutLefts(int trackIndex, bool selectionOnly) const;
+    void refreshAfterTransitionPreview();
+    struct TransitionPreviewState
+    {
+        bool active = false;
+        int track = -1;
+        QString fromClipId;
+        QString toClipId;
+        QString transitionId;
+        bool existed = false;
+        QString originalKind;
+        QMap<QString, QVariant> originalParameters;
+        drift::TimeUs playheadUs = 0;
+    } m_transitionPreview;
     drift::Clip *textClipAt(int trackIndex, int clipIndex);
     // A text, subtitle or shape clip: anything that carries a shading stack.
     drift::Clip *styledClipAt(int trackIndex, int clipIndex, bool textOnly = false);

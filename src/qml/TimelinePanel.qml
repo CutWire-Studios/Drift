@@ -282,9 +282,13 @@ PanelFrame {
     property int effectDropTrackIndex: -1
     property int effectDropClipIndex: -1
     // Window a dragged transition would cover (seconds; track -1 when hidden).
+    property alias transitionPicker: transitionPickerPopup
     property int transitionDropTrackIndex: -1
     property real transitionDropStart: 0
     property real transitionDropEnd: 0
+    TransitionPickerPopup {
+        id: transitionPickerPopup
+    }
     // CapCut-style marquee (drag on empty track space to box-select clips).
     property bool marqueeActive: false
     property bool marqueeAdditive: false
@@ -2059,7 +2063,7 @@ PanelFrame {
                                     }
                                 }
 
-                                // Transition overlap regions (purple) — above clips for hit-testing.
+                                // Transition cut buttons and toffees — above clips for hit-testing.
                                 // One delegate per region that exists, computed in C++, instead of
                                 // one per clip each scanning the whole track for its partner.
                                 Repeater {
@@ -2067,6 +2071,9 @@ PanelFrame {
                                     delegate: TimelineTransitionRegion {
                                         panel: root
                                         trackIndex: trackRow.trackIndex
+                                        clipAreaHeight: trackClipArea.height
+                                        hoverX: trackHover.hovered ? trackHover.point.position.x : -1
+                                        hoverY: trackHover.hovered ? trackHover.point.position.y : -1
                                     }
                                 }
 

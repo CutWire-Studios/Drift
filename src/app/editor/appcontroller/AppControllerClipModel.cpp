@@ -1185,13 +1185,15 @@ TimelineClipsModel::Decorations AppController::trackDecorations(const drift::Tra
             startUs = toClip.timelineStart;
             endUs = fromClip.timelineEnd();
         } else {
-            continue;
+            startUs = endUs = fromClip.timelineEnd();
         }
-        if (endUs <= startUs)
+        if (endUs <= startUs && transition)
             continue;
         region.start = drift::usToSeconds(startUs);
         region.end = drift::usToSeconds(endUs);
         region.overlap = drift::clipsPhysicallyOverlap(fromClip, toClip);
+        region.cut = region.overlap ? drift::usToSeconds((startUs + endUs) / 2)
+                                    : drift::usToSeconds(fromClip.timelineEnd());
         const drift::TimeUs shorterUs = qMin(fromClip.timelineDuration, toClip.timelineDuration);
         region.maxDuration =
             drift::usToSeconds(region.overlap ? shorterUs - drift::secondsToUs(0.05) : shorterUs);
@@ -1679,6 +1681,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("pasteEffects"), tr("Paste effects onto clip")),
         action(QStringLiteral("pasteAttributes"), tr("Paste attributes…")),
         action(QStringLiteral("split"), tr("Split at current time")),
+        action(QStringLiteral("addTransitionAtPlayhead"), tr("Add transition at playhead")),
         action(QStringLiteral("merge"), tr("Merge adjacent clips")),
         action(QStringLiteral("transformTogether"), tr("Transform selection together")),
         action(QStringLiteral("selectTransformLayer"), tr("Select transform layer")),
