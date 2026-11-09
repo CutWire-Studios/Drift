@@ -1303,6 +1303,41 @@ void McpTest::rippleTrimMovesTheRest()
         state.project()->tracks().last().clips.removeFirst();
         state.project()->tracks().last().clips.insert(0, partner);
     }
+    // A free adjustment clip: its locked track refuses the trim; unlocked, the trim leaves the
+    // other adjustments alone (an adjustment track never ripples).
+    {
+        drift::Track lane{.type = drift::TrackType::Adjustment};
+        drift::Clip adj;
+        adj.id = QStringLiteral("free-grade");
+        adj.type = drift::ClipType::Adjustment;
+        adj.timelineDuration = drift::secondsToUs(2.0);
+        adj.srcOut = adj.timelineDuration;
+        drift::Clip later = adj;
+        later.id = QStringLiteral("later-grade");
+        later.timelineStart = drift::secondsToUs(5.0);
+        lane.clips = {adj, later};
+        lane.locked = true;
+        state.project()->tracks().append(lane);
+        // By track and index: the lane was added outside an edit, so ids are not indexed yet.
+        const int laneIndex = int(state.project()->tracks().size()) - 1;
+        const auto trimAdj = [&](double out) {
+            return dispatcher.applyOne(QStringLiteral("set_trim"),
+                                       {{QStringLiteral("track"), laneIndex}, {QStringLiteral("index"), 0},
+                                        {QStringLiteral("in"), 0.0}, {QStringLiteral("out"), out},
+                                        {QStringLiteral("ripple"), true}});
+        };
+        QCOMPARE(trimAdj(3.0).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        state.project()->tracks().last().locked = false;
+        const QJsonObject trimmedAdj = trimAdj(3.0);
+        QVERIFY2(trimmedAdj.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(trimmedAdj).toJson()));
+        double laterStart = -1;
+        for (const drift::Clip &clip : state.project()->tracks().at(laneIndex).clips)
+            if (clip.id == QLatin1String("later-grade"))
+                laterStart = drift::usToSeconds(clip.timelineStart);
+        QCOMPARE(laterStart, 5.0);
+        state.project()->tracks().removeLast();
+    }
+
     const QJsonObject loose = trim(2.0, 3.0, true);
     QCOMPARE(loose.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     QCOMPARE(durOf(ids.at(1)), 3.0);
