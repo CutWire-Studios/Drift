@@ -7461,6 +7461,7 @@ void CoreTest::diffProjectsReportsClipChanges()
     asset.id = QStringLiteral("asset");
     asset.name = QStringLiteral("Take 1");
     asset.path = QStringLiteral("/media/take1.mp4");
+    asset.durationUs = drift::secondsToUs(10.0);
     withAsset.assets().insert(asset.id, asset);
     drift::Project binTrimmed = withAsset;
     binTrimmed.assets()[asset.id].trimInUs = drift::secondsToUs(1.0);
@@ -7477,6 +7478,17 @@ void CoreTest::diffProjectsReportsClipChanges()
     drift::Project refreshed = withAsset;
     refreshed.assets()[asset.id].durationUs = drift::secondsToUs(12.0);
     QCOMPARE(drift::diffProjects(withAsset, refreshed).assets.size(), 1);
+    // An import's probe filling in what was unknown is not an edit.
+    drift::Project probed = withAsset;
+    probed.assets()[asset.id].width = 3840;
+    probed.assets()[asset.id].sampleRate = 48000;
+    probed.assets()[asset.id].hasAudioKnown = true;
+    probed.assets()[asset.id].hasAudio = true;
+    QVERIFY(drift::diffProjects(withAsset, probed).isEmpty());
+    // ...but a refresh that changes a known value is.
+    drift::Project resized = probed;
+    resized.assets()[asset.id].width = 1920;
+    QCOMPARE(drift::diffProjects(probed, resized).assets.size(), 1);
 }
 
 QTEST_MAIN(CoreTest)

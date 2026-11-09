@@ -64,15 +64,30 @@ struct Located
     const Clip *clip = nullptr;
 };
 
-// An asset as the project holds it, minus the caches background jobs fill without an edit
-// (thumbnail, filmstrip, the frame-rate probe). Facts read from the file stay: a refresh of a
-// file changed in place is a change to its asset.
-QJsonObject editableAsset(const MediaAsset &asset)
+// Whether an edit changed an asset. Background jobs write some fields without an edit: the
+// thumbnail, filmstrip and frame-rate caches, and the facts read from the file, which an import's
+// probe or a lazy audio check fills in after the asset exists. Those caches never count; a fact
+// counts only when it was known before (a refresh of a file changed in place gives it a new value),
+// not when it goes from unknown (absent, 0, empty) to known.
+bool assetEdited(const MediaAsset &before, const MediaAsset &after)
 {
-    QJsonObject json = assetJson(asset);
-    for (const char *key : {"thumbnailPath", "filmstripPath", "variableFrameRate"})
-        json.remove(QLatin1String(key));
-    return json;
+    QJsonObject a = assetJson(before);
+    QJsonObject b = assetJson(after);
+    for (const char *key : {"thumbnailPath", "filmstripPath", "variableFrameRate"}) {
+        a.remove(QLatin1String(key));
+        b.remove(QLatin1String(key));
+    }
+    for (const char *key : {"kind", "durationUs", "duration", "width", "height", "fps", "rotationDegrees",
+                            "sampleRate", "channels", "codecName", "hasAudio", "sourceSize", "sourceModifiedMs"}) {
+        const QJsonValue was = a.value(QLatin1String(key));
+        const bool unknown = was.isUndefined() || was.isNull() || (was.isDouble() && was.toDouble() == 0.0)
+                             || (was.isString() && was.toString().isEmpty());
+        if (unknown) {
+            a.remove(QLatin1String(key));
+            b.remove(QLatin1String(key));
+        }
+    }
+    return a != b;
 }
 
 // Each clip's key: its id's occurrence across the whole timeline, in track order, then the id
@@ -279,7 +294,7 @@ ProjectDiff diffProjects(const Project &from, const Project &to)
         const auto was = from.assets().constFind(it.key());
         if (was == from.assets().constEnd())
             diff.assets.append({it.key(), QStringLiteral("added"), it->name});
-        else if (editableAsset(*was) != editableAsset(*it))
+        else if (assetEdited(*was, *it))
             diff.assets.append({it.key(), QStringLiteral("changed"), it->name});
     }
     for (auto it = from.assets().constBegin(); it != from.assets().constEnd(); ++it)
