@@ -1473,9 +1473,10 @@
           "Close every gap on `track` within [from, to] (seconds; default the whole track) in one undo "
           "step: the hole before the first clip and each hole between clips, latest first. Later "
           "clips move left, together with every track joined to this one by linked clips, so A/V "
-          "stays in sync. A gap that a clip on such a track sits in is left open and listed in "
-          "skipped with the clip in the way; a locked track refuses the op. Returns closed:[{at, "
-          "width}], skipped:[{at, width, blocker}] and moved:[{id, start}].",
+          "stays in sync. A gap that a clip on such a track sits in (or that a linked clip would "
+          "have to cross 0 or the gap to close) is left open and listed in skipped with that clip; "
+          "a locked track or an adjustment track refuses the op. Returns closed:[{at, width}] and "
+          "skipped:[{at, width, blocker}] at their positions before the op, and moved:[{id, start}].",
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                         {QStringLiteral("from"), numberProp(QStringLiteral("Only gaps starting at or after this time (seconds)"))},
                         {QStringLiteral("to"), numberProp(QStringLiteral("Only gaps ending at or before this time (seconds)"))}},

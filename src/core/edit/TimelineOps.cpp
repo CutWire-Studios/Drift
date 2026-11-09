@@ -1542,11 +1542,13 @@ bool closeRippleRanges(Project &project, const QList<RippleRange> &ranges, QStri
     if (!collision.isEmpty() || clamped) {
         if (blocker) {
             *blocker = collision;
-            if (collision.isEmpty())
-                for (const QString &id : std::as_const(movedIds)) {
-                    *blocker = id;
-                    break;
-                }
+            if (collision.isEmpty()) {
+                // The clip stopped at 0 short of its full move.
+                for (const Track &track : project.tracks())
+                    for (const Clip &clip : track.clips)
+                        if (blocker->isEmpty() && clip.timelineStart == 0 && movedIds.contains(clip.id))
+                            *blocker = clip.id;
+            }
         }
         project = unchanged;
         return false;

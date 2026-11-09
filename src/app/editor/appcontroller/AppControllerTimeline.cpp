@@ -2802,6 +2802,10 @@ AppController::GapCloseResult AppController::closeGapsRippled(int trackIndex, dr
         result.error = QStringLiteral("No such track");
         return result;
     }
+    if (m_project.tracks().at(trackIndex).isAdjustment()) {
+        result.error = QStringLiteral("Track %1 is an adjustment track; its clips follow the clips they apply to").arg(trackIndex);
+        return result;
+    }
     QSet<int> lockChecked = drift::rippleTrackGroup(m_project, trackIndex);
     lockChecked.insert(trackIndex);
     for (const int t : std::as_const(lockChecked)) {
@@ -2831,7 +2835,26 @@ AppController::GapCloseResult AppController::closeGapsRippled(int trackIndex, dr
             continue;
         QString blocker;
         QStringList moved;
-        if (drift::closeRippleRanges(m_project, {{trackIndex, gap.first, gap.second}}, &blocker, &moved))
+        const drift::Project prior = m_project;
+        bool closed = drift::closeRippleRanges(m_project, {{trackIndex, gap.first, gap.second}}, &blocker, &moved);
+        if (closed) {
+            // A clip before the gap linked to one after it moves too and leaves the hole open (and
+            // the earlier gaps' positions stale): that gap stays, with the linked clip as blocker.
+            const QList<drift::Clip> &now = m_project.tracks().at(trackIndex).clips;
+            for (const drift::Clip &clip : prior.tracks().at(trackIndex).clips) {
+                if (!closed || clip.timelineStart >= gap.first)
+                    continue;
+                for (const drift::Clip &after : now) {
+                    if (after.id == clip.id && after.timelineStart != clip.timelineStart) {
+                        closed = false;
+                        blocker = clip.id;
+                    }
+                }
+            }
+            if (!closed)
+                m_project = prior;
+        }
+        if (closed)
             result.closed.prepend({gap.first, gap.second - gap.first});
         else
             result.skipped.prepend({{gap.first, gap.second - gap.first}, blocker});

@@ -943,7 +943,8 @@ public:
     struct GapCloseResult
     {
         QList<QPair<drift::TimeUs, drift::TimeUs>> closed; // (start, width) as they were
-        QList<QPair<QPair<drift::TimeUs, drift::TimeUs>, QString>> skipped; // gap and the clip in the way
+        // gap (as it was) and the clip in the way, or the clip that cannot move with the rest
+        QList<QPair<QPair<drift::TimeUs, drift::TimeUs>, QString>> skipped;
         QStringList moved;
         QString error;
     };

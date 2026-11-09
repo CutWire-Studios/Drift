@@ -1395,6 +1395,32 @@ void McpTest::closeGapsClosesEveryHole()
     QCOMPARE(all.value(QStringLiteral("moved")).toArray().size(), 3);
     state.undo();
 
+    // The first and last clips linked on the same track: closing a later gap would drag the first
+    // clip with it (across 0, or leaving the hole open), so those gaps are skipped with it as
+    // blocker; the leading gap still closes.
+    {
+        const auto setLink = [&](const QString &id, const QString &link) {
+            const QPair<int, int> loc = state.mcp()->locateClip(id);
+            state.project()->tracks()[loc.first].clips[loc.second].linkId = link;
+        };
+        setLink(ids.at(0), QStringLiteral("same-track"));
+        setLink(ids.at(2), QStringLiteral("same-track"));
+        const QJsonObject linked = closeGaps({});
+        QVERIFY2(linked.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(linked).toJson()));
+        QCOMPARE(linked.value(QStringLiteral("closed")).toArray().size(), 1);
+        const QJsonArray skipped = linked.value(QStringLiteral("skipped")).toArray();
+        QCOMPARE(skipped.size(), 2);
+        for (const QJsonValue &gap : skipped)
+            QCOMPARE(gap.toObject().value(QStringLiteral("blocker")).toString(), ids.at(0));
+        QCOMPARE(startOf(ids.at(0)), 0.0);
+        QCOMPARE(startOf(ids.at(1)), 2.0);
+        QCOMPARE(startOf(ids.at(2)), 5.0);
+        state.undo();
+        setLink(ids.at(0), QString());
+        setLink(ids.at(2), QString());
+        QCOMPARE(startOf(ids.at(0)), 1.0);
+    }
+
     // A clip on a linked track sitting in a gap: that gap stays open, the others close.
     {
         drift::Track audioTrack{.type = drift::TrackType::Audio};
@@ -1423,6 +1449,24 @@ void McpTest::closeGapsClosesEveryHole()
 
     QCOMPARE(dispatcher.applyOne(QStringLiteral("close_gaps"), {{QStringLiteral("track"), 42}}).value(QStringLiteral("error")).toString(),
              QStringLiteral("not_found"));
+    QCOMPARE(closeGaps({{QStringLiteral("from"), 3.0}, {QStringLiteral("to"), 2.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // An adjustment track is refused rather than reported closed with nothing moved.
+    {
+        drift::Track adjustment{.type = drift::TrackType::Adjustment};
+        drift::Clip grade;
+        grade.id = QStringLiteral("free-grade");
+        grade.type = drift::ClipType::Adjustment;
+        grade.timelineStart = drift::secondsToUs(5.0);
+        grade.timelineDuration = drift::secondsToUs(1.0);
+        adjustment.clips = {grade};
+        state.project()->tracks().append(adjustment);
+        const QJsonObject refused = dispatcher.applyOne(
+            QStringLiteral("close_gaps"), {{QStringLiteral("track"), int(state.project()->tracks().size()) - 1}});
+        QCOMPARE(refused.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(state.project()->tracks().last().clips.first().timelineStart, drift::secondsToUs(5.0));
+    }
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

@@ -3291,6 +3291,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const drift::TimeUs toUs = args.contains(QStringLiteral("to"))
                                        ? drift::secondsToUs(jsonNumber(args.value(QStringLiteral("to")), 0.0))
                                        : -1;
+        if (fromUs < 0 || (args.contains(QStringLiteral("to")) && toUs < fromUs))
+            return err("bad_args", QStringLiteral("from must be >= 0 and to >= from"));
         const AppController::GapCloseResult closed = m_controller->closeGapsRippled(track, fromUs, toUs);
         if (!closed.error.isEmpty())
             return err(closed.error == QLatin1String("No such track") ? "not_found" : "bad_args", closed.error);
