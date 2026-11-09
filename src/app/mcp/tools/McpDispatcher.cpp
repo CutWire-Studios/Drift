@@ -1614,15 +1614,18 @@ QJsonObject reorderReply(const AppController::ReorderResult &result, const drift
                 movedJson.append(QJsonObject{{QStringLiteral("id"), clip.id},
                                              {QStringLiteral("start"),
                                               drift::mcpdetail::round3(drift::usToSeconds(clip.timelineStart))}});
-    return QJsonObject{{QStringLiteral("moved"), movedJson}};
+    QJsonObject reply{{QStringLiteral("moved"), movedJson}};
+    if (!result.removedTransitions.isEmpty())
+        reply.insert(QStringLiteral("removed_transitions"), QJsonArray::fromStringList(result.removedTransitions));
+    return reply;
 }
 
 } // namespace
 
 QJsonObject McpDispatcher::opSwapClips(const QJsonObject &args)
 {
-    const QString a = args.value(QStringLiteral("a")).toString();
-    const QString b = args.value(QStringLiteral("b")).toString();
+    const QString a = argString(args, QStringLiteral("a"));
+    const QString b = argString(args, QStringLiteral("b"));
     if (a.isEmpty() || b.isEmpty())
         return err("bad_args", QStringLiteral("a and b required"));
     const AppController::ReorderResult result = m_controller->swapClips(a, b);
@@ -1641,14 +1644,14 @@ QJsonObject McpDispatcher::opMoveClip(const QJsonObject &args)
     if (int(args.contains(QStringLiteral("at"))) + int(hasBefore) + int(hasAfter) != 1)
         return err("bad_args", QStringLiteral("give exactly one of at, before, after"));
     if (hasBefore || hasAfter) {
-        const QString neighbour = args.value(hasBefore ? QStringLiteral("before") : QStringLiteral("after")).toString();
+        const QString neighbour = argString(args, hasBefore ? QStringLiteral("before") : QStringLiteral("after"));
+        if (neighbour.isEmpty())
+            return err("bad_args", QStringLiteral("before/after take a clip id"));
         const AppController::ReorderResult result = m_controller->moveClipNextTo(ref.id, neighbour, hasAfter);
         if (!result.error.isEmpty())
             return err(result.errorCode.toLatin1().constData(), result.error);
         const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
-        QJsonObject reply = clipFeedback(after, {});
-        reply.insert(QStringLiteral("moved"), reorderReply(result, *m_controller->project()).value(QStringLiteral("moved")));
-        return ok(reply);
+        return ok(clipFeedback(after, reorderReply(result, *m_controller->project())));
     }
     const double requested = jsonNumber(args.value(QStringLiteral("at")), 0);
     if (m_controller->allowClipOverlap()) {

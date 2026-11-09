@@ -695,7 +695,8 @@ const QList<Op> &ops()
           "the next gap; the reply carries requested, placed, and reason:\"gap\" when they differ. "
           "Or reorder: before/after (a clip id on the same track) puts it at that clip's start or "
           "end and moves the clips in between by its length, linked tracks too, in one undo step; "
-          "the reply adds moved:[{id, start}]. A locked track or a clip landing on another refuses it.",
+          "the reply adds moved:[{id, start}] and any removed_transitions. Refused when the two are "
+          "linked, a track is locked, or a clip would land on another or before 0.",
           objectSchema(mergeProps({{QStringLiteral("at"), numberProp(QStringLiteral("New start seconds"))},
                                    {QStringLiteral("before"), stringProp(QStringLiteral("Clip id to move in front of"))},
                                    {QStringLiteral("after"), stringProp(QStringLiteral("Clip id to move behind"))}},
@@ -704,7 +705,8 @@ const QList<Op> &ops()
         { "swap_clips", "timeline", "Exchange two clips' places",
           "Swap two clips on one track in one undo step: each takes the other's place, the clips "
           "between them move by the difference in length, and linked A/V moves along. Refused for "
-          "different tracks, a locked track or a clip landing on another. Returns moved:[{id, start}].",
+          "different tracks, linked or locked clips, or a clip landing on another or before 0. "
+          "Returns moved:[{id, start}] and any removed_transitions.",
           objectSchema({{QStringLiteral("a"), stringProp(QStringLiteral("Clip id"))},
                         {QStringLiteral("b"), stringProp(QStringLiteral("Clip id"))}},
                        {QStringLiteral("a"), QStringLiteral("b")}) },

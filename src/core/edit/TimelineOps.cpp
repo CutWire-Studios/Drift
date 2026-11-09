@@ -1456,7 +1456,7 @@ QStringList rippleTracks(Project &project, const QSet<int> &tracks, TimeUs fromU
 }
 
 QStringList shiftWindow(Project &project, const QSet<int> &tracks, TimeUs fromUs, TimeUs toUs, TimeUs deltaUs,
-                        const QSet<QString> &exclude, bool *clamped)
+                        const QSet<QString> &exclude, bool *clamped, QString *clampedId)
 {
     QStringList moved;
     if (deltaUs == 0 || toUs <= fromUs)
@@ -1465,8 +1465,12 @@ QStringList shiftWindow(Project &project, const QSet<int> &tracks, TimeUs fromUs
     QSet<QString> movedIds;
     QSet<QString> movedLinks;
     const auto move = [&](Clip &clip) {
-        if (clip.timelineStart + deltaUs < 0 && clamped)
-            *clamped = true;
+        if (clip.timelineStart + deltaUs < 0) {
+            if (clamped)
+                *clamped = true;
+            if (clampedId && clampedId->isEmpty())
+                *clampedId = clip.id;
+        }
         clip.timelineStart = qMax<TimeUs>(0, clip.timelineStart + deltaUs);
         moved.append(clip.id);
         movedIds.insert(clip.id);
@@ -1496,7 +1500,8 @@ QStringList shiftWindow(Project &project, const QSet<int> &tracks, TimeUs fromUs
     return moved;
 }
 
-QStringList shiftClipWithLinks(Project &project, const QString &clipId, TimeUs deltaUs, bool *clamped)
+QStringList shiftClipWithLinks(Project &project, const QString &clipId, TimeUs deltaUs, bool *clamped,
+                               QString *clampedId)
 {
     QStringList moved;
     QString link;
@@ -1510,8 +1515,12 @@ QStringList shiftClipWithLinks(Project &project, const QString &clipId, TimeUs d
         for (Clip &clip : track.clips) {
             if (clip.id != clipId && (link.isEmpty() || clip.linkId != link))
                 continue;
-            if (clip.timelineStart + deltaUs < 0 && clamped)
-                *clamped = true;
+            if (clip.timelineStart + deltaUs < 0) {
+                if (clamped)
+                    *clamped = true;
+                if (clampedId && clampedId->isEmpty())
+                    *clampedId = clip.id;
+            }
             clip.timelineStart = qMax<TimeUs>(0, clip.timelineStart + deltaUs);
             moved.append(clip.id);
         }

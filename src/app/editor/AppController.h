@@ -954,10 +954,12 @@ public:
     // in between move by its length so the track keeps its spacing. swapClips exchanges two
     // clips' places; the clips between them move by the difference in length. Tracks joined by
     // linked clips move together. Refused (nothing changes) when the clips are on different tracks,
-    // a track is locked, or a clip would land on another or before 0.
+    // a track is locked or an adjustment track, the two are linked to each other or overlap, or a
+    // clip would land on another or before 0. Transitions whose clips stop touching are removed.
     struct ReorderResult
     {
         QStringList moved;
+        QStringList removedTransitions;
         QString error;
         QString errorCode;
     };

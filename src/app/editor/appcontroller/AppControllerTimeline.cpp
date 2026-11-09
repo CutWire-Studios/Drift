@@ -2896,6 +2896,24 @@ QSet<QString> clipAndLinks(const drift::Project &project, const QString &clipId)
     return ids;
 }
 
+// Transitions in `before` that `after` no longer has (their clips stopped touching), by id.
+QStringList removedTransitionsSince(const drift::Project &before, const drift::Project &after)
+{
+    const auto key = [](const drift::Transition &transition) {
+        return transition.fromClipId + QLatin1Char('|') + transition.toClipId;
+    };
+    QSet<QString> kept;
+    for (const drift::Track &track : after.tracks())
+        for (const drift::Transition &transition : track.transitions)
+            kept.insert(key(transition));
+    QStringList removed;
+    for (const drift::Track &track : before.tracks())
+        for (const drift::Transition &transition : track.transitions)
+            if (!kept.contains(key(transition)))
+                removed.append(transition.id.isEmpty() ? key(transition) : transition.id);
+    return removed;
+}
+
 QStringList movedSince(const drift::Project &before, const drift::Project &after)
 {
     QHash<QString, drift::TimeUs> starts;
@@ -2932,46 +2950,54 @@ AppController::ReorderResult AppController::moveClipNextTo(const QString &clipId
         return fail("bad_args", QStringLiteral("A clip cannot move next to itself"));
     if (t != nt)
         return fail("bad_args", QStringLiteral("%1 and %2 are on different tracks; use move_to_track first").arg(clipId, neighbourId));
+    if (m_project.tracks().at(t).isAdjustment())
+        return fail("bad_args", QStringLiteral("Track %1 is an adjustment track; its clips follow the clips they apply to").arg(t));
+    const QSet<QString> carried = clipAndLinks(m_project, clipId);
+    if (carried.contains(neighbourId))
+        return fail("bad_args", QStringLiteral("%1 and %2 are linked and move together; unlink them first").arg(clipId, neighbourId));
 
     const drift::Clip clip = m_project.tracks().at(t).clips.at(c);
     const drift::Clip neighbour = m_project.tracks().at(nt).clips.at(nc);
     const drift::TimeUs s = clip.timelineStart;
     const drift::TimeUs e = clip.timelineEnd();
     const drift::TimeUs length = clip.timelineDuration;
+    if (neighbour.timelineStart < e && neighbour.timelineEnd() > s)
+        return fail("bad_args", QStringLiteral("%1 and %2 overlap").arg(clipId, neighbourId));
     const drift::TimeUs target = after ? neighbour.timelineEnd() : neighbour.timelineStart;
-    if (target == s || target == e)
-        return result; // already there
 
-    const QSet<QString> carried = clipAndLinks(m_project, clipId);
     QSet<int> tracks = drift::rippleTrackGroup(m_project, t);
     tracks.insert(t);
     for (const int i : std::as_const(tracks)) {
         if (m_project.tracks().at(i).locked)
             return fail("bad_args", QStringLiteral("Track %1 is locked").arg(i));
     }
+    if (after ? target == s : target == e)
+        return result; // already there
 
     const drift::Project before = m_project;
     bool clamped = false;
+    QString clampedId;
     drift::TimeUs newStart = s;
     if (target > e) {
-        drift::shiftWindow(m_project, tracks, e, target, -length, carried, &clamped);
+        drift::shiftWindow(m_project, tracks, e, target, -length, carried, &clamped, &clampedId);
         newStart = target - length;
     } else {
-        drift::shiftWindow(m_project, tracks, target, s, length, carried, &clamped);
+        drift::shiftWindow(m_project, tracks, target, s, length, carried, &clamped, &clampedId);
         newStart = target;
     }
-    drift::shiftClipWithLinks(m_project, clipId, newStart - s, &clamped);
+    drift::shiftClipWithLinks(m_project, clipId, newStart - s, &clamped, &clampedId);
     const QString collision = drift::rippleCollision(before, m_project, tracks);
     if (!collision.isEmpty() || clamped) {
         m_project = before;
         return fail("bad_args", collision.isEmpty()
-                                    ? QStringLiteral("A linked clip would have to move before the start of the timeline")
+                                    ? QStringLiteral("Linked clip %1 would have to move before the start of the timeline").arg(clampedId)
                                     : QStringLiteral("Clip %1 would land on another; move it first").arg(collision));
     }
     syncOverlapTransitions(m_project);
     pushProjectEdit(before, tr("Clip moved"));
     finishEdit(tr("Clip moved"));
     result.moved = movedSince(before, m_project);
+    result.removedTransitions = removedTransitionsSince(before, m_project);
     return result;
 }
 
@@ -2992,6 +3018,10 @@ AppController::ReorderResult AppController::swapClips(const QString &firstId, co
         return fail("bad_args", QStringLiteral("A clip cannot swap with itself"));
     if (t1 != t2)
         return fail("bad_args", QStringLiteral("%1 and %2 are on different tracks").arg(firstId, secondId));
+    if (m_project.tracks().at(t1).isAdjustment())
+        return fail("bad_args", QStringLiteral("Track %1 is an adjustment track; its clips follow the clips they apply to").arg(t1));
+    if (clipAndLinks(m_project, firstId).contains(secondId))
+        return fail("bad_args", QStringLiteral("%1 and %2 are linked and move together; unlink them first").arg(firstId, secondId));
 
     drift::Clip a = m_project.tracks().at(t1).clips.at(c1);
     drift::Clip b = m_project.tracks().at(t2).clips.at(c2);
@@ -3010,21 +3040,23 @@ AppController::ReorderResult AppController::swapClips(const QString &firstId, co
 
     const drift::Project before = m_project;
     bool clamped = false;
+    QString clampedId;
     drift::shiftWindow(m_project, tracks, a.timelineEnd(), b.timelineStart,
-                       b.timelineDuration - a.timelineDuration, carried, &clamped);
-    drift::shiftClipWithLinks(m_project, a.id, (b.timelineEnd() - a.timelineDuration) - a.timelineStart, &clamped);
-    drift::shiftClipWithLinks(m_project, b.id, a.timelineStart - b.timelineStart, &clamped);
+                       b.timelineDuration - a.timelineDuration, carried, &clamped, &clampedId);
+    drift::shiftClipWithLinks(m_project, a.id, (b.timelineEnd() - a.timelineDuration) - a.timelineStart, &clamped, &clampedId);
+    drift::shiftClipWithLinks(m_project, b.id, a.timelineStart - b.timelineStart, &clamped, &clampedId);
     const QString collision = drift::rippleCollision(before, m_project, tracks);
     if (!collision.isEmpty() || clamped) {
         m_project = before;
         return fail("bad_args", collision.isEmpty()
-                                    ? QStringLiteral("A linked clip would have to move before the start of the timeline")
+                                    ? QStringLiteral("Linked clip %1 would have to move before the start of the timeline").arg(clampedId)
                                     : QStringLiteral("Clip %1 would land on another; move it first").arg(collision));
     }
     syncOverlapTransitions(m_project);
     pushProjectEdit(before, tr("Clips swapped"));
     finishEdit(tr("Clips swapped"));
     result.moved = movedSince(before, m_project);
+    result.removedTransitions = removedTransitionsSince(before, m_project);
     return result;
 }
 

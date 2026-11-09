@@ -303,13 +303,14 @@ QStringList rippleTracks(Project &project, const QSet<int> &tracks, TimeUs fromU
 // Moves the clips on `tracks` that start within [fromUs, toUs) (and are not in `exclude`) by
 // `deltaUs`, once, together with any clip on those tracks linked to a moved one (outside the
 // window or not, unless excluded). For reordering: the clips between a clip's old and new place
-// make room or close up. `clamped` as for rippleTracks. Returns the moved ids.
+// make room or close up. `clamped` and `clampedId` as for rippleTracks. Returns the moved ids.
 QStringList shiftWindow(Project &project, const QSet<int> &tracks, TimeUs fromUs, TimeUs toUs, TimeUs deltaUs,
-                        const QSet<QString> &exclude = {}, bool *clamped = nullptr);
+                        const QSet<QString> &exclude = {}, bool *clamped = nullptr, QString *clampedId = nullptr);
 
 // Moves a clip and everything linked to it (on any track; adjustment tracks aside) by `deltaUs`.
 // Returns the moved ids.
-QStringList shiftClipWithLinks(Project &project, const QString &clipId, TimeUs deltaUs, bool *clamped = nullptr);
+QStringList shiftClipWithLinks(Project &project, const QString &clipId, TimeUs deltaUs, bool *clamped = nullptr,
+                               QString *clampedId = nullptr);
 
 // The id of a clip on `tracks` that overlaps another one in `after` though the two did not
 // overlap in `before` (a ripple pushed one onto the other), or empty. Adjustment tracks are

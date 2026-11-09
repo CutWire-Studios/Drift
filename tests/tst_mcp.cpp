@@ -1549,6 +1549,70 @@ void McpTest::reorderClipsKeepsTheSpacing()
     QCOMPARE(swap(a, a).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     QCOMPARE(startOf(a), 0.0);
 
+    // Into the middle; the reply carries the final starts.
+    const QJsonObject middle = move(a, "after", b);
+    QVERIFY2(middle.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(middle).toJson()));
+    QCOMPARE(startOf(b), 0.0);
+    QCOMPARE(startOf(a), 2.0);
+    QCOMPARE(startOf(c), 3.0);
+    QHash<QString, double> reported;
+    for (const QJsonValue &m : middle.value(QStringLiteral("moved")).toArray())
+        reported.insert(m.toObject().value(QStringLiteral("id")).toString(), m.toObject().value(QStringLiteral("start")).toDouble());
+    QCOMPARE(reported.size(), 2);
+    QCOMPARE(reported.value(a), 2.0);
+    QCOMPARE(reported.value(b), 0.0);
+    state.undo();
+
+    // Already in place: ok, nothing moves, no undo step.
+    const QJsonObject inPlace = move(b, "after", a);
+    QVERIFY(inPlace.value(QStringLiteral("ok")).toBool());
+    QVERIFY(inPlace.value(QStringLiteral("moved")).toArray().isEmpty());
+    QCOMPARE(startOf(b), 1.0);
+
+    // A gap between the clips moves with the block.
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].timelineStart = drift::secondsToUs(5.0);
+    QVERIFY(move(a, "after", c).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(b), 0.0);
+    QCOMPARE(startOf(c), 4.0);
+    QCOMPARE(startOf(a), 5.0);
+    state.undo();
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].timelineStart = drift::secondsToUs(3.0);
+
+    // Two clips linked to each other can't be ordered against each other.
+    {
+        const auto setLink = [&](const QString &id, const QString &link) {
+            state.project()->tracks()[track].clips[state.mcp()->locateClip(id).second].linkId = link;
+        };
+        setLink(a, QStringLiteral("a-c"));
+        setLink(c, QStringLiteral("a-c"));
+        QCOMPARE(move(a, "after", c).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(swap(a, c).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(startOf(a), 0.0);
+        QCOMPARE(startOf(c), 3.0);
+        setLink(a, QString());
+        setLink(c, QString());
+    }
+
+    // Adjustment clips follow what they apply to: refused rather than half moved.
+    {
+        drift::Track adjustment{.type = drift::TrackType::Adjustment};
+        for (const auto &[id, at] : {std::pair{"adj-1", 0.0}, std::pair{"adj-2", 1.0}}) {
+            drift::Clip grade;
+            grade.id = QString::fromLatin1(id);
+            grade.type = drift::ClipType::Adjustment;
+            grade.timelineStart = drift::secondsToUs(at);
+            grade.timelineDuration = drift::secondsToUs(1.0);
+            adjustment.clips.append(grade);
+        }
+        state.project()->tracks().append(adjustment);
+        // Straight to the controller: the MCP id lookup doesn't know clips added to the project directly.
+        QCOMPARE(state.moveClipNextTo(QStringLiteral("adj-1"), QStringLiteral("adj-2"), true).errorCode,
+                 QStringLiteral("bad_args"));
+        QCOMPARE(state.swapClips(QStringLiteral("adj-1"), QStringLiteral("adj-2")).errorCode, QStringLiteral("bad_args"));
+        QCOMPARE(startOf(QStringLiteral("adj-2")), 1.0);
+        state.project()->tracks().removeLast();
+    }
+
     // A's linked audio goes with it; a clip on the audio track between moves with B and C.
     {
         drift::Track audioTrack{.type = drift::TrackType::Audio};
