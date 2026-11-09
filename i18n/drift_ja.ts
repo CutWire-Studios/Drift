@@ -3039,7 +3039,7 @@
     </message>
     <message>
         <source>Hide/show selected clip&apos;s track</source>
-        <translation type="unfinished"></translation>
+        <translation>選択中のクリップのトラックを表示/非表示</translation>
     </message>
     <message>
         <source>3D gizmo: move / Tracker tool</source>
@@ -5945,15 +5945,15 @@
     </message>
     <message>
         <source>Color Burn</source>
-        <translation type="unfinished"></translation>
+        <translation>焼き込みカラー</translation>
     </message>
     <message>
         <source>Linear Burn</source>
-        <translation type="unfinished"></translation>
+        <translation>焼き込み (リニア)</translation>
     </message>
     <message>
         <source>Darker Color</source>
-        <translation type="unfinished"></translation>
+        <translation>カラー比較 (暗)</translation>
     </message>
     <message>
         <source>Lighten</source>
@@ -5965,7 +5965,7 @@
     </message>
     <message>
         <source>Color Dodge</source>
-        <translation type="unfinished"></translation>
+        <translation>覆い焼きカラー</translation>
     </message>
     <message>
         <source>Add</source>
@@ -5973,7 +5973,7 @@
     </message>
     <message>
         <source>Lighter Color</source>
-        <translation type="unfinished"></translation>
+        <translation>カラー比較 (明)</translation>
     </message>
     <message>
         <source>Contrast</source>
@@ -5985,39 +5985,39 @@
     </message>
     <message>
         <source>Soft Light</source>
-        <translation type="unfinished"></translation>
+        <translation>ソフトライト</translation>
     </message>
     <message>
         <source>Hard Light</source>
-        <translation type="unfinished"></translation>
+        <translation>ハードライト</translation>
     </message>
     <message>
         <source>Vivid Light</source>
-        <translation type="unfinished"></translation>
+        <translation>ビビッドライト</translation>
     </message>
     <message>
         <source>Linear Light</source>
-        <translation type="unfinished"></translation>
+        <translation>リニアライト</translation>
     </message>
     <message>
         <source>Pin Light</source>
-        <translation type="unfinished"></translation>
+        <translation>ピンライト</translation>
     </message>
     <message>
         <source>Hard Mix</source>
-        <translation type="unfinished"></translation>
+        <translation>ハードミックス</translation>
     </message>
     <message>
         <source>Inversion</source>
-        <translation type="unfinished"></translation>
+        <translation>反転</translation>
     </message>
     <message>
         <source>Difference</source>
-        <translation type="unfinished"></translation>
+        <translation>差の絶対値</translation>
     </message>
     <message>
         <source>Exclusion</source>
-        <translation type="unfinished"></translation>
+        <translation>除外</translation>
     </message>
     <message>
         <source>Subtract</source>
@@ -6025,11 +6025,11 @@
     </message>
     <message>
         <source>Divide</source>
-        <translation type="unfinished"></translation>
+        <translation>除算</translation>
     </message>
     <message>
         <source>Component</source>
-        <translation type="unfinished"></translation>
+        <translation>コンポーネント</translation>
     </message>
     <message>
         <source>Hue</source>
@@ -6045,7 +6045,7 @@
     </message>
     <message>
         <source>Luminosity</source>
-        <translation type="unfinished"></translation>
+        <translation>輝度</translation>
     </message>
 </context>
 <context>
@@ -17524,7 +17524,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Follows your Windows display scale.</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows の表示スケールに従います。</translation>
     </message>
     <message>
         <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
@@ -17532,7 +17532,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger or smaller, on top of your display settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>表示設定に加えて、ボタン、テキスト、アイコンを大きくまたは小さくします。</translation>
     </message>
     <message>
         <source>100% (system)</source>
@@ -17540,7 +17540,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Windows display scale</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows の表示スケール</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -22074,27 +22074,27 @@ If playback stutters, try another.</source>
     <name>TeleprompterPanel</name>
     <message>
         <source>Teleprompter</source>
-        <translation type="unfinished"></translation>
+        <translation>テレプロンプター</translation>
     </message>
     <message>
         <source>Edit script</source>
-        <translation type="unfinished"></translation>
+        <translation>スクリプトを編集</translation>
     </message>
     <message>
         <source>Read mode</source>
-        <translation type="unfinished"></translation>
+        <translation>読み取りモード</translation>
     </message>
     <message>
         <source>Pause scrolling</source>
-        <translation type="unfinished"></translation>
+        <translation>スクロールを一時停止</translation>
     </message>
     <message>
         <source>Start scrolling</source>
-        <translation type="unfinished"></translation>
+        <translation>スクロールを開始</translation>
     </message>
     <message>
         <source>Back to top</source>
-        <translation type="unfinished"></translation>
+        <translation>先頭に戻る</translation>
     </message>
     <message>
         <source>Speed</source>
@@ -22110,19 +22110,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Follow recording</source>
-        <translation type="unfinished"></translation>
+        <translation>録画に連動</translation>
     </message>
     <message>
         <source>Scrolling starts, pauses and stops with recording</source>
-        <translation type="unfinished"></translation>
+        <translation>スクロールは録画に合わせて開始、一時停止、停止します</translation>
     </message>
     <message>
         <source>Show over preview</source>
-        <translation type="unfinished"></translation>
+        <translation>プレビュー上に表示</translation>
     </message>
     <message>
         <source>Paste or type your script</source>
-        <translation type="unfinished"></translation>
+        <translation>スクリプトを貼り付けるか入力してください</translation>
     </message>
 </context>
 <context>
@@ -23573,7 +23573,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Toggle keyframe strip</source>
-        <translation type="unfinished"></translation>
+        <translation>キーフレームストリップを切り替え</translation>
     </message>
     <message>
         <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
@@ -26619,7 +26619,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Teleprompter</source>
-        <translation type="unfinished"></translation>
+        <translation>テレプロンプター</translation>
     </message>
     <message>
         <source>Noise Removal</source>
