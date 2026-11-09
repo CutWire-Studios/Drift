@@ -752,7 +752,7 @@
     </message>
     <message>
         <source>Curve</source>
-        <translation type="unfinished">Đường cong</translation>
+        <translation>Đường cong</translation>
     </message>
     <message>
         <source>Done</source>
@@ -4119,15 +4119,15 @@
     </message>
     <message>
         <source>Linear</source>
-        <translation type="unfinished">Tuyến tính</translation>
+        <translation>Tuyến tính</translation>
     </message>
     <message>
         <source>Smooth</source>
-        <translation type="unfinished">Mượt</translation>
+        <translation>Mượt</translation>
     </message>
     <message>
         <source>Natural</source>
-        <translation type="unfinished">Tự nhiên</translation>
+        <translation>Tự nhiên</translation>
     </message>
     <message>
         <source>Custom</source>
@@ -4143,7 +4143,7 @@
     </message>
     <message>
         <source>Bounce</source>
-        <translation type="unfinished">Nảy</translation>
+        <translation>Nảy</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -5241,7 +5241,7 @@
     </message>
     <message>
         <source>Remove silence</source>
-        <translation type="unfinished">Xóa im lặng</translation>
+        <translation>Xóa im lặng</translation>
     </message>
     <message>
         <source>Removed %1 s of silence</source>
