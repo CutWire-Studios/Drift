@@ -100,6 +100,7 @@ private slots:
     void captureFilesStayOutOfTheProject();
     void subtitleClipKeepsItsChosenName();
     void setTransformKeysOnlyInsideTheClip();
+    void inspectFiltersTracksAndFields();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
     void replaceAssetWaitsForTheReprobe();
@@ -901,6 +902,51 @@ void McpTest::subtitleClipKeepsItsChosenName()
     cues.removeLast();
     state.setSubtitleCues(0, 0, cues);
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("Subtitles (002)"));
+}
+
+void McpTest::inspectFiltersTracksAndFields()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    for (int t = 0; t < 3; ++t) {
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(t);
+        clip.type = drift::ClipType::Text;
+        clip.name = clip.id;
+        clip.timelineDuration = drift::secondsToUs(1.0 + t);
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks()[t].clips.append(clip);
+    }
+    state.project()->ensureTrackIds();
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject some = dispatcher.inspect({{QStringLiteral("clips"), true},
+                                                 {QStringLiteral("tracks"), QJsonArray{0, 2}},
+                                                 {QStringLiteral("fields"), QJsonArray{QStringLiteral("duration")}}});
+    QVERIFY2(some.value(QStringLiteral("ok")).toBool(true), qPrintable(QJsonDocument(some).toJson()));
+    const QJsonArray rows = some.value(QStringLiteral("tracks")).toArray();
+    QCOMPARE(rows.size(), 2);
+    QCOMPARE(rows.at(0).toObject().value(QStringLiteral("i")).toInt(), 0);
+    QCOMPARE(rows.at(1).toObject().value(QStringLiteral("i")).toInt(), 2);
+    const QJsonObject item = rows.at(1).toObject().value(QStringLiteral("items")).toArray().first().toObject();
+    QCOMPARE(item.keys(), (QStringList{QStringLiteral("duration"), QStringLiteral("id")}));
+    QCOMPARE(item.value(QStringLiteral("duration")).toDouble(), 3.0);
+    QCOMPARE(some.value(QStringLiteral("clips")).toInt(), 3); // the summary still counts every clip
+
+    // Detail rows trim too; the full reply is larger.
+    const QJsonObject detail = dispatcher.inspect({{QStringLiteral("clips"), true},
+                                                   {QStringLiteral("detail"), true},
+                                                   {QStringLiteral("fields"), QJsonArray{QStringLiteral("name")}}});
+    const QJsonObject detailItem = detail.value(QStringLiteral("tracks")).toArray().first().toObject()
+                                       .value(QStringLiteral("items")).toArray().first().toObject();
+    QCOMPARE(detailItem.keys(), (QStringList{QStringLiteral("id"), QStringLiteral("name")}));
+    const QJsonObject full = dispatcher.inspect({{QStringLiteral("clips"), true}, {QStringLiteral("detail"), true}});
+    QVERIFY(QJsonDocument(full).toJson().size() > QJsonDocument(detail).toJson().size());
+
+    QCOMPARE(dispatcher.inspect({{QStringLiteral("tracks"), QJsonArray{5}}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

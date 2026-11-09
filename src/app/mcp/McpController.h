@@ -104,6 +104,8 @@ public:
         int since = -1;
         int track = -1;
         QString clip;
+        QList<int> tracks;   // only these tracks (with `track`, its index too)
+        QStringList fields;  // clip rows keep only these keys (and id)
     };
     QJsonObject inspect(const InspectOptions &options) const;
     QJsonObject inspect(bool includeClips, int sinceRevision = -1, bool detail = false,

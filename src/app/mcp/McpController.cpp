@@ -612,7 +612,27 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
                                    .arg(options.track)
                                    .arg(projectTracks.size()));
     }
-    const int onlyTrack = only.first >= 0 ? only.first : options.track;
+    QSet<int> onlyTracks;
+    for (const int t : options.tracks) {
+        if (t < 0 || t >= projectTracks.size())
+            return err("bad_args", QStringLiteral("track %1 does not exist; the timeline has %2 track(s)")
+                                       .arg(t)
+                                       .arg(projectTracks.size()));
+        onlyTracks.insert(t);
+    }
+    if (!onlyTracks.isEmpty() && options.track >= 0)
+        onlyTracks.insert(options.track);
+    const int onlyTrack = only.first >= 0 ? only.first : (onlyTracks.isEmpty() ? options.track : -1);
+    // A clip row trimmed to the fields asked for; the id always stays so the row can be used.
+    const auto trimmed = [&options](QJsonObject row) {
+        if (options.fields.isEmpty())
+            return row;
+        QJsonObject out;
+        for (auto it = row.constBegin(); it != row.constEnd(); ++it)
+            if (it.key() == QLatin1String("id") || options.fields.contains(it.key()))
+                out.insert(it.key(), it.value());
+        return out;
+    };
     const bool includeClips = options.clips || only.first >= 0;
     const bool detail = options.detail || only.first >= 0;
     const bool includeCues = options.cues;
@@ -623,7 +643,7 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
     for (int t = 0; t < projectTracks.size(); ++t) {
         const drift::Track &track = projectTracks.at(t);
         clipCount += track.clips.size();
-        if (onlyTrack >= 0 && t != onlyTrack)
+        if ((onlyTrack >= 0 && t != onlyTrack) || (!onlyTracks.isEmpty() && !onlyTracks.contains(t)))
             continue;
         QJsonObject row{
             {QStringLiteral("i"), t},
@@ -683,7 +703,7 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
                             if (canvas.contains(QLatin1String(key)))
                                 transform.insert(QLatin1String(key), canvas.value(QLatin1String(key)));
                         }
-                        clips.append(mcpDetailRow(fullClip, transform, options.verbose));
+                        clips.append(trimmed(mcpDetailRow(fullClip, transform, options.verbose)));
                     }
                 } else {
                     const QVariantMap compact = compactClip(t, c, false);
@@ -699,7 +719,7 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
                         }
                         row.insert(QStringLiteral("subtitleCues"), cues);
                     }
-                    clips.append(row);
+                    clips.append(trimmed(row));
                 }
             }
             row.insert(QStringLiteral("items"), clips);

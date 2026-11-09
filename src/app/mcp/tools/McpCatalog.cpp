@@ -1712,7 +1712,14 @@ QJsonArray homepageTools()
                       {QStringLiteral("track"),
                        integerProp(QStringLiteral("Track index: return only that track"))},
                       {QStringLiteral("since"),
-                       integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current"))}}),
+                       integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current"))},
+                      {QStringLiteral("tracks"),
+                       arrayProp(integerProp(QStringLiteral("Track index")),
+                                 QStringLiteral("Return only these tracks (other tracks are left out of tracks[])"))},
+                      {QStringLiteral("fields"),
+                       arrayProp(stringProp(QStringLiteral("Clip row key, e.g. start")),
+                                 QStringLiteral("Clip rows keep only these keys (id always stays), e.g. [\"start\",\"duration\",\"name\"]: "
+                                                "a smaller reply for a big timeline"))}}),
         toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("apply"),
