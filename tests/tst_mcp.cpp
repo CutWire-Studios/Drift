@@ -1020,6 +1020,28 @@ void McpTest::insertClipRipplesTheTrack()
         QCOMPARE(startOf(QStringLiteral("music")), 5.0);
         state.undo();
 
+        // An earlier clip pulled along by a loose partner that moves would land on the new clip:
+        // refused. a gets a loose partner after the point; inserting at a's end moves the partner,
+        // and a with it, onto the new clip's place.
+        {
+            const QPair<int, int> locA = state.mcp()->locateClip(a);
+            drift::Clip &clipA = state.project()->tracks()[locA.first].clips[locA.second];
+            clipA.linkId = QStringLiteral("a-loose");
+            clipA.linkLoose = true;
+            drift::Clip partnerA = clipA;
+            partnerA.id = QStringLiteral("a-audio");
+            partnerA.type = drift::ClipType::Audio;
+            partnerA.timelineStart = drift::secondsToUs(8.0);
+            state.project()->tracks()[audio].clips.append(partnerA);
+            const QJsonObject pulled = insert({{QStringLiteral("at"), 2.0}, {QStringLiteral("out"), 1.0}});
+            QCOMPARE(pulled.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+            QCOMPARE(startOf(a), 0.0);
+            QCOMPARE(startOf(b), 2.0);
+            state.project()->tracks()[audio].clips.removeLast();
+            clipA.linkId.clear();
+            clipA.linkLoose = false;
+        }
+
         // A locked track the ripple would change refuses the insert.
         state.project()->tracks()[audio].locked = true;
         QCOMPARE(insert({{QStringLiteral("before"), b}, {QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(),
