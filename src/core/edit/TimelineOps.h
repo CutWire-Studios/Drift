@@ -294,10 +294,11 @@ QSet<int> rippleTrackGroup(const Project &project, int trackIndex);
 // Moves every clip on `tracks` that starts at or after `fromUs` (and is not in `exclude`) by
 // `deltaUs`, once, together with any clip on those tracks linked to a moved one that starts
 // earlier (a J-cut, or a loose partner). A clip moved left stops at 0; `clamped` is then set,
-// since it no longer keeps its offset. Returns the moved ids. Callers check the result with
+// since it no longer keeps its offset, and `clampedId` names the first such clip. Returns the
+// moved ids. Callers check the result with
 // rippleCollision.
 QStringList rippleTracks(Project &project, const QSet<int> &tracks, TimeUs fromUs, TimeUs deltaUs,
-                         const QSet<QString> &exclude = {}, bool *clamped = nullptr);
+                         const QSet<QString> &exclude = {}, bool *clamped = nullptr, QString *clampedId = nullptr);
 
 // The id of a clip on `tracks` that overlaps another one in `after` though the two did not
 // overlap in `before` (a ripple pushed one onto the other), or empty. Adjustment tracks are
