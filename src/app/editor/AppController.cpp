@@ -1119,6 +1119,7 @@ QVariantList AppController::tracks() const
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
             {QStringLiteral("solo"), track.solo},
+            {QStringLiteral("locked"), track.locked},
             {QStringLiteral("volume"), track.volume},
             {QStringLiteral("pan"), track.pan},
             {QStringLiteral("clipDisplay"), static_cast<int>(track.clipDisplay)},

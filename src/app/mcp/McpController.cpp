@@ -631,6 +631,7 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
             {QStringLiteral("clips"), track.clips.size()},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
+            {QStringLiteral("locked"), track.locked},
         };
         if (track.isAdjustment())
             row.insert(QStringLiteral("scope"), drift::adjustmentScopeToString(track.adjustmentScope));

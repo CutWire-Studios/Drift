@@ -16,6 +16,8 @@ Item {
     // getters) so the toggles rebind on tracksChanged.
     readonly property bool trackMuted: column.tracks[index].muted === true
     readonly property bool trackHidden: column.tracks[index].hidden === true
+    readonly property bool trackLocked: column.tracks[index].locked === true
+    readonly property bool trackSolo: column.tracks[index].solo === true
     readonly property int clipDisplay: column.tracks[index].clipDisplay !== undefined
                                        ? column.tracks[index].clipDisplay : 1
     readonly property bool trackWaveform: clipDisplay === 2
@@ -46,7 +48,31 @@ Item {
                                           && index > column.spanPreviewLayer
                                           && index <= column.spanPreviewEnd
     readonly property real rowTop: column.trackRowTop(index)
-    readonly property real centerOffset: index < column.tracks.length - 1 ? -Theme.trackGap / 2 : 0
+    readonly property bool selected: {
+        if (column.compact)
+            return false
+        if (EditorState.selectedTrack === index)
+            return true
+        const picked = EditorState.selection
+        for (let i = 0; i < picked.length; ++i) {
+            if (picked[i].track === index)
+                return true
+        }
+        return false
+    }
+    // Nested adjustment lanes occupy the top of the row; the header's own content lives below them.
+    readonly property int laneCount: {
+        const dep = column.tracks.length
+        return EditorState.clipsModel(index).adjustmentLanes.length
+    }
+    readonly property real rowContentHeight: column.trackHeight(index)
+    readonly property real contentTop: laneCount * Theme.adjustmentLaneHeight
+    readonly property real contentHeight: rowContentHeight - contentTop
+    readonly property bool twoLine: !column.compact && contentHeight >= 44
+    readonly property real line1Height: twoLine ? 24 : contentHeight
+    readonly property real line2Height: twoLine ? 22 : 0
+    readonly property real blockTop: contentTop + (contentHeight - line1Height - line2Height) / 2
+    readonly property real centerOffset: contentTop + contentHeight / 2 - height / 2
     readonly property string hideLabel: isTransformLayer
         ? (trackHidden ? qsTr("Turn transform on") : qsTr("Turn transform off"))
         : column.tracks[index].type === "adjustment"
@@ -69,6 +95,8 @@ Item {
     clip: true
 
     readonly property string trackType: column.tracks[index].type
+    readonly property bool wantSolo: trackType === "audio"
+                                     || (trackType === "video" && column.tracks[index].hasAudio === true)
     readonly property bool wantMute: trackType === "video" || trackType === "audio"
     readonly property bool wantHide: trackType === "video" || trackType === "adjustment"
                                      || trackType === "text" || trackType === "subtitle"
@@ -88,10 +116,11 @@ Item {
     // Toggles drop out lowest-priority first as the header narrows; whatever does not fit is
     // reachable from the overflow button, which opens the context menu.
     readonly property var iconFit: {
+        if (!column.compact)
+            return { overflow: false, mute: false, hide: false, mic: false, lanes: false, clip: false }
         const wants = [wantMute, wantHide, wantMic, wantLanes, wantClip]
         const spacing = trackIconRow.spacing
-        const nameReserve = column.compact ? 8 : (column.trackHeight(index) < 40 ? 36 : 0)
-        const avail = width - (column.compact ? 16 : 22) - (column.compact ? 4 : 12) - nameReserve
+        const avail = width - 16 - 4 - 8
         const cap = Math.max(0, Math.floor((avail + spacing) / (16 + spacing)))
         let total = 0
         for (const w of wants)
@@ -213,6 +242,13 @@ Item {
         }
     }
 
+    TrackHeaderBottomResize {
+        visible: !column.compact
+        column: trackLabelRow.column
+        trackIndex: index
+        lanesPx: trackLabelRow.contentTop
+    }
+
     TrackHeaderEdge {
         column: trackLabelRow.column
         trackIndex: index
@@ -224,6 +260,26 @@ Item {
         rowHeight: trackLabelRow.column.trackHeight(index)
     }
 
+    TrackHeaderStateTint {
+        visible: !column.compact
+        hovered: trackHeaderDrag.containsMouse
+        selected: trackLabelRow.selected
+        locked: trackLabelRow.trackLocked
+        rowHeight: trackLabelRow.column.trackHeight(index)
+    }
+
+    TrackHeaderTypeStrip {
+        trackType: trackLabelRow.trackType
+        transformLayer: trackLabelRow.isTransformLayer
+        rowHeight: trackLabelRow.column.trackHeight(index)
+        opacity: trackLabelRow.trackHidden ? 0.4 : 1
+    }
+
+    TrackHeaderSeparator {
+        visible: !column.compact && index < column.tracks.length - 1
+        rowHeight: trackLabelRow.column.trackHeight(index)
+    }
+
     TrackHeaderGrip {
         id: grip
         shown: !(column.compact && trackLabelRow.insideBracket)
@@ -231,14 +287,16 @@ Item {
         hot: grip.hovered
         dragging: column.draggingTrackFrom === index
         headerHovered: trackHeaderDrag.containsMouse
-        centerOffset: trackLabelRow.centerOffset
+        centerOffset: column.compact ? trackLabelRow.centerOffset
+                                     : trackLabelRow.blockTop + trackLabelRow.line1Height / 2 - trackLabelRow.height / 2
     }
 
     // One eye per nested adjustment lane, level with its strip at the top of the row.
-    // The lane has no header of its own, so its switch lives on its parent's.
+    // The lane has no header of its own, so its switch lives on its parent's. The rest of
+    // the header is laid out below the lanes (contentTop), so the two never share a line.
     Column {
         anchors.right: parent.right
-        anchors.rightMargin: column.compact ? 4 : 12
+        anchors.rightMargin: column.compact ? 4 : 9
         y: 0
         Repeater {
             model: EditorState.clipsModel(index).adjustmentLanes
@@ -250,6 +308,7 @@ Item {
 
     Row {
         id: trackIconRow
+        visible: column.compact
         anchors.right: parent.right
         anchors.rightMargin: column.compact ? 4 : 12
         anchors.verticalCenter: parent.verticalCenter
@@ -293,15 +352,15 @@ Item {
         }
     }
 
-    // Text/subtitle rows are too short for the name band above (it needs both a
-    // top-anchored name and a vertically centered icon row without the two
-    // overlapping), so the name sits inline here instead, between the grip and the
-    // type/toggle icons.
-    TrackHeaderInlineName {
-        visible: !column.compact && column.trackHeight(index) < 40 && width >= 24
-        label: trackLabelRow.trackDisplayName
-        centerOffset: trackLabelRow.centerOffset
-        iconRow: trackIconRow
+    Loader {
+        active: !column.compact
+        anchors.fill: parent
+        sourceComponent: Component {
+            TrackHeaderControls {
+                row: trackLabelRow
+                onOverflowRequested: (anchor) => trackContextMenu.popup(anchor, 0, anchor.height)
+            }
+        }
     }
 
     // Compact stand-in for the glyph and the name band: sits in the gap
@@ -325,13 +384,6 @@ Item {
         clipDisplay: trackLabelRow.clipDisplay
         corner: true
         shown: column.compact && column.tracks[index].type === "video"
-    }
-
-    // Track name. Nothing in the header used to say which
-    // track this was beyond the type glyph.
-    TrackHeaderBandName {
-        visible: !column.compact && column.trackHeight(index) >= 40 && width >= 24
-        label: trackLabelRow.trackDisplayName
     }
 
     // Track context menu. Right-click on desktop; on touch it is opened from the

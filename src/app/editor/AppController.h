@@ -1428,6 +1428,8 @@ public:
     Q_INVOKABLE void setTrackHidden(int trackIndex, bool hidden);
     Q_INVOKABLE void setTrackSolo(int trackIndex, bool solo);
     Q_INVOKABLE bool trackSolo(int trackIndex) const;
+    Q_INVOKABLE void setTrackLocked(int trackIndex, bool locked);
+    Q_INVOKABLE bool trackLocked(int trackIndex) const;
     Q_INVOKABLE void setTrackVolume(int trackIndex, double volume);
     Q_INVOKABLE void previewTrackVolume(int trackIndex, double volume);
     Q_INVOKABLE double trackVolume(int trackIndex) const;
@@ -2354,6 +2356,7 @@ protected:
     // sending it twice.
     bool m_quietUndoPush = false;
     bool m_undoRefreshOwed = false;
+    bool m_editRefusedByLock = false;
     // Set while commitPreviewDrag finishes a drag that left the selection on the same clip:
     // finishEdit then skips selectionChanged.
     bool m_quietSelection = false;

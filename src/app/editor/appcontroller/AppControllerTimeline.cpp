@@ -13,6 +13,8 @@
 
 
 #include <QGuiApplication>
+#include <QJsonArray>
+#include <QJsonObject>
 #include <QCoreApplication>
 #include <QScopedValueRollback>
 #include <QSettings>
@@ -85,6 +87,24 @@ void attachAssetSource(drift::Clip &clip)
     drift::vec::probeVectorSource(clip.vector);
 }
 
+static QMap<QString, QPair<QJsonValue, bool>> trackContentById(const drift::Project &project)
+{
+    QMap<QString, QPair<QJsonValue, bool>> result;
+    const auto collect = [&result](const QJsonArray &tracks) {
+        for (const QJsonValue &value : tracks) {
+            const QJsonObject track = value.toObject();
+            QJsonArray content{track.value(QStringLiteral("clips")), track.value(QStringLiteral("transitions"))};
+            result.insert(track.value(QStringLiteral("id")).toString(),
+                          {content, track.value(QStringLiteral("locked")).toBool()});
+        }
+    };
+    const QJsonObject root = project.toJson(false);
+    collect(root.value(QStringLiteral("tracks")).toArray());
+    for (const QJsonValue &sequence : root.value(QStringLiteral("sequences")).toArray())
+        collect(sequence.toObject().value(QStringLiteral("tracks")).toArray());
+    return result;
+}
+
 // Ripple by time rather than by index, over several tracks at once: every clip on those tracks
 // starting at or after fromUs moves by delta, and linked partners on other tracks follow. Index
 // ripple (applyRippleShift) only ever reached one track, which is how a trim of a linked clip used
@@ -97,7 +117,7 @@ void rippleTracksFrom(drift::Project &project, const QSet<int> &trackIndexes, dr
     QList<drift::Clip> moved;
     QSet<QString> movedIds;
     for (const int t : trackIndexes) {
-        if (t < 0 || t >= project.tracks().size())
+        if (t < 0 || t >= project.tracks().size() || project.tracks().at(t).locked)
             continue;
         for (drift::Clip &clip : project.tracks()[t].clips) {
             if (excludeIds.contains(clip.id) || clip.timelineStart < fromUs)
@@ -749,6 +769,26 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     // This is also where a track created by this edit gets its id — nested lanes address their
     // parent by it, and the dozen places that append a track all leave it empty.
     normalizeProjectStructure(&before);
+    m_editRefusedByLock = false;
+    bool anyLocked = false;
+    for (const drift::Track &track : before.tracks())
+        anyLocked = anyLocked || track.locked;
+    if (anyLocked) {
+        const auto was = trackContentById(before);
+        const auto now = trackContentById(m_project);
+        for (auto it = was.constBegin(); it != was.constEnd(); ++it) {
+            if (!it.value().second)
+                continue;
+            const auto cur = now.constFind(it.key());
+            if (cur == now.constEnd() || cur->first != it.value().first) {
+                m_project = before;
+                m_editRefusedByLock = true;
+                m_tracksCacheValid = false;
+                m_durationCacheValid = false;
+                return;
+            }
+        }
+    }
     // Pinned adjustments take their span from their clip. finishEdit re-spans them too, but only
     // after this snapshot -- a redo would then restore every effect at its clip's old position.
     syncLinkedAdjustments(m_project);
@@ -824,7 +864,12 @@ void AppController::finishEdit(const QString &message)
     // timeline already shows the result and the label lives on in the undo
     // stack, so an edit now only clears a stale warning from an earlier attempt.
     Q_UNUSED(message)
-    setLastMessage(QString());
+    if (m_editRefusedByLock) {
+        m_editRefusedByLock = false;
+        setLastMessage(tr("Track is locked"), QStringLiteral("warning"));
+    } else {
+        setLastMessage(QString());
+    }
     m_mcpController->bumpEditRevision();
 }
 
@@ -1269,7 +1314,7 @@ int AppController::placeGeneratedAudioOnNewTracks(const QList<GeneratedAudioPlac
 
 void AppController::selectClip(int trackIndex, int clipIndex)
 {
-    if (!isValidClipIndex(trackIndex, clipIndex))
+    if (!isValidClipIndex(trackIndex, clipIndex) || m_project.tracks().at(trackIndex).locked)
         return;
 
     m_selectedTrack = trackIndex;
@@ -1331,11 +1376,11 @@ QVariantList AppController::locateClip(const QString &clipId) const
 
 void AppController::addToSelection(int trackIndex, int clipIndex)
 {
-    if (!isValidClipIndex(trackIndex, clipIndex))
+    if (!isValidClipIndex(trackIndex, clipIndex) || m_project.tracks().at(trackIndex).locked)
         return;
 
     for (const QPair<int, int> &pair : selectionWithLinkedPartners(m_project, trackIndex, clipIndex)) {
-        if (!m_selection.contains(pair))
+        if (!m_project.tracks().at(pair.first).locked && !m_selection.contains(pair))
             m_selection.append(pair);
     }
     m_selectedTrack = trackIndex;
@@ -1352,7 +1397,7 @@ void AppController::setSelection(const QVariantList &pairs)
         const int clipIndex = map.value(QStringLiteral("clip")).toInt();
         // Match click-select: bring linked A/V partners along.
         for (const QPair<int, int> &pair : selectionWithLinkedPartners(m_project, trackIndex, clipIndex)) {
-            if (!next.contains(pair))
+            if (!next.contains(pair) && !m_project.tracks().at(pair.first).locked)
                 next.append(pair);
         }
     }
@@ -1477,7 +1522,7 @@ void AppController::deleteSelection(bool withPinnedAdjustments)
         return a.second > b.second;
     });
     for (const QPair<int, int> &pair : pairs) {
-        if (!isValidClipIndex(pair.first, pair.second))
+        if (!isValidClipIndex(pair.first, pair.second) || m_project.tracks().at(pair.first).locked)
             continue;
         const drift::Clip &clip = m_project.tracks().at(pair.first).clips.at(pair.second);
         removedClipIds.insert(clip.id);
@@ -1715,6 +1760,8 @@ void AppController::splitAtPlayhead()
     const QList<drift::Track> &tracksView = m_project.tracks();
     for (int trackIndex = 0; trackIndex < tracksView.size(); ++trackIndex) {
         drift::Track &track = m_project.tracks()[trackIndex];
+        if (track.locked)
+            continue;
         for (int clipIndex = 0; clipIndex < track.clips.size(); ++clipIndex) {
             drift::Clip &clip = track.clips[clipIndex];
             if (!clip.containsTime(m_playheadUs))

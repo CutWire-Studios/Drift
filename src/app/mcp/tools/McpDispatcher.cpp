@@ -1464,9 +1464,12 @@ QJsonObject McpDispatcher::opSetTrack(const QJsonObject &args)
         m_controller->setTrackMuted(track, jsonBool(args.value(QStringLiteral("muted"))));
     if (args.contains(QStringLiteral("hidden")))
         m_controller->setTrackHidden(track, jsonBool(args.value(QStringLiteral("hidden"))));
+    if (args.contains(QStringLiteral("locked")))
+        m_controller->setTrackLocked(track, jsonBool(args.value(QStringLiteral("locked"))));
     return ok({{QStringLiteral("track"), track},
                {QStringLiteral("muted"), m_controller->trackMuted(track)},
-               {QStringLiteral("hidden"), m_controller->trackHidden(track)}});
+               {QStringLiteral("hidden"), m_controller->trackHidden(track)},
+               {QStringLiteral("locked"), m_controller->trackLocked(track)}});
 }
 
 QJsonObject McpDispatcher::opPlaceClip(const QJsonObject &args)

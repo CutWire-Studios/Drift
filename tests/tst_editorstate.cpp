@@ -356,6 +356,7 @@ private slots:
     void effectRemovalRemapsGraphSelection();
     void denoiseAddsCleanedClipOnTrackAbove();
     void audioRecordingVoiceoverWorkflow();
+    void lockedTrackRejectsEdits();
     void audioMixerTrackControlsAndMetering();
     void speedCurveOnAudioClipRetimesAndReplaces();
     void waveformPeaksForSourceRangeSlicesToTheTrimmedWindow();
@@ -8919,6 +8920,39 @@ void EditorStateTest::audioRecordingVoiceoverWorkflow()
         QFile::remove(path2);
         QFile::remove(path3);
     }
+}
+
+void EditorStateTest::lockedTrackRejectsEdits()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setAllowClipOverlap(true);
+    state.setSnapEnabled(false);
+
+    state.addTextClip(QStringLiteral("One"), 0.0);
+    state.setClipDuration(0, 0, 4.0);
+    const auto start = [&] { return state.project()->tracks().at(0).clips.at(0).timelineStart; };
+
+    state.selectClip(0, 0);
+    state.setTrackLocked(0, true);
+    QCOMPARE(state.selectedTrack(), -1);
+    QCOMPARE(state.trackLocked(0), true);
+    QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("locked")).toBool(), true);
+
+    state.moveClip(0, 0, 3.0);
+    QCOMPARE(start(), drift::secondsToUs(0.0));
+    state.selectClip(0, 0);
+    QCOMPARE(state.selectedTrack(), -1);
+    state.selectAllClips();
+    QCOMPARE(state.selectedTrack(), -1);
+    state.setPlayheadSeconds(2.0);
+    state.splitAtPlayhead();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+
+    state.setTrackLocked(0, false);
+    QCOMPARE(state.trackLocked(0), false);
+    state.moveClip(0, 0, 3.0);
+    QCOMPARE(start(), drift::secondsToUs(3.0));
 }
 
 void EditorStateTest::audioMixerTrackControlsAndMetering()

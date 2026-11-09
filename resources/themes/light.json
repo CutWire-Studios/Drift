@@ -1498,7 +1498,8 @@
     "timelinePanel": {
       "background": "$semantic.surface.panel",
       "headerBorder": "$semantic.panel.border",
-      "trackBackground": "$semantic.panel.accent"
+      "trackBackground": "$semantic.panel.accent",
+      "lockedOverlay": "$semantic.timeline.scrimSoft"
     },
     "timelinePlayheadHead": {
       "background": "$semantic.primary",
@@ -1631,9 +1632,6 @@
     "timelineWorkAreaShade": {
       "background": "$semantic.primary"
     },
-    "trackHeaderBandName": {
-      "foregroundMuted": "$semantic.mutedForeground"
-    },
     "trackHeaderChannelLanesButton": {
       "accent": "$semantic.primary",
       "foregroundMuted": "$semantic.mutedForeground"
@@ -1645,6 +1643,9 @@
     "trackHeaderCompactName": {
       "foregroundMuted": "$semantic.mutedForeground"
     },
+    "trackHeaderBottomResize": {
+      "foreground": "$semantic.primary"
+    },
     "trackHeaderEdge": {
       "border": "$semantic.panel.border"
     },
@@ -1654,9 +1655,6 @@
     },
     "trackHeaderHideButton": {
       "destructive": "$semantic.destructive",
-      "foregroundMuted": "$semantic.mutedForeground"
-    },
-    "trackHeaderInlineName": {
       "foregroundMuted": "$semantic.mutedForeground"
     },
     "trackHeaderInsertLine": {
@@ -1677,6 +1675,14 @@
       "destructive": "$semantic.destructive",
       "foregroundMuted": "$semantic.mutedForeground"
     },
+    "trackHeaderLockButton": {
+      "locked": "$semantic.warning",
+      "foregroundMuted": "$semantic.mutedForeground"
+    },
+    "trackHeaderName": {
+      "foreground": "$semantic.foreground",
+      "foregroundMuted": "$semantic.mutedForeground"
+    },
     "trackHeaderOverflowButton": {
       "foregroundMuted": "$semantic.mutedForeground"
     },
@@ -1685,6 +1691,29 @@
     },
     "trackHeaderRow": {
       "background": "$semantic.timeline.headerBackground"
+    },
+    "trackHeaderSeparator": {
+      "border": "$semantic.panel.border"
+    },
+    "trackHeaderSoloButton": {
+      "accent": "$semantic.primary",
+      "accentForeground": "$semantic.primaryForeground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "radius": "$metrics.radius.sm"
+    },
+    "trackHeaderStateTint": {
+      "hover": "$semantic.foreground",
+      "locked": "$semantic.warning",
+      "selected": "$semantic.primary"
+    },
+    "trackHeaderTypeStrip": {
+      "audio": "$semantic.clip.audio",
+      "effect": "$semantic.clip.effect",
+      "graphic": "$semantic.clip.graphic",
+      "subtitle": "$semantic.clip.subtitle",
+      "text": "$semantic.clip.text",
+      "transform": "$semantic.clip.transform",
+      "video": "$semantic.clip.videoPlaceholder"
     },
     "trackHeaderWash": {
       "background": "$semantic.clip.transform"
@@ -4253,7 +4282,7 @@
       },
       "trackGap": 6,
       "newTrackHitSlop": 24,
-      "trackLabelsWidth": 130,
+      "trackLabelsWidth": 170,
       "pixelsPerSecondBase": 50,
       "endPadFraction": 0.25,
       "endPadMinPx": 120,

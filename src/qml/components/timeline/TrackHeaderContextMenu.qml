@@ -35,6 +35,12 @@ ThemedContextMenu {
         onTriggered: EditorState.setTrackMuted(header.index, !header.trackMuted)
     }
     ThemedMenuItem {
+        visible: header.wantSolo
+        text: header.trackSolo ? qsTr("Unsolo track") : qsTr("Solo track")
+        icon.name: Theme.icons.headphones
+        onTriggered: EditorState.setTrackSolo(header.index, !header.trackSolo)
+    }
+    ThemedMenuItem {
         visible: header.wantMic
         text: header.isRecordingHere ? qsTr("Stop recording") : qsTr("Record voiceover")
         icon.name: Theme.icons.mic
@@ -62,6 +68,11 @@ ThemedContextMenu {
         icon.name: header.trackHidden ? Theme.icons.eye
                                              : Theme.icons.eyeOff
         onTriggered: EditorState.setTrackHidden(header.index, !header.trackHidden)
+    }
+    ThemedMenuItem {
+        text: header.trackLocked ? qsTr("Unlock track") : qsTr("Lock track")
+        icon.name: header.trackLocked ? Theme.icons.lockOpen : Theme.icons.lock
+        onTriggered: EditorState.setTrackLocked(header.index, !header.trackLocked)
     }
     ThemedMenuSeparator {
         visible: header.isTransformLayer || header.transformable
@@ -148,7 +159,7 @@ ThemedContextMenu {
         ThemedMenuItem {
             visible: !column.touchHold
             enabled: false
-            text: qsTr("Scroll over the header to fine-tune")
+            text: qsTr("Drag the bottom edge or scroll over the header to fine-tune")
             icon.name: Theme.icons.info
         }
     }

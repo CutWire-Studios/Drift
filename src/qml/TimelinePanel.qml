@@ -45,6 +45,29 @@ PanelFrame {
         return trackLabelsArea.trackNameAt(i)
     }
 
+    function fitTracksToPanel(area) {
+        let scaled = 0
+        let fixed = 0
+        let rows = 0
+        for (let i = 0; i < tracks.length; ++i) {
+            if (!trackOccupiesARow(i))
+                continue
+            const lanes = EditorState.adjustmentLaneCount(i) * Theme.adjustmentLaneHeight
+            scaled += trackHeight(i) - lanes
+            fixed += lanes
+            ++rows
+        }
+        if (scaled <= 0)
+            return
+        const factor = (area.height - fixed - Math.max(0, rows - 1) * Theme.trackGap) / scaled
+        if (factor <= 0)
+            return
+        for (let i = 0; i < tracks.length; ++i) {
+            if (trackOccupiesARow(i))
+                EditorState.setTrackHeightScale(i, (tracks[i].heightScale || 1) * factor)
+        }
+    }
+
     // Y offset of a track row within the track column (excludes ruler/bookmark).
     function trackOffsetY(index) {
         var cursor = 0
@@ -1398,7 +1421,9 @@ PanelFrame {
 
                     IconButton {
                         id: addTrackButton
-                        anchors.centerIn: parent
+                        anchors.left: parent.left
+                        anchors.leftMargin: Theme.spacingSm
+                        anchors.verticalCenter: parent.verticalCenter
                         glyph: Theme.icons.plus
                         variant: "text"
                         tooltip: qsTr("Add new track")
@@ -1408,6 +1433,35 @@ PanelFrame {
                             id: addTrackMenu
                             x: Math.max(0, (addTrackButton.width - width) / 2)
                             y: addTrackButton.height + 4
+                        }
+                    }
+
+                    Row {
+                        id: trackHeightTools
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.spacingSm
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: parent.width >= addTrackButton.width + width + 3 * Theme.spacingSm
+
+                        IconButton {
+                            glyph: Theme.icons.listChevronsDownUp
+                            variant: "text"
+                            tooltip: qsTr("Shrink all tracks")
+                            enabled: EditorState.canShrinkTrackHeights
+                            onClicked: EditorState.nudgeAllTrackHeightScales(-1)
+                        }
+                        IconButton {
+                            glyph: Theme.icons.listChevronsUpDown
+                            variant: "text"
+                            tooltip: qsTr("Grow all tracks")
+                            enabled: EditorState.canGrowTrackHeights
+                            onClicked: EditorState.nudgeAllTrackHeightScales(1)
+                        }
+                        IconButton {
+                            glyph: Theme.icons.maximize
+                            variant: "text"
+                            tooltip: qsTr("Fit tracks to panel")
+                            onClicked: root.fitTracksToPanel(trackLabelsArea)
                         }
                     }
 
@@ -1989,6 +2043,13 @@ PanelFrame {
                                         panel: root
                                         trackIndex: trackRow.trackIndex
                                     }
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    z: 10
+                                    visible: root.tracks[trackRow.trackIndex].locked === true
+                                    color: Theme.c.timelinePanel.lockedOverlay
                                 }
                             }
                         }

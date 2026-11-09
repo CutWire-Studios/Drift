@@ -263,7 +263,7 @@ PreferencesController::PreferencesController(QObject *parent)
     if (m_audioMixerWidth > 0)
         m_audioMixerWidth = qBound(160.0, m_audioMixerWidth, 2000.0);
     m_trackLabelsWidth = qBound(64.0,
-        settings.value(QStringLiteral("ui/trackLabelsWidth"), 130.0).toDouble(), 360.0);
+        settings.value(QStringLiteral("ui/trackLabelsWidth"), 170.0).toDouble(), 360.0);
     m_androidTrackLabelsWidth = qBound(56.0,
         settings.value(QStringLiteral("ui/androidTrackLabelsWidth"), 80.0).toDouble(), 200.0);
     m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();

@@ -1971,6 +1971,14 @@ qt_add_qml_module(drift
         src/qml/components/timeline/VoiceoverBarDivider.qml
         src/qml/components/timeline/TransformCoverageTint.qml
         src/qml/components/timeline/TrackHeaderWash.qml
+        src/qml/components/timeline/TrackHeaderControls.qml
+        src/qml/components/timeline/TrackHeaderLockButton.qml
+        src/qml/components/timeline/TrackHeaderSoloButton.qml
+        src/qml/components/timeline/TrackHeaderName.qml
+        src/qml/components/timeline/TrackHeaderTypeStrip.qml
+        src/qml/components/timeline/TrackHeaderSeparator.qml
+        src/qml/components/timeline/TrackHeaderBottomResize.qml
+        src/qml/components/timeline/TrackHeaderStateTint.qml
         src/qml/components/timeline/TrackHeaderRow.qml
         src/qml/components/timeline/TrackHeaderResizeHandle.qml
         src/qml/components/timeline/TrackHeaderRenameDialog.qml
@@ -1979,7 +1987,6 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TrackHeaderMicButton.qml
         src/qml/components/timeline/TrackHeaderLaneEye.qml
         src/qml/components/timeline/TrackHeaderInsertLine.qml
-        src/qml/components/timeline/TrackHeaderInlineName.qml
         src/qml/components/timeline/TrackHeaderHideButton.qml
         src/qml/components/timeline/TrackHeaderGrip.qml
         src/qml/components/timeline/TrackHeaderEdge.qml
@@ -1989,7 +1996,6 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TrackHeaderCompactName.qml
         src/qml/components/timeline/TrackHeaderClipDisplayButton.qml
         src/qml/components/timeline/TrackHeaderChannelLanesButton.qml
-        src/qml/components/timeline/TrackHeaderBandName.qml
         src/qml/components/timeline/TimelineWorkAreaShade.qml
         src/qml/components/timeline/TimelineWorkAreaOverlay.qml
         src/qml/components/timeline/TimelineWorkAreaEdge.qml

@@ -297,6 +297,26 @@ bool AppController::trackSolo(int trackIndex) const
     return m_project.tracks().at(trackIndex).solo;
 }
 
+void AppController::setTrackLocked(int trackIndex, bool locked)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (m_project.tracks()[trackIndex].locked == locked)
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].locked = locked;
+    pushProjectEdit(before, tr("Track lock"));
+    finishEdit(locked ? tr("Track locked") : tr("Track unlocked"));
+}
+
+bool AppController::trackLocked(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    return m_project.tracks().at(trackIndex).locked;
+}
+
 void AppController::previewTrackVolume(int trackIndex, double volume)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -2459,7 +2479,8 @@ void AppController::normalizeSelection()
     QList<QPair<int, int>> kept;
     kept.reserve(selection.size());
     for (const QPair<int, int> &pair : selection) {
-        if (isValidClipIndex(pair.first, pair.second) && !kept.contains(pair))
+        if (isValidClipIndex(pair.first, pair.second) && !m_project.tracks().at(pair.first).locked
+            && !kept.contains(pair))
             kept.append(pair);
     }
     m_selection = kept;

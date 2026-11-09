@@ -371,7 +371,7 @@ private:
     bool m_keyframeStripVisible = true;
     bool m_audioMixerVisible = false;
     qreal m_audioMixerWidth = 0;
-    qreal m_trackLabelsWidth = 130;
+    qreal m_trackLabelsWidth = 170;
     qreal m_androidTrackLabelsWidth = 80;
     QStringList m_timelineToolbarItems;
     QStringList m_proxyNamePatterns;
