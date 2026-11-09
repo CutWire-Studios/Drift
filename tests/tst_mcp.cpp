@@ -1069,6 +1069,23 @@ void McpTest::dirtyDetailTellsTimelineFromView()
     QVERIFY(detail().value(QStringLiteral("other")).toArray().isEmpty());
     QVERIFY(!dispatcher.inspect({}).contains(QStringLiteral("dirty_detail")));
 
+    // A taller track row alone is saved with the project but doesn't make it dirty; the detail
+    // still names it, and a since that is current doesn't hide it.
+    const int revision = dispatcher.inspect({}).value(QStringLiteral("revision")).toInt();
+    state.setTrackHeightScale(0, 2.0);
+    const QJsonObject heightOnly = dispatcher.inspect({{QStringLiteral("dirty_detail"), true},
+                                                       {QStringLiteral("since"), revision}});
+    QVERIFY2(!heightOnly.value(QStringLiteral("unchanged")).toBool(), qPrintable(QJsonDocument(heightOnly).toJson()));
+    const QJsonObject height = heightOnly.value(QStringLiteral("dirty_detail")).toObject();
+    QVERIFY(!height.value(QStringLiteral("dirty")).toBool());
+    QCOMPARE(height.value(QStringLiteral("other")).toArray(), QJsonArray{QStringLiteral("track_view")});
+    QVERIFY(!height.contains(QStringLiteral("unknown")));
+
+    // Unsaved with nothing it can name: unknown.
+    state.setTrackHeightScale(0, 1.0);
+    state.projectFile()->setDirty(true);
+    QVERIFY(detail().value(QStringLiteral("unknown")).toBool());
+
     // A taller track row and a bookmark: dirty, but not the cut.
     state.setTrackHeightScale(0, 2.0);
     state.addBookmark(1.0, QStringLiteral("look here"));

@@ -1735,7 +1735,7 @@ QJsonArray homepageTools()
                       {QStringLiteral("dirty_detail"),
                        boolProp(QStringLiteral("Add dirty_detail: what the unsaved changes are, vs the saved file. timeline:true "
                                                "with the clips/tracks/assets that differ, or only other (track_view, work_area, "
-                                               "bookmarks, sequence_tabs, project_info). Playhead, selection and zoom are never saved."))}}),
+                                               "bookmarks, sequence_tabs, project_info); unknown:true if unsaved with no named difference."))}}),
         toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("apply"),

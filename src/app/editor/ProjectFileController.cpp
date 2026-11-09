@@ -67,6 +67,8 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
     : QObject(parent)
     , m_app(app)
 {
+    // The state a fresh controller starts clean in, until the first save, load or new project.
+    m_savedProject = m_app->m_project;
     // Periodically snapshot unsaved work to a recovery file so a crash doesn't
     // lose progress. A confirmed close (Save or Don't Save) clears dirty first,
     // so aboutToQuit only writes this when quit was interrupted (SIGTERM, kill).
@@ -773,6 +775,11 @@ void ProjectFileController::runBundleSave(const QUrl &url, const std::optional<P
                     // Clean only if nothing changed since the snapshot that was written.
                     if (m_dirtyRevision == capture->dirtyRevision) {
                         setDirty(false);
+                        // What was written, not what is open now: state that never makes the
+                        // project dirty (a track's view) can have changed while the write ran.
+                        // Save As adopts a new identity on landing, so it keeps the open state.
+                        if (!adopt && capture->project)
+                            m_savedProject = *capture->project;
                         deleteRecoveryFile();
                     }
                     emit projectMetadataChanged();
@@ -1924,7 +1931,7 @@ void ProjectFileController::setDirty(bool dirty)
     if (dirty)
         ++m_dirtyRevision;
     else
-        m_savedProject = m_app->m_project; // implicitly shared: a cheap copy until the next edit
+        m_savedProject = m_app->m_project; // a full copy (TrackList copies its clips), once per save or load
     if (m_dirty == dirty)
         return;
     m_dirty = dirty;

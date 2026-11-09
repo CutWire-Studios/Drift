@@ -597,7 +597,8 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
 {
     m_app->flushUndoHistoryTrim(); // history indices as they will stay
     using namespace drift::mcp;
-    if (options.since >= 0 && options.since == m_editRevision)
+    // dirty_detail can change without an edit (a save, a track's view), so it never short-circuits.
+    if (options.since >= 0 && options.since == m_editRevision && !options.dirtyDetail)
         return ok({{QStringLiteral("unchanged"), true}, {QStringLiteral("revision"), m_editRevision}});
 
     const QList<drift::Track> &projectTracks = m_app->m_project.tracks();
@@ -1333,9 +1334,14 @@ QJsonObject McpController::dirtyDetail() const
     if (m_app->projectFile()->savedProject().openSequenceTabs() != m_app->m_project.openSequenceTabs())
         other.append(QStringLiteral("sequence_tabs"));
     QJsonObject out = drift::projectDiffToJson(diff);
-    out.insert(QStringLiteral("dirty"), m_app->projectFile()->hasUnsavedChanges());
+    const bool dirty = m_app->projectFile()->hasUnsavedChanges();
+    out.insert(QStringLiteral("dirty"), dirty);
     out.insert(QStringLiteral("timeline"), timeline);
     out.insert(QStringLiteral("other"), QJsonArray::fromStringList(other));
+    // Unsaved, yet nothing the diff compares differs: something it doesn't cover (an effect
+    // package, a transcript, ...) or an edit that was made and undone back to the saved state.
+    if (dirty && !timeline && other.isEmpty())
+        out.insert(QStringLiteral("unknown"), true);
     return out;
 }
 
