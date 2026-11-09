@@ -1673,9 +1673,12 @@ bool AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bo
             if (*ripple)
                 affected.unite(drift::rippleTrackGroup(before, range.track));
         }
+        // Every track losing a clip counts too, adjustment lanes losing a pinned effect included.
+        for (const QPair<int, int> &pair : std::as_const(pairs))
+            affected.insert(pair.first);
         QString problem;
         for (const int t : std::as_const(affected)) {
-            if (before.tracks().at(t).locked) {
+            if (t >= 0 && t < before.tracks().size() && before.tracks().at(t).locked) {
                 problem = QStringLiteral("Track %1 is locked").arg(t);
                 break;
             }
@@ -1686,13 +1689,11 @@ bool AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bo
                 problem = QStringLiteral("Clip %1 is in the way of closing that space; move or delete it, or pass ripple:false")
                               .arg(blocker);
         }
-        {
-            if (!problem.isEmpty()) {
-                m_project = before;
-                if (error)
-                    *error = problem;
-                return false;
-            }
+        if (!problem.isEmpty()) {
+            m_project = before;
+            if (error)
+                *error = problem;
+            return false;
         }
     } else if (m_rippleEnabled) {
         // Latest first, so each range is closed while the clips before it are still in place.

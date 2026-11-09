@@ -1105,6 +1105,18 @@ void McpTest::deleteClipsClosesTheSpace()
         adjustments += t.isAdjustment() ? int(t.clips.size()) : 0;
     QCOMPARE(adjustments, 1);
 
+    // A locked lane holding the clip's effect refuses the delete, even without ripple.
+    for (drift::Track &t : state.project()->tracks())
+        if (t.isAdjustment())
+            t.locked = true;
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("delete_clips"),
+                                 {{QStringLiteral("clips"), QJsonArray{ids.at(1)}}, {QStringLiteral("ripple"), false}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(startOf(ids.at(1)), 2.0);
+    for (drift::Track &t : state.project()->tracks())
+        t.locked = false;
+
     // An unknown id deletes nothing.
     const QJsonObject unknown = dispatcher.applyOne(QStringLiteral("delete_clips"),
                                                     {{QStringLiteral("clips"), QJsonArray{ids.at(1), QStringLiteral("nope")}}});
