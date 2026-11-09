@@ -984,6 +984,27 @@ void McpTest::changeFeedListsEditsBySource()
     QVERIFY2(later.at(1).toObject().value(QStringLiteral("label")).toString().contains(QStringLiteral("set_clip_name")),
              qPrintable(later.at(1).toObject().value(QStringLiteral("label")).toString()));
 
+    // Reading a later entry first leaves the earlier one's detail intact.
+    const int beforeTwo = dispatcher.applyOne(QStringLiteral("changes"), {}).value(QStringLiteral("revision")).toInt();
+    state.setClipName(0, 1, QStringLiteral("R1"));
+    const int r1 = dispatcher.applyOne(QStringLiteral("changes"), {}).value(QStringLiteral("revision")).toInt();
+    state.setClipName(0, 1, QStringLiteral("R2"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), r1}}).value(QStringLiteral("changes")).toArray().size(), 1);
+    const QJsonArray both = dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), beforeTwo}})
+                                .value(QStringLiteral("changes")).toArray();
+    QCOMPARE(both.size(), 2);
+    QVERIFY(!both.at(0).toObject().contains(QStringLiteral("detail")));
+    QCOMPARE(both.at(0).toObject().value(QStringLiteral("clips")).toArray().size(), 1);
+
+    // An undo inside a batch keeps its kind.
+    const int beforeUndo = dispatcher.applyOne(QStringLiteral("changes"), {}).value(QStringLiteral("revision")).toInt();
+    QVERIFY(dispatcher.apply(QJsonObject{{QStringLiteral("ops"), QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("undo")}}}}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonArray undone = dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), beforeUndo}})
+                                  .value(QStringLiteral("changes")).toArray();
+    QCOMPARE(undone.size(), 1);
+    QCOMPARE(undone.first().toObject().value(QStringLiteral("kind")).toString(), QStringLiteral("undo"));
+
     // diff between a history version and head.
     const QJsonArray history = dispatcher.applyOne(QStringLiteral("list_history"), {}).value(QStringLiteral("entries")).toArray();
     const QString origin = history.last().toObject().value(QStringLiteral("short")).toString();

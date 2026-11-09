@@ -64,18 +64,30 @@ struct Located
     const Clip *clip = nullptr;
 };
 
-// Clips by id; a duplicated id (an imported file can carry one) is told apart by its occurrence.
-QHash<QString, Located> clipsById(const QList<Track> &tracks)
+// Each clip's key: its id, or for a duplicated id (an imported file can carry one) the id and its
+// occurrence across the whole timeline, in track order.
+QList<QStringList> clipKeys(const QList<Track> &tracks)
+{
+    QList<QStringList> keys;
+    QHash<QString, int> seen;
+    for (const Track &track : tracks) {
+        QStringList row;
+        for (const Clip &clip : track.clips) {
+            const int n = seen[clip.id]++;
+            row.append(n == 0 ? clip.id : clip.id + QLatin1Char('#') + QString::number(n));
+        }
+        keys.append(row);
+    }
+    return keys;
+}
+
+QHash<QString, Located> clipsById(const QList<Track> &tracks, const QList<QStringList> &keys)
 {
     QHash<QString, Located> out;
-    QHash<QString, int> seen;
     for (int t = 0; t < tracks.size(); ++t) {
         const QList<Clip> &clips = tracks.at(t).clips;
-        for (int c = 0; c < clips.size(); ++c) {
-            const QString &id = clips.at(c).id;
-            const int n = seen[id]++;
-            out.insert(n == 0 ? id : id + QLatin1Char('#') + QString::number(n), {t, c, &clips, &clips.at(c)});
-        }
+        for (int c = 0; c < clips.size(); ++c)
+            out.insert(keys.at(t).at(c), {t, c, &clips, &clips.at(c)});
     }
     return out;
 }
@@ -146,8 +158,10 @@ QStringList changedTrackFields(const Track &a, const Track &b, int fromIndex, in
 
 void diffTimeline(const QString &sequence, const QList<Track> &from, const QList<Track> &to, ProjectDiff &diff)
 {
-    const QHash<QString, Located> before = clipsById(from);
-    const QHash<QString, Located> after = clipsById(to);
+    const QList<QStringList> fromKeys = clipKeys(from);
+    const QList<QStringList> toKeys = clipKeys(to);
+    const QHash<QString, Located> before = clipsById(from, fromKeys);
+    const QHash<QString, Located> after = clipsById(to, toKeys);
 
     // Split heads: clips that stayed and got shorter from the end, by (track, media, new end).
     QHash<QString, QString> splitHeads;
@@ -166,13 +180,8 @@ void diffTimeline(const QString &sequence, const QList<Track> &from, const QList
     // In timeline order: by track, then by start.
     for (int t = 0; t < to.size(); ++t) {
         QList<QPair<QString, const Clip *>> clips;
-        {
-            QHash<QString, int> seen;
-            for (const Clip &clip : to.at(t).clips) {
-                const int n = seen[clip.id]++;
-                clips.append({n == 0 ? clip.id : clip.id + QLatin1Char('#') + QString::number(n), &clip});
-            }
-        }
+        for (int c = 0; c < to.at(t).clips.size(); ++c)
+            clips.append({toKeys.at(t).at(c), &to.at(t).clips.at(c)});
         std::stable_sort(clips.begin(), clips.end(), [](const auto &a, const auto &b) {
             return a.second->timelineStart < b.second->timelineStart;
         });
@@ -204,14 +213,12 @@ void diffTimeline(const QString &sequence, const QList<Track> &from, const QList
             diff.clips.append(changed);
         }
     }
-    for (int t = 0; t < from.size(); ++t) {
-        QHash<QString, int> seen;
-        for (const Clip &clip : from.at(t).clips) {
-            const int n = seen[clip.id]++;
-            if (!after.contains(n == 0 ? clip.id : clip.id + QLatin1Char('#') + QString::number(n)))
+    for (int t = 0; t < from.size(); ++t)
+        for (int c = 0; c < from.at(t).clips.size(); ++c)
+            if (!after.contains(fromKeys.at(t).at(c))) {
+                const Clip &clip = from.at(t).clips.at(c);
                 diff.clips.append({clip.id, sequence, QStringLiteral("removed"), t, -1, {}, clip.name, {}});
-        }
-    }
+            }
 
     QHash<QString, int> trackBefore;
     for (int t = 0; t < from.size(); ++t)
@@ -287,8 +294,6 @@ ProjectDiff diffProjects(const Project &from, const Project &to)
         diff.settings.append(QStringLiteral("work_area"));
     if (from.name() != to.name() || from.author() != to.author() || from.description() != to.description())
         diff.settings.append(QStringLiteral("project_info"));
-    if (from.openSequenceTabs() != to.openSequenceTabs())
-        diff.settings.append(QStringLiteral("sequence_tabs"));
     if (sequencesChanged)
         diff.settings.append(QStringLiteral("sequences"));
     return diff;

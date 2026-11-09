@@ -430,6 +430,8 @@ private:
     };
     static constexpr int kChangeLogSize = 500;
     static constexpr int kChangeSnapshots = 50;
+    static constexpr int kChangeSnapshotClips = 20000; // clip copies across unread snapshots
+    std::optional<ChangeKind> m_batchKind;
     bool m_changeFeedOn = false;
     int m_changeFeedFloor = 0; // the oldest revision `since` may name and still get every change
     std::shared_ptr<const drift::Project> m_changeBase; // the state before the first entry

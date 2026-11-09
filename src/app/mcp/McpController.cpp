@@ -1134,10 +1134,20 @@ void McpController::startChangeFeed()
 
 void McpController::recordChange(ChangeKind kind)
 {
-    // A batch is one entry, logged when it ends (its ops' own finishes are inside it).
-    if (!m_changeFeedOn || m_batchDepth > 0)
+    // A batch is one entry, logged when it ends (its ops' own finishes are inside it). It takes
+    // the kind its ops share (a batch of undos is an undo); mixed kinds read as an edit.
+    if (m_batchDepth > 0) {
+        if (!m_batchKind)
+            m_batchKind = kind;
+        else if (*m_batchKind != kind)
+            m_batchKind = ChangeKind::Edit;
         return;
+    }
     QString label = std::exchange(m_pendingChangeLabel, QString());
+    if (const std::optional<ChangeKind> batch = std::exchange(m_batchKind, std::nullopt); batch && kind == ChangeKind::Edit)
+        kind = *batch;
+    if (!m_changeFeedOn)
+        return;
     if (label.isEmpty())
         label = kind == ChangeKind::Undo ? m_app->m_undoStack.redoText() : m_app->m_undoStack.undoText();
     ChangeEntry entry;
@@ -1150,20 +1160,28 @@ void McpController::recordChange(ChangeKind kind)
     entry.state = std::make_shared<const drift::Project>(m_app->m_project);
     m_changeLog.append(entry);
 
-    // Unread snapshots are bounded: past the limit the oldest go, and the entry that needed one as
-    // its starting point keeps only its label.
+    // Unread snapshots are bounded (fewer for a big project: each holds a copy of every clip): past
+    // the limit the oldest go, and the entries that needed one keep only their label.
+    int clipCount = 0;
+    m_app->m_project.forEachTrackList([&clipCount](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks)
+            clipCount += int(track.clips.size());
+    });
+    const int budget = qBound(4, kChangeSnapshotClips / qMax(1, clipCount), kChangeSnapshots);
     int held = m_changeBase ? 1 : 0;
     for (const ChangeEntry &e : std::as_const(m_changeLog))
         held += e.state ? 1 : 0;
-    for (int i = -1; held > kChangeSnapshots && i < m_changeLog.size() - 1; ++i) {
+    for (int i = -1; held > budget && i < m_changeLog.size() - 1; ++i) {
         std::shared_ptr<const drift::Project> &state = i < 0 ? m_changeBase : m_changeLog[i].state;
         if (!state)
             continue;
         state.reset();
         --held;
-        ChangeEntry &next = m_changeLog[i + 1];
-        if (!next.computed)
-            next.detailDropped = true;
+        // The entry it ended and the one it started.
+        if (i >= 0 && !m_changeLog[i].computed)
+            m_changeLog[i].detailDropped = true;
+        if (!m_changeLog[i + 1].computed)
+            m_changeLog[i + 1].detailDropped = true;
     }
     if (m_changeLog.size() > kChangeLogSize) {
         m_changeFeedFloor = m_changeLog.first().revision;
@@ -1183,8 +1201,11 @@ void McpController::computeChange(int index)
     else
         entry.detailDropped = true;
     entry.computed = true;
-    // That starting point is needed by nothing else now.
-    from.reset();
+    // A snapshot ends one entry and starts the next: it goes once both are worked out.
+    if (index == 0 || m_changeLog.at(index - 1).computed)
+        from.reset();
+    if (index + 1 < m_changeLog.size() && m_changeLog.at(index + 1).computed)
+        entry.state.reset();
 }
 
 QJsonObject McpController::changesSince(int since, int limit)
@@ -1196,15 +1217,15 @@ QJsonObject McpController::changesSince(int since, int limit)
     for (int i = 0; i < m_changeLog.size(); ++i) {
         if (m_changeLog.at(i).revision <= since)
             continue;
-        if (returned == limit) {
-            more = true;
-            break;
-        }
         computeChange(i);
         const ChangeEntry &entry = m_changeLog.at(i);
         // Nothing in the project changed (a timeline switch, a refresh): not an edit to report.
         if (!entry.detailDropped && entry.diff.isEmpty())
             continue;
+        if (returned == limit) {
+            more = true;
+            break;
+        }
         QJsonObject row = entry.diff;
         row.insert(QStringLiteral("revision"), entry.revision);
         row.insert(QStringLiteral("source"), entry.source);
@@ -2092,6 +2113,7 @@ QJsonObject McpController::restoreSnapshot(const QString &hash)
         if (!m_app->m_project.transcript(it.key()))
             m_app->m_project.setTranscript(it.key(), it.value());
     }
+    m_pendingChangeLabel = QStringLiteral("Restore snapshot");
     bumpEditRevision();
     return ok({{QStringLiteral("index"), 0},
                {QStringLiteral("hash"), fileHash},

@@ -7433,6 +7433,20 @@ void CoreTest::diffProjectsReportsClipChanges()
     drift::Project marked = from;
     marked.bookmarks().append({drift::secondsToUs(1), QStringLiteral("here")});
     QCOMPARE(drift::diffProjects(from, marked).settings, QStringList{QStringLiteral("bookmarks")});
+
+    // A duplicated id on two tracks is matched by occurrence: identical states are identical, and
+    // removing the second copy is reported.
+    drift::Project twins = from;
+    drift::Track twinTrack{.id = QStringLiteral("v3"), .type = drift::TrackType::Video};
+    twinTrack.clips = {clip("a", 9, 1)};
+    twins.tracks().append(twinTrack);
+    QVERIFY(drift::diffProjects(twins, twins).isEmpty());
+    drift::Project oneTwin = twins;
+    oneTwin.tracks()[1].clips.clear();
+    const drift::ProjectDiff twinDiff = drift::diffProjects(twins, oneTwin);
+    QCOMPARE(twinDiff.clips.size(), 1);
+    QCOMPARE(twinDiff.clips.first().change, QStringLiteral("removed"));
+    QCOMPARE(twinDiff.clips.first().track, 1);
 }
 
 QTEST_MAIN(CoreTest)
