@@ -1345,7 +1345,11 @@ PanelFrame {
             Loader {
                 id: keyframesBar
                 width: parent.width - (audioMixer.visible ? audioMixer.width : 0)
-                active: root.keyframesTab && EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
+                active: EditorState.preferences.keyframeStripVisible && root.keyframesTab
+                        && EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
+                // A Loader keeps its last height after unloading; hiding it is what makes the
+                // Column give the space back.
+                visible: !!item && item.visible
                 sourceComponent: Component {
                     KeyframeGraph {
                         pxPerSecond: root.pxPerSecond

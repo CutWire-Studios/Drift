@@ -27,10 +27,13 @@ class PreferencesController : public QObject
                    NOTIFY workspaceLayoutPreferenceChanged)
     Q_PROPERTY(QString workspaceLayoutPreferred READ workspaceLayoutPreferred
                    NOTIFY workspaceLayoutPreferenceChanged)
-    // On by default. Worth turning off on a very long timeline: the strip repaints every clip
+    // Off by default. Worth leaving off on a very long timeline: the strip repaints every clip
     // in the project on every edit.
     Q_PROPERTY(bool timelineOverviewVisible READ timelineOverviewVisible
                    WRITE setTimelineOverviewVisible NOTIFY timelineOverviewVisibleChanged)
+    // On by default; hides the keyframe graph above the tracks even on a keyframes tab.
+    Q_PROPERTY(bool keyframeStripVisible READ keyframeStripVisible
+                   WRITE setKeyframeStripVisible NOTIFY keyframeStripVisibleChanged)
     Q_PROPERTY(bool audioMixerVisible READ audioMixerVisible
                    WRITE setAudioMixerVisible NOTIFY audioMixerVisibleChanged)
     // Width the user dragged the mixer to; 0 means size to fit its channel strips.
@@ -171,6 +174,8 @@ public:
 
     bool timelineOverviewVisible() const { return m_timelineOverviewVisible; }
     void setTimelineOverviewVisible(bool visible);
+    bool keyframeStripVisible() const { return m_keyframeStripVisible; }
+    void setKeyframeStripVisible(bool visible);
     bool audioMixerVisible() const { return m_audioMixerVisible; }
     void setAudioMixerVisible(bool visible);
     qreal audioMixerWidth() const { return m_audioMixerWidth; }
@@ -320,6 +325,7 @@ signals:
     void darkModePreferenceChanged();
     void workspaceLayoutPreferenceChanged();
     void timelineOverviewVisibleChanged();
+    void keyframeStripVisibleChanged();
     void audioMixerVisibleChanged();
     void audioMixerWidthChanged();
     void trackLabelsWidthChanged();
@@ -359,6 +365,7 @@ private:
     bool m_workspaceLayoutOverridden = false;
     QString m_workspaceLayoutPreferred = QStringLiteral("landscape");
     bool m_timelineOverviewVisible = false;
+    bool m_keyframeStripVisible = true;
     bool m_audioMixerVisible = false;
     qreal m_audioMixerWidth = 0;
     qreal m_trackLabelsWidth = 130;

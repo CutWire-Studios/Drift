@@ -253,6 +253,8 @@ PreferencesController::PreferencesController(QObject *parent)
     m_undoHistoryLimit = qMax(0, settings.value(QStringLiteral("editor/undoHistoryLimit"), 0).toInt());
     m_timelineOverviewVisible =
         settings.value(QStringLiteral("ui/timelineOverviewVisible"), false).toBool();
+    m_keyframeStripVisible =
+        settings.value(QStringLiteral("ui/keyframeStripVisible"), true).toBool();
     m_audioMixerVisible =
         settings.value(QStringLiteral("ui/audioMixerVisible"), false).toBool();
     m_audioMixerWidth = settings.value(QStringLiteral("ui/audioMixerWidth"), 0.0).toDouble();
@@ -370,6 +372,16 @@ void PreferencesController::setTimelineOverviewVisible(bool visible)
     QSettings settings;
     settings.setValue(QStringLiteral("ui/timelineOverviewVisible"), m_timelineOverviewVisible);
     emit timelineOverviewVisibleChanged();
+}
+
+void PreferencesController::setKeyframeStripVisible(bool visible)
+{
+    if (m_keyframeStripVisible == visible)
+        return;
+    m_keyframeStripVisible = visible;
+    QSettings settings;
+    settings.setValue(QStringLiteral("ui/keyframeStripVisible"), m_keyframeStripVisible);
+    emit keyframeStripVisibleChanged();
 }
 
 void PreferencesController::setAudioMixerVisible(bool visible)
