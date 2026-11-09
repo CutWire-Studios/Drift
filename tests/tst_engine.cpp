@@ -349,6 +349,8 @@ private slots:
     void compositorPreviewScaleMapsProjectPixelLayout();
     void compositorAppliesFaceWarpFromBakedTrack();
     void compositorAppliesMultiplyBlendMode();
+    void compositorAppliesExtendedBlendModes_data();
+    void compositorAppliesExtendedBlendModes();
     void compositorAnimatesKeyedEffectParam();
     void compositorRendersShapeClip();
     void compositorRendersCompositeClip();
@@ -9091,6 +9093,74 @@ void EngineTest::compositorAppliesMultiplyBlendMode()
 
     const QImage overWhite = compositeOverBackground(Qt::white);
     QCOMPARE(overWhite.pixelColor(32, 32), QColor(255, 0, 0));
+}
+
+void EngineTest::compositorAppliesExtendedBlendModes_data()
+{
+    QTest::addColumn<int>("mode");
+    QTest::addColumn<int>("r");
+    QTest::addColumn<int>("g");
+    QTest::addColumn<int>("b");
+
+    // Top (200,100,50) over bottom (100,150,220), expected from the W3C compositing formulas.
+    QTest::newRow("difference") << int(drift::BlendMode::Difference) << 100 << 50 << 170;
+    QTest::newRow("exclusion") << int(drift::BlendMode::Exclusion) << 143 << 132 << 184;
+    QTest::newRow("colorDodge") << int(drift::BlendMode::ColorDodge) << 255 << 247 << 255;
+    QTest::newRow("subtract") << int(drift::BlendMode::Subtract) << 0 << 50 << 170;
+    QTest::newRow("hardMix") << int(drift::BlendMode::HardMix) << 255 << 0 << 255;
+    QTest::newRow("luminosity") << int(drift::BlendMode::Luminosity) << 82 << 132 << 202;
+}
+
+void EngineTest::compositorAppliesExtendedBlendModes()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QFETCH(int, mode);
+    QFETCH(int, r);
+    QFETCH(int, g);
+    QFETCH(int, b);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    auto writeSolidImage = [&](const QString &name, QColor color) {
+        QImage image(64, 64, QImage::Format_RGBA8888);
+        image.fill(color);
+        const QString path = dir.filePath(name);
+        image.save(path, "PNG");
+        return path;
+    };
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+
+    drift::Clip top;
+    top.id = QStringLiteral("top");
+    top.type = drift::ClipType::Image;
+    top.path = writeSolidImage(QStringLiteral("top.png"), QColor(200, 100, 50));
+    top.blendMode = drift::BlendMode(mode);
+    top.timelineStart = 0;
+    top.timelineDuration = drift::secondsToUs(1.0);
+    project.tracks()[0].clips.append(top);
+
+    drift::Clip bottom;
+    bottom.id = QStringLiteral("bottom");
+    bottom.type = drift::ClipType::Image;
+    bottom.path = writeSolidImage(QStringLiteral("bottom.png"), QColor(100, 150, 220));
+    bottom.timelineStart = 0;
+    bottom.timelineDuration = drift::secondsToUs(1.0);
+    project.tracks()[1].clips.append(bottom);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QColor px = compositor.compositeAt(0).pixelColor(32, 32);
+    QVERIFY2(qAbs(px.red() - r) <= 2, qPrintable(QStringLiteral("red %1 vs %2").arg(px.red()).arg(r)));
+    QVERIFY2(qAbs(px.green() - g) <= 2, qPrintable(QStringLiteral("green %1 vs %2").arg(px.green()).arg(g)));
+    QVERIFY2(qAbs(px.blue() - b) <= 2, qPrintable(QStringLiteral("blue %1 vs %2").arg(px.blue()).arg(b)));
 }
 
 // A keyed effect parameter is resolved inside the compositor, which is the only place preview and

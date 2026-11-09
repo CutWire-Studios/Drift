@@ -120,6 +120,7 @@ private slots:
     void insertTrackAtTopAllowsDuplicateTypes();
     void multiTrackSerializationRoundTrip();
     void textStyleAndBlendModeSerialization();
+    void blendModeRoundTripsEveryMode();
     void legacyBoldMigratesToFontWeight();
     void textPresetsAreWellFormed();
     void userTextPresetsRoundTrip();
@@ -1666,6 +1667,52 @@ void CoreTest::multiTrackSerializationRoundTrip()
     QCOMPARE(loaded.tracks()[2].clips.size(), 1);
     QCOMPARE(loaded.tracks()[2].clips[0].id, QStringLiteral("clip-v2"));
     QCOMPARE(loaded.tracks()[3].type, drift::TrackType::Text);
+}
+
+void CoreTest::blendModeRoundTripsEveryMode()
+{
+    for (int i = 0; i <= int(drift::BlendMode::Luminosity); ++i) {
+        const auto mode = drift::BlendMode(i);
+        drift::Project project;
+        project.tracks().clear();
+        project.tracks().append(drift::Track{.type = drift::TrackType::Text});
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-blend");
+        clip.type = drift::ClipType::Text;
+        clip.timelineDuration = drift::secondsToUs(1.0);
+        clip.blendMode = mode;
+        project.tracks()[0].clips.append(clip);
+
+        QString error;
+        const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+        QVERIFY(error.isEmpty());
+        QCOMPARE(loaded.tracks().at(0).clips.at(0).blendMode, mode);
+    }
+
+    QJsonObject json = [] {
+        drift::Project project;
+        project.tracks().clear();
+        project.tracks().append(drift::Track{.type = drift::TrackType::Text});
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-blend");
+        clip.type = drift::ClipType::Text;
+        clip.timelineDuration = drift::secondsToUs(1.0);
+        clip.blendMode = drift::BlendMode::Multiply;
+        project.tracks()[0].clips.append(clip);
+        return project.toJson();
+    }();
+    QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
+    QJsonObject track = tracks.at(0).toObject();
+    QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+    QJsonObject clipJson = clips.at(0).toObject();
+    clipJson.insert(QStringLiteral("blendMode"), QStringLiteral("notAMode"));
+    clips.replace(0, clipJson);
+    track.insert(QStringLiteral("clips"), clips);
+    tracks.replace(0, track);
+    json.insert(QStringLiteral("tracks"), tracks);
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QCOMPARE(loaded.tracks().at(0).clips.at(0).blendMode, drift::BlendMode::Normal);
 }
 
 void CoreTest::textStyleAndBlendModeSerialization()

@@ -18,6 +18,7 @@
 #include "engine/packages/assets/EmojiCatalog.h"
 #include "engine/packages/assets/FontCatalog.h"
 #include "engine/render2d/skia/SkiaRuntime.h"
+#include "engine/render2d/skia/SkiaShading.h"
 #include "engine/render2d/shapes/SkiaShapePainter.h"
 #include "engine/render2d/text/SkiaTextGeometry.h"
 #include "engine/render2d/text/SkiaTextPainter.h"
@@ -28,6 +29,7 @@
 #include "engine/render2d/skia/VectorPainter.h"
 
 #include "include/core/SkBlurTypes.h"
+#include "include/core/SkBitmap.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
 #include "include/core/SkContourMeasure.h"
@@ -331,6 +333,8 @@ private slots:
     void complexScriptsShapeWithoutMissingGlyphs();
     void characterPiecesNeverSplitShapingClusters();
     void skslEffectsCompileAndRender();
+    void shadingBlendersMatchFormulas_data();
+    void shadingBlendersMatchFormulas();
     void textLookRenders();
     void textPacksRender();
 };
@@ -2088,6 +2092,37 @@ void SkiaTest::skslEffectsCompileAndRender()
     fill->paint.kind = TextPaintKind::Effect;
     fill->paint.effect.id = QStringLiteral("shine");
     QCOMPARE(skia::makeTextPainter(textClip(animated, text), text, layout, 1.0).painter->cacheKey(), quint64(0));
+}
+
+void SkiaTest::shadingBlendersMatchFormulas_data()
+{
+    QTest::addColumn<int>("mode");
+    QTest::addColumn<QColor>("expected");
+    QTest::newRow("difference") << int(BlendMode::Difference) << QColor(100, 50, 170);
+    QTest::newRow("linearBurn") << int(BlendMode::LinearBurn) << QColor(45, 0, 15);
+    QTest::newRow("hardMix") << int(BlendMode::HardMix) << QColor(255, 0, 255);
+    QTest::newRow("subtract") << int(BlendMode::Subtract) << QColor(0, 50, 170);
+    QTest::newRow("divide") << int(BlendMode::Divide) << QColor(128, 255, 255);
+}
+
+// The modes Skia has no SkBlendMode for are SkSL blenders, which fall back to source-over if they
+// fail to compile; a source-over result would read as the top colour here.
+void SkiaTest::shadingBlendersMatchFormulas()
+{
+    QFETCH(int, mode);
+    QFETCH(QColor, expected);
+    SkBitmap bitmap;
+    bitmap.allocPixels(SkImageInfo::Make(4, 4, kRGBA_8888_SkColorType, kPremul_SkAlphaType));
+    SkCanvas canvas(bitmap);
+    canvas.clear(SkColorSetRGB(100, 150, 220));
+    SkPaint paint;
+    paint.setColor(SkColorSetRGB(200, 100, 50));
+    paint.setBlender(skia::toSkBlender(BlendMode(mode)));
+    canvas.drawPaint(paint);
+    const SkColor got = bitmap.getColor(1, 1);
+    QVERIFY2(qAbs(int(SkColorGetR(got)) - expected.red()) <= 2 && qAbs(int(SkColorGetG(got)) - expected.green()) <= 2
+                 && qAbs(int(SkColorGetB(got)) - expected.blue()) <= 2,
+             qPrintable(QStringLiteral("got %1,%2,%3").arg(SkColorGetR(got)).arg(SkColorGetG(got)).arg(SkColorGetB(got))));
 }
 
 // Every look renders something, and Neon glows outside the glyphs.
