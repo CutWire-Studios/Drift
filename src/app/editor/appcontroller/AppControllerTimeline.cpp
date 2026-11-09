@@ -1217,8 +1217,17 @@ AppController::InsertResult AppController::insertClipFromAsset(int assetIndex, i
     }
 
     const drift::Project before = m_project;
-    if (ripple)
+    if (ripple) {
         drift::rippleTracks(m_project, rippleTracks, atUs, lengthUs);
+        // An earlier linked clip moved with its partner can land on a clip that stayed.
+        const QString collision = drift::rippleCollision(before, m_project, rippleTracks);
+        if (!collision.isEmpty()) {
+            m_project = before;
+            return fail("bad_args", QStringLiteral("The ripple would push clip %1 onto another; move it first, or pass "
+                                                   "ripple:false")
+                                        .arg(collision));
+        }
+    }
 
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     clip.thumbnailPath = m_assetLibrary->thumbnailAt(assetIndex);

@@ -6947,6 +6947,40 @@ void CoreTest::closeRippleRangesShiftsEachGroupOnce()
     QVERIFY(drift::closeRippleRanges(overlap, {{0, 0, drift::secondsToUs(4)}, {0, drift::secondsToUs(2), drift::secondsToUs(6)}}));
     QCOMPARE(rippleStart(overlap, "later"), 4.0);
 
+    // A link held only by a deleted clip still joins its tracks when the groups come from before
+    // the delete: the two followers close together over the union, once.
+    {
+        drift::Project was;
+        drift::Track wv{.type = drift::TrackType::Video};
+        wv.clips = {rippleClip("v", 2, 2, "only"), rippleClip("v-next", 6, 1)};
+        drift::Track wa{.type = drift::TrackType::Audio};
+        wa.clips = {rippleClip("a", 1, 3, "only"), rippleClip("a-next", 6, 1)};
+        was.tracks() = {wv, wa};
+        drift::Project now = was;
+        now.tracks()[0].clips.removeFirst();
+        now.tracks()[1].clips.removeFirst();
+        QVERIFY(drift::closeRippleRanges(now, {{0, drift::secondsToUs(2), drift::secondsToUs(4)},
+                                               {1, drift::secondsToUs(1), drift::secondsToUs(4)}},
+                                         nullptr, nullptr, &was));
+        QCOMPARE(rippleStart(now, "v-next"), 3.0);
+        QCOMPARE(rippleStart(now, "a-next"), 3.0);
+    }
+
+    // An earlier loose partner shifted with its clip would land on a clip that stayed: refused.
+    {
+        drift::Project loose;
+        drift::Track lv{.type = drift::TrackType::Video};
+        lv.clips = {rippleClip("follower", 7, 1, "l")};
+        drift::Track la{.type = drift::TrackType::Audio};
+        la.clips = {rippleClip("still", 0, 1), rippleClip("partner", 2, 1, "l")};
+        loose.tracks() = {lv, la};
+        QString hit;
+        QVERIFY(!drift::closeRippleRanges(loose, {{0, drift::secondsToUs(5), drift::secondsToUs(7)}}, &hit));
+        QVERIFY(!hit.isEmpty());
+        QCOMPARE(rippleStart(loose, "follower"), 7.0);
+        QCOMPARE(rippleStart(loose, "partner"), 2.0);
+    }
+
     // A clip of the group inside a range to close blocks it, and nothing changes.
     drift::Project blocked;
     drift::Track bv{.type = drift::TrackType::Video};
