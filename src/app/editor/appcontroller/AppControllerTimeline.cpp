@@ -2719,7 +2719,9 @@ QStringList AppController::setClipTrimRippled(int trackIndex, int clipIndex, dou
 
     // The tracks that move: every track that ripples with the clip's (joined to it by linked
     // clips), so its partners and their followers keep their place.
-    const QSet<int> tracks = drift::rippleTrackGroup(m_project, trackIndex);
+    QSet<int> tracks = drift::rippleTrackGroup(m_project, trackIndex);
+    // The clip's own track always counts, an adjustment track (never in a group) included.
+    tracks.insert(trackIndex);
     for (const int t : tracks) {
         if (m_project.tracks().at(t).locked) {
             if (error)
