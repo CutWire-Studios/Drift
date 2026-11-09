@@ -1535,6 +1535,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     if (tool == QLatin1String("find_clips")) {
         // An explicit empty label finds the unlabelled clips.
         const bool byLabel = args.contains(QStringLiteral("label"));
+        if (byLabel && !args.value(QStringLiteral("label")).isString())
+            return err("bad_args", QStringLiteral("label must be a string (\"\" finds unlabelled clips)"));
         const QString label = argString(args, QStringLiteral("label"));
         const QString name = argString(args, QStringLiteral("name"));
         const QString kind = argString(args, QStringLiteral("kind"));
