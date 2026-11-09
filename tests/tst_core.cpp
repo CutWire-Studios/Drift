@@ -7467,6 +7467,12 @@ void CoreTest::diffProjectsReportsClipChanges()
     const drift::ProjectDiff assetDiff = drift::diffProjects(withAsset, binTrimmed);
     QCOMPARE(assetDiff.assets.size(), 1);
     QCOMPARE(assetDiff.assets.first().change, QStringLiteral("changed"));
+    // A thumbnail or a frame-rate probe filled in the background is not an edit.
+    drift::Project cached = withAsset;
+    cached.assets()[asset.id].thumbnailPath = QStringLiteral("/cache/thumb.jpg");
+    cached.assets()[asset.id].frameRateKnown = true;
+    cached.assets()[asset.id].variableFrameRate = true;
+    QVERIFY(drift::diffProjects(withAsset, cached).isEmpty());
 }
 
 QTEST_MAIN(CoreTest)

@@ -996,6 +996,18 @@ void McpTest::changeFeedListsEditsBySource()
     QCOMPARE(async.at(0).toObject().value(QStringLiteral("source")).toString(), QStringLiteral("mcp"));
     QCOMPARE(async.at(1).toObject().value(QStringLiteral("source")).toString(), QStringLiteral("ui"));
 
+    // An undoable edit that never calls finishEdit (a bin folder) still gets its own entry once
+    // the event loop turns, rather than folding into the next edit.
+    const int beforeFolder = dispatcher.applyOne(QStringLiteral("changes"), {}).value(QStringLiteral("revision")).toInt();
+    QVERIFY(!state.bin()->createFolder(QStringLiteral("Shorts"), QString()).isEmpty());
+    QCoreApplication::processEvents();
+    state.setClipName(0, 1, QStringLiteral("After the folder"));
+    const QJsonArray folder = dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), beforeFolder}})
+                                  .value(QStringLiteral("changes")).toArray();
+    QVERIFY2(folder.size() == 2, QJsonDocument(folder).toJson().constData());
+    QCOMPARE(folder.at(0).toObject().value(QStringLiteral("label")).toString(), QStringLiteral("Folder created"));
+    QCOMPARE(folder.at(1).toObject().value(QStringLiteral("clips")).toArray().size(), 1);
+
     // Reading a later entry first leaves the earlier one's detail intact.
     const int beforeTwo = dispatcher.applyOne(QStringLiteral("changes"), {}).value(QStringLiteral("revision")).toInt();
     state.setClipName(0, 1, QStringLiteral("R1"));

@@ -45,7 +45,7 @@ struct ProjectDiff
     QList<TrackDiff> tracks;
     QList<AssetDiff> assets;
     // Project-level state that changed: fps, resolution, sample_rate, background, bookmarks,
-    // work_area, project_info, sequences. (Which composites are open as tabs is view state.)
+    // work_area, project_info, sequences, bin_folders. (Which composites are open as tabs is view state.)
     QStringList settings;
     bool isEmpty() const { return clips.isEmpty() && tracks.isEmpty() && assets.isEmpty() && settings.isEmpty(); }
 };

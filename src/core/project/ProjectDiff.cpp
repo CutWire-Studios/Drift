@@ -64,6 +64,19 @@ struct Located
     const Clip *clip = nullptr;
 };
 
+// An asset as edits change it: name, path, bin trim, rotation override, folder, rating, ranges,
+// markers, ... Facts read from the file (probe results, fingerprint) and the caches background
+// jobs fill (thumbnail, filmstrip, the frame-rate probe) change without an edit, so they're left out.
+QJsonObject editableAsset(const MediaAsset &asset)
+{
+    QJsonObject json = assetJson(asset);
+    for (const char *key : {"kind", "durationUs", "duration", "width", "height", "fps", "rotationDegrees",
+                            "sampleRate", "channels", "codecName", "thumbnailPath", "filmstripPath", "hasAudio",
+                            "variableFrameRate", "sourceSize", "sourceModifiedMs"})
+        json.remove(QLatin1String(key));
+    return json;
+}
+
 // Each clip's key: its id's occurrence across the whole timeline, in track order, then the id
 // (an imported file can carry a duplicated id). The count leads and holds no ':', so two clips
 // share a key only when they are the same occurrence of the same id: "1:a" can't be a real id's key.
@@ -268,7 +281,7 @@ ProjectDiff diffProjects(const Project &from, const Project &to)
         const auto was = from.assets().constFind(it.key());
         if (was == from.assets().constEnd())
             diff.assets.append({it.key(), QStringLiteral("added"), it->name});
-        else if (assetJson(*was) != assetJson(*it)) // name, path, bin trim, rotation, folder, ...
+        else if (editableAsset(*was) != editableAsset(*it))
             diff.assets.append({it.key(), QStringLiteral("changed"), it->name});
     }
     for (auto it = from.assets().constBegin(); it != from.assets().constEnd(); ++it)
@@ -297,6 +310,13 @@ ProjectDiff diffProjects(const Project &from, const Project &to)
         diff.settings.append(QStringLiteral("project_info"));
     if (sequencesChanged)
         diff.settings.append(QStringLiteral("sequences"));
+    bool folders = from.binFolderOrder() != to.binFolderOrder();
+    for (auto it = to.binFolders().constBegin(); !folders && it != to.binFolders().constEnd(); ++it) {
+        const auto was = from.binFolders().constFind(it.key());
+        folders = was == from.binFolders().constEnd() || was->name != it->name || was->parentId != it->parentId;
+    }
+    if (folders || from.binFolders().size() != to.binFolders().size())
+        diff.settings.append(QStringLiteral("bin_folders"));
     return diff;
 }
 
