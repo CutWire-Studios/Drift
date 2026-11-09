@@ -91,11 +91,11 @@
     </message>
     <message>
         <source>This is not a Drift addon, a .driftfx or a Drift Forge zip.</source>
-        <translation type="unfinished"></translation>
+        <translation>Đây không phải là add-on của Drift, tệp .driftfx hay tệp zip của Drift Forge.</translation>
     </message>
     <message>
         <source>Drift cannot use this file: %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift không thể dùng tệp này: %1.</translation>
     </message>
 </context>
 <context>
@@ -564,7 +564,7 @@
     </message>
     <message>
         <source>Crop</source>
-        <translation>Cắt cúp</translation>
+        <translation>Cắt khung</translation>
     </message>
     <message>
         <source>Background</source>
@@ -783,7 +783,7 @@
     </message>
     <message>
         <source>Crop</source>
-        <translation>Cắt cúp</translation>
+        <translation>Cắt khung</translation>
     </message>
     <message>
         <source>Background</source>
@@ -1037,7 +1037,7 @@
     </message>
     <message>
         <source>Crop</source>
-        <translation>Cắt cúp</translation>
+        <translation>Cắt khung</translation>
     </message>
     <message>
         <source>Trim</source>
@@ -1178,7 +1178,7 @@
     </message>
     <message>
         <source>Pick a video or image to crop.</source>
-        <translation>Chọn một video hoặc hình ảnh để cắt cúp.</translation>
+        <translation>Chọn một video hoặc hình ảnh để cắt khung.</translation>
     </message>
     <message>
         <source>Pick a video or audio file to trim.</source>
@@ -1276,11 +1276,11 @@
     </message>
     <message>
         <source>Unlock crop ratio</source>
-        <translation>Mở khóa tỷ lệ cắt cúp</translation>
+        <translation>Mở khóa tỷ lệ cắt khung</translation>
     </message>
     <message>
         <source>Lock crop ratio</source>
-        <translation>Khóa tỷ lệ cắt cúp</translation>
+        <translation>Khóa tỷ lệ cắt khung</translation>
     </message>
     <message>
         <source>Trim</source>
@@ -1324,7 +1324,7 @@
     </message>
     <message>
         <source>Save keeps the original file and stores this crop.</source>
-        <translation>Lưu sẽ giữ nguyên tệp gốc và lưu phần cắt cúp này.</translation>
+        <translation>Lưu sẽ giữ nguyên tệp gốc và lưu phần cắt khung này.</translation>
     </message>
     <message>
         <source>Save keeps the original file and stores this trim.</source>
@@ -1421,11 +1421,11 @@
     </message>
     <message>
         <source>Dissolve composite</source>
-        <translation type="unfinished"></translation>
+        <translation>Hòa tan tổ hợp</translation>
     </message>
     <message>
         <source>Release the clips inside back onto the timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Đưa các clip bên trong trở lại dòng thời gian</translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -1569,11 +1569,11 @@
     </message>
     <message>
         <source>Delete with effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa với các hiệu ứng</translation>
     </message>
     <message>
         <source>Remove the clip and its effects together</source>
-        <translation type="unfinished"></translation>
+        <translation>Loại bỏ clip và đồng thời với các hiệu ứng của nó</translation>
     </message>
     <message>
         <source>Trim &amp; timing</source>
@@ -2497,11 +2497,11 @@
     </message>
     <message>
         <source>Crop clip</source>
-        <translation>Cắt cúp clip</translation>
+        <translation>Cắt khung clip</translation>
     </message>
     <message>
         <source>Crop saved</source>
-        <translation>Đã lưu cắt cúp</translation>
+        <translation>Đã lưu cắt khung</translation>
     </message>
     <message>
         <source>New project</source>
@@ -2525,7 +2525,7 @@
     </message>
     <message>
         <source>Delete selection with its effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa lựa chọn với các hiệu ứng của nó</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -2597,7 +2597,7 @@
     </message>
     <message>
         <source>3D gizmo: cycle world/local/view axes</source>
-        <translation type="unfinished"></translation>
+        <translation>Gizmo 3D: luân chuyển trục thế giới/cục bộ/khung nhìn</translation>
     </message>
     <message>
         <source>Add/remove bookmark at current time</source>
@@ -3195,7 +3195,7 @@
     </message>
     <message>
         <source>Replace clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Thay thế clip</translation>
     </message>
     <message>
         <source>Clips moved</source>
@@ -3303,19 +3303,19 @@
     </message>
     <message>
         <source>Aim camera at target</source>
-        <translation type="unfinished"></translation>
+        <translation>Ngắm camera vào mục tiêu</translation>
     </message>
     <message>
         <source>Free camera</source>
-        <translation type="unfinished"></translation>
+        <translation>Camera tự do</translation>
     </message>
     <message>
         <source>Camera aims at its point of interest</source>
-        <translation type="unfinished"></translation>
+        <translation>Camera hướng vào điểm quan tâm của nó</translation>
     </message>
     <message>
         <source>Camera uses its own rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>Camera sử dụng góc xoay của riêng nó</translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -3595,19 +3595,19 @@
     </message>
     <message>
         <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể hòa tan các tổ hợp có thay đổi tốc độ, bị đảo ngược hoặc không ở tốc độ bình thường</translation>
     </message>
     <message>
         <source>Dissolve composite</source>
-        <translation type="unfinished"></translation>
+        <translation>Hòa tan tổ hợp</translation>
     </message>
     <message>
         <source>Composite effects and transform were discarded</source>
-        <translation type="unfinished"></translation>
+        <translation>Các hiệu ứng và chuyển đổi của tổ hợp đã bị hủy bỏ</translation>
     </message>
     <message>
         <source>Composite dissolved</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hòa tan tổ hợp</translation>
     </message>
     <message>
         <source>Composite</source>
@@ -3931,7 +3931,7 @@
     </message>
     <message>
         <source>Align camera to view</source>
-        <translation type="unfinished"></translation>
+        <translation>Căn chỉnh camera theo khung nhìn</translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
@@ -4223,11 +4223,11 @@
     </message>
     <message>
         <source>Remove all effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Loại bỏ tất cả hiệu ứng</translation>
     </message>
     <message>
         <source>All effects removed</source>
-        <translation type="unfinished"></translation>
+        <translation>Tất cả hiệu ứng đã bị loại bỏ</translation>
     </message>
     <message>
         <source>Enable effect</source>
@@ -4505,11 +4505,11 @@
     </message>
     <message>
         <source>Delete empty tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa track rỗng</translation>
     </message>
     <message>
         <source>Empty tracks deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã xóa các track rỗng</translation>
     </message>
     <message>
         <source>Add track</source>
@@ -4983,16 +4983,16 @@
     </message>
     <message>
         <source>Relink other missing files?</source>
-        <translation type="unfinished"></translation>
+        <translation>Liên kết lại các tệp còn thiếu?</translation>
     </message>
     <message>
         <source>Relink</source>
-        <translation type="unfinished"></translation>
+        <translation>Liên kết lại</translation>
     </message>
     <message numerus="yes">
         <source>%n other missing files from the same folder were found in “%1” with the same name and size. Relink them too?</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Đã tìm thấy %n tệp bị thiếu khác từ cùng thư mục trong “%1” với cùng tên và kích thước. Có liên kết lại chúng không?</numerusform>
         </translation>
     </message>
     <message>
@@ -9589,19 +9589,19 @@
     </message>
     <message>
         <source>Crop</source>
-        <translation>Cắt cúp</translation>
+        <translation>Cắt khung</translation>
     </message>
     <message>
         <source>Unlock crop ratio</source>
-        <translation>Mở khóa tỷ lệ cắt cúp</translation>
+        <translation>Mở khóa tỷ lệ cắt khung</translation>
     </message>
     <message>
         <source>Lock crop ratio</source>
-        <translation>Khóa tỷ lệ cắt cúp</translation>
+        <translation>Khóa tỷ lệ cắt khung</translation>
     </message>
     <message>
         <source>Crop…</source>
-        <translation>Cắt cúp…</translation>
+        <translation>Cắt khung…</translation>
     </message>
     <message>
         <source>Which part of the original file this clip plays</source>
@@ -13250,15 +13250,15 @@
     </message>
     <message>
         <source>Crop image</source>
-        <translation>Cắt cúp hình ảnh</translation>
+        <translation>Cắt khung hình ảnh</translation>
     </message>
     <message>
         <source>Crop saved</source>
-        <translation>Đã lưu cắt cúp</translation>
+        <translation>Đã lưu cắt khung</translation>
     </message>
     <message>
         <source>Crop video</source>
-        <translation>Cắt cúp video</translation>
+        <translation>Cắt khung video</translation>
     </message>
     <message>
         <source>Media trimmed</source>
@@ -13449,11 +13449,11 @@
     </message>
     <message>
         <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
-        <translation>Kéo hộp để cắt cúp. Hình ảnh gốc vẫn được giữ, nên có thể thay đổi phần cắt cúp sau.</translation>
+        <translation>Kéo hộp để cắt khung. Hình ảnh gốc vẫn được giữ, nên có thể thay đổi phần cắt khung sau.</translation>
     </message>
     <message>
         <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
-        <translation>Kéo hộp để cắt cúp. Video gốc vẫn được giữ, nên có thể thay đổi phần cắt cúp sau.</translation>
+        <translation>Kéo hộp để cắt khung. Video gốc vẫn được giữ, nên có thể thay đổi phần cắt khung sau.</translation>
     </message>
     <message>
         <source>Straighten</source>
@@ -13501,15 +13501,15 @@
     </message>
     <message>
         <source>Original: %1×%2 • Crop: %3×%4</source>
-        <translation>Gốc: %1×%2 • Cắt cúp: %3×%4</translation>
+        <translation>Gốc: %1×%2 • Cắt khung: %3×%4</translation>
     </message>
     <message>
         <source>Unlock crop ratio</source>
-        <translation>Mở khóa tỷ lệ cắt cúp</translation>
+        <translation>Mở khóa tỷ lệ cắt khung</translation>
     </message>
     <message>
         <source>Lock crop ratio</source>
-        <translation>Khóa tỷ lệ cắt cúp</translation>
+        <translation>Khóa tỷ lệ cắt khung</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -13533,7 +13533,7 @@
     </message>
     <message>
         <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation>Xong sẽ giữ nguyên video gốc và lưu phạm vi cùng phần cắt cúp này. Nâng cấp sẽ kết xuất chúng thành video mới trong ngăn media, rồi mở nó trong cửa sổ Nâng cấp.</translation>
+        <translation>Hoàn tất sẽ giữ nguyên video gốc và lưu phạm vi cùng phần cắt khung này. Nâng cấp sẽ kết xuất chúng thành video mới trong ngăn media, rồi mở nó trong cửa sổ Nâng cấp.</translation>
     </message>
     <message>
         <source>Saving…</source>
@@ -13541,11 +13541,11 @@
     </message>
     <message>
         <source>Choose the part and crop to keep, then Next.</source>
-        <translation>Chọn phần và vùng cắt cúp cần giữ, rồi nhấn Kế tiếp.</translation>
+        <translation>Chọn phần và vùng cắt khung cần giữ, rồi nhấn Kế tiếp.</translation>
     </message>
     <message>
         <source>Save keeps the original file and stores this crop.</source>
-        <translation>Lưu sẽ giữ nguyên tệp gốc và lưu phần cắt cúp này.</translation>
+        <translation>Lưu sẽ giữ nguyên tệp gốc và lưu phần cắt khung này.</translation>
     </message>
     <message>
         <source>Save keeps the original file and stores this trim.</source>
@@ -13553,7 +13553,7 @@
     </message>
     <message>
         <source>Adjust the crop or Reset to restore the full picture.</source>
-        <translation>Điều chỉnh phần cắt cúp hoặc Đặt lại để khôi phục hình ảnh đầy đủ.</translation>
+        <translation>Điều chỉnh phần cắt khung hoặc Đặt lại để khôi phục hình ảnh đầy đủ.</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
@@ -13600,11 +13600,11 @@
     </message>
     <message>
         <source>Crop — %1</source>
-        <translation>Cắt cúp — %1</translation>
+        <translation>Cắt khung — %1</translation>
     </message>
     <message>
         <source>Crop</source>
-        <translation>Cắt cúp</translation>
+        <translation>Cắt khung</translation>
     </message>
 </context>
 <context>
@@ -23105,7 +23105,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Crop…</source>
-        <translation>Cắt cúp…</translation>
+        <translation>Cắt khung…</translation>
     </message>
     <message>
         <source>Enhance video…</source>
