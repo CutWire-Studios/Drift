@@ -1644,10 +1644,28 @@ QJsonObject McpDispatcher::opSetTrim(const QJsonObject &args)
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
-    m_controller->setClipTrim(ref.track, ref.clip, jsonNumber(args.value(QStringLiteral("in")), 0),
-                              jsonNumber(args.value(QStringLiteral("out")), 0));
+    const double in = jsonNumber(args.value(QStringLiteral("in")), 0);
+    const double out = jsonNumber(args.value(QStringLiteral("out")), 0);
+    if (!jsonBool(args.value(QStringLiteral("ripple")), false)) {
+        m_controller->setClipTrim(ref.track, ref.clip, in, out);
+        const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
+        return ok(clipFeedback(after));
+    }
+    QString error;
+    const QStringList movedIds = m_controller->setClipTrimRippled(ref.track, ref.clip, in, out, &error);
+    if (!error.isEmpty())
+        return err("bad_args", error);
+    QJsonArray moved;
+    for (const QString &id : movedIds) {
+        const ClipRef m = resolveClip(QJsonObject{{QStringLiteral("clip"), id}});
+        if (m.valid())
+            moved.append(QJsonObject{{QStringLiteral("id"), id},
+                                     {QStringLiteral("start"),
+                                      drift::mcpdetail::round3(drift::usToSeconds(
+                                          m_controller->project()->tracks().at(m.track).clips.at(m.clip).timelineStart))}});
+    }
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
-    return ok(clipFeedback(after));
+    return ok(clipFeedback(after, {{QStringLiteral("moved"), moved}}));
 }
 
 QJsonObject McpDispatcher::opMoveToTrack(const QJsonObject &args)

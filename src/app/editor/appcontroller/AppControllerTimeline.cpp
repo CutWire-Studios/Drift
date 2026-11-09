@@ -2680,7 +2680,14 @@ void AppController::setClipTrim(int trackIndex, int clipIndex, double inPoint, d
     if (clipIndex < 0 || clipIndex >= track.clips.size())
         return;
 
-    drift::Clip &clip = track.clips[clipIndex];
+    const drift::Project before = m_project;
+    applyClipTrim(track.clips[clipIndex], inPoint, outPoint);
+    pushProjectEdit(before, tr("Trim updated"));
+    finishEdit(tr("Trim updated"));
+}
+
+void AppController::applyClipTrim(drift::Clip &clip, double inPoint, double outPoint) const
+{
     const bool syntheticVisual = isSyntheticTimelineClip(clip.type);
     const drift::TimeUs sourceDuration = syntheticVisual ? syntheticClipMaxDurationUs() : sourceDurationForClip(clip);
     const drift::TimeUs clampedIn = qBound<drift::TimeUs>(0, drift::secondsToUs(inPoint),
@@ -2689,16 +2696,73 @@ void AppController::setClipTrim(int trackIndex, int clipIndex, double inPoint, d
                                             sourceDuration);
     const drift::TimeUs newDuration = clampedOut - clampedIn;
     const double speed = clip.effectiveSpeed();
-
-    const drift::Project before = m_project;
     clip.srcIn = clampedIn;
     clip.srcOut = clampedOut;
     clip.timelineDuration = static_cast<drift::TimeUs>(llround(static_cast<double>(newDuration) / speed));
     clip.timelineDuration = qMax(clip.timelineDuration, drift::minClipDurationUs(m_project.fps()));
     // A ramp re-derives the duration from the range that survived the trim.
     clip.syncDurationFromSpeedCurve();
-    pushProjectEdit(before, tr("Trim updated"));
-    finishEdit(tr("Trim updated"));
+}
+
+QStringList AppController::setClipTrimRippled(int trackIndex, int clipIndex, double inPoint, double outPoint,
+                                              QString *error)
+{
+    QStringList moved;
+    if (!isValidClipIndex(trackIndex, clipIndex)) {
+        if (error)
+            *error = QStringLiteral("No such clip");
+        return moved;
+    }
+    const drift::Clip &original = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const QString id = original.id;
+    const drift::TimeUs oldEnd = original.timelineEnd();
+
+    // The tracks that move: the clip's own, and those holding linked partners of it or of any
+    // clip after it, so partners stay in sync and nothing moved lands on a clip that stayed.
+    QSet<int> tracks{trackIndex};
+    const auto addPartnerTracks = [&](const drift::Clip &clip) {
+        if (clip.linkId.isEmpty())
+            return;
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip)) {
+            if (!m_project.tracks().at(ref.trackIndex).isAdjustment())
+                tracks.insert(ref.trackIndex);
+        }
+    };
+    for (const drift::Clip &clip : m_project.tracks().at(trackIndex).clips) {
+        if (clip.id == id || clip.timelineStart >= oldEnd)
+            addPartnerTracks(clip);
+    }
+    for (const int t : std::as_const(tracks)) {
+        if (m_project.tracks().at(t).locked) {
+            if (error)
+                *error = QStringLiteral("Track %1 is locked").arg(t);
+            return moved;
+        }
+    }
+
+    const drift::Project before = m_project;
+    drift::Clip &target = m_project.tracks()[trackIndex].clips[clipIndex];
+    applyClipTrim(target, inPoint, outPoint);
+    const drift::Clip trimmed = target;
+    QSet<QString> skip{id};
+    for (const drift::ClipRef &ref : drift::linkedPartners(m_project, trimmed))
+        skip.insert(m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
+    syncLinkedPartnersFrom(m_project, trimmed);
+    const drift::TimeUs delta = trimmed.timelineEnd() - oldEnd;
+    rippleTracksFrom(m_project, tracks, oldEnd, delta, skip);
+    syncOverlapTransitions(m_project);
+    pushProjectEdit(before, tr("Ripple trim"));
+    finishEdit(tr("Ripple trim"));
+
+    QHash<QString, drift::TimeUs> starts;
+    for (const drift::Track &track : before.tracks())
+        for (const drift::Clip &clip : track.clips)
+            starts.insert(clip.id, clip.timelineStart);
+    for (const drift::Track &track : m_project.tracks())
+        for (const drift::Clip &clip : track.clips)
+            if (starts.contains(clip.id) && starts.value(clip.id) != clip.timelineStart)
+                moved.append(clip.id);
+    return moved;
 }
 
 void AppController::duplicateSelectedClip()

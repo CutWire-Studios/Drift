@@ -930,7 +930,14 @@ public:
     // has always been handed this return value; until the enum existed it was reading undefined.
     Q_INVOKABLE int trimClipLeft(int trackIndex, int clipIndex, double newStart);
     Q_INVOKABLE int trimClipRight(int trackIndex, int clipIndex, double newEnd);
+    // With `ripple`, the clip's linked partners take the same trim, and the clips after its old end
+    // (on its track and the tracks holding linked partners of those clips) move by the change in
+    // length, whatever the project's ripple setting. Returns the ids of the clips that moved.
     Q_INVOKABLE void setClipTrim(int trackIndex, int clipIndex, double inPoint, double outPoint);
+    QStringList setClipTrimRippled(int trackIndex, int clipIndex, double inPoint, double outPoint, QString *error = nullptr);
+    // setClipTrim's arithmetic on one clip: clamps the range to the source and re-derives the
+    // timeline duration from it and the speed.
+    void applyClipTrim(drift::Clip &clip, double inPoint, double outPoint) const;
     // Inserts a clip of `assetIndex` on `trackIndex` starting exactly at `atUs`, with source range
     // [srcInUs, srcOutUs), in one undo step. A negative srcInUs/srcOutUs takes the asset's bin
     // trim (else its whole length); an explicit range must lie within the media. With `ripple`,

@@ -101,6 +101,7 @@ private slots:
     void subtitleClipKeepsItsChosenName();
     void insertClipRipplesTheTrack();
     void deleteClipsClosesTheSpace();
+    void rippleTrimMovesTheRest();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
@@ -1199,6 +1200,61 @@ void McpTest::deleteClipsClosesTheSpace()
                 .value(QStringLiteral("ok")).toBool());
     QCOMPARE(startOf(ids.at(2)), -1.0);
     QCOMPARE(startOf(ids.at(3)), 6.0);
+}
+
+void McpTest::rippleTrimMovesTheRest()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QStringList ids;
+    for (int i = 0; i < 3; ++i) {
+        QJsonObject args{{QStringLiteral("asset"), 0}, {QStringLiteral("in"), i * 2.0}, {QStringLiteral("out"), i * 2.0 + 2.0}};
+        if (ids.isEmpty())
+            args.insert(QStringLiteral("at"), 0.0);
+        else
+            args.insert(QStringLiteral("after"), ids.last());
+        ids.append(dispatcher.applyOne(QStringLiteral("insert_clip"), args).value(QStringLiteral("id")).toString());
+    }
+    const auto startOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineStart);
+    };
+    const auto trim = [&](double in, double out, bool ripple) {
+        return dispatcher.applyOne(QStringLiteral("set_trim"),
+                                   {{QStringLiteral("clip"), ids.at(1)}, {QStringLiteral("in"), in},
+                                    {QStringLiteral("out"), out}, {QStringLiteral("ripple"), ripple}});
+    };
+    const int steps = state.undoHistory().size();
+
+    // Lengthen the middle clip by 1 s: the last one moves right by 1 s, in one step.
+    QJsonObject longer = trim(2.0, 5.0, true);
+    QVERIFY2(longer.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(longer).toJson()));
+    QCOMPARE(longer.value(QStringLiteral("dur")).toDouble(), 3.0);
+    QCOMPARE(startOf(ids.at(2)), 5.0);
+    QCOMPARE(longer.value(QStringLiteral("moved")).toArray().size(), 1);
+    QCOMPARE(state.undoHistory().size(), steps + 1);
+
+    // Shorten it to 1 s: the last one closes up.
+    QVERIFY(trim(2.0, 3.0, true).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(ids.at(2)), 3.0);
+    QCOMPARE(startOf(ids.at(0)), 0.0);
+
+    // Without ripple nothing else moves (the old behaviour).
+    QVERIFY(trim(2.0, 3.5, false).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(ids.at(2)), 3.0);
+
+    state.undo();
+    state.undo();
+    state.undo();
+    QCOMPARE(startOf(ids.at(2)), 4.0);
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
