@@ -1206,8 +1206,6 @@ AppController::InsertResult AppController::insertClipFromAsset(int assetIndex, i
         result.error = message;
         return result;
     };
-    if (atUs < 0)
-        return fail("bad_args", QStringLiteral("The time is before the start of the timeline"));
     drift::Clip clip;
     {
         QString code;
@@ -1215,6 +1213,8 @@ AppController::InsertResult AppController::insertClipFromAsset(int assetIndex, i
         if (!buildClipFromAsset(assetIndex, trackIndex, srcInUs, srcOutUs, &clip, &code, &message))
             return fail(code.toLatin1().constData(), message);
     }
+    if (atUs < 0)
+        return fail("bad_args", QStringLiteral("The time is before the start of the timeline"));
     const drift::TimeUs lengthUs = clip.timelineDuration;
 
     const drift::Track &target = m_project.tracks().at(trackIndex);
@@ -3123,6 +3123,8 @@ AppController::SequenceResult AppController::setTrackSequence(int trackIndex, co
         return fail("bad_args", QStringLiteral("Track %1 is an adjustment track; its clips follow the clips they apply to").arg(trackIndex));
     if (startUs < 0)
         return fail("bad_args", QStringLiteral("start must be 0 or more"));
+    if (entries.isEmpty())
+        return fail("bad_args", QStringLiteral("clips is empty; use delete_clips to clear a track"));
     QSet<int> group = drift::rippleTrackGroup(m_project, trackIndex);
     group.insert(trackIndex);
     for (const int t : std::as_const(group)) {
@@ -3144,6 +3146,27 @@ AppController::SequenceResult AppController::setTrackSequence(int trackIndex, co
         if (listed.contains(entry.clipId))
             return fail("bad_args", QStringLiteral("Clip %1 is listed twice; duplicate_clip it for a second copy").arg(entry.clipId));
         listed.insert(entry.clipId);
+        // A range on a reused clip is refused past its media, as for a new clip, not clamped.
+        if (entry.srcInUs >= 0 || entry.srcOutUs >= 0) {
+            const drift::Clip &clip = m_project.tracks().at(t).clips.at(c);
+            const drift::TimeUs fullUs = isSyntheticTimelineClip(clip.type) ? syntheticClipMaxDurationUs()
+                                                                             : sourceDurationForClip(clip);
+            const drift::TimeUs minUs = drift::minClipDurationUs(m_project.fps());
+            const drift::TimeUs in = entry.srcInUs >= 0 ? entry.srcInUs : clip.srcIn;
+            const drift::TimeUs out = entry.srcOutUs >= 0 ? entry.srcOutUs : clip.srcOut;
+            if (fullUs > 0 && in >= fullUs)
+                return fail("bad_args", QStringLiteral("Clip %1: in (%2 s) is at or past the end of the media (%3 s)")
+                                            .arg(entry.clipId)
+                                            .arg(drift::usToSeconds(in))
+                                            .arg(drift::usToSeconds(fullUs)));
+            if (fullUs > 0 && out > fullUs + minUs)
+                return fail("bad_args", QStringLiteral("Clip %1: out (%2 s) is past the end of the media (%3 s)")
+                                            .arg(entry.clipId)
+                                            .arg(drift::usToSeconds(out))
+                                            .arg(drift::usToSeconds(fullUs)));
+            if (out - in < minUs)
+                return fail("bad_args", QStringLiteral("Clip %1: the source range is shorter than a frame").arg(entry.clipId));
+        }
     }
     QStringList removeIds;
     for (const drift::Clip &clip : m_project.tracks().at(trackIndex).clips) {
@@ -3174,17 +3197,30 @@ AppController::SequenceResult AppController::setTrackSequence(int trackIndex, co
     }
 
     const drift::Project before = m_project;
+    // Deleting goes through the selection; a refused layout puts the user's back.
+    const QList<QPair<int, int>> previousSelection = m_selection;
+    const int previousTrack = m_selectedTrack;
+    const int previousClip = m_selectedClip;
     const auto refuse = [&](const QString &message) {
         m_project = before;
+        m_selection = previousSelection;
+        m_selectedTrack = previousTrack;
+        m_selectedClip = previousClip;
         m_mcpController->endBatch(tr("Set sequence"), false);
         return fail("bad_args", message);
     };
+    // The batch makes the delete and the layout one undo step.
     m_mcpController->beginBatch();
     if (!removeIds.isEmpty()) {
         QString error;
         if (deleteClipsById(removeIds, true, false, &error) < 0)
             return refuse(error);
     }
+    // The delete can drop an emptied effect lane, which renumbers the tracks after it: the
+    // collision check compares against this state, with the group taken from it.
+    const drift::Project afterDelete = m_project;
+    QSet<int> collisionGroup = drift::rippleTrackGroup(m_project, trackIndex);
+    collisionGroup.insert(trackIndex);
 
     bool clamped = false;
     QString clampedId;
@@ -3227,10 +3263,14 @@ AppController::SequenceResult AppController::setTrackSequence(int trackIndex, co
 
     if (clamped)
         return refuse(QStringLiteral("Linked clip %1 would have to move before the start of the timeline").arg(clampedId));
-    const QString collision = drift::rippleCollision(before, m_project, group);
+    const QString collision = drift::rippleCollision(afterDelete, m_project, collisionGroup);
     if (!collision.isEmpty())
         return refuse(QStringLiteral("Clip %1 would land on another; move it first").arg(collision));
     syncOverlapTransitions(m_project);
+    // Settled here as well: inside an outer batch, endBatch below only counts down, and the
+    // caller reads the new layout (and addresses the new clips) before the outer batch ends.
+    syncLinkedAdjustments(m_project);
+    m_mcpController->bumpEditRevision();
     m_mcpController->endBatch(tr("Set sequence"), true);
 
     QSet<QString> remaining;

@@ -707,8 +707,9 @@ const QList<Op> &ops()
           "entry is {clip} (a clip on this track, keeping its settings) or {asset}, each with "
           "optional in/out (source seconds) and name. Unlisted clips on the track are deleted with "
           "their linked audio and effects; listed clips' linked audio moves with them. Refused, "
-          "nothing changed, for a clip from another track or listed twice, two listed clips linked "
-          "to each other, a locked track, or linked audio landing on another clip. Returns "
+          "nothing changed, for a clip from another track or listed twice, a range past the media, "
+          "clips linked to each other, a locked or adjustment track, or linked audio landing on "
+          "another clip or before 0. Clear a track with delete_clips. Returns "
           "clips:[{id, start, dur}] in order, created, removed and any removed_transitions.",
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                         {QStringLiteral("clips"),

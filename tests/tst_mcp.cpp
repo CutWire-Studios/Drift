@@ -1854,6 +1854,45 @@ void McpTest::setSequenceLaysOutTheTrack()
     QVERIFY(find(b));
     QVERIFY(find(c));
     QCOMPARE(find(a)->timelineStart, 0);
+    QCOMPARE(sequence({}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(sequence({entry(a)}, {{QStringLiteral("start"), -1.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(sequence({QJsonObject{{QStringLiteral("clip"), a}, {QStringLiteral("out"), 20.0}}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(find(a)->timelineDuration, drift::secondsToUs(1.0));
+
+    // Inside a batch, with nothing deleted: the reply still reads the new layout, new clip included,
+    // and the whole batch is one undo step.
+    {
+        const QJsonObject batch = dispatcher.apply(QJsonObject{
+            {QStringLiteral("ops"),
+             QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_sequence")},
+                                    {QStringLiteral("args"),
+                                     QJsonObject{{QStringLiteral("track"), track},
+                                                 {QStringLiteral("clips"),
+                                                  QJsonArray{entry(c), entry(a), entry(b),
+                                                             QJsonObject{{QStringLiteral("asset"), 0}, {QStringLiteral("out"), 1.0}}}}}}}}}});
+        QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+        const QJsonObject inner = batch.value(QStringLiteral("done")).toArray().first().toObject().value(QStringLiteral("result")).toObject();
+        const QJsonArray rows = inner.value(QStringLiteral("clips")).toArray();
+        QCOMPARE(rows.size(), 4);
+        QCOMPARE(rows.at(0).toObject().value(QStringLiteral("id")).toString(), c);
+        QCOMPARE(rows.at(1).toObject().value(QStringLiteral("start")).toDouble(), 1.0);
+        QCOMPARE(rows.at(2).toObject().value(QStringLiteral("start")).toDouble(), 2.0);
+        QCOMPARE(rows.at(3).toObject().value(QStringLiteral("start")).toDouble(), 4.0);
+        state.undo();
+        QCOMPARE(find(c)->timelineStart, drift::secondsToUs(3.0));
+        QCOMPARE(state.project()->tracks().at(track).clips.size(), 3);
+    }
+
+    // An unlisted clip linked to a listed one would take it along: refused.
+    {
+        state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second].linkId = QStringLiteral("a-c");
+        state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].linkId = QStringLiteral("a-c");
+        QCOMPARE(sequence({entry(a), entry(b)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY(find(c));
+        state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second].linkId.clear();
+        state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].linkId.clear();
+    }
 
     // A's linked audio moves with it; a clip on the audio track in its way refuses the layout.
     {
@@ -1878,6 +1917,17 @@ void McpTest::setSequenceLaysOutTheTrack()
         state.project()->tracks().last().clips.append(blocker);
         QCOMPARE(sequence({entry(b), entry(a)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
         QCOMPARE(find(a)->timelineStart, 0);
+        QCOMPARE(find(QStringLiteral("a-audio"))->timelineStart, 0);
+        QVERIFY(find(c));
+
+        // Same, with an effect on C: deleting C drops its effect lane, which renumbers the audio
+        // track; the blocker is still found.
+        const int tracksBefore = int(state.project()->tracks().size());
+        const QJsonObject graded = dispatcher.applyOne(
+            QStringLiteral("add_effect"), {{QStringLiteral("clip"), c}, {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}});
+        QVERIFY2(graded.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(graded).toJson()));
+        QCOMPARE(int(state.project()->tracks().size()), tracksBefore + 1);
+        QCOMPARE(sequence({entry(b), entry(a)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
         QCOMPARE(find(QStringLiteral("a-audio"))->timelineStart, 0);
         QVERIFY(find(c));
     }

@@ -994,8 +994,10 @@ public:
     // a clip already on the track (by id, keeping its settings; in/out retrim it) or makes one from
     // an asset. Clips on the track that are not listed are deleted with their linked partners and
     // pinned effects; listed clips' partners move (and retrim) with them. Refused, with nothing
-    // changed, for a locked or adjustment track, a clip from another track, a clip listed twice,
-    // two listed clips linked to each other, or a partner that would land on another clip.
+    // changed, for an empty list, a negative start, a locked or adjustment track, a clip from
+    // another track or listed twice, a range past the media, two listed clips linked to each
+    // other (or an unlisted one linked to a listed one), or a partner that would land on another
+    // clip or before 0.
     struct SequenceEntry
     {
         QString clipId;
