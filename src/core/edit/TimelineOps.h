@@ -285,6 +285,32 @@ bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeU
 // split itself names each half from its cues.
 QString nextSplitPieceName(const Track &track, const QString &name);
 
+// Ripple edits (agent ops). Tracks joined, directly or through other tracks, by a linked pair of
+// clips (tight or loose) ripple together as one group, so linked audio never drifts from its
+// video and nothing a ripple moves lands on a clip that stayed. Adjustment tracks are never in a
+// group: pinned adjustments follow their clip in the edit's normalisation.
+QSet<int> rippleTrackGroup(const Project &project, int trackIndex);
+
+// Moves every clip on `tracks` that starts at or after `fromUs` (and is not in `exclude`) by
+// `deltaUs`, once, together with any clip on those tracks linked to a moved one that starts
+// earlier (a J-cut, or a loose partner). Clips moved left stop at 0. Returns the moved ids.
+QStringList rippleTracks(Project &project, const QSet<int> &tracks, TimeUs fromUs, TimeUs deltaUs,
+                         const QSet<QString> &exclude = {});
+
+// A time range that was cleared on one track, to be closed by closeRippleRanges.
+struct RippleRange
+{
+    int track = -1;
+    TimeUs start = 0;
+    TimeUs end = 0;
+};
+
+// Closes cleared ranges: the ranges on the tracks of each group are merged, and each merged range
+// closes once for the whole group, latest first. Refuses (returns false with `blocker` set to the
+// id in the way, and changes nothing) when a clip on a group track overlaps a range to close.
+bool closeRippleRanges(Project &project, const QList<RippleRange> &ranges, QString *blocker = nullptr,
+                       QStringList *moved = nullptr);
+
 
 // Repoint `dst` at the media `src` carries while keeping dst's timeline placement. The source
 // time is read from `src` at dst's timeline start, so the two stay in timeline sync — which is

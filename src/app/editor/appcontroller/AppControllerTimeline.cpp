@@ -1207,28 +1207,18 @@ AppController::InsertResult AppController::insertClipFromAsset(int assetIndex, i
         }
     }
 
-    // Rippled: the destination track and every track holding a linked partner (tight or loose) of a
-    // clip that moves, so partners keep their place and nothing moved lands on a clip that stayed.
-    // Adjustment lanes follow their clips in the edit's normalisation.
-    QSet<int> rippleTracks{trackIndex};
-    if (ripple) {
-        for (const drift::Clip &other : target.clips) {
-            if (other.timelineStart < atUs || other.linkId.isEmpty())
-                continue;
-            for (const drift::ClipRef &ref : drift::linkedPartners(m_project, other)) {
-                if (!m_project.tracks().at(ref.trackIndex).isAdjustment())
-                    rippleTracks.insert(ref.trackIndex);
-            }
-        }
-    }
-    for (const int t : std::as_const(rippleTracks)) {
+    // Rippled: every track that ripples with the destination (joined to it by linked clips), so
+    // linked audio keeps its place and nothing moved lands on a clip that stayed. Adjustment lanes
+    // follow their clips in the edit's normalisation.
+    const QSet<int> rippleTracks = ripple ? drift::rippleTrackGroup(m_project, trackIndex) : QSet<int>{trackIndex};
+    for (const int t : rippleTracks) {
         if (m_project.tracks().at(t).locked)
             return fail("bad_args", QStringLiteral("Track %1 is locked").arg(t));
     }
 
     const drift::Project before = m_project;
     if (ripple)
-        rippleTracksFrom(m_project, rippleTracks, atUs, lengthUs, {});
+        drift::rippleTracks(m_project, rippleTracks, atUs, lengthUs);
 
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     clip.thumbnailPath = m_assetLibrary->thumbnailAt(assetIndex);
