@@ -2367,6 +2367,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">සංක්‍රාන්ති</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2557,6 +2564,10 @@
     <message>
         <source>Split at current time</source>
         <translation>වත්මන් වේලාවේදී වෙන් කරන්න</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -3804,6 +3815,18 @@
         <translation>සංක්‍රාන්තිය යාවත්කාලීන විය</translation>
     </message>
     <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change look</source>
         <translation>පෙනුම වෙනස් කරන්න</translation>
     </message>
@@ -4840,6 +4863,10 @@
     <message>
         <source>Favorites</source>
         <translation>ප්‍රියතමයන්</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23431,6 +23458,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">සංක්‍රාන්තියක් එක් කරන්න</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25426,8 +25460,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>ක්ලිප් දෙකක් එකිනෙක මත පිහිටන ස්ථානය තෝරන්න (දම් පැහැයෙන් පෙන්වයි), නැතහොත් ක්ලිපයක් ඊළඟ ක්ලිපය මතට වැටෙන සේ අදින්න.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25438,8 +25472,8 @@ If playback stutters, try another.</source>
         <translation>මෙම ක්ලිපයෙන් පසු සංක්‍රාන්තියක් නැත. ඊළඟ ක්ලිපයට කැපුම් ස්ථානයේ එකක් එක් කරන්න.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>crossfade එකක් එක් කරන්න (%1 s)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25491,6 +25525,84 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">සංක්‍රාන්ති සොයන්න</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">මගේ සංක්‍රාන්ති</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">සංක්‍රාන්ති කිසිවක් නොමැත</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">තවත් එක් කිරීමට සංක්‍රාන්ති පැකේජයක් ස්ථාපනය කරන්න.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">අමතර අංග ලබාගන්න</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">“%1” ට ගැලපෙන සංක්‍රාන්ති නැත</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">මෙතෙක් අභිරුචි සංක්‍රාන්ති නැත</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">තවමත් ප්‍රියතමයන් නැත</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">මෙම ප්‍රවර්ගයේ කිසිවක් නැත</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">වෙනත් නමක් උත්සාහ කරන්න.</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">මෙහි සුරැකීමට සංක්‍රාන්ති තරු ලකුණු කරන්න.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">වෙනත් ප්‍රවර්ගයක් තෝරන්න.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">ආයාත කරන්න</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25508,64 +25620,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>සංක්‍රාන්ති සොයන්න</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>මගේ සංක්‍රාන්ති</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>සංක්‍රාන්ති කිසිවක් නොමැත</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>තවත් එක් කිරීමට සංක්‍රාන්ති පැකේජයක් ස්ථාපනය කරන්න.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>අමතර අංග ලබාගන්න</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>“%1” ට ගැලපෙන සංක්‍රාන්ති නැත</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>මෙතෙක් අභිරුචි සංක්‍රාන්ති නැත</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>තවමත් ප්‍රියතමයන් නැත</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>වෙනත් නමක් උත්සාහ කරන්න.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>මෙහි සුරැකීමට සංක්‍රාන්ති තරු ලකුණු කරන්න.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>වෙනත් ප්‍රවර්ගයක් තෝරන්න.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>ආයාත කරන්න</translation>
     </message>
 </context>
 <context>

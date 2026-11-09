@@ -2379,6 +2379,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2569,6 +2576,10 @@
     <message>
         <source>Split at current time</source>
         <translation>تقسيم عند الوقت الحالي</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -3586,6 +3597,18 @@
     <message>
         <source>Transition updated</source>
         <translation>تم تحديث الانتقال</translation>
+    </message>
+    <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add transition</source>
@@ -4896,6 +4919,10 @@
     <message>
         <source>Favorites</source>
         <translation>المفضلة</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23743,6 +23770,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">إضافة انتقال</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25766,8 +25800,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>حدد موضع تداخل مقطعين (يظهر باللون الأرجواني)، أو اسحب مقطعًا ليتداخل مع المقطع التالي.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25778,8 +25812,8 @@ If playback stutters, try another.</source>
         <translation>لا يوجد انتقال بعد هذا المقطع. أضف انتقالًا عند موضع القطع مع المقطع التالي.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>إضافة تلاشٍ متداخل (%1 ث)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25831,6 +25865,88 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">البحث في الانتقالات</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">انتقالاتي</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">لا توجد انتقالات متاحة</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">ثبت حزمة انتقالات لإضافة المزيد.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">لا توجد انتقالات تطابق “%1”</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">لا توجد انتقالات مخصصة بعد</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">لا توجد مفضلات بعد</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">لا يوجد شيء في هذه الفئة</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">ميز الانتقالات بنجمة لحفظها هنا.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">اختر فئة أخرى.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">استيراد</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25848,64 +25964,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>البحث في الانتقالات</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>انتقالاتي</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>لا توجد انتقالات متاحة</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>ثبت حزمة انتقالات لإضافة المزيد.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>الحصول على الإضافات</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>لا توجد انتقالات تطابق “%1”</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>لا توجد انتقالات مخصصة بعد</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>لا توجد مفضلات بعد</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>لا يوجد شيء في هذه الفئة</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>جرب اسمًا آخر.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>ميز الانتقالات بنجمة لحفظها هنا.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>اختر فئة أخرى.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>استيراد</translation>
     </message>
 </context>
 <context>

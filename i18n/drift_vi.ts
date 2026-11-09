@@ -2364,6 +2364,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Chuyển cảnh</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2554,6 +2561,10 @@
     <message>
         <source>Split at current time</source>
         <translation>Cắt ở điểm hiện tại</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -3806,6 +3817,18 @@
         <translation>Đã cập nhật hiệu ứng chuyển cảnh</translation>
     </message>
     <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change look</source>
         <translation>Thay đổi giao diện màu</translation>
     </message>
@@ -4826,6 +4849,10 @@
     <message>
         <source>Favorites</source>
         <translation>Yêu thích</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23354,6 +23381,13 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">Thêm hiệu ứng chuyển cảnh</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25342,8 +25376,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>Chọn vị trí hai clip chồng lên nhau (hiển thị bằng màu tím) hoặc kéo một clip để chồng lên clip tiếp theo.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25354,8 +25388,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Không có chuyển cảnh sau clip này. Thêm một chuyển cảnh tại điểm cắt sang clip kế tiếp.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>Thêm hòa mờ chéo (%1 s)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25407,6 +25441,83 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">Tìm hiệu ứng chuyển cảnh</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">Chuyển cảnh của tôi</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">Không có hiệu ứng chuyển cảnh nào có sẵn</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">Cài đặt một gói hiệu ứng chuyển cảnh để bổ sung thêm.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">Tải gói bổ trợ</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">Không có hiệu ứng chuyển cảnh nào khớp với “%1”</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">Chưa có chuyển cảnh tùy chỉnh nào</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">Chưa có sở thích nào</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">Không có gì trong danh mục này</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">Hãy thử một tên khác.</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">Đánh dấu sao hiệu ứng chuyển cảnh để lưu chúng ở đây.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">Chọn một danh mục khác.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Nhập</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25424,64 +25535,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>Tìm hiệu ứng chuyển cảnh</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>Chuyển cảnh của tôi</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>Không có hiệu ứng chuyển cảnh nào có sẵn</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>Cài đặt một gói hiệu ứng chuyển cảnh để bổ sung thêm.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>Tải gói bổ trợ</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>Không có hiệu ứng chuyển cảnh nào khớp với “%1”</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>Chưa có chuyển cảnh tùy chỉnh nào</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>Chưa có sở thích nào</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Không có gì trong danh mục này</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>Hãy thử một tên khác.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>Đánh dấu sao hiệu ứng chuyển cảnh để lưu chúng ở đây.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Chọn một danh mục khác.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Nhập</translation>
     </message>
 </context>
 <context>

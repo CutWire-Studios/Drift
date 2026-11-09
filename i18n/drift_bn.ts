@@ -2367,6 +2367,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">ট্রানজিশন</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2557,6 +2564,10 @@
     <message>
         <source>Split at current time</source>
         <translation>বর্তমান সময়ে বিভক্ত</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -3804,6 +3815,18 @@
         <translation>পরিবর্তন আপডেট করা হয়েছে।</translation>
     </message>
     <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change look</source>
         <translation>লুক পরিবর্তন করুন</translation>
     </message>
@@ -4840,6 +4863,10 @@
     <message>
         <source>Favorites</source>
         <translation>প্রিয়</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23431,6 +23458,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">স্থানান্তর যোগ করুন</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25426,8 +25460,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>যেখানে দুটি ক্লিপ ওভারল্যাপ হয় তা নির্বাচন করুন (বেগুনি রঙে দেখানো হয়েছে), অথবা একটি ক্লিপ টেনে আনুন যাতে এটি পরেরটিকে ওভারল্যাপ করে.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25438,8 +25472,8 @@ If playback stutters, try another.</source>
         <translation>এই ক্লিপের পরে কোন পরিবর্তন নেই। পরবর্তী ক্লিপে কাটাতে একটি যোগ করুন.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>ক্রসফেড যোগ করুন (%1 সে.)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25491,6 +25525,84 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">সার্চ ট্রানজিশন</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">আমার ট্রানজিশন</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">কোনো ট্রানজিশন উপলব্ধ নেই</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">আরও যোগ করতে একটি ট্রানজিশন প্যাক ইনস্টল করুন.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">অতিরিক্ত পান</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">কোন ট্রানজিশন মেলে না “%1”</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">এখনো কোনো কাস্টম ট্রানজিশন নেই</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">এখনও কোন পছন্দসই নেই।</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">এই বিভাগে কিছু নেই</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">একটি ভিন্ন নাম চেষ্টা করুন.</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">স্টার ট্রানজিশন সেগুলিকে এখানে সংরক্ষণ করুন.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">অন্য বিভাগ বেছে নিন.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">ইমপোর্ট</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25508,64 +25620,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>সার্চ ট্রানজিশন</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>আমার ট্রানজিশন</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>কোনো ট্রানজিশন উপলব্ধ নেই</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>আরও যোগ করতে একটি ট্রানজিশন প্যাক ইনস্টল করুন.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>অতিরিক্ত পান</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>কোন ট্রানজিশন মেলে না “%1”</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>এখনো কোনো কাস্টম ট্রানজিশন নেই</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>এখনও কোন পছন্দসই নেই।</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>এই বিভাগে কিছু নেই</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>একটি ভিন্ন নাম চেষ্টা করুন.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>স্টার ট্রানজিশন সেগুলিকে এখানে সংরক্ষণ করুন.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>অন্য বিভাগ বেছে নিন.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>ইমপোর্ট</translation>
     </message>
 </context>
 <context>

@@ -2364,6 +2364,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">トランジション</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2980,6 +2987,10 @@
     <message>
         <source>Paste attributes…</source>
         <translation>属性を貼り付け…</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Go to previous cut point</source>
@@ -3796,6 +3807,18 @@
     <message>
         <source>Transition updated</source>
         <translation>トランジションを更新しました</translation>
+    </message>
+    <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Change look</source>
@@ -4826,6 +4849,10 @@
     <message>
         <source>Favorites</source>
         <translation>お気に入り</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23354,6 +23381,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">トランジションを追加</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25342,8 +25376,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>2つのクリップが重なる部分 (紫色で表示)を選択するか、クリップをドラッグして次のクリップと重なるようにします。</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25354,8 +25388,8 @@ If playback stutters, try another.</source>
         <translation>このクリップの後にトランジションはありません。次のクリップとの切り取り位置に追加します。</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>クロスフェードを追加 (%1 秒)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25407,6 +25441,83 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">トランジションを検索</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">マイトランジション</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">利用可能なトランジションがありません</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">トランジションパックをインストールして追加してください。</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">拡張機能を入手</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">「%1」に一致するトランジションはありません</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">カスタムトランジションはまだありません</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">お気に入りはまだありません</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">このカテゴリには何もありません</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">別の名前を試してください。</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">トランジションにスターを付けてここに保存します。</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">別のカテゴリを選択してください。</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">インポート</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25424,64 +25535,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>トランジションを検索</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>マイトランジション</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>利用可能なトランジションがありません</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>トランジションパックをインストールして追加してください。</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>拡張機能を入手</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>「%1」に一致するトランジションはありません</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>カスタムトランジションはまだありません</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>お気に入りはまだありません</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>このカテゴリには何もありません</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>別の名前を試してください。</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>トランジションにスターを付けてここに保存します。</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>別のカテゴリを選択してください。</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>インポート</translation>
     </message>
 </context>
 <context>

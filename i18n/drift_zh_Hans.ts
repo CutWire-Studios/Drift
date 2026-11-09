@@ -2364,6 +2364,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">转场</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2554,6 +2561,10 @@
     <message>
         <source>Split at current time</source>
         <translation>在当前时间分割</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -3798,6 +3809,18 @@
         <translation>转场已更新</translation>
     </message>
     <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change look</source>
         <translation>更改外观</translation>
     </message>
@@ -4826,6 +4849,10 @@
     <message>
         <source>Favorites</source>
         <translation>收藏</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23354,6 +23381,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">添加转场</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25342,8 +25376,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>选择两个片段重叠的位置（以紫色显示），或拖动片段使其与下一个片段重叠。</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25354,8 +25388,8 @@ If playback stutters, try another.</source>
         <translation>此片段后无转场。在与下一片段的切割处添加一个。</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>添加交叉淡入淡出 (%1 秒)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25407,6 +25441,83 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">搜索转场</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">我的转场</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">无可用的转场</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">安装转场包以添加更多。</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">没有与 &quot;%1&quot; 匹配的转场</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">暂无自定义转场</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">暂无收藏</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">此类别中没有内容</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">星标转场以保存至此。</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">请选择其他分类。</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">导入</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25424,64 +25535,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>搜索转场</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>我的转场</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>无可用的转场</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>安装转场包以添加更多。</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>获取更多</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>没有与 &quot;%1&quot; 匹配的转场</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>暂无自定义转场</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>暂无收藏</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>此类别中没有内容</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>尝试其他名称。</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>星标转场以保存至此。</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>选择其他类别。</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>导入</translation>
     </message>
 </context>
 <context>

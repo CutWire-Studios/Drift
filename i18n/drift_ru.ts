@@ -2370,6 +2370,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Переходы</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2560,6 +2567,10 @@
     <message>
         <source>Split at current time</source>
         <translation>Разделить в текущей точке</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -3810,6 +3821,18 @@
         <translation>Переход обновлён</translation>
     </message>
     <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change look</source>
         <translation>Изменить стиль</translation>
     </message>
@@ -4854,6 +4877,10 @@
     <message>
         <source>Favorites</source>
         <translation>Избранное</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23509,6 +23536,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">Добавить переход</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25511,8 +25545,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>Выберите область перекрытия двух клипов (фиолетовая) или перетащите клип так, чтобы он перекрыл следующий.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25523,8 +25557,8 @@ If playback stutters, try another.</source>
         <translation>После этого клипа нет перехода. Добавьте его на стыке со следующим клипом.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>Добавить перекрёстный наплыв (%1 с)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25576,6 +25610,85 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">Поиск переходов</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">Мои переходы</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">Нет доступных переходов</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">Установите пакет переходов, чтобы добавить больше.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">Получить дополнения</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">Нет переходов по запросу «%1»</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">Пользовательских переходов пока нет</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">В избранном пока ничего нет</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">В этой категории ничего нет</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">Попробуйте другое название.</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">Отмечайте переходы звёздочкой, чтобы сохранять их здесь.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">Выберите другую категорию.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Импорт</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25593,64 +25706,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>Поиск переходов</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>Мои переходы</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>Нет доступных переходов</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>Установите пакет переходов, чтобы добавить больше.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>Получить дополнения</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>Нет переходов по запросу «%1»</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>Пользовательских переходов пока нет</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>В избранном пока ничего нет</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>В этой категории ничего нет</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>Попробуйте другое название.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>Отмечайте переходы звёздочкой, чтобы сохранять их здесь.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Выберите другую категорию.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Импорт</translation>
     </message>
 </context>
 <context>

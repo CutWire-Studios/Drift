@@ -2367,6 +2367,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Pagbabagong-kalagayan</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2986,6 +2993,10 @@
     <message>
         <source>Paste attributes…</source>
         <translation>I-paste ang mga katangian…</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Go to previous cut point</source>
@@ -3802,6 +3813,18 @@
     <message>
         <source>Transition updated</source>
         <translation>Na-update ang transisyon</translation>
+    </message>
+    <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Change look</source>
@@ -4840,6 +4863,10 @@
     <message>
         <source>Favorites</source>
         <translation>Mga Paborito</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23432,6 +23459,13 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">Magdagdag ng transisyon</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25427,8 +25461,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>Piliin kung saan nagsasapawan ang dalawang clip (ipinapakita sa lila), o mag-drag ng clip upang sumapaw ito sa susunod.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25439,8 +25473,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Walang transisyon pagkatapos ng clip na ito. Magdagdag ng isa sa cut papunta sa susunod na clip.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>Magdagdag ng crossfade (%1 s)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25492,6 +25526,84 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">Maghanap ng mga transisyon</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">Aking mga Transisyon</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">Walang available na mga transisyon</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">Mag-install ng transitions pack upang magdagdag pa.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">Kumuha ng mga dagdag</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">Walang mga transisyong tumutugma sa “%1”</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">Wala pang custom na mga transisyon</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">Wala pang mga paborito</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">Walang laman sa kategoryang ito</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">Subukan ang ibang pangalan.</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">Lagyan ng bituin ang mga transisyon upang i-save ang mga ito rito.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">Pumili ng ibang kategorya.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Mag-import</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25509,64 +25621,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>Maghanap ng mga transisyon</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>Aking mga Transisyon</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>Walang available na mga transisyon</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>Mag-install ng transitions pack upang magdagdag pa.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>Kumuha ng mga dagdag</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>Walang mga transisyong tumutugma sa “%1”</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>Wala pang custom na mga transisyon</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>Wala pang mga paborito</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Walang laman sa kategoryang ito</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>Subukan ang ibang pangalan.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>Lagyan ng bituin ang mga transisyon upang i-save ang mga ito rito.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Pumili ng ibang kategorya.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Mag-import</translation>
     </message>
 </context>
 <context>

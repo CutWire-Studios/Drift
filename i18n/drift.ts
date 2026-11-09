@@ -2367,6 +2367,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2556,6 +2563,10 @@
     </message>
     <message>
         <source>Split at current time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3804,6 +3815,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change look</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4839,6 +4862,10 @@
     </message>
     <message>
         <source>Favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -23423,6 +23450,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25418,7 +25452,7 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -25430,7 +25464,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
+        <source>Add transition…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -25483,32 +25517,24 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TransitionPresetCard</name>
-    <message>
-        <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove from favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add to favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>TransitionsTab</name>
+    <name>TransitionPickerGrid</name>
     <message>
         <source>Search transitions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
+        <source>My Transitions</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
-        <source>My Transitions</source>
+        <source>Apply to all cuts on track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -25536,6 +25562,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing in this category</source>
         <translation type="unfinished"></translation>
     </message>
@@ -25552,11 +25582,37 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick another category.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TransitionPresetCard</name>
+    <message>
+        <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TransitionsTab</name>
+    <message>
+        <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

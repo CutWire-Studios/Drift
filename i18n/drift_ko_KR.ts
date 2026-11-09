@@ -2364,6 +2364,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">전환</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2554,6 +2561,10 @@
     <message>
         <source>Split at current time</source>
         <translation>현재 시점에서 분할</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -3798,6 +3809,18 @@
         <translation>전환이 업데이트됨</translation>
     </message>
     <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change look</source>
         <translation>룩 변경</translation>
     </message>
@@ -4826,6 +4849,10 @@
     <message>
         <source>Favorites</source>
         <translation>즐겨찾기</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23345,6 +23372,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">전환 추가</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25333,8 +25367,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>두 클립이 겹치는 곳(보라색으로 표시)을 선택하거나, 클립을 드래그하여 다음 클립과 겹치게 하세요.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25345,8 +25379,8 @@ If playback stutters, try another.</source>
         <translation>이 클립 뒤에는 전환이 없습니다. 다음 클립과의 컷 지점에 전환을 추가하세요.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>크로스페이드 추가 (%1초)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25398,6 +25432,83 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">전환 검색</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">내 전환</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">사용 가능한 전환이 없습니다</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">더 추가하려면 전환 팩을 설치하세요.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">추가 기능 받기</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">“%1”과(와) 일치하는 전환이 없습니다</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">아직 사용자 정의 전환이 없습니다</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">아직 즐겨찾기가 없습니다</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">이 카테고리에는 항목이 없습니다</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">다른 이름을 입력해 보세요.</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">전환에 별표를 표시하여 여기에 저장하세요.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">다른 카테고리를 선택하세요.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">가져오기</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25415,64 +25526,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>전환 검색</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>내 전환</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>사용 가능한 전환이 없습니다</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>더 추가하려면 전환 팩을 설치하세요.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>추가 기능 받기</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>“%1”과(와) 일치하는 전환이 없습니다</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>아직 사용자 정의 전환이 없습니다</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>아직 즐겨찾기가 없습니다</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>이 카테고리에는 항목이 없습니다</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>다른 이름을 입력해 보세요.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>전환에 별표를 표시하여 여기에 저장하세요.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>다른 카테고리를 선택하세요.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>가져오기</translation>
     </message>
 </context>
 <context>

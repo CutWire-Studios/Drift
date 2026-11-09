@@ -2367,6 +2367,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Transitions</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2558,6 +2565,10 @@
     <message>
         <source>Split at current time</source>
         <translation>Diviser à l&apos;heure actuelle</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -3809,6 +3820,18 @@
         <translation>Transition mise à jour</translation>
     </message>
     <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change look</source>
         <translation>Changer le style visuel</translation>
     </message>
@@ -4841,6 +4864,10 @@
     <message>
         <source>Favorites</source>
         <translation>Favoris</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23435,6 +23462,13 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">Ajouter une transition</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -25430,8 +25464,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>Sélectionnez où deux clips se chevauchent (affiché en violet), ou faites glisser un clip pour qu&apos;il chevauche le suivant.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25442,8 +25476,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Aucune transition après ce clip. Ajoutez-en une à la coupe vers le prochain clip.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>Ajouter un fondu enchaîné (%1 s)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25495,6 +25529,84 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">Rechercher des transitions</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">Mes transitions</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">Aucune transition disponible</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">Installez une extension de transitions pour en ajouter davantage.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">Obtenir des extras</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">Aucune transition ne correspond à “%1”</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">Aucune transition personnalisée pour le moment</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">Pas encore de favoris</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">Rien dans cette catégorie</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">Essayez un nom différent.</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">Étoilez les transitions pour les enregistrer ici.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">Choisissez une autre catégorie.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Importer</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25512,64 +25624,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>Rechercher des transitions</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>Mes transitions</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>Aucune transition disponible</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>Installez une extension de transitions pour en ajouter davantage.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>Obtenir des extras</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>Aucune transition ne correspond à “%1”</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>Aucune transition personnalisée pour le moment</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>Pas encore de favoris</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Rien dans cette catégorie</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>Essayez un nom différent.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>Étoilez les transitions pour les enregistrer ici.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Choisissez une autre catégorie.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Importer</translation>
     </message>
 </context>
 <context>
