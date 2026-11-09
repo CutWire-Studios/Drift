@@ -3240,7 +3240,7 @@ bool AppController::canReplaceClipMedia(int trackIndex, int clipIndex, int asset
         .has_value();
 }
 
-bool AppController::rebindClipMedia(int trackIndex, int clipIndex, int assetIndex)
+bool AppController::rebindClipMedia(int trackIndex, int clipIndex, int assetIndex, bool renameDefault)
 {
     if (!canReplaceClipMedia(trackIndex, clipIndex, assetIndex))
         return false;
@@ -3260,7 +3260,7 @@ bool AppController::rebindClipMedia(int trackIndex, int clipIndex, int assetInde
 
     const auto rebind = [&](drift::Clip &clip, drift::ClipType type) {
         const bool still = type == drift::ClipType::Image;
-        if (clip.name.isEmpty() || clip.name == oldName)
+        if (renameDefault && (clip.name.isEmpty() || clip.name == oldName))
             clip.name = assetCopy.name;
         clip.assetId = assetCopy.id;
         clip.path = assetCopy.path;
@@ -3354,7 +3354,10 @@ AppController::ReplaceResult AppController::replaceClipRippled(int trackIndex, i
     if (ranged && asset->kind == drift::MediaKind::Image)
         return fail("bad_args", QStringLiteral("in/out apply to video and audio; a still takes the clip's length"));
     m_assetLibrary->ensureMedia(assetIndex);
-    const drift::TimeUs fullUs = clipDurationForAssetIndex(assetIndex);
+    // A range needs the real length: before the probe has one, any bound would be made up.
+    if (ranged && asset->durationUs <= 0)
+        return fail("bad_args", QStringLiteral("The asset's length is not known yet; wait for it to load, or omit in/out"));
+    const drift::TimeUs fullUs = ranged ? asset->durationUs : clipDurationForAssetIndex(assetIndex);
     const drift::TimeUs minUs = drift::minClipDurationUs(m_project.fps());
     const drift::TimeUs inUs = qMax<drift::TimeUs>(0, srcInUs);
     drift::TimeUs outUs = srcOutUs >= 0 ? srcOutUs : fullUs;
@@ -3375,7 +3378,7 @@ AppController::ReplaceResult AppController::replaceClipRippled(int trackIndex, i
 
     const drift::Project before = m_project.detachedCopy();
     const drift::TimeUs oldEnd = original.timelineEnd();
-    if (!rebindClipMedia(trackIndex, clipIndex, assetIndex)) {
+    if (!rebindClipMedia(trackIndex, clipIndex, assetIndex, false)) {
         m_project = before;
         return fail("type_mismatch", QStringLiteral("This asset cannot stand in for the clip"));
     }

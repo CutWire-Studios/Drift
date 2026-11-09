@@ -985,8 +985,9 @@ public:
     ReplaceResult replaceClipRippled(int trackIndex, int clipIndex, int assetIndex, drift::TimeUs srcInUs,
                                      drift::TimeUs srcOutUs, bool ripple);
     bool canReplaceClipMedia(int trackIndex, int clipIndex, int assetIndex) const;
-    // replaceClipMedia without the undo step.
-    bool rebindClipMedia(int trackIndex, int clipIndex, int assetIndex);
+    // replaceClipMedia without the undo step. With renameDefault (the UI), a clip still named
+    // after its old file takes the new file's name; the agent op keeps every name.
+    bool rebindClipMedia(int trackIndex, int clipIndex, int assetIndex, bool renameDefault = true);
     // After a clip `id` (on trackIndex) changed length from oldEnd: with `ripple`, the clips after
     // it on its ripple group move by the change (its synced partners aside); either way a new
     // overlap refuses. On refusal the project is restored to `before`, `error` names the clip in

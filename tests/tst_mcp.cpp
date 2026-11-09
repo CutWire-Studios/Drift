@@ -1686,6 +1686,13 @@ void McpTest::replaceClipKeepsTheSlot()
         return dispatcher.applyOne(QStringLiteral("replace_clip"), args);
     };
 
+    // A clip still named after its file keeps that name too (the UI renames it).
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(b).second].name = QStringLiteral("shot.mp4");
+    QVERIFY(dispatcher.applyOne(QStringLiteral("replace_clip"), {{QStringLiteral("clip"), b}, {QStringLiteral("asset"), 1}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipOf(b).name, QStringLiteral("shot.mp4"));
+    state.undo();
+
     // No range: same length, settings kept, nothing moves.
     const QJsonObject same = replace({});
     QVERIFY2(same.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(same).toJson()));
@@ -1726,6 +1733,9 @@ void McpTest::replaceClipKeepsTheSlot()
     state.undo();
 
     // Errors change nothing.
+    state.project()->assets()[otherId].durationUs = 0; // not probed yet
+    QCOMPARE(replace({{QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    state.project()->assets()[otherId].durationUs = drift::secondsToUs(6.0);
     QCOMPARE(replace({{QStringLiteral("out"), 7.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     QCOMPARE(replace({{QStringLiteral("in"), 3.0}, {QStringLiteral("out"), 2.0}}).value(QStringLiteral("error")).toString(),
              QStringLiteral("bad_args"));
