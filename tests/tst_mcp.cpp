@@ -947,6 +947,24 @@ void McpTest::inspectFiltersTracksAndFields()
 
     QCOMPARE(dispatcher.inspect({{QStringLiteral("tracks"), QJsonArray{5}}}).value(QStringLiteral("error")).toString(),
              QStringLiteral("bad_args"));
+
+    // track and tracks together: the union.
+    const QJsonObject both = dispatcher.inspect({{QStringLiteral("tracks"), QJsonArray{0}}, {QStringLiteral("track"), 1}});
+    QCOMPARE(both.value(QStringLiteral("tracks")).toArray().size(), 2);
+    // clip=<uuid> isn't filtered away by a tracks list that leaves its track out.
+    const QJsonObject one = dispatcher.inspect({{QStringLiteral("clip"), QStringLiteral("clip-1")},
+                                                {QStringLiteral("tracks"), QJsonArray{0}}});
+    const QJsonArray oneRows = one.value(QStringLiteral("tracks")).toArray();
+    QCOMPARE(oneRows.size(), 1);
+    QCOMPARE(oneRows.first().toObject().value(QStringLiteral("i")).toInt(), 1);
+
+    // Over the wire the schema accepts both keys, and checks their item types.
+    QJsonObject wire{{QStringLiteral("tracks"), QJsonArray{0}}, {QStringLiteral("fields"), QJsonArray{QStringLiteral("start")}}};
+    QVERIFY(drift::mcp::checkHomepageArgs(QStringLiteral("inspect"), wire).isEmpty());
+    QJsonObject badTracks{{QStringLiteral("tracks"), QJsonArray{QStringLiteral("a")}}};
+    QVERIFY(!drift::mcp::checkHomepageArgs(QStringLiteral("inspect"), badTracks).isEmpty());
+    QJsonObject badFields{{QStringLiteral("fields"), QJsonArray{1}}};
+    QVERIFY(!drift::mcp::checkHomepageArgs(QStringLiteral("inspect"), badFields).isEmpty());
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

@@ -643,7 +643,8 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
     for (int t = 0; t < projectTracks.size(); ++t) {
         const drift::Track &track = projectTracks.at(t);
         clipCount += track.clips.size();
-        if ((onlyTrack >= 0 && t != onlyTrack) || (!onlyTracks.isEmpty() && !onlyTracks.contains(t)))
+        // clip=<uuid> already names its track, so tracks[] doesn't filter it away.
+        if ((onlyTrack >= 0 && t != onlyTrack) || (only.first < 0 && !onlyTracks.isEmpty() && !onlyTracks.contains(t)))
             continue;
         QJsonObject row{
             {QStringLiteral("i"), t},

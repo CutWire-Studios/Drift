@@ -120,7 +120,7 @@ The `initialize` reply carries a short `instructions` string with the essentials
 2. **`search({q})`** — find ops by keyword across names, when-hints, descriptions and argument names. Returns `hits:[{name, toolbox, when, args, required}]`; `schema:true` inlines the full schema when there are ≤3 hits. Use this instead of loading a whole toolbox.
 3. **`toolbox({name})`** or **`toolbox({ops:[…]})`** — full JSON schemas for a toolbox, or for just the named ops (any toolbox).
 4. **`apply({ops:[{tool, args}, …]})`** — run mutations in order; one undo step for the batch.
-5. **`inspect()`** — project summary; `clips:true` adds clip rows, `detail:true` expands them, `clip:<uuid>` / `track:<n>` / `tracks:[n,…]` filter, `fields:[…]` keeps only those keys (plus `id`) on each clip row, `since:<revision>` short-circuits.
+5. **`inspect()`** — project summary; `clips:true` adds clip rows, `detail:true` expands them, `clip:<uuid>` / `track:<n>` / `tracks:[n,…]` filter, `fields:[…]` keeps only those keys (plus `id`) on each clip row (an empty array filters nothing; `subtitleCues` too is dropped unless listed), `since:<revision>` short-circuits.
 6. **`activity()`** — cheap text profile of visual change, motion and loudness over a range; tells you *where* to look.
 7. **`frames()`** — one labelled contact-sheet image of many moments; tells you *what* is there.
 8. **`capture({at, view})`** — one full-size JPEG still of the composition (use to verify edits). `view:"editor3d"` shows the preview's free 3D viewpoint instead (see [3D viewport](#3d-viewport)).
