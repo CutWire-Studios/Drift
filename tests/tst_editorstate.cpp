@@ -2,6 +2,7 @@
 #include "app/bin/AssetPreviewController.h"
 #include "app/color/ColorController.h"
 #include "app/jobs/audio/DenoiseController.h"
+#include "app/jobs/render/BakeFingerprint.h"
 #include "app/jobs/audio/AudioAlignController.h"
 #include "app/jobs/vision/DepthController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
@@ -133,6 +134,7 @@ class EditorStateTest : public QObject
     Q_OBJECT
 
 private slots:
+    void bakeFingerprintTracksRangeEdits();
     void snapTimeEnabled();
     void compositeFromSelectionUndoRedo();
     void compositeClipGetsAPreviewBox();
@@ -16311,6 +16313,46 @@ void EditorStateTest::maskingCutoutPatchSurvivesInspectorEdits()
     QVERIFY(edited.invert);
     QCOMPARE(edited.mediaPatches.size(), 1);
     QCOMPARE(edited.mediaPatches.firstKey(), 5 * fx.frame);
+}
+
+void EditorStateTest::bakeFingerprintTracksRangeEdits()
+{
+    drift::Project project;
+    project.setResolution(1280, 720);
+    project.setFps(30);
+    project.tracks().clear();
+    for (const QString &id : {QStringLiteral("t1"), QStringLiteral("t2")}) {
+        drift::Track track{.type = drift::TrackType::Shape};
+        track.id = id;
+        project.tracks().append(track);
+    }
+    drift::Clip inside = boxShape(QStringLiteral("in"), QRectF(0, 0, 100, 100));
+    drift::Clip outside = boxShape(QStringLiteral("out"), QRectF(0, 0, 100, 100));
+    outside.timelineStart = drift::secondsToUs(10.0);
+    project.tracks()[0].clips.append(inside);
+    project.tracks()[1].clips.append(outside);
+
+    const QByteArray original = drift::bakeFingerprint(project, 0, 60);
+    QCOMPARE(original.size(), 32);
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+
+    project.tracks()[0].clips[0].opacity.setKeyframe(0, 0.5);
+    const QByteArray edited = drift::bakeFingerprint(project, 0, 60);
+    QVERIFY(edited != original);
+
+    project.tracks()[1].clips[0].opacity.setKeyframe(0, 0.25);
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), edited);
+
+    project.tracks()[0].name = QStringLiteral("renamed");
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), edited);
+
+    project.tracks()[0].clips[0].opacity = inside.opacity;
+    project.tracks()[1].clips[0].opacity = outside.opacity;
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+
+    QVERIFY(drift::bakeFingerprint(project, 0, 60) != drift::bakeFingerprint(project, 300, 360));
+    project.setResolution(1920, 1080);
+    QVERIFY(drift::bakeFingerprint(project, 0, 60) != original);
 }
 
 QTEST_MAIN(EditorStateTest)

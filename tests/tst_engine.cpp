@@ -53,6 +53,9 @@
 #include "engine/decode/probe/StillImage.h"
 #include "engine/diagnostics/DebugReport.h"
 #include "engine/ml/vision/depth/DepthSidecar.h"
+#include "engine/encode/bake/BakeFile.h"
+#include "engine/encode/bake/BakeReader.h"
+#include "engine/encode/bake/BakeWriter.h"
 #include "engine/ml/vision/depth/VdaDepth.h"
 #include "engine/encode/export/Exporter.h"
 #include "engine/encode/proxies/PreviewProxyRenderer.h"
@@ -205,6 +208,16 @@ private slots:
     void faceTrackRoundTripsAndInterpolates();
     void depthSidecarRoundTripsAndNormalises();
     void depthSidecarRejectsUnfinishedFile();
+    void bakeFileRoundTrips();
+    void bakeFileFallsBackWhenSuperblockIsLost();
+    void bakeFileRemoveRangeSplitsAndSharesGops();
+    void bakeFileReusesFreedSpace();
+    void bakeFileKeepsSpaceWhileSnapshotLives();
+    void bakeFileCompactionShrinksAndKeepsBytes();
+    void bakeWriterStoresClosedGopsAndReplacesOverlap();
+    void bakeFrameForTimeInvertsTheWriterMapping();
+    void bakeReaderRandomAccessMatchesSequential();
+    void compositorServesBakedFramesAndReportsTheBake();
     void vdaStitcherAlignsAndBlendsWindows();
     void vdaInferenceSizeKeepsAspectOnPatchGrid();
     void effectPackageLoaderParsesDepthRequirement();
@@ -18180,6 +18193,536 @@ void EngineTest::lookCatalogFindsPacksAndUserLooks()
     QCOMPARE(drift::importCubeFiles({incoming + "/My Look.cube"}, userRoot).importedIds, (QStringList{myLookId}));
 
     drift::reloadLookCatalog();
+}
+
+namespace {
+
+struct FakeGop
+{
+    QByteArray bytes;
+    QVector<quint32> sizes;
+};
+
+FakeGop fakeGop(int seed, int frames, int packetBytes)
+{
+    FakeGop g;
+    for (int i = 0; i < frames; ++i) {
+        g.sizes.push_back(quint32(packetBytes + i));
+        g.bytes.append(QByteArray(packetBytes + i, char('A' + (seed + i) % 26)));
+    }
+    return g;
+}
+
+// Appends `gops` back to back from `start`; returns the bake id.
+QString fakeBake(drift::BakeFile &f, qint64 start, int gops, int frames, int packetBytes, int seed)
+{
+    const QString id = f.beginBake(start, 30, 1920, 1080, 1, QByteArrayLiteral("sps"),
+                                   QByteArray::number(seed));
+    for (int i = 0; i < gops; ++i) {
+        const FakeGop g = fakeGop(seed * 7 + i, frames, packetBytes);
+        if (!f.appendGop(id, start + qint64(i) * frames, g.bytes, g.sizes))
+            return {};
+    }
+    return id;
+}
+
+bool bakeGopMatches(const QString &path, const drift::BakeGop &g, int seed, int frames, int packetBytes)
+{
+    QFile file(path);
+    QByteArray got;
+    return file.open(QIODevice::ReadOnly) && drift::readGop(file, g, got)
+        && got == fakeGop(seed, frames, packetBytes).bytes;
+}
+
+} // namespace
+
+void EngineTest::bakeFileRoundTrips()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    QString ids[3];
+    {
+        auto f = drift::BakeFile::open(path);
+        QVERIFY(f);
+        QVERIFY(f->snapshot()->bakes.empty());
+        f->setDefaultPreset(2);
+        ids[0] = fakeBake(*f, 100, 3, 4, 50, 1);
+        ids[1] = fakeBake(*f, 0, 2, 4, 60, 2);
+        ids[2] = fakeBake(*f, 500, 1, 8, 40, 3);
+        QVERIFY(f->commit());
+        QVERIFY(f->snapshot()->bakes.size() == 3);
+    }
+    auto f = drift::BakeFile::open(path);
+    QVERIFY(f);
+    const auto snap = f->snapshot();
+    QCOMPARE(snap->quality, 2);
+    QCOMPARE(int(snap->bakes.size()), 3);
+    QCOMPARE(snap->bakes[0].id, ids[1]);
+    QCOMPARE(snap->bakes[1].id, ids[0]);
+    QCOMPARE(snap->bakes[1].startFrame, qint64(100));
+    QCOMPARE(snap->bakes[1].endFrame, qint64(112));
+    QCOMPARE(snap->bakes[1].extradata, QByteArrayLiteral("sps"));
+    QCOMPARE(snap->bakes[1].fingerprint, QByteArray::number(1));
+    QCOMPARE(snap->bakes[1].width, 1920);
+    QVERIFY(!snap->bakeAt(99));
+    QVERIFY(!snap->bakeAt(112));
+    QVERIFY(snap->bakeAt(111));
+    const auto loc = snap->locate(106);
+    QVERIFY(loc);
+    QCOMPARE(loc.bake->id, ids[0]);
+    QCOMPARE(loc.gop->firstFrame, qint64(104));
+    QCOMPARE(loc.indexInGop, 2);
+    QVERIFY(!snap->locate(300));
+    QVERIFY(bakeGopMatches(path, loc.gop[-1], 7, 4, 50));
+    QVERIFY(bakeGopMatches(path, *loc.gop, 8, 4, 50));
+    QVERIFY(bakeGopMatches(path, snap->locate(503).gop[0], 21, 8, 40));
+    QCOMPARE(quint64(QFileInfo(path).size()), f->fileBytes());
+}
+
+void EngineTest::bakeFileFallsBackWhenSuperblockIsLost()
+{
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    QString a, b;
+    {
+        auto f = drift::BakeFile::open(path);
+        a = fakeBake(*f, 0, 2, 4, 50, 1);
+        QVERIFY(f->commit());
+        b = fakeBake(*f, 100, 2, 4, 50, 2);
+        f->setCrashBeforeSuperblockForTest(true);
+        QVERIFY(!f->commit());
+    }
+    {
+        auto f = drift::BakeFile::open(path);
+        QCOMPARE(int(f->snapshot()->bakes.size()), 1);
+        QCOMPARE(f->snapshot()->bakes[0].id, a);
+        QVERIFY(fakeBake(*f, 100, 2, 4, 50, 2).size());
+        QVERIFY(f->commit());
+        QCOMPARE(int(f->snapshot()->bakes.size()), 2);
+    }
+    {
+        // Tear the newest superblock slot: the previous generation must take over.
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::ReadWrite));
+        QByteArray s0, s1;
+        file.seek(64);
+        s0 = file.read(8);
+        file.seek(96);
+        s1 = file.read(8);
+        const qint64 newer = qFromLittleEndian<quint64>(s0.constData()) > qFromLittleEndian<quint64>(s1.constData()) ? 64 : 96;
+        file.seek(newer + 10);
+        file.write("\xff\xff\xff", 3);
+    }
+    auto f = drift::BakeFile::open(path);
+    QCOMPARE(int(f->snapshot()->bakes.size()), 1);
+    QCOMPARE(f->snapshot()->bakes[0].id, a);
+    QVERIFY(bakeGopMatches(path, f->snapshot()->bakes[0].gops[1], 7 + 1, 4, 50));
+}
+
+void EngineTest::bakeFileRemoveRangeSplitsAndSharesGops()
+{
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    auto f = drift::BakeFile::open(path);
+    const QString id = fakeBake(*f, 0, 4, 10, 100, 1); // gops at 0,10,20,30
+    QVERIFY(f->commit());
+
+    QVERIFY(f->removeRange(15, 25)); // cuts inside gops 10 and 20
+    QVERIFY(f->commit());
+    auto snap = f->snapshot();
+    QCOMPARE(int(snap->bakes.size()), 2);
+    const drift::Bake &left = snap->bakes[0];
+    const drift::Bake &right = snap->bakes[1];
+    QCOMPARE(left.id, id);
+    QVERIFY(right.id != id);
+    QCOMPARE(left.endFrame, qint64(15));
+    QCOMPARE(right.startFrame, qint64(25));
+    QCOMPARE(right.endFrame, qint64(40));
+    QCOMPARE(right.extradata, left.extradata);
+    QCOMPARE(int(left.gops.size()), 2);
+    QCOMPARE(int(right.gops.size()), 2);
+    QVERIFY(!snap->bakeAt(20));
+    QVERIFY(snap->locate(14));
+    QVERIFY(snap->locate(25));
+
+    // Cutting inside a single GOP leaves both halves referencing it.
+    QVERIFY(f->removeRange(32, 34));
+    QVERIFY(f->commit());
+    snap = f->snapshot();
+    QCOMPARE(int(snap->bakes.size()), 3);
+    QCOMPARE(snap->bakes[1].gops.back().offset, snap->bakes[2].gops.back().offset);
+    const quint64 live = f->liveBytes();
+
+    QVERIFY(f->deleteBake(snap->bakes[1].id));
+    QVERIFY(f->commit());
+    QCOMPARE(int(f->snapshot()->bakes.size()), 2);
+    QVERIFY(f->liveBytes() <= live);
+    QVERIFY(bakeGopMatches(path, f->snapshot()->bakes[1].gops.back(), 7 + 3, 10, 100));
+}
+
+void EngineTest::bakeFileReusesFreedSpace()
+{
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    auto f = drift::BakeFile::open(path);
+    const QString a = fakeBake(*f, 0, 3, 4, 4000, 1);
+    fakeBake(*f, 1000, 3, 4, 4000, 2);
+    QVERIFY(f->commit());
+    const quint64 aOffset = f->snapshot()->bakes[0].gops[0].offset;
+    const quint64 before = f->fileBytes();
+
+    QVERIFY(f->deleteBake(a));
+    QVERIFY(f->commit());
+    fakeBake(*f, 2000, 3, 4, 4000, 3);
+    QVERIFY(f->commit());
+    const auto snap = f->snapshot();
+    QCOMPARE(snap->bakes[0].startFrame, qint64(1000));
+    QCOMPARE(snap->bakes[1].gops[0].offset, aOffset);
+    QVERIFY(f->fileBytes() <= before + 1024);
+    QVERIFY(bakeGopMatches(path, snap->bakes[1].gops[2], 3 * 7 + 2, 4, 4000));
+    QVERIFY(bakeGopMatches(path, snap->bakes[0].gops[2], 2 * 7 + 2, 4, 4000));
+}
+
+void EngineTest::bakeFileKeepsSpaceWhileSnapshotLives()
+{
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    auto f = drift::BakeFile::open(path);
+    const QString a = fakeBake(*f, 0, 3, 4, 4000, 1);
+    fakeBake(*f, 1000, 3, 4, 4000, 2);
+    QVERIFY(f->commit());
+    const quint64 aOffset = f->snapshot()->bakes[0].gops[0].offset;
+    auto held = f->snapshot();
+
+    QVERIFY(f->deleteBake(a));
+    QVERIFY(f->commit());
+    fakeBake(*f, 2000, 3, 4, 4000, 3);
+    QVERIFY(f->commit());
+    QVERIFY(f->snapshot()->bakes[1].gops[0].offset != aOffset);
+    QVERIFY(bakeGopMatches(path, held->bakes[0].gops[0], 7, 4, 4000));
+
+    held.reset();
+    fakeBake(*f, 3000, 3, 4, 4000, 4);
+    QVERIFY(f->commit());
+    bool reused = false;
+    for (const auto &b : f->snapshot()->bakes)
+        reused = reused || (b.startFrame == 3000 && b.gops[0].offset == aOffset);
+    QVERIFY(reused);
+}
+
+void EngineTest::bakeFileCompactionShrinksAndKeepsBytes()
+{
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    auto f = drift::BakeFile::open(path);
+    const QString a = fakeBake(*f, 0, 5, 4, 4000, 1);
+    const QString b = fakeBake(*f, 1000, 3, 4, 3000, 2);
+    fakeBake(*f, 2000, 5, 4, 4000, 3);
+    QVERIFY(f->commit());
+    QVERIFY(f->deleteBake(a));
+    QVERIFY(f->removeRange(1004, 1012));
+    QVERIFY(f->commit());
+    Q_UNUSED(b);
+    const quint64 before = f->fileBytes();
+
+    QVERIFY(f->compact());
+    QVERIFY(f->fileBytes() < before);
+    QVERIFY(!QFileInfo::exists(path + ".part"));
+    QCOMPARE(quint64(QFileInfo(path).size()), f->fileBytes());
+    QCOMPARE(f->fileBytes(), f->liveBytes() + 4096);
+    const auto snap = f->snapshot();
+    QCOMPARE(int(snap->bakes.size()), 2);
+    QCOMPARE(snap->bakes[0].startFrame, qint64(1000));
+    QCOMPARE(snap->bakes[0].endFrame, qint64(1004));
+    QVERIFY(bakeGopMatches(path, snap->bakes[0].gops[0], 2 * 7, 4, 3000));
+    for (int i = 0; i < 5; ++i)
+        QVERIFY(bakeGopMatches(path, snap->bakes[1].gops[size_t(i)], 3 * 7 + i, 4, 4000));
+
+    QVERIFY(fakeBake(*f, 5000, 1, 4, 100, 9).size());
+    QVERIFY(f->commit());
+    auto g = drift::BakeFile::open(path);
+    QCOMPARE(int(g->snapshot()->bakes.size()), 3);
+}
+
+void EngineTest::bakeWriterStoresClosedGopsAndReplacesOverlap()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    if (!avcodec_find_encoder_by_name("libx264"))
+        QSKIP("No libx264 in this FFmpeg build");
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("shape");
+    clip.type = drift::ClipType::Shape;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
+    clip.transformX.setKeyframe(0, 10.0);
+    clip.transformY.setKeyframe(0, 10.0);
+    clip.transformW.setKeyframe(0, 30.0);
+    clip.transformH.setKeyframe(0, 30.0);
+    project.tracks()[0].clips.append(clip);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    auto file = drift::BakeFile::open(dir.filePath(QStringLiteral("p.driftbake")));
+    QVERIFY(file);
+
+    const auto first = drift::BakeWriter::bake(*file, project, 10, 55, 1, QByteArray("fp"));
+    QVERIFY2(first.ok, qPrintable(first.error));
+    QCOMPARE(first.endFrame, qint64(55));
+    {
+        const auto snap = file->snapshot();
+        QCOMPARE(int(snap->bakes.size()), 1);
+        const drift::Bake &bake = snap->bakes[0];
+        QCOMPARE(bake.startFrame, qint64(10));
+        QCOMPARE(bake.endFrame, qint64(55));
+        QCOMPARE(bake.preset, 1);
+        QCOMPARE(bake.fingerprint, QByteArray("fp"));
+        QVERIFY(!bake.extradata.isEmpty());
+        QCOMPARE(int(bake.gops.size()), 3);
+
+        const AVCodec *h264 = avcodec_find_decoder(AV_CODEC_ID_H264);
+        QFile f(file->path());
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        qint64 frame = 10;
+        for (const drift::BakeGop &gop : bake.gops) {
+            QCOMPARE(gop.firstFrame, frame);
+            QCOMPARE(int(gop.packetSizes.size()), 15);
+            QByteArray bytes;
+            QVERIFY(drift::readGop(f, gop, bytes));
+
+            AVCodecContext *ctx = avcodec_alloc_context3(h264);
+            ctx->extradata = static_cast<uint8_t *>(av_mallocz(bake.extradata.size() + AV_INPUT_BUFFER_PADDING_SIZE));
+            std::memcpy(ctx->extradata, bake.extradata.constData(), size_t(bake.extradata.size()));
+            ctx->extradata_size = bake.extradata.size();
+            QVERIFY(avcodec_open2(ctx, h264, nullptr) >= 0);
+            AVPacket *pkt = av_packet_alloc();
+            AVFrame *out = av_frame_alloc();
+            int decoded = 0;
+            qsizetype offset = 0;
+            for (int i = 0; i < gop.packetSizes.size(); ++i) {
+                QByteArray data = bytes.mid(offset, qsizetype(gop.packetSizes[i]));
+                offset += gop.packetSizes[i];
+                QVERIFY(av_new_packet(pkt, data.size()) >= 0);
+                std::memcpy(pkt->data, data.constData(), size_t(data.size()));
+                QVERIFY(avcodec_send_packet(ctx, pkt) >= 0);
+                av_packet_unref(pkt);
+                while (avcodec_receive_frame(ctx, out) == 0)
+                    ++decoded;
+            }
+            avcodec_send_packet(ctx, nullptr);
+            while (avcodec_receive_frame(ctx, out) == 0)
+                ++decoded;
+            QCOMPARE(decoded, int(gop.packetSizes.size()));
+            av_frame_free(&out);
+            av_packet_free(&pkt);
+            avcodec_free_context(&ctx);
+            frame += gop.packetSizes.size();
+        }
+    }
+
+    const auto second = drift::BakeWriter::bake(*file, project, 30, 40, 1, QByteArray("fp2"));
+    QVERIFY2(second.ok, qPrintable(second.error));
+    const auto snap = file->snapshot();
+    QCOMPARE(int(snap->bakes.size()), 3);
+    QCOMPARE(snap->bakes[0].startFrame, qint64(10));
+    QCOMPARE(snap->bakes[0].endFrame, qint64(30));
+    QCOMPARE(snap->bakes[1].startFrame, qint64(30));
+    QCOMPARE(snap->bakes[1].endFrame, qint64(40));
+    QCOMPARE(snap->bakes[2].startFrame, qint64(40));
+    QCOMPARE(snap->bakes[2].endFrame, qint64(55));
+
+    int seen = 0;
+    const auto cancelled = drift::BakeWriter::bake(*file, project, 0, 50, 0, QByteArray(),
+                                                   [&](double) { return ++seen < 20; });
+    QVERIFY(cancelled.cancelled);
+    QVERIFY(cancelled.endFrame > 0 && cancelled.endFrame < 50);
+    QCOMPARE(file->snapshot()->bakeAt(0) != nullptr, true);
+}
+
+namespace {
+
+drift::Project movingShapeProject()
+{
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("shape");
+    clip.type = drift::ClipType::Shape;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
+    clip.transformX.setKeyframe(0, 4.0);
+    clip.transformX.setKeyframe(drift::secondsToUs(2.0), 30.0);
+    clip.transformY.setKeyframe(0, 10.0);
+    clip.transformW.setKeyframe(0, 30.0);
+    clip.transformH.setKeyframe(0, 30.0);
+    project.tracks()[0].clips.append(clip);
+    return project;
+}
+
+qint64 bakeTestTimeUs(qint64 frame, int fps)
+{
+    return std::llround(double(frame) * 1e6 / fps);
+}
+
+} // namespace
+
+void EngineTest::bakeFrameForTimeInvertsTheWriterMapping()
+{
+    for (const int fps : {24, 25, 30, 60}) {
+        for (qint64 f = 0; f < 200000; ++f)
+            QCOMPARE(drift::BakeReaderPool::frameForTime(bakeTestTimeUs(f, fps), fps), f);
+    }
+}
+
+void EngineTest::bakeReaderRandomAccessMatchesSequential()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    if (!avcodec_find_encoder_by_name("libx264"))
+        QSKIP("No libx264 in this FFmpeg build");
+
+    const drift::Project project = movingShapeProject();
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    auto file = drift::BakeFile::open(dir.filePath(QStringLiteral("p.driftbake")));
+    QVERIFY(file);
+    const auto baked = drift::BakeWriter::bake(*file, project, 10, 55, 1, QByteArray("fp"));
+    QVERIFY2(baked.ok, qPrintable(baked.error));
+
+    drift::BakeReaderPool pool;
+    pool.setSource(file->path(), file->snapshot());
+
+    const auto lumaOf = [](const PreviewVideoFrame &v) {
+        QByteArray out;
+        for (int y = 0; y < v.frame->height; ++y)
+            out.append(reinterpret_cast<const char *>(v.frame->data[0] + y * v.frame->linesize[0]), v.frame->width);
+        return out;
+    };
+
+    QMap<qint64, QByteArray> sequential;
+    for (qint64 f = 10; f < 55; ++f) {
+        const PreviewVideoFrame v = pool.read(f, 1, false, 64, 64, 30);
+        QVERIFY2(v.isValid(), qPrintable(QString::number(f)));
+        QCOMPARE(v.frame->format, int(AV_PIX_FMT_NV12));
+        QCOMPARE(v.displayWidth(), 64);
+        QCOMPARE(v.displayHeight(), 64);
+        QCOMPARE(v.colorspace, int(AVCOL_SPC_BT709));
+        QCOMPARE(v.colorRange, int(AVCOL_RANGE_MPEG));
+        sequential.insert(f, lumaOf(v));
+    }
+    QVERIFY(sequential.value(10) != sequential.value(50));
+
+    QList<qint64> order;
+    for (qint64 f = 10; f < 55; ++f)
+        order.append(f);
+    std::mt19937 rng(7);
+    std::shuffle(order.begin(), order.end(), rng);
+    for (const qint64 f : order) {
+        const PreviewVideoFrame v = pool.read(f, 2, false, 64, 64, 30);
+        QVERIFY(v.isValid());
+        QCOMPARE(lumaOf(v), sequential.value(f));
+    }
+
+    QVERIFY(!pool.read(9, 3, false, 64, 64, 30).isValid());
+    QVERIFY(!pool.read(55, 3, false, 64, 64, 30).isValid());
+    QVERIFY(!pool.read(20, 3, false, 128, 64, 30).isValid());
+    QVERIFY(!pool.read(20, 3, false, 64, 64, 25).isValid());
+
+    const PreviewVideoFrame key = pool.read(27, 4, true, 64, 64, 30);
+    QVERIFY(key.isValid());
+    QCOMPARE(lumaOf(key), sequential.value(25));
+}
+
+void EngineTest::compositorServesBakedFramesAndReportsTheBake()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    if (!avcodec_find_encoder_by_name("libx264"))
+        QSKIP("No libx264 in this FFmpeg build");
+
+    const drift::Project project = movingShapeProject();
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    auto file = drift::BakeFile::open(dir.filePath(QStringLiteral("p.driftbake")));
+    QVERIFY(file);
+    const auto baked = drift::BakeWriter::bake(*file, project, 10, 55, 2, QByteArray("fp"));
+    QVERIFY2(baked.ok, qPrintable(baked.error));
+    const QString bakeId = file->snapshot()->bakes[0].id;
+
+    auto pool = std::make_shared<drift::BakeReaderPool>();
+    pool->setSource(file->path(), file->snapshot());
+    FrameCompositor live;
+    live.setProject(&project);
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    compositor.setBakeSource(pool);
+
+    const drift::TimeUs inside = bakeTestTimeUs(30, 30);
+    const QImage want = live.compositeAt(inside);
+    const QImage got = compositor.compositeAt(inside);
+    QVERIFY(!want.isNull() && got.size() == want.size());
+    const QImage a = want.convertToFormat(QImage::Format_RGBA8888);
+    const QImage b = got.convertToFormat(QImage::Format_RGBA8888);
+    qint64 diff = 0;
+    for (int y = 0; y < a.height(); ++y)
+        for (int x = 0; x < a.width() * 4; ++x)
+            diff += qAbs(int(a.constScanLine(y)[x]) - int(b.constScanLine(y)[x]));
+    QVERIFY2(double(diff) / (a.width() * a.height() * 4) < 6.0, qPrintable(QString::number(double(diff))));
+
+    GpuScene scene;
+    FrameCompositor::RenderOptions options;
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QCOMPARE(scene.bakeId, bakeId);
+    QCOMPARE(int(scene.items.size()), 1);
+
+    options.useBakes = false;
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QVERIFY(scene.bakeId.isEmpty());
+
+    options.useBakes = true;
+    options.maskView.clipId = QStringLiteral("shape");
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QVERIFY(scene.bakeId.isEmpty());
+    options.maskView.clipId.clear();
+    options.textEdit.clipId = QStringLiteral("shape");
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QVERIFY(scene.bakeId.isEmpty());
+    options.textEdit.clipId.clear();
+    options.editor.active = true;
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QVERIFY(scene.bakeId.isEmpty());
+    options.editor.active = false;
+
+    for (const qint64 frame : {5, 55, 60}) {
+        QVERIFY(compositor.buildSceneAt(bakeTestTimeUs(frame, 30), options, &scene));
+        QVERIFY(scene.bakeId.isEmpty());
+    }
+
+    options.previewScale = 0.5;
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QCOMPARE(scene.bakeId, bakeId);
+    QCOMPARE(scene.canvasSize, QSize(32, 32));
+
+    options.previewScale = 1.0;
+    const GpuFrameTexture tex = compositor.compositeToTextureAt(inside, options);
+    QVERIFY(tex.isValid());
+    QCOMPARE(tex.bakeId, bakeId);
 }
 
 QTEST_MAIN(EngineTest)

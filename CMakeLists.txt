@@ -874,6 +874,12 @@ add_library(driftengine STATIC
     src/engine/ml/vision/Restorer.cpp
     src/engine/ml/vision/depth/DepthSidecar.h
     src/engine/ml/vision/depth/DepthSidecar.cpp
+    src/engine/encode/bake/BakeFile.h
+    src/engine/encode/bake/BakeFile.cpp
+    src/engine/encode/bake/BakeWriter.h
+    src/engine/encode/bake/BakeWriter.cpp
+    src/engine/encode/bake/BakeReader.h
+    src/engine/encode/bake/BakeReader.cpp
     src/engine/face/tracking/FaceLandmarker.h
     src/engine/face/tracking/FaceLandmarker.cpp
     src/engine/face/tracking/FaceTrack.h
@@ -1233,6 +1239,10 @@ target_sources(driftapp PRIVATE
     src/app/jobs/vision/SceneDetectController.cpp
     src/app/jobs/vision/DepthController.h
     src/app/jobs/vision/DepthController.cpp
+    src/app/jobs/render/BakeController.h
+    src/app/jobs/render/BakeController.cpp
+    src/app/jobs/render/BakeFingerprint.h
+    src/app/jobs/render/BakeFingerprint.cpp
     src/app/jobs/audio/DenoiseController.h
     src/app/jobs/audio/DenoiseController.cpp
     src/app/jobs/audio/AudioAlignController.h
@@ -1956,6 +1966,7 @@ qt_add_qml_module(drift
         src/qml/components/panels/AudioSheetPanel.qml
         src/qml/components/ImageViewer.qml
         src/qml/components/dialogs/ImageViewerDialog.qml
+        src/qml/components/dialogs/BakesDialog.qml
         src/qml/components/timeline/TimelineClipItem.qml
         src/qml/components/timeline/PlayheadInterpolator.qml
         src/qml/components/timeline/TimelineTrackArea.qml
@@ -1985,6 +1996,9 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TrackHeaderRow.qml
         src/qml/components/timeline/TrackHeaderResizeHandle.qml
         src/qml/components/timeline/TrackHeaderRenameDialog.qml
+        src/qml/components/timeline/TimelineBakeStrip.qml
+        src/qml/components/timeline/TimelineBakeContextMenu.qml
+        src/qml/components/timeline/TimelineWorkAreaBakeChip.qml
         src/qml/components/timeline/TrackHeaderMuteButton.qml
         src/qml/components/timeline/TrackHeaderOverflowButton.qml
         src/qml/components/timeline/TrackHeaderMicButton.qml
@@ -2481,6 +2495,8 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsWorkspacesPage.qml
         src/qml/components/shell/EditorHeaderSettingsButton.qml
         src/qml/components/shell/AppSettingsMenu.qml
+        src/qml/components/shell/EditorHeaderVideoButton.qml
+        src/qml/components/shell/VideoMenu.qml
         src/qml/components/shell/EditorHeaderSeparator.qml
         src/qml/components/shell/EditorHeaderSearchField.qml
         src/qml/components/shell/EditorHeaderProjectsButton.qml

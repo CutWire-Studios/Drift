@@ -12,6 +12,7 @@
 #include "app/editor/BlendPreviewController.h"
 #include "app/jobs/audio/DenoiseController.h"
 #include "app/jobs/audio/AudioAlignController.h"
+#include "app/jobs/render/BakeController.h"
 #include "app/jobs/vision/DepthController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
 #include "app/mcp/McpController.h"
@@ -612,6 +613,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_segmentation = new SegmentationController(this, this);
     m_sceneDetect = new SceneDetectController(this, this);
     m_depth = new DepthController(this, this);
+    m_bakes = new BakeController(this, this);
     m_denoise = new DenoiseController(this, this);
     m_audioAlign = new AudioAlignController(this, this);
     m_color = new ColorController(this, this);

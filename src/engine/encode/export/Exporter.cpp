@@ -5,6 +5,8 @@
 #include "engine/audio/AudioMixer.h"
 #include "engine/decode/readers/ClipReaderPool.h"
 #include "engine/compositor/FrameCompositor.h"
+#include "engine/compositor/PreviewStream.h"
+#include "engine/encode/bake/BakeReader.h"
 #include "engine/compositor/GpuCompositor.h"
 #include "engine/gpu/device/GpuPreference.h"
 #include "engine/decode/hw/HwAccel.h"
@@ -701,7 +703,7 @@ QString avErrorText(int rc)
 
 // Sends a frame (or nullptr to flush) to the encoder and interleaves the packets.
 bool encodeWriteFrame(AVFormatContext *fmt, AVCodecContext *codec, AVStream *stream, AVFrame *frame,
-                      AVPacket *pkt, QString *errorOut)
+                      AVPacket *pkt, QString *errorOut, const ExportSettings::PacketSink *sink = nullptr)
 {
     int rc = avcodec_send_frame(codec, frame);
     if (rc < 0) {
@@ -718,6 +720,16 @@ bool encodeWriteFrame(AVFormatContext *fmt, AVCodecContext *codec, AVStream *str
             if (errorOut)
                 *errorOut = QStringLiteral("Failed to read an encoded packet");
             return false;
+        }
+        if (sink) {
+            const bool keep = sink->onPacket && sink->onPacket(pkt);
+            av_packet_unref(pkt);
+            if (!keep) {
+                if (errorOut)
+                    *errorOut = QStringLiteral("Export cancelled");
+                return false;
+            }
+            continue;
         }
         av_packet_rescale_ts(pkt, codec->time_base, stream->time_base);
         pkt->stream_index = stream->index;
@@ -2035,15 +2047,18 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         return false;
     }
 
-    const AVCodec *vcodec = findEncoder(vdef->encoderNames);
-    const AVCodec *acodec = findEncoder(adef->encoderNames);
+    const ExportSettings::PacketSink *sink = settings.packetSink.get();
+    // Bakes must be software x264: the reader relies on fixed closed GOPs, and the "h264" fallback
+    // name in the codec table can resolve to a hardware encoder.
+    const AVCodec *vcodec = sink ? avcodec_find_encoder_by_name("libx264") : findEncoder(vdef->encoderNames);
+    const AVCodec *acodec = sink ? nullptr : findEncoder(adef->encoderNames);
     if (vdef->hw != HwBackend::None && !hwBackendOnThisOs(vdef->hw)) {
         if (errorOut)
             *errorOut = QStringLiteral("The %1 encoder is not available on this platform.")
                             .arg(hwEncoderLabel(*vdef));
         return false;
     }
-    if (!vcodec || !acodec) {
+    if (!vcodec || (!sink && !acodec)) {
         if (errorOut) {
             if (vdef->hw != HwBackend::None && !vcodec)
                 *errorOut = QStringLiteral("The %1 encoder is not available in this FFmpeg build.")
@@ -2107,8 +2122,9 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
     // result next to the file the user picked.
     const QByteArray outUtf8 = outputPath.toUtf8();
 
-    avformat_alloc_output_context2(&fmt, nullptr, nullptr, outUtf8.constData());
-    if (!fmt) {
+    if (!sink)
+        avformat_alloc_output_context2(&fmt, nullptr, nullptr, outUtf8.constData());
+    if (!fmt && !sink) {
         // Portal pickers hand back whatever name the user typed, extension or not; when there is
         // nothing to guess from, fall back to the container this codec pair asks for.
         const QString container = preferredContainer(settings.videoCodecId, settings.audioCodecId);
@@ -2117,22 +2133,24 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                                      : container.toUtf8();
         avformat_alloc_output_context2(&fmt, nullptr, muxer.constData(), outUtf8.constData());
     }
-    if (!fmt) {
+    if (!fmt && !sink) {
         error = QStringLiteral("Could not determine output format");
         goto cleanup;
     }
 
     {
-        vstream = avformat_new_stream(fmt, nullptr);
-        astream = avformat_new_stream(fmt, nullptr);
-        if (!vstream || !astream) {
-            error = QStringLiteral("Could not create output streams");
-            goto cleanup;
+        if (!sink) {
+            vstream = avformat_new_stream(fmt, nullptr);
+            astream = avformat_new_stream(fmt, nullptr);
+            if (!vstream || !astream) {
+                error = QStringLiteral("Could not create output streams");
+                goto cleanup;
+            }
         }
 
         vctx = avcodec_alloc_context3(vcodec);
-        actx = avcodec_alloc_context3(acodec);
-        if (!vctx || !actx) {
+        actx = sink ? nullptr : avcodec_alloc_context3(acodec);
+        if (!vctx || (!sink && !actx)) {
             error = QStringLiteral("Could not allocate encoders");
             goto cleanup;
         }
@@ -2142,7 +2160,9 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         vctx->pix_fmt = pickEncodePixFmt(vcodec, vdef->hw, vdef->pixFmt);
         vctx->time_base = frameTb;
         vctx->framerate = frameRate;
-        vctx->gop_size = qMax(1, static_cast<int>(std::llround(fpsValue * 2.0)));
+        vctx->gop_size = sink && settings.bakeGop > 0
+            ? settings.bakeGop
+            : qMax(1, static_cast<int>(std::llround(fpsValue * 2.0)));
         const bool vtH264 =
             vdef->hw == HwBackend::VideoToolbox && std::strncmp(vdef->id, "h264", 4) == 0;
         // MediaCodec: most Android encoders emit no B-frames whatever this says, and mediacodecenc
@@ -2150,7 +2170,7 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         // usable timestamp, since MediaCodec reports none of its own.
         vctx->max_b_frames =
             (vdef->hw == HwBackend::Vaapi || vdef->hw == HwBackend::MediaCodec || vtH264
-             || vdef->hasAlpha)
+             || vdef->hasAlpha || sink)
                 ? 0
                 : 2;
         if (vdef->hw != HwBackend::None) {
@@ -2160,7 +2180,7 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                 vctx->profile = AV_PROFILE_HEVC_MAIN;
         }
         applySdrBt709Tags(vctx);
-        if (fmt->oformat->flags & AVFMT_GLOBALHEADER)
+        if (sink || (fmt->oformat->flags & AVFMT_GLOBALHEADER))
             vctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
         // MediaCodec is a hardware backend with no hardware *device*: mediacodecenc takes plain
@@ -2198,16 +2218,25 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
             vctx->profile = AV_PROFILE_H264_HIGH;
             av_opt_set(vctx->priv_data, "profile", "high", 0);
         }
+        if (sink && settings.bakeGop > 0) {
+            const QByteArray params =
+                QStringLiteral("keyint=%1:min-keyint=%1:scenecut=0:bframes=0:open-gop=0")
+                    .arg(settings.bakeGop)
+                    .toUtf8();
+            av_opt_set(vctx->priv_data, "x264-params", params.constData(), 0);
+        }
 
-        const AVSampleFormat audioFmt = pickSampleFmt(acodec);
-        actx->sample_fmt = audioFmt;
-        actx->sample_rate = sampleRate;
-        av_channel_layout_default(&actx->ch_layout, 2);
-        if (!adef->lossless)
-            actx->bit_rate = static_cast<int64_t>(qMax(32, settings.audioBitrateKbps)) * 1000;
-        actx->time_base = AVRational{1, sampleRate};
-        if (fmt->oformat->flags & AVFMT_GLOBALHEADER)
-            actx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+        const AVSampleFormat audioFmt = sink ? AV_SAMPLE_FMT_NONE : pickSampleFmt(acodec);
+        if (actx) {
+            actx->sample_fmt = audioFmt;
+            actx->sample_rate = sampleRate;
+            av_channel_layout_default(&actx->ch_layout, 2);
+            if (!adef->lossless)
+                actx->bit_rate = static_cast<int64_t>(qMax(32, settings.audioBitrateKbps)) * 1000;
+            actx->time_base = AVRational{1, sampleRate};
+            if (fmt->oformat->flags & AVFMT_GLOBALHEADER)
+                actx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+        }
 
         if (const int rc = avcodec_open2(vctx, vcodec, nullptr); rc < 0) {
             const QString details = QStringLiteral("%1: %2 (%3x%4, %5, %6 fps)")
@@ -2235,35 +2264,42 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
             error += QStringLiteral(" [%1]").arg(details);
             goto cleanup;
         }
-        if (const int rc = avcodec_open2(actx, acodec, nullptr); rc < 0) {
-            error = QStringLiteral("Could not open the audio encoder [%1: %2]")
-                        .arg(QString::fromUtf8(acodec->name), avErrorText(rc));
-            goto cleanup;
+        if (actx) {
+            if (const int rc = avcodec_open2(actx, acodec, nullptr); rc < 0) {
+                error = QStringLiteral("Could not open the audio encoder [%1: %2]")
+                            .arg(QString::fromUtf8(acodec->name), avErrorText(rc));
+                goto cleanup;
+            }
+
+            avcodec_parameters_from_context(vstream->codecpar, vctx);
+            avcodec_parameters_from_context(astream->codecpar, actx);
+            vstream->time_base = vctx->time_base;
+            astream->time_base = actx->time_base;
+        } else if (sink->onStart) {
+            sink->onStart(QByteArray(reinterpret_cast<const char *>(vctx->extradata),
+                                     vctx->extradata_size));
         }
 
-        avcodec_parameters_from_context(vstream->codecpar, vctx);
-        avcodec_parameters_from_context(astream->codecpar, actx);
-        vstream->time_base = vctx->time_base;
-        astream->time_base = actx->time_base;
-
-        const int frameSize = actx->frame_size > 0 ? actx->frame_size : 1024;
+        const int frameSize = actx && actx->frame_size > 0 ? actx->frame_size : 1024;
         const AVPixelFormat outPixFmt = vctx->pix_fmt;
         const AVPixelFormat swPixFmt =
             isHardwarePixelFormat(outPixFmt) ? AV_PIX_FMT_NV12 : outPixFmt;
         const bool hwUpload = isHardwarePixelFormat(outPixFmt);
 
-        if (!(fmt->oformat->flags & AVFMT_NOFILE)) {
+        if (fmt && !(fmt->oformat->flags & AVFMT_NOFILE)) {
             if (const int rc = avio_open(&fmt->pb, outUtf8.constData(), AVIO_FLAG_WRITE); rc < 0) {
                 error = QStringLiteral("Could not open the output file: %1").arg(avErrorText(rc));
                 goto cleanup;
             }
         }
 
-        if (avformat_write_header(fmt, nullptr) < 0) {
-            error = QStringLiteral("Could not write the file header");
-            goto cleanup;
+        if (fmt) {
+            if (avformat_write_header(fmt, nullptr) < 0) {
+                error = QStringLiteral("Could not write the file header");
+                goto cleanup;
+            }
+            headerWritten = true;
         }
-        headerWritten = true;
 
         const bool forceCpuSws = qEnvironmentVariableIsSet("DRIFT_EXPORT_SWSCALE")
                                  && qgetenv("DRIFT_EXPORT_SWSCALE") != "0";
@@ -2288,10 +2324,10 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
 
         pkt = av_packet_alloc();
         vframe = av_frame_alloc();
-        aframe = av_frame_alloc();
+        aframe = sink ? nullptr : av_frame_alloc();
         if (hwUpload)
             hwframe = av_frame_alloc();
-        if (!pkt || !vframe || !aframe || (hwUpload && !hwframe)) {
+        if (!pkt || !vframe || (!sink && !aframe) || (hwUpload && !hwframe)) {
             error = QStringLiteral("Out of memory");
             goto cleanup;
         }
@@ -2304,13 +2340,15 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
             goto cleanup;
         }
 
-        aframe->format = audioFmt;
-        aframe->sample_rate = sampleRate;
-        av_channel_layout_copy(&aframe->ch_layout, &actx->ch_layout);
-        aframe->nb_samples = frameSize;
-        if (av_frame_get_buffer(aframe, 0) < 0) {
-            error = QStringLiteral("Could not allocate the audio frame");
-            goto cleanup;
+        if (aframe) {
+            aframe->format = audioFmt;
+            aframe->sample_rate = sampleRate;
+            av_channel_layout_copy(&aframe->ch_layout, &actx->ch_layout);
+            aframe->nb_samples = frameSize;
+            if (av_frame_get_buffer(aframe, 0) < 0) {
+                error = QStringLiteral("Could not allocate the audio frame");
+                goto cleanup;
+            }
         }
 
         // Preview and export share ClipReaderPool's readers, so this is what keeps an
@@ -2320,8 +2358,24 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
 
         FrameCompositor compositor;
         compositor.setProject(&project);
+        constexpr int kBakeOwner = 1;
+        struct BakeRelease
+        {
+            std::shared_ptr<drift::BakeReaderPool> pool;
+            ~BakeRelease()
+            {
+                if (pool)
+                    for (int s = 0; s < kPreviewStreamCount; ++s)
+                        pool->release(kBakeOwner * kPreviewStreamCount + s);
+            }
+        } bakeRelease;
+        if (settings.useBakes && settings.bakes) {
+            compositor.setBakeSource(settings.bakes, kBakeOwner);
+            bakeRelease.pool = settings.bakes;
+        }
         AudioMixer mixer;
-        mixer.setProject(&project);
+        if (!sink)
+            mixer.setProject(&project);
 
         std::vector<float> audioBuffer;
         int64_t audioSamplesGenerated = 0;
@@ -2382,8 +2436,10 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                     encodeFrame = hwframe;
                 }
             }
-            if (!encodeWriteFrame(fmt, vctx, vstream, encodeFrame, pkt, &error))
+            if (!encodeWriteFrame(fmt, vctx, vstream, encodeFrame, pkt, &error, sink))
                 return false;
+            if (sink)
+                return true;
 
             const int64_t targetSamples =
                 qMin(totalAudioSamples,
@@ -2411,6 +2467,7 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         }
         composeOptions.readAheadUs = static_cast<drift::TimeUs>(
             std::llround(2.0 * 1e6 * frameRate.den / frameRate.num));
+        composeOptions.useBakes = settings.useBakes;
 
         std::vector<uint8_t> nv12Y;
         std::vector<uint8_t> nv12Uv;
@@ -2530,7 +2587,8 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                 continue;
             }
 
-            QImage img = renderAtOutput ? compositor.compositeAt(t, composeOptions) : compositor.compositeAt(t);
+            QImage img = renderAtOutput || !settings.useBakes ? compositor.compositeAt(t, composeOptions)
+                                                                  : compositor.compositeAt(t);
             if (img.isNull()) {
                 img = QImage(canvasW, canvasH, QImage::Format_RGBA8888);
                 img.fill(vdef->hasAlpha ? Qt::transparent : Qt::black);
@@ -2574,6 +2632,12 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         }
 
         if (!cancelled) {
+            if (sink) {
+                if (!encodeWriteFrame(nullptr, vctx, nullptr, nullptr, pkt, &error, sink))
+                    goto cleanup;
+                ok = true;
+                goto cleanup;
+            }
             if (!flushAudioFrames(true))
                 goto cleanup;
             if (!encodeWriteFrame(fmt, vctx, vstream, nullptr, pkt, &error))
@@ -2585,6 +2649,9 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                 goto cleanup;
             }
             ok = true;
+        } else if (sink) {
+            // Frames the encoder already holds are still valid bake content.
+            encodeWriteFrame(nullptr, vctx, nullptr, nullptr, pkt, &error, sink);
         }
     }
 

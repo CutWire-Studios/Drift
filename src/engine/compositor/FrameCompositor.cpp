@@ -9,6 +9,8 @@
 #include "engine/compositor/effects/EffectProcessor.h"
 #include "engine/face/tracking/FaceTrack.h"
 #include "engine/compositor/GpuCompositor.h"
+#include "engine/compositor/PreviewStream.h"
+#include "engine/encode/bake/BakeReader.h"
 #include "engine/gpu/effects/GpuEffectExecutor.h"
 #include "engine/compositor/layers/MaskApplier.h"
 #include "engine/decode/probe/MediaProbe.h"
@@ -2008,6 +2010,40 @@ QImage FrameCompositor::compositeAt(drift::TimeUs timelineUs) const
     return compositeAt(timelineUs, RenderOptions{});
 }
 
+bool FrameCompositor::prepareFromBake(drift::TimeUs timelineUs, const RenderOptions &options, GpuScene *sceneOut,
+                                      int width, int height, double renderScale) const
+{
+    // A bake is the finished picture at project size: the 3D view, the inline text editor, the mask
+    // view and a bypassed effect all need the layers behind it, and a transparent background cannot
+    // be stored in it. Bakes are of the main timeline, so an open composite tab never reads them.
+    if (!options.useBakes || !m_project->activeSequenceId().isEmpty() || options.editor.active || options.textEdit.active() || !options.maskView.clipId.isEmpty()
+        || renderScale > 1.0 + 1e-6 || m_project->background().kind == drift::BackgroundKind::Transparent)
+        return false;
+
+    QString bakeId;
+    const PreviewVideoFrame video = m_bakes->read(drift::BakeReaderPool::frameForTime(timelineUs, m_project->fps()),
+                                                  m_bakeOwner * kPreviewStreamCount + options.stream,
+                                                  options.approximateSeek, m_project->width(), m_project->height(),
+                                                  m_project->fps(), &bakeId);
+    if (!video.isValid())
+        return false;
+
+    GpuScene scene;
+    scene.canvasSize = QSize(width, height);
+    scene.previewStream = options.stream;
+    scene.cacheVideoSources = options.cacheVideoSources;
+    scene.scopeReadbackWidth = options.scopeReadbackWidth;
+    scene.bakeId = bakeId;
+    GpuItem item;
+    item.layer.video = video;
+    item.layer.rect = QRectF(0, 0, width, height);
+    item.layer.frameRate = m_project->fps();
+    item.layer.valid = true;
+    scene.items.append(item);
+    *sceneOut = std::move(scene);
+    return true;
+}
+
 bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &options, GpuScene *sceneOut,
                               int *widthOut, int *heightOut, double *renderScaleOut) const
 {
@@ -2021,6 +2057,13 @@ bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &opt
     const int height = qMax(1, static_cast<int>(std::lround(projectHeight * renderScale)));
     if (width <= 0 || height <= 0)
         return false;
+
+    if (sceneOut && m_bakes && prepareFromBake(timelineUs, options, sceneOut, width, height, renderScale)) {
+        *widthOut = width;
+        *heightOut = height;
+        *renderScaleOut = renderScale;
+        return true;
+    }
 
     const AllowProxiesScope proxies(options.allowProxies);
     // Covers the warm below and every read buildGpuScene makes, nested timelines included.
@@ -2073,7 +2116,9 @@ GpuFrameTexture FrameCompositor::compositeToTextureAt(drift::TimeUs timelineUs,
     if (!prepare(timelineUs, options, &scene, &width, &height, &renderScale))
         return {};
 
-    return GpuCompositor::renderToTexture(scene);
+    GpuFrameTexture frame = GpuCompositor::renderToTexture(scene);
+    frame.bakeId = scene.bakeId;
+    return frame;
 }
 
 bool FrameCompositor::buildSceneAt(drift::TimeUs timelineUs, const RenderOptions &options,

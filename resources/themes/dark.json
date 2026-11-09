@@ -1375,6 +1375,30 @@
       "audioTint": "$semantic.clip.adjustment.audio",
       "maskTint": "$semantic.clip.adjustment.mask"
     },
+    "bakesDialogRow": {
+      "backgroundHover": "$semantic.panel.muted",
+      "divider": "$semantic.panel.border",
+      "radius": "$metrics.radius.sm"
+    },
+    "timelineBakeStrip": {
+      "fresh": "$semantic.constructive",
+      "stale": "$semantic.warning",
+      "staleHatch": "$semantic.scrim",
+      "progress": "$semantic.primary",
+      "track": "$semantic.panel.border",
+      "radius": 1
+    },
+    "timelineBakeChip": {
+      "background": "$semantic.primary",
+      "foreground": "$semantic.primaryForeground",
+      "radius": "$metrics.radius.pill"
+    },
+    "previewBakeBadge": {
+      "fresh": "$semantic.constructive",
+      "stale": "$semantic.warning",
+      "text": "$semantic.onMedia",
+      "radius": "$metrics.radius.pill"
+    },
     "timelineLaneRibbons": {
       "video": "$semantic.clip.adjustment.video",
       "audio": "$semantic.clip.adjustment.audio",

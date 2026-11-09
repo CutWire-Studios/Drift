@@ -11,6 +11,12 @@
 #include <QImage>
 #include <QString>
 
+#include <memory>
+
+namespace drift {
+class BakeReaderPool;
+}
+
 // Preview canvas as a fraction of project resolution. Below this, text and effect
 // radii collapse to subpixels. The compositor only goes past 1.0 when export raises RenderOptions::maxScale.
 inline constexpr double kMinPreviewScale = 0.02;
@@ -45,6 +51,9 @@ public:
         // and its beat reads 0 until it is. Only the preview sets it; export and every other caller
         // wait, so a frame never depends on how fast the analysis happened to run.
         bool deferAudioAnalysis = false;
+        // Show a baked range's frame instead of compositing it. Range baking turns it off so a
+        // bake never reads another.
+        bool useBakes = true;
         // The preview's 3D mode: the scene seen from the editor's free viewpoint, with the camera
         // and the stage drawn as guides. Only the preview sets it; export never does.
         struct EditorView
@@ -122,6 +131,14 @@ public:
                                              double renderScale);
 
     void setProject(const drift::Project *project) { m_project = project; }
+    // Where baked frames come from (see RenderOptions::useBakes). `owner` keeps this compositor's
+    // decoders apart from other compositors sharing the pool: the preview and an export run each
+    // pass their own.
+    void setBakeSource(std::shared_ptr<drift::BakeReaderPool> bakes, int owner = 0)
+    {
+        m_bakes = std::move(bakes);
+        m_bakeOwner = owner;
+    }
     // Nested sequence views are built from the project and reused across composites of it. The
     // owner calls this whenever the project behind the pointer changes; comparing pointers here
     // cannot tell, since a new snapshot can land at a freed one's address.
@@ -150,7 +167,14 @@ private:
                  int *heightOut, double *renderScaleOut) const;
 
 
+    // Fills `sceneOut` from a bake and returns true when one covers the frame and nothing in
+    // `options` needs the live composite.
+    bool prepareFromBake(drift::TimeUs timelineUs, const RenderOptions &options, GpuScene *sceneOut,
+                         int width, int height, double renderScale) const;
+
     const drift::Project *m_project = nullptr;
+    std::shared_ptr<drift::BakeReaderPool> m_bakes;
+    int m_bakeOwner = 0;
     mutable QHash<QString, std::shared_ptr<const drift::Project>> m_nestedViews;
 };
 

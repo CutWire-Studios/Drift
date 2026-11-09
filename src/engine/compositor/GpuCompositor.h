@@ -198,6 +198,8 @@ struct GpuScene
     QMatrix4x4 editorViewProj;
     // The guides drawn into the 3D view: grid, stage, camera, selection. See EditorOverlay.
     QList<drift::EditorLine> editorLines;
+    // The bake this frame was read from, empty when it was composited live.
+    QString bakeId;
 };
 
 // A composited frame still living in GPU memory. The texture belongs to the GL
@@ -213,6 +215,8 @@ struct GpuFrameTexture
     QImage image;
     // Small upright copy of the canvas for the scopes, only when GpuScene asked for one.
     QImage scopeImage;
+    // The bake the frame came from, empty when composited live.
+    QString bakeId;
 
     bool isValid() const { return !size.isEmpty() && (textureId != 0 || !image.isNull()); }
 };

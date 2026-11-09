@@ -278,6 +278,8 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/vision/SegmentationController.cpp
     ../src/app/jobs/vision/SceneDetectController.cpp
     ../src/app/jobs/vision/DepthController.cpp
+    ../src/app/jobs/render/BakeController.cpp
+    ../src/app/jobs/render/BakeFingerprint.cpp
     ../src/app/jobs/audio/DenoiseController.cpp
     ../src/app/jobs/audio/AudioAlignController.cpp
     ../src/app/color/ColorController.cpp

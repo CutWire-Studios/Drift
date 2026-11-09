@@ -510,6 +510,7 @@ QtObject {
     readonly property real clipMinInteractiveWidth: ThemeManager.metrics.timeline.clipMinInteractiveWidth
     readonly property real clipControlsMinWidth: clipMinInteractiveWidth
     readonly property real clipMinWidth: 2
+    readonly property real timelineBakeStripHeight: 4
 
     // --- Layout: Android / touch -----------------------------------------------
     readonly property real androidIconButtonSize: ThemeManager.metrics.android.iconButtonSize

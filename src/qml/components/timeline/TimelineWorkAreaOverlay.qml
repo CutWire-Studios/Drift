@@ -36,4 +36,11 @@ Item {
         shown: EditorState.workAreaOutSeconds >= 0
         edgeX: parent.outX - width
     }
+
+    TimelineWorkAreaBakeChip {
+        visible: EditorState.workAreaInSeconds >= 0 && EditorState.workAreaOutSeconds > EditorState.workAreaInSeconds
+        x: Math.max(parent.inX + Theme.spacingMd, parent.outX - width - Theme.spacingMd)
+        y: workAreaOverlay.view.contentY + Theme.spacingMd
+        z: 2
+    }
 }

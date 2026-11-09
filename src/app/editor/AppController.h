@@ -51,6 +51,7 @@ class BlendPreviewController;
 class DenoiseController;
 class AudioAlignController;
 class DepthController;
+class BakeController;
 class FaceTrackingController;
 class McpController;
 class RestoreController;
@@ -94,6 +95,7 @@ class AppController : public QObject
     friend class SegmentationController;
     friend class SceneDetectController;
     friend class DepthController;
+    friend class BakeController;
     friend class DenoiseController;
     friend class AudioAlignController;
     friend class ColorController;
@@ -128,6 +130,7 @@ class AppController : public QObject
     Q_MOC_INCLUDE("app/jobs/audio/DenoiseController.h")
     Q_MOC_INCLUDE("app/jobs/audio/AudioAlignController.h")
     Q_MOC_INCLUDE("app/jobs/vision/DepthController.h")
+    Q_MOC_INCLUDE("app/jobs/render/BakeController.h")
     Q_MOC_INCLUDE("app/jobs/vision/FaceTrackingController.h")
     Q_MOC_INCLUDE("app/mcp/McpController.h")
     Q_MOC_INCLUDE("app/jobs/vision/RestoreController.h")
@@ -167,6 +170,8 @@ class AppController : public QObject
     Q_PROPERTY(SceneDetectController *scenes READ scenes CONSTANT)
     // Depth estimation for a clip. QML: EditorState.depth.
     Q_PROPERTY(DepthController *depth READ depth CONSTANT)
+    // Range bakes: pre-rendered stretches of the timeline. QML: EditorState.bakes.
+    Q_PROPERTY(BakeController *bakes READ bakes CONSTANT)
     // Noise removal for a clip's audio. QML: EditorState.denoise.
     Q_PROPERTY(DenoiseController *denoise READ denoise CONSTANT)
     // Silence removal and audio sync. QML: EditorState.audioAlign.
@@ -392,6 +397,7 @@ public:
     SegmentationController *segmentation() const { return m_segmentation; }
     SceneDetectController *scenes() const { return m_sceneDetect; }
     DepthController *depth() const { return m_depth; }
+    BakeController *bakes() const { return m_bakes; }
     DenoiseController *denoise() const { return m_denoise; }
     AudioAlignController *audioAlign() const { return m_audioAlign; }
     ColorController *color() const { return m_color; }
@@ -2297,6 +2303,7 @@ protected:
     SegmentationController *m_segmentation = nullptr;
     SceneDetectController *m_sceneDetect = nullptr;
     DepthController *m_depth = nullptr;
+    BakeController *m_bakes = nullptr;
     DenoiseController *m_denoise = nullptr;
     AudioAlignController *m_audioAlign = nullptr;
     ColorController *m_color = nullptr;
