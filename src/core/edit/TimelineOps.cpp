@@ -1455,6 +1455,70 @@ QStringList rippleTracks(Project &project, const QSet<int> &tracks, TimeUs fromU
     return moved;
 }
 
+QStringList shiftWindow(Project &project, const QSet<int> &tracks, TimeUs fromUs, TimeUs toUs, TimeUs deltaUs,
+                        const QSet<QString> &exclude, bool *clamped)
+{
+    QStringList moved;
+    if (deltaUs == 0 || toUs <= fromUs)
+        return moved;
+    QList<Track> &all = project.tracks();
+    QSet<QString> movedIds;
+    QSet<QString> movedLinks;
+    const auto move = [&](Clip &clip) {
+        if (clip.timelineStart + deltaUs < 0 && clamped)
+            *clamped = true;
+        clip.timelineStart = qMax<TimeUs>(0, clip.timelineStart + deltaUs);
+        moved.append(clip.id);
+        movedIds.insert(clip.id);
+    };
+    for (const int t : tracks) {
+        if (t < 0 || t >= all.size())
+            continue;
+        for (Clip &clip : all[t].clips) {
+            if (exclude.contains(clip.id) || clip.timelineStart < fromUs || clip.timelineStart >= toUs)
+                continue;
+            move(clip);
+            if (!clip.linkId.isEmpty())
+                movedLinks.insert(clip.linkId);
+        }
+    }
+    if (!movedLinks.isEmpty()) {
+        for (const int t : tracks) {
+            if (t < 0 || t >= all.size())
+                continue;
+            for (Clip &clip : all[t].clips) {
+                if (!movedIds.contains(clip.id) && !exclude.contains(clip.id) && !clip.linkId.isEmpty()
+                    && movedLinks.contains(clip.linkId))
+                    move(clip);
+            }
+        }
+    }
+    return moved;
+}
+
+QStringList shiftClipWithLinks(Project &project, const QString &clipId, TimeUs deltaUs, bool *clamped)
+{
+    QStringList moved;
+    QString link;
+    for (const Track &track : project.tracks())
+        for (const Clip &clip : track.clips)
+            if (clip.id == clipId)
+                link = clip.linkId;
+    for (Track &track : project.tracks()) {
+        if (track.isAdjustment())
+            continue;
+        for (Clip &clip : track.clips) {
+            if (clip.id != clipId && (link.isEmpty() || clip.linkId != link))
+                continue;
+            if (clip.timelineStart + deltaUs < 0 && clamped)
+                *clamped = true;
+            clip.timelineStart = qMax<TimeUs>(0, clip.timelineStart + deltaUs);
+            moved.append(clip.id);
+        }
+    }
+    return moved;
+}
+
 QString rippleCollision(const Project &before, const Project &after, const QSet<int> &tracks)
 {
     QSet<QString> overlappedBefore;

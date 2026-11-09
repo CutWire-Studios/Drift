@@ -2876,6 +2876,158 @@ AppController::GapCloseResult AppController::closeGapsRippled(int trackIndex, dr
     return result;
 }
 
+namespace {
+
+// The ids of `clipId` and everything linked to it.
+QSet<QString> clipAndLinks(const drift::Project &project, const QString &clipId)
+{
+    QSet<QString> ids{clipId};
+    QString link;
+    for (const drift::Track &track : project.tracks())
+        for (const drift::Clip &clip : track.clips)
+            if (clip.id == clipId)
+                link = clip.linkId;
+    if (link.isEmpty())
+        return ids;
+    for (const drift::Track &track : project.tracks())
+        for (const drift::Clip &clip : track.clips)
+            if (clip.linkId == link)
+                ids.insert(clip.id);
+    return ids;
+}
+
+QStringList movedSince(const drift::Project &before, const drift::Project &after)
+{
+    QHash<QString, drift::TimeUs> starts;
+    for (const drift::Track &track : before.tracks())
+        for (const drift::Clip &clip : track.clips)
+            starts.insert(clip.id, clip.timelineStart);
+    QStringList moved;
+    for (const drift::Track &track : after.tracks())
+        for (const drift::Clip &clip : track.clips)
+            if (starts.contains(clip.id) && starts.value(clip.id) != clip.timelineStart)
+                moved.append(clip.id);
+    return moved;
+}
+
+} // namespace
+
+AppController::ReorderResult AppController::moveClipNextTo(const QString &clipId, const QString &neighbourId, bool after)
+{
+    ReorderResult result;
+    const auto fail = [&result](const char *code, const QString &message) {
+        result.errorCode = QString::fromLatin1(code);
+        result.error = message;
+        return result;
+    };
+    int t = -1;
+    int c = -1;
+    int nt = -1;
+    int nc = -1;
+    if (!findClipById(m_project, clipId, &t, &c))
+        return fail("not_found", QStringLiteral("No clip %1").arg(clipId));
+    if (!findClipById(m_project, neighbourId, &nt, &nc))
+        return fail("not_found", QStringLiteral("No clip %1").arg(neighbourId));
+    if (clipId == neighbourId)
+        return fail("bad_args", QStringLiteral("A clip cannot move next to itself"));
+    if (t != nt)
+        return fail("bad_args", QStringLiteral("%1 and %2 are on different tracks; use move_to_track first").arg(clipId, neighbourId));
+
+    const drift::Clip clip = m_project.tracks().at(t).clips.at(c);
+    const drift::Clip neighbour = m_project.tracks().at(nt).clips.at(nc);
+    const drift::TimeUs s = clip.timelineStart;
+    const drift::TimeUs e = clip.timelineEnd();
+    const drift::TimeUs length = clip.timelineDuration;
+    const drift::TimeUs target = after ? neighbour.timelineEnd() : neighbour.timelineStart;
+    if (target == s || target == e)
+        return result; // already there
+
+    const QSet<QString> carried = clipAndLinks(m_project, clipId);
+    QSet<int> tracks = drift::rippleTrackGroup(m_project, t);
+    tracks.insert(t);
+    for (const int i : std::as_const(tracks)) {
+        if (m_project.tracks().at(i).locked)
+            return fail("bad_args", QStringLiteral("Track %1 is locked").arg(i));
+    }
+
+    const drift::Project before = m_project;
+    bool clamped = false;
+    drift::TimeUs newStart = s;
+    if (target > e) {
+        drift::shiftWindow(m_project, tracks, e, target, -length, carried, &clamped);
+        newStart = target - length;
+    } else {
+        drift::shiftWindow(m_project, tracks, target, s, length, carried, &clamped);
+        newStart = target;
+    }
+    drift::shiftClipWithLinks(m_project, clipId, newStart - s, &clamped);
+    const QString collision = drift::rippleCollision(before, m_project, tracks);
+    if (!collision.isEmpty() || clamped) {
+        m_project = before;
+        return fail("bad_args", collision.isEmpty()
+                                    ? QStringLiteral("A linked clip would have to move before the start of the timeline")
+                                    : QStringLiteral("Clip %1 would land on another; move it first").arg(collision));
+    }
+    syncOverlapTransitions(m_project);
+    pushProjectEdit(before, tr("Clip moved"));
+    finishEdit(tr("Clip moved"));
+    result.moved = movedSince(before, m_project);
+    return result;
+}
+
+AppController::ReorderResult AppController::swapClips(const QString &firstId, const QString &secondId)
+{
+    ReorderResult result;
+    const auto fail = [&result](const char *code, const QString &message) {
+        result.errorCode = QString::fromLatin1(code);
+        result.error = message;
+        return result;
+    };
+    int t1 = -1, c1 = -1, t2 = -1, c2 = -1;
+    if (!findClipById(m_project, firstId, &t1, &c1))
+        return fail("not_found", QStringLiteral("No clip %1").arg(firstId));
+    if (!findClipById(m_project, secondId, &t2, &c2))
+        return fail("not_found", QStringLiteral("No clip %1").arg(secondId));
+    if (firstId == secondId)
+        return fail("bad_args", QStringLiteral("A clip cannot swap with itself"));
+    if (t1 != t2)
+        return fail("bad_args", QStringLiteral("%1 and %2 are on different tracks").arg(firstId, secondId));
+
+    drift::Clip a = m_project.tracks().at(t1).clips.at(c1);
+    drift::Clip b = m_project.tracks().at(t2).clips.at(c2);
+    if (b.timelineStart < a.timelineStart)
+        std::swap(a, b);
+    if (a.timelineEnd() > b.timelineStart)
+        return fail("bad_args", QStringLiteral("%1 and %2 overlap").arg(a.id, b.id));
+
+    QSet<int> tracks = drift::rippleTrackGroup(m_project, t1);
+    tracks.insert(t1);
+    for (const int i : std::as_const(tracks)) {
+        if (m_project.tracks().at(i).locked)
+            return fail("bad_args", QStringLiteral("Track %1 is locked").arg(i));
+    }
+    const QSet<QString> carried = clipAndLinks(m_project, a.id) + clipAndLinks(m_project, b.id);
+
+    const drift::Project before = m_project;
+    bool clamped = false;
+    drift::shiftWindow(m_project, tracks, a.timelineEnd(), b.timelineStart,
+                       b.timelineDuration - a.timelineDuration, carried, &clamped);
+    drift::shiftClipWithLinks(m_project, a.id, (b.timelineEnd() - a.timelineDuration) - a.timelineStart, &clamped);
+    drift::shiftClipWithLinks(m_project, b.id, a.timelineStart - b.timelineStart, &clamped);
+    const QString collision = drift::rippleCollision(before, m_project, tracks);
+    if (!collision.isEmpty() || clamped) {
+        m_project = before;
+        return fail("bad_args", collision.isEmpty()
+                                    ? QStringLiteral("A linked clip would have to move before the start of the timeline")
+                                    : QStringLiteral("Clip %1 would land on another; move it first").arg(collision));
+    }
+    syncOverlapTransitions(m_project);
+    pushProjectEdit(before, tr("Clips swapped"));
+    finishEdit(tr("Clips swapped"));
+    result.moved = movedSince(before, m_project);
+    return result;
+}
+
 void AppController::duplicateSelectedClip()
 {
     if (m_selectedTrack < 0 || m_selectedClip < 0)

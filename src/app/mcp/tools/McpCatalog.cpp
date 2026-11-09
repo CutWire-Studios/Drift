@@ -692,10 +692,22 @@ const QList<Op> &ops()
                        {QStringLiteral("asset")}) },
         { "move_clip", "timeline", "Change a clip's start time",
           "Move a clip on its track. When overlap is off (default) the start may be pushed forward to "
-          "the next gap; the reply carries requested, placed, and reason:\"gap\" when they differ.",
-          objectSchema(mergeProps({{QStringLiteral("at"), numberProp(QStringLiteral("New start seconds"))}},
+          "the next gap; the reply carries requested, placed, and reason:\"gap\" when they differ. "
+          "Or reorder: before/after (a clip id on the same track) puts it at that clip's start or "
+          "end and moves the clips in between by its length, linked tracks too, in one undo step; "
+          "the reply adds moved:[{id, start}]. A locked track or a clip landing on another refuses it.",
+          objectSchema(mergeProps({{QStringLiteral("at"), numberProp(QStringLiteral("New start seconds"))},
+                                   {QStringLiteral("before"), stringProp(QStringLiteral("Clip id to move in front of"))},
+                                   {QStringLiteral("after"), stringProp(QStringLiteral("Clip id to move behind"))}},
                                   clipRefProps()),
-                       {QStringLiteral("at")}) },
+                       {}) },
+        { "swap_clips", "timeline", "Exchange two clips' places",
+          "Swap two clips on one track in one undo step: each takes the other's place, the clips "
+          "between them move by the difference in length, and linked A/V moves along. Refused for "
+          "different tracks, a locked track or a clip landing on another. Returns moved:[{id, start}].",
+          objectSchema({{QStringLiteral("a"), stringProp(QStringLiteral("Clip id"))},
+                        {QStringLiteral("b"), stringProp(QStringLiteral("Clip id"))}},
+                       {QStringLiteral("a"), QStringLiteral("b")}) },
         { "set_duration", "timeline", "Change timeline length",
           "Set the clip's timeline duration in seconds. Trims source out (or in if reversed). Clamped "
           "to the source material left after the current trim, so the applied dur in the reply may be "

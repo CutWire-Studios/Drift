@@ -817,6 +817,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opPlaceClip(args);
     if (tool == QLatin1String("move_clip"))
         return opMoveClip(args);
+    if (tool == QLatin1String("swap_clips"))
+        return opSwapClips(args);
     if (tool == QLatin1String("set_duration"))
         return opSetDuration(args);
     if (tool == QLatin1String("set_trim"))
@@ -1600,13 +1602,54 @@ QJsonObject McpDispatcher::opInsertClip(const QJsonObject &args)
     return ok(clipFeedback(placed, extra));
 }
 
+namespace {
+
+QJsonObject reorderReply(const AppController::ReorderResult &result, const drift::Project &project)
+{
+    const QSet<QString> moved(result.moved.cbegin(), result.moved.cend());
+    QJsonArray movedJson;
+    for (const drift::Track &track : project.tracks())
+        for (const drift::Clip &clip : track.clips)
+            if (moved.contains(clip.id))
+                movedJson.append(QJsonObject{{QStringLiteral("id"), clip.id},
+                                             {QStringLiteral("start"),
+                                              drift::mcpdetail::round3(drift::usToSeconds(clip.timelineStart))}});
+    return QJsonObject{{QStringLiteral("moved"), movedJson}};
+}
+
+} // namespace
+
+QJsonObject McpDispatcher::opSwapClips(const QJsonObject &args)
+{
+    const QString a = args.value(QStringLiteral("a")).toString();
+    const QString b = args.value(QStringLiteral("b")).toString();
+    if (a.isEmpty() || b.isEmpty())
+        return err("bad_args", QStringLiteral("a and b required"));
+    const AppController::ReorderResult result = m_controller->swapClips(a, b);
+    if (!result.error.isEmpty())
+        return err(result.errorCode.toLatin1().constData(), result.error);
+    return ok(reorderReply(result, *m_controller->project()));
+}
+
 QJsonObject McpDispatcher::opMoveClip(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
-    if (!args.contains(QStringLiteral("at")))
-        return err("bad_args", QStringLiteral("at required"));
+    const bool hasBefore = args.contains(QStringLiteral("before"));
+    const bool hasAfter = args.contains(QStringLiteral("after"));
+    if (int(args.contains(QStringLiteral("at"))) + int(hasBefore) + int(hasAfter) != 1)
+        return err("bad_args", QStringLiteral("give exactly one of at, before, after"));
+    if (hasBefore || hasAfter) {
+        const QString neighbour = args.value(hasBefore ? QStringLiteral("before") : QStringLiteral("after")).toString();
+        const AppController::ReorderResult result = m_controller->moveClipNextTo(ref.id, neighbour, hasAfter);
+        if (!result.error.isEmpty())
+            return err(result.errorCode.toLatin1().constData(), result.error);
+        const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
+        QJsonObject reply = clipFeedback(after, {});
+        reply.insert(QStringLiteral("moved"), reorderReply(result, *m_controller->project()).value(QStringLiteral("moved")));
+        return ok(reply);
+    }
     const double requested = jsonNumber(args.value(QStringLiteral("at")), 0);
     if (m_controller->allowClipOverlap()) {
         m_controller->selectClip(ref.track, ref.clip);

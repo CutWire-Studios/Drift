@@ -949,6 +949,20 @@ public:
         QString error;
     };
     GapCloseResult closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs);
+    // Reordering on one track, one undo step each. moveClipNextTo moves a clip (with everything
+    // linked to it) to the start (`after` false) or end of another clip on its track; the clips
+    // in between move by its length so the track keeps its spacing. swapClips exchanges two
+    // clips' places; the clips between them move by the difference in length. Tracks joined by
+    // linked clips move together. Refused (nothing changes) when the clips are on different tracks,
+    // a track is locked, or a clip would land on another or before 0.
+    struct ReorderResult
+    {
+        QStringList moved;
+        QString error;
+        QString errorCode;
+    };
+    ReorderResult moveClipNextTo(const QString &clipId, const QString &neighbourId, bool after);
+    ReorderResult swapClips(const QString &firstId, const QString &secondId);
     // setClipTrim's arithmetic on one clip: clamps the range to the source and re-derives the
     // timeline duration from it and the speed.
     void applyClipTrim(drift::Clip &clip, double inPoint, double outPoint) const;
