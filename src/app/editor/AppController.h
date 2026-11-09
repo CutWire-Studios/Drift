@@ -45,6 +45,7 @@ class CurveEditorController;
 class KeyframeController;
 class MaskingController;
 class SubtitleController;
+class TeleprompterController;
 class ColorController;
 class BlendPreviewController;
 class DenoiseController;
@@ -101,6 +102,7 @@ class AppController : public QObject
     friend class MaskingController;
     friend class MaskEditSession;
     friend class SubtitleController;
+    friend class TeleprompterController;
     friend class RestoreController;
     friend class FaceTrackingController;
     friend class StabilizeController;
@@ -120,6 +122,7 @@ class AppController : public QObject
     Q_MOC_INCLUDE("app/editor/sessions/KeyframeController.h")
     Q_MOC_INCLUDE("app/editor/sessions/MaskingController.h")
     Q_MOC_INCLUDE("app/editor/sessions/SubtitleController.h")
+    Q_MOC_INCLUDE("app/editor/sessions/TeleprompterController.h")
     Q_MOC_INCLUDE("app/color/ColorController.h")
     Q_MOC_INCLUDE("app/editor/BlendPreviewController.h")
     Q_MOC_INCLUDE("app/jobs/audio/DenoiseController.h")
@@ -177,6 +180,7 @@ class AppController : public QObject
     // "Use as mask" on bin assets and timeline clips. QML: EditorState.masking.
     Q_PROPERTY(MaskingController *masking READ masking CONSTANT)
     Q_PROPERTY(SubtitleController *subtitles READ subtitles CONSTANT)
+    Q_PROPERTY(TeleprompterController *teleprompter READ teleprompter CONSTANT)
     // Video restore and enhance (decompression, upscaling). QML: EditorState.restore.
     Q_PROPERTY(RestoreController *restore READ restore CONSTANT)
     // Face landmark tracking and Face Swap source ingest. QML: EditorState.faces.
@@ -395,6 +399,7 @@ public:
     KeyframeController *keyframes() const { return m_keyframes; }
     MaskingController *masking() const { return m_masking; }
     SubtitleController *subtitles() const { return m_subtitles; }
+    TeleprompterController *teleprompter() const { return m_teleprompter; }
     RestoreController *restore() const { return m_restore; }
     FaceTrackingController *faces() const { return m_faces; }
     StabilizeController *stabilize() const { return m_stabilize; }
@@ -2283,6 +2288,7 @@ protected:
     KeyframeController *m_keyframes = nullptr;
     MaskingController *m_masking = nullptr;
     SubtitleController *m_subtitles = nullptr;
+    TeleprompterController *m_teleprompter = nullptr;
     RestoreController *m_restore = nullptr;
     FaceTrackingController *m_faces = nullptr;
     StabilizeController *m_stabilize = nullptr;

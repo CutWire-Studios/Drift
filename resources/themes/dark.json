@@ -3011,6 +3011,19 @@
       "foregroundValue": "$semantic.preview.statsValue",
       "foregroundWarn": "$semantic.preview.statsWarn"
     },
+    "teleprompterView": {
+      "foreground": "$semantic.panel.foreground",
+      "marker": "$semantic.panel.accent"
+    },
+    "teleprompterPanel": {
+      "foregroundMuted": "$semantic.panel.muted"
+    },
+    "teleprompterOverlay": {
+      "background": "$semantic.scrim",
+      "foreground": "$semantic.onMedia",
+      "marker": "$semantic.accent",
+      "radius": "$metrics.radius.sm"
+    },
     "playbackStatsOverlay": {
       "background": "$semantic.preview.statsBackground",
       "border": "$semantic.preview.statsBorder",

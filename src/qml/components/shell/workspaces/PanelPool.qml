@@ -80,6 +80,7 @@ Item {
         "subtitleText": subtitleTextC,
         "subtitleTiming": subtitleTimingC,
         "recorder": recorderC,
+        "teleprompter": teleprompterC,
         "denoise": denoiseC,
         "color": colorC,
         "looks": looksC,
@@ -115,6 +116,7 @@ Item {
     Component { id: subtitleTextC; LazyPanel { panel: SubtitleTextPanel {} } }
     Component { id: subtitleTimingC; LazyPanel { panel: SubtitleTimingPanel {} } }
     Component { id: recorderC; LazyPanel { panel: RecorderPanel {} } }
+    Component { id: teleprompterC; LazyPanel { panel: TeleprompterPanel {} } }
     Component { id: denoiseC; LazyPanel { panel: DenoisePanel {} } }
     Component { id: colorC; LazyPanel { panel: ColorPanel {} } }
     Component { id: looksC; LazyPanel { panel: LooksPanel {} } }

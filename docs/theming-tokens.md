@@ -2140,6 +2140,13 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | playbackStatsLine | foreground | $semantic.preview.statsLabel | $semantic.preview.statsLabel |
 | playbackStatsLine | foregroundValue | $semantic.preview.statsValue | $semantic.preview.statsValue |
 | playbackStatsLine | foregroundWarn | $semantic.preview.statsWarn | $semantic.preview.statsWarn |
+| teleprompterView | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| teleprompterView | marker | $semantic.panel.accent | $semantic.panel.accent |
+| teleprompterPanel | foregroundMuted | $semantic.panel.muted | $semantic.panel.muted |
+| teleprompterOverlay | background | $semantic.scrim | $semantic.scrim |
+| teleprompterOverlay | foreground | $semantic.onMedia | $semantic.onMedia |
+| teleprompterOverlay | marker | $semantic.accent | $semantic.accent |
+| teleprompterOverlay | radius | $metrics.radius.sm | $metrics.radius.sm |
 | playbackStatsOverlay | background | $semantic.preview.statsBackground | $semantic.preview.statsBackground |
 | playbackStatsOverlay | border | $semantic.preview.statsBorder | $semantic.preview.statsBorder |
 | playbackStatsOverlay | borderWidth | $metrics.borderWidth | $metrics.borderWidth |

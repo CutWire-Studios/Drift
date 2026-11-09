@@ -2102,14 +2102,16 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
     asset.ranges.append({QStringLiteral("r2"), drift::secondsToUs(5), drift::secondsToUs(9), -1, {}, {}});
     asset.markers.append({QStringLiteral("m1"), drift::secondsToUs(2), QStringLiteral("Cue"), QStringLiteral("note")});
     project.addAsset(asset);
+    project.setTeleprompterScript(QStringLiteral("Hello\nworld"));
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 22);
+    QCOMPARE(drift::Project::kCurrentVersion, 23);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
     QVERIFY(error.isEmpty());
+    QCOMPARE(loaded.teleprompterScript(), QStringLiteral("Hello\nworld"));
     const drift::MediaAsset *back = loaded.asset(QStringLiteral("asset-lab"));
     QVERIFY(back);
     QCOMPARE(back->rating, 1);
@@ -2144,7 +2146,7 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 22);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 23);
     const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                    .value(QStringLiteral("clips")).toArray().at(0).toObject()
                                    .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();

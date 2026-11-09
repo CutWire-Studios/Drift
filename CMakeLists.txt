@@ -1221,6 +1221,8 @@ target_sources(driftapp PRIVATE
     src/app/editor/sessions/MaskingController.cpp
     src/app/editor/sessions/SubtitleController.h
     src/app/editor/sessions/SubtitleController.cpp
+    src/app/editor/sessions/TeleprompterController.h
+    src/app/editor/sessions/TeleprompterController.cpp
     src/app/editor/sessions/SubtitleCueModel.h
     src/app/editor/sessions/SubtitleCueModel.cpp
     src/app/editor/sessions/SubtitleCueFilterModel.h
@@ -1871,6 +1873,8 @@ qt_add_qml_module(drift
         src/qml/components/panels/AudioMixerPanel.qml
         src/qml/components/panels/SubtitlesPanel.qml
         src/qml/components/panels/RecorderPanel.qml
+        src/qml/components/panels/TeleprompterPanel.qml
+        src/qml/components/teleprompter/TeleprompterView.qml
         src/qml/components/panels/DenoisePanel.qml
         src/qml/components/panels/ColorPanel.qml
         src/qml/components/panels/LooksPanel.qml

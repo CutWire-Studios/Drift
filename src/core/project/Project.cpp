@@ -1399,6 +1399,8 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 21 added Mask::cropShape, the clip Shape picker's mask marker. Nothing to migrate; the
     // bump is a gate, as for versions 6 and 9. An older build would drop the marker and no longer
     // treat the mask as the clip's shape.
+    // Version 23 added the teleprompter script. Nothing to migrate; the bump is a gate so an older
+    // build does not silently drop the script on save.
     // Version 22 moved the 3D world to After Effects' convention (migrateWorldTo22 above).
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
@@ -1432,6 +1434,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         project.m_id = savedId;
     project.m_author = object.value(QStringLiteral("author")).toString();
     project.m_description = object.value(QStringLiteral("description")).toString();
+    project.m_teleprompterScript = object.value(QStringLiteral("teleprompterScript")).toString();
     const QDateTime created =
         QDateTime::fromString(object.value(QStringLiteral("createdAt")).toString(), Qt::ISODate);
     if (created.isValid())
@@ -1548,6 +1551,8 @@ QJsonObject Project::toJson(bool includeTranscripts) const
     };
     if (!sequencesArray.isEmpty())
         root.insert(QStringLiteral("sequences"), sequencesArray);
+    if (!m_teleprompterScript.isEmpty())
+        root.insert(QStringLiteral("teleprompterScript"), m_teleprompterScript);
     if (!m_openSequenceTabs.isEmpty())
         root.insert(QStringLiteral("openSequenceTabs"), QJsonArray::fromStringList(m_openSequenceTabs));
     if (hasWorkArea()) {
