@@ -268,6 +268,8 @@ int ensureAdjustmentLane(Project &project, int parentIndex, AdjustmentKind kind,
     if (project.tracks().at(parentIndex).isAdjustment())
         return -1;
 
+    project.tracks()[parentIndex].lanesCollapsed = false;
+
     for (const int laneIndex : adjustmentLaneIndexes(project, parentIndex)) {
         const Track &lane = project.tracks().at(laneIndex);
         if (visibleOnly && lane.hidden)

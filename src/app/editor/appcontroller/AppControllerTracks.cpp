@@ -544,8 +544,8 @@ int AppController::trackRowHeight(int trackIndex, const QVariantMap &metrics) co
     }
 
     const double scale = track.heightScale > 0 ? track.heightScale : 1.0;
-    const double lanes =
-        drift::adjustmentLaneIndexes(m_project, trackIndex).size() * metric("lane", 20.0);
+    const int laneCount = drift::adjustmentLaneIndexes(m_project, trackIndex).size();
+    const double lanes = laneCount * (track.lanesCollapsed ? metric("ribbon", 3.0) : metric("lane", 20.0));
     return qRound(qMax(20.0, base * scale + lanes));
 }
 
@@ -560,6 +560,57 @@ QVariantList AppController::adjustmentLanes(int trackIndex) const
     for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, trackIndex))
         out.append(laneIndex);
     return out;
+}
+
+QString AppController::adjustmentLaneKind(int laneIndex) const
+{
+    if (laneIndex < 0 || laneIndex >= m_project.tracks().size())
+        return {};
+    const drift::Track &lane = m_project.tracks().at(laneIndex);
+    if (!lane.isAdjustmentLane() || lane.clips.isEmpty())
+        return {};
+    switch (lane.clips.first().adjustmentKind) {
+    case drift::AdjustmentKind::VideoEffects:
+        return QStringLiteral("videoEffects");
+    case drift::AdjustmentKind::AudioEffects:
+        return QStringLiteral("audioEffects");
+    case drift::AdjustmentKind::Mask:
+        return QStringLiteral("mask");
+    default:
+        return {};
+    }
+}
+
+QVariantList AppController::adjustmentLaneSpans(int parentIndex) const
+{
+    QVariantList out;
+    for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, parentIndex)) {
+        const drift::Track &lane = m_project.tracks().at(laneIndex);
+        QVariantList spans;
+        for (const drift::Clip &clip : lane.clips) {
+            spans.append(QVariantMap{
+                {QStringLiteral("start"), drift::usToSeconds(clip.timelineStart)},
+                {QStringLiteral("end"), drift::usToSeconds(clip.timelineEnd())},
+            });
+        }
+        out.append(QVariantMap{
+            {QStringLiteral("laneIndex"), laneIndex},
+            {QStringLiteral("kind"), adjustmentLaneKind(laneIndex)},
+            {QStringLiteral("hidden"), lane.hidden},
+            {QStringLiteral("spans"), spans},
+        });
+    }
+    return out;
+}
+
+void AppController::setTrackLanesCollapsed(int trackIndex, bool collapsed)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (m_project.tracks()[trackIndex].lanesCollapsed == collapsed)
+        return;
+    m_project.tracks()[trackIndex].lanesCollapsed = collapsed;
+    notifyTracksChanged();
 }
 
 double AppController::trackHeightScale(int trackIndex) const

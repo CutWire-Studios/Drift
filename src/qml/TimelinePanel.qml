@@ -52,7 +52,7 @@ PanelFrame {
         for (let i = 0; i < tracks.length; ++i) {
             if (!trackOccupiesARow(i))
                 continue
-            const lanes = EditorState.adjustmentLaneCount(i) * Theme.adjustmentLaneHeight
+            const lanes = trackLanesPx(i)
             scaled += trackHeight(i) - lanes
             fixed += lanes
             ++rows
@@ -610,7 +610,8 @@ PanelFrame {
             "subtitle": Theme.trackHeightSubtitle,
             "shape": Theme.trackHeightShape,
             "adjustment": Theme.trackHeightAdjustment,
-            "lane": Theme.adjustmentLaneHeight
+            "lane": Theme.adjustmentLaneHeight,
+            "ribbon": Theme.adjustmentRibbonHeight
         })
     }
 
@@ -722,16 +723,25 @@ PanelFrame {
         return { "track": track, "lane": laneIndexAtY(track, y - trackOffsetY(track)) }
     }
 
-    // Which nested lane of `trackIndex`, if any, a y inside that row falls in. Lanes stack as
-    // strips across the top of the row; -1 means the clip area below them.
+    // Height the nested lanes take of a row: full strips when expanded, thin ribbons when collapsed.
+    function trackLanesPx(index) {
+        const dep = tracks.length
+        const collapsed = !!tracks[index] && tracks[index].lanesCollapsed === true
+        return EditorState.adjustmentLaneCount(index)
+                * (collapsed ? Theme.adjustmentRibbonHeight : Theme.adjustmentLaneHeight)
+    }
+
+    // Which nested lane of `trackIndex`, if any, a y inside that row falls in. Expanded lanes
+    // stack as strips below the row's own clip area; -1 means the clip area (or collapsed ribbons).
     function laneIndexAtY(trackIndex, yInRow) {
+        if (tracks[trackIndex].lanesCollapsed === true)
+            return -1
         const lanes = EditorState.adjustmentLanes(trackIndex)
-        for (var i = 0; i < lanes.length; i++) {
-            const top = i * Theme.adjustmentLaneHeight
-            if (yInRow >= top && yInRow < top + Theme.adjustmentLaneHeight)
-                return lanes[i]
-        }
-        return -1
+        const clipHeight = trackHeight(trackIndex) - lanes.length * Theme.adjustmentLaneHeight
+        if (yInRow < clipHeight)
+            return -1
+        const i = Math.floor((yInRow - clipHeight) / Theme.adjustmentLaneHeight)
+        return i >= 0 && i < lanes.length ? lanes[i] : -1
     }
 
     // Depth of the "insert a new track here" band on a track row.
@@ -1701,6 +1711,8 @@ PanelFrame {
                                 // Above the rows below it while one of its clips is dragged, so the clip draws over them.
                                 z: trackClipsRenderer.dragging ? 20 : 0
                                 property int trackIndex: index
+                                readonly property bool lanesCollapsed: root.tracks[trackIndex].lanesCollapsed === true
+                                readonly property real lanesPx: root.trackLanesPx(trackIndex)
                                 // Drawn inside its parent's row instead of getting one here.
                                 // Column skips invisible children entirely, so this costs no
                                 // spacing either.
@@ -1939,12 +1951,13 @@ PanelFrame {
                                     trackIndex: trackRow.trackIndex
                                 }
 
-                                // Nested adjustment lanes, drawn as strips across the top of
-                                // this row. A lane is a track in its own right — that is what
+                                // Nested adjustment lanes, drawn as strips below this row's own
+                                // clips, or as coverage ribbons in the same place when collapsed. A lane is a track in its own right — that is what
                                 // keeps (trackIndex, clipIndex) addressing flat everywhere else —
                                 // but it has no row of its own, so it is rendered in here.
                                 Column {
                                     id: adjustmentLaneStrips
+                                    y: trackClipArea.height
                                     width: trackRow.width
                                     spacing: 0
                                     z: 4
@@ -1953,7 +1966,7 @@ PanelFrame {
                                         // From the track's clip model, which only re-announces
                                         // the list when a lane actually comes or goes. A JS
                                         // array here rebuilt every lane and its clips per edit.
-                                        model: EditorState.clipsModel(trackRow.trackIndex).adjustmentLanes
+                                        model: trackRow.lanesCollapsed ? 0 : EditorState.clipsModel(trackRow.trackIndex).adjustmentLanes
                                         delegate: TimelineAdjustmentLaneStrip {
                                             panel: root
                                             timelineColumn: trackColumn
@@ -1963,7 +1976,19 @@ PanelFrame {
                                     }
                                 }
 
-                                // The track's own clips sit below the strips. This wrapper is
+                                Loader {
+                                    active: trackRow.lanesCollapsed
+                                    y: trackClipArea.height
+                                    z: 4
+                                    width: trackRow.width
+                                    sourceComponent: TimelineLaneRibbons {
+                                        width: trackRow.width
+                                        panel: root
+                                        trackIndex: trackRow.trackIndex
+                                    }
+                                }
+
+                                // The track's own clips sit above the strips. This wrapper is
                                 // what TimelineClipItem reads as its `trackRow` (it takes its
                                 // parent), so the clips size themselves to the space left over
                                 // without knowing lanes exist.
@@ -1976,9 +2001,9 @@ PanelFrame {
                                     // and an Item without the property yields 0, so every track
                                     // rendered track 0's clips.
                                     property int trackIndex: trackRow.trackIndex
-                                    y: adjustmentLaneStrips.height
+                                    y: 0
                                     width: trackRow.width
-                                    height: Math.max(0, trackRow.height - adjustmentLaneStrips.height)
+                                    height: Math.max(0, trackRow.height - trackRow.lanesPx)
 
                                     TimelineTrackArea {
                                         id: trackClipsRenderer

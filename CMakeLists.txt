@@ -1986,6 +1986,9 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TrackHeaderOverflowButton.qml
         src/qml/components/timeline/TrackHeaderMicButton.qml
         src/qml/components/timeline/TrackHeaderLaneEye.qml
+        src/qml/components/timeline/TrackHeaderLaneRow.qml
+        src/qml/components/timeline/TrackHeaderLaneToggle.qml
+        src/qml/components/timeline/TimelineLaneRibbons.qml
         src/qml/components/timeline/TrackHeaderInsertLine.qml
         src/qml/components/timeline/TrackHeaderHideButton.qml
         src/qml/components/timeline/TrackHeaderGrip.qml

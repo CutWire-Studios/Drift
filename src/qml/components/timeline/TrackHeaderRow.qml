@@ -60,15 +60,19 @@ Item {
         }
         return false
     }
-    // Nested adjustment lanes occupy the top of the row; the header's own content lives below them.
+    // On desktop the lanes sit below the parent's own content, or collapse into ribbons along
+    // the top. The compact (phone) header keeps them as full strips at the top.
     readonly property int laneCount: {
         const dep = column.tracks.length
         return EditorState.clipsModel(index).adjustmentLanes.length
     }
     readonly property real rowContentHeight: column.trackHeight(index)
-    readonly property real contentTop: laneCount * Theme.adjustmentLaneHeight
-    readonly property real contentHeight: rowContentHeight - contentTop
-    readonly property bool twoLine: !column.compact && contentHeight >= 44
+    readonly property bool lanesCollapsed: !column.compact && column.tracks[index].lanesCollapsed === true
+    readonly property real lanesPx: laneCount * (lanesCollapsed ? Theme.adjustmentRibbonHeight
+                                                                : Theme.adjustmentLaneHeight)
+    readonly property real contentTop: column.compact ? lanesPx : 0
+    readonly property real contentHeight: rowContentHeight - lanesPx
+    readonly property bool twoLine: !column.compact && contentHeight >= 44 && (wantMic || wantLanes)
     readonly property real line1Height: twoLine ? 24 : contentHeight
     readonly property real line2Height: twoLine ? 22 : 0
     readonly property real blockTop: contentTop + (contentHeight - line1Height - line2Height) / 2
@@ -246,7 +250,7 @@ Item {
         visible: !column.compact
         column: trackLabelRow.column
         trackIndex: index
-        lanesPx: trackLabelRow.contentTop
+        lanesPx: trackLabelRow.lanesPx
     }
 
     TrackHeaderEdge {
@@ -291,18 +295,26 @@ Item {
                                      : trackLabelRow.blockTop + trackLabelRow.line1Height / 2 - trackLabelRow.height / 2
     }
 
-    // One eye per nested adjustment lane, level with its strip at the top of the row.
-    // The lane has no header of its own, so its switch lives on its parent's. The rest of
-    // the header is laid out below the lanes (contentTop), so the two never share a line.
+    // Compact: one eye per lane, level with its strip at the top of the row.
     Column {
+        visible: column.compact
         anchors.right: parent.right
-        anchors.rightMargin: column.compact ? 4 : 9
+        anchors.rightMargin: 4
         y: 0
         Repeater {
-            model: EditorState.clipsModel(index).adjustmentLanes
+            model: column.compact ? EditorState.clipsModel(index).adjustmentLanes : 0
             delegate: TrackHeaderLaneEye {
                 column: trackLabelRow.column
             }
+        }
+    }
+
+    Repeater {
+        model: column.compact || lanesCollapsed ? 0 : EditorState.clipsModel(index).adjustmentLanes
+        delegate: TrackHeaderLaneRow {
+            row: trackLabelRow
+            y: trackLabelRow.contentHeight + index * Theme.adjustmentLaneHeight
+            count: trackLabelRow.laneCount
         }
     }
 

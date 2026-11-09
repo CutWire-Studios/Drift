@@ -1372,7 +1372,15 @@
     },
     "timelineAdjustmentLaneChrome": {
       "background": "$semantic.clip.effect",
-      "edge": "$semantic.timeline.scrimSoft"
+      "edge": "$semantic.timeline.scrimSoft",
+      "videoTint": "$semantic.clip.adjustment.video",
+      "audioTint": "$semantic.clip.adjustment.audio",
+      "maskTint": "$semantic.clip.adjustment.mask"
+    },
+    "timelineLaneRibbons": {
+      "video": "$semantic.clip.adjustment.video",
+      "audio": "$semantic.clip.adjustment.audio",
+      "mask": "$semantic.clip.adjustment.mask"
     },
     "timelineBookmarkLaneHighlight": {
       "background": "$semantic.primary"
@@ -1660,6 +1668,20 @@
     "trackHeaderInsertLine": {
       "foreground": "$semantic.primary",
       "radius": 1
+    },
+    "trackHeaderLaneRow": {
+      "connector": "$semantic.border",
+      "video": "$semantic.clip.adjustment.video",
+      "audio": "$semantic.clip.adjustment.audio",
+      "mask": "$semantic.clip.adjustment.mask",
+      "foreground": "$semantic.mutedForeground",
+      "foregroundDimmed": "$semantic.mutedForeground"
+    },
+    "trackHeaderLaneToggle": {
+      "foreground": "$semantic.mutedForeground",
+      "foregroundHover": "$semantic.foreground",
+      "badgeBackground": "$semantic.border",
+      "badgeForeground": "$semantic.foreground"
     },
     "trackHeaderLaneEye": {
       "destructive": "$semantic.destructive",
@@ -4280,6 +4302,7 @@
         "pointer": 20,
         "touch": 24
       },
+      "adjustmentRibbonHeight": 3,
       "trackGap": 6,
       "newTrackHitSlop": 24,
       "trackLabelsWidth": 170,

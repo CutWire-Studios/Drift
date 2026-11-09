@@ -2,7 +2,7 @@ import QtQuick
 import Drift
 
 // Desktop header content: name and the main toggles on the first line, secondary toggles
-// (clip display, mic, channel lanes) on a second line when the row is tall enough.
+// (mic, channel lanes) on a second line when the row is tall enough.
 // Toggles sit in fixed-width slots, right-aligned, so each kind lines up down the column.
 Item {
     id: ctl
@@ -12,18 +12,18 @@ Item {
 
     readonly property real slotWidth: 20
     readonly property real padRight: 6
-    readonly property real nameLeft: 24
+    readonly property real nameLeft: row.laneCount > 0 ? 24 + laneToggle.width + 2 : 24
     readonly property real nameMin: 28
 
     readonly property var fit: {
         const wants = [true, row.wantSolo, row.wantMute, row.wantHide]
-        const secondary = [row.wantClip, row.wantMic, row.wantLanes]
+        const secondary = [row.wantMic, row.wantLanes]
         const cap = Math.max(0, Math.floor((row.width - nameLeft - padRight - nameMin) / slotWidth))
         const secondaryCols = row.twoLine
-            ? Math.min(3, Math.max(0, Math.floor((row.width - nameLeft - padRight) / slotWidth))) : 0
+            ? Math.min(2, Math.max(0, Math.floor((row.width - nameLeft - padRight) / slotWidth))) : 0
         let overflow = !row.twoLine && secondary.some(w => w)
-        for (let i = 0; i < 3; ++i) {
-            if (row.twoLine && secondary[i] && i < 3 - secondaryCols)
+        for (let i = 0; i < 2; ++i) {
+            if (row.twoLine && secondary[i] && i < 2 - secondaryCols)
                 overflow = true
         }
         let cols = Math.min(4, Math.max(0, cap - (overflow ? 1 : 0)))
@@ -34,6 +34,15 @@ Item {
         if (overflow)
             cols = Math.min(4, Math.max(0, cap - 1))
         return { overflow: overflow, cols: cols, secondaryCols: secondaryCols }
+    }
+
+    TrackHeaderLaneToggle {
+        id: laneToggle
+        visible: ctl.row.laneCount > 0
+        x: 24
+        y: ctl.row.blockTop
+        height: ctl.row.line1Height
+        row: ctl.row
     }
 
     TrackHeaderName {
@@ -118,18 +127,6 @@ Item {
         y: ctl.row.blockTop + ctl.row.line1Height
         height: ctl.row.line2Height
 
-        Item {
-            visible: ctl.fit.secondaryCols >= 3
-            width: ctl.slotWidth
-            height: line2.height
-            TrackHeaderClipDisplayButton {
-                anchors.horizontalCenter: parent.horizontalCenter
-                column: ctl.row.column
-                trackIndex: ctl.row.index
-                clipDisplay: ctl.row.clipDisplay
-                shown: ctl.row.wantClip
-            }
-        }
         Item {
             visible: ctl.fit.secondaryCols >= 2
             width: ctl.slotWidth

@@ -1125,6 +1125,7 @@ QVariantList AppController::tracks() const
             {QStringLiteral("clipDisplay"), static_cast<int>(track.clipDisplay)},
             {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
             {QStringLiteral("heightScale"), track.heightScale},
+            {QStringLiteral("lanesCollapsed"), track.lanesCollapsed},
         });
     }
 

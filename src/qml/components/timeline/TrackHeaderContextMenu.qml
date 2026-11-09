@@ -26,6 +26,13 @@ ThemedContextMenu {
             renameDialog.open()
         }
     }
+    ThemedMenuItem {
+        visible: header.laneCount > 0
+        height: visible ? implicitHeight : 0
+        text: header.lanesCollapsed ? qsTr("Expand child lanes") : qsTr("Collapse child lanes")
+        icon.name: header.lanesCollapsed ? Theme.icons.chevronDown : Theme.icons.chevronUp
+        onTriggered: EditorState.setTrackLanesCollapsed(header.index, !header.lanesCollapsed)
+    }
     ThemedMenuSeparator {}
     ThemedMenuItem {
         text: header.trackMuted ? qsTr("Unmute track")

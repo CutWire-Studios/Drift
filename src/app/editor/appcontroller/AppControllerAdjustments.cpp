@@ -346,6 +346,7 @@ void AppController::normalizeProjectStructure(const drift::Project *before)
 {
     m_project.ensureTrackIds();
     const QList<QPair<QString, int>> selection = captureSelectionByTrackId();
+    const QString transitionTrackId = trackIdAt(m_selectedTransitionTrack);
     // Belt and braces for anything that hands the editor a project built the old way — an
     // importer, a tool, a test. Both passes are cheap no-ops once the shape is right.
     drift::liftAdjustmentClipsToOwnTracks(m_project);
@@ -356,6 +357,8 @@ void AppController::normalizeProjectStructure(const drift::Project *before)
     m_project.ensureTrackIds();
     clampStoredTransitionDurations(m_project);
     restoreSelectionByTrackId(selection);
+    if (m_selectedTransitionTrack >= 0)
+        m_selectedTransitionTrack = m_project.trackIndexById(transitionTrackId);
 }
 
 // Projects saved before overlap stopped minting crossfades can carry a transition whose stored
@@ -405,6 +408,13 @@ void AppController::normalizeAdjustmentLanes(drift::Project &project) const
             track.parentTrackId.clear();
             track.adjustmentScope = drift::AdjustmentScope::AllBelow;
         }
+    }
+
+    // A lane exists to hold effects; once its last clip is gone it is only clutter. Lanes are
+    // empty only transiently while being created, and no normalize runs inside that window.
+    for (int i = project.tracks().size() - 1; i >= 0; --i) {
+        if (project.tracks().at(i).isAdjustmentLane() && project.tracks().at(i).clips.isEmpty())
+            project.tracks().removeAt(i);
     }
 
     // Re-gather each parent's lanes directly below it. Lanes keep their relative order, so the
@@ -635,31 +645,6 @@ void AppController::addAdjustmentTrack(const QString &kind)
     int clipIndex = -1;
     if (!newClipId.isEmpty() && findClipById(m_project, newClipId, &trackIndex, &clipIndex))
         selectClip(trackIndex, clipIndex);
-}
-
-int AppController::ensureAdjustmentLane(int parentTrackIndex, const QString &kind, double atSeconds,
-                                        double durationSeconds)
-{
-    const drift::TimeUs startUs =
-        atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
-    const drift::TimeUs durUs = durationSeconds > 0.0 ? drift::secondsToUs(durationSeconds)
-                                                      : drift::imageClipDurationUs();
-
-    const drift::Project before = m_project;
-    const int laneIndex =
-        ensureAdjustmentLaneFor(parentTrackIndex, adjustmentKindFromArg(kind), startUs, durUs);
-    if (laneIndex < 0)
-        return -1;
-
-    // Only a fresh lane changes the project; reusing one is a pure lookup and must not land on
-    // the undo stack as an empty edit.
-    if (m_project.tracks().size() != before.tracks().size()) {
-        const QList<QPair<QString, int>> selection = captureSelectionByTrackId();
-        restoreSelectionByTrackId(selection);
-        pushProjectEdit(before, tr("Add adjustment lane"));
-        finishEdit(tr("Adjustment lane added"));
-    }
-    return laneIndex;
 }
 
 void AppController::moveAdjustmentToLane(int fromTrack, int fromClip, int parentTrackIndex,

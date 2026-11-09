@@ -1292,6 +1292,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
                 trackObject.value(QStringLiteral("showChannelWaveforms")).toBool(false);
             track.heightScale = qBound(
                 0.6, trackObject.value(QStringLiteral("heightScale")).toDouble(1.0), 4.0);
+            track.lanesCollapsed = trackObject.value(QStringLiteral("lanesCollapsed")).toBool(false);
 
             const QJsonArray clipsArray = trackObject.value(QStringLiteral("clips")).toArray();
             for (const QJsonValue &clipValue : clipsArray) {
@@ -1350,6 +1351,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         // combinable. Runs after the v4 pass, which is what mints the track ids a lane needs.
         migrateClipMasksToAdjustmentLanes(project);
     }
+    project.forEachTrackList([](QList<Track> &tracks) {
+        tracks.removeIf([](const Track &track) { return track.isAdjustmentLane() && track.clips.isEmpty(); });
+    });
     if (version < 13) {
         const double width = project.width();
         const double height = project.height();
@@ -1501,6 +1505,7 @@ QJsonObject Project::toJson(bool includeTranscripts) const
                 {QStringLiteral("clipDisplay"), static_cast<int>(track.clipDisplay)},
                 {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
                 {QStringLiteral("heightScale"), track.heightScale},
+                {QStringLiteral("lanesCollapsed"), track.lanesCollapsed},
                 {QStringLiteral("clips"), clipsArray},
                 {QStringLiteral("transitions"), transitionsArray},
             };

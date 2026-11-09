@@ -753,11 +753,6 @@ public:
     // aimed at a standalone adjustment layer (trackIndex < 0 means a new one): the canvas it
     // grades has neither, so the effect would silently do nothing.
     bool effectFitsTrack(int trackIndex, const QString &effectId, QString *why = nullptr) const;
-    // Index of a lane on `parentTrackIndex` able to hold `kind` over [atSeconds, +durationSeconds),
-    // creating one when every existing lane is occupied there. Returns -1 if the parent cannot
-    // take a lane. Note this shifts track indices when it inserts.
-    Q_INVOKABLE int ensureAdjustmentLane(int parentTrackIndex, const QString &kind,
-                                         double atSeconds = -1.0, double durationSeconds = -1.0);
     // Move an adjustment clip between the two placements. Both unlink it first: a pinned
     // adjustment belongs to its clip's track, so re-scoping it would leave the link meaningless.
     // `atSeconds` < 0 keeps the adjustment where it is on the timeline; a drag passes the
@@ -1479,6 +1474,13 @@ public:
     Q_INVOKABLE int adjustmentLaneCount(int trackIndex) const;
     // Track indices of those lanes, topmost first.
     Q_INVOKABLE QVariantList adjustmentLanes(int trackIndex) const;
+    // "videoEffects" | "audioEffects" | "mask", or "" for a lane with no clips.
+    Q_INVOKABLE QString adjustmentLaneKind(int laneIndex) const;
+    // Per lane under the parent, in order: {laneIndex, kind, hidden, spans:[{start, end}]} with
+    // times in seconds. Feeds the collapsed coverage ribbons.
+    Q_INVOKABLE QVariantList adjustmentLaneSpans(int parentIndex) const;
+    // View-only, no undo entry. Collapsed lanes shrink to ribbons in trackRowHeight.
+    Q_INVOKABLE void setTrackLanesCollapsed(int trackIndex, bool collapsed);
 
     Q_INVOKABLE double trackHeightScaleMin() const { return 0.6; }
     Q_INVOKABLE double trackHeightScaleMax() const { return 4.0; }

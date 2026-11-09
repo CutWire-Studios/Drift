@@ -1077,6 +1077,12 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | subtitleCueWaveform | foreground | $semantic.clip.panelWaveform | $semantic.clip.panelWaveform |
 | timelineAdjustmentLaneChrome | background | $semantic.clip.effect | $semantic.clip.effect |
 | timelineAdjustmentLaneChrome | edge | $semantic.timeline.scrimSoft | $semantic.timeline.scrimSoft |
+| timelineAdjustmentLaneChrome | videoTint | $semantic.clip.adjustment.video | $semantic.clip.adjustment.video |
+| timelineAdjustmentLaneChrome | audioTint | $semantic.clip.adjustment.audio | $semantic.clip.adjustment.audio |
+| timelineAdjustmentLaneChrome | maskTint | $semantic.clip.adjustment.mask | $semantic.clip.adjustment.mask |
+| timelineLaneRibbons | video | $semantic.clip.adjustment.video | $semantic.clip.adjustment.video |
+| timelineLaneRibbons | audio | $semantic.clip.adjustment.audio | $semantic.clip.adjustment.audio |
+| timelineLaneRibbons | mask | $semantic.clip.adjustment.mask | $semantic.clip.adjustment.mask |
 | timelineBookmarkLaneHighlight | background | $semantic.primary | $semantic.primary |
 | timelineBookmarkMarker | foreground | $semantic.primary | $semantic.primary |
 | timelineBookmarkMarker | radius | 1 | 1 |
@@ -1244,6 +1250,16 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | trackHeaderHideButton | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | trackHeaderInsertLine | foreground | $semantic.primary | $semantic.primary |
 | trackHeaderInsertLine | radius | 1 | 1 |
+| trackHeaderLaneRow | connector | $semantic.border | $semantic.border |
+| trackHeaderLaneRow | video | $semantic.clip.adjustment.video | $semantic.clip.adjustment.video |
+| trackHeaderLaneRow | audio | $semantic.clip.adjustment.audio | $semantic.clip.adjustment.audio |
+| trackHeaderLaneRow | mask | $semantic.clip.adjustment.mask | $semantic.clip.adjustment.mask |
+| trackHeaderLaneRow | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
+| trackHeaderLaneRow | foregroundDimmed | $semantic.mutedForeground | $semantic.mutedForeground |
+| trackHeaderLaneToggle | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
+| trackHeaderLaneToggle | foregroundHover | $semantic.foreground | $semantic.foreground |
+| trackHeaderLaneToggle | badgeBackground | $semantic.border | $semantic.border |
+| trackHeaderLaneToggle | badgeForeground | $semantic.foreground | $semantic.foreground |
 | trackHeaderLaneEye | destructive | $semantic.destructive | $semantic.destructive |
 | trackHeaderLaneEye | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | trackHeaderMicButton | paused | $semantic.timeline.recordPaused | $semantic.timeline.recordPaused |
@@ -3039,6 +3055,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timeline.trackHeightAdjustment.touch | 40 | 40 |
 | timeline.adjustmentLaneHeight.pointer | 20 | 20 |
 | timeline.adjustmentLaneHeight.touch | 24 | 24 |
+| timeline.adjustmentRibbonHeight | 3 | 3 |
 | timeline.trackGap | 6 | 6 |
 | timeline.newTrackHitSlop | 24 | 24 |
 | timeline.trackLabelsWidth | 170 | 170 |

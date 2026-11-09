@@ -481,6 +481,8 @@ private slots:
     void projectV3MigratesEffectsOntoAdjustmentLanes();
     void adjustmentMovesBetweenStandaloneAndNested();
     void trackRowHeightsForAdjustmentsAndLanes();
+    void collapsedLanesAndEmptyLaneCleanup();
+    void emptyLaneRemovedWithLastClip();
     void overlappingAdjustmentsGetASecondLane();
     void multiClipMoveLeftPreservesSelectionAndRelativeSpacing();
     void multiClipMoveCrossTracks();
@@ -13390,6 +13392,64 @@ void EditorStateTest::trackRowHeightsForAdjustmentsAndLanes()
 
     // Missing keys fall back rather than collapsing the row to nothing.
     QVERIFY(laned.trackRowHeight(parent, QVariantMap{}) > 0);
+}
+
+void EditorStateTest::collapsedLanesAndEmptyLaneCleanup()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.addAudioEffect(0, 0, QStringLiteral("space.autopan"));
+    const QVariantMap metrics{{QStringLiteral("video"), 65.0}, {QStringLiteral("lane"), 20.0},
+                              {QStringLiteral("ribbon"), 3.0}};
+    QCOMPARE(state.trackRowHeight(0, metrics), 105);
+
+    const QList<int> lanes = drift::adjustmentLaneIndexes(*state.project(), 0);
+    QCOMPARE(lanes.size(), 2);
+    QCOMPARE(state.adjustmentLaneKind(lanes.at(0)), QStringLiteral("videoEffects"));
+    QCOMPARE(state.adjustmentLaneKind(lanes.at(1)), QStringLiteral("audioEffects"));
+    QCOMPARE(state.adjustmentLaneKind(0), QString());
+    const QVariantList spans = state.adjustmentLaneSpans(0);
+    QCOMPARE(spans.size(), 2);
+    QCOMPARE(spans.at(0).toMap().value(QStringLiteral("laneIndex")).toInt(), lanes.at(0));
+    QCOMPARE(spans.at(0).toMap().value(QStringLiteral("spans")).toList().size(), 1);
+
+    const int undoCount = state.m_undoStack.count();
+    state.setTrackLanesCollapsed(0, true);
+    QCOMPARE(state.m_undoStack.count(), undoCount);
+    QCOMPARE(state.trackRowHeight(0, metrics), 65 + 6);
+    QVERIFY(state.tracks().at(0).toMap().value(QStringLiteral("lanesCollapsed")).toBool());
+
+    AppController reopened(&library);
+    QString error;
+    QVERIFY(reopened.applyProjectJson(state.serializeProjectJson(), &error));
+    QVERIFY(reopened.project()->tracks().at(0).lanesCollapsed);
+    QCOMPARE(reopened.trackRowHeight(0, metrics), 65 + 6);
+
+    state.setTrackLanesCollapsed(0, true);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+    QVERIFY(!state.project()->tracks().at(0).lanesCollapsed);
+}
+
+void EditorStateTest::emptyLaneRemovedWithLastClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.addAudioEffect(0, 0, QStringLiteral("space.autopan"));
+    const int tracksBefore = state.project()->tracks().size();
+    const QList<int> lanes = drift::adjustmentLaneIndexes(*state.project(), 0);
+    QCOMPARE(lanes.size(), 1);
+
+    state.selectClip(lanes.at(0), 0);
+    state.deleteSelectedClip();
+    QCOMPARE(state.project()->tracks().size(), tracksBefore - 1);
+    QCOMPARE(drift::adjustmentLaneIndexes(*state.project(), 0).size(), 0);
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().size(), tracksBefore);
+    QCOMPARE(drift::adjustmentLaneIndexes(*state.project(), 0).size(), 1);
 }
 
 // The two placements are the whole point of the feature: a standalone adjustment applies to
