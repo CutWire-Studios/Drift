@@ -7494,6 +7494,24 @@ void CoreTest::diffProjectsReportsClipChanges()
     filled.sampleRate = 48000;
     filled.codecName = QStringLiteral("aac");
     QVERIFY(drift::diffProjects(placeholder, probed).isEmpty());
+    // A lazy audio check that lands first (a sample rate) still leaves it a placeholder.
+    drift::Project heard = placeholder;
+    heard.assets()[pending.id].sampleRate = 48000;
+    QVERIFY(drift::diffProjects(heard, probed).isEmpty());
+    // A static 3D model has no length, size or codec once imported, only its fingerprint: a
+    // refresh that changes it is a change.
+    drift::Project model = from;
+    drift::MediaAsset glb;
+    glb.id = QStringLiteral("glb");
+    glb.path = QStringLiteral("/media/chair.glb");
+    glb.kind = drift::MediaKind::Model3d;
+    glb.sourceSize = 4096;
+    glb.sourceModifiedMs = 1000;
+    model.assets().insert(glb.id, glb);
+    drift::Project animated = model;
+    animated.assets()[glb.id].durationUs = drift::secondsToUs(2.0);
+    animated.assets()[glb.id].sourceSize = 8192;
+    QCOMPARE(drift::diffProjects(model, animated).assets.size(), 1);
     // A lazy audio check on a probed asset is not an edit either.
     drift::Project audioKnown = withAsset;
     audioKnown.assets()[asset.id].hasAudioKnown = true;

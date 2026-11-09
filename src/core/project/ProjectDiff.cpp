@@ -67,7 +67,7 @@ struct Located
 // Whether an edit changed an asset. Background jobs write some fields without an edit:
 // - the thumbnail, filmstrip and frame-rate caches, which never count;
 // - the facts an import's probe reads from the file. Until it lands the asset is a placeholder
-//   (no length, size, sample rate or codec; its kind guessed from the extension), and filling it
+//   (no length, size, codec or fingerprint; its kind guessed from the extension), and filling it
 //   in is not an edit. Once probed, every fact counts, 0 included: a refresh of a file changed in
 //   place (new length, rotation, ...) is a change;
 // - the audio facts and the file fingerprint, which a lazy audio check or an older project's first
@@ -82,8 +82,10 @@ bool assetEdited(const MediaAsset &before, const MediaAsset &after)
     };
     for (const char *key : {"thumbnailPath", "filmstripPath", "variableFrameRate"})
         drop(key);
-    const bool probed = before.durationUs > 0 || before.width > 0 || before.sampleRate > 0
-                        || !before.codecName.isEmpty();
+    // Not the sample rate: a lazy audio check can write it before the import's probe lands. The
+    // fingerprint covers what the probe leaves without length, size or codec (a static 3D model).
+    const bool probed = before.durationUs > 0 || before.width > 0 || !before.codecName.isEmpty()
+                        || before.sourceSize > 0;
     if (!probed) {
         for (const char *key : {"kind", "durationUs", "duration", "width", "height", "fps", "rotationDegrees",
                                 "sampleRate", "channels", "codecName", "hasAudio", "sourceSize", "sourceModifiedMs"})
