@@ -495,7 +495,7 @@
       "target": "panel:properties.blending#blending-blend-mode",
       "context": "BlendingInspector",
       "source": "Blend mode",
-      "keywords": "multiply screen overlay add",
+      "keywords": "multiply screen overlay add difference exclusion dodge burn soft hard light hue saturation color luminosity",
       "needs": [
         "blendable"
       ]

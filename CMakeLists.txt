@@ -1535,6 +1535,8 @@ set_source_files_properties(src/qml/LayoutPresets.qml PROPERTIES QT_QML_SINGLETO
 # How a download job renders as words, shared by the desktop Marketplace and the phone
 # download rows so the two hosts of the same jobs cannot word them differently.
 set_source_files_properties(src/qml/DownloadFormat.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
+# Blend mode ids, labels and groups shared by the clip card picker and the text shading combo.
+set_source_files_properties(src/qml/BlendModes.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # Import + reporting policy, needed by surfaces that have no AssetsPanel to borrow it from.
 set_source_files_properties(src/qml/MediaImport.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # App-wide notification queue; the visual host is components/shell/ToastHost.qml.
@@ -1598,6 +1600,7 @@ qt_add_qml_module(drift
         src/qml/AndroidShareTargetSheet.qml
         src/qml/AndroidLinkImport.qml
         src/qml/DownloadFormat.qml
+        src/qml/BlendModes.qml
         src/qml/AndroidNotificationsSheet.qml
         src/qml/components/shell/NavRailButton.qml
         # Touch entry point, loaded instead of Main.qml on Android (see src/app/main.cpp).

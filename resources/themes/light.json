@@ -437,7 +437,8 @@
       "foreground": "$semantic.panel.foreground",
       "icon": "$semantic.warning",
       "backgroundHighlighted": "$semantic.panel.secondary.background",
-      "backgroundHover": "$semantic.panel.accent"
+      "backgroundHover": "$semantic.panel.accent",
+      "sectionForeground": "$semantic.mutedForeground"
     },
     "themedColorDialog": {
       "defaultColor": "$semantic.onMedia",
@@ -1924,6 +1925,15 @@
       "temperature": ["$palette.gradeTempCool", "$palette.gradeTrackNeutral", "$palette.gradeTempWarm"],
       "tint": ["$palette.gradeTintGreen", "$palette.gradeTrackNeutral", "$palette.gradeTintMagenta"],
       "luma": ["$palette.gradeTrackBlack", "$palette.gradeTrackWhite"]
+    },
+    "blendCard": {
+      "background": "$semantic.panel.secondary.background",
+      "backgroundHover": "$semantic.panel.accent",
+      "selectedBorder": "$semantic.primary",
+      "selectedBorderWidth": "$metrics.borderWidthFocus",
+      "label": "$semantic.mutedForeground",
+      "labelSelected": "$semantic.panel.foreground",
+      "radius": "$metrics.radius.md"
     },
     "lookCard": {
       "background": "$semantic.panel.secondary.background",
