@@ -736,9 +736,11 @@ const QList<Op> &ops()
           false, true },
         { "delete_clips", "timeline", "Remove several clips and close up",
           "Delete several clips in one undo step, with their linked A/V partners. With ripple "
-          "(default true) the space each leaves is closed: later clips on its track move left, and "
-          "their linked partners follow, whatever set_ripple says. with_effects (default true) "
-          "also deletes the adjustments pinned to them (their effects and masks). All ids must "
+          "(default true) the space they leave is closed, whatever set_ripple says: later clips "
+          "move left, together with every track joined to theirs by linked clips, so A/V stays in "
+          "sync. Overlapping or adjacent spaces close as one. A clip in the way on one of those "
+          "tracks, or a locked one, refuses the delete (nothing changes). with_effects (default "
+          "true, unlike delete_clip) also deletes the adjustments pinned to them. All ids must "
           "exist, or nothing is deleted (not_found lists the unknown ones). Returns removed:[ids] "
           "(partners and effects included) and moved:[{id, start}] with the final start of every "
           "clip that moved.",

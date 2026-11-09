@@ -1719,7 +1719,7 @@ QJsonObject McpDispatcher::opDeleteClips(const QJsonObject &args)
     for (const QJsonValue &v : args.value(QStringLiteral("clips")).toArray()) {
         const QString id = v.toString();
         if (id.isEmpty())
-            continue;
+            return err("bad_args", QStringLiteral("clips must be non-empty clip ids"));
         if (m_controller->mcp()->locateClip(id).first < 0)
             unknown.append(id);
         else if (!ids.contains(id))
@@ -1734,8 +1734,11 @@ QJsonObject McpDispatcher::opDeleteClips(const QJsonObject &args)
     for (const drift::Track &t : m_controller->project()->tracks())
         for (const drift::Clip &c : t.clips)
             starts.insert(c.id, c.timelineStart);
-    m_controller->deleteClipsById(ids, jsonBool(args.value(QStringLiteral("with_effects")), true),
-                                  jsonBool(args.value(QStringLiteral("ripple")), true));
+    QString error;
+    if (m_controller->deleteClipsById(ids, jsonBool(args.value(QStringLiteral("with_effects")), true),
+                                      jsonBool(args.value(QStringLiteral("ripple")), true), &error)
+        < 0)
+        return err("bad_args", error);
 
     QJsonArray moved;
     QSet<QString> remaining;

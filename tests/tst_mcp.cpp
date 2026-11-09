@@ -1130,10 +1130,58 @@ void McpTest::deleteClipsClosesTheSpace()
     state.undo();
     QCOMPARE(startOf(ids.at(3)), 6.0);
 
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("delete_clips"), {{QStringLiteral("clips"), QJsonArray{ids.at(1), QString()}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // Linked audio: ids[1] and ids[3] get audio partners on another track. Deleting ids[1] clears
+    // its range on both tracks; the following pair moves back once (2 s), not once per track.
+    {
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        for (const int i : {1, 3}) {
+            const QPair<int, int> loc = state.mcp()->locateClip(ids.at(i));
+            drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+            video.linkId = QStringLiteral("link-%1").arg(i);
+            drift::Clip audio = video;
+            audio.id = QStringLiteral("audio-%1").arg(i);
+            audio.type = drift::ClipType::Audio;
+            audioTrack.clips.append(audio);
+        }
+        state.project()->tracks().append(audioTrack);
+        const QJsonObject pair = dispatcher.applyOne(QStringLiteral("delete_clips"), {{QStringLiteral("clips"), QJsonArray{ids.at(1)}}});
+        QVERIFY2(pair.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(pair).toJson()));
+        QCOMPARE(startOf(QStringLiteral("audio-1")), -1.0);
+        QCOMPARE(startOf(ids.at(2)), 2.0);
+        QCOMPARE(startOf(ids.at(3)), 4.0);
+        QCOMPARE(startOf(QStringLiteral("audio-3")), 4.0);
+        state.undo();
+        QCOMPARE(startOf(ids.at(3)), 6.0);
+
+        // A clip in the way on a linked track refuses the delete, and nothing changes.
+        drift::Track &audio = state.project()->tracks().last();
+        drift::Clip inside = audio.clips.first();
+        inside.id = QStringLiteral("in-the-way");
+        inside.linkId.clear();
+        inside.timelineStart = drift::secondsToUs(4.5);
+        inside.timelineDuration = drift::secondsToUs(1.0);
+        audio.clips.insert(1, inside);
+        const QJsonObject blocked = dispatcher.applyOne(QStringLiteral("delete_clips"), {{QStringLiteral("clips"), QJsonArray{ids.at(2)}}});
+        QCOMPARE(blocked.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY(blocked.value(QStringLiteral("detail")).toString().contains(QStringLiteral("in-the-way")));
+        QCOMPARE(startOf(ids.at(2)), 4.0);
+        QCOMPARE(startOf(ids.at(3)), 6.0);
+        state.project()->tracks().removeLast();
+        for (const int i : {1, 3}) {
+            const QPair<int, int> loc = state.mcp()->locateClip(ids.at(i));
+            state.project()->tracks()[loc.first].clips[loc.second].linkId.clear();
+        }
+    }
+
     // ripple:false leaves the gap.
     QVERIFY(dispatcher.applyOne(QStringLiteral("delete_clips"),
                                 {{QStringLiteral("clips"), QJsonArray{ids.at(2)}}, {QStringLiteral("ripple"), false}})
                 .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(ids.at(2)), -1.0);
     QCOMPARE(startOf(ids.at(3)), 6.0);
 }
 

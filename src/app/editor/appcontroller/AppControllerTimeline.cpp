@@ -1581,7 +1581,7 @@ bool AppController::selectionHasPinnedAdjustments() const
     return false;
 }
 
-int AppController::deleteClipsById(const QStringList &ids, bool withEffects, bool ripple)
+int AppController::deleteClipsById(const QStringList &ids, bool withEffects, bool ripple, QString *error)
 {
     QList<QPair<int, int>> pairs;
     for (const QString &id : ids) {
@@ -1595,16 +1595,17 @@ int AppController::deleteClipsById(const QStringList &ids, bool withEffects, boo
     m_selection = pairs;
     m_selectedTrack = pairs.constFirst().first;
     m_selectedClip = pairs.constFirst().second;
-    deleteSelection(withEffects, ripple);
+    if (!deleteSelection(withEffects, ripple, error))
+        return -1;
     return int(pairs.size());
 }
 
-void AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bool> ripple)
+bool AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bool> ripple, QString *error)
 {
     if (m_selection.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
         m_selection = {qMakePair(m_selectedTrack, m_selectedClip)};
     if (m_selection.isEmpty())
-        return;
+        return false;
 
     const drift::Project before = m_project;
     QList<QPair<int, int>> pairs = m_selection;
@@ -1651,7 +1652,35 @@ void AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bo
             removedRanges.append({pair.first, clip.timelineStart, clip.timelineDuration});
         m_project.tracks()[pair.first].clips.removeAt(pair.second);
     }
-    if (ripple.value_or(m_rippleEnabled)) {
+    if (ripple.has_value()) {
+        // Agent ops: linked tracks close together, each merged range once; refused (and undone)
+        // rather than overlap a clip in the way or move a locked track.
+        if (*ripple) {
+            QList<drift::RippleRange> ranges;
+            QSet<int> affected;
+            for (const RemovedRange &range : std::as_const(removedRanges)) {
+                ranges.append({range.track, range.start, range.start + range.duration});
+                affected.unite(drift::rippleTrackGroup(m_project, range.track));
+            }
+            QString problem;
+            for (const int t : std::as_const(affected)) {
+                if (m_project.tracks().at(t).locked) {
+                    problem = QStringLiteral("Track %1 is locked").arg(t);
+                    break;
+                }
+            }
+            QString blocker;
+            if (problem.isEmpty() && !drift::closeRippleRanges(m_project, ranges, &blocker))
+                problem = QStringLiteral("Clip %1 sits in the space this would close; delete it too, or pass ripple:false")
+                              .arg(blocker);
+            if (!problem.isEmpty()) {
+                m_project = before;
+                if (error)
+                    *error = problem;
+                return false;
+            }
+        }
+    } else if (m_rippleEnabled) {
         // Latest first, so each range is closed while the clips before it are still in place.
         std::sort(removedRanges.begin(), removedRanges.end(),
                   [](const RemovedRange &a, const RemovedRange &b) { return a.start > b.start; });
@@ -1690,6 +1719,7 @@ void AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bo
     pushProjectEdit(before, tr("Clip deleted"));
     clearSelection();
     finishEdit(tr("Clip deleted"));
+    return true;
 }
 
 // Overlaps the edit just applied created: physically overlapping pairs with no transition yet,
