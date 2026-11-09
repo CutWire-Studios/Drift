@@ -85,6 +85,9 @@ struct Clip
     TimeUs srcOut = 0;
 
     QString name;
+    // A user/agent tag that survives renames; empty when unset. A split or duplicate numbers the
+    // copy: "intro" -> "intro.2" (numberCopiedLabels).
+    QString label;
     QString textContent;
     TextStyle textStyle; // meaningful when type == Text or Subtitle
     QList<SubtitleCue> subtitleCues; // only meaningful when type == Subtitle

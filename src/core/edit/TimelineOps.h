@@ -394,4 +394,14 @@ void rebaseKeyframesForSplitTail(Clip &tail, TimeUs offset);
 
 bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out, double fps = 0);
 
+// A label's base and number: "intro" is ("intro", 1), "intro.3" is ("intro", 3).
+QPair<QString, int> splitLabel(const QString &label);
+// Whether `label` is `query` or, for an unnumbered query, one of its numbered copies ("query.N").
+bool labelMatches(const QString &label, const QString &query);
+// Clips new in `after` (ids `before` lacks) whose label a clip in `before` already carried take
+// the next free number of that label, so a split or duplicate leaves the original's label alone:
+// "intro" -> "intro.2", then "intro.3". New clips linked to each other (a split A/V pair) share
+// one number. Returns how many labels changed.
+int numberCopiedLabels(const Project &before, Project &after);
+
 } // namespace drift

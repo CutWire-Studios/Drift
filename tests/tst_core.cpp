@@ -225,6 +225,7 @@ private slots:
     void applyMulticamSwitchMergesAdjacentSameCamera();
     void applyMulticamSwitchRejectsEdges();
     void sliceClipToTimelineRangeKeepsSourceInSync();
+    void clipLabelsRoundTripAndNumberCopies();
 };
 
 void CoreTest::timeConversion()
@@ -7340,6 +7341,72 @@ void CoreTest::imageSequenceDetection()
     QCOMPARE(found.size(), 2);
     QCOMPARE(found[0].sequence.pattern, dir.filePath(QStringLiteral("m_%03d.png")));
     QCOMPARE(found[1].sequence.pattern, dir.filePath(QStringLiteral("m_%05d.png")));
+}
+
+void CoreTest::clipLabelsRoundTripAndNumberCopies()
+{
+    // Saved and loaded; an unlabelled clip writes no key.
+    drift::Project project;
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip intro;
+    intro.id = QStringLiteral("intro");
+    intro.type = drift::ClipType::Text;
+    intro.timelineDuration = drift::secondsToUs(2.0);
+    intro.label = QStringLiteral("intro");
+    drift::Clip plain = intro;
+    plain.id = QStringLiteral("plain");
+    plain.label.clear();
+    plain.timelineStart = drift::secondsToUs(5.0);
+    project.tracks()[0].clips = {intro, plain};
+    QString error;
+    const QJsonObject json = project.toJson();
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+    QCOMPARE(loaded.tracks().at(0).clips.at(0).label, QStringLiteral("intro"));
+    QVERIFY(loaded.tracks().at(0).clips.at(1).label.isEmpty());
+    const QString saved = QString::fromUtf8(QJsonDocument(json).toJson(QJsonDocument::Compact));
+    QCOMPARE(saved.count(QStringLiteral("\"label\"")), 1);
+
+    // Parsing and matching.
+    QCOMPARE(drift::splitLabel(QStringLiteral("intro.3")), qMakePair(QStringLiteral("intro"), 3));
+    QCOMPARE(drift::splitLabel(QStringLiteral("v1.0")), qMakePair(QStringLiteral("v1.0"), 1));
+    QCOMPARE(drift::splitLabel(QStringLiteral("take.1")), qMakePair(QStringLiteral("take.1"), 1));
+    QVERIFY(drift::labelMatches(QStringLiteral("intro.2"), QStringLiteral("intro")));
+    QVERIFY(!drift::labelMatches(QStringLiteral("intro"), QStringLiteral("intro.2")));
+    QVERIFY(!drift::labelMatches(QStringLiteral("introduction"), QStringLiteral("intro")));
+
+    // A split copy and a duplicate take the next numbers, left to right; the original keeps its
+    // label, a linked pair shares one number, and a new clip with a fresh label is left alone.
+    drift::Project after = project;
+    drift::Clip tail = intro;
+    tail.id = QStringLiteral("tail");
+    tail.timelineStart = drift::secondsToUs(1.0);
+    tail.linkId = QStringLiteral("pair");
+    drift::Clip tailAudio = tail;
+    tailAudio.id = QStringLiteral("tail-audio");
+    tailAudio.type = drift::ClipType::Audio;
+    drift::Clip copy = intro;
+    copy.id = QStringLiteral("copy");
+    copy.timelineStart = drift::secondsToUs(8.0);
+    drift::Clip fresh = intro;
+    fresh.id = QStringLiteral("fresh");
+    fresh.label = QStringLiteral("outro");
+    after.tracks()[0].clips += {copy, tail, fresh};
+    after.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    after.tracks()[1].clips = {tailAudio};
+    QCOMPARE(drift::numberCopiedLabels(project, after), 3);
+    const auto labelOf = [&after](const QString &id) {
+        for (const drift::Track &track : after.tracks())
+            for (const drift::Clip &clip : track.clips)
+                if (clip.id == id)
+                    return clip.label;
+        return QString();
+    };
+    QCOMPARE(labelOf(QStringLiteral("intro")), QStringLiteral("intro"));
+    QCOMPARE(labelOf(QStringLiteral("tail")), QStringLiteral("intro.2"));
+    QCOMPARE(labelOf(QStringLiteral("tail-audio")), QStringLiteral("intro.2"));
+    QCOMPARE(labelOf(QStringLiteral("copy")), QStringLiteral("intro.3"));
+    QCOMPARE(labelOf(QStringLiteral("fresh")), QStringLiteral("outro"));
 }
 
 QTEST_MAIN(CoreTest)

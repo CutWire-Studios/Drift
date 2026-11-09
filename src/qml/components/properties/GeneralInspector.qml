@@ -258,6 +258,44 @@ Item {
             }
         }
 
+        // A stable tag that survives renames; splits and duplicates number the copies.
+        Column {
+            width: root.width
+            spacing: 4
+            Text {
+                text: qsTr("Label")
+                SearchAnchor {
+                    searchId: "general-clip-label"
+                    title: qsTr("Clip label")
+                    keywords: "tag label find"
+                }
+                color: Theme.c.generalInspector.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+            Row {
+                width: parent.width
+                spacing: Theme.spacingSm
+                Text {
+                    width: parent.width - labelButton.width - parent.spacing
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: (root.hasSelection && root.clipData.label) || qsTr("No label")
+                    color: root.hasSelection && root.clipData.label ? Theme.c.generalInspector.foreground : Theme.c.generalInspector.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeBase
+                    elide: Text.ElideRight
+                }
+                IconButton {
+                    id: labelButton
+                    glyph: Theme.icons.pencil
+                    variant: "ghost"
+                    buttonSize: Theme.controlHeightSm
+                    tooltip: qsTr("Edit label")
+                    onClicked: labelDialog.openWith(qsTr("Clip label"), root.clipData.label || "")
+                }
+            }
+        }
+
         Column {
             width: root.width
             spacing: 4
@@ -646,6 +684,15 @@ Item {
                 }
             }
         }
+    }
+
+    NameDialog {
+        id: labelDialog
+        acceptText: qsTr("Save")
+        fieldLabel: qsTr("Label")
+        placeholder: qsTr("e.g. intro (empty clears it)")
+        allowEmpty: true
+        onSubmitted: name => EditorState.setClipLabel(EditorState.selectedTrack, EditorState.selectedClip, name)
     }
 
     NameDialog {

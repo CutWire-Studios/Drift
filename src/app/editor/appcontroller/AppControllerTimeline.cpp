@@ -749,6 +749,8 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     // This is also where a track created by this edit gets its id — nested lanes address their
     // parent by it, and the dozen places that append a track all leave it empty.
     normalizeProjectStructure(&before);
+    // A split or duplicate copies the clip's label; the copy takes the next number.
+    drift::numberCopiedLabels(before, m_project);
     // Pinned adjustments take their span from their clip. finishEdit re-spans them too, but only
     // after this snapshot -- a redo would then restore every effect at its clip's old position.
     syncLinkedAdjustments(m_project);
