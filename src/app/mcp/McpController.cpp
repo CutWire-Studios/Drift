@@ -1163,7 +1163,7 @@ void McpController::recordChange(ChangeKind kind)
     // Unread snapshots are bounded (fewer for a big project: each holds a copy of every clip): past
     // the limit the oldest go, and the entries that needed one keep only their label.
     int clipCount = 0;
-    m_app->m_project.forEachTrackList([&clipCount](const QList<drift::Track> &tracks) {
+    std::as_const(m_app->m_project).forEachTrackList([&clipCount](const QList<drift::Track> &tracks) {
         for (const drift::Track &track : tracks)
             clipCount += int(track.clips.size());
     });
