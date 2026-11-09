@@ -1698,6 +1698,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("speedUp"), tr("Increase playback speed")),
         action(QStringLiteral("speedDown"), tr("Decrease playback speed")),
         action(QStringLiteral("toggleGuides"), tr("Toggle guides")),
+        action(QStringLiteral("toggleTrackHidden"), tr("Hide/show selected clip's track")),
         action(QStringLiteral("gizmoMove"), tr("3D gizmo: move / Tracker tool")),
         action(QStringLiteral("gizmoRotate"), tr("3D gizmo: rotate / Rectangle mask")),
         action(QStringLiteral("gizmoScale"), tr("3D gizmo: scale / Ellipse mask")),

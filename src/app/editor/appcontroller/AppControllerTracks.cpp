@@ -158,6 +158,7 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("speedUp"), QStringLiteral("L")},
         {QStringLiteral("speedDown"), QStringLiteral("J")},
         {QStringLiteral("toggleGuides"), QStringLiteral("G")},
+        {QStringLiteral("toggleTrackHidden"), QStringLiteral("Shift+E")},
         // The 3D gizmo's tools. Blender's G/R/S and W/E/R are taken by guides, split and the
         // ripple deletes, so these sit on T(ranslate), R(otate) and E (next to R).
         {QStringLiteral("gizmoMove"), QStringLiteral("T")},
@@ -1711,6 +1712,8 @@ void AppController::triggerAction(const QString &actionId)
         nudgeSelection(0.1);
     else if (actionId == QStringLiteral("toggleGuides"))
         m_preview->setGuidesEnabled(!m_preview->guidesEnabled());
+    else if (actionId == QStringLiteral("toggleTrackHidden"))
+        setTrackHidden(m_selectedTrack, !trackHidden(m_selectedTrack));
     else if (actionId == QStringLiteral("gizmoMove"))
         m_preview->setGizmoTool(QStringLiteral("move"));
     else if (actionId == QStringLiteral("gizmoRotate"))
