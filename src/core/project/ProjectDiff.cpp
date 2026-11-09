@@ -64,27 +64,35 @@ struct Located
     const Clip *clip = nullptr;
 };
 
-// Whether an edit changed an asset. Background jobs write some fields without an edit: the
-// thumbnail, filmstrip and frame-rate caches, and the facts read from the file, which an import's
-// probe or a lazy audio check fills in after the asset exists. Those caches never count; a fact
-// counts only when it was known before (a refresh of a file changed in place gives it a new value),
-// not when it goes from unknown (absent, 0, empty) to known.
+// Whether an edit changed an asset. Background jobs write some fields without an edit:
+// - the thumbnail, filmstrip and frame-rate caches, which never count;
+// - the facts an import's probe reads from the file. Until it lands the asset is a placeholder
+//   (no length, size, sample rate or codec; its kind guessed from the extension), and filling it
+//   in is not an edit. Once probed, every fact counts, 0 included: a refresh of a file changed in
+//   place (new length, rotation, ...) is a change;
+// - the audio facts and the file fingerprint, which a lazy audio check or an older project's first
+//   refresh fill in; they count only once known (going from absent or 0 to a value is not an edit).
 bool assetEdited(const MediaAsset &before, const MediaAsset &after)
 {
     QJsonObject a = assetJson(before);
     QJsonObject b = assetJson(after);
-    for (const char *key : {"thumbnailPath", "filmstripPath", "variableFrameRate"}) {
+    const auto drop = [&a, &b](const char *key) {
         a.remove(QLatin1String(key));
         b.remove(QLatin1String(key));
-    }
-    for (const char *key : {"kind", "durationUs", "duration", "width", "height", "fps", "rotationDegrees",
-                            "sampleRate", "channels", "codecName", "hasAudio", "sourceSize", "sourceModifiedMs"}) {
-        const QJsonValue was = a.value(QLatin1String(key));
-        const bool unknown = was.isUndefined() || was.isNull() || (was.isDouble() && was.toDouble() == 0.0)
-                             || (was.isString() && was.toString().isEmpty());
-        if (unknown) {
-            a.remove(QLatin1String(key));
-            b.remove(QLatin1String(key));
+    };
+    for (const char *key : {"thumbnailPath", "filmstripPath", "variableFrameRate"})
+        drop(key);
+    const bool probed = before.durationUs > 0 || before.width > 0 || before.sampleRate > 0
+                        || !before.codecName.isEmpty();
+    if (!probed) {
+        for (const char *key : {"kind", "durationUs", "duration", "width", "height", "fps", "rotationDegrees",
+                                "sampleRate", "channels", "codecName", "hasAudio", "sourceSize", "sourceModifiedMs"})
+            drop(key);
+    } else {
+        for (const char *key : {"sampleRate", "channels", "hasAudio", "sourceSize", "sourceModifiedMs"}) {
+            const QJsonValue was = a.value(QLatin1String(key));
+            if (was.isUndefined() || (was.isDouble() && was.toDouble() == 0.0))
+                drop(key);
         }
     }
     return a != b;

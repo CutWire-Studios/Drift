@@ -7478,17 +7478,31 @@ void CoreTest::diffProjectsReportsClipChanges()
     drift::Project refreshed = withAsset;
     refreshed.assets()[asset.id].durationUs = drift::secondsToUs(12.0);
     QCOMPARE(drift::diffProjects(withAsset, refreshed).assets.size(), 1);
-    // An import's probe filling in what was unknown is not an edit.
-    drift::Project probed = withAsset;
-    probed.assets()[asset.id].width = 3840;
-    probed.assets()[asset.id].sampleRate = 48000;
-    probed.assets()[asset.id].hasAudioKnown = true;
-    probed.assets()[asset.id].hasAudio = true;
-    QVERIFY(drift::diffProjects(withAsset, probed).isEmpty());
-    // ...but a refresh that changes a known value is.
-    drift::Project resized = probed;
-    resized.assets()[asset.id].width = 1920;
-    QCOMPARE(drift::diffProjects(probed, resized).assets.size(), 1);
+    // An import's probe filling in a placeholder is not an edit, even when it corrects the kind
+    // guessed from the extension (an audio-only .mp4).
+    drift::Project placeholder = from;
+    drift::MediaAsset pending;
+    pending.id = QStringLiteral("pending");
+    pending.name = QStringLiteral("voice.mp4");
+    pending.path = QStringLiteral("/media/voice.mp4");
+    pending.kind = drift::MediaKind::Video;
+    placeholder.assets().insert(pending.id, pending);
+    drift::Project probed = placeholder;
+    drift::MediaAsset &filled = probed.assets()[pending.id];
+    filled.kind = drift::MediaKind::Audio;
+    filled.durationUs = drift::secondsToUs(30.0);
+    filled.sampleRate = 48000;
+    filled.codecName = QStringLiteral("aac");
+    QVERIFY(drift::diffProjects(placeholder, probed).isEmpty());
+    // A lazy audio check on a probed asset is not an edit either.
+    drift::Project audioKnown = withAsset;
+    audioKnown.assets()[asset.id].hasAudioKnown = true;
+    audioKnown.assets()[asset.id].hasAudio = false;
+    QVERIFY(drift::diffProjects(withAsset, audioKnown).isEmpty());
+    // Once probed, a known 0 is a value: a refresh that turns the rotation from 0 to 90 is a change.
+    drift::Project rotated = withAsset;
+    rotated.assets()[asset.id].rotationDegrees = 90;
+    QCOMPARE(drift::diffProjects(withAsset, rotated).assets.size(), 1);
 }
 
 QTEST_MAIN(CoreTest)
