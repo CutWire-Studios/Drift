@@ -1024,11 +1024,15 @@ void McpTest::insertClipRipplesTheTrack()
         // refused. a gets a loose partner after the point; inserting at a's end moves the partner,
         // and a with it, onto the new clip's place.
         {
-            const QPair<int, int> locA = state.mcp()->locateClip(a);
-            drift::Clip &clipA = state.project()->tracks()[locA.first].clips[locA.second];
-            clipA.linkId = QStringLiteral("a-loose");
-            clipA.linkLoose = true;
-            drift::Clip partnerA = clipA;
+            // Located again after the insert: a refused one restores the project, which frees the
+            // clips any earlier reference pointed into.
+            const auto clipA = [&]() -> drift::Clip & {
+                const QPair<int, int> loc = state.mcp()->locateClip(a);
+                return state.project()->tracks()[loc.first].clips[loc.second];
+            };
+            clipA().linkId = QStringLiteral("a-loose");
+            clipA().linkLoose = true;
+            drift::Clip partnerA = clipA();
             partnerA.id = QStringLiteral("a-audio");
             partnerA.type = drift::ClipType::Audio;
             partnerA.timelineStart = drift::secondsToUs(8.0);
@@ -1038,8 +1042,8 @@ void McpTest::insertClipRipplesTheTrack()
             QCOMPARE(startOf(a), 0.0);
             QCOMPARE(startOf(b), 2.0);
             state.project()->tracks()[audio].clips.removeLast();
-            clipA.linkId.clear();
-            clipA.linkLoose = false;
+            clipA().linkId.clear();
+            clipA().linkLoose = false;
         }
 
         // A locked track the ripple would change refuses the insert.
