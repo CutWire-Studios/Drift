@@ -7407,6 +7407,34 @@ void CoreTest::clipLabelsRoundTripAndNumberCopies()
     QCOMPARE(labelOf(QStringLiteral("tail-audio")), QStringLiteral("intro.2"));
     QCOMPARE(labelOf(QStringLiteral("copy")), QStringLiteral("intro.3"));
     QCOMPARE(labelOf(QStringLiteral("fresh")), QStringLiteral("outro"));
+
+    // A clip replaced by a new one (speed ramp, subtitle conversion, cut and paste) keeps its
+    // label: nothing else holds it.
+    drift::Project replaced = project;
+    drift::Clip successor = intro;
+    successor.id = QStringLiteral("successor");
+    replaced.tracks()[0].clips = {successor, plain};
+    QCOMPARE(drift::numberCopiedLabels(project, replaced), 0);
+    QCOMPARE(replaced.tracks().at(0).clips.at(0).label, QStringLiteral("intro"));
+    // Two pieces replacing it: the first keeps the label, the second is numbered.
+    drift::Project pieces = replaced;
+    drift::Clip piece = successor;
+    piece.id = QStringLiteral("piece");
+    piece.timelineStart = drift::secondsToUs(1.0);
+    pieces.tracks()[0].clips.append(piece);
+    QCOMPARE(drift::numberCopiedLabels(project, pieces), 1);
+    QCOMPARE(pieces.tracks().at(0).clips.at(0).label, QStringLiteral("intro"));
+    QCOMPARE(pieces.tracks().at(0).clips.at(2).label, QStringLiteral("intro.2"));
+
+    // The top number in use doesn't overflow: the copy takes the lowest free one.
+    drift::Project top = project;
+    top.tracks()[0].clips[0].label = QStringLiteral("intro.2147483647");
+    drift::Project topAfter = top;
+    drift::Clip topCopy = top.tracks().at(0).clips.at(0);
+    topCopy.id = QStringLiteral("top-copy");
+    topAfter.tracks()[0].clips.append(topCopy);
+    QCOMPARE(drift::numberCopiedLabels(top, topAfter), 1);
+    QCOMPARE(topAfter.tracks().at(0).clips.last().label, QStringLiteral("intro.2"));
 }
 
 QTEST_MAIN(CoreTest)

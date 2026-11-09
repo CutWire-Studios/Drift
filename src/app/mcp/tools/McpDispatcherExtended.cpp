@@ -1526,12 +1526,15 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             return clipRefError(args);
         if (!args.value(QStringLiteral("label")).isString())
             return err("bad_args", QStringLiteral("label required (a string; empty clears it)"));
-        const QString label = args.value(QStringLiteral("label")).toString().trimmed();
-        m_controller->setClipLabel(ref.track, ref.clip, label);
-        return ok(clipFeedback(ref, {{QStringLiteral("label"), label}}));
+        m_controller->setClipLabel(ref.track, ref.clip, args.value(QStringLiteral("label")).toString());
+        const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
+        return ok(clipFeedback(after, {{QStringLiteral("label"),
+                                        m_controller->project()->tracks().at(after.track).clips.at(after.clip).label}}));
     }
 
     if (tool == QLatin1String("find_clips")) {
+        // An explicit empty label finds the unlabelled clips.
+        const bool byLabel = args.contains(QStringLiteral("label"));
         const QString label = argString(args, QStringLiteral("label"));
         const QString name = argString(args, QStringLiteral("name"));
         const QString kind = argString(args, QStringLiteral("kind"));
@@ -1558,7 +1561,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                 continue;
             for (int c = 0; c < tracks.at(t).clips.size(); ++c) {
                 const drift::Clip &clip = tracks.at(t).clips.at(c);
-                if (!label.isEmpty() && !drift::labelMatches(clip.label, label))
+                if (byLabel && (label.isEmpty() ? !clip.label.isEmpty() : !drift::labelMatches(clip.label, label)))
                     continue;
                 if (!name.isEmpty() && !clip.name.contains(name, Qt::CaseInsensitive))
                     continue;

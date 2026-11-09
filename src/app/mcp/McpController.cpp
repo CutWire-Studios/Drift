@@ -1189,7 +1189,7 @@ void McpController::endBatch(const QString &text, bool pushUndo)
         emit m_app->previewDragActiveChanged();
     }
     if (pushUndo)
-        m_app->pushProjectEdit(m_batchBefore, text);
+        m_app->pushProjectEdit(m_batchBefore, text, false);
     m_app->finishEdit(text);
     m_batchBefore = {};
     // After the finishEdit above, which clears the status line.

@@ -740,7 +740,7 @@ double AppController::sourceTimeAtPlayhead() const
     return sourceTimeForClip(activeVideoClipAtPlayhead());
 }
 
-void AppController::pushProjectEdit(const drift::Project &before, const QString &text)
+void AppController::pushProjectEdit(const drift::Project &before, const QString &text, bool numberLabels)
 {
     // Before the snapshot, not after: the structural invariants have to be part of the recorded
     // state, or a redo would restore a project with effects still sitting on their clips and the
@@ -749,8 +749,11 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     // This is also where a track created by this edit gets its id — nested lanes address their
     // parent by it, and the dozen places that append a track all leave it empty.
     normalizeProjectStructure(&before);
-    // A split or duplicate copies the clip's label; the copy takes the next number.
-    drift::numberCopiedLabels(before, m_project);
+    // A split or duplicate copies the clip's label; the copy takes the next number. A batch's
+    // closing push skips it: each op numbered its own copies, and a label set on a copy since
+    // (set_clip_label) is meant as given.
+    if (numberLabels)
+        drift::numberCopiedLabels(before, m_project);
     // Pinned adjustments take their span from their clip. finishEdit re-spans them too, but only
     // after this snapshot -- a redo would then restore every effect at its clip's old position.
     syncLinkedAdjustments(m_project);

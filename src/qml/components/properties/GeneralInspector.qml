@@ -688,7 +688,6 @@ Item {
 
     NameDialog {
         id: labelDialog
-        acceptText: qsTr("Save")
         fieldLabel: qsTr("Label")
         placeholder: qsTr("e.g. intro (empty clears it)")
         allowEmpty: true

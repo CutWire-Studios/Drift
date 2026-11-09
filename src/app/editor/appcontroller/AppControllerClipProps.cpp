@@ -625,7 +625,10 @@ void AppController::setClipLabel(int trackIndex, int clipIndex, const QString &l
 {
     if (!isValidClipIndex(trackIndex, clipIndex))
         return;
-    const QString trimmed = label.trimmed();
+    QString trimmed = label.trimmed();
+    // A trailing dot would read as a number separator on the copies ("intro..2").
+    while (trimmed.endsWith(QLatin1Char('.')))
+        trimmed.chop(1);
     if (m_project.tracks().at(trackIndex).clips.at(clipIndex).label == trimmed)
         return;
     const drift::Project before = m_project.detachedCopy();

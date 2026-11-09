@@ -1828,7 +1828,8 @@ protected:
 
     // Records the edit for undo. The timeline and selection refresh is left to finishEdit; an
     // edit that does not call it calls settleUndoRefresh() instead.
-    void pushProjectEdit(const drift::Project &before, const QString &text);
+    // numberLabels: false for a push that only bundles edits which numbered themselves (a batch).
+    void pushProjectEdit(const drift::Project &before, const QString &text, bool numberLabels = true);
     void settleUndoRefresh();
 
     // Lifts one effect, one audio effect, or the whole stack off a clip. Every copy and

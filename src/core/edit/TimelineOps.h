@@ -398,10 +398,11 @@ bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &o
 QPair<QString, int> splitLabel(const QString &label);
 // Whether `label` is `query` or, for an unnumbered query, one of its numbered copies ("query.N").
 bool labelMatches(const QString &label, const QString &query);
-// Clips new in `after` (ids `before` lacks) whose label a clip in `before` already carried take
-// the next free number of that label, so a split or duplicate leaves the original's label alone:
-// "intro" -> "intro.2", then "intro.3". New clips linked to each other (a split A/V pair) share
-// one number. Returns how many labels changed.
+// Clips new in `after` (ids `before` lacks) whose label a clip that was already there still holds
+// take the next free number of that label, so a split or duplicate leaves the original's label
+// alone: "intro" -> "intro.2", then "intro.3". A new clip whose label nobody else holds any more
+// (a clip replaced by a new one) keeps it. New clips linked to each other (a split A/V pair)
+// share one outcome. Returns how many labels changed.
 int numberCopiedLabels(const Project &before, Project &after);
 
 } // namespace drift

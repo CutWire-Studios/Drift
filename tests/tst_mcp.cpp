@@ -904,8 +904,6 @@ void McpTest::subtitleClipKeepsItsChosenName()
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("Subtitles (002)"));
 }
 
-// A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
-// (earlier still, outside it). It now refuses and writes nothing; `at` names the time instead.
 void McpTest::clipLabelsSurviveSplitsAndFind()
 {
     AssetLibrary library;
@@ -971,8 +969,29 @@ void McpTest::clipLabelsSurviveSplitsAndFind()
     QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_label"), {{QStringLiteral("clip"), QStringLiteral("clip-1")}, {QStringLiteral("label"), QString()}})
                 .value(QStringLiteral("ok")).toBool());
     QCOMPARE(find({{QStringLiteral("name"), QStringLiteral("closing")}}), QStringList{QStringLiteral("clip-1=")});
+    QCOMPARE(find({{QStringLiteral("label"), QString()}}), QStringList{QStringLiteral("clip-1=")});
+
+    // A trailing dot is dropped (it would read as a number separator).
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_clip_label"), {{QStringLiteral("clip"), QStringLiteral("clip-1")}, {QStringLiteral("label"), QStringLiteral("end.")}})
+                 .value(QStringLiteral("label")).toString(),
+             QStringLiteral("end"));
+
+    // In a batch, a label set on a new copy stays as given: the batch's closing push doesn't
+    // renumber what its ops already settled.
+    const int clipsBefore = int(state.project()->tracks().at(0).clips.size());
+    state.mcp()->beginBatch();
+    state.selectClip(0, 0);
+    state.duplicateSelectedClip();
+    const int copyIndex = int(state.project()->tracks().at(0).clips.size()) - 1;
+    QCOMPARE(copyIndex, clipsBefore);
+    QVERIFY(state.project()->tracks().at(0).clips.at(copyIndex).label.startsWith(QStringLiteral("intro.")));
+    state.setClipLabel(0, copyIndex, QStringLiteral("intro"));
+    state.mcp()->endBatch(QStringLiteral("Copy"), true);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(copyIndex).label, QStringLiteral("intro"));
 }
 
+// A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
+// (earlier still, outside it). It now refuses and writes nothing; `at` names the time instead.
 void McpTest::setTransformKeysOnlyInsideTheClip()
 {
     AssetLibrary library;
