@@ -1581,7 +1581,25 @@ bool AppController::selectionHasPinnedAdjustments() const
     return false;
 }
 
-void AppController::deleteSelection(bool withPinnedAdjustments)
+int AppController::deleteClipsById(const QStringList &ids, bool withEffects, bool ripple)
+{
+    QList<QPair<int, int>> pairs;
+    for (const QString &id : ids) {
+        int t = -1;
+        int c = -1;
+        if (findClipById(m_project, id, &t, &c) && !pairs.contains(qMakePair(t, c)))
+            pairs.append(qMakePair(t, c));
+    }
+    if (pairs.isEmpty())
+        return 0;
+    m_selection = pairs;
+    m_selectedTrack = pairs.constFirst().first;
+    m_selectedClip = pairs.constFirst().second;
+    deleteSelection(withEffects, ripple);
+    return int(pairs.size());
+}
+
+void AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bool> ripple)
 {
     if (m_selection.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
         m_selection = {qMakePair(m_selectedTrack, m_selectedClip)};
@@ -1633,7 +1651,7 @@ void AppController::deleteSelection(bool withPinnedAdjustments)
             removedRanges.append({pair.first, clip.timelineStart, clip.timelineDuration});
         m_project.tracks()[pair.first].clips.removeAt(pair.second);
     }
-    if (m_rippleEnabled) {
+    if (ripple.value_or(m_rippleEnabled)) {
         // Latest first, so each range is closed while the clips before it are still in place.
         std::sort(removedRanges.begin(), removedRanges.end(),
                   [](const RemovedRange &a, const RemovedRange &b) { return a.start > b.start; });

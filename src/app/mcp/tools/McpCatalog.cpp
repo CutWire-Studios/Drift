@@ -734,6 +734,21 @@ const QList<Op> &ops()
                                                             "clip (its effects and masks). Default false"))}},
                                   clipRefProps())),
           false, true },
+        { "delete_clips", "timeline", "Remove several clips and close up",
+          "Delete several clips in one undo step, with their linked A/V partners. With ripple "
+          "(default true) the space each leaves is closed: later clips on its track move left, and "
+          "their linked partners follow, whatever set_ripple says. with_effects (default true) "
+          "also deletes the adjustments pinned to them (their effects and masks). All ids must "
+          "exist, or nothing is deleted (not_found lists the unknown ones). Returns removed:[ids] "
+          "(partners and effects included) and moved:[{id, start}] with the final start of every "
+          "clip that moved.",
+          objectSchema({{QStringLiteral("clips"), arrayProp(stringProp(QStringLiteral("Clip id")),
+                                                            QStringLiteral("Clips to delete"))},
+                        {QStringLiteral("ripple"), propWithDefault(boolProp(QStringLiteral("Close the space they leave")), true)},
+                        {QStringLiteral("with_effects"),
+                         propWithDefault(boolProp(QStringLiteral("Also delete the adjustments pinned to them")), true)}},
+                       {QStringLiteral("clips")}),
+          false, true },
         { "duplicate_clip", "timeline", "Copy a clip after itself",
           "Duplicate a clip immediately after it on the same track. Returns the new clip's id.",
           objectSchema(clipRefProps()) },

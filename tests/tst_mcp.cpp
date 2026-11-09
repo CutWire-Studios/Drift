@@ -100,6 +100,7 @@ private slots:
     void captureFilesStayOutOfTheProject();
     void subtitleClipKeepsItsChosenName();
     void insertClipRipplesTheTrack();
+    void deleteClipsClosesTheSpace();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
@@ -1068,6 +1069,72 @@ void McpTest::insertClipRipplesTheTrack()
     QCOMPARE(explicitRange.value(QStringLiteral("in")).toDouble(), 6.0);
     QCOMPARE(explicitRange.value(QStringLiteral("dur")).toDouble(), 1.0);
     QCOMPARE(startOf(b), 3.0);
+}
+
+void McpTest::deleteClipsClosesTheSpace()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QStringList ids;
+    for (int i = 0; i < 4; ++i) {
+        QJsonObject args{{QStringLiteral("asset"), 0}, {QStringLiteral("in"), i * 2.0}, {QStringLiteral("out"), i * 2.0 + 2.0}};
+        if (ids.isEmpty())
+            args.insert(QStringLiteral("at"), 0.0);
+        else
+            args.insert(QStringLiteral("after"), ids.last());
+        ids.append(dispatcher.applyOne(QStringLiteral("insert_clip"), args).value(QStringLiteral("id")).toString());
+    }
+    QVERIFY(!state.rippleEnabled()); // the op ripples whatever the project setting
+    QVERIFY(dispatcher.applyOne(QStringLiteral("add_effect"),
+                                {{QStringLiteral("clip"), ids.at(1)}, {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}})
+                .value(QStringLiteral("ok")).toBool());
+    const auto startOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return loc.first < 0 ? -1.0 : drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineStart);
+    };
+    int adjustments = 0;
+    for (const drift::Track &t : state.project()->tracks())
+        adjustments += t.isAdjustment() ? int(t.clips.size()) : 0;
+    QCOMPARE(adjustments, 1);
+
+    // An unknown id deletes nothing.
+    const QJsonObject unknown = dispatcher.applyOne(QStringLiteral("delete_clips"),
+                                                    {{QStringLiteral("clips"), QJsonArray{ids.at(1), QStringLiteral("nope")}}});
+    QCOMPARE(unknown.value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QCOMPARE(startOf(ids.at(1)), 2.0);
+
+    const int steps = state.undoHistory().size();
+    const QJsonObject removed = dispatcher.applyOne(QStringLiteral("delete_clips"),
+                                                    {{QStringLiteral("clips"), QJsonArray{ids.at(1), ids.at(2)}}});
+    QVERIFY2(removed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(removed).toJson()));
+    QCOMPARE(startOf(ids.at(1)), -1.0);
+    QCOMPARE(startOf(ids.at(2)), -1.0);
+    QCOMPARE(startOf(ids.at(0)), 0.0);
+    QCOMPARE(startOf(ids.at(3)), 2.0); // closed up over both
+    QCOMPARE(removed.value(QStringLiteral("moved")).toArray().size(), 1);
+    QCOMPARE(removed.value(QStringLiteral("moved")).toArray().at(0).toObject().value(QStringLiteral("start")).toDouble(), 2.0);
+    QVERIFY(removed.value(QStringLiteral("removed")).toArray().size() >= 3); // the clips and the grade
+    adjustments = 0;
+    for (const drift::Track &t : state.project()->tracks())
+        adjustments += t.isAdjustment() ? int(t.clips.size()) : 0;
+    QCOMPARE(adjustments, 0);
+    QCOMPARE(state.undoHistory().size(), steps + 1);
+    state.undo();
+    QCOMPARE(startOf(ids.at(3)), 6.0);
+
+    // ripple:false leaves the gap.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("delete_clips"),
+                                {{QStringLiteral("clips"), QJsonArray{ids.at(2)}}, {QStringLiteral("ripple"), false}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(ids.at(3)), 6.0);
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

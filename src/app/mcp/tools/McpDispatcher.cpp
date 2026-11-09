@@ -825,6 +825,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opMoveToTrack(args);
     if (tool == QLatin1String("split_clip"))
         return opSplitClip(args);
+    if (tool == QLatin1String("delete_clips"))
+        return opDeleteClips(args);
     if (tool == QLatin1String("delete_clip"))
         return opDeleteClip(args);
     if (tool == QLatin1String("duplicate_clip"))
@@ -1708,6 +1710,54 @@ QJsonObject McpDispatcher::opDeleteClip(const QJsonObject &args)
     if (m_controller->mcp()->locateClip(ref.id).first >= 0)
         return err("bad_args", QStringLiteral("Delete refused"));
     return ok({{QStringLiteral("removed"), ref.id}});
+}
+
+QJsonObject McpDispatcher::opDeleteClips(const QJsonObject &args)
+{
+    QStringList ids;
+    QStringList unknown;
+    for (const QJsonValue &v : args.value(QStringLiteral("clips")).toArray()) {
+        const QString id = v.toString();
+        if (id.isEmpty())
+            continue;
+        if (m_controller->mcp()->locateClip(id).first < 0)
+            unknown.append(id);
+        else if (!ids.contains(id))
+            ids.append(id);
+    }
+    if (!unknown.isEmpty())
+        return err("not_found", QStringLiteral("Unknown clips: %1").arg(unknown.join(QStringLiteral(", "))));
+    if (ids.isEmpty())
+        return err("bad_args", QStringLiteral("clips must list at least one clip id"));
+
+    QHash<QString, drift::TimeUs> starts;
+    for (const drift::Track &t : m_controller->project()->tracks())
+        for (const drift::Clip &c : t.clips)
+            starts.insert(c.id, c.timelineStart);
+    m_controller->deleteClipsById(ids, jsonBool(args.value(QStringLiteral("with_effects")), true),
+                                  jsonBool(args.value(QStringLiteral("ripple")), true));
+
+    QJsonArray moved;
+    QSet<QString> remaining;
+    for (const drift::Track &t : m_controller->project()->tracks()) {
+        for (const drift::Clip &c : t.clips) {
+            remaining.insert(c.id);
+            if (starts.contains(c.id) && starts.value(c.id) != c.timelineStart)
+                moved.append(QJsonObject{{QStringLiteral("id"), c.id},
+                                         {QStringLiteral("start"),
+                                          drift::mcpdetail::round3(drift::usToSeconds(c.timelineStart))}});
+        }
+    }
+    QJsonArray removed;
+    for (auto it = starts.constBegin(); it != starts.constEnd(); ++it) {
+        if (!remaining.contains(it.key()))
+            removed.append(it.key());
+    }
+    for (const QString &id : std::as_const(ids)) {
+        if (remaining.contains(id))
+            return err("bad_args", QStringLiteral("Delete refused for %1").arg(id));
+    }
+    return ok({{QStringLiteral("removed"), removed}, {QStringLiteral("moved"), moved}});
 }
 
 QJsonObject McpDispatcher::opDuplicateClip(const QJsonObject &args)
