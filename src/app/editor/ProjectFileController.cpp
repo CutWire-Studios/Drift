@@ -68,7 +68,7 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
     , m_app(app)
 {
     // The state a fresh controller starts clean in, until the first save, load or new project.
-    m_savedProject = m_app->m_project;
+    m_savedProject = std::make_shared<const drift::Project>(m_app->m_project);
     // Periodically snapshot unsaved work to a recovery file so a crash doesn't
     // lose progress. A confirmed close (Save or Don't Save) clears dirty first,
     // so aboutToQuit only writes this when quit was interrupted (SIGTERM, kill).
@@ -772,16 +772,7 @@ void ProjectFileController::runBundleSave(const QUrl &url, const std::optional<P
                     setCurrentProjectPath(location);
                     addRecentProject(location);
                     queueSaveThumbnail(location);
-                    // Clean only if nothing changed since the snapshot that was written.
-                    if (m_dirtyRevision == capture->dirtyRevision) {
-                        setDirty(false);
-                        // What was written, not what is open now: state that never makes the
-                        // project dirty (a track's view) can have changed while the write ran.
-                        // Save As adopts a new identity on landing, so it keeps the open state.
-                        if (!adopt && capture->project)
-                            m_savedProject = *capture->project;
-                        deleteRecoveryFile();
-                    }
+                    landWrite(*capture, adopt);
                     emit projectMetadataChanged();
                 }
                 m_app->setLastMessage(adopt ? tr("Saved a copy") : tr("Project saved"),
@@ -1231,7 +1222,7 @@ void ProjectFileController::packageProject(const QUrl &url)
             discardWriteTarget(path, url, disposable);
         QMetaObject::invokeMethod(
             this,
-            [this, ok, error, url, media = request.media]() {
+            [this, ok, error, url, media = request.media, capture]() {
                 m_packaging = false;
                 emit packagingChanged();
                 if (!ok) {
@@ -1245,8 +1236,10 @@ void ProjectFileController::packageProject(const QUrl &url)
                 const QString location = projectLocation(url);
                 setCurrentProjectPath(location);
                 addRecentProject(location);
-                setDirty(false);
-                deleteRecoveryFile();
+                // Like a save: clean only if nothing changed while the media was copied, and the
+                // baseline is the snapshot that was packaged.
+                if (m_app->m_project.id() == capture->projectId)
+                    landWrite(*capture, std::nullopt);
                 emit projectMetadataChanged();
                 m_app->setLastMessage(tr("Shareable copy ready"), QStringLiteral("success"));
                 emit packageFinished(true, QStringLiteral("Shareable copy ready"));
@@ -1926,15 +1919,48 @@ void ProjectFileController::removeRecentProject(const QString &path)
     emit recentProjectsChanged();
 }
 
+void ProjectFileController::landWrite(const SaveCapture &capture, const std::optional<ProjectIdentity> &adopt)
+{
+    // The baseline follows the file even when edits came in during the write: those are what is
+    // unsaved now, not what the file holds. Save As wrote the copy's identity into the file.
+    std::shared_ptr<const drift::Project> written = capture.project;
+    if (written && adopt) {
+        auto renamed = std::make_shared<drift::Project>(*written);
+        renamed->setId(adopt->id);
+        renamed->setName(adopt->name);
+        written = renamed;
+    }
+    if (m_dirtyRevision != capture.dirtyRevision) {
+        if (written)
+            m_savedProject = written;
+        return;
+    }
+    if (written)
+        markClean(written);
+    else
+        setDirty(false);
+    deleteRecoveryFile();
+}
+
+void ProjectFileController::markClean(std::shared_ptr<const drift::Project> baseline)
+{
+    m_savedProject = std::move(baseline);
+    if (!m_dirty)
+        return;
+    m_dirty = false;
+    emit dirtyChanged();
+}
+
 void ProjectFileController::setDirty(bool dirty)
 {
-    if (dirty)
-        ++m_dirtyRevision;
-    else
-        m_savedProject = m_app->m_project; // a full copy (TrackList copies its clips), once per save or load
-    if (m_dirty == dirty)
+    if (!dirty) {
+        markClean(std::make_shared<const drift::Project>(m_app->m_project)); // a full copy (TrackList copies its clips)
         return;
-    m_dirty = dirty;
+    }
+    ++m_dirtyRevision;
+    if (m_dirty)
+        return;
+    m_dirty = true;
     emit dirtyChanged();
 }
 

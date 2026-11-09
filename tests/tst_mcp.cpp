@@ -1106,6 +1106,18 @@ void McpTest::dirtyDetailTellsTimelineFromView()
     state.projectFile()->setDirty(false);
     QVERIFY(!detail().value(QStringLiteral("timeline")).toBool());
     QVERIFY(detail().value(QStringLiteral("other")).toArray().isEmpty());
+
+    // A real save: the baseline is what was written, even when an edit lands while it writes.
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    state.setClipName(0, 0, QStringLiteral("Written"));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(dir.filePath(QStringLiteral("p.drift"))));
+    state.addBookmark(2.0, QStringLiteral("during the write"));
+    state.projectFile()->waitForSave();
+    const QJsonObject during = detail();
+    QVERIFY(during.value(QStringLiteral("dirty")).toBool());
+    QVERIFY2(!during.value(QStringLiteral("timeline")).toBool(), qPrintable(QJsonDocument(during).toJson()));
+    QCOMPARE(during.value(QStringLiteral("other")).toArray(), QJsonArray{QStringLiteral("bookmarks")});
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

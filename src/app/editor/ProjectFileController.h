@@ -87,7 +87,7 @@ public:
     bool hasUnsavedChanges() const { return m_dirty; }
     // The project as it was when it last became clean (saved, loaded or new): what
     // inspect({dirty_detail}) compares the current state against.
-    const drift::Project &savedProject() const { return m_savedProject; }
+    const drift::Project &savedProject() const { return *m_savedProject; }
     QString currentProjectPath() const { return m_currentProjectPath; }
     bool recoveryAvailable() const { return m_recoveryAvailable; }
     QVariantMap recoveryInfo() const { return m_recoveryInfo; }
@@ -304,7 +304,13 @@ private:
     // Save state / autosave / crash recovery.
     QString m_currentProjectPath;
     bool m_dirty = false;
-    drift::Project m_savedProject;
+    // Shared with the save that wrote it, so landing a save costs no copy.
+    std::shared_ptr<const drift::Project> m_savedProject;
+    // A save or package landed: the file now holds `written`; the project is clean only if
+    // nothing changed since it was captured.
+    void landWrite(const SaveCapture &capture, const std::optional<ProjectIdentity> &adopt);
+    // Clean, with `baseline` as what the file holds.
+    void markClean(std::shared_ptr<const drift::Project> baseline);
     // Bumped by every setDirty(true). A save records it when it captures the document and only
     // clears the dirty flag if it is unchanged when the write lands: an edit made during the
     // write is not in the file.

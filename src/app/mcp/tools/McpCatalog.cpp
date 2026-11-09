@@ -1731,7 +1731,7 @@ QJsonArray homepageTools()
                       {QStringLiteral("track"),
                        integerProp(QStringLiteral("Track index: return only that track"))},
                       {QStringLiteral("since"),
-                       integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current"))},
+                       integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current (not with dirty_detail)"))},
                       {QStringLiteral("dirty_detail"),
                        boolProp(QStringLiteral("Add dirty_detail: what the unsaved changes are, vs the saved file. timeline:true "
                                                "with the clips/tracks/assets that differ, or only other (track_view, work_area, "
