@@ -10,6 +10,7 @@
 #include <QSet>
 #include <QStandardPaths>
 
+#include "core/project/ProjectDiff.h"
 #include "core/animation/ClipAnimation.h"
 #include "core/project/media/ImageSequence.h"
 #include "core/animation/Keyframe.h"
@@ -225,6 +226,7 @@ private slots:
     void applyMulticamSwitchMergesAdjacentSameCamera();
     void applyMulticamSwitchRejectsEdges();
     void sliceClipToTimelineRangeKeepsSourceInSync();
+    void diffProjectsReportsClipChanges();
 };
 
 void CoreTest::timeConversion()
@@ -7340,6 +7342,67 @@ void CoreTest::imageSequenceDetection()
     QCOMPARE(found.size(), 2);
     QCOMPARE(found[0].sequence.pattern, dir.filePath(QStringLiteral("m_%03d.png")));
     QCOMPARE(found[1].sequence.pattern, dir.filePath(QStringLiteral("m_%05d.png")));
+}
+
+void CoreTest::diffProjectsReportsClipChanges()
+{
+    drift::Project from;
+    drift::Track video{.id = QStringLiteral("v1"), .type = drift::TrackType::Video};
+    const auto clip = [](const char *id, double start, double dur) {
+        drift::Clip c;
+        c.id = QString::fromLatin1(id);
+        c.type = drift::ClipType::Video;
+        c.assetId = QStringLiteral("asset");
+        c.name = c.id;
+        c.timelineStart = drift::secondsToUs(start);
+        c.timelineDuration = drift::secondsToUs(dur);
+        c.srcIn = 0;
+        c.srcOut = c.timelineDuration;
+        return c;
+    };
+    video.clips = {clip("a", 0, 4), clip("b", 4, 2), clip("c", 6, 1)};
+    from.tracks() = {video};
+
+    drift::Project to = from;
+    QVERIFY(drift::diffProjects(from, to).isEmpty());
+    // A split at 2: "a" gets shorter, "a2" carries on from it.
+    drift::Clip &a = to.tracks()[0].clips[0];
+    a.timelineDuration = drift::secondsToUs(2);
+    a.srcOut = a.timelineDuration;
+    drift::Clip a2 = clip("a2", 2, 2);
+    a2.srcIn = drift::secondsToUs(2);
+    to.tracks()[0].clips.append(a2);
+    // "b" renamed and moved to a new track; "c" deleted.
+    drift::Clip b = to.tracks()[0].clips[1];
+    b.name = QStringLiteral("Renamed");
+    b.timelineStart = drift::secondsToUs(5);
+    to.tracks()[0].clips.removeAt(1);
+    to.tracks()[0].clips.removeAt(1);
+    drift::Track second{.id = QStringLiteral("v2"), .type = drift::TrackType::Video};
+    second.clips = {b};
+    to.tracks().append(second);
+
+    const drift::ProjectDiff diff = drift::diffProjects(from, to);
+    QHash<QString, drift::ClipDiff> byId;
+    for (const drift::ClipDiff &row : diff.clips)
+        byId.insert(row.id, row);
+    QCOMPARE(byId.size(), 4);
+    QCOMPARE(byId.value(QStringLiteral("a")).change, QStringLiteral("changed"));
+    QCOMPARE(byId.value(QStringLiteral("a")).fields, (QStringList{QStringLiteral("duration"), QStringLiteral("out")}));
+    QCOMPARE(byId.value(QStringLiteral("a2")).change, QStringLiteral("added"));
+    QCOMPARE(byId.value(QStringLiteral("a2")).splitFrom, QStringLiteral("a"));
+    QCOMPARE(byId.value(QStringLiteral("b")).track, 1);
+    QCOMPARE(byId.value(QStringLiteral("b")).fromTrack, 0);
+    QCOMPARE(byId.value(QStringLiteral("b")).fields,
+             (QStringList{QStringLiteral("track"), QStringLiteral("name"), QStringLiteral("start")}));
+    QCOMPARE(byId.value(QStringLiteral("c")).change, QStringLiteral("removed"));
+    QCOMPARE(diff.tracks.size(), 1);
+    QCOMPARE(diff.tracks.first().change, QStringLiteral("added"));
+    QCOMPARE(diff.tracks.first().id, QStringLiteral("v2"));
+
+    const QJsonObject json = drift::projectDiffToJson(diff);
+    QCOMPARE(json.value(QStringLiteral("clips")).toArray().size(), 4);
+    QVERIFY(!json.contains(QStringLiteral("assets")));
 }
 
 QTEST_MAIN(CoreTest)

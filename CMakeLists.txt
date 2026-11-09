@@ -642,6 +642,8 @@ add_library(driftcore STATIC
     src/core/interchange/OtioReader.cpp
     src/core/edit/TimelineOps.h
     src/core/edit/TimelineOps.cpp
+    src/core/project/ProjectDiff.h
+    src/core/project/ProjectDiff.cpp
     src/core/edit/MaskSpace.h
     src/core/edit/MaskSpace.cpp
     src/core/edit/CutOps.h

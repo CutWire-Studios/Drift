@@ -1520,6 +1520,24 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref, {{QStringLiteral("name"), name}}));
     }
 
+    if (tool == QLatin1String("changes")) {
+        const int since = args.contains(QStringLiteral("since")) ? jsonInt(args.value(QStringLiteral("since")), -1) : -1;
+        if (args.contains(QStringLiteral("since")) && since < 0)
+            return err("bad_args", QStringLiteral("since must be a revision (0 or more)"));
+        const int limit = qBound(1, jsonInt(args.value(QStringLiteral("limit")), 50), 500);
+        m_controller->mcp()->startChangeFeed();
+        if (since < 0)
+            return ok({{QStringLiteral("revision"), m_controller->mcp()->revision()}, {QStringLiteral("changes"), QJsonArray()}});
+        return m_controller->mcp()->changesSince(since, limit);
+    }
+
+    if (tool == QLatin1String("diff")) {
+        const QString from = argString(args, QStringLiteral("from"));
+        if (from.isEmpty())
+            return err("bad_args", QStringLiteral("from required"));
+        return m_controller->mcp()->diffStates(from, argString(args, QStringLiteral("to")));
+    }
+
     if (tool == QLatin1String("add_bookmark")) {
         if (!args.contains(QStringLiteral("at")))
             return err("bad_args", QStringLiteral("at required"));

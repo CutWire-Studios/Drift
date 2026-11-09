@@ -1041,6 +1041,18 @@ QString AppController::historyHashAt(int stackIndex) const
     return cmd ? cmd->afterHash() : QString();
 }
 
+std::optional<drift::Project> AppController::historyProjectAt(int stackIndex) const
+{
+    if (stackIndex < 0 || stackIndex > m_undoStack.count())
+        return std::nullopt;
+    if (m_undoStack.count() == 0 || stackIndex == m_undoStack.index())
+        return m_project;
+    const auto *cmd = historyCommand(m_undoStack, stackIndex == 0 ? 0 : stackIndex - 1);
+    if (!cmd)
+        return std::nullopt;
+    return stackIndex == 0 ? cmd->before() : cmd->after();
+}
+
 int AppController::historyIndexForHash(const QString &prefix) const
 {
     const QString needle = prefix.trimmed().toLower();

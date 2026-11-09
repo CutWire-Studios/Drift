@@ -113,7 +113,19 @@ public:
     }
     int revision() const { return m_editRevision; }
     // AppController bumps this from every edit path, including ones that never touch MCP.
-    void bumpEditRevision() { ++m_editRevision; }
+    // Every finished edit (the editor's, an agent's, undo/redo) bumps the revision; with the change
+    // feed on, it also logs what changed since the last one.
+    void bumpEditRevision();
+    // The change feed: the edits after revision `since`, oldest first, each with its source ("mcp"
+    // or "ui"), kind (edit, undo, redo), label and clip/track/asset diff. The log starts at the
+    // first agent call and keeps the newest kChangeLogSize entries; an older `since` reports
+    // `truncated`.
+    QJsonObject changesSince(int since, int limit) const;
+    // Starts the log (idempotent): the first agent call does, and so does `changes`.
+    void startChangeFeed();
+    // What differs between two project states: a history hash (list_history), a snapshot hash
+    // (take_snapshot) or "head".
+    QJsonObject diffStates(const QString &from, const QString &to) const;
     bool undoSuspended() const { return m_undoSuspended; }
     const drift::Project &batchBefore() const { return m_batchBefore; }
     // A keyed write (the property already animates, or auto-key is on) lands at `atSeconds` on the
@@ -401,6 +413,23 @@ private:
         int pausedAtStart = 0; // a call that starts inside a paused pump is still the agent's
     };
     QList<AgentCallFrame> m_agentCalls;
+    struct ChangeEntry
+    {
+        int revision = 0;
+        QString source;
+        QString kind;
+        QString label;
+        QJsonObject diff;
+    };
+    static constexpr int kChangeLogSize = 500;
+    bool m_changeFeedOn = false;
+    int m_changeFeedFloor = 0; // the oldest revision `since` may name and still get every change
+    drift::Project m_changeBase;
+    int m_changeUndoIndex = 0;
+    int m_changeUndoCount = 0;
+    QList<ChangeEntry> m_changeLog;
+    void recordChange();
+    std::optional<drift::Project> projectForState(const QString &state, QString *error) const;
     int m_agentCallsPaused = 0;
     QString m_pendingWarning;
     drift::Project m_batchBefore;

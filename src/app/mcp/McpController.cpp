@@ -1,4 +1,5 @@
 #include "app/mcp/McpController.h"
+#include "core/project/ProjectDiff.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/jobs/vision/SceneDetectController.h"
 
@@ -1116,8 +1117,143 @@ QJsonObject McpController::captureFrame(double atSeconds, bool full, bool editor
     return {{QStringLiteral("content"), content}, {QStringLiteral("isError"), false}};
 }
 
+void McpController::bumpEditRevision()
+{
+    ++m_editRevision;
+    recordChange();
+}
+
+void McpController::startChangeFeed()
+{
+    if (m_changeFeedOn)
+        return;
+    m_changeFeedOn = true;
+    m_changeFeedFloor = m_editRevision;
+    m_changeBase = m_app->m_project;
+    m_changeUndoIndex = m_app->m_undoStack.index();
+    m_changeUndoCount = m_app->m_undoStack.count();
+}
+
+void McpController::recordChange()
+{
+    if (!m_changeFeedOn)
+        return;
+    const drift::ProjectDiff diff = drift::diffProjects(m_changeBase, m_app->m_project);
+    const int index = m_app->m_undoStack.index();
+    const int count = m_app->m_undoStack.count();
+    QString kind = QStringLiteral("edit");
+    QString label = m_app->m_undoStack.undoText();
+    if (count == m_changeUndoCount && index < m_changeUndoIndex) {
+        kind = QStringLiteral("undo");
+        label = m_app->m_undoStack.redoText();
+    } else if (count == m_changeUndoCount && index > m_changeUndoIndex) {
+        kind = QStringLiteral("redo");
+    }
+    m_changeUndoIndex = index;
+    m_changeUndoCount = count;
+    m_changeBase = m_app->m_project;
+    if (diff.isEmpty())
+        return;
+    m_changeLog.append({m_editRevision, inAgentCall() ? QStringLiteral("mcp") : QStringLiteral("ui"), kind, label,
+                        drift::projectDiffToJson(diff)});
+    if (m_changeLog.size() > kChangeLogSize) {
+        m_changeLog.removeFirst();
+        m_changeFeedFloor = m_changeLog.first().revision - 1;
+    }
+}
+
+QJsonObject McpController::changesSince(int since, int limit) const
+{
+    using namespace drift::mcp;
+    QJsonArray changes;
+    int returned = 0;
+    bool more = false;
+    for (const ChangeEntry &entry : m_changeLog) {
+        if (entry.revision <= since)
+            continue;
+        if (returned == limit) {
+            more = true;
+            break;
+        }
+        QJsonObject row = entry.diff;
+        row.insert(QStringLiteral("revision"), entry.revision);
+        row.insert(QStringLiteral("source"), entry.source);
+        row.insert(QStringLiteral("kind"), entry.kind);
+        if (!entry.label.isEmpty())
+            row.insert(QStringLiteral("label"), entry.label);
+        changes.append(row);
+        ++returned;
+    }
+    QJsonObject out{{QStringLiteral("revision"), m_editRevision}, {QStringLiteral("changes"), changes}};
+    if (more)
+        out.insert(QStringLiteral("more"), true);
+    // Edits before the feed started, or dropped from the log, are not listed.
+    if (since >= 0 && since < m_changeFeedFloor) {
+        out.insert(QStringLiteral("truncated"), true);
+        out.insert(QStringLiteral("from_revision"), m_changeFeedFloor);
+    }
+    return ok(out);
+}
+
+std::optional<drift::Project> McpController::projectForState(const QString &state, QString *error) const
+{
+    const QString needle = state.trimmed();
+    if (needle.isEmpty() || needle.compare(QLatin1String("head"), Qt::CaseInsensitive) == 0)
+        return m_app->m_project;
+    if (needle.size() < 8) {
+        *error = QStringLiteral("%1: give a hash of 8+ characters or \"head\"").arg(needle);
+        return std::nullopt;
+    }
+    const int onStack = m_app->historyIndexForHash(needle);
+    if (onStack >= 0)
+        return m_app->historyProjectAt(onStack);
+    QDir dir(m_app->historySnapshotDir());
+    QString path;
+    int matches = 0;
+    for (const QFileInfo &info : dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files, QDir::Name)) {
+        if (info.completeBaseName().startsWith(needle, Qt::CaseInsensitive)) {
+            ++matches;
+            path = info.absoluteFilePath();
+        }
+    }
+    if (matches != 1) {
+        *error = matches == 0 ? QStringLiteral("No history version or snapshot matches %1").arg(needle)
+                              : QStringLiteral("%1 matches several snapshots; give more characters").arg(needle);
+        return std::nullopt;
+    }
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        *error = QStringLiteral("Could not read snapshot %1").arg(needle);
+        return std::nullopt;
+    }
+    QString parseError;
+    drift::Project project = drift::Project::fromJson(QJsonDocument::fromJson(file.readAll()).object(), &parseError);
+    if (!parseError.isEmpty()) {
+        *error = parseError;
+        return std::nullopt;
+    }
+    return project;
+}
+
+QJsonObject McpController::diffStates(const QString &from, const QString &to) const
+{
+    using namespace drift::mcp;
+    m_app->flushUndoHistoryTrim();
+    QString error;
+    const std::optional<drift::Project> a = projectForState(from, &error);
+    if (!a)
+        return err("not_found", error);
+    const std::optional<drift::Project> b = projectForState(to, &error);
+    if (!b)
+        return err("not_found", error);
+    QJsonObject out = drift::projectDiffToJson(drift::diffProjects(*a, *b));
+    out.insert(QStringLiteral("same"), out.isEmpty());
+    return ok(out);
+}
+
 void McpController::beginAgentCall()
 {
+    startChangeFeed();
     m_agentCalls.append({QThread::currentThread()->loopLevel(), m_agentCallsPaused});
 }
 
@@ -1751,7 +1887,7 @@ QJsonObject McpController::undoTo(int index, const QString &hash)
     m_app->captureSelectionClipIds();
     m_app->m_undoStack.setIndex(target);
     m_app->m_undoSelectionCaptured = false;
-    ++m_editRevision;
+    bumpEditRevision();
     // Redoing forward can take the applied steps past the limit again; settle it before replying.
     m_app->flushUndoHistoryTrim();
     const QString at = m_app->historyHashAt(m_app->m_undoStack.index());
@@ -1921,7 +2057,7 @@ QJsonObject McpController::restoreSnapshot(const QString &hash)
         if (!m_app->m_project.transcript(it.key()))
             m_app->m_project.setTranscript(it.key(), it.value());
     }
-    ++m_editRevision;
+    bumpEditRevision();
     return ok({{QStringLiteral("index"), 0},
                {QStringLiteral("hash"), fileHash},
                {QStringLiteral("short"), shortHash(fileHash)},

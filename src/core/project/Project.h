@@ -311,4 +311,7 @@ private:
     QHash<QString, TranscriptPtr> m_transcripts;
 };
 
+// A clip as the project file stores it (without its id's owner track); for comparing clips.
+QJsonObject clipJson(const Clip &clip);
+
 } // namespace drift

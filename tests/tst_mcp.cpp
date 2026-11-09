@@ -100,6 +100,7 @@ private slots:
     void captureFilesStayOutOfTheProject();
     void subtitleClipKeepsItsChosenName();
     void setTransformKeysOnlyInsideTheClip();
+    void changeFeedListsEditsBySource();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
     void replaceAssetWaitsForTheReprobe();
@@ -378,9 +379,9 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("guide")));
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
-    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 23000);
+    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 23150);
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
-                .toJson(QJsonDocument::Compact).size() < 11500);
+                .toJson(QJsonDocument::Compact).size() < 11600);
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -901,6 +902,75 @@ void McpTest::subtitleClipKeepsItsChosenName()
     cues.removeLast();
     state.setSubtitleCues(0, 0, cues);
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("Subtitles (002)"));
+}
+
+void McpTest::changeFeedListsEditsBySource()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(i);
+        clip.type = drift::ClipType::Text;
+        clip.name = clip.id;
+        clip.timelineStart = drift::secondsToUs(4.0 * i);
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks()[0].clips.append(clip);
+    }
+    state.project()->ensureTrackIds();
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    // An edit before the feed starts is not listed.
+    state.setClipName(0, 1, QStringLiteral("Before the feed"));
+    state.mcp()->beginAgentCall();
+    const int start = dispatcher.applyOne(QStringLiteral("changes"), {}).value(QStringLiteral("revision")).toInt();
+    QVERIFY(start > 0);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("split_clip"), {{QStringLiteral("clip"), QStringLiteral("clip-0")}, {QStringLiteral("at"), 2.0}})
+                .value(QStringLiteral("ok")).toBool());
+    state.mcp()->endAgentCall();
+    // The user renames a clip, then undoes it.
+    state.setClipName(0, 1, QStringLiteral("By the user"));
+    state.undo();
+
+    const QJsonObject feed = dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), start}});
+    QVERIFY2(feed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(feed).toJson()));
+    const QJsonArray changes = feed.value(QStringLiteral("changes")).toArray();
+    QCOMPARE(changes.size(), 3);
+    const QJsonObject split = changes.at(0).toObject();
+    QCOMPARE(split.value(QStringLiteral("source")).toString(), QStringLiteral("mcp"));
+    QCOMPARE(split.value(QStringLiteral("kind")).toString(), QStringLiteral("edit"));
+    QString tail;
+    for (const QJsonValue &row : split.value(QStringLiteral("clips")).toArray())
+        if (row.toObject().value(QStringLiteral("change")).toString() == QLatin1String("added"))
+            tail = row.toObject().value(QStringLiteral("split_from")).toString();
+    QCOMPARE(tail, QStringLiteral("clip-0"));
+    const QJsonObject rename = changes.at(1).toObject();
+    QCOMPARE(rename.value(QStringLiteral("source")).toString(), QStringLiteral("ui"));
+    QCOMPARE(rename.value(QStringLiteral("clips")).toArray().first().toObject().value(QStringLiteral("fields")).toArray(),
+             QJsonArray{QStringLiteral("name")});
+    QCOMPARE(changes.at(2).toObject().value(QStringLiteral("kind")).toString(), QStringLiteral("undo"));
+    QCOMPARE(feed.value(QStringLiteral("revision")).toInt(), changes.at(2).toObject().value(QStringLiteral("revision")).toInt());
+    QVERIFY(!feed.contains(QStringLiteral("truncated")));
+    // The latest revision lists nothing; one before the feed started is marked truncated.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), feed.value(QStringLiteral("revision")).toInt()}})
+                .value(QStringLiteral("changes")).toArray().isEmpty());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), 0}}).value(QStringLiteral("truncated")).toBool());
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("changes"), {{QStringLiteral("since"), start}, {QStringLiteral("limit"), 1}})
+                 .value(QStringLiteral("changes")).toArray().size(), 1);
+
+    // diff between a history version and head.
+    const QJsonArray history = dispatcher.applyOne(QStringLiteral("list_history"), {}).value(QStringLiteral("entries")).toArray();
+    const QString origin = history.last().toObject().value(QStringLiteral("short")).toString();
+    const QJsonObject sinceOrigin = dispatcher.applyOne(QStringLiteral("diff"), {{QStringLiteral("from"), origin}});
+    QVERIFY2(sinceOrigin.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(sinceOrigin).toJson()));
+    QVERIFY(!sinceOrigin.value(QStringLiteral("same")).toBool());
+    QVERIFY(sinceOrigin.value(QStringLiteral("clips")).toArray().size() >= 2);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("diff"), {{QStringLiteral("from"), QStringLiteral("head")}}).value(QStringLiteral("same")).toBool());
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("diff"), {{QStringLiteral("from"), QStringLiteral("deadbeefdeadbeef")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

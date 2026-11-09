@@ -755,6 +755,24 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("hash"),
                          stringProp(QStringLiteral("Snapshot hash or unique prefix"))}},
                        {QStringLiteral("hash")}) },
+        { "changes", "timeline", "What changed since a revision",
+          "The edits after revision `since` (from inspect or a previous call), oldest first, made in "
+          "the editor or by you, undo/redo included. Each: {revision, source:mcp|ui, kind:edit|undo|redo, "
+          "label, clips:[{id, change:added|removed|changed, track, fields, from_track, split_from}], "
+          "tracks, assets}. Without since, just the current revision. The log starts at your first "
+          "call this session and keeps the last 500 edits; truncated:true means some are missing "
+          "(re-read inspect).",
+          objectSchema({{QStringLiteral("since"), integerProp(QStringLiteral("Revision you last saw"))},
+                        {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Most edits to return"), 1, 500), 50)}}),
+          true, false, true },
+        { "diff", "timeline", "Compare two project versions",
+          "What differs between two states: clips added, removed or changed (with the fields), "
+          "tracks and assets. from/to: a hash from list_history or take_snapshot (8+ chars) or "
+          "\"head\" (default for to). E.g. check a scripted round, or what undo_to would revert.",
+          objectSchema({{QStringLiteral("from"), stringProp(QStringLiteral("Older state: hash or head"))},
+                        {QStringLiteral("to"), stringProp(QStringLiteral("Newer state: hash or head (default)"))}},
+                       {QStringLiteral("from")}),
+          true, false, true },
         { "set_overlap", "timeline", "Allow clips to overlap",
           "Project setting. Off (default): place/move push to the next gap. On: requested start is kept.",
           objectSchema({{QStringLiteral("enabled"), boolProp(QStringLiteral("Allow overlapping clips"))}},

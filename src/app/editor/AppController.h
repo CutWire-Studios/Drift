@@ -2091,6 +2091,8 @@ protected:
     void rememberExportChoice(const QString &outputPath, const QVariantMap &settings);
     QJsonObject sessionJson() const;
     QString historyHashAt(int stackIndex) const;
+    // The project as it was at a history index (0 = Origin), or nullopt past the stack.
+    std::optional<drift::Project> historyProjectAt(int stackIndex) const;
     // Every file a project state reachable by undo/redo points at, so cleanup does not take
     // media the history still needs.
     QSet<QString> historyMediaPaths() const;

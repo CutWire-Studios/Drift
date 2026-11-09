@@ -675,6 +675,11 @@ MediaAsset assetFromJsonV1(const QJsonObject &object)
 
 } // namespace
 
+QJsonObject clipJson(const Clip &clip)
+{
+    return clipToJson(clip);
+}
+
 void Project::resetToDefaultTimeline()
 {
     m_tracks = {
