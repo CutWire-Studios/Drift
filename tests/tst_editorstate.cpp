@@ -4948,6 +4948,13 @@ void EditorStateTest::uiScalePersistsAcrossSessions()
         state.preferences()->setUiScale(9.0);
         QCOMPARE(state.preferences()->uiScale(), 2.0);
         state.preferences()->setUiScale(0.1);
+        QCOMPARE(state.preferences()->uiScale(), 0.75);
+        state.preferences()->setUiScale(0.0);
+        QCOMPARE(state.preferences()->uiScale(), 0.0);
+        QCOMPARE(QSettings().value(QStringLiteral("ui/scale")).toDouble(), 0.0);
+        state.preferences()->setUiScale(0.82);
+        QCOMPARE(state.preferences()->uiScale(), 0.8);
+        state.preferences()->setUiScale(1.0);
         QCOMPARE(state.preferences()->uiScale(), 1.0);
         QVERIFY(!QSettings().contains(QStringLiteral("ui/scale")));
 

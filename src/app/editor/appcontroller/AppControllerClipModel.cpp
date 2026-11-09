@@ -503,8 +503,14 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
                 param.insert(QStringLiteral("step"), paramDef.step);
             if (paramDef.isColor())
                 param.insert(QStringLiteral("alpha"), paramDef.alpha);
-            if (paramDef.type == drift::EffectParamType::Curve)
+            if (paramDef.type == drift::EffectParamType::Curve) {
                 param.insert(QStringLiteral("curveMode"), paramDef.curveMode);
+                param.insert(QStringLiteral("curveChannel"), paramDef.curveChannel);
+            }
+            if (!paramDef.widget.isEmpty())
+                param.insert(QStringLiteral("widget"), paramDef.widget);
+            if (!paramDef.track.isEmpty())
+                param.insert(QStringLiteral("track"), paramDef.track);
             if (paramDef.isFilePath()) {
                 param.insert(QStringLiteral("fileFilters"), paramDef.fileFilters);
                 const QString path = value.toString();
@@ -1698,6 +1704,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("speedUp"), tr("Increase playback speed")),
         action(QStringLiteral("speedDown"), tr("Decrease playback speed")),
         action(QStringLiteral("toggleGuides"), tr("Toggle guides")),
+        action(QStringLiteral("toggleTrackHidden"), tr("Hide/show selected clip's track")),
         action(QStringLiteral("gizmoMove"), tr("3D gizmo: move / Tracker tool")),
         action(QStringLiteral("gizmoRotate"), tr("3D gizmo: rotate / Rectangle mask")),
         action(QStringLiteral("gizmoScale"), tr("3D gizmo: scale / Ellipse mask")),

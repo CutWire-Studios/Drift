@@ -380,6 +380,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | themedComboBoxDelegate | icon | $semantic.warning | $semantic.warning |
 | themedComboBoxDelegate | backgroundHighlighted | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
 | themedComboBoxDelegate | backgroundHover | $semantic.panel.accent | $semantic.panel.accent |
+| themedComboBoxDelegate | sectionForeground | $semantic.mutedForeground | $semantic.mutedForeground |
 | themedColorDialog | defaultColor | $semantic.onMedia | $semantic.onMedia |
 | themedColorDialog | fieldRadius | $metrics.radius.sm | $metrics.radius.sm |
 | themedColorDialog | fieldBorder | $palette.controlsFieldHairline | $palette.controlsFieldHairline |
@@ -1402,6 +1403,13 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | colorGradeTracks | temperature | ["$palette.gradeTempCool", "$palette.gradeTrackNeutral", "$palette.gradeTempWarm"] | ["$palette.gradeTempCool", "$palette.gradeTrackNeutral", "$palette.gradeTempWarm"] |
 | colorGradeTracks | tint | ["$palette.gradeTintGreen", "$palette.gradeTrackNeutral", "$palette.gradeTintMagenta"] | ["$palette.gradeTintGreen", "$palette.gradeTrackNeutral", "$palette.gradeTintMagenta"] |
 | colorGradeTracks | luma | ["$palette.gradeTrackBlack", "$palette.gradeTrackWhite"] | ["$palette.gradeTrackBlack", "$palette.gradeTrackWhite"] |
+| blendCard | background | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
+| blendCard | backgroundHover | $semantic.panel.accent | $semantic.panel.accent |
+| blendCard | selectedBorder | $semantic.primary | $semantic.primary |
+| blendCard | selectedBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
+| blendCard | label | $semantic.mutedForeground | $semantic.mutedForeground |
+| blendCard | labelSelected | $semantic.panel.foreground | $semantic.panel.foreground |
+| blendCard | radius | $metrics.radius.md | $metrics.radius.md |
 | lookCard | background | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
 | lookCard | backgroundHover | $semantic.panel.accent | $semantic.panel.accent |
 | lookCard | selectedBorder | $semantic.primary | $semantic.primary |
@@ -2132,6 +2140,13 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | playbackStatsLine | foreground | $semantic.preview.statsLabel | $semantic.preview.statsLabel |
 | playbackStatsLine | foregroundValue | $semantic.preview.statsValue | $semantic.preview.statsValue |
 | playbackStatsLine | foregroundWarn | $semantic.preview.statsWarn | $semantic.preview.statsWarn |
+| teleprompterView | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| teleprompterView | marker | $semantic.panel.accent | $semantic.panel.accent |
+| teleprompterPanel | foregroundMuted | $semantic.panel.muted | $semantic.panel.muted |
+| teleprompterOverlay | background | $semantic.scrim | $semantic.scrim |
+| teleprompterOverlay | foreground | $semantic.onMedia | $semantic.onMedia |
+| teleprompterOverlay | marker | $semantic.accent | $semantic.accent |
+| teleprompterOverlay | radius | $metrics.radius.sm | $metrics.radius.sm |
 | playbackStatsOverlay | background | $semantic.preview.statsBackground | $semantic.preview.statsBackground |
 | playbackStatsOverlay | border | $semantic.preview.statsBorder | $semantic.preview.statsBorder |
 | playbackStatsOverlay | borderWidth | $metrics.borderWidth | $metrics.borderWidth |

@@ -2596,6 +2596,10 @@
         <translation>Bật tắt đường kẻ</translation>
     </message>
     <message>
+        <source>Hide/show selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>3D gizmo: cycle world/local/view axes</source>
         <translation>Gizmo 3D: luân chuyển trục thế giới/cục bộ/khung nhìn</translation>
     </message>
@@ -5926,6 +5930,125 @@
     </message>
 </context>
 <context>
+    <name>BlendModes</name>
+    <message>
+        <source>Normal</source>
+        <translation type="unfinished">Bình thường</translation>
+    </message>
+    <message>
+        <source>Darken</source>
+        <translation type="unfinished">Tối hơn</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished">Hòa trộn</translation>
+    </message>
+    <message>
+        <source>Color Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darker Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lighten</source>
+        <translation type="unfinished">Sáng hơn</translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">Màn hình</translation>
+    </message>
+    <message>
+        <source>Color Dodge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Thêm</translation>
+    </message>
+    <message>
+        <source>Lighter Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">Độ tương phản</translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished">Lớp phủ</translation>
+    </message>
+    <message>
+        <source>Soft Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vivid Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pin Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Mix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inversion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Difference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclusion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished">Loại trừ</translation>
+    </message>
+    <message>
+        <source>Divide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Component</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue</source>
+        <translation type="unfinished">Sắc độ</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">Độ bão hòa</translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Màu</translation>
+    </message>
+    <message>
+        <source>Luminosity</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BlendingInspector</name>
     <message>
         <source>Blend mode</source>
@@ -5934,38 +6057,6 @@
     <message>
         <source>How this clip&apos;s colours combine with the tracks beneath it.</source>
         <translation>Màu sắc của clip này kết hợp như thế nào với các track bên dưới nó.</translation>
-    </message>
-    <message>
-        <source>Normal</source>
-        <translation>Bình thường</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation>Hòa trộn</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation>Màn hình</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Lớp phủ</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Thêm</translation>
-    </message>
-    <message>
-        <source>Darken</source>
-        <translation>Tối hơn</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation>Sáng hơn</translation>
-    </message>
-    <message>
-        <source>How this clip blends with the layers below</source>
-        <translation>Cách clip này hòa trộn với các lớp bên dưới</translation>
     </message>
     <message>
         <source>Reset to Normal</source>
@@ -15969,6 +16060,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Điều chỉnh kích thước nút, chữ và biểu tượng lớn hơn hoặc nhỏ hơn.</translation>
     </message>
     <message>
+        <source>Windows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Recommended</source>
         <translation>Được đề xuất</translation>
     </message>
@@ -17428,16 +17523,24 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Khởi động lại Drift để áp dụng kích thước này.</translation>
     </message>
     <message>
+        <source>Follows your Windows display scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
         <translation>Ở mức 100%, giao diện sẽ vừa vặn với màn hình 1080p, bất kể tỷ lệ hiển thị trên Windows của bạn là bao nhiêu.</translation>
     </message>
     <message>
-        <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
-        <translation>Làm cho các nút, văn bản và biểu tượng lớn hơn, ngoài cài đặt hiển thị của bạn.</translation>
+        <source>Makes buttons, text, and icons larger or smaller, on top of your display settings.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>100% (system)</source>
         <translation>100% (hệ thống)</translation>
+    </message>
+    <message>
+        <source>Windows display scale</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout</source>
@@ -18665,32 +18768,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Hiệu ứng</translation>
     </message>
     <message>
-        <source>Normal</source>
-        <translation>Bình thường</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation>Hòa trộn</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation>Màn hình</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Lớp phủ</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Thêm</translation>
-    </message>
-    <message>
         <source>Darken</source>
         <translation>Tối hơn</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation>Sáng hơn</translation>
     </message>
     <message>
         <source>Centre</source>
@@ -21992,6 +22071,61 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TeleprompterPanel</name>
+    <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Tốc độ</translation>
+    </message>
+    <message>
+        <source>lines/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">Kích thước</translation>
+    </message>
+    <message>
+        <source>Follow recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scrolling starts, pauses and stops with recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show over preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste or type your script</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextAnimPresetFrame</name>
     <message>
         <source>None</source>
@@ -23436,6 +23570,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Toggle audio mixer strip</source>
         <translation>Bật tắt dải trộn âm thanh</translation>
+    </message>
+    <message>
+        <source>Toggle keyframe strip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
@@ -25566,6 +25704,21 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>Vec2Param</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Chỉnh sửa %1</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">Đặt lại %1</translation>
+    </message>
+    <message>
+        <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
+        <translation type="unfinished">Kéo thả để pha màu. Giữ Shift để tinh chỉnh. Nhấp đúp để đặt lại màu.</translation>
+    </message>
+</context>
+<context>
     <name>Vec2ParamPad</name>
     <message>
         <source>Edit %1</source>
@@ -26463,6 +26616,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Recorder</source>
         <translation>Trình ghi âm</translation>
+    </message>
+    <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Noise Removal</source>

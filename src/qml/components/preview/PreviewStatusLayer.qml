@@ -30,6 +30,32 @@ Item {
         seconds: EditorState.audioRecordSeconds
     }
 
+    // Interface only, like the rest of this layer: it never reaches a render or export.
+    Loader {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: Theme.spacingLg
+        height: Math.round(parent.height * 0.3)
+        z: 5
+        active: !root.compact && EditorState.teleprompter.overlayEnabled && EditorState.teleprompter.script.length > 0
+        sourceComponent: Component {
+            Rectangle {
+                radius: Theme.c.teleprompterOverlay.radius
+                color: Theme.c.teleprompterOverlay.background
+                clip: true
+
+                TeleprompterView {
+                    anchors.fill: parent
+                    fontScale: 0.75
+                    readLineRatio: 0.4
+                    textColor: Theme.c.teleprompterOverlay.foreground
+                    markerColor: Theme.c.teleprompterOverlay.marker
+                }
+            }
+        }
+    }
+
     // On a brand-new project this — the largest, most central panel — said nothing at all, while
     // the timeline below it explained what to do. The terse gap message below is right when a
     // project has content and the playhead is simply over a gap; it is not an answer to "what do

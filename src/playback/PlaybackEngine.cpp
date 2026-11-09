@@ -729,15 +729,14 @@ void PlaybackEngine::play()
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
     m_clock.setRate(m_playbackRate);
     m_clock.reset(m_playheadUs, m_sampleRate);
+    requestAudioFocus();
+    ensureAudioSink();
+    m_clock.start();
     m_playing = true;
     m_compositor.setPlaybackActive(true);
     // Android dims and locks on its own idle timer, which would be wrong mid-playback even
     // without touch input; no-op on desktop.
     drift::android::acquireKeepScreenOn();
-
-    requestAudioFocus();
-    ensureAudioSink();
-    m_clock.start();
 
     pushAudioSnapshot();
 

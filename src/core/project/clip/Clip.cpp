@@ -103,6 +103,44 @@ QString blendModeToString(BlendMode mode)
         return QStringLiteral("darken");
     case BlendMode::Lighten:
         return QStringLiteral("lighten");
+    case BlendMode::ColorBurn:
+        return QStringLiteral("colorBurn");
+    case BlendMode::LinearBurn:
+        return QStringLiteral("linearBurn");
+    case BlendMode::DarkerColor:
+        return QStringLiteral("darkerColor");
+    case BlendMode::ColorDodge:
+        return QStringLiteral("colorDodge");
+    case BlendMode::LighterColor:
+        return QStringLiteral("lighterColor");
+    case BlendMode::SoftLight:
+        return QStringLiteral("softLight");
+    case BlendMode::HardLight:
+        return QStringLiteral("hardLight");
+    case BlendMode::VividLight:
+        return QStringLiteral("vividLight");
+    case BlendMode::LinearLight:
+        return QStringLiteral("linearLight");
+    case BlendMode::PinLight:
+        return QStringLiteral("pinLight");
+    case BlendMode::HardMix:
+        return QStringLiteral("hardMix");
+    case BlendMode::Difference:
+        return QStringLiteral("difference");
+    case BlendMode::Exclusion:
+        return QStringLiteral("exclusion");
+    case BlendMode::Subtract:
+        return QStringLiteral("subtract");
+    case BlendMode::Divide:
+        return QStringLiteral("divide");
+    case BlendMode::Hue:
+        return QStringLiteral("hue");
+    case BlendMode::Saturation:
+        return QStringLiteral("saturation");
+    case BlendMode::Color:
+        return QStringLiteral("color");
+    case BlendMode::Luminosity:
+        return QStringLiteral("luminosity");
     }
     return QStringLiteral("normal");
 }
@@ -121,6 +159,44 @@ BlendMode blendModeFromString(const QString &mode)
         return BlendMode::Darken;
     if (mode == QStringLiteral("lighten"))
         return BlendMode::Lighten;
+    if (mode == QStringLiteral("colorBurn"))
+        return BlendMode::ColorBurn;
+    if (mode == QStringLiteral("linearBurn"))
+        return BlendMode::LinearBurn;
+    if (mode == QStringLiteral("darkerColor"))
+        return BlendMode::DarkerColor;
+    if (mode == QStringLiteral("colorDodge"))
+        return BlendMode::ColorDodge;
+    if (mode == QStringLiteral("lighterColor"))
+        return BlendMode::LighterColor;
+    if (mode == QStringLiteral("softLight"))
+        return BlendMode::SoftLight;
+    if (mode == QStringLiteral("hardLight"))
+        return BlendMode::HardLight;
+    if (mode == QStringLiteral("vividLight"))
+        return BlendMode::VividLight;
+    if (mode == QStringLiteral("linearLight"))
+        return BlendMode::LinearLight;
+    if (mode == QStringLiteral("pinLight"))
+        return BlendMode::PinLight;
+    if (mode == QStringLiteral("hardMix"))
+        return BlendMode::HardMix;
+    if (mode == QStringLiteral("difference"))
+        return BlendMode::Difference;
+    if (mode == QStringLiteral("exclusion"))
+        return BlendMode::Exclusion;
+    if (mode == QStringLiteral("subtract"))
+        return BlendMode::Subtract;
+    if (mode == QStringLiteral("divide"))
+        return BlendMode::Divide;
+    if (mode == QStringLiteral("hue"))
+        return BlendMode::Hue;
+    if (mode == QStringLiteral("saturation"))
+        return BlendMode::Saturation;
+    if (mode == QStringLiteral("color"))
+        return BlendMode::Color;
+    if (mode == QStringLiteral("luminosity"))
+        return BlendMode::Luminosity;
     return BlendMode::Normal;
 }
 

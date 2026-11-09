@@ -272,6 +272,7 @@ qt_add_executable(tst_mcp
     ../src/app/editor/sessions/MaskStackModel.cpp
     ../src/app/editor/sessions/MaskingController.cpp
     ../src/app/editor/sessions/SubtitleController.cpp
+    ../src/app/editor/sessions/TeleprompterController.cpp
     ../src/app/editor/sessions/SubtitleCueModel.cpp
     ../src/app/editor/sessions/SubtitleCueFilterModel.cpp
     ../src/app/jobs/vision/SegmentationController.cpp
@@ -282,6 +283,7 @@ qt_add_executable(tst_mcp
     ../src/app/color/ColorController.cpp
     ../src/app/color/ScopesController.cpp
     ../src/app/color/LookThumbnailService.cpp
+    ../src/app/editor/BlendPreviewController.cpp
     ../src/ui/imageproviders/color/ColorImageProvider.cpp
     ../src/app/jobs/vision/RestoreController.cpp
     ../src/app/jobs/vision/FaceTrackingController.cpp
