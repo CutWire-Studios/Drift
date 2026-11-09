@@ -1930,6 +1930,31 @@ void McpTest::setSequenceLaysOutTheTrack()
         QCOMPARE(sequence({entry(b), entry(a)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
         QCOMPARE(find(QStringLiteral("a-audio"))->timelineStart, 0);
         QVERIFY(find(c));
+
+        // Laying out the audio track itself: dropping C's audio takes C and its effect lane, which
+        // moves the audio track up one; the layout still lands on it.
+        state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].linkId = QStringLiteral("c-link");
+        drift::Clip cAudio = partner;
+        cAudio.id = QStringLiteral("c-audio");
+        cAudio.linkId = QStringLiteral("c-link");
+        cAudio.timelineStart = drift::secondsToUs(3.0);
+        const int audioIndex = int(state.project()->tracks().size()) - 1;
+        state.project()->tracks()[audioIndex].clips.append(cAudio);
+        const int tracksWithLane = int(state.project()->tracks().size());
+        AppController::SequenceEntry first;
+        first.clipId = QStringLiteral("a-audio");
+        AppController::SequenceEntry second;
+        second.clipId = QStringLiteral("audio-blocker");
+        const AppController::SequenceResult laidAudio = state.setTrackSequence(audioIndex, {first, second}, 0);
+        QVERIFY2(laidAudio.error.isEmpty(), qPrintable(laidAudio.error));
+        QCOMPARE(int(state.project()->tracks().size()), tracksWithLane - 1);
+        QVERIFY(!find(c));
+        QVERIFY(!find(QStringLiteral("c-audio")));
+        QCOMPARE(find(QStringLiteral("audio-blocker"))->timelineStart, drift::secondsToUs(1.0));
+        QCOMPARE(state.project()->tracks().at(audioIndex - 1).clips.size(), 2);
+        state.undo();
+        QVERIFY(find(c));
+        QCOMPARE(int(state.project()->tracks().size()), tracksWithLane);
     }
 }
 

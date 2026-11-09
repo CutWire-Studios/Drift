@@ -3196,17 +3196,33 @@ AppController::SequenceResult AppController::setTrackSequence(int trackIndex, co
         built.insert(i, clip);
     }
 
+    // The delete can drop emptied effect lanes and renumber the tracks: the target is found again
+    // by its id afterwards.
+    m_project.ensureTrackIds();
+    const QString targetTrackId = m_project.tracks().at(trackIndex).id;
     const drift::Project before = m_project;
-    // Deleting goes through the selection; a refused layout puts the user's back.
+    // Deleting goes through the selection and drops the deleted effects' hidden graph rows; a
+    // refused layout puts the user's selection (transition included) and those rows back.
     const QList<QPair<int, int>> previousSelection = m_selection;
     const int previousTrack = m_selectedTrack;
     const int previousClip = m_selectedClip;
+    const int previousTransitionTrack = m_selectedTransitionTrack;
+    const int previousTransitionLeftClip = m_selectedTransitionLeftClip;
+    const QStringList previousHiddenGraph = m_keyframeGraphHiddenProperties;
     const auto refuse = [&](const QString &message) {
         m_project = before;
         m_selection = previousSelection;
         m_selectedTrack = previousTrack;
         m_selectedClip = previousClip;
+        m_selectedTransitionTrack = previousTransitionTrack;
+        m_selectedTransitionLeftClip = previousTransitionLeftClip;
+        const bool graphChanged = m_keyframeGraphHiddenProperties != previousHiddenGraph;
+        m_keyframeGraphHiddenProperties = previousHiddenGraph;
         m_mcpController->endBatch(tr("Set sequence"), false);
+        notifySelectionChanged();
+        emit selectedTransitionDataChanged();
+        if (graphChanged)
+            emit keyframeGraphVisibilityChanged();
         return fail("bad_args", message);
     };
     // The batch makes the delete and the layout one undo step.
@@ -3216,8 +3232,15 @@ AppController::SequenceResult AppController::setTrackSequence(int trackIndex, co
         if (deleteClipsById(removeIds, true, false, &error) < 0)
             return refuse(error);
     }
-    // The delete can drop an emptied effect lane, which renumbers the tracks after it: the
-    // collision check compares against this state, with the group taken from it.
+    // The delete can drop an emptied effect lane, which renumbers the tracks after it: the target
+    // is found again by id, and the collision check compares against this state, with the group
+    // taken from it.
+    trackIndex = -1;
+    for (int t = 0; t < m_project.tracks().size(); ++t)
+        if (m_project.tracks().at(t).id == targetTrackId)
+            trackIndex = t;
+    if (trackIndex < 0)
+        return refuse(QStringLiteral("The track went with the deleted clips"));
     const drift::Project afterDelete = m_project;
     QSet<int> collisionGroup = drift::rippleTrackGroup(m_project, trackIndex);
     collisionGroup.insert(trackIndex);
