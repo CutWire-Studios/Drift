@@ -705,7 +705,7 @@ const QList<Op> &ops()
         { "swap_clips", "timeline", "Exchange two clips' places",
           "Swap two clips on one track in one undo step: each takes the other's place, the clips "
           "between them move by the difference in length, and linked A/V moves along. Refused for "
-          "different tracks, linked or locked clips, or a clip landing on another or before 0. "
+          "different tracks, linked clips, a locked track, or a clip landing on another or before 0. "
           "Returns moved:[{id, start}] and any removed_transitions.",
           objectSchema({{QStringLiteral("a"), stringProp(QStringLiteral("Clip id"))},
                         {QStringLiteral("b"), stringProp(QStringLiteral("Clip id"))}},
