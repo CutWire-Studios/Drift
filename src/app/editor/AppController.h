@@ -46,6 +46,7 @@ class KeyframeController;
 class MaskingController;
 class SubtitleController;
 class ColorController;
+class BlendPreviewController;
 class DenoiseController;
 class AudioAlignController;
 class DepthController;
@@ -95,6 +96,7 @@ class AppController : public QObject
     friend class DenoiseController;
     friend class AudioAlignController;
     friend class ColorController;
+    friend class BlendPreviewController;
     friend class KeyframeController;
     friend class MaskingController;
     friend class MaskEditSession;
@@ -119,6 +121,7 @@ class AppController : public QObject
     Q_MOC_INCLUDE("app/editor/sessions/MaskingController.h")
     Q_MOC_INCLUDE("app/editor/sessions/SubtitleController.h")
     Q_MOC_INCLUDE("app/color/ColorController.h")
+    Q_MOC_INCLUDE("app/editor/BlendPreviewController.h")
     Q_MOC_INCLUDE("app/jobs/audio/DenoiseController.h")
     Q_MOC_INCLUDE("app/jobs/audio/AudioAlignController.h")
     Q_MOC_INCLUDE("app/jobs/vision/DepthController.h")
@@ -167,6 +170,8 @@ class AppController : public QObject
     Q_PROPERTY(AudioAlignController *audioAlign READ audioAlign CONSTANT)
     // Colour grade, finishing effects and looks. QML: EditorState.color.
     Q_PROPERTY(ColorController *color READ color CONSTANT)
+    // The selected clip rendered in every blend mode. QML: EditorState.blendPreview.
+    Q_PROPERTY(BlendPreviewController *blendPreview READ blendPreview CONSTANT)
     // Keyframe panel editing and clip property rows. QML: EditorState.keyframes.
     Q_PROPERTY(KeyframeController *keyframes READ keyframes CONSTANT)
     // "Use as mask" on bin assets and timeline clips. QML: EditorState.masking.
@@ -386,6 +391,7 @@ public:
     DenoiseController *denoise() const { return m_denoise; }
     AudioAlignController *audioAlign() const { return m_audioAlign; }
     ColorController *color() const { return m_color; }
+    BlendPreviewController *blendPreview() const { return m_blendPreview; }
     KeyframeController *keyframes() const { return m_keyframes; }
     MaskingController *masking() const { return m_masking; }
     SubtitleController *subtitles() const { return m_subtitles; }
@@ -2273,6 +2279,7 @@ protected:
     DenoiseController *m_denoise = nullptr;
     AudioAlignController *m_audioAlign = nullptr;
     ColorController *m_color = nullptr;
+    BlendPreviewController *m_blendPreview = nullptr;
     KeyframeController *m_keyframes = nullptr;
     MaskingController *m_masking = nullptr;
     SubtitleController *m_subtitles = nullptr;

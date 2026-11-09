@@ -1144,6 +1144,8 @@ target_sources(driftapp PRIVATE
     src/app/color/ScopesController.h
     src/app/color/ScopesController.cpp
     src/app/color/LookThumbnailService.cpp
+    src/app/editor/BlendPreviewController.h
+    src/app/editor/BlendPreviewController.cpp
     src/app/online/addons/AddonCatalog.cpp
     src/app/jobs/JobRegistry.h
     src/app/jobs/JobRegistry.cpp

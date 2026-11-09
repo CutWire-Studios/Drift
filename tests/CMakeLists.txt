@@ -282,6 +282,7 @@ qt_add_executable(tst_mcp
     ../src/app/color/ColorController.cpp
     ../src/app/color/ScopesController.cpp
     ../src/app/color/LookThumbnailService.cpp
+    ../src/app/editor/BlendPreviewController.cpp
     ../src/ui/imageproviders/color/ColorImageProvider.cpp
     ../src/app/jobs/vision/RestoreController.cpp
     ../src/app/jobs/vision/FaceTrackingController.cpp
