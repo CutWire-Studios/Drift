@@ -746,6 +746,8 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
     };
     if (m_app->preview()->viewport3dOpen())
         extra.insert(QStringLiteral("look_through"), m_app->preview()->lookThrough());
+    if (options.dirtyDetail)
+        extra.insert(QStringLiteral("dirty_detail"), dirtyDetail());
     if (detail) {
         QJsonArray marks;
         for (const QVariant &v : m_app->bookmarks()) {
@@ -1303,6 +1305,38 @@ QJsonObject McpController::diffStates(const QString &from, const QString &to) co
     QJsonObject out = drift::projectDiffToJson(drift::diffProjects(*a, *b));
     out.insert(QStringLiteral("same"), out.isEmpty());
     return ok(out);
+}
+
+QJsonObject McpController::dirtyDetail() const
+{
+    const drift::ProjectDiff diff = drift::diffProjects(m_app->projectFile()->savedProject(), m_app->m_project);
+    // Saved with the project but not part of the cut: what the editor's view or bookkeeping
+    // changed. Everything else in the diff is the timeline.
+    static const QStringList kOtherSettings{QStringLiteral("bookmarks"), QStringLiteral("work_area"),
+                                            QStringLiteral("project_info")};
+    QStringList other;
+    bool timeline = !diff.clips.isEmpty() || !diff.assets.isEmpty();
+    for (const QString &setting : diff.settings) {
+        if (kOtherSettings.contains(setting))
+            other.append(setting);
+        else
+            timeline = true;
+    }
+    for (const drift::TrackDiff &track : diff.tracks) {
+        if (track.change == QLatin1String("changed") && track.fields == QStringList{QStringLiteral("view")}) {
+            if (!other.contains(QStringLiteral("track_view")))
+                other.append(QStringLiteral("track_view"));
+        } else {
+            timeline = true;
+        }
+    }
+    if (m_app->projectFile()->savedProject().openSequenceTabs() != m_app->m_project.openSequenceTabs())
+        other.append(QStringLiteral("sequence_tabs"));
+    QJsonObject out = drift::projectDiffToJson(diff);
+    out.insert(QStringLiteral("dirty"), m_app->projectFile()->hasUnsavedChanges());
+    out.insert(QStringLiteral("timeline"), timeline);
+    out.insert(QStringLiteral("other"), QJsonArray::fromStringList(other));
+    return out;
 }
 
 void McpController::beginAgentCall()

@@ -85,6 +85,9 @@ public:
     bool projectLoadPending() const { return m_projectLoadPending; }
     double projectLoadProgress() const { return m_projectLoadProgress; }
     bool hasUnsavedChanges() const { return m_dirty; }
+    // The project as it was when it last became clean (saved, loaded or new): what
+    // inspect({dirty_detail}) compares the current state against.
+    const drift::Project &savedProject() const { return m_savedProject; }
     QString currentProjectPath() const { return m_currentProjectPath; }
     bool recoveryAvailable() const { return m_recoveryAvailable; }
     QVariantMap recoveryInfo() const { return m_recoveryInfo; }
@@ -301,6 +304,7 @@ private:
     // Save state / autosave / crash recovery.
     QString m_currentProjectPath;
     bool m_dirty = false;
+    drift::Project m_savedProject;
     // Bumped by every setDirty(true). A save records it when it captures the document and only
     // clears the dirty flag if it is unchanged when the write lands: an edit made during the
     // write is not in the file.

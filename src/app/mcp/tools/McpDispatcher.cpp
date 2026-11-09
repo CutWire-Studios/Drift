@@ -689,6 +689,7 @@ QJsonObject McpDispatcher::inspect(const QJsonObject &args) const
                         ? jsonInt(args.value(QStringLiteral("track")), -1)
                         : -1;
     options.clip = args.value(QStringLiteral("clip")).toString();
+    options.dirtyDetail = jsonBool(args.value(QStringLiteral("dirty_detail")));
     return m_controller->mcp()->inspect(options);
 }
 

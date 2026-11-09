@@ -104,6 +104,7 @@ public:
         int since = -1;
         int track = -1;
         QString clip;
+        bool dirtyDetail = false;
     };
     QJsonObject inspect(const InspectOptions &options) const;
     QJsonObject inspect(bool includeClips, int sinceRevision = -1, bool detail = false,
@@ -130,6 +131,10 @@ public:
     // What differs between two project states: a history hash (list_history), a snapshot hash
     // (take_snapshot) or "head".
     QJsonObject diffStates(const QString &from, const QString &to) const;
+    // What the unsaved changes are: `timeline` (clips, tracks, assets or settings differ from the
+    // saved project, with that diff) and `other`, the saved state outside the timeline that
+    // changed: track view settings, work area, bookmarks, open sequence tabs, project info.
+    QJsonObject dirtyDetail() const;
     bool undoSuspended() const { return m_undoSuspended; }
     const drift::Project &batchBefore() const { return m_batchBefore; }
     // A keyed write (the property already animates, or auto-key is on) lands at `atSeconds` on the

@@ -1923,6 +1923,8 @@ void ProjectFileController::setDirty(bool dirty)
 {
     if (dirty)
         ++m_dirtyRevision;
+    else
+        m_savedProject = m_app->m_project; // implicitly shared: a cheap copy until the next edit
     if (m_dirty == dirty)
         return;
     m_dirty = dirty;

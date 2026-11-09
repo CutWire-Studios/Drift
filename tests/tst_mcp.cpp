@@ -101,6 +101,7 @@ private slots:
     void subtitleClipKeepsItsChosenName();
     void setTransformKeysOnlyInsideTheClip();
     void changeFeedListsEditsBySource();
+    void dirtyDetailTellsTimelineFromView();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
     void replaceAssetWaitsForTheReprobe();
@@ -1044,6 +1045,50 @@ void McpTest::changeFeedListsEditsBySource()
     QVERIFY(dispatcher.applyOne(QStringLiteral("diff"), {{QStringLiteral("from"), QStringLiteral("head")}}).value(QStringLiteral("same")).toBool());
     QCOMPARE(dispatcher.applyOne(QStringLiteral("diff"), {{QStringLiteral("from"), QStringLiteral("deadbeefdeadbeef")}}).value(QStringLiteral("error")).toString(),
              QStringLiteral("not_found"));
+}
+
+void McpTest::dirtyDetailTellsTimelineFromView()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-0");
+    clip.type = drift::ClipType::Text;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks()[0].clips.append(clip);
+    state.project()->ensureTrackIds();
+    state.projectFile()->setDirty(false); // as saved
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto detail = [&] {
+        return dispatcher.inspect({{QStringLiteral("dirty_detail"), true}}).value(QStringLiteral("dirty_detail")).toObject();
+    };
+    QVERIFY(!detail().value(QStringLiteral("timeline")).toBool());
+    QVERIFY(detail().value(QStringLiteral("other")).toArray().isEmpty());
+    QVERIFY(!dispatcher.inspect({}).contains(QStringLiteral("dirty_detail")));
+
+    // A taller track row and a bookmark: dirty, but not the cut.
+    state.setTrackHeightScale(0, 2.0);
+    state.addBookmark(1.0, QStringLiteral("look here"));
+    QJsonObject view = detail();
+    QVERIFY(view.value(QStringLiteral("dirty")).toBool());
+    QVERIFY2(!view.value(QStringLiteral("timeline")).toBool(), qPrintable(QJsonDocument(view).toJson()));
+    QVERIFY(view.value(QStringLiteral("other")).toArray().contains(QStringLiteral("track_view")));
+    QVERIFY(view.value(QStringLiteral("other")).toArray().contains(QStringLiteral("bookmarks")));
+
+    // A rename is a timeline edit, listed with its clip.
+    state.setClipName(0, 0, QStringLiteral("Renamed"));
+    const QJsonObject edited = detail();
+    QVERIFY(edited.value(QStringLiteral("timeline")).toBool());
+    QCOMPARE(edited.value(QStringLiteral("clips")).toArray().first().toObject().value(QStringLiteral("fields")).toArray(),
+             QJsonArray{QStringLiteral("name")});
+
+    // Saving makes this the new baseline.
+    state.projectFile()->setDirty(false);
+    QVERIFY(!detail().value(QStringLiteral("timeline")).toBool());
+    QVERIFY(detail().value(QStringLiteral("other")).toArray().isEmpty());
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
