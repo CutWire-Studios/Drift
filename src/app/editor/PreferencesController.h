@@ -127,12 +127,13 @@ class PreferencesController : public QObject
     Q_PROPERTY(QString uiLanguage READ uiLanguage WRITE setUiLanguage NOTIFY uiLanguageChanged)
     Q_PROPERTY(QVariantList uiLanguages READ uiLanguages NOTIFY uiLanguageChanged)
     Q_PROPERTY(bool needsUiLanguagePrompt READ needsUiLanguagePrompt NOTIFY uiLanguageChanged)
-    // QSettings("ui/scale"), 1.0..2.0 in 0.25 steps. Extra scale on top of the OS display scale,
-    // except where applyStoredUiScale is given the OS scale (Windows): there it is the absolute
-    // size, 1.0 being 96 DPI. Applied as QT_SCALE_FACTOR before QApplication; a change needs a
-    // restart.
+    // QSettings("ui/scale"), 0.75, 0.8, 0.9, then 1.0..2.0 in 0.25 steps. Extra scale on top of
+    // the OS display scale, except where applyStoredUiScale is given the OS scale (Windows): there
+    // it is the absolute size, 1.0 being 96 DPI. Applied as QT_SCALE_FACTOR before QApplication;
+    // a change needs a restart. 0 applies no factor at all, leaving the OS display scale as is.
     Q_PROPERTY(double uiScale READ uiScale WRITE setUiScale NOTIFY uiScaleChanged)
     Q_PROPERTY(double appliedUiScale READ appliedUiScale CONSTANT)
+    Q_PROPERTY(double systemUiScale READ systemUiScale CONSTANT)
     Q_PROPERTY(bool uiScaleNeedsRestart READ uiScaleNeedsRestart NOTIFY uiScaleChanged)
     // Which shell to build at startup: "auto", "desktop" or "mobile". QSettings("ui/shell").
     // Shell.qml decides once, so a change needs a restart. appliedShell is the shell actually
@@ -282,9 +283,11 @@ public:
     Q_INVOKABLE void chooseUiLanguage(const QString &code);
     double uiScale() const { return m_uiScale; }
     double appliedUiScale() const;
+    double systemUiScale() const;
     bool uiScaleNeedsRestart() const;
     void setUiScale(double scale);
-    // Snaps to 1.0, 1.25, 1.5, 1.75, or 2.0. Safe before any PreferencesController exists.
+    // Snaps to 0 (OS scale), 0.75, 0.8, 0.9, 1.0, 1.25, 1.5, 1.75, or 2.0. Safe before any
+    // PreferencesController exists.
     static double storedUiScale();
     // Once per install: sets ui/scale from the primary screen's short side, 1080 rows being 1.0,
     // and records ui/autoScaleDone. Same preconditions as applyStoredUiScale.

@@ -9,11 +9,14 @@ QuickSetupPage {
     glyph: Theme.icons.zoomIn
     contentMaxWidth: 760
 
-    readonly property var scales: [1.0, 1.25, 1.5, 1.75, 2.0]
+    readonly property var scales: [0.75, 0.8, 0.9, 1.0, 1.25, 1.5, 1.75, 2.0]
+                                  .concat(Qt.platform.os === "windows" ? [0] : [])
     property real recommended: EditorState.preferences.uiScale
     readonly property real applied: EditorState.preferences.appliedUiScale > 0
                                     ? EditorState.preferences.appliedUiScale : 1.0
-    readonly property real ratio: EditorState.preferences.uiScale / applied
+    readonly property real ratio: (EditorState.preferences.uiScale > 0
+                                   ? EditorState.preferences.uiScale
+                                   : EditorState.preferences.systemUiScale) / applied
 
     Component.onCompleted: recommended = EditorState.preferences.uiScale
 
@@ -32,7 +35,7 @@ QuickSetupPage {
 
                 width: 128
                 height: 76
-                text: Math.round(modelData * 100) + "%"
+                text: modelData > 0 ? Math.round(modelData * 100) + "%" : qsTr("Windows")
                 selected: Math.abs(modelData - EditorState.preferences.uiScale) < 0.001
                 onClicked: EditorState.preferences.uiScale = modelData
 
