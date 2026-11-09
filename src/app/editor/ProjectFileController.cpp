@@ -1230,17 +1230,19 @@ void ProjectFileController::packageProject(const QUrl &url)
                     emit packageFinished(false, error);
                     return;
                 }
-                rememberEmbeddedSources(media);
                 m_packageProgress = 1.0;
                 emit packageProgressChanged();
                 const QString location = projectLocation(url);
-                setCurrentProjectPath(location);
                 addRecentProject(location);
-                // Like a save: clean only if nothing changed while the media was copied, and the
-                // baseline is the snapshot that was packaged.
-                if (m_app->m_project.id() == capture->projectId)
+                // Like a save: the open document takes the package's path, sources, and (if
+                // nothing changed while the media was copied) its clean state only if it is still
+                // the one that was packaged; a load or New Project during the copy keeps its own.
+                if (m_app->m_project.id() == capture->projectId) {
+                    rememberEmbeddedSources(media);
+                    setCurrentProjectPath(location);
                     landWrite(*capture, std::nullopt);
-                emit projectMetadataChanged();
+                    emit projectMetadataChanged();
+                }
                 m_app->setLastMessage(tr("Shareable copy ready"), QStringLiteral("success"));
                 emit packageFinished(true, QStringLiteral("Shareable copy ready"));
             },
