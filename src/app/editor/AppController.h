@@ -935,6 +935,19 @@ public:
     // length, whatever the project's ripple setting. Returns the ids of the clips that moved.
     Q_INVOKABLE void setClipTrim(int trackIndex, int clipIndex, double inPoint, double outPoint);
     QStringList setClipTrimRippled(int trackIndex, int clipIndex, double inPoint, double outPoint, QString *error = nullptr);
+    // Closes the gaps on `trackIndex` that lie within [fromUs, toUs] (toUs < 0: no end): the one
+    // before the first clip and those between clips, latest first, through closeRippleRanges so
+    // tracks joined by linked clips close together. A gap a clip on such a track sits in is left
+    // open and reported. One undo step. `error` is set (and nothing changes) for a bad track or a
+    // locked one in the group.
+    struct GapCloseResult
+    {
+        QList<QPair<drift::TimeUs, drift::TimeUs>> closed; // (start, width) as they were
+        QList<QPair<QPair<drift::TimeUs, drift::TimeUs>, QString>> skipped; // gap and the clip in the way
+        QStringList moved;
+        QString error;
+    };
+    GapCloseResult closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs);
     // setClipTrim's arithmetic on one clip: clamps the range to the source and re-derives the
     // timeline duration from it and the speed.
     void applyClipTrim(drift::Clip &clip, double inPoint, double outPoint) const;

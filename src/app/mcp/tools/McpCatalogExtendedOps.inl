@@ -1469,6 +1469,17 @@
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                         {QStringLiteral("at"), numberProp(QStringLiteral("Left edge of the hole, timeline seconds"))}},
                        {QStringLiteral("track"), QStringLiteral("at")}) },
+        { "close_gaps", "timeline", "Close every hole on a track",
+          "Close every gap on `track` within [from, to] (seconds; default the whole track) in one undo "
+          "step: the hole before the first clip and each hole between clips, latest first. Later "
+          "clips move left, together with every track joined to this one by linked clips, so A/V "
+          "stays in sync. A gap that a clip on such a track sits in is left open and listed in "
+          "skipped with the clip in the way; a locked track refuses the op. Returns closed:[{at, "
+          "width}], skipped:[{at, width, blocker}] and moved:[{id, start}].",
+          objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
+                        {QStringLiteral("from"), numberProp(QStringLiteral("Only gaps starting at or after this time (seconds)"))},
+                        {QStringLiteral("to"), numberProp(QStringLiteral("Only gaps ending at or before this time (seconds)"))}},
+                       {QStringLiteral("track")}) },
         { "set_snap", "timeline", "Turn magnetic snapping on or off",
           "Editor snap-to-clips/beats/bookmarks. Not undoable.",
           objectSchema({{QStringLiteral("enabled"), boolProp(QStringLiteral("Snap on"))}},
