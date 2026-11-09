@@ -1369,46 +1369,6 @@ QString nextSplitPieceName(const Track &track, const QString &name)
     return QStringLiteral("%1 (%2)").arg(base).arg(next);
 }
 
-QStringList rippleShiftFrom(Project &project, int trackIndex, TimeUs fromUs, TimeUs deltaUs)
-{
-    QStringList moved;
-    QList<Track> &tracks = project.tracks();
-    if (deltaUs == 0 || trackIndex < 0 || trackIndex >= tracks.size())
-        return moved;
-
-    QSet<QString> links;
-    for (const Clip &clip : std::as_const(tracks.at(trackIndex).clips)) {
-        if (clip.timelineStart >= fromUs && !clip.linkId.isEmpty())
-            links.insert(clip.linkId);
-    }
-    QSet<int> synced{trackIndex};
-    if (!links.isEmpty()) {
-        for (int t = 0; t < tracks.size(); ++t) {
-            if (tracks.at(t).isAdjustment())
-                continue;
-            for (const Clip &clip : std::as_const(tracks.at(t).clips)) {
-                if (links.contains(clip.linkId)) {
-                    synced.insert(t);
-                    break;
-                }
-            }
-        }
-    }
-
-    for (int t = 0; t < tracks.size(); ++t) {
-        if (!synced.contains(t))
-            continue;
-        for (Clip &clip : tracks[t].clips) {
-            const bool partner = t != trackIndex && !clip.linkId.isEmpty() && links.contains(clip.linkId);
-            if (clip.timelineStart < fromUs && !partner)
-                continue;
-            clip.timelineStart = qMax<TimeUs>(0, clip.timelineStart + deltaUs);
-            moved.append(clip.id);
-        }
-    }
-    return moved;
-}
-
 bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset, double fps)
 {
     return splitClipAtOffsetMin(head, tail, offset, minClipDurationUs(fps));

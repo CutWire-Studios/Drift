@@ -225,7 +225,6 @@ private slots:
     void applyMulticamSwitchMergesAdjacentSameCamera();
     void applyMulticamSwitchRejectsEdges();
     void sliceClipToTimelineRangeKeepsSourceInSync();
-    void rippleShiftMovesLaterClipsAndLinkedPartners();
 };
 
 void CoreTest::timeConversion()
@@ -6867,49 +6866,6 @@ void CoreTest::subtitleNamesFollowCuesOnlyWhenGenerated()
 
 // The new piece of a split gets the next free " (N)" for its base name on the track, so the
 // halves can be told apart. A year in parentheses is part of the name, not a piece number.
-void CoreTest::rippleShiftMovesLaterClipsAndLinkedPartners()
-{
-    using drift::secondsToUs;
-    const auto clip = [](const char *id, double start, double dur, const char *link = "") {
-        drift::Clip c;
-        c.id = QString::fromLatin1(id);
-        c.timelineStart = secondsToUs(start);
-        c.timelineDuration = secondsToUs(dur);
-        c.srcOut = c.timelineDuration;
-        c.linkId = QString::fromLatin1(link);
-        return c;
-    };
-    drift::Project project;
-    project.tracks().clear();
-    drift::Track video{.type = drift::TrackType::Video};
-    video.clips = {clip("a", 0, 2), clip("b", 2, 2, "ab"), clip("c", 5, 1)};
-    drift::Track audio{.type = drift::TrackType::Audio};
-    // b's audio starts earlier (a J-cut); d is a later clip on the same, now synced, track.
-    audio.clips = {clip("b-audio", 1.5, 2.5, "ab"), clip("d", 4, 1)};
-    drift::Track other{.type = drift::TrackType::Audio};
-    other.clips = {clip("music", 3, 4)};
-    drift::Track lane{.type = drift::TrackType::Adjustment};
-    lane.clips = {clip("grade", 2, 2)};
-    project.tracks() = {video, audio, other, lane};
-
-    const QStringList moved = drift::rippleShiftFrom(project, 0, secondsToUs(2), secondsToUs(1));
-    const auto startOf = [&](int t, int i) { return drift::usToSeconds(project.tracks().at(t).clips.at(i).timelineStart); };
-    QCOMPARE(startOf(0, 0), 0.0); // before the point
-    QCOMPARE(startOf(0, 1), 3.0);
-    QCOMPARE(startOf(0, 2), 6.0);
-    QCOMPARE(startOf(1, 0), 2.5); // the partner moves with b, though it starts before the point
-    QCOMPARE(startOf(1, 1), 5.0); // later clip on the synced track
-    QCOMPARE(startOf(2, 0), 3.0); // a track with no partner of a moved clip stays
-    QCOMPARE(startOf(3, 0), 2.0); // adjustments follow their clip in normalisation, not here
-    QCOMPARE(QSet<QString>(moved.cbegin(), moved.cend()),
-             (QSet<QString>{QStringLiteral("b"), QStringLiteral("c"), QStringLiteral("b-audio"), QStringLiteral("d")}));
-
-    // Left: stops at 0.
-    QVERIFY(drift::rippleShiftFrom(project, 0, secondsToUs(3), -secondsToUs(10)).size() == 4);
-    QCOMPARE(startOf(0, 1), 0.0);
-    QVERIFY(drift::rippleShiftFrom(project, 0, 0, 0).isEmpty());
-}
-
 void CoreTest::splitPieceNamesAreNumberedPerTrack()
 {
     drift::Track track;

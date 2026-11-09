@@ -673,10 +673,12 @@ const QList<Op> &ops()
           "moves right by the new clip's length, and so do the clips on tracks holding their linked "
           "audio, so A/V stays in sync; effect adjustments follow their clips. With ripple the "
           "point must be at a clip boundary or in a gap, not inside a clip (split it first); "
-          "without it the space must already be free. `in`/`out` are source seconds (default: the "
-          "asset's own length). `track` defaults to the track of `before`/`after`, else the first "
-          "that accepts the asset. Returns the new clip {id, track, index, start, dur, in, out} and "
-          "moved:[{id, start}] with the final start of every clip the ripple moved.",
+          "without it the space must already be free. `in`/`out` are source seconds within the "
+          "media (default: the asset's bin trim, else its whole length); a range past the media "
+          "fails bad_args. `track` defaults to the track of `before`/`after`, else the first that "
+          "accepts the asset. Returns the new clip {id, track, index, start, dur, in, out}, "
+          "moved:[{id, start}] with the final start of every clip the ripple moved, and "
+          "removed_transitions:[ids] when a transition at the cut had to go (its clips no longer touch).",
           objectSchema(mergeProps({{QStringLiteral("asset"), assetRefProp()},
                                    {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds to insert at"))},
                                    {QStringLiteral("before"), stringProp(QStringLiteral("Clip id to insert before (its start)"))},

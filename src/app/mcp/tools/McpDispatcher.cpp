@@ -1560,37 +1560,40 @@ QJsonObject McpDispatcher::opInsertClip(const QJsonObject &args)
         return err("type_mismatch", QStringLiteral("Track does not accept this asset"));
     }
 
-    const drift::TimeUs inUs = drift::secondsToUs(jsonNumber(args.value(QStringLiteral("in")), 0));
+    const drift::TimeUs inUs = args.contains(QStringLiteral("in"))
+                                   ? drift::secondsToUs(jsonNumber(args.value(QStringLiteral("in")), 0))
+                                   : -1;
     const drift::TimeUs outUs = args.contains(QStringLiteral("out"))
                                     ? drift::secondsToUs(jsonNumber(args.value(QStringLiteral("out")), 0))
                                     : -1;
-    if (outUs >= 0 && outUs <= inUs)
+    if (inUs < -1 || (args.contains(QStringLiteral("in")) && inUs < 0))
+        return err("bad_args", QStringLiteral("in must be 0 or more"));
+    if (outUs >= 0 && outUs <= qMax<drift::TimeUs>(0, inUs))
         return err("bad_args", QStringLiteral("out must be after in"));
     const bool ripple = jsonBool(args.value(QStringLiteral("ripple")), true);
 
-    QString error;
-    QStringList moved;
-    const QString id = m_controller->insertClipFromAsset(asset, track, atUs, inUs, outUs, ripple, &error, &moved);
-    if (id.isEmpty())
-        return err("bad_args", error);
+    const AppController::InsertResult inserted =
+        m_controller->insertClipFromAsset(asset, track, atUs, inUs, outUs, ripple);
+    if (inserted.id.isEmpty())
+        return err(inserted.errorCode.toLatin1().constData(), inserted.error);
 
     QJsonArray movedJson;
-    for (const QString &movedId : std::as_const(moved)) {
+    for (const QString &movedId : inserted.moved) {
         const ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), movedId}});
         if (!ref.valid())
             continue;
         movedJson.append(QJsonObject{
             {QStringLiteral("id"), movedId},
             {QStringLiteral("start"),
-             drift::mcpdetail::round3(drift::usToSeconds(m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).timelineStart))}});
+             drift::mcpdetail::round3(drift::usToSeconds(
+                 m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).timelineStart))}});
     }
-    const ClipRef placed = resolveClip(QJsonObject{{QStringLiteral("clip"), id}});
-    const drift::Clip &clip = m_controller->project()->tracks().at(placed.track).clips.at(placed.clip);
-    return ok(clipFeedback(placed, {{QStringLiteral("start"), drift::mcpdetail::round3(drift::usToSeconds(clip.timelineStart))},
-                                    {QStringLiteral("dur"), drift::mcpdetail::round3(drift::usToSeconds(clip.timelineDuration))},
-                                    {QStringLiteral("in"), drift::mcpdetail::round3(drift::usToSeconds(clip.srcIn))},
-                                    {QStringLiteral("out"), drift::mcpdetail::round3(drift::usToSeconds(clip.srcOut))},
-                                    {QStringLiteral("moved"), movedJson}}));
+    const ClipRef placed = resolveClip(QJsonObject{{QStringLiteral("clip"), inserted.id}});
+    QJsonObject extra{{QStringLiteral("moved"), movedJson}};
+    // A transition at the cut no longer has two touching clips, so it goes.
+    if (!inserted.removedTransitions.isEmpty())
+        extra.insert(QStringLiteral("removed_transitions"), QJsonArray::fromStringList(inserted.removedTransitions));
+    return ok(clipFeedback(placed, extra));
 }
 
 QJsonObject McpDispatcher::opMoveClip(const QJsonObject &args)

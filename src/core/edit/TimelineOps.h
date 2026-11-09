@@ -285,13 +285,6 @@ bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeU
 // split itself names each half from its cues.
 QString nextSplitPieceName(const Track &track, const QString &name);
 
-// Ripple: moves every clip that starts at or after `fromUs` on `trackIndex` by `deltaUs`, and the
-// same on each track that holds a linked partner (linkId) of one of those clips, together with
-// that partner even when it starts earlier (a J- or L-cut), so linked audio stays in sync.
-// Adjustment tracks are left alone: pinned adjustments follow their clip in the next edit's
-// normalisation. A clip moved left stops at 0. Returns the ids of the clips moved. Callers
-// moving left (closing space) make sure the space is there.
-QStringList rippleShiftFrom(Project &project, int trackIndex, TimeUs fromUs, TimeUs deltaUs);
 
 // Repoint `dst` at the media `src` carries while keeping dst's timeline placement. The source
 // time is read from `src` at dst's timeline start, so the two stay in timeline sync — which is

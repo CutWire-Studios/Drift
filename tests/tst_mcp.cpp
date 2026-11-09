@@ -967,6 +967,41 @@ void McpTest::insertClipRipplesTheTrack()
     QCOMPARE(startOf(b), 2.0);
     QCOMPARE(startOf(c), 4.0);
     QCOMPARE(state.project()->tracks().at(track).clips.size(), 3);
+
+    // A range past the media is refused, not clamped; codes match the other ops.
+    QCOMPARE(insert({{QStringLiteral("after"), c}, {QStringLiteral("in"), 9.0}, {QStringLiteral("out"), 12.0}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(insert({{QStringLiteral("after"), c}, {QStringLiteral("in"), 10.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(insert({{QStringLiteral("at"), 0.0}, {QStringLiteral("track"), 42}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("type_mismatch"));
+
+    // A transition on the cut the clip goes into is removed, and the reply says so.
+    {
+        const QPair<int, int> locB = state.mcp()->locateClip(b);
+        state.addTransition(locB.first, locB.second, QStringLiteral("crossfade"), 0.5);
+        QCOMPARE(state.project()->tracks().at(track).transitions.size(), 1);
+        const QJsonObject cut = insert({{QStringLiteral("after"), b}, {QStringLiteral("out"), 1.0}});
+        QVERIFY2(cut.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(cut).toJson()));
+        QCOMPARE(cut.value(QStringLiteral("removed_transitions")).toArray().size(), 1);
+        QVERIFY(state.project()->tracks().at(track).transitions.isEmpty());
+        state.undo();
+    }
+
+    // A bin trim is the default range; an explicit one wins over it, and the ripple makes room
+    // for exactly the clip that lands.
+    QVERIFY(library.setAssetTrim(0, drift::secondsToUs(1.0), drift::secondsToUs(5.0)));
+    const QJsonObject trimmed = insert({{QStringLiteral("after"), a}});
+    QVERIFY2(trimmed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(trimmed).toJson()));
+    QCOMPARE(trimmed.value(QStringLiteral("in")).toDouble(), 1.0);
+    QCOMPARE(trimmed.value(QStringLiteral("out")).toDouble(), 5.0);
+    QCOMPARE(startOf(b), 6.0);
+    state.undo();
+    const QJsonObject explicitRange = insert({{QStringLiteral("after"), a}, {QStringLiteral("in"), 6.0}, {QStringLiteral("out"), 7.0}});
+    QCOMPARE(explicitRange.value(QStringLiteral("in")).toDouble(), 6.0);
+    QCOMPARE(explicitRange.value(QStringLiteral("dur")).toDouble(), 1.0);
+    QCOMPARE(startOf(b), 3.0);
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
