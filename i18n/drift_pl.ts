@@ -2602,6 +2602,10 @@
         <translation>Przełącz przewodniki</translation>
     </message>
     <message>
+        <source>Hide/show selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>3D gizmo: cycle world/local/view axes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5972,6 +5976,125 @@
     </message>
 </context>
 <context>
+    <name>BlendModes</name>
+    <message>
+        <source>Normal</source>
+        <translation type="unfinished">Normalny</translation>
+    </message>
+    <message>
+        <source>Darken</source>
+        <translation type="unfinished">Przyciemnij</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished">Mnożenie</translation>
+    </message>
+    <message>
+        <source>Color Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darker Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lighten</source>
+        <translation type="unfinished">Rozjaśnij</translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">Ekran</translation>
+    </message>
+    <message>
+        <source>Color Dodge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Dodaj</translation>
+    </message>
+    <message>
+        <source>Lighter Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">Kontrast</translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished">Nakładka</translation>
+    </message>
+    <message>
+        <source>Soft Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vivid Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pin Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Mix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inversion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Difference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclusion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished">Odejmij</translation>
+    </message>
+    <message>
+        <source>Divide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Component</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue</source>
+        <translation type="unfinished">Odcień</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">Nasycenie</translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Kolor</translation>
+    </message>
+    <message>
+        <source>Luminosity</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BlendingInspector</name>
     <message>
         <source>Blend mode</source>
@@ -5980,38 +6103,6 @@
     <message>
         <source>How this clip&apos;s colours combine with the tracks beneath it.</source>
         <translation>Jak kolory tego klipu łączą się ze ścieżkami pod spodem.</translation>
-    </message>
-    <message>
-        <source>Normal</source>
-        <translation>Normalny</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation>Mnożenie</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation>Ekran</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Nakładka</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Dodaj</translation>
-    </message>
-    <message>
-        <source>Darken</source>
-        <translation>Przyciemnij</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation>Rozjaśnij</translation>
-    </message>
-    <message>
-        <source>How this clip blends with the layers below</source>
-        <translation>Jak ten klip miesza się z warstwami poniżej</translation>
     </message>
     <message>
         <source>Reset to Normal</source>
@@ -16107,6 +16198,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Windows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Recommended</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17568,16 +17663,24 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Uruchom ponownie Drift, aby zastosować ten rozmiar.</translation>
     </message>
     <message>
+        <source>Follows your Windows display scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
-        <translation>Zwiększa przyciski, tekst i ikony niezależnie od ustawień ekranu.</translation>
+        <source>Makes buttons, text, and icons larger or smaller, on top of your display settings.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>100% (system)</source>
         <translation>100% (system)</translation>
+    </message>
+    <message>
+        <source>Windows display scale</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout</source>
@@ -18805,32 +18908,8 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Efekt</translation>
     </message>
     <message>
-        <source>Normal</source>
-        <translation>Normalny</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation>Mnożenie</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation>Ekran</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Nakładka</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Dodaj</translation>
-    </message>
-    <message>
         <source>Darken</source>
         <translation>Przyciemnij</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation>Rozjaśnij</translation>
     </message>
     <message>
         <source>Centre</source>
@@ -22148,6 +22227,61 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
 </context>
 <context>
+    <name>TeleprompterPanel</name>
+    <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Prędkość</translation>
+    </message>
+    <message>
+        <source>lines/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">Rozmiar</translation>
+    </message>
+    <message>
+        <source>Follow recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scrolling starts, pauses and stops with recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show over preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste or type your script</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextAnimPresetFrame</name>
     <message>
         <source>None</source>
@@ -23594,6 +23728,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Toggle audio mixer strip</source>
         <translation>Przełącz pasek miksera audio</translation>
+    </message>
+    <message>
+        <source>Toggle keyframe strip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
@@ -25740,6 +25878,21 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
 </context>
 <context>
+    <name>Vec2Param</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Edytuj %1</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">Zresetuj %1</translation>
+    </message>
+    <message>
+        <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Vec2ParamPad</name>
     <message>
         <source>Edit %1</source>
@@ -26637,6 +26790,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Recorder</source>
         <translation>Rejestrator</translation>
+    </message>
+    <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Noise Removal</source>

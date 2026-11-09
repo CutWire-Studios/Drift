@@ -2599,6 +2599,10 @@
         <translation>මඟපෙන්වුම් රේඛා ක්‍රියාත්මක/අක්‍රිය කරන්න</translation>
     </message>
     <message>
+        <source>Hide/show selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>3D gizmo: cycle world/local/view axes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5949,6 +5953,125 @@
     </message>
 </context>
 <context>
+    <name>BlendModes</name>
+    <message>
+        <source>Normal</source>
+        <translation type="unfinished">Normal (සාමාන්‍ය)</translation>
+    </message>
+    <message>
+        <source>Darken</source>
+        <translation type="unfinished">Darken</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished">Multiply</translation>
+    </message>
+    <message>
+        <source>Color Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darker Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lighten</source>
+        <translation type="unfinished">Lighten</translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">Screen</translation>
+    </message>
+    <message>
+        <source>Color Dodge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Add</translation>
+    </message>
+    <message>
+        <source>Lighter Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">පරස්පරතාව (Contrast)</translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished">Overlay</translation>
+    </message>
+    <message>
+        <source>Soft Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vivid Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pin Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Mix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inversion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Difference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclusion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished">අඩු කරන්න</translation>
+    </message>
+    <message>
+        <source>Divide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Component</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue</source>
+        <translation type="unfinished">Hue</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">සංතෘප්තිය (Saturation)</translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">වර්ණ</translation>
+    </message>
+    <message>
+        <source>Luminosity</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BlendingInspector</name>
     <message>
         <source>Blend mode</source>
@@ -5957,38 +6080,6 @@
     <message>
         <source>How this clip&apos;s colours combine with the tracks beneath it.</source>
         <translation>මෙම ක්ලිපයේ වර්ණ ඊට පහළින් ඇති ට්‍රැක් සමඟ සංයෝජනය වන ආකාරය.</translation>
-    </message>
-    <message>
-        <source>Normal</source>
-        <translation>Normal (සාමාන්‍ය)</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation>Multiply</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation>Screen</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Overlay</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Add</translation>
-    </message>
-    <message>
-        <source>Darken</source>
-        <translation>Darken</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation>Lighten</translation>
-    </message>
-    <message>
-        <source>How this clip blends with the layers below</source>
-        <translation>මෙම ක්ලිපය පහළින් ඇති ස්තර සමඟ මුසු වන ආකාරය</translation>
     </message>
     <message>
         <source>Reset to Normal</source>
@@ -16037,6 +16128,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Windows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Recommended</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17497,16 +17592,24 @@ If playback stutters, try another.</source>
         <translation>මෙම ප්‍රමාණය යෙදීමට Drift නැවත ආරම්භ කරන්න.</translation>
     </message>
     <message>
+        <source>Follows your Windows display scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
-        <translation>ඔබේ සංදර්ශක සැකසුම් වලට අමතරව බොත්තම්, පෙළ සහ අයිකන විශාල කරයි.</translation>
+        <source>Makes buttons, text, and icons larger or smaller, on top of your display settings.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>100% (system)</source>
         <translation>100% (පද්ධතිය)</translation>
+    </message>
+    <message>
+        <source>Windows display scale</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout</source>
@@ -18734,32 +18837,8 @@ If playback stutters, try another.</source>
         <translation>ප්‍රයෝගය</translation>
     </message>
     <message>
-        <source>Normal</source>
-        <translation>Normal (සාමාන්‍ය)</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation>Multiply</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation>Screen</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Overlay</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Add</translation>
-    </message>
-    <message>
         <source>Darken</source>
         <translation>Darken</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation>Lighten</translation>
     </message>
     <message>
         <source>Centre</source>
@@ -22069,6 +22148,61 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TeleprompterPanel</name>
+    <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">වේගය</translation>
+    </message>
+    <message>
+        <source>lines/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">ප්‍රමාණය</translation>
+    </message>
+    <message>
+        <source>Follow recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scrolling starts, pauses and stops with recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show over preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste or type your script</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextAnimPresetFrame</name>
     <message>
         <source>None</source>
@@ -23514,6 +23648,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Toggle audio mixer strip</source>
         <translation>ශ්‍රව්‍ය මිශ්‍රක තීරුව ටොගල් කරන්න</translation>
+    </message>
+    <message>
+        <source>Toggle keyframe strip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
@@ -25652,6 +25790,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>Vec2Param</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 සංස්කරණය කරන්න</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">%1 යළි සකසන්න</translation>
+    </message>
+    <message>
+        <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Vec2ParamPad</name>
     <message>
         <source>Edit %1</source>
@@ -26549,6 +26702,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Recorder</source>
         <translation>පටිගත කිරීමේ යන්ත්‍රය</translation>
+    </message>
+    <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Noise Removal</source>

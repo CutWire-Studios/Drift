@@ -2599,6 +2599,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Hide/show selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>3D gizmo: cycle world/local/view axes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5949,33 +5953,9 @@
     </message>
 </context>
 <context>
-    <name>BlendingInspector</name>
-    <message>
-        <source>Blend mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>How this clip&apos;s colours combine with the tracks beneath it.</source>
-        <translation type="unfinished"></translation>
-    </message>
+    <name>BlendModes</name>
     <message>
         <source>Normal</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5983,11 +5963,122 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Multiply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darker Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Lighten</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>How this clip blends with the layers below</source>
+        <source>Screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color Dodge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lighter Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Soft Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vivid Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pin Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Mix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inversion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Difference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclusion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Divide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Component</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Luminosity</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BlendingInspector</name>
+    <message>
+        <source>Blend mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How this clip&apos;s colours combine with the tracks beneath it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16031,6 +16122,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Windows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Recommended</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17490,15 +17585,23 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Follows your Windows display scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
+        <source>Makes buttons, text, and icons larger or smaller, on top of your display settings.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>100% (system)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows display scale</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -18727,31 +18830,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Normal</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Darken</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lighten</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -22061,6 +22140,61 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TeleprompterPanel</name>
+    <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>lines/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scrolling starts, pauses and stops with recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show over preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste or type your script</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextAnimPresetFrame</name>
     <message>
         <source>None</source>
@@ -23505,6 +23639,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Toggle audio mixer strip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle keyframe strip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -25644,6 +25782,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>Vec2Param</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Vec2ParamPad</name>
     <message>
         <source>Edit %1</source>
@@ -26540,6 +26693,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Recorder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Teleprompter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
