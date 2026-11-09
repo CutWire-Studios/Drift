@@ -1,6 +1,11 @@
 #include "engine/audio/AudioRecorder.h"
 
+#include <QElapsedTimer>
+#include <QMetaObject>
+#include <QThread>
+
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 
 namespace drift {
@@ -73,17 +78,226 @@ void unpackToStereoFloat(const char *srcBytes, qint64 byteCount, const QAudioFor
 
 } // namespace
 
+// Capture, conversion and FLAC encoding run on their own thread so a stalled GUI thread cannot
+// overflow the device buffer and drop samples. Every member except `gain` is touched only there.
+class AudioRecorder::Worker : public QObject
+{
+public:
+    explicit Worker(AudioRecorder *owner)
+        : m_owner(owner)
+    {
+    }
+
+    std::atomic<float> gain{1.0f};
+
+    bool start(const QAudioDevice &device, const QAudioFormat &format, const QString &path, int session,
+               QString *error)
+    {
+        if (!m_writer.open(path, format.sampleRate(), 2, error))
+            return false;
+
+        m_format = format;
+        m_sampleRate = format.sampleRate();
+        m_session = session;
+        m_paused = false;
+        m_failed = false;
+        m_failError.clear();
+        m_totalFrames = 0;
+        m_peakCounter = 0;
+        m_bucketPeak = 0.0f;
+        m_pendingPeak = 0.0f;
+        m_pendingPeaks.clear();
+
+        if (!startSource(device)) {
+            m_writer.abort();
+            *error = QStringLiteral("Failed to start audio input stream");
+            return false;
+        }
+        m_postTimer.start();
+        return true;
+    }
+
+    void switchDevice(const QAudioDevice &device)
+    {
+        m_source.reset();
+        m_io = nullptr;
+        m_format = negotiateFormat(device);
+        if (m_format.isValid() && startSource(device) && m_paused)
+            m_source->suspend();
+    }
+
+    void setPaused(bool paused)
+    {
+        m_paused = paused;
+        if (!m_source)
+            return;
+        if (paused) {
+            m_source->suspend();
+            postUpdate(true);
+        } else {
+            m_source->resume();
+        }
+    }
+
+    bool stop(qint64 *frames, QString *error)
+    {
+        if (m_source) {
+            if (!m_paused)
+                drain();
+            m_source->stop();
+            m_source.reset();
+            m_io = nullptr;
+        }
+        *frames = m_totalFrames;
+        if (m_failed) {
+            m_writer.abort();
+            *error = m_failError;
+            return false;
+        }
+        if (!m_writer.finish(error)) {
+            m_writer.abort();
+            return false;
+        }
+        return true;
+    }
+
+    void cancel()
+    {
+        if (m_source) {
+            m_source->stop();
+            m_source.reset();
+        }
+        m_io = nullptr;
+        m_writer.abort();
+    }
+
+private:
+    bool startSource(const QAudioDevice &device)
+    {
+        m_source = std::make_unique<QAudioSource>(device, m_format);
+        m_source->setBufferSize(m_format.bytesForDuration(500000));
+        m_io = m_source->start();
+        if (!m_io) {
+            m_source.reset();
+            return false;
+        }
+        connect(m_io, &QIODevice::readyRead, this, [this] {
+            drain();
+            postUpdate(false);
+        });
+        return true;
+    }
+
+    void drain()
+    {
+        if (!m_io || m_paused || m_failed)
+            return;
+
+        const QByteArray bytes = m_io->readAll();
+        if (bytes.isEmpty())
+            return;
+
+        std::vector<float> stereoPcm;
+        unpackToStereoFloat(bytes.constData(), bytes.size(), m_format, stereoPcm);
+        if (stereoPcm.empty())
+            return;
+
+        const float g = gain.load(std::memory_order_relaxed);
+        if (g != 1.0f) {
+            for (float &s : stereoPcm) {
+                s = std::clamp(s * g, -1.0f, 1.0f);
+            }
+        }
+
+        const int frames = static_cast<int>(stereoPcm.size() / 2);
+        const int samplesPerPeak = std::max(1, m_sampleRate / 50);
+
+        for (int i = 0; i < frames; ++i) {
+            const float sampleL = std::abs(stereoPcm[i * 2]);
+            const float sampleR = std::abs(stereoPcm[i * 2 + 1]);
+            const float framePeak = std::max(sampleL, sampleR);
+            m_pendingPeak = std::max(m_pendingPeak, framePeak);
+
+            m_bucketPeak = std::max(m_bucketPeak, framePeak);
+            m_peakCounter++;
+            if (m_peakCounter >= samplesPerPeak) {
+                m_pendingPeaks.push_back(m_bucketPeak);
+                m_bucketPeak = 0.0f;
+                m_peakCounter = 0;
+            }
+        }
+
+        QString error;
+        if (!m_writer.writeFrames(stereoPcm.data(), frames, &error)) {
+            qWarning("AudioRecorder: writeFrames failed: %s", qPrintable(error));
+            m_failed = true;
+            m_failError = error;
+            QMetaObject::invokeMethod(
+                m_owner,
+                [o = m_owner, s = m_session, error] {
+                    if (s != o->m_session || !o->m_recording)
+                        return;
+                    emit o->recordingError(error);
+                    o->cancelRecording();
+                },
+                Qt::QueuedConnection);
+            return;
+        }
+        m_totalFrames += frames;
+    }
+
+    void postUpdate(bool force)
+    {
+        if (m_failed || (!force && !m_postTimer.hasExpired(33)))
+            return;
+        m_postTimer.restart();
+        QMetaObject::invokeMethod(
+            m_owner,
+            [o = m_owner, s = m_session, f = m_totalFrames, p = m_pendingPeak, v = m_pendingPeaks] {
+                o->applyLiveUpdate(s, f, p, v);
+            },
+            Qt::QueuedConnection);
+        m_pendingPeak = 0.0f;
+        m_pendingPeaks.clear();
+    }
+
+    AudioRecorder *m_owner;
+    std::unique_ptr<QAudioSource> m_source;
+    QIODevice *m_io = nullptr;
+    drift::AudioFileWriter m_writer;
+    QAudioFormat m_format;
+    int m_sampleRate = 48000;
+    int m_session = 0;
+    bool m_paused = false;
+    bool m_failed = false;
+    QString m_failError;
+    qint64 m_totalFrames = 0;
+    int m_peakCounter = 0;
+    float m_bucketPeak = 0.0f;
+    float m_pendingPeak = 0.0f;
+    std::vector<float> m_pendingPeaks;
+    QElapsedTimer m_postTimer;
+};
+
 AudioRecorder::AudioRecorder(QObject *parent)
     : QObject(parent)
     , m_mediaDevices(new QMediaDevices(this))
+    , m_thread(new QThread(this))
+    , m_worker(new Worker(this))
 {
     connect(m_mediaDevices, &QMediaDevices::audioInputsChanged, this, &AudioRecorder::onDevicesChanged);
+
+    m_worker->moveToThread(m_thread);
+    connect(m_thread, &QThread::finished, m_worker, &QObject::deleteLater);
+    m_thread->start();
 }
 
 AudioRecorder::~AudioRecorder()
 {
     if (m_recording)
         cancelRecording();
+    m_thread->quit();
+    m_thread->wait();
 }
 
 QVariantList AudioRecorder::availableDevices() const
@@ -116,6 +330,7 @@ void AudioRecorder::setGain(float gain)
     if (qFuzzyCompare(m_gain, clamped))
         return;
     m_gain = clamped;
+    m_worker->gain.store(clamped, std::memory_order_relaxed);
     emit gainChanged(m_gain);
 }
 
@@ -153,21 +368,8 @@ void AudioRecorder::selectDevice(const QString &id)
             emit currentDeviceChanged();
 
             if (m_recording) {
-                if (m_audioSource) {
-                    m_audioSource->stop();
-                    m_audioSource.reset();
-                }
-                m_inputIo = nullptr;
-                m_captureFormat = negotiateFormat(m_selectedDevice);
-                if (m_captureFormat.isValid()) {
-                    m_audioSource = std::make_unique<QAudioSource>(m_selectedDevice, m_captureFormat, this);
-                    m_inputIo = m_audioSource->start();
-                    if (m_inputIo) {
-                        connect(m_inputIo, &QIODevice::readyRead, this, &AudioRecorder::onReadyRead);
-                        if (m_paused)
-                            m_audioSource->suspend();
-                    }
-                }
+                QMetaObject::invokeMethod(
+                    m_worker, [this, device] { m_worker->switchDevice(device); }, Qt::BlockingQueuedConnection);
             }
             return;
         }
@@ -229,47 +431,38 @@ bool AudioRecorder::startRecording(int trackIndex, const QString &outputPath, QS
         return false;
     }
 
-    m_captureFormat = negotiateFormat(dev);
-    if (!m_captureFormat.isValid()) {
+    const QAudioFormat format = negotiateFormat(dev);
+    if (!format.isValid()) {
         if (errorOut)
             *errorOut = QStringLiteral("Failed to negotiate supported audio format");
         emit recordingError(*errorOut);
         return false;
     }
 
-    m_sampleRate = m_captureFormat.sampleRate();
+    m_sampleRate = format.sampleRate();
     m_outputPath = outputPath;
+    ++m_session;
 
     QString error;
-    if (!m_writer.open(m_outputPath, m_sampleRate, 2, &error)) {
+    bool started = false;
+    m_worker->gain.store(m_gain, std::memory_order_relaxed);
+    QMetaObject::invokeMethod(
+        m_worker,
+        [&] { started = m_worker->start(dev, format, m_outputPath, m_session, &error); },
+        Qt::BlockingQueuedConnection);
+    if (!started) {
         if (errorOut)
             *errorOut = error;
         emit recordingError(error);
         return false;
     }
 
-    m_audioSource = std::make_unique<QAudioSource>(dev, m_captureFormat, this);
-    m_inputIo = m_audioSource->start();
-    if (!m_inputIo) {
-        m_writer.abort();
-        m_audioSource.reset();
-        if (errorOut)
-            *errorOut = QStringLiteral("Failed to start audio input stream");
-        emit recordingError(*errorOut);
-        return false;
-    }
-
-    connect(m_inputIo, &QIODevice::readyRead, this, &AudioRecorder::onReadyRead);
-
     m_recording = true;
     m_paused = false;
     m_recordingTrackIndex = trackIndex;
-    m_totalFramesWritten = 0;
     m_recordedSeconds = 0.0;
     m_audioLevel = 0.0f;
     m_livePeaks.clear();
-    m_peakSampleCounter = 0;
-    m_currentBucketPeak = 0.0f;
 
     emit recordingStateChanged();
     emit pausedChanged(false);
@@ -285,8 +478,7 @@ void AudioRecorder::pause()
         return;
 
     m_paused = true;
-    if (m_audioSource)
-        m_audioSource->suspend();
+    QMetaObject::invokeMethod(m_worker, [this] { m_worker->setPaused(true); }, Qt::BlockingQueuedConnection);
 
     m_audioLevel = 0.0f;
     emit audioLevelChanged(0.0f);
@@ -299,65 +491,23 @@ void AudioRecorder::resume()
         return;
 
     m_paused = false;
-    if (m_audioSource)
-        m_audioSource->resume();
+    QMetaObject::invokeMethod(m_worker, [this] { m_worker->setPaused(false); }, Qt::BlockingQueuedConnection);
 
     emit pausedChanged(false);
 }
 
-void AudioRecorder::onReadyRead()
+void AudioRecorder::applyLiveUpdate(int session, qint64 frames, float peak, const std::vector<float> &peaks)
 {
-    if (!m_recording || !m_inputIo || m_paused)
+    if (session != m_session || !m_recording)
         return;
 
-    const QByteArray bytes = m_inputIo->readAll();
-    if (bytes.isEmpty())
-        return;
-
-    std::vector<float> stereoPcm;
-    unpackToStereoFloat(bytes.constData(), bytes.size(), m_captureFormat, stereoPcm);
-    if (stereoPcm.empty())
-        return;
-
-    // Apply software input gain
-    if (m_gain != 1.0f) {
-        for (float &s : stereoPcm) {
-            s = std::clamp(s * m_gain, -1.0f, 1.0f);
-        }
+    m_livePeaks.insert(m_livePeaks.end(), peaks.begin(), peaks.end());
+    m_recordedSeconds = double(frames) / double(m_sampleRate);
+    if (!m_paused) {
+        // Exponential smoothing for a responsive, readable meter
+        m_audioLevel = std::max(peak, m_audioLevel * 0.75f);
+        emit audioLevelChanged(m_audioLevel);
     }
-
-    const int frames = static_cast<int>(stereoPcm.size() / 2);
-    const int samplesPerPeak = std::max(1, m_sampleRate / 50);
-
-    float peak = 0.0f;
-    for (int i = 0; i < frames; ++i) {
-        const float sampleL = std::abs(stereoPcm[i * 2]);
-        const float sampleR = std::abs(stereoPcm[i * 2 + 1]);
-        const float framePeak = std::max(sampleL, sampleR);
-        peak = std::max(peak, framePeak);
-
-        m_currentBucketPeak = std::max(m_currentBucketPeak, framePeak);
-        m_peakSampleCounter++;
-        if (m_peakSampleCounter >= samplesPerPeak) {
-            m_livePeaks.push_back(m_currentBucketPeak);
-            m_currentBucketPeak = 0.0f;
-            m_peakSampleCounter = 0;
-        }
-    }
-    // Exponential smoothing for a responsive, readable meter
-    m_audioLevel = std::max(peak, m_audioLevel * 0.75f);
-    emit audioLevelChanged(m_audioLevel);
-
-    QString error;
-    if (!m_writer.writeFrames(stereoPcm.data(), frames, &error)) {
-        qWarning("AudioRecorder: writeFrames failed: %s", qPrintable(error));
-        emit recordingError(error);
-        cancelRecording();
-        return;
-    }
-
-    m_totalFramesWritten += frames;
-    m_recordedSeconds = double(m_totalFramesWritten) / double(m_sampleRate);
     emit recordedSecondsChanged(m_recordedSeconds);
     emit livePeaksChanged();
 }
@@ -369,22 +519,21 @@ QString AudioRecorder::stopRecording(drift::TimeUs *recordedDurationUsOut)
 
     m_recording = false;
     m_paused = false;
-    if (m_audioSource) {
-        m_audioSource->stop();
-        m_audioSource.reset();
-    }
-    m_inputIo = nullptr;
+    ++m_session;
 
     QString error;
-    if (!m_writer.finish(&error)) {
+    qint64 frames = 0;
+    bool ok = false;
+    QMetaObject::invokeMethod(m_worker, [&] { ok = m_worker->stop(&frames, &error); }, Qt::BlockingQueuedConnection);
+    if (!ok) {
         qWarning("AudioRecorder: finish failed: %s", qPrintable(error));
-        m_writer.abort();
         emit recordingError(error);
         emit recordingStateChanged();
         emit pausedChanged(false);
         return {};
     }
 
+    m_recordedSeconds = double(frames) / double(m_sampleRate);
     const drift::TimeUs durUs = drift::secondsToUs(m_recordedSeconds);
     if (recordedDurationUsOut)
         *recordedDurationUsOut = durUs;
@@ -393,8 +542,6 @@ QString AudioRecorder::stopRecording(drift::TimeUs *recordedDurationUsOut)
     m_recordingTrackIndex = -1;
     m_audioLevel = 0.0f;
     m_livePeaks.clear();
-    m_peakSampleCounter = 0;
-    m_currentBucketPeak = 0.0f;
     emit audioLevelChanged(0.0f);
     emit pausedChanged(false);
     emit livePeaksChanged();
@@ -410,19 +557,12 @@ void AudioRecorder::cancelRecording()
 
     m_recording = false;
     m_paused = false;
-    if (m_audioSource) {
-        m_audioSource->stop();
-        m_audioSource.reset();
-    }
-    m_inputIo = nullptr;
-
-    m_writer.abort();
+    ++m_session;
+    QMetaObject::invokeMethod(m_worker, [this] { m_worker->cancel(); }, Qt::BlockingQueuedConnection);
     m_recordingTrackIndex = -1;
     m_audioLevel = 0.0f;
     m_recordedSeconds = 0.0;
     m_livePeaks.clear();
-    m_peakSampleCounter = 0;
-    m_currentBucketPeak = 0.0f;
     emit audioLevelChanged(0.0f);
     emit pausedChanged(false);
     emit livePeaksChanged();
