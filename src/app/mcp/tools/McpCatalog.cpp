@@ -670,8 +670,9 @@ const QList<Op> &ops()
         { "insert_clip", "timeline", "Insert media and push the rest along",
           "Insert an asset as a clip at an exact point, in one undo step. The point is `at` (seconds), "
           "or `before`/`after` a clip id. With ripple (default true) every later clip on the track "
-          "moves right by the new clip's length, and so do the clips on tracks holding their linked "
-          "audio, so A/V stays in sync; effect adjustments follow their clips. With ripple the "
+          "moves right by the new clip's length, and so does every later clip on the tracks holding "
+          "their linked audio, so A/V stays in sync; effect adjustments follow their clips. A locked "
+          "track it would change refuses the insert. With ripple the "
           "point must be at a clip boundary or in a gap, not inside a clip (split it first); "
           "without it the space must already be free. `in`/`out` are source seconds within the "
           "media (default: the asset's bin trim, else its whole length); a range past the media "
@@ -684,8 +685,8 @@ const QList<Op> &ops()
                                    {QStringLiteral("before"), stringProp(QStringLiteral("Clip id to insert before (its start)"))},
                                    {QStringLiteral("after"), stringProp(QStringLiteral("Clip id to insert after (its end)"))},
                                    {QStringLiteral("track"), integerProp(QStringLiteral("Destination track"))},
-                                   {QStringLiteral("in"), numberProp(QStringLiteral("Source in, seconds (default 0)"))},
-                                   {QStringLiteral("out"), numberProp(QStringLiteral("Source out, seconds (default: the asset's length)"))},
+                                   {QStringLiteral("in"), numberProp(QStringLiteral("Source in, seconds (default: the bin trim's in, else 0)"))},
+                                   {QStringLiteral("out"), numberProp(QStringLiteral("Source out, seconds (default: the bin trim's out, else the media's end)"))},
                                    {QStringLiteral("ripple"), propWithDefault(boolProp(QStringLiteral("Push later clips right to make room")), true)}},
                                   {}),
                        {QStringLiteral("asset")}) },

@@ -1155,10 +1155,17 @@ AppController::InsertResult AppController::insertClipFromAsset(int assetIndex, i
     if (atUs < 0)
         return fail("bad_args", QStringLiteral("The time is before the start of the timeline"));
 
-    // The layout first: it applies a bin trim to srcIn/srcOut/timelineDuration, which then becomes
-    // the default range rather than overwriting an explicit one after the ripple made room.
+    // Source first (a 3D model's layout reads its probed bounds), then the layout: it applies a bin
+    // trim to srcIn/srcOut/timelineDuration, which then becomes the default range rather than
+    // overwriting an explicit one after the ripple made room.
     drift::Clip clip;
     clip.type = clipType;
+    clip.assetId = m_assetLibrary->assetIdAt(assetIndex);
+    clip.name = asset.value(QStringLiteral("name")).toString();
+    clip.path = asset.value(QStringLiteral("path")).toString();
+    clip.sequenceId = asset.value(QStringLiteral("sequenceId")).toString();
+    m_assetLibrary->ensureMedia(assetIndex);
+    attachAssetSource(clip);
     const drift::TimeUs fullUs = clipDurationForAssetIndex(assetIndex);
     clip.srcIn = 0;
     clip.srcOut = fullUs;
@@ -1167,8 +1174,9 @@ AppController::InsertResult AppController::insertClipFromAsset(int assetIndex, i
     const drift::TimeUs minUs = drift::minClipDurationUs(m_project.fps());
     // Up to a frame of slack for times that went through seconds and back.
     const drift::TimeUs slackUs = minUs;
-    const drift::TimeUs inUs = srcInUs >= 0 ? srcInUs : clip.srcIn;
-    drift::TimeUs outUs = srcOutUs >= 0 ? srcOutUs : (srcInUs >= 0 ? fullUs : clip.srcOut);
+    // An omitted end keeps the bin trim where it still fits the given one, else the media's.
+    const drift::TimeUs inUs = srcInUs >= 0 ? srcInUs : (clip.srcIn < srcOutUs || srcOutUs < 0 ? clip.srcIn : 0);
+    drift::TimeUs outUs = srcOutUs >= 0 ? srcOutUs : (clip.srcOut > inUs ? clip.srcOut : fullUs);
     if (inUs >= fullUs)
         return fail("bad_args", QStringLiteral("in (%1 s) is at or past the end of the media (%2 s)")
                                     .arg(drift::usToSeconds(inUs))
@@ -1199,19 +1207,30 @@ AppController::InsertResult AppController::insertClipFromAsset(int assetIndex, i
         }
     }
 
-    m_assetLibrary->ensureMedia(assetIndex);
+    // Rippled: the destination track and every track holding a linked partner (tight or loose) of a
+    // clip that moves, so partners keep their place and nothing moved lands on a clip that stayed.
+    // Adjustment lanes follow their clips in the edit's normalisation.
+    QSet<int> rippleTracks{trackIndex};
+    if (ripple) {
+        for (const drift::Clip &other : target.clips) {
+            if (other.timelineStart < atUs || other.linkId.isEmpty())
+                continue;
+            for (const drift::ClipRef &ref : drift::linkedPartners(m_project, other)) {
+                if (!m_project.tracks().at(ref.trackIndex).isAdjustment())
+                    rippleTracks.insert(ref.trackIndex);
+            }
+        }
+    }
+    for (const int t : std::as_const(rippleTracks)) {
+        if (m_project.tracks().at(t).locked)
+            return fail("bad_args", QStringLiteral("Track %1 is locked").arg(t));
+    }
+
     const drift::Project before = m_project;
-    // The same ripple the timeline's own edits use: later clips on the track move, and their
-    // linked partners on other tracks follow them.
     if (ripple)
-        rippleTracksFrom(m_project, {trackIndex}, atUs, lengthUs, {});
+        rippleTracksFrom(m_project, rippleTracks, atUs, lengthUs, {});
 
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    clip.assetId = m_assetLibrary->assetIdAt(assetIndex);
-    clip.name = asset.value(QStringLiteral("name")).toString();
-    clip.path = asset.value(QStringLiteral("path")).toString();
-    attachAssetSource(clip);
-    clip.sequenceId = asset.value(QStringLiteral("sequenceId")).toString();
     clip.thumbnailPath = m_assetLibrary->thumbnailAt(assetIndex);
     clip.filmstripPath = m_assetLibrary->filmstripAt(assetIndex);
     clip.timelineStart = atUs;
@@ -1224,17 +1243,23 @@ AppController::InsertResult AppController::insertClipFromAsset(int assetIndex, i
     while (at < track.clips.size() && track.clips.at(at).timelineStart <= atUs)
         ++at;
     track.clips.insert(at, clip);
+    // Before the snapshot, so redo does not bring back a transition whose clips no longer touch.
+    syncOverlapTransitions(m_project);
     pushProjectEdit(before, ripple ? tr("Clip inserted") : tr("Clip added"));
     finishEdit(ripple ? tr("Clip inserted") : tr("Clip added"));
 
     result.id = clip.id;
     QHash<QString, drift::TimeUs> starts;
-    QSet<QString> transitionsBefore;
+    // By the pair of clips: a transition from an older project may have no id.
+    const auto key = [](const drift::Transition &transition) {
+        return transition.fromClipId + QLatin1Char('|') + transition.toClipId;
+    };
+    QHash<QString, QString> transitionsBefore;
     for (const drift::Track &t : before.tracks()) {
         for (const drift::Clip &was : t.clips)
             starts.insert(was.id, was.timelineStart);
         for (const drift::Transition &transition : t.transitions)
-            transitionsBefore.insert(transition.id);
+            transitionsBefore.insert(key(transition), transition.id.isEmpty() ? key(transition) : transition.id);
     }
     QSet<QString> transitionsAfter;
     for (const drift::Track &t : m_project.tracks()) {
@@ -1243,11 +1268,11 @@ AppController::InsertResult AppController::insertClipFromAsset(int assetIndex, i
                 result.moved.append(now.id);
         }
         for (const drift::Transition &transition : t.transitions)
-            transitionsAfter.insert(transition.id);
+            transitionsAfter.insert(key(transition));
     }
-    for (const QString &id : std::as_const(transitionsBefore)) {
-        if (!transitionsAfter.contains(id))
-            result.removedTransitions.append(id);
+    for (auto it = transitionsBefore.constBegin(); it != transitionsBefore.constEnd(); ++it) {
+        if (!transitionsAfter.contains(it.key()))
+            result.removedTransitions.append(it.value());
     }
     return result;
 }

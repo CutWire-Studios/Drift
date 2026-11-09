@@ -987,6 +987,46 @@ void McpTest::insertClipRipplesTheTrack()
         QCOMPARE(cut.value(QStringLiteral("removed_transitions")).toArray().size(), 1);
         QVERIFY(state.project()->tracks().at(track).transitions.isEmpty());
         state.undo();
+        QCOMPARE(state.project()->tracks().at(track).transitions.size(), 1);
+        state.redo(); // the redone insert has no transition on its cut either
+        QVERIFY(state.project()->tracks().at(track).transitions.isEmpty());
+        state.undo();
+    }
+    QCOMPARE(insert({{QStringLiteral("after"), c}, {QStringLiteral("out"), -2.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // Linked audio on another track: b gets an audio partner, and an unrelated clip sits right
+    // after it on that track. Inserting before b moves both, so A/V stays in sync and nothing
+    // lands on the clip that would otherwise have stayed.
+    {
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        const QPair<int, int> locB = state.mcp()->locateClip(b);
+        drift::Clip &video = state.project()->tracks()[locB.first].clips[locB.second];
+        video.linkId = QStringLiteral("b-link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("b-audio");
+        partner.type = drift::ClipType::Audio;
+        drift::Clip follower = partner;
+        follower.id = QStringLiteral("music");
+        follower.linkId.clear();
+        follower.timelineStart = video.timelineEnd();
+        audioTrack.clips = {partner, follower};
+        state.project()->tracks().append(audioTrack);
+        const int audio = int(state.project()->tracks().size()) - 1;
+        const QJsonObject withAudio = insert({{QStringLiteral("before"), b}, {QStringLiteral("out"), 1.0}});
+        QVERIFY2(withAudio.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(withAudio).toJson()));
+        QCOMPARE(startOf(b), 3.0);
+        QCOMPARE(startOf(QStringLiteral("b-audio")), 3.0);
+        QCOMPARE(startOf(QStringLiteral("music")), 5.0);
+        state.undo();
+
+        // A locked track the ripple would change refuses the insert.
+        state.project()->tracks()[audio].locked = true;
+        QCOMPARE(insert({{QStringLiteral("before"), b}, {QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(),
+                 QStringLiteral("bad_args"));
+        QCOMPARE(startOf(b), 2.0);
+        state.project()->tracks().removeLast();
+        state.project()->tracks()[locB.first].clips[locB.second].linkId.clear();
     }
 
     // A bin trim is the default range; an explicit one wins over it, and the ripple makes room

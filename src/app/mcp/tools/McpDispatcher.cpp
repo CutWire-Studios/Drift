@@ -1566,8 +1566,10 @@ QJsonObject McpDispatcher::opInsertClip(const QJsonObject &args)
     const drift::TimeUs outUs = args.contains(QStringLiteral("out"))
                                     ? drift::secondsToUs(jsonNumber(args.value(QStringLiteral("out")), 0))
                                     : -1;
-    if (inUs < -1 || (args.contains(QStringLiteral("in")) && inUs < 0))
+    if (args.contains(QStringLiteral("in")) && inUs < 0)
         return err("bad_args", QStringLiteral("in must be 0 or more"));
+    if (args.contains(QStringLiteral("out")) && outUs < 0)
+        return err("bad_args", QStringLiteral("out must be 0 or more"));
     if (outUs >= 0 && outUs <= qMax<drift::TimeUs>(0, inUs))
         return err("bad_args", QStringLiteral("out must be after in"));
     const bool ripple = jsonBool(args.value(QStringLiteral("ripple")), true);
