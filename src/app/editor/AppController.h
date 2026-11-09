@@ -985,6 +985,35 @@ public:
     ReplaceResult replaceClipRippled(int trackIndex, int clipIndex, int assetIndex, drift::TimeUs srcInUs,
                                      drift::TimeUs srcOutUs, bool ripple);
     bool canReplaceClipMedia(int trackIndex, int clipIndex, int assetIndex) const;
+    // insertClipFromAsset's clip, not yet placed: source, layout, the range (a negative end takes
+    // the bin trim, else the media's) and a fresh id. False with errorCode/error when the asset or
+    // range doesn't fit the track.
+    bool buildClipFromAsset(int assetIndex, int trackIndex, drift::TimeUs srcInUs, drift::TimeUs srcOutUs,
+                            drift::Clip *out, QString *errorCode, QString *error);
+    // Makes a track exactly `entries`, end to end from startUs, in one undo step. An entry reuses
+    // a clip already on the track (by id, keeping its settings; in/out retrim it) or makes one from
+    // an asset. Clips on the track that are not listed are deleted with their linked partners and
+    // pinned effects; listed clips' partners move (and retrim) with them. Refused, with nothing
+    // changed, for a locked or adjustment track, a clip from another track, a clip listed twice,
+    // two listed clips linked to each other, or a partner that would land on another clip.
+    struct SequenceEntry
+    {
+        QString clipId;
+        int assetIndex = -1;
+        drift::TimeUs srcInUs = -1;
+        drift::TimeUs srcOutUs = -1;
+        std::optional<QString> name;
+    };
+    struct SequenceResult
+    {
+        QStringList order; // the track's clips, in sequence
+        QStringList created;
+        QStringList removed;
+        QStringList removedTransitions;
+        QString error;
+        QString errorCode;
+    };
+    SequenceResult setTrackSequence(int trackIndex, const QList<SequenceEntry> &entries, drift::TimeUs startUs);
     // replaceClipMedia without the undo step. With renameDefault (the UI), a clip still named
     // after its old file takes the new file's name; the agent op keeps every name.
     bool rebindClipMedia(int trackIndex, int clipIndex, int assetIndex, bool renameDefault = true);

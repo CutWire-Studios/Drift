@@ -105,6 +105,7 @@ private slots:
     void closeGapsClosesEveryHole();
     void reorderClipsKeepsTheSpacing();
     void replaceClipKeepsTheSlot();
+    void setSequenceLaysOutTheTrack();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
@@ -1768,6 +1769,117 @@ void McpTest::replaceClipKeepsTheSlot()
         QVERIFY(!clipOf(a).linkLoose);
         QCOMPARE(replace({{QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
         QVERIFY(clipOf(a).assetId != otherId);
+    }
+}
+
+void McpTest::setSequenceLaysOutTheTrack()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    // A [0,1), B [1,3), C [3,4).
+    QStringList ids;
+    for (const auto &[at, out] : {std::pair{0.0, 1.0}, std::pair{1.0, 2.0}, std::pair{3.0, 1.0}}) {
+        const QJsonObject placed = dispatcher.applyOne(
+            QStringLiteral("insert_clip"),
+            {{QStringLiteral("asset"), 0}, {QStringLiteral("at"), at}, {QStringLiteral("out"), out}, {QStringLiteral("ripple"), false}});
+        QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson()));
+        ids.append(placed.value(QStringLiteral("id")).toString());
+    }
+    const QString a = ids.at(0), b = ids.at(1), c = ids.at(2);
+    const int track = state.mcp()->locateClip(a).first;
+    const auto find = [&](const QString &id) -> const drift::Clip * {
+        for (const drift::Track &t : state.project()->tracks())
+            for (const drift::Clip &clip : t.clips)
+                if (clip.id == id)
+                    return &clip;
+        return nullptr;
+    };
+    const auto sequence = [&](const QJsonArray &clips, QJsonObject extra = {}) {
+        extra.insert(QStringLiteral("track"), track);
+        extra.insert(QStringLiteral("clips"), clips);
+        return dispatcher.applyOne(QStringLiteral("set_sequence"), extra);
+    };
+    const auto entry = [](const QString &id) { return QJsonObject{{QStringLiteral("clip"), id}}; };
+
+    // C first, a new clip from the asset, then A shortened; B goes.
+    const QJsonObject laid = sequence({entry(c),
+                                       QJsonObject{{QStringLiteral("asset"), 0}, {QStringLiteral("in"), 5.0},
+                                                   {QStringLiteral("out"), 7.0}, {QStringLiteral("name"), QStringLiteral("New")}},
+                                       QJsonObject{{QStringLiteral("clip"), a}, {QStringLiteral("out"), 0.5}}});
+    QVERIFY2(laid.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(laid).toJson()));
+    const QJsonArray order = laid.value(QStringLiteral("clips")).toArray();
+    QCOMPARE(order.size(), 3);
+    QCOMPARE(order.at(0).toObject().value(QStringLiteral("id")).toString(), c);
+    QCOMPARE(order.at(0).toObject().value(QStringLiteral("start")).toDouble(), 0.0);
+    QCOMPARE(order.at(1).toObject().value(QStringLiteral("start")).toDouble(), 1.0);
+    QCOMPARE(order.at(1).toObject().value(QStringLiteral("dur")).toDouble(), 2.0);
+    QCOMPARE(order.at(2).toObject().value(QStringLiteral("id")).toString(), a);
+    QCOMPARE(order.at(2).toObject().value(QStringLiteral("start")).toDouble(), 3.0);
+    QCOMPARE(order.at(2).toObject().value(QStringLiteral("dur")).toDouble(), 0.5);
+    const QString created = laid.value(QStringLiteral("created")).toArray().at(0).toString();
+    QCOMPARE(find(created)->name, QStringLiteral("New"));
+    QCOMPARE(find(created)->srcIn, drift::secondsToUs(5.0));
+    QCOMPARE(laid.value(QStringLiteral("removed")).toArray(), QJsonArray{b});
+    QVERIFY(!find(b));
+    state.undo(); // one step
+    QVERIFY(find(b));
+    QVERIFY(!find(created));
+    QCOMPARE(find(a)->timelineDuration, drift::secondsToUs(1.0));
+    QCOMPARE(find(c)->timelineStart, drift::secondsToUs(3.0));
+
+    // A start offset.
+    QVERIFY(sequence({entry(b), entry(a)}, {{QStringLiteral("start"), 2.0}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(find(b)->timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(find(a)->timelineStart, drift::secondsToUs(4.0));
+    state.undo();
+
+    // Refusals change nothing.
+    QCOMPARE(sequence({entry(a), entry(a)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(sequence({entry(QStringLiteral("nope"))}).value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QCOMPARE(sequence({QJsonObject{{QStringLiteral("asset"), 0}, {QStringLiteral("out"), 20.0}}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(sequence({QJsonObject{{QStringLiteral("asset"), 0}, {QStringLiteral("clip"), a}}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    state.project()->tracks()[track].locked = true;
+    QCOMPARE(sequence({entry(a)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    state.project()->tracks()[track].locked = false;
+    QVERIFY(find(b));
+    QVERIFY(find(c));
+    QCOMPARE(find(a)->timelineStart, 0);
+
+    // A's linked audio moves with it; a clip on the audio track in its way refuses the layout.
+    {
+        drift::Clip &video = state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second];
+        video.linkId = QStringLiteral("a-link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("a-audio");
+        partner.type = drift::ClipType::Audio;
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        audioTrack.clips = {partner};
+        state.project()->tracks().append(audioTrack);
+        QVERIFY(sequence({entry(b), entry(a)}).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(find(a)->timelineStart, drift::secondsToUs(2.0));
+        QCOMPARE(find(QStringLiteral("a-audio"))->timelineStart, drift::secondsToUs(2.0));
+        QVERIFY(!find(c));
+        state.undo();
+
+        drift::Clip blocker = partner;
+        blocker.id = QStringLiteral("audio-blocker");
+        blocker.linkId.clear();
+        blocker.timelineStart = drift::secondsToUs(2.5);
+        state.project()->tracks().last().clips.append(blocker);
+        QCOMPARE(sequence({entry(b), entry(a)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(find(a)->timelineStart, 0);
+        QCOMPARE(find(QStringLiteral("a-audio"))->timelineStart, 0);
+        QVERIFY(find(c));
     }
 }
 

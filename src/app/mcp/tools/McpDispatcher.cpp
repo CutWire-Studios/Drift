@@ -821,6 +821,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opSwapClips(args);
     if (tool == QLatin1String("replace_clip"))
         return opReplaceClip(args);
+    if (tool == QLatin1String("set_sequence"))
+        return opSetSequence(args);
     if (tool == QLatin1String("set_duration"))
         return opSetDuration(args);
     if (tool == QLatin1String("set_trim"))
@@ -1623,6 +1625,64 @@ QJsonObject reorderReply(const AppController::ReorderResult &result, const drift
 }
 
 } // namespace
+
+QJsonObject McpDispatcher::opSetSequence(const QJsonObject &args)
+{
+    if (!args.contains(QStringLiteral("track")) || !args.value(QStringLiteral("clips")).isArray())
+        return err("bad_args", QStringLiteral("track and clips required"));
+    const int track = jsonInt(args.value(QStringLiteral("track")), -1);
+    QList<AppController::SequenceEntry> entries;
+    const QJsonArray list = args.value(QStringLiteral("clips")).toArray();
+    for (int i = 0; i < list.size(); ++i) {
+        const QJsonObject item = list.at(i).toObject();
+        const bool hasClip = item.contains(QStringLiteral("clip"));
+        if (hasClip == item.contains(QStringLiteral("asset")))
+            return err("bad_args", QStringLiteral("Entry %1: give exactly one of clip, asset").arg(i));
+        AppController::SequenceEntry entry;
+        if (hasClip) {
+            const ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), item.value(QStringLiteral("clip"))}});
+            if (!ref.valid())
+                return err("not_found", QStringLiteral("Entry %1: no clip %2").arg(i).arg(argString(item, QStringLiteral("clip"))));
+            entry.clipId = ref.id;
+        } else {
+            entry.assetIndex = resolveAsset(item.value(QStringLiteral("asset")));
+            if (entry.assetIndex < 0)
+                return err("not_found", QStringLiteral("Entry %1: unknown asset").arg(i));
+        }
+        if (item.contains(QStringLiteral("in")))
+            entry.srcInUs = drift::secondsToUs(jsonNumber(item.value(QStringLiteral("in")), 0));
+        if (item.contains(QStringLiteral("out")))
+            entry.srcOutUs = drift::secondsToUs(jsonNumber(item.value(QStringLiteral("out")), 0));
+        if ((item.contains(QStringLiteral("in")) && entry.srcInUs < 0) || (item.contains(QStringLiteral("out")) && entry.srcOutUs < 0))
+            return err("bad_args", QStringLiteral("Entry %1: in and out must be 0 or more").arg(i));
+        if (entry.srcInUs >= 0 && entry.srcOutUs >= 0 && entry.srcOutUs <= entry.srcInUs)
+            return err("bad_args", QStringLiteral("Entry %1: out must be after in").arg(i));
+        if (item.contains(QStringLiteral("name")))
+            entry.name = item.value(QStringLiteral("name")).toString();
+        entries.append(entry);
+    }
+    const drift::TimeUs startUs = drift::secondsToUs(jsonNumber(args.value(QStringLiteral("start")), 0));
+    const AppController::SequenceResult result = m_controller->setTrackSequence(track, entries, startUs);
+    if (!result.error.isEmpty())
+        return err(result.errorCode.toLatin1().constData(), result.error);
+
+    QJsonArray clips;
+    for (const QString &id : result.order) {
+        const ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), id}});
+        if (!ref.valid())
+            continue;
+        const drift::Clip &clip = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip);
+        clips.append(QJsonObject{{QStringLiteral("id"), id},
+                                 {QStringLiteral("start"), drift::mcpdetail::round3(drift::usToSeconds(clip.timelineStart))},
+                                 {QStringLiteral("dur"), drift::mcpdetail::round3(drift::usToSeconds(clip.timelineDuration))}});
+    }
+    QJsonObject reply{{QStringLiteral("clips"), clips},
+                      {QStringLiteral("created"), QJsonArray::fromStringList(result.created)},
+                      {QStringLiteral("removed"), QJsonArray::fromStringList(result.removed)}};
+    if (!result.removedTransitions.isEmpty())
+        reply.insert(QStringLiteral("removed_transitions"), QJsonArray::fromStringList(result.removedTransitions));
+    return ok(reply);
+}
 
 QJsonObject McpDispatcher::opReplaceClip(const QJsonObject &args)
 {
