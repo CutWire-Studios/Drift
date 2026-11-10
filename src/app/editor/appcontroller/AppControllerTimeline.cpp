@@ -1,6 +1,7 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "app/bin/AssetPreviewController.h"
 #include "app/mcp/McpController.h"
+#include "core/project/SubtitleCue.h"
 #include "app/editor/sessions/SpeedCurveController.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/ProjectFileController.h"
@@ -152,7 +153,7 @@ void splitLinkedPartnerAt(drift::Project &project, const drift::Clip &sourceHead
             continue;
 
         partnerTail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        if (partnerTail.type != drift::ClipType::Subtitle)
+        if (partnerTail.type != drift::ClipType::Subtitle || !drift::isGeneratedSubtitleClipName(partnerTail.name))
             partnerTail.name = drift::nextSplitPieceName(track, partner.name);
         if (!tailLinkId.isEmpty())
             partnerTail.linkId = tailLinkId;
@@ -1782,7 +1783,7 @@ void AppController::splitAtPlayhead()
                 continue;
 
             tail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-            if (tail.type != drift::ClipType::Subtitle)
+            if (tail.type != drift::ClipType::Subtitle || !drift::isGeneratedSubtitleClipName(tail.name))
                 tail.name = drift::nextSplitPieceName(track, clip.name);
             const QString tailLinkId = drift::assignSplitLinkIds(clip, tail);
             if (!clip.linkId.isEmpty())
@@ -1830,8 +1831,9 @@ void AppController::splitClipAt(int trackIndex, int clipIndex, double seconds)
         return;
 
     tail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    // Subtitle halves are already named from their cues by the split.
-    if (tail.type != drift::ClipType::Subtitle)
+    // Subtitle halves with a generated name are already named from their cues by the split; a
+    // chosen name gets a piece number like any other clip.
+    if (tail.type != drift::ClipType::Subtitle || !drift::isGeneratedSubtitleClipName(tail.name))
         tail.name = drift::nextSplitPieceName(track, clip.name);
     const QString tailLinkId = drift::assignSplitLinkIds(clip, tail);
     const QString headId = clip.id;
