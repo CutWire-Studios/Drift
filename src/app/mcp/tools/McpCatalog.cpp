@@ -894,6 +894,25 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("hash"),
                          stringProp(QStringLiteral("Snapshot hash or unique prefix"))}},
                        {QStringLiteral("hash")}) },
+        { "changes", "timeline", "What changed since a revision",
+          "The edits after revision `since` (from inspect or a previous call), oldest first, made in "
+          "the editor or by you, undo/redo included. Each: {revision, source:mcp|ui, kind:edit|undo|redo, "
+          "label, clips:[{id, change:added|removed|changed, track, sequence, fields, from_track, "
+          "split_from}], tracks, assets, settings}; a batch is one entry. Without since, just the "
+          "current revision. more:true: call again from the last revision. The log starts at your "
+          "first call this session and keeps 500 edits; truncated:true (or detail:false on an old "
+          "entry) means some detail is gone: re-read inspect.",
+          objectSchema({{QStringLiteral("since"), integerProp(QStringLiteral("Revision you last saw"))},
+                        {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Most edits to return"), 1, 500), 50)}}),
+          true, false, true },
+        { "diff", "timeline", "Compare two project versions",
+          "What differs between two states: clips added, removed or changed (with the fields), "
+          "tracks and assets. from/to: a hash from list_history or take_snapshot (8+ chars) or "
+          "\"head\" (default for to). E.g. check a scripted round, or what undo_to would revert.",
+          objectSchema({{QStringLiteral("from"), stringProp(QStringLiteral("Older state: hash or head"))},
+                        {QStringLiteral("to"), stringProp(QStringLiteral("Newer state: hash or head (default)"))}},
+                       {QStringLiteral("from")}),
+          true, false, true },
         { "set_overlap", "timeline", "Allow clips to overlap",
           "Project setting. Off (default): place/move push to the next gap. On: requested start is kept.",
           objectSchema({{QStringLiteral("enabled"), boolProp(QStringLiteral("Allow overlapping clips"))}},
@@ -1881,7 +1900,8 @@ QJsonArray homepageTools()
                        "use or still sits at its default: an absent boolean is false; transform "
                        "{x,y,w,h,rotation,opacity} is always present (values at the playhead) and "
                        "animated lists the keyframed properties. verbose=true returns every field. "
-                       "clip=<uuid> returns just that clip (detail on); track=<n> just that track. "
+                       "clip=<uuid> returns just that clip (detail on); track=<n> just that track, tracks=[n,...] just those; "
+                       "fields=[...] trims clip rows to those keys plus id. "
                        "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect|downloads} only while "
                        "active, and jobs.list holds get_job's records; beats only once analysed. since=<revision> returns {unchanged:true, revision}."),
         objectSchema({{QStringLiteral("clips"), boolProp(QStringLiteral("Include per-clip rows under tracks[].items"))},
@@ -1897,7 +1917,18 @@ QJsonArray homepageTools()
                       {QStringLiteral("track"),
                        integerProp(QStringLiteral("Track index: return only that track"))},
                       {QStringLiteral("since"),
-                       integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current"))}}),
+                       integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current (not with dirty_detail)"))},
+                      {QStringLiteral("tracks"),
+                       arrayProp(integerProp(QStringLiteral("Track index")),
+                                 QStringLiteral("Return only these tracks (other tracks are left out of tracks[]; empty = all)"))},
+                      {QStringLiteral("fields"),
+                       arrayProp(stringProp(QStringLiteral("Clip row key, e.g. start")),
+                                 QStringLiteral("Clip rows keep only these keys (id always stays; empty = all), e.g. [\"start\",\"duration\",\"name\"]: "
+                                                "a smaller reply for a big timeline"))},
+                      {QStringLiteral("dirty_detail"),
+                       boolProp(QStringLiteral("Add dirty_detail: what the unsaved changes are, vs the saved file. timeline:true "
+                                               "with the clips/tracks/assets that differ, or only other (track_view, work_area, "
+                                               "bookmarks, sequence_tabs, project_info); unknown:true if unsaved with no named difference."))}}),
         toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("apply"),

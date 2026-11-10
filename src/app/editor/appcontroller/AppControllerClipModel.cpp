@@ -5,6 +5,7 @@
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "app/jobs/vision/StabilizeController.h"
 #include "app/editor/ProjectFileController.h"
+#include "app/mcp/McpController.h"
 #include "ui/preview/PreviewController.h"
 
 #include "engine/packages/audio/AudioEffectCatalog.h"
@@ -1345,6 +1346,8 @@ bool AppController::removeAsset(int assetIndex)
     // start now points at the wrong asset.
     setDraggingAssetIndex(-1);
     pushProjectEdit(before, tr("Media removed"));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    m_mcpController->bumpEditRevision();
     settleUndoRefresh();
     return true;
 }
@@ -1386,6 +1389,8 @@ int AppController::removeAssets(const QStringList &assetIds)
 
     setDraggingAssetIndex(-1);
     pushProjectEdit(before, removed == 1 ? tr("Media removed") : tr("%n items removed", "", removed));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    m_mcpController->bumpEditRevision();
     settleUndoRefresh();
     return removed;
 }
@@ -1508,6 +1513,8 @@ bool AppController::setAssetRotation(int assetIndex, int degrees)
         return false;
 
     pushProjectEdit(before, tr("Media rotated"));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    m_mcpController->bumpEditRevision();
     settleUndoRefresh();
     return true;
 }

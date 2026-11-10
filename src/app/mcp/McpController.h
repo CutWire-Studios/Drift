@@ -105,6 +105,9 @@ public:
         int since = -1;
         int track = -1;
         QString clip;
+        QList<int> tracks;   // only these tracks (with `track`, its index too)
+        QStringList fields;  // clip rows keep only these keys (and id)
+        bool dirtyDetail = false;
     };
     QJsonObject inspect(const InspectOptions &options) const;
     QJsonObject inspect(bool includeClips, int sinceRevision = -1, bool detail = false,
@@ -114,7 +117,27 @@ public:
     }
     int revision() const { return m_editRevision; }
     // AppController bumps this from every edit path, including ones that never touch MCP.
-    void bumpEditRevision() { ++m_editRevision; }
+    // Every finished edit (the editor's, an agent's, undo/redo) bumps the revision; with the change
+    // feed on, it also logs what changed since the last one.
+    enum class ChangeKind { Edit, Undo, Redo };
+    void bumpEditRevision(ChangeKind kind = ChangeKind::Edit);
+    // The next logged change is the agent's even outside its call: an async op it started (a
+    // replace_asset probe) lands from a nested event loop, where inAgentCall() is false.
+    void markNextChangeByAgent() { m_nextChangeByAgent = true; }
+    // The change feed: the edits after revision `since`, oldest first, each with its source ("mcp"
+    // or "ui"), kind (edit, undo, redo), label and clip/track/asset diff. The log starts at the
+    // first agent call and keeps the newest kChangeLogSize entries; an older `since` reports
+    // `truncated`.
+    QJsonObject changesSince(int since, int limit);
+    // Starts the log (idempotent): the first agent call does, and so does `changes`.
+    void startChangeFeed();
+    // What differs between two project states: a history hash (list_history), a snapshot hash
+    // (take_snapshot) or "head".
+    QJsonObject diffStates(const QString &from, const QString &to) const;
+    // What the unsaved changes are: `timeline` (clips, tracks, assets or settings differ from the
+    // saved project, with that diff) and `other`, the saved state outside the timeline that
+    // changed: track view settings, work area, bookmarks, open sequence tabs, project info.
+    QJsonObject dirtyDetail() const;
     bool undoSuspended() const { return m_undoSuspended; }
     const drift::Project &batchBefore() const { return m_batchBefore; }
     // A keyed write (the property already animates, or auto-key is on) lands at `atSeconds` on the
@@ -408,6 +431,33 @@ private:
         int pausedAtStart = 0; // a call that starts inside a paused pump is still the agent's
     };
     QList<AgentCallFrame> m_agentCalls;
+    // One finished edit. Its diff is worked out when `changes` reads it, from the project as it was
+    // after the previous entry (or the feed's start) to `state`; a snapshot costs a project copy,
+    // the diff a serialisation of every clip, so the edit path only pays for the first.
+    struct ChangeEntry
+    {
+        int revision = 0;
+        QString source;
+        QString kind;
+        QString label;
+        std::shared_ptr<const drift::Project> state;
+        QJsonObject diff;
+        bool computed = false;
+        bool detailDropped = false; // too many unread snapshots: only the label is left
+    };
+    static constexpr int kChangeLogSize = 500;
+    static constexpr int kChangeSnapshots = 50;
+    static constexpr int kChangeSnapshotClips = 20000; // clip copies across unread snapshots
+    std::optional<ChangeKind> m_batchKind;
+    bool m_changeFeedOn = false;
+    bool m_nextChangeByAgent = false;
+    int m_changeFeedFloor = 0; // the oldest revision `since` may name and still get every change
+    std::shared_ptr<const drift::Project> m_changeBase; // the state before the first entry
+    QString m_pendingChangeLabel;
+    QList<ChangeEntry> m_changeLog;
+    void recordChange(ChangeKind kind);
+    void computeChange(int index);
+    std::optional<drift::Project> projectForState(const QString &state, QString *error) const;
     int m_agentCallsPaused = 0;
     QString m_pendingWarning;
     drift::Project m_batchBefore;

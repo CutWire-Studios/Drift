@@ -1861,7 +1861,7 @@ void AppController::undo()
     captureSelectionClipIds();
     m_undoStack.undo();
     m_undoSelectionCaptured = false;
-    m_mcpController->bumpEditRevision();
+    m_mcpController->bumpEditRevision(McpController::ChangeKind::Undo);
 }
 
 QStringList AppController::undoHistory() const
@@ -1890,7 +1890,7 @@ void AppController::redo()
     captureSelectionClipIds();
     m_undoStack.redo();
     m_undoSelectionCaptured = false;
-    m_mcpController->bumpEditRevision();
+    m_mcpController->bumpEditRevision(McpController::ChangeKind::Redo);
 }
 namespace {
 
