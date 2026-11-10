@@ -61,12 +61,25 @@ void CompositorWorker::composite(drift::TimeUs timeUs, FrameCompositor::RenderOp
     emit frameReady(frame, timeUs, timing, sequence, stream);
 }
 
+void CompositorWorker::setBakeSource(std::shared_ptr<drift::BakeReaderPool> bakes)
+{
+    m_compositor.setBakeSource(std::move(bakes));
+}
+
+void CompositorService::setBakeSource(std::shared_ptr<drift::BakeReaderPool> bakes)
+{
+    QMetaObject::invokeMethod(m_worker, "setBakeSource", Qt::QueuedConnection,
+                              Q_ARG(std::shared_ptr<drift::BakeReaderPool>, std::move(bakes)));
+    invalidateSnapshot();
+}
+
 CompositorService::CompositorService(QObject *parent)
     : QObject(parent)
 {
     qRegisterMetaType<drift::TimeUs>("drift::TimeUs");
     qRegisterMetaType<std::shared_ptr<const drift::Project>>("std::shared_ptr<const drift::Project>");
     qRegisterMetaType<FrameCompositor::RenderOptions>("FrameCompositor::RenderOptions");
+    qRegisterMetaType<std::shared_ptr<drift::BakeReaderPool>>("std::shared_ptr<drift::BakeReaderPool>");
     qRegisterMetaType<GpuFrameTexture>("GpuFrameTexture");
     qRegisterMetaType<CompositeTiming>("CompositeTiming");
     m_worker = new CompositorWorker;
@@ -155,6 +168,9 @@ void CompositorService::resetAdaptiveState()
 FrameCompositor::RenderOptions CompositorService::effectiveOptions(
     FrameCompositor::RenderOptions options) const
 {
+    // A bypassed effect is edited out of the snapshot; a bake still has it in.
+    if (!m_bypassClipIds.isEmpty() && !m_bypassCatalogIds.isEmpty())
+        options.useBakes = false;
     if (!m_adaptiveQuality)
         return options;
     options.previewScale = qBound(kMinPreviewScale, options.previewScale * m_adaptiveScale, 1.0);

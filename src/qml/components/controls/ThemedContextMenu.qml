@@ -15,13 +15,14 @@ Menu {
 
     implicitWidth: 200
     padding: Theme.spacingSm
-    popupType: (Qt.platform.os === "android" || Qt.platform.os === "wasm") ? Popup.Item : Popup.Window
+    // In-window popup: a separate menu window stopped taking clicks on Windows (#473).
+    popupType: Popup.Item
+    // Non-negative margins make the Popup shift/flip to stay inside the window.
     margins: Theme.spacingSm
+    // Capped to the window so a tall menu scrolls (the Menu's ListView turns interactive)
+    // instead of running past the bottom edge.
     readonly property real _maxHeight: {
-        const host = root.parent
-        const avail = popupType === Popup.Window && host
-                      ? host.Screen.desktopAvailableHeight
-                      : (Overlay.overlay ? Overlay.overlay.height : 0)
+        const avail = Overlay.overlay ? Overlay.overlay.height : 0
         return avail > 0 ? avail - 2 * Theme.spacingSm : Number.POSITIVE_INFINITY
     }
     implicitHeight: Math.min(Math.max(implicitBackgroundHeight + topInset + bottomInset,

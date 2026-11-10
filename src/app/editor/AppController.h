@@ -45,10 +45,13 @@ class CurveEditorController;
 class KeyframeController;
 class MaskingController;
 class SubtitleController;
+class TeleprompterController;
 class ColorController;
+class BlendPreviewController;
 class DenoiseController;
 class AudioAlignController;
 class DepthController;
+class BakeController;
 class FaceTrackingController;
 class McpController;
 class RestoreController;
@@ -92,13 +95,16 @@ class AppController : public QObject
     friend class SegmentationController;
     friend class SceneDetectController;
     friend class DepthController;
+    friend class BakeController;
     friend class DenoiseController;
     friend class AudioAlignController;
     friend class ColorController;
+    friend class BlendPreviewController;
     friend class KeyframeController;
     friend class MaskingController;
     friend class MaskEditSession;
     friend class SubtitleController;
+    friend class TeleprompterController;
     friend class RestoreController;
     friend class FaceTrackingController;
     friend class StabilizeController;
@@ -118,10 +124,13 @@ class AppController : public QObject
     Q_MOC_INCLUDE("app/editor/sessions/KeyframeController.h")
     Q_MOC_INCLUDE("app/editor/sessions/MaskingController.h")
     Q_MOC_INCLUDE("app/editor/sessions/SubtitleController.h")
+    Q_MOC_INCLUDE("app/editor/sessions/TeleprompterController.h")
     Q_MOC_INCLUDE("app/color/ColorController.h")
+    Q_MOC_INCLUDE("app/editor/BlendPreviewController.h")
     Q_MOC_INCLUDE("app/jobs/audio/DenoiseController.h")
     Q_MOC_INCLUDE("app/jobs/audio/AudioAlignController.h")
     Q_MOC_INCLUDE("app/jobs/vision/DepthController.h")
+    Q_MOC_INCLUDE("app/jobs/render/BakeController.h")
     Q_MOC_INCLUDE("app/jobs/vision/FaceTrackingController.h")
     Q_MOC_INCLUDE("app/mcp/McpController.h")
     Q_MOC_INCLUDE("app/jobs/vision/RestoreController.h")
@@ -161,17 +170,22 @@ class AppController : public QObject
     Q_PROPERTY(SceneDetectController *scenes READ scenes CONSTANT)
     // Depth estimation for a clip. QML: EditorState.depth.
     Q_PROPERTY(DepthController *depth READ depth CONSTANT)
+    // Range bakes: pre-rendered stretches of the timeline. QML: EditorState.bakes.
+    Q_PROPERTY(BakeController *bakes READ bakes CONSTANT)
     // Noise removal for a clip's audio. QML: EditorState.denoise.
     Q_PROPERTY(DenoiseController *denoise READ denoise CONSTANT)
     // Silence removal and audio sync. QML: EditorState.audioAlign.
     Q_PROPERTY(AudioAlignController *audioAlign READ audioAlign CONSTANT)
     // Colour grade, finishing effects and looks. QML: EditorState.color.
     Q_PROPERTY(ColorController *color READ color CONSTANT)
+    // The selected clip rendered in every blend mode. QML: EditorState.blendPreview.
+    Q_PROPERTY(BlendPreviewController *blendPreview READ blendPreview CONSTANT)
     // Keyframe panel editing and clip property rows. QML: EditorState.keyframes.
     Q_PROPERTY(KeyframeController *keyframes READ keyframes CONSTANT)
     // "Use as mask" on bin assets and timeline clips. QML: EditorState.masking.
     Q_PROPERTY(MaskingController *masking READ masking CONSTANT)
     Q_PROPERTY(SubtitleController *subtitles READ subtitles CONSTANT)
+    Q_PROPERTY(TeleprompterController *teleprompter READ teleprompter CONSTANT)
     // Video restore and enhance (decompression, upscaling). QML: EditorState.restore.
     Q_PROPERTY(RestoreController *restore READ restore CONSTANT)
     // Face landmark tracking and Face Swap source ingest. QML: EditorState.faces.
@@ -383,12 +397,15 @@ public:
     SegmentationController *segmentation() const { return m_segmentation; }
     SceneDetectController *scenes() const { return m_sceneDetect; }
     DepthController *depth() const { return m_depth; }
+    BakeController *bakes() const { return m_bakes; }
     DenoiseController *denoise() const { return m_denoise; }
     AudioAlignController *audioAlign() const { return m_audioAlign; }
     ColorController *color() const { return m_color; }
+    BlendPreviewController *blendPreview() const { return m_blendPreview; }
     KeyframeController *keyframes() const { return m_keyframes; }
     MaskingController *masking() const { return m_masking; }
     SubtitleController *subtitles() const { return m_subtitles; }
+    TeleprompterController *teleprompter() const { return m_teleprompter; }
     RestoreController *restore() const { return m_restore; }
     FaceTrackingController *faces() const { return m_faces; }
     StabilizeController *stabilize() const { return m_stabilize; }
@@ -742,11 +759,6 @@ public:
     // aimed at a standalone adjustment layer (trackIndex < 0 means a new one): the canvas it
     // grades has neither, so the effect would silently do nothing.
     bool effectFitsTrack(int trackIndex, const QString &effectId, QString *why = nullptr) const;
-    // Index of a lane on `parentTrackIndex` able to hold `kind` over [atSeconds, +durationSeconds),
-    // creating one when every existing lane is occupied there. Returns -1 if the parent cannot
-    // take a lane. Note this shifts track indices when it inserts.
-    Q_INVOKABLE int ensureAdjustmentLane(int parentTrackIndex, const QString &kind,
-                                         double atSeconds = -1.0, double durationSeconds = -1.0);
     // Move an adjustment clip between the two placements. Both unlink it first: a pinned
     // adjustment belongs to its clip's track, so re-scoping it would leave the link meaningless.
     // `atSeconds` < 0 keeps the adjustment where it is on the timeline; a drag passes the
@@ -869,6 +881,11 @@ public:
     // Runs a history-limit trim that is still queued, for readers of history indices (MCP
     // list_history, undo_to, inspect) that must not see the stack before and then after it.
     void flushUndoHistoryTrim();
+    // Makes the project as it is now the result of the newest applied step, so an edit made
+    // without its own undo step is undone together with that step (and redone with it), and
+    // drops undone (redo) steps, whose states no longer follow from it. With no applied step the
+    // edit becomes part of the starting state.
+    void foldEditIntoHistory();
     Q_INVOKABLE void duplicateSelectedClip();
     Q_INVOKABLE void moveClip(int trackIndex, int clipIndex, double newStart);
     Q_INVOKABLE void moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart);
@@ -989,6 +1006,7 @@ public:
     Q_INVOKABLE void upsertSubtitleCueAtPlayhead(int trackIndex, int clipIndex, const QString &text);
     Q_INVOKABLE void seekToSubtitleCue(int trackIndex, int clipIndex, int cueIndex);
     Q_INVOKABLE void setTextStyle(int trackIndex, int clipIndex, const QVariantMap &style);
+    Q_INVOKABLE void previewSetTextStyle(int trackIndex, int clipIndex, const QVariantMap &style);
     // The shading stack of a text, subtitle or shape clip: layers[0] is drawn first. Each call
     // is one undo step; the preview variants coalesce into one through begin/commitPreviewDrag.
     Q_INVOKABLE QString addStyleLayer(int trackIndex, int clipIndex, const QString &kind, int atIndex = -1);
@@ -1232,6 +1250,24 @@ public:
     // aimY>) as plain values — keyframe the statics through setClipKeyframe with "model3d.<key>".
     Q_INVOKABLE QVariantMap addModel3dClip(const QString &path, int trackIndex, double atSeconds,
                                            const QVariantMap &opts = {});
+    // A Procedural 3D clip from an installed package. Params start at the package's defaults.
+    // opts: duration (seconds), seed (int), name.
+    Q_INVOKABLE QVariantMap addProceduralClip(const QString &packageId, int trackIndex, double atSeconds,
+                                              const QVariantMap &opts = {});
+    // Installed procedural packages, valid ones only: [{id, name, description, category, thumbnail}].
+    Q_INVOKABLE QVariantList proceduralPackages() const;
+    // Repoints a Procedural clip at another package: params reset to its defaults, keyframes kept
+    // only for params the new package also declares. One undo step.
+    Q_INVOKABLE bool setProceduralPackage(int trackIndex, int clipIndex, const QString &packageId);
+    // Static (non-keyframed) writes of a Procedural clip's params; bool and enum params are numbers.
+    Q_INVOKABLE bool setProceduralParam(int trackIndex, int clipIndex, const QString &key, double value);
+    Q_INVOKABLE bool setProceduralVec2Param(int trackIndex, int clipIndex, const QString &key, double x,
+                                            double y);
+    Q_INVOKABLE bool setProceduralColorParam(int trackIndex, int clipIndex, const QString &key,
+                                             const QString &value);
+    Q_INVOKABLE bool setProceduralSeed(int trackIndex, int clipIndex, int seed);
+    // What the last render of the clip reported: {known, packageId, error, errors[], log[], serial}.
+    Q_INVOKABLE QVariantMap proceduralDiagnostics(const QString &clipId) const;
     Q_INVOKABLE QVariantMap setModel3dSource(int trackIndex, int clipIndex, const QString &path,
                                              const QVariantMap &opts = {});
     // Returns an error string, empty on success.
@@ -1267,12 +1303,24 @@ public:
     Q_INVOKABLE QVariantList transitionKindsForTrack(int trackIndex) const;
     Q_INVOKABLE QVariantList transitionCategories() const;
     Q_INVOKABLE void selectTransition(int trackIndex, int leftClipIndex);
+    // selectionOnly: only cuts between two clips that are both in the multi-selection on this
+    // track; otherwise every eligible cut. Existing transitions are re-kinded, empty cuts get one
+    // at the preferred duration. One undo step.
+    Q_INVOKABLE void applyTransitionToCuts(int trackIndex, const QString &kind, bool selectionOnly);
+    Q_INVOKABLE int selectedCutCount(int trackIndex) const;
+    // Hover preview: swaps the kind at a cut (or inserts a temporary transition), loops playback
+    // around it. Nothing is pushed to the undo stack; endTransitionPreview restores the project and
+    // the playhead. Any committed transition edit ends a running preview first.
+    Q_INVOKABLE void beginTransitionPreview(int trackIndex, int leftClipIndex, const QString &kind);
+    Q_INVOKABLE void endTransitionPreview();
+    Q_INVOKABLE void addTransitionAtPlayhead();
     Q_INVOKABLE void clearTransitionSelection();
     // A colour property ("text.color") fans out to its four channel tracks (<prop>.r/g/b/a) as
     // one undo step. Clears every channel when the colour is invalid.
     Q_INVOKABLE void setClipColorKeyframe(int trackIndex, int clipIndex, const QString &prop,
                                           double atSeconds, const QColor &color);
-    Q_INVOKABLE void setClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
+    // False when nothing was written: a bad clip index or a property the clip does not have.
+    Q_INVOKABLE bool setClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
                                      double value);
     // A vec2 effect param ("fx.<i>.<key>") keys its two axis tracks (<prop>.x/.y) as one undo step.
     Q_INVOKABLE void setClipVec2Keyframe(int trackIndex, int clipIndex, const QString &prop,
@@ -1311,6 +1359,20 @@ public:
                                                 double outDx, double outDy, bool corner);
     Q_INVOKABLE void setKeyframeHold(int trackIndex, int clipIndex, const QString &prop,
                                      double atSeconds, bool hold);
+    // Catmull-Rom auto tangents on the key at atSeconds, or on every key when `all`. Never touches
+    // the other position axis. Returns false when the property has no such key.
+    bool setKeyframeSmooth(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
+                           bool all);
+    struct KeyframeBatch
+    {
+        QString prop;
+        QList<QPointF> keys; // x = timeline seconds, y = value
+    };
+    // Writes many keys in one undo step. `interpolation` (linear, hold, ease, smooth; empty keeps
+    // the tangents) is applied to every key of each property afterwards. Returns the first prop
+    // the clip does not have, in which case nothing is changed; empty on success.
+    QString setClipKeyframes(int trackIndex, int clipIndex, const QList<KeyframeBatch> &batches,
+                             bool replace, const QString &interpolation);
     Q_INVOKABLE void setKeyframeInterpolation(int trackIndex, int clipIndex, const QString &prop,
                                               const QString &mode);
     Q_INVOKABLE void setKeyframeEasingAt(int trackIndex, int clipIndex, const QString &prop,
@@ -1436,6 +1498,8 @@ public:
     Q_INVOKABLE void setTrackHidden(int trackIndex, bool hidden);
     Q_INVOKABLE void setTrackSolo(int trackIndex, bool solo);
     Q_INVOKABLE bool trackSolo(int trackIndex) const;
+    Q_INVOKABLE void setTrackLocked(int trackIndex, bool locked);
+    Q_INVOKABLE bool trackLocked(int trackIndex) const;
     Q_INVOKABLE void setTrackVolume(int trackIndex, double volume);
     Q_INVOKABLE void previewTrackVolume(int trackIndex, double volume);
     Q_INVOKABLE double trackVolume(int trackIndex) const;
@@ -1485,6 +1549,13 @@ public:
     Q_INVOKABLE int adjustmentLaneCount(int trackIndex) const;
     // Track indices of those lanes, topmost first.
     Q_INVOKABLE QVariantList adjustmentLanes(int trackIndex) const;
+    // "videoEffects" | "audioEffects" | "mask", or "" for a lane with no clips.
+    Q_INVOKABLE QString adjustmentLaneKind(int laneIndex) const;
+    // Per lane under the parent, in order: {laneIndex, kind, hidden, spans:[{start, end}]} with
+    // times in seconds. Feeds the collapsed coverage ribbons.
+    Q_INVOKABLE QVariantList adjustmentLaneSpans(int parentIndex) const;
+    // View-only, no undo entry. Collapsed lanes shrink to ribbons in trackRowHeight.
+    Q_INVOKABLE void setTrackLanesCollapsed(int trackIndex, bool collapsed);
 
     Q_INVOKABLE double trackHeightScaleMin() const { return 0.6; }
     Q_INVOKABLE double trackHeightScaleMax() const { return 4.0; }
@@ -2113,6 +2184,8 @@ protected:
     // Every file a project state reachable by undo/redo points at, so cleanup does not take
     // media the history still needs.
     QSet<QString> historyMediaPaths() const;
+    // Media that only undo history still points at: what dropping history lets go of.
+    QSet<QString> historyOnlyMediaPaths() const;
     // Whether undo history is saved into the project file (the "project" history mode).
     bool persistsUndoHistory() const;
     // Most steps that can be undone: -1 for no limit, 0 when history is off. Undone steps (redo)
@@ -2122,6 +2195,23 @@ protected:
     void scheduleUndoHistoryTrim();
     // Drops the oldest applied undo steps past undoHistoryCap(); with history off, every step.
     void trimUndoHistory();
+    // Keeps steps [first, last) of `capture` with `index` of them applied; the project is untouched.
+    void rebuildUndoStack(const drift::HistoryCapture &capture, int first, int last, int index);
+    // Drops all but the newest `keepLast` applied steps, and every undone (redo) one. Returns
+    // how many steps went.
+    int clearUndoHistory(int keepLast);
+    // This project's own history settings, saved with it, each overriding the app's when set.
+    // Steps: kProjectHistoryUnset, -1 = no limit, 0 = no history, N = most undoable steps.
+    // Persist: -1 unset, 0 = this session only, 1 = saved with the project. Kept apart so turning
+    // history off and on again does not lose the persistence choice.
+    static constexpr int kProjectHistoryUnset = -2;
+    int m_projectHistorySteps = kProjectHistoryUnset;
+    int m_projectHistoryPersist = -1;
+    bool hasProjectHistorySettings() const
+    {
+        return m_projectHistorySteps != kProjectHistoryUnset || m_projectHistoryPersist >= 0;
+    }
+    QString effectiveUndoHistoryMode() const;
 public:
     // The "undoHistory" member of a saved document: states as plain JSON, deduplicated, plus the
     // media they reference. Reads only the capture, so a worker can run it. `states` receives one
@@ -2289,12 +2379,15 @@ protected:
     SegmentationController *m_segmentation = nullptr;
     SceneDetectController *m_sceneDetect = nullptr;
     DepthController *m_depth = nullptr;
+    BakeController *m_bakes = nullptr;
     DenoiseController *m_denoise = nullptr;
     AudioAlignController *m_audioAlign = nullptr;
     ColorController *m_color = nullptr;
+    BlendPreviewController *m_blendPreview = nullptr;
     KeyframeController *m_keyframes = nullptr;
     MaskingController *m_masking = nullptr;
     SubtitleController *m_subtitles = nullptr;
+    TeleprompterController *m_teleprompter = nullptr;
     RestoreController *m_restore = nullptr;
     FaceTrackingController *m_faces = nullptr;
     StabilizeController *m_stabilize = nullptr;
@@ -2342,6 +2435,20 @@ protected:
     int inlineRenderedPos(int modelPos) const;
     int inlineModelPos(int renderedPos) const;
     bool m_previewDragActive = false;
+    QList<int> eligibleCutLefts(int trackIndex, bool selectionOnly) const;
+    void refreshAfterTransitionPreview();
+    struct TransitionPreviewState
+    {
+        bool active = false;
+        int track = -1;
+        QString fromClipId;
+        QString toClipId;
+        QString transitionId;
+        bool existed = false;
+        QString originalKind;
+        QMap<QString, QVariant> originalParameters;
+        drift::TimeUs playheadUs = 0;
+    } m_transitionPreview;
     drift::Clip *textClipAt(int trackIndex, int clipIndex);
     // A text, subtitle or shape clip: anything that carries a shading stack.
     drift::Clip *styledClipAt(int trackIndex, int clipIndex, bool textOnly = false);
@@ -2360,6 +2467,7 @@ protected:
     // sending it twice.
     bool m_quietUndoPush = false;
     bool m_undoRefreshOwed = false;
+    bool m_editRefusedByLock = false;
     // Set while commitPreviewDrag finishes a drag that left the selection on the same clip:
     // finishEdit then skips selectionChanged.
     bool m_quietSelection = false;

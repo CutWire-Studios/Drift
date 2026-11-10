@@ -7,7 +7,10 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <QByteArray>
+
 #include <functional>
+#include <memory>
 
 #include "core/base/Time.h"
 
@@ -24,6 +27,12 @@ struct ExportScalePreset
     int targetHeight = 0; // 0 = keep project height
     int videoBitrateKbps = 12000;
 };
+
+struct AVPacket;
+
+namespace drift {
+class BakeReaderPool;
+}
 
 // Upper bound for a hand-typed export frame rate; anything above is clamped.
 inline constexpr int kMaxExportFps = 480;
@@ -52,6 +61,21 @@ struct ExportSettings
     // Optional export slice on the timeline. Both zero = encode the full project.
     drift::TimeUs startUs = 0;
     drift::TimeUs endUs = 0;
+    // Read baked ranges instead of compositing them. Range baking turns it off.
+    bool useBakes = true;
+    // Where the baked frames come from when useBakes is on; null renders everything live.
+    std::shared_ptr<drift::BakeReaderPool> bakes;
+    // Receives the encoded video instead of a file: software x264 only, no audio, no muxer. The
+    // encoder runs with a global header, so onStart gets the avcC extradata right after it opens.
+    // Packets arrive in decode order; onPacket returning false cancels the run.
+    struct PacketSink
+    {
+        std::function<void(const QByteArray &extradata)> onStart;
+        std::function<bool(const AVPacket *pkt)> onPacket;
+    };
+    std::shared_ptr<PacketSink> packetSink;
+    // With a packetSink: a fixed closed GOP of exactly this many frames, no B-frames, no scenecuts.
+    int bakeGop = 0;
 };
 
 // WYSIWYG exporter: encodes frames straight from FrameCompositor and audio from

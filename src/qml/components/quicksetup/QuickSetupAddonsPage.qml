@@ -47,7 +47,7 @@ QuickSetupPage {
     }
 
     title: qsTr("Install the essentials")
-    subtitle: qsTr("Drift's basic effects, transitions, audio effects, fonts and looks come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.")
+    subtitle: qsTr("Drift's basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.")
     glyph: Theme.icons.package
     canAdvance: allDone
     contentMaxWidth: 760

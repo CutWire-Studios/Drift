@@ -22,6 +22,7 @@ Column {
     property real sliderTo: 1
     // Snaps the slider to multiples of this (whole-number effect params); 0 is continuous.
     property real sliderStep: 0
+    property var sliderGradient: []
     // Static values can be dragged during playback. Keyed ones (or any with Auto keyframes on)
     // stay locked: the write lands at the moving playhead, dropping a key per move.
     property bool editableWhilePlaying: false
@@ -599,6 +600,41 @@ Column {
                 Binding on value {
                     when: !valueSlider.pressed
                     value: root.displayedValue
+                }
+                Canvas {
+                    id: gradientTrack
+                    x: valueSlider.leftPadding
+                    y: valueSlider.topPadding + valueSlider.availableHeight / 2 - height / 2
+                    width: valueSlider.availableWidth
+                    height: Theme.spacingSm
+                    z: -0.5
+                    visible: root.sliderGradient.length >= 2
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+                    Connections {
+                        target: root
+                        function onSliderGradientChanged() { gradientTrack.requestPaint() }
+                    }
+                    onPaint: {
+                        const ctx = getContext("2d")
+                        ctx.reset()
+                        const stops = root.sliderGradient
+                        if (!stops || stops.length < 2 || width < 2)
+                            return
+                        const g = ctx.createLinearGradient(0, 0, width, 0)
+                        for (let i = 0; i < stops.length; ++i)
+                            g.addColorStop(i / (stops.length - 1), String(stops[i]))
+                        const r = height / 2
+                        ctx.fillStyle = g
+                        ctx.beginPath()
+                        ctx.moveTo(r, 0)
+                        ctx.lineTo(width - r, 0)
+                        ctx.arc(width - r, r, r, -Math.PI / 2, Math.PI / 2)
+                        ctx.lineTo(r, height)
+                        ctx.arc(r, r, r, Math.PI / 2, 3 * Math.PI / 2)
+                        ctx.closePath()
+                        ctx.fill()
+                    }
                 }
                 onMoved: {
                     root.liveValue = value

@@ -5,6 +5,7 @@ Column {
     property var row
     property int effectIndex: -1
     property var inspector
+    property bool procedural: false
     spacing: 4
     width: parent ? parent.width : implicitWidth
     visible: row && row.paramData.type === "color"
@@ -72,8 +73,8 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             hex: colorRow.hexOf(colorRow.shownColor)
             tooltip: qsTr("Choose %1").arg(row.paramData.label)
-            onEyedropperStarted: inspector.bypassForEyedropper(effectIndex)
-            onEyedropperEnded: EditorState.cancelPreviewDrag()
+            onEyedropperStarted: if (!procedural) inspector.bypassForEyedropper(effectIndex)
+            onEyedropperEnded: if (!procedural) EditorState.cancelPreviewDrag()
             onEdited: value => {
                 // Animated colours key the playhead, like every other
                 // animated param; static ones set the value.
@@ -83,6 +84,10 @@ Column {
                         row.paramData.prop, EditorState.playheadSeconds,
                         Qt.rgba(Qt.color(value).r, Qt.color(value).g,
                                 Qt.color(value).b, colorRow.shownAlpha))
+                } else if (procedural) {
+                    EditorState.setProceduralColorParam(
+                        EditorState.selectedTrack, EditorState.selectedClip,
+                        row.paramData.key, value)
                 } else {
                     EditorState.setEffectColorParam(
                         EditorState.selectedTrack, EditorState.selectedClip,
@@ -112,10 +117,15 @@ Column {
                 EditorState.commitPreviewDrag()
             } else if (!pressed) {
                 const a = ("0" + Math.round(value * 255).toString(16)).slice(-2)
-                EditorState.setEffectColorParam(
-                    EditorState.selectedTrack, EditorState.selectedClip,
-                    effectIndex, row.paramData.key,
-                    colorRow.hexOf(colorRow.staticColor) + a)
+                const hex = colorRow.hexOf(colorRow.staticColor) + a
+                if (procedural) {
+                    EditorState.setProceduralColorParam(
+                        EditorState.selectedTrack, EditorState.selectedClip, row.paramData.key, hex)
+                } else {
+                    EditorState.setEffectColorParam(
+                        EditorState.selectedTrack, EditorState.selectedClip,
+                        effectIndex, row.paramData.key, hex)
+                }
             }
         }
         onMoved: {
@@ -140,6 +150,7 @@ Column {
             delegate: EffectsColorSwatchChip {
                                                 current: String(row.paramData.value || "").toLowerCase() === modelData
                                                 effectIndex: effectIndex
+                                                procedural: procedural
                                                 paramKey: row.paramData.key
                                             }
         }

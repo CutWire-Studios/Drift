@@ -540,6 +540,8 @@ QVariantMap McpController::compactClip(int trackIndex, int clipIndex, bool inclu
                m_app->propertyValueAt(trackIndex, clipIndex, QStringLiteral("opacity"), at, 1));
     if (clip.layer3d) {
         out.insert(QStringLiteral("layer3d"), true);
+        if (clip.depthOcclude)
+            out.insert(QStringLiteral("depthOcclude"), true);
         for (const char *key : {"rotationX", "rotationY", "z", "perspective"}) {
             const QString k = QLatin1String(key);
             out.insert(k, m_app->propertyValueAt(trackIndex, clipIndex, k, at, 0));
@@ -631,6 +633,7 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
             {QStringLiteral("clips"), track.clips.size()},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
+            {QStringLiteral("locked"), track.locked},
         };
         if (track.isAdjustment())
             row.insert(QStringLiteral("scope"), drift::adjustmentScopeToString(track.adjustmentScope));
@@ -953,6 +956,25 @@ bool McpController::setClipCanvas(int trackIndex, int clipIndex, const QVariantM
         return false;
     }
 
+    if (patch.value(QStringLiteral("depthOcclude")).toBool()) {
+        // Same refusals as setClipDepthOcclude: a flat clip has no pose to sort by, and the
+        // dest-reading blend modes copy the canvas aside before a depth test could see it.
+        const bool always3d = clip.type == drift::ClipType::Model3d || clip.type == drift::ClipType::Procedural;
+        const bool to3d = always3d ? clip.layer3d
+                          : patch.contains(QStringLiteral("layer3d"))
+                              ? patch.value(QStringLiteral("layer3d")).toBool()
+                              : clip.layer3d || patch.contains(QStringLiteral("rotationX"))
+                                    || patch.contains(QStringLiteral("rotationY"))
+                                    || patch.contains(QStringLiteral("z"))
+                                    || patch.contains(QStringLiteral("perspective"));
+        if (!to3d || clip.blendMode != drift::BlendMode::Normal) {
+            if (error)
+                *error = to3d ? QStringLiteral("depth_occlude needs blend mode Normal")
+                              : QStringLiteral("depth_occlude needs a 3D layer (layer3d:true)");
+            return false;
+        }
+    }
+
     const drift::Project before = m_app->m_project;
     // Inside the clip by the check above whenever the write keys; a constant write ignores it.
     const drift::TimeUs relative = qBound<drift::TimeUs>(0, atUs - clip.timelineStart, clip.timelineDuration);
@@ -972,11 +994,17 @@ bool McpController::setClipCanvas(int trackIndex, int clipIndex, const QVariantM
     for (const auto &[patchKey, prop] : kProps)
         write(patchKey, prop);
     // After the value writes, so an explicit layer3d:false wins over their auto-enable.
-    if (patch.contains(QStringLiteral("layer3d")) && clip.type != drift::ClipType::Model3d) {
+    if (patch.contains(QStringLiteral("layer3d")) && clip.type != drift::ClipType::Model3d
+        && clip.type != drift::ClipType::Procedural) {
         clip.layer3d = patch.value(QStringLiteral("layer3d")).toBool();
         if (!clip.layer3d)
             m_app->clearPose3d(clip);
         any = true;
+    }
+    if (patch.contains(QStringLiteral("depthOcclude"))) {
+        const bool enable = patch.value(QStringLiteral("depthOcclude")).toBool();
+        any = any || clip.depthOcclude != enable;
+        clip.depthOcclude = enable && clip.layer3d;
     }
     if (!any)
         return false;
@@ -1813,6 +1841,102 @@ QJsonObject McpController::clearCache()
                {QStringLiteral("after"),
                 QJsonObject{{QStringLiteral("frame_cache"), frameCacheJson()},
                             {QStringLiteral("decoders"), decodersJson()}}}});
+}
+
+QJsonObject McpController::historySettings() const
+{
+    return {{QStringLiteral("mode"), m_app->effectiveUndoHistoryMode()},
+            // Steps that can be undone at most: 0 with history off, -1 with no limit.
+            {QStringLiteral("steps"), m_app->undoHistoryCap()},
+            {QStringLiteral("source"), m_app->hasProjectHistorySettings() ? QStringLiteral("project")
+                                                                          : QStringLiteral("global")}};
+}
+
+QJsonObject McpController::clearHistory(int keepLast)
+{
+    using namespace drift::mcp;
+    const int removed = m_app->clearUndoHistory(qMax(0, keepLast));
+    // A saved history is part of the file: the next save writes the smaller one.
+    if (removed > 0 && m_app->persistsUndoHistory())
+        m_app->m_projectFile->setDirty(true);
+    return ok({{QStringLiteral("removed"), removed},
+               {QStringLiteral("steps"), m_app->m_undoStack.count()},
+               {QStringLiteral("index"), m_app->m_undoStack.index()}});
+}
+
+QJsonObject McpController::setHistoryLimit(bool reset, std::optional<int> steps, std::optional<bool> persist)
+{
+    using namespace drift::mcp;
+    if (!reset && !steps && !persist)
+        return err("bad_args", QStringLiteral("steps, persist or reset required"));
+    if (steps && *steps < -1)
+        return err("bad_args", QStringLiteral("steps must be -1 (no limit), 0 (no history) or more"));
+    const int stepsBefore = m_app->m_projectHistorySteps;
+    const int persistBefore = m_app->m_projectHistoryPersist;
+    if (reset) {
+        m_app->m_projectHistorySteps = AppController::kProjectHistoryUnset;
+        m_app->m_projectHistoryPersist = -1;
+    }
+    if (steps)
+        m_app->m_projectHistorySteps = *steps;
+    if (persist)
+        m_app->m_projectHistoryPersist = *persist ? 1 : 0;
+    // Saved with the project, so changing it changes the project.
+    if (m_app->m_projectHistorySteps != stepsBefore || m_app->m_projectHistoryPersist != persistBefore)
+        m_app->m_projectFile->setDirty(true);
+    m_app->scheduleUndoHistoryTrim();
+    m_app->flushUndoHistoryTrim();
+    QJsonObject reply = historySettings();
+    reply.insert(QStringLiteral("steps_kept"), m_app->m_undoStack.count());
+    return ok(reply);
+}
+
+QJsonObject McpController::historyStats(bool size) const
+{
+    using namespace drift::mcp;
+    m_app->flushUndoHistoryTrim();
+    const drift::HistoryCapture capture = drift::captureHistory(m_app->m_undoStack);
+    // Project snapshots held in memory (a step's before and after, shared where a step reuses
+    // one). Each is a full project copy, though copies share data that did not change. Counted by
+    // identity, so this serialises nothing.
+    // Walked through the live commands, not the capture: a macro's inner steps hold snapshots
+    // of their own, which the capture flattens away.
+    QSet<const drift::HistoryState *> states;
+    const std::function<void(const QUndoCommand *)> collect = [&](const QUndoCommand *command) {
+        if (const auto *snapshot = dynamic_cast<const drift::ProjectSnapshotCommand *>(command)) {
+            states.insert(snapshot->beforeState().get());
+            states.insert(snapshot->afterState().get());
+        }
+        for (int c = 0; c < command->childCount(); ++c)
+            collect(command->child(c));
+    };
+    for (int i = 0; i < m_app->m_undoStack.count(); ++i)
+        collect(m_app->m_undoStack.command(i));
+    QStringList media = m_app->historyOnlyMediaPaths().values();
+    media.sort();
+    const int mediaCount = media.size();
+    if (media.size() > 20)
+        media = media.mid(0, 20);
+    QJsonObject reply{
+        {QStringLiteral("steps"), m_app->m_undoStack.count()},
+        {QStringLiteral("undoable"), m_app->m_undoStack.index()},
+        {QStringLiteral("redoable"), m_app->m_undoStack.count() - m_app->m_undoStack.index()},
+        {QStringLiteral("snapshots"), int(states.size())},
+        {QStringLiteral("saved_with_project"), m_app->persistsUndoHistory()},
+        {QStringLiteral("history_only_media"), mediaCount},
+        {QStringLiteral("history_only_media_paths"), QJsonArray::fromStringList(media)},
+        {QStringLiteral("settings"), historySettings()},
+    };
+    if (size) {
+        // Serialises every state on this thread, so only on request: the history as uncompressed
+        // JSON, which is what a save adds before compression. Memory use is higher; it is not
+        // measured here.
+        const drift::HistoryDocument document = drift::historyToJson(capture);
+        const qint64 bytes =
+            document.json.isEmpty() ? 0 : QJsonDocument(document.json).toJson(QJsonDocument::Compact).size();
+        reply.insert(QStringLiteral("json_bytes"), double(bytes));
+    }
+    return ok(reply);
 }
 
 QJsonObject McpController::takeSnapshot(const QString &label)
