@@ -1,4 +1,5 @@
 #include "app/editor/ProjectFileController.h"
+#include "app/mcp/McpController.h"
 #include "app/bin/MediaBinController.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/sessions/MaskingController.h"
@@ -1339,6 +1340,9 @@ void ProjectFileController::collectMediaToFolder(const QUrl &folder, bool move)
                 m_app->restoreFilmstripsAfterLoad();
                 m_app->notifyTracksChanged();
                 setDirty(true);
+                // An edit like any other for revision readers (inspect since, the change feed).
+                if (McpController *mcp = m_app->mcp())
+                    mcp->bumpEditRevision();
 
                 if (undeleted > 0)
                     m_app->setLastMessage(tr("Media collected, but %n original(s) couldn’t be deleted", "",

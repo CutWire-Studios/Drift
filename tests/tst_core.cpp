@@ -10,6 +10,7 @@
 #include <QSet>
 #include <QStandardPaths>
 
+#include "core/project/ProjectDiff.h"
 #include "core/animation/ClipAnimation.h"
 #include "core/project/media/ImageSequence.h"
 #include "core/animation/Keyframe.h"
@@ -231,6 +232,7 @@ private slots:
     void rippleGroupsFollowLinksAcrossTracks();
     void closeRippleRangesShiftsEachGroupOnce();
     void clipLabelsRoundTripAndNumberCopies();
+    void diffProjectsReportsClipChanges();
 };
 
 void CoreTest::timeConversion()
@@ -7728,6 +7730,185 @@ void CoreTest::clipLabelsRoundTripAndNumberCopies()
     topAfter.tracks()[0].clips.append(topCopy);
     QCOMPARE(drift::numberCopiedLabels(top, topAfter), 1);
     QCOMPARE(topAfter.tracks().at(0).clips.last().label, QStringLiteral("intro.2"));
+}
+
+void CoreTest::diffProjectsReportsClipChanges()
+{
+    drift::Project from;
+    drift::Track video{.id = QStringLiteral("v1"), .type = drift::TrackType::Video};
+    const auto clip = [](const char *id, double start, double dur) {
+        drift::Clip c;
+        c.id = QString::fromLatin1(id);
+        c.type = drift::ClipType::Video;
+        c.assetId = QStringLiteral("asset");
+        c.name = c.id;
+        c.timelineStart = drift::secondsToUs(start);
+        c.timelineDuration = drift::secondsToUs(dur);
+        c.srcIn = 0;
+        c.srcOut = c.timelineDuration;
+        return c;
+    };
+    video.clips = {clip("a", 0, 4), clip("b", 4, 2), clip("c", 6, 1)};
+    from.tracks() = {video};
+
+    drift::Project to = from;
+    QVERIFY(drift::diffProjects(from, to).isEmpty());
+    // A split at 2: "a" gets shorter, "a2" carries on from it.
+    drift::Clip &a = to.tracks()[0].clips[0];
+    a.timelineDuration = drift::secondsToUs(2);
+    a.srcOut = a.timelineDuration;
+    drift::Clip a2 = clip("a2", 2, 2);
+    a2.srcIn = drift::secondsToUs(2);
+    a2.srcOut = drift::secondsToUs(4);
+    to.tracks()[0].clips.append(a2);
+    // "b" renamed and moved to a new track; "c" deleted.
+    drift::Clip b = to.tracks()[0].clips[1];
+    b.name = QStringLiteral("Renamed");
+    b.timelineStart = drift::secondsToUs(5);
+    to.tracks()[0].clips.removeAt(1);
+    to.tracks()[0].clips.removeAt(1);
+    drift::Track second{.id = QStringLiteral("v2"), .type = drift::TrackType::Video};
+    second.clips = {b};
+    to.tracks().append(second);
+
+    const drift::ProjectDiff diff = drift::diffProjects(from, to);
+    QHash<QString, drift::ClipDiff> byId;
+    for (const drift::ClipDiff &row : diff.clips)
+        byId.insert(row.id, row);
+    QCOMPARE(byId.size(), 4);
+    QCOMPARE(byId.value(QStringLiteral("a")).change, QStringLiteral("changed"));
+    QCOMPARE(byId.value(QStringLiteral("a")).fields, (QStringList{QStringLiteral("duration"), QStringLiteral("out")}));
+    QCOMPARE(byId.value(QStringLiteral("a2")).change, QStringLiteral("added"));
+    QCOMPARE(byId.value(QStringLiteral("a2")).splitFrom, QStringLiteral("a"));
+    QCOMPARE(byId.value(QStringLiteral("b")).track, 1);
+    QCOMPARE(byId.value(QStringLiteral("b")).fromTrack, 0);
+    QCOMPARE(byId.value(QStringLiteral("b")).fields,
+             (QStringList{QStringLiteral("track"), QStringLiteral("name"), QStringLiteral("start")}));
+    QCOMPARE(byId.value(QStringLiteral("c")).change, QStringLiteral("removed"));
+    QCOMPARE(diff.tracks.size(), 1);
+    QCOMPARE(diff.tracks.first().change, QStringLiteral("added"));
+    QCOMPARE(diff.tracks.first().id, QStringLiteral("v2"));
+
+    const QJsonObject json = drift::projectDiffToJson(diff);
+    QCOMPARE(json.value(QStringLiteral("clips")).toArray().size(), 4);
+    QVERIFY(!json.contains(QStringLiteral("assets")));
+
+    // A trimmed clip with an unrelated piece of the same media after it is not a split.
+    drift::Project trimmed = from;
+    trimmed.tracks()[0].clips[2].timelineDuration = drift::secondsToUs(0.5);
+    drift::Clip unrelated = clip("u", 6.5, 0.5);
+    unrelated.srcIn = drift::secondsToUs(8);
+    trimmed.tracks()[0].clips.append(unrelated);
+    for (const drift::ClipDiff &row : drift::diffProjects(from, trimmed).clips)
+        QVERIFY(row.splitFrom.isEmpty());
+
+    // Opening a composite swaps the open tracks: not an edit. An edit inside it is reported with
+    // its sequence.
+    drift::Project nested = from;
+    drift::Track inner{.id = QStringLiteral("inner"), .type = drift::TrackType::Video};
+    inner.clips = {clip("n", 0, 1)};
+    const QString sequence = nested.addSequence({inner});
+    drift::Project opened = nested;
+    QVERIFY(opened.activateSequence(sequence));
+    QVERIFY(drift::diffProjects(nested, opened).isEmpty());
+    opened.tracks()[0].clips[0].name = QStringLiteral("Inner renamed");
+    const drift::ProjectDiff insideDiff = drift::diffProjects(nested, opened);
+    QCOMPARE(insideDiff.clips.size(), 1);
+    QCOMPARE(insideDiff.clips.first().sequence, sequence);
+    QCOMPARE(insideDiff.clips.first().fields, QStringList{QStringLiteral("name")});
+
+    // Project-level state: bookmarks and the background are edits too.
+    drift::Project marked = from;
+    marked.bookmarks().append({drift::secondsToUs(1), QStringLiteral("here")});
+    QCOMPARE(drift::diffProjects(from, marked).settings, QStringList{QStringLiteral("bookmarks")});
+
+    // A duplicated id on two tracks is matched by occurrence: identical states are identical, and
+    // removing the second copy is reported.
+    drift::Project twins = from;
+    drift::Track twinTrack{.id = QStringLiteral("v3"), .type = drift::TrackType::Video};
+    twinTrack.clips = {clip("a", 9, 1)};
+    twins.tracks().append(twinTrack);
+    QVERIFY(drift::diffProjects(twins, twins).isEmpty());
+    drift::Project oneTwin = twins;
+    oneTwin.tracks()[1].clips.clear();
+    const drift::ProjectDiff twinDiff = drift::diffProjects(twins, oneTwin);
+    QCOMPARE(twinDiff.clips.size(), 1);
+    QCOMPARE(twinDiff.clips.first().change, QStringLiteral("removed"));
+    QCOMPARE(twinDiff.clips.first().track, 1);
+
+    // A real id that looks like a duplicate's key ("a#1") is still its own clip.
+    drift::Project lookalike = twins;
+    drift::Track lookalikeTrack{.id = QStringLiteral("v4"), .type = drift::TrackType::Video};
+    lookalikeTrack.clips = {clip("a#1", 20, 3)};
+    lookalike.tracks().append(lookalikeTrack);
+    QVERIFY(drift::diffProjects(lookalike, lookalike).isEmpty());
+
+    // An asset's bin trim is a change to it, though its name and path stay.
+    drift::Project withAsset = from;
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("asset");
+    asset.name = QStringLiteral("Take 1");
+    asset.path = QStringLiteral("/media/take1.mp4");
+    asset.durationUs = drift::secondsToUs(10.0);
+    withAsset.assets().insert(asset.id, asset);
+    drift::Project binTrimmed = withAsset;
+    binTrimmed.assets()[asset.id].trimInUs = drift::secondsToUs(1.0);
+    const drift::ProjectDiff assetDiff = drift::diffProjects(withAsset, binTrimmed);
+    QCOMPARE(assetDiff.assets.size(), 1);
+    QCOMPARE(assetDiff.assets.first().change, QStringLiteral("changed"));
+    // A thumbnail or a frame-rate probe filled in the background is not an edit.
+    drift::Project cached = withAsset;
+    cached.assets()[asset.id].thumbnailPath = QStringLiteral("/cache/thumb.jpg");
+    cached.assets()[asset.id].frameRateKnown = true;
+    cached.assets()[asset.id].variableFrameRate = true;
+    QVERIFY(drift::diffProjects(withAsset, cached).isEmpty());
+    // A refresh of the file changed in place (same name and path, new length) is a change.
+    drift::Project refreshed = withAsset;
+    refreshed.assets()[asset.id].durationUs = drift::secondsToUs(12.0);
+    QCOMPARE(drift::diffProjects(withAsset, refreshed).assets.size(), 1);
+    // An import's probe filling in a placeholder is not an edit, even when it corrects the kind
+    // guessed from the extension (an audio-only .mp4).
+    drift::Project placeholder = from;
+    drift::MediaAsset pending;
+    pending.id = QStringLiteral("pending");
+    pending.name = QStringLiteral("voice.mp4");
+    pending.path = QStringLiteral("/media/voice.mp4");
+    pending.kind = drift::MediaKind::Video;
+    placeholder.assets().insert(pending.id, pending);
+    drift::Project probed = placeholder;
+    drift::MediaAsset &filled = probed.assets()[pending.id];
+    filled.kind = drift::MediaKind::Audio;
+    filled.durationUs = drift::secondsToUs(30.0);
+    filled.sampleRate = 48000;
+    filled.codecName = QStringLiteral("aac");
+    QVERIFY(drift::diffProjects(placeholder, probed).isEmpty());
+    // A lazy audio check that lands first (a sample rate) still leaves it a placeholder.
+    drift::Project heard = placeholder;
+    heard.assets()[pending.id].sampleRate = 48000;
+    QVERIFY(drift::diffProjects(heard, probed).isEmpty());
+    // A static 3D model has no length, size or codec once imported, only its fingerprint: a
+    // refresh that changes it is a change.
+    drift::Project model = from;
+    drift::MediaAsset glb;
+    glb.id = QStringLiteral("glb");
+    glb.path = QStringLiteral("/media/chair.glb");
+    glb.kind = drift::MediaKind::Model3d;
+    glb.sourceSize = 4096;
+    glb.sourceModifiedMs = 1000;
+    model.assets().insert(glb.id, glb);
+    drift::Project animated = model;
+    animated.assets()[glb.id].durationUs = drift::secondsToUs(2.0);
+    animated.assets()[glb.id].sourceSize = 8192;
+    QCOMPARE(drift::diffProjects(model, animated).assets.size(), 1);
+    // A lazy audio check on a probed asset is not an edit either.
+    drift::Project audioKnown = withAsset;
+    audioKnown.assets()[asset.id].hasAudioKnown = true;
+    audioKnown.assets()[asset.id].hasAudio = false;
+    QVERIFY(drift::diffProjects(withAsset, audioKnown).isEmpty());
+    // Once probed, a known 0 is a value: a refresh that turns the rotation from 0 to 90 is a change.
+    drift::Project rotated = withAsset;
+    rotated.assets()[asset.id].rotationDegrees = 90;
+    QCOMPARE(drift::diffProjects(withAsset, rotated).assets.size(), 1);
 }
 
 QTEST_MAIN(CoreTest)

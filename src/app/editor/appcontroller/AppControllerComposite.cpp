@@ -979,9 +979,11 @@ void AppController::dissolveComposite(int trackIndex, int clipIndex)
     m_selectedTransitionLeftClip = -1;
 
     pushProjectEdit(before, tr("Dissolve composite"));
-    if (discarding)
+    if (discarding) {
         setLastMessage(tr("Composite effects and transform were discarded"), QStringLiteral("warning"));
-    else
+        // No finishEdit on this path: the revision (and the change feed) moves here.
+        m_mcpController->bumpEditRevision();
+    } else
         finishEdit(tr("Composite dissolved"));
     notifySelectionChanged();
     emit sequenceTabsChanged();

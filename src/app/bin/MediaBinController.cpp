@@ -3,6 +3,7 @@
 #include "app/editor/AppController.h"
 #include "app/editor/AppControllerDetail.h"
 #include "app/bin/AssetLibrary.h"
+#include "app/mcp/McpController.h"
 #include "app/editor/ProjectFileController.h"
 #include "engine/platform/AndroidUri.h"
 #include "engine/encode/MediaEditor.h"
@@ -62,6 +63,9 @@ QString MediaBinController::createFolder(const QString &name, const QString &par
     const drift::Project before = m_app->m_project;
     const QString id = m_folderModel.createFolder(trimmed, parentId);
     m_app->pushProjectEdit(before, tr("Folder created"));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return id;
 }
@@ -81,6 +85,9 @@ bool MediaBinController::renameFolder(const QString &folderId, const QString &na
         return false;
 
     m_app->pushProjectEdit(before, tr("Folder renamed"));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return true;
 }
@@ -96,6 +103,9 @@ bool MediaBinController::moveFolder(const QString &folderId, const QString &newP
         return false;
 
     m_app->pushProjectEdit(before, tr("Folder moved"));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return true;
 }
@@ -117,6 +127,9 @@ bool MediaBinController::deleteFolder(const QString &folderId)
         setCurrentFolderId(parentId);
 
     m_app->pushProjectEdit(before, tr("Folder deleted"));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return true;
 }
@@ -135,6 +148,9 @@ bool MediaBinController::moveAssetToFolder(int assetIndex, const QString &folder
         return false;
 
     m_app->pushProjectEdit(before, tr("Media moved"));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return true;
 }
@@ -158,6 +174,9 @@ int MediaBinController::moveAssetsToFolder(const QStringList &assetIds, const QS
 
     m_app->pushProjectEdit(before,
                            moved == 1 ? tr("Media moved") : tr("%n items moved", "", moved));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return moved;
 }
@@ -377,6 +396,12 @@ bool MediaBinController::replaceSource(int assetIndex, const QUrl &url)
     // Reading a file off a slow disk is the one part of this the user waits on with nothing to
     // show for it, so the row it belongs to goes busy until the probe lands.
     m_replacingAssetId = assetId;
+    // The probe lands outside the agent's call (its wait runs a nested event loop), so the change
+    // feed learns whose replace it was from here.
+    if (m_app->mcp() && m_app->mcp()->inAgentCall())
+        m_replacesByAgent.insert(assetId);
+    else
+        m_replacesByAgent.remove(assetId);
     // applyProbedSource overwrites the whole struct from the probe result, which knows nothing
     // about where the file came from — so the URI is held here and put back in finalizeReplace.
     m_replacingAssetSourceUri = sourceUri;
@@ -631,6 +656,9 @@ bool MediaBinController::saveEdit(int assetIndex, double inSeconds, double outSe
             return true;
         }
         m_app->pushProjectEdit(before, tr("Media trimmed"));
+        // An undo step without finishEdit: the revision (and the change feed) moves here.
+        if (McpController *mcp = m_app->mcp())
+            mcp->bumpEditRevision();
         m_app->settleUndoRefresh();
         m_app->setLastMessage(tr("Trim saved"));
         emit editFinished(true, tr("Trim saved"));
@@ -756,6 +784,9 @@ QString MediaBinController::addSubclip(const QString &assetId, double inSeconds,
     if (id.isEmpty())
         return {};
     m_app->pushProjectEdit(before, tr("Sub-clip added"));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return id;
 }
@@ -927,6 +958,7 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
     // whichever replace runs next.
     const QString replacementSourceUri =
         refresh ? QString() : std::exchange(m_replacingAssetSourceUri, QString());
+    const bool byAgent = !refresh && m_replacesByAgent.remove(assetId);
 
     std::function<void(drift::MediaAsset &)> adjust = std::exchange(m_replaceAdjust, nullptr);
     if (refresh)
@@ -1050,6 +1082,8 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
     const QString label = fromEdit ? tr("Media edited")
                                    : (refresh ? tr("Media refreshed") : tr("Media replaced"));
     m_app->pushProjectEdit(before, label);
+    if (byAgent && m_app->mcp())
+        m_app->mcp()->markNextChangeByAgent();
     m_app->finishEdit(label);
     finishEditJob(true, newName);
     if (!fromEdit && !refresh)
@@ -1094,6 +1128,9 @@ void MediaBinController::relinkSiblings()
     const drift::Project before = m_app->m_project;
     m_app->projectFile()->remapProjectPaths(remap);
     m_app->pushProjectEdit(before, tr("Relink media"));
+    // An undo step without finishEdit: the revision (and the change feed) moves here.
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     m_app->m_assetLibrary->setProject(&m_app->m_project);
     m_folderModel.setProject(&m_app->m_project);

@@ -1,4 +1,5 @@
 #include "app/mcp/McpController.h"
+#include "core/project/ProjectDiff.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/jobs/vision/SceneDetectController.h"
 
@@ -1167,8 +1168,197 @@ QJsonObject McpController::captureFrame(double atSeconds, bool full, bool editor
     return {{QStringLiteral("content"), content}, {QStringLiteral("isError"), false}};
 }
 
+void McpController::bumpEditRevision(ChangeKind kind)
+{
+    ++m_editRevision;
+    recordChange(kind);
+}
+
+void McpController::startChangeFeed()
+{
+    if (m_changeFeedOn)
+        return;
+    m_changeFeedOn = true;
+    m_changeFeedFloor = m_editRevision;
+    m_changeBase = std::make_shared<const drift::Project>(m_app->m_project);
+}
+
+void McpController::recordChange(ChangeKind kind)
+{
+    const bool byAgent = std::exchange(m_nextChangeByAgent, false) || inAgentCall();
+    // A batch is one entry, logged when it ends (its ops' own finishes are inside it). It takes
+    // the kind its ops share (a batch of undos is an undo); mixed kinds read as an edit.
+    if (m_batchDepth > 0) {
+        if (!m_batchKind)
+            m_batchKind = kind;
+        else if (*m_batchKind != kind)
+            m_batchKind = ChangeKind::Edit;
+        return;
+    }
+    QString label = std::exchange(m_pendingChangeLabel, QString());
+    if (const std::optional<ChangeKind> batch = std::exchange(m_batchKind, std::nullopt); batch && kind == ChangeKind::Edit)
+        kind = *batch;
+    if (!m_changeFeedOn)
+        return;
+    if (label.isEmpty())
+        label = kind == ChangeKind::Undo ? m_app->m_undoStack.redoText() : m_app->m_undoStack.undoText();
+    ChangeEntry entry;
+    entry.revision = m_editRevision;
+    entry.source = byAgent ? QStringLiteral("mcp") : QStringLiteral("ui");
+    entry.kind = kind == ChangeKind::Undo   ? QStringLiteral("undo")
+                 : kind == ChangeKind::Redo ? QStringLiteral("redo")
+                                            : QStringLiteral("edit");
+    entry.label = label;
+    entry.state = std::make_shared<const drift::Project>(m_app->m_project);
+    m_changeLog.append(entry);
+
+    // Unread snapshots are bounded (fewer for a big project: each holds a copy of every clip): past
+    // the limit the oldest go, and the entries that needed one keep only their label.
+    int clipCount = 0;
+    std::as_const(m_app->m_project).forEachTrackList([&clipCount](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks)
+            clipCount += int(track.clips.size());
+    });
+    const int budget = qBound(4, kChangeSnapshotClips / qMax(1, clipCount), kChangeSnapshots);
+    int held = m_changeBase ? 1 : 0;
+    for (const ChangeEntry &e : std::as_const(m_changeLog))
+        held += e.state ? 1 : 0;
+    for (int i = -1; held > budget && i < m_changeLog.size() - 1; ++i) {
+        std::shared_ptr<const drift::Project> &state = i < 0 ? m_changeBase : m_changeLog[i].state;
+        if (!state)
+            continue;
+        state.reset();
+        --held;
+        // The entry it ended and the one it started.
+        if (i >= 0 && !m_changeLog[i].computed)
+            m_changeLog[i].detailDropped = true;
+        if (!m_changeLog[i + 1].computed)
+            m_changeLog[i + 1].detailDropped = true;
+    }
+    if (m_changeLog.size() > kChangeLogSize) {
+        m_changeFeedFloor = m_changeLog.first().revision;
+        m_changeBase = m_changeLog.first().state;
+        m_changeLog.removeFirst();
+    }
+}
+
+void McpController::computeChange(int index)
+{
+    ChangeEntry &entry = m_changeLog[index];
+    if (entry.computed)
+        return;
+    std::shared_ptr<const drift::Project> &from = index == 0 ? m_changeBase : m_changeLog[index - 1].state;
+    if (!entry.detailDropped && from && entry.state)
+        entry.diff = drift::projectDiffToJson(drift::diffProjects(*from, *entry.state));
+    else
+        entry.detailDropped = true;
+    entry.computed = true;
+    // A snapshot ends one entry and starts the next: it goes once both are worked out.
+    if (index == 0 || m_changeLog.at(index - 1).computed)
+        from.reset();
+    if (index + 1 < m_changeLog.size() && m_changeLog.at(index + 1).computed)
+        entry.state.reset();
+}
+
+QJsonObject McpController::changesSince(int since, int limit)
+{
+    using namespace drift::mcp;
+    QJsonArray changes;
+    int returned = 0;
+    bool more = false;
+    for (int i = 0; i < m_changeLog.size(); ++i) {
+        if (m_changeLog.at(i).revision <= since)
+            continue;
+        computeChange(i);
+        const ChangeEntry &entry = m_changeLog.at(i);
+        // Nothing in the project changed (a timeline switch, a refresh): not an edit to report.
+        if (!entry.detailDropped && entry.diff.isEmpty())
+            continue;
+        if (returned == limit) {
+            more = true;
+            break;
+        }
+        QJsonObject row = entry.diff;
+        row.insert(QStringLiteral("revision"), entry.revision);
+        row.insert(QStringLiteral("source"), entry.source);
+        row.insert(QStringLiteral("kind"), entry.kind);
+        if (!entry.label.isEmpty())
+            row.insert(QStringLiteral("label"), entry.label);
+        if (entry.detailDropped)
+            row.insert(QStringLiteral("detail"), false);
+        changes.append(row);
+        ++returned;
+    }
+    QJsonObject out{{QStringLiteral("revision"), m_editRevision}, {QStringLiteral("changes"), changes}};
+    if (more)
+        out.insert(QStringLiteral("more"), true);
+    // Edits before the feed started, or dropped from the log, are not listed.
+    if (since >= 0 && since < m_changeFeedFloor) {
+        out.insert(QStringLiteral("truncated"), true);
+        out.insert(QStringLiteral("from_revision"), m_changeFeedFloor);
+    }
+    return ok(out);
+}
+
+std::optional<drift::Project> McpController::projectForState(const QString &state, QString *error) const
+{
+    const QString needle = state.trimmed();
+    if (needle.isEmpty() || needle.compare(QLatin1String("head"), Qt::CaseInsensitive) == 0)
+        return m_app->m_project;
+    if (needle.size() < 8) {
+        *error = QStringLiteral("%1: give a hash of 8+ characters or \"head\"").arg(needle);
+        return std::nullopt;
+    }
+    const int onStack = m_app->historyIndexForHash(needle);
+    if (onStack >= 0)
+        return m_app->historyProjectAt(onStack);
+    QDir dir(m_app->historySnapshotDir());
+    QString path;
+    int matches = 0;
+    for (const QFileInfo &info : dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files, QDir::Name)) {
+        if (info.completeBaseName().startsWith(needle, Qt::CaseInsensitive)) {
+            ++matches;
+            path = info.absoluteFilePath();
+        }
+    }
+    if (matches != 1) {
+        *error = matches == 0 ? QStringLiteral("No history version or snapshot matches %1").arg(needle)
+                              : QStringLiteral("%1 matches several snapshots; give more characters").arg(needle);
+        return std::nullopt;
+    }
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        *error = QStringLiteral("Could not read snapshot %1").arg(needle);
+        return std::nullopt;
+    }
+    QString parseError;
+    drift::Project project = drift::Project::fromJson(QJsonDocument::fromJson(file.readAll()).object(), &parseError);
+    if (!parseError.isEmpty()) {
+        *error = parseError;
+        return std::nullopt;
+    }
+    return project;
+}
+
+QJsonObject McpController::diffStates(const QString &from, const QString &to) const
+{
+    using namespace drift::mcp;
+    m_app->flushUndoHistoryTrim();
+    QString error;
+    const std::optional<drift::Project> a = projectForState(from, &error);
+    if (!a)
+        return err("not_found", error);
+    const std::optional<drift::Project> b = projectForState(to, &error);
+    if (!b)
+        return err("not_found", error);
+    QJsonObject out = drift::projectDiffToJson(drift::diffProjects(*a, *b));
+    out.insert(QStringLiteral("same"), out.isEmpty());
+    return ok(out);
+}
+
 void McpController::beginAgentCall()
 {
+    startChangeFeed();
     m_agentCalls.append({QThread::currentThread()->loopLevel(), m_agentCallsPaused});
 }
 
@@ -1239,6 +1429,7 @@ void McpController::endBatch(const QString &text, bool pushUndo)
     }
     if (pushUndo)
         m_app->pushProjectEdit(m_batchBefore, text, false);
+    m_pendingChangeLabel = text;
     m_app->finishEdit(text);
     m_batchBefore = {};
     // After the finishEdit above, which clears the status line.
@@ -1800,9 +1991,11 @@ QJsonObject McpController::undoTo(int index, const QString &hash)
     // Same as AppController::undo()/redo(): the selection is carried across by clip id, or the
     // jump leaves it on whatever clip now sits at the old indices.
     m_app->captureSelectionClipIds();
+    const int from = m_app->m_undoStack.index();
     m_app->m_undoStack.setIndex(target);
     m_app->m_undoSelectionCaptured = false;
-    ++m_editRevision;
+    m_pendingChangeLabel = QStringLiteral("Jump to version %1").arg(target);
+    bumpEditRevision(target < from ? ChangeKind::Undo : ChangeKind::Redo);
     // Redoing forward can take the applied steps past the limit again; settle it before replying.
     m_app->flushUndoHistoryTrim();
     const QString at = m_app->historyHashAt(m_app->m_undoStack.index());
@@ -2068,7 +2261,8 @@ QJsonObject McpController::restoreSnapshot(const QString &hash)
         if (!m_app->m_project.transcript(it.key()))
             m_app->m_project.setTranscript(it.key(), it.value());
     }
-    ++m_editRevision;
+    m_pendingChangeLabel = QStringLiteral("Restore snapshot");
+    bumpEditRevision();
     return ok({{QStringLiteral("index"), 0},
                {QStringLiteral("hash"), fileHash},
                {QStringLiteral("short"), shortHash(fileHash)},
