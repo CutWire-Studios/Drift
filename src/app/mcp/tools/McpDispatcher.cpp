@@ -706,6 +706,10 @@ QJsonObject McpDispatcher::inspect(const QJsonObject &args) const
                         ? jsonInt(args.value(QStringLiteral("track")), -1)
                         : -1;
     options.clip = args.value(QStringLiteral("clip")).toString();
+    for (const QJsonValue &t : args.value(QStringLiteral("tracks")).toArray())
+        options.tracks.append(jsonInt(t, -1));
+    for (const QJsonValue &f : args.value(QStringLiteral("fields")).toArray())
+        options.fields.append(f.toString());
     return m_controller->mcp()->inspect(options);
 }
 

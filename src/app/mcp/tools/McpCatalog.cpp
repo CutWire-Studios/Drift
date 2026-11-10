@@ -1881,7 +1881,8 @@ QJsonArray homepageTools()
                        "use or still sits at its default: an absent boolean is false; transform "
                        "{x,y,w,h,rotation,opacity} is always present (values at the playhead) and "
                        "animated lists the keyframed properties. verbose=true returns every field. "
-                       "clip=<uuid> returns just that clip (detail on); track=<n> just that track. "
+                       "clip=<uuid> returns just that clip (detail on); track=<n> just that track, tracks=[n,...] just those; "
+                       "fields=[...] trims clip rows to those keys plus id. "
                        "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect|downloads} only while "
                        "active, and jobs.list holds get_job's records; beats only once analysed. since=<revision> returns {unchanged:true, revision}."),
         objectSchema({{QStringLiteral("clips"), boolProp(QStringLiteral("Include per-clip rows under tracks[].items"))},
@@ -1897,7 +1898,14 @@ QJsonArray homepageTools()
                       {QStringLiteral("track"),
                        integerProp(QStringLiteral("Track index: return only that track"))},
                       {QStringLiteral("since"),
-                       integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current"))}}),
+                       integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current"))},
+                      {QStringLiteral("tracks"),
+                       arrayProp(integerProp(QStringLiteral("Track index")),
+                                 QStringLiteral("Return only these tracks (other tracks are left out of tracks[]; empty = all)"))},
+                      {QStringLiteral("fields"),
+                       arrayProp(stringProp(QStringLiteral("Clip row key, e.g. start")),
+                                 QStringLiteral("Clip rows keep only these keys (id always stays; empty = all), e.g. [\"start\",\"duration\",\"name\"]: "
+                                                "a smaller reply for a big timeline"))}}),
         toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("apply"),
