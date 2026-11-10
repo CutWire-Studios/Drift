@@ -1292,28 +1292,41 @@ GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
 
     detachDepth();
     if (depthTexture) {
-        QOpenGLShaderProgram *depthResolve = rt.builtinProgram(
-            QStringLiteral("model_clip_depth"), kQuadVertexShader, kModelClipDepthFrag);
-        GlTarget depth = depthResolve ? rt.acquireTarget(outW, outH) : GlTarget{};
-        if (depth.isValid()) {
-            depth.fbo->bind();
-            gl->glViewport(0, 0, outW, outH);
-            depthResolve->bind();
-            depthResolve->setUniformValue("u_depth", 0);
-            depthResolve->setUniformValue("u_taps", supersample ? 2.f : 1.f);
-            gl->glActiveTexture(GL_TEXTURE0);
-            gl->glBindTexture(GL_TEXTURE_2D, depthTexture);
-            gl->glBindVertexArray(rt.vao);
-            gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            gl->glBindVertexArray(0);
-            gl->glBindTexture(GL_TEXTURE_2D, 0);
-            depthResolve->release();
-            depth.fbo->release();
+        GlTarget depth = packModelClipDepth(rt, gl, depthTexture, canvasSize, supersample);
+        if (depth.isValid())
             *depthOut = std::move(depth);
-        }
     }
     rt.releaseTarget(std::move(scratch));
     return result;
+}
+
+GLuint modelClipDepthTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, int width, int height)
+{
+    return modelDepthTexture(rt, gl, width, height);
+}
+
+GlTarget packModelClipDepth(GlRuntime &rt, QOpenGLExtraFunctions *gl, GLuint depthTexture,
+                            const QSize &outSize, bool supersample)
+{
+    QOpenGLShaderProgram *depthResolve = rt.builtinProgram(QStringLiteral("model_clip_depth"),
+                                                           kQuadVertexShader, kModelClipDepthFrag);
+    GlTarget depth = depthResolve ? rt.acquireTarget(outSize.width(), outSize.height()) : GlTarget{};
+    if (!depth.isValid())
+        return {};
+    depth.fbo->bind();
+    gl->glViewport(0, 0, outSize.width(), outSize.height());
+    depthResolve->bind();
+    depthResolve->setUniformValue("u_depth", 0);
+    depthResolve->setUniformValue("u_taps", supersample ? 2.f : 1.f);
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glBindTexture(GL_TEXTURE_2D, depthTexture);
+    gl->glBindVertexArray(rt.vao);
+    gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    gl->glBindVertexArray(0);
+    gl->glBindTexture(GL_TEXTURE_2D, 0);
+    depthResolve->release();
+    depth.fbo->release();
+    return depth;
 }
 
 GlTarget resolveModelClipScratch(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &&scratch,

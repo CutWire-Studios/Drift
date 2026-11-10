@@ -41,6 +41,8 @@ cleanup:
   - "*.la"
 
 modules:
+  - shared-modules/lua5.4/lua-5.4.json
+
   # Headers only. Drift does not link ONNX Runtime — it dlopens whichever build the user
   # installed from the Acceleration category, so the app ships none and neither does this
   # manifest. The library in this archive is deliberately discarded. Built with
@@ -132,6 +134,7 @@ modules:
         -DCMAKE_BUILD_TYPE=Release
         -DDRIFT_WITH_SKIA=ON
         -DDRIFT_FETCH_ONNXRUNTIME=OFF
+        -DDRIFT_SYSTEM_LUA=ON
         -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
         -DDRIFT_BUNDLE_CORE_PACKAGES_ONLY=ON
         -DONNXRUNTIME_ROOT=/app

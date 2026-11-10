@@ -263,7 +263,7 @@ PreferencesController::PreferencesController(QObject *parent)
     if (m_audioMixerWidth > 0)
         m_audioMixerWidth = qBound(160.0, m_audioMixerWidth, 2000.0);
     m_trackLabelsWidth = qBound(64.0,
-        settings.value(QStringLiteral("ui/trackLabelsWidth"), 130.0).toDouble(), 360.0);
+        settings.value(QStringLiteral("ui/trackLabelsWidth"), 170.0).toDouble(), 360.0);
     m_androidTrackLabelsWidth = qBound(56.0,
         settings.value(QStringLiteral("ui/androidTrackLabelsWidth"), 80.0).toDouble(), 200.0);
     m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();
@@ -300,7 +300,8 @@ PreferencesController::PreferencesController(QObject *parent)
     drift::setImageClipDurationUs(drift::secondsToUs(m_stillDurationSeconds));
     loadPerformanceSettings();
     m_transitionDurationSeconds = qBound(0.1,
-        settings.value(QStringLiteral("timeline/transitionDurationSeconds"), 0.5).toDouble(), 5.0);
+        settings.value(QStringLiteral("timeline/transitionDurationSeconds"), 1.0).toDouble(), 5.0);
+    m_recentTransitions = settings.value(QStringLiteral("timeline/recentTransitions")).toStringList();
     applyNetworkProxy(m_networkProxyMode, m_networkProxyHost, m_networkProxyPort, m_networkProxyUser,
                       m_networkProxyPassword);
     m_uiLanguage = storedUiLanguage();
@@ -709,6 +710,18 @@ void PreferencesController::setTransitionDurationSeconds(double seconds)
     m_transitionDurationSeconds = seconds;
     QSettings().setValue(QStringLiteral("timeline/transitionDurationSeconds"), m_transitionDurationSeconds);
     emit transitionDurationSecondsChanged();
+}
+
+void PreferencesController::pushRecentTransition(const QString &kind)
+{
+    if (kind.isEmpty() || (!m_recentTransitions.isEmpty() && m_recentTransitions.first() == kind))
+        return;
+    m_recentTransitions.removeAll(kind);
+    m_recentTransitions.prepend(kind);
+    while (m_recentTransitions.size() > 8)
+        m_recentTransitions.removeLast();
+    QSettings().setValue(QStringLiteral("timeline/recentTransitions"), m_recentTransitions);
+    emit recentTransitionsChanged();
 }
 
 namespace {

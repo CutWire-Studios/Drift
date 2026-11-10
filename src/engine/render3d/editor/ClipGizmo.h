@@ -84,6 +84,13 @@ struct Geometry
     QList<Handle> handles;
 };
 
+// The same placement with the anchor moved to `local` (rect-local px, z out of the plane): the rect
+// and position shift so every point lands where it did, but rotations now turn about `local`. For
+// geometry that hangs off the clip's anchor yet should be handled at its bounds centre.
+Pose pivotedAt(const Pose &pose, const QVector3D &local);
+// A pose edited after pivotedAt, expressed again with `original`'s anchor and the same placement.
+Pose anchoredLike(const Pose &pivoted, const Pose &original);
+
 // `size` scales the handles (1 on desktop, larger for touch). Under a `view`, a transform-layer
 // parent must be affine (it is folded into the view); a tilted parent gives no gizmo.
 Geometry geometry(const Pose &pose, Tool tool, Orientation orientation, double scale,

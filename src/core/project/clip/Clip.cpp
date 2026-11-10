@@ -27,6 +27,8 @@ QString clipTypeToString(ClipType type)
         return QStringLiteral("pdf");
     case ClipType::Composite:
         return QStringLiteral("composite");
+    case ClipType::Procedural:
+        return QStringLiteral("procedural");
     }
     return QStringLiteral("video");
 }
@@ -53,6 +55,8 @@ ClipType clipTypeFromString(const QString &type)
         return ClipType::Pdf;
     if (type == QStringLiteral("composite"))
         return ClipType::Composite;
+    if (type == QStringLiteral("procedural"))
+        return ClipType::Procedural;
     return ClipType::Video;
 }
 

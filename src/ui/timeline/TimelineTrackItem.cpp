@@ -963,6 +963,8 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
             drawBadge(s.warning, s.vfrTooltip);
         if (missing)
             drawBadge(s.missing, s.missingTooltip);
+        if (row.packageMissing)
+            drawBadge(s.missing, tr("Procedural package not found. The clip renders nothing until it is installed again."));
 
         const double nameRoom = std::max(0.0, rowLeft + rowWidth - x - pillsWidth);
         const QString name = tinyMetrics.elidedText(row.name, Qt::ElideRight, nameRoom);
@@ -1232,7 +1234,7 @@ void TimelineTrackItem::buildFilmstrip(int index, const QRectF &body, const QRec
 
     const bool singleFrame = row.kind == QLatin1String("image") || row.kind == QLatin1String("vector")
                              || row.kind == QLatin1String("model3d")
-                             || row.kind == QLatin1String("pdf");
+                             || row.kind == QLatin1String("pdf") || row.kind == QLatin1String("procedural");
     const int frameCount = singleFrame ? 1 : kFilmstripFrameCount;
     const QString sourcePath = row.kind == QLatin1String("video") ? row.path : QString();
     const qreal dpr = window() ? window()->effectiveDevicePixelRatio() : 1.0;

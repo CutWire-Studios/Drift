@@ -618,6 +618,8 @@ add_library(driftcore STATIC
     src/core/project/sources/VectorSource.cpp
     src/core/project/sources/Model3dSource.h
     src/core/project/sources/Model3dSource.cpp
+    src/core/project/sources/ProceduralSource.h
+    src/core/project/sources/ProceduralSource.cpp
     src/core/project/sources/PdfSource.h
     src/core/project/sources/PdfSource.cpp
     src/core/base/ZipArchive.h
@@ -724,6 +726,56 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(driftaudiodsp PRIVATE -ffp-contract=off)
 endif()
 
+# --- Lua + procedural geometry (Qt-free) ------------------------------------
+# Flatpak builds Lua as a separate module from flathub/shared-modules and sets this ON; every other
+# platform builds the vendored copy.
+option(DRIFT_SYSTEM_LUA "Link the system Lua 5.4 instead of building third_party/lua" OFF)
+if(DRIFT_SYSTEM_LUA)
+    find_package(Lua 5.4 EXACT QUIET)
+    add_library(drift_lua INTERFACE)
+    if(LUA_FOUND)
+        target_include_directories(drift_lua SYSTEM INTERFACE ${LUA_INCLUDE_DIR})
+        target_link_libraries(drift_lua INTERFACE ${LUA_LIBRARIES})
+    else()
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(DRIFT_LUA_PC REQUIRED IMPORTED_TARGET lua5.4)
+        target_link_libraries(drift_lua INTERFACE PkgConfig::DRIFT_LUA_PC)
+    endif()
+else()
+    file(GLOB DRIFT_LUA_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/third_party/lua/*.c)
+    add_library(drift_lua STATIC ${DRIFT_LUA_SOURCES})
+    target_include_directories(drift_lua SYSTEM PUBLIC ${CMAKE_SOURCE_DIR}/third_party/lua)
+    set_target_properties(drift_lua PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    if(EMSCRIPTEN)
+        # Lua's LUAI_THROW is longjmp when built as C, which does not unwind through Qt for wasm's
+        # JS-exception model. As C++ it throws, which -fexceptions handles. LuaInclude.h reads the define.
+        set_source_files_properties(${DRIFT_LUA_SOURCES} PROPERTIES LANGUAGE CXX)
+        target_compile_definitions(drift_lua PUBLIC DRIFT_LUA_AS_CXX=1)
+    endif()
+    # Lua seeds string hashing from the clock and ASLR, which makes pairs() order differ run to run.
+    target_compile_options(drift_lua PRIVATE
+        "$<IF:$<C_COMPILER_ID:MSVC>,/FI${CMAKE_SOURCE_DIR}/cmake/lua_seed.h,SHELL:-include ${CMAKE_SOURCE_DIR}/cmake/lua_seed.h>")
+endif()
+
+add_library(driftprocedural STATIC
+    src/engine/procedural/LuaInclude.h
+    src/engine/procedural/LuaSandbox.h
+    src/engine/procedural/LuaSandbox.cpp
+    src/engine/procedural/ProceduralMesh.h
+    src/engine/procedural/ProceduralGeometry.h
+    src/engine/procedural/ProceduralGeometry.cpp
+    src/engine/procedural/ProceduralScene.h
+    src/engine/procedural/ProceduralEvaluator.h
+    src/engine/procedural/ProceduralEvaluator.cpp
+    src/engine/procedural/ProceduralCamera.h
+    src/engine/procedural/ProceduralSceneCache.h
+    src/engine/procedural/ProceduralSceneCache.cpp
+    src/engine/procedural/ProceduralDiagnostics.h
+    src/engine/procedural/ProceduralDiagnostics.cpp
+)
+target_include_directories(driftprocedural PUBLIC src)
+target_link_libraries(driftprocedural PUBLIC drift_lua)
+
 # --- engine: FFmpeg-facing code, no QML deps -------------------------------
 add_library(driftengine STATIC
     src/engine/addons/AddonPackage.h
@@ -808,6 +860,10 @@ add_library(driftengine STATIC
     src/engine/render2d/vector/VectorInspect.cpp
     src/engine/packages/effects/EffectPackageLoader.h
     src/engine/packages/effects/EffectPackageLoader.cpp
+    src/engine/packages/procedurals/ProceduralPackageLoader.h
+    src/engine/packages/procedurals/ProceduralPackageLoader.cpp
+    src/engine/packages/procedurals/ProceduralCatalog.h
+    src/engine/packages/procedurals/ProceduralCatalog.cpp
     src/engine/packages/transitions/TransitionCatalog.h
     src/engine/packages/transitions/TransitionCatalog.cpp
     src/engine/packages/transitions/TransitionPackageLoader.h
@@ -874,6 +930,12 @@ add_library(driftengine STATIC
     src/engine/ml/vision/Restorer.cpp
     src/engine/ml/vision/depth/DepthSidecar.h
     src/engine/ml/vision/depth/DepthSidecar.cpp
+    src/engine/encode/bake/BakeFile.h
+    src/engine/encode/bake/BakeFile.cpp
+    src/engine/encode/bake/BakeWriter.h
+    src/engine/encode/bake/BakeWriter.cpp
+    src/engine/encode/bake/BakeReader.h
+    src/engine/encode/bake/BakeReader.cpp
     src/engine/face/tracking/FaceLandmarker.h
     src/engine/face/tracking/FaceLandmarker.cpp
     src/engine/face/tracking/FaceTrack.h
@@ -916,6 +978,11 @@ add_library(driftengine STATIC
     src/engine/face/swap/GlFaceSwapRenderer.cpp
     src/engine/render3d/models/GlModelRenderer.h
     src/engine/render3d/models/GlModelRenderer.cpp
+    src/engine/render3d/procedural/ProceduralRequest.h
+    src/engine/render3d/procedural/ProceduralClipRenderer.h
+    src/engine/render3d/procedural/ProceduralClipRenderer.cpp
+    src/engine/render3d/procedural/GlProceduralRenderer.h
+    src/engine/render3d/procedural/GlProceduralRenderer.cpp
     src/engine/render3d/splats/GlSplatRenderer.h
     src/engine/render3d/splats/GlSplatRenderer.cpp
     src/engine/face/swap/FaceSwapSource.h
@@ -977,7 +1044,7 @@ target_include_directories(driftengine PUBLIC src)
 # cgltf is PRIVATE: ModelAsset.h exposes no cgltf type, so nothing outside ModelAsset.cpp includes it.
 target_include_directories(driftengine SYSTEM PRIVATE ${CMAKE_SOURCE_DIR}/third_party/cgltf)
 target_link_libraries(driftengine PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGL Qt6::Multimedia FFmpeg::FFmpeg driftcore
-    driftaudiodsp onnxruntime::headers)
+    driftaudiodsp driftprocedural onnxruntime::headers)
 target_link_libraries(driftengine PRIVATE ${DRIFT_ZSTD_TARGET} OpenSSL::Crypto ${CMAKE_DL_LIBS})
 if(WIN32)
     # Hybrid-graphics laptops: D3D11VA -> OpenGL preview interop, and DXGI adapter enumeration for
@@ -1233,6 +1300,10 @@ target_sources(driftapp PRIVATE
     src/app/jobs/vision/SceneDetectController.cpp
     src/app/jobs/vision/DepthController.h
     src/app/jobs/vision/DepthController.cpp
+    src/app/jobs/render/BakeController.h
+    src/app/jobs/render/BakeController.cpp
+    src/app/jobs/render/BakeFingerprint.h
+    src/app/jobs/render/BakeFingerprint.cpp
     src/app/jobs/audio/DenoiseController.h
     src/app/jobs/audio/DenoiseController.cpp
     src/app/jobs/audio/AudioAlignController.h
@@ -1313,6 +1384,14 @@ target_sources(driftapp PRIVATE
     src/app/mcp/tools/McpDispatcherExtended.cpp
     src/app/mcp/tools/McpEffectAuthoring.h
     src/app/mcp/tools/McpEffectAuthoring.cpp
+    src/app/mcp/tools/McpProceduralAuthoring.h
+    src/app/mcp/tools/McpProceduralAuthoring.cpp
+    src/app/procedural/ProceduralAuthoringService.h
+    src/app/procedural/ProceduralAuthoringService.cpp
+    src/app/procedural/ProceduralEditorController.h
+    src/app/procedural/ProceduralEditorController.cpp
+    src/app/procedural/ProceduralHighlighter.h
+    src/app/procedural/ProceduralHighlighter.cpp
     src/app/mcp/protocol/McpValidate.h
     src/app/mcp/protocol/McpValidate.cpp
     src/app/mcp/tools/McpMarket.cpp
@@ -1509,6 +1588,7 @@ qt_add_resources(drift "drift_workspaces"
         resources/workspaces/keyframes.json
         resources/workspaces/masking-tracking.json
         resources/workspaces/3d.json
+        resources/workspaces/procedural.json
 )
 
 qt_add_resources(drift "drift_marketplace"
@@ -1524,6 +1604,13 @@ qt_add_resources(drift "drift_addon_catalog"
 )
 
 # Global search index written by scripts/gen-search-index.py; loaded at :/search-index.json.
+# The procedural_authoring_guide tool serves this file, so the docs are the single source.
+qt_add_resources(drift "drift_procedural_docs"
+    PREFIX "/docs"
+    BASE docs
+    FILES docs/procedural.md
+)
+
 qt_add_resources(drift "drift_search_index"
     PREFIX "/"
     BASE resources
@@ -1611,6 +1698,7 @@ qt_add_qml_module(drift
         src/qml/AndroidMoreToolsSheet.qml
         src/qml/AndroidFadeSheet.qml
         src/qml/AndroidEasingSheet.qml
+        src/qml/AndroidTransitionPickerSheet.qml
         src/qml/AndroidProjectSheet.qml
         src/qml/AndroidHome.qml
         src/qml/AndroidEditor.qml
@@ -1697,6 +1785,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/Model3DLighting.qml
         src/qml/components/properties/Transform3dInspector.qml
         src/qml/components/properties/PdfInspector.qml
+        src/qml/components/properties/ProceduralInspector.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/EffectsInspector.qml
         src/qml/components/properties/FacePropPicker.qml
@@ -1823,6 +1912,8 @@ qt_add_qml_module(drift
         src/qml/components/assets/AssetFavoriteButton.qml
         src/qml/components/assets/AssetQuickAddButton.qml
         src/qml/components/assets/TransitionPresetCard.qml
+        src/qml/components/transitions/TransitionPickerGrid.qml
+        src/qml/components/transitions/TransitionPickerPopup.qml
         src/qml/components/assets/TextStyleUserCard.qml
         src/qml/components/assets/TextStylePackCard.qml
         src/qml/components/assets/StockAudioRow.qml
@@ -1887,6 +1978,9 @@ qt_add_qml_module(drift
         src/qml/components/panels/Transform3dPanel.qml
         src/qml/components/panels/Camera3dPanel.qml
         src/qml/components/panels/View3dPanel.qml
+        src/qml/components/panels/ProceduralEditorPanel.qml
+        src/qml/components/panels/ProceduralParamsPanel.qml
+        src/qml/components/panels/ProceduralConsolePanel.qml
         src/qml/components/panels/SubtitleLanePanel.qml
         src/qml/components/panels/SubtitleTextPanel.qml
         src/qml/components/subtitles/SubtitleLaneToolbar.qml
@@ -1953,6 +2047,7 @@ qt_add_qml_module(drift
         src/qml/components/panels/AudioSheetPanel.qml
         src/qml/components/ImageViewer.qml
         src/qml/components/dialogs/ImageViewerDialog.qml
+        src/qml/components/dialogs/BakesDialog.qml
         src/qml/components/timeline/TimelineClipItem.qml
         src/qml/components/timeline/PlayheadInterpolator.qml
         src/qml/components/timeline/TimelineTrackArea.qml
@@ -1971,15 +2066,28 @@ qt_add_qml_module(drift
         src/qml/components/timeline/VoiceoverBarDivider.qml
         src/qml/components/timeline/TransformCoverageTint.qml
         src/qml/components/timeline/TrackHeaderWash.qml
+        src/qml/components/timeline/TrackHeaderControls.qml
+        src/qml/components/timeline/TrackHeaderLockButton.qml
+        src/qml/components/timeline/TrackHeaderSoloButton.qml
+        src/qml/components/timeline/TrackHeaderName.qml
+        src/qml/components/timeline/TrackHeaderTypeStrip.qml
+        src/qml/components/timeline/TrackHeaderSeparator.qml
+        src/qml/components/timeline/TrackHeaderBottomResize.qml
+        src/qml/components/timeline/TrackHeaderStateTint.qml
         src/qml/components/timeline/TrackHeaderRow.qml
         src/qml/components/timeline/TrackHeaderResizeHandle.qml
         src/qml/components/timeline/TrackHeaderRenameDialog.qml
+        src/qml/components/timeline/TimelineBakeStrip.qml
+        src/qml/components/timeline/TimelineBakeContextMenu.qml
+        src/qml/components/timeline/TimelineWorkAreaBakeChip.qml
         src/qml/components/timeline/TrackHeaderMuteButton.qml
         src/qml/components/timeline/TrackHeaderOverflowButton.qml
         src/qml/components/timeline/TrackHeaderMicButton.qml
         src/qml/components/timeline/TrackHeaderLaneEye.qml
+        src/qml/components/timeline/TrackHeaderLaneRow.qml
+        src/qml/components/timeline/TrackHeaderLaneToggle.qml
+        src/qml/components/timeline/TimelineLaneRibbons.qml
         src/qml/components/timeline/TrackHeaderInsertLine.qml
-        src/qml/components/timeline/TrackHeaderInlineName.qml
         src/qml/components/timeline/TrackHeaderHideButton.qml
         src/qml/components/timeline/TrackHeaderGrip.qml
         src/qml/components/timeline/TrackHeaderEdge.qml
@@ -1989,15 +2097,14 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TrackHeaderCompactName.qml
         src/qml/components/timeline/TrackHeaderClipDisplayButton.qml
         src/qml/components/timeline/TrackHeaderChannelLanesButton.qml
-        src/qml/components/timeline/TrackHeaderBandName.qml
         src/qml/components/timeline/TimelineWorkAreaShade.qml
         src/qml/components/timeline/TimelineWorkAreaOverlay.qml
         src/qml/components/timeline/TimelineWorkAreaEdge.qml
         src/qml/components/timeline/TimelineTrimHandle.qml
         src/qml/components/timeline/TimelineTrimGrip.qml
         src/qml/components/timeline/TimelineTransitionRegion.qml
-        src/qml/components/timeline/TimelineTransitionLabel.qml
-        src/qml/components/timeline/TimelineTransitionHatch.qml
+        src/qml/components/timeline/TimelineTransitionToffee.qml
+        src/qml/components/timeline/TimelineCutButton.qml
         src/qml/components/timeline/TimelineTransitionDropOutline.qml
         src/qml/components/timeline/TimelineTrackTransformWash.qml
         src/qml/components/timeline/TimelineToolbarZoomSlider.qml
@@ -2469,6 +2576,8 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsWorkspacesPage.qml
         src/qml/components/shell/EditorHeaderSettingsButton.qml
         src/qml/components/shell/AppSettingsMenu.qml
+        src/qml/components/shell/EditorHeaderVideoButton.qml
+        src/qml/components/shell/VideoMenu.qml
         src/qml/components/shell/EditorHeaderSeparator.qml
         src/qml/components/shell/EditorHeaderSearchField.qml
         src/qml/components/shell/EditorHeaderProjectsButton.qml

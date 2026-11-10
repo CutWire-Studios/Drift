@@ -18,8 +18,13 @@
 
 #include <atomic>
 
-// Audio-master playback: mixes timeline audio and composites preview frames off the GUI thread.
+namespace drift {
+class BakeIndex;
+class BakeReaderPool;
+}
 class AudioOutputChannel;
+
+// Audio-master playback: mixes timeline audio and composites preview frames off the GUI thread.
 
 class PlaybackEngine : public QObject
 {
@@ -31,6 +36,8 @@ class PlaybackEngine : public QObject
     Q_PROPERTY(QSize previewTextureSize READ previewTextureSize NOTIFY currentFrameChanged)
     Q_PROPERTY(QImage previewImage READ previewImage NOTIFY currentFrameChanged)
     Q_PROPERTY(bool hasFrame READ hasFrame NOTIFY currentFrameChanged)
+    // The bake the Camera frame was read from, empty when it was composited live.
+    Q_PROPERTY(QString currentFrameBakeId READ currentFrameBakeId NOTIFY currentFrameChanged)
     // hasFrame alone cannot tell "the playhead is over a gap" from "the GPU
     // compositor never started", and the preview used to report the second as the
     // first. These carry the difference. The status is a stable id, not a
@@ -62,6 +69,11 @@ public:
     void notifyProjectEdited();
     // Preview-only bypass of catalog effects on the given clips. See CompositorService.
     void setPreviewEffectBypass(const QSet<QString> &clipIds, const QSet<QString> &catalogIds);
+    // Publishes the committed bake index of the open project (null index: no bakes). Redraws the
+    // current frame. Exporters take the same pool through bakeReaderPool().
+    void setBakeIndex(const QString &path, std::shared_ptr<const drift::BakeIndex> index);
+    std::shared_ptr<drift::BakeReaderPool> bakeReaderPool() const { return m_bakePool; }
+    QString currentFrameBakeId() const;
     // Reference-counted: the preview reads a small copy of each frame back while any scope is open.
     void acquireScopes();
     void releaseScopes();
@@ -280,6 +292,7 @@ private:
         int renderWidth = 0;
         int renderHeight = 0;
     };
+    std::shared_ptr<drift::BakeReaderPool> m_bakePool;
     Stream m_streams[kPreviewStreamCount];
     mutable QMutex m_frameMutex;
     int m_scopeConsumers = 0;

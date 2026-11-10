@@ -15,6 +15,8 @@
 #include "engine/gpu/effects/GpuEffectDefinition.h"
 #include "engine/compositor/layers/MaskApplier.h"
 #include "engine/render3d/models/ModelClipRenderer.h"
+#include "engine/render3d/procedural/GlProceduralRenderer.h"
+#include "engine/render3d/procedural/ProceduralRequest.h"
 #include "engine/compositor/layers/TransformLayer.h"
 
 #include <QLineF>
@@ -721,8 +723,10 @@ QMatrix4x4 layerViewProjection(const GpuLayer &layer, const QSize &canvas)
     const QSizeF canvasF(canvas);
     QMatrix4x4 view = layer.viewProj;
     if (!layer.viewActive) {
-        view = drift::clipEyeView(layer.model3d ? layer.model3d->pose3d.perspective : layer.pose3d.perspective,
-                                  canvasF);
+        const double perspective = layer.model3d        ? layer.model3d->pose3d.perspective
+                                   : layer.procedural ? layer.procedural->pose3d.perspective
+                                                      : layer.pose3d.perspective;
+        view = drift::clipEyeView(perspective, canvasF);
     }
     if (layer.hasParent && layer.parent.isAffine())
         view = view * drift::worldParentFromAffine(layer.parent,
@@ -751,6 +755,14 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         target = drift::gl::drawModelClip(rt, gl, *layer.model3d, canvasSize,
                                           layerViewProjection(layer, canvasSize),
                                           layer.depthOcclude ? modelDepth : nullptr);
+    } else if (layer.procedural) {
+        target = drift::gl::drawProceduralClip(rt, gl, *layer.procedural, canvasSize,
+                                               layerViewProjection(layer, canvasSize),
+                                               layer.depthOcclude ? modelDepth : nullptr,
+                                               layer.globalAudio
+                                                   ? std::array<float, 3>{layer.globalAudio->level, layer.globalAudio->bass,
+                                                                          layer.globalAudio->beat}
+                                                   : std::array<float, 3>{});
     } else if (layer.nested) {
         target = nestedLayerTarget(rt, gl, *layer.nested);
     } else if (layer.video.isValid()) {

@@ -18,6 +18,7 @@
 #include "core/text/TextStyle.h"
 #include "core/text/TextLook.h"
 #include "app/mcp/tools/McpEffectAuthoring.h"
+#include "app/mcp/tools/McpProceduralAuthoring.h"
 #include "app/mcp/protocol/McpJson.h"
 #include "app/mcp/tools/McpMarket.h"
 
@@ -2772,8 +2773,11 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const double value = args.contains(QStringLiteral("value"))
                                  ? jsonNumber(args.value(QStringLiteral("value")), 0)
                                  : m_controller->propertyValueAt(ref.track, ref.clip, prop, fromSec, 0);
+        const bool wasLinked = m_controller->positionLinked();
+        m_controller->setPositionLinked(false);
         m_controller->previewMoveClipKeyframe(ref.track, ref.clip, prop, fromSec, toSec, value);
         m_controller->commitPreviewDrag();
+        m_controller->setPositionLinked(wasLinked);
         return ok(clipFeedback(ref, {{QStringLiteral("prop"), prop}, {QStringLiteral("from"), fromSec}, {QStringLiteral("to"), toSec}}));
     }
 
@@ -3552,6 +3556,31 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return authoring::exportPackage(args);
     if (tool == QLatin1String("import_effect"))
         return authoring::importPackage(m_controller, args);
+
+    if (tool == QLatin1String("procedural_authoring_guide"))
+        return procedural::guide();
+    if (tool == QLatin1String("list_procedurals"))
+        return procedural::list();
+    if (tool == QLatin1String("create_procedural"))
+        return procedural::create(args);
+    if (tool == QLatin1String("update_procedural"))
+        return procedural::update(args);
+    if (tool == QLatin1String("get_procedural_source"))
+        return procedural::source(m_controller, args);
+    if (tool == QLatin1String("delete_procedural"))
+        return procedural::remove(m_controller, args);
+    if (tool == QLatin1String("add_procedural"))
+        return procedural::add(m_controller, args);
+    if (tool == QLatin1String("evaluate_procedural")) {
+        const bool byClip = args.contains(QStringLiteral("clip"))
+            || (args.contains(QStringLiteral("track")) && args.contains(QStringLiteral("index")));
+        if (!byClip)
+            return procedural::evaluate(m_controller, args, nullptr);
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        return procedural::evaluate(m_controller, args, &m_controller->project()->tracks().at(ref.track).clips.at(ref.clip));
+    }
 
     if (tool == QLatin1String("list_themes")) {
         ThemeManager *themes = ThemeManager::shared();

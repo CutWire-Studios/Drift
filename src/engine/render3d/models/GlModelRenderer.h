@@ -107,6 +107,14 @@ GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
 GlTarget resolveModelClipScratch(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &&scratch,
                                  const QSize &canvasSize, bool supersample);
 
+// The sampleable depth texture a clip draw attaches to its scratch when the compositor wants the
+// clip's depth (one slot on the runtime, resized as needed), and the packing of that texture into
+// the layer-sized colour target the depth-aware layer shader unpacks. `supersample` is whether the
+// scratch was drawn at twice the output size.
+GLuint modelClipDepthTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, int width, int height);
+GlTarget packModelClipDepth(GlRuntime &rt, QOpenGLExtraFunctions *gl, GLuint depthTexture,
+                            const QSize &outSize, bool supersample);
+
 void destroyGlModels(GlRuntime &rt, QOpenGLExtraFunctions *gl);
 
 } // namespace drift::gl

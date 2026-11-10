@@ -63,6 +63,7 @@ JobRegistry::JobRegistry(QObject *parent)
 {
     m_modelPool.setMaxThreadCount(1);
     m_networkPool.setMaxThreadCount(2);
+    m_renderPool.setMaxThreadCount(1);
 }
 
 JobRegistry::~JobRegistry()
@@ -71,8 +72,10 @@ JobRegistry::~JobRegistry()
         entry->context.m_cancel.storeRelaxed(1);
     m_modelPool.clear();
     m_networkPool.clear();
+    m_renderPool.clear();
     m_modelPool.waitForDone();
     m_networkPool.waitForDone();
+    m_renderPool.waitForDone();
 }
 
 QString JobRegistry::start(const QString &kind, const QString &target, Lane lane,
@@ -102,7 +105,9 @@ QString JobRegistry::start(const QString &kind, const QString &target, Lane lane
 
     QPointer<JobRegistry> self(this);
     const QString id = entry->id;
-    QThreadPool &pool = lane == Lane::Model ? m_modelPool : m_networkPool;
+    QThreadPool &pool = lane == Lane::Model ? m_modelPool
+        : lane == Lane::Network            ? m_networkPool
+                                           : m_renderPool;
     pool.start(QRunnable::create([self, entry, id, work = std::move(work), done = std::move(done)]() mutable {
         if (!entry->context.cancelled())
             work(entry->context);

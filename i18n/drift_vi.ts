@@ -58,10 +58,6 @@
         <translation>Tự động (được khuyến nghị)</translation>
     </message>
     <message>
-        <source>This computer</source>
-        <translation>Máy tính này</translation>
-    </message>
-    <message>
         <source>NVIDIA graphics (faster)</source>
         <translation>Đồ họa NVIDIA (nhanh hơn)</translation>
     </message>
@@ -70,8 +66,8 @@
         <translation>Đồ họa AMD (nhanh hơn)</translation>
     </message>
     <message>
-        <source>Graphics card (faster)</source>
-        <translation>Card đồ họa (nhanh hơn)</translation>
+        <source>CPU</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not open that file.</source>
@@ -2364,6 +2360,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Chuyển cảnh</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2554,6 +2557,10 @@
     <message>
         <source>Split at current time</source>
         <translation>Tách ở điểm hiện tại</translation>
+    </message>
+    <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -3198,6 +3205,10 @@
         <translation>Đã hủy bỏ ghi âm</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation>Thay thế clip</translation>
     </message>
@@ -3260,14 +3271,6 @@
     <message>
         <source>Adjustment track added</source>
         <translation>Đã thêm track điều chỉnh</translation>
-    </message>
-    <message>
-        <source>Add adjustment lane</source>
-        <translation>Thêm làn điều chỉnh</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>Đã thêm làn điều chỉnh</translation>
     </message>
     <message>
         <source>Nest adjustment in track</source>
@@ -3698,6 +3701,42 @@
         <translation>Đã thêm mô hình 3D</translation>
     </message>
     <message>
+        <source>unknown procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown param &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural clip added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change procedural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit procedural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seed changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>3D model replaced</source>
         <translation>Đã loại bỏ mô hình 3D</translation>
     </message>
@@ -3808,6 +3847,18 @@
     <message>
         <source>Transition updated</source>
         <translation>Đã cập nhật hiệu ứng chuyển cảnh</translation>
+    </message>
+    <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Change look</source>
@@ -4170,6 +4221,14 @@
         <translation>Nội suy keyframe</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">Thêm keyframe</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>Đặt lại camera</translation>
     </message>
@@ -4490,6 +4549,18 @@
     <message>
         <source>Track shown</source>
         <translation>Hiện track</translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move track</source>
@@ -4818,6 +4889,10 @@
     <message>
         <source>Favorites</source>
         <translation>Yêu thích</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5923,6 +5998,186 @@
     </message>
 </context>
 <context>
+    <name>BakeController</name>
+    <message>
+        <source>Set a work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the bake cache</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Baking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Work area set</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BakesDialog</name>
+    <message>
+        <source>Bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Đóng</translation>
+    </message>
+    <message>
+        <source>Compact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Balanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation type="unfinished">Cao</translation>
+    </message>
+    <message>
+        <source>%1m %2s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Baking %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all bakes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Xóa</translation>
+    </message>
+    <message>
+        <source>Playback and export will render these ranges live again. Your project is not changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-bake at current quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality for new bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>≈ %1 per minute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Hủy bỏ</translation>
+    </message>
+    <message>
+        <source>Bake work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set a work area on the timeline first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>I</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>O</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Range</source>
+        <translation type="unfinished">Phạm vi</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">Thời lượng</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">Chất lượng</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">Kích thước</translation>
+    </message>
+    <message>
+        <source>State</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">Thêm</translation>
+    </message>
+    <message>
+        <source>Delete bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n bake(s) · %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>0 B</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-bake all stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BinBreadcrumb</name>
     <message>
         <source>Media</source>
@@ -6659,6 +6914,10 @@
     <message>
         <source>Select Color</source>
         <translation>Chọn màu</translation>
+    </message>
+    <message>
+        <source>Edit colour</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7746,20 +8005,12 @@
         <translation>Lưu dự án</translation>
     </message>
     <message>
-        <source>Video</source>
-        <translation>Video</translation>
-    </message>
-    <message>
         <source>Name your project</source>
         <translation>Tên dự án của bạn</translation>
     </message>
     <message>
         <source>Untitled Project</source>
         <translation>Dự án chưa đặt tên</translation>
-    </message>
-    <message>
-        <source>Video size and layout</source>
-        <translation>Kích thước và bố cục video</translation>
     </message>
     <message>
         <source>Agent</source>
@@ -7894,6 +8145,17 @@
     <message>
         <source>Settings</source>
         <translation>Cài đặt</translation>
+    </message>
+</context>
+<context>
+    <name>EditorHeaderVideoButton</name>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">Video</translation>
+    </message>
+    <message>
+        <source>Bakes, crop and video layout</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8625,6 +8887,44 @@
     <message>
         <source>Export cancelled.</source>
         <translation>Xuất bị hủy bỏ.</translation>
+    </message>
+    <message>
+        <source>Some bakes are out of date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Re-bake first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-baking. Export again when it finishes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render them live</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export as is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Hủy bỏ</translation>
+    </message>
+    <message>
+        <source>Use baked ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read pre-rendered ranges instead of compositing them again</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14847,6 +15147,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>PreviewStatusLayer</name>
     <message>
+        <source>Stale bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Baked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing to preview yet</source>
         <translation>Không có gì để xem trước</translation>
     </message>
@@ -14965,6 +15273,293 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>REC %1s</source>
         <translation>GHI %1s</translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralConsolePanel</name>
+    <message>
+        <source>Procedural console</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Console</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear the Apply output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply or Check a package to see its output here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected clip</source>
+        <translation type="unfinished">Clip được chọn</translation>
+    </message>
+    <message>
+        <source>No errors or output</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralEditorController</name>
+    <message>
+        <source>procedural.json is not valid JSON: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>expected an object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: ok - %2 meshes, %3 vertices, %4 instances (%5 ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 failed: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>shader %1 compiled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shaders were not compiled: no OpenGL context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is read-only. Duplicate it to edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Áp dụng</translation>
+    </message>
+    <message>
+        <source>Check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished">%1 sao chép</translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">Nhân bản</translation>
+    </message>
+    <message>
+        <source>Use 1-48 letters, digits or underscores for the name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Radius</source>
+        <translation type="unfinished">Bán kính</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Tốc độ</translation>
+    </message>
+    <message>
+        <source>Tint</source>
+        <translation type="unfinished">Sắc thái</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished">Tạo</translation>
+    </message>
+    <message>
+        <source>Use letters, digits or underscores for a new shader name, not an existing one</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralEditorPanel</name>
+    <message>
+        <source>Procedural code editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (read-only)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package to edit. Selecting a procedural clip opens its package.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">Mới</translation>
+    </message>
+    <message>
+        <source>Apply or revert your edits first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create a minimal procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate to edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy this package to your own procedurals and edit the copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate procedural to edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Áp dụng</translation>
+    </message>
+    <message>
+        <source>Validate and install the package, then refresh the preview (Ctrl+S)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply procedural code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Validate the edits without installing them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert</source>
+        <translation type="unfinished">Khôi phục</translation>
+    </message>
+    <message>
+        <source>Discard edits and reload the package from disk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a clip using this package at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard unapplied edits?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished">Hủy bỏ</translation>
+    </message>
+    <message>
+        <source>Keep editing</source>
+        <translation type="unfinished">Tiếp tục chỉnh sửa</translation>
+    </message>
+    <message>
+        <source>Package name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished">Tạo</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Hủy bỏ</translation>
+    </message>
+    <message>
+        <source>Add a shader pair</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shader name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Thêm</translation>
+    </message>
+    <message>
+        <source>%1 is read-only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 - unapplied edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No package open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a procedural clip, pick a package above, or create a new one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralInspector</name>
+    <message>
+        <source>Package &quot;%1&quot; is not installed; the clip renders nothing until it returns.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package that builds this clip&apos;s scene. Changing it resets the parameters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not change the package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished">Hạt giống</translation>
+    </message>
+    <message>
+        <source>Procedural seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralParamsPanel</name>
+    <message>
+        <source>Procedural parameters panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a procedural clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a Procedural 3D clip on the timeline to edit its parameters here.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15469,6 +16064,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>PDF</translation>
     </message>
     <message>
+        <source>Procedural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>Phụ đề</translation>
     </message>
@@ -15900,6 +16499,18 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>The rendered file could not be read</source>
         <translation>Không thể đọc tệp đã kết xuất</translation>
+    </message>
+    <message>
+        <source>Compact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation type="unfinished">Cao</translation>
+    </message>
+    <message>
+        <source>Balanced</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -16921,6 +17532,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Video size and layout</source>
         <translation>Kích thước và bố cục video</translation>
+    </message>
+    <message>
+        <source>Bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished">Cắt cúp video</translation>
     </message>
     <message>
         <source>Switch to mobile layout…</source>
@@ -23137,6 +23756,48 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineBakeContextMenu</name>
+    <message>
+        <source>Re-bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage bakes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TimelineBakeStrip</name>
+    <message>
+        <source>Baking %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 – %2 · %3 · %4%5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · %2×%3</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineBookmarkContextMenu</name>
     <message>
         <source>Go to bookmark</source>
@@ -23346,6 +24007,13 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">Thêm hiệu ứng chuyển cảnh</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -23380,6 +24048,25 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Importing…</source>
         <translation>Đang nhập…</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Mặt nạ</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Hiệu ứng</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23437,6 +24124,18 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Add new track</source>
         <translation>Thêm track mới</translation>
+    </message>
+    <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -23810,6 +24509,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>TimelineTrackItem</name>
     <message>
+        <source>Procedural package not found. The clip renders nothing until it is installed again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>Điều chỉnh âm thanh</translation>
     </message>
@@ -23847,6 +24550,25 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Trim clip</source>
         <translation>Cắt clip</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineWorkAreaBakeChip</name>
+    <message>
+        <source>Baking %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel baking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-render the work area for smooth playback and export</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23982,12 +24704,28 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Đổi tên…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>Bật tiếng track</translation>
     </message>
     <message>
         <source>Mute track</source>
         <translation>Tắt tiếng track</translation>
+    </message>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stop recording</source>
@@ -24012,6 +24750,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Hide track</source>
         <translation>Ẩn track</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24046,8 +24792,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Cao hơn</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>Cuộn trên thanh tiêu đề để tinh chỉnh</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24110,6 +24856,43 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Turn adjustment off</source>
         <translation>Tắt điều chỉnh</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Mặt nạ</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Hiệu ứng</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24193,6 +24976,21 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Hide track</source>
         <translation>Ẩn track</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>
@@ -25227,8 +26025,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>Chọn vị trí hai clip chồng lên nhau (hiển thị bằng màu tím) hoặc kéo một clip để chồng lên clip tiếp theo.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25239,8 +26037,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Không có chuyển cảnh sau clip này. Thêm một chuyển cảnh tại điểm cắt sang clip kế tiếp.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>Thêm hòa mờ chéo (%1 s)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25292,6 +26090,83 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">Tìm hiệu ứng chuyển cảnh</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">Chuyển cảnh của tôi</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">Không có hiệu ứng chuyển cảnh nào có sẵn</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">Cài đặt một gói hiệu ứng chuyển cảnh để bổ sung thêm.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">Tải gói bổ trợ</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">Không có hiệu ứng chuyển cảnh nào khớp với “%1”</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">Chưa có chuyển cảnh tùy chỉnh nào</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">Chưa có sở thích nào</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">Không có gì trong danh mục này</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">Hãy thử một tên khác.</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">Đánh dấu sao hiệu ứng chuyển cảnh để lưu chúng ở đây.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">Chọn một danh mục khác.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Nhập</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25309,64 +26184,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>Tìm hiệu ứng chuyển cảnh</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation>Cài đặt chuyển cảnh hoặc hiệu ứng tùy chỉnh từ tệp .driftfx hoặc zip được tạo trong Drift Forge</translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>Chuyển cảnh của tôi</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>Không có hiệu ứng chuyển cảnh nào có sẵn</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>Cài đặt một gói hiệu ứng chuyển cảnh để bổ sung thêm.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>Tải gói bổ trợ</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>Không có hiệu ứng chuyển cảnh nào khớp với “%1”</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>Chưa có chuyển cảnh tùy chỉnh nào</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>Chưa có sở thích nào</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Không có gì trong danh mục này</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>Hãy thử một tên khác.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation>Nhập tệp .driftfx hoặc zip được tạo trong Drift Forge để thêm của riêng bạn.</translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>Đánh dấu sao hiệu ứng chuyển cảnh để lưu chúng ở đây.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Chọn một danh mục khác.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Nhập</translation>
     </message>
 </context>
 <context>
@@ -25950,6 +26769,25 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>VideoMenu</name>
+    <message>
+        <source>Bakes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel crop</source>
+        <translation type="unfinished">Hủy cắt</translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished">Cắt cúp video</translation>
+    </message>
+    <message>
+        <source>Adjust video layout…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>VideoSizeControls</name>
     <message>
         <source>Custom</source>
@@ -25978,18 +26816,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Frames per second</source>
         <translation>Số khung hình trên giây</translation>
-    </message>
-    <message>
-        <source>Cancel crop</source>
-        <translation>Hủy cắt</translation>
-    </message>
-    <message>
-        <source>Crop video size</source>
-        <translation>Cắt kích thước video</translation>
-    </message>
-    <message>
-        <source>Drag the preview edges to change what’s included</source>
-        <translation>Kéo các cạnh xem trước để thay đổi những gì được bao gồm</translation>
     </message>
     <message>
         <source>Changing size doesn’t shrink your clips — anything outside the new edges is cut off.</source>
@@ -26664,6 +27490,18 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>View &amp; Lights</source>
         <translation>Khung nhìn &amp; Ánh sáng</translation>
+    </message>
+    <message>
+        <source>Procedural Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural Parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural Console</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Media</source>

@@ -10,6 +10,11 @@ Row {
     property string tooltip: qsTr("Choose colour")
     // Emitted once the user commits, never on every keystroke.
     signal edited(string value)
+    // With livePreview set, the open picker's colour is sent through previewed() inside one
+    // preview drag, so the caller can apply it without an undo step: OK commits the final colour
+    // through edited(), closing any other way reverts.
+    property bool livePreview: false
+    signal previewed(string value)
     signal eyedropperStarted()
     signal eyedropperEnded()
 
@@ -62,7 +67,30 @@ Row {
         sourceComponent: Component {
             ThemedColorDialog {
                 title: qsTr("Select Color")
-                onAccepted: root.edited(root._toHex(selectedColor))
+                property bool _live: false
+                property bool _previewing: false
+                function _endPreview() {
+                    _live = false
+                    if (_previewing) {
+                        _previewing = false
+                        EditorState.cancelPreviewDrag()
+                    }
+                }
+                onOpened: _live = root.livePreview
+                onSelectedColorChanged: {
+                    if (!_live)
+                        return
+                    if (!_previewing) {
+                        _previewing = true
+                        EditorState.beginPreviewDrag(qsTr("Edit colour"))
+                    }
+                    root.previewed(root._toHex(selectedColor))
+                }
+                onClosed: _endPreview()
+                onAccepted: {
+                    _endPreview()
+                    root.edited(root._toHex(selectedColor))
+                }
                 onEyedropperStarted: root.eyedropperStarted()
                 onEyedropperEnded: root.eyedropperEnded()
             }

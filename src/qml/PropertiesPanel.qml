@@ -146,6 +146,7 @@ PanelFrame {
         { id: "vector", label: qsTr("Motion"), icon: Theme.icons.layers, group: 0, needs: ["vector"], keyframes: true },
         { id: "model3d", label: qsTr("3D Model"), icon: Theme.icons.box, group: 0, needs: ["model3d"], keyframes: true },
         { id: "pdf", label: qsTr("PDF"), icon: Theme.icons.fileText, group: 0, needs: ["pdf"], keyframes: true },
+        { id: "procedural", label: qsTr("Procedural"), icon: Theme.icons.box, group: 0, needs: ["procedural"], keyframes: true },
         { id: "subtitles", label: qsTr("Subtitles"), icon: Theme.icons.captions, group: 0, needs: ["subtitle"] },
         { id: "transform", label: qsTr("Transform"), icon: Theme.icons.maximize, group: 1,
           needs: ["transformable"], opens: "adj:transform", keyframes: true },
@@ -575,6 +576,12 @@ PanelFrame {
                     active: root.currentTabId === "model3d"
                     visible: active
                     sourceComponent: Component { Model3DInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "procedural"
+                    visible: active
+                    sourceComponent: Component { ProceduralInspector { width: tabColumn.width } }
                 }
 
                 Loader {
