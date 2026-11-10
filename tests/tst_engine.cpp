@@ -256,6 +256,7 @@ private slots:
     void audioWindowBassSplitsLowFromHigh();
     void audioFrameTextureLayout();
     void clipGizmoSolvesDrags();
+    void clipGizmoPivotsOnBoundsCentre();
     void faceTrackV2CarriesContoursAndPose();
     void faceTrackV1FileStillLoads();
     void smoothFaceTrackHandlesMissingBlocks();
@@ -2406,6 +2407,48 @@ void EngineTest::editorOverlayDrawsTheCameraAndClipsAtTheEye()
     QVERIFY((hit - QVector3D(2880, 1620, 2000)).length() < 0.5f);
     // A plane behind the eye is not hit.
     QVERIFY(!drift::rayHitsQuadPlane(QVector3D(960, 540, 3000), QVector3D(960, 540, 4000), input.selectedQuad, &hit));
+}
+
+void EngineTest::clipGizmoPivotsOnBoundsCentre()
+{
+    using namespace drift::gizmo;
+    Pose pose;
+    pose.canvas = QSizeF(1920, 1080);
+    pose.rect = QRectF(0, 0, 1920, 1080);
+    pose.pose3d.rotationX = 20.0;
+    pose.pose3d.rotationY = -35.0;
+    pose.pose3d.positionZ = 80.0;
+    pose.pose3d.anchorX = 300.0;
+    pose.pose3d.hasAnchorX = true;
+    pose.rotation = 25.0;
+    const QVector3D centre(1400.f, 200.f, 40.f);
+    const QVector3D probe(1500.f, 350.f, -60.f);
+
+    const auto world = [](const Pose &p, const QVector3D &local) {
+        return drift::clipLocalToWorld(p.rect, p.rotation, p.pose3d, p.canvas).map(local);
+    };
+    // The renderer's placement of any scene point is untouched by moving the pivot.
+    const Pose pivoted = pivotedAt(pose, centre);
+    QVERIFY((world(pivoted, probe) - world(pose, probe)).length() < 1e-2f);
+    QVERIFY((pivoted.pose3d.pivot(pivoted.rect) - world(pose, centre)).length() < 1e-2f);
+    // The gizmo stands where the bounds centre lands on screen.
+    const Geometry g = geometry(pivoted, Tool::Move, Orientation::World, 1.0);
+    QVERIFY(g.valid);
+    const QVector3D c = world(pose, centre);
+    const double w = 1.0 + c.z() / pose.pose3d.perspective;
+    QVERIFY(QLineF(g.origin, QPointF(960 + (c.x() - 960) / w, 540 + (c.y() - 540) / w)).length() < 0.05);
+
+    // Turn about the centre, then write back with the clip's own anchor: the centre stays put and
+    // the rest of the scene has turned about it.
+    Pose turned = pivoted;
+    turned.rotation += 30.0;
+    const Pose written = anchoredLike(turned, pose);
+    QCOMPARE(written.pose3d.hasAnchorX, true);
+    QCOMPARE(written.pose3d.hasAnchorY, false);
+    QCOMPARE(written.pose3d.anchorX, 300.0);
+    QVERIFY((world(written, centre) - world(pose, centre)).length() < 1e-2f);
+    QVERIFY((world(written, probe) - world(turned, probe)).length() < 1e-2f);
+    QVERIFY((world(written, probe) - world(pose, probe)).length() > 1.0f);
 }
 
 void EngineTest::clipGizmoSolvesDrags()

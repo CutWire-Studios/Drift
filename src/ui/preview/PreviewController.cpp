@@ -11,6 +11,7 @@
 #include "core/edit/TimelineOps.h"
 #include "engine/render3d/editor/ClipGizmo.h"
 #include "engine/render3d/scene/ClipTransform3d.h"
+#include "engine/procedural/ProceduralDiagnostics.h"
 #include "engine/render3d/DepthRelief.h"
 #include "engine/ml/vision/depth/DepthSidecar.h"
 #include "engine/packages/effects/EffectCatalog.h"
@@ -76,6 +77,24 @@ drift::gizmo::Pose gizmoPoseFromBox(const QVariantMap &box)
                          box.value(QStringLiteral("canvasHeight")).toDouble());
     pose.parent = previewBoxParent(box);
     return pose;
+}
+
+bool hasBoundsCentre(const QVariantMap &box)
+{
+    return box.contains(QStringLiteral("boundsCentreX"));
+}
+
+// A procedural clip's geometry is laid out in script space, which is the clip's rect-local space, so
+// the centre of its bounds is a point there. The gizmo stands on it and turns about it; the drag
+// result goes back through anchoredLike to the clip's own anchor, which the renderer keeps using.
+drift::gizmo::Pose gizmoPoseOfBox(const QVariantMap &box)
+{
+    drift::gizmo::Pose pose = gizmoPoseFromBox(box);
+    if (!hasBoundsCentre(box))
+        return pose;
+    return drift::gizmo::pivotedAt(pose, QVector3D(box.value(QStringLiteral("boundsCentreX")).toFloat(),
+                                                   box.value(QStringLiteral("boundsCentreY")).toFloat(),
+                                                   box.value(QStringLiteral("boundsCentreZ")).toFloat()));
 }
 
 QVariantList polylineToVariant(const QPolygonF &line)
@@ -389,7 +408,10 @@ QVariantMap PreviewController::gizmoGeometry(const QVariantMap &box, double scal
     if (box.value(QStringLiteral("kind")).toString() == QLatin1String("camera")
         && toolFromString(m_gizmoTool) == Tool::Scale)
         return {{QStringLiteral("valid"), false}};
-    const Geometry g = geometry(gizmoPoseFromBox(box), toolFromString(m_gizmoTool),
+    // Scene geometry is not stretched by the clip's size, so there is nothing for scale to do.
+    if (hasBoundsCentre(box) && toolFromString(m_gizmoTool) == Tool::Scale)
+        return {{QStringLiteral("valid"), false}};
+    const Geometry g = geometry(gizmoPoseOfBox(box), toolFromString(m_gizmoTool),
                                 orientationFromString(m_gizmoOrientation), scale, size,
                                 gizmoView(viewport));
     QVariantList handles;
@@ -423,7 +445,9 @@ QString PreviewController::gizmoPick(const QVariantMap &box, double scale, doubl
     if (box.value(QStringLiteral("kind")).toString() == QLatin1String("camera")
         && toolFromString(m_gizmoTool) == Tool::Scale)
         return {};
-    const Geometry g = geometry(gizmoPoseFromBox(box), toolFromString(m_gizmoTool),
+    if (hasBoundsCentre(box) && toolFromString(m_gizmoTool) == Tool::Scale)
+        return {};
+    const Geometry g = geometry(gizmoPoseOfBox(box), toolFromString(m_gizmoTool),
                                 orientationFromString(m_gizmoOrientation), scale, size,
                                 gizmoView(viewport));
     return pick(g, QPointF(x, y), tolerance);
@@ -441,10 +465,10 @@ QVariantMap PreviewController::applyGizmoDrag(const QVariantMap &start, const QS
     drift::Clip &clip = m_app.m_project.tracks()[trackIndex].clips[clipIndex];
 
     const Tool tool = toolFromString(m_gizmoTool);
-    const DragResult result = drag(gizmoPoseFromBox(start), tool, orientationFromString(m_gizmoOrientation),
+    const DragResult result = drag(gizmoPoseOfBox(start), tool, orientationFromString(m_gizmoOrientation),
                                    handle, QPointF(pressX, pressY), QPointF(nowX, nowY), snap, scale,
                                    gizmoView(viewport), m_translateSnap, m_rotationSnap);
-    const Pose &pose = result.pose;
+    const Pose pose = hasBoundsCentre(start) ? anchoredLike(result.pose, gizmoPoseFromBox(start)) : result.pose;
 
     if (start.value(QStringLiteral("kind")).toString() == QLatin1String("camera")) {
         if (!drift::isCameraClip(clip) || tool == Tool::Scale)
@@ -1619,6 +1643,19 @@ QVariantList PreviewController::clipsAtPlayhead(int viewport) const
                 {QStringLiteral("canvasHeight"), canvasHeight},
             };
             insertBoxPose(entry, clip, relative, canvasHeight);
+            if (clip.type == drift::ClipType::Procedural) {
+                // The scene last built for the clip, as the selection's guide box uses. A script
+                // with its own camera is a flat picture, so it keeps the rect.
+                drift::ProceduralClipReport report;
+                if (drift::ProceduralDiagnostics::shared().clip(clip.id.toStdString(), &report) && report.scene
+                    && report.scene->aabbValid && !report.scene->hasCamera) {
+                    const auto &lo = report.scene->aabbMin;
+                    const auto &hi = report.scene->aabbMax;
+                    entry.insert(QStringLiteral("boundsCentreX"), (lo[0] + hi[0]) * 0.5);
+                    entry.insert(QStringLiteral("boundsCentreY"), (lo[1] + hi[1]) * 0.5);
+                    entry.insert(QStringLiteral("boundsCentreZ"), (lo[2] + hi[2]) * 0.5);
+                }
+            }
             // Where the box lands on screen, through its own pose, every parent and the camera.
             {
                 const QRectF rect(entry.value(QStringLiteral("x")).toDouble(),
