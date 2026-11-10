@@ -890,6 +890,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
     QVariantMap map{
         {QStringLiteral("id"), clip.id},
         {QStringLiteral("name"), clip.name},
+        {QStringLiteral("label"), clip.label},
         {QStringLiteral("path"), clip.path},
         {QStringLiteral("sourceFrame"), clip.sourceFrame},
         {QStringLiteral("sourceFrameAngle"), clip.sourceFrameAngle},

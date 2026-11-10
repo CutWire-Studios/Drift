@@ -110,6 +110,7 @@ private slots:
     void replaceClipKeepsTheSlot();
     void setSequenceLaysOutTheTrack();
     void setTransformKeysOnlyInsideTheClip();
+    void clipLabelsSurviveSplitsAndFind();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
     void replaceAssetWaitsForTheReprobe();
@@ -2003,6 +2004,92 @@ void McpTest::setSequenceLaysOutTheTrack()
         QVERIFY(find(c));
         QCOMPARE(int(state.project()->tracks().size()), tracksWithLane);
     }
+}
+
+void McpTest::clipLabelsSurviveSplitsAndFind()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(i);
+        clip.type = drift::ClipType::Text;
+        clip.name = i == 0 ? QStringLiteral("33-2 Opening shot") : QStringLiteral("Closing");
+        clip.timelineStart = drift::secondsToUs(4.0 * i);
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks()[0].clips.append(clip);
+    }
+    state.project()->ensureTrackIds();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto find = [&](const QJsonObject &args) {
+        const QJsonObject found = dispatcher.applyOne(QStringLiteral("find_clips"), args);
+        QStringList ids;
+        for (const QJsonValue &clip : found.value(QStringLiteral("clips")).toArray())
+            ids.append(clip.toObject().value(QStringLiteral("id")).toString() + QLatin1Char('=')
+                       + clip.toObject().value(QStringLiteral("label")).toString());
+        return ids;
+    };
+
+    const QJsonObject labelled = dispatcher.applyOne(
+        QStringLiteral("set_clip_label"), {{QStringLiteral("clip"), QStringLiteral("clip-0")}, {QStringLiteral("label"), QStringLiteral(" intro ")}});
+    QVERIFY2(labelled.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(labelled).toJson()));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).label, QStringLiteral("intro"));
+    state.undo();
+    QVERIFY(state.project()->tracks().at(0).clips.at(0).label.isEmpty());
+    state.redo();
+
+    // A rename leaves the label; a split numbers the tail, a duplicate the next copy.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_name"), {{QStringLiteral("clip"), QStringLiteral("clip-0")}, {QStringLiteral("name"), QStringLiteral("Renamed")}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject split = dispatcher.applyOne(QStringLiteral("split_clip"), {{QStringLiteral("clip"), QStringLiteral("clip-0")}, {QStringLiteral("at"), 2.0}});
+    QVERIFY2(split.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(split).toJson()));
+    const QJsonObject duplicated = dispatcher.applyOne(QStringLiteral("duplicate_clip"), {{QStringLiteral("clip"), QStringLiteral("clip-0")}});
+    QVERIFY2(duplicated.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(duplicated).toJson()));
+    const QStringList intro = find({{QStringLiteral("label"), QStringLiteral("intro")}});
+    QCOMPARE(intro.size(), 3);
+    QCOMPARE(intro.first(), QStringLiteral("clip-0=intro"));
+    QStringList labels;
+    for (const QString &hit : intro)
+        labels.append(hit.section(QLatin1Char('='), 1));
+    labels.sort();
+    QCOMPARE(labels, (QStringList{QStringLiteral("intro"), QStringLiteral("intro.2"), QStringLiteral("intro.3")}));
+    QCOMPARE(find({{QStringLiteral("label"), QStringLiteral("intro.2")}}).size(), 1);
+
+    // Other filters, combined with AND.
+    QCOMPARE(find({{QStringLiteral("name"), QStringLiteral("closing")}}), QStringList{QStringLiteral("clip-1=")});
+    QCOMPARE(find({{QStringLiteral("label"), QStringLiteral("intro")}, {QStringLiteral("name"), QStringLiteral("closing")}}).size(), 0);
+    QCOMPARE(find({{QStringLiteral("kind"), QStringLiteral("text")}, {QStringLiteral("track"), 0}}).size(), 4);
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("find_clips"), {{QStringLiteral("track"), 7}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+
+    // Cleared with an empty label.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_label"), {{QStringLiteral("clip"), QStringLiteral("clip-1")}, {QStringLiteral("label"), QStringLiteral("x")}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_label"), {{QStringLiteral("clip"), QStringLiteral("clip-1")}, {QStringLiteral("label"), QString()}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(find({{QStringLiteral("name"), QStringLiteral("closing")}}), QStringList{QStringLiteral("clip-1=")});
+    QCOMPARE(find({{QStringLiteral("label"), QString()}}), QStringList{QStringLiteral("clip-1=")});
+
+    // A trailing dot is dropped (it would read as a number separator).
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_clip_label"), {{QStringLiteral("clip"), QStringLiteral("clip-1")}, {QStringLiteral("label"), QStringLiteral("end.")}})
+                 .value(QStringLiteral("label")).toString(),
+             QStringLiteral("end"));
+
+    // In a batch, a label set on a new copy stays as given: the batch's closing push doesn't
+    // renumber what its ops already settled.
+    const int clipsBefore = int(state.project()->tracks().at(0).clips.size());
+    state.mcp()->beginBatch();
+    state.selectClip(0, 0);
+    state.duplicateSelectedClip();
+    const int copyIndex = int(state.project()->tracks().at(0).clips.size()) - 1;
+    QCOMPARE(copyIndex, clipsBefore);
+    QVERIFY(state.project()->tracks().at(0).clips.at(copyIndex).label.startsWith(QStringLiteral("intro.")));
+    state.setClipLabel(0, copyIndex, QStringLiteral("intro"));
+    state.mcp()->endBatch(QStringLiteral("Copy"), true);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(copyIndex).label, QStringLiteral("intro"));
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

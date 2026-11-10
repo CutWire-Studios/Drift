@@ -1071,6 +1071,8 @@ public:
     Q_INVOKABLE void setClipTextContent(int trackIndex, int clipIndex, const QString &text);
     // Display label on the timeline / inspector. Does not rename the source file.
     Q_INVOKABLE void setClipName(int trackIndex, int clipIndex, const QString &name);
+    // A stable tag on the clip (empty clears it); splits and duplicates number their copies.
+    Q_INVOKABLE void setClipLabel(int trackIndex, int clipIndex, const QString &label);
     Q_INVOKABLE void commitTextEdit(int trackIndex, int clipIndex, const QString &text);
     bool inlineTextEditing() const { return m_inlineTextEditing; }
 
@@ -2015,7 +2017,8 @@ protected:
 
     // Records the edit for undo. The timeline and selection refresh is left to finishEdit; an
     // edit that does not call it calls settleUndoRefresh() instead.
-    void pushProjectEdit(const drift::Project &before, const QString &text);
+    // numberLabels: false for a push that only bundles edits which numbered themselves (a batch).
+    void pushProjectEdit(const drift::Project &before, const QString &text, bool numberLabels = true);
     void settleUndoRefresh();
 
     // Lifts one effect, one audio effect, or the whole stack off a clip. Every copy and

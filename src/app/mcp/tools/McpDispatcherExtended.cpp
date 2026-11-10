@@ -1522,6 +1522,72 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref, {{QStringLiteral("name"), name}}));
     }
 
+    if (tool == QLatin1String("set_clip_label")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        if (!args.value(QStringLiteral("label")).isString())
+            return err("bad_args", QStringLiteral("label required (a string; empty clears it)"));
+        m_controller->setClipLabel(ref.track, ref.clip, args.value(QStringLiteral("label")).toString());
+        const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
+        return ok(clipFeedback(after, {{QStringLiteral("label"),
+                                        m_controller->project()->tracks().at(after.track).clips.at(after.clip).label}}));
+    }
+
+    if (tool == QLatin1String("find_clips")) {
+        // An explicit empty label finds the unlabelled clips.
+        const bool byLabel = args.contains(QStringLiteral("label"));
+        if (byLabel && !args.value(QStringLiteral("label")).isString())
+            return err("bad_args", QStringLiteral("label must be a string (\"\" finds unlabelled clips)"));
+        const QString label = argString(args, QStringLiteral("label"));
+        const QString name = argString(args, QStringLiteral("name"));
+        const QString kind = argString(args, QStringLiteral("kind"));
+        const int track = args.contains(QStringLiteral("track")) ? jsonInt(args.value(QStringLiteral("track")), -1) : -1;
+        if (args.contains(QStringLiteral("track")) && (track < 0 || track >= m_controller->project()->tracks().size()))
+            return err("not_found", QStringLiteral("No such track"));
+        QString assetId;
+        if (args.contains(QStringLiteral("asset"))) {
+            const int asset = resolveAsset(args.value(QStringLiteral("asset")));
+            if (asset < 0)
+                return err("not_found", QStringLiteral("Unknown asset"));
+            assetId = m_controller->assetLibrary()->assetIdAt(asset);
+        }
+        struct Hit
+        {
+            int track;
+            int clip;
+            drift::TimeUs start;
+        };
+        QList<Hit> hits;
+        const QList<drift::Track> &tracks = m_controller->project()->tracks();
+        for (int t = 0; t < tracks.size(); ++t) {
+            if (track >= 0 && t != track)
+                continue;
+            for (int c = 0; c < tracks.at(t).clips.size(); ++c) {
+                const drift::Clip &clip = tracks.at(t).clips.at(c);
+                if (byLabel && (label.isEmpty() ? !clip.label.isEmpty() : !drift::labelMatches(clip.label, label)))
+                    continue;
+                if (!name.isEmpty() && !clip.name.contains(name, Qt::CaseInsensitive))
+                    continue;
+                if (!assetId.isEmpty() && clip.assetId != assetId)
+                    continue;
+                if (!kind.isEmpty() && drift::clipTypeToString(clip.type) != kind)
+                    continue;
+                hits.append({t, c, clip.timelineStart});
+            }
+        }
+        std::stable_sort(hits.begin(), hits.end(), [](const Hit &a, const Hit &b) {
+            return a.start != b.start ? a.start < b.start : a.track < b.track;
+        });
+        QJsonArray clips;
+        for (const Hit &hit : std::as_const(hits)) {
+            QJsonObject clip = QJsonObject::fromVariantMap(m_controller->mcp()->compactClip(hit.track, hit.clip));
+            clip.insert(QStringLiteral("track"), hit.track);
+            clips.append(clip);
+        }
+        return ok({{QStringLiteral("clips"), clips}});
+    }
+
     if (tool == QLatin1String("add_bookmark")) {
         if (!args.contains(QStringLiteral("at")))
             return err("bad_args", QStringLiteral("at required"));

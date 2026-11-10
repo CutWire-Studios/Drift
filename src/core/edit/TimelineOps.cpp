@@ -1,5 +1,7 @@
 #include "core/edit/TimelineOps.h"
 
+#include <limits>
+
 #include "core/edit/MaskSpace.h"
 
 #include <QUuid>
@@ -1636,6 +1638,101 @@ bool closeRippleRanges(Project &project, const QList<RippleRange> &ranges, QStri
     if (moved)
         *moved = movedIds.values();
     return true;
+}
+
+QPair<QString, int> splitLabel(const QString &label)
+{
+    const int dot = label.lastIndexOf(QLatin1Char('.'));
+    if (dot > 0 && dot + 1 < label.size()) {
+        bool ok = false;
+        const int n = label.mid(dot + 1).toInt(&ok);
+        if (ok && n >= 2 && label.mid(dot + 1) == QString::number(n))
+            return {label.left(dot), n};
+    }
+    return {label, 1};
+}
+
+bool labelMatches(const QString &label, const QString &query)
+{
+    if (label.isEmpty() || query.isEmpty())
+        return false;
+    if (label == query)
+        return true;
+    // An unnumbered query also finds its numbered copies.
+    return splitLabel(query).second == 1 && splitLabel(label).first == query;
+}
+
+int numberCopiedLabels(const Project &before, Project &after)
+{
+    QSet<QString> oldIds;
+    for (const Track &track : before.tracks())
+        for (const Clip &clip : track.clips)
+            oldIds.insert(clip.id);
+
+    // The labels clips that were already there still hold, and every number in use per base.
+    QSet<QString> taken;
+    QHash<QString, QSet<int>> used;
+    for (const Track &track : after.tracks()) {
+        for (const Clip &clip : track.clips) {
+            if (clip.label.isEmpty())
+                continue;
+            const QPair<QString, int> parts = splitLabel(clip.label);
+            used[parts.first].insert(parts.second);
+            if (oldIds.contains(clip.id))
+                taken.insert(clip.label);
+        }
+    }
+
+    // The new labelled clips, in timeline order so the numbers read left to right.
+    struct Copy
+    {
+        int track;
+        int clip;
+        TimeUs start;
+    };
+    QList<Copy> copies;
+    for (int t = 0; t < after.tracks().size(); ++t) {
+        const QList<Clip> &clips = after.tracks().at(t).clips;
+        for (int c = 0; c < clips.size(); ++c)
+            if (!oldIds.contains(clips.at(c).id) && !clips.at(c).label.isEmpty())
+                copies.append({t, c, clips.at(c).timelineStart});
+    }
+    if (copies.isEmpty())
+        return 0;
+    std::stable_sort(copies.begin(), copies.end(), [](const Copy &a, const Copy &b) { return a.start < b.start; });
+
+    const auto nextFree = [&used](const QString &base) {
+        QSet<int> &numbers = used[base];
+        int highest = 1;
+        for (const int n : std::as_const(numbers))
+            highest = qMax(highest, n);
+        int n = highest < std::numeric_limits<int>::max() ? highest + 1 : 2;
+        while (numbers.contains(n)) // only after the top number ran out
+            ++n;
+        numbers.insert(n);
+        return base + QLatin1Char('.') + QString::number(n);
+    };
+    // A copy keeps its label when nothing else holds it any more (a clip replaced by a new one: a
+    // speed ramp, a subtitle conversion, a cut and paste); otherwise it takes the next number.
+    // Linked new clips (a split A/V pair) take the same outcome.
+    QHash<QString, QString> decided; // linkId|label -> label
+    int changed = 0;
+    for (const Copy &copy : std::as_const(copies)) {
+        Clip &clip = after.tracks()[copy.track].clips[copy.clip];
+        const QString key = clip.linkId.isEmpty() ? QString() : clip.linkId + QLatin1Char('|') + clip.label;
+        QString label = key.isEmpty() ? QString() : decided.value(key);
+        if (label.isEmpty()) {
+            label = taken.contains(clip.label) ? nextFree(splitLabel(clip.label).first) : clip.label;
+            taken.insert(label);
+            if (!key.isEmpty())
+                decided.insert(key, label);
+        }
+        if (clip.label != label) {
+            clip.label = label;
+            ++changed;
+        }
+    }
+    return changed;
 }
 
 bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset, double fps)
