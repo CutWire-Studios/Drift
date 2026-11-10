@@ -32,8 +32,8 @@ QuickSetupPage {
             kind: "extras",
             title: qsTr("Get more from Extras"),
             text: mobile
-                  ? qsTr("More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the top bar.")
-                  : qsTr("More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the header.")
+                  ? qsTr("More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.")
+                  : qsTr("More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.")
         })
         if (mobile) {
             list.push({

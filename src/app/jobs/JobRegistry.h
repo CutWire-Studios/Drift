@@ -34,8 +34,9 @@ class JobRegistry : public QObject
     Q_OBJECT
 public:
     // Local models share one lane so two big ONNX sessions never load at once; network jobs
-    // run beside them.
-    enum class Lane { Model, Network };
+    // run beside them. Render is for long GPU/CPU renders (range bakes) that must not hold up the
+    // model lane.
+    enum class Lane { Model, Network, Render };
 
     explicit JobRegistry(QObject *parent = nullptr);
     ~JobRegistry() override;
@@ -61,4 +62,5 @@ private:
     QStringList m_order;
     QThreadPool m_modelPool;
     QThreadPool m_networkPool;
+    QThreadPool m_renderPool;
 };

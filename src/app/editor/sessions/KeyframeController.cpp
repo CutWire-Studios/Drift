@@ -10,6 +10,7 @@
 #include "core/text/TextStyle.h"
 #include "engine/packages/audio/AudioEffectCatalog.h"
 #include "engine/packages/effects/EffectCatalog.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
 
 #include <QOpenGLContext>
 #include <QSet>
@@ -216,6 +217,15 @@ QVariantList KeyframeController::animatableProperties(int track, int clip) const
             const QString prop = QStringLiteral("model3d.%1").arg(key);
             rows << scalarRow(prop, m_app->keyframePropertyLabel(track, clip, prop), QStringLiteral("model3d"),
                               tr("3D model"), 0, 0, 2);
+        }
+    }
+    if (target.type == drift::ClipType::Procedural) {
+        const drift::ProceduralPackage package = proceduralForId(target.procedural.packageId);
+        for (const drift::EffectParamSpec &spec : package.parameters) {
+            if (spec.isFilePath() || spec.isClip() || spec.isSampler())
+                continue;
+            rows << specRow(QStringLiteral("proc.%1").arg(spec.key), spec, QStringLiteral("proc"),
+                            package.displayName);
         }
     }
     if (target.type == drift::ClipType::Pdf) {

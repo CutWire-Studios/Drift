@@ -2,6 +2,7 @@
 #include "app/bin/AssetPreviewController.h"
 #include "app/color/ColorController.h"
 #include "app/jobs/audio/DenoiseController.h"
+#include "app/jobs/render/BakeFingerprint.h"
 #include "app/jobs/audio/AudioAlignController.h"
 #include "app/jobs/vision/DepthController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
@@ -133,6 +134,7 @@ class EditorStateTest : public QObject
     Q_OBJECT
 
 private slots:
+    void bakeFingerprintTracksRangeEdits();
     void snapTimeEnabled();
     void compositeFromSelectionUndoRedo();
     void compositeClipGetsAPreviewBox();
@@ -356,6 +358,7 @@ private slots:
     void effectRemovalRemapsGraphSelection();
     void denoiseAddsCleanedClipOnTrackAbove();
     void audioRecordingVoiceoverWorkflow();
+    void lockedTrackRejectsEdits();
     void audioMixerTrackControlsAndMetering();
     void speedCurveOnAudioClipRetimesAndReplaces();
     void waveformPeaksForSourceRangeSlicesToTheTrimmedWindow();
@@ -480,6 +483,8 @@ private slots:
     void projectV3MigratesEffectsOntoAdjustmentLanes();
     void adjustmentMovesBetweenStandaloneAndNested();
     void trackRowHeightsForAdjustmentsAndLanes();
+    void collapsedLanesAndEmptyLaneCleanup();
+    void emptyLaneRemovedWithLastClip();
     void overlappingAdjustmentsGetASecondLane();
     void multiClipMoveLeftPreservesSelectionAndRelativeSpacing();
     void multiClipMoveCrossTracks();
@@ -4948,6 +4953,13 @@ void EditorStateTest::uiScalePersistsAcrossSessions()
         state.preferences()->setUiScale(9.0);
         QCOMPARE(state.preferences()->uiScale(), 2.0);
         state.preferences()->setUiScale(0.1);
+        QCOMPARE(state.preferences()->uiScale(), 0.75);
+        state.preferences()->setUiScale(0.0);
+        QCOMPARE(state.preferences()->uiScale(), 0.0);
+        QCOMPARE(QSettings().value(QStringLiteral("ui/scale")).toDouble(), 0.0);
+        state.preferences()->setUiScale(0.82);
+        QCOMPARE(state.preferences()->uiScale(), 0.8);
+        state.preferences()->setUiScale(1.0);
         QCOMPARE(state.preferences()->uiScale(), 1.0);
         QVERIFY(!QSettings().contains(QStringLiteral("ui/scale")));
 
@@ -5408,6 +5420,17 @@ void EditorStateTest::keyframeStaticChannelsReadTheStoredValue()
         const double value = state.propertyValueAt(track, clip, colorProps.at(i), 1.0, -1.0);
         QVERIFY2(qAbs(value - expected[i]) < 1e-6, qPrintable(colorProps.at(i)));
     }
+    // Channel keys fold into the stored hex; no "color.r" entries in the params, stored or resolved.
+    state.setClipKeyframe(track, clip, QStringLiteral("fx.0.color.r"), 1.0, 1.0);
+    const QList<drift::Effect> effects =
+        videoEffectsOf(*state.project(), state.project()->tracks().at(track).clips.at(clip));
+    QVERIFY(!effects.isEmpty());
+    const drift::Effect &fx = effects.at(0);
+    QVERIFY(!fx.parameters.contains(QStringLiteral("color.r")));
+    QCOMPARE(fx.parameters.value(QStringLiteral("color")).toString().left(3), QStringLiteral("#ff"));
+    const drift::Effect resolved = fx.resolvedAt(drift::secondsToUs(1.0));
+    QVERIFY(!resolved.parameters.contains(QStringLiteral("color.r")));
+    QCOMPARE(resolved.parameters.value(QStringLiteral("color")).toString().left(3), QStringLiteral("#ff"));
 
     state.keyframes()->addKeysAt(track, clip, {QStringLiteral("fx.0.center.x"), QStringLiteral("fx.0.center.y")}, 2.0);
     QVERIFY(qAbs(state.propertyValueAt(track, clip, QStringLiteral("fx.0.center.x"), 2.0, -1.0) - 0.25) < 1e-6);
@@ -8912,6 +8935,39 @@ void EditorStateTest::audioRecordingVoiceoverWorkflow()
         QFile::remove(path2);
         QFile::remove(path3);
     }
+}
+
+void EditorStateTest::lockedTrackRejectsEdits()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setAllowClipOverlap(true);
+    state.setSnapEnabled(false);
+
+    state.addTextClip(QStringLiteral("One"), 0.0);
+    state.setClipDuration(0, 0, 4.0);
+    const auto start = [&] { return state.project()->tracks().at(0).clips.at(0).timelineStart; };
+
+    state.selectClip(0, 0);
+    state.setTrackLocked(0, true);
+    QCOMPARE(state.selectedTrack(), -1);
+    QCOMPARE(state.trackLocked(0), true);
+    QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("locked")).toBool(), true);
+
+    state.moveClip(0, 0, 3.0);
+    QCOMPARE(start(), drift::secondsToUs(0.0));
+    state.selectClip(0, 0);
+    QCOMPARE(state.selectedTrack(), -1);
+    state.selectAllClips();
+    QCOMPARE(state.selectedTrack(), -1);
+    state.setPlayheadSeconds(2.0);
+    state.splitAtPlayhead();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+
+    state.setTrackLocked(0, false);
+    QCOMPARE(state.trackLocked(0), false);
+    state.moveClip(0, 0, 3.0);
+    QCOMPARE(start(), drift::secondsToUs(3.0));
 }
 
 void EditorStateTest::audioMixerTrackControlsAndMetering()
@@ -13351,6 +13407,64 @@ void EditorStateTest::trackRowHeightsForAdjustmentsAndLanes()
     QVERIFY(laned.trackRowHeight(parent, QVariantMap{}) > 0);
 }
 
+void EditorStateTest::collapsedLanesAndEmptyLaneCleanup()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.addAudioEffect(0, 0, QStringLiteral("space.autopan"));
+    const QVariantMap metrics{{QStringLiteral("video"), 65.0}, {QStringLiteral("lane"), 20.0},
+                              {QStringLiteral("ribbon"), 3.0}};
+    QCOMPARE(state.trackRowHeight(0, metrics), 105);
+
+    const QList<int> lanes = drift::adjustmentLaneIndexes(*state.project(), 0);
+    QCOMPARE(lanes.size(), 2);
+    QCOMPARE(state.adjustmentLaneKind(lanes.at(0)), QStringLiteral("videoEffects"));
+    QCOMPARE(state.adjustmentLaneKind(lanes.at(1)), QStringLiteral("audioEffects"));
+    QCOMPARE(state.adjustmentLaneKind(0), QString());
+    const QVariantList spans = state.adjustmentLaneSpans(0);
+    QCOMPARE(spans.size(), 2);
+    QCOMPARE(spans.at(0).toMap().value(QStringLiteral("laneIndex")).toInt(), lanes.at(0));
+    QCOMPARE(spans.at(0).toMap().value(QStringLiteral("spans")).toList().size(), 1);
+
+    const int undoCount = state.m_undoStack.count();
+    state.setTrackLanesCollapsed(0, true);
+    QCOMPARE(state.m_undoStack.count(), undoCount);
+    QCOMPARE(state.trackRowHeight(0, metrics), 65 + 6);
+    QVERIFY(state.tracks().at(0).toMap().value(QStringLiteral("lanesCollapsed")).toBool());
+
+    AppController reopened(&library);
+    QString error;
+    QVERIFY(reopened.applyProjectJson(state.serializeProjectJson(), &error));
+    QVERIFY(reopened.project()->tracks().at(0).lanesCollapsed);
+    QCOMPARE(reopened.trackRowHeight(0, metrics), 65 + 6);
+
+    state.setTrackLanesCollapsed(0, true);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+    QVERIFY(!state.project()->tracks().at(0).lanesCollapsed);
+}
+
+void EditorStateTest::emptyLaneRemovedWithLastClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.addAudioEffect(0, 0, QStringLiteral("space.autopan"));
+    const int tracksBefore = state.project()->tracks().size();
+    const QList<int> lanes = drift::adjustmentLaneIndexes(*state.project(), 0);
+    QCOMPARE(lanes.size(), 1);
+
+    state.selectClip(lanes.at(0), 0);
+    state.deleteSelectedClip();
+    QCOMPARE(state.project()->tracks().size(), tracksBefore - 1);
+    QCOMPARE(drift::adjustmentLaneIndexes(*state.project(), 0).size(), 0);
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().size(), tracksBefore);
+    QCOMPARE(drift::adjustmentLaneIndexes(*state.project(), 0).size(), 1);
+}
+
 // The two placements are the whole point of the feature: a standalone adjustment applies to
 // everything composited below it, a nested one only to the track it sits in. Dragging between
 // them is how you switch, and it is a one-way door in neither direction.
@@ -16210,6 +16324,46 @@ void EditorStateTest::maskingCutoutPatchSurvivesInspectorEdits()
     QVERIFY(edited.invert);
     QCOMPARE(edited.mediaPatches.size(), 1);
     QCOMPARE(edited.mediaPatches.firstKey(), 5 * fx.frame);
+}
+
+void EditorStateTest::bakeFingerprintTracksRangeEdits()
+{
+    drift::Project project;
+    project.setResolution(1280, 720);
+    project.setFps(30);
+    project.tracks().clear();
+    for (const QString &id : {QStringLiteral("t1"), QStringLiteral("t2")}) {
+        drift::Track track{.type = drift::TrackType::Shape};
+        track.id = id;
+        project.tracks().append(track);
+    }
+    drift::Clip inside = boxShape(QStringLiteral("in"), QRectF(0, 0, 100, 100));
+    drift::Clip outside = boxShape(QStringLiteral("out"), QRectF(0, 0, 100, 100));
+    outside.timelineStart = drift::secondsToUs(10.0);
+    project.tracks()[0].clips.append(inside);
+    project.tracks()[1].clips.append(outside);
+
+    const QByteArray original = drift::bakeFingerprint(project, 0, 60);
+    QCOMPARE(original.size(), 32);
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+
+    project.tracks()[0].clips[0].opacity.setKeyframe(0, 0.5);
+    const QByteArray edited = drift::bakeFingerprint(project, 0, 60);
+    QVERIFY(edited != original);
+
+    project.tracks()[1].clips[0].opacity.setKeyframe(0, 0.25);
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), edited);
+
+    project.tracks()[0].name = QStringLiteral("renamed");
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), edited);
+
+    project.tracks()[0].clips[0].opacity = inside.opacity;
+    project.tracks()[1].clips[0].opacity = outside.opacity;
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+
+    QVERIFY(drift::bakeFingerprint(project, 0, 60) != drift::bakeFingerprint(project, 300, 360));
+    project.setResolution(1920, 1080);
+    QVERIFY(drift::bakeFingerprint(project, 0, 60) != original);
 }
 
 QTEST_MAIN(EditorStateTest)

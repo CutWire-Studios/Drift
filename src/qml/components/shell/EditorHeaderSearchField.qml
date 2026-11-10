@@ -12,6 +12,8 @@ Rectangle {
     signal downloadsRequested()
     signal languageRequested()
     signal videoSizeRequested()
+    signal bakesRequested()
+    signal cropRequested()
     signal searchFinished()
     function focusField() {
         searchInput.forceActiveFocus()
@@ -198,6 +200,8 @@ Rectangle {
             case "downloads": searchBox.downloadsRequested(); break
             case "language": searchBox.languageRequested(); break
             case "videoSize": searchBox.videoSizeRequested(); break
+            case "bakes": searchBox.bakesRequested(); break
+            case "cropVideo": searchBox.cropRequested(); break
             case "mobileShell": ShellBridge.main.switchShell("mobile"); break
             }
         }

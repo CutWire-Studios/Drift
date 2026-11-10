@@ -98,6 +98,8 @@ public:
         QString effectsLabel;
         // "-6.0 dB" for a constant gain off unity; empty when keyframed or at unity.
         QString volumeLabel;
+        // A procedural clip whose package is not in the catalog; it renders nothing but keeps its data.
+        bool packageMissing = false;
     };
 
     // Empty time between two clips, in seconds.
@@ -115,6 +117,9 @@ public:
         int rightClip = -1;
         double start = 0.0;
         double end = 0.0;
+        // Touching clips: the cut. Overlapping clips: the midpoint of the overlap. Always set, so
+        // a cut with no transition yet (start == end) still has a position.
+        double cut = 0.0;
         bool hasTransition = false;
         // The clips physically overlap, so the window is the overlap and only its start can move.
         bool overlap = false;

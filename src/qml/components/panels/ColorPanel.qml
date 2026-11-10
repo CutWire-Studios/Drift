@@ -615,7 +615,7 @@ PanelFrame {
                     }
 
                     SectionHeader {
-                        title: qsTr("Look")
+                        title: qsTr("LUT")
                         modified: root.lookModified
                         onResetRequested: root.colorState.resetGroup("Look")
                     }
@@ -624,7 +624,7 @@ PanelFrame {
                         readonly property bool none: (root.params.look || "") === ""
                         wrapMode: none ? Text.WordWrap : Text.NoWrap
                         elide: none ? Text.ElideNone : Text.ElideRight
-                        text: none ? qsTr("None. Choose a look in the Looks panel.") : root.target.lookLabel
+                        text: none ? qsTr("None. Choose one in the Color Grading LUTs panel.") : root.target.lookLabel
                         color: Theme.mutedForeground
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeXs
@@ -632,7 +632,7 @@ PanelFrame {
                     GradeSlider {
                         width: parent.width
                         enabled: (root.params.look || "") !== ""
-                        label: qsTr("Look Intensity")
+                        label: qsTr("LUT Intensity")
                         from: 0
                         to: 1
                         defaultValue: 1
