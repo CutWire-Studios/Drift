@@ -1150,6 +1150,37 @@ bool writeMaskScalar(drift::Mask &mask, const QString &key, double value)
     return true;
 }
 
+namespace {
+// "<colour>.r/.g/.b/.a" is a keyframe track only; the static value is the hex under the colour's
+// own key, so a channel write updates that hex instead of adding a "<colour>.r" entry.
+void storeParamValue(QMap<QString, QVariant> &parameters, const QString &key, double value)
+{
+    const bool colorChannel = key.size() > 2 && key.at(key.size() - 2) == QLatin1Char('.')
+                              && QStringLiteral("rgba").contains(key.back());
+    const QString base = colorChannel ? key.chopped(2) : QString();
+    const QString hex = colorChannel ? parameters.value(base).toString() : QString();
+    if (!colorChannel || !hex.startsWith(QLatin1Char('#'))) {
+        parameters.insert(key, value);
+        return;
+    }
+    QColor color(hex.left(7));
+    const int v = qBound(0, int(std::lround(value * 255.0)), 255);
+    const QChar channel = key.back();
+    if (channel == QLatin1Char('r'))
+        color.setRed(v);
+    else if (channel == QLatin1Char('g'))
+        color.setGreen(v);
+    else if (channel == QLatin1Char('b'))
+        color.setBlue(v);
+    QString stored = color.name(QColor::HexRgb);
+    if (channel == QLatin1Char('a'))
+        stored += QStringLiteral("%1").arg(v, 2, 16, QLatin1Char('0'));
+    else if (hex.size() == 9)
+        stored += hex.right(2);
+    parameters.insert(base, stored);
+}
+} // namespace
+
 bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs relative, double value,
                         bool autoKey, bool force)
 {
@@ -1215,34 +1246,7 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
     }
     QString procKey;
     if (parseProceduralProp(clip, prop, &procKey)) {
-        // "<colour>.r/.g/.b/.a" is a keyframe track only; the static value is the hex under the colour's own key.
-        const bool colorChannel = procKey.size() > 2 && procKey.at(procKey.size() - 2) == QLatin1Char('.')
-                                  && QStringLiteral("rgba").contains(procKey.back());
-        const auto store = [&] {
-            if (!colorChannel) {
-                clip.procedural.parameters.insert(procKey, value);
-                return;
-            }
-            const QString base = procKey.chopped(2);
-            const QString hex = clip.procedural.parameters.value(base).toString();
-            if (!hex.startsWith(QLatin1Char('#')))
-                return;
-            QColor color(hex.left(7));
-            const int v = qBound(0, int(std::lround(value * 255.0)), 255);
-            const QChar channel = procKey.back();
-            if (channel == QLatin1Char('r'))
-                color.setRed(v);
-            else if (channel == QLatin1Char('g'))
-                color.setGreen(v);
-            else if (channel == QLatin1Char('b'))
-                color.setBlue(v);
-            QString stored = color.name(QColor::HexRgb);
-            if (channel == QLatin1Char('a'))
-                stored += QStringLiteral("%1").arg(v, 2, 16, QLatin1Char('0'));
-            else if (hex.size() == 9)
-                stored += hex.right(2);
-            clip.procedural.parameters.insert(base, stored);
-        };
+        const auto store = [&] { storeParamValue(clip.procedural.parameters, procKey, value); };
         const auto existing = clip.procedural.paramKeyframes.constFind(procKey);
         const bool keyed = existing != clip.procedural.paramKeyframes.constEnd() && !existing->isEmpty();
         if (!keyed && !force && !autoKey) {
@@ -1300,12 +1304,12 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
     const auto existing = effect.paramKeyframes.constFind(paramKey);
     const bool keyed = existing != effect.paramKeyframes.constEnd() && !existing->isEmpty();
     if (!keyed && !force && !autoKey) {
-        effect.parameters.insert(paramKey, value);
+        storeParamValue(effect.parameters, paramKey, value);
         return true;
     }
     if (!writeKeyframeValue(effect.paramKeyframes[paramKey], relative, value, autoKey, force))
         return false;
-    effect.parameters.insert(paramKey, value);
+    storeParamValue(effect.parameters, paramKey, value);
     return true;
 }
 

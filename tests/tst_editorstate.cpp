@@ -5420,6 +5420,17 @@ void EditorStateTest::keyframeStaticChannelsReadTheStoredValue()
         const double value = state.propertyValueAt(track, clip, colorProps.at(i), 1.0, -1.0);
         QVERIFY2(qAbs(value - expected[i]) < 1e-6, qPrintable(colorProps.at(i)));
     }
+    // Channel keys fold into the stored hex; no "color.r" entries in the params, stored or resolved.
+    state.setClipKeyframe(track, clip, QStringLiteral("fx.0.color.r"), 1.0, 1.0);
+    const QList<drift::Effect> effects =
+        videoEffectsOf(*state.project(), state.project()->tracks().at(track).clips.at(clip));
+    QVERIFY(!effects.isEmpty());
+    const drift::Effect &fx = effects.at(0);
+    QVERIFY(!fx.parameters.contains(QStringLiteral("color.r")));
+    QCOMPARE(fx.parameters.value(QStringLiteral("color")).toString().left(3), QStringLiteral("#ff"));
+    const drift::Effect resolved = fx.resolvedAt(drift::secondsToUs(1.0));
+    QVERIFY(!resolved.parameters.contains(QStringLiteral("color.r")));
+    QCOMPARE(resolved.parameters.value(QStringLiteral("color")).toString().left(3), QStringLiteral("#ff"));
 
     state.keyframes()->addKeysAt(track, clip, {QStringLiteral("fx.0.center.x"), QStringLiteral("fx.0.center.y")}, 2.0);
     QVERIFY(qAbs(state.propertyValueAt(track, clip, QStringLiteral("fx.0.center.x"), 2.0, -1.0) - 0.25) < 1e-6);
