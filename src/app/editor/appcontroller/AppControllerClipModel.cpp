@@ -1,5 +1,6 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "engine/packages/effects/EffectCatalog.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
 #include "engine/render3d/models/ModelAsset.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "app/jobs/vision/StabilizeController.h"
@@ -153,6 +154,9 @@ QStringList inspectorCaps(const drift::Clip &clip, drift::TrackType trackType)
     case ClipType::Model3d:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("model3d");
         break;
+    case ClipType::Procedural:
+        caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("procedural");
+        break;
     case ClipType::Adjustment:
         break;
     }
@@ -288,7 +292,7 @@ bool clipAcceptsPreviewTransform(const drift::Clip &clip)
 {
     return clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Image
            || clip.type == drift::ClipType::Vector || clip.type == drift::ClipType::Model3d
-           || clip.type == drift::ClipType::Pdf
+           || clip.type == drift::ClipType::Pdf || clip.type == drift::ClipType::Procedural
            || clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle
            || clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Composite
            || (clip.type == drift::ClipType::Adjustment
@@ -447,6 +451,96 @@ bool runningOnGles()
     return QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES;
 }
 
+// One parameter as the inspector's param map. propPrefix is what the keyframe API addresses the
+// param under: "fx.<index>." for an effect, "proc." for a procedural clip.
+QVariantMap paramSpecToMap(const drift::EffectParamSpec &paramDef, const QMap<QString, QVariant> &parameters,
+                           const QMap<QString, drift::KeyframeTrack<double>> &keyframes,
+                           const QString &propPrefix, drift::TimeUs timelineStart)
+{
+    QVariant value = parameters.value(
+        paramDef.isVec2() || paramDef.isRegion() ? paramDef.key + QLatin1String(".x") : paramDef.key);
+    if (!value.isValid())
+        value = paramDef.defaultVariant();
+
+    // `value` stays the static value; the row falls back to it whenever the track is empty.
+    QVariantMap param{
+        {QStringLiteral("key"), paramDef.key},
+        {QStringLiteral("label"), paramDef.label},
+        {QStringLiteral("min"), paramDef.min},
+        {QStringLiteral("max"), paramDef.max},
+        {QStringLiteral("isBoolean"), paramDef.isBoolean()},
+        {QStringLiteral("type"), paramDef.typeName()},
+        {QStringLiteral("value"), value},
+        {QStringLiteral("group"), paramDef.group},
+        {QStringLiteral("groupCollapsed"), paramDef.groupCollapsed},
+        {QStringLiteral("swatches"), paramDef.swatches},
+        {QStringLiteral("enables"), paramDef.enables},
+    };
+    if (paramDef.isVec2()) {
+        param.insert(QStringLiteral("valueY"), parameters.value(paramDef.key + QLatin1String(".y"), paramDef.defaultY));
+    }
+    if (paramDef.isRegion()) {
+        param.insert(QStringLiteral("valueY"),
+                     parameters.value(paramDef.key + QLatin1String(".y"), paramDef.defaultY));
+        param.insert(QStringLiteral("valueW"),
+                     parameters.value(paramDef.key + QLatin1String(".w"), paramDef.defaultW));
+        param.insert(QStringLiteral("valueH"),
+                     parameters.value(paramDef.key + QLatin1String(".h"), paramDef.defaultH));
+        param.insert(QStringLiteral("regionShape"), paramDef.regionShape);
+    }
+    if (paramDef.isEnum())
+        param.insert(QStringLiteral("options"), paramDef.options);
+    if (paramDef.type == drift::EffectParamType::Lut) {
+        const QString look = value.toString();
+        const std::optional<drift::LookEntry> entry = drift::lookForId(look);
+        param.insert(QStringLiteral("lookLabel"), entry ? entry->label : look);
+        param.insert(QStringLiteral("missing"),
+                     !look.isEmpty() && drift::resolveLutPath(look).isEmpty());
+    }
+    if (paramDef.step > 0.0)
+        param.insert(QStringLiteral("step"), paramDef.step);
+    if (paramDef.isColor())
+        param.insert(QStringLiteral("alpha"), paramDef.alpha);
+    if (paramDef.type == drift::EffectParamType::Curve) {
+        param.insert(QStringLiteral("curveMode"), paramDef.curveMode);
+        param.insert(QStringLiteral("curveChannel"), paramDef.curveChannel);
+    }
+    if (!paramDef.widget.isEmpty())
+        param.insert(QStringLiteral("widget"), paramDef.widget);
+    if (!paramDef.track.isEmpty())
+        param.insert(QStringLiteral("track"), paramDef.track);
+    if (paramDef.isFilePath()) {
+        param.insert(QStringLiteral("fileFilters"), paramDef.fileFilters);
+        const QString path = value.toString();
+        param.insert(QStringLiteral("missing"),
+                     !path.isEmpty() && !QFileInfo::exists(path));
+        const QString warn = drift::modelAssetWarning(path);
+        if (!warn.isEmpty())
+            param.insert(QStringLiteral("warning"), warn);
+    }
+    // A hue in degrees (chroma key's u_keyHue) is still a float on the keyframe stack, but
+    // nobody thinks of a backdrop as "121°" — the inspector adds a swatch that maps a
+    // picked colour onto it. Detected from the manifest's shape rather than a new param
+    // type, so the shader contract and the addon manifests stay as they are.
+    if (paramDef.type == drift::EffectParamType::Float && paramDef.min == 0.0
+        && paramDef.max == 360.0
+        && paramDef.key.endsWith(QLatin1String("hue"), Qt::CaseInsensitive)) {
+        param.insert(QStringLiteral("hue"), true);
+    }
+    // File paths, clips and sampler inputs carry no `prop`: the keyframe stack is typed
+    // double. A colour, vec2 and region animate as per-channel tracks ("<key>.r", "<key>.x"),
+    // which share their key times, so the first channel's track stands in for the whole param.
+    if (!paramDef.isFilePath() && !paramDef.isClip() && !paramDef.isSampler()) {
+        const QString trackKey = paramDef.isColor()  ? paramDef.key + QLatin1String(".r")
+                                 : paramDef.isVec2() || paramDef.isRegion()
+                                     ? paramDef.key + QLatin1String(".x")
+                                     : paramDef.key;
+        param.insert(QStringLiteral("prop"), propPrefix + paramDef.key);
+        param.insert(QStringLiteral("keyframes"), keyframeTrackToMap(keyframes.value(trackKey), timelineStart));
+    }
+    return param;
+}
+
 // `effectIndex` and `timelineStart` are only needed to describe the params' keyframe tracks: the
 // inspector addresses them as "fx.<index>.<key>", and key times are reported on the timeline.
 QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::TimeUs timelineStart)
@@ -457,93 +551,8 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
         for (const drift::EffectParamSpec &paramDef : def->meta.parameters) {
             if (paramDef.desktopGlOnly && runningOnGles())
                 continue;
-            QVariant value = effect.parameters.value(
-                paramDef.isVec2() || paramDef.isRegion() ? paramDef.key + QLatin1String(".x") : paramDef.key);
-            if (!value.isValid())
-                value = paramDef.defaultVariant();
-
-            // `value` stays the static value; the row falls back to it whenever the track is empty.
-            QVariantMap param{
-                {QStringLiteral("key"), paramDef.key},
-                {QStringLiteral("label"), paramDef.label},
-                {QStringLiteral("min"), paramDef.min},
-                {QStringLiteral("max"), paramDef.max},
-                {QStringLiteral("isBoolean"), paramDef.isBoolean()},
-                {QStringLiteral("type"), paramDef.typeName()},
-                {QStringLiteral("value"), value},
-                {QStringLiteral("group"), paramDef.group},
-                {QStringLiteral("groupCollapsed"), paramDef.groupCollapsed},
-                {QStringLiteral("swatches"), paramDef.swatches},
-                {QStringLiteral("enables"), paramDef.enables},
-            };
-            if (paramDef.isVec2()) {
-                const QVariant y = effect.parameters.value(paramDef.key + QLatin1String(".y"),
-                                                           paramDef.defaultY);
-                param.insert(QStringLiteral("valueY"), y);
-            }
-            if (paramDef.isRegion()) {
-                param.insert(QStringLiteral("valueY"),
-                             effect.parameters.value(paramDef.key + QLatin1String(".y"), paramDef.defaultY));
-                param.insert(QStringLiteral("valueW"),
-                             effect.parameters.value(paramDef.key + QLatin1String(".w"), paramDef.defaultW));
-                param.insert(QStringLiteral("valueH"),
-                             effect.parameters.value(paramDef.key + QLatin1String(".h"), paramDef.defaultH));
-                param.insert(QStringLiteral("regionShape"), paramDef.regionShape);
-            }
-            if (paramDef.isEnum())
-                param.insert(QStringLiteral("options"), paramDef.options);
-            if (paramDef.type == drift::EffectParamType::Lut) {
-                const QString look = value.toString();
-                const std::optional<drift::LookEntry> entry = drift::lookForId(look);
-                param.insert(QStringLiteral("lookLabel"), entry ? entry->label : look);
-                param.insert(QStringLiteral("missing"),
-                             !look.isEmpty() && drift::resolveLutPath(look).isEmpty());
-            }
-            if (paramDef.step > 0.0)
-                param.insert(QStringLiteral("step"), paramDef.step);
-            if (paramDef.isColor())
-                param.insert(QStringLiteral("alpha"), paramDef.alpha);
-            if (paramDef.type == drift::EffectParamType::Curve) {
-                param.insert(QStringLiteral("curveMode"), paramDef.curveMode);
-                param.insert(QStringLiteral("curveChannel"), paramDef.curveChannel);
-            }
-            if (!paramDef.widget.isEmpty())
-                param.insert(QStringLiteral("widget"), paramDef.widget);
-            if (!paramDef.track.isEmpty())
-                param.insert(QStringLiteral("track"), paramDef.track);
-            if (paramDef.isFilePath()) {
-                param.insert(QStringLiteral("fileFilters"), paramDef.fileFilters);
-                const QString path = value.toString();
-                param.insert(QStringLiteral("missing"),
-                             !path.isEmpty() && !QFileInfo::exists(path));
-                const QString warn = drift::modelAssetWarning(path);
-                if (!warn.isEmpty())
-                    param.insert(QStringLiteral("warning"), warn);
-            }
-            // A hue in degrees (chroma key's u_keyHue) is still a float on the keyframe stack, but
-            // nobody thinks of a backdrop as "121°" — the inspector adds a swatch that maps a
-            // picked colour onto it. Detected from the manifest's shape rather than a new param
-            // type, so the shader contract and the addon manifests stay as they are.
-            if (paramDef.type == drift::EffectParamType::Float && paramDef.min == 0.0
-                && paramDef.max == 360.0
-                && paramDef.key.endsWith(QLatin1String("hue"), Qt::CaseInsensitive)) {
-                param.insert(QStringLiteral("hue"), true);
-            }
-            // File paths, clips and sampler inputs carry no `prop`: the keyframe stack is typed
-            // double. A colour, vec2 and region animate as per-channel tracks ("<key>.r", "<key>.x"),
-            // which share their key times, so the first channel's track stands in for the whole param.
-            if (!paramDef.isFilePath() && !paramDef.isClip() && !paramDef.isSampler()) {
-                const QString trackKey = paramDef.isColor()  ? paramDef.key + QLatin1String(".r")
-                                         : paramDef.isVec2() || paramDef.isRegion()
-                                             ? paramDef.key + QLatin1String(".x")
-                                             : paramDef.key;
-                param.insert(QStringLiteral("prop"),
-                             QStringLiteral("fx.%1.%2").arg(effectIndex).arg(paramDef.key));
-                param.insert(QStringLiteral("keyframes"),
-                             keyframeTrackToMap(effect.paramKeyframes.value(trackKey),
-                                                timelineStart));
-            }
-            params.append(param);
+            params.append(paramSpecToMap(paramDef, effect.parameters, effect.paramKeyframes,
+                                         QStringLiteral("fx.%1.").arg(effectIndex), timelineStart));
         }
     }
     return {
@@ -989,6 +998,23 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         map.insert(QStringLiteral("model3d"), model3dSourceToMap(clip.model3d, clip.timelineStart));
     if (clip.type == drift::ClipType::Pdf)
         map.insert(QStringLiteral("pdf"), pdfSourceToMap(clip.pdf, clip.timelineStart));
+    if (clip.type == drift::ClipType::Procedural) {
+        const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
+        QVariantList params;
+        for (const drift::EffectParamSpec &spec : package.parameters) {
+            if (spec.desktopGlOnly && runningOnGles())
+                continue;
+            params.append(paramSpecToMap(spec, clip.procedural.parameters, clip.procedural.paramKeyframes,
+                                         QStringLiteral("proc."), clip.timelineStart));
+        }
+        map.insert(QStringLiteral("procedural"),
+                   QVariantMap{{QStringLiteral("packageId"), clip.procedural.packageId},
+                               {QStringLiteral("packageName"), package.valid ? package.displayName : QString()},
+                               {QStringLiteral("seed"), clip.procedural.seed},
+                               {QStringLiteral("parameters"), QVariant::fromValue(clip.procedural.parameters)},
+                               {QStringLiteral("params"), params},
+                               {QStringLiteral("packageMissing"), !package.valid}});
+    }
     return map;
 }
 
@@ -1009,6 +1035,7 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
     row.name = clip.name;
     row.path = clip.path;
     row.kind = drift::clipTypeToString(clip.type);
+    row.packageMissing = clip.type == drift::ClipType::Procedural && !hasProcedural(clip.procedural.packageId);
     row.adjustmentKind = drift::adjustmentKindToString(clip.adjustmentKind);
     row.linkedClipId = clip.linkedClipId;
     row.linkId = clip.linkId;

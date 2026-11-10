@@ -183,7 +183,7 @@ void PreviewController::refreshOutliner()
             Outliner3dModel::Entry entry;
             if (drift::isCameraClip(clip))
                 entry.group = Outliner3dModel::Cameras;
-            else if (clip.type == drift::ClipType::Model3d)
+            else if (clip.type == drift::ClipType::Model3d || clip.type == drift::ClipType::Procedural)
                 entry.group = Outliner3dModel::Models;
             else if (clip.layer3d && !track.isTransformLayer())
                 entry.group = Outliner3dModel::Layers;

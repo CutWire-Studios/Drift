@@ -1226,6 +1226,24 @@ public:
     // aimY>) as plain values — keyframe the statics through setClipKeyframe with "model3d.<key>".
     Q_INVOKABLE QVariantMap addModel3dClip(const QString &path, int trackIndex, double atSeconds,
                                            const QVariantMap &opts = {});
+    // A Procedural 3D clip from an installed package. Params start at the package's defaults.
+    // opts: duration (seconds), seed (int), name.
+    Q_INVOKABLE QVariantMap addProceduralClip(const QString &packageId, int trackIndex, double atSeconds,
+                                              const QVariantMap &opts = {});
+    // Installed procedural packages, valid ones only: [{id, name, description, category, thumbnail}].
+    Q_INVOKABLE QVariantList proceduralPackages() const;
+    // Repoints a Procedural clip at another package: params reset to its defaults, keyframes kept
+    // only for params the new package also declares. One undo step.
+    Q_INVOKABLE bool setProceduralPackage(int trackIndex, int clipIndex, const QString &packageId);
+    // Static (non-keyframed) writes of a Procedural clip's params; bool and enum params are numbers.
+    Q_INVOKABLE bool setProceduralParam(int trackIndex, int clipIndex, const QString &key, double value);
+    Q_INVOKABLE bool setProceduralVec2Param(int trackIndex, int clipIndex, const QString &key, double x,
+                                            double y);
+    Q_INVOKABLE bool setProceduralColorParam(int trackIndex, int clipIndex, const QString &key,
+                                             const QString &value);
+    Q_INVOKABLE bool setProceduralSeed(int trackIndex, int clipIndex, int seed);
+    // What the last render of the clip reported: {known, packageId, error, errors[], log[], serial}.
+    Q_INVOKABLE QVariantMap proceduralDiagnostics(const QString &clipId) const;
     Q_INVOKABLE QVariantMap setModel3dSource(int trackIndex, int clipIndex, const QString &path,
                                              const QVariantMap &opts = {});
     // Returns an error string, empty on success.

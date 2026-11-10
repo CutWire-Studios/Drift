@@ -54,6 +54,8 @@ public:
         // Show a baked range's frame instead of compositing it. Range baking turns it off so a
         // bake never reads another.
         bool useBakes = true;
+        // The frame is for a file (export, bake): procedural scripts get the longer wall-clock limit.
+        bool exporting = false;
         // The preview's 3D mode: the scene seen from the editor's free viewpoint, with the camera
         // and the stage drawn as guides. Only the preview sets it; export never does.
         struct EditorView

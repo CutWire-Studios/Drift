@@ -98,6 +98,8 @@ public:
         QString effectsLabel;
         // "-6.0 dB" for a constant gain off unity; empty when keyframed or at unity.
         QString volumeLabel;
+        // A procedural clip whose package is not in the catalog; it renders nothing but keeps its data.
+        bool packageMissing = false;
     };
 
     // Empty time between two clips, in seconds.

@@ -2468,6 +2468,7 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         composeOptions.readAheadUs = static_cast<drift::TimeUs>(
             std::llround(2.0 * 1e6 * frameRate.den / frameRate.num));
         composeOptions.useBakes = settings.useBakes;
+        composeOptions.exporting = true;
 
         std::vector<uint8_t> nv12Y;
         std::vector<uint8_t> nv12Uv;

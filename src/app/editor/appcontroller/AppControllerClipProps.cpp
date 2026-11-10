@@ -1831,7 +1831,7 @@ void AppController::setClipLayer3d(int trackIndex, int clipIndex, bool enabled)
         return;
     drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
     if (clip.type == drift::ClipType::Audio || clip.type == drift::ClipType::Model3d
-        || clip.layer3d == enabled)
+        || clip.type == drift::ClipType::Procedural || clip.layer3d == enabled)
         return;
     const drift::Project before = m_project;
     clip.layer3d = enabled;

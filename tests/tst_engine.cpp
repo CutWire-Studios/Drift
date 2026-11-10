@@ -67,6 +67,10 @@
 #include "engine/render3d/editor/EditorOverlay.h"
 #include "engine/compositor/layers/TransformLayer.h"
 #include "engine/compositor/GpuCompositor.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
+#include "engine/procedural/ProceduralDiagnostics.h"
+#include "engine/procedural/ProceduralEvaluator.h"
+#include "engine/render3d/procedural/ProceduralRequest.h"
 #include "engine/color/ScopeAnalysis.h"
 #include "engine/color/CubeLut.h"
 #include "engine/packages/looks/LookCatalog.h"
@@ -282,6 +286,12 @@ private slots:
     void modelClipWorldFitsTheRect();
     void modelClipDrawRequestFollowsLoopMode();
     void modelClipRendersCube();
+    void proceduralClipDrawsWorldGeometry();
+    void proceduralClipOcclusionAndFragDepth();
+    void proceduralOwnCameraIsFlatAndUpright();
+    void proceduralBrokenShaderIsReported();
+    void proceduralInstancesAndCustomAttributes();
+    void compositorRendersProceduralClip();
     void modelClipRigRenders();
     void compositorRendersModelClip();
     void modelClipDoesNotLeakGlState();
@@ -3654,6 +3664,262 @@ GpuScene modelClipScene(const QString &path, int size, double rotY = 0.0, double
 }
 
 } // namespace
+
+namespace {
+
+const char *const kProceduralVert = R"(#version 330 core
+layout(location = 0) in vec3 a_position;
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_proj;
+void main() { gl_Position = u_proj * u_view * u_model * vec4(a_position, 1.0); }
+)";
+
+const char *const kProceduralFrag = R"(#version 330 core
+out vec4 fragColor;
+uniform vec4 u_tint;
+void main() { fragColor = u_tint; }
+)";
+
+const char *const kProceduralDepthFrag = R"(#version 330 core
+out vec4 fragColor;
+uniform vec4 u_tint;
+void main() { fragColor = u_tint; gl_FragDepth = 0.0; }
+)";
+
+GpuLayer proceduralLayer(const char *lua, int size, const char *frag = kProceduralFrag, bool depth = false,
+                         const char *vert = kProceduralVert, const char *hash = "test-hash")
+{
+    drift::ProceduralScene scene = drift::ProceduralEvaluator::evaluate(
+        lua, {}, 0.0, {}, drift::ProceduralCanvas{size, size}, drift::ProceduralBudgets::forPlatform());
+    auto request = std::make_shared<drift::ProceduralRequest>();
+    request->scene = std::make_shared<const drift::ProceduralScene>(std::move(scene));
+    request->sourceHash = std::string(hash) + (frag == kProceduralDepthFrag ? "-depth" : "");
+    request->shaders.insert(QStringLiteral("flat"), {QString::fromUtf8(vert), QString::fromUtf8(frag)});
+    request->projectSize = QSize(size, size);
+    request->pose3d.perspective = size / 0.6;
+
+    GpuLayer layer;
+    layer.procedural = request;
+    layer.rect = QRectF(0, 0, size, size);
+    layer.screenSpace = true;
+    layer.depthOcclude = depth;
+    layer.valid = true;
+    return layer;
+}
+
+GpuScene proceduralScene(const QList<GpuLayer> &layers, int size)
+{
+    GpuScene scene;
+    scene.canvasSize = QSize(size, size);
+    scene.backgroundColor = Qt::black;
+    for (const GpuLayer &layer : layers) {
+        GpuItem item;
+        item.layer = layer;
+        scene.items.append(item);
+    }
+    return scene;
+}
+
+QString box(double w, double h, double d, double x, double y, double z, const char *tint)
+{
+    return QStringLiteral("scene:add(geo.box(%1, %2, %3):transform(mat.translate(%4, %5, %6)), 'flat', {u_tint = %7})\n")
+        .arg(w).arg(h).arg(d).arg(x).arg(y).arg(z).arg(QLatin1String(tint));
+}
+
+} // namespace
+
+void EngineTest::proceduralClipDrawsWorldGeometry()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    // World y points down the canvas, so a box at y = +10 sits below the centre.
+    const QImage out = GpuCompositor::render(proceduralScene(
+        {proceduralLayer(box(14, 8, 4, 32, 44, 0, "{1, 0, 0, 1}").toUtf8().constData(), 64)}, 64))
+                           .convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY(!out.isNull());
+    QVERIFY2(qRed(out.pixel(32, 44)) > 200 && qGreen(out.pixel(32, 44)) < 30,
+             qPrintable(QStringLiteral("box #%1").arg(out.pixel(32, 44), 8, 16, QLatin1Char('0'))));
+    QCOMPARE(qRed(out.pixel(32, 20)), 0); // nothing above the centre
+    QCOMPARE(qRed(out.pixel(4, 4)), 0);
+}
+
+void EngineTest::proceduralClipOcclusionAndFragDepth()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    const QByteArray nearGreen = box(24, 24, 4, 32, 32, -40, "{0, 1, 0, 1}").toUtf8();
+    const QByteArray farRed = box(60, 60, 4, 32, 32, 60, "{1, 0, 0, 1}").toUtf8();
+    const auto centre = [](const QImage &image) { return image.convertToFormat(QImage::Format_RGBA8888).pixel(32, 32); };
+
+    // Without depth the later layer simply paints over the earlier one.
+    QImage out = GpuCompositor::render(proceduralScene(
+        {proceduralLayer(nearGreen.constData(), 64), proceduralLayer(farRed.constData(), 64)}, 64));
+    QVERIFY(qRed(centre(out)) > 200 && qGreen(centre(out)) < 30);
+
+    // With it the nearer box stays on top although it was drawn first.
+    out = GpuCompositor::render(proceduralScene(
+        {proceduralLayer(nearGreen.constData(), 64, kProceduralFrag, true),
+         proceduralLayer(farRed.constData(), 64, kProceduralFrag, true)}, 64));
+    QVERIFY2(qGreen(centre(out)) > 200 && qRed(centre(out)) < 30,
+             qPrintable(QStringLiteral("centre #%1").arg(centre(out), 8, 16, QLatin1Char('0'))));
+
+    // A shader that writes gl_FragDepth = 0 brings its far box in front: the packed depth carries it.
+    out = GpuCompositor::render(proceduralScene(
+        {proceduralLayer(nearGreen.constData(), 64, kProceduralFrag, true),
+         proceduralLayer(farRed.constData(), 64, kProceduralDepthFrag, true)}, 64));
+    QVERIFY2(qRed(centre(out)) > 200 && qGreen(centre(out)) < 30,
+             qPrintable(QStringLiteral("centre #%1").arg(centre(out), 8, 16, QLatin1Char('0'))));
+}
+
+void EngineTest::proceduralOwnCameraIsFlatAndUpright()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    // Up in the script's world is -Y; the box at y = -60 must land in the top half of the picture.
+    const QByteArray lua = (QStringLiteral("scene:camera{eye = {0, 0, -300}, target = {0, 0, 0}, fov = 0.9}\n")
+                            + box(40, 40, 10, 0, -60, 0, "{0, 0, 1, 1}")).toUtf8();
+    GpuLayer layer = proceduralLayer(lua.constData(), 64);
+    QVERIFY(layer.procedural->ownCamera());
+    const QImage out = GpuCompositor::render(proceduralScene({layer}, 64)).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY2(qBlue(out.pixel(32, 19)) > 200 && qRed(out.pixel(32, 19)) < 30,
+             qPrintable(QStringLiteral("top #%1").arg(out.pixel(32, 19), 8, 16, QLatin1Char('0'))));
+    QCOMPARE(qBlue(out.pixel(32, 45)), 0);
+}
+
+void EngineTest::proceduralBrokenShaderIsReported()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    const QByteArray lua = box(40, 40, 10, 32, 32, 0, "{1, 1, 1, 1}").toUtf8();
+    GpuLayer layer = proceduralLayer(lua.constData(), 32, "#version 330 core\nout vec4 f;\nvoid main() { f = nope; }\n",
+                                     false, kProceduralVert, "broken-hash");
+    const QImage out = GpuCompositor::render(proceduralScene({layer}, 32)).convertToFormat(QImage::Format_RGBA8888);
+    QCOMPARE(qRed(out.pixel(16, 16)), 0); // nothing drawn, no crash
+    const auto shaders = drift::ProceduralDiagnostics::shared().shaders("broken-hash");
+    QVERIFY(shaders.count("flat"));
+    QVERIFY(!shaders.at("flat").ok);
+    QVERIFY(!shaders.at("flat").log.empty());
+}
+
+void EngineTest::proceduralInstancesAndCustomAttributes()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    // Two instances placed by a_instanceMatrix, coloured by a custom attribute the shader declares
+    // without a layout qualifier: it must be found by name.
+    const char *vert = R"(#version 330 core
+in vec3 a_position;
+in float a_weight;
+in mat4 a_instanceMatrix;
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_proj;
+out float v_weight;
+void main() {
+    v_weight = a_weight;
+    gl_Position = u_proj * u_view * u_model * a_instanceMatrix * vec4(a_position, 1.0);
+}
+)";
+    const char *frag = R"(#version 330 core
+in float v_weight;
+out vec4 fragColor;
+void main() { fragColor = vec4(v_weight, 0.0, 0.0, 1.0); }
+)";
+    const char *lua = R"(
+        local m = geo.box(10, 10, 4)
+        m:set("weight", buf.new("float", 24):fill(1.0))
+        m:instances(buf.from({mat.translate(16, 32, 0), mat.translate(48, 32, 0)}))
+        scene:add(m, "flat")
+    )";
+    const QImage out = GpuCompositor::render(proceduralScene({proceduralLayer(lua, 64, frag, false, vert, "instanced-hash")}, 64))
+                           .convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY2(qRed(out.pixel(16, 32)) > 200, qPrintable(QString::number(qRed(out.pixel(16, 32)))));
+    QVERIFY(qRed(out.pixel(48, 32)) > 200);
+    QCOMPARE(qRed(out.pixel(32, 32)), 0);
+}
+
+void EngineTest::compositorRendersProceduralClip()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QTemporaryDir packages;
+    const auto write = [&](const QString &name, const QByteArray &data) {
+        QFile f(packages.path() + QStringLiteral("/slide/") + name);
+        QVERIFY(QDir().mkpath(QFileInfo(f).absolutePath()));
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write(data);
+    };
+    write(QStringLiteral("procedural.json"),
+          R"({"id": "test.slide", "displayName": "Slide", "category": "Test",
+              "parameters": [{"identifier": "shift", "type": "float", "min": 0, "max": 100, "default": 0}]})");
+    write(QStringLiteral("main.lua"),
+          "scene:add(geo.box(20, 20, 4):transform(mat.translate(30 + 40 * time + params.shift, 50, 0)),"
+          " 'main', {u_tint = {1, 1, 1, 1}})");
+    write(QStringLiteral("main.vert"), kProceduralVert);
+    write(QStringLiteral("main.frag"), kProceduralFrag);
+    reloadProceduralCatalog({packages.path()});
+    const auto restore = qScopeGuard([] { reloadProceduralCatalog(); });
+    QVERIFY(hasProcedural(QStringLiteral("test.slide")));
+
+    drift::Project project;
+    project.setResolution(200, 100);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("proc");
+    clip.type = drift::ClipType::Procedural;
+    clip.procedural.packageId = QStringLiteral("test.slide");
+    clip.procedural.parameters.insert(QStringLiteral("shift"), 10.0);
+    clip.layer3d = true;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcIn = 0;
+    clip.srcOut = drift::secondsToUs(4.0);
+    clip.transformX.setKeyframe(0, 0.0);
+    clip.transformY.setKeyframe(0, 0.0);
+    clip.transformW.setKeyframe(0, 200.0);
+    clip.transformH.setKeyframe(0, 100.0);
+    project.tracks()[0].clips.append(clip);
+
+    const auto meanX = [](const QImage &image) {
+        long sum = 0;
+        long count = 0;
+        for (int y = 0; y < image.height(); ++y)
+            for (int x = 0; x < image.width(); ++x) {
+                if (qGray(image.pixel(x, y)) > 128) {
+                    sum += x;
+                    ++count;
+                }
+            }
+        return count > 50 ? double(sum) / double(count) : -1.0;
+    };
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage t0 = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY2(std::abs(meanX(t0) - 40.0) < 3.0, qPrintable(QString::number(meanX(t0))));
+    // The script's clock is the clip's source time.
+    const QImage t1 = compositor.compositeAt(drift::secondsToUs(1.0)).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY2(std::abs(meanX(t1) - 80.0) < 3.0, qPrintable(QString::number(meanX(t1))));
+    drift::ProceduralClipReport report;
+    QVERIFY(drift::ProceduralDiagnostics::shared().clip("proc", &report));
+    QVERIFY(report.scene && report.scene->ok() && report.error.empty());
+
+    // Trimming the head starts the script at the trim point rather than at zero.
+    project.tracks()[0].clips[0].srcIn = drift::secondsToUs(1.0);
+    const QImage trimmed = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY2(std::abs(meanX(trimmed) - 80.0) < 3.0, qPrintable(QString::number(meanX(trimmed))));
+
+    // A missing package draws nothing and says why.
+    project.tracks()[0].clips[0].procedural.packageId = QStringLiteral("test.gone");
+    const QImage gone = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QCOMPARE(meanX(gone), -1.0);
+    QVERIFY(drift::ProceduralDiagnostics::shared().clip("proc", &report));
+    QVERIFY(!report.error.empty());
+    QVERIFY(!report.scene);
+}
 
 void EngineTest::modelClipRendersCube()
 {

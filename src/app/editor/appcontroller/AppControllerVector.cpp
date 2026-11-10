@@ -1,4 +1,6 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
+#include "engine/procedural/ProceduralDiagnostics.h"
 #include "app/editor/PreferencesController.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/render3d/models/ModelAsset.h"
@@ -489,6 +491,240 @@ QVariantMap AppController::addModel3dClip(const QString &path, int trackIndex, d
     if (!unknown.isEmpty())
         out.insert(QStringLiteral("unknownOptions"), unknown);
     return out;
+}
+
+QVariantMap AppController::addProceduralClip(const QString &packageId, int trackIndex, double atSeconds,
+                                             const QVariantMap &opts)
+{
+    const drift::ProceduralPackage package = proceduralForId(packageId);
+    if (!package.valid)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), tr("unknown procedural package")}};
+    const QVariantMap initial = opts.value(QStringLiteral("params")).toMap();
+    for (auto it = initial.constBegin(); it != initial.constEnd(); ++it) {
+        const bool known = std::any_of(package.parameters.cbegin(), package.parameters.cend(),
+                                       [&](const drift::EffectParamSpec &spec) { return spec.key == it.key(); });
+        if (!known)
+            return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), tr("unknown param \"%1\"").arg(it.key())}};
+    }
+
+    const drift::Project before = m_project;
+
+    drift::TimeUs duration = drift::imageClipDurationUs();
+    if (opts.value(QStringLiteral("duration")).toDouble() > 0.0)
+        duration = drift::secondsToUs(opts.value(QStringLiteral("duration")).toDouble());
+    duration = qMax(duration, drift::minClipDurationUs(m_project.fps()));
+
+    const drift::TimeUs startUs = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    int target = trackIndex;
+    if (target < 0 || target >= m_project.tracks().size()
+        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Procedural)) {
+        target = drift::ensureFreeTrackForClipType(m_project, drift::ClipType::Procedural, startUs,
+                                                   duration, true);
+    }
+    if (target < 0)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("no graphic track")}};
+
+    drift::Track &track = m_project.tracks()[target];
+    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startUs, duration,
+                                                        m_snapEnabled, m_playheadUs);
+
+    drift::Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.type = drift::ClipType::Procedural;
+    clip.procedural.packageId = package.id;
+    for (const drift::EffectParamSpec &spec : package.parameters)
+        spec.insertDefault(clip.procedural.parameters);
+    for (auto it = initial.constBegin(); it != initial.constEnd(); ++it)
+        clip.procedural.parameters.insert(it.key(), it.value());
+    clip.procedural.seed = opts.value(QStringLiteral("seed")).toInt();
+    clip.name = opts.value(QStringLiteral("name")).toString();
+    if (clip.name.isEmpty())
+        clip.name = package.displayName.isEmpty() ? package.id : package.displayName;
+    clip.timelineStart = start;
+    clip.timelineDuration = duration;
+    clip.srcIn = 0;
+    clip.srcOut = duration;
+    setClipLayoutPixels(clip, 0, 0, m_project.width(), m_project.height());
+    clip.layer3d = true;
+
+    track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
+    pushProjectEdit(before, tr("Procedural clip added"));
+    finishEdit(tr("Procedural clip added"));
+    selectClip(target, newClipIndex);
+
+    return {{QStringLiteral("ok"), true},
+            {QStringLiteral("id"), clip.id},
+            {QStringLiteral("track"), target},
+            {QStringLiteral("index"), newClipIndex}};
+}
+
+QVariantList AppController::proceduralPackages() const
+{
+    QVariantList out;
+    for (const drift::ProceduralPackage &package : proceduralCatalog()) {
+        if (!package.valid)
+            continue;
+        out.append(QVariantMap{{QStringLiteral("id"), package.id},
+                               {QStringLiteral("name"), package.displayName.isEmpty() ? package.id : package.displayName},
+                               {QStringLiteral("description"), package.description},
+                               {QStringLiteral("category"), package.category},
+                               {QStringLiteral("thumbnail"), package.thumbnailPath}});
+    }
+    return out;
+}
+
+bool AppController::setProceduralPackage(int trackIndex, int clipIndex, const QString &packageId)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    const drift::ProceduralPackage package = proceduralForId(packageId);
+    if (clip.type != drift::ClipType::Procedural || !package.valid)
+        return false;
+    if (clip.procedural.packageId == package.id)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.procedural.packageId = package.id;
+    clip.procedural.parameters.clear();
+    for (const drift::EffectParamSpec &spec : package.parameters)
+        spec.insertDefault(clip.procedural.parameters);
+    for (auto it = clip.procedural.paramKeyframes.begin(); it != clip.procedural.paramKeyframes.end();) {
+        QString key;
+        if (parseProceduralProp(clip, QStringLiteral("proc.") + it.key(), &key))
+            ++it;
+        else
+            it = clip.procedural.paramKeyframes.erase(it);
+    }
+    pushProjectEdit(before, tr("Change procedural"));
+    finishEdit(tr("Procedural changed"));
+    return true;
+}
+
+bool AppController::setProceduralParam(int trackIndex, int clipIndex, const QString &key, double value)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Procedural)
+        return false;
+    const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
+    const auto spec = std::find_if(package.parameters.cbegin(), package.parameters.cend(),
+                                   [&](const drift::EffectParamSpec &p) { return p.key == key; });
+    if (spec == package.parameters.cend() || spec->isText() || spec->isVec2() || spec->isRegion())
+        return false;
+    const QVariant newValue = spec->isBoolean() ? QVariant(value > 0.5) : QVariant(value);
+    if (clip.procedural.parameters.value(key) == newValue)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.procedural.parameters.insert(key, newValue);
+    pushProjectEdit(before, tr("Edit procedural"));
+    finishEdit(tr("Procedural updated"));
+    return true;
+}
+
+bool AppController::setProceduralVec2Param(int trackIndex, int clipIndex, const QString &key, double x,
+                                           double y)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Procedural)
+        return false;
+    const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
+    const auto spec = std::find_if(package.parameters.cbegin(), package.parameters.cend(),
+                                   [&](const drift::EffectParamSpec &p) { return p.key == key; });
+    if (spec == package.parameters.cend() || !spec->isVec2())
+        return false;
+
+    const drift::Project before = m_project;
+    clip.procedural.parameters.insert(key + QLatin1String(".x"), std::clamp(x, spec->min, spec->max));
+    clip.procedural.parameters.insert(key + QLatin1String(".y"), std::clamp(y, spec->min, spec->max));
+    pushProjectEdit(before, tr("Edit procedural"));
+    finishEdit(tr("Procedural updated"));
+    return true;
+}
+
+bool AppController::setProceduralColorParam(int trackIndex, int clipIndex, const QString &key,
+                                            const QString &value)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Procedural)
+        return false;
+    const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
+    const auto spec = std::find_if(package.parameters.cbegin(), package.parameters.cend(),
+                                   [&](const drift::EffectParamSpec &p) { return p.key == key; });
+    if (spec == package.parameters.cend() || !spec->isColor())
+        return false;
+
+    // Same rule as effect colours: an alpha param stores #rrggbbaa, and a six-digit pick keeps the
+    // opacity already stored.
+    QString stored;
+    if (spec->alpha && value.size() == 9 && value.startsWith(QLatin1Char('#'))) {
+        const QColor rgb(value.left(7));
+        bool alphaOk = false;
+        value.right(2).toInt(&alphaOk, 16);
+        if (!rgb.isValid() || !alphaOk)
+            return false;
+        stored = rgb.name(QColor::HexRgb) + value.right(2).toLower();
+    } else {
+        const QColor color(value);
+        if (!color.isValid())
+            return false;
+        stored = color.name(QColor::HexRgb);
+        if (spec->alpha) {
+            const QString old = clip.procedural.parameters.value(key).toString();
+            stored += old.size() == 9 ? old.right(2) : QStringLiteral("ff");
+        }
+    }
+    if (clip.procedural.parameters.value(key).toString() == stored)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.procedural.parameters.insert(key, stored);
+    pushProjectEdit(before, tr("Edit procedural"));
+    finishEdit(tr("Procedural updated"));
+    return true;
+}
+
+bool AppController::setProceduralSeed(int trackIndex, int clipIndex, int seed)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Procedural)
+        return false;
+    if (clip.procedural.seed == seed)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.procedural.seed = seed;
+    pushProjectEdit(before, tr("Change seed"));
+    finishEdit(tr("Seed changed"));
+    return true;
+}
+
+QVariantMap AppController::proceduralDiagnostics(const QString &clipId) const
+{
+    drift::ProceduralClipReport report;
+    if (!drift::ProceduralDiagnostics::shared().clip(clipId.toStdString(), &report))
+        return {{QStringLiteral("known"), false}};
+    const auto toList = [](const std::vector<std::string> &lines) {
+        QStringList out;
+        for (const std::string &line : lines)
+            out << QString::fromStdString(line);
+        return out;
+    };
+    return {{QStringLiteral("known"), true},
+            {QStringLiteral("packageId"), QString::fromStdString(report.packageId)},
+            {QStringLiteral("error"), QString::fromStdString(report.error)},
+            {QStringLiteral("errors"), report.scene ? toList(report.scene->errors) : QStringList()},
+            {QStringLiteral("log"), report.scene ? toList(report.scene->log) : QStringList()},
+            {QStringLiteral("serial"), QVariant::fromValue<qulonglong>(report.serial)}};
 }
 
 QVariantMap AppController::setModel3dSource(int trackIndex, int clipIndex, const QString &path,

@@ -22,7 +22,9 @@
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "engine/render3d/models/ModelAsset.h"
 #include "engine/render3d/models/ModelClipRenderer.h"
+#include "engine/render3d/procedural/ProceduralClipRenderer.h"
 #include "engine/render3d/splats/SplatAsset.h"
+#include "engine/render3d/procedural/ProceduralRequest.h"
 #include "engine/render2d/vector/VectorClipRenderer.h"
 #include "engine/render2d/pdf/PdfClipRenderer.h"
 #include "core/project/clip/Clip.h"
@@ -65,6 +67,17 @@ struct AllowProxiesScope
 {
     explicit AllowProxiesScope(bool allow) : previous(t_allowProxies) { t_allowProxies = allow; }
     ~AllowProxiesScope() { t_allowProxies = previous; }
+    bool previous;
+};
+
+// RenderOptions::exporting for the prepare() running on this thread: procedural scripts get the
+// export wall-clock limit.
+thread_local bool t_exporting = false;
+
+struct ExportingScope
+{
+    explicit ExportingScope(bool exporting) : previous(t_exporting) { t_exporting = exporting; }
+    ~ExportingScope() { t_exporting = previous; }
     bool previous;
 };
 
@@ -454,7 +467,8 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
             // A vector clip's path is a .json/.svg, a model clip's a .glb and a PDF clip's a .pdf
             // the decoders must never open.
             if (clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Vector
-                || clip.type == drift::ClipType::Model3d || clip.type == drift::ClipType::Pdf)
+                || clip.type == drift::ClipType::Model3d || clip.type == drift::ClipType::Pdf
+                || clip.type == drift::ClipType::Procedural)
                 continue;
 
             if ((track.type == drift::TrackType::Video || track.type == drift::TrackType::Shape)
@@ -1389,6 +1403,31 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         destRect = QRectF(0, 0, canvasWidth, canvasHeight);
         rotation = 0.0;
         layer.screenSpace = true;
+    } else if (clip.type == drift::ClipType::Procedural) {
+        // The script runs in project px whatever the render scale; only the draw matrix scales it.
+        const QSizeF projectSize(projectWidth, projectHeight);
+        drift::procedural3d::BuildInput input;
+        input.clipId = clip.id;
+        input.source = clip.procedural.isAnimated() ? clip.procedural.resolvedAt(clipTimeUs) : clip.procedural;
+        input.sourceTimeUs = clip.timelineToSourceUs(timelineUs);
+        input.frameRate = projectFps > 0 ? projectFps : 30;
+        input.projectSize = projectSize;
+        input.renderScale = renderScale;
+        input.camera = drift::defaultSceneCamera(projectSize);
+        if (const drift::Clip *cameraClip = drift::cameraClipAt(project.tracks(), timelineUs))
+            input.camera = drift::sceneCameraFromClip(*cameraClip, timelineUs, 1.0, projectSize);
+        input.projectRect = QRectF(x / renderScale, y / renderScale, w / renderScale, h / renderScale);
+        input.rotation = rotation;
+        input.projectPose = drift::clipPoseAt(clip, clipTimeUs, 1.0, projectHeight);
+        input.renderPose = drift::clipPoseAt(clip, clipTimeUs, renderScale, projectHeight);
+        input.exporting = t_exporting;
+        layer.procedural = drift::procedural3d::makeProceduralRequest(input);
+        layer.effects = resolvedClipEffects(clip, clipTimeUs);
+        // Drawn already in place, like a model: world geometry through the shared viewpoint, or flat
+        // through the script's own camera. Either way the layer is the whole canvas.
+        destRect = QRectF(0, 0, canvasWidth, canvasHeight);
+        rotation = 0.0;
+        layer.screenSpace = true;
     } else if (clip.type == drift::ClipType::Composite) {
         if (const drift::Project *nested = nestedProject(project, clip)) {
             const NestedScope scope(clip);
@@ -1422,7 +1461,12 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
     // the setter, so an imported or hand-edited project cannot ask for something undrawable.
     layer.depthOcclude = clip.depthOcclude && clip.layer3d
                          && clip.blendMode == drift::BlendMode::Normal;
-    if (clip.type != drift::ClipType::Model3d) {
+    // A script with its own camera is a flat picture: it has no depth in the shared world.
+    if (layer.procedural && layer.procedural->ownCamera())
+        layer.depthOcclude = false;
+    // The pose of a model or procedural clip is already inside its request: the layer is drawn in
+    // place, and a pose on it would tilt the whole canvas-sized quad a second time.
+    if (clip.type != drift::ClipType::Model3d && clip.type != drift::ClipType::Procedural) {
         layer.pose3d = drift::clipPoseAt(clip, clipTimeUs, renderScale, projectHeight);
     }
     layer.flipH = clip.flipH;
@@ -1708,6 +1752,51 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         guides.selectedQuad = parent * drift::clipQuadToWorld(layer.rect, layer.rotation, false, false,
                                                               layer.pose3d, canvas);
     };
+    // A procedural clip's own camera stands in the world as a frustum; without one, its scene is
+    // world geometry and the selection gets the box around the scene's bounds. The scene is the one
+    // already evaluated for this layer, so nothing runs twice.
+    const auto placeProcedural = [&](const drift::Clip &clip, const GpuLayer &layer) {
+        if (!editorView || !layer.procedural)
+            return;
+        const drift::ProceduralRequest &request = *layer.procedural;
+        const bool selected = clip.id == options.editor.selectedClipId;
+        const float scale = float(renderScale);
+        if (request.ownCamera()) {
+            const drift::ProceduralSceneCamera &camera = request.scene->camera;
+            const auto point = [&](const std::array<float, 3> &p) { return QVector3D(p[0], p[1], p[2]) * scale; };
+            drift::FrustumGuide frustum;
+            frustum.eye = point(camera.eye);
+            frustum.target = point(camera.target);
+            frustum.up = QVector3D(camera.up[0], camera.up[1], camera.up[2]);
+            frustum.fov = camera.fov;
+            frustum.aspect = double(request.projectSize.width()) / std::max(1, request.projectSize.height());
+            frustum.nearPlane = camera.nearPlane * scale;
+            frustum.farPlane = camera.farPlane * scale;
+            frustum.selected = selected;
+            guides.frustums.append(frustum);
+            return;
+        }
+        if (!selected || !request.scene->aabbValid || (layer.hasParent && !layer.parent.isAffine()))
+            return;
+        const QSizeF canvas(width, height);
+        const QMatrix4x4 parent = layer.hasParent ? drift::worldParentFromAffine(layer.parent, canvas)
+                                                  : QMatrix4x4();
+        QMatrix4x4 toRender;
+        toRender.scale(scale);
+        guides.hasSelectedModel = true;
+        guides.selectedModelMin = QVector3D(request.scene->aabbMin[0], request.scene->aabbMin[1],
+                                            request.scene->aabbMin[2]);
+        guides.selectedModelMax = QVector3D(request.scene->aabbMax[0], request.scene->aabbMax[1],
+                                            request.scene->aabbMax[2]);
+        guides.selectedModel = parent * toRender * request.model;
+        // The unit quad of the clip's canvas-sized rect, for the scene camera's frame on it.
+        const QSizeF project(request.projectSize);
+        QMatrix4x4 unit;
+        unit.translate(float(project.width() * 0.5), float(project.height() * 0.5));
+        unit.scale(float(project.width() * 0.5), float(project.height() * 0.5));
+        guides.hasSelectedQuad = true;
+        guides.selectedQuad = guides.selectedModel * unit;
+    };
     // A clip with a depth effect stands in the 3D view as a relief, its lights placed over it.
     QList<drift::EditorLine> reliefGuides;
     QVector3D editorEye;
@@ -1799,6 +1888,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         return frame;
     };
     const auto attachAudioInputs = [&](GpuLayer &layer) {
+        if (layer.procedural && layer.procedural->usesGlobalAudio && !layer.globalAudio)
+            layer.globalAudio = audioFrameFor(QString());
         for (int i = 0; i < layer.effects.size(); ++i) {
             const drift::Effect &effect = layer.effects.at(i);
             const EffectPresetEntry *def = effect.catalogId.isEmpty() ? nullptr : effectDefForId(effect.catalogId);
@@ -1939,6 +2030,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
             attachTrackInputs(item.layer);
             attachAudioInputs(item.layer);
             noteSelection(clip, item.layer);
+            placeProcedural(clip, item.layer);
             placeRelief(clip, item.layer);
             placeModelLights(clip, item.layer);
             applyDepthOcclusion(project, scene, item.layer, nearestOccluder, occluders);
@@ -2066,6 +2158,7 @@ bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &opt
     }
 
     const AllowProxiesScope proxies(options.allowProxies);
+    const ExportingScope exporting(options.exporting);
     // Covers the warm below and every read buildGpuScene makes, nested timelines included.
     const ClipReaderPool::ApproximateSeekScope approximate(options.approximateSeek);
     const NestedViewsScope nestedViews(m_nestedViews);

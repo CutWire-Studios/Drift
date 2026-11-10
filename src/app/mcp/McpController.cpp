@@ -540,6 +540,8 @@ QVariantMap McpController::compactClip(int trackIndex, int clipIndex, bool inclu
                m_app->propertyValueAt(trackIndex, clipIndex, QStringLiteral("opacity"), at, 1));
     if (clip.layer3d) {
         out.insert(QStringLiteral("layer3d"), true);
+        if (clip.depthOcclude)
+            out.insert(QStringLiteral("depthOcclude"), true);
         for (const char *key : {"rotationX", "rotationY", "z", "perspective"}) {
             const QString k = QLatin1String(key);
             out.insert(k, m_app->propertyValueAt(trackIndex, clipIndex, k, at, 0));
@@ -954,6 +956,25 @@ bool McpController::setClipCanvas(int trackIndex, int clipIndex, const QVariantM
         return false;
     }
 
+    if (patch.value(QStringLiteral("depthOcclude")).toBool()) {
+        // Same refusals as setClipDepthOcclude: a flat clip has no pose to sort by, and the
+        // dest-reading blend modes copy the canvas aside before a depth test could see it.
+        const bool always3d = clip.type == drift::ClipType::Model3d || clip.type == drift::ClipType::Procedural;
+        const bool to3d = always3d ? clip.layer3d
+                          : patch.contains(QStringLiteral("layer3d"))
+                              ? patch.value(QStringLiteral("layer3d")).toBool()
+                              : clip.layer3d || patch.contains(QStringLiteral("rotationX"))
+                                    || patch.contains(QStringLiteral("rotationY"))
+                                    || patch.contains(QStringLiteral("z"))
+                                    || patch.contains(QStringLiteral("perspective"));
+        if (!to3d || clip.blendMode != drift::BlendMode::Normal) {
+            if (error)
+                *error = to3d ? QStringLiteral("depth_occlude needs blend mode Normal")
+                              : QStringLiteral("depth_occlude needs a 3D layer (layer3d:true)");
+            return false;
+        }
+    }
+
     const drift::Project before = m_app->m_project;
     // Inside the clip by the check above whenever the write keys; a constant write ignores it.
     const drift::TimeUs relative = qBound<drift::TimeUs>(0, atUs - clip.timelineStart, clip.timelineDuration);
@@ -973,11 +994,17 @@ bool McpController::setClipCanvas(int trackIndex, int clipIndex, const QVariantM
     for (const auto &[patchKey, prop] : kProps)
         write(patchKey, prop);
     // After the value writes, so an explicit layer3d:false wins over their auto-enable.
-    if (patch.contains(QStringLiteral("layer3d")) && clip.type != drift::ClipType::Model3d) {
+    if (patch.contains(QStringLiteral("layer3d")) && clip.type != drift::ClipType::Model3d
+        && clip.type != drift::ClipType::Procedural) {
         clip.layer3d = patch.value(QStringLiteral("layer3d")).toBool();
         if (!clip.layer3d)
             m_app->clearPose3d(clip);
         any = true;
+    }
+    if (patch.contains(QStringLiteral("depthOcclude"))) {
+        const bool enable = patch.value(QStringLiteral("depthOcclude")).toBool();
+        any = any || clip.depthOcclude != enable;
+        clip.depthOcclude = enable && clip.layer3d;
     }
     if (!any)
         return false;

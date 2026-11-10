@@ -88,7 +88,7 @@ QJsonObject animPropProp()
         "transform like any 3D layer (x, y, width, height, z, rotationX, rotationY, rotation, "
         "perspective), and the older model3d.<scale|depth|rotX|rotY|rotZ> are still accepted as "
         "shorthands that write those; model3d.modelScale and modelScaleZ resize the model about the clip's anchor "
-        "(modelScaleZ only its depth). On a PDF clip pdf.scrollX and pdf.scrollY (page units: 1 moves "
+        "(modelScaleZ only its depth). On a procedural clip proc.<paramKey> for any numeric, switch, enum or colour-channel param of its package (proc.tint.r, proc.origin.x for vec2). On a PDF clip pdf.scrollX and pdf.scrollY (page units: 1 moves "
         "one page, or one grid row/column) and pdf.zoom (0.1..10). "
         "Note width/height here vs w/h in set_transform. Spellings live in this "
 "schema — list_animated_properties returns only properties that already have keys (empty on a "
@@ -789,6 +789,7 @@ const QList<Op> &ops()
                                    {QStringLiteral("h"), numberProp(QStringLiteral("On-canvas height in pixels"))},
                                    {QStringLiteral("rotation"), numberProp(QStringLiteral("Degrees clockwise"))},
                                    {QStringLiteral("layer3d"), boolProp(QStringLiteral("Make the clip a 3D layer (true) or flat (false). Writing any of the 3D fields below turns it on; false resets them to 0 and the default perspective"))},
+                                   {QStringLiteral("depth_occlude"), boolProp(QStringLiteral("Occlude by depth: this 3D layer hides and is hidden by other depth-occluding 3D layers (model and procedural clips) by z instead of track order. Needs a 3D layer with blend mode Normal; set it on every clip that should sort"))},
                                    {QStringLiteral("rotationX"), numberProp(QStringLiteral("Rotation about X in degrees (right-handed; + tips the top edge toward the viewer)"))},
                                    {QStringLiteral("rotationY"), numberProp(QStringLiteral("Rotation about Y in degrees (right-handed; + swings the right edge toward the viewer)"))},
                                    {QStringLiteral("z"), numberProp(QStringLiteral("Position Z in pixels; + away from the viewer, - toward it (After Effects' convention)"))},
@@ -1048,7 +1049,7 @@ const QList<Op> &ops()
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
           "on a fresh clip. Property spellings live in the `prop` schema of the other keyframes ops "
-          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, afx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>, model3d.<key>, pdf.<key>), not here.",
+          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, afx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>, model3d.<key>, pdf.<key>, proc.<key>), not here.",
           objectSchema(clipRefProps()), true, false, true },
         { "list_keyframes", "keyframes", "Read keys for one property",
           "Returns {prop, enabled, keys:[{seconds, value, inDx, inDy, outDx, outDy, corner, hold, "
@@ -1318,7 +1319,8 @@ QStringList toolboxNames()
             QStringLiteral("ui"),        QStringLiteral("shapes"),   QStringLiteral("motion"),
             QStringLiteral("model3d"),   QStringLiteral("subtitles"), QStringLiteral("segmentation"), QStringLiteral("ai"),
             QStringLiteral("audio"),     QStringLiteral("scene"),    QStringLiteral("multicam"),
-            QStringLiteral("market"),    QStringLiteral("transcript"), QStringLiteral("voice")};
+            QStringLiteral("market"),    QStringLiteral("transcript"), QStringLiteral("voice"),
+            QStringLiteral("procedural")};
 }
 
 QStringList undoExemptOps()
@@ -1348,6 +1350,8 @@ QStringList undoExemptOps()
         QStringLiteral("install_addons"),
         QStringLiteral("create_effect"),       QStringLiteral("update_effect"),
         QStringLiteral("delete_effect"),       QStringLiteral("export_effect"),
+        QStringLiteral("create_procedural"),   QStringLiteral("update_procedural"),
+        QStringLiteral("delete_procedural"),
         QStringLiteral("set_acceleration"),    QStringLiteral("switch_angle"),
         QStringLiteral("end_multicam"),
         // Background work and stored analysis: nothing on the timeline changes.
@@ -1484,6 +1488,13 @@ QString agentGuideText()
         "   add_effect / add_transition / add_audio_effect straight away.\n"
         "4. update_effect to iterate, delete_effect to drop it, export_effect for a .driftfx.\n"
         "\n"
+        "Procedural 3D (procedural toolbox):\n"
+        "1. procedural_authoring_guide for the Lua API, the manifest and the shader contract.\n"
+        "2. create_procedural({slug, manifest, files:{\"main.lua\", \"<n>.vert\", \"<n>.frag\"}}) - the Lua is run and\n"
+        "   the shaders compiled first; fix and retry on lua_error / shader_compile_failed.\n"
+        "3. evaluate_procedural({id, t}) for counts, bounds, lights and print output; update_procedural to iterate.\n"
+        "4. add_procedural({id}) places it; set_keyframe on proc.<key> animates a manifest param.\n"
+        "\n"
         "Understanding the footage (scene toolbox):\n"
         "0. activity → frames → capture shows you the pictures before any scan: activity for\n"
         "   where content changes, frames for a labelled contact sheet, capture for one moment.\n"
@@ -1526,7 +1537,7 @@ QString agentGuideText()
         "shape.layer.<id>.<field>. A fresh shape has layers \"fill\" and \"stroke\".\n"
         "\n"
         "Toolboxes: media, timeline, canvas, playback, text, effects, project, keyframes, speed, ui, "
-        "shapes, motion, model3d, subtitles, segmentation, ai, audio, scene, multicam, market.\n");
+        "shapes, motion, model3d, subtitles, segmentation, ai, audio, scene, multicam, market, procedural.\n");
 }
 
 QJsonObject catalogPayload(const QJsonObject &args)
@@ -1558,6 +1569,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
         {"market", "The Cutwire marketplace: stock media, Drift assets, sound effects and community add-ons. Browse sources, preview, install (optionally onto the timeline), and manage Downloads. Stock installs spend a per-machine quota."},
         {"transcript", "Transcript-first editing: transcribe once, read phrases/words with times, cut by words or by source ranges, assemble takes, label speakers."},
+        {"procedural", "Procedural 3D clips: Lua-built scenes with your own GLSL shaders. Read the guide, write packages into My Procedurals, try them with evaluate_procedural, place them as clips and animate their params with proc.<key> keyframes."},
         {"voice", "Voices: ElevenLabs / Fish Audio text-to-speech and ElevenLabs sound effects (billable, need the user's API key), plus local Chatterbox TTS with a cloneable voice library and subtitle voiceovers (free, needs the tts-model addon)."},
     };
 

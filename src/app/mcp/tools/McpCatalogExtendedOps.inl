@@ -664,6 +664,87 @@
           "Read it to edit a document that has no slots, then send it back with set_lottie_source.",
           objectSchema(clipRefProps()), true, false, true },
 
+        { "procedural_authoring_guide", "procedural", "How to write a procedural 3D package",
+          "Read before create_procedural. Returns {guide} - the full authoring guide (docs/procedural.md): "
+          "package layout and manifest, the Lua API, budgets, the shader contract with both camera modes, "
+          "and a complete worked example.",
+          objectSchema({}), true, false, true },
+        { "list_procedurals", "procedural", "See installed procedural packages",
+          "Returns {procedurals:[{id, name, description, category, user, shaders:[names], params:[{key, "
+          "label, type, min, max, default}]}]}. user:true marks packages made with create_procedural.",
+          objectSchema({}), true, false, true },
+        { "create_procedural", "procedural", "Write a new procedural 3D package",
+          "Create a package from a manifest, main.lua and shader pairs. Before anything is installed it is "
+          "parsed, main.lua is run at t=0 with default params and camera, and every shader pair is compiled on "
+          "the GL thread; failures return bad_manifest, lua_error or shader_compile_failed with errors[], the "
+          "Lua log and the driver log per shader, and leave nothing on disk. Returns {id, stats:{meshCount, "
+          "vertexCount, instanceCount, triangleCount, elapsedMs}, log, shaders:{name:{ok, log}}, "
+          "shaderCheck: ok|skipped, warnings?}. id is user.<slug> and works with add_procedural at once. "
+          "Not undoable.",
+          objectSchema({{QStringLiteral("slug"), stringProp(QStringLiteral("a-z, 0-9, _ (max 48); the id becomes user.<slug>"))},
+                        {QStringLiteral("manifest"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                                 {QStringLiteral("description"), QStringLiteral("procedural.json body (displayName, description, category, parameters, maxVertices, maxInstances); id is set for you")}}},
+                        {QStringLiteral("files"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("{\"main.lua\": \"<Lua>\", \"lit.vert\": \"<GLSL>\", \"lit.frag\": \"<GLSL>\"} - every shader needs both halves")}}}},
+                       {QStringLiteral("slug"), QStringLiteral("manifest"), QStringLiteral("files")}) },
+        { "update_procedural", "procedural", "Change a My Procedurals package",
+          "Replaces parts of an existing user package by id, keeping the id so clips already using it pick the "
+          "change up. Omitted manifest and files stay as they are; files overwrites or adds, remove_files drops "
+          "shader files. Validated like create_procedural. Bundled and add-on packages are refused "
+          "(not_user_procedural) - fork those with create_procedural. Not undoable.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Existing user procedural id"))},
+                        {QStringLiteral("manifest"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                                 {QStringLiteral("description"), QStringLiteral("Full replacement manifest (optional)")}}},
+                        {QStringLiteral("files"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("Only the files to overwrite or add, e.g. {\"main.lua\": \"...\"}")}}},
+                        {QStringLiteral("remove_files"), arrayProp(stringProp(QStringLiteral("Shader file name")),
+                                                                    QStringLiteral("Shader files to delete, e.g. [\"old.vert\", \"old.frag\"]"))}},
+                       {QStringLiteral("id")}),
+          false, false, true },
+        { "get_procedural_source", "procedural", "Read a procedural package's code",
+          "Returns {id, user, uses, manifest, files:{name: text}} for any package, bundled ones too, to learn "
+          "from or fork. uses (user packages only) is how many clips in the project use it.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Id from list_procedurals"))}},
+                       {QStringLiteral("id")}), true, false, true },
+        { "delete_procedural", "procedural", "Remove a My Procedurals package",
+          "Delete a user package. Refuses with in_use when the project has clips of it unless force:true "
+          "(those clips keep their data and render nothing). Not undoable.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("User procedural id"))},
+                        {QStringLiteral("force"), boolProp(QStringLiteral("Delete even if the project uses it"))}},
+                       {QStringLiteral("id")}), false, true },
+        { "add_procedural", "procedural", "Place a procedural 3D clip",
+          "Add a clip of an installed package on a graphic track, creating one when needed. It is a 3D layer "
+          "the size of the canvas; the whole scene is built by main.lua each frame, in project pixels (origin "
+          "top-left, y down, +z away). Params start at the manifest defaults; params sets "
+          "starting values, and set_keyframe on proc.<key> animates them later (one key holds a constant). "
+          "Returns {id, track, index}.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Package id from list_procedurals"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Optional destination graphic track; omitted picks or creates one"))},
+                        {QStringLiteral("duration"), numberProp(QStringLiteral("Clip length in seconds (default 5)"))},
+                        {QStringLiteral("seed"), integerProp(QStringLiteral("The script's `seed` global (default 0)"))},
+                        {QStringLiteral("params"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("Starting values by param key; unknown keys fail bad_args")}}},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("Clip name (default: the package's name)"))}},
+                       {QStringLiteral("id")}) },
+        { "evaluate_procedural", "procedural", "Run a package's Lua and report the scene",
+          "Runs main.lua on the spot (no rendering) and returns {cameraMode: world|own, cameraRead, stats:{"
+          "meshCount, vertexCount, instanceCount, triangleCount, luaBytesPeak, elapsedMs}, bounds:{min, max}, "
+          "meshes:[{shader, vertices, instances, uniforms}], lights, camera? (own mode), log (print output), "
+          "errors}. Give id to try a package with default params plus params overrides, or clip to evaluate a "
+          "placed clip as it renders at timeline second t (keyframes, seed and the covering Camera clip "
+          "included; params overrides still apply). Without clip, t is the script's `time`. A script error "
+          "returns ok:false lua_error with errors[]. Use it to check bounds and counts without exporting.",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Package id (when not evaluating a clip)"))},
+                                   {QStringLiteral("t"), numberProp(QStringLiteral("Seconds: script time for id; timeline time for clip (default 0, or the clip start)"))},
+                                   {QStringLiteral("params"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                                         {QStringLiteral("description"), QStringLiteral("Param overrides by key, e.g. {\"count\": 12, \"tint\": \"#ff8800\"}")}}},
+                                   {QStringLiteral("seed"), integerProp(QStringLiteral("Seed for id mode (default 0)"))},
+                                   {QStringLiteral("width"), integerProp(QStringLiteral("Canvas width for id mode (default: project)"))},
+                                   {QStringLiteral("height"), integerProp(QStringLiteral("Canvas height for id mode (default: project)"))}},
+                                  clipRefProps())),
+          true, false, true },
+
         { "add_model3d", "model3d", "Place a 3D model (.glb) or Gaussian splat",
           "Add a glTF binary, or a Gaussian splat scene (.sog, a 3DGS .ply, a .zip or folder bundle holding meta.json/lod-meta.json, or that meta.json), as a model clip on a graphic track, creating one when needed. A model "
           "clip is a 3D layer like any other: its rect (x, y, w, h) is the front face of the "

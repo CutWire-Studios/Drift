@@ -1,6 +1,7 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "core/edit/TimelineOps.h"
 #include "engine/packages/effects/EffectCatalog.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
 
 #include "core/animation/EasingPresetStore.h"
 // Engine-internal by its own header comment, and included here only for releaseCaches(): the GPU
@@ -429,6 +430,19 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
             QString pdfKey;
             if (parsePdfProp(clip, prop, &pdfKey) && drift::pdfScalar(clip.pdf, pdfKey, &scalar))
                 return scalar;
+            QString procKey;
+            if (parseProceduralProp(clip, prop, &procKey)) {
+                const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
+                EffectPresetEntry def;
+                def.meta.parameters = package.parameters;
+                drift::Effect holder;
+                holder.parameters = clip.procedural.parameters;
+                const QMap<QString, QVariant> params = resolvedEffectParameters(holder, def);
+                if (params.value(procKey).isValid())
+                    return params.value(procKey).toDouble();
+                if (staticColorChannel(params, procKey, &scalar))
+                    return scalar;
+            }
         }
     }
     return fallback;
@@ -625,6 +639,12 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
             const auto it = clip.model3d.keyframes.constFind(key);
             if (it != clip.model3d.keyframes.constEnd() && !it->isEmpty())
                 out.append(QStringLiteral("model3d.%1").arg(key));
+        }
+    }
+    if (clip.type == drift::ClipType::Procedural) {
+        for (auto it = clip.procedural.paramKeyframes.constBegin(); it != clip.procedural.paramKeyframes.constEnd(); ++it) {
+            if (!it->isEmpty())
+                out.append(QStringLiteral("proc.%1").arg(it.key()));
         }
     }
     if (clip.type == drift::ClipType::Pdf) {

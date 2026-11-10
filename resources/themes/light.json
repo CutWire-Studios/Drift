@@ -2412,6 +2412,44 @@
     "pdfInspector": {
       "foregroundMuted": "$semantic.mutedForeground"
     },
+    "proceduralInspector": {
+      "foregroundMuted": "$semantic.mutedForeground",
+      "iconError": "$semantic.destructive",
+      "foregroundError": "$semantic.destructive"
+    },
+    "proceduralEditorPanel": {
+      "background": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "foregroundError": "$semantic.destructive",
+      "bannerBackground": "$semantic.panel.accent",
+      "bannerForeground": "$semantic.panel.foreground",
+      "gutterBackground": "$semantic.panel.accent",
+      "gutterForeground": "$semantic.mutedForeground",
+      "selection": "$semantic.primary",
+      "selectionForeground": "$semantic.primaryForeground",
+      "syntaxKeyword": "$semantic.accentOnPanel",
+      "syntaxType": "$semantic.clip.effect",
+      "syntaxBuiltin": "$semantic.clip.graphic",
+      "syntaxString": "$semantic.constructive",
+      "syntaxComment": "$semantic.mutedForeground",
+      "syntaxNumber": "$semantic.warning"
+    },
+    "proceduralConsolePanel": {
+      "background": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "headerBackground": "$semantic.panel.accent",
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "error": "$semantic.destructive",
+      "warning": "$semantic.warning",
+      "log": "$semantic.panel.foreground",
+      "shader": "$semantic.clip.effect",
+      "info": "$semantic.constructive"
+    },
     "propertiesEmptyState": {
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",

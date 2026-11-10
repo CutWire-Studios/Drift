@@ -4,6 +4,7 @@
 #include "core/text/animation/TextAnimationPreset.h"
 #include "engine/render2d/pdf/PdfiumRuntime.h"
 #include "engine/packages/effects/EffectCatalog.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
 #include "engine/decode/probe/MediaProbe.h"
 #include "engine/render3d/models/ModelAsset.h"
 #include "engine/render3d/models/ModelClipRenderer.h"
@@ -846,7 +847,7 @@ bool isSyntheticTimelineClip(drift::ClipType type)
     return type == drift::ClipType::Text || type == drift::ClipType::Subtitle
            || type == drift::ClipType::Shape || type == drift::ClipType::Image
            || type == drift::ClipType::Vector || type == drift::ClipType::Model3d
-           || type == drift::ClipType::Pdf
+           || type == drift::ClipType::Pdf || type == drift::ClipType::Procedural
            || type == drift::ClipType::Adjustment;
 }
 
@@ -961,6 +962,35 @@ bool parsePdfProp(const drift::Clip &clip, const QString &prop, QString *key)
     return true;
 }
 
+bool parseProceduralProp(const drift::Clip &clip, const QString &prop, QString *key)
+{
+    if (clip.type != drift::ClipType::Procedural || !prop.startsWith(QLatin1String("proc.")))
+        return false;
+    const QString candidate = prop.mid(5);
+    const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
+    for (const drift::EffectParamSpec &spec : package.parameters) {
+        if (spec.key == candidate) {
+            if (spec.isText() || spec.isVec2() || spec.isRegion())
+                return false;
+            *key = candidate;
+            return true;
+        }
+        if (!candidate.startsWith(spec.key + QLatin1Char('.')))
+            continue;
+        const QString channel = candidate.mid(spec.key.size() + 1);
+        const bool valid = (spec.isColor() && QStringLiteral("rgb").contains(channel) && channel.size() == 1)
+            || (spec.isColor() && spec.alpha && channel == QLatin1String("a"))
+            || (spec.isVec2() && (channel == QLatin1String("x") || channel == QLatin1String("y")))
+            || (spec.isRegion() && QStringList{QStringLiteral("x"), QStringLiteral("y"), QStringLiteral("w"),
+                                                QStringLiteral("h")}.contains(channel));
+        if (!valid)
+            return false;
+        *key = candidate;
+        return true;
+    }
+    return false;
+}
+
 void clearClipPose3d(drift::Clip &clip)
 {
     clip.rotationX = {};
@@ -1045,6 +1075,13 @@ drift::KeyframeTrack<double> *keyframeTrackForProp(drift::Clip &clip, const QStr
             return &clip.model3d.keyframes[modelKey];
         const auto it = clip.model3d.keyframes.find(modelKey);
         return it == clip.model3d.keyframes.end() ? nullptr : &it.value();
+    }
+    QString procKey;
+    if (parseProceduralProp(clip, prop, &procKey)) {
+        if (createIfMissing)
+            return &clip.procedural.paramKeyframes[procKey];
+        const auto it = clip.procedural.paramKeyframes.find(procKey);
+        return it == clip.procedural.paramKeyframes.end() ? nullptr : &it.value();
     }
     QString pdfKey;
     if (parsePdfProp(clip, prop, &pdfKey)) {
@@ -1174,6 +1211,47 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
         if (!writeKeyframeValue(clip.model3d.keyframes[modelKey], relative, value, autoKey, force))
             return false;
         drift::setModel3dScalar(clip.model3d, modelKey, value);
+        return true;
+    }
+    QString procKey;
+    if (parseProceduralProp(clip, prop, &procKey)) {
+        // "<colour>.r/.g/.b/.a" is a keyframe track only; the static value is the hex under the colour's own key.
+        const bool colorChannel = procKey.size() > 2 && procKey.at(procKey.size() - 2) == QLatin1Char('.')
+                                  && QStringLiteral("rgba").contains(procKey.back());
+        const auto store = [&] {
+            if (!colorChannel) {
+                clip.procedural.parameters.insert(procKey, value);
+                return;
+            }
+            const QString base = procKey.chopped(2);
+            const QString hex = clip.procedural.parameters.value(base).toString();
+            if (!hex.startsWith(QLatin1Char('#')))
+                return;
+            QColor color(hex.left(7));
+            const int v = qBound(0, int(std::lround(value * 255.0)), 255);
+            const QChar channel = procKey.back();
+            if (channel == QLatin1Char('r'))
+                color.setRed(v);
+            else if (channel == QLatin1Char('g'))
+                color.setGreen(v);
+            else if (channel == QLatin1Char('b'))
+                color.setBlue(v);
+            QString stored = color.name(QColor::HexRgb);
+            if (channel == QLatin1Char('a'))
+                stored += QStringLiteral("%1").arg(v, 2, 16, QLatin1Char('0'));
+            else if (hex.size() == 9)
+                stored += hex.right(2);
+            clip.procedural.parameters.insert(base, stored);
+        };
+        const auto existing = clip.procedural.paramKeyframes.constFind(procKey);
+        const bool keyed = existing != clip.procedural.paramKeyframes.constEnd() && !existing->isEmpty();
+        if (!keyed && !force && !autoKey) {
+            store();
+            return true;
+        }
+        if (!writeKeyframeValue(clip.procedural.paramKeyframes[procKey], relative, value, autoKey, force))
+            return false;
+        store();
         return true;
     }
     QString pdfKey;

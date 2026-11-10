@@ -44,6 +44,20 @@ inline bool isEngineBoundGpuUniform(const QString &name)
     return name.startsWith(QLatin1String("u_texture"));
 }
 
+// The matrices, camera, resolution and light uniforms the procedural renderer binds for every
+// user shader (docs/procedural.md, "Shader contract"). A package param or a scene:add uniform of one
+// of these names would be overwritten each draw. u_time, u_timeUs, u_frameIndex, u_frameRate and
+// u_resolution are already engine-bound above and shared with effects.
+inline bool isProceduralContractUniform(const QString &name)
+{
+    static const QStringList names{
+        QStringLiteral("u_model"),       QStringLiteral("u_view"),        QStringLiteral("u_proj"),
+        QStringLiteral("u_normalMatrix"), QStringLiteral("u_cameraPos"),  QStringLiteral("u_renderResolution"),
+        QStringLiteral("u_lightCount"),  QStringLiteral("u_lightPos"),    QStringLiteral("u_lightDir"),
+        QStringLiteral("u_lightColor"),  QStringLiteral("u_lightParams")};
+    return names.contains(name);
+}
+
 // Names package JSON must not claim. Wider than the above: the per-frame face anchors travel to
 // the shader *through* the parameter map, so they must still be bound from it, but a package
 // declaring its own u_face* slider would collide with what the engine injects.
@@ -51,7 +65,7 @@ inline bool isReservedGpuUniform(const QString &name)
 {
     return isEngineBoundGpuUniform(name) || name.startsWith(QLatin1String("u_face"))
            || name == QLatin1String("u_audioLevel") || name == QLatin1String("u_audioBass")
-           || name == QLatin1String("u_audioBeat");
+           || name == QLatin1String("u_audioBeat") || isProceduralContractUniform(name);
 }
 
 struct GpuEffectBufferSpec
