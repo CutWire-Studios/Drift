@@ -1407,7 +1407,7 @@ QSet<int> rippleTrackGroup(const Project &project, int trackIndex)
 }
 
 QStringList rippleTracks(Project &project, const QSet<int> &tracks, TimeUs fromUs, TimeUs deltaUs,
-                         const QSet<QString> &exclude, bool *clamped)
+                         const QSet<QString> &exclude, bool *clamped, QString *clampedId)
 {
     QStringList moved;
     if (deltaUs == 0)
@@ -1421,8 +1421,12 @@ QStringList rippleTracks(Project &project, const QSet<int> &tracks, TimeUs fromU
         for (Clip &clip : all[t].clips) {
             if (exclude.contains(clip.id) || clip.timelineStart < fromUs)
                 continue;
-            if (clip.timelineStart + deltaUs < 0 && clamped)
-                *clamped = true;
+            if (clip.timelineStart + deltaUs < 0) {
+                if (clamped)
+                    *clamped = true;
+                if (clampedId && clampedId->isEmpty())
+                    *clampedId = clip.id;
+            }
             clip.timelineStart = qMax<TimeUs>(0, clip.timelineStart + deltaUs);
             moved.append(clip.id);
             movedIds.insert(clip.id);
@@ -1439,8 +1443,12 @@ QStringList rippleTracks(Project &project, const QSet<int> &tracks, TimeUs fromU
                 if (movedIds.contains(clip.id) || exclude.contains(clip.id) || clip.linkId.isEmpty()
                     || !movedLinks.contains(clip.linkId))
                     continue;
-                if (clip.timelineStart + deltaUs < 0 && clamped)
-                    *clamped = true;
+                if (clip.timelineStart + deltaUs < 0) {
+                    if (clamped)
+                        *clamped = true;
+                    if (clampedId && clampedId->isEmpty())
+                        *clampedId = clip.id;
+                }
                 clip.timelineStart = qMax<TimeUs>(0, clip.timelineStart + deltaUs);
                 moved.append(clip.id);
                 movedIds.insert(clip.id);
@@ -1530,12 +1538,13 @@ bool closeRippleRanges(Project &project, const QList<RippleRange> &ranges, QStri
     QSet<QString> movedIds;
     QSet<int> touched;
     bool clamped = false;
+    QString clampedId;
     for (int g = 0; g < groups.size(); ++g) {
         touched.unite(groups.at(g));
         const QList<QPair<TimeUs, TimeUs>> &list = groupRanges.at(g);
         for (int i = int(list.size()) - 1; i >= 0; --i) {
             for (const QString &id : rippleTracks(project, groups.at(g), list.at(i).second,
-                                                  -(list.at(i).second - list.at(i).first), {}, &clamped))
+                                                  -(list.at(i).second - list.at(i).first), {}, &clamped, &clampedId))
                 movedIds.insert(id);
         }
     }
@@ -1546,10 +1555,7 @@ bool closeRippleRanges(Project &project, const QList<RippleRange> &ranges, QStri
         if (blocker) {
             *blocker = collision;
             if (collision.isEmpty())
-                for (const QString &id : std::as_const(movedIds)) {
-                    *blocker = id;
-                    break;
-                }
+                *blocker = clampedId; // the clip stopped at 0 short of its full move
         }
         project = unchanged;
         return false;

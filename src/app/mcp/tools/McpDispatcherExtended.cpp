@@ -1,4 +1,5 @@
 #include "app/mcp/tools/McpCatalog.h"
+#include "app/mcp/McpDetail.h"
 #include "app/jobs/vision/SceneDetectController.h"
 #include "app/editor/PreferencesController.h"
 #include "app/jobs/audio/DenoiseController.h"
@@ -3302,6 +3303,39 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         m_controller->closeGap(jsonInt(args.value(QStringLiteral("track"))),
                                jsonNumber(args.value(QStringLiteral("at")), 0.0));
         return ok({});
+    }
+
+    if (tool == QLatin1String("close_gaps")) {
+        if (!args.contains(QStringLiteral("track")))
+            return err("bad_args", QStringLiteral("track required"));
+        const int track = jsonInt(args.value(QStringLiteral("track")), -1);
+        const drift::TimeUs fromUs = drift::secondsToUs(jsonNumber(args.value(QStringLiteral("from")), 0.0));
+        const drift::TimeUs toUs = args.contains(QStringLiteral("to"))
+                                       ? drift::secondsToUs(jsonNumber(args.value(QStringLiteral("to")), 0.0))
+                                       : -1;
+        if (fromUs < 0 || (args.contains(QStringLiteral("to")) && toUs < fromUs))
+            return err("bad_args", QStringLiteral("from must be >= 0 and to >= from"));
+        const AppController::GapCloseResult closed = m_controller->closeGapsRippled(track, fromUs, toUs);
+        if (!closed.error.isEmpty())
+            return err(closed.error == QLatin1String("No such track") ? "not_found" : "bad_args", closed.error);
+        const auto seconds = [](drift::TimeUs us) { return drift::mcpdetail::round3(drift::usToSeconds(us)); };
+        QJsonArray closedJson;
+        for (const auto &gap : closed.closed)
+            closedJson.append(QJsonObject{{QStringLiteral("at"), seconds(gap.first)}, {QStringLiteral("width"), seconds(gap.second)}});
+        QJsonArray skippedJson;
+        for (const auto &gap : closed.skipped)
+            skippedJson.append(QJsonObject{{QStringLiteral("at"), seconds(gap.first.first)},
+                                           {QStringLiteral("width"), seconds(gap.first.second)},
+                                           {QStringLiteral("blocker"), gap.second}});
+        QJsonArray moved;
+        for (const QString &id : closed.moved) {
+            const ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), id}});
+            if (ref.valid())
+                moved.append(QJsonObject{{QStringLiteral("id"), id},
+                                         {QStringLiteral("start"),
+                                          seconds(m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).timelineStart)}});
+        }
+        return ok({{QStringLiteral("closed"), closedJson}, {QStringLiteral("skipped"), skippedJson}, {QStringLiteral("moved"), moved}});
     }
 
     if (tool == QLatin1String("set_snap")) {

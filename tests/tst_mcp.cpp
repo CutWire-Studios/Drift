@@ -104,6 +104,8 @@ private slots:
     void splittingANamedSubtitleClipNumbersThePieces();
     void insertClipRipplesTheTrack();
     void deleteClipsClosesTheSpace();
+    void rippleTrimMovesTheRest();
+    void closeGapsClosesEveryHole();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
@@ -1246,6 +1248,272 @@ void McpTest::deleteClipsClosesTheSpace()
                 .value(QStringLiteral("ok")).toBool());
     QCOMPARE(startOf(ids.at(2)), -1.0);
     QCOMPARE(startOf(ids.at(3)), 6.0);
+}
+
+void McpTest::rippleTrimMovesTheRest()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QStringList ids;
+    for (int i = 0; i < 3; ++i) {
+        QJsonObject args{{QStringLiteral("asset"), 0}, {QStringLiteral("in"), i * 2.0}, {QStringLiteral("out"), i * 2.0 + 2.0}};
+        if (ids.isEmpty())
+            args.insert(QStringLiteral("at"), 0.0);
+        else
+            args.insert(QStringLiteral("after"), ids.last());
+        ids.append(dispatcher.applyOne(QStringLiteral("insert_clip"), args).value(QStringLiteral("id")).toString());
+    }
+    const auto startOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineStart);
+    };
+    const auto trim = [&](double in, double out, bool ripple) {
+        return dispatcher.applyOne(QStringLiteral("set_trim"),
+                                   {{QStringLiteral("clip"), ids.at(1)}, {QStringLiteral("in"), in},
+                                    {QStringLiteral("out"), out}, {QStringLiteral("ripple"), ripple}});
+    };
+    const int steps = state.undoHistory().size();
+
+    // Lengthen the middle clip by 1 s: the last one moves right by 1 s, in one step.
+    QJsonObject longer = trim(2.0, 5.0, true);
+    QVERIFY2(longer.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(longer).toJson()));
+    QCOMPARE(longer.value(QStringLiteral("dur")).toDouble(), 3.0);
+    QCOMPARE(startOf(ids.at(2)), 5.0);
+    QCOMPARE(longer.value(QStringLiteral("moved")).toArray().size(), 1);
+    QCOMPARE(state.undoHistory().size(), steps + 1);
+
+    // Shorten it to 1 s: the last one closes up.
+    QVERIFY(trim(2.0, 3.0, true).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(ids.at(2)), 3.0);
+    QCOMPARE(startOf(ids.at(0)), 0.0);
+
+    // Without ripple nothing else moves (the old behaviour).
+    QVERIFY(trim(2.0, 3.5, false).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(ids.at(2)), 3.0);
+
+    state.undo();
+    state.undo();
+    state.undo();
+    QCOMPARE(startOf(ids.at(2)), 4.0);
+
+    // Linked audio: the middle clip's partner takes the same trim, and the last clip's partner
+    // moves with it. A clip in the space a shorter trim gives up refuses it.
+    drift::Track audioTrack{.type = drift::TrackType::Audio};
+    for (const int i : {1, 2}) {
+        const QPair<int, int> loc = state.mcp()->locateClip(ids.at(i));
+        drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+        video.linkId = QStringLiteral("link-%1").arg(i);
+        drift::Clip audio = video;
+        audio.id = QStringLiteral("audio-%1").arg(i);
+        audio.type = drift::ClipType::Audio;
+        audioTrack.clips.append(audio);
+    }
+    state.project()->tracks().append(audioTrack);
+    QVERIFY(trim(2.0, 5.0, true).value(QStringLiteral("ok")).toBool());
+    const auto durOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineDuration);
+    };
+    QCOMPARE(durOf(QStringLiteral("audio-1")), 3.0);
+    QCOMPARE(startOf(ids.at(2)), 5.0);
+    QCOMPARE(startOf(QStringLiteral("audio-2")), 5.0);
+
+    drift::Clip inside = state.project()->tracks().last().clips.first();
+    inside.id = QStringLiteral("in-the-way");
+    inside.linkId.clear();
+    inside.timelineStart = drift::secondsToUs(4.5);
+    inside.timelineDuration = drift::secondsToUs(0.5);
+    state.project()->tracks().last().clips.removeFirst();
+    state.project()->tracks().last().clips.insert(0, inside);
+    const QJsonObject blocked = trim(2.0, 3.0, true);
+    QCOMPARE(blocked.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(startOf(ids.at(2)), 5.0);
+    QCOMPARE(durOf(ids.at(1)), 3.0);
+
+    // A loose partner keeps its own length, so a shorter trim that would close the following clip
+    // onto it is refused rather than overlap.
+    {
+        // The clip in the way makes room for a loose partner of the middle clip.
+        const QPair<int, int> loc = state.mcp()->locateClip(ids.at(1));
+        drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+        video.linkLoose = true;
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("audio-1");
+        partner.type = drift::ClipType::Audio;
+        state.project()->tracks().last().clips.removeFirst();
+        state.project()->tracks().last().clips.insert(0, partner);
+    }
+    // A free adjustment clip: its locked track refuses the trim; unlocked, the trim leaves the
+    // other adjustments alone (an adjustment track never ripples).
+    {
+        drift::Track lane{.type = drift::TrackType::Adjustment};
+        drift::Clip adj;
+        adj.id = QStringLiteral("free-grade");
+        adj.type = drift::ClipType::Adjustment;
+        adj.timelineDuration = drift::secondsToUs(2.0);
+        adj.srcOut = adj.timelineDuration;
+        drift::Clip later = adj;
+        later.id = QStringLiteral("later-grade");
+        later.timelineStart = drift::secondsToUs(5.0);
+        lane.clips = {adj, later};
+        lane.locked = true;
+        state.project()->tracks().append(lane);
+        // By track and index: the lane was added outside an edit, so ids are not indexed yet.
+        const int laneIndex = int(state.project()->tracks().size()) - 1;
+        const auto trimAdj = [&](double out) {
+            return dispatcher.applyOne(QStringLiteral("set_trim"),
+                                       {{QStringLiteral("track"), laneIndex}, {QStringLiteral("index"), 0},
+                                        {QStringLiteral("in"), 0.0}, {QStringLiteral("out"), out},
+                                        {QStringLiteral("ripple"), true}});
+        };
+        QCOMPARE(trimAdj(3.0).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        state.project()->tracks().last().locked = false;
+        const QJsonObject trimmedAdj = trimAdj(3.0);
+        QVERIFY2(trimmedAdj.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(trimmedAdj).toJson()));
+        double laterStart = -1;
+        for (const drift::Clip &clip : state.project()->tracks().at(laneIndex).clips)
+            if (clip.id == QLatin1String("later-grade"))
+                laterStart = drift::usToSeconds(clip.timelineStart);
+        QCOMPARE(laterStart, 5.0);
+        state.project()->tracks().removeLast();
+    }
+
+    const QJsonObject loose = trim(2.0, 3.0, true);
+    QCOMPARE(loose.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(durOf(ids.at(1)), 3.0);
+    QCOMPARE(startOf(QStringLiteral("audio-2")), 5.0);
+}
+
+void McpTest::closeGapsClosesEveryHole()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    // Clips at [1,2), [3,4), [6,7): gaps [0,1), [2,3), [4,6).
+    QStringList ids;
+    for (const double at : {1.0, 3.0, 6.0}) {
+        const QJsonObject placed = dispatcher.applyOne(
+            QStringLiteral("insert_clip"),
+            {{QStringLiteral("asset"), 0}, {QStringLiteral("at"), at}, {QStringLiteral("out"), 1.0}, {QStringLiteral("ripple"), false}});
+        QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson()));
+        ids.append(placed.value(QStringLiteral("id")).toString());
+    }
+    const int track = state.mcp()->locateClip(ids.at(0)).first;
+    const auto startOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineStart);
+    };
+    const auto closeGaps = [&](QJsonObject args) {
+        args.insert(QStringLiteral("track"), track);
+        return dispatcher.applyOne(QStringLiteral("close_gaps"), args);
+    };
+
+    // Only the gaps within [2, 6].
+    const QJsonObject ranged = closeGaps({{QStringLiteral("from"), 2.0}, {QStringLiteral("to"), 6.0}});
+    QVERIFY2(ranged.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(ranged).toJson()));
+    QCOMPARE(ranged.value(QStringLiteral("closed")).toArray().size(), 2);
+    QCOMPARE(startOf(ids.at(0)), 1.0);
+    QCOMPARE(startOf(ids.at(1)), 2.0);
+    QCOMPARE(startOf(ids.at(2)), 3.0);
+    state.undo(); // one step
+    QCOMPARE(startOf(ids.at(2)), 6.0);
+
+    // All of them, the leading one included.
+    const QJsonObject all = closeGaps({});
+    QCOMPARE(all.value(QStringLiteral("closed")).toArray().size(), 3);
+    QCOMPARE(startOf(ids.at(0)), 0.0);
+    QCOMPARE(startOf(ids.at(1)), 1.0);
+    QCOMPARE(startOf(ids.at(2)), 2.0);
+    QCOMPARE(all.value(QStringLiteral("moved")).toArray().size(), 3);
+    state.undo();
+
+    // The first and last clips linked on the same track: closing a later gap would drag the first
+    // clip with it (across 0, or leaving the hole open), so those gaps are skipped with it as
+    // blocker; the leading gap still closes.
+    {
+        const auto setLink = [&](const QString &id, const QString &link) {
+            const QPair<int, int> loc = state.mcp()->locateClip(id);
+            state.project()->tracks()[loc.first].clips[loc.second].linkId = link;
+        };
+        setLink(ids.at(0), QStringLiteral("same-track"));
+        setLink(ids.at(2), QStringLiteral("same-track"));
+        const QJsonObject linked = closeGaps({});
+        QVERIFY2(linked.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(linked).toJson()));
+        QCOMPARE(linked.value(QStringLiteral("closed")).toArray().size(), 1);
+        const QJsonArray skipped = linked.value(QStringLiteral("skipped")).toArray();
+        QCOMPARE(skipped.size(), 2);
+        for (const QJsonValue &gap : skipped)
+            QCOMPARE(gap.toObject().value(QStringLiteral("blocker")).toString(), ids.at(0));
+        QCOMPARE(startOf(ids.at(0)), 0.0);
+        QCOMPARE(startOf(ids.at(1)), 2.0);
+        QCOMPARE(startOf(ids.at(2)), 5.0);
+        state.undo();
+        setLink(ids.at(0), QString());
+        setLink(ids.at(2), QString());
+        QCOMPARE(startOf(ids.at(0)), 1.0);
+    }
+
+    // A clip on a linked track sitting in a gap: that gap stays open, the others close.
+    {
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        const QPair<int, int> loc = state.mcp()->locateClip(ids.at(2));
+        drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+        video.linkId = QStringLiteral("link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("partner");
+        partner.type = drift::ClipType::Audio;
+        drift::Clip inTheWay = partner;
+        inTheWay.id = QStringLiteral("in-the-way");
+        inTheWay.linkId.clear();
+        inTheWay.timelineStart = drift::secondsToUs(4.5);
+        inTheWay.timelineDuration = drift::secondsToUs(0.5);
+        audioTrack.clips = {inTheWay, partner};
+        state.project()->tracks().append(audioTrack);
+        const QJsonObject partly = closeGaps({});
+        QVERIFY2(partly.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(partly).toJson()));
+        QCOMPARE(partly.value(QStringLiteral("skipped")).toArray().size(), 1);
+        QCOMPARE(partly.value(QStringLiteral("skipped")).toArray().at(0).toObject().value(QStringLiteral("blocker")).toString(),
+                 QStringLiteral("in-the-way"));
+        QCOMPARE(partly.value(QStringLiteral("closed")).toArray().size(), 2);
+        QCOMPARE(startOf(ids.at(0)), 0.0);
+        QCOMPARE(startOf(ids.at(1)), 1.0);
+    }
+
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("close_gaps"), {{QStringLiteral("track"), 42}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(closeGaps({{QStringLiteral("from"), 3.0}, {QStringLiteral("to"), 2.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // An adjustment track is refused rather than reported closed with nothing moved.
+    {
+        drift::Track adjustment{.type = drift::TrackType::Adjustment};
+        drift::Clip grade;
+        grade.id = QStringLiteral("free-grade");
+        grade.type = drift::ClipType::Adjustment;
+        grade.timelineStart = drift::secondsToUs(5.0);
+        grade.timelineDuration = drift::secondsToUs(1.0);
+        adjustment.clips = {grade};
+        state.project()->tracks().append(adjustment);
+        const QJsonObject refused = dispatcher.applyOne(
+            QStringLiteral("close_gaps"), {{QStringLiteral("track"), int(state.project()->tracks().size()) - 1}});
+        QCOMPARE(refused.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(state.project()->tracks().last().clips.first().timelineStart, drift::secondsToUs(5.0));
+    }
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
