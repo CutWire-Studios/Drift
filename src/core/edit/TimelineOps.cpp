@@ -1372,6 +1372,193 @@ QString nextSplitPieceName(const Track &track, const QString &name)
     return QStringLiteral("%1 (%2)").arg(base).arg(next);
 }
 
+QSet<int> rippleTrackGroup(const Project &project, int trackIndex)
+{
+    const QList<Track> &tracks = project.tracks();
+    QSet<int> group;
+    if (trackIndex < 0 || trackIndex >= tracks.size() || tracks.at(trackIndex).isAdjustment())
+        return group;
+    // Which tracks hold each link, then a walk over tracks sharing one.
+    QHash<QString, QSet<int>> linkTracks;
+    for (int t = 0; t < tracks.size(); ++t) {
+        if (tracks.at(t).isAdjustment())
+            continue;
+        for (const Clip &clip : tracks.at(t).clips) {
+            if (!clip.linkId.isEmpty())
+                linkTracks[clip.linkId].insert(t);
+        }
+    }
+    QList<int> pending{trackIndex};
+    while (!pending.isEmpty()) {
+        const int t = pending.takeLast();
+        if (group.contains(t))
+            continue;
+        group.insert(t);
+        for (const Clip &clip : tracks.at(t).clips) {
+            if (clip.linkId.isEmpty())
+                continue;
+            for (const int other : linkTracks.value(clip.linkId)) {
+                if (!group.contains(other))
+                    pending.append(other);
+            }
+        }
+    }
+    return group;
+}
+
+QStringList rippleTracks(Project &project, const QSet<int> &tracks, TimeUs fromUs, TimeUs deltaUs,
+                         const QSet<QString> &exclude, bool *clamped)
+{
+    QStringList moved;
+    if (deltaUs == 0)
+        return moved;
+    QList<Track> &all = project.tracks();
+    QSet<QString> movedLinks;
+    QSet<QString> movedIds;
+    for (const int t : tracks) {
+        if (t < 0 || t >= all.size())
+            continue;
+        for (Clip &clip : all[t].clips) {
+            if (exclude.contains(clip.id) || clip.timelineStart < fromUs)
+                continue;
+            if (clip.timelineStart + deltaUs < 0 && clamped)
+                *clamped = true;
+            clip.timelineStart = qMax<TimeUs>(0, clip.timelineStart + deltaUs);
+            moved.append(clip.id);
+            movedIds.insert(clip.id);
+            if (!clip.linkId.isEmpty())
+                movedLinks.insert(clip.linkId);
+        }
+    }
+    // Earlier clips linked to a moved one keep their offset to it.
+    if (!movedLinks.isEmpty()) {
+        for (const int t : tracks) {
+            if (t < 0 || t >= all.size())
+                continue;
+            for (Clip &clip : all[t].clips) {
+                if (movedIds.contains(clip.id) || exclude.contains(clip.id) || clip.linkId.isEmpty()
+                    || !movedLinks.contains(clip.linkId))
+                    continue;
+                if (clip.timelineStart + deltaUs < 0 && clamped)
+                    *clamped = true;
+                clip.timelineStart = qMax<TimeUs>(0, clip.timelineStart + deltaUs);
+                moved.append(clip.id);
+                movedIds.insert(clip.id);
+            }
+        }
+    }
+    return moved;
+}
+
+QString rippleCollision(const Project &before, const Project &after, const QSet<int> &tracks)
+{
+    QSet<QString> overlappedBefore;
+    const auto pairKey = [](const QString &a, const QString &b) {
+        return a < b ? a + QLatin1Char('|') + b : b + QLatin1Char('|') + a;
+    };
+    for (const int t : tracks) {
+        if (t < 0 || t >= before.tracks().size())
+            continue;
+        const QList<Clip> &clips = before.tracks().at(t).clips;
+        for (int i = 0; i < clips.size(); ++i)
+            for (int j = i + 1; j < clips.size(); ++j)
+                if (clips.at(i).timelineStart < clips.at(j).timelineEnd()
+                    && clips.at(j).timelineStart < clips.at(i).timelineEnd())
+                    overlappedBefore.insert(pairKey(clips.at(i).id, clips.at(j).id));
+    }
+    for (const int t : tracks) {
+        if (t < 0 || t >= after.tracks().size() || after.tracks().at(t).isAdjustment())
+            continue;
+        const QList<Clip> &clips = after.tracks().at(t).clips;
+        for (int i = 0; i < clips.size(); ++i) {
+            for (int j = i + 1; j < clips.size(); ++j) {
+                const Clip &a = clips.at(i);
+                const Clip &b = clips.at(j);
+                if (a.timelineStart < b.timelineEnd() && b.timelineStart < a.timelineEnd()
+                    && !overlappedBefore.contains(pairKey(a.id, b.id)))
+                    return a.timelineStart <= b.timelineStart ? b.id : a.id;
+            }
+        }
+    }
+    return {};
+}
+
+bool closeRippleRanges(Project &project, const QList<RippleRange> &ranges, QString *blocker, QStringList *moved,
+                       const Project *groupSource)
+{
+    // Group the ranges, then merge each group's ranges into disjoint ones.
+    QList<QSet<int>> groups;
+    QList<QList<QPair<TimeUs, TimeUs>>> groupRanges;
+    for (const RippleRange &range : ranges) {
+        if (range.end <= range.start || range.track < 0 || range.track >= project.tracks().size())
+            continue;
+        int g = 0;
+        while (g < groups.size() && !groups.at(g).contains(range.track))
+            ++g;
+        if (g == groups.size()) {
+            groups.append(rippleTrackGroup(groupSource ? *groupSource : project, range.track));
+            groupRanges.append(QList<QPair<TimeUs, TimeUs>>());
+        }
+        groupRanges[g].append(qMakePair(range.start, range.end));
+    }
+    for (QList<QPair<TimeUs, TimeUs>> &list : groupRanges) {
+        std::sort(list.begin(), list.end());
+        QList<QPair<TimeUs, TimeUs>> merged;
+        for (const auto &r : std::as_const(list)) {
+            if (!merged.isEmpty() && r.first <= merged.last().second)
+                merged.last().second = qMax(merged.last().second, r.second);
+            else
+                merged.append(r);
+        }
+        list = merged;
+    }
+    // Nothing may sit inside a range that closes, on any track of its group.
+    for (int g = 0; g < groups.size(); ++g) {
+        for (const int t : groups.at(g)) {
+            for (const Clip &clip : project.tracks().at(t).clips) {
+                for (const auto &r : groupRanges.at(g)) {
+                    if (clip.timelineStart < r.second && clip.timelineEnd() > r.first) {
+                        if (blocker)
+                            *blocker = clip.id;
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    const Project unchanged = project;
+    QSet<QString> movedIds;
+    QSet<int> touched;
+    bool clamped = false;
+    for (int g = 0; g < groups.size(); ++g) {
+        touched.unite(groups.at(g));
+        const QList<QPair<TimeUs, TimeUs>> &list = groupRanges.at(g);
+        for (int i = int(list.size()) - 1; i >= 0; --i) {
+            for (const QString &id : rippleTracks(project, groups.at(g), list.at(i).second,
+                                                  -(list.at(i).second - list.at(i).first), {}, &clamped))
+                movedIds.insert(id);
+        }
+    }
+    // An earlier linked clip shifted with its partner can still land on a clip that stayed, or run
+    // out of room before 0: refused as well, with nothing changed.
+    const QString collision = rippleCollision(unchanged, project, touched);
+    if (!collision.isEmpty() || clamped) {
+        if (blocker) {
+            *blocker = collision;
+            if (collision.isEmpty())
+                for (const QString &id : std::as_const(movedIds)) {
+                    *blocker = id;
+                    break;
+                }
+        }
+        project = unchanged;
+        return false;
+    }
+    if (moved)
+        *moved = movedIds.values();
+    return true;
+}
+
 bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset, double fps)
 {
     return splitClipAtOffsetMin(head, tail, offset, minClipDurationUs(fps));
