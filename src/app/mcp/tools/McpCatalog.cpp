@@ -716,6 +716,26 @@ const QList<Op> &ops()
                                    {QStringLiteral("after"), stringProp(QStringLiteral("Clip id to move behind"))}},
                                   clipRefProps()),
                        {}) },
+        { "set_sequence", "timeline", "Lay a track out from a list",
+          "Make `track` exactly `clips`, end to end from `start` (default 0), in one undo step. An "
+          "entry is {clip} (a clip on this track, keeping its settings) or {asset}, each with "
+          "optional in/out (source seconds) and name. Unlisted clips on the track are deleted with "
+          "their linked audio and effects; listed clips' linked audio moves with them. Refused, "
+          "nothing changed, for a clip from another track or listed twice, a range past the media, "
+          "clips linked to each other, a locked or adjustment track, or linked audio landing on "
+          "another clip or before 0. Clear a track with delete_clips. Returns "
+          "clips:[{id, start, dur}] in order, created, removed and any removed_transitions.",
+          objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
+                        {QStringLiteral("clips"),
+                         arrayProp(objectSchema({{QStringLiteral("clip"), stringProp(QStringLiteral("Clip id on this track"))},
+                                                 {QStringLiteral("asset"), assetRefProp()},
+                                                 {QStringLiteral("in"), numberProp(QStringLiteral("Source in, seconds"))},
+                                                 {QStringLiteral("out"), numberProp(QStringLiteral("Source out, seconds"))},
+                                                 {QStringLiteral("name"), stringProp(QStringLiteral("Clip name"))}},
+                                                {}),
+                                   QStringLiteral("The track's clips, in order"))},
+                        {QStringLiteral("start"), numberProp(QStringLiteral("Where the first clip starts, seconds"))}},
+                       {QStringLiteral("track"), QStringLiteral("clips")}) },
         { "replace_clip", "timeline", "Put new media under a clip",
           "Swap the clip's media for another asset in place, in one undo step. The clip keeps its "
           "name, transform, effects and keyframes; linked audio follows when the new file has sound. "
