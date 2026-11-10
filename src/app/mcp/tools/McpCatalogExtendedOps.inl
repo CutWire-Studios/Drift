@@ -200,6 +200,24 @@
           objectSchema(mergeProps({{QStringLiteral("name"), stringProp(QStringLiteral("New name, must be non-empty"))}},
                                   clipRefProps()),
                        {QStringLiteral("name")}) },
+        { "set_clip_label", "timeline", "Tag a clip with a stable label",
+          "Set the clip's label (empty clears it): a tag that survives renames, shown in the "
+          "inspector. A split or duplicate gives the copy the next number (intro, intro.2, "
+          "intro.3); the original keeps its label. Find clips by it with find_clips.",
+          objectSchema(mergeProps({{QStringLiteral("label"), stringProp(QStringLiteral("Label; empty clears it"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("label")}) },
+        { "find_clips", "timeline", "Search clips by label or name",
+          "Clips matching every filter given: label (exact; an unnumbered label also finds its "
+          "numbered copies; \"\" finds unlabelled clips), name (case-insensitive substring), asset, track, kind. Returns "
+          "clips:[{id, track, label, name, kind, start, duration, ...}] in timeline order.",
+          objectSchema({{QStringLiteral("label"), stringProp(QStringLiteral("Label, e.g. intro"))},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("Part of the name"))},
+                        {QStringLiteral("asset"), assetRefProp()},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
+                        {QStringLiteral("kind"), stringProp(QStringLiteral("Clip kind, e.g. video, audio, text"))}},
+                       {}),
+          true, false, true },
         { "add_bookmark", "timeline", "Mark a time",
           "Add a bookmark at `at` seconds. Does not return its index — bookmarks are addressed by "
           "position in inspect({detail:true}).bookmarks, so re-read that before removing or updating.",

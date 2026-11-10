@@ -364,6 +364,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("anchorY"), keyframesToJson(clip.anchorY));
     if (!clip.anchorZ.isEmpty())
         json.insert(QStringLiteral("anchorZ"), keyframesToJson(clip.anchorZ));
+    if (!clip.label.isEmpty())
+        json.insert(QStringLiteral("label"), clip.label);
     return json;
 }
 
@@ -416,6 +418,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
         adjustmentKindFromString(object.value(QStringLiteral("adjustmentKind")).toString());
     clip.linkedClipId = object.value(QStringLiteral("linkedClipId")).toString();
     clip.name = object.value(QStringLiteral("name")).toString();
+    clip.label = object.value(QStringLiteral("label")).toString();
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
     clip.textStyle = textStyleFromJson(object.value(QStringLiteral("textStyle")).toObject());
     clip.subtitleCues = subtitleCuesFromJson(object.value(QStringLiteral("subtitleCues")).toArray());

@@ -522,6 +522,8 @@ QVariantMap McpController::compactClip(int trackIndex, int clipIndex, bool inclu
         {QStringLiteral("outPoint"), drift::usToSeconds(clip.srcOut)},
         {QStringLiteral("assetId"), clip.assetId},
     };
+    if (!clip.label.isEmpty())
+        out.insert(QStringLiteral("label"), clip.label);
     if (!clip.sequenceId.isEmpty())
         out.insert(QStringLiteral("sequenceId"), clip.sequenceId);
     if (clip.type == drift::ClipType::Adjustment)
@@ -1215,7 +1217,7 @@ void McpController::endBatch(const QString &text, bool pushUndo)
         emit m_app->previewDragActiveChanged();
     }
     if (pushUndo)
-        m_app->pushProjectEdit(m_batchBefore, text);
+        m_app->pushProjectEdit(m_batchBefore, text, false);
     m_app->finishEdit(text);
     m_batchBefore = {};
     // After the finishEdit above, which clears the status line.
