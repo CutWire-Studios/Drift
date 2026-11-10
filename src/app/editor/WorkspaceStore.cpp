@@ -51,7 +51,7 @@ const PanelType kPanelTypes[] = {
     {"teleprompter", QT_TRANSLATE_NOOP("WorkspaceStore", "Teleprompter")},
     {"denoise", QT_TRANSLATE_NOOP("WorkspaceStore", "Noise Removal")},
     {"color", QT_TRANSLATE_NOOP("WorkspaceStore", "Color")},
-    {"looks", QT_TRANSLATE_NOOP("WorkspaceStore", "Looks")},
+    {"looks", QT_TRANSLATE_NOOP("WorkspaceStore", "Color Grading LUTs")},
     {"scopes", QT_TRANSLATE_NOOP("WorkspaceStore", "Scopes")},
     {"keyframes", QT_TRANSLATE_NOOP("WorkspaceStore", "Keyframes")},
     {"masking", QT_TRANSLATE_NOOP("WorkspaceStore", "Masking")},
@@ -61,6 +61,9 @@ const PanelType kPanelTypes[] = {
     {"transform3d", QT_TRANSLATE_NOOP("WorkspaceStore", "3D Transform")},
     {"camera3d", QT_TRANSLATE_NOOP("WorkspaceStore", "Camera")},
     {"view3d", QT_TRANSLATE_NOOP("WorkspaceStore", "View & Lights")},
+    {"proceduralEditor", QT_TRANSLATE_NOOP("WorkspaceStore", "Procedural Code")},
+    {"proceduralParams", QT_TRANSLATE_NOOP("WorkspaceStore", "Procedural Parameters")},
+    {"proceduralConsole", QT_TRANSLATE_NOOP("WorkspaceStore", "Procedural Console")},
 };
 
 // Tab ids and labels mirror AssetsPanel.qml / PropertiesPanel.qml.

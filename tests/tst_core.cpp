@@ -82,6 +82,7 @@ private slots:
     void easingCssRoundTrip();
     void easingSetSegmentOnLastKeyTargetsIncomingSegment();
     void keyframeBezierTangents();
+    void keyframeSmoothTangents();
     void disabledKeyframesFreezeAtFirstKey();
     void legacyTrackInterpolationMigratesLosslessly();
     void keyframeNearestQuery();
@@ -156,6 +157,7 @@ private slots:
     void textStyleKeyframesSerialization();
     void vectorClipIsSyntheticOnGraphicTracks();
     void model3dSourceSerialization();
+    void proceduralSourceSerializationAndSplit();
     void model3dScalarClampsAndResolves();
     void model3dPoseMigratesToTransform();
     void model3dKeyLightKeysMigrate();
@@ -290,6 +292,46 @@ void CoreTest::disabledKeyframesFreezeAtFirstKey()
     QCOMPARE(loadedTrack.keyframes().size(), 2);
     // A project written before the switch existed loads with its animations on.
     QVERIFY(loaded.tracks().at(0).clips.at(0).transformX.enabled());
+}
+
+void CoreTest::keyframeSmoothTangents()
+{
+    drift::KeyframeTrack<double> track;
+    track.setKeyframe(0, 0.0);
+    track.setKeyframe(drift::secondsToUs(1.0), 10.0);
+    track.setKeyframe(drift::secondsToUs(3.0), 4.0);
+    track.setKeyframe(drift::secondsToUs(4.0), 4.0);
+    track.setEasing(0, drift::Interpolation::Hold);
+    track.setSmoothAll();
+
+    const auto &keys = track.keyframes();
+    const drift::Keyframe<double> first = keys.value(0);
+    QVERIFY(!first.hold);
+    QCOMPARE(first.inDx, 0.0);
+    // One-sided slope at the ends: 10 over 1 s, handle a third of the segment.
+    QCOMPARE(first.outDx, drift::kUsPerSecond / 3.0);
+    QVERIFY(qAbs(first.outDy - 10.0 / 3.0) < 1e-9);
+
+    // Middle key: slope is the chord between its neighbours, (4 - 0) / 3 s.
+    const drift::Keyframe<double> mid = keys.value(drift::secondsToUs(1.0));
+    QCOMPARE(mid.inDx, -drift::kUsPerSecond / 3.0);
+    QCOMPARE(mid.outDx, 2.0 * drift::kUsPerSecond / 3.0);
+    const double slope = 4.0 / (3.0 * drift::kUsPerSecond);
+    QVERIFY(qAbs(mid.outDy - slope * mid.outDx) < 1e-9);
+    QVERIFY(qAbs(mid.inDy - slope * mid.inDx) < 1e-9);
+
+    const drift::Keyframe<double> last = keys.value(drift::secondsToUs(4.0));
+    QCOMPARE(last.outDx, 0.0);
+    QCOMPARE(last.outDy, 0.0);
+
+    // C1: the velocity just before and after a key agrees.
+    const drift::TimeUs key = drift::secondsToUs(1.0);
+    const drift::TimeUs h = 1000;
+    const double before = (track.evaluateAt(key) - track.evaluateAt(key - h)) / h;
+    const double after = (track.evaluateAt(key + h) - track.evaluateAt(key)) / h;
+    QVERIFY(qAbs(before - slope) < 0.03 * slope);
+    QVERIFY(qAbs(after - slope) < 0.03 * slope);
+    QCOMPARE(track.evaluateAt(key), 10.0);
 }
 
 void CoreTest::keyframeBezierTangents()
@@ -2106,7 +2148,7 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 23);
+    QCOMPARE(drift::Project::kCurrentVersion, 24);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
@@ -2146,7 +2188,7 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 23);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 24);
     const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                    .value(QStringLiteral("clips")).toArray().at(0).toObject()
                                    .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();
@@ -2653,6 +2695,63 @@ void CoreTest::vectorClipIsSyntheticOnGraphicTracks()
     QCOMPARE(clip.timelineToSourceUs(drift::secondsToUs(1.5)), drift::secondsToUs(1.0));
     clip.reverse = true;
     QCOMPARE(clip.timelineToSourceUs(drift::secondsToUs(1.5)), drift::secondsToUs(3.0));
+}
+
+void CoreTest::proceduralSourceSerializationAndSplit()
+{
+    drift::Track shapeTrack{.type = drift::TrackType::Shape};
+    QVERIFY(shapeTrack.allowsClipType(drift::ClipType::Procedural));
+    QVERIFY(!drift::Track{.type = drift::TrackType::Video}.allowsClipType(drift::ClipType::Procedural));
+    QCOMPARE(drift::clipTypeFromString(drift::clipTypeToString(drift::ClipType::Procedural)),
+             drift::ClipType::Procedural);
+
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-proc");
+    clip.type = drift::ClipType::Procedural;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    clip.procedural.packageId = QStringLiteral("missing.pkg");
+    clip.procedural.seed = 42;
+    clip.procedural.parameters.insert(QStringLiteral("count"), 12);
+    clip.procedural.parameters.insert(QStringLiteral("tint"), QStringLiteral("#ff8800"));
+    clip.procedural.paramKeyframes[QStringLiteral("speed")].setKeyframe(0, 0.0);
+    clip.procedural.paramKeyframes[QStringLiteral("speed")].setKeyframe(drift::secondsToUs(4.0), 4.0);
+    project.tracks()[0].clips.append(clip);
+    drift::Clip shape;
+    shape.id = QStringLiteral("clip-shape");
+    shape.type = drift::ClipType::Shape;
+    project.tracks()[0].clips.append(shape);
+
+    const QJsonObject json = project.toJson();
+    const QJsonArray clips = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                 .value(QStringLiteral("clips")).toArray();
+    QVERIFY(clips.at(0).toObject().contains(QStringLiteral("procedural")));
+    QVERIFY(!clips.at(1).toObject().contains(QStringLiteral("procedural")));
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const drift::Clip &c = loaded.tracks()[0].clips[0];
+    QCOMPARE(c.type, drift::ClipType::Procedural);
+    QCOMPARE(c.procedural.packageId, QStringLiteral("missing.pkg"));
+    QCOMPARE(c.procedural.seed, 42);
+    QCOMPARE(c.procedural.parameters.value(QStringLiteral("count")).toInt(), 12);
+    QCOMPARE(c.procedural.parameters.value(QStringLiteral("tint")).toString(), QStringLiteral("#ff8800"));
+    const auto &track = c.procedural.paramKeyframes.value(QStringLiteral("speed"));
+    QCOMPARE(track.keyframes().size(), 2);
+    QCOMPARE(track.evaluateAt(drift::secondsToUs(2.0)), 2.0);
+
+    drift::Clip head = clip;
+    drift::Clip tail;
+    QVERIFY(drift::splitClipAtOffset(head, tail, drift::secondsToUs(2.0)));
+    QCOMPARE(tail.procedural.packageId, QStringLiteral("missing.pkg"));
+    QCOMPARE(head.procedural.paramKeyframes.value(QStringLiteral("speed")).evaluateAt(drift::secondsToUs(2.0)), 2.0);
+    const auto &tailTrack = tail.procedural.paramKeyframes.value(QStringLiteral("speed"));
+    QCOMPARE(tailTrack.evaluateAt(0), 2.0);
+    QCOMPARE(tailTrack.evaluateAt(drift::secondsToUs(2.0)), 4.0);
 }
 
 void CoreTest::model3dSourceSerialization()

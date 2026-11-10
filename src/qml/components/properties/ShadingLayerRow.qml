@@ -344,6 +344,9 @@ Column {
             ColorSwatchField {
                 hex: row.paint.color || "#ff000000"
                 tooltip: qsTr("Choose the layer colour")
+                livePreview: true
+                onPreviewed: value => EditorState.previewSetStyleLayer(EditorState.selectedTrack, EditorState.selectedClip,
+                                                                       row.layerId, { "paint": { "color": value } })
                 onEdited: value => row.setLayer({ "paint": { "color": value } })
             }
         }

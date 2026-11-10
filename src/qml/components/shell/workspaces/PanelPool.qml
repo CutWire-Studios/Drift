@@ -93,6 +93,9 @@ Item {
         "transform3d": transform3dC,
         "camera3d": camera3dC,
         "view3d": view3dC,
+        "proceduralEditor": proceduralEditorC,
+        "proceduralParams": proceduralParamsC,
+        "proceduralConsole": proceduralConsoleC,
         "undoHistory": historyC,
         "sourceViewer": sourceViewerC,
         "sourceLab.bin": sourceLabBinC,
@@ -129,6 +132,9 @@ Item {
     Component { id: transform3dC; LazyPanel { panel: Transform3dPanel {} } }
     Component { id: camera3dC; LazyPanel { panel: Camera3dPanel {} } }
     Component { id: view3dC; LazyPanel { panel: View3dPanel {} } }
+    Component { id: proceduralEditorC; LazyPanel { panel: ProceduralEditorPanel {} } }
+    Component { id: proceduralParamsC; LazyPanel { panel: ProceduralParamsPanel {} } }
+    Component { id: proceduralConsoleC; LazyPanel { panel: ProceduralConsolePanel {} } }
     Component { id: historyC; LazyPanel { panel: HistoryPanel {} } }
     Component { id: sourceViewerC; LazyPanel { panel: SourceViewerPanel {} } }
     Component { id: sourceLabBinC; LazyPanel { panel: SourceLabBinPanel {} } }

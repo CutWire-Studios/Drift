@@ -124,7 +124,7 @@ struct Sequence
 class Project
 {
 public:
-    static constexpr int kCurrentVersion = 23;
+    static constexpr int kCurrentVersion = 24;
 
     Project() { resetToDefaultTimeline(); }
 

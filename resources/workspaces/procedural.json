@@ -1,0 +1,41 @@
+{
+  "id": "procedural",
+  "name": "Procedural",
+  "builtin": true,
+  "order": 11,
+  "windows": [
+    {
+      "id": "main",
+      "root": {
+        "split": "v",
+        "sizes": [0.68, 0.32],
+        "children": [
+          {
+            "split": "h",
+            "sizes": [0.38, 0.34, 0.28],
+            "children": [
+              { "panels": [ { "type": "proceduralEditor" } ], "active": 0 },
+              {
+                "split": "v",
+                "sizes": [0.5, 0.5],
+                "children": [
+                  { "panels": [ { "type": "preview" } ], "active": 0 },
+                  { "panels": [ { "type": "viewport3d" } ], "active": 0 }
+                ]
+              },
+              { "panels": [ { "type": "proceduralParams" } ], "active": 0 }
+            ]
+          },
+          {
+            "split": "h",
+            "sizes": [0.4, 0.6],
+            "children": [
+              { "panels": [ { "type": "proceduralConsole" } ], "active": 0 },
+              { "panels": [ { "type": "timeline" } ], "active": 0 }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

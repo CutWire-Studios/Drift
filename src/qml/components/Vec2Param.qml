@@ -9,6 +9,7 @@ Column {
 
     required property var paramData
     required property int effectIndex
+    property bool procedural: false
 
     readonly property var keys: (paramData.keyframes && paramData.keyframes.points) || []
     readonly property bool animated: keys.length > 0
@@ -35,7 +36,7 @@ Column {
     function preview(x, y) {
         liveX = x
         liveY = y
-        if (animated) {
+        if (animated || procedural) {
             EditorState.previewSetClipKeyframe(EditorState.selectedTrack, EditorState.selectedClip,
                                                paramData.prop + ".x", EditorState.playheadSeconds, x)
             EditorState.previewSetClipKeyframe(EditorState.selectedTrack, EditorState.selectedClip,
@@ -50,6 +51,9 @@ Column {
         if (animated) {
             EditorState.setClipVec2Keyframe(EditorState.selectedTrack, EditorState.selectedClip,
                                             paramData.prop, EditorState.playheadSeconds, x, y)
+        } else if (procedural) {
+            EditorState.setProceduralVec2Param(EditorState.selectedTrack, EditorState.selectedClip,
+                                               paramData.key, x, y)
         } else {
             EditorState.setEffectVec2Param(EditorState.selectedTrack, EditorState.selectedClip,
                                            effectIndex, paramData.key, x, y)

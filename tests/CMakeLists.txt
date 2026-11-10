@@ -278,6 +278,8 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/vision/SegmentationController.cpp
     ../src/app/jobs/vision/SceneDetectController.cpp
     ../src/app/jobs/vision/DepthController.cpp
+    ../src/app/jobs/render/BakeController.cpp
+    ../src/app/jobs/render/BakeFingerprint.cpp
     ../src/app/jobs/audio/DenoiseController.cpp
     ../src/app/jobs/audio/AudioAlignController.cpp
     ../src/app/color/ColorController.cpp
@@ -316,6 +318,8 @@ qt_add_executable(tst_mcp
     ../src/app/mcp/tools/McpDispatcherExtended.cpp
     ../src/ui/theme/ThemeManager.cpp
     ../src/app/mcp/tools/McpEffectAuthoring.cpp
+    ../src/app/mcp/tools/McpProceduralAuthoring.cpp
+    ../src/app/procedural/ProceduralAuthoringService.cpp
     ../src/app/mcp/protocol/McpValidate.cpp
     ../src/app/mcp/tools/McpMarket.cpp
     ../src/app/online/marketplace/MarketInstall.cpp
@@ -338,6 +342,11 @@ target_include_directories(tst_mcp PRIVATE ../src)
 target_link_libraries(tst_mcp PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6::Network Qt6::Multimedia Qt6::Concurrent driftcore driftengine)
 target_compile_definitions(tst_mcp PRIVATE DRIFT_VERSION="${PROJECT_VERSION}"
     DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+qt_add_resources(tst_mcp "procedural_docs"
+    PREFIX "/docs"
+    BASE ../docs
+    FILES ../docs/procedural.md
+)
 add_test(NAME Mcp COMMAND tst_mcp)
 drift_copy_effects(tst_mcp)
 drift_copy_transitions(tst_mcp)
@@ -430,6 +439,7 @@ qt_add_resources(tst_workspacestore "workspace_presets"
         ../resources/workspaces/keyframes.json
         ../resources/workspaces/masking-tracking.json
         ../resources/workspaces/3d.json
+        ../resources/workspaces/procedural.json
 )
 add_test(NAME WorkspaceStore COMMAND tst_workspacestore)
 
@@ -443,6 +453,19 @@ qt_add_executable(tst_tracking tst_tracking.cpp ../src/engine/tracking/MotionTra
 target_include_directories(tst_tracking PRIVATE ../src)
 target_link_libraries(tst_tracking PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
 add_test(NAME Tracking COMMAND tst_tracking)
+
+qt_add_executable(tst_procedural tst_procedural.cpp)
+target_include_directories(tst_procedural PRIVATE ../src)
+target_link_libraries(tst_procedural PRIVATE Qt6::Test driftprocedural)
+if(DRIFT_SYSTEM_LUA)
+    target_compile_definitions(tst_procedural PRIVATE DRIFT_SYSTEM_LUA=1)
+endif()
+add_test(NAME Procedural COMMAND tst_procedural)
+
+qt_add_executable(tst_proceduralpackages tst_proceduralpackages.cpp)
+target_include_directories(tst_proceduralpackages PRIVATE ../src)
+target_link_libraries(tst_proceduralpackages PRIVATE Qt6::Test driftengine driftcore)
+add_test(NAME ProceduralPackages COMMAND tst_proceduralpackages)
 
 qt_add_executable(tst_transform3d tst_transform3d.cpp)
 target_include_directories(tst_transform3d PRIVATE ../src)

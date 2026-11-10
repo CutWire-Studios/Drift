@@ -113,6 +113,8 @@ class PreferencesController : public QObject
     // Transitions on an overlap keep the overlap's length.
     Q_PROPERTY(double transitionDurationSeconds READ transitionDurationSeconds
                    WRITE setTransitionDurationSeconds NOTIFY transitionDurationSecondsChanged)
+    // Most recently applied transition kinds, newest first, at most 8. QSettings("timeline/recentTransitions").
+    Q_PROPERTY(QStringList recentTransitions READ recentTransitions NOTIFY recentTransitionsChanged)
     // Size of the cache folder, minus the subfolders a live disk cache owns. refreshCacheSize and
     // clearCache run off the GUI thread; cacheBusy is true while either is in flight.
     Q_PROPERTY(qint64 cacheSizeBytes READ cacheSizeBytes NOTIFY cacheSizeChanged)
@@ -241,6 +243,8 @@ public:
     double stillDurationSeconds() const { return m_stillDurationSeconds; }
     void setStillDurationSeconds(double seconds);
     double transitionDurationSeconds() const { return m_transitionDurationSeconds; }
+    QStringList recentTransitions() const { return m_recentTransitions; }
+    void pushRecentTransition(const QString &kind);
     void setTransitionDurationSeconds(double seconds);
     // Performance tunables (see the properties above).
     int staleFrameLagMs() const;
@@ -351,6 +355,7 @@ signals:
     void autosaveIntervalSecondsChanged();
     void stillDurationSecondsChanged();
     void transitionDurationSecondsChanged();
+    void recentTransitionsChanged();
     void cacheSizeChanged();
     void cacheLocationChanged();
     void uiLanguageChanged();
@@ -371,7 +376,7 @@ private:
     bool m_keyframeStripVisible = true;
     bool m_audioMixerVisible = false;
     qreal m_audioMixerWidth = 0;
-    qreal m_trackLabelsWidth = 130;
+    qreal m_trackLabelsWidth = 170;
     qreal m_androidTrackLabelsWidth = 80;
     QStringList m_timelineToolbarItems;
     QStringList m_proxyNamePatterns;
@@ -400,7 +405,8 @@ private:
     bool m_relaunchOnQuit = false;
     int m_autosaveIntervalSeconds = 15;
     double m_stillDurationSeconds = 5.0;
-    double m_transitionDurationSeconds = 0.5;
+    double m_transitionDurationSeconds = 1.0;
+    QStringList m_recentTransitions;
     qint64 m_cacheSizeBytes = 0;
     bool m_cacheBusy = false;
 

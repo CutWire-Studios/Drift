@@ -2,6 +2,8 @@
 #include "core/base/CacheRoot.h"
 #include "app/bin/MediaBinController.h"
 #include "app/editor/PreferencesController.h"
+#include "app/procedural/ProceduralEditorController.h"
+#include "app/procedural/ProceduralHighlighter.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/mcp/McpController.h"
 #include "engine/packages/assets/EmojiCatalog.h"
@@ -779,6 +781,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<ToolCursor>("Drift", 1, 0, "ToolCursor");
     qmlRegisterType<PolylineDraft>("Drift", 1, 0, "PolylineDraft");
     qmlRegisterType<ColorWheelPad>("Drift", 1, 0, "ColorWheelPad");
+    qmlRegisterType<ProceduralHighlighter>("Drift", 1, 0, "ProceduralHighlighter");
     qmlRegisterType<CurvePlot>("Drift", 1, 0, "CurvePlot");
     qmlRegisterType<KeyframeLanesItem>("Drift", 1, 0, "KeyframeLanesItem");
     qmlRegisterType<KeyframeCurvesItem>("Drift", 1, 0, "KeyframeCurvesItem");
@@ -796,6 +799,7 @@ int main(int argc, char *argv[])
     static LayoutStore layoutStore;
     static WorkspaceStore workspaceStore;
     static SearchIndex searchIndex;
+    static ProceduralEditorController proceduralEditor(&editorState);
     static drift::Haptics haptics;
     static drift::PointerDevices pointerDevices;
     editorState.setAddonManager(&addonManager);
@@ -806,6 +810,7 @@ int main(int argc, char *argv[])
     qmlRegisterSingletonInstance("Drift", 1, 0, "AssetLibrary", &assetLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "BinFolderModel", editorState.bin()->folderModel());
     qmlRegisterSingletonInstance("Drift", 1, 0, "EditorState", &editorState);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "ProceduralEditor", &proceduralEditor);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AppController", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "FileDialogs", &fileDialogs);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Addons", &addonManager);

@@ -123,6 +123,7 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("copyEffects"), QStringLiteral("Ctrl+Alt+C")},
         {QStringLiteral("pasteEffects"), QStringLiteral("Ctrl+Shift+V")},
         {QStringLiteral("pasteAttributes"), QStringLiteral("Ctrl+Alt+V")},
+        {QStringLiteral("addTransitionAtPlayhead"), QStringLiteral("Ctrl+Shift+D")},
         {QStringLiteral("split"), QStringLiteral("S")},
         {QStringLiteral("merge"), QStringLiteral("Ctrl+M")},
         {QStringLiteral("unlink"), QStringLiteral("Ctrl+Shift+U")},
@@ -295,6 +296,26 @@ bool AppController::trackSolo(int trackIndex) const
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return false;
     return m_project.tracks().at(trackIndex).solo;
+}
+
+void AppController::setTrackLocked(int trackIndex, bool locked)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (m_project.tracks()[trackIndex].locked == locked)
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].locked = locked;
+    pushProjectEdit(before, tr("Track lock"));
+    finishEdit(locked ? tr("Track locked") : tr("Track unlocked"));
+}
+
+bool AppController::trackLocked(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    return m_project.tracks().at(trackIndex).locked;
 }
 
 void AppController::previewTrackVolume(int trackIndex, double volume)
@@ -524,8 +545,8 @@ int AppController::trackRowHeight(int trackIndex, const QVariantMap &metrics) co
     }
 
     const double scale = track.heightScale > 0 ? track.heightScale : 1.0;
-    const double lanes =
-        drift::adjustmentLaneIndexes(m_project, trackIndex).size() * metric("lane", 20.0);
+    const int laneCount = drift::adjustmentLaneIndexes(m_project, trackIndex).size();
+    const double lanes = laneCount * (track.lanesCollapsed ? metric("ribbon", 3.0) : metric("lane", 20.0));
     return qRound(qMax(20.0, base * scale + lanes));
 }
 
@@ -540,6 +561,57 @@ QVariantList AppController::adjustmentLanes(int trackIndex) const
     for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, trackIndex))
         out.append(laneIndex);
     return out;
+}
+
+QString AppController::adjustmentLaneKind(int laneIndex) const
+{
+    if (laneIndex < 0 || laneIndex >= m_project.tracks().size())
+        return {};
+    const drift::Track &lane = m_project.tracks().at(laneIndex);
+    if (!lane.isAdjustmentLane() || lane.clips.isEmpty())
+        return {};
+    switch (lane.clips.first().adjustmentKind) {
+    case drift::AdjustmentKind::VideoEffects:
+        return QStringLiteral("videoEffects");
+    case drift::AdjustmentKind::AudioEffects:
+        return QStringLiteral("audioEffects");
+    case drift::AdjustmentKind::Mask:
+        return QStringLiteral("mask");
+    default:
+        return {};
+    }
+}
+
+QVariantList AppController::adjustmentLaneSpans(int parentIndex) const
+{
+    QVariantList out;
+    for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, parentIndex)) {
+        const drift::Track &lane = m_project.tracks().at(laneIndex);
+        QVariantList spans;
+        for (const drift::Clip &clip : lane.clips) {
+            spans.append(QVariantMap{
+                {QStringLiteral("start"), drift::usToSeconds(clip.timelineStart)},
+                {QStringLiteral("end"), drift::usToSeconds(clip.timelineEnd())},
+            });
+        }
+        out.append(QVariantMap{
+            {QStringLiteral("laneIndex"), laneIndex},
+            {QStringLiteral("kind"), adjustmentLaneKind(laneIndex)},
+            {QStringLiteral("hidden"), lane.hidden},
+            {QStringLiteral("spans"), spans},
+        });
+    }
+    return out;
+}
+
+void AppController::setTrackLanesCollapsed(int trackIndex, bool collapsed)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (m_project.tracks()[trackIndex].lanesCollapsed == collapsed)
+        return;
+    m_project.tracks()[trackIndex].lanesCollapsed = collapsed;
+    notifyTracksChanged();
 }
 
 double AppController::trackHeightScale(int trackIndex) const
@@ -1692,6 +1764,8 @@ void AppController::triggerAction(const QString &actionId)
         requestPasteAttributes();
     else if (actionId == QStringLiteral("split"))
         splitAtPlayhead();
+    else if (actionId == QStringLiteral("addTransitionAtPlayhead"))
+        addTransitionAtPlayhead();
     else if (actionId == QStringLiteral("merge"))
         mergeSelectedClips();
     else if (actionId == QStringLiteral("separateAudio"))
@@ -2459,7 +2533,8 @@ void AppController::normalizeSelection()
     QList<QPair<int, int>> kept;
     kept.reserve(selection.size());
     for (const QPair<int, int> &pair : selection) {
-        if (isValidClipIndex(pair.first, pair.second) && !kept.contains(pair))
+        if (isValidClipIndex(pair.first, pair.second) && !m_project.tracks().at(pair.first).locked
+            && !kept.contains(pair))
             kept.append(pair);
     }
     m_selection = kept;
