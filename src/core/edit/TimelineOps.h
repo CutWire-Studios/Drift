@@ -285,6 +285,56 @@ bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeU
 // split itself names each half from its cues.
 QString nextSplitPieceName(const Track &track, const QString &name);
 
+// Ripple edits (agent ops). Tracks joined, directly or through other tracks, by a linked pair of
+// clips (tight or loose) ripple together as one group, so linked audio never drifts from its
+// video and nothing a ripple moves lands on a clip that stayed. Adjustment tracks are never in a
+// group: pinned adjustments follow their clip in the edit's normalisation.
+QSet<int> rippleTrackGroup(const Project &project, int trackIndex);
+
+// Moves every clip on `tracks` that starts at or after `fromUs` (and is not in `exclude`) by
+// `deltaUs`, once, together with any clip on those tracks linked to a moved one that starts
+// earlier (a J-cut, or a loose partner). A clip moved left stops at 0; `clamped` is then set,
+// since it no longer keeps its offset, and `clampedId` names the first such clip. Returns the
+// moved ids. Callers check the result with
+// rippleCollision.
+QStringList rippleTracks(Project &project, const QSet<int> &tracks, TimeUs fromUs, TimeUs deltaUs,
+                         const QSet<QString> &exclude = {}, bool *clamped = nullptr, QString *clampedId = nullptr);
+
+// Moves the clips on `tracks` that start within [fromUs, toUs) (and are not in `exclude`) by
+// `deltaUs`, once, together with any clip on those tracks linked to a moved one (outside the
+// window or not, unless excluded). For reordering: the clips between a clip's old and new place
+// make room or close up. `clamped` and `clampedId` as for rippleTracks. Returns the moved ids.
+QStringList shiftWindow(Project &project, const QSet<int> &tracks, TimeUs fromUs, TimeUs toUs, TimeUs deltaUs,
+                        const QSet<QString> &exclude = {}, bool *clamped = nullptr, QString *clampedId = nullptr);
+
+// Moves a clip and everything linked to it (on any track; adjustment tracks aside) by `deltaUs`.
+// Returns the moved ids.
+QStringList shiftClipWithLinks(Project &project, const QString &clipId, TimeUs deltaUs, bool *clamped = nullptr,
+                               QString *clampedId = nullptr);
+
+// The id of a clip on `tracks` that overlaps another one in `after` though the two did not
+// overlap in `before` (a ripple pushed one onto the other), or empty. Adjustment tracks are
+// skipped; tracks are matched by index, so the edit must not have added or removed any.
+QString rippleCollision(const Project &before, const Project &after, const QSet<int> &tracks);
+
+// A time range that was cleared on one track, to be closed by closeRippleRanges.
+struct RippleRange
+{
+    int track = -1;
+    TimeUs start = 0;
+    TimeUs end = 0;
+};
+
+// Closes cleared ranges: the ranges on the tracks of each group are merged, and each merged range
+// closes once for the whole group, latest first. Groups come from `groupSource` when given (the
+// project before the clips were removed, so a link held only by a removed clip still joins its
+// tracks). Refuses, changing nothing and setting `blocker` to the clip in the way, when a clip on
+// a group track overlaps a range to close, when closing would push a clip onto another, or when a
+// clip would have to move before 0.
+bool closeRippleRanges(Project &project, const QList<RippleRange> &ranges, QString *blocker = nullptr,
+                       QStringList *moved = nullptr, const Project *groupSource = nullptr);
+
+
 // Repoint `dst` at the media `src` carries while keeping dst's timeline placement. The source
 // time is read from `src` at dst's timeline start, so the two stay in timeline sync — which is
 // what makes a multicam switch land on the frame the angle was showing at that moment.

@@ -31,7 +31,7 @@ inline constexpr char kPluginEpKind[] = "onnxruntime-ep";
 
 struct RuntimeInfo
 {
-    QString variant; // "cpu", "cuda", "migraphx", …
+    QString variant; // "cpu", "cuda", "migraphx", "winml", …
     QString version; // ONNX Runtime version, when the directory says
     QString dir;     // root holding lib/
 };
@@ -86,6 +86,11 @@ void setPreferredVariant(const QString &variant);
 // getting CPU hides exactly what was being investigated, so an explicit choice fails loudly where
 // an automatic one falls back.
 bool variantExplicit();
+
+// The core a selection token needs loaded. Usually the token itself; on Windows every graphics
+// choice other than CUDA ("directml", and whatever the Windows ML catalog contributes, such as
+// "migraphx") lives in the "winml" core.
+QString coreVariantFor(const QString &variant);
 
 // Why a provider whose libraries live outside the addon cannot work here, in words a user can act
 // on, or empty when nothing is known to be wrong. Only "migraphx" has such libraries: the AMD core

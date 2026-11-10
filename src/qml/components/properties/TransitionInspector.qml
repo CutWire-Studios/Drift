@@ -7,7 +7,6 @@ Item {
 
     property int clipDataRevision: 0
     property int transitionDataRevision: 0
-    property bool suppressTransitionKindUpdate: false
 
     readonly property var clipData: {
         void clipDataRevision
@@ -66,20 +65,6 @@ Item {
             return
         if (transitionDurationField && !transitionDurationField.activeFocus)
             transitionDurationField.value = root.activeTransition.duration || EditorState.preferences.transitionDurationSeconds
-        if (transitionKindBox) {
-            const kinds = EditorState.transitionKindsForTrack(root.transitionEditTrack)
-            const active = root.activeTransition.kind || "crossfade"
-            let idx = 0
-            for (let i = 0; i < kinds.length; ++i) {
-                if (kinds[i].kind === active) {
-                    idx = i
-                    break
-                }
-            }
-            root.suppressTransitionKindUpdate = true
-            transitionKindBox.currentIndex = idx
-            root.suppressTransitionKindUpdate = false
-        }
     }
 
     function commitEdits() {
@@ -94,13 +79,6 @@ Item {
             if (Math.abs(v - current) > 0.0001)
                 EditorState.setTransitionDuration(
                     root.transitionEditTrack, transitionId, v)
-        }
-        if (transitionKindBox && transitionKindBox.currentIndex >= 0) {
-            const kinds = EditorState.transitionKindsForTrack(root.transitionEditTrack)
-            const item = kinds[transitionKindBox.currentIndex]
-            if (item && item.kind !== (root.activeTransition.kind || "crossfade"))
-                EditorState.setTransitionKind(
-                    root.transitionEditTrack, transitionId, item.kind)
         }
     }
 
@@ -134,7 +112,7 @@ Item {
             wrapMode: Text.WordWrap
             visible: !root.hasActiveTransition && !root.canAddOutgoingTransition
             text: root.clipKind === "video" || root.clipKind === "shape" || root.clipKind === "text"
-                  ? qsTr("Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.")
+                  ? qsTr("Hover the cut between two clips and click + to add a transition.")
                   : qsTr("Transitions work between two clips on a video, shape, or text track.")
             color: Theme.c.transitionInspector.foregroundMuted
             font.family: Theme.fontFamily
@@ -156,11 +134,23 @@ Item {
             }
 
             ThemedButton {
-                text: qsTr("Add crossfade (%1 s)").arg(EditorState.preferences.transitionDurationSeconds)
+                id: addTransitionButton
+                text: qsTr("Add transition…")
                 variant: "primary"
-                onClicked: EditorState.addTransition(
-                               EditorState.selectedTrack, EditorState.selectedClip,
-                               "crossfade", EditorState.preferences.transitionDurationSeconds)
+                onClicked: {
+                    const track = EditorState.selectedTrack
+                    const left = EditorState.selectedClip
+                    const page = ShellBridge.main ? ShellBridge.main.editorPage : null
+                    if (page && page.openTransitionPicker)
+                        page.openTransitionPicker(track, left, "", "")
+                    else
+                        addPicker.openFor(track, left, "", "", addTransitionButton, 0,
+                                          addTransitionButton.height + Theme.spacingXs)
+                }
+
+                TransitionPickerPopup {
+                    id: addPicker
+                }
             }
         }
 
@@ -196,26 +186,107 @@ Item {
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
                 }
-                ThemedComboBox {
-                    id: transitionKindBox
+                // A thumbnail picker instead of a name list: many kinds are only told apart by how they look.
+                Rectangle {
+                    id: kindButton
+                    readonly property var kindInfo: {
+                        const kinds = EditorState.transitionKindsForTrack(root.transitionEditTrack)
+                        const active = root.hasActiveTransition ? (root.activeTransition.kind || "crossfade") : ""
+                        for (let i = 0; i < kinds.length; ++i) {
+                            if (kinds[i].kind === active)
+                                return kinds[i]
+                        }
+                        return ({ kind: active, label: active })
+                    }
+                    readonly property string strip: kindInfo.previewStripPath || ""
+                    readonly property int frameCount: Math.max(1, kindInfo.previewFrames || 1)
                     width: parent.width
-                    textRole: "label"
-                    valueRole: "kind"
-                    model: EditorState.transitionKindsForTrack(root.transitionEditTrack)
-                    onActivated: transitionKindBox.commitTransitionKind()
-                    onCurrentIndexChanged: {
-                        if (root.suppressTransitionKindUpdate || !root.hasActiveTransition)
+                    height: Theme.controlHeight * 1.6
+                    radius: Theme.c.themedComboBox.radius
+                    color: Theme.c.themedComboBox.background
+                    border.width: kindMouse.containsMouse || kindButton.activeFocus
+                                  ? Theme.c.themedComboBox.borderWidthFocus
+                                  : Theme.c.themedComboBox.borderWidth
+                    border.color: kindMouse.containsMouse || kindButton.activeFocus
+                                  ? Theme.c.themedComboBox.borderFocus
+                                  : Theme.c.themedComboBox.border
+                    activeFocusOnTab: true
+                    Keys.onSpacePressed: kindButton.openPicker()
+                    Keys.onReturnPressed: kindButton.openPicker()
+
+                    function openPicker() {
+                        if (!root.hasActiveTransition)
                             return
-                        transitionKindBox.commitTransitionKind()
+                        const track = root.transitionEditTrack
+                        const left = root.transitionEditLeftClip
+                        const id = root.activeTransition.id
+                        const kind = root.activeTransition.kind || "crossfade"
+                        const page = ShellBridge.main ? ShellBridge.main.editorPage : null
+                        if (page && page.openTransitionPicker)
+                            page.openTransitionPicker(track, left, id, kind)
+                        else
+                            kindPicker.openFor(track, left, id, kind, kindButton, 0, kindButton.height + Theme.spacingXs)
                     }
 
-                    function commitTransitionKind() {
-                        const item = model[currentIndex]
-                        if (!item || !root.hasActiveTransition)
-                            return
-                        EditorState.setTransitionKind(
-                            root.transitionEditTrack,
-                            root.activeTransition.id, item.kind)
+                    Row {
+                        anchors.fill: parent
+                        anchors.margins: Theme.spacingXs
+                        spacing: Theme.spacingSm
+
+                        Item {
+                            id: kindThumb
+                            width: height
+                            height: parent.height
+                            clip: true
+
+                            Image {
+                                visible: kindButton.strip.length > 0 && status === Image.Ready
+                                source: kindButton.strip.length > 0 ? EditorState.imageUrl(kindButton.strip) : ""
+                                height: parent.height
+                                width: parent.height * kindButton.frameCount
+                                x: -Math.round(0.45 * (kindButton.frameCount - 1)) * parent.height
+                                sourceSize.height: Math.ceil(parent.height * Screen.devicePixelRatio)
+                                fillMode: Image.Stretch
+                                asynchronous: true
+                                smooth: true
+                            }
+
+                            IconGlyph {
+                                anchors.centerIn: parent
+                                visible: kindButton.strip.length === 0
+                                glyph: Theme.icons.chevronsRight
+                                iconColor: Theme.c.themedComboBox.icon
+                            }
+                        }
+
+                        Text {
+                            width: parent.width - kindThumb.width - kindChevron.width - parent.spacing * 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: kindButton.kindInfo.label || kindButton.kindInfo.kind || ""
+                            elide: Text.ElideRight
+                            color: Theme.c.themedComboBox.foreground
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSizeSm
+                        }
+
+                        IconGlyph {
+                            id: kindChevron
+                            anchors.verticalCenter: parent.verticalCenter
+                            glyph: Theme.icons.chevronDown
+                            iconColor: Theme.c.themedComboBox.icon
+                        }
+                    }
+
+                    MouseArea {
+                        id: kindMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: kindButton.openPicker()
+                    }
+
+                    TransitionPickerPopup {
+                        id: kindPicker
                     }
                 }
             }

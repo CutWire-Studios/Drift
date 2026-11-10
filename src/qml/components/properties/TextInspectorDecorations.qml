@@ -29,6 +29,8 @@ CollapsibleSection {
         ColorSwatchField {
             hex: inspector.textStyle.boxColor
             tooltip: qsTr("Choose background colour")
+            livePreview: true
+            onPreviewed: value => inspector.previewTextStyle({ "boxColor": value })
             onEdited: value => inspector.setTextStyleKey("boxColor", value)
         }
 
@@ -174,6 +176,8 @@ CollapsibleSection {
             ColorSwatchField {
                 hex: inspector.textStyle.wordHighlight.color
                 tooltip: qsTr("Choose highlight colour")
+                livePreview: true
+                onPreviewed: value => inspector.previewTextStyle({ "wordHighlight": { "color": value } })
                 onEdited: value => inspector.setTextGroupKey("wordHighlight", "color", value)
             }
         }
@@ -257,6 +261,8 @@ CollapsibleSection {
             ColorSwatchField {
                 hex: inspector.textStyle.underlineColor
                 tooltip: qsTr("Choose underline colour")
+                livePreview: true
+                onPreviewed: value => inspector.previewTextStyle({ "underlineColor": value })
                 onEdited: value => inspector.setTextStyleKey("underlineColor", value)
             }
         }

@@ -210,6 +210,11 @@ Item {
         EditorState.setTextStyle(EditorState.selectedTrack, EditorState.selectedClip, patch)
     }
 
+    // A colour picker's live value; no undo step until the picker commits through a setter.
+    function previewTextStyle(patch) {
+        EditorState.previewSetTextStyle(EditorState.selectedTrack, EditorState.selectedClip, patch)
+    }
+
     // Nested style groups: the C++ side takes the same partial-patch shape one level down.
     function setTextGroupKey(group, key, value) {
         const inner = {}

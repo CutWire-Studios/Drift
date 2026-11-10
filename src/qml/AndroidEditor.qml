@@ -149,6 +149,12 @@ Item {
             assetsSheet.open()
     }
 
+    function openTransitionPicker(track, leftClip, transitionId, currentKind) {
+        composer.close()
+        preview.textEditor.commit()
+        transitionPickerSheet.openFor(track, leftClip, transitionId, currentKind)
+    }
+
     // The rail's [+]. Clears whatever sheet is up first: the add menu is a step on
     // the way to one of them, and stacking it over an open Media sheet would leave
     // two sheets to dismiss to get back to the timeline.
@@ -697,6 +703,10 @@ Item {
 
     AndroidFadeSheet {
         id: fadeSheet
+    }
+
+    AndroidTransitionPickerSheet {
+        id: transitionPickerSheet
     }
 
     AndroidEasingSheet {

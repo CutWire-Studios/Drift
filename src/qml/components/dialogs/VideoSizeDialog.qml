@@ -1,7 +1,7 @@
 import QtQuick
 import Drift
 
-// Header Video button. Canvas size, frame rate, layout templates, and crop.
+// Header Video button. Canvas size, frame rate and layout templates.
 ThemedDialog {
     id: root
 
@@ -16,7 +16,6 @@ ThemedDialog {
 
     contentItem: VideoSizeControls {
         width: parent ? parent.width : Theme.dialogWidthMd
-        onCropStarted: root.close()
         onLayoutChooserOpened: root.close()
     }
 }

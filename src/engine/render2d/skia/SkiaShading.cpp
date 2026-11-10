@@ -5,38 +5,156 @@
 
 #include <QtMath>
 
+#include <string>
 #include <vector>
 
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColorFilter.h"
 #include "include/core/SkImageFilter.h"
+#include "include/core/SkString.h"
 #include "include/core/SkShader.h"
 #include "include/effects/SkDashPathEffect.h"
 #include "include/effects/SkDiscretePathEffect.h"
 #include "include/effects/SkImageFilters.h"
+#include "include/effects/SkRuntimeEffect.h"
 #include "include/effects/SkTrimPathEffect.h"
 
 namespace drift::skia {
 
-SkBlendMode toSkBlendMode(BlendMode mode)
+namespace {
+
+constexpr const char *kBlenderPreamble = R"(
+half lum(half3 c) { return dot(c, half3(0.3, 0.59, 0.11)); }
+half sat(half3 c) { return max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b)); }
+half3 clipColor(half3 c) {
+    half l = lum(c);
+    half n = min(c.r, min(c.g, c.b));
+    half x = max(c.r, max(c.g, c.b));
+    if (n < 0.0) c = l + (c - l) * l / max(l - n, 0.0001);
+    if (x > 1.0) c = l + (c - l) * (1.0 - l) / max(x - l, 0.0001);
+    return c;
+}
+half3 setLum(half3 c, half l) { return clipColor(c + (l - lum(c))); }
+half3 setSat(half3 c, half s) {
+    half mn = min(c.r, min(c.g, c.b));
+    half mx = max(c.r, max(c.g, c.b));
+    if (mx <= mn) return half3(0.0);
+    return (c - mn) * s / (mx - mn);
+}
+half3 colorBurn(half3 b, half3 s) {
+    half3 r = 1.0 - min(half3(1.0), (1.0 - b) / max(s, half3(0.0001)));
+    r = mix(r, half3(0.0), step(s, half3(0.0)));
+    return mix(r, half3(1.0), step(half3(1.0), b));
+}
+half3 colorDodge(half3 b, half3 s) {
+    half3 r = min(half3(1.0), b / max(1.0 - s, half3(0.0001)));
+    r = mix(r, half3(1.0), step(half3(1.0), s));
+    return mix(r, half3(0.0), step(b, half3(0.0)));
+}
+)";
+
+constexpr const char *kBlenderMain = R"(
+half4 main(half4 src, half4 dst) {
+    half sa = src.a;
+    half da = dst.a;
+    half3 s = sa > 0.0 ? src.rgb / sa : half3(0.0);
+    half3 b = da > 0.0 ? dst.rgb / da : half3(0.0);
+    half3 mixed = clamp(blend(b, s), 0.0, 1.0);
+    half3 cr = (1.0 - da) * s + da * mixed;
+    return half4(sa * cr + da * (1.0 - sa) * b, sa + da * (1.0 - sa));
+}
+)";
+
+sk_sp<SkBlender> makeBlender(const char *blendBody)
+{
+    const std::string sksl = std::string(kBlenderPreamble) + "half3 blend(half3 b, half3 s) {\n" + blendBody
+                             + "\n}\n" + kBlenderMain;
+    auto result = SkRuntimeEffect::MakeForBlender(SkString(sksl));
+    if (!result.effect)
+        return SkBlender::Mode(SkBlendMode::kSrcOver);
+    return result.effect->makeBlender(nullptr);
+}
+
+} // namespace
+
+sk_sp<SkBlender> toSkBlender(BlendMode mode)
 {
     switch (mode) {
     case BlendMode::Normal:
-        return SkBlendMode::kSrcOver;
+        break;
     case BlendMode::Multiply:
-        return SkBlendMode::kMultiply;
+        return SkBlender::Mode(SkBlendMode::kMultiply);
     case BlendMode::Screen:
-        return SkBlendMode::kScreen;
+        return SkBlender::Mode(SkBlendMode::kScreen);
     case BlendMode::Overlay:
-        return SkBlendMode::kOverlay;
+        return SkBlender::Mode(SkBlendMode::kOverlay);
     case BlendMode::Add:
-        return SkBlendMode::kPlus;
+        return SkBlender::Mode(SkBlendMode::kPlus);
     case BlendMode::Darken:
-        return SkBlendMode::kDarken;
+        return SkBlender::Mode(SkBlendMode::kDarken);
     case BlendMode::Lighten:
-        return SkBlendMode::kLighten;
+        return SkBlender::Mode(SkBlendMode::kLighten);
+    case BlendMode::ColorBurn:
+        return SkBlender::Mode(SkBlendMode::kColorBurn);
+    case BlendMode::ColorDodge:
+        return SkBlender::Mode(SkBlendMode::kColorDodge);
+    case BlendMode::SoftLight:
+        return SkBlender::Mode(SkBlendMode::kSoftLight);
+    case BlendMode::HardLight:
+        return SkBlender::Mode(SkBlendMode::kHardLight);
+    case BlendMode::Difference:
+        return SkBlender::Mode(SkBlendMode::kDifference);
+    case BlendMode::Exclusion:
+        return SkBlender::Mode(SkBlendMode::kExclusion);
+    case BlendMode::Hue:
+        return SkBlender::Mode(SkBlendMode::kHue);
+    case BlendMode::Saturation:
+        return SkBlender::Mode(SkBlendMode::kSaturation);
+    case BlendMode::Color:
+        return SkBlender::Mode(SkBlendMode::kColor);
+    case BlendMode::Luminosity:
+        return SkBlender::Mode(SkBlendMode::kLuminosity);
+    case BlendMode::LinearBurn: {
+        static const sk_sp<SkBlender> blender = makeBlender("return b + s - 1.0;");
+        return blender;
     }
-    return SkBlendMode::kSrcOver;
+    case BlendMode::DarkerColor: {
+        static const sk_sp<SkBlender> blender = makeBlender("return lum(s) < lum(b) ? s : b;");
+        return blender;
+    }
+    case BlendMode::LighterColor: {
+        static const sk_sp<SkBlender> blender = makeBlender("return lum(s) > lum(b) ? s : b;");
+        return blender;
+    }
+    case BlendMode::VividLight: {
+        static const sk_sp<SkBlender> blender = makeBlender(
+            "return mix(colorDodge(b, 2.0 * (s - 0.5)), colorBurn(b, 2.0 * s), step(s, half3(0.5)));");
+        return blender;
+    }
+    case BlendMode::LinearLight: {
+        static const sk_sp<SkBlender> blender = makeBlender("return b + 2.0 * s - 1.0;");
+        return blender;
+    }
+    case BlendMode::PinLight: {
+        static const sk_sp<SkBlender> blender = makeBlender(
+            "return mix(max(b, 2.0 * s - 1.0), min(b, 2.0 * s), step(s, half3(0.5)));");
+        return blender;
+    }
+    case BlendMode::HardMix: {
+        static const sk_sp<SkBlender> blender = makeBlender("return step(half3(1.0), b + s);");
+        return blender;
+    }
+    case BlendMode::Subtract: {
+        static const sk_sp<SkBlender> blender = makeBlender("return b - s;");
+        return blender;
+    }
+    case BlendMode::Divide: {
+        static const sk_sp<SkBlender> blender = makeBlender(
+            "return mix(b / max(s, half3(0.0001)), step(half3(0.0001), b), step(s, half3(0.0)));");
+        return blender;
+    }
+    }
+    return SkBlender::Mode(SkBlendMode::kSrcOver);
 }
 
 namespace {
@@ -142,7 +260,7 @@ ShadingLayerGroup beginShadingLayer(SkCanvas &canvas, const TextShadingLayer &la
         return {};
     SkPaint lp;
     lp.setAlphaf(float(layer.opacity));
-    lp.setBlendMode(layer.knockout ? SkBlendMode::kDstOut : toSkBlendMode(layer.blend));
+    lp.setBlender(layer.knockout ? SkBlender::Mode(SkBlendMode::kDstOut) : toSkBlender(layer.blend));
     sk_sp<SkImageFilter> filter;
     if (layer.spread > 0.0) {
         const float r = float(layer.spread * scale);

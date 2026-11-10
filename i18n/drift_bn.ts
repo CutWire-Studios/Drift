@@ -58,10 +58,6 @@
         <translation>স্বয়ংক্রিয় (প্রস্তাবিত)</translation>
     </message>
     <message>
-        <source>This computer</source>
-        <translation>এই কম্পিউটার</translation>
-    </message>
-    <message>
         <source>NVIDIA graphics (faster)</source>
         <translation>NVIDIA গ্রাফিক্স (দ্রুততর)</translation>
     </message>
@@ -70,8 +66,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graphics card (faster)</source>
-        <translation>গ্রাফিক্স কার্ড (দ্রুততর)</translation>
+        <source>CPU</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not open that file.</source>
@@ -2367,6 +2363,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">ট্রানজিশন</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2559,6 +2562,10 @@
         <translation>বর্তমান সময়ে বিভক্ত</translation>
     </message>
     <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge adjacent clips</source>
         <translation>পাশাপাশি ক্লিপগুলো একত্র করুন</translation>
     </message>
@@ -2597,6 +2604,10 @@
     <message>
         <source>Toggle guides</source>
         <translation>টগল গাইড</translation>
+    </message>
+    <message>
+        <source>Hide/show selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>3D gizmo: cycle world/local/view axes</source>
@@ -3200,6 +3211,10 @@
         <translation>রেকর্ডিং বাতিল করা হয়েছে।</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3262,14 +3277,6 @@
     <message>
         <source>Adjustment track added</source>
         <translation>অ্যাডজাস্টমেন্ট ট্র্যাক যোগ করা হয়েছে</translation>
-    </message>
-    <message>
-        <source>Add adjustment lane</source>
-        <translation>অ্যাডজাস্টমেন্ট লেন যোগ করুন</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>অ্যাডজাস্টমেন্ট লেন যোগ করা হয়েছে</translation>
     </message>
     <message>
         <source>Nest adjustment in track</source>
@@ -3692,6 +3699,42 @@
         <translation>3D মডেল যোগ করা হয়েছে</translation>
     </message>
     <message>
+        <source>unknown procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown param &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural clip added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change procedural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit procedural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seed changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>3D model replaced</source>
         <translation>3D মডেল প্রতিস্থাপিত</translation>
     </message>
@@ -3802,6 +3845,18 @@
     <message>
         <source>Transition updated</source>
         <translation>পরিবর্তন আপডেট করা হয়েছে।</translation>
+    </message>
+    <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Change look</source>
@@ -4166,6 +4221,14 @@
         <translation>কীফ্রেম ইন্টারপোলেট করে</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">কীফ্রেম যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>ক্যামেরা রিসেট করুন</translation>
     </message>
@@ -4489,6 +4552,18 @@
     <message>
         <source>Track shown</source>
         <translation>ট্র্যাক দেখানো হয়েছে</translation>
+    </message>
+    <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move track</source>
@@ -4844,6 +4919,10 @@
     <message>
         <source>Favorites</source>
         <translation>প্রিয়</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5958,10 +6037,310 @@
     </message>
 </context>
 <context>
+    <name>BakeController</name>
+    <message>
+        <source>Set a work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the bake cache</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Baking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Work area set</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BakesDialog</name>
+    <message>
+        <source>Bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">বন্ধ করুন</translation>
+    </message>
+    <message>
+        <source>Compact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Balanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation type="unfinished">উচ্চ</translation>
+    </message>
+    <message>
+        <source>%1m %2s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Baking %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all bakes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">মুছুন</translation>
+    </message>
+    <message>
+        <source>Playback and export will render these ranges live again. Your project is not changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-bake at current quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality for new bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>≈ %1 per minute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">বাতিল করুন</translation>
+    </message>
+    <message>
+        <source>Bake work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set a work area on the timeline first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>I</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>O</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Range</source>
+        <translation type="unfinished">রেঞ্জ</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">সময়কাল</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">মান</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">আকার</translation>
+    </message>
+    <message>
+        <source>State</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">আরও</translation>
+    </message>
+    <message>
+        <source>Delete bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n bake(s) · %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>0 B</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-bake all stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BinBreadcrumb</name>
     <message>
         <source>Media</source>
         <translation>মিডিয়া</translation>
+    </message>
+</context>
+<context>
+    <name>BlendModes</name>
+    <message>
+        <source>Normal</source>
+        <translation type="unfinished">স্বাভাবিক</translation>
+    </message>
+    <message>
+        <source>Darken</source>
+        <translation type="unfinished">গাঢ়</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished">গুণ করুন</translation>
+    </message>
+    <message>
+        <source>Color Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darker Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lighten</source>
+        <translation type="unfinished">হালকা করুন</translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">স্ক্রীন</translation>
+    </message>
+    <message>
+        <source>Color Dodge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Lighter Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">কনট্রাস্ট</translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished">ওভারলে</translation>
+    </message>
+    <message>
+        <source>Soft Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vivid Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pin Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Mix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inversion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Difference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclusion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished">বিয়োগ করুন</translation>
+    </message>
+    <message>
+        <source>Divide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Component</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue</source>
+        <translation type="unfinished">হিউ</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">স্যাচুরেশন</translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">রঙ</translation>
+    </message>
+    <message>
+        <source>Luminosity</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5973,38 +6352,6 @@
     <message>
         <source>How this clip&apos;s colours combine with the tracks beneath it.</source>
         <translation>কিভাবে এই ক্লিপের রং এর নিচের ট্র্যাকগুলির সাথে একত্রিত হয়.</translation>
-    </message>
-    <message>
-        <source>Normal</source>
-        <translation>স্বাভাবিক</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation>গুণ করুন</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation>স্ক্রীন</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>ওভারলে</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>যোগ করুন</translation>
-    </message>
-    <message>
-        <source>Darken</source>
-        <translation>গাঢ়</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation>হালকা করুন</translation>
-    </message>
-    <message>
-        <source>How this clip blends with the layers below</source>
-        <translation>এই ক্লিপটি নীচের স্তরগুলির সাথে কীভাবে মিশে যায়।</translation>
     </message>
     <message>
         <source>Reset to Normal</source>
@@ -6611,6 +6958,10 @@
     <message>
         <source>Select Color</source>
         <translation>রঙ নির্বাচন করুন</translation>
+    </message>
+    <message>
+        <source>Edit colour</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7718,14 +8069,6 @@
         <translation>প্রকল্প সংরক্ষণ করুন</translation>
     </message>
     <message>
-        <source>Video</source>
-        <translation>ভিডিও</translation>
-    </message>
-    <message>
-        <source>Video size and layout</source>
-        <translation>ভিডিওর আকার ও লেআউট</translation>
-    </message>
-    <message>
         <source>Agent</source>
         <translation>এজেন্ট</translation>
     </message>
@@ -7851,6 +8194,17 @@
     <message>
         <source>Settings</source>
         <translation>সেটিংস</translation>
+    </message>
+</context>
+<context>
+    <name>EditorHeaderVideoButton</name>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">ভিডিও</translation>
+    </message>
+    <message>
+        <source>Bakes, crop and video layout</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8583,6 +8937,45 @@
     <message>
         <source>Export cancelled.</source>
         <translation>এক্সপোর্ট বাতিল হয়েছে.</translation>
+    </message>
+    <message>
+        <source>Some bakes are out of date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Re-bake first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-baking. Export again when it finishes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render them live</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export as is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">বাতিল করুন</translation>
+    </message>
+    <message>
+        <source>Use baked ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read pre-rendered ranges instead of compositing them again</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14857,6 +15250,14 @@ If playback stutters, try another.</source>
 <context>
     <name>PreviewStatusLayer</name>
     <message>
+        <source>Stale bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Baked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing to preview yet</source>
         <translation>এখনও পূর্বরূপ দেখার জন্য কিছুই নেই।</translation>
     </message>
@@ -14975,6 +15376,293 @@ If playback stutters, try another.</source>
     <message>
         <source>REC %1s</source>
         <translation>REC %1 সে</translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralConsolePanel</name>
+    <message>
+        <source>Procedural console</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Console</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear the Apply output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply or Check a package to see its output here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No errors or output</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralEditorController</name>
+    <message>
+        <source>procedural.json is not valid JSON: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>expected an object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: ok - %2 meshes, %3 vertices, %4 instances (%5 ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 failed: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>shader %1 compiled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shaders were not compiled: no OpenGL context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is read-only. Duplicate it to edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">প্রয়োগ করুন</translation>
+    </message>
+    <message>
+        <source>Check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished">%1 অনুলিপি</translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">অনুলিপি তৈরি করুন</translation>
+    </message>
+    <message>
+        <source>Use 1-48 letters, digits or underscores for the name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Radius</source>
+        <translation type="unfinished">ব্যাসার্ধ</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">গতি</translation>
+    </message>
+    <message>
+        <source>Tint</source>
+        <translation type="unfinished">টিন্ট</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished">তৈরি করুন</translation>
+    </message>
+    <message>
+        <source>Use letters, digits or underscores for a new shader name, not an existing one</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralEditorPanel</name>
+    <message>
+        <source>Procedural code editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (read-only)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package to edit. Selecting a procedural clip opens its package.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">নতুন</translation>
+    </message>
+    <message>
+        <source>Apply or revert your edits first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create a minimal procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate to edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy this package to your own procedurals and edit the copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate procedural to edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">প্রয়োগ করুন</translation>
+    </message>
+    <message>
+        <source>Validate and install the package, then refresh the preview (Ctrl+S)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply procedural code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Validate the edits without installing them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert</source>
+        <translation type="unfinished">প্রত্যাবর্তন করুন</translation>
+    </message>
+    <message>
+        <source>Discard edits and reload the package from disk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a clip using this package at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard unapplied edits?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished">বাতিল করুন</translation>
+    </message>
+    <message>
+        <source>Keep editing</source>
+        <translation type="unfinished">সম্পাদনা চালিয়ে যান</translation>
+    </message>
+    <message>
+        <source>Package name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished">তৈরি করুন</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">বাতিল করুন</translation>
+    </message>
+    <message>
+        <source>Add a shader pair</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shader name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">যোগ করুন</translation>
+    </message>
+    <message>
+        <source>%1 is read-only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 - unapplied edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No package open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a procedural clip, pick a package above, or create a new one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralInspector</name>
+    <message>
+        <source>Package &quot;%1&quot; is not installed; the clip renders nothing until it returns.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package that builds this clip&apos;s scene. Changing it resets the parameters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not change the package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished">বীজ</translation>
+    </message>
+    <message>
+        <source>Procedural seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralParamsPanel</name>
+    <message>
+        <source>Procedural parameters panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a procedural clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a Procedural 3D clip on the timeline to edit its parameters here.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15482,6 +16170,10 @@ If playback stutters, try another.</source>
         <translation>PDF</translation>
     </message>
     <message>
+        <source>Procedural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>সাবটাইটেল</translation>
     </message>
@@ -15914,6 +16606,18 @@ If playback stutters, try another.</source>
         <source>The rendered file could not be read</source>
         <translation>রেন্ডার করা ফাইলটি পড়া যায়নি</translation>
     </message>
+    <message>
+        <source>Compact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation type="unfinished">উচ্চ</translation>
+    </message>
+    <message>
+        <source>Balanced</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QuickSetup</name>
@@ -16070,6 +16774,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Make buttons, text and icons larger or smaller.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16933,6 +17641,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ভিডিওর আকার ও লেআউট</translation>
     </message>
     <message>
+        <source>Bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished">ভিডিও ক্রপ করুন</translation>
+    </message>
+    <message>
         <source>Switch to mobile layout…</source>
         <translation type="unfinished">মোবাইল লেআউটে পরিবর্তন করুন…</translation>
     </message>
@@ -17533,16 +18249,24 @@ If playback stutters, try another.</source>
         <translation>এই আকার প্রয়োগ করতে Drift পুনরায় চালু করুন.</translation>
     </message>
     <message>
+        <source>Follows your Windows display scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
-        <translation>আপনার প্রদর্শন সেটিংস ছাড়াও বোতাম, টেক্সট এবং আইকনগুলিকে বড় করে তোলে।</translation>
+        <source>Makes buttons, text, and icons larger or smaller, on top of your display settings.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>100% (system)</source>
         <translation>100% (সিস্টেম)</translation>
+    </message>
+    <message>
+        <source>Windows display scale</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout</source>
@@ -18770,32 +19494,8 @@ If playback stutters, try another.</source>
         <translation>ইফেক্ট</translation>
     </message>
     <message>
-        <source>Normal</source>
-        <translation>স্বাভাবিক</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation>গুণ করুন</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation>স্ক্রীন</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>ওভারলে</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>যোগ করুন</translation>
-    </message>
-    <message>
         <source>Darken</source>
         <translation>গাঢ়</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation>হালকা করুন</translation>
     </message>
     <message>
         <source>Centre</source>
@@ -22105,6 +22805,61 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TeleprompterPanel</name>
+    <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">গতি</translation>
+    </message>
+    <message>
+        <source>lines/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">আকার</translation>
+    </message>
+    <message>
+        <source>Follow recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scrolling starts, pauses and stops with recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show over preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste or type your script</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextAnimPresetFrame</name>
     <message>
         <source>None</source>
@@ -23116,6 +23871,48 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineBakeContextMenu</name>
+    <message>
+        <source>Re-bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage bakes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TimelineBakeStrip</name>
+    <message>
+        <source>Baking %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 – %2 · %3 · %4%5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · %2×%3</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineBookmarkContextMenu</name>
     <message>
         <source>Go to bookmark</source>
@@ -23325,6 +24122,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">স্থানান্তর যোগ করুন</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -23359,6 +24163,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Importing…</source>
         <translation>ইমপোর্ট করা হচ্ছে…</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">অডিও ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">মাস্ক</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23416,6 +24239,18 @@ If playback stutters, try another.</source>
     <message>
         <source>Add new track</source>
         <translation>নতুন ট্র্যাক যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -23550,6 +24385,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Toggle audio mixer strip</source>
         <translation>অডিও মিক্সার স্ট্রিপ টগল করুন</translation>
+    </message>
+    <message>
+        <source>Toggle keyframe strip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
@@ -23786,6 +24625,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineTrackItem</name>
     <message>
+        <source>Procedural package not found. The clip renders nothing until it is installed again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>অডিও সমন্বয়</translation>
     </message>
@@ -23823,6 +24666,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Trim clip</source>
         <translation>ট্রিম ক্লিপ</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineWorkAreaBakeChip</name>
+    <message>
+        <source>Baking %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel baking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-render the work area for smooth playback and export</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23959,12 +24821,28 @@ If playback stutters, try another.</source>
         <translation>নাম পরিবর্তন করুন…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>ট্র্যাক আনমিউট করুন</translation>
     </message>
     <message>
         <source>Mute track</source>
         <translation>নিঃশব্দ ট্র্যাক</translation>
+    </message>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stop recording</source>
@@ -23989,6 +24867,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Hide track</source>
         <translation>ট্র্যাক লুকান</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24023,8 +24909,8 @@ If playback stutters, try another.</source>
         <translation>লম্বা</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>ফাইন-টিউন করতে হেডারের উপর স্ক্রোল করুন</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24088,6 +24974,43 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn adjustment off</source>
         <translation>সমন্বয় বন্ধ করুন</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">অডিও ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">মাস্ক</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24171,6 +25094,21 @@ If playback stutters, try another.</source>
     <message>
         <source>Hide track</source>
         <translation>ট্র্যাক লুকান</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>
@@ -25209,8 +26147,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>যেখানে দুটি ক্লিপ ওভারল্যাপ হয় তা নির্বাচন করুন (বেগুনি রঙে দেখানো হয়েছে), অথবা একটি ক্লিপ টেনে আনুন যাতে এটি পরেরটিকে ওভারল্যাপ করে.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25221,8 +26159,8 @@ If playback stutters, try another.</source>
         <translation>এই ক্লিপের পরে কোন পরিবর্তন নেই। পরবর্তী ক্লিপে কাটাতে একটি যোগ করুন.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>ক্রসফেড যোগ করুন (%1 সে.)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25274,6 +26212,84 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">সার্চ ট্রানজিশন</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">আমার ট্রানজিশন</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">কোনো ট্রানজিশন উপলব্ধ নেই</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">আরও যোগ করতে একটি ট্রানজিশন প্যাক ইনস্টল করুন.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">অতিরিক্ত পান</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">কোন ট্রানজিশন মেলে না “%1”</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">এখনো কোনো কাস্টম ট্রানজিশন নেই</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">এখনও কোন পছন্দসই নেই।</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">এই বিভাগে কিছু নেই</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">একটি ভিন্ন নাম চেষ্টা করুন.</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">স্টার ট্রানজিশন সেগুলিকে এখানে সংরক্ষণ করুন.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">অন্য বিভাগ বেছে নিন.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">ইমপোর্ট</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25291,64 +26307,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>সার্চ ট্রানজিশন</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>আমার ট্রানজিশন</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>কোনো ট্রানজিশন উপলব্ধ নেই</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>আরও যোগ করতে একটি ট্রানজিশন প্যাক ইনস্টল করুন.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>অতিরিক্ত পান</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>কোন ট্রানজিশন মেলে না “%1”</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>এখনো কোনো কাস্টম ট্রানজিশন নেই</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>এখনও কোন পছন্দসই নেই।</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>এই বিভাগে কিছু নেই</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>একটি ভিন্ন নাম চেষ্টা করুন.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>স্টার ট্রানজিশন সেগুলিকে এখানে সংরক্ষণ করুন.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>অন্য বিভাগ বেছে নিন.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>ইমপোর্ট</translation>
     </message>
 </context>
 <context>
@@ -25688,6 +26648,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>Vec2Param</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">সম্পাদনা %1</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">%1 রিসেট করুন</translation>
+    </message>
+    <message>
+        <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Vec2ParamPad</name>
     <message>
         <source>Edit %1</source>
@@ -25919,6 +26894,25 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>VideoMenu</name>
+    <message>
+        <source>Bakes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel crop</source>
+        <translation type="unfinished">ক্রপ বাতিল করুন</translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished">ভিডিও ক্রপ করুন</translation>
+    </message>
+    <message>
+        <source>Adjust video layout…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>VideoSizeControls</name>
     <message>
         <source>Custom</source>
@@ -25947,18 +26941,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Frames per second</source>
         <translation>প্রতি সেকেন্ডে ফ্রেম</translation>
-    </message>
-    <message>
-        <source>Cancel crop</source>
-        <translation>ক্রপ বাতিল করুন</translation>
-    </message>
-    <message>
-        <source>Crop video size</source>
-        <translation>ভিডিওর আকার ক্রপ করুন</translation>
-    </message>
-    <message>
-        <source>Drag the preview edges to change what’s included</source>
-        <translation>যা অন্তর্ভুক্ত রয়েছে তা পরিবর্তন করতে পূর্বরূপের প্রান্তগুলি টেনে আনুন।</translation>
     </message>
     <message>
         <source>Changing size doesn’t shrink your clips — anything outside the new edges is cut off.</source>
@@ -26587,6 +27569,10 @@ If playback stutters, try another.</source>
         <translation>রেকর্ডার</translation>
     </message>
     <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Noise Removal</source>
         <translation>নয়েজ অপসারণ</translation>
     </message>
@@ -26628,6 +27614,18 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>View &amp; Lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural Parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

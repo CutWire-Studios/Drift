@@ -26,6 +26,13 @@ ThemedContextMenu {
             renameDialog.open()
         }
     }
+    ThemedMenuItem {
+        visible: header.laneCount > 0
+        height: visible ? implicitHeight : 0
+        text: header.lanesCollapsed ? qsTr("Expand child lanes") : qsTr("Collapse child lanes")
+        icon.name: header.lanesCollapsed ? Theme.icons.chevronDown : Theme.icons.chevronUp
+        onTriggered: EditorState.setTrackLanesCollapsed(header.index, !header.lanesCollapsed)
+    }
     ThemedMenuSeparator {}
     ThemedMenuItem {
         text: header.trackMuted ? qsTr("Unmute track")
@@ -33,6 +40,12 @@ ThemedContextMenu {
         icon.name: header.trackMuted ? Theme.icons.volumeHigh
                                             : Theme.icons.volumeOff
         onTriggered: EditorState.setTrackMuted(header.index, !header.trackMuted)
+    }
+    ThemedMenuItem {
+        visible: header.wantSolo
+        text: header.trackSolo ? qsTr("Unsolo track") : qsTr("Solo track")
+        icon.name: Theme.icons.headphones
+        onTriggered: EditorState.setTrackSolo(header.index, !header.trackSolo)
     }
     ThemedMenuItem {
         visible: header.wantMic
@@ -62,6 +75,11 @@ ThemedContextMenu {
         icon.name: header.trackHidden ? Theme.icons.eye
                                              : Theme.icons.eyeOff
         onTriggered: EditorState.setTrackHidden(header.index, !header.trackHidden)
+    }
+    ThemedMenuItem {
+        text: header.trackLocked ? qsTr("Unlock track") : qsTr("Lock track")
+        icon.name: header.trackLocked ? Theme.icons.lockOpen : Theme.icons.lock
+        onTriggered: EditorState.setTrackLocked(header.index, !header.trackLocked)
     }
     ThemedMenuSeparator {
         visible: header.isTransformLayer || header.transformable
@@ -148,7 +166,7 @@ ThemedContextMenu {
         ThemedMenuItem {
             visible: !column.touchHold
             enabled: false
-            text: qsTr("Scroll over the header to fine-tune")
+            text: qsTr("Drag the bottom edge or scroll over the header to fine-tune")
             icon.name: Theme.icons.info
         }
     }

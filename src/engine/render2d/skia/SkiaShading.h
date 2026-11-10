@@ -6,6 +6,7 @@
 #include <QRectF>
 
 #include "include/core/SkBlendMode.h"
+#include "include/core/SkBlender.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkPathEffect.h"
 #include "include/core/SkRefCnt.h"
@@ -17,7 +18,7 @@ class SkCanvas;
 
 namespace drift::skia {
 
-SkBlendMode toSkBlendMode(BlendMode mode);
+sk_sp<SkBlender> toSkBlender(BlendMode mode);
 
 // The layer's own paint source — solid, gradient over `box`, texture or shader effect — into
 // `paint`, with `alpha` folded into the colour. A texture or effect that fails to build falls
