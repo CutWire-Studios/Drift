@@ -289,6 +289,35 @@ double polylineDistance(QPointF p, const QPolygonF &line)
 
 } // namespace
 
+Pose pivotedAt(const Pose &pose, const QVector3D &local)
+{
+    const QVector3D d = local - pose.pose3d.anchorIn(pose.rect);
+    const QVector3D shift = rotationOf(pose).mapVector(d) - d;
+    Pose out = pose;
+    out.rect.translate(shift.x(), shift.y());
+    out.pose3d.positionZ += shift.z();
+    out.pose3d.hasAnchorX = out.pose3d.hasAnchorY = true;
+    out.pose3d.anchorX = local.x();
+    out.pose3d.anchorY = local.y();
+    out.pose3d.anchorZ = local.z();
+    return out;
+}
+
+Pose anchoredLike(const Pose &pivoted, const Pose &original)
+{
+    const QVector3D d = pivoted.pose3d.anchorIn(pivoted.rect) - original.pose3d.anchorIn(original.rect);
+    const QVector3D shift = rotationOf(pivoted).mapVector(d) - d;
+    Pose out = pivoted;
+    out.rect.translate(-shift.x(), -shift.y());
+    out.pose3d.positionZ -= shift.z();
+    out.pose3d.hasAnchorX = original.pose3d.hasAnchorX;
+    out.pose3d.hasAnchorY = original.pose3d.hasAnchorY;
+    out.pose3d.anchorX = original.pose3d.anchorX;
+    out.pose3d.anchorY = original.pose3d.anchorY;
+    out.pose3d.anchorZ = original.pose3d.anchorZ;
+    return out;
+}
+
 Tool toolFromString(const QString &name)
 {
     if (name == QLatin1String("rotate"))

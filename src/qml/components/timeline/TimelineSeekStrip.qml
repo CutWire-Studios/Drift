@@ -97,6 +97,14 @@ Item {
         }
     }
 
+    TimelineBakeStrip {
+        y: parent.height - height - 1
+        width: parent.width
+        z: 3
+        panel: seekStrip.panel
+        onManageRequested: ShellBridge.navigate("dialog:bakes")
+    }
+
     function openRename(index, label) {
         bookmarkRow.renameIndex = index
         renameField.text = label

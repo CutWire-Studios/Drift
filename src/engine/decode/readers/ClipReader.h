@@ -225,6 +225,7 @@ private:
 
     // PTS in clip-local microseconds (best_effort, minus stream start_time).
     drift::TimeUs videoPtsToUs(const AVFrame *frame) const;
+    drift::TimeUs audioPtsToUs(const AVFrame *frame) const;
     // Cover/peek cursor: the last frame with pts <= the request, plus the next
     // decoded frame. Variable-frame-rate sources (game captures especially) have
     // gaps longer than a project tick; without the peek, that overshoot looks

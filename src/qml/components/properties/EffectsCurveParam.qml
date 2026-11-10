@@ -12,6 +12,12 @@ Column {
 
     readonly property bool hue: row && row.paramData.curveMode === "hue"
 
+    readonly property var channelNames: hue ? ["hue", "sat", "lum"] : ["master", "r", "g", "b"]
+    readonly property string activeChannel: {
+        const c = row ? row.paramData.curveChannel : ""
+        return c && channelNames.indexOf(c) >= 0 ? c : channelNames[0]
+    }
+
     readonly property var defaultPoints: hue
         ? [{x: 0, y: 0.5, ease: "spline"}, {x: 1, y: 0.5, ease: "spline"}]
         : [{x: 0, y: 0, ease: "spline"}, {x: 1, y: 1, ease: "spline"}]
@@ -62,8 +68,9 @@ Column {
         width: Math.min(parent.width, 260)
         showTabs: false
         hueMode: root.hue
+        channel: root.activeChannel
         curves: root.hue
-            ? ({ hue: root.pointsJson })
+            ? ({ hue: root.pointsJson, sat: root.pointsJson, lum: root.pointsJson })
             : ({ master: root.pointsJson, r: root.pointsJson, g: root.pointsJson, b: root.pointsJson })
         onBegan: EditorState.beginPreviewDrag(qsTr("Edit %1").arg(root.row.paramData.label))
         onChanged: (channel, json) => root.writePoints(json)

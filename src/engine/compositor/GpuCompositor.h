@@ -35,6 +35,9 @@ class VectorPainter;
 namespace drift::model3d {
 struct ModelDrawRequest;
 }
+namespace drift {
+struct ProceduralRequest;
+}
 
 // One frame of a media mask's pixels. A video decodes through the preview path like any clip, so
 // it uploads as YUV (or imports on the GPU) instead of being converted to RGBA on the CPU first,
@@ -74,6 +77,8 @@ struct GpuLayer
     std::shared_ptr<const drift::skia::VectorPainter> vector;
     // A glTF model drawn by GlModelRenderer straight into a full-canvas layer target.
     std::shared_ptr<const drift::model3d::ModelDrawRequest> model3d;
+    // A Lua-built scene drawn by GlProceduralRenderer into a full-canvas layer target, like a model.
+    std::shared_ptr<const drift::ProceduralRequest> procedural;
     // A composite clip's nested timeline, composed into a canvas-sized layer target.
     std::shared_ptr<const struct GpuScene> nested;
     QList<drift::Effect> effects;
@@ -151,7 +156,8 @@ struct GpuLayer
 
     bool hasPixels() const
     {
-        return video.isValid() || vector != nullptr || model3d != nullptr || nested != nullptr
+        return video.isValid() || vector != nullptr || model3d != nullptr || procedural != nullptr
+               || nested != nullptr
                || !source.isNull();
     }
 };
@@ -198,6 +204,8 @@ struct GpuScene
     QMatrix4x4 editorViewProj;
     // The guides drawn into the 3D view: grid, stage, camera, selection. See EditorOverlay.
     QList<drift::EditorLine> editorLines;
+    // The bake this frame was read from, empty when it was composited live.
+    QString bakeId;
 };
 
 // A composited frame still living in GPU memory. The texture belongs to the GL
@@ -213,6 +221,8 @@ struct GpuFrameTexture
     QImage image;
     // Small upright copy of the canvas for the scopes, only when GpuScene asked for one.
     QImage scopeImage;
+    // The bake the frame came from, empty when composited live.
+    QString bakeId;
 
     bool isValid() const { return !size.isEmpty() && (textureId != 0 || !image.isNull()); }
 };

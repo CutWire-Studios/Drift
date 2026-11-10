@@ -19,6 +19,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QScopeGuard>
 #include <QSettings>
 #include <QStandardPaths>
@@ -54,6 +55,7 @@
 #include "engine/ml/audio/ClapTagger.h"
 #include "engine/ml/vision/depth/DepthSidecar.h"
 #include "engine/packages/effects/EffectCatalog.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
 #include "engine/gpu/GlRuntime.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "engine/compositor/GpuCompositor.h"
@@ -99,6 +101,7 @@ private slots:
     void proxySuggestionFollowsThePreference();
     void captureFilesStayOutOfTheProject();
     void subtitleClipKeepsItsChosenName();
+    void splittingANamedSubtitleClipNumbersThePieces();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
@@ -141,6 +144,7 @@ private slots:
     void depthToolsSampleAndClear();
     void catalogDispatcherParity();
     void authoredEffectLifecycle();
+    void proceduralAuthoringLifecycle();
     void effectPresetHousekeeping();
     void textResultRoundsNumbers();
     void validateRejectsWrongType();
@@ -217,6 +221,7 @@ private slots:
     void writingAtAKeyframeReadbackTimeReusesTheKey();
     void keyframeWritesStayInsideTheClip();
     void keyframeEasingThroughMcp();
+    void bulkSmoothKeyframesAndUnlinkedTangents();
     void normalizeVolumeIsRelativeAndIdempotent();
     void duckUnderIsIdempotentAndKeepsTheEnvelope();
     void audioReadOpsAreNotUndoable();
@@ -359,7 +364,7 @@ void McpTest::catalogListsToolboxes()
     const QJsonObject cat = drift::mcp::catalogPayload();
     QVERIFY(cat.value(QStringLiteral("ok")).toBool());
     const QJsonArray boxes = cat.value(QStringLiteral("toolboxes")).toArray();
-    QCOMPARE(boxes.size(), 22);
+    QCOMPARE(boxes.size(), 23);
     QStringList names;
     for (const QJsonValue &v : boxes)
         names.append(v.toObject().value(QStringLiteral("name")).toString());
@@ -379,9 +384,9 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("guide")));
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
-    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 23300);
+    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 24000);
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
-                .toJson(QJsonDocument::Compact).size() < 11700);
+                .toJson(QJsonDocument::Compact).size() < 12500);
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -902,6 +907,46 @@ void McpTest::subtitleClipKeepsItsChosenName()
     cues.removeLast();
     state.setSubtitleCues(0, 0, cues);
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("Subtitles (002)"));
+}
+
+// A subtitle clip with a chosen name is split like any other clip: the new piece gets the next
+// " (N)". One whose name is generated keeps naming each half from its own cues.
+void McpTest::splittingANamedSubtitleClipNumbersThePieces()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Subtitle});
+    const auto subtitleClip = [](const QString &id) {
+        drift::Clip clip;
+        clip.id = id;
+        clip.type = drift::ClipType::Subtitle;
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.srcOut = clip.timelineDuration;
+        clip.subtitleCues = {drift::SubtitleCue{0, drift::secondsToUs(1.0), QStringLiteral("one")},
+                             drift::SubtitleCue{drift::secondsToUs(2.5), drift::secondsToUs(3.5),
+                                                QStringLiteral("two")}};
+        clip.name = drift::subtitleClipName(clip.subtitleCues);
+        return clip;
+    };
+    drift::Clip named = subtitleClip(QStringLiteral("named"));
+    named.name = QStringLiteral("VO script");
+    state.project()->tracks()[0].clips.append(named);
+
+    state.splitClipAt(0, 0, 2.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("VO script"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).name, QStringLiteral("VO script (2)"));
+
+    // Generated: each half is named from the cues it keeps, never with a piece number.
+    state.project()->tracks()[0].clips.clear();
+    state.project()->tracks()[0].clips.append(subtitleClip(QStringLiteral("generated")));
+    state.splitClipAt(0, 0, 2.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    for (const drift::Clip &half : state.project()->tracks().at(0).clips) {
+        QVERIFY2(drift::isGeneratedSubtitleClipName(half.name), qPrintable(half.name));
+        QVERIFY2(!half.name.endsWith(QStringLiteral(" (2)")), qPrintable(half.name));
+    }
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
@@ -3778,6 +3823,115 @@ void McpTest::keyframeEasingThroughMcp()
     QCOMPARE(twoShapes.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
 }
 
+void McpTest::bulkSmoothKeyframesAndUnlinkedTangents()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QVERIFY(state.positionLinked());
+
+    const QJsonObject text = dispatcher.applyOne(
+        QStringLiteral("add_text"),
+        {{QStringLiteral("text"), QStringLiteral("A")}, {QStringLiteral("at"), 0.0}});
+    const QString clip = text.value(QStringLiteral("id")).toString();
+    auto call = [&](const char *tool, QJsonObject args) {
+        args.insert(QStringLiteral("clip"), clip);
+        return dispatcher.applyOne(QString::fromLatin1(tool), args);
+    };
+    auto keysOf = [&](const char *prop) {
+        return call("list_keyframes", {{QStringLiteral("prop"), QString::fromLatin1(prop)}})
+            .value(QStringLiteral("keys")).toArray();
+    };
+
+    const int undoBefore = state.undoIndex();
+    QJsonObject r = call("set_keyframes",
+                         {{QStringLiteral("keys"),
+                           QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}, QJsonArray{2.0, 50.0}}},
+                                       {QStringLiteral("y"), QJsonArray{QJsonObject{{QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 0.0}},
+                                                                        QJsonObject{{QStringLiteral("at"), 2.0}, {QStringLiteral("value"), 20.0}}}}}},
+                          {QStringLiteral("interpolation"), QStringLiteral("smooth")}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    QCOMPARE(r.value(QStringLiteral("written")).toObject().value(QStringLiteral("x")).toInt(), 3);
+    QCOMPARE(state.undoIndex(), undoBefore + 1);
+    QCOMPARE(keysOf("x").size(), 3);
+    QCOMPARE(keysOf("y").size(), 2);
+    const QJsonObject mid = keysOf("x").at(1).toObject();
+    // slope = (50 - 0) / 2 s = 25/s; handles are a third of a 1 s segment.
+    QVERIFY(qAbs(mid.value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+    QVERIFY(qAbs(mid.value(QStringLiteral("outDy")).toDouble() - 25.0 / 3.0) < 1e-3);
+    QVERIFY(qAbs(mid.value(QStringLiteral("inDy")).toDouble() + 25.0 / 3.0) < 1e-3);
+
+    r = call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 5.0}, QJsonArray{1.5, 6.0}}}}},
+                               {QStringLiteral("replace"), true}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(keysOf("x").size(), 2);
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 0.0);
+
+    r = call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 9.0}}},
+                                                                    {QStringLiteral("nope.prop"), QJsonArray{QJsonArray{0.0, 1.0}}}}},
+                               {QStringLiteral("replace"), true}});
+    QVERIFY(!r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(keysOf("x").size(), 2);
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("value")).toDouble(), 5.0);
+
+    QVERIFY(!call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0}}}}}})
+                 .value(QStringLiteral("ok")).toBool());
+    QVERIFY(!call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 1.0}}}}},
+                                    {QStringLiteral("interpolation"), QStringLiteral("wobbly")}})
+                 .value(QStringLiteral("ok")).toBool());
+
+    // x and y tangents are independent over MCP although the editor's link toggle is on.
+    call("set_keyframes", {{QStringLiteral("keys"),
+                            QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}}},
+                                        {QStringLiteral("y"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}}}}},
+                           {QStringLiteral("replace"), true}});
+    auto tangents = [&](const char *prop, double outDy) {
+        return call("set_keyframe_tangents", {{QStringLiteral("prop"), QString::fromLatin1(prop)}, {QStringLiteral("at"), 0.0},
+                                              {QStringLiteral("outDx"), 0.2}, {QStringLiteral("outDy"), outDy}});
+    };
+    QVERIFY(tangents("x", 30.0).value(QStringLiteral("ok")).toBool());
+    QVERIFY(tangents("y", 70.0).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 30.0);
+    QCOMPARE(keysOf("y").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 70.0);
+    QVERIFY(state.positionLinked());
+
+    QVERIFY(call("set_keyframe_tangents", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 0.0},
+                                           {QStringLiteral("outDx"), 0.2}, {QStringLiteral("outDy"), 10.0},
+                                           {QStringLiteral("linked"), true}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(keysOf("y").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 10.0);
+
+    // Per-key and whole-property smooth.
+    call("set_keyframes", {{QStringLiteral("keys"),
+                            QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 10.0}, QJsonArray{2.0, 0.0}}}}},
+                           {QStringLiteral("replace"), true}});
+    state.setPlayheadSeconds(0.25);
+    for (const char *mode : {"ease", "linear", "hold"}) {
+        QVERIFY(call("set_keyframe_interpolation", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0},
+                                                    {QStringLiteral("mode"), QString::fromLatin1(mode)}})
+                    .value(QStringLiteral("ok")).toBool());
+        QCOMPARE(state.playheadSeconds(), 0.25);
+    }
+    QCOMPARE(keysOf("x").at(1).toObject().value(QStringLiteral("hold")).toBool(), true);
+    QVERIFY(call("set_keyframe", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0}, {QStringLiteral("value"), 10.0}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject unknownProp = call("set_keyframe", {{QStringLiteral("prop"), QStringLiteral("text.nope")}, {QStringLiteral("at"), 1.0},
+                                                          {QStringLiteral("value"), 1.0}});
+    QVERIFY(!unknownProp.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(unknownProp.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY(!state.setClipKeyframe(0, 0, QStringLiteral("nope"), 1.0, 1.0));
+    QVERIFY(call("set_keyframe_interpolation", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0},
+                                                {QStringLiteral("mode"), QStringLiteral("smooth")}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(qAbs(keysOf("x").at(1).toObject().value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDx")).toDouble(), 0.0);
+    QVERIFY(call("set_keyframe_easing", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("all"), true},
+                                         {QStringLiteral("smooth"), true}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(qAbs(keysOf("x").at(0).toObject().value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+}
+
 void McpTest::setVolumeRoundTrips()
 {
     AssetLibrary library;
@@ -6398,6 +6552,281 @@ void McpTest::authoredEffectLifecycle()
                  .value(QStringLiteral("uses")).toInt(), 1);
 }
 
+// The worked example in docs/procedural.md: each "### <file>" heading under "## Worked example" is
+// followed by one fenced block. Testing the doc's own text keeps the guide and the tools in step.
+static QMap<QString, QString> proceduralDocExample()
+{
+    QFile doc(QStringLiteral(":/docs/procedural.md"));
+    if (!doc.open(QIODevice::ReadOnly))
+        return {};
+    const QString text = QString::fromUtf8(doc.readAll());
+    const qsizetype start = text.indexOf(QStringLiteral("## Worked example"));
+    const qsizetype end = text.indexOf(QStringLiteral("\n## MCP workflow"));
+    if (start < 0 || end < start)
+        return {};
+    QMap<QString, QString> files;
+    const QRegularExpression re(QStringLiteral("### ([A-Za-z0-9_.]+)\\n\\n```[a-z]*\\n(.*?)\\n```"),
+                                QRegularExpression::DotMatchesEverythingOption);
+    auto it = re.globalMatch(text.mid(start, end - start));
+    while (it.hasNext()) {
+        const QRegularExpressionMatch m = it.next();
+        files.insert(m.captured(1), m.captured(2) + QLatin1Char('\n'));
+    }
+    return files;
+}
+
+void McpTest::proceduralAuthoringLifecycle()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const auto restore = qScopeGuard([&] {
+        QDir(QDir(appData).filePath(QStringLiteral("procedurals"))).removeRecursively();
+        reloadProceduralCatalog();
+        QStandardPaths::setTestModeEnabled(false);
+    });
+    QDir(QDir(appData).filePath(QStringLiteral("procedurals"))).removeRecursively();
+    reloadProceduralCatalog();
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *op, const QJsonObject &args = {}) {
+        return dispatcher.applyOne(QString::fromLatin1(op), args);
+    };
+    const auto dump = [](const QJsonObject &o) { return qPrintable(QJsonDocument(o).toJson()); };
+
+    QMap<QString, QString> example = proceduralDocExample();
+    QVERIFY2(example.size() == 4, "docs/procedural.md worked example must have 4 files");
+    const QJsonObject manifest = QJsonDocument::fromJson(example.take(QStringLiteral("procedural.json")).toUtf8()).object();
+    QVERIFY(!manifest.isEmpty());
+    const auto filesJson = [](const QMap<QString, QString> &files) {
+        QJsonObject o;
+        for (auto it = files.cbegin(); it != files.cend(); ++it)
+            o.insert(it.key(), it.value());
+        return o;
+    };
+    const auto createArgs = [&](const QString &slug, const QMap<QString, QString> &files) {
+        return QJsonObject{{QStringLiteral("slug"), slug},
+                           {QStringLiteral("manifest"), manifest},
+                           {QStringLiteral("files"), filesJson(files)}};
+    };
+    const QString target = QDir(appData).filePath(QStringLiteral("procedurals/orbs"));
+
+    // The guide is the docs file itself.
+    const QJsonObject guide = call("procedural_authoring_guide");
+    QVERIFY(guide.value(QStringLiteral("ok")).toBool());
+    QFile docFile(QStringLiteral(":/docs/procedural.md"));
+    QVERIFY(docFile.open(QIODevice::ReadOnly));
+    QCOMPARE(guide.value(QStringLiteral("guide")).toString(), QString::fromUtf8(docFile.readAll()));
+
+    // Invalid packages install nothing.
+    QMap<QString, QString> noPartner = example;
+    noPartner.remove(QStringLiteral("lit.frag"));
+    QCOMPARE(call("create_procedural", createArgs(QStringLiteral("orbs"), noPartner)).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_manifest"));
+    QMap<QString, QString> syntax = example;
+    syntax.insert(QStringLiteral("main.lua"), QStringLiteral("local = = 1\n"));
+    const QJsonObject syntaxReply = call("create_procedural", createArgs(QStringLiteral("orbs"), syntax));
+    QCOMPARE(syntaxReply.value(QStringLiteral("error")).toString(), QStringLiteral("lua_error"));
+    QVERIFY(!syntaxReply.value(QStringLiteral("errors")).toArray().isEmpty());
+    QMap<QString, QString> wrongShader = example;
+    wrongShader.insert(QStringLiteral("main.lua"), example.value(QStringLiteral("main.lua")).replace(QStringLiteral("\"lit\""), QStringLiteral("\"missing\"")));
+    const QJsonObject wrongReply = call("create_procedural", createArgs(QStringLiteral("orbs"), wrongShader));
+    QCOMPARE(wrongReply.value(QStringLiteral("error")).toString(), QStringLiteral("lua_error"));
+    QVERIFY(wrongReply.value(QStringLiteral("errors")).toArray().at(0).toString().contains(QStringLiteral("missing")));
+    QCOMPARE(call("create_procedural", createArgs(QStringLiteral("Bad Slug!"), example)).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    const bool haveGl = drift::gl::runtime().available();
+    if (haveGl) {
+        QMap<QString, QString> brokenGlsl = example;
+        brokenGlsl.insert(QStringLiteral("lit.frag"), QStringLiteral("#version 330 core\nvoid main() { nope; }\n"));
+        const QJsonObject broken = call("create_procedural", createArgs(QStringLiteral("orbs"), brokenGlsl));
+        QCOMPARE(broken.value(QStringLiteral("error")).toString(), QStringLiteral("shader_compile_failed"));
+        QVERIFY(broken.value(QStringLiteral("errors")).toArray().at(0).toString().startsWith(QStringLiteral("lit:")));
+        QVERIFY(!broken.value(QStringLiteral("shaders")).toObject().value(QStringLiteral("lit")).toObject().value(QStringLiteral("ok")).toBool());
+    }
+    QVERIFY(!QFileInfo::exists(target));
+    QVERIFY(!hasProcedural(QStringLiteral("user.orbs")));
+
+    // The doc's example validates and installs.
+    const QJsonObject created = call("create_procedural", createArgs(QStringLiteral("orbs"), example));
+    QVERIFY2(created.value(QStringLiteral("ok")).toBool(), dump(created));
+    QCOMPARE(created.value(QStringLiteral("id")).toString(), QStringLiteral("user.orbs"));
+    QCOMPARE(created.value(QStringLiteral("shaderCheck")).toString(), haveGl ? QStringLiteral("ok") : QStringLiteral("skipped"));
+    QCOMPARE(created.value(QStringLiteral("stats")).toObject().value(QStringLiteral("instanceCount")).toInt(), 36);
+    QVERIFY(hasProcedural(QStringLiteral("user.orbs")));
+    QCOMPARE(call("create_procedural", createArgs(QStringLiteral("orbs"), example)).value(QStringLiteral("error")).toString(),
+             QStringLiteral("exists"));
+
+    bool listed = false;
+    for (const QJsonValue &v : call("list_procedurals").value(QStringLiteral("procedurals")).toArray()) {
+        const QJsonObject row = v.toObject();
+        if (row.value(QStringLiteral("id")).toString() != QLatin1String("user.orbs"))
+            continue;
+        listed = true;
+        QVERIFY(row.value(QStringLiteral("user")).toBool());
+        QCOMPARE(row.value(QStringLiteral("params")).toArray().size(), 6);
+        QCOMPARE(row.value(QStringLiteral("shaders")).toArray().at(0).toString(), QStringLiteral("lit"));
+    }
+    QVERIFY(listed);
+
+    const QJsonObject source = call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}});
+    QVERIFY2(source.value(QStringLiteral("ok")).toBool(), dump(source));
+    QVERIFY(source.value(QStringLiteral("user")).toBool());
+    QCOMPARE(source.value(QStringLiteral("uses")).toInt(), 0);
+    QCOMPARE(source.value(QStringLiteral("files")).toObject().value(QStringLiteral("lit.vert")).toString(), example.value(QStringLiteral("lit.vert")));
+    QCOMPARE(source.value(QStringLiteral("manifest")).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("user.orbs"));
+    QCOMPARE(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.nope")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+
+    // evaluate by id: counts, bounds, lights, camera mode.
+    const QJsonObject eval = call("evaluate_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                                          {QStringLiteral("t"), 1.5},
+                                                          {QStringLiteral("params"), QJsonObject{{QStringLiteral("count"), 3}}}});
+    QVERIFY2(eval.value(QStringLiteral("ok")).toBool(), dump(eval));
+    QCOMPARE(eval.value(QStringLiteral("stats")).toObject().value(QStringLiteral("instanceCount")).toInt(), 9);
+    QCOMPARE(eval.value(QStringLiteral("cameraMode")).toString(), QStringLiteral("world"));
+    QVERIFY(!eval.value(QStringLiteral("cameraRead")).toBool());
+    QCOMPARE(eval.value(QStringLiteral("lights")).toArray().size(), 2);
+    QCOMPARE(eval.value(QStringLiteral("meshes")).toArray().at(0).toObject().value(QStringLiteral("shader")).toString(), QStringLiteral("lit"));
+    const QJsonObject bounds = eval.value(QStringLiteral("bounds")).toObject();
+    QVERIFY(bounds.value(QStringLiteral("max")).toArray().at(0).toDouble() > bounds.value(QStringLiteral("min")).toArray().at(0).toDouble());
+    QCOMPARE(call("evaluate_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                          {QStringLiteral("params"), QJsonObject{{QStringLiteral("nope"), 1}}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // update: partial files, then a camera of its own flips the mode.
+    QString ownCamera = example.value(QStringLiteral("main.lua"));
+    ownCamera += QStringLiteral("scene:camera{eye = {cx, cy, -900}, target = {cx, cy, 0}, fov = 0.8}\nprint('own camera')\n");
+    const QJsonObject updated = call("update_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                                           {QStringLiteral("files"), QJsonObject{{QStringLiteral("main.lua"), ownCamera}}}});
+    QVERIFY2(updated.value(QStringLiteral("ok")).toBool(), dump(updated));
+    QCOMPARE(updated.value(QStringLiteral("log")).toArray().at(0).toString(), QStringLiteral("own camera"));
+    const QJsonObject own = call("evaluate_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")}});
+    QCOMPARE(own.value(QStringLiteral("cameraMode")).toString(), QStringLiteral("own"));
+    QVERIFY(own.value(QStringLiteral("camera")).toObject().contains(QStringLiteral("eye")));
+    QVERIFY(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}})
+                .value(QStringLiteral("files")).toObject().value(QStringLiteral("lit.frag")).toString()
+            == example.value(QStringLiteral("lit.frag")));
+    const QJsonObject badUpdate = call("update_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                                             {QStringLiteral("files"), QJsonObject{{QStringLiteral("main.lua"), QStringLiteral("error('boom')")}}}});
+    QCOMPARE(badUpdate.value(QStringLiteral("error")).toString(), QStringLiteral("lua_error"));
+    QVERIFY(badUpdate.value(QStringLiteral("errors")).toArray().at(0).toString().contains(QStringLiteral("boom")));
+    QVERIFY(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}})
+                .value(QStringLiteral("files")).toObject().value(QStringLiteral("main.lua")).toString().contains(QStringLiteral("own camera")));
+    QCOMPARE(call("update_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                        {QStringLiteral("remove_files"), QJsonArray{QStringLiteral("lit.frag")}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_manifest"));
+
+    // edits: exact-once replacements applied before validation; a miss writes nothing.
+    const QJsonObject edited = call("update_procedural",
+                                    {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                     {QStringLiteral("edits"), QJsonArray{QJsonObject{{QStringLiteral("file"), QStringLiteral("main.lua")},
+                                                                                       {QStringLiteral("old"), QStringLiteral("print('own camera')")},
+                                                                                       {QStringLiteral("new"), QStringLiteral("print('edited')")}}}}});
+    QVERIFY2(edited.value(QStringLiteral("ok")).toBool(), dump(edited));
+    QCOMPARE(edited.value(QStringLiteral("log")).toArray().at(0).toString(), QStringLiteral("edited"));
+    const QString mainAfter = call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}})
+                                  .value(QStringLiteral("files")).toObject().value(QStringLiteral("main.lua")).toString();
+    QVERIFY(mainAfter.contains(QStringLiteral("print('edited')")) && !mainAfter.contains(QStringLiteral("own camera')")));
+    for (const QString &old : {QStringLiteral("no such text"), QStringLiteral("local")}) {
+        const QJsonObject missed = call("update_procedural",
+                                        {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                         {QStringLiteral("edits"), QJsonArray{QJsonObject{{QStringLiteral("file"), QStringLiteral("main.lua")},
+                                                                                           {QStringLiteral("old"), QStringLiteral("print('edited')")},
+                                                                                           {QStringLiteral("new"), QStringLiteral("print('again')")}},
+                                                                              QJsonObject{{QStringLiteral("file"), QStringLiteral("main.lua")},
+                                                                                           {QStringLiteral("old"), old},
+                                                                                           {QStringLiteral("new"), QStringLiteral("x")}}}}});
+        QCOMPARE(missed.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY2(missed.value(QStringLiteral("detail")).toString().contains(QStringLiteral("edits[1] (main.lua)")),
+                 dump(missed));
+    }
+    QCOMPARE(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}})
+                 .value(QStringLiteral("files")).toObject().value(QStringLiteral("main.lua")).toString(),
+             mainAfter);
+
+    // Back to the world camera for the clip.
+    QVERIFY(call("update_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                       {QStringLiteral("files"), filesJson({{QStringLiteral("main.lua"), example.value(QStringLiteral("main.lua"))}})}})
+                .value(QStringLiteral("ok")).toBool());
+
+    // Placing, keyframing and evaluating a clip.
+    QCOMPARE(call("add_procedural", {{QStringLiteral("id"), QStringLiteral("user.nope")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(call("add_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                     {QStringLiteral("params"), QJsonObject{{QStringLiteral("nope"), 1}}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    const int tracksBefore = state.project()->tracks().size();
+    const QJsonObject added = call("add_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                                      {QStringLiteral("at"), 0.0},
+                                                      {QStringLiteral("duration"), 4.0},
+                                                      {QStringLiteral("params"), QJsonObject{{QStringLiteral("count"), 3}}}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(), dump(added));
+    QVERIFY(state.project()->tracks().size() >= tracksBefore);
+    const QString clipId = added.value(QStringLiteral("id")).toString();
+    const auto clipRef = [&]() -> const drift::Clip & {
+        return state.project()->tracks().at(added.value(QStringLiteral("track")).toInt()).clips.at(added.value(QStringLiteral("index")).toInt());
+    };
+    QCOMPARE(clipRef().type, drift::ClipType::Procedural);
+    QCOMPARE(clipRef().procedural.parameters.value(QStringLiteral("count")).toInt(), 3);
+    QCOMPARE(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}}).value(QStringLiteral("uses")).toInt(), 1);
+
+    QCOMPARE(call("set_keyframe", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.bogus")},
+                                   {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 1.0}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(call("set_keyframe", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.tint")},
+                                   {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 1.0}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    for (const auto &[at, value] : {std::pair{0.0, 1.0}, std::pair{2.0, 5.0}}) {
+        const QJsonObject keyed = call("set_keyframe", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.speed")},
+                                                        {QStringLiteral("at"), at}, {QStringLiteral("value"), value}});
+        QVERIFY2(keyed.value(QStringLiteral("ok")).toBool(), dump(keyed));
+    }
+    QVERIFY(call("set_keyframe", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.tint.r")},
+                                  {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 0.25}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject keys = call("list_keyframes", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.speed")}});
+    QCOMPARE(keys.value(QStringLiteral("keys")).toArray().size(), 2);
+    QCOMPARE(keys.value(QStringLiteral("keys")).toArray().at(1).toObject().value(QStringLiteral("value")).toDouble(), 5.0);
+    QCOMPARE(clipRef().procedural.paramKeyframes.value(QStringLiteral("speed")).keyframes().size(), 2);
+    const QJsonArray animated = call("list_animated_properties", {{QStringLiteral("clip"), clipId}}).value(QStringLiteral("props")).toArray();
+    QVERIFY(animated.contains(QStringLiteral("proc.speed")));
+    QVERIFY(animated.contains(QStringLiteral("proc.tint.r")));
+
+    // Undo takes the second key back out.
+    QVERIFY(call("undo").value(QStringLiteral("ok")).toBool());
+    QVERIFY(call("undo").value(QStringLiteral("ok")).toBool());
+    QCOMPARE(call("list_keyframes", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.speed")}})
+                 .value(QStringLiteral("keys")).toArray().size(), 1);
+    QVERIFY(call("redo").value(QStringLiteral("ok")).toBool());
+    QCOMPARE(call("list_keyframes", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.speed")}})
+                 .value(QStringLiteral("keys")).toArray().size(), 2);
+
+    const QJsonObject clipEval = call("evaluate_procedural", {{QStringLiteral("clip"), clipId}, {QStringLiteral("t"), 1.0}});
+    QVERIFY2(clipEval.value(QStringLiteral("ok")).toBool(), dump(clipEval));
+    QCOMPARE(clipEval.value(QStringLiteral("stats")).toObject().value(QStringLiteral("instanceCount")).toInt(), 9);
+    QCOMPARE(clipEval.value(QStringLiteral("id")).toString(), QStringLiteral("user.orbs"));
+    QCOMPARE(call("evaluate_procedural", {{QStringLiteral("clip"), addTextClip(dispatcher)}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("type_mismatch"));
+
+    // Delete refuses while a clip uses it.
+    const QJsonObject inUse = call("delete_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")}});
+    QCOMPARE(inUse.value(QStringLiteral("error")).toString(), QStringLiteral("in_use"));
+    QVERIFY(QFileInfo::exists(target));
+    QCOMPARE(call("delete_procedural", {{QStringLiteral("id"), QStringLiteral("adjust.brightness")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    const QJsonObject deleted = call("delete_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")}, {QStringLiteral("force"), true}});
+    QVERIFY2(deleted.value(QStringLiteral("ok")).toBool(), dump(deleted));
+    QVERIFY(!QFileInfo::exists(target));
+    QVERIFY(!hasProcedural(QStringLiteral("user.orbs")));
+}
+
 void McpTest::effectPresetHousekeeping()
 {
     QStandardPaths::setTestModeEnabled(true);
@@ -6647,6 +7076,22 @@ void McpTest::setTransformWrites3dPose()
     QCOMPARE(state.preview()->clipAtCanvasPoint(cx, cy).value(QStringLiteral("clip")).toInt(), loc.second);
     const double flatRight = box.value(QStringLiteral("x")).toDouble() + box.value(QStringLiteral("width")).toDouble() - 1;
     QVERIFY(state.preview()->clipAtCanvasPoint(flatRight, cy).isEmpty());
+
+    // depth_occlude: off by default, on for a 3D layer, refused for a flat one.
+    QVERIFY(!r.contains(QStringLiteral("depth_occlude")));
+    const QJsonObject occl = dispatcher.applyOne(
+        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("depth_occlude"), true}});
+    QVERIFY2(occl.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(occl).toJson(QJsonDocument::Compact)));
+    QVERIFY(occl.value(QStringLiteral("depth_occlude")).toBool());
+    QVERIFY(state.project()->tracks().at(state.mcp()->locateClip(clip).first).clips
+                .at(state.mcp()->locateClip(clip).second).depthOcclude);
+    state.undo();
+    QVERIFY(!state.project()->tracks().at(state.mcp()->locateClip(clip).first).clips
+                 .at(state.mcp()->locateClip(clip).second).depthOcclude);
+    const QJsonObject flatOccl = dispatcher.applyOne(
+        QStringLiteral("set_transform"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("layer3d"), false}, {QStringLiteral("depth_occlude"), true}});
+    QVERIFY(!flatOccl.value(QStringLiteral("ok")).toBool());
 
     // The anchor point is the pivot: unset until written, then reported with the other 3D fields.
     QVERIFY(!r.contains(QStringLiteral("anchorX")));

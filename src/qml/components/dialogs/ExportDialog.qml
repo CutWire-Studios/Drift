@@ -36,6 +36,8 @@ ThemedDialog {
     property int audioBitrateKbps: 192
     property bool advancedOpen: false
     property bool exportWorkAreaOnly: false
+    property bool useBakes: true
+    property var staleBakes: []
 
     // Export frame rate. fpsNum 0 means "follow the project fps". Rational so the
     // NTSC rates (30000/1001 and friends) survive the round-trip.
@@ -335,7 +337,8 @@ ThemedDialog {
             "audioBitrateKbps": audioBitrateKbps,
             "audioOnly": isAudioOnly,
             "gifExport": isGifExport,
-            "exportWorkAreaOnly": exportWorkAreaOnly && EditorState.workAreaActive
+            "exportWorkAreaOnly": exportWorkAreaOnly && EditorState.workAreaActive,
+            "bakes": useBakes ? "all" : "none"
         }
         if (s.exportWorkAreaOnly) {
             s.startUs = Math.round(EditorState.workAreaInSeconds * 1000000)
@@ -355,6 +358,20 @@ ThemedDialog {
     }
 
     onAccepted: {
+        if (useBakes && !isAudioOnly && !isGifExport) {
+            const wholeRange = !(exportWorkAreaOnly && EditorState.workAreaActive)
+            staleBakes = EditorState.bakes.staleBakesIn(
+                wholeRange ? 0 : EditorState.workAreaInSeconds,
+                wholeRange ? EditorState.durationSeconds : EditorState.workAreaOutSeconds)
+            if (staleBakes.length > 0) {
+                staleBakesDialog.open()
+                return
+            }
+        }
+        startExport("all")
+    }
+
+    function startExport(bakeMode) {
         var container = isGifExport ? "gif"
                 : isAudioOnly
                   ? EditorState.exportPreferredAudioOnlyContainer(audioCodecId)
@@ -371,10 +388,67 @@ ThemedDialog {
                                        suggestedName, suffix,
                                        EditorState.lastExportFolder())
         if (url != "") {
-            EditorState.exportWithSettings(url, buildSettings())
+            const settings = buildSettings()
+            settings.bakes = useBakes ? bakeMode : "none"
+            EditorState.exportWithSettings(url, settings)
             Toasts.info(qsTr("Export started…"))
         } else {
             Toasts.info(qsTr("Export cancelled."))
+        }
+    }
+
+    ThemedDialog {
+        id: staleBakesDialog
+        title: qsTr("Some bakes are out of date")
+        preferredWidth: Theme.dialogWidthSm
+        showFooter: false
+        acceptOnReturn: false
+
+        contentItem: Column {
+            width: parent ? parent.width : Theme.dialogWidthSm
+            spacing: Theme.spacingXl
+
+            ThemedLabel {
+                width: parent.width
+                size: "sm"
+                tone: "default"
+                text: qsTr("%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.", "",
+                           root.staleBakes.length)
+            }
+
+            Flow {
+                width: parent.width
+                spacing: Theme.spacingMd
+
+                ThemedButton {
+                    variant: "primary"
+                    text: qsTr("Re-bake first")
+                    onClicked: {
+                        staleBakesDialog.close()
+                        EditorState.bakes.rebakeAllStale()
+                        Toasts.info(qsTr("Re-baking. Export again when it finishes."))
+                    }
+                }
+                ThemedButton {
+                    text: qsTr("Render them live")
+                    onClicked: {
+                        staleBakesDialog.close()
+                        root.startExport("fresh")
+                    }
+                }
+                ThemedButton {
+                    text: qsTr("Export as is")
+                    onClicked: {
+                        staleBakesDialog.close()
+                        root.startExport("all")
+                    }
+                }
+                ThemedButton {
+                    variant: "ghost"
+                    text: qsTr("Cancel")
+                    onClicked: staleBakesDialog.close()
+                }
+            }
         }
     }
 
@@ -406,6 +480,15 @@ ThemedDialog {
             ExportDialogModeBar { dialog: root }
 
             ExportDialogWorkAreaCheck { dialog: root }
+
+            ThemedCheckBox {
+                width: parent.width
+                visible: root.exportMode === "video" && EditorState.bakes.bakes.length > 0
+                text: qsTr("Use baked ranges")
+                checked: root.useBakes
+                tooltip: qsTr("Read pre-rendered ranges instead of compositing them again")
+                onToggled: root.useBakes = checked
+            }
 
             ExportDialogVideoSection {
                 id: videoSection

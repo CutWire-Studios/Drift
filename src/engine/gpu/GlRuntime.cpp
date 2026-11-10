@@ -6,8 +6,10 @@
 #include "engine/decode/readers/ClipReader.h"
 #include "engine/face/tracking/Face111.h"
 #include "engine/ml/vision/depth/DepthSidecar.h"
+#include "engine/procedural/ProceduralDiagnostics.h"
 #include "engine/render3d/models/GlModelRenderer.h"
 #include "engine/render3d/splats/GlSplatRenderer.h"
+#include "engine/render3d/procedural/GlProceduralRenderer.h"
 #include "engine/gpu/device/GpuDevice.h"
 #include "engine/decode/SwsColorRange.h"
 #include "engine/decode/hw/VaapiZeroCopy.h"
@@ -27,6 +29,7 @@
 #include <QOffscreenSurface>
 #include <QFileInfo>
 #include <QOpenGLContext>
+#include <QRegularExpression>
 #include <QSet>
 #include <QScopeGuard>
 #include <QSettings>
@@ -1391,6 +1394,7 @@ void GlRuntime::releaseCaches()
         if (auto *gl = functions()) {
             destroyGlModels(*this, gl);
             destroyGlSplats(*this, gl);
+            destroyGlProcedurals(*this, gl);
         }
     });
 }
@@ -1434,10 +1438,12 @@ void GlRuntime::shutdown()
             m_pooledTargets = 0;
             m_pooledTargetBytes = 0;
             programs.clear();
+            userPrograms.clear();
             copyProgram.reset();
             if (auto *gl = context->extraFunctions()) {
                 destroyGlModels(*this, gl);
                 destroyGlSplats(*this, gl);
+                destroyGlProcedurals(*this, gl);
                 for (const auto &entry : staticTextures) {
                     GLuint tex = entry.second;
                     gl->glDeleteTextures(1, &tex);
@@ -3108,6 +3114,110 @@ bool GlRuntime::validateProgram(const drift::GpuEffectDefinition &gpu, QStringLi
                 errors->append(QStringLiteral("%1 link: %2").arg(where, program.log().trimmed()));
         }
     });
+}
+
+namespace {
+
+struct UserAttribute
+{
+    QString name;
+    int location = -1; // -1: assign the next free custom slot
+};
+
+// Input declarations of a user vertex shader: `[layout(location = N)] in [precision] type a_name;`
+QList<UserAttribute> userVertexInputs(const QString &source)
+{
+    static const QRegularExpression pattern(
+        QStringLiteral(R"((?:layout\s*\(\s*location\s*=\s*(\d+)\s*\)\s*)?\bin\s+(?:(?:highp|mediump|lowp)\s+)?\w+\s+(a_\w+)\s*;)"));
+    QString stripped = source;
+    stripped.remove(QRegularExpression(QStringLiteral(R"(//[^\n]*|/\*.*?\*/)"),
+                                       QRegularExpression::DotMatchesEverythingOption));
+    QList<UserAttribute> out;
+    auto it = pattern.globalMatch(stripped);
+    while (it.hasNext()) {
+        const QRegularExpressionMatch m = it.next();
+        out.append({m.captured(2), m.hasCaptured(1) && !m.captured(1).isEmpty() ? m.captured(1).toInt() : -1});
+    }
+    return out;
+}
+
+} // namespace
+
+const UserProgram *GlRuntime::compileUserProgram(const QString &sourceHash, const QString &shaderName,
+                                                 const QString &vertexSource, const QString &fragmentSource,
+                                                 QString *log)
+{
+    const QString cacheKey = sourceHash + QLatin1Char('/') + shaderName;
+    const auto cached = userPrograms.find(cacheKey);
+    if (cached != userPrograms.end()) {
+        if (log)
+            *log = cached->second.log;
+        return cached->second.ok ? &cached->second : nullptr;
+    }
+    // Packages come and go as they are edited; a full flush now and then is cheaper than tracking use.
+    if (userPrograms.size() >= 96)
+        userPrograms.clear();
+
+    UserProgram result;
+    auto program = std::make_unique<QOpenGLShaderProgram>();
+    const bool built =
+        program->addShaderFromSourceCode(QOpenGLShader::Vertex, translateShader(vertexSource, false))
+        && program->addShaderFromSourceCode(QOpenGLShader::Fragment, translateShader(fragmentSource, true));
+    if (built) {
+        static const std::pair<const char *, int> kFixed[] = {{"a_position", 0}, {"a_normal", 1}, {"a_uv", 2},
+                                                              {"a_color", 3}, {"a_instanceMatrix", 12}};
+        for (const auto &[name, location] : kFixed)
+            program->bindAttributeLocation(QLatin1String(name), location);
+        int nextCustom = 4;
+        QSet<int> taken;
+        const QList<UserAttribute> inputs = userVertexInputs(vertexSource);
+        for (const UserAttribute &input : inputs) {
+            if (input.location >= 4 && input.location <= 11)
+                taken.insert(input.location);
+        }
+        for (const UserAttribute &input : inputs) {
+            bool fixed = false;
+            for (const auto &entry : kFixed)
+                fixed = fixed || input.name == QLatin1String(entry.first);
+            if (fixed)
+                continue;
+            int location = input.location;
+            if (location < 0) {
+                while (nextCustom <= 11 && taken.contains(nextCustom))
+                    ++nextCustom;
+                location = nextCustom++;
+                if (location > 11) {
+                    result.log = QStringLiteral("more than 8 custom vertex attributes (a_%1 has no slot)").arg(input.name.mid(2));
+                    result.ok = false;
+                    drift::ProceduralDiagnostics::shared().setShader(
+                        sourceHash.toStdString(), shaderName.toStdString(), {false, result.log.toStdString()});
+                    userPrograms.emplace(cacheKey, std::move(result));
+                    if (log)
+                        *log = userPrograms.at(cacheKey).log;
+                    return nullptr;
+                }
+                program->bindAttributeLocation(input.name, location);
+            }
+            result.customNames.append(input.name.mid(2));
+            result.customLocations.append(location);
+        }
+    }
+    if (!built || !program->link()) {
+        result.log = program->log().trimmed();
+        if (result.log.isEmpty())
+            result.log = QStringLiteral("shader compilation failed");
+        result.ok = false;
+    } else {
+        result.log = program->log().trimmed();
+        result.program = std::move(program);
+        result.ok = true;
+    }
+    drift::ProceduralDiagnostics::shared().setShader(sourceHash.toStdString(), shaderName.toStdString(),
+                                                     {result.ok, result.log.toStdString()});
+    const auto it = userPrograms.emplace(cacheKey, std::move(result)).first;
+    if (log)
+        *log = it->second.log;
+    return it->second.ok ? &it->second : nullptr;
 }
 
 CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffectDefinition &gpu)

@@ -101,6 +101,35 @@ struct GlModelGpu
     int paletteRows = 0;
 };
 
+// A user shader pair of a procedural package, linked with the procedural attribute layout
+// (0 position, 1 normal, 2 uv, 3 color, 4-11 custom a_<name> in declaration order, 12-15
+// a_instanceMatrix). `ok` false means `log` holds why it failed and `program` is null.
+struct UserProgram
+{
+    std::unique_ptr<QOpenGLShaderProgram> program;
+    QStringList customNames;   // attribute names without the "a_" prefix, in location order
+    QVector<int> customLocations;
+    QString log;
+    bool ok = false;
+};
+
+// One procedural mesh's buffers, keyed by its content hash so identical geometry from successive
+// frames reuses them. Owned by GlRuntime::procedurals.
+struct ProceduralMeshGpu
+{
+    std::uint64_t hash = 0;
+    GLuint position = 0;
+    GLuint normal = 0;
+    GLuint uv = 0;
+    GLuint color = 0;
+    GLuint indices = 0;
+    GLuint instances = 0;
+    std::vector<GLuint> custom; // parallel to ProceduralMesh::custom
+    // One VAO per distinct custom-attribute layout a shader asked for (almost always one).
+    std::vector<std::pair<std::string, GLuint>> vaos;
+    size_t bytes = 0;
+};
+
 struct CompiledPass
 {
     std::unique_ptr<QOpenGLShaderProgram> program;
@@ -169,6 +198,18 @@ public:
         static constexpr size_t kMaxBytes = 192ull * 1024 * 1024;
     };
     ModelCache models;
+
+    // Procedural clips: linked user programs by "<sourceHash>/<shader>" and uploaded meshes, both
+    // bounded. Destroyed in shutdown(); the meshes also in releaseCaches().
+    std::map<QString, UserProgram> userPrograms;
+    struct ProceduralCache
+    {
+        std::list<ProceduralMeshGpu> lru;
+        std::unordered_map<std::uint64_t, std::list<ProceduralMeshGpu>::iterator> index;
+        size_t totalBytes = 0;
+        static constexpr size_t kMaxBytes = 256ull * 1024 * 1024;
+    };
+    ProceduralCache procedurals;
 
     // Static UV sphere for head-proxy occlusion. Built once on first model3d draw.
     struct HeadProxy
@@ -274,6 +315,16 @@ public:
     // Compiles every pass into throwaway programs, leaving the cache alone, and appends each
     // driver log to `errors`. Returns false when OpenGL is unavailable and nothing was checked.
     bool validateProgram(const drift::GpuEffectDefinition &gpu, QStringList *errors);
+
+    // Compiles and links a procedural package's vertex/fragment pair (both through the usual
+    // `#version 330 core` to ES 3.00 translation), cached by (sourceHash, shaderName). A failure is
+    // cached too, so a broken shader is not recompiled every frame. Either way the outcome and the
+    // driver log are recorded in ProceduralDiagnostics::shaders(sourceHash) the first time, and the
+    // log is also returned in *log. Returns null on failure. GL thread only: wrap in exec() from
+    // anywhere else.
+    const UserProgram *compileUserProgram(const QString &sourceHash, const QString &shaderName,
+                                          const QString &vertexSource, const QString &fragmentSource,
+                                          QString *log = nullptr);
 
     // Framebuffers are recycled by size (and depth attachment): allocating a fresh FBO per
     // effect per frame churns GPU memory during steady-state playback. wantDepth is only set
