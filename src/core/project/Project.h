@@ -124,7 +124,7 @@ struct Sequence
 class Project
 {
 public:
-    static constexpr int kCurrentVersion = 22;
+    static constexpr int kCurrentVersion = 24;
 
     Project() { resetToDefaultTimeline(); }
 
@@ -141,6 +141,9 @@ public:
 
     QString description() const { return m_description; }
     void setDescription(const QString &description) { m_description = description; }
+    // Not undoable: ProjectSnapshotCommand carries the live script across undo/redo.
+    QString teleprompterScript() const { return m_teleprompterScript; }
+    void setTeleprompterScript(const QString &script) { m_teleprompterScript = script; }
 
     QDateTime createdAt() const { return m_createdAt; }
     void setCreatedAt(const QDateTime &createdAt) { m_createdAt = createdAt; }
@@ -287,6 +290,7 @@ private:
     QString m_id;
     QString m_author;
     QString m_description;
+    QString m_teleprompterScript;
     QDateTime m_createdAt;
     QDateTime m_modifiedAt;
     int m_fps = 30;

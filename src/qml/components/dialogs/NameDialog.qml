@@ -8,10 +8,12 @@ import Drift
 ThemedDialog {
     id: root
 
-    // Emitted with the trimmed name; never fires empty.
+    // Emitted with the trimmed name; never fires empty unless allowEmpty (a clearable field).
     signal submitted(string name)
 
     property alias placeholder: nameField.placeholderText
+    property string fieldLabel: qsTr("Name")
+    property bool allowEmpty: false
 
     acceptText: qsTr("Save")
     preferredWidth: Theme.dialogWidthSm
@@ -26,7 +28,7 @@ ThemedDialog {
 
     onAccepted: {
         const name = nameField.text.trim()
-        if (name.length > 0)
+        if (name.length > 0 || root.allowEmpty)
             root.submitted(name)
     }
 
@@ -35,7 +37,7 @@ ThemedDialog {
         width: parent ? parent.width : 320
 
         ThemedLabel {
-            text: qsTr("Name")
+            text: root.fieldLabel
         }
 
         ThemedTextField {

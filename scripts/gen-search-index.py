@@ -50,6 +50,9 @@ FILE_TARGETS = {
     "Transform3dInspector.qml": "panel:transform3d",
     "Camera3dPanel.qml": "panel:camera3d",
     "View3dPanel.qml": "panel:view3d",
+    "ProceduralEditorPanel.qml": "panel:proceduralEditor",
+    "ProceduralParamsPanel.qml": "panel:proceduralParams",
+    "ProceduralConsolePanel.qml": "panel:proceduralConsole",
     "SubtitlesPanel.qml": "panel:subtitles",
     "SubtitleLanePanel.qml": "panel:subtitleLane",
     "SubtitleTextPanel.qml": "panel:subtitleText",
@@ -85,6 +88,7 @@ INSPECTOR_PREFIXES = (
     ("CameraInspector", "camera"),
     ("PdfInspector", "pdf"),
     ("Model3DInspector", "model3d"),
+    ("ProceduralInspector", "procedural"),
     ("VectorInspector", "vector"),
 )
 

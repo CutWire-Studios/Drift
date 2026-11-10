@@ -48,7 +48,7 @@ Column {
             id: importButton
             text: qsTr("Import…")
             onClicked: {
-                const urls = FileDialogs.openFiles(qsTr("Import looks"), [qsTr("LUT files (*.cube)")])
+                const urls = FileDialogs.openFiles(qsTr("Import LUTs"), [qsTr("LUT files (*.cube)")])
                 if (urls && urls.length > 0)
                     EditorState.color.importLooks(urls)
             }
@@ -59,6 +59,6 @@ Column {
         visible: !!(root.row && root.row.paramData.missing)
         selected: false
         variant: "outline"
-        text: qsTr("Missing look")
+        text: qsTr("Missing LUT")
     }
 }

@@ -204,7 +204,7 @@
       "id": "color-looks",
       "target": "panel:looks#color-looks",
       "context": "LooksPanel",
-      "source": "Looks",
+      "source": "Color Grading LUTs",
       "keywords": "lut filter preset cube",
       "needs": []
     },
@@ -212,7 +212,7 @@
       "id": "color-import-looks",
       "target": "panel:looks#color-import-looks",
       "context": "LooksPanel",
-      "source": "Import looks",
+      "source": "Import LUTs",
       "keywords": "import cube lut look",
       "needs": []
     },
@@ -230,6 +230,54 @@
       "context": "Outliner3dPanel",
       "source": "3D Outliner",
       "keywords": "3d scene list cameras models layers objects hierarchy visibility",
+      "needs": []
+    },
+    {
+      "id": "procedural-console",
+      "target": "panel:proceduralConsole#procedural-console",
+      "context": "ProceduralConsolePanel",
+      "source": "Procedural console",
+      "keywords": "lua errors print log shader compile output diagnostics",
+      "needs": []
+    },
+    {
+      "id": "procedural-editor",
+      "target": "panel:proceduralEditor#procedural-editor",
+      "context": "ProceduralEditorPanel",
+      "source": "Procedural code editor",
+      "keywords": "lua glsl shader script procedural 3d scene code edit apply",
+      "needs": []
+    },
+    {
+      "id": "procedural-new",
+      "target": "panel:proceduralEditor#procedural-new",
+      "context": "ProceduralEditorPanel",
+      "source": "New procedural package",
+      "keywords": "create template lua shader",
+      "needs": []
+    },
+    {
+      "id": "procedural-duplicate",
+      "target": "panel:proceduralEditor#procedural-duplicate",
+      "context": "ProceduralEditorPanel",
+      "source": "Duplicate procedural to edit",
+      "keywords": "copy fork bundled read-only",
+      "needs": []
+    },
+    {
+      "id": "procedural-apply",
+      "target": "panel:proceduralEditor#procedural-apply",
+      "context": "ProceduralEditorPanel",
+      "source": "Apply procedural code",
+      "keywords": "save run validate install ctrl+s",
+      "needs": []
+    },
+    {
+      "id": "procedural-params-panel",
+      "target": "panel:proceduralParams#procedural-params-panel",
+      "context": "ProceduralParamsPanel",
+      "source": "Procedural parameters panel",
+      "keywords": "procedural params seed package keyframe",
       "needs": []
     },
     {
@@ -495,7 +543,7 @@
       "target": "panel:properties.blending#blending-blend-mode",
       "context": "BlendingInspector",
       "source": "Blend mode",
-      "keywords": "multiply screen overlay add",
+      "keywords": "multiply screen overlay add difference exclusion dodge burn soft hard light hue saturation color luminosity",
       "needs": [
         "blendable"
       ]
@@ -579,6 +627,14 @@
       "needs": []
     },
     {
+      "id": "general-clip-label",
+      "target": "panel:properties.general#general-clip-label",
+      "context": "GeneralInspector",
+      "source": "Clip label",
+      "keywords": "tag label find",
+      "needs": []
+    },
+    {
       "id": "general-crop",
       "target": "panel:properties.general#general-crop",
       "context": "GeneralInspector",
@@ -650,6 +706,36 @@
       "keywords": "scroll",
       "needs": [
         "pdf"
+      ]
+    },
+    {
+      "id": "procedural-package",
+      "target": "panel:properties.procedural#procedural-package",
+      "context": "ProceduralInspector",
+      "source": "Procedural package",
+      "keywords": "lua scene generator",
+      "needs": [
+        "procedural"
+      ]
+    },
+    {
+      "id": "procedural-seed",
+      "target": "panel:properties.procedural#procedural-seed",
+      "context": "ProceduralInspector",
+      "source": "Procedural seed",
+      "keywords": "random",
+      "needs": [
+        "procedural"
+      ]
+    },
+    {
+      "id": "procedural-params",
+      "target": "panel:properties.procedural#procedural-params",
+      "context": "ProceduralInspector",
+      "source": "Procedural parameters",
+      "keywords": "keyframe",
+      "needs": [
+        "procedural"
       ]
     },
     {
@@ -1657,6 +1743,14 @@
       "source": "PDF",
       "needs": [
         "pdf"
+      ]
+    },
+    {
+      "id": "procedural",
+      "context": "PropertiesPanel",
+      "source": "Procedural",
+      "needs": [
+        "procedural"
       ]
     },
     {

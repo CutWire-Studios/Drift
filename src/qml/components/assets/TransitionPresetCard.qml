@@ -7,6 +7,10 @@ Column {
     id: root
     required property var modelData
     required property real cardSize
+    property bool draggable: true
+    property bool selected: false
+    readonly property bool hovered: transitionHover.hovered
+    signal chosen(string kind)
     width: cardSize
     spacing: 4
     // Lift on grab — matches the media and effect cards.
@@ -65,8 +69,10 @@ Column {
         height: cardSize
         radius: Theme.c.transitionPresetCard.radius
         color: transitionHover.hovered ? Theme.c.transitionPresetCard.backgroundHover : Theme.c.transitionPresetCard.background
-        border.width: transitionDrag.active ? Theme.c.transitionPresetCard.borderWidth : 0
-        border.color: Theme.c.transitionPresetCard.border
+        border.width: transitionDrag.active || root.selected ? Theme.c.transitionPresetCard.borderWidth : 0
+        border.color: root.selected && !transitionDrag.active
+                      ? Theme.c.transitionPresetCard.selectedBorder
+                      : Theme.c.transitionPresetCard.border
         clip: true
 
         // The card already had a considered hover
@@ -85,7 +91,9 @@ Column {
         }
 
         ThemedToolTip {
-            text: qsTr("%1 — drag onto where two clips meet, or on touch hold then drag").arg(root.modelData.label)
+            text: root.draggable
+                  ? qsTr("%1 — drag onto where two clips meet, or on touch hold then drag").arg(root.modelData.label)
+                  : root.modelData.label
             visible: transitionHover.hovered
         }
 
@@ -94,8 +102,15 @@ Column {
             onTapped: cardMenu.popup()
         }
 
+        TapHandler {
+            enabled: !root.draggable
+            acceptedButtons: Qt.LeftButton
+            onTapped: root.chosen(root.modelData.kind)
+        }
+
         DragHandler {
             id: transitionDrag
+            enabled: root.draggable
             target: null
             // A finger lifts through TouchDrag instead: a platform
             // drag has no touch gesture and cannot leave the sheet.
@@ -113,6 +128,8 @@ Column {
         // clips. This used to be a tap that applied to whatever was
         // selected, which gave no say over which boundary it landed on.
         TouchLiftArea {
+            enabled: root.draggable
+            visible: root.draggable
             dragKind: "transition"
             payload: root.modelData.kind
             label: root.modelData.label

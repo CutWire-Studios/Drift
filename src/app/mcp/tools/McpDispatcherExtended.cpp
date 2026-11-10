@@ -1,4 +1,5 @@
 #include "app/mcp/tools/McpCatalog.h"
+#include "app/mcp/McpDetail.h"
 #include "app/jobs/vision/SceneDetectController.h"
 #include "app/editor/PreferencesController.h"
 #include "app/jobs/audio/DenoiseController.h"
@@ -18,6 +19,7 @@
 #include "core/text/TextStyle.h"
 #include "core/text/TextLook.h"
 #include "app/mcp/tools/McpEffectAuthoring.h"
+#include "app/mcp/tools/McpProceduralAuthoring.h"
 #include "app/mcp/protocol/McpJson.h"
 #include "app/mcp/tools/McpMarket.h"
 
@@ -1520,6 +1522,72 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref, {{QStringLiteral("name"), name}}));
     }
 
+    if (tool == QLatin1String("set_clip_label")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        if (!args.value(QStringLiteral("label")).isString())
+            return err("bad_args", QStringLiteral("label required (a string; empty clears it)"));
+        m_controller->setClipLabel(ref.track, ref.clip, args.value(QStringLiteral("label")).toString());
+        const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
+        return ok(clipFeedback(after, {{QStringLiteral("label"),
+                                        m_controller->project()->tracks().at(after.track).clips.at(after.clip).label}}));
+    }
+
+    if (tool == QLatin1String("find_clips")) {
+        // An explicit empty label finds the unlabelled clips.
+        const bool byLabel = args.contains(QStringLiteral("label"));
+        if (byLabel && !args.value(QStringLiteral("label")).isString())
+            return err("bad_args", QStringLiteral("label must be a string (\"\" finds unlabelled clips)"));
+        const QString label = argString(args, QStringLiteral("label"));
+        const QString name = argString(args, QStringLiteral("name"));
+        const QString kind = argString(args, QStringLiteral("kind"));
+        const int track = args.contains(QStringLiteral("track")) ? jsonInt(args.value(QStringLiteral("track")), -1) : -1;
+        if (args.contains(QStringLiteral("track")) && (track < 0 || track >= m_controller->project()->tracks().size()))
+            return err("not_found", QStringLiteral("No such track"));
+        QString assetId;
+        if (args.contains(QStringLiteral("asset"))) {
+            const int asset = resolveAsset(args.value(QStringLiteral("asset")));
+            if (asset < 0)
+                return err("not_found", QStringLiteral("Unknown asset"));
+            assetId = m_controller->assetLibrary()->assetIdAt(asset);
+        }
+        struct Hit
+        {
+            int track;
+            int clip;
+            drift::TimeUs start;
+        };
+        QList<Hit> hits;
+        const QList<drift::Track> &tracks = m_controller->project()->tracks();
+        for (int t = 0; t < tracks.size(); ++t) {
+            if (track >= 0 && t != track)
+                continue;
+            for (int c = 0; c < tracks.at(t).clips.size(); ++c) {
+                const drift::Clip &clip = tracks.at(t).clips.at(c);
+                if (byLabel && (label.isEmpty() ? !clip.label.isEmpty() : !drift::labelMatches(clip.label, label)))
+                    continue;
+                if (!name.isEmpty() && !clip.name.contains(name, Qt::CaseInsensitive))
+                    continue;
+                if (!assetId.isEmpty() && clip.assetId != assetId)
+                    continue;
+                if (!kind.isEmpty() && drift::clipTypeToString(clip.type) != kind)
+                    continue;
+                hits.append({t, c, clip.timelineStart});
+            }
+        }
+        std::stable_sort(hits.begin(), hits.end(), [](const Hit &a, const Hit &b) {
+            return a.start != b.start ? a.start < b.start : a.track < b.track;
+        });
+        QJsonArray clips;
+        for (const Hit &hit : std::as_const(hits)) {
+            QJsonObject clip = QJsonObject::fromVariantMap(m_controller->mcp()->compactClip(hit.track, hit.clip));
+            clip.insert(QStringLiteral("track"), hit.track);
+            clips.append(clip);
+        }
+        return ok({{QStringLiteral("clips"), clips}});
+    }
+
     if (tool == QLatin1String("changes")) {
         const int since = args.contains(QStringLiteral("since")) ? jsonInt(args.value(QStringLiteral("since")), -1) : -1;
         if (args.contains(QStringLiteral("since")) && since < 0)
@@ -2790,8 +2858,11 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const double value = args.contains(QStringLiteral("value"))
                                  ? jsonNumber(args.value(QStringLiteral("value")), 0)
                                  : m_controller->propertyValueAt(ref.track, ref.clip, prop, fromSec, 0);
+        const bool wasLinked = m_controller->positionLinked();
+        m_controller->setPositionLinked(false);
         m_controller->previewMoveClipKeyframe(ref.track, ref.clip, prop, fromSec, toSec, value);
         m_controller->commitPreviewDrag();
+        m_controller->setPositionLinked(wasLinked);
         return ok(clipFeedback(ref, {{QStringLiteral("prop"), prop}, {QStringLiteral("from"), fromSec}, {QStringLiteral("to"), toSec}}));
     }
 
@@ -3275,6 +3346,24 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     if (tool == QLatin1String("take_snapshot"))
         return m_controller->mcp()->takeSnapshot(argString(args, QStringLiteral("label")));
 
+    if (tool == QLatin1String("clear_history"))
+        return m_controller->mcp()->clearHistory(jsonInt(args.value(QStringLiteral("keep_last")), 0));
+
+    if (tool == QLatin1String("set_history_limit")) {
+        // Through the usual helpers: the validator accepts "5" and "true" without converting them.
+        std::optional<int> steps;
+        if (args.contains(QStringLiteral("steps")))
+            steps = jsonInt(args.value(QStringLiteral("steps")), -3);
+        std::optional<bool> persist;
+        if (args.contains(QStringLiteral("persist")))
+            persist = jsonBool(args.value(QStringLiteral("persist")), true);
+        return m_controller->mcp()->setHistoryLimit(jsonBool(args.value(QStringLiteral("reset")), false),
+                                                    steps, persist);
+    }
+
+    if (tool == QLatin1String("history_stats"))
+        return m_controller->mcp()->historyStats(jsonBool(args.value(QStringLiteral("size")), false));
+
     if (tool == QLatin1String("list_snapshots"))
         return m_controller->mcp()->listSnapshots();
 
@@ -3298,6 +3387,39 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         m_controller->closeGap(jsonInt(args.value(QStringLiteral("track"))),
                                jsonNumber(args.value(QStringLiteral("at")), 0.0));
         return ok({});
+    }
+
+    if (tool == QLatin1String("close_gaps")) {
+        if (!args.contains(QStringLiteral("track")))
+            return err("bad_args", QStringLiteral("track required"));
+        const int track = jsonInt(args.value(QStringLiteral("track")), -1);
+        const drift::TimeUs fromUs = drift::secondsToUs(jsonNumber(args.value(QStringLiteral("from")), 0.0));
+        const drift::TimeUs toUs = args.contains(QStringLiteral("to"))
+                                       ? drift::secondsToUs(jsonNumber(args.value(QStringLiteral("to")), 0.0))
+                                       : -1;
+        if (fromUs < 0 || (args.contains(QStringLiteral("to")) && toUs < fromUs))
+            return err("bad_args", QStringLiteral("from must be >= 0 and to >= from"));
+        const AppController::GapCloseResult closed = m_controller->closeGapsRippled(track, fromUs, toUs);
+        if (!closed.error.isEmpty())
+            return err(closed.error == QLatin1String("No such track") ? "not_found" : "bad_args", closed.error);
+        const auto seconds = [](drift::TimeUs us) { return drift::mcpdetail::round3(drift::usToSeconds(us)); };
+        QJsonArray closedJson;
+        for (const auto &gap : closed.closed)
+            closedJson.append(QJsonObject{{QStringLiteral("at"), seconds(gap.first)}, {QStringLiteral("width"), seconds(gap.second)}});
+        QJsonArray skippedJson;
+        for (const auto &gap : closed.skipped)
+            skippedJson.append(QJsonObject{{QStringLiteral("at"), seconds(gap.first.first)},
+                                           {QStringLiteral("width"), seconds(gap.first.second)},
+                                           {QStringLiteral("blocker"), gap.second}});
+        QJsonArray moved;
+        for (const QString &id : closed.moved) {
+            const ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), id}});
+            if (ref.valid())
+                moved.append(QJsonObject{{QStringLiteral("id"), id},
+                                         {QStringLiteral("start"),
+                                          seconds(m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).timelineStart)}});
+        }
+        return ok({{QStringLiteral("closed"), closedJson}, {QStringLiteral("skipped"), skippedJson}, {QStringLiteral("moved"), moved}});
     }
 
     if (tool == QLatin1String("set_snap")) {
@@ -3570,6 +3692,31 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return authoring::exportPackage(args);
     if (tool == QLatin1String("import_effect"))
         return authoring::importPackage(m_controller, args);
+
+    if (tool == QLatin1String("procedural_authoring_guide"))
+        return procedural::guide();
+    if (tool == QLatin1String("list_procedurals"))
+        return procedural::list();
+    if (tool == QLatin1String("create_procedural"))
+        return procedural::create(args);
+    if (tool == QLatin1String("update_procedural"))
+        return procedural::update(args);
+    if (tool == QLatin1String("get_procedural_source"))
+        return procedural::source(m_controller, args);
+    if (tool == QLatin1String("delete_procedural"))
+        return procedural::remove(m_controller, args);
+    if (tool == QLatin1String("add_procedural"))
+        return procedural::add(m_controller, args);
+    if (tool == QLatin1String("evaluate_procedural")) {
+        const bool byClip = args.contains(QStringLiteral("clip"))
+            || (args.contains(QStringLiteral("track")) && args.contains(QStringLiteral("index")));
+        if (!byClip)
+            return procedural::evaluate(m_controller, args, nullptr);
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        return procedural::evaluate(m_controller, args, &m_controller->project()->tracks().at(ref.track).clips.at(ref.clip));
+    }
 
     if (tool == QLatin1String("list_themes")) {
         ThemeManager *themes = ThemeManager::shared();

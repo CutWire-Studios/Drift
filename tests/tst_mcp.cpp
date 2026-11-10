@@ -19,6 +19,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QScopeGuard>
 #include <QSettings>
 #include <QStandardPaths>
@@ -54,6 +55,7 @@
 #include "engine/ml/audio/ClapTagger.h"
 #include "engine/ml/vision/depth/DepthSidecar.h"
 #include "engine/packages/effects/EffectCatalog.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
 #include "engine/gpu/GlRuntime.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "engine/compositor/GpuCompositor.h"
@@ -99,7 +101,17 @@ private slots:
     void proxySuggestionFollowsThePreference();
     void captureFilesStayOutOfTheProject();
     void subtitleClipKeepsItsChosenName();
+    void splittingANamedSubtitleClipNumbersThePieces();
+    void insertClipRipplesTheTrack();
+    void deleteClipsClosesTheSpace();
+    void rippleTrimMovesTheRest();
+    void closeGapsClosesEveryHole();
+    void reorderClipsKeepsTheSpacing();
+    void replaceClipKeepsTheSlot();
+    void setSequenceLaysOutTheTrack();
     void setTransformKeysOnlyInsideTheClip();
+    void clipLabelsSurviveSplitsAndFind();
+    void inspectFiltersTracksAndFields();
     void changeFeedListsEditsBySource();
     void dirtyDetailTellsTimelineFromView();
     void homepageToolsRejectUnknownArgs();
@@ -143,6 +155,7 @@ private slots:
     void depthToolsSampleAndClear();
     void catalogDispatcherParity();
     void authoredEffectLifecycle();
+    void proceduralAuthoringLifecycle();
     void effectPresetHousekeeping();
     void textResultRoundsNumbers();
     void validateRejectsWrongType();
@@ -219,6 +232,7 @@ private slots:
     void writingAtAKeyframeReadbackTimeReusesTheKey();
     void keyframeWritesStayInsideTheClip();
     void keyframeEasingThroughMcp();
+    void bulkSmoothKeyframesAndUnlinkedTangents();
     void normalizeVolumeIsRelativeAndIdempotent();
     void duckUnderIsIdempotentAndKeepsTheEnvelope();
     void audioReadOpsAreNotUndoable();
@@ -231,6 +245,8 @@ private slots:
     void memoryStatsAndClearCache();
     void listHistoryReflectsTheHistoryLimit();
     void historyOpsSeeTheTrimmedStack();
+    void historyHousekeepingOps();
+    void applyWithoutHistoryJoinsTheNewestStep();
     void undoToRestoresSnapshot();
     void setRippleIsNotUndoable();
     void closeGapClosesOneHole();
@@ -360,7 +376,7 @@ void McpTest::catalogListsToolboxes()
     const QJsonObject cat = drift::mcp::catalogPayload();
     QVERIFY(cat.value(QStringLiteral("ok")).toBool());
     const QJsonArray boxes = cat.value(QStringLiteral("toolboxes")).toArray();
-    QCOMPARE(boxes.size(), 22);
+    QCOMPARE(boxes.size(), 23);
     QStringList names;
     for (const QJsonValue &v : boxes)
         names.append(v.toObject().value(QStringLiteral("name")).toString());
@@ -380,9 +396,9 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("guide")));
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
-    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 23150);
+    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 24000);
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
-                .toJson(QJsonDocument::Compact).size() < 11600);
+                .toJson(QJsonDocument::Compact).size() < 12500);
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -903,6 +919,1243 @@ void McpTest::subtitleClipKeepsItsChosenName()
     cues.removeLast();
     state.setSubtitleCues(0, 0, cues);
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("Subtitles (002)"));
+}
+
+// A subtitle clip with a chosen name is split like any other clip: the new piece gets the next
+// " (N)". One whose name is generated keeps naming each half from its own cues.
+void McpTest::splittingANamedSubtitleClipNumbersThePieces()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Subtitle});
+    const auto subtitleClip = [](const QString &id) {
+        drift::Clip clip;
+        clip.id = id;
+        clip.type = drift::ClipType::Subtitle;
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.srcOut = clip.timelineDuration;
+        clip.subtitleCues = {drift::SubtitleCue{0, drift::secondsToUs(1.0), QStringLiteral("one")},
+                             drift::SubtitleCue{drift::secondsToUs(2.5), drift::secondsToUs(3.5),
+                                                QStringLiteral("two")}};
+        clip.name = drift::subtitleClipName(clip.subtitleCues);
+        return clip;
+    };
+    drift::Clip named = subtitleClip(QStringLiteral("named"));
+    named.name = QStringLiteral("VO script");
+    state.project()->tracks()[0].clips.append(named);
+
+    state.splitClipAt(0, 0, 2.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("VO script"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).name, QStringLiteral("VO script (2)"));
+
+    // Generated: each half is named from the cues it keeps, never with a piece number.
+    state.project()->tracks()[0].clips.clear();
+    state.project()->tracks()[0].clips.append(subtitleClip(QStringLiteral("generated")));
+    state.splitClipAt(0, 0, 2.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    for (const drift::Clip &half : state.project()->tracks().at(0).clips) {
+        QVERIFY2(drift::isGeneratedSubtitleClipName(half.name), qPrintable(half.name));
+        QVERIFY2(!half.name.endsWith(QStringLiteral(" (2)")), qPrintable(half.name));
+    }
+}
+
+void McpTest::insertClipRipplesTheTrack()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto insert = [&](QJsonObject args) {
+        args.insert(QStringLiteral("asset"), 0);
+        return dispatcher.applyOne(QStringLiteral("insert_clip"), args);
+    };
+
+    // Three 2 s clips laid end to end.
+    QJsonObject first = insert({{QStringLiteral("at"), 0.0}, {QStringLiteral("out"), 2.0}});
+    QVERIFY2(first.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(first).toJson()));
+    const QString a = first.value(QStringLiteral("id")).toString();
+    const int track = first.value(QStringLiteral("track")).toInt();
+    const QString b = insert({{QStringLiteral("after"), a}, {QStringLiteral("in"), 2.0}, {QStringLiteral("out"), 4.0}})
+                          .value(QStringLiteral("id")).toString();
+    const QString c = insert({{QStringLiteral("after"), b}, {QStringLiteral("in"), 4.0}, {QStringLiteral("out"), 6.0}})
+                          .value(QStringLiteral("id")).toString();
+    QVERIFY(!b.isEmpty() && !c.isEmpty());
+    const int steps = state.undoHistory().size();
+
+    // A 1.5 s clip before b pushes b and c right; the reply says where they went.
+    const QJsonObject mid = insert({{QStringLiteral("before"), b}, {QStringLiteral("in"), 7.0}, {QStringLiteral("out"), 8.5}});
+    QVERIFY2(mid.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(mid).toJson()));
+    QCOMPARE(mid.value(QStringLiteral("start")).toDouble(), 2.0);
+    QCOMPARE(mid.value(QStringLiteral("dur")).toDouble(), 1.5);
+    QCOMPARE(mid.value(QStringLiteral("in")).toDouble(), 7.0);
+    QCOMPARE(mid.value(QStringLiteral("moved")).toArray().size(), 2);
+    const auto startOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineStart);
+    };
+    QCOMPARE(startOf(a), 0.0);
+    QCOMPARE(startOf(b), 3.5);
+    QCOMPARE(startOf(c), 5.5);
+    QCOMPARE(state.undoHistory().size(), steps + 1); // one step for the insert and the ripple
+
+    // Inside a clip is refused with ripple; no room is refused without it.
+    QCOMPARE(insert({{QStringLiteral("at"), 1.0}, {QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(insert({{QStringLiteral("at"), 3.5}, {QStringLiteral("out"), 1.0}, {QStringLiteral("ripple"), false}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    // Without ripple into a gap that fits.
+    QVERIFY(insert({{QStringLiteral("at"), 9.0}, {QStringLiteral("out"), 1.0}, {QStringLiteral("ripple"), false}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(c), 5.5);
+    QVERIFY(!insert({{QStringLiteral("at"), 1.0}, {QStringLiteral("before"), a}}).value(QStringLiteral("ok")).toBool());
+
+    // Undo takes the insert and its ripple back together.
+    state.undo();
+    state.undo();
+    QCOMPARE(startOf(b), 2.0);
+    QCOMPARE(startOf(c), 4.0);
+    QCOMPARE(state.project()->tracks().at(track).clips.size(), 3);
+
+    // A range past the media is refused, not clamped; codes match the other ops.
+    QCOMPARE(insert({{QStringLiteral("after"), c}, {QStringLiteral("in"), 9.0}, {QStringLiteral("out"), 12.0}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(insert({{QStringLiteral("after"), c}, {QStringLiteral("in"), 10.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(insert({{QStringLiteral("at"), 0.0}, {QStringLiteral("track"), 42}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("type_mismatch"));
+
+    // A transition on the cut the clip goes into is removed, and the reply says so.
+    {
+        const QPair<int, int> locB = state.mcp()->locateClip(b);
+        state.addTransition(locB.first, locB.second, QStringLiteral("crossfade"), 0.5);
+        QCOMPARE(state.project()->tracks().at(track).transitions.size(), 1);
+        const QJsonObject cut = insert({{QStringLiteral("after"), b}, {QStringLiteral("out"), 1.0}});
+        QVERIFY2(cut.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(cut).toJson()));
+        QCOMPARE(cut.value(QStringLiteral("removed_transitions")).toArray().size(), 1);
+        QVERIFY(state.project()->tracks().at(track).transitions.isEmpty());
+        state.undo();
+        QCOMPARE(state.project()->tracks().at(track).transitions.size(), 1);
+        state.redo(); // the redone insert has no transition on its cut either
+        QVERIFY(state.project()->tracks().at(track).transitions.isEmpty());
+        state.undo();
+    }
+    QCOMPARE(insert({{QStringLiteral("after"), c}, {QStringLiteral("out"), -2.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // Linked audio on another track: b gets an audio partner, and an unrelated clip sits right
+    // after it on that track. Inserting before b moves both, so A/V stays in sync and nothing
+    // lands on the clip that would otherwise have stayed.
+    {
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        const QPair<int, int> locB = state.mcp()->locateClip(b);
+        drift::Clip &video = state.project()->tracks()[locB.first].clips[locB.second];
+        video.linkId = QStringLiteral("b-link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("b-audio");
+        partner.type = drift::ClipType::Audio;
+        drift::Clip follower = partner;
+        follower.id = QStringLiteral("music");
+        follower.linkId.clear();
+        follower.timelineStart = video.timelineEnd();
+        audioTrack.clips = {partner, follower};
+        state.project()->tracks().append(audioTrack);
+        const int audio = int(state.project()->tracks().size()) - 1;
+        const QJsonObject withAudio = insert({{QStringLiteral("before"), b}, {QStringLiteral("out"), 1.0}});
+        QVERIFY2(withAudio.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(withAudio).toJson()));
+        QCOMPARE(startOf(b), 3.0);
+        QCOMPARE(startOf(QStringLiteral("b-audio")), 3.0);
+        QCOMPARE(startOf(QStringLiteral("music")), 5.0);
+        state.undo();
+
+        // An earlier clip pulled along by a loose partner that moves would land on the new clip:
+        // refused. a gets a loose partner after the point; inserting at a's end moves the partner,
+        // and a with it, onto the new clip's place.
+        {
+            // Located again after the insert: a refused one restores the project, which frees the
+            // clips any earlier reference pointed into.
+            const auto clipA = [&]() -> drift::Clip & {
+                const QPair<int, int> loc = state.mcp()->locateClip(a);
+                return state.project()->tracks()[loc.first].clips[loc.second];
+            };
+            clipA().linkId = QStringLiteral("a-loose");
+            clipA().linkLoose = true;
+            drift::Clip partnerA = clipA();
+            partnerA.id = QStringLiteral("a-audio");
+            partnerA.type = drift::ClipType::Audio;
+            partnerA.timelineStart = drift::secondsToUs(8.0);
+            state.project()->tracks()[audio].clips.append(partnerA);
+            const QJsonObject pulled = insert({{QStringLiteral("at"), 2.0}, {QStringLiteral("out"), 1.0}});
+            QCOMPARE(pulled.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+            QCOMPARE(startOf(a), 0.0);
+            QCOMPARE(startOf(b), 2.0);
+            state.project()->tracks()[audio].clips.removeLast();
+            clipA().linkId.clear();
+            clipA().linkLoose = false;
+        }
+
+        // A locked track the ripple would change refuses the insert.
+        state.project()->tracks()[audio].locked = true;
+        QCOMPARE(insert({{QStringLiteral("before"), b}, {QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(),
+                 QStringLiteral("bad_args"));
+        QCOMPARE(startOf(b), 2.0);
+        state.project()->tracks().removeLast();
+        state.project()->tracks()[locB.first].clips[locB.second].linkId.clear();
+    }
+
+    // A bin trim is the default range; an explicit one wins over it, and the ripple makes room
+    // for exactly the clip that lands.
+    QVERIFY(library.setAssetTrim(0, drift::secondsToUs(1.0), drift::secondsToUs(5.0)));
+    const QJsonObject trimmed = insert({{QStringLiteral("after"), a}});
+    QVERIFY2(trimmed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(trimmed).toJson()));
+    QCOMPARE(trimmed.value(QStringLiteral("in")).toDouble(), 1.0);
+    QCOMPARE(trimmed.value(QStringLiteral("out")).toDouble(), 5.0);
+    QCOMPARE(startOf(b), 6.0);
+    state.undo();
+    const QJsonObject explicitRange = insert({{QStringLiteral("after"), a}, {QStringLiteral("in"), 6.0}, {QStringLiteral("out"), 7.0}});
+    QCOMPARE(explicitRange.value(QStringLiteral("in")).toDouble(), 6.0);
+    QCOMPARE(explicitRange.value(QStringLiteral("dur")).toDouble(), 1.0);
+    QCOMPARE(startOf(b), 3.0);
+}
+
+void McpTest::deleteClipsClosesTheSpace()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QStringList ids;
+    for (int i = 0; i < 4; ++i) {
+        QJsonObject args{{QStringLiteral("asset"), 0}, {QStringLiteral("in"), i * 2.0}, {QStringLiteral("out"), i * 2.0 + 2.0}};
+        if (ids.isEmpty())
+            args.insert(QStringLiteral("at"), 0.0);
+        else
+            args.insert(QStringLiteral("after"), ids.last());
+        ids.append(dispatcher.applyOne(QStringLiteral("insert_clip"), args).value(QStringLiteral("id")).toString());
+    }
+    QVERIFY(!state.rippleEnabled()); // the op ripples whatever the project setting
+    QVERIFY(dispatcher.applyOne(QStringLiteral("add_effect"),
+                                {{QStringLiteral("clip"), ids.at(1)}, {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}})
+                .value(QStringLiteral("ok")).toBool());
+    const auto startOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return loc.first < 0 ? -1.0 : drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineStart);
+    };
+    int adjustments = 0;
+    for (const drift::Track &t : state.project()->tracks())
+        adjustments += t.isAdjustment() ? int(t.clips.size()) : 0;
+    QCOMPARE(adjustments, 1);
+
+    // A locked lane holding the clip's effect refuses the delete, even without ripple.
+    for (drift::Track &t : state.project()->tracks())
+        if (t.isAdjustment())
+            t.locked = true;
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("delete_clips"),
+                                 {{QStringLiteral("clips"), QJsonArray{ids.at(1)}}, {QStringLiteral("ripple"), false}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(startOf(ids.at(1)), 2.0);
+    for (drift::Track &t : state.project()->tracks())
+        t.locked = false;
+
+    // An unknown id deletes nothing.
+    const QJsonObject unknown = dispatcher.applyOne(QStringLiteral("delete_clips"),
+                                                    {{QStringLiteral("clips"), QJsonArray{ids.at(1), QStringLiteral("nope")}}});
+    QCOMPARE(unknown.value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QCOMPARE(startOf(ids.at(1)), 2.0);
+
+    const int steps = state.undoHistory().size();
+    const QJsonObject removed = dispatcher.applyOne(QStringLiteral("delete_clips"),
+                                                    {{QStringLiteral("clips"), QJsonArray{ids.at(1), ids.at(2)}}});
+    QVERIFY2(removed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(removed).toJson()));
+    QCOMPARE(startOf(ids.at(1)), -1.0);
+    QCOMPARE(startOf(ids.at(2)), -1.0);
+    QCOMPARE(startOf(ids.at(0)), 0.0);
+    QCOMPARE(startOf(ids.at(3)), 2.0); // closed up over both
+    QCOMPARE(removed.value(QStringLiteral("moved")).toArray().size(), 1);
+    QCOMPARE(removed.value(QStringLiteral("moved")).toArray().at(0).toObject().value(QStringLiteral("start")).toDouble(), 2.0);
+    QVERIFY(removed.value(QStringLiteral("removed")).toArray().size() >= 3); // the clips and the grade
+    adjustments = 0;
+    for (const drift::Track &t : state.project()->tracks())
+        adjustments += t.isAdjustment() ? int(t.clips.size()) : 0;
+    QCOMPARE(adjustments, 0);
+    QCOMPARE(state.undoHistory().size(), steps + 1);
+    state.undo();
+    QCOMPARE(startOf(ids.at(3)), 6.0);
+
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("delete_clips"), {{QStringLiteral("clips"), QJsonArray{ids.at(1), QString()}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // Linked audio: ids[1] and ids[3] get audio partners on another track. Deleting ids[1] clears
+    // its range on both tracks; the following pair moves back once (2 s), not once per track.
+    {
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        for (const int i : {1, 3}) {
+            const QPair<int, int> loc = state.mcp()->locateClip(ids.at(i));
+            drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+            video.linkId = QStringLiteral("link-%1").arg(i);
+            drift::Clip audio = video;
+            audio.id = QStringLiteral("audio-%1").arg(i);
+            audio.type = drift::ClipType::Audio;
+            audioTrack.clips.append(audio);
+        }
+        state.project()->tracks().append(audioTrack);
+        const QJsonObject pair = dispatcher.applyOne(QStringLiteral("delete_clips"), {{QStringLiteral("clips"), QJsonArray{ids.at(1)}}});
+        QVERIFY2(pair.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(pair).toJson()));
+        QCOMPARE(startOf(QStringLiteral("audio-1")), -1.0);
+        QCOMPARE(startOf(ids.at(2)), 2.0);
+        QCOMPARE(startOf(ids.at(3)), 4.0);
+        QCOMPARE(startOf(QStringLiteral("audio-3")), 4.0);
+        state.undo();
+        QCOMPARE(startOf(ids.at(3)), 6.0);
+
+        // A clip in the way on a linked track refuses the delete, and nothing changes.
+        drift::Track &audio = state.project()->tracks().last();
+        drift::Clip inside = audio.clips.first();
+        inside.id = QStringLiteral("in-the-way");
+        inside.linkId.clear();
+        inside.timelineStart = drift::secondsToUs(4.5);
+        inside.timelineDuration = drift::secondsToUs(1.0);
+        audio.clips.insert(1, inside);
+        const QPair<int, int> selected = state.mcp()->locateClip(ids.at(0));
+        state.selectClip(selected.first, selected.second);
+        const QJsonObject blocked = dispatcher.applyOne(QStringLiteral("delete_clips"), {{QStringLiteral("clips"), QJsonArray{ids.at(2)}}});
+        QCOMPARE(state.selectedTrack(), selected.first); // a refused delete leaves the selection alone
+        QCOMPARE(state.selectedClip(), selected.second);
+        QCOMPARE(blocked.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY(blocked.value(QStringLiteral("detail")).toString().contains(QStringLiteral("in-the-way")));
+        QCOMPARE(startOf(ids.at(2)), 4.0);
+        QCOMPARE(startOf(ids.at(3)), 6.0);
+        state.project()->tracks().removeLast();
+        for (const int i : {1, 3}) {
+            const QPair<int, int> loc = state.mcp()->locateClip(ids.at(i));
+            state.project()->tracks()[loc.first].clips[loc.second].linkId.clear();
+        }
+    }
+
+    // ripple:false leaves the gap.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("delete_clips"),
+                                {{QStringLiteral("clips"), QJsonArray{ids.at(2)}}, {QStringLiteral("ripple"), false}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(ids.at(2)), -1.0);
+    QCOMPARE(startOf(ids.at(3)), 6.0);
+}
+
+void McpTest::rippleTrimMovesTheRest()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QStringList ids;
+    for (int i = 0; i < 3; ++i) {
+        QJsonObject args{{QStringLiteral("asset"), 0}, {QStringLiteral("in"), i * 2.0}, {QStringLiteral("out"), i * 2.0 + 2.0}};
+        if (ids.isEmpty())
+            args.insert(QStringLiteral("at"), 0.0);
+        else
+            args.insert(QStringLiteral("after"), ids.last());
+        ids.append(dispatcher.applyOne(QStringLiteral("insert_clip"), args).value(QStringLiteral("id")).toString());
+    }
+    const auto startOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineStart);
+    };
+    const auto trim = [&](double in, double out, bool ripple) {
+        return dispatcher.applyOne(QStringLiteral("set_trim"),
+                                   {{QStringLiteral("clip"), ids.at(1)}, {QStringLiteral("in"), in},
+                                    {QStringLiteral("out"), out}, {QStringLiteral("ripple"), ripple}});
+    };
+    const int steps = state.undoHistory().size();
+
+    // Lengthen the middle clip by 1 s: the last one moves right by 1 s, in one step.
+    QJsonObject longer = trim(2.0, 5.0, true);
+    QVERIFY2(longer.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(longer).toJson()));
+    QCOMPARE(longer.value(QStringLiteral("dur")).toDouble(), 3.0);
+    QCOMPARE(startOf(ids.at(2)), 5.0);
+    QCOMPARE(longer.value(QStringLiteral("moved")).toArray().size(), 1);
+    QCOMPARE(state.undoHistory().size(), steps + 1);
+
+    // Shorten it to 1 s: the last one closes up.
+    QVERIFY(trim(2.0, 3.0, true).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(ids.at(2)), 3.0);
+    QCOMPARE(startOf(ids.at(0)), 0.0);
+
+    // Without ripple nothing else moves (the old behaviour).
+    QVERIFY(trim(2.0, 3.5, false).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(ids.at(2)), 3.0);
+
+    state.undo();
+    state.undo();
+    state.undo();
+    QCOMPARE(startOf(ids.at(2)), 4.0);
+
+    // Linked audio: the middle clip's partner takes the same trim, and the last clip's partner
+    // moves with it. A clip in the space a shorter trim gives up refuses it.
+    drift::Track audioTrack{.type = drift::TrackType::Audio};
+    for (const int i : {1, 2}) {
+        const QPair<int, int> loc = state.mcp()->locateClip(ids.at(i));
+        drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+        video.linkId = QStringLiteral("link-%1").arg(i);
+        drift::Clip audio = video;
+        audio.id = QStringLiteral("audio-%1").arg(i);
+        audio.type = drift::ClipType::Audio;
+        audioTrack.clips.append(audio);
+    }
+    state.project()->tracks().append(audioTrack);
+    QVERIFY(trim(2.0, 5.0, true).value(QStringLiteral("ok")).toBool());
+    const auto durOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineDuration);
+    };
+    QCOMPARE(durOf(QStringLiteral("audio-1")), 3.0);
+    QCOMPARE(startOf(ids.at(2)), 5.0);
+    QCOMPARE(startOf(QStringLiteral("audio-2")), 5.0);
+
+    drift::Clip inside = state.project()->tracks().last().clips.first();
+    inside.id = QStringLiteral("in-the-way");
+    inside.linkId.clear();
+    inside.timelineStart = drift::secondsToUs(4.5);
+    inside.timelineDuration = drift::secondsToUs(0.5);
+    state.project()->tracks().last().clips.removeFirst();
+    state.project()->tracks().last().clips.insert(0, inside);
+    const QJsonObject blocked = trim(2.0, 3.0, true);
+    QCOMPARE(blocked.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(startOf(ids.at(2)), 5.0);
+    QCOMPARE(durOf(ids.at(1)), 3.0);
+
+    // A loose partner keeps its own length, so a shorter trim that would close the following clip
+    // onto it is refused rather than overlap.
+    {
+        // The clip in the way makes room for a loose partner of the middle clip.
+        const QPair<int, int> loc = state.mcp()->locateClip(ids.at(1));
+        drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+        video.linkLoose = true;
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("audio-1");
+        partner.type = drift::ClipType::Audio;
+        state.project()->tracks().last().clips.removeFirst();
+        state.project()->tracks().last().clips.insert(0, partner);
+    }
+    // A free adjustment clip: its locked track refuses the trim; unlocked, the trim leaves the
+    // other adjustments alone (an adjustment track never ripples).
+    {
+        drift::Track lane{.type = drift::TrackType::Adjustment};
+        drift::Clip adj;
+        adj.id = QStringLiteral("free-grade");
+        adj.type = drift::ClipType::Adjustment;
+        adj.timelineDuration = drift::secondsToUs(2.0);
+        adj.srcOut = adj.timelineDuration;
+        drift::Clip later = adj;
+        later.id = QStringLiteral("later-grade");
+        later.timelineStart = drift::secondsToUs(5.0);
+        lane.clips = {adj, later};
+        lane.locked = true;
+        state.project()->tracks().append(lane);
+        // By track and index: the lane was added outside an edit, so ids are not indexed yet.
+        const int laneIndex = int(state.project()->tracks().size()) - 1;
+        const auto trimAdj = [&](double out) {
+            return dispatcher.applyOne(QStringLiteral("set_trim"),
+                                       {{QStringLiteral("track"), laneIndex}, {QStringLiteral("index"), 0},
+                                        {QStringLiteral("in"), 0.0}, {QStringLiteral("out"), out},
+                                        {QStringLiteral("ripple"), true}});
+        };
+        QCOMPARE(trimAdj(3.0).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        state.project()->tracks().last().locked = false;
+        const QJsonObject trimmedAdj = trimAdj(3.0);
+        QVERIFY2(trimmedAdj.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(trimmedAdj).toJson()));
+        double laterStart = -1;
+        for (const drift::Clip &clip : state.project()->tracks().at(laneIndex).clips)
+            if (clip.id == QLatin1String("later-grade"))
+                laterStart = drift::usToSeconds(clip.timelineStart);
+        QCOMPARE(laterStart, 5.0);
+        state.project()->tracks().removeLast();
+    }
+
+    const QJsonObject loose = trim(2.0, 3.0, true);
+    QCOMPARE(loose.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(durOf(ids.at(1)), 3.0);
+    QCOMPARE(startOf(QStringLiteral("audio-2")), 5.0);
+}
+
+void McpTest::closeGapsClosesEveryHole()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    // Clips at [1,2), [3,4), [6,7): gaps [0,1), [2,3), [4,6).
+    QStringList ids;
+    for (const double at : {1.0, 3.0, 6.0}) {
+        const QJsonObject placed = dispatcher.applyOne(
+            QStringLiteral("insert_clip"),
+            {{QStringLiteral("asset"), 0}, {QStringLiteral("at"), at}, {QStringLiteral("out"), 1.0}, {QStringLiteral("ripple"), false}});
+        QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson()));
+        ids.append(placed.value(QStringLiteral("id")).toString());
+    }
+    const int track = state.mcp()->locateClip(ids.at(0)).first;
+    const auto startOf = [&](const QString &id) {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return drift::usToSeconds(state.project()->tracks().at(loc.first).clips.at(loc.second).timelineStart);
+    };
+    const auto closeGaps = [&](QJsonObject args) {
+        args.insert(QStringLiteral("track"), track);
+        return dispatcher.applyOne(QStringLiteral("close_gaps"), args);
+    };
+
+    // Only the gaps within [2, 6].
+    const QJsonObject ranged = closeGaps({{QStringLiteral("from"), 2.0}, {QStringLiteral("to"), 6.0}});
+    QVERIFY2(ranged.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(ranged).toJson()));
+    QCOMPARE(ranged.value(QStringLiteral("closed")).toArray().size(), 2);
+    QCOMPARE(startOf(ids.at(0)), 1.0);
+    QCOMPARE(startOf(ids.at(1)), 2.0);
+    QCOMPARE(startOf(ids.at(2)), 3.0);
+    state.undo(); // one step
+    QCOMPARE(startOf(ids.at(2)), 6.0);
+
+    // All of them, the leading one included.
+    const QJsonObject all = closeGaps({});
+    QCOMPARE(all.value(QStringLiteral("closed")).toArray().size(), 3);
+    QCOMPARE(startOf(ids.at(0)), 0.0);
+    QCOMPARE(startOf(ids.at(1)), 1.0);
+    QCOMPARE(startOf(ids.at(2)), 2.0);
+    QCOMPARE(all.value(QStringLiteral("moved")).toArray().size(), 3);
+    state.undo();
+
+    // The first and last clips linked on the same track: closing a later gap would drag the first
+    // clip with it (across 0, or leaving the hole open), so those gaps are skipped with it as
+    // blocker; the leading gap still closes.
+    {
+        const auto setLink = [&](const QString &id, const QString &link) {
+            const QPair<int, int> loc = state.mcp()->locateClip(id);
+            state.project()->tracks()[loc.first].clips[loc.second].linkId = link;
+        };
+        setLink(ids.at(0), QStringLiteral("same-track"));
+        setLink(ids.at(2), QStringLiteral("same-track"));
+        const QJsonObject linked = closeGaps({});
+        QVERIFY2(linked.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(linked).toJson()));
+        QCOMPARE(linked.value(QStringLiteral("closed")).toArray().size(), 1);
+        const QJsonArray skipped = linked.value(QStringLiteral("skipped")).toArray();
+        QCOMPARE(skipped.size(), 2);
+        for (const QJsonValue &gap : skipped)
+            QCOMPARE(gap.toObject().value(QStringLiteral("blocker")).toString(), ids.at(0));
+        QCOMPARE(startOf(ids.at(0)), 0.0);
+        QCOMPARE(startOf(ids.at(1)), 2.0);
+        QCOMPARE(startOf(ids.at(2)), 5.0);
+        state.undo();
+        setLink(ids.at(0), QString());
+        setLink(ids.at(2), QString());
+        QCOMPARE(startOf(ids.at(0)), 1.0);
+    }
+
+    // A clip on a linked track sitting in a gap: that gap stays open, the others close.
+    {
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        const QPair<int, int> loc = state.mcp()->locateClip(ids.at(2));
+        drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+        video.linkId = QStringLiteral("link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("partner");
+        partner.type = drift::ClipType::Audio;
+        drift::Clip inTheWay = partner;
+        inTheWay.id = QStringLiteral("in-the-way");
+        inTheWay.linkId.clear();
+        inTheWay.timelineStart = drift::secondsToUs(4.5);
+        inTheWay.timelineDuration = drift::secondsToUs(0.5);
+        audioTrack.clips = {inTheWay, partner};
+        state.project()->tracks().append(audioTrack);
+        const QJsonObject partly = closeGaps({});
+        QVERIFY2(partly.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(partly).toJson()));
+        QCOMPARE(partly.value(QStringLiteral("skipped")).toArray().size(), 1);
+        QCOMPARE(partly.value(QStringLiteral("skipped")).toArray().at(0).toObject().value(QStringLiteral("blocker")).toString(),
+                 QStringLiteral("in-the-way"));
+        QCOMPARE(partly.value(QStringLiteral("closed")).toArray().size(), 2);
+        QCOMPARE(startOf(ids.at(0)), 0.0);
+        QCOMPARE(startOf(ids.at(1)), 1.0);
+    }
+
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("close_gaps"), {{QStringLiteral("track"), 42}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(closeGaps({{QStringLiteral("from"), 3.0}, {QStringLiteral("to"), 2.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // An adjustment track is refused rather than reported closed with nothing moved.
+    {
+        drift::Track adjustment{.type = drift::TrackType::Adjustment};
+        drift::Clip grade;
+        grade.id = QStringLiteral("free-grade");
+        grade.type = drift::ClipType::Adjustment;
+        grade.timelineStart = drift::secondsToUs(5.0);
+        grade.timelineDuration = drift::secondsToUs(1.0);
+        adjustment.clips = {grade};
+        state.project()->tracks().append(adjustment);
+        const QJsonObject refused = dispatcher.applyOne(
+            QStringLiteral("close_gaps"), {{QStringLiteral("track"), int(state.project()->tracks().size()) - 1}});
+        QCOMPARE(refused.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(state.project()->tracks().last().clips.first().timelineStart, drift::secondsToUs(5.0));
+    }
+}
+
+void McpTest::reorderClipsKeepsTheSpacing()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    // A [0,1), B [1,3), C [3,4).
+    QStringList ids;
+    for (const auto &[at, out] : {std::pair{0.0, 1.0}, std::pair{1.0, 2.0}, std::pair{3.0, 1.0}}) {
+        const QJsonObject placed = dispatcher.applyOne(
+            QStringLiteral("insert_clip"),
+            {{QStringLiteral("asset"), 0}, {QStringLiteral("at"), at}, {QStringLiteral("out"), out}, {QStringLiteral("ripple"), false}});
+        QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson()));
+        ids.append(placed.value(QStringLiteral("id")).toString());
+    }
+    const QString a = ids.at(0), b = ids.at(1), c = ids.at(2);
+    const int track = state.mcp()->locateClip(a).first;
+    const auto startOf = [&](const QString &id) {
+        for (const drift::Track &t : state.project()->tracks())
+            for (const drift::Clip &clip : t.clips)
+                if (clip.id == id)
+                    return drift::usToSeconds(clip.timelineStart);
+        return -1.0;
+    };
+    const auto move = [&](const QString &id, const char *where, const QString &neighbour) {
+        return dispatcher.applyOne(QStringLiteral("move_clip"),
+                                   {{QStringLiteral("clip"), id}, {QString::fromLatin1(where), neighbour}});
+    };
+    const auto swap = [&](const QString &x, const QString &y) {
+        return dispatcher.applyOne(QStringLiteral("swap_clips"), {{QStringLiteral("a"), x}, {QStringLiteral("b"), y}});
+    };
+
+    // A to the end: B and C close up behind it.
+    const QJsonObject toEnd = move(a, "after", c);
+    QVERIFY2(toEnd.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(toEnd).toJson()));
+    QCOMPARE(startOf(b), 0.0);
+    QCOMPARE(startOf(c), 2.0);
+    QCOMPARE(startOf(a), 3.0);
+    QCOMPARE(toEnd.value(QStringLiteral("moved")).toArray().size(), 3);
+    state.undo(); // one step
+    QCOMPARE(startOf(a), 0.0);
+    QCOMPARE(startOf(b), 1.0);
+    QCOMPARE(startOf(c), 3.0);
+
+    // C to the front: A and B make room.
+    QVERIFY(move(c, "before", a).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(c), 0.0);
+    QCOMPARE(startOf(a), 1.0);
+    QCOMPARE(startOf(b), 2.0);
+    state.undo();
+
+    // Swaps: equal lengths across B, and unequal neighbours.
+    QVERIFY(swap(c, a).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(c), 0.0);
+    QCOMPARE(startOf(b), 1.0);
+    QCOMPARE(startOf(a), 3.0);
+    state.undo();
+    QVERIFY(swap(a, b).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(b), 0.0);
+    QCOMPARE(startOf(a), 2.0);
+    QCOMPARE(startOf(c), 3.0);
+    state.undo();
+
+    // Bad arguments change nothing.
+    QCOMPARE(move(b, "after", b).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(move(b, "after", QStringLiteral("nope")).value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("move_clip"),
+                                 {{QStringLiteral("clip"), a}, {QStringLiteral("at"), 5.0}, {QStringLiteral("after"), c}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(swap(a, a).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(startOf(a), 0.0);
+
+    // Into the middle; the reply carries the final starts.
+    const QJsonObject middle = move(a, "after", b);
+    QVERIFY2(middle.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(middle).toJson()));
+    QCOMPARE(startOf(b), 0.0);
+    QCOMPARE(startOf(a), 2.0);
+    QCOMPARE(startOf(c), 3.0);
+    QHash<QString, double> reported;
+    for (const QJsonValue &m : middle.value(QStringLiteral("moved")).toArray())
+        reported.insert(m.toObject().value(QStringLiteral("id")).toString(), m.toObject().value(QStringLiteral("start")).toDouble());
+    QCOMPARE(reported.size(), 2);
+    QCOMPARE(reported.value(a), 2.0);
+    QCOMPARE(reported.value(b), 0.0);
+    state.undo();
+
+    // Already in place: ok, nothing moves, no undo step.
+    const QJsonObject inPlace = move(b, "after", a);
+    QVERIFY(inPlace.value(QStringLiteral("ok")).toBool());
+    QVERIFY(inPlace.value(QStringLiteral("moved")).toArray().isEmpty());
+    QCOMPARE(startOf(b), 1.0);
+
+    // A gap between the clips moves with the block.
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].timelineStart = drift::secondsToUs(5.0);
+    QVERIFY(move(a, "after", c).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(b), 0.0);
+    QCOMPARE(startOf(c), 4.0);
+    QCOMPARE(startOf(a), 5.0);
+    state.undo();
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].timelineStart = drift::secondsToUs(3.0);
+
+    // Two clips linked to each other can't be ordered against each other.
+    {
+        const auto setLink = [&](const QString &id, const QString &link) {
+            state.project()->tracks()[track].clips[state.mcp()->locateClip(id).second].linkId = link;
+        };
+        setLink(a, QStringLiteral("a-c"));
+        setLink(c, QStringLiteral("a-c"));
+        QCOMPARE(move(a, "after", c).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(swap(a, c).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(startOf(a), 0.0);
+        QCOMPARE(startOf(c), 3.0);
+        setLink(a, QString());
+        setLink(c, QString());
+    }
+
+    // Adjustment clips follow what they apply to: refused rather than half moved.
+    {
+        drift::Track adjustment{.type = drift::TrackType::Adjustment};
+        for (const auto &[id, at] : {std::pair{"adj-1", 0.0}, std::pair{"adj-2", 1.0}}) {
+            drift::Clip grade;
+            grade.id = QString::fromLatin1(id);
+            grade.type = drift::ClipType::Adjustment;
+            grade.timelineStart = drift::secondsToUs(at);
+            grade.timelineDuration = drift::secondsToUs(1.0);
+            adjustment.clips.append(grade);
+        }
+        state.project()->tracks().append(adjustment);
+        // Straight to the controller: the MCP id lookup doesn't know clips added to the project directly.
+        QCOMPARE(state.moveClipNextTo(QStringLiteral("adj-1"), QStringLiteral("adj-2"), true).errorCode,
+                 QStringLiteral("bad_args"));
+        QCOMPARE(state.swapClips(QStringLiteral("adj-1"), QStringLiteral("adj-2")).errorCode, QStringLiteral("bad_args"));
+        QCOMPARE(startOf(QStringLiteral("adj-2")), 1.0);
+        state.project()->tracks().removeLast();
+    }
+
+    // A's linked audio goes with it; a clip on the audio track between moves with B and C.
+    {
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        drift::Clip &video = state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second];
+        video.linkId = QStringLiteral("a-link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("a-audio");
+        partner.type = drift::ClipType::Audio;
+        drift::Clip under = partner;
+        under.id = QStringLiteral("under-c");
+        under.linkId.clear();
+        under.timelineStart = drift::secondsToUs(3.0);
+        audioTrack.clips = {partner, under};
+        state.project()->tracks().append(audioTrack);
+        QVERIFY(move(a, "after", c).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(startOf(a), 3.0);
+        QCOMPARE(startOf(QStringLiteral("a-audio")), 3.0);
+        QCOMPARE(startOf(QStringLiteral("under-c")), 2.0);
+        state.undo();
+
+        // A locked linked track refuses it.
+        state.project()->tracks().last().locked = true;
+        QCOMPARE(move(a, "after", c).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(startOf(a), 0.0);
+        state.project()->tracks().last().locked = false;
+
+        // A clip on the audio track that would be landed on refuses it too.
+        state.project()->tracks().last().clips.last().timelineStart = drift::secondsToUs(3.5);
+        const QJsonObject blocked = move(a, "after", c);
+        QCOMPARE(blocked.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(startOf(a), 0.0);
+        QCOMPARE(startOf(QStringLiteral("a-audio")), 0.0);
+    }
+}
+
+void McpTest::replaceClipKeepsTheSlot()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    for (const auto &[name, seconds] : {std::pair{"shot.mp4", 10.0}, std::pair{"other.mp4", 6.0}}) {
+        drift::MediaAsset media;
+        media.name = QString::fromLatin1(name);
+        media.kind = drift::MediaKind::Video;
+        media.path = QStringLiteral("/nonexistent/") + media.name;
+        media.durationUs = drift::secondsToUs(seconds);
+        state.project()->addAsset(media);
+    }
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    // A [0,2), B [2,3), both from shot.mp4.
+    QStringList ids;
+    for (const auto &[at, out] : {std::pair{0.0, 2.0}, std::pair{2.0, 1.0}}) {
+        const QJsonObject placed = dispatcher.applyOne(
+            QStringLiteral("insert_clip"),
+            {{QStringLiteral("asset"), 0}, {QStringLiteral("at"), at}, {QStringLiteral("out"), out}, {QStringLiteral("ripple"), false}});
+        QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson()));
+        ids.append(placed.value(QStringLiteral("id")).toString());
+    }
+    const QString a = ids.at(0), b = ids.at(1);
+    const int track = state.mcp()->locateClip(a).first;
+    const auto clipOf = [&](const QString &id) {
+        return state.project()->tracks().at(track).clips.at(state.mcp()->locateClip(id).second);
+    };
+    const QString otherId = library.assetIdAt(1);
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second].name = QStringLiteral("Hero");
+    const auto replace = [&](QJsonObject args) {
+        args.insert(QStringLiteral("clip"), a);
+        if (!args.contains(QStringLiteral("asset")))
+            args.insert(QStringLiteral("asset"), 1);
+        return dispatcher.applyOne(QStringLiteral("replace_clip"), args);
+    };
+
+    // A clip still named after its file keeps that name too (the UI renames it).
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(b).second].name = QStringLiteral("shot.mp4");
+    QVERIFY(dispatcher.applyOne(QStringLiteral("replace_clip"), {{QStringLiteral("clip"), b}, {QStringLiteral("asset"), 1}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipOf(b).name, QStringLiteral("shot.mp4"));
+    state.undo();
+
+    // No range: same length, settings kept, nothing moves.
+    const QJsonObject same = replace({});
+    QVERIFY2(same.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(same).toJson()));
+    QCOMPARE(clipOf(a).assetId, otherId);
+    QCOMPARE(clipOf(a).name, QStringLiteral("Hero"));
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(2.0));
+    QVERIFY(same.value(QStringLiteral("moved")).toArray().isEmpty());
+    state.undo();
+    QVERIFY(clipOf(a).assetId != otherId);
+
+    // A longer range ripples B right, in one undo step.
+    const QJsonObject longer = replace({{QStringLiteral("in"), 1.0}, {QStringLiteral("out"), 4.0}});
+    QVERIFY2(longer.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(longer).toJson()));
+    QCOMPARE(clipOf(a).srcIn, drift::secondsToUs(1.0));
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(3.0));
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(longer.value(QStringLiteral("moved")).toArray().size(), 1);
+    state.undo();
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(2.0));
+    QVERIFY(clipOf(a).assetId != otherId);
+
+    // A shorter one closes up; without ripple it leaves the gap, and a longer one is refused.
+    QVERIFY(replace({{QStringLiteral("out"), 1.0}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(1.0));
+    state.undo();
+    QVERIFY(replace({{QStringLiteral("out"), 1.0}, {QStringLiteral("ripple"), false}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(2.0));
+    state.undo();
+    QCOMPARE(replace({{QStringLiteral("out"), 4.0}, {QStringLiteral("ripple"), false}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QVERIFY(clipOf(a).assetId != otherId);
+
+    // in alone runs to the media's end; the reply carries the final starts.
+    const QJsonObject tail = replace({{QStringLiteral("in"), 3.0}});
+    QVERIFY2(tail.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(tail).toJson()));
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(3.0));
+    QCOMPARE(tail.value(QStringLiteral("moved")).toArray().at(0).toObject().value(QStringLiteral("start")).toDouble(), 3.0);
+    state.undo();
+
+    // Errors change nothing.
+    state.project()->assets()[otherId].durationUs = 0; // not probed yet
+    QCOMPARE(replace({{QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    state.project()->assets()[otherId].durationUs = drift::secondsToUs(6.0);
+    QCOMPARE(replace({{QStringLiteral("out"), 7.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(replace({{QStringLiteral("in"), 3.0}, {QStringLiteral("out"), 2.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(replace({{QStringLiteral("asset"), 0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(replace({{QStringLiteral("asset"), 9}}).value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    state.project()->tracks()[track].locked = true;
+    QCOMPARE(replace({}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    state.project()->tracks()[track].locked = false;
+    QVERIFY(clipOf(a).assetId != otherId);
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(2.0));
+
+    // Linked audio: the new file is silent, so the audio keeps its media and the link turns loose;
+    // a shorter replacement would close up over that audio, so ripple refuses it.
+    {
+        drift::Clip &video = state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second];
+        video.linkId = QStringLiteral("a-link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("a-audio");
+        partner.type = drift::ClipType::Audio;
+        const QString oldAsset = partner.assetId;
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        audioTrack.clips = {partner};
+        state.project()->tracks().append(audioTrack);
+        QVERIFY(replace({}).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(clipOf(a).assetId, otherId);
+        QVERIFY(clipOf(a).linkLoose);
+        QCOMPARE(state.project()->tracks().last().clips.first().assetId, oldAsset);
+        QVERIFY(state.project()->tracks().last().clips.first().linkLoose);
+        state.undo();
+        QVERIFY(!clipOf(a).linkLoose);
+        QCOMPARE(replace({{QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY(clipOf(a).assetId != otherId);
+    }
+}
+
+void McpTest::setSequenceLaysOutTheTrack()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    // A [0,1), B [1,3), C [3,4).
+    QStringList ids;
+    for (const auto &[at, out] : {std::pair{0.0, 1.0}, std::pair{1.0, 2.0}, std::pair{3.0, 1.0}}) {
+        const QJsonObject placed = dispatcher.applyOne(
+            QStringLiteral("insert_clip"),
+            {{QStringLiteral("asset"), 0}, {QStringLiteral("at"), at}, {QStringLiteral("out"), out}, {QStringLiteral("ripple"), false}});
+        QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson()));
+        ids.append(placed.value(QStringLiteral("id")).toString());
+    }
+    const QString a = ids.at(0), b = ids.at(1), c = ids.at(2);
+    const int track = state.mcp()->locateClip(a).first;
+    const auto find = [&](const QString &id) -> const drift::Clip * {
+        for (const drift::Track &t : state.project()->tracks())
+            for (const drift::Clip &clip : t.clips)
+                if (clip.id == id)
+                    return &clip;
+        return nullptr;
+    };
+    const auto sequence = [&](const QJsonArray &clips, QJsonObject extra = {}) {
+        extra.insert(QStringLiteral("track"), track);
+        extra.insert(QStringLiteral("clips"), clips);
+        return dispatcher.applyOne(QStringLiteral("set_sequence"), extra);
+    };
+    const auto entry = [](const QString &id) { return QJsonObject{{QStringLiteral("clip"), id}}; };
+
+    // C first, a new clip from the asset, then A shortened; B goes.
+    const QJsonObject laid = sequence({entry(c),
+                                       QJsonObject{{QStringLiteral("asset"), 0}, {QStringLiteral("in"), 5.0},
+                                                   {QStringLiteral("out"), 7.0}, {QStringLiteral("name"), QStringLiteral("New")}},
+                                       QJsonObject{{QStringLiteral("clip"), a}, {QStringLiteral("out"), 0.5}}});
+    QVERIFY2(laid.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(laid).toJson()));
+    const QJsonArray order = laid.value(QStringLiteral("clips")).toArray();
+    QCOMPARE(order.size(), 3);
+    QCOMPARE(order.at(0).toObject().value(QStringLiteral("id")).toString(), c);
+    QCOMPARE(order.at(0).toObject().value(QStringLiteral("start")).toDouble(), 0.0);
+    QCOMPARE(order.at(1).toObject().value(QStringLiteral("start")).toDouble(), 1.0);
+    QCOMPARE(order.at(1).toObject().value(QStringLiteral("dur")).toDouble(), 2.0);
+    QCOMPARE(order.at(2).toObject().value(QStringLiteral("id")).toString(), a);
+    QCOMPARE(order.at(2).toObject().value(QStringLiteral("start")).toDouble(), 3.0);
+    QCOMPARE(order.at(2).toObject().value(QStringLiteral("dur")).toDouble(), 0.5);
+    const QString created = laid.value(QStringLiteral("created")).toArray().at(0).toString();
+    QCOMPARE(find(created)->name, QStringLiteral("New"));
+    QCOMPARE(find(created)->srcIn, drift::secondsToUs(5.0));
+    QCOMPARE(laid.value(QStringLiteral("removed")).toArray(), QJsonArray{b});
+    QVERIFY(!find(b));
+    state.undo(); // one step
+    QVERIFY(find(b));
+    QVERIFY(!find(created));
+    QCOMPARE(find(a)->timelineDuration, drift::secondsToUs(1.0));
+    QCOMPARE(find(c)->timelineStart, drift::secondsToUs(3.0));
+
+    // A start offset.
+    QVERIFY(sequence({entry(b), entry(a)}, {{QStringLiteral("start"), 2.0}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(find(b)->timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(find(a)->timelineStart, drift::secondsToUs(4.0));
+    state.undo();
+
+    // Refusals change nothing.
+    QCOMPARE(sequence({entry(a), entry(a)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(sequence({entry(QStringLiteral("nope"))}).value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QCOMPARE(sequence({QJsonObject{{QStringLiteral("asset"), 0}, {QStringLiteral("out"), 20.0}}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(sequence({QJsonObject{{QStringLiteral("asset"), 0}, {QStringLiteral("clip"), a}}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    state.project()->tracks()[track].locked = true;
+    QCOMPARE(sequence({entry(a)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    state.project()->tracks()[track].locked = false;
+    QVERIFY(find(b));
+    QVERIFY(find(c));
+    QCOMPARE(find(a)->timelineStart, 0);
+    QCOMPARE(sequence({}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(sequence({entry(a)}, {{QStringLiteral("start"), -1.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(sequence({QJsonObject{{QStringLiteral("clip"), a}, {QStringLiteral("out"), 20.0}}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(find(a)->timelineDuration, drift::secondsToUs(1.0));
+
+    // Inside a batch, with nothing deleted: the reply still reads the new layout, new clip included,
+    // and the whole batch is one undo step.
+    {
+        const QJsonObject batch = dispatcher.apply(QJsonObject{
+            {QStringLiteral("ops"),
+             QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_sequence")},
+                                    {QStringLiteral("args"),
+                                     QJsonObject{{QStringLiteral("track"), track},
+                                                 {QStringLiteral("clips"),
+                                                  QJsonArray{entry(c), entry(a), entry(b),
+                                                             QJsonObject{{QStringLiteral("asset"), 0}, {QStringLiteral("out"), 1.0}}}}}}}}}});
+        QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+        const QJsonObject inner = batch.value(QStringLiteral("done")).toArray().first().toObject().value(QStringLiteral("result")).toObject();
+        const QJsonArray rows = inner.value(QStringLiteral("clips")).toArray();
+        QCOMPARE(rows.size(), 4);
+        QCOMPARE(rows.at(0).toObject().value(QStringLiteral("id")).toString(), c);
+        QCOMPARE(rows.at(1).toObject().value(QStringLiteral("start")).toDouble(), 1.0);
+        QCOMPARE(rows.at(2).toObject().value(QStringLiteral("start")).toDouble(), 2.0);
+        QCOMPARE(rows.at(3).toObject().value(QStringLiteral("start")).toDouble(), 4.0);
+        state.undo();
+        QCOMPARE(find(c)->timelineStart, drift::secondsToUs(3.0));
+        QCOMPARE(state.project()->tracks().at(track).clips.size(), 3);
+    }
+
+    // An unlisted clip linked to a listed one would take it along: refused.
+    {
+        state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second].linkId = QStringLiteral("a-c");
+        state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].linkId = QStringLiteral("a-c");
+        QCOMPARE(sequence({entry(a), entry(b)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY(find(c));
+        state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second].linkId.clear();
+        state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].linkId.clear();
+    }
+
+    // A's linked audio moves with it; a clip on the audio track in its way refuses the layout.
+    {
+        drift::Clip &video = state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second];
+        video.linkId = QStringLiteral("a-link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("a-audio");
+        partner.type = drift::ClipType::Audio;
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        audioTrack.clips = {partner};
+        state.project()->tracks().append(audioTrack);
+        QVERIFY(sequence({entry(b), entry(a)}).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(find(a)->timelineStart, drift::secondsToUs(2.0));
+        QCOMPARE(find(QStringLiteral("a-audio"))->timelineStart, drift::secondsToUs(2.0));
+        QVERIFY(!find(c));
+        state.undo();
+
+        drift::Clip blocker = partner;
+        blocker.id = QStringLiteral("audio-blocker");
+        blocker.linkId.clear();
+        blocker.timelineStart = drift::secondsToUs(2.5);
+        state.project()->tracks().last().clips.append(blocker);
+        QCOMPARE(sequence({entry(b), entry(a)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(find(a)->timelineStart, 0);
+        QCOMPARE(find(QStringLiteral("a-audio"))->timelineStart, 0);
+        QVERIFY(find(c));
+
+        // Same, with an effect on C: deleting C drops its effect lane, which renumbers the audio
+        // track; the blocker is still found.
+        const int tracksBefore = int(state.project()->tracks().size());
+        const QJsonObject graded = dispatcher.applyOne(
+            QStringLiteral("add_effect"), {{QStringLiteral("clip"), c}, {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}});
+        QVERIFY2(graded.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(graded).toJson()));
+        QCOMPARE(int(state.project()->tracks().size()), tracksBefore + 1);
+        QCOMPARE(sequence({entry(b), entry(a)}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(find(QStringLiteral("a-audio"))->timelineStart, 0);
+        QVERIFY(find(c));
+
+        // Laying out the audio track itself: dropping C's audio takes C and its effect lane, which
+        // moves the audio track up one; the layout still lands on it.
+        state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].linkId = QStringLiteral("c-link");
+        drift::Clip cAudio = partner;
+        cAudio.id = QStringLiteral("c-audio");
+        cAudio.linkId = QStringLiteral("c-link");
+        cAudio.timelineStart = drift::secondsToUs(3.0);
+        const int audioIndex = int(state.project()->tracks().size()) - 1;
+        state.project()->tracks()[audioIndex].clips.append(cAudio);
+        const int tracksWithLane = int(state.project()->tracks().size());
+        AppController::SequenceEntry first;
+        first.clipId = QStringLiteral("a-audio");
+        AppController::SequenceEntry second;
+        second.clipId = QStringLiteral("audio-blocker");
+        const AppController::SequenceResult laidAudio = state.setTrackSequence(audioIndex, {first, second}, 0);
+        QVERIFY2(laidAudio.error.isEmpty(), qPrintable(laidAudio.error));
+        QCOMPARE(int(state.project()->tracks().size()), tracksWithLane - 1);
+        QVERIFY(!find(c));
+        QVERIFY(!find(QStringLiteral("c-audio")));
+        QCOMPARE(find(QStringLiteral("audio-blocker"))->timelineStart, drift::secondsToUs(1.0));
+        QCOMPARE(state.project()->tracks().at(audioIndex - 1).clips.size(), 2);
+        state.undo();
+        QVERIFY(find(c));
+        QCOMPARE(int(state.project()->tracks().size()), tracksWithLane);
+    }
+}
+
+void McpTest::clipLabelsSurviveSplitsAndFind()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(i);
+        clip.type = drift::ClipType::Text;
+        clip.name = i == 0 ? QStringLiteral("33-2 Opening shot") : QStringLiteral("Closing");
+        clip.timelineStart = drift::secondsToUs(4.0 * i);
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks()[0].clips.append(clip);
+    }
+    state.project()->ensureTrackIds();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto find = [&](const QJsonObject &args) {
+        const QJsonObject found = dispatcher.applyOne(QStringLiteral("find_clips"), args);
+        QStringList ids;
+        for (const QJsonValue &clip : found.value(QStringLiteral("clips")).toArray())
+            ids.append(clip.toObject().value(QStringLiteral("id")).toString() + QLatin1Char('=')
+                       + clip.toObject().value(QStringLiteral("label")).toString());
+        return ids;
+    };
+
+    const QJsonObject labelled = dispatcher.applyOne(
+        QStringLiteral("set_clip_label"), {{QStringLiteral("clip"), QStringLiteral("clip-0")}, {QStringLiteral("label"), QStringLiteral(" intro ")}});
+    QVERIFY2(labelled.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(labelled).toJson()));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).label, QStringLiteral("intro"));
+    state.undo();
+    QVERIFY(state.project()->tracks().at(0).clips.at(0).label.isEmpty());
+    state.redo();
+
+    // A rename leaves the label; a split numbers the tail, a duplicate the next copy.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_name"), {{QStringLiteral("clip"), QStringLiteral("clip-0")}, {QStringLiteral("name"), QStringLiteral("Renamed")}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject split = dispatcher.applyOne(QStringLiteral("split_clip"), {{QStringLiteral("clip"), QStringLiteral("clip-0")}, {QStringLiteral("at"), 2.0}});
+    QVERIFY2(split.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(split).toJson()));
+    const QJsonObject duplicated = dispatcher.applyOne(QStringLiteral("duplicate_clip"), {{QStringLiteral("clip"), QStringLiteral("clip-0")}});
+    QVERIFY2(duplicated.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(duplicated).toJson()));
+    const QStringList intro = find({{QStringLiteral("label"), QStringLiteral("intro")}});
+    QCOMPARE(intro.size(), 3);
+    QCOMPARE(intro.first(), QStringLiteral("clip-0=intro"));
+    QStringList labels;
+    for (const QString &hit : intro)
+        labels.append(hit.section(QLatin1Char('='), 1));
+    labels.sort();
+    QCOMPARE(labels, (QStringList{QStringLiteral("intro"), QStringLiteral("intro.2"), QStringLiteral("intro.3")}));
+    QCOMPARE(find({{QStringLiteral("label"), QStringLiteral("intro.2")}}).size(), 1);
+
+    // Other filters, combined with AND.
+    QCOMPARE(find({{QStringLiteral("name"), QStringLiteral("closing")}}), QStringList{QStringLiteral("clip-1=")});
+    QCOMPARE(find({{QStringLiteral("label"), QStringLiteral("intro")}, {QStringLiteral("name"), QStringLiteral("closing")}}).size(), 0);
+    QCOMPARE(find({{QStringLiteral("kind"), QStringLiteral("text")}, {QStringLiteral("track"), 0}}).size(), 4);
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("find_clips"), {{QStringLiteral("track"), 7}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+
+    // Cleared with an empty label.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_label"), {{QStringLiteral("clip"), QStringLiteral("clip-1")}, {QStringLiteral("label"), QStringLiteral("x")}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_label"), {{QStringLiteral("clip"), QStringLiteral("clip-1")}, {QStringLiteral("label"), QString()}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(find({{QStringLiteral("name"), QStringLiteral("closing")}}), QStringList{QStringLiteral("clip-1=")});
+    QCOMPARE(find({{QStringLiteral("label"), QString()}}), QStringList{QStringLiteral("clip-1=")});
+
+    // A trailing dot is dropped (it would read as a number separator).
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_clip_label"), {{QStringLiteral("clip"), QStringLiteral("clip-1")}, {QStringLiteral("label"), QStringLiteral("end.")}})
+                 .value(QStringLiteral("label")).toString(),
+             QStringLiteral("end"));
+
+    // In a batch, a label set on a new copy stays as given: the batch's closing push doesn't
+    // renumber what its ops already settled.
+    const int clipsBefore = int(state.project()->tracks().at(0).clips.size());
+    state.mcp()->beginBatch();
+    state.selectClip(0, 0);
+    state.duplicateSelectedClip();
+    const int copyIndex = int(state.project()->tracks().at(0).clips.size()) - 1;
+    QCOMPARE(copyIndex, clipsBefore);
+    QVERIFY(state.project()->tracks().at(0).clips.at(copyIndex).label.startsWith(QStringLiteral("intro.")));
+    state.setClipLabel(0, copyIndex, QStringLiteral("intro"));
+    state.mcp()->endBatch(QStringLiteral("Copy"), true);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(copyIndex).label, QStringLiteral("intro"));
+}
+
+void McpTest::inspectFiltersTracksAndFields()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    for (int t = 0; t < 3; ++t) {
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(t);
+        clip.type = drift::ClipType::Text;
+        clip.name = clip.id;
+        clip.timelineDuration = drift::secondsToUs(1.0 + t);
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks()[t].clips.append(clip);
+    }
+    state.project()->ensureTrackIds();
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject some = dispatcher.inspect({{QStringLiteral("clips"), true},
+                                                 {QStringLiteral("tracks"), QJsonArray{0, 2}},
+                                                 {QStringLiteral("fields"), QJsonArray{QStringLiteral("duration")}}});
+    QVERIFY2(some.value(QStringLiteral("ok")).toBool(true), qPrintable(QJsonDocument(some).toJson()));
+    const QJsonArray rows = some.value(QStringLiteral("tracks")).toArray();
+    QCOMPARE(rows.size(), 2);
+    QCOMPARE(rows.at(0).toObject().value(QStringLiteral("i")).toInt(), 0);
+    QCOMPARE(rows.at(1).toObject().value(QStringLiteral("i")).toInt(), 2);
+    const QJsonObject item = rows.at(1).toObject().value(QStringLiteral("items")).toArray().first().toObject();
+    QCOMPARE(item.keys(), (QStringList{QStringLiteral("duration"), QStringLiteral("id")}));
+    QCOMPARE(item.value(QStringLiteral("duration")).toDouble(), 3.0);
+    QCOMPARE(some.value(QStringLiteral("clips")).toInt(), 3); // the summary still counts every clip
+
+    // Detail rows trim too; the full reply is larger.
+    const QJsonObject detail = dispatcher.inspect({{QStringLiteral("clips"), true},
+                                                   {QStringLiteral("detail"), true},
+                                                   {QStringLiteral("fields"), QJsonArray{QStringLiteral("name")}}});
+    const QJsonObject detailItem = detail.value(QStringLiteral("tracks")).toArray().first().toObject()
+                                       .value(QStringLiteral("items")).toArray().first().toObject();
+    QCOMPARE(detailItem.keys(), (QStringList{QStringLiteral("id"), QStringLiteral("name")}));
+    const QJsonObject full = dispatcher.inspect({{QStringLiteral("clips"), true}, {QStringLiteral("detail"), true}});
+    QVERIFY(QJsonDocument(full).toJson().size() > QJsonDocument(detail).toJson().size());
+
+    QCOMPARE(dispatcher.inspect({{QStringLiteral("tracks"), QJsonArray{5}}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // track and tracks together: the union.
+    const QJsonObject both = dispatcher.inspect({{QStringLiteral("tracks"), QJsonArray{0}}, {QStringLiteral("track"), 1}});
+    QCOMPARE(both.value(QStringLiteral("tracks")).toArray().size(), 2);
+    // clip=<uuid> isn't filtered away by a tracks list that leaves its track out.
+    const QJsonObject one = dispatcher.inspect({{QStringLiteral("clip"), QStringLiteral("clip-1")},
+                                                {QStringLiteral("tracks"), QJsonArray{0}}});
+    const QJsonArray oneRows = one.value(QStringLiteral("tracks")).toArray();
+    QCOMPARE(oneRows.size(), 1);
+    QCOMPARE(oneRows.first().toObject().value(QStringLiteral("i")).toInt(), 1);
+
+    // Over the wire the schema accepts both keys, and checks their item types.
+    QJsonObject wire{{QStringLiteral("tracks"), QJsonArray{0}}, {QStringLiteral("fields"), QJsonArray{QStringLiteral("start")}}};
+    QVERIFY(drift::mcp::checkHomepageArgs(QStringLiteral("inspect"), wire).isEmpty());
+    QJsonObject badTracks{{QStringLiteral("tracks"), QJsonArray{QStringLiteral("a")}}};
+    QVERIFY(!drift::mcp::checkHomepageArgs(QStringLiteral("inspect"), badTracks).isEmpty());
+    QJsonObject badFields{{QStringLiteral("fields"), QJsonArray{1}}};
+    QVERIFY(!drift::mcp::checkHomepageArgs(QStringLiteral("inspect"), badFields).isEmpty());
 }
 
 void McpTest::changeFeedListsEditsBySource()
@@ -3994,6 +5247,115 @@ void McpTest::keyframeEasingThroughMcp()
     QCOMPARE(twoShapes.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
 }
 
+void McpTest::bulkSmoothKeyframesAndUnlinkedTangents()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QVERIFY(state.positionLinked());
+
+    const QJsonObject text = dispatcher.applyOne(
+        QStringLiteral("add_text"),
+        {{QStringLiteral("text"), QStringLiteral("A")}, {QStringLiteral("at"), 0.0}});
+    const QString clip = text.value(QStringLiteral("id")).toString();
+    auto call = [&](const char *tool, QJsonObject args) {
+        args.insert(QStringLiteral("clip"), clip);
+        return dispatcher.applyOne(QString::fromLatin1(tool), args);
+    };
+    auto keysOf = [&](const char *prop) {
+        return call("list_keyframes", {{QStringLiteral("prop"), QString::fromLatin1(prop)}})
+            .value(QStringLiteral("keys")).toArray();
+    };
+
+    const int undoBefore = state.undoIndex();
+    QJsonObject r = call("set_keyframes",
+                         {{QStringLiteral("keys"),
+                           QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}, QJsonArray{2.0, 50.0}}},
+                                       {QStringLiteral("y"), QJsonArray{QJsonObject{{QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 0.0}},
+                                                                        QJsonObject{{QStringLiteral("at"), 2.0}, {QStringLiteral("value"), 20.0}}}}}},
+                          {QStringLiteral("interpolation"), QStringLiteral("smooth")}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    QCOMPARE(r.value(QStringLiteral("written")).toObject().value(QStringLiteral("x")).toInt(), 3);
+    QCOMPARE(state.undoIndex(), undoBefore + 1);
+    QCOMPARE(keysOf("x").size(), 3);
+    QCOMPARE(keysOf("y").size(), 2);
+    const QJsonObject mid = keysOf("x").at(1).toObject();
+    // slope = (50 - 0) / 2 s = 25/s; handles are a third of a 1 s segment.
+    QVERIFY(qAbs(mid.value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+    QVERIFY(qAbs(mid.value(QStringLiteral("outDy")).toDouble() - 25.0 / 3.0) < 1e-3);
+    QVERIFY(qAbs(mid.value(QStringLiteral("inDy")).toDouble() + 25.0 / 3.0) < 1e-3);
+
+    r = call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 5.0}, QJsonArray{1.5, 6.0}}}}},
+                               {QStringLiteral("replace"), true}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(keysOf("x").size(), 2);
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 0.0);
+
+    r = call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 9.0}}},
+                                                                    {QStringLiteral("nope.prop"), QJsonArray{QJsonArray{0.0, 1.0}}}}},
+                               {QStringLiteral("replace"), true}});
+    QVERIFY(!r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(keysOf("x").size(), 2);
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("value")).toDouble(), 5.0);
+
+    QVERIFY(!call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0}}}}}})
+                 .value(QStringLiteral("ok")).toBool());
+    QVERIFY(!call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 1.0}}}}},
+                                    {QStringLiteral("interpolation"), QStringLiteral("wobbly")}})
+                 .value(QStringLiteral("ok")).toBool());
+
+    // x and y tangents are independent over MCP although the editor's link toggle is on.
+    call("set_keyframes", {{QStringLiteral("keys"),
+                            QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}}},
+                                        {QStringLiteral("y"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}}}}},
+                           {QStringLiteral("replace"), true}});
+    auto tangents = [&](const char *prop, double outDy) {
+        return call("set_keyframe_tangents", {{QStringLiteral("prop"), QString::fromLatin1(prop)}, {QStringLiteral("at"), 0.0},
+                                              {QStringLiteral("outDx"), 0.2}, {QStringLiteral("outDy"), outDy}});
+    };
+    QVERIFY(tangents("x", 30.0).value(QStringLiteral("ok")).toBool());
+    QVERIFY(tangents("y", 70.0).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 30.0);
+    QCOMPARE(keysOf("y").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 70.0);
+    QVERIFY(state.positionLinked());
+
+    QVERIFY(call("set_keyframe_tangents", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 0.0},
+                                           {QStringLiteral("outDx"), 0.2}, {QStringLiteral("outDy"), 10.0},
+                                           {QStringLiteral("linked"), true}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(keysOf("y").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 10.0);
+
+    // Per-key and whole-property smooth.
+    call("set_keyframes", {{QStringLiteral("keys"),
+                            QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 10.0}, QJsonArray{2.0, 0.0}}}}},
+                           {QStringLiteral("replace"), true}});
+    state.setPlayheadSeconds(0.25);
+    for (const char *mode : {"ease", "linear", "hold"}) {
+        QVERIFY(call("set_keyframe_interpolation", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0},
+                                                    {QStringLiteral("mode"), QString::fromLatin1(mode)}})
+                    .value(QStringLiteral("ok")).toBool());
+        QCOMPARE(state.playheadSeconds(), 0.25);
+    }
+    QCOMPARE(keysOf("x").at(1).toObject().value(QStringLiteral("hold")).toBool(), true);
+    QVERIFY(call("set_keyframe", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0}, {QStringLiteral("value"), 10.0}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject unknownProp = call("set_keyframe", {{QStringLiteral("prop"), QStringLiteral("text.nope")}, {QStringLiteral("at"), 1.0},
+                                                          {QStringLiteral("value"), 1.0}});
+    QVERIFY(!unknownProp.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(unknownProp.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY(!state.setClipKeyframe(0, 0, QStringLiteral("nope"), 1.0, 1.0));
+    QVERIFY(call("set_keyframe_interpolation", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0},
+                                                {QStringLiteral("mode"), QStringLiteral("smooth")}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(qAbs(keysOf("x").at(1).toObject().value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDx")).toDouble(), 0.0);
+    QVERIFY(call("set_keyframe_easing", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("all"), true},
+                                         {QStringLiteral("smooth"), true}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(qAbs(keysOf("x").at(0).toObject().value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+}
+
 void McpTest::setVolumeRoundTrips()
 {
     AssetLibrary library;
@@ -4781,6 +6143,212 @@ void McpTest::historyOpsSeeTheTrimmedStack()
     const QJsonObject undo = dispatcher.applyOne(QStringLiteral("undo"), {});
     QVERIFY(!undo.value(QStringLiteral("ok")).toBool());
     QCOMPARE(state.undoHistory().size(), 0);
+}
+
+void McpTest::historyHousekeepingOps()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto testMode = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const auto restore = isolateUndoHistorySettings();
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("history.drift"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (int i = 0; i < 5; ++i)
+        QVERIFY(dispatcher.apply(addTextOp(i)).value(QStringLiteral("ok")).toBool());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    // Saved, so the clear below is what makes it changed again.
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+
+    QJsonObject stats = dispatcher.applyOne(QStringLiteral("history_stats"), {});
+    QVERIFY2(stats.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(stats).toJson()));
+    QCOMPARE(stats.value(QStringLiteral("steps")).toInt(), 5);
+    QCOMPARE(stats.value(QStringLiteral("undoable")).toInt(), 4);
+    QCOMPARE(stats.value(QStringLiteral("redoable")).toInt(), 1);
+    QCOMPARE(stats.value(QStringLiteral("snapshots")).toInt(), 10); // a before and an after per step
+    QVERIFY(!stats.contains(QStringLiteral("json_bytes"))); // only on request: it serialises every state
+    QVERIFY(dispatcher.applyOne(QStringLiteral("history_stats"), {{QStringLiteral("size"), true}})
+                .value(QStringLiteral("json_bytes")).toDouble() > 0);
+    QVERIFY(stats.value(QStringLiteral("saved_with_project")).toBool());
+    QCOMPARE(stats.value(QStringLiteral("history_only_media")).toInt(), 0);
+    QJsonObject settings = stats.value(QStringLiteral("settings")).toObject();
+    QCOMPARE(settings.value(QStringLiteral("source")).toString(), QStringLiteral("global"));
+    QCOMPARE(settings.value(QStringLiteral("steps")).toInt(), -1);
+
+    // keep_last keeps the newest undoable steps and drops the redo one; the project stays.
+    const int clipsBefore = dispatcher.inspect({}).value(QStringLiteral("clips")).toInt();
+    const QJsonObject cleared = dispatcher.applyOne(QStringLiteral("clear_history"), {{QStringLiteral("keep_last"), 2}});
+    QVERIFY(cleared.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(cleared.value(QStringLiteral("removed")).toInt(), 3);
+    QCOMPARE(cleared.value(QStringLiteral("steps")).toInt(), 2);
+    QCOMPARE(cleared.value(QStringLiteral("index")).toInt(), 2);
+    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), clipsBefore);
+    QVERIFY(!state.redoAvailable());
+    // A saved history is part of the file, so clearing it is a change to save.
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    // The kept steps still undo and redo.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), clipsBefore - 1);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("redo"), {}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), clipsBefore);
+
+    // This project's own limit, saved with it.
+    QJsonObject limit = dispatcher.applyOne(QStringLiteral("set_history_limit"),
+                                            {{QStringLiteral("steps"), 1}, {QStringLiteral("persist"), false}});
+    QVERIFY2(limit.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(limit).toJson()));
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), 1);
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("session"));
+    QCOMPARE(limit.value(QStringLiteral("source")).toString(), QStringLiteral("project"));
+    QCOMPARE(limit.value(QStringLiteral("steps_kept")).toInt(), 1);
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("history_stats"), {})
+                 .value(QStringLiteral("saved_with_project")).toBool());
+
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+    AppController reopened(&library);
+    reopened.projectFile()->loadProject(QUrl::fromLocalFile(path));
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    drift::mcp::McpDispatcher reopenedDispatcher(&reopened);
+    settings = reopenedDispatcher.applyOne(QStringLiteral("history_stats"), {})
+                   .value(QStringLiteral("settings")).toObject();
+    QCOMPARE(settings.value(QStringLiteral("source")).toString(), QStringLiteral("project"));
+    QCOMPARE(settings.value(QStringLiteral("mode")).toString(), QStringLiteral("session"));
+    QCOMPARE(settings.value(QStringLiteral("steps")).toInt(), 1);
+    QCOMPARE(reopened.undoHistory().size(), 0); // session mode: nothing was saved to load
+
+    // 0 turns history off for this project without losing its persist choice: a limit again
+    // brings back "session". Numbers and booleans as strings are read as such.
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), QStringLiteral("0")}});
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("off"));
+    QCOMPARE(limit.value(QStringLiteral("steps_kept")).toInt(), 0);
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), QStringLiteral("5")}});
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("session"));
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), 5);
+
+    // The same setting again is not a change to the project.
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), 5}});
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+
+    // With the app's history off, a project limit turns it on (for the session, unless asked).
+    state.preferences()->setUndoHistoryMode(QStringLiteral("off"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("history_stats"), {})
+                 .value(QStringLiteral("settings")).toObject().value(QStringLiteral("mode")).toString(),
+             QStringLiteral("session"));
+    dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("reset"), true}});
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("history_stats"), {})
+                 .value(QStringLiteral("settings")).toObject().value(QStringLiteral("mode")).toString(),
+             QStringLiteral("off"));
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), -1}});
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("session"));
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), -1);
+    QVERIFY(dispatcher.apply(addTextOp(9)).value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.undoAvailable());
+    state.preferences()->setUndoHistoryMode(QStringLiteral("project"));
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("reset"), true}});
+    QCOMPARE(limit.value(QStringLiteral("source")).toString(), QStringLiteral("global"));
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("project"));
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), -1);
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("set_history_limit"), {}).value(QStringLiteral("ok")).toBool());
+}
+
+void McpTest::applyWithoutHistoryJoinsTheNewestStep()
+{
+    const auto restore = isolateUndoHistorySettings();
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto clips = [&] { return dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(); };
+    const auto quiet = [&](int i) {
+        QJsonObject args = addTextOp(i);
+        args.insert(QStringLiteral("history"), QStringLiteral("false")); // string form, as agents send it
+        return dispatcher.apply(args);
+    };
+
+    // No step yet: the edit becomes part of the starting state, with nothing to undo.
+    QVERIFY(quiet(0).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clips(), 1);
+    QVERIFY(!state.undoAvailable());
+
+    // One step, then a batch without its own: undo takes both back, redo brings both.
+    QVERIFY(dispatcher.apply(addTextOp(1)).value(QStringLiteral("ok")).toBool());
+    QVERIFY(quiet(2).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), 1);
+    QCOMPARE(clips(), 3);
+    state.undo();
+    QCOMPARE(clips(), 1);
+    state.redo();
+    QCOMPARE(clips(), 3);
+
+    // Undone steps are dropped: their states no longer follow from the project.
+    QVERIFY(dispatcher.apply(addTextOp(3)).value(QStringLiteral("ok")).toBool());
+    state.undo();
+    QVERIFY(state.redoAvailable());
+    QVERIFY(quiet(4).value(QStringLiteral("ok")).toBool());
+    QVERIFY(!state.redoAvailable());
+    QCOMPARE(clips(), 4);
+    state.undo();
+    QCOMPARE(clips(), 1);
+
+    // A batch that fails part-way still folds what ran.
+    state.redo();
+    QJsonObject failing = addTextOp(5);
+    QJsonArray ops = failing.value(QStringLiteral("ops")).toArray();
+    ops.append(QJsonObject{{QStringLiteral("tool"), QStringLiteral("delete_clip")},
+                           {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), QStringLiteral("nope")}}}});
+    failing.insert(QStringLiteral("ops"), ops);
+    failing.insert(QStringLiteral("history"), false);
+    QVERIFY(!dispatcher.apply(failing).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clips(), 5);
+    QCOMPARE(state.undoHistory().size(), 1);
+    state.undo(); // the folded op goes with the step it joined
+    QCOMPARE(clips(), 1);
+    state.redo();
+    QCOMPARE(clips(), 5);
+
+    // Unsaved afterwards, like any edit: nothing was pushed, so this is set explicitly.
+    {
+        QStandardPaths::setTestModeEnabled(true);
+        const auto testMode = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        state.projectFile()->saveProject(QUrl::fromLocalFile(dir.filePath(QStringLiteral("quiet.drift"))));
+        state.projectFile()->waitForSave();
+        QVERIFY(!state.projectFile()->hasUnsavedChanges());
+        QVERIFY(quiet(6).value(QStringLiteral("ok")).toBool());
+        QVERIFY(state.projectFile()->hasUnsavedChanges());
+        QVERIFY(dispatcher.inspect({}).value(QStringLiteral("dirty")).toBool());
+
+        // A batch that changes nothing leaves history and the saved state alone: redo survives
+        // and a clean project stays clean.
+        state.undo();
+        QVERIFY(state.redoAvailable());
+        state.projectFile()->saveProject(QUrl::fromLocalFile(dir.filePath(QStringLiteral("quiet.drift"))));
+        state.projectFile()->waitForSave();
+        QVERIFY(!state.projectFile()->hasUnsavedChanges());
+        const QString anyClip = dispatcher.inspect({{QStringLiteral("clips"), true}})
+                                    .value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                    .value(QStringLiteral("items")).toArray().at(0).toObject()
+                                    .value(QStringLiteral("id")).toString();
+        QVERIFY(!anyClip.isEmpty());
+        const QString sameName = state.project()->tracks().at(0).clips.at(0).name;
+        QJsonObject noop{{QStringLiteral("history"), false},
+                         {QStringLiteral("ops"),
+                          QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_clip_name")},
+                                                 {QStringLiteral("args"),
+                                                  QJsonObject{{QStringLiteral("clip"), anyClip},
+                                                              {QStringLiteral("name"), sameName}}}}}}};
+        QVERIFY(dispatcher.apply(noop).value(QStringLiteral("ok")).toBool());
+        QVERIFY(state.redoAvailable());
+        QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    }
 }
 
 void McpTest::undoToRestoresSnapshot()
@@ -6500,6 +8068,281 @@ void McpTest::authoredEffectLifecycle()
                  .value(QStringLiteral("uses")).toInt(), 1);
 }
 
+// The worked example in docs/procedural.md: each "### <file>" heading under "## Worked example" is
+// followed by one fenced block. Testing the doc's own text keeps the guide and the tools in step.
+static QMap<QString, QString> proceduralDocExample()
+{
+    QFile doc(QStringLiteral(":/docs/procedural.md"));
+    if (!doc.open(QIODevice::ReadOnly))
+        return {};
+    const QString text = QString::fromUtf8(doc.readAll());
+    const qsizetype start = text.indexOf(QStringLiteral("## Worked example"));
+    const qsizetype end = text.indexOf(QStringLiteral("\n## MCP workflow"));
+    if (start < 0 || end < start)
+        return {};
+    QMap<QString, QString> files;
+    const QRegularExpression re(QStringLiteral("### ([A-Za-z0-9_.]+)\\n\\n```[a-z]*\\n(.*?)\\n```"),
+                                QRegularExpression::DotMatchesEverythingOption);
+    auto it = re.globalMatch(text.mid(start, end - start));
+    while (it.hasNext()) {
+        const QRegularExpressionMatch m = it.next();
+        files.insert(m.captured(1), m.captured(2) + QLatin1Char('\n'));
+    }
+    return files;
+}
+
+void McpTest::proceduralAuthoringLifecycle()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const auto restore = qScopeGuard([&] {
+        QDir(QDir(appData).filePath(QStringLiteral("procedurals"))).removeRecursively();
+        reloadProceduralCatalog();
+        QStandardPaths::setTestModeEnabled(false);
+    });
+    QDir(QDir(appData).filePath(QStringLiteral("procedurals"))).removeRecursively();
+    reloadProceduralCatalog();
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *op, const QJsonObject &args = {}) {
+        return dispatcher.applyOne(QString::fromLatin1(op), args);
+    };
+    const auto dump = [](const QJsonObject &o) { return qPrintable(QJsonDocument(o).toJson()); };
+
+    QMap<QString, QString> example = proceduralDocExample();
+    QVERIFY2(example.size() == 4, "docs/procedural.md worked example must have 4 files");
+    const QJsonObject manifest = QJsonDocument::fromJson(example.take(QStringLiteral("procedural.json")).toUtf8()).object();
+    QVERIFY(!manifest.isEmpty());
+    const auto filesJson = [](const QMap<QString, QString> &files) {
+        QJsonObject o;
+        for (auto it = files.cbegin(); it != files.cend(); ++it)
+            o.insert(it.key(), it.value());
+        return o;
+    };
+    const auto createArgs = [&](const QString &slug, const QMap<QString, QString> &files) {
+        return QJsonObject{{QStringLiteral("slug"), slug},
+                           {QStringLiteral("manifest"), manifest},
+                           {QStringLiteral("files"), filesJson(files)}};
+    };
+    const QString target = QDir(appData).filePath(QStringLiteral("procedurals/orbs"));
+
+    // The guide is the docs file itself.
+    const QJsonObject guide = call("procedural_authoring_guide");
+    QVERIFY(guide.value(QStringLiteral("ok")).toBool());
+    QFile docFile(QStringLiteral(":/docs/procedural.md"));
+    QVERIFY(docFile.open(QIODevice::ReadOnly));
+    QCOMPARE(guide.value(QStringLiteral("guide")).toString(), QString::fromUtf8(docFile.readAll()));
+
+    // Invalid packages install nothing.
+    QMap<QString, QString> noPartner = example;
+    noPartner.remove(QStringLiteral("lit.frag"));
+    QCOMPARE(call("create_procedural", createArgs(QStringLiteral("orbs"), noPartner)).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_manifest"));
+    QMap<QString, QString> syntax = example;
+    syntax.insert(QStringLiteral("main.lua"), QStringLiteral("local = = 1\n"));
+    const QJsonObject syntaxReply = call("create_procedural", createArgs(QStringLiteral("orbs"), syntax));
+    QCOMPARE(syntaxReply.value(QStringLiteral("error")).toString(), QStringLiteral("lua_error"));
+    QVERIFY(!syntaxReply.value(QStringLiteral("errors")).toArray().isEmpty());
+    QMap<QString, QString> wrongShader = example;
+    wrongShader.insert(QStringLiteral("main.lua"), example.value(QStringLiteral("main.lua")).replace(QStringLiteral("\"lit\""), QStringLiteral("\"missing\"")));
+    const QJsonObject wrongReply = call("create_procedural", createArgs(QStringLiteral("orbs"), wrongShader));
+    QCOMPARE(wrongReply.value(QStringLiteral("error")).toString(), QStringLiteral("lua_error"));
+    QVERIFY(wrongReply.value(QStringLiteral("errors")).toArray().at(0).toString().contains(QStringLiteral("missing")));
+    QCOMPARE(call("create_procedural", createArgs(QStringLiteral("Bad Slug!"), example)).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    const bool haveGl = drift::gl::runtime().available();
+    if (haveGl) {
+        QMap<QString, QString> brokenGlsl = example;
+        brokenGlsl.insert(QStringLiteral("lit.frag"), QStringLiteral("#version 330 core\nvoid main() { nope; }\n"));
+        const QJsonObject broken = call("create_procedural", createArgs(QStringLiteral("orbs"), brokenGlsl));
+        QCOMPARE(broken.value(QStringLiteral("error")).toString(), QStringLiteral("shader_compile_failed"));
+        QVERIFY(broken.value(QStringLiteral("errors")).toArray().at(0).toString().startsWith(QStringLiteral("lit:")));
+        QVERIFY(!broken.value(QStringLiteral("shaders")).toObject().value(QStringLiteral("lit")).toObject().value(QStringLiteral("ok")).toBool());
+    }
+    QVERIFY(!QFileInfo::exists(target));
+    QVERIFY(!hasProcedural(QStringLiteral("user.orbs")));
+
+    // The doc's example validates and installs.
+    const QJsonObject created = call("create_procedural", createArgs(QStringLiteral("orbs"), example));
+    QVERIFY2(created.value(QStringLiteral("ok")).toBool(), dump(created));
+    QCOMPARE(created.value(QStringLiteral("id")).toString(), QStringLiteral("user.orbs"));
+    QCOMPARE(created.value(QStringLiteral("shaderCheck")).toString(), haveGl ? QStringLiteral("ok") : QStringLiteral("skipped"));
+    QCOMPARE(created.value(QStringLiteral("stats")).toObject().value(QStringLiteral("instanceCount")).toInt(), 36);
+    QVERIFY(hasProcedural(QStringLiteral("user.orbs")));
+    QCOMPARE(call("create_procedural", createArgs(QStringLiteral("orbs"), example)).value(QStringLiteral("error")).toString(),
+             QStringLiteral("exists"));
+
+    bool listed = false;
+    for (const QJsonValue &v : call("list_procedurals").value(QStringLiteral("procedurals")).toArray()) {
+        const QJsonObject row = v.toObject();
+        if (row.value(QStringLiteral("id")).toString() != QLatin1String("user.orbs"))
+            continue;
+        listed = true;
+        QVERIFY(row.value(QStringLiteral("user")).toBool());
+        QCOMPARE(row.value(QStringLiteral("params")).toArray().size(), 6);
+        QCOMPARE(row.value(QStringLiteral("shaders")).toArray().at(0).toString(), QStringLiteral("lit"));
+    }
+    QVERIFY(listed);
+
+    const QJsonObject source = call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}});
+    QVERIFY2(source.value(QStringLiteral("ok")).toBool(), dump(source));
+    QVERIFY(source.value(QStringLiteral("user")).toBool());
+    QCOMPARE(source.value(QStringLiteral("uses")).toInt(), 0);
+    QCOMPARE(source.value(QStringLiteral("files")).toObject().value(QStringLiteral("lit.vert")).toString(), example.value(QStringLiteral("lit.vert")));
+    QCOMPARE(source.value(QStringLiteral("manifest")).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("user.orbs"));
+    QCOMPARE(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.nope")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+
+    // evaluate by id: counts, bounds, lights, camera mode.
+    const QJsonObject eval = call("evaluate_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                                          {QStringLiteral("t"), 1.5},
+                                                          {QStringLiteral("params"), QJsonObject{{QStringLiteral("count"), 3}}}});
+    QVERIFY2(eval.value(QStringLiteral("ok")).toBool(), dump(eval));
+    QCOMPARE(eval.value(QStringLiteral("stats")).toObject().value(QStringLiteral("instanceCount")).toInt(), 9);
+    QCOMPARE(eval.value(QStringLiteral("cameraMode")).toString(), QStringLiteral("world"));
+    QVERIFY(!eval.value(QStringLiteral("cameraRead")).toBool());
+    QCOMPARE(eval.value(QStringLiteral("lights")).toArray().size(), 2);
+    QCOMPARE(eval.value(QStringLiteral("meshes")).toArray().at(0).toObject().value(QStringLiteral("shader")).toString(), QStringLiteral("lit"));
+    const QJsonObject bounds = eval.value(QStringLiteral("bounds")).toObject();
+    QVERIFY(bounds.value(QStringLiteral("max")).toArray().at(0).toDouble() > bounds.value(QStringLiteral("min")).toArray().at(0).toDouble());
+    QCOMPARE(call("evaluate_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                          {QStringLiteral("params"), QJsonObject{{QStringLiteral("nope"), 1}}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // update: partial files, then a camera of its own flips the mode.
+    QString ownCamera = example.value(QStringLiteral("main.lua"));
+    ownCamera += QStringLiteral("scene:camera{eye = {cx, cy, -900}, target = {cx, cy, 0}, fov = 0.8}\nprint('own camera')\n");
+    const QJsonObject updated = call("update_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                                           {QStringLiteral("files"), QJsonObject{{QStringLiteral("main.lua"), ownCamera}}}});
+    QVERIFY2(updated.value(QStringLiteral("ok")).toBool(), dump(updated));
+    QCOMPARE(updated.value(QStringLiteral("log")).toArray().at(0).toString(), QStringLiteral("own camera"));
+    const QJsonObject own = call("evaluate_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")}});
+    QCOMPARE(own.value(QStringLiteral("cameraMode")).toString(), QStringLiteral("own"));
+    QVERIFY(own.value(QStringLiteral("camera")).toObject().contains(QStringLiteral("eye")));
+    QVERIFY(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}})
+                .value(QStringLiteral("files")).toObject().value(QStringLiteral("lit.frag")).toString()
+            == example.value(QStringLiteral("lit.frag")));
+    const QJsonObject badUpdate = call("update_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                                             {QStringLiteral("files"), QJsonObject{{QStringLiteral("main.lua"), QStringLiteral("error('boom')")}}}});
+    QCOMPARE(badUpdate.value(QStringLiteral("error")).toString(), QStringLiteral("lua_error"));
+    QVERIFY(badUpdate.value(QStringLiteral("errors")).toArray().at(0).toString().contains(QStringLiteral("boom")));
+    QVERIFY(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}})
+                .value(QStringLiteral("files")).toObject().value(QStringLiteral("main.lua")).toString().contains(QStringLiteral("own camera")));
+    QCOMPARE(call("update_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                        {QStringLiteral("remove_files"), QJsonArray{QStringLiteral("lit.frag")}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_manifest"));
+
+    // edits: exact-once replacements applied before validation; a miss writes nothing.
+    const QJsonObject edited = call("update_procedural",
+                                    {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                     {QStringLiteral("edits"), QJsonArray{QJsonObject{{QStringLiteral("file"), QStringLiteral("main.lua")},
+                                                                                       {QStringLiteral("old"), QStringLiteral("print('own camera')")},
+                                                                                       {QStringLiteral("new"), QStringLiteral("print('edited')")}}}}});
+    QVERIFY2(edited.value(QStringLiteral("ok")).toBool(), dump(edited));
+    QCOMPARE(edited.value(QStringLiteral("log")).toArray().at(0).toString(), QStringLiteral("edited"));
+    const QString mainAfter = call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}})
+                                  .value(QStringLiteral("files")).toObject().value(QStringLiteral("main.lua")).toString();
+    QVERIFY(mainAfter.contains(QStringLiteral("print('edited')")) && !mainAfter.contains(QStringLiteral("own camera')")));
+    for (const QString &old : {QStringLiteral("no such text"), QStringLiteral("local")}) {
+        const QJsonObject missed = call("update_procedural",
+                                        {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                         {QStringLiteral("edits"), QJsonArray{QJsonObject{{QStringLiteral("file"), QStringLiteral("main.lua")},
+                                                                                           {QStringLiteral("old"), QStringLiteral("print('edited')")},
+                                                                                           {QStringLiteral("new"), QStringLiteral("print('again')")}},
+                                                                              QJsonObject{{QStringLiteral("file"), QStringLiteral("main.lua")},
+                                                                                           {QStringLiteral("old"), old},
+                                                                                           {QStringLiteral("new"), QStringLiteral("x")}}}}});
+        QCOMPARE(missed.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY2(missed.value(QStringLiteral("detail")).toString().contains(QStringLiteral("edits[1] (main.lua)")),
+                 dump(missed));
+    }
+    QCOMPARE(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}})
+                 .value(QStringLiteral("files")).toObject().value(QStringLiteral("main.lua")).toString(),
+             mainAfter);
+
+    // Back to the world camera for the clip.
+    QVERIFY(call("update_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                       {QStringLiteral("files"), filesJson({{QStringLiteral("main.lua"), example.value(QStringLiteral("main.lua"))}})}})
+                .value(QStringLiteral("ok")).toBool());
+
+    // Placing, keyframing and evaluating a clip.
+    QCOMPARE(call("add_procedural", {{QStringLiteral("id"), QStringLiteral("user.nope")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(call("add_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                     {QStringLiteral("params"), QJsonObject{{QStringLiteral("nope"), 1}}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    const int tracksBefore = state.project()->tracks().size();
+    const QJsonObject added = call("add_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                                      {QStringLiteral("at"), 0.0},
+                                                      {QStringLiteral("duration"), 4.0},
+                                                      {QStringLiteral("params"), QJsonObject{{QStringLiteral("count"), 3}}}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(), dump(added));
+    QVERIFY(state.project()->tracks().size() >= tracksBefore);
+    const QString clipId = added.value(QStringLiteral("id")).toString();
+    const auto clipRef = [&]() -> const drift::Clip & {
+        return state.project()->tracks().at(added.value(QStringLiteral("track")).toInt()).clips.at(added.value(QStringLiteral("index")).toInt());
+    };
+    QCOMPARE(clipRef().type, drift::ClipType::Procedural);
+    QCOMPARE(clipRef().procedural.parameters.value(QStringLiteral("count")).toInt(), 3);
+    QCOMPARE(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}}).value(QStringLiteral("uses")).toInt(), 1);
+
+    QCOMPARE(call("set_keyframe", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.bogus")},
+                                   {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 1.0}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(call("set_keyframe", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.tint")},
+                                   {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 1.0}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    for (const auto &[at, value] : {std::pair{0.0, 1.0}, std::pair{2.0, 5.0}}) {
+        const QJsonObject keyed = call("set_keyframe", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.speed")},
+                                                        {QStringLiteral("at"), at}, {QStringLiteral("value"), value}});
+        QVERIFY2(keyed.value(QStringLiteral("ok")).toBool(), dump(keyed));
+    }
+    QVERIFY(call("set_keyframe", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.tint.r")},
+                                  {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 0.25}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject keys = call("list_keyframes", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.speed")}});
+    QCOMPARE(keys.value(QStringLiteral("keys")).toArray().size(), 2);
+    QCOMPARE(keys.value(QStringLiteral("keys")).toArray().at(1).toObject().value(QStringLiteral("value")).toDouble(), 5.0);
+    QCOMPARE(clipRef().procedural.paramKeyframes.value(QStringLiteral("speed")).keyframes().size(), 2);
+    const QJsonArray animated = call("list_animated_properties", {{QStringLiteral("clip"), clipId}}).value(QStringLiteral("props")).toArray();
+    QVERIFY(animated.contains(QStringLiteral("proc.speed")));
+    QVERIFY(animated.contains(QStringLiteral("proc.tint.r")));
+
+    // Undo takes the second key back out.
+    QVERIFY(call("undo").value(QStringLiteral("ok")).toBool());
+    QVERIFY(call("undo").value(QStringLiteral("ok")).toBool());
+    QCOMPARE(call("list_keyframes", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.speed")}})
+                 .value(QStringLiteral("keys")).toArray().size(), 1);
+    QVERIFY(call("redo").value(QStringLiteral("ok")).toBool());
+    QCOMPARE(call("list_keyframes", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.speed")}})
+                 .value(QStringLiteral("keys")).toArray().size(), 2);
+
+    const QJsonObject clipEval = call("evaluate_procedural", {{QStringLiteral("clip"), clipId}, {QStringLiteral("t"), 1.0}});
+    QVERIFY2(clipEval.value(QStringLiteral("ok")).toBool(), dump(clipEval));
+    QCOMPARE(clipEval.value(QStringLiteral("stats")).toObject().value(QStringLiteral("instanceCount")).toInt(), 9);
+    QCOMPARE(clipEval.value(QStringLiteral("id")).toString(), QStringLiteral("user.orbs"));
+    QCOMPARE(call("evaluate_procedural", {{QStringLiteral("clip"), addTextClip(dispatcher)}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("type_mismatch"));
+
+    // Delete refuses while a clip uses it.
+    const QJsonObject inUse = call("delete_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")}});
+    QCOMPARE(inUse.value(QStringLiteral("error")).toString(), QStringLiteral("in_use"));
+    QVERIFY(QFileInfo::exists(target));
+    QCOMPARE(call("delete_procedural", {{QStringLiteral("id"), QStringLiteral("adjust.brightness")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    const QJsonObject deleted = call("delete_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")}, {QStringLiteral("force"), true}});
+    QVERIFY2(deleted.value(QStringLiteral("ok")).toBool(), dump(deleted));
+    QVERIFY(!QFileInfo::exists(target));
+    QVERIFY(!hasProcedural(QStringLiteral("user.orbs")));
+}
+
 void McpTest::effectPresetHousekeeping()
 {
     QStandardPaths::setTestModeEnabled(true);
@@ -6749,6 +8592,22 @@ void McpTest::setTransformWrites3dPose()
     QCOMPARE(state.preview()->clipAtCanvasPoint(cx, cy).value(QStringLiteral("clip")).toInt(), loc.second);
     const double flatRight = box.value(QStringLiteral("x")).toDouble() + box.value(QStringLiteral("width")).toDouble() - 1;
     QVERIFY(state.preview()->clipAtCanvasPoint(flatRight, cy).isEmpty());
+
+    // depth_occlude: off by default, on for a 3D layer, refused for a flat one.
+    QVERIFY(!r.contains(QStringLiteral("depth_occlude")));
+    const QJsonObject occl = dispatcher.applyOne(
+        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("depth_occlude"), true}});
+    QVERIFY2(occl.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(occl).toJson(QJsonDocument::Compact)));
+    QVERIFY(occl.value(QStringLiteral("depth_occlude")).toBool());
+    QVERIFY(state.project()->tracks().at(state.mcp()->locateClip(clip).first).clips
+                .at(state.mcp()->locateClip(clip).second).depthOcclude);
+    state.undo();
+    QVERIFY(!state.project()->tracks().at(state.mcp()->locateClip(clip).first).clips
+                 .at(state.mcp()->locateClip(clip).second).depthOcclude);
+    const QJsonObject flatOccl = dispatcher.applyOne(
+        QStringLiteral("set_transform"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("layer3d"), false}, {QStringLiteral("depth_occlude"), true}});
+    QVERIFY(!flatOccl.value(QStringLiteral("ok")).toBool());
 
     // The anchor point is the pivot: unset until written, then reported with the other 3D fields.
     QVERIFY(!r.contains(QStringLiteral("anchorX")));
