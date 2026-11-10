@@ -1222,6 +1222,17 @@ void AppController::rebuildUndoStack(const drift::HistoryCapture &capture, int f
     emit undoStackChanged();
 }
 
+void AppController::foldEditIntoHistory()
+{
+    flushUndoHistoryTrim();
+    drift::HistoryCapture capture = drift::captureHistory(m_undoStack);
+    if (capture.steps.isEmpty())
+        return;
+    if (capture.index > 0)
+        capture.steps[capture.index - 1].after = std::make_shared<const drift::HistoryState>(m_project);
+    rebuildUndoStack(capture, 0, capture.index, capture.index);
+}
+
 int AppController::clearUndoHistory(int keepLast)
 {
     flushUndoHistoryTrim();
