@@ -64,7 +64,8 @@ QString MediaBinController::createFolder(const QString &name, const QString &par
     const QString id = m_folderModel.createFolder(trimmed, parentId);
     m_app->pushProjectEdit(before, tr("Folder created"));
     // An undo step without finishEdit: the revision (and the change feed) moves here.
-    m_app->mcp()->bumpEditRevision();
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return id;
 }
@@ -85,7 +86,8 @@ bool MediaBinController::renameFolder(const QString &folderId, const QString &na
 
     m_app->pushProjectEdit(before, tr("Folder renamed"));
     // An undo step without finishEdit: the revision (and the change feed) moves here.
-    m_app->mcp()->bumpEditRevision();
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return true;
 }
@@ -102,7 +104,8 @@ bool MediaBinController::moveFolder(const QString &folderId, const QString &newP
 
     m_app->pushProjectEdit(before, tr("Folder moved"));
     // An undo step without finishEdit: the revision (and the change feed) moves here.
-    m_app->mcp()->bumpEditRevision();
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return true;
 }
@@ -125,7 +128,8 @@ bool MediaBinController::deleteFolder(const QString &folderId)
 
     m_app->pushProjectEdit(before, tr("Folder deleted"));
     // An undo step without finishEdit: the revision (and the change feed) moves here.
-    m_app->mcp()->bumpEditRevision();
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return true;
 }
@@ -145,7 +149,8 @@ bool MediaBinController::moveAssetToFolder(int assetIndex, const QString &folder
 
     m_app->pushProjectEdit(before, tr("Media moved"));
     // An undo step without finishEdit: the revision (and the change feed) moves here.
-    m_app->mcp()->bumpEditRevision();
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return true;
 }
@@ -170,7 +175,8 @@ int MediaBinController::moveAssetsToFolder(const QStringList &assetIds, const QS
     m_app->pushProjectEdit(before,
                            moved == 1 ? tr("Media moved") : tr("%n items moved", "", moved));
     // An undo step without finishEdit: the revision (and the change feed) moves here.
-    m_app->mcp()->bumpEditRevision();
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return moved;
 }
@@ -651,7 +657,8 @@ bool MediaBinController::saveEdit(int assetIndex, double inSeconds, double outSe
         }
         m_app->pushProjectEdit(before, tr("Media trimmed"));
         // An undo step without finishEdit: the revision (and the change feed) moves here.
-        m_app->mcp()->bumpEditRevision();
+        if (McpController *mcp = m_app->mcp())
+            mcp->bumpEditRevision();
         m_app->settleUndoRefresh();
         m_app->setLastMessage(tr("Trim saved"));
         emit editFinished(true, tr("Trim saved"));
@@ -778,7 +785,8 @@ QString MediaBinController::addSubclip(const QString &assetId, double inSeconds,
         return {};
     m_app->pushProjectEdit(before, tr("Sub-clip added"));
     // An undo step without finishEdit: the revision (and the change feed) moves here.
-    m_app->mcp()->bumpEditRevision();
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     return id;
 }
@@ -1121,7 +1129,8 @@ void MediaBinController::relinkSiblings()
     m_app->projectFile()->remapProjectPaths(remap);
     m_app->pushProjectEdit(before, tr("Relink media"));
     // An undo step without finishEdit: the revision (and the change feed) moves here.
-    m_app->mcp()->bumpEditRevision();
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     m_app->m_assetLibrary->setProject(&m_app->m_project);
     m_folderModel.setProject(&m_app->m_project);

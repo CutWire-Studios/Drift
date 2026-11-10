@@ -429,7 +429,8 @@ bool SourceLabController::edit(const QString &text, Fn &&change)
         return false;
     m_app->pushProjectEdit(before, text);
     // An undo step without finishEdit: the revision (and the change feed) moves here.
-    m_app->mcp()->bumpEditRevision();
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     if (m_app->m_assetLibrary)
         m_app->m_assetLibrary->refreshLabRoles();
@@ -659,7 +660,8 @@ QStringList SourceLabController::makeSubclips(const QStringList &rangeIds)
         return created;
     m_app->pushProjectEdit(before, tr("Make sub-clips"));
     // An undo step without finishEdit: the revision (and the change feed) moves here.
-    m_app->mcp()->bumpEditRevision();
+    if (McpController *mcp = m_app->mcp())
+        mcp->bumpEditRevision();
     m_app->settleUndoRefresh();
     if (m_app->m_assetLibrary)
         m_app->m_assetLibrary->refreshLabRoles();
@@ -1084,7 +1086,8 @@ bool SourceLabController::applyWithoutEncode(const QString &mode)
             return false;
         m_app->pushProjectEdit(before, tr("Apply source edit"));
         // An undo step without finishEdit: the revision (and the change feed) moves here.
-        m_app->mcp()->bumpEditRevision();
+        if (McpController *mcp = m_app->mcp())
+            mcp->bumpEditRevision();
         m_app->settleUndoRefresh();
     } else {
         const QString name = tr("%1 (edited)").arg(asset->name);
@@ -1098,7 +1101,8 @@ bool SourceLabController::applyWithoutEncode(const QString &mode)
             copy->sourceFrame = r.crop;
         m_app->pushProjectEdit(before, tr("Add edited copy"));
         // An undo step without finishEdit: the revision (and the change feed) moves here.
-        m_app->mcp()->bumpEditRevision();
+        if (McpController *mcp = m_app->mcp())
+            mcp->bumpEditRevision();
         m_app->settleUndoRefresh();
     }
     if (m_app->m_assetLibrary)
