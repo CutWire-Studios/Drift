@@ -21,6 +21,8 @@
 
 #ifdef _WIN32
 #    include <windows.h>
+
+#    include <thread>
 #else
 #    include <dlfcn.h>
 #endif
@@ -44,6 +46,7 @@ State g_state = State::Unloaded;
 QString g_error;
 QString g_variant;
 QString g_version;
+QString g_libPath;
 int g_apiVersion = 0;
 QList<PluginEp> g_registeredEps;
 QSet<QString> g_autoFailed;
@@ -159,46 +162,224 @@ QSet<QString> epDeviceNames(Ort::Env &env)
     return names;
 }
 
+void registerEpLibrary(Ort::Env &env, PluginEp ep)
+{
+    const QSet<QString> before = epDeviceNames(env);
+    try {
+        env.RegisterExecutionProviderLibrary(ep.variant.toUtf8().constData(), ortPath(ep.library));
+    } catch (const Ort::Exception &e) {
+        qWarning("[ort] the %s provider could not be registered (%s).",
+                 qUtf8Printable(ep.variant), e.what());
+        return;
+    }
+
+    // The library names its own EPs. Diffing the device list is more reliable than making the
+    // package guess the exact string ONNX Runtime will report, which is what has to be matched
+    // later when a session asks for this provider.
+    QSet<QString> added = epDeviceNames(env);
+    added.subtract(before);
+    if (added.isEmpty()) {
+        qWarning("[ort] the %s provider registered but offers no device here; ignoring it.",
+                 qUtf8Printable(ep.variant));
+        return;
+    }
+
+    ep.epName = *added.constBegin();
+    g_registeredEps.append(ep);
+    qInfo("[ort] registered execution provider %s (%s).", qUtf8Printable(ep.epName),
+          qUtf8Printable(ep.variant));
+}
+
 void registerPluginEps(Ort::Env &env)
 {
     if (g_apiVersion < kPluginEpApiVersion)
         return;
 
-    for (PluginEp ep : installedPluginEps()) {
+    for (const PluginEp &ep : installedPluginEps()) {
         if (g_apiVersion < ep.minApiVersion) {
             qWarning("[ort] the %s provider needs OrtApi %d but the loaded runtime provides %d; "
                      "skipping it.",
                      qUtf8Printable(ep.variant), ep.minApiVersion, g_apiVersion);
             continue;
         }
-
-        const QSet<QString> before = epDeviceNames(env);
-        try {
-            env.RegisterExecutionProviderLibrary(ep.variant.toUtf8().constData(),
-                                                 ortPath(ep.library));
-        } catch (const Ort::Exception &e) {
-            qWarning("[ort] the %s provider could not be registered (%s).",
-                     qUtf8Printable(ep.variant), e.what());
-            continue;
-        }
-
-        // The library names its own EPs. Diffing the device list is more reliable than making the
-        // package guess the exact string ONNX Runtime will report, which is what has to be matched
-        // later when a session asks for this provider.
-        QSet<QString> added = epDeviceNames(env);
-        added.subtract(before);
-        if (added.isEmpty()) {
-            qWarning("[ort] the %s provider registered but offers no device here; ignoring it.",
-                     qUtf8Printable(ep.variant));
-            continue;
-        }
-
-        ep.epName = *added.constBegin();
-        g_registeredEps.append(ep);
-        qInfo("[ort] registered execution provider %s (%s).", qUtf8Printable(ep.epName),
-              qUtf8Printable(ep.variant));
+        registerEpLibrary(env, ep);
     }
 }
+
+#ifdef _WIN32
+// The flat C catalog API of Microsoft.Windows.AI.MachineLearning.dll, as declared in
+// WinMLEpCatalog.h from the Microsoft.Windows.AI.MachineLearning NuGet. Declared here rather than
+// included because that DLL ships in the "winml" core addon and is resolved at run time, like
+// onnxruntime.dll itself.
+enum WinMLEpReadyState {
+    WinMLEpReadyState_Ready = 0,
+    WinMLEpReadyState_NotReady = 1,
+    WinMLEpReadyState_NotPresent = 2,
+};
+enum WinMLEpCertification {
+    WinMLEpCertification_Unknown = 0,
+    WinMLEpCertification_Certified = 1,
+    WinMLEpCertification_Uncertified = 2,
+};
+struct WinMLEpInfo
+{
+    const char *name;
+    const char *version;
+    const char *packageFamilyName;
+    const char *libraryPath;
+    const char *packageRootPath;
+    WinMLEpReadyState readyState;
+    WinMLEpCertification certification;
+};
+struct WinMLEpCatalog;
+struct WinMLEp;
+using WinMLEpEnumCallback = BOOL(CALLBACK *)(WinMLEp *, const WinMLEpInfo *, void *);
+
+struct WinMLCatalogApi
+{
+    HRESULT(STDAPICALLTYPE *create)(WinMLEpCatalog **) = nullptr;
+    void(STDAPICALLTYPE *release)(WinMLEpCatalog *) = nullptr;
+    HRESULT(STDAPICALLTYPE *enumerate)(WinMLEpCatalog *, WinMLEpEnumCallback, void *) = nullptr;
+    HRESULT(STDAPICALLTYPE *find)(WinMLEpCatalog *, const char *, const char *, WinMLEp **) = nullptr;
+    HRESULT(STDAPICALLTYPE *ensureReady)(WinMLEp *) = nullptr;
+    HRESULT(STDAPICALLTYPE *libraryPathSize)(WinMLEp *, size_t *) = nullptr;
+    HRESULT(STDAPICALLTYPE *libraryPath)(WinMLEp *, size_t, char *, size_t *) = nullptr;
+};
+
+template <typename Fn>
+bool resolve(HMODULE module, const char *name, Fn &fn)
+{
+    fn = reinterpret_cast<Fn>(GetProcAddress(module, name));
+    return fn != nullptr;
+}
+
+std::optional<WinMLCatalogApi> loadCatalogApi(const QString &libDir)
+{
+    const QString path = QDir(libDir).filePath(QStringLiteral("Microsoft.Windows.AI.MachineLearning.dll"));
+    HMODULE module = LoadLibraryW(QDir::toNativeSeparators(path).toStdWString().c_str());
+    if (!module) {
+        qWarning("[ort] cannot load %s (error %lu); vendor providers from Windows ML are "
+                 "unavailable.",
+                 qUtf8Printable(path), GetLastError());
+        return std::nullopt;
+    }
+    WinMLCatalogApi api;
+    if (!resolve(module, "WinMLEpCatalogCreate", api.create)
+        || !resolve(module, "WinMLEpCatalogRelease", api.release)
+        || !resolve(module, "WinMLEpCatalogEnumProviders", api.enumerate)
+        || !resolve(module, "WinMLEpCatalogFindProvider", api.find)
+        || !resolve(module, "WinMLEpEnsureReady", api.ensureReady)
+        || !resolve(module, "WinMLEpGetLibraryPathSize", api.libraryPathSize)
+        || !resolve(module, "WinMLEpGetLibraryPath", api.libraryPath)) {
+        qWarning("[ort] %s lacks the Windows ML catalog API.", qUtf8Printable(path));
+        return std::nullopt;
+    }
+    return api;
+}
+
+QString catalogLibraryPath(const WinMLCatalogApi &api, WinMLEp *ep)
+{
+    size_t size = 0;
+    if (FAILED(api.libraryPathSize(ep, &size)) || size == 0)
+        return {};
+    std::string path(size, '\0');
+    size_t used = 0;
+    if (FAILED(api.libraryPath(ep, size, path.data(), &used)) || used == 0)
+        return {};
+    path.resize(used - 1); // the count includes the terminator
+    return QString::fromUtf8(path);
+}
+
+// "migraphx" is the token the AMD choice already has on Linux, so the picker label and a saved
+// preference carry across.
+QString variantForCatalogEp(const QString &name)
+{
+    QString token = name.toLower();
+    if (token.contains(QLatin1String("migraphx")))
+        return QStringLiteral("migraphx");
+    if (token.contains(QLatin1String("tensorrt")))
+        return QStringLiteral("tensorrt");
+    token.remove(QLatin1String("executionprovider"));
+    return token;
+}
+
+struct CatalogScan
+{
+    const WinMLCatalogApi *api;
+    Ort::Env *env;
+    QList<std::pair<std::string, std::string>> pending; // name, package family
+};
+
+BOOL CALLBACK registerCatalogEp(WinMLEp *ep, const WinMLEpInfo *info, void *context)
+{
+    auto *scan = static_cast<CatalogScan *>(context);
+    if (!info || !info->name || info->certification != WinMLEpCertification_Certified)
+        return TRUE;
+    if (info->readyState != WinMLEpReadyState_Ready) {
+        scan->pending.append({info->name, info->packageFamilyName ? info->packageFamilyName : ""});
+        return TRUE;
+    }
+    // Microsoft's catalog sample calls EnsureReady on ready providers too before asking for the
+    // library path, so this does the same rather than trusting info->libraryPath.
+    if (const HRESULT hr = scan->api->ensureReady(ep); FAILED(hr)) {
+        qWarning("[ort] Windows ML could not prepare %s (0x%08lx).", info->name,
+                 static_cast<unsigned long>(hr));
+        return TRUE;
+    }
+    const QString library = catalogLibraryPath(*scan->api, ep);
+    if (library.isEmpty())
+        return TRUE;
+    PluginEp plugin;
+    plugin.variant = variantForCatalogEp(QString::fromUtf8(info->name));
+    plugin.library = library;
+    plugin.minApiVersion = kPluginEpApiVersion;
+    registerEpLibrary(*scan->env, plugin);
+    return TRUE;
+}
+
+// Registers the vendor providers Windows ML has for this machine (AMD MIGraphX, NVIDIA TensorRT
+// for RTX, Intel OpenVINO, …). Windows installs them on demand, which can mean a download of
+// hundreds of MB, so providers that are not on disk yet are fetched on a background thread and
+// picked up on the next launch; meanwhile DirectML from the same core carries the work.
+void registerCatalogEps(Ort::Env &env)
+{
+    static const std::optional<WinMLCatalogApi> api =
+        loadCatalogApi(QFileInfo(g_libPath).absolutePath());
+    if (!api)
+        return;
+
+    WinMLEpCatalog *catalog = nullptr;
+    if (const HRESULT hr = api->create(&catalog); FAILED(hr)) {
+        // Below Windows 11 24H2 there is no catalog; DirectML still works.
+        qInfo("[ort] no Windows ML provider catalog here (0x%08lx).",
+              static_cast<unsigned long>(hr));
+        return;
+    }
+    CatalogScan scan{&*api, &env, {}};
+    api->enumerate(catalog, registerCatalogEp, &scan);
+    api->release(catalog);
+
+    if (scan.pending.isEmpty())
+        return;
+    std::thread([pending = scan.pending] {
+        WinMLEpCatalog *catalog = nullptr;
+        if (FAILED(api->create(&catalog)))
+            return;
+        for (const auto &[name, family] : pending) {
+            WinMLEp *ep = nullptr;
+            const char *familyArg = family.empty() ? nullptr : family.c_str();
+            if (FAILED(api->find(catalog, name.c_str(), familyArg, &ep)) || !ep)
+                continue;
+            qInfo("[ort] Windows is installing the %s provider; it is used from the next launch.",
+                  name.c_str());
+            if (const HRESULT hr = api->ensureReady(ep); FAILED(hr))
+                qWarning("[ort] Windows ML could not install %s (0x%08lx).", name.c_str(),
+                         static_cast<unsigned long>(hr));
+        }
+        api->release(catalog);
+    }).detach();
+}
+#endif
 
 } // namespace
 
@@ -229,8 +410,9 @@ bool ensureLoaded(QString *error)
     const Candidate *chosen = nullptr;
     const QString wanted = preferredVariant();
     if (variantExplicit()) {
+        const QString core = coreVariantFor(wanted);
         for (const Candidate &candidate : found) {
-            if (candidate.variant == wanted) {
+            if (candidate.variant == core) {
                 chosen = &candidate;
                 break;
             }
@@ -239,8 +421,19 @@ bool ensureLoaded(QString *error)
     // A preference naming a plugin EP ("webgpu") matches no core, and a preference naming a core
     // that is not installed is not worth refusing to start over — the search order already ranks
     // an installed addon above the development copy.
-    if (!chosen)
+    if (!chosen) {
         chosen = &found.first();
+        // The Windows ML core is the CPU core plus DirectML and the vendor catalog, so when both
+        // are installed it is never the worse pick.
+        if (chosen->variant == QLatin1String("cpu")) {
+            for (const Candidate &candidate : found) {
+                if (candidate.variant == QLatin1String("winml")) {
+                    chosen = &candidate;
+                    break;
+                }
+            }
+        }
+    }
 
 #ifdef _WIN32
     // onnxruntime.dll lives in the addon lib/ folder, not next to Drift.exe. LoadLibrary of a
@@ -300,6 +493,7 @@ bool ensureLoaded(QString *error)
 
     Ort::InitApi(api);
     g_variant = chosen->variant;
+    g_libPath = chosen->libPath;
     g_version = chosen->version.isEmpty() ? QString::fromUtf8(base->GetVersionString())
                                           : chosen->version;
     g_state = State::Loaded;
@@ -326,6 +520,10 @@ Ort::Env &env()
     static Ort::Env *instance = [] {
         auto *created = new Ort::Env{ORT_LOGGING_LEVEL_ERROR, "drift"};
         registerPluginEps(*created);
+#ifdef _WIN32
+        if (g_variant == QLatin1String("winml") && g_apiVersion >= kPluginEpApiVersion)
+            registerCatalogEps(*created);
+#endif
         return created;
     }();
     return *instance;
@@ -366,10 +564,6 @@ QList<PluginEp> installedPluginEps()
             path = QDir(root).filePath(name);
         if (ep.variant.isEmpty() || name.isEmpty() || !QFileInfo::exists(path))
             continue;
-        // WebGPU measured slower than CPU, yet "auto" would prefer it as a plugin EP, so copies
-        // installed before it was withdrawn from the store are ignored.
-        if (ep.variant == QLatin1String("webgpu"))
-            continue;
 
         ep.library = path;
         eps.append(ep);
@@ -400,11 +594,19 @@ QStringList selectableVariants()
     // and changed before anything has been loaded and without loading anything.
     QStringList variants{QStringLiteral("cpu")};
     for (const RuntimeInfo &runtime : installedRuntimes()) {
-        if (!variants.contains(runtime.variant))
-            variants.append(runtime.variant);
+        // The Windows ML core is chosen by the provider it carries, not by its own name.
+        const QString token = runtime.variant == QLatin1String("winml") ? QStringLiteral("directml")
+                                                                        : runtime.variant;
+        if (!variants.contains(token))
+            variants.append(token);
     }
     for (const PluginEp &ep : installedPluginEps()) {
         if (!ep.variant.isEmpty() && !variants.contains(ep.variant))
+            variants.append(ep.variant);
+    }
+    // What the Windows ML catalog contributed is only known once the env exists.
+    for (const PluginEp &ep : registeredPluginEps()) {
+        if (!variants.contains(ep.variant))
             variants.append(ep.variant);
     }
     return variants;
@@ -415,12 +617,11 @@ QString preferredVariant()
     const QString override = QString::fromLocal8Bit(qgetenv("DRIFT_ORT_EP")).trimmed().toLower();
     if (!override.isEmpty())
         return override;
-    const QString saved = QSettings()
-                              .value(QStringLiteral("ort/variant"), QStringLiteral("auto"))
-                              .toString()
-                              .trimmed()
-                              .toLower();
-    return saved == QLatin1String("webgpu") ? QStringLiteral("auto") : saved;
+    return QSettings()
+        .value(QStringLiteral("ort/variant"), QStringLiteral("auto"))
+        .toString()
+        .trimmed()
+        .toLower();
 }
 
 void setPreferredVariant(const QString &variant)
@@ -432,6 +633,16 @@ bool variantExplicit()
 {
     const QString variant = preferredVariant();
     return !variant.isEmpty() && variant != QLatin1String("auto");
+}
+
+QString coreVariantFor(const QString &variant)
+{
+#ifdef _WIN32
+    if (variant != QLatin1String("auto") && variant != QLatin1String("cpu")
+        && variant != QLatin1String("cuda") && variant != QLatin1String("webgpu"))
+        return QStringLiteral("winml");
+#endif
+    return variant;
 }
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)

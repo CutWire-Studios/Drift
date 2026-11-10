@@ -664,14 +664,23 @@ QVariantList AddonManager::accelerationOptions() const
     };
 
     QVariantList rows{row(QStringLiteral("auto"), tr("Automatic (recommended)")),
-                      row(QStringLiteral("cpu"), tr("CPU"))};
+                      row(QStringLiteral("cpu"), tr("Processor (CPU)"))};
     for (const QString &variant : installed) {
         if (variant == QLatin1String("cpu"))
             continue;
         if (variant == QLatin1String("cuda"))
-            rows.append(row(variant, tr("NVIDIA graphics (faster)")));
+            rows.append(row(variant, tr("NVIDIA CUDA")));
         else if (variant == QLatin1String("migraphx"))
-            rows.append(row(variant, tr("AMD graphics (faster)")));
+#ifdef Q_OS_WIN
+            // On Windows this is the MIGraphX provider Windows ML installs, not a ROCm build.
+            rows.append(row(variant, tr("AMD MIGraphX (Windows ML)")));
+#else
+            rows.append(row(variant, tr("AMD ROCm (MIGraphX)")));
+#endif
+        else if (variant == QLatin1String("directml"))
+            rows.append(row(variant, tr("Windows ML (DirectX 12)")));
+        else if (variant == QLatin1String("webgpu"))
+            rows.append(row(variant, tr("WebGPU (any graphics card)")));
         else
             rows.append(row(variant, variant.toUpper()));
     }
@@ -693,9 +702,10 @@ void AddonManager::setAcceleration(const QString &variant)
     // effect immediately — it layers onto the core already loaded. Switching to a *different core*
     // does not: that library is loaded once per process.
     const QString active = drift::ort::activeVariant();
-    if (!active.isEmpty() && variant != active && variant != QLatin1String("auto")) {
+    const QString core = drift::ort::coreVariantFor(variant);
+    if (!active.isEmpty() && core != active && variant != QLatin1String("auto")) {
         for (const drift::ort::RuntimeInfo &runtime : drift::ort::installedRuntimes()) {
-            if (runtime.variant == variant) {
+            if (runtime.variant == core) {
                 m_runtimeRestartRequired = true;
                 break;
             }
@@ -736,7 +746,8 @@ QVariantList AddonManager::fallbackAccelerationOptions(const QString &failed) co
             continue;
         // A different core only loads on the next launch, which is no use to the job waiting.
         const bool usableNow = value == QLatin1String("auto") || value == QLatin1String("cpu")
-            || value == active || !drift::ort::pluginEpNameForVariant(value).isEmpty();
+            || drift::ort::coreVariantFor(value) == active
+            || !drift::ort::pluginEpNameForVariant(value).isEmpty();
         if (usableNow)
             rows.append(row);
     }

@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": "f1a4e57dd935483f",
-  "generated": "2026-10-31T17:11:04+00:00",
+  "revision": "abd787ad07ad750b",
+  "generated": "2026-11-10T13:52:36+00:00",
   "categories": [
     {
       "id": "essentials",
@@ -873,7 +873,7 @@
       ],
       "howTo": [
         "Install this engine",
-        "Open the AI engine details and choose NVIDIA graphics",
+        "Open the AI engine details and choose NVIDIA CUDA",
         "Run any AI tool as usual"
       ],
       "unlocks": [
@@ -1018,7 +1018,7 @@
       "howTo": [
         "Install ROCm with MIGraphX on your computer",
         "Install this engine",
-        "Open the AI engine details and choose AMD graphics"
+        "Open the AI engine details and choose AMD ROCm (MIGraphX)"
       ],
       "unlocks": [
         {
@@ -1280,7 +1280,6 @@
     },
     {
       "match": "onnxruntime.ep.webgpu.*",
-      "hidden": true,
       "tagline": "Speed boost for AI on any graphics card",
       "summary": "Makes AI features faster using an AMD, Intel or NVIDIA graphics card, with no extra toolkit to install. It adds to the AI engine you already have.",
       "categories": [
@@ -1359,6 +1358,45 @@
         {
           "label": "21 extra fonts",
           "location": "Text font list"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 50
+    },
+    {
+      "match": "onnxruntime.winml.*",
+      "tagline": "Faster AI with Windows ML on any DirectX 12 graphics card",
+      "summary": "The same AI features, sped up by any modern graphics card (AMD, Intel, NVIDIA or Qualcomm) with nothing else to install. On Windows 11 24H2 and newer, Windows adds vendor-tuned speedups by itself, and Drift falls back to the processor if the card can't be used.",
+      "categories": [
+        "engines-runtimes"
+      ],
+      "keywords": [
+        "directml",
+        "windows ml",
+        "amd",
+        "radeon",
+        "intel",
+        "nvidia",
+        "gpu",
+        "faster",
+        "ai engine",
+        "migraphx"
+      ],
+      "icon": "zap",
+      "useCases": [
+        "Speed up AI tools on any Windows graphics card"
+      ],
+      "howTo": [
+        "Install this engine",
+        "Open the AI engine details and choose a graphics option, or leave it on Automatic"
+      ],
+      "unlocks": [
+        {
+          "label": "Faster AI tools",
+          "location": "Throughout Drift"
         }
       ],
       "requires": [],
