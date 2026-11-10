@@ -143,7 +143,9 @@ void applyNetworkProxy(const QString &mode, const QString &host, int port, const
 
 double normalizeUiScale(double scale)
 {
-    static const double kSteps[] = {1.0, 1.25, 1.5, 1.75, 2.0};
+    if (scale <= 0.0)
+        return 0.0;
+    static const double kSteps[] = {0.75, 0.8, 0.9, 1.0, 1.25, 1.5, 1.75, 2.0};
     double best = 1.0;
     double bestDist = std::numeric_limits<double>::max();
     for (double step : kSteps) {
@@ -253,13 +255,15 @@ PreferencesController::PreferencesController(QObject *parent)
     m_undoHistoryLimit = qMax(0, settings.value(QStringLiteral("editor/undoHistoryLimit"), 0).toInt());
     m_timelineOverviewVisible =
         settings.value(QStringLiteral("ui/timelineOverviewVisible"), false).toBool();
+    m_keyframeStripVisible =
+        settings.value(QStringLiteral("ui/keyframeStripVisible"), true).toBool();
     m_audioMixerVisible =
         settings.value(QStringLiteral("ui/audioMixerVisible"), false).toBool();
     m_audioMixerWidth = settings.value(QStringLiteral("ui/audioMixerWidth"), 0.0).toDouble();
     if (m_audioMixerWidth > 0)
         m_audioMixerWidth = qBound(160.0, m_audioMixerWidth, 2000.0);
     m_trackLabelsWidth = qBound(64.0,
-        settings.value(QStringLiteral("ui/trackLabelsWidth"), 130.0).toDouble(), 360.0);
+        settings.value(QStringLiteral("ui/trackLabelsWidth"), 170.0).toDouble(), 360.0);
     m_androidTrackLabelsWidth = qBound(56.0,
         settings.value(QStringLiteral("ui/androidTrackLabelsWidth"), 80.0).toDouble(), 200.0);
     m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();
@@ -296,7 +300,8 @@ PreferencesController::PreferencesController(QObject *parent)
     drift::setImageClipDurationUs(drift::secondsToUs(m_stillDurationSeconds));
     loadPerformanceSettings();
     m_transitionDurationSeconds = qBound(0.1,
-        settings.value(QStringLiteral("timeline/transitionDurationSeconds"), 0.5).toDouble(), 5.0);
+        settings.value(QStringLiteral("timeline/transitionDurationSeconds"), 1.0).toDouble(), 5.0);
+    m_recentTransitions = settings.value(QStringLiteral("timeline/recentTransitions")).toStringList();
     applyNetworkProxy(m_networkProxyMode, m_networkProxyHost, m_networkProxyPort, m_networkProxyUser,
                       m_networkProxyPassword);
     m_uiLanguage = storedUiLanguage();
@@ -370,6 +375,16 @@ void PreferencesController::setTimelineOverviewVisible(bool visible)
     QSettings settings;
     settings.setValue(QStringLiteral("ui/timelineOverviewVisible"), m_timelineOverviewVisible);
     emit timelineOverviewVisibleChanged();
+}
+
+void PreferencesController::setKeyframeStripVisible(bool visible)
+{
+    if (m_keyframeStripVisible == visible)
+        return;
+    m_keyframeStripVisible = visible;
+    QSettings settings;
+    settings.setValue(QStringLiteral("ui/keyframeStripVisible"), m_keyframeStripVisible);
+    emit keyframeStripVisibleChanged();
 }
 
 void PreferencesController::setAudioMixerVisible(bool visible)
@@ -695,6 +710,18 @@ void PreferencesController::setTransitionDurationSeconds(double seconds)
     m_transitionDurationSeconds = seconds;
     QSettings().setValue(QStringLiteral("timeline/transitionDurationSeconds"), m_transitionDurationSeconds);
     emit transitionDurationSecondsChanged();
+}
+
+void PreferencesController::pushRecentTransition(const QString &kind)
+{
+    if (kind.isEmpty() || (!m_recentTransitions.isEmpty() && m_recentTransitions.first() == kind))
+        return;
+    m_recentTransitions.removeAll(kind);
+    m_recentTransitions.prepend(kind);
+    while (m_recentTransitions.size() > 8)
+        m_recentTransitions.removeLast();
+    QSettings().setValue(QStringLiteral("timeline/recentTransitions"), m_recentTransitions);
+    emit recentTransitionsChanged();
 }
 
 namespace {
@@ -1065,7 +1092,10 @@ void PreferencesController::applyStoredUiScale(double osDisplayScale)
     // A shell or .desktop Exec=QT_SCALE_FACTOR=… stays the escape hatch.
     if (qEnvironmentVariableIsSet("QT_SCALE_FACTOR"))
         return;
-    const double factor = storedUiScale() / g_osDisplayScale;
+    const double stored = storedUiScale();
+    if (stored <= 0.0)
+        return;
+    const double factor = stored / g_osDisplayScale;
     if (qFuzzyCompare(factor, 1.0))
         return;
     qputenv("QT_SCALE_FACTOR", QByteArray::number(factor, 'g', 4));
@@ -1077,8 +1107,15 @@ double PreferencesController::appliedUiScale() const
     return appliedUiScaleFromEnvironment();
 }
 
+double PreferencesController::systemUiScale() const
+{
+    return g_osDisplayScale;
+}
+
 bool PreferencesController::uiScaleNeedsRestart() const
 {
+    if (m_uiScale <= 0.0)
+        return g_uiScaleFromSettings;
     return !qFuzzyCompare(m_uiScale, appliedUiScaleFromEnvironment());
 }
 

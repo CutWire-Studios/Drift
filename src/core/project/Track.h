@@ -56,6 +56,8 @@ struct Track
     // view-only: multiplies this track's base row height so a single lane can be
     // enlarged (waveform editing) without zooming the whole timeline.
     qreal heightScale = 1.0;
+    // view-only, parent tracks: nested adjustment lanes fold into thin coverage ribbons.
+    bool lanesCollapsed = false;
 
     // Adjustment tracks only.
     AdjustmentScope adjustmentScope = AdjustmentScope::AllBelow;

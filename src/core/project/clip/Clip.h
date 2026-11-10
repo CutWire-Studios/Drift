@@ -14,6 +14,7 @@
 #include "core/base/Time.h"
 #include "core/tracking/MotionTracker.h"
 #include "core/project/sources/Model3dSource.h"
+#include "core/project/sources/ProceduralSource.h"
 #include "core/project/sources/PdfSource.h"
 #include "core/project/sources/VectorSource.h"
 
@@ -25,7 +26,7 @@ namespace drift {
 // Vector is a Lottie animation or SVG document, Model3d a glTF binary and Pdf a PDF; like Image and Shape
 // they have no media file behind their source range, so they are synthetic and unbounded.
 // Composite plays a nested timeline (Project::sequenceTracks(sequenceId)) as its source.
-enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector, Model3d, Pdf, Composite };
+enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector, Model3d, Pdf, Composite, Procedural };
 
 QString clipTypeToString(ClipType type);
 ClipType clipTypeFromString(const QString &type);
@@ -85,6 +86,9 @@ struct Clip
     TimeUs srcOut = 0;
 
     QString name;
+    // A user/agent tag that survives renames; empty when unset. A split or duplicate numbers the
+    // copy: "intro" -> "intro.2" (numberCopiedLabels).
+    QString label;
     QString textContent;
     TextStyle textStyle; // meaningful when type == Text or Subtitle
     QList<SubtitleCue> subtitleCues; // only meaningful when type == Subtitle
@@ -92,6 +96,7 @@ struct Clip
     VectorSource vector;   // only meaningful when type == Vector
     Model3dSource model3d; // only meaningful when type == Model3d
     PdfSource pdf;         // only meaningful when type == Pdf
+    ProceduralSource procedural; // only meaningful when type == Procedural
     // Nested timeline this clip plays: set on a Composite clip and on the Audio companion that
     // "Separate audio" splits off it.
     QString sequenceId;

@@ -12,6 +12,8 @@
 #include <memory>
 #include <vector>
 
+class QThread;
+
 #include "engine/encode/writers/AudioFileWriter.h"
 #include "core/base/Time.h"
 
@@ -65,17 +67,19 @@ signals:
     void recordingError(const QString &error);
 
 private slots:
-    void onReadyRead();
     void onDevicesChanged();
 
 private:
+    class Worker;
+
     static QAudioFormat negotiateFormat(const QAudioDevice &device);
+    void applyLiveUpdate(int session, qint64 frames, float peak, const std::vector<float> &peaks);
 
     QMediaDevices *m_mediaDevices = nullptr;
     QAudioDevice m_selectedDevice;
-    std::unique_ptr<QAudioSource> m_audioSource;
-    QIODevice *m_inputIo = nullptr;
-    drift::AudioFileWriter m_writer;
+    QThread *m_thread = nullptr;
+    Worker *m_worker = nullptr;
+    int m_session = 0;
 
     bool m_recording = false;
     bool m_paused = false;
@@ -84,13 +88,9 @@ private:
     float m_audioLevel = 0.0f;
     float m_gain = 1.0f;
     double m_recordedSeconds = 0.0;
-    qint64 m_totalFramesWritten = 0;
     int m_sampleRate = 48000;
-    QAudioFormat m_captureFormat;
 
     std::vector<float> m_livePeaks;
-    int m_peakSampleCounter = 0;
-    float m_currentBucketPeak = 0.0f;
 };
 
 } // namespace drift

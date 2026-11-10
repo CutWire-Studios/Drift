@@ -61,7 +61,7 @@ Item {
 
     function closeTopDialog() {
         const dialogs = [unsavedDialog, exportDialogLoader.item, exportProgressDialogLoader.item,
-                         projectPropertiesDialogLoader.item, agentAccessDialog, videoSizeDialogLoader.item,
+                         projectPropertiesDialogLoader.item, agentAccessDialog, videoSizeDialogLoader.item, bakesDialogLoader.item,
                          languageChooserDialogLoader.item, packageProgressDialog]
         for (var i = 0; i < dialogs.length; ++i) {
             const d = dialogs[i]
@@ -340,6 +340,11 @@ Item {
         sourceComponent: Component { VideoSizeDialog { } }
     }
 
+    LazyLoader {
+        id: bakesDialogLoader
+        sourceComponent: Component { BakesDialog { } }
+    }
+
     UnsavedChangesDialog {
         id: unsavedDialog
 
@@ -406,14 +411,10 @@ Item {
                 onClicked: root.saveProject()
             }
 
-            IconButton {
-                glyph: Theme.icons.ratio
-                variant: "ghost"
-                text: qsTr("Video")
-                active: videoSizeDialogLoader.shown || EditorState.preview.canvasCropMode
-                tooltip: qsTr("Video size and layout")
-                anchors.verticalCenter: parent.verticalCenter
-                onClicked: videoSizeDialogLoader.ensure().openDialog()
+            EditorHeaderVideoButton {
+                dialogShown: videoSizeDialogLoader.shown || bakesDialogLoader.shown
+                onBakesRequested: bakesDialogLoader.ensure().openDialog()
+                onLayoutRequested: videoSizeDialogLoader.ensure().openDialog()
             }
         }
 
@@ -433,6 +434,8 @@ Item {
             onDownloadsRequested: root.downloadsRequested()
             onLanguageRequested: languageChooserDialogLoader.ensure().openFromHeader()
             onVideoSizeRequested: videoSizeDialogLoader.ensure().openDialog()
+            onBakesRequested: bakesDialogLoader.ensure().openDialog()
+            onCropRequested: EditorState.preview.canvasCropMode = true
             onSearchFinished: root.endSearch()
         }
 

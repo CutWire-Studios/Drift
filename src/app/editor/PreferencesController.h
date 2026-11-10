@@ -27,10 +27,13 @@ class PreferencesController : public QObject
                    NOTIFY workspaceLayoutPreferenceChanged)
     Q_PROPERTY(QString workspaceLayoutPreferred READ workspaceLayoutPreferred
                    NOTIFY workspaceLayoutPreferenceChanged)
-    // On by default. Worth turning off on a very long timeline: the strip repaints every clip
+    // Off by default. Worth leaving off on a very long timeline: the strip repaints every clip
     // in the project on every edit.
     Q_PROPERTY(bool timelineOverviewVisible READ timelineOverviewVisible
                    WRITE setTimelineOverviewVisible NOTIFY timelineOverviewVisibleChanged)
+    // On by default; hides the keyframe graph above the tracks even on a keyframes tab.
+    Q_PROPERTY(bool keyframeStripVisible READ keyframeStripVisible
+                   WRITE setKeyframeStripVisible NOTIFY keyframeStripVisibleChanged)
     Q_PROPERTY(bool audioMixerVisible READ audioMixerVisible
                    WRITE setAudioMixerVisible NOTIFY audioMixerVisibleChanged)
     // Width the user dragged the mixer to; 0 means size to fit its channel strips.
@@ -110,6 +113,8 @@ class PreferencesController : public QObject
     // Transitions on an overlap keep the overlap's length.
     Q_PROPERTY(double transitionDurationSeconds READ transitionDurationSeconds
                    WRITE setTransitionDurationSeconds NOTIFY transitionDurationSecondsChanged)
+    // Most recently applied transition kinds, newest first, at most 8. QSettings("timeline/recentTransitions").
+    Q_PROPERTY(QStringList recentTransitions READ recentTransitions NOTIFY recentTransitionsChanged)
     // Size of the cache folder, minus the subfolders a live disk cache owns. refreshCacheSize and
     // clearCache run off the GUI thread; cacheBusy is true while either is in flight.
     Q_PROPERTY(qint64 cacheSizeBytes READ cacheSizeBytes NOTIFY cacheSizeChanged)
@@ -124,12 +129,13 @@ class PreferencesController : public QObject
     Q_PROPERTY(QString uiLanguage READ uiLanguage WRITE setUiLanguage NOTIFY uiLanguageChanged)
     Q_PROPERTY(QVariantList uiLanguages READ uiLanguages NOTIFY uiLanguageChanged)
     Q_PROPERTY(bool needsUiLanguagePrompt READ needsUiLanguagePrompt NOTIFY uiLanguageChanged)
-    // QSettings("ui/scale"), 1.0..2.0 in 0.25 steps. Extra scale on top of the OS display scale,
-    // except where applyStoredUiScale is given the OS scale (Windows): there it is the absolute
-    // size, 1.0 being 96 DPI. Applied as QT_SCALE_FACTOR before QApplication; a change needs a
-    // restart.
+    // QSettings("ui/scale"), 0.75, 0.8, 0.9, then 1.0..2.0 in 0.25 steps. Extra scale on top of
+    // the OS display scale, except where applyStoredUiScale is given the OS scale (Windows): there
+    // it is the absolute size, 1.0 being 96 DPI. Applied as QT_SCALE_FACTOR before QApplication;
+    // a change needs a restart. 0 applies no factor at all, leaving the OS display scale as is.
     Q_PROPERTY(double uiScale READ uiScale WRITE setUiScale NOTIFY uiScaleChanged)
     Q_PROPERTY(double appliedUiScale READ appliedUiScale CONSTANT)
+    Q_PROPERTY(double systemUiScale READ systemUiScale CONSTANT)
     Q_PROPERTY(bool uiScaleNeedsRestart READ uiScaleNeedsRestart NOTIFY uiScaleChanged)
     // Which shell to build at startup: "auto", "desktop" or "mobile". QSettings("ui/shell").
     // Shell.qml decides once, so a change needs a restart. appliedShell is the shell actually
@@ -171,6 +177,8 @@ public:
 
     bool timelineOverviewVisible() const { return m_timelineOverviewVisible; }
     void setTimelineOverviewVisible(bool visible);
+    bool keyframeStripVisible() const { return m_keyframeStripVisible; }
+    void setKeyframeStripVisible(bool visible);
     bool audioMixerVisible() const { return m_audioMixerVisible; }
     void setAudioMixerVisible(bool visible);
     qreal audioMixerWidth() const { return m_audioMixerWidth; }
@@ -235,6 +243,8 @@ public:
     double stillDurationSeconds() const { return m_stillDurationSeconds; }
     void setStillDurationSeconds(double seconds);
     double transitionDurationSeconds() const { return m_transitionDurationSeconds; }
+    QStringList recentTransitions() const { return m_recentTransitions; }
+    void pushRecentTransition(const QString &kind);
     void setTransitionDurationSeconds(double seconds);
     // Performance tunables (see the properties above).
     int staleFrameLagMs() const;
@@ -277,9 +287,11 @@ public:
     Q_INVOKABLE void chooseUiLanguage(const QString &code);
     double uiScale() const { return m_uiScale; }
     double appliedUiScale() const;
+    double systemUiScale() const;
     bool uiScaleNeedsRestart() const;
     void setUiScale(double scale);
-    // Snaps to 1.0, 1.25, 1.5, 1.75, or 2.0. Safe before any PreferencesController exists.
+    // Snaps to 0 (OS scale), 0.75, 0.8, 0.9, 1.0, 1.25, 1.5, 1.75, or 2.0. Safe before any
+    // PreferencesController exists.
     static double storedUiScale();
     // Once per install: sets ui/scale from the primary screen's short side, 1080 rows being 1.0,
     // and records ui/autoScaleDone. Same preconditions as applyStoredUiScale.
@@ -320,6 +332,7 @@ signals:
     void darkModePreferenceChanged();
     void workspaceLayoutPreferenceChanged();
     void timelineOverviewVisibleChanged();
+    void keyframeStripVisibleChanged();
     void audioMixerVisibleChanged();
     void audioMixerWidthChanged();
     void trackLabelsWidthChanged();
@@ -342,6 +355,7 @@ signals:
     void autosaveIntervalSecondsChanged();
     void stillDurationSecondsChanged();
     void transitionDurationSecondsChanged();
+    void recentTransitionsChanged();
     void cacheSizeChanged();
     void cacheLocationChanged();
     void uiLanguageChanged();
@@ -359,9 +373,10 @@ private:
     bool m_workspaceLayoutOverridden = false;
     QString m_workspaceLayoutPreferred = QStringLiteral("landscape");
     bool m_timelineOverviewVisible = false;
+    bool m_keyframeStripVisible = true;
     bool m_audioMixerVisible = false;
     qreal m_audioMixerWidth = 0;
-    qreal m_trackLabelsWidth = 130;
+    qreal m_trackLabelsWidth = 170;
     qreal m_androidTrackLabelsWidth = 80;
     QStringList m_timelineToolbarItems;
     QStringList m_proxyNamePatterns;
@@ -390,7 +405,8 @@ private:
     bool m_relaunchOnQuit = false;
     int m_autosaveIntervalSeconds = 15;
     double m_stillDurationSeconds = 5.0;
-    double m_transitionDurationSeconds = 0.5;
+    double m_transitionDurationSeconds = 1.0;
+    QStringList m_recentTransitions;
     qint64 m_cacheSizeBytes = 0;
     bool m_cacheBusy = false;
 

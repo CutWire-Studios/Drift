@@ -58,10 +58,6 @@
         <translation>Automatique (recommandé)</translation>
     </message>
     <message>
-        <source>This computer</source>
-        <translation>Cet Ordinateur</translation>
-    </message>
-    <message>
         <source>NVIDIA graphics (faster)</source>
         <translation>NVIDIA (plus rapide)</translation>
     </message>
@@ -70,8 +66,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graphics card (faster)</source>
-        <translation>Carte graphique (plus rapide)</translation>
+        <source>CPU</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not open that file.</source>
@@ -2367,6 +2363,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidTransitionPickerSheet</name>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Transitions</translation>
+    </message>
+</context>
+<context>
     <name>AndroidVolumePage</name>
     <message>
         <source>%1 s</source>
@@ -2560,6 +2563,10 @@
         <translation>Diviser à l&apos;heure actuelle</translation>
     </message>
     <message>
+        <source>Add transition at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge adjacent clips</source>
         <translation>Fusionner les clips adjacents</translation>
     </message>
@@ -2598,6 +2605,10 @@
     <message>
         <source>Toggle guides</source>
         <translation>Basculer les repères</translation>
+    </message>
+    <message>
+        <source>Hide/show selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>3D gizmo: cycle world/local/view axes</source>
@@ -3205,6 +3216,10 @@
         <translation>Enregistrement annulé</translation>
     </message>
     <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3267,14 +3282,6 @@
     <message>
         <source>Adjustment track added</source>
         <translation>Piste de réglage ajoutée</translation>
-    </message>
-    <message>
-        <source>Add adjustment lane</source>
-        <translation>Ajouter une voie de réglage</translation>
-    </message>
-    <message>
-        <source>Adjustment lane added</source>
-        <translation>Voie de réglage ajoutée</translation>
     </message>
     <message>
         <source>Nest adjustment in track</source>
@@ -3697,6 +3704,42 @@
         <translation>Modèle 3D ajouté</translation>
     </message>
     <message>
+        <source>unknown procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown param &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural clip added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change procedural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit procedural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seed changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>3D model replaced</source>
         <translation>Modèle 3D remplacé</translation>
     </message>
@@ -3807,6 +3850,18 @@
     <message>
         <source>Transition updated</source>
         <translation>Transition mise à jour</translation>
+    </message>
+    <message>
+        <source>Apply transition to cuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cut between two clips to add a transition to</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Change look</source>
@@ -4171,6 +4226,14 @@
         <translation>Interpolation de l&apos;image clé</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">Ajouter des images clés</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>Réinitialiser la caméra</translation>
     </message>
@@ -4496,6 +4559,18 @@
         <translation>Piste affichée</translation>
     </message>
     <message>
+        <source>Track lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unlocked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move track</source>
         <translation>Déplacer la piste</translation>
     </message>
@@ -4804,6 +4879,22 @@
         <source>Video size cropped to %1×%2</source>
         <translation>Taille vidéo recadrée à %1×%2</translation>
     </message>
+    <message>
+        <source>Clear clip label</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Label clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip label cleared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip labelled</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppSettingsMenu</name>
@@ -4829,6 +4920,10 @@
     <message>
         <source>Favorites</source>
         <translation>Favoris</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5943,10 +6038,310 @@
     </message>
 </context>
 <context>
+    <name>BakeController</name>
+    <message>
+        <source>Set a work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the bake cache</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Baking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Work area set</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BakesDialog</name>
+    <message>
+        <source>Bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Fermer</translation>
+    </message>
+    <message>
+        <source>Compact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Balanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation type="unfinished">Élevée</translation>
+    </message>
+    <message>
+        <source>%1m %2s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Baking %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all bakes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Supprimer</translation>
+    </message>
+    <message>
+        <source>Playback and export will render these ranges live again. Your project is not changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-bake at current quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality for new bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>≈ %1 per minute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Annuler</translation>
+    </message>
+    <message>
+        <source>Bake work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set a work area on the timeline first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>I</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>O</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Range</source>
+        <translation type="unfinished">Plage</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">Durée</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">Qualité</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">Taille</translation>
+    </message>
+    <message>
+        <source>State</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">Plus</translation>
+    </message>
+    <message>
+        <source>Delete bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n bake(s) · %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>0 B</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-bake all stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BinBreadcrumb</name>
     <message>
         <source>Media</source>
         <translation>Média</translation>
+    </message>
+</context>
+<context>
+    <name>BlendModes</name>
+    <message>
+        <source>Normal</source>
+        <translation type="unfinished">Normal</translation>
+    </message>
+    <message>
+        <source>Darken</source>
+        <translation type="unfinished">Assombrir</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished">Multiplier</translation>
+    </message>
+    <message>
+        <source>Color Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Burn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darker Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lighten</source>
+        <translation type="unfinished">Éclaircir</translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">Écran</translation>
+    </message>
+    <message>
+        <source>Color Dodge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Ajouter</translation>
+    </message>
+    <message>
+        <source>Lighter Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">Contraste</translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished">Superposition</translation>
+    </message>
+    <message>
+        <source>Soft Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vivid Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pin Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hard Mix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inversion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Difference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclusion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished">Soustraire</translation>
+    </message>
+    <message>
+        <source>Divide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Component</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue</source>
+        <translation type="unfinished">Teinte</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">Saturation</translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Couleur</translation>
+    </message>
+    <message>
+        <source>Luminosity</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5958,38 +6353,6 @@
     <message>
         <source>How this clip&apos;s colours combine with the tracks beneath it.</source>
         <translation>Comment les couleurs de ce clip se combinent avec les pistes en dessous.</translation>
-    </message>
-    <message>
-        <source>Normal</source>
-        <translation>Normal</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation>Multiplier</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation>Écran</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Superposition</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Ajouter</translation>
-    </message>
-    <message>
-        <source>Darken</source>
-        <translation>Assombrir</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation>Éclaircir</translation>
-    </message>
-    <message>
-        <source>How this clip blends with the layers below</source>
-        <translation>Comment ce clip se mélange avec les calques en dessous</translation>
     </message>
     <message>
         <source>Reset to Normal</source>
@@ -6596,6 +6959,10 @@
     <message>
         <source>Select Color</source>
         <translation>Sélectionner la couleur</translation>
+    </message>
+    <message>
+        <source>Edit colour</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7703,14 +8070,6 @@
         <translation>Enregistrer le projet</translation>
     </message>
     <message>
-        <source>Video</source>
-        <translation>Vidéo</translation>
-    </message>
-    <message>
-        <source>Video size and layout</source>
-        <translation>Taille et disposition de la vidéo</translation>
-    </message>
-    <message>
         <source>Agent</source>
         <translation>Agent</translation>
     </message>
@@ -7836,6 +8195,17 @@
     <message>
         <source>Settings</source>
         <translation>Paramètres</translation>
+    </message>
+</context>
+<context>
+    <name>EditorHeaderVideoButton</name>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">Vidéo</translation>
+    </message>
+    <message>
+        <source>Bakes, crop and video layout</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8568,6 +8938,45 @@
     <message>
         <source>Export cancelled.</source>
         <translation>Exportation annulée.</translation>
+    </message>
+    <message>
+        <source>Some bakes are out of date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Re-bake first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-baking. Export again when it finishes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render them live</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export as is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Annuler</translation>
+    </message>
+    <message>
+        <source>Use baked ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read pre-rendered ranges instead of compositing them again</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9654,6 +10063,26 @@
     <message>
         <source>File</source>
         <translation>Fichier</translation>
+    </message>
+    <message>
+        <source>Label</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip label</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No label</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit label</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>e.g. intro (empty clears it)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14823,6 +15252,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>PreviewStatusLayer</name>
     <message>
+        <source>Stale bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Baked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing to preview yet</source>
         <translation>Pas encore de prévisualisation</translation>
     </message>
@@ -14941,6 +15378,293 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>REC %1s</source>
         <translation>ENR. %1s</translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralConsolePanel</name>
+    <message>
+        <source>Procedural console</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Console</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear the Apply output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply or Check a package to see its output here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No errors or output</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralEditorController</name>
+    <message>
+        <source>procedural.json is not valid JSON: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>expected an object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: ok - %2 meshes, %3 vertices, %4 instances (%5 ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 failed: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>shader %1 compiled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shaders were not compiled: no OpenGL context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is read-only. Duplicate it to edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Appliquer</translation>
+    </message>
+    <message>
+        <source>Check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished">%1 copie</translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">Dupliquer</translation>
+    </message>
+    <message>
+        <source>Use 1-48 letters, digits or underscores for the name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Radius</source>
+        <translation type="unfinished">Rayon</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Vitesse</translation>
+    </message>
+    <message>
+        <source>Tint</source>
+        <translation type="unfinished">Teinte</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished">Créer</translation>
+    </message>
+    <message>
+        <source>Use letters, digits or underscores for a new shader name, not an existing one</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralEditorPanel</name>
+    <message>
+        <source>Procedural code editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (read-only)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package to edit. Selecting a procedural clip opens its package.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">Nouveau</translation>
+    </message>
+    <message>
+        <source>Apply or revert your edits first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create a minimal procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate to edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy this package to your own procedurals and edit the copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate procedural to edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Appliquer</translation>
+    </message>
+    <message>
+        <source>Validate and install the package, then refresh the preview (Ctrl+S)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply procedural code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Validate the edits without installing them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert</source>
+        <translation type="unfinished">Rétablir</translation>
+    </message>
+    <message>
+        <source>Discard edits and reload the package from disk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a clip using this package at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard unapplied edits?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished">Ignorer</translation>
+    </message>
+    <message>
+        <source>Keep editing</source>
+        <translation type="unfinished">Continuer à modifier</translation>
+    </message>
+    <message>
+        <source>Package name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished">Créer</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Annuler</translation>
+    </message>
+    <message>
+        <source>Add a shader pair</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shader name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Ajouter</translation>
+    </message>
+    <message>
+        <source>%1 is read-only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 - unapplied edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No package open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a procedural clip, pick a package above, or create a new one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralInspector</name>
+    <message>
+        <source>Package &quot;%1&quot; is not installed; the clip renders nothing until it returns.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package that builds this clip&apos;s scene. Changing it resets the parameters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not change the package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished">Graine</translation>
+    </message>
+    <message>
+        <source>Procedural seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProceduralParamsPanel</name>
+    <message>
+        <source>Procedural parameters panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a procedural clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a Procedural 3D clip on the timeline to edit its parameters here.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15448,6 +16172,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>PDF</translation>
     </message>
     <message>
+        <source>Procedural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>Sous-titres</translation>
     </message>
@@ -15880,6 +16608,18 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <source>The rendered file could not be read</source>
         <translation>Le fichier généré n’a pas pu être lu</translation>
     </message>
+    <message>
+        <source>Compact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation type="unfinished">Élevée</translation>
+    </message>
+    <message>
+        <source>Balanced</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QuickSetup</name>
@@ -16036,6 +16776,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Make buttons, text and icons larger or smaller.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16899,6 +17643,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished">Taille et disposition de la vidéo</translation>
     </message>
     <message>
+        <source>Bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished">Recadrer la vidéo</translation>
+    </message>
+    <message>
         <source>Switch to mobile layout…</source>
         <translation type="unfinished">Basculer vers la disposition mobile…</translation>
     </message>
@@ -17499,16 +18251,24 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Redémarrer Drift pour appliquer cette échelle.</translation>
     </message>
     <message>
+        <source>Follows your Windows display scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
-        <translation>Agrandit les boutons, le texte et les icônes, en plus des paramètres d’affichage de votre système.</translation>
+        <source>Makes buttons, text, and icons larger or smaller, on top of your display settings.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>100% (system)</source>
         <translation>100% (système)</translation>
+    </message>
+    <message>
+        <source>Windows display scale</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout</source>
@@ -18736,32 +19496,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Effet</translation>
     </message>
     <message>
-        <source>Normal</source>
-        <translation>Normal</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation>Multiplier</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation>Écran</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Superposition</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Ajouter</translation>
-    </message>
-    <message>
         <source>Darken</source>
         <translation>Assombrir</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation>Éclaircir</translation>
     </message>
     <message>
         <source>Centre</source>
@@ -22072,6 +22808,61 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TeleprompterPanel</name>
+    <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Vitesse</translation>
+    </message>
+    <message>
+        <source>lines/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">Taille</translation>
+    </message>
+    <message>
+        <source>Follow recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scrolling starts, pauses and stops with recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show over preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste or type your script</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextAnimPresetFrame</name>
     <message>
         <source>None</source>
@@ -23084,6 +23875,48 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineBakeContextMenu</name>
+    <message>
+        <source>Re-bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage bakes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TimelineBakeStrip</name>
+    <message>
+        <source>Baking %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 – %2 · %3 · %4%5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · %2×%3</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineBookmarkContextMenu</name>
     <message>
         <source>Go to bookmark</source>
@@ -23293,6 +24126,13 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineCutButton</name>
+    <message>
+        <source>Add transition</source>
+        <translation type="unfinished">Ajouter une transition</translation>
+    </message>
+</context>
+<context>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
@@ -23327,6 +24167,25 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Importing…</source>
         <translation>Importation en cours…</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineLaneRibbons</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Audio FX</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Masque</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Effets</translation>
+    </message>
+    <message>
+        <source>%1 — click to expand</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23384,6 +24243,18 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Add new track</source>
         <translation>Ajouter une piste</translation>
+    </message>
+    <message>
+        <source>Shrink all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit tracks to panel</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close Gap</source>
@@ -23518,6 +24389,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Toggle audio mixer strip</source>
         <translation>Basculer la tranche du mélangeur audio</translation>
+    </message>
+    <message>
+        <source>Toggle keyframe strip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
@@ -23754,6 +24629,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>TimelineTrackItem</name>
     <message>
+        <source>Procedural package not found. The clip renders nothing until it is installed again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>Ajustement audio</translation>
     </message>
@@ -23791,6 +24670,25 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Trim clip</source>
         <translation>Raccourcir le clip</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineWorkAreaBakeChip</name>
+    <message>
+        <source>Baking %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel baking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-render the work area for smooth playback and export</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23927,12 +24825,28 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Renommer…</translation>
     </message>
     <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unmute track</source>
         <translation>Réactiver le son de la piste</translation>
     </message>
     <message>
         <source>Mute track</source>
         <translation>Mettre la piste en sourdine</translation>
+    </message>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stop recording</source>
@@ -23957,6 +24871,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Hide track</source>
         <translation>Masquer la piste</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -23991,8 +24913,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Plus haute</translation>
     </message>
     <message>
-        <source>Scroll over the header to fine-tune</source>
-        <translation>Faites défiler sur l&apos;en-tête pour un réglage fin</translation>
+        <source>Drag the bottom edge or scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24056,6 +24978,43 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Turn adjustment off</source>
         <translation>Désactiver l’ajustement</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneRow</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Audio FX</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Masque</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Effets</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLaneToggle</name>
+    <message>
+        <source>Expand child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse child lanes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderLockButton</name>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24139,6 +25098,21 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Hide track</source>
         <translation>Masquer la piste</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderSoloButton</name>
+    <message>
+        <source>Unsolo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished">S</translation>
     </message>
 </context>
 <context>
@@ -25177,8 +26151,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>TransitionInspector</name>
     <message>
-        <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>Sélectionnez où deux clips se chevauchent (affiché en violet), ou faites glisser un clip pour qu&apos;il chevauche le suivant.</translation>
+        <source>Hover the cut between two clips and click + to add a transition.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -25189,8 +26163,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Aucune transition après ce clip. Ajoutez-en une à la coupe vers le prochain clip.</translation>
     </message>
     <message>
-        <source>Add crossfade (%1 s)</source>
-        <translation>Ajouter un fondu enchaîné (%1 s)</translation>
+        <source>Add transition…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -25242,6 +26216,84 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TransitionPickerGrid</name>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">Rechercher des transitions</translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished">Mes transitions</translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply to %n selected cuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to all cuts on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">Aucune transition disponible</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">Installez une extension de transitions pour en ajouter davantage.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">Obtenir des extras</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">Aucune transition ne correspond à “%1”</translation>
+    </message>
+    <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished">Aucune transition personnalisée pour le moment</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">Pas encore de favoris</translation>
+    </message>
+    <message>
+        <source>No recent transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">Rien dans cette catégorie</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">Essayez un nom différent.</translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">Étoilez les transitions pour les enregistrer ici.</translation>
+    </message>
+    <message>
+        <source>Transitions you add show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">Choisissez une autre catégorie.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Importer</translation>
+    </message>
+</context>
+<context>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
@@ -25259,64 +26311,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>TransitionsTab</name>
     <message>
-        <source>Search transitions</source>
-        <translation>Rechercher des transitions</translation>
-    </message>
-    <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>My Transitions</source>
-        <translation>Mes transitions</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>Aucune transition disponible</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>Installez une extension de transitions pour en ajouter davantage.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>Obtenir des extras</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>Aucune transition ne correspond à “%1”</translation>
-    </message>
-    <message>
-        <source>No custom transitions yet</source>
-        <translation>Aucune transition personnalisée pour le moment</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>Pas encore de favoris</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Rien dans cette catégorie</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>Essayez un nom différent.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>Étoilez les transitions pour les enregistrer ici.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Choisissez une autre catégorie.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Importer</translation>
     </message>
 </context>
 <context>
@@ -25656,6 +26652,21 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>Vec2Param</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Modifier %1</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">Réinitialiser %1</translation>
+    </message>
+    <message>
+        <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Vec2ParamPad</name>
     <message>
         <source>Edit %1</source>
@@ -25887,6 +26898,25 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>VideoMenu</name>
+    <message>
+        <source>Bakes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel crop</source>
+        <translation type="unfinished">Annuler le recadrage</translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished">Recadrer la vidéo</translation>
+    </message>
+    <message>
+        <source>Adjust video layout…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>VideoSizeControls</name>
     <message>
         <source>Custom</source>
@@ -25915,18 +26945,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Frames per second</source>
         <translation>Images par seconde</translation>
-    </message>
-    <message>
-        <source>Cancel crop</source>
-        <translation>Annuler le recadrage</translation>
-    </message>
-    <message>
-        <source>Crop video size</source>
-        <translation>Recadrer la taille vidéo</translation>
-    </message>
-    <message>
-        <source>Drag the preview edges to change what’s included</source>
-        <translation>Faites glisser les bords de l’aperçu pour modifier ce qui est inclus</translation>
     </message>
     <message>
         <source>Changing size doesn’t shrink your clips — anything outside the new edges is cut off.</source>
@@ -26555,6 +27573,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Enregistreur</translation>
     </message>
     <message>
+        <source>Teleprompter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Noise Removal</source>
         <translation>Suppression du bruit</translation>
     </message>
@@ -26596,6 +27618,18 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>View &amp; Lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural Parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Procedural Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
