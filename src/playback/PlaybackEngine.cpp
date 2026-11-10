@@ -2,6 +2,8 @@
 #include "playback/AudioOutputChannel.h"
 
 #include "playback/stats/PerfLog.h"
+#include "engine/encode/bake/BakeFile.h"
+#include "engine/encode/bake/BakeReader.h"
 #include "engine/EngineTuning.h"
 
 #include <cstdio>
@@ -245,6 +247,8 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
     });
     connect(&m_compositeTimer, &QTimer::timeout, this, &PlaybackEngine::onCompositeTick);
     connect(&m_compositor, &CompositorService::frameReady, this, &PlaybackEngine::onFrameReady);
+    m_bakePool = std::make_shared<drift::BakeReaderPool>();
+    m_compositor.setBakeSource(m_bakePool);
 
     // The GPU compositor needs Qt Quick's global share context, which does not
     // exist until the first QQuickWindow initialises — after this constructor. So
@@ -355,6 +359,19 @@ void PlaybackEngine::setPreviewEffectBypass(const QSet<QString> &clipIds, const 
 {
     m_compositor.setPreviewBypass(clipIds, catalogIds);
     refreshFrame();
+}
+
+void PlaybackEngine::setBakeIndex(const QString &path, std::shared_ptr<const drift::BakeIndex> index)
+{
+    m_bakePool->setSource(path, std::move(index));
+    m_compositor.invalidateSnapshot();
+    refreshFrame();
+}
+
+QString PlaybackEngine::currentFrameBakeId() const
+{
+    QMutexLocker lock(&m_frameMutex);
+    return m_streams[int(PreviewStream::Camera)].frame.bakeId;
 }
 
 void PlaybackEngine::acquireScopes()
@@ -729,15 +746,14 @@ void PlaybackEngine::play()
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
     m_clock.setRate(m_playbackRate);
     m_clock.reset(m_playheadUs, m_sampleRate);
+    requestAudioFocus();
+    ensureAudioSink();
+    m_clock.start();
     m_playing = true;
     m_compositor.setPlaybackActive(true);
     // Android dims and locks on its own idle timer, which would be wrong mid-playback even
     // without touch input; no-op on desktop.
     drift::android::acquireKeepScreenOn();
-
-    requestAudioFocus();
-    ensureAudioSink();
-    m_clock.start();
 
     pushAudioSnapshot();
 

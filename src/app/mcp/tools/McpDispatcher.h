@@ -119,6 +119,7 @@ private:
     QJsonObject opListAnimatedProperties(const QJsonObject &args) const;
     QJsonObject opListKeyframes(const QJsonObject &args) const;
     QJsonObject opSetKeyframe(const QJsonObject &args);
+    QJsonObject opSetKeyframes(const QJsonObject &args);
     QJsonObject opRemoveKeyframe(const QJsonObject &args);
     QJsonObject opSetKeyframeInterpolation(const QJsonObject &args);
     QJsonObject opSetKeyframeTangents(const QJsonObject &args);

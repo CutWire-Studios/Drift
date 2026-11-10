@@ -16,7 +16,14 @@
             "children": [
               { "panels": [ { "type": "assets.media" } ], "active": 0 },
               { "panels": [ { "type": "preview" } ], "active": 0 },
-              { "panels": [ { "type": "recorder" }, { "type": "denoise" } ], "active": 0 }
+              {
+                "split": "v",
+                "sizes": [0.55, 0.45],
+                "children": [
+                  { "panels": [ { "type": "teleprompter" } ], "active": 0 },
+                  { "panels": [ { "type": "recorder" }, { "type": "denoise" } ], "active": 0 }
+                ]
+              }
             ]
           },
           {

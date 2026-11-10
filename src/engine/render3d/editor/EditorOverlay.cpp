@@ -145,6 +145,44 @@ QList<EditorLine> buildEditorOverlay(const EditorOverlayInput &input)
         }
     }
 
+    for (const FrustumGuide &f : input.frustums) {
+        const QVector3D toTarget = f.target - f.eye;
+        const float focus = toTarget.length();
+        if (focus < 1e-3f || !(f.fov > 1e-4) || f.fov > 3.1)
+            continue;
+        const QVector3D forward = toTarget / focus;
+        QVector3D right = QVector3D::crossProduct(forward, f.up);
+        if (right.lengthSquared() < 1e-12f)
+            continue;
+        right.normalize();
+        const QVector3D up = QVector3D::crossProduct(right, forward);
+        // The far plane can sit at 1e5; the frame drawn is the one at the target, capped by it.
+        const float reach = float(std::min(double(focus), f.farPlane));
+        const float halfH = reach * float(std::tan(f.fov * 0.5));
+        const float halfW = halfH * float(f.aspect);
+        const auto plane = [&](float distance, float scale) {
+            const QVector3D c = f.eye + forward * distance;
+            const QVector3D r = right * halfW * scale;
+            const QVector3D u = up * halfH * scale;
+            return QList<QVector3D>{c - r - u, c + r - u, c + r + u, c - r + u};
+        };
+        const QColor body = f.selected ? kSelected : kCamera;
+        const QList<QVector3D> frame = plane(reach, 1.f);
+        for (const QVector3D &corner : frame)
+            addLine(out, f.eye, corner, kCameraRays, 1.f);
+        addLoop(out, frame, body, f.selected ? 2.f : 1.5f);
+        const float t = 0.15f;
+        const QList<QVector3D> nearFrame = plane(reach * t, t);
+        for (const QVector3D &corner : nearFrame)
+            addLine(out, f.eye, corner, body, 2.f);
+        addLoop(out, nearFrame, body, 2.f);
+        const QVector3D top = f.eye + forward * reach * t + up * halfH * t * 1.6f;
+        addLoop(out,
+                {f.eye + forward * reach * t + up * halfH * t * 1.1f - right * halfW * t * 0.5f,
+                 f.eye + forward * reach * t + up * halfH * t * 1.1f + right * halfW * t * 0.5f, top},
+                body, 2.f);
+    }
+
     if (input.hasSelectedModel) {
         const QVector3D lo = input.selectedModelMin;
         const QVector3D hi = input.selectedModelMax;

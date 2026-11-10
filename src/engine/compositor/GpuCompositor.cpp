@@ -15,6 +15,8 @@
 #include "engine/gpu/effects/GpuEffectDefinition.h"
 #include "engine/compositor/layers/MaskApplier.h"
 #include "engine/render3d/models/ModelClipRenderer.h"
+#include "engine/render3d/procedural/GlProceduralRenderer.h"
+#include "engine/render3d/procedural/ProceduralRequest.h"
 #include "engine/compositor/layers/TransformLayer.h"
 
 #include <QLineF>
@@ -160,7 +162,7 @@ uniform float u_opacity;
 uniform float u_hasMask;
 uniform float u_maskInvert;
 uniform float u_layerPremul;
-uniform int u_blendMode;      // 1 multiply, 2 screen, 3 overlay, 5 darken, 6 lighten
+uniform int u_blendMode;      // 0 normal, 1-6 multiply..lighten (4 add is fixed-function), 7-25 in BlendMode order from colorBurn
 // Depth occlusion: 1 where this layer shows, falling to 0 where the occluder's depth, laid out on
 // the canvas by kDepthPlaceFragShader, is nearer than the distance the layer was placed at.
 uniform sampler2D u_occ;
@@ -181,6 +183,34 @@ float occlusion() {
     return 1.0 - cover * nearer;
 }
 
+float blendLum(vec3 c) { return dot(c, vec3(0.3, 0.59, 0.11)); }
+float blendSat(vec3 c) { return max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b)); }
+vec3 blendClipColor(vec3 c) {
+    float l = blendLum(c);
+    float n = min(c.r, min(c.g, c.b));
+    float x = max(c.r, max(c.g, c.b));
+    if (n < 0.0) c = l + (c - l) * l / max(l - n, 0.0001);
+    if (x > 1.0) c = l + (c - l) * (1.0 - l) / max(x - l, 0.0001);
+    return c;
+}
+vec3 blendSetLum(vec3 c, float l) { return blendClipColor(c + (l - blendLum(c))); }
+vec3 blendSetSat(vec3 c, float s) {
+    float mn = min(c.r, min(c.g, c.b));
+    float mx = max(c.r, max(c.g, c.b));
+    if (mx <= mn) return vec3(0.0);
+    return (c - mn) * s / (mx - mn);
+}
+vec3 blendColorBurn(vec3 b, vec3 s) {
+    vec3 r = 1.0 - min(vec3(1.0), (1.0 - b) / max(s, vec3(0.0001)));
+    r = mix(r, vec3(0.0), step(s, vec3(0.0)));
+    return mix(r, vec3(1.0), step(vec3(1.0), b));
+}
+vec3 blendColorDodge(vec3 b, vec3 s) {
+    vec3 r = min(vec3(1.0), b / max(1.0 - s, vec3(0.0001)));
+    r = mix(r, vec3(1.0), step(vec3(1.0), s));
+    return mix(r, vec3(0.0), step(b, vec3(0.0)));
+}
+
 vec3 blendRgb(vec3 base, vec3 src) {
     if (u_blendMode == 1) return base * src;
     if (u_blendMode == 2) return 1.0 - (1.0 - base) * (1.0 - src);
@@ -191,6 +221,45 @@ vec3 blendRgb(vec3 base, vec3 src) {
     }
     if (u_blendMode == 5) return min(base, src);
     if (u_blendMode == 6) return max(base, src);
+    if (u_blendMode == 7) return blendColorBurn(base, src);
+    if (u_blendMode == 8) return base + src - 1.0;
+    if (u_blendMode == 9) return blendLum(src) < blendLum(base) ? src : base;
+    if (u_blendMode == 10) return blendColorDodge(base, src);
+    if (u_blendMode == 11) return blendLum(src) > blendLum(base) ? src : base;
+    if (u_blendMode == 12) {
+        vec3 d = mix(sqrt(base), ((16.0 * base - 12.0) * base + 4.0) * base, step(base, vec3(0.25)));
+        vec3 dark = base - (1.0 - 2.0 * src) * base * (1.0 - base);
+        vec3 light = base + (2.0 * src - 1.0) * (d - base);
+        return mix(light, dark, step(src, vec3(0.5)));
+    }
+    if (u_blendMode == 13) {
+        return mix(1.0 - 2.0 * (1.0 - base) * (1.0 - src),
+                   2.0 * base * src,
+                   step(src, vec3(0.5)));
+    }
+    if (u_blendMode == 14) {
+        return mix(blendColorDodge(base, 2.0 * (src - 0.5)),
+                   blendColorBurn(base, 2.0 * src),
+                   step(src, vec3(0.5)));
+    }
+    if (u_blendMode == 15) return base + 2.0 * src - 1.0;
+    if (u_blendMode == 16) {
+        return mix(max(base, 2.0 * src - 1.0),
+                   min(base, 2.0 * src),
+                   step(src, vec3(0.5)));
+    }
+    if (u_blendMode == 17) return step(vec3(1.0), base + src);
+    if (u_blendMode == 18) return abs(base - src);
+    if (u_blendMode == 19) return base + src - 2.0 * base * src;
+    if (u_blendMode == 20) return base - src;
+    if (u_blendMode == 21) {
+        vec3 q = base / max(src, vec3(0.0001));
+        return mix(q, step(vec3(0.0001), base), step(src, vec3(0.0)));
+    }
+    if (u_blendMode == 22) return blendSetLum(blendSetSat(src, blendSat(base)), blendLum(base));
+    if (u_blendMode == 23) return blendSetLum(blendSetSat(base, blendSat(src)), blendLum(base));
+    if (u_blendMode == 24) return blendSetLum(src, blendLum(base));
+    if (u_blendMode == 25) return blendSetLum(base, blendLum(src));
     return src;
 }
 
@@ -304,6 +373,44 @@ int blendModeCode(drift::BlendMode mode)
         return 5;
     case drift::BlendMode::Lighten:
         return 6;
+    case drift::BlendMode::ColorBurn:
+        return 7;
+    case drift::BlendMode::LinearBurn:
+        return 8;
+    case drift::BlendMode::DarkerColor:
+        return 9;
+    case drift::BlendMode::ColorDodge:
+        return 10;
+    case drift::BlendMode::LighterColor:
+        return 11;
+    case drift::BlendMode::SoftLight:
+        return 12;
+    case drift::BlendMode::HardLight:
+        return 13;
+    case drift::BlendMode::VividLight:
+        return 14;
+    case drift::BlendMode::LinearLight:
+        return 15;
+    case drift::BlendMode::PinLight:
+        return 16;
+    case drift::BlendMode::HardMix:
+        return 17;
+    case drift::BlendMode::Difference:
+        return 18;
+    case drift::BlendMode::Exclusion:
+        return 19;
+    case drift::BlendMode::Subtract:
+        return 20;
+    case drift::BlendMode::Divide:
+        return 21;
+    case drift::BlendMode::Hue:
+        return 22;
+    case drift::BlendMode::Saturation:
+        return 23;
+    case drift::BlendMode::Color:
+        return 24;
+    case drift::BlendMode::Luminosity:
+        return 25;
     case drift::BlendMode::Normal:
         break;
     }
@@ -616,8 +723,10 @@ QMatrix4x4 layerViewProjection(const GpuLayer &layer, const QSize &canvas)
     const QSizeF canvasF(canvas);
     QMatrix4x4 view = layer.viewProj;
     if (!layer.viewActive) {
-        view = drift::clipEyeView(layer.model3d ? layer.model3d->pose3d.perspective : layer.pose3d.perspective,
-                                  canvasF);
+        const double perspective = layer.model3d        ? layer.model3d->pose3d.perspective
+                                   : layer.procedural ? layer.procedural->pose3d.perspective
+                                                      : layer.pose3d.perspective;
+        view = drift::clipEyeView(perspective, canvasF);
     }
     if (layer.hasParent && layer.parent.isAffine())
         view = view * drift::worldParentFromAffine(layer.parent,
@@ -646,6 +755,14 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         target = drift::gl::drawModelClip(rt, gl, *layer.model3d, canvasSize,
                                           layerViewProjection(layer, canvasSize),
                                           layer.depthOcclude ? modelDepth : nullptr);
+    } else if (layer.procedural) {
+        target = drift::gl::drawProceduralClip(rt, gl, *layer.procedural, canvasSize,
+                                               layerViewProjection(layer, canvasSize),
+                                               layer.depthOcclude ? modelDepth : nullptr,
+                                               layer.globalAudio
+                                                   ? std::array<float, 3>{layer.globalAudio->level, layer.globalAudio->bass,
+                                                                          layer.globalAudio->beat}
+                                                   : std::array<float, 3>{});
     } else if (layer.nested) {
         target = nestedLayerTarget(rt, gl, *layer.nested);
     } else if (layer.video.isValid()) {

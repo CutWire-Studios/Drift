@@ -180,7 +180,9 @@ Item {
             break
         case "transitionReplace":
             if (ShellBridge.main.editorPage)
-                ShellBridge.main.editorPage.openAssetsTab("transitions")
+                ShellBridge.main.editorPage.openTransitionPicker(
+                    EditorState.selectedTransitionTrack, EditorState.selectedTransitionLeftClip,
+                    EditorState.selectedTransitionData.id, EditorState.selectedTransitionData.kind || "")
             break
         case "transitionDelete":
             EditorState.removeTransition(EditorState.selectedTransitionTrack,
