@@ -58,15 +58,27 @@
         <translation>Automatycznie (zalecane)</translation>
     </message>
     <message>
-        <source>NVIDIA graphics (faster)</source>
-        <translation>Karta graficzna NVIDIA (szybszy)</translation>
-    </message>
-    <message>
-        <source>AMD graphics (faster)</source>
+        <source>Processor (CPU)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>CPU</source>
+        <source>NVIDIA CUDA</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AMD MIGraphX (Windows ML)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AMD ROCm (MIGraphX)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows ML (DirectX 12)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebGPU (any graphics card)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3221,6 +3233,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip inserted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple trim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gaps closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips swapped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3865,10 +3897,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Change look</source>
-        <translation>Zmień styl</translation>
-    </message>
-    <message>
         <source>Edit curve</source>
         <translation>Edytuj krzywą</translation>
     </message>
@@ -4327,6 +4355,10 @@
     <message>
         <source>Effect updated</source>
         <translation>Zaktualizowano efekt</translation>
+    </message>
+    <message>
+        <source>Change LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not read the selected file</source>
@@ -6576,16 +6608,8 @@
         <translation>Brak</translation>
     </message>
     <message>
-        <source>Missing look</source>
-        <translation type="unfinished">Brakujący styl</translation>
-    </message>
-    <message>
         <source>Adjust color</source>
         <translation>Dostosuj kolor</translation>
-    </message>
-    <message>
-        <source>Set look</source>
-        <translation>Ustaw styl</translation>
     </message>
     <message>
         <source>Reset %1</source>
@@ -6595,41 +6619,49 @@
         <source>Reset grade</source>
         <translation>Zresetuj korekcję</translation>
     </message>
-    <message numerus="yes">
-        <source>Imported %n look(s)</source>
-        <translation>
-            <numerusform>Zaimportowano %n styl</numerusform>
-            <numerusform>Zaimportowano %n style</numerusform>
-            <numerusform>Zaimportowano %n stylów</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Imported %n look(s), %1 failed</source>
-        <translation>
-            <numerusform>Zaimportowano %n styl, %1 nie powiódł się</numerusform>
-            <numerusform>Zaimportowano %n style, %1 nie powiodły się</numerusform>
-            <numerusform>Zaimportowano %n stylów, %1 nie powiodło się</numerusform>
-        </translation>
-    </message>
     <message>
-        <source>Could not import that look</source>
+        <source>Missing LUT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not remove the look</source>
-        <translation>Nie można usunąć stylu</translation>
+        <source>Set LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n LUT(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n LUT(s), %1 failed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>Look removed</source>
-        <translation>Usunięto styl</translation>
+        <source>Could not import that LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not rename the look</source>
-        <translation>Nie można zmienić nazwy stylu</translation>
+        <source>Could not remove the LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Look renamed</source>
-        <translation>Zmieniono nazwę stylu</translation>
+        <source>LUT removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not rename the LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT renamed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
@@ -6898,18 +6930,6 @@
         <translation>Kolor</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation>Styl</translation>
-    </message>
-    <message>
-        <source>None. Choose a look in the Looks panel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>Intensywność stylu</translation>
-    </message>
-    <message>
         <source>Color wheels</source>
         <translation type="unfinished">Koła kolorów</translation>
     </message>
@@ -6948,6 +6968,18 @@
     <message>
         <source>Apply to all clips</source>
         <translation>Zastosuj do wszystkich klipów</translation>
+    </message>
+    <message>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None. Choose one in the Color Grading LUTs panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>
@@ -8846,16 +8878,16 @@
         <translation>Importuj…</translation>
     </message>
     <message>
-        <source>Import looks</source>
-        <translation>Importuj style</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
         <translation>Pliki LUT (*.cube)</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>Brakujący styl</translation>
     </message>
 </context>
 <context>
@@ -10100,7 +10132,7 @@
     </message>
     <message>
         <source>Label</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Etykieta</translation>
     </message>
     <message>
         <source>Clip label</source>
@@ -11493,60 +11525,56 @@
 <context>
     <name>LooksPanel</name>
     <message>
-        <source>Looks</source>
-        <translation>Style</translation>
-    </message>
-    <message>
-        <source>My Looks</source>
-        <translation>Moje style</translation>
-    </message>
-    <message>
-        <source>Import looks</source>
-        <translation>Importuj style</translation>
-    </message>
-    <message>
         <source>LUT files (*.cube)</source>
         <translation>Pliki LUT (*.cube)</translation>
-    </message>
-    <message>
-        <source>Search looks</source>
-        <translation>Szukaj stylów</translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>Intensywność stylu</translation>
     </message>
     <message>
         <source>Adjust %1</source>
         <translation>Dostosuj %1</translation>
     </message>
     <message>
-        <source>Get free looks</source>
-        <translation>Pobierz bezpłatne style</translation>
-    </message>
-    <message>
         <source>Rename…</source>
         <translation>Zmień nazwę…</translation>
-    </message>
-    <message>
-        <source>Import .cube looks</source>
-        <translation>Importuj style .cube</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>Brakujący styl</translation>
     </message>
     <message>
         <source>Remove</source>
         <translation>Usuń</translation>
     </message>
     <message>
-        <source>No looks match “%1”.</source>
-        <translation>Żaden styl nie pasuje do „%1”.</translation>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No favorites yet. Star looks to save them here.</source>
-        <translation>Brak ulubionych. Oznacz style gwiazdką, aby zapisać je tutaj.</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import .cube LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No LUTs match “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No favorites yet. Star LUTs to save them here.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
@@ -11565,20 +11593,28 @@
         <translation>Importuj</translation>
     </message>
     <message>
-        <source>No looks</source>
-        <translation>Brak stylów</translation>
+        <source>No LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Download a free pack of ready-made looks, or import your own .cube files.</source>
-        <translation>Pobierz bezpłatny pakiet gotowych stylów lub zaimportuj własne pliki .cube.</translation>
+        <source>Download a free pack of ready-made color grading LUTs, or import your own .cube files.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select a clip to try looks on it</source>
-        <translation>Zaznacz klip, aby wypróbować na nim style</translation>
+        <source>Get free LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove this look?</source>
-        <translation>Usunąć ten styl?</translation>
+        <source>Select a clip to try LUTs on it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove this LUT?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>“%1” is used by %n clip(s). They will show it as missing until it is imported again.</source>
@@ -11587,10 +11623,6 @@
             <numerusform>„%1” jest używany przez %n klipy. Będą wyświetlane jako brakujące, dopóki nie zostanie ponownie zaimportowany.</numerusform>
             <numerusform>„%1” jest używany przez %n klipów. Będą wyświetlane jako brakujące, dopóki nie zostanie ponownie zaimportowany.</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Rename look</source>
-        <translation>Zmień nazwę stylu</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -12061,8 +12093,8 @@
         <translation type="unfinished">Motyw</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation type="unfinished">Styl</translation>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Effect template</source>
@@ -16744,7 +16776,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and looks come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
+        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16926,8 +16958,8 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation type="unfinished">Przejścia</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation type="unfinished">Style</translation>
+        <source>LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fonts</source>
@@ -17009,11 +17041,11 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the header.</source>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -27672,10 +27704,6 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Kolor</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation>Style</translation>
-    </message>
-    <message>
         <source>Scopes</source>
         <translation>Wykresy</translation>
     </message>
@@ -27790,6 +27818,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Camera</source>
         <translation>Kamera</translation>
+    </message>
+    <message>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization</source>

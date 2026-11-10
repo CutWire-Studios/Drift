@@ -58,15 +58,27 @@
         <translation>Awtomatiko (inirerekomenda)</translation>
     </message>
     <message>
-        <source>NVIDIA graphics (faster)</source>
-        <translation>Grapikong NVIDIA (mas mabilis)</translation>
-    </message>
-    <message>
-        <source>AMD graphics (faster)</source>
+        <source>Processor (CPU)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>CPU</source>
+        <source>NVIDIA CUDA</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AMD MIGraphX (Windows ML)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AMD ROCm (MIGraphX)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows ML (DirectX 12)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebGPU (any graphics card)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3211,8 +3223,28 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip inserted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip can&apos;t completely cover another</source>
         <translation>Hindi maaaring ganap na takpan ng clip ang isa pa</translation>
+    </message>
+    <message>
+        <source>Ripple trim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gaps closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips swapped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set sequence</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Replace clip</source>
@@ -3859,10 +3891,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Change look</source>
-        <translation>Palitan ang look</translation>
-    </message>
-    <message>
         <source>Edit curve</source>
         <translation>I-edit ang curve</translation>
     </message>
@@ -4319,6 +4347,10 @@
     <message>
         <source>Effect updated</source>
         <translation>Na-update ang epekto</translation>
+    </message>
+    <message>
+        <source>Change LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not read the selected file</source>
@@ -6552,16 +6584,8 @@
         <translation>Wala</translation>
     </message>
     <message>
-        <source>Missing look</source>
-        <translation type="unfinished">Nawawalang look</translation>
-    </message>
-    <message>
         <source>Adjust color</source>
         <translation>I-adjust ang kulay</translation>
-    </message>
-    <message>
-        <source>Set look</source>
-        <translation>Itakda ang look</translation>
     </message>
     <message>
         <source>Reset %1</source>
@@ -6571,39 +6595,47 @@
         <source>Reset grade</source>
         <translation>I-reset ang grade</translation>
     </message>
-    <message numerus="yes">
-        <source>Imported %n look(s)</source>
-        <translation>
-            <numerusform>Na-import ang %n look</numerusform>
-            <numerusform>Na-import ang %n mga look</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Imported %n look(s), %1 failed</source>
-        <translation>
-            <numerusform>Na-import ang %n look, nabigo ang %1</numerusform>
-            <numerusform>Na-import ang %n mga look, nabigo ang %1</numerusform>
-        </translation>
-    </message>
     <message>
-        <source>Could not import that look</source>
+        <source>Missing LUT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not remove the look</source>
-        <translation>Hindi maalis ang look</translation>
+        <source>Set LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n LUT(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n LUT(s), %1 failed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>Look removed</source>
-        <translation>Naalis ang look</translation>
+        <source>Could not import that LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not rename the look</source>
-        <translation>Hindi mapalitan ang pangalan ng look</translation>
+        <source>Could not remove the LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Look renamed</source>
-        <translation>Napalitan ang pangalan ng look</translation>
+        <source>LUT removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not rename the LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT renamed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
@@ -6871,18 +6903,6 @@
         <translation>Kulay</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation>Look</translation>
-    </message>
-    <message>
-        <source>None. Choose a look in the Looks panel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>Intensity ng Look</translation>
-    </message>
-    <message>
         <source>Color wheels</source>
         <translation type="unfinished">Mga color wheel</translation>
     </message>
@@ -6921,6 +6941,18 @@
     <message>
         <source>Apply to all clips</source>
         <translation>Ilapat sa lahat ng clip</translation>
+    </message>
+    <message>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None. Choose one in the Color Grading LUTs panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>
@@ -8812,16 +8844,16 @@
         <translation>Mag-import…</translation>
     </message>
     <message>
-        <source>Import looks</source>
-        <translation>Mag-import ng mga look</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
         <translation>Mga LUT file (*.cube)</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>Nawawalang look</translation>
     </message>
 </context>
 <context>
@@ -10064,7 +10096,7 @@
     </message>
     <message>
         <source>Label</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Label</translation>
     </message>
     <message>
         <source>Clip label</source>
@@ -11451,60 +11483,56 @@
 <context>
     <name>LooksPanel</name>
     <message>
-        <source>Looks</source>
-        <translation>Mga Look</translation>
-    </message>
-    <message>
-        <source>My Looks</source>
-        <translation>Aking mga Look</translation>
-    </message>
-    <message>
-        <source>Import looks</source>
-        <translation>Mag-import ng mga look</translation>
-    </message>
-    <message>
         <source>LUT files (*.cube)</source>
         <translation>Mga LUT file (*.cube)</translation>
-    </message>
-    <message>
-        <source>Search looks</source>
-        <translation>Maghanap ng mga look</translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>Intensity ng Look</translation>
     </message>
     <message>
         <source>Adjust %1</source>
         <translation>I-adjust ang %1</translation>
     </message>
     <message>
-        <source>Get free looks</source>
-        <translation>Kumuha ng mga libreng look</translation>
-    </message>
-    <message>
         <source>Rename…</source>
         <translation>Palitan ang pangalan…</translation>
-    </message>
-    <message>
-        <source>Import .cube looks</source>
-        <translation>Mag-import ng mga .cube look</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>Nawawalang look</translation>
     </message>
     <message>
         <source>Remove</source>
         <translation>Tanggal</translation>
     </message>
     <message>
-        <source>No looks match “%1”.</source>
-        <translation>Walang mga look na tumutugma sa “%1”.</translation>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No favorites yet. Star looks to save them here.</source>
-        <translation>Wala pang mga paborito. Lagyan ng bituin ang mga look upang i-save ang mga ito rito.</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import .cube LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No LUTs match “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No favorites yet. Star LUTs to save them here.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
@@ -11523,20 +11551,28 @@
         <translation>Mag-import</translation>
     </message>
     <message>
-        <source>No looks</source>
-        <translation>Walang mga look</translation>
+        <source>No LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Download a free pack of ready-made looks, or import your own .cube files.</source>
-        <translation>Mag-download ng libreng pack ng mga nakahandang look, o mag-import ng sarili mong mga .cube file.</translation>
+        <source>Download a free pack of ready-made color grading LUTs, or import your own .cube files.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select a clip to try looks on it</source>
-        <translation>Pumili ng clip upang sumubok ng mga look dito</translation>
+        <source>Get free LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove this look?</source>
-        <translation>Alisin ang look na ito?</translation>
+        <source>Select a clip to try LUTs on it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove this LUT?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>“%1” is used by %n clip(s). They will show it as missing until it is imported again.</source>
@@ -11544,10 +11580,6 @@
             <numerusform>Ginagamit ang “%1” ng %n clip. Ipakikita nila ito bilang nawawala hanggang sa ma-import itong muli.</numerusform>
             <numerusform>Ginagamit ang “%1” ng %n mga clip. Ipakikita nila ito bilang nawawala hanggang sa ma-import itong muli.</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Rename look</source>
-        <translation>Palitan ang pangalan ng look</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -12016,8 +12048,8 @@
         <translation type="unfinished">Tema</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation type="unfinished">Look</translation>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Effect template</source>
@@ -16673,7 +16705,7 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and looks come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
+        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16855,8 +16887,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation type="unfinished">Pagbabagong-kalagayan</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation type="unfinished">Mga Look</translation>
+        <source>LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fonts</source>
@@ -16938,11 +16970,11 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the header.</source>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -27582,10 +27614,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Kulay</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation>Mga Look</translation>
-    </message>
-    <message>
         <source>Scopes</source>
         <translation>Mga Scope</translation>
     </message>
@@ -27700,6 +27728,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Camera</source>
         <translation>Camera</translation>
+    </message>
+    <message>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization</source>

@@ -58,15 +58,27 @@
         <translation>自动（推荐）</translation>
     </message>
     <message>
-        <source>NVIDIA graphics (faster)</source>
-        <translation>英伟达显卡（快速）</translation>
-    </message>
-    <message>
-        <source>AMD graphics (faster)</source>
+        <source>Processor (CPU)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>CPU</source>
+        <source>NVIDIA CUDA</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AMD MIGraphX (Windows ML)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AMD ROCm (MIGraphX)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows ML (DirectX 12)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebGPU (any graphics card)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3209,6 +3221,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip inserted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple trim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gaps closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips swapped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3853,10 +3885,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Change look</source>
-        <translation>更改外观</translation>
-    </message>
-    <message>
         <source>Edit curve</source>
         <translation>编辑曲线</translation>
     </message>
@@ -4311,6 +4339,10 @@
     <message>
         <source>Effect updated</source>
         <translation>效果已更新</translation>
+    </message>
+    <message>
+        <source>Change LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not read the selected file</source>
@@ -6528,16 +6560,8 @@
         <translation>无</translation>
     </message>
     <message>
-        <source>Missing look</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Adjust color</source>
         <translation>调整颜色</translation>
-    </message>
-    <message>
-        <source>Set look</source>
-        <translation>设置外观</translation>
     </message>
     <message>
         <source>Reset %1</source>
@@ -6547,37 +6571,45 @@
         <source>Reset grade</source>
         <translation>重置调色</translation>
     </message>
-    <message numerus="yes">
-        <source>Imported %n look(s)</source>
-        <translation>
-            <numerusform>已导入 %n 个外观</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Imported %n look(s), %1 failed</source>
-        <translation>
-            <numerusform>已导入 %n 个外观，%1 个失败</numerusform>
-        </translation>
-    </message>
     <message>
-        <source>Could not import that look</source>
+        <source>Missing LUT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not remove the look</source>
-        <translation>无法移除外观</translation>
+        <source>Set LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n LUT(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n LUT(s), %1 failed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>Look removed</source>
-        <translation>外观已移除</translation>
+        <source>Could not import that LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not rename the look</source>
-        <translation>无法重命名外观</translation>
+        <source>Could not remove the LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Look renamed</source>
-        <translation>外观已重命名</translation>
+        <source>LUT removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not rename the LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT renamed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
@@ -6844,18 +6876,6 @@
         <translation>颜色</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation>外观</translation>
-    </message>
-    <message>
-        <source>None. Choose a look in the Looks panel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>外观强度</translation>
-    </message>
-    <message>
         <source>Color wheels</source>
         <translation type="unfinished">色彩轮</translation>
     </message>
@@ -6894,6 +6914,18 @@
     <message>
         <source>Apply to all clips</source>
         <translation>应用到所有片段</translation>
+    </message>
+    <message>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None. Choose one in the Color Grading LUTs panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>
@@ -8778,16 +8810,16 @@
         <translation>导入…</translation>
     </message>
     <message>
-        <source>Import looks</source>
-        <translation>导入调色</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
         <translation>LUT 文件 (*.cube)</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>缺少调色文件</translation>
     </message>
 </context>
 <context>
@@ -10028,7 +10060,7 @@
     </message>
     <message>
         <source>Label</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">标签</translation>
     </message>
     <message>
         <source>Clip label</source>
@@ -11409,60 +11441,56 @@
 <context>
     <name>LooksPanel</name>
     <message>
-        <source>Looks</source>
-        <translation>调色风格</translation>
-    </message>
-    <message>
-        <source>My Looks</source>
-        <translation>我的调色风格</translation>
-    </message>
-    <message>
-        <source>Import looks</source>
-        <translation>导入调色风格</translation>
-    </message>
-    <message>
         <source>LUT files (*.cube)</source>
         <translation>LUT 文件 (*.cube)</translation>
-    </message>
-    <message>
-        <source>Search looks</source>
-        <translation>搜索调色风格</translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>调色强度</translation>
     </message>
     <message>
         <source>Adjust %1</source>
         <translation>调整 %1</translation>
     </message>
     <message>
-        <source>Get free looks</source>
-        <translation>获取免费调色风格</translation>
-    </message>
-    <message>
         <source>Rename…</source>
         <translation>重命名…</translation>
-    </message>
-    <message>
-        <source>Import .cube looks</source>
-        <translation>导入 .cube 调色风格</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>调色风格缺失</translation>
     </message>
     <message>
         <source>Remove</source>
         <translation>移除</translation>
     </message>
     <message>
-        <source>No looks match “%1”.</source>
-        <translation>没有符合“%1”的调色风格。</translation>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No favorites yet. Star looks to save them here.</source>
-        <translation>暂无收藏。点星收藏调色风格后即会显示在此处。</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import .cube LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No LUTs match “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No favorites yet. Star LUTs to save them here.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
@@ -11481,30 +11509,34 @@
         <translation>导入</translation>
     </message>
     <message>
-        <source>No looks</source>
-        <translation>暂无调色风格</translation>
+        <source>No LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Download a free pack of ready-made looks, or import your own .cube files.</source>
-        <translation>下载免费现成的调色风格包，或导入自己的 .cube 文件。</translation>
+        <source>Download a free pack of ready-made color grading LUTs, or import your own .cube files.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select a clip to try looks on it</source>
-        <translation>选择一个片段以试色调色风格</translation>
+        <source>Get free LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove this look?</source>
-        <translation>移除此调色风格？</translation>
+        <source>Select a clip to try LUTs on it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove this LUT?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>“%1” is used by %n clip(s). They will show it as missing until it is imported again.</source>
         <translation>
             <numerusform>%n 个片段正在使用“%1”。在重新导入之前，它们会显示为缺失。</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Rename look</source>
-        <translation>重命名调色风格</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -11971,8 +12003,8 @@
         <translation type="unfinished">主题</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation type="unfinished">外观</translation>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Effect template</source>
@@ -16602,7 +16634,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and looks come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
+        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16784,7 +16816,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished">转场</translation>
     </message>
     <message>
-        <source>Looks</source>
+        <source>LUTs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16867,11 +16899,11 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the header.</source>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -27492,10 +27524,6 @@ If playback stutters, try another.</source>
         <translation>颜色</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation>外观</translation>
-    </message>
-    <message>
         <source>Scopes</source>
         <translation>示波器</translation>
     </message>
@@ -27610,6 +27638,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Camera</source>
         <translation>摄像机</translation>
+    </message>
+    <message>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization</source>
