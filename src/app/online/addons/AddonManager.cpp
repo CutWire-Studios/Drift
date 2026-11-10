@@ -664,7 +664,7 @@ QVariantList AddonManager::accelerationOptions() const
     };
 
     QVariantList rows{row(QStringLiteral("auto"), tr("Automatic (recommended)")),
-                      row(QStringLiteral("cpu"), tr("This computer"))};
+                      row(QStringLiteral("cpu"), tr("CPU"))};
     for (const QString &variant : installed) {
         if (variant == QLatin1String("cpu"))
             continue;
@@ -672,8 +672,6 @@ QVariantList AddonManager::accelerationOptions() const
             rows.append(row(variant, tr("NVIDIA graphics (faster)")));
         else if (variant == QLatin1String("migraphx"))
             rows.append(row(variant, tr("AMD graphics (faster)")));
-        else if (variant == QLatin1String("webgpu"))
-            rows.append(row(variant, tr("Graphics card (faster)")));
         else
             rows.append(row(variant, variant.toUpper()));
     }

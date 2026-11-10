@@ -366,6 +366,10 @@ QList<PluginEp> installedPluginEps()
             path = QDir(root).filePath(name);
         if (ep.variant.isEmpty() || name.isEmpty() || !QFileInfo::exists(path))
             continue;
+        // WebGPU measured slower than CPU, yet "auto" would prefer it as a plugin EP, so copies
+        // installed before it was withdrawn from the store are ignored.
+        if (ep.variant == QLatin1String("webgpu"))
+            continue;
 
         ep.library = path;
         eps.append(ep);
@@ -411,11 +415,12 @@ QString preferredVariant()
     const QString override = QString::fromLocal8Bit(qgetenv("DRIFT_ORT_EP")).trimmed().toLower();
     if (!override.isEmpty())
         return override;
-    return QSettings()
-        .value(QStringLiteral("ort/variant"), QStringLiteral("auto"))
-        .toString()
-        .trimmed()
-        .toLower();
+    const QString saved = QSettings()
+                              .value(QStringLiteral("ort/variant"), QStringLiteral("auto"))
+                              .toString()
+                              .trimmed()
+                              .toLower();
+    return saved == QLatin1String("webgpu") ? QStringLiteral("auto") : saved;
 }
 
 void setPreferredVariant(const QString &variant)

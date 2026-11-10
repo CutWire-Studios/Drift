@@ -1280,6 +1280,7 @@
     },
     {
       "match": "onnxruntime.ep.webgpu.*",
+      "hidden": true,
       "tagline": "Speed boost for AI on any graphics card",
       "summary": "Makes AI features faster using an AMD, Intel or NVIDIA graphics card, with no extra toolkit to install. It adds to the AI engine you already have.",
       "categories": [
