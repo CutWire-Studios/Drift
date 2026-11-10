@@ -1917,14 +1917,18 @@ QJsonArray homepageTools()
                       {QStringLiteral("track"),
                        integerProp(QStringLiteral("Track index: return only that track"))},
                       {QStringLiteral("since"),
-                       integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current"))},
+                       integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current (not with dirty_detail)"))},
                       {QStringLiteral("tracks"),
                        arrayProp(integerProp(QStringLiteral("Track index")),
                                  QStringLiteral("Return only these tracks (other tracks are left out of tracks[]; empty = all)"))},
                       {QStringLiteral("fields"),
                        arrayProp(stringProp(QStringLiteral("Clip row key, e.g. start")),
                                  QStringLiteral("Clip rows keep only these keys (id always stays; empty = all), e.g. [\"start\",\"duration\",\"name\"]: "
-                                                "a smaller reply for a big timeline"))}}),
+                                                "a smaller reply for a big timeline"))},
+                      {QStringLiteral("dirty_detail"),
+                       boolProp(QStringLiteral("Add dirty_detail: what the unsaved changes are, vs the saved file. timeline:true "
+                                               "with the clips/tracks/assets that differ, or only other (track_view, work_area, "
+                                               "bookmarks, sequence_tabs, project_info); unknown:true if unsaved with no named difference."))}}),
         toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("apply"),

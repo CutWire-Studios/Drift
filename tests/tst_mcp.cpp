@@ -113,6 +113,7 @@ private slots:
     void clipLabelsSurviveSplitsAndFind();
     void inspectFiltersTracksAndFields();
     void changeFeedListsEditsBySource();
+    void dirtyDetailTellsTimelineFromView();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
     void replaceAssetWaitsForTheReprobe();
@@ -2297,6 +2298,79 @@ void McpTest::changeFeedListsEditsBySource()
     QVERIFY(dispatcher.applyOne(QStringLiteral("diff"), {{QStringLiteral("from"), QStringLiteral("head")}}).value(QStringLiteral("same")).toBool());
     QCOMPARE(dispatcher.applyOne(QStringLiteral("diff"), {{QStringLiteral("from"), QStringLiteral("deadbeefdeadbeef")}}).value(QStringLiteral("error")).toString(),
              QStringLiteral("not_found"));
+}
+
+void McpTest::dirtyDetailTellsTimelineFromView()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-0");
+    clip.type = drift::ClipType::Text;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks()[0].clips.append(clip);
+    state.project()->ensureTrackIds();
+    state.projectFile()->setDirty(false); // as saved
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto detail = [&] {
+        return dispatcher.inspect({{QStringLiteral("dirty_detail"), true}}).value(QStringLiteral("dirty_detail")).toObject();
+    };
+    QVERIFY(!detail().value(QStringLiteral("timeline")).toBool());
+    QVERIFY(detail().value(QStringLiteral("other")).toArray().isEmpty());
+    QVERIFY(!dispatcher.inspect({}).contains(QStringLiteral("dirty_detail")));
+
+    // A taller track row alone is saved with the project but doesn't make it dirty; the detail
+    // still names it, and a since that is current doesn't hide it.
+    const int revision = dispatcher.inspect({}).value(QStringLiteral("revision")).toInt();
+    state.setTrackHeightScale(0, 2.0);
+    const QJsonObject heightOnly = dispatcher.inspect({{QStringLiteral("dirty_detail"), true},
+                                                       {QStringLiteral("since"), revision}});
+    QVERIFY2(!heightOnly.value(QStringLiteral("unchanged")).toBool(), qPrintable(QJsonDocument(heightOnly).toJson()));
+    const QJsonObject height = heightOnly.value(QStringLiteral("dirty_detail")).toObject();
+    QVERIFY(!height.value(QStringLiteral("dirty")).toBool());
+    QCOMPARE(height.value(QStringLiteral("other")).toArray(), QJsonArray{QStringLiteral("track_view")});
+    QVERIFY(!height.contains(QStringLiteral("unknown")));
+
+    // Unsaved with nothing it can name: unknown.
+    state.setTrackHeightScale(0, 1.0);
+    state.projectFile()->setDirty(true);
+    QVERIFY(detail().value(QStringLiteral("unknown")).toBool());
+
+    // A taller track row and a bookmark: dirty, but not the cut.
+    state.setTrackHeightScale(0, 2.0);
+    state.addBookmark(1.0, QStringLiteral("look here"));
+    QJsonObject view = detail();
+    QVERIFY(view.value(QStringLiteral("dirty")).toBool());
+    QVERIFY2(!view.value(QStringLiteral("timeline")).toBool(), qPrintable(QJsonDocument(view).toJson()));
+    QVERIFY(view.value(QStringLiteral("other")).toArray().contains(QStringLiteral("track_view")));
+    QVERIFY(view.value(QStringLiteral("other")).toArray().contains(QStringLiteral("bookmarks")));
+
+    // A rename is a timeline edit, listed with its clip.
+    state.setClipName(0, 0, QStringLiteral("Renamed"));
+    const QJsonObject edited = detail();
+    QVERIFY(edited.value(QStringLiteral("timeline")).toBool());
+    QCOMPARE(edited.value(QStringLiteral("clips")).toArray().first().toObject().value(QStringLiteral("fields")).toArray(),
+             QJsonArray{QStringLiteral("name")});
+
+    // Saving makes this the new baseline.
+    state.projectFile()->setDirty(false);
+    QVERIFY(!detail().value(QStringLiteral("timeline")).toBool());
+    QVERIFY(detail().value(QStringLiteral("other")).toArray().isEmpty());
+
+    // A real save: the baseline is what was written, even when an edit lands while it writes.
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    state.setClipName(0, 0, QStringLiteral("Written"));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(dir.filePath(QStringLiteral("p.drift"))));
+    state.addBookmark(2.0, QStringLiteral("during the write"));
+    state.projectFile()->waitForSave();
+    const QJsonObject during = detail();
+    QVERIFY(during.value(QStringLiteral("dirty")).toBool());
+    QVERIFY2(!during.value(QStringLiteral("timeline")).toBool(), qPrintable(QJsonDocument(during).toJson()));
+    QCOMPARE(during.value(QStringLiteral("other")).toArray(), QJsonArray{QStringLiteral("bookmarks")});
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge

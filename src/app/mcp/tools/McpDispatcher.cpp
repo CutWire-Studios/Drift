@@ -710,6 +710,7 @@ QJsonObject McpDispatcher::inspect(const QJsonObject &args) const
         options.tracks.append(jsonInt(t, -1));
     for (const QJsonValue &f : args.value(QStringLiteral("fields")).toArray())
         options.fields.append(f.toString());
+    options.dirtyDetail = jsonBool(args.value(QStringLiteral("dirty_detail")));
     return m_controller->mcp()->inspect(options);
 }
 
