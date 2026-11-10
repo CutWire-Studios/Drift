@@ -1176,6 +1176,154 @@ void AppController::addClipFromAssetAt(int assetIndex, int trackIndex, double at
     selectClip(trackIndex, newClipIndex);
 }
 
+AppController::InsertResult AppController::insertClipFromAsset(int assetIndex, int trackIndex, drift::TimeUs atUs,
+                                                               drift::TimeUs srcInUs, drift::TimeUs srcOutUs,
+                                                               bool ripple)
+{
+    InsertResult result;
+    const auto fail = [&result](const char *code, const QString &message) {
+        result.errorCode = QString::fromLatin1(code);
+        result.error = message;
+        return result;
+    };
+    if (!m_assetLibrary)
+        return fail("not_found", QStringLiteral("No media bin"));
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return fail("not_found", QStringLiteral("No such track"));
+    const QVariantMap asset = m_assetLibrary->assetAt(assetIndex);
+    if (asset.isEmpty())
+        return fail("not_found", QStringLiteral("No such asset"));
+    if (!compositeAssetPlaceable(asset))
+        return fail("type_mismatch", QStringLiteral("A composite goes on the main timeline only"));
+    const drift::ClipType clipType = drift::clipTypeFromString(asset.value(QStringLiteral("kind")).toString());
+    if (!m_project.tracks().at(trackIndex).allowsClipType(clipType))
+        return fail("type_mismatch", QStringLiteral("This track does not take that kind of clip"));
+    if (atUs < 0)
+        return fail("bad_args", QStringLiteral("The time is before the start of the timeline"));
+
+    // Source first (a 3D model's layout reads its probed bounds), then the layout: it applies a bin
+    // trim to srcIn/srcOut/timelineDuration, which then becomes the default range rather than
+    // overwriting an explicit one after the ripple made room.
+    drift::Clip clip;
+    clip.type = clipType;
+    clip.assetId = m_assetLibrary->assetIdAt(assetIndex);
+    clip.name = asset.value(QStringLiteral("name")).toString();
+    clip.path = asset.value(QStringLiteral("path")).toString();
+    clip.sequenceId = asset.value(QStringLiteral("sequenceId")).toString();
+    m_assetLibrary->ensureMedia(assetIndex);
+    attachAssetSource(clip);
+    const drift::TimeUs fullUs = clipDurationForAssetIndex(assetIndex);
+    clip.srcIn = 0;
+    clip.srcOut = fullUs;
+    clip.timelineDuration = fullUs;
+    applyAssetLayout(clip, asset, m_project.width(), m_project.height());
+    const drift::TimeUs minUs = drift::minClipDurationUs(m_project.fps());
+    // Up to a frame of slack for times that went through seconds and back.
+    const drift::TimeUs slackUs = minUs;
+    // An omitted end keeps the bin trim where it still fits the given one, else the media's.
+    const drift::TimeUs inUs = srcInUs >= 0 ? srcInUs : (clip.srcIn < srcOutUs || srcOutUs < 0 ? clip.srcIn : 0);
+    drift::TimeUs outUs = srcOutUs >= 0 ? srcOutUs : (clip.srcOut > inUs ? clip.srcOut : fullUs);
+    if (inUs >= fullUs)
+        return fail("bad_args", QStringLiteral("in (%1 s) is at or past the end of the media (%2 s)")
+                                    .arg(drift::usToSeconds(inUs))
+                                    .arg(drift::usToSeconds(fullUs)));
+    if (outUs > fullUs + slackUs)
+        return fail("bad_args", QStringLiteral("out (%1 s) is past the end of the media (%2 s)")
+                                    .arg(drift::usToSeconds(outUs))
+                                    .arg(drift::usToSeconds(fullUs)));
+    outUs = qMin(outUs, fullUs);
+    if (outUs - inUs < minUs)
+        return fail("bad_args", QStringLiteral("The source range is shorter than a frame"));
+    const drift::TimeUs lengthUs = outUs - inUs;
+
+    const drift::Track &target = m_project.tracks().at(trackIndex);
+    for (const drift::Clip &other : target.clips) {
+        if (ripple) {
+            if (other.timelineStart < atUs && other.timelineEnd() > atUs)
+                return fail("bad_args",
+                            QStringLiteral("%1 s is inside clip %2 (%3–%4 s): insert before or after it, or split it first")
+                                .arg(drift::usToSeconds(atUs))
+                                .arg(other.id)
+                                .arg(drift::usToSeconds(other.timelineStart))
+                                .arg(drift::usToSeconds(other.timelineEnd())));
+        } else if (other.timelineStart < atUs + lengthUs && other.timelineEnd() > atUs) {
+            return fail("bad_args", QStringLiteral("No room at %1 s: clip %2 is in the way (pass ripple:true to make room)")
+                                        .arg(drift::usToSeconds(atUs))
+                                        .arg(other.id));
+        }
+    }
+
+    // Rippled: every track that ripples with the destination (joined to it by linked clips), so
+    // linked audio keeps its place and nothing moved lands on a clip that stayed. Adjustment lanes
+    // follow their clips in the edit's normalisation.
+    const QSet<int> rippleTracks = ripple ? drift::rippleTrackGroup(m_project, trackIndex) : QSet<int>{trackIndex};
+    for (const int t : rippleTracks) {
+        if (m_project.tracks().at(t).locked)
+            return fail("bad_args", QStringLiteral("Track %1 is locked").arg(t));
+    }
+
+    const drift::Project before = m_project;
+    if (ripple)
+        drift::rippleTracks(m_project, rippleTracks, atUs, lengthUs);
+
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.thumbnailPath = m_assetLibrary->thumbnailAt(assetIndex);
+    clip.filmstripPath = m_assetLibrary->filmstripAt(assetIndex);
+    clip.timelineStart = atUs;
+    clip.timelineDuration = lengthUs;
+    clip.srcIn = inUs;
+    clip.srcOut = outUs;
+
+    drift::Track &track = m_project.tracks()[trackIndex];
+    int at = 0;
+    while (at < track.clips.size() && track.clips.at(at).timelineStart <= atUs)
+        ++at;
+    track.clips.insert(at, clip);
+    // An earlier linked clip moved with its partner can land on a clip that stayed, or on the new
+    // clip itself: checked with the new clip in place.
+    if (ripple) {
+        const QString collision = drift::rippleCollision(before, m_project, rippleTracks);
+        if (!collision.isEmpty()) {
+            m_project = before;
+            return fail("bad_args", QStringLiteral("The ripple would push clip %1 onto another; move it first, or pass "
+                                                   "ripple:false")
+                                        .arg(collision));
+        }
+    }
+    // Before the snapshot, so redo does not bring back a transition whose clips no longer touch.
+    syncOverlapTransitions(m_project);
+    pushProjectEdit(before, ripple ? tr("Clip inserted") : tr("Clip added"));
+    finishEdit(ripple ? tr("Clip inserted") : tr("Clip added"));
+
+    result.id = clip.id;
+    QHash<QString, drift::TimeUs> starts;
+    // By the pair of clips: a transition from an older project may have no id.
+    const auto key = [](const drift::Transition &transition) {
+        return transition.fromClipId + QLatin1Char('|') + transition.toClipId;
+    };
+    QHash<QString, QString> transitionsBefore;
+    for (const drift::Track &t : before.tracks()) {
+        for (const drift::Clip &was : t.clips)
+            starts.insert(was.id, was.timelineStart);
+        for (const drift::Transition &transition : t.transitions)
+            transitionsBefore.insert(key(transition), transition.id.isEmpty() ? key(transition) : transition.id);
+    }
+    QSet<QString> transitionsAfter;
+    for (const drift::Track &t : m_project.tracks()) {
+        for (const drift::Clip &now : t.clips) {
+            if (starts.contains(now.id) && starts.value(now.id) != now.timelineStart)
+                result.moved.append(now.id);
+        }
+        for (const drift::Transition &transition : t.transitions)
+            transitionsAfter.insert(key(transition));
+    }
+    for (auto it = transitionsBefore.constBegin(); it != transitionsBefore.constEnd(); ++it) {
+        if (!transitionsAfter.contains(it.key()))
+            result.removedTransitions.append(it.value());
+    }
+    return result;
+}
+
 AppController::GeneratedAudioImport AppController::importGeneratedAudio(
     const QString &path, const QJsonObject &generator, bool place, double atSeconds, int track)
 {

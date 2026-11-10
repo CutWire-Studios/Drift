@@ -7,6 +7,7 @@
 #include "app/mcp/McpController.h"
 #include "app/mcp/tools/McpCatalog.h"
 #include "app/mcp/protocol/McpJson.h"
+#include "app/mcp/McpDetail.h"
 #include "app/mcp/protocol/McpValidate.h"
 
 #include "core/text/TextStyle.h"
@@ -841,6 +842,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opRemoveTrack(args);
     if (tool == QLatin1String("set_track"))
         return opSetTrack(args);
+    if (tool == QLatin1String("insert_clip"))
+        return opInsertClip(args);
     if (tool == QLatin1String("place_clip"))
         return opPlaceClip(args);
     if (tool == QLatin1String("move_clip"))
@@ -1553,6 +1556,82 @@ QJsonObject McpDispatcher::opPlaceClip(const QJsonObject &args)
     extra.insert(QStringLiteral("placed"), placed);
     extra.insert(QStringLiteral("asset"), asset);
     return ok(clipFeedback(placedRef, extra));
+}
+
+QJsonObject McpDispatcher::opInsertClip(const QJsonObject &args)
+{
+    const int asset = resolveAsset(args.value(QStringLiteral("asset")));
+    if (asset < 0)
+        return err("not_found", QStringLiteral("Unknown asset"));
+
+    const int anchors = int(args.contains(QStringLiteral("at"))) + int(args.contains(QStringLiteral("before")))
+                        + int(args.contains(QStringLiteral("after")));
+    if (anchors != 1)
+        return err("bad_args", QStringLiteral("Pass exactly one of at, before, after"));
+
+    int track = args.contains(QStringLiteral("track")) ? jsonInt(args.value(QStringLiteral("track")), -1) : -1;
+    drift::TimeUs atUs = 0;
+    if (args.contains(QStringLiteral("at"))) {
+        atUs = drift::secondsToUs(jsonNumber(args.value(QStringLiteral("at")), 0));
+    } else {
+        const bool after = args.contains(QStringLiteral("after"));
+        const QString neighbour = argString(args, after ? QStringLiteral("after") : QStringLiteral("before"));
+        const ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), neighbour}});
+        if (!ref.valid())
+            return err("not_found", QStringLiteral("No clip %1").arg(neighbour));
+        if (track >= 0 && track != ref.track)
+            return err("bad_args", QStringLiteral("Clip %1 is on track %2, not %3").arg(neighbour).arg(ref.track).arg(track));
+        track = ref.track;
+        const drift::Clip &clip = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip);
+        atUs = after ? clip.timelineEnd() : clip.timelineStart;
+    }
+    if (track < 0) {
+        for (int t = 0; t < m_controller->tracks().size() && track < 0; ++t) {
+            if (m_controller->trackAcceptsAsset(t, asset))
+                track = t;
+        }
+        if (track < 0)
+            return err("type_mismatch", QStringLiteral("No track accepts this asset; add one or pass track"));
+    } else if (!m_controller->trackAcceptsAsset(track, asset)) {
+        return err("type_mismatch", QStringLiteral("Track does not accept this asset"));
+    }
+
+    const drift::TimeUs inUs = args.contains(QStringLiteral("in"))
+                                   ? drift::secondsToUs(jsonNumber(args.value(QStringLiteral("in")), 0))
+                                   : -1;
+    const drift::TimeUs outUs = args.contains(QStringLiteral("out"))
+                                    ? drift::secondsToUs(jsonNumber(args.value(QStringLiteral("out")), 0))
+                                    : -1;
+    if (args.contains(QStringLiteral("in")) && inUs < 0)
+        return err("bad_args", QStringLiteral("in must be 0 or more"));
+    if (args.contains(QStringLiteral("out")) && outUs < 0)
+        return err("bad_args", QStringLiteral("out must be 0 or more"));
+    if (outUs >= 0 && outUs <= qMax<drift::TimeUs>(0, inUs))
+        return err("bad_args", QStringLiteral("out must be after in"));
+    const bool ripple = jsonBool(args.value(QStringLiteral("ripple")), true);
+
+    const AppController::InsertResult inserted =
+        m_controller->insertClipFromAsset(asset, track, atUs, inUs, outUs, ripple);
+    if (inserted.id.isEmpty())
+        return err(inserted.errorCode.toLatin1().constData(), inserted.error);
+
+    QJsonArray movedJson;
+    for (const QString &movedId : inserted.moved) {
+        const ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), movedId}});
+        if (!ref.valid())
+            continue;
+        movedJson.append(QJsonObject{
+            {QStringLiteral("id"), movedId},
+            {QStringLiteral("start"),
+             drift::mcpdetail::round3(drift::usToSeconds(
+                 m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).timelineStart))}});
+    }
+    const ClipRef placed = resolveClip(QJsonObject{{QStringLiteral("clip"), inserted.id}});
+    QJsonObject extra{{QStringLiteral("moved"), movedJson}};
+    // A transition at the cut no longer has two touching clips, so it goes.
+    if (!inserted.removedTransitions.isEmpty())
+        extra.insert(QStringLiteral("removed_transitions"), QJsonArray::fromStringList(inserted.removedTransitions));
+    return ok(clipFeedback(placed, extra));
 }
 
 QJsonObject McpDispatcher::opMoveClip(const QJsonObject &args)

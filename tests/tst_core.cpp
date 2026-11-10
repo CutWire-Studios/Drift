@@ -228,6 +228,8 @@ private slots:
     void applyMulticamSwitchMergesAdjacentSameCamera();
     void applyMulticamSwitchRejectsEdges();
     void sliceClipToTimelineRangeKeepsSourceInSync();
+    void rippleGroupsFollowLinksAcrossTracks();
+    void closeRippleRangesShiftsEachGroupOnce();
 };
 
 void CoreTest::timeConversion()
@@ -7010,6 +7012,134 @@ void CoreTest::subtitleNamesFollowCuesOnlyWhenGenerated()
     name = QStringLiteral("VO script");
     drift::refreshSubtitleClipName(name, cues);
     QCOMPARE(name, QStringLiteral("VO script"));
+}
+
+namespace {
+drift::Clip rippleClip(const char *id, double start, double dur, const char *link = "")
+{
+    drift::Clip c;
+    c.id = QString::fromLatin1(id);
+    c.timelineStart = drift::secondsToUs(start);
+    c.timelineDuration = drift::secondsToUs(dur);
+    c.srcOut = c.timelineDuration;
+    c.linkId = QString::fromLatin1(link);
+    return c;
+}
+double rippleStart(const drift::Project &project, const char *id)
+{
+    for (const drift::Track &t : project.tracks())
+        for (const drift::Clip &c : t.clips)
+            if (c.id == QLatin1String(id))
+                return drift::usToSeconds(c.timelineStart);
+    return -1;
+}
+} // namespace
+
+void CoreTest::rippleGroupsFollowLinksAcrossTracks()
+{
+    drift::Project project;
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.clips = {rippleClip("a", 0, 2), rippleClip("b", 2, 2, "ab"), rippleClip("c", 5, 1)};
+    drift::Track a1{.type = drift::TrackType::Audio};
+    // b's audio starts earlier (a J-cut); d links on to a third track.
+    a1.clips = {rippleClip("b-audio", 1.5, 2.5, "ab"), rippleClip("d", 4, 1, "dv")};
+    drift::Track v2{.type = drift::TrackType::Video};
+    v2.clips = {rippleClip("d-video", 4, 1, "dv"), rippleClip("e", 7, 1)};
+    drift::Track other{.type = drift::TrackType::Audio};
+    other.clips = {rippleClip("music", 3, 4)};
+    drift::Track lane{.type = drift::TrackType::Adjustment};
+    lane.clips = {rippleClip("grade", 2, 2)};
+    project.tracks() = {v1, a1, v2, other, lane};
+
+    QCOMPARE(drift::rippleTrackGroup(project, 0), (QSet<int>{0, 1, 2}));
+    QCOMPARE(drift::rippleTrackGroup(project, 3), (QSet<int>{3}));
+    QVERIFY(drift::rippleTrackGroup(project, 4).isEmpty());
+
+    const QStringList moved =
+        drift::rippleTracks(project, drift::rippleTrackGroup(project, 0), drift::secondsToUs(2), drift::secondsToUs(1));
+    QCOMPARE(rippleStart(project, "a"), 0.0);
+    QCOMPARE(rippleStart(project, "b"), 3.0);
+    QCOMPARE(rippleStart(project, "b-audio"), 2.5); // the J-cut partner keeps its offset
+    QCOMPARE(rippleStart(project, "d"), 5.0);
+    QCOMPARE(rippleStart(project, "d-video"), 5.0); // through the third track
+    QCOMPARE(rippleStart(project, "e"), 8.0);
+    QCOMPARE(rippleStart(project, "music"), 3.0);
+    QCOMPARE(rippleStart(project, "grade"), 2.0);
+    QCOMPARE(moved.size(), 6);
+    QVERIFY(drift::rippleTracks(project, {0}, 0, drift::secondsToUs(1),
+                                {QStringLiteral("a"), QStringLiteral("b"), QStringLiteral("c")})
+                .isEmpty());
+}
+
+void CoreTest::closeRippleRangesShiftsEachGroupOnce()
+{
+    // A linked pair deleted from video and audio: one cleared range per track, but the following
+    // pair moves back once (2 s), not once per track.
+    drift::Project project;
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.clips = {rippleClip("next", 6, 2, "n")};
+    drift::Track a1{.type = drift::TrackType::Audio};
+    a1.clips = {rippleClip("next-audio", 6, 2, "n")};
+    project.tracks() = {v1, a1};
+    QStringList moved;
+    QVERIFY(drift::closeRippleRanges(project, {{0, 0, drift::secondsToUs(2)}, {1, 0, drift::secondsToUs(2)}}, nullptr, &moved));
+    QCOMPARE(rippleStart(project, "next"), 4.0);
+    QCOMPARE(rippleStart(project, "next-audio"), 4.0);
+    QCOMPARE(moved.size(), 2);
+
+    // Overlapping cleared ranges close by their union (6 s), not the sum (8 s).
+    drift::Project overlap;
+    drift::Track single{.type = drift::TrackType::Video};
+    single.clips = {rippleClip("later", 10, 1)};
+    overlap.tracks() = {single};
+    QVERIFY(drift::closeRippleRanges(overlap, {{0, 0, drift::secondsToUs(4)}, {0, drift::secondsToUs(2), drift::secondsToUs(6)}}));
+    QCOMPARE(rippleStart(overlap, "later"), 4.0);
+
+    // A link held only by a deleted clip still joins its tracks when the groups come from before
+    // the delete: the two followers close together over the union, once.
+    {
+        drift::Project was;
+        drift::Track wv{.type = drift::TrackType::Video};
+        wv.clips = {rippleClip("v", 2, 2, "only"), rippleClip("v-next", 6, 1)};
+        drift::Track wa{.type = drift::TrackType::Audio};
+        wa.clips = {rippleClip("a", 1, 3, "only"), rippleClip("a-next", 6, 1)};
+        was.tracks() = {wv, wa};
+        drift::Project now = was;
+        now.tracks()[0].clips.removeFirst();
+        now.tracks()[1].clips.removeFirst();
+        QVERIFY(drift::closeRippleRanges(now, {{0, drift::secondsToUs(2), drift::secondsToUs(4)},
+                                               {1, drift::secondsToUs(1), drift::secondsToUs(4)}},
+                                         nullptr, nullptr, &was));
+        QCOMPARE(rippleStart(now, "v-next"), 3.0);
+        QCOMPARE(rippleStart(now, "a-next"), 3.0);
+    }
+
+    // An earlier loose partner shifted with its clip would land on a clip that stayed: refused.
+    {
+        drift::Project loose;
+        drift::Track lv{.type = drift::TrackType::Video};
+        lv.clips = {rippleClip("follower", 7, 1, "l")};
+        drift::Track la{.type = drift::TrackType::Audio};
+        la.clips = {rippleClip("still", 0, 1), rippleClip("partner", 2, 1, "l")};
+        loose.tracks() = {lv, la};
+        QString hit;
+        QVERIFY(!drift::closeRippleRanges(loose, {{0, drift::secondsToUs(5), drift::secondsToUs(7)}}, &hit));
+        QVERIFY(!hit.isEmpty());
+        QCOMPARE(rippleStart(loose, "follower"), 7.0);
+        QCOMPARE(rippleStart(loose, "partner"), 2.0);
+    }
+
+    // A clip of the group inside a range to close blocks it, and nothing changes.
+    drift::Project blocked;
+    drift::Track bv{.type = drift::TrackType::Video};
+    bv.clips = {rippleClip("pair", 6, 2, "p")};
+    drift::Track ba{.type = drift::TrackType::Audio};
+    ba.clips = {rippleClip("inside", 1, 1), rippleClip("pair-audio", 6, 2, "p")};
+    blocked.tracks() = {bv, ba};
+    QString blocker;
+    QVERIFY(!drift::closeRippleRanges(blocked, {{0, 0, drift::secondsToUs(4)}}, &blocker));
+    QCOMPARE(blocker, QStringLiteral("inside"));
+    QCOMPARE(rippleStart(blocked, "pair"), 6.0);
 }
 
 // The new piece of a split gets the next free " (N)" for its base name on the track, so the
