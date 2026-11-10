@@ -2160,6 +2160,8 @@ protected:
     // Every file a project state reachable by undo/redo points at, so cleanup does not take
     // media the history still needs.
     QSet<QString> historyMediaPaths() const;
+    // Media that only undo history still points at: what dropping history lets go of.
+    QSet<QString> historyOnlyMediaPaths() const;
     // Whether undo history is saved into the project file (the "project" history mode).
     bool persistsUndoHistory() const;
     // Most steps that can be undone: -1 for no limit, 0 when history is off. Undone steps (redo)
@@ -2169,6 +2171,23 @@ protected:
     void scheduleUndoHistoryTrim();
     // Drops the oldest applied undo steps past undoHistoryCap(); with history off, every step.
     void trimUndoHistory();
+    // Keeps steps [first, last) of `capture` with `index` of them applied; the project is untouched.
+    void rebuildUndoStack(const drift::HistoryCapture &capture, int first, int last, int index);
+    // Drops all but the newest `keepLast` applied steps, and every undone (redo) one. Returns
+    // how many steps went.
+    int clearUndoHistory(int keepLast);
+    // This project's own history settings, saved with it, each overriding the app's when set.
+    // Steps: kProjectHistoryUnset, -1 = no limit, 0 = no history, N = most undoable steps.
+    // Persist: -1 unset, 0 = this session only, 1 = saved with the project. Kept apart so turning
+    // history off and on again does not lose the persistence choice.
+    static constexpr int kProjectHistoryUnset = -2;
+    int m_projectHistorySteps = kProjectHistoryUnset;
+    int m_projectHistoryPersist = -1;
+    bool hasProjectHistorySettings() const
+    {
+        return m_projectHistorySteps != kProjectHistoryUnset || m_projectHistoryPersist >= 0;
+    }
+    QString effectiveUndoHistoryMode() const;
 public:
     // The "undoHistory" member of a saved document: states as plain JSON, deduplicated, plus the
     // media they reference. Reads only the capture, so a worker can run it. `states` receives one

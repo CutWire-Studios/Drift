@@ -3261,6 +3261,24 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     if (tool == QLatin1String("take_snapshot"))
         return m_controller->mcp()->takeSnapshot(argString(args, QStringLiteral("label")));
 
+    if (tool == QLatin1String("clear_history"))
+        return m_controller->mcp()->clearHistory(jsonInt(args.value(QStringLiteral("keep_last")), 0));
+
+    if (tool == QLatin1String("set_history_limit")) {
+        // Through the usual helpers: the validator accepts "5" and "true" without converting them.
+        std::optional<int> steps;
+        if (args.contains(QStringLiteral("steps")))
+            steps = jsonInt(args.value(QStringLiteral("steps")), -3);
+        std::optional<bool> persist;
+        if (args.contains(QStringLiteral("persist")))
+            persist = jsonBool(args.value(QStringLiteral("persist")), true);
+        return m_controller->mcp()->setHistoryLimit(jsonBool(args.value(QStringLiteral("reset")), false),
+                                                    steps, persist);
+    }
+
+    if (tool == QLatin1String("history_stats"))
+        return m_controller->mcp()->historyStats(jsonBool(args.value(QStringLiteral("size")), false));
+
     if (tool == QLatin1String("list_snapshots"))
         return m_controller->mcp()->listSnapshots();
 

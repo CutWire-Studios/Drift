@@ -1843,6 +1843,102 @@ QJsonObject McpController::clearCache()
                             {QStringLiteral("decoders"), decodersJson()}}}});
 }
 
+QJsonObject McpController::historySettings() const
+{
+    return {{QStringLiteral("mode"), m_app->effectiveUndoHistoryMode()},
+            // Steps that can be undone at most: 0 with history off, -1 with no limit.
+            {QStringLiteral("steps"), m_app->undoHistoryCap()},
+            {QStringLiteral("source"), m_app->hasProjectHistorySettings() ? QStringLiteral("project")
+                                                                          : QStringLiteral("global")}};
+}
+
+QJsonObject McpController::clearHistory(int keepLast)
+{
+    using namespace drift::mcp;
+    const int removed = m_app->clearUndoHistory(qMax(0, keepLast));
+    // A saved history is part of the file: the next save writes the smaller one.
+    if (removed > 0 && m_app->persistsUndoHistory())
+        m_app->m_projectFile->setDirty(true);
+    return ok({{QStringLiteral("removed"), removed},
+               {QStringLiteral("steps"), m_app->m_undoStack.count()},
+               {QStringLiteral("index"), m_app->m_undoStack.index()}});
+}
+
+QJsonObject McpController::setHistoryLimit(bool reset, std::optional<int> steps, std::optional<bool> persist)
+{
+    using namespace drift::mcp;
+    if (!reset && !steps && !persist)
+        return err("bad_args", QStringLiteral("steps, persist or reset required"));
+    if (steps && *steps < -1)
+        return err("bad_args", QStringLiteral("steps must be -1 (no limit), 0 (no history) or more"));
+    const int stepsBefore = m_app->m_projectHistorySteps;
+    const int persistBefore = m_app->m_projectHistoryPersist;
+    if (reset) {
+        m_app->m_projectHistorySteps = AppController::kProjectHistoryUnset;
+        m_app->m_projectHistoryPersist = -1;
+    }
+    if (steps)
+        m_app->m_projectHistorySteps = *steps;
+    if (persist)
+        m_app->m_projectHistoryPersist = *persist ? 1 : 0;
+    // Saved with the project, so changing it changes the project.
+    if (m_app->m_projectHistorySteps != stepsBefore || m_app->m_projectHistoryPersist != persistBefore)
+        m_app->m_projectFile->setDirty(true);
+    m_app->scheduleUndoHistoryTrim();
+    m_app->flushUndoHistoryTrim();
+    QJsonObject reply = historySettings();
+    reply.insert(QStringLiteral("steps_kept"), m_app->m_undoStack.count());
+    return ok(reply);
+}
+
+QJsonObject McpController::historyStats(bool size) const
+{
+    using namespace drift::mcp;
+    m_app->flushUndoHistoryTrim();
+    const drift::HistoryCapture capture = drift::captureHistory(m_app->m_undoStack);
+    // Project snapshots held in memory (a step's before and after, shared where a step reuses
+    // one). Each is a full project copy, though copies share data that did not change. Counted by
+    // identity, so this serialises nothing.
+    // Walked through the live commands, not the capture: a macro's inner steps hold snapshots
+    // of their own, which the capture flattens away.
+    QSet<const drift::HistoryState *> states;
+    const std::function<void(const QUndoCommand *)> collect = [&](const QUndoCommand *command) {
+        if (const auto *snapshot = dynamic_cast<const drift::ProjectSnapshotCommand *>(command)) {
+            states.insert(snapshot->beforeState().get());
+            states.insert(snapshot->afterState().get());
+        }
+        for (int c = 0; c < command->childCount(); ++c)
+            collect(command->child(c));
+    };
+    for (int i = 0; i < m_app->m_undoStack.count(); ++i)
+        collect(m_app->m_undoStack.command(i));
+    QStringList media = m_app->historyOnlyMediaPaths().values();
+    media.sort();
+    const int mediaCount = media.size();
+    if (media.size() > 20)
+        media = media.mid(0, 20);
+    QJsonObject reply{
+        {QStringLiteral("steps"), m_app->m_undoStack.count()},
+        {QStringLiteral("undoable"), m_app->m_undoStack.index()},
+        {QStringLiteral("redoable"), m_app->m_undoStack.count() - m_app->m_undoStack.index()},
+        {QStringLiteral("snapshots"), int(states.size())},
+        {QStringLiteral("saved_with_project"), m_app->persistsUndoHistory()},
+        {QStringLiteral("history_only_media"), mediaCount},
+        {QStringLiteral("history_only_media_paths"), QJsonArray::fromStringList(media)},
+        {QStringLiteral("settings"), historySettings()},
+    };
+    if (size) {
+        // Serialises every state on this thread, so only on request: the history as uncompressed
+        // JSON, which is what a save adds before compression. Memory use is higher; it is not
+        // measured here.
+        const drift::HistoryDocument document = drift::historyToJson(capture);
+        const qint64 bytes =
+            document.json.isEmpty() ? 0 : QJsonDocument(document.json).toJson(QJsonDocument::Compact).size();
+        reply.insert(QStringLiteral("json_bytes"), double(bytes));
+    }
+    return ok(reply);
+}
+
 QJsonObject McpController::takeSnapshot(const QString &label)
 {
     m_app->flushUndoHistoryTrim(); // history indices as they will stay
