@@ -11,6 +11,8 @@ Item {
     readonly property string mineId: "__mine__"
     property bool showMine: false
     property string mineLabel: qsTr("My Effects")
+    readonly property string recentId: "__recent__"
+    property bool showRecent: false
 
     property var categories: []
     property string activeCategory: ""
@@ -39,6 +41,16 @@ Item {
             active: root.activeCategory === root.favoritesId
             tooltip: qsTr("Favorites")
             onClicked: root.categoryActivated(root.favoritesId)
+        }
+
+        ThemedChip {
+            id: recentButton
+            visible: root.showRecent
+            anchors.verticalCenter: parent.verticalCenter
+            text: qsTr("Recent")
+            variant: "outline"
+            selected: root.activeCategory === root.recentId
+            onClicked: root.categoryActivated(root.recentId)
         }
 
         ThemedChip {

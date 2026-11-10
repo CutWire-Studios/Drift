@@ -21,7 +21,7 @@ QuickSetupMockEditor {
     readonly property var extrasTiles: [
         { glyph: "wand-sparkles", label: qsTr("Effects") },
         { glyph: "download", label: qsTr("Transitions") },
-        { glyph: "sparkles", label: qsTr("Looks") },
+        { glyph: "sparkles", label: qsTr("LUTs") },
         { glyph: "type", label: qsTr("Fonts") },
         { glyph: "package", label: qsTr("Stickers") },
         { glyph: "bot", label: qsTr("AI tools") }

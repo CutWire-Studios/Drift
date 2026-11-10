@@ -7,9 +7,12 @@
 #include "app/editor/sessions/KeyframeController.h"
 #include "app/editor/sessions/MaskingController.h"
 #include "app/editor/sessions/SubtitleController.h"
+#include "app/editor/sessions/TeleprompterController.h"
 #include "app/color/ColorController.h"
+#include "app/editor/BlendPreviewController.h"
 #include "app/jobs/audio/DenoiseController.h"
 #include "app/jobs/audio/AudioAlignController.h"
+#include "app/jobs/render/BakeController.h"
 #include "app/jobs/vision/DepthController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
 #include "app/mcp/McpController.h"
@@ -610,12 +613,15 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_segmentation = new SegmentationController(this, this);
     m_sceneDetect = new SceneDetectController(this, this);
     m_depth = new DepthController(this, this);
+    m_bakes = new BakeController(this, this);
     m_denoise = new DenoiseController(this, this);
     m_audioAlign = new AudioAlignController(this, this);
     m_color = new ColorController(this, this);
+    m_blendPreview = new BlendPreviewController(this, this);
     m_keyframes = new KeyframeController(this, this);
     m_masking = new MaskingController(this, this);
     m_subtitles = new SubtitleController(this, this);
+    m_teleprompter = new TeleprompterController(this, this);
     m_restore = new RestoreController(this, this);
     m_faces = new FaceTrackingController(this, this);
     m_stabilize = new StabilizeController(this, this);
@@ -1115,11 +1121,13 @@ QVariantList AppController::tracks() const
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
             {QStringLiteral("solo"), track.solo},
+            {QStringLiteral("locked"), track.locked},
             {QStringLiteral("volume"), track.volume},
             {QStringLiteral("pan"), track.pan},
             {QStringLiteral("clipDisplay"), static_cast<int>(track.clipDisplay)},
             {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
             {QStringLiteral("heightScale"), track.heightScale},
+            {QStringLiteral("lanesCollapsed"), track.lanesCollapsed},
         });
     }
 

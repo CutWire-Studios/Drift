@@ -192,8 +192,14 @@ Effect Effect::resolvedAt(TimeUs clipTimeUs) const
 {
     Effect out = *this;
     for (auto it = paramKeyframes.constBegin(); it != paramKeyframes.constEnd(); ++it) {
-        if (!it->isEmpty())
-            out.parameters.insert(it.key(), it->evaluateAt(clipTimeUs));
+        if (it->isEmpty())
+            continue;
+        const QString &key = it.key();
+        // Colour channel tracks are folded into the hex below, not stored as "<key>.r".
+        if (key.size() > 2 && key.at(key.size() - 2) == QLatin1Char('.') && QStringLiteral("rgba").contains(key.back())
+            && parameters.value(key.chopped(2)).toString().startsWith(QLatin1Char('#')))
+            continue;
+        out.parameters.insert(key, it->evaluateAt(clipTimeUs));
     }
     // A colour animates as four channel tracks, "<key>.r/.g/.b/.a" in 0..1, and is folded back
     // into the hex the rest of the pipeline reads. #rrggbbaa is kept when the static value had

@@ -31,9 +31,9 @@ Column {
     readonly property var kindGlyphs: ({ "fill": Theme.icons.type, "stroke": Theme.icons.shapes,
                                          "shadow": Theme.icons.moon, "glow": Theme.icons.sun,
                                          "extrude": Theme.icons.layers })
-    readonly property var blendModes: ["normal", "multiply", "screen", "overlay", "add", "darken", "lighten"]
-    readonly property var blendLabels: [qsTr("Normal"), qsTr("Multiply"), qsTr("Screen"), qsTr("Overlay"),
-                                        qsTr("Add"), qsTr("Darken"), qsTr("Lighten")]
+    readonly property var blendModes: BlendModes.ids
+    readonly property var blendLabels: BlendModes.labels
+    readonly property var blendSections: BlendModes.sections
     readonly property var strokeAligns: ["center", "outside", "inside"]
     readonly property var strokeAlignLabels: [qsTr("Centre"), qsTr("Outside"), qsTr("Inside")]
     readonly property var dashes: ["solid", "dash", "dot", "dashdot"]
@@ -94,6 +94,7 @@ Column {
                 ThemedComboBox {
                     width: parent.width
                     model: row.blendLabels
+                    sections: row.blendSections
                     currentIndex: Math.max(0, row.blendModes.indexOf(row.layerData.blend || "normal"))
                     onActivated: row.setLayer({ "blend": row.blendModes[currentIndex] })
                 }
@@ -343,6 +344,9 @@ Column {
             ColorSwatchField {
                 hex: row.paint.color || "#ff000000"
                 tooltip: qsTr("Choose the layer colour")
+                livePreview: true
+                onPreviewed: value => EditorState.previewSetStyleLayer(EditorState.selectedTrack, EditorState.selectedClip,
+                                                                       row.layerId, { "paint": { "color": value } })
                 onEdited: value => row.setLayer({ "paint": { "color": value } })
             }
         }

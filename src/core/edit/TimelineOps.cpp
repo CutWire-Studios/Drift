@@ -205,6 +205,7 @@ TrackType trackTypeForClipType(ClipType type)
     case ClipType::Vector:
     case ClipType::Model3d:
     case ClipType::Pdf:
+    case ClipType::Procedural:
         return TrackType::Shape;
     case ClipType::Adjustment:
         return TrackType::Adjustment;
@@ -267,6 +268,8 @@ int ensureAdjustmentLane(Project &project, int parentIndex, AdjustmentKind kind,
     // two scopes at once.
     if (project.tracks().at(parentIndex).isAdjustment())
         return -1;
+
+    project.tracks()[parentIndex].lanesCollapsed = false;
 
     for (const int laneIndex : adjustmentLaneIndexes(project, parentIndex)) {
         const Track &lane = project.tracks().at(laneIndex);
@@ -1311,7 +1314,7 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
 
     if (clip.type == ClipType::Image || clip.type == ClipType::Shape || clip.type == ClipType::Vector
         || clip.type == ClipType::Model3d || clip.type == ClipType::Pdf
-        || clip.type == ClipType::Adjustment)
+        || clip.type == ClipType::Procedural || clip.type == ClipType::Adjustment)
         return imageClipDurationUs();
 
     return qMax(clip.srcOut, clip.timelineDuration);
@@ -2232,6 +2235,7 @@ void forEachKeyframeTrack(Clip &clip, Fn &&fn)
     visitMap(clip.vector.keyframes);
     visitMap(clip.model3d.keyframes);
     visitMap(clip.pdf.keyframes);
+    visitMap(clip.procedural.paramKeyframes);
 }
 
 } // namespace

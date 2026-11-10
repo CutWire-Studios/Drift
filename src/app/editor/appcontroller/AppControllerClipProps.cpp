@@ -1085,6 +1085,16 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
     finishEdit(tr("Text style updated"));
 }
 
+void AppController::previewSetTextStyle(int trackIndex, int clipIndex, const QVariantMap &m)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    beginImplicitPreviewDrag(tr("Edit text style"));
+    applyTextStylePatch(clip->textStyle, m);
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("style.*")});
+}
+
 // The partial patch both the inspector and set_text send: the canonical keys (layers, layer,
 // animation, lookId) and, for one release, the flat v6 keys routed onto the well-known layers.
 void AppController::applyTextStylePatch(drift::TextStyle &s, const QVariantMap &m)
@@ -1821,7 +1831,7 @@ void AppController::setClipLayer3d(int trackIndex, int clipIndex, bool enabled)
         return;
     drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
     if (clip.type == drift::ClipType::Audio || clip.type == drift::ClipType::Model3d
-        || clip.layer3d == enabled)
+        || clip.type == drift::ClipType::Procedural || clip.layer3d == enabled)
         return;
     const drift::Project before = m_project;
     clip.layer3d = enabled;

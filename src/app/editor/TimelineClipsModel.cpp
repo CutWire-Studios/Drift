@@ -155,6 +155,7 @@ QVariantList TimelineClipsModel::transitionRegions() const
             {QStringLiteral("rightClip"), region.rightClip},
             {QStringLiteral("start"), region.start},
             {QStringLiteral("end"), region.end},
+            {QStringLiteral("cut"), region.cut},
             {QStringLiteral("hasTransition"), region.hasTransition},
             {QStringLiteral("overlap"), region.overlap},
             {QStringLiteral("maxDuration"), region.maxDuration},
