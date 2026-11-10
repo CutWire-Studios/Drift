@@ -271,6 +271,14 @@ QVariantList AddonManager::catalog() const
         return out;
     };
     const auto storeFields = [&](QVariantMap &row, const QJsonObject &entry, const QString &id) {
+        // The catalog can rename or re-describe an addon without a repack, so its text wins over
+        // what the package carries.
+        for (const QLatin1String key : {QLatin1String("name"), QLatin1String("description"),
+                                        QLatin1String("details")}) {
+            const QString text = entry.value(key).toString();
+            if (!text.isEmpty())
+                row.insert(key, text);
+        }
         const QString description = row.value(QStringLiteral("description")).toString();
         const QString tagline = entry.value(QStringLiteral("tagline")).toString();
         const QJsonArray categories = entry.value(QStringLiteral("categories")).toArray();
@@ -471,6 +479,9 @@ QVariantMap AddonManager::entry(const QString &id) const
 
 QString AddonManager::addonName(const QString &id) const
 {
+    if (const QString name = m_catalog.entryFor(id).value(QStringLiteral("name")).toString();
+        !name.isEmpty())
+        return name;
     for (const QJsonObject &addon : m_remote) {
         if (addon.value(QStringLiteral("id")).toString() == id)
             return addon.value(QStringLiteral("name")).toString();
@@ -577,11 +588,15 @@ QVariantList AddonManager::missingEssentialAddons() const
         for (const QJsonObject &addon : m_remote) {
             if (addon.value(QStringLiteral("id")).toString() != id)
                 continue;
+            const QString description =
+                m_catalog.entryFor(id).value(QStringLiteral("description")).toString();
             rows.append(QVariantMap{
                 {QStringLiteral("id"), id},
-                {QStringLiteral("name"), addon.value(QStringLiteral("name")).toString()},
+                {QStringLiteral("name"), addonName(id)},
                 {QStringLiteral("version"), addon.value(QStringLiteral("version")).toString()},
-                {QStringLiteral("description"), addon.value(QStringLiteral("description")).toString()},
+                {QStringLiteral("description"),
+                 description.isEmpty() ? addon.value(QStringLiteral("description")).toString()
+                                       : description},
                 {QStringLiteral("downloadSize"), addon.value(QStringLiteral("downloadSize")).toDouble()},
             });
             break;

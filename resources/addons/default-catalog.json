@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": "abd787ad07ad750b",
-  "generated": "2026-11-10T13:52:36+00:00",
+  "revision": "c33e5f418164d222",
+  "generated": "2026-11-10T14:05:39+00:00",
   "categories": [
     {
       "id": "essentials",
@@ -387,6 +387,7 @@
     },
     {
       "match": "onnxruntime.cpu.*",
+      "name": "AI Engine — Processor (CPU)",
       "tagline": "The AI engine that works on every computer",
       "summary": "Powers Drift's AI tools such as captions, cutouts and noise removal. It runs on your computer's processor and is installed automatically the first time an AI tool needs it.",
       "categories": [
@@ -854,6 +855,7 @@
     },
     {
       "match": "onnxruntime.cuda.*",
+      "name": "AI Engine — NVIDIA CUDA",
       "tagline": "Faster AI on NVIDIA graphics cards",
       "summary": "The same AI features, sped up by an NVIDIA graphics card. Needs a recent NVIDIA driver, and falls back to the processor if the card cannot be used.",
       "categories": [
@@ -941,6 +943,7 @@
     },
     {
       "id": "audio.ast",
+      "name": "Sound Type Detection",
       "tagline": "Tell speech, music and silence apart",
       "summary": "Marks which parts of your timeline are speech, music or silence and names the sounds in between. Useful for quickly understanding long recordings.",
       "categories": [
@@ -998,6 +1001,7 @@
     },
     {
       "match": "onnxruntime.migraphx.*",
+      "name": "AI Engine — AMD ROCm (MIGraphX)",
       "tagline": "Faster AI on AMD graphics cards",
       "summary": "The same AI features, sped up by an AMD Radeon card. It needs ROCm with MIGraphX installed on your computer, and falls back to the processor if it is missing.",
       "categories": [
@@ -1087,6 +1091,7 @@
     },
     {
       "id": "silero.vad",
+      "name": "Voice Activity Detection",
       "tagline": "Find exactly where people are talking",
       "summary": "Detects speech so silence removal skips breaths, music and room noise instead of treating them as talking. Also tightens caption timing.",
       "categories": [
@@ -1280,6 +1285,7 @@
     },
     {
       "match": "onnxruntime.ep.webgpu.*",
+      "name": "Speed boost — WebGPU (any graphics card)",
       "tagline": "Speed boost for AI on any graphics card",
       "summary": "Makes AI features faster using an AMD, Intel or NVIDIA graphics card, with no extra toolkit to install. It adds to the AI engine you already have.",
       "categories": [
