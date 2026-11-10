@@ -119,11 +119,14 @@ jobs:
       # Move the tag before touching the release, so the release always points at a commit that
       # actually produced the assets attached to it.
       - name: Point the nightly tag at this commit
+        id: tag
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/nightly" >/dev/null 2>&1; then
+          previous="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/nightly" --jq '.object.sha' 2>/dev/null || true)"
+          echo "previous=${previous}" >> "$GITHUB_OUTPUT"
+          if [ -n "${previous}" ]; then
             gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/nightly" \
               -f sha="${GITHUB_SHA}" -F force=true > /dev/null
           else
@@ -219,3 +222,117 @@ jobs:
               --title "${title}" --notes-file notes.md
           fi
           gh release upload nightly --clobber "${assets[@]}"
+
+      # Posts the build to CutWire Discord #releases-nightly. Stable releases go to #releases from
+      # release.yml; this one lists only what landed since the previous nightly.
+      - name: Notify Discord
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_NIGHTLY_WEBHOOK_URL }}
+          VERSION: ${{ needs.check.outputs.version }}
+          PREVIOUS: ${{ steps.tag.outputs.previous }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/nightly" > release.json
+          if [ -n "${PREVIOUS}" ] && git cat-file -e "${PREVIOUS}^{commit}" 2>/dev/null \
+             && [ "${PREVIOUS}" != "${GITHUB_SHA}" ]; then
+            git log --no-merges --pretty='%h%x09%s' "${PREVIOUS}..${GITHUB_SHA}" > changes.txt
+          else
+            : > changes.txt
+          fi
+          python3 <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          webhook = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
+          if not webhook:
+              raise SystemExit("DISCORD_NIGHTLY_WEBHOOK_URL secret is not set")
+
+          with open("release.json", encoding="utf-8") as f:
+              release = json.load(f)
+          with open("changes.txt", encoding="utf-8") as f:
+              changes = [line.rstrip("\n").split("\t", 1) for line in f if "\t" in line]
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          sha = os.environ["GITHUB_SHA"]
+          version = os.environ["VERSION"]
+          DRIFT_GOLD = 0xFCAD01
+          ICON = "https://raw.githubusercontent.com/CutWire-Studios/Drift/main/Drift_icon.png"
+
+          def clamp(text: str, limit: int) -> str:
+              if len(text) <= limit:
+                  return text
+              cut = text[: limit - 1]
+              if "\n" in cut:
+                  cut = cut.rsplit("\n", 1)[0]
+              return cut.rstrip() + "\n…"
+
+          def asset_label(name: str) -> str | None:
+              n = name.lower()
+              if n.endswith(".zsync"):
+                  return None
+              is_arm = "arm64" in n or "aarch64" in n
+              if n.endswith(".apk"):
+                  return "Android (x86_64)" if "x86_64" in n else "Android (arm64)"
+              if n.endswith(".appimage"):
+                  return "Linux AppImage (aarch64)" if is_arm else "Linux AppImage (x86_64)"
+              if n.endswith(".dmg"):
+                  return "macOS (Apple Silicon)" if is_arm else "macOS (Intel)"
+              if n.endswith(".zip"):
+                  return "Windows portable (arm64)" if is_arm else "Windows portable (x64)"
+              if n.endswith(".exe"):
+                  return "Windows installer (arm64)" if is_arm else "Windows installer (x64)"
+              if n.endswith(".flatpak"):
+                  return "Flatpak bundle (aarch64)" if is_arm else "Flatpak bundle (x86_64)"
+              if n.endswith(".pkg.tar.zst"):
+                  return "Arch Linux (aarch64)" if is_arm else "Arch Linux (x86_64)"
+              return name
+
+          if changes:
+              lines = [f"- {subject} ([`{short}`](https://github.com/{repo}/commit/{short}))"
+                       for short, subject in changes]
+              description = f"**{len(changes)} change(s) since the last nightly**\n" + "\n".join(lines)
+          else:
+              description = "Rebuilt from the same commit as the last nightly."
+          description += ("\n\n-# Untested build straight off main. Installs beside a stable Drift "
+                          "and shares its settings.")
+
+          downloads = [f"[{label}]({a['browser_download_url']})"
+                       for a in release.get("assets") or []
+                       if (label := asset_label(a.get("name") or ""))]
+          downloads.sort()
+
+          payload = {
+              "username": "Drift Nightly",
+              "avatar_url": ICON,
+              "allowed_mentions": {"parse": []},
+              "embeds": [{
+                  "title": f"Drift Nightly — {version}",
+                  "url": release["html_url"],
+                  "description": clamp(description, 4096),
+                  "color": DRIFT_GOLD,
+                  "fields": [{"name": "Downloads",
+                              "value": clamp("\n".join(downloads) or "No assets", 1024)}],
+                  "footer": {"text": f"GitHub · nightly · {sha[:7]}"},
+              }],
+          }
+
+          req = urllib.request.Request(
+              webhook.split("?")[0] + "?wait=true",
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json",
+                       "User-Agent": "CutWire-Drift-Nightly-Notify"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req) as resp:
+                  msg = json.load(resp)
+          except urllib.error.HTTPError as exc:
+              body = exc.read().decode("utf-8", errors="replace")
+              raise SystemExit(f"Discord webhook failed HTTP {exc.code}: {body}") from exc
+
+          print(f"Posted Discord message {msg.get('id')} in channel {msg.get('channel_id')}")
+          PY
