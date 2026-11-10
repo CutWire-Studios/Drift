@@ -80,6 +80,7 @@ private:
     QJsonObject opMoveToTrack(const QJsonObject &args);
     QJsonObject opSplitClip(const QJsonObject &args);
     QJsonObject opDeleteClip(const QJsonObject &args);
+    QJsonObject opDeleteClips(const QJsonObject &args);
     QJsonObject opDuplicateClip(const QJsonObject &args);
     QJsonObject opUndo();
     QJsonObject opRedo();

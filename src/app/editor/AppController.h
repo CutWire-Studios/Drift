@@ -965,6 +965,10 @@ public:
         QStringList moved;
         QStringList removedTransitions;
     };
+    // Deletes these clips (and their linked A/V partners) in one undo step, closing the space they
+    // leave when `ripple`, whatever the project's ripple setting. `withEffects` also removes the
+    // adjustments pinned to them. Unknown ids are skipped; returns how many of `ids` were found.
+    int deleteClipsById(const QStringList &ids, bool withEffects, bool ripple, QString *error = nullptr);
     InsertResult insertClipFromAsset(int assetIndex, int trackIndex, drift::TimeUs atUs, drift::TimeUs srcInUs,
                                      drift::TimeUs srcOutUs, bool ripple);
     Q_INVOKABLE void setClipStart(int trackIndex, int clipIndex, double start);
@@ -2146,7 +2150,12 @@ protected:
                                       bool ripple, SegmentReplaceResult *out, QString *error);
     void trimClipGroupAt(int trackIndex, int clipIndex, drift::TimeUs atUs, bool dropLeft);
     void autoCrossfadeNewOverlaps(const drift::Project &before);
-    void deleteSelection(bool withPinnedAdjustments);
+    // Without `ripple` the project's ripple setting applies, as for the UI's Delete. With it (agent
+    // ops), true closes the cleared ranges with closeRippleRanges, linked tracks once, and refuses
+    // (restoring the project, returning false with `error`) when a clip blocks a range or a track
+    // it would move is locked.
+    bool deleteSelection(bool withPinnedAdjustments, std::optional<bool> ripple = std::nullopt,
+                         QString *error = nullptr);
     void applyRippleShift(drift::Track &track, int fromClipIndex, drift::TimeUs delta);
     void restoreFilmstripsAfterLoad();
     void normalizeSelection();

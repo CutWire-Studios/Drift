@@ -1627,12 +1627,39 @@ bool AppController::selectionHasPinnedAdjustments() const
     return false;
 }
 
-void AppController::deleteSelection(bool withPinnedAdjustments)
+int AppController::deleteClipsById(const QStringList &ids, bool withEffects, bool ripple, QString *error)
+{
+    QList<QPair<int, int>> pairs;
+    for (const QString &id : ids) {
+        int t = -1;
+        int c = -1;
+        if (findClipById(m_project, id, &t, &c) && !pairs.contains(qMakePair(t, c)))
+            pairs.append(qMakePair(t, c));
+    }
+    if (pairs.isEmpty())
+        return 0;
+    // Deleting goes through the selection; a refused delete puts the user's back.
+    const QList<QPair<int, int>> previousSelection = m_selection;
+    const int previousTrack = m_selectedTrack;
+    const int previousClip = m_selectedClip;
+    m_selection = pairs;
+    m_selectedTrack = pairs.constFirst().first;
+    m_selectedClip = pairs.constFirst().second;
+    if (!deleteSelection(withEffects, ripple, error)) {
+        m_selection = previousSelection;
+        m_selectedTrack = previousTrack;
+        m_selectedClip = previousClip;
+        return -1;
+    }
+    return int(pairs.size());
+}
+
+bool AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bool> ripple, QString *error)
 {
     if (m_selection.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
         m_selection = {qMakePair(m_selectedTrack, m_selectedClip)};
     if (m_selection.isEmpty())
-        return;
+        return false;
 
     const drift::Project before = m_project;
     QList<QPair<int, int>> pairs = m_selection;
@@ -1679,7 +1706,42 @@ void AppController::deleteSelection(bool withPinnedAdjustments)
             removedRanges.append({pair.first, clip.timelineStart, clip.timelineDuration});
         m_project.tracks()[pair.first].clips.removeAt(pair.second);
     }
-    if (m_rippleEnabled) {
+    if (ripple.has_value()) {
+        // Agent ops: linked tracks close together, each merged range once; refused (and undone)
+        // rather than overlap a clip in the way or move a locked track.
+        // Groups and locks come from before the delete: a link held only by a deleted clip still
+        // joins its tracks. Without ripple only the tracks losing a clip count.
+        QList<drift::RippleRange> ranges;
+        QSet<int> affected;
+        for (const RemovedRange &range : std::as_const(removedRanges)) {
+            ranges.append({range.track, range.start, range.start + range.duration});
+            affected.insert(range.track);
+            if (*ripple)
+                affected.unite(drift::rippleTrackGroup(before, range.track));
+        }
+        // Every track losing a clip counts too, adjustment lanes losing a pinned effect included.
+        for (const QPair<int, int> &pair : std::as_const(pairs))
+            affected.insert(pair.first);
+        QString problem;
+        for (const int t : std::as_const(affected)) {
+            if (t >= 0 && t < before.tracks().size() && before.tracks().at(t).locked) {
+                problem = QStringLiteral("Track %1 is locked").arg(t);
+                break;
+            }
+        }
+        if (*ripple) {
+            QString blocker;
+            if (problem.isEmpty() && !drift::closeRippleRanges(m_project, ranges, &blocker, nullptr, &before))
+                problem = QStringLiteral("Clip %1 is in the way of closing that space; move or delete it, or pass ripple:false")
+                              .arg(blocker);
+        }
+        if (!problem.isEmpty()) {
+            m_project = before;
+            if (error)
+                *error = problem;
+            return false;
+        }
+    } else if (m_rippleEnabled) {
         // Latest first, so each range is closed while the clips before it are still in place.
         std::sort(removedRanges.begin(), removedRanges.end(),
                   [](const RemovedRange &a, const RemovedRange &b) { return a.start > b.start; });
@@ -1718,6 +1780,7 @@ void AppController::deleteSelection(bool withPinnedAdjustments)
     pushProjectEdit(before, tr("Clip deleted"));
     clearSelection();
     finishEdit(tr("Clip deleted"));
+    return true;
 }
 
 // Overlaps the edit just applied created: physically overlapping pairs with no transition yet,
