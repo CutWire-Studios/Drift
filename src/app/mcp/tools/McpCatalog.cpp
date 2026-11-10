@@ -706,10 +706,38 @@ const QList<Op> &ops()
                        {QStringLiteral("asset")}) },
         { "move_clip", "timeline", "Change a clip's start time",
           "Move a clip on its track. When overlap is off (default) the start may be pushed forward to "
-          "the next gap; the reply carries requested, placed, and reason:\"gap\" when they differ.",
-          objectSchema(mergeProps({{QStringLiteral("at"), numberProp(QStringLiteral("New start seconds"))}},
+          "the next gap; the reply carries requested, placed, and reason:\"gap\" when they differ. "
+          "Or reorder: before/after (a clip id on the same track) puts it at that clip's start or "
+          "end and moves the clips in between by its length, linked tracks too, in one undo step; "
+          "the reply adds moved:[{id, start}] and any removed_transitions. Refused when the two are "
+          "linked, a track is locked, or a clip would land on another or before 0.",
+          objectSchema(mergeProps({{QStringLiteral("at"), numberProp(QStringLiteral("New start seconds"))},
+                                   {QStringLiteral("before"), stringProp(QStringLiteral("Clip id to move in front of"))},
+                                   {QStringLiteral("after"), stringProp(QStringLiteral("Clip id to move behind"))}},
                                   clipRefProps()),
-                       {QStringLiteral("at")}) },
+                       {}) },
+        { "replace_clip", "timeline", "Put new media under a clip",
+          "Swap the clip's media for another asset in place, in one undo step. The clip keeps its "
+          "name, transform, effects and keyframes; linked audio follows when the new file has sound. "
+          "A silent file leaves linked audio in place, loosely linked. in/out set the new source "
+          "range (neither: the clip's length, shorter if the file runs out; a still takes none). "
+          "With ripple (default) later clips, linked tracks too, move by the change in length; "
+          "without, a longer clip must not land on the next. Returns moved:[{id, start}] and any "
+          "removed_transitions.",
+          objectSchema(mergeProps({{QStringLiteral("asset"), assetRefProp()},
+                                   {QStringLiteral("in"), numberProp(QStringLiteral("Source in, seconds (alone: to the media's end)"))},
+                                   {QStringLiteral("out"), numberProp(QStringLiteral("Source out, seconds (alone: from 0)"))},
+                                   {QStringLiteral("ripple"), propWithDefault(boolProp(QStringLiteral("Move later clips by the change in length")), true)}},
+                                  clipRefProps()),
+                       {QStringLiteral("asset")}) },
+        { "swap_clips", "timeline", "Exchange two clips' places",
+          "Swap two clips on one track in one undo step: each takes the other's place, the clips "
+          "between them move by the difference in length, and linked A/V moves along. Refused for "
+          "different tracks, linked clips, a locked track, or a clip landing on another or before 0. "
+          "Returns moved:[{id, start}] and any removed_transitions.",
+          objectSchema({{QStringLiteral("a"), stringProp(QStringLiteral("Clip id"))},
+                        {QStringLiteral("b"), stringProp(QStringLiteral("Clip id"))}},
+                       {QStringLiteral("a"), QStringLiteral("b")}) },
         { "set_duration", "timeline", "Change timeline length",
           "Set the clip's timeline duration in seconds. Trims source out (or in if reversed). Clamped "
           "to the source material left after the current trim, so the applied dur in the reply may be "

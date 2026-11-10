@@ -966,9 +966,52 @@ public:
         QString error;
     };
     GapCloseResult closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs);
+    // Reordering on one track, one undo step each. moveClipNextTo moves a clip (with everything
+    // linked to it) to the start (`after` false) or end of another clip on its track; the clips
+    // in between move by its length so the track keeps its spacing. swapClips exchanges two
+    // clips' places; the clips between them move by the difference in length. Tracks joined by
+    // linked clips move together. Refused (nothing changes) when the clips are on different tracks,
+    // a track is locked or an adjustment track, the two are linked to each other or overlap, or a
+    // clip would land on another or before 0. Transitions whose clips stop touching are removed.
+    struct ReorderResult
+    {
+        QStringList moved;
+        QStringList removedTransitions;
+        QString error;
+        QString errorCode;
+    };
+    ReorderResult moveClipNextTo(const QString &clipId, const QString &neighbourId, bool after);
+    ReorderResult swapClips(const QString &firstId, const QString &secondId);
     // setClipTrim's arithmetic on one clip: clamps the range to the source and re-derives the
     // timeline duration from it and the speed.
     void applyClipTrim(drift::Clip &clip, double inPoint, double outPoint) const;
+    // Puts another library asset under a clip in place, keeping its name (unless it was the old
+    // file's), transform, effects and keyframes; linked audio follows when the new file has sound
+    // (replaceClipMedia's rules). With a source range [srcInUs, srcOutUs) (either may be negative
+    // for the media's start or end) the clip takes that length; otherwise it keeps its length,
+    // shorter if the new file runs out. With `ripple` the clips after it (on every track joined to
+    // it by linked clips) move by the change in length; without, a longer clip must not land on
+    // the next one. One undo step; refused with errorCode not_found/type_mismatch/bad_args.
+    struct ReplaceResult
+    {
+        QStringList moved;
+        QStringList removedTransitions;
+        QString error;
+        QString errorCode;
+    };
+    ReplaceResult replaceClipRippled(int trackIndex, int clipIndex, int assetIndex, drift::TimeUs srcInUs,
+                                     drift::TimeUs srcOutUs, bool ripple);
+    bool canReplaceClipMedia(int trackIndex, int clipIndex, int assetIndex) const;
+    // replaceClipMedia without the undo step. With renameDefault (the UI), a clip still named
+    // after its old file takes the new file's name; the agent op keeps every name.
+    bool rebindClipMedia(int trackIndex, int clipIndex, int assetIndex, bool renameDefault = true);
+    // After a clip `id` (on trackIndex) changed length from oldEnd: with `ripple`, the clips after
+    // it on its ripple group move by the change (its synced partners aside); either way a new
+    // overlap refuses. On refusal the project is restored to `before`, `error` names the clip in
+    // the way (`verb` is the edit, for the hint) and false is returned.
+    bool rippleResizedClip(const drift::Project &before, int trackIndex, const QString &id, drift::TimeUs oldEnd,
+                           bool ripple, const QString &verb, QString *error);
+    static QStringList movedClipIds(const drift::Project &before, const drift::Project &after);
     // Inserts a clip of `assetIndex` on `trackIndex` starting exactly at `atUs`, with source range
     // [srcInUs, srcOutUs), in one undo step. A negative srcInUs/srcOutUs takes the asset's bin
     // trim (else its whole length); an explicit range must lie within the media. With `ripple`,

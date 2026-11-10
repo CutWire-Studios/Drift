@@ -106,6 +106,8 @@ private slots:
     void deleteClipsClosesTheSpace();
     void rippleTrimMovesTheRest();
     void closeGapsClosesEveryHole();
+    void reorderClipsKeepsTheSpacing();
+    void replaceClipKeepsTheSlot();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
@@ -1513,6 +1515,306 @@ void McpTest::closeGapsClosesEveryHole()
             QStringLiteral("close_gaps"), {{QStringLiteral("track"), int(state.project()->tracks().size()) - 1}});
         QCOMPARE(refused.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
         QCOMPARE(state.project()->tracks().last().clips.first().timelineStart, drift::secondsToUs(5.0));
+    }
+}
+
+void McpTest::reorderClipsKeepsTheSpacing()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    // A [0,1), B [1,3), C [3,4).
+    QStringList ids;
+    for (const auto &[at, out] : {std::pair{0.0, 1.0}, std::pair{1.0, 2.0}, std::pair{3.0, 1.0}}) {
+        const QJsonObject placed = dispatcher.applyOne(
+            QStringLiteral("insert_clip"),
+            {{QStringLiteral("asset"), 0}, {QStringLiteral("at"), at}, {QStringLiteral("out"), out}, {QStringLiteral("ripple"), false}});
+        QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson()));
+        ids.append(placed.value(QStringLiteral("id")).toString());
+    }
+    const QString a = ids.at(0), b = ids.at(1), c = ids.at(2);
+    const int track = state.mcp()->locateClip(a).first;
+    const auto startOf = [&](const QString &id) {
+        for (const drift::Track &t : state.project()->tracks())
+            for (const drift::Clip &clip : t.clips)
+                if (clip.id == id)
+                    return drift::usToSeconds(clip.timelineStart);
+        return -1.0;
+    };
+    const auto move = [&](const QString &id, const char *where, const QString &neighbour) {
+        return dispatcher.applyOne(QStringLiteral("move_clip"),
+                                   {{QStringLiteral("clip"), id}, {QString::fromLatin1(where), neighbour}});
+    };
+    const auto swap = [&](const QString &x, const QString &y) {
+        return dispatcher.applyOne(QStringLiteral("swap_clips"), {{QStringLiteral("a"), x}, {QStringLiteral("b"), y}});
+    };
+
+    // A to the end: B and C close up behind it.
+    const QJsonObject toEnd = move(a, "after", c);
+    QVERIFY2(toEnd.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(toEnd).toJson()));
+    QCOMPARE(startOf(b), 0.0);
+    QCOMPARE(startOf(c), 2.0);
+    QCOMPARE(startOf(a), 3.0);
+    QCOMPARE(toEnd.value(QStringLiteral("moved")).toArray().size(), 3);
+    state.undo(); // one step
+    QCOMPARE(startOf(a), 0.0);
+    QCOMPARE(startOf(b), 1.0);
+    QCOMPARE(startOf(c), 3.0);
+
+    // C to the front: A and B make room.
+    QVERIFY(move(c, "before", a).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(c), 0.0);
+    QCOMPARE(startOf(a), 1.0);
+    QCOMPARE(startOf(b), 2.0);
+    state.undo();
+
+    // Swaps: equal lengths across B, and unequal neighbours.
+    QVERIFY(swap(c, a).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(c), 0.0);
+    QCOMPARE(startOf(b), 1.0);
+    QCOMPARE(startOf(a), 3.0);
+    state.undo();
+    QVERIFY(swap(a, b).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(b), 0.0);
+    QCOMPARE(startOf(a), 2.0);
+    QCOMPARE(startOf(c), 3.0);
+    state.undo();
+
+    // Bad arguments change nothing.
+    QCOMPARE(move(b, "after", b).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(move(b, "after", QStringLiteral("nope")).value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("move_clip"),
+                                 {{QStringLiteral("clip"), a}, {QStringLiteral("at"), 5.0}, {QStringLiteral("after"), c}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(swap(a, a).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(startOf(a), 0.0);
+
+    // Into the middle; the reply carries the final starts.
+    const QJsonObject middle = move(a, "after", b);
+    QVERIFY2(middle.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(middle).toJson()));
+    QCOMPARE(startOf(b), 0.0);
+    QCOMPARE(startOf(a), 2.0);
+    QCOMPARE(startOf(c), 3.0);
+    QHash<QString, double> reported;
+    for (const QJsonValue &m : middle.value(QStringLiteral("moved")).toArray())
+        reported.insert(m.toObject().value(QStringLiteral("id")).toString(), m.toObject().value(QStringLiteral("start")).toDouble());
+    QCOMPARE(reported.size(), 2);
+    QCOMPARE(reported.value(a), 2.0);
+    QCOMPARE(reported.value(b), 0.0);
+    state.undo();
+
+    // Already in place: ok, nothing moves, no undo step.
+    const QJsonObject inPlace = move(b, "after", a);
+    QVERIFY(inPlace.value(QStringLiteral("ok")).toBool());
+    QVERIFY(inPlace.value(QStringLiteral("moved")).toArray().isEmpty());
+    QCOMPARE(startOf(b), 1.0);
+
+    // A gap between the clips moves with the block.
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].timelineStart = drift::secondsToUs(5.0);
+    QVERIFY(move(a, "after", c).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf(b), 0.0);
+    QCOMPARE(startOf(c), 4.0);
+    QCOMPARE(startOf(a), 5.0);
+    state.undo();
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(c).second].timelineStart = drift::secondsToUs(3.0);
+
+    // Two clips linked to each other can't be ordered against each other.
+    {
+        const auto setLink = [&](const QString &id, const QString &link) {
+            state.project()->tracks()[track].clips[state.mcp()->locateClip(id).second].linkId = link;
+        };
+        setLink(a, QStringLiteral("a-c"));
+        setLink(c, QStringLiteral("a-c"));
+        QCOMPARE(move(a, "after", c).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(swap(a, c).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(startOf(a), 0.0);
+        QCOMPARE(startOf(c), 3.0);
+        setLink(a, QString());
+        setLink(c, QString());
+    }
+
+    // Adjustment clips follow what they apply to: refused rather than half moved.
+    {
+        drift::Track adjustment{.type = drift::TrackType::Adjustment};
+        for (const auto &[id, at] : {std::pair{"adj-1", 0.0}, std::pair{"adj-2", 1.0}}) {
+            drift::Clip grade;
+            grade.id = QString::fromLatin1(id);
+            grade.type = drift::ClipType::Adjustment;
+            grade.timelineStart = drift::secondsToUs(at);
+            grade.timelineDuration = drift::secondsToUs(1.0);
+            adjustment.clips.append(grade);
+        }
+        state.project()->tracks().append(adjustment);
+        // Straight to the controller: the MCP id lookup doesn't know clips added to the project directly.
+        QCOMPARE(state.moveClipNextTo(QStringLiteral("adj-1"), QStringLiteral("adj-2"), true).errorCode,
+                 QStringLiteral("bad_args"));
+        QCOMPARE(state.swapClips(QStringLiteral("adj-1"), QStringLiteral("adj-2")).errorCode, QStringLiteral("bad_args"));
+        QCOMPARE(startOf(QStringLiteral("adj-2")), 1.0);
+        state.project()->tracks().removeLast();
+    }
+
+    // A's linked audio goes with it; a clip on the audio track between moves with B and C.
+    {
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        drift::Clip &video = state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second];
+        video.linkId = QStringLiteral("a-link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("a-audio");
+        partner.type = drift::ClipType::Audio;
+        drift::Clip under = partner;
+        under.id = QStringLiteral("under-c");
+        under.linkId.clear();
+        under.timelineStart = drift::secondsToUs(3.0);
+        audioTrack.clips = {partner, under};
+        state.project()->tracks().append(audioTrack);
+        QVERIFY(move(a, "after", c).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(startOf(a), 3.0);
+        QCOMPARE(startOf(QStringLiteral("a-audio")), 3.0);
+        QCOMPARE(startOf(QStringLiteral("under-c")), 2.0);
+        state.undo();
+
+        // A locked linked track refuses it.
+        state.project()->tracks().last().locked = true;
+        QCOMPARE(move(a, "after", c).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(startOf(a), 0.0);
+        state.project()->tracks().last().locked = false;
+
+        // A clip on the audio track that would be landed on refuses it too.
+        state.project()->tracks().last().clips.last().timelineStart = drift::secondsToUs(3.5);
+        const QJsonObject blocked = move(a, "after", c);
+        QCOMPARE(blocked.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(startOf(a), 0.0);
+        QCOMPARE(startOf(QStringLiteral("a-audio")), 0.0);
+    }
+}
+
+void McpTest::replaceClipKeepsTheSlot()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    for (const auto &[name, seconds] : {std::pair{"shot.mp4", 10.0}, std::pair{"other.mp4", 6.0}}) {
+        drift::MediaAsset media;
+        media.name = QString::fromLatin1(name);
+        media.kind = drift::MediaKind::Video;
+        media.path = QStringLiteral("/nonexistent/") + media.name;
+        media.durationUs = drift::secondsToUs(seconds);
+        state.project()->addAsset(media);
+    }
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    // A [0,2), B [2,3), both from shot.mp4.
+    QStringList ids;
+    for (const auto &[at, out] : {std::pair{0.0, 2.0}, std::pair{2.0, 1.0}}) {
+        const QJsonObject placed = dispatcher.applyOne(
+            QStringLiteral("insert_clip"),
+            {{QStringLiteral("asset"), 0}, {QStringLiteral("at"), at}, {QStringLiteral("out"), out}, {QStringLiteral("ripple"), false}});
+        QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson()));
+        ids.append(placed.value(QStringLiteral("id")).toString());
+    }
+    const QString a = ids.at(0), b = ids.at(1);
+    const int track = state.mcp()->locateClip(a).first;
+    const auto clipOf = [&](const QString &id) {
+        return state.project()->tracks().at(track).clips.at(state.mcp()->locateClip(id).second);
+    };
+    const QString otherId = library.assetIdAt(1);
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second].name = QStringLiteral("Hero");
+    const auto replace = [&](QJsonObject args) {
+        args.insert(QStringLiteral("clip"), a);
+        if (!args.contains(QStringLiteral("asset")))
+            args.insert(QStringLiteral("asset"), 1);
+        return dispatcher.applyOne(QStringLiteral("replace_clip"), args);
+    };
+
+    // A clip still named after its file keeps that name too (the UI renames it).
+    state.project()->tracks()[track].clips[state.mcp()->locateClip(b).second].name = QStringLiteral("shot.mp4");
+    QVERIFY(dispatcher.applyOne(QStringLiteral("replace_clip"), {{QStringLiteral("clip"), b}, {QStringLiteral("asset"), 1}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipOf(b).name, QStringLiteral("shot.mp4"));
+    state.undo();
+
+    // No range: same length, settings kept, nothing moves.
+    const QJsonObject same = replace({});
+    QVERIFY2(same.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(same).toJson()));
+    QCOMPARE(clipOf(a).assetId, otherId);
+    QCOMPARE(clipOf(a).name, QStringLiteral("Hero"));
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(2.0));
+    QVERIFY(same.value(QStringLiteral("moved")).toArray().isEmpty());
+    state.undo();
+    QVERIFY(clipOf(a).assetId != otherId);
+
+    // A longer range ripples B right, in one undo step.
+    const QJsonObject longer = replace({{QStringLiteral("in"), 1.0}, {QStringLiteral("out"), 4.0}});
+    QVERIFY2(longer.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(longer).toJson()));
+    QCOMPARE(clipOf(a).srcIn, drift::secondsToUs(1.0));
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(3.0));
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(longer.value(QStringLiteral("moved")).toArray().size(), 1);
+    state.undo();
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(2.0));
+    QVERIFY(clipOf(a).assetId != otherId);
+
+    // A shorter one closes up; without ripple it leaves the gap, and a longer one is refused.
+    QVERIFY(replace({{QStringLiteral("out"), 1.0}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(1.0));
+    state.undo();
+    QVERIFY(replace({{QStringLiteral("out"), 1.0}, {QStringLiteral("ripple"), false}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipOf(b).timelineStart, drift::secondsToUs(2.0));
+    state.undo();
+    QCOMPARE(replace({{QStringLiteral("out"), 4.0}, {QStringLiteral("ripple"), false}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QVERIFY(clipOf(a).assetId != otherId);
+
+    // in alone runs to the media's end; the reply carries the final starts.
+    const QJsonObject tail = replace({{QStringLiteral("in"), 3.0}});
+    QVERIFY2(tail.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(tail).toJson()));
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(3.0));
+    QCOMPARE(tail.value(QStringLiteral("moved")).toArray().at(0).toObject().value(QStringLiteral("start")).toDouble(), 3.0);
+    state.undo();
+
+    // Errors change nothing.
+    state.project()->assets()[otherId].durationUs = 0; // not probed yet
+    QCOMPARE(replace({{QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    state.project()->assets()[otherId].durationUs = drift::secondsToUs(6.0);
+    QCOMPARE(replace({{QStringLiteral("out"), 7.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(replace({{QStringLiteral("in"), 3.0}, {QStringLiteral("out"), 2.0}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(replace({{QStringLiteral("asset"), 0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(replace({{QStringLiteral("asset"), 9}}).value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    state.project()->tracks()[track].locked = true;
+    QCOMPARE(replace({}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    state.project()->tracks()[track].locked = false;
+    QVERIFY(clipOf(a).assetId != otherId);
+    QCOMPARE(clipOf(a).timelineDuration, drift::secondsToUs(2.0));
+
+    // Linked audio: the new file is silent, so the audio keeps its media and the link turns loose;
+    // a shorter replacement would close up over that audio, so ripple refuses it.
+    {
+        drift::Clip &video = state.project()->tracks()[track].clips[state.mcp()->locateClip(a).second];
+        video.linkId = QStringLiteral("a-link");
+        drift::Clip partner = video;
+        partner.id = QStringLiteral("a-audio");
+        partner.type = drift::ClipType::Audio;
+        const QString oldAsset = partner.assetId;
+        drift::Track audioTrack{.type = drift::TrackType::Audio};
+        audioTrack.clips = {partner};
+        state.project()->tracks().append(audioTrack);
+        QVERIFY(replace({}).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(clipOf(a).assetId, otherId);
+        QVERIFY(clipOf(a).linkLoose);
+        QCOMPARE(state.project()->tracks().last().clips.first().assetId, oldAsset);
+        QVERIFY(state.project()->tracks().last().clips.first().linkLoose);
+        state.undo();
+        QVERIFY(!clipOf(a).linkLoose);
+        QCOMPARE(replace({{QStringLiteral("out"), 1.0}}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY(clipOf(a).assetId != otherId);
     }
 }
 
