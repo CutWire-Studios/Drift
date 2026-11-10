@@ -8,6 +8,7 @@ Rectangle {
     required property string modelData
     property bool current: false
     property int effectIndex: -1
+    property bool procedural: false
     property string paramKey: ""
 
     width: 22
@@ -24,9 +25,13 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: EditorState.setEffectColorParam(
-                       EditorState.selectedTrack, EditorState.selectedClip,
-                       swatch.effectIndex, swatch.paramKey, swatch.modelData)
+        onClicked: swatch.procedural
+                   ? EditorState.setProceduralColorParam(
+                         EditorState.selectedTrack, EditorState.selectedClip,
+                         swatch.paramKey, swatch.modelData)
+                   : EditorState.setEffectColorParam(
+                         EditorState.selectedTrack, EditorState.selectedClip,
+                         swatch.effectIndex, swatch.paramKey, swatch.modelData)
     }
     ThemedToolTip {
         visible: swatchMouse.containsMouse

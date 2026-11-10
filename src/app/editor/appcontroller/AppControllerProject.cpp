@@ -2,6 +2,7 @@
 #include "engine/platform/AndroidUri.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "app/editor/sessions/CurveEditorController.h"
+#include "app/jobs/render/BakeController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
 #include "app/jobs/vision/SegmentationController.h"
 #include "app/bin/MediaBinController.h"
@@ -127,6 +128,10 @@ void AppController::resetSessionState()
     m_previewDragAuto = false;
     m_previewDragDirty = false;
     m_previewAutoCommit->stop();
+    if (m_transitionPreview.active) {
+        m_transitionPreview = {};
+        m_playback.clearPreviewRange();
+    }
     m_keyframeGraphHiddenProperties.clear();
     m_preview->setCanvasCropMode(false);
     m_preview->setGuideEditSetId(QString());
@@ -549,7 +554,14 @@ void AppController::exportWithPreset(const QUrl &outputUrl, const QString &prese
 void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings,
                                        bool rememberChoice)
 {
-    const ExportSettings exportSettings = Exporter::settingsFromMap(settings);
+    ExportSettings exportSettings = Exporter::settingsFromMap(settings);
+    // "bakes": "all" (default) | "fresh" (skip stale bakes) | "none"; "useBakes": false is "none".
+    const QString bakeMode = settings.value(QStringLiteral("useBakes"), true).toBool()
+        ? settings.value(QStringLiteral("bakes"), QStringLiteral("all")).toString()
+        : QStringLiteral("none");
+    exportSettings.useBakes = bakeMode != QLatin1String("none");
+    if (exportSettings.useBakes)
+        exportSettings.bakes = m_bakes->exportPool(bakeMode != QLatin1String("fresh"));
 
     // The muxer is chosen from the output file's extension, and a created document's URI has
     // none — so the staging file the encoder writes is given the one the settings imply.

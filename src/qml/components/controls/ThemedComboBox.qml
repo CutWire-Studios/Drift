@@ -7,6 +7,7 @@ ComboBox {
     id: root
 
     property string tooltip: ""
+    property var sections: []
 
     // Analogue of implicitContentWidth, measured across every entry instead of only the current
     // one. A width derived from implicitContentWidth changes as the selection does, and since the

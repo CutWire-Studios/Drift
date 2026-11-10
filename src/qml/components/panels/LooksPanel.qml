@@ -8,7 +8,7 @@ PanelFrame {
     id: root
     SearchAnchor {
         searchId: "color-looks"
-        title: qsTr("Looks")
+        title: qsTr("Color Grading LUTs")
         keywords: "lut filter preset cube"
     }
 
@@ -36,7 +36,7 @@ PanelFrame {
         for (let i = 1; i < list.length; ++i) {
             if (list[i].userInstalled)
                 continue
-            const name = list[i].category || qsTr("Looks")
+            const name = list[i].category || qsTr("Color Grading LUTs")
             if (!seen[name]) {
                 seen[name] = true
                 out.push({ id: name, label: name })
@@ -75,7 +75,7 @@ PanelFrame {
         if (list.length > 0)
             out.push(list[0])
         for (let i = 1; i < list.length; ++i) {
-            if (!list[i].userInstalled && (list[i].category || qsTr("Looks")) === activeCategory)
+            if (!list[i].userInstalled && (list[i].category || qsTr("Color Grading LUTs")) === activeCategory)
                 out.push(list[i])
         }
         return out
@@ -96,7 +96,7 @@ PanelFrame {
     }
 
     function importLooks() {
-        const urls = FileDialogs.openFiles(qsTr("Import looks"), [qsTr("LUT files (*.cube)")])
+        const urls = FileDialogs.openFiles(qsTr("Import LUTs"), [qsTr("LUT files (*.cube)")])
         if (urls && urls.length > 0)
             colorState.importLooks(urls)
     }
@@ -118,7 +118,7 @@ PanelFrame {
         id: header
         width: parent.width
         height: Theme.panelHeaderHeight
-        title: qsTr("Looks")
+        title: qsTr("Color Grading LUTs")
     }
 
     Connections {
@@ -139,12 +139,12 @@ PanelFrame {
 
         AssetSearchBar {
             id: search
-            placeholderText: qsTr("Search looks")
+            placeholderText: qsTr("Search LUTs")
             onTextChanged: root.query = text
 
             SearchAnchor {
                 searchId: "color-import-looks"
-                title: qsTr("Import looks")
+                title: qsTr("Import LUTs")
                 keywords: "import cube lut look"
                 target: importLooksButton
             }
@@ -153,7 +153,7 @@ PanelFrame {
                 glyph: Theme.icons.download
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
-                tooltip: qsTr("Import .cube looks")
+                tooltip: qsTr("Import .cube LUTs")
                 onClicked: root.importLooks()
             }
         }
@@ -169,7 +169,7 @@ PanelFrame {
             categories: root.categories
             activeCategory: root.activeCategory
             showMine: true
-            mineLabel: qsTr("My Looks")
+            mineLabel: qsTr("My LUTs")
             searching: root.trimmedQuery.length > 0
             onCategoryActivated: categoryId => root.activeCategory = categoryId
         }
@@ -184,14 +184,14 @@ PanelFrame {
             visible: root.hasTarget && root.lookMissing
             selected: false
             variant: "outline"
-            text: qsTr("Missing look")
+            text: qsTr("Missing LUT")
         }
 
         GradeSlider {
             x: Theme.pagePadding
             width: parent.width - Theme.pagePadding * 2
             enabled: root.hasTarget && root.currentLook !== ""
-            label: qsTr("Look Intensity")
+            label: qsTr("LUT Intensity")
             from: 0
             to: 1
             defaultValue: 1
@@ -358,9 +358,9 @@ PanelFrame {
         visible: root.hasTarget && root.visibleLooks.length === 0 && !root.nothingInstalled
                  && !(root.activeCategory === root.mineId && root.trimmedQuery.length === 0)
         text: root.trimmedQuery.length > 0
-              ? qsTr("No looks match “%1”.").arg(root.trimmedQuery)
+              ? qsTr("No LUTs match “%1”.").arg(root.trimmedQuery)
               : (root.activeCategory === root.favoritesId
-                 ? qsTr("No favorites yet. Star looks to save them here.")
+                 ? qsTr("No favorites yet. Star LUTs to save them here.")
                  : qsTr("Nothing in this category."))
         color: Theme.mutedForeground
         font.family: Theme.fontFamily
@@ -376,7 +376,7 @@ PanelFrame {
                  && root.trimmedQuery.length === 0 && !root.nothingInstalled
         compact: true
         glyph: Theme.icons.download
-        title: qsTr("%1 is empty").arg(qsTr("My Looks"))
+        title: qsTr("%1 is empty").arg(qsTr("My LUTs"))
         hint: qsTr("Import a .cube file to add your own.")
         actionText: qsTr("Import")
         onActionTriggered: root.importLooks()
@@ -389,9 +389,9 @@ PanelFrame {
         visible: root.hasTarget && root.nothingInstalled
         compact: true
         glyph: Theme.icons.sparkles
-        title: qsTr("No looks")
-        hint: qsTr("Download a free pack of ready-made looks, or import your own .cube files.")
-        actionText: qsTr("Get free looks")
+        title: qsTr("No LUTs")
+        hint: qsTr("Download a free pack of ready-made color grading LUTs, or import your own .cube files.")
+        actionText: qsTr("Get free LUTs")
         onActionTriggered: ShellBridge.main.openAddonManager("looks")
     }
 
@@ -399,13 +399,13 @@ PanelFrame {
         anchors.centerIn: parent
         visible: !root.hasTarget
         glyph: Theme.icons.sparkles
-        title: qsTr("Select a clip to try looks on it")
+        title: qsTr("Select a clip to try LUTs on it")
         compact: true
     }
 
     ThemedDialog {
         id: confirmRemoveLook
-        title: qsTr("Remove this look?")
+        title: qsTr("Remove this LUT?")
         acceptText: qsTr("Remove")
         acceptVariant: "destructive"
         preferredWidth: Theme.dialogWidthSm
@@ -427,7 +427,7 @@ PanelFrame {
 
     ThemedDialog {
         id: renameDialog
-        title: qsTr("Rename look")
+        title: qsTr("Rename LUT")
         acceptText: qsTr("Rename")
         onAccepted: {
             const name = renameField.text.trim()

@@ -86,6 +86,12 @@ struct EffectParamSpec
     bool alpha = false;
     // Curve params: "hue" for a curve over hue, which wraps at red and rests flat at y = 0.5.
     QString curveMode;
+    // Curve params: the channel colour the inspector draws it in ("master", "r", "g", "b", "hue", "sat", "lum").
+    QString curveChannel;
+    // Vec2 params: "colorWheel" shows a colour wheel instead of the XY pad.
+    QString widget;
+    // Float params: a coloured slider track ("temperature", "tint", "luma", or "hue:<deg>", "sat:<deg>", "lum:<deg>" for an HSL band).
+    QString track;
 
     bool isBoolean() const { return type == EffectParamType::Bool; }
     bool isColor() const { return type == EffectParamType::Color; }

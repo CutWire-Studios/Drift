@@ -267,18 +267,6 @@ AVFrame *softwareFrameToRgba(const AVFrame *frame, SwsContext *&sws, int targetW
     return rgba;
 }
 
-drift::TimeUs ptsToUs(const AVFrame *frame, const AVRational &timeBase)
-{
-    if (!frame)
-        return 0;
-    const int64_t pts = frame->best_effort_timestamp != AV_NOPTS_VALUE
-                            ? frame->best_effort_timestamp
-                            : frame->pts;
-    if (pts == AV_NOPTS_VALUE)
-        return 0;
-    return av_rescale_q(pts, timeBase, {1, drift::kUsPerSecond});
-}
-
 } // namespace
 
 ClipReader::ClipReader() = default;
@@ -1746,13 +1734,29 @@ bool ClipReader::seekAudioStream(drift::TimeUs sourceUs)
         return false;
 
     AVStream *stream = m_fmt->streams[m_audioStream];
-    const int64_t targetTs = av_rescale_q(sourceUs, {1, AV_TIME_BASE}, stream->time_base);
+    const int64_t startTs = stream->start_time != AV_NOPTS_VALUE ? stream->start_time : 0;
+    const int64_t targetTs = av_rescale_q(sourceUs, {1, AV_TIME_BASE}, stream->time_base) + startTs;
     if (av_seek_frame(m_fmt, m_audioStream, targetTs, AVSEEK_FLAG_BACKWARD) < 0)
         return false;
     avcodec_flush_buffers(m_audioCtx);
     if (m_swr)
         swr_free(&m_swr);
     return true;
+}
+
+drift::TimeUs ClipReader::audioPtsToUs(const AVFrame *frame) const
+{
+    if (!frame || !m_fmt || m_audioStream < 0)
+        return 0;
+    const AVStream *stream = m_fmt->streams[m_audioStream];
+    int64_t pts = frame->best_effort_timestamp != AV_NOPTS_VALUE
+                      ? frame->best_effort_timestamp
+                      : frame->pts;
+    if (pts == AV_NOPTS_VALUE)
+        return 0;
+    if (stream->start_time != AV_NOPTS_VALUE)
+        pts -= stream->start_time;
+    return av_rescale_q(pts, stream->time_base, {1, drift::kUsPerSecond});
 }
 
 drift::TimeUs ClipReader::videoPtsToUs(const AVFrame *frame) const
@@ -2333,7 +2337,6 @@ int ClipReader::readAudioInterleaved(drift::TimeUs sourceStartUs, int sampleCoun
         return 0;
     }
 
-    const AVRational timeBase = m_fmt->streams[m_audioStream]->time_base;
     QVector<float> scratch;
     int pendingDrop = 0; // leading output frames to discard so playback starts at sourceStartUs
     bool sentFlush = false;
@@ -2362,7 +2365,7 @@ int ClipReader::readAudioInterleaved(drift::TimeUs sourceStartUs, int sampleCoun
         }
 
         if (alignToStart) {
-            const drift::TimeUs framePtsUs = ptsToUs(frame, timeBase);
+            const drift::TimeUs framePtsUs = audioPtsToUs(frame);
             m_audioNextPtsUs = framePtsUs;
             if (sourceStartUs > framePtsUs)
                 pendingDrop = static_cast<int>(((sourceStartUs - framePtsUs) * outputSampleRate)

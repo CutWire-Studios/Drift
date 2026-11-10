@@ -58,6 +58,8 @@ CollapsibleSection {
             ColorSwatchField {
                 hex: inspector.textStyle.accent.color
                 tooltip: qsTr("Choose accent colour")
+                livePreview: true
+                onPreviewed: value => inspector.previewTextStyle({ "accent": { "color": value } })
                 onEdited: value => inspector.setTextGroupKey("accent", "color", value)
             }
         }
@@ -110,6 +112,8 @@ CollapsibleSection {
             ColorSwatchField {
                 hex: inspector.textStyle.accent.outlineColor
                 tooltip: qsTr("Choose accent outline colour")
+                livePreview: true
+                onPreviewed: value => inspector.previewTextStyle({ "accent": { "outlineColor": value } })
                 onEdited: value => inspector.setTextGroupKey("accent", "outlineColor", value)
             }
 
@@ -149,6 +153,8 @@ CollapsibleSection {
             ColorSwatchField {
                 hex: inspector.textStyle.accent.highlight.color
                 tooltip: qsTr("Choose accent highlight colour")
+                livePreview: true
+                onPreviewed: value => inspector.previewTextStyle({ "accent": { "highlight": { "color": value } } })
                 onEdited: value => inspector.setTextAccentHighlightKey("color", value)
             }
         }

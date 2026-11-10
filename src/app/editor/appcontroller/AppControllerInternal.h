@@ -229,6 +229,10 @@ bool parseModel3dProp(const drift::Clip &clip, const QString &prop, QString *key
 // A PDF viewport scalar is addressed as "pdf.<key>" ("pdf.scrollY", "pdf.zoom").
 bool parsePdfProp(const drift::Clip &clip, const QString &prop, QString *key);
 
+// A procedural param is addressed as "proc.<key>" ("proc.speed"); colour, vec2 and region params
+// animate per channel ("proc.tint.r", "proc.origin.x") like an effect's.
+bool parseProceduralProp(const drift::Clip &clip, const QString &prop, QString *key);
+
 void clearClipPose3d(drift::Clip &clip);
 
 drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QString &prop);
