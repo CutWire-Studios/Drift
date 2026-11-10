@@ -7140,6 +7140,21 @@ void CoreTest::closeRippleRangesShiftsEachGroupOnce()
     QVERIFY(!drift::closeRippleRanges(blocked, {{0, 0, drift::secondsToUs(4)}}, &blocker));
     QCOMPARE(blocker, QStringLiteral("inside"));
     QCOMPARE(rippleStart(blocked, "pair"), 6.0);
+
+    // Two earlier partners: one lands exactly on 0, the other would cross it. The blocker is the
+    // one that clamped.
+    drift::Project clamping;
+    drift::Track cv{.type = drift::TrackType::Video};
+    cv.clips = {rippleClip("first", 3, 1), rippleClip("later", 6, 1, "c")};
+    drift::Track ca{.type = drift::TrackType::Audio};
+    ca.clips = {rippleClip("lands-on-zero", 2, 1, "c")};
+    drift::Track cb{.type = drift::TrackType::Audio};
+    cb.clips = {rippleClip("crosses-zero", 1, 1, "c")};
+    clamping.tracks() = {cv, ca, cb};
+    blocker.clear();
+    QVERIFY(!drift::closeRippleRanges(clamping, {{0, drift::secondsToUs(4), drift::secondsToUs(6)}}, &blocker));
+    QCOMPARE(blocker, QStringLiteral("crosses-zero"));
+    QCOMPARE(rippleStart(clamping, "later"), 6.0);
 }
 
 // The new piece of a split gets the next free " (N)" for its base name on the track, so the

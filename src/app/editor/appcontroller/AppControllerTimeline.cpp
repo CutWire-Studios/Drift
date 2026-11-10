@@ -2844,6 +2844,87 @@ QStringList AppController::setClipTrimRippled(int trackIndex, int clipIndex, dou
     return moved;
 }
 
+AppController::GapCloseResult AppController::closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs)
+{
+    GapCloseResult result;
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size()) {
+        result.error = QStringLiteral("No such track");
+        return result;
+    }
+    if (m_project.tracks().at(trackIndex).isAdjustment()) {
+        result.error = QStringLiteral("Track %1 is an adjustment track; its clips follow the clips they apply to").arg(trackIndex);
+        return result;
+    }
+    QSet<int> lockChecked = drift::rippleTrackGroup(m_project, trackIndex);
+    lockChecked.insert(trackIndex);
+    for (const int t : std::as_const(lockChecked)) {
+        if (m_project.tracks().at(t).locked) {
+            result.error = QStringLiteral("Track %1 is locked").arg(t);
+            return result;
+        }
+    }
+
+    // The holes, from the clips' own extents (overlapping clips leave none between them).
+    QList<drift::Clip> clips = m_project.tracks().at(trackIndex).clips;
+    std::sort(clips.begin(), clips.end(),
+              [](const drift::Clip &a, const drift::Clip &b) { return a.timelineStart < b.timelineStart; });
+    QList<QPair<drift::TimeUs, drift::TimeUs>> gaps; // start, end
+    drift::TimeUs reach = 0;
+    for (const drift::Clip &clip : std::as_const(clips)) {
+        if (clip.timelineStart > reach)
+            gaps.append({reach, clip.timelineStart});
+        reach = qMax(reach, clip.timelineEnd());
+    }
+    const drift::TimeUs limit = toUs < 0 ? std::numeric_limits<drift::TimeUs>::max() : toUs;
+
+    const drift::Project before = m_project;
+    for (int i = int(gaps.size()) - 1; i >= 0; --i) {
+        const auto gap = gaps.at(i);
+        if (gap.first < fromUs || gap.second > limit)
+            continue;
+        QString blocker;
+        QStringList moved;
+        const drift::Project prior = m_project;
+        bool closed = drift::closeRippleRanges(m_project, {{trackIndex, gap.first, gap.second}}, &blocker, &moved);
+        if (closed) {
+            // A clip before the gap linked to one after it moves too and leaves the hole open (and
+            // the earlier gaps' positions stale): that gap stays, with the linked clip as blocker.
+            const QList<drift::Clip> &now = m_project.tracks().at(trackIndex).clips;
+            for (const drift::Clip &clip : prior.tracks().at(trackIndex).clips) {
+                if (!closed || clip.timelineStart >= gap.first)
+                    continue;
+                for (const drift::Clip &after : now) {
+                    if (after.id == clip.id && after.timelineStart != clip.timelineStart) {
+                        closed = false;
+                        blocker = clip.id;
+                    }
+                }
+            }
+            if (!closed)
+                m_project = prior;
+        }
+        if (closed)
+            result.closed.prepend({gap.first, gap.second - gap.first});
+        else
+            result.skipped.prepend({{gap.first, gap.second - gap.first}, blocker});
+    }
+    if (result.closed.isEmpty())
+        return result;
+    syncOverlapTransitions(m_project);
+    pushProjectEdit(before, tr("Gaps closed"));
+    finishEdit(tr("Gaps closed"));
+
+    QHash<QString, drift::TimeUs> starts;
+    for (const drift::Track &track : before.tracks())
+        for (const drift::Clip &clip : track.clips)
+            starts.insert(clip.id, clip.timelineStart);
+    for (const drift::Track &track : m_project.tracks())
+        for (const drift::Clip &clip : track.clips)
+            if (starts.contains(clip.id) && starts.value(clip.id) != clip.timelineStart)
+                result.moved.append(clip.id);
+    return result;
+}
+
 void AppController::duplicateSelectedClip()
 {
     if (m_selectedTrack < 0 || m_selectedClip < 0)
