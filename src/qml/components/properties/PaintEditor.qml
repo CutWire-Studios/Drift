@@ -95,6 +95,8 @@ Column {
             ColorSwatchField {
                 hex: (root.paint && root.paint.color) || "#ffffffff"
                 tooltip: qsTr("Choose the paint colour")
+                livePreview: true
+                onPreviewed: value => root.previewPaint({ "color": value })
                 onEdited: value => root.setPaint({ "color": value })
             }
         }

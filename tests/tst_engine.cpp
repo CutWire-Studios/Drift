@@ -53,6 +53,9 @@
 #include "engine/decode/probe/StillImage.h"
 #include "engine/diagnostics/DebugReport.h"
 #include "engine/ml/vision/depth/DepthSidecar.h"
+#include "engine/encode/bake/BakeFile.h"
+#include "engine/encode/bake/BakeReader.h"
+#include "engine/encode/bake/BakeWriter.h"
 #include "engine/ml/vision/depth/VdaDepth.h"
 #include "engine/encode/export/Exporter.h"
 #include "engine/encode/proxies/PreviewProxyRenderer.h"
@@ -64,6 +67,10 @@
 #include "engine/render3d/editor/EditorOverlay.h"
 #include "engine/compositor/layers/TransformLayer.h"
 #include "engine/compositor/GpuCompositor.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
+#include "engine/procedural/ProceduralDiagnostics.h"
+#include "engine/procedural/ProceduralEvaluator.h"
+#include "engine/render3d/procedural/ProceduralRequest.h"
 #include "engine/color/ScopeAnalysis.h"
 #include "engine/color/CubeLut.h"
 #include "engine/packages/looks/LookCatalog.h"
@@ -197,6 +204,7 @@ private slots:
     void mediaEditorAppliesGainAndNormalizes();
     void mediaEditorDownscalesAndChoosesContainers();
     void mediaEditorMuxesReplacementAudio();
+    void audioReadAfterSeekHonoursStreamStartTime();
     void mediaEditorRemuxStartsOnAKeyframe();
     void denoiseAudioRangeWritesFlac();
     void reverseProxyLookupIsByContainmentAndSourceIdentity();
@@ -204,6 +212,16 @@ private slots:
     void faceTrackRoundTripsAndInterpolates();
     void depthSidecarRoundTripsAndNormalises();
     void depthSidecarRejectsUnfinishedFile();
+    void bakeFileRoundTrips();
+    void bakeFileFallsBackWhenSuperblockIsLost();
+    void bakeFileRemoveRangeSplitsAndSharesGops();
+    void bakeFileReusesFreedSpace();
+    void bakeFileKeepsSpaceWhileSnapshotLives();
+    void bakeFileCompactionShrinksAndKeepsBytes();
+    void bakeWriterStoresClosedGopsAndReplacesOverlap();
+    void bakeFrameForTimeInvertsTheWriterMapping();
+    void bakeReaderRandomAccessMatchesSequential();
+    void compositorServesBakedFramesAndReportsTheBake();
     void vdaStitcherAlignsAndBlendsWindows();
     void vdaInferenceSizeKeepsAspectOnPatchGrid();
     void effectPackageLoaderParsesDepthRequirement();
@@ -238,6 +256,7 @@ private slots:
     void audioWindowBassSplitsLowFromHigh();
     void audioFrameTextureLayout();
     void clipGizmoSolvesDrags();
+    void clipGizmoPivotsOnBoundsCentre();
     void faceTrackV2CarriesContoursAndPose();
     void faceTrackV1FileStillLoads();
     void smoothFaceTrackHandlesMissingBlocks();
@@ -268,6 +287,12 @@ private slots:
     void modelClipWorldFitsTheRect();
     void modelClipDrawRequestFollowsLoopMode();
     void modelClipRendersCube();
+    void proceduralClipDrawsWorldGeometry();
+    void proceduralClipOcclusionAndFragDepth();
+    void proceduralOwnCameraIsFlatAndUpright();
+    void proceduralBrokenShaderIsReported();
+    void proceduralInstancesAndCustomAttributes();
+    void compositorRendersProceduralClip();
     void modelClipRigRenders();
     void compositorRendersModelClip();
     void modelClipDoesNotLeakGlState();
@@ -348,6 +373,8 @@ private slots:
     void compositorPreviewScaleMapsProjectPixelLayout();
     void compositorAppliesFaceWarpFromBakedTrack();
     void compositorAppliesMultiplyBlendMode();
+    void compositorAppliesExtendedBlendModes_data();
+    void compositorAppliesExtendedBlendModes();
     void compositorAnimatesKeyedEffectParam();
     void compositorRendersShapeClip();
     void compositorRendersCompositeClip();
@@ -2382,6 +2409,48 @@ void EngineTest::editorOverlayDrawsTheCameraAndClipsAtTheEye()
     QVERIFY(!drift::rayHitsQuadPlane(QVector3D(960, 540, 3000), QVector3D(960, 540, 4000), input.selectedQuad, &hit));
 }
 
+void EngineTest::clipGizmoPivotsOnBoundsCentre()
+{
+    using namespace drift::gizmo;
+    Pose pose;
+    pose.canvas = QSizeF(1920, 1080);
+    pose.rect = QRectF(0, 0, 1920, 1080);
+    pose.pose3d.rotationX = 20.0;
+    pose.pose3d.rotationY = -35.0;
+    pose.pose3d.positionZ = 80.0;
+    pose.pose3d.anchorX = 300.0;
+    pose.pose3d.hasAnchorX = true;
+    pose.rotation = 25.0;
+    const QVector3D centre(1400.f, 200.f, 40.f);
+    const QVector3D probe(1500.f, 350.f, -60.f);
+
+    const auto world = [](const Pose &p, const QVector3D &local) {
+        return drift::clipLocalToWorld(p.rect, p.rotation, p.pose3d, p.canvas).map(local);
+    };
+    // The renderer's placement of any scene point is untouched by moving the pivot.
+    const Pose pivoted = pivotedAt(pose, centre);
+    QVERIFY((world(pivoted, probe) - world(pose, probe)).length() < 1e-2f);
+    QVERIFY((pivoted.pose3d.pivot(pivoted.rect) - world(pose, centre)).length() < 1e-2f);
+    // The gizmo stands where the bounds centre lands on screen.
+    const Geometry g = geometry(pivoted, Tool::Move, Orientation::World, 1.0);
+    QVERIFY(g.valid);
+    const QVector3D c = world(pose, centre);
+    const double w = 1.0 + c.z() / pose.pose3d.perspective;
+    QVERIFY(QLineF(g.origin, QPointF(960 + (c.x() - 960) / w, 540 + (c.y() - 540) / w)).length() < 0.05);
+
+    // Turn about the centre, then write back with the clip's own anchor: the centre stays put and
+    // the rest of the scene has turned about it.
+    Pose turned = pivoted;
+    turned.rotation += 30.0;
+    const Pose written = anchoredLike(turned, pose);
+    QCOMPARE(written.pose3d.hasAnchorX, true);
+    QCOMPARE(written.pose3d.hasAnchorY, false);
+    QCOMPARE(written.pose3d.anchorX, 300.0);
+    QVERIFY((world(written, centre) - world(pose, centre)).length() < 1e-2f);
+    QVERIFY((world(written, probe) - world(turned, probe)).length() < 1e-2f);
+    QVERIFY((world(written, probe) - world(pose, probe)).length() > 1.0f);
+}
+
 void EngineTest::clipGizmoSolvesDrags()
 {
     using namespace drift::gizmo;
@@ -3638,6 +3707,262 @@ GpuScene modelClipScene(const QString &path, int size, double rotY = 0.0, double
 }
 
 } // namespace
+
+namespace {
+
+const char *const kProceduralVert = R"(#version 330 core
+layout(location = 0) in vec3 a_position;
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_proj;
+void main() { gl_Position = u_proj * u_view * u_model * vec4(a_position, 1.0); }
+)";
+
+const char *const kProceduralFrag = R"(#version 330 core
+out vec4 fragColor;
+uniform vec4 u_tint;
+void main() { fragColor = u_tint; }
+)";
+
+const char *const kProceduralDepthFrag = R"(#version 330 core
+out vec4 fragColor;
+uniform vec4 u_tint;
+void main() { fragColor = u_tint; gl_FragDepth = 0.0; }
+)";
+
+GpuLayer proceduralLayer(const char *lua, int size, const char *frag = kProceduralFrag, bool depth = false,
+                         const char *vert = kProceduralVert, const char *hash = "test-hash")
+{
+    drift::ProceduralScene scene = drift::ProceduralEvaluator::evaluate(
+        lua, {}, 0.0, {}, drift::ProceduralCanvas{size, size}, drift::ProceduralBudgets::forPlatform());
+    auto request = std::make_shared<drift::ProceduralRequest>();
+    request->scene = std::make_shared<const drift::ProceduralScene>(std::move(scene));
+    request->sourceHash = std::string(hash) + (frag == kProceduralDepthFrag ? "-depth" : "");
+    request->shaders.insert(QStringLiteral("flat"), {QString::fromUtf8(vert), QString::fromUtf8(frag)});
+    request->projectSize = QSize(size, size);
+    request->pose3d.perspective = size / 0.6;
+
+    GpuLayer layer;
+    layer.procedural = request;
+    layer.rect = QRectF(0, 0, size, size);
+    layer.screenSpace = true;
+    layer.depthOcclude = depth;
+    layer.valid = true;
+    return layer;
+}
+
+GpuScene proceduralScene(const QList<GpuLayer> &layers, int size)
+{
+    GpuScene scene;
+    scene.canvasSize = QSize(size, size);
+    scene.backgroundColor = Qt::black;
+    for (const GpuLayer &layer : layers) {
+        GpuItem item;
+        item.layer = layer;
+        scene.items.append(item);
+    }
+    return scene;
+}
+
+QString box(double w, double h, double d, double x, double y, double z, const char *tint)
+{
+    return QStringLiteral("scene:add(geo.box(%1, %2, %3):transform(mat.translate(%4, %5, %6)), 'flat', {u_tint = %7})\n")
+        .arg(w).arg(h).arg(d).arg(x).arg(y).arg(z).arg(QLatin1String(tint));
+}
+
+} // namespace
+
+void EngineTest::proceduralClipDrawsWorldGeometry()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    // World y points down the canvas, so a box at y = +10 sits below the centre.
+    const QImage out = GpuCompositor::render(proceduralScene(
+        {proceduralLayer(box(14, 8, 4, 32, 44, 0, "{1, 0, 0, 1}").toUtf8().constData(), 64)}, 64))
+                           .convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY(!out.isNull());
+    QVERIFY2(qRed(out.pixel(32, 44)) > 200 && qGreen(out.pixel(32, 44)) < 30,
+             qPrintable(QStringLiteral("box #%1").arg(out.pixel(32, 44), 8, 16, QLatin1Char('0'))));
+    QCOMPARE(qRed(out.pixel(32, 20)), 0); // nothing above the centre
+    QCOMPARE(qRed(out.pixel(4, 4)), 0);
+}
+
+void EngineTest::proceduralClipOcclusionAndFragDepth()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    const QByteArray nearGreen = box(24, 24, 4, 32, 32, -40, "{0, 1, 0, 1}").toUtf8();
+    const QByteArray farRed = box(60, 60, 4, 32, 32, 60, "{1, 0, 0, 1}").toUtf8();
+    const auto centre = [](const QImage &image) { return image.convertToFormat(QImage::Format_RGBA8888).pixel(32, 32); };
+
+    // Without depth the later layer simply paints over the earlier one.
+    QImage out = GpuCompositor::render(proceduralScene(
+        {proceduralLayer(nearGreen.constData(), 64), proceduralLayer(farRed.constData(), 64)}, 64));
+    QVERIFY(qRed(centre(out)) > 200 && qGreen(centre(out)) < 30);
+
+    // With it the nearer box stays on top although it was drawn first.
+    out = GpuCompositor::render(proceduralScene(
+        {proceduralLayer(nearGreen.constData(), 64, kProceduralFrag, true),
+         proceduralLayer(farRed.constData(), 64, kProceduralFrag, true)}, 64));
+    QVERIFY2(qGreen(centre(out)) > 200 && qRed(centre(out)) < 30,
+             qPrintable(QStringLiteral("centre #%1").arg(centre(out), 8, 16, QLatin1Char('0'))));
+
+    // A shader that writes gl_FragDepth = 0 brings its far box in front: the packed depth carries it.
+    out = GpuCompositor::render(proceduralScene(
+        {proceduralLayer(nearGreen.constData(), 64, kProceduralFrag, true),
+         proceduralLayer(farRed.constData(), 64, kProceduralDepthFrag, true)}, 64));
+    QVERIFY2(qRed(centre(out)) > 200 && qGreen(centre(out)) < 30,
+             qPrintable(QStringLiteral("centre #%1").arg(centre(out), 8, 16, QLatin1Char('0'))));
+}
+
+void EngineTest::proceduralOwnCameraIsFlatAndUpright()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    // Up in the script's world is -Y; the box at y = -60 must land in the top half of the picture.
+    const QByteArray lua = (QStringLiteral("scene:camera{eye = {0, 0, -300}, target = {0, 0, 0}, fov = 0.9}\n")
+                            + box(40, 40, 10, 0, -60, 0, "{0, 0, 1, 1}")).toUtf8();
+    GpuLayer layer = proceduralLayer(lua.constData(), 64);
+    QVERIFY(layer.procedural->ownCamera());
+    const QImage out = GpuCompositor::render(proceduralScene({layer}, 64)).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY2(qBlue(out.pixel(32, 19)) > 200 && qRed(out.pixel(32, 19)) < 30,
+             qPrintable(QStringLiteral("top #%1").arg(out.pixel(32, 19), 8, 16, QLatin1Char('0'))));
+    QCOMPARE(qBlue(out.pixel(32, 45)), 0);
+}
+
+void EngineTest::proceduralBrokenShaderIsReported()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    const QByteArray lua = box(40, 40, 10, 32, 32, 0, "{1, 1, 1, 1}").toUtf8();
+    GpuLayer layer = proceduralLayer(lua.constData(), 32, "#version 330 core\nout vec4 f;\nvoid main() { f = nope; }\n",
+                                     false, kProceduralVert, "broken-hash");
+    const QImage out = GpuCompositor::render(proceduralScene({layer}, 32)).convertToFormat(QImage::Format_RGBA8888);
+    QCOMPARE(qRed(out.pixel(16, 16)), 0); // nothing drawn, no crash
+    const auto shaders = drift::ProceduralDiagnostics::shared().shaders("broken-hash");
+    QVERIFY(shaders.count("flat"));
+    QVERIFY(!shaders.at("flat").ok);
+    QVERIFY(!shaders.at("flat").log.empty());
+}
+
+void EngineTest::proceduralInstancesAndCustomAttributes()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    // Two instances placed by a_instanceMatrix, coloured by a custom attribute the shader declares
+    // without a layout qualifier: it must be found by name.
+    const char *vert = R"(#version 330 core
+in vec3 a_position;
+in float a_weight;
+in mat4 a_instanceMatrix;
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_proj;
+out float v_weight;
+void main() {
+    v_weight = a_weight;
+    gl_Position = u_proj * u_view * u_model * a_instanceMatrix * vec4(a_position, 1.0);
+}
+)";
+    const char *frag = R"(#version 330 core
+in float v_weight;
+out vec4 fragColor;
+void main() { fragColor = vec4(v_weight, 0.0, 0.0, 1.0); }
+)";
+    const char *lua = R"(
+        local m = geo.box(10, 10, 4)
+        m:set("weight", buf.new("float", 24):fill(1.0))
+        m:instances(buf.from({mat.translate(16, 32, 0), mat.translate(48, 32, 0)}))
+        scene:add(m, "flat")
+    )";
+    const QImage out = GpuCompositor::render(proceduralScene({proceduralLayer(lua, 64, frag, false, vert, "instanced-hash")}, 64))
+                           .convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY2(qRed(out.pixel(16, 32)) > 200, qPrintable(QString::number(qRed(out.pixel(16, 32)))));
+    QVERIFY(qRed(out.pixel(48, 32)) > 200);
+    QCOMPARE(qRed(out.pixel(32, 32)), 0);
+}
+
+void EngineTest::compositorRendersProceduralClip()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QTemporaryDir packages;
+    const auto write = [&](const QString &name, const QByteArray &data) {
+        QFile f(packages.path() + QStringLiteral("/slide/") + name);
+        QVERIFY(QDir().mkpath(QFileInfo(f).absolutePath()));
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write(data);
+    };
+    write(QStringLiteral("procedural.json"),
+          R"({"id": "test.slide", "displayName": "Slide", "category": "Test",
+              "parameters": [{"identifier": "shift", "type": "float", "min": 0, "max": 100, "default": 0}]})");
+    write(QStringLiteral("main.lua"),
+          "scene:add(geo.box(20, 20, 4):transform(mat.translate(30 + 40 * time + params.shift, 50, 0)),"
+          " 'main', {u_tint = {1, 1, 1, 1}})");
+    write(QStringLiteral("main.vert"), kProceduralVert);
+    write(QStringLiteral("main.frag"), kProceduralFrag);
+    reloadProceduralCatalog({packages.path()});
+    const auto restore = qScopeGuard([] { reloadProceduralCatalog(); });
+    QVERIFY(hasProcedural(QStringLiteral("test.slide")));
+
+    drift::Project project;
+    project.setResolution(200, 100);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("proc");
+    clip.type = drift::ClipType::Procedural;
+    clip.procedural.packageId = QStringLiteral("test.slide");
+    clip.procedural.parameters.insert(QStringLiteral("shift"), 10.0);
+    clip.layer3d = true;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcIn = 0;
+    clip.srcOut = drift::secondsToUs(4.0);
+    clip.transformX.setKeyframe(0, 0.0);
+    clip.transformY.setKeyframe(0, 0.0);
+    clip.transformW.setKeyframe(0, 200.0);
+    clip.transformH.setKeyframe(0, 100.0);
+    project.tracks()[0].clips.append(clip);
+
+    const auto meanX = [](const QImage &image) {
+        long sum = 0;
+        long count = 0;
+        for (int y = 0; y < image.height(); ++y)
+            for (int x = 0; x < image.width(); ++x) {
+                if (qGray(image.pixel(x, y)) > 128) {
+                    sum += x;
+                    ++count;
+                }
+            }
+        return count > 50 ? double(sum) / double(count) : -1.0;
+    };
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage t0 = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY2(std::abs(meanX(t0) - 40.0) < 3.0, qPrintable(QString::number(meanX(t0))));
+    // The script's clock is the clip's source time.
+    const QImage t1 = compositor.compositeAt(drift::secondsToUs(1.0)).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY2(std::abs(meanX(t1) - 80.0) < 3.0, qPrintable(QString::number(meanX(t1))));
+    drift::ProceduralClipReport report;
+    QVERIFY(drift::ProceduralDiagnostics::shared().clip("proc", &report));
+    QVERIFY(report.scene && report.scene->ok() && report.error.empty());
+
+    // Trimming the head starts the script at the trim point rather than at zero.
+    project.tracks()[0].clips[0].srcIn = drift::secondsToUs(1.0);
+    const QImage trimmed = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY2(std::abs(meanX(trimmed) - 80.0) < 3.0, qPrintable(QString::number(meanX(trimmed))));
+
+    // A missing package draws nothing and says why.
+    project.tracks()[0].clips[0].procedural.packageId = QStringLiteral("test.gone");
+    const QImage gone = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QCOMPARE(meanX(gone), -1.0);
+    QVERIFY(drift::ProceduralDiagnostics::shared().clip("proc", &report));
+    QVERIFY(!report.error.empty());
+    QVERIFY(!report.scene);
+}
 
 void EngineTest::modelClipRendersCube()
 {
@@ -6413,6 +6738,43 @@ void EngineTest::mediaEditorMuxesReplacementAudio()
     QVERIFY(peakOf(spec.outputPath) > 0.7f);
 }
 
+void EngineTest::audioReadAfterSeekHonoursStreamStartTime()
+{
+    if (ffmpegExe().isEmpty())
+        QSKIP("ffmpeg not on PATH");
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    // Silence, then a tone from 1.0 s of content; the audio stream's own start_time is 0.3 s.
+    const QString wav = dir.filePath(QStringLiteral("onset.wav"));
+    QVERIFY(runProcess(ffmpegExe(),
+                       {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                        QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                        QStringLiteral("aevalsrc='if(gte(t,1),0.8*sin(2*PI*440*t),0)':d=3:s=48000:c=stereo"),
+                        wav}));
+    const QString path = dir.filePath(QStringLiteral("offset.mkv"));
+    QVERIFY(runProcess(ffmpegExe(),
+                       {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                        QStringLiteral("-itsoffset"), QStringLiteral("0.3"), QStringLiteral("-i"),
+                        wav, QStringLiteral("-c:a"), QStringLiteral("pcm_s16le"), path}));
+
+    constexpr int kRate = 48000;
+    constexpr int kFrames = kRate;
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    QVector<float> buf(kFrames * 2, 0.0f);
+    QCOMPARE(reader.readAudioInterleaved(500'000, kFrames, kRate, buf.data()), kFrames);
+    int onset = -1;
+    for (int i = 0; i < kFrames; ++i) {
+        if (std::abs(buf[i * 2]) > 0.1f) {
+            onset = i;
+            break;
+        }
+    }
+    QVERIFY(onset >= 0);
+    // Tone starts 0.5 s after the requested position.
+    QVERIFY2(qAbs(onset - kRate / 2) <= 200, qPrintable(QString::number(onset)));
+}
+
 void EngineTest::mediaEditorRemuxStartsOnAKeyframe()
 {
     if (ffmpegExe().isEmpty())
@@ -9053,6 +9415,74 @@ void EngineTest::compositorAppliesMultiplyBlendMode()
 
     const QImage overWhite = compositeOverBackground(Qt::white);
     QCOMPARE(overWhite.pixelColor(32, 32), QColor(255, 0, 0));
+}
+
+void EngineTest::compositorAppliesExtendedBlendModes_data()
+{
+    QTest::addColumn<int>("mode");
+    QTest::addColumn<int>("r");
+    QTest::addColumn<int>("g");
+    QTest::addColumn<int>("b");
+
+    // Top (200,100,50) over bottom (100,150,220), expected from the W3C compositing formulas.
+    QTest::newRow("difference") << int(drift::BlendMode::Difference) << 100 << 50 << 170;
+    QTest::newRow("exclusion") << int(drift::BlendMode::Exclusion) << 143 << 132 << 184;
+    QTest::newRow("colorDodge") << int(drift::BlendMode::ColorDodge) << 255 << 247 << 255;
+    QTest::newRow("subtract") << int(drift::BlendMode::Subtract) << 0 << 50 << 170;
+    QTest::newRow("hardMix") << int(drift::BlendMode::HardMix) << 255 << 0 << 255;
+    QTest::newRow("luminosity") << int(drift::BlendMode::Luminosity) << 82 << 132 << 202;
+}
+
+void EngineTest::compositorAppliesExtendedBlendModes()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QFETCH(int, mode);
+    QFETCH(int, r);
+    QFETCH(int, g);
+    QFETCH(int, b);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    auto writeSolidImage = [&](const QString &name, QColor color) {
+        QImage image(64, 64, QImage::Format_RGBA8888);
+        image.fill(color);
+        const QString path = dir.filePath(name);
+        image.save(path, "PNG");
+        return path;
+    };
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+
+    drift::Clip top;
+    top.id = QStringLiteral("top");
+    top.type = drift::ClipType::Image;
+    top.path = writeSolidImage(QStringLiteral("top.png"), QColor(200, 100, 50));
+    top.blendMode = drift::BlendMode(mode);
+    top.timelineStart = 0;
+    top.timelineDuration = drift::secondsToUs(1.0);
+    project.tracks()[0].clips.append(top);
+
+    drift::Clip bottom;
+    bottom.id = QStringLiteral("bottom");
+    bottom.type = drift::ClipType::Image;
+    bottom.path = writeSolidImage(QStringLiteral("bottom.png"), QColor(100, 150, 220));
+    bottom.timelineStart = 0;
+    bottom.timelineDuration = drift::secondsToUs(1.0);
+    project.tracks()[1].clips.append(bottom);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QColor px = compositor.compositeAt(0).pixelColor(32, 32);
+    QVERIFY2(qAbs(px.red() - r) <= 2, qPrintable(QStringLiteral("red %1 vs %2").arg(px.red()).arg(r)));
+    QVERIFY2(qAbs(px.green() - g) <= 2, qPrintable(QStringLiteral("green %1 vs %2").arg(px.green()).arg(g)));
+    QVERIFY2(qAbs(px.blue() - b) <= 2, qPrintable(QStringLiteral("blue %1 vs %2").arg(px.blue()).arg(b)));
 }
 
 // A keyed effect parameter is resolved inside the compositor, which is the only place preview and
@@ -18072,6 +18502,536 @@ void EngineTest::lookCatalogFindsPacksAndUserLooks()
     QCOMPARE(drift::importCubeFiles({incoming + "/My Look.cube"}, userRoot).importedIds, (QStringList{myLookId}));
 
     drift::reloadLookCatalog();
+}
+
+namespace {
+
+struct FakeGop
+{
+    QByteArray bytes;
+    QVector<quint32> sizes;
+};
+
+FakeGop fakeGop(int seed, int frames, int packetBytes)
+{
+    FakeGop g;
+    for (int i = 0; i < frames; ++i) {
+        g.sizes.push_back(quint32(packetBytes + i));
+        g.bytes.append(QByteArray(packetBytes + i, char('A' + (seed + i) % 26)));
+    }
+    return g;
+}
+
+// Appends `gops` back to back from `start`; returns the bake id.
+QString fakeBake(drift::BakeFile &f, qint64 start, int gops, int frames, int packetBytes, int seed)
+{
+    const QString id = f.beginBake(start, 30, 1920, 1080, 1, QByteArrayLiteral("sps"),
+                                   QByteArray::number(seed));
+    for (int i = 0; i < gops; ++i) {
+        const FakeGop g = fakeGop(seed * 7 + i, frames, packetBytes);
+        if (!f.appendGop(id, start + qint64(i) * frames, g.bytes, g.sizes))
+            return {};
+    }
+    return id;
+}
+
+bool bakeGopMatches(const QString &path, const drift::BakeGop &g, int seed, int frames, int packetBytes)
+{
+    QFile file(path);
+    QByteArray got;
+    return file.open(QIODevice::ReadOnly) && drift::readGop(file, g, got)
+        && got == fakeGop(seed, frames, packetBytes).bytes;
+}
+
+} // namespace
+
+void EngineTest::bakeFileRoundTrips()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    QString ids[3];
+    {
+        auto f = drift::BakeFile::open(path);
+        QVERIFY(f);
+        QVERIFY(f->snapshot()->bakes.empty());
+        f->setDefaultPreset(2);
+        ids[0] = fakeBake(*f, 100, 3, 4, 50, 1);
+        ids[1] = fakeBake(*f, 0, 2, 4, 60, 2);
+        ids[2] = fakeBake(*f, 500, 1, 8, 40, 3);
+        QVERIFY(f->commit());
+        QVERIFY(f->snapshot()->bakes.size() == 3);
+    }
+    auto f = drift::BakeFile::open(path);
+    QVERIFY(f);
+    const auto snap = f->snapshot();
+    QCOMPARE(snap->quality, 2);
+    QCOMPARE(int(snap->bakes.size()), 3);
+    QCOMPARE(snap->bakes[0].id, ids[1]);
+    QCOMPARE(snap->bakes[1].id, ids[0]);
+    QCOMPARE(snap->bakes[1].startFrame, qint64(100));
+    QCOMPARE(snap->bakes[1].endFrame, qint64(112));
+    QCOMPARE(snap->bakes[1].extradata, QByteArrayLiteral("sps"));
+    QCOMPARE(snap->bakes[1].fingerprint, QByteArray::number(1));
+    QCOMPARE(snap->bakes[1].width, 1920);
+    QVERIFY(!snap->bakeAt(99));
+    QVERIFY(!snap->bakeAt(112));
+    QVERIFY(snap->bakeAt(111));
+    const auto loc = snap->locate(106);
+    QVERIFY(loc);
+    QCOMPARE(loc.bake->id, ids[0]);
+    QCOMPARE(loc.gop->firstFrame, qint64(104));
+    QCOMPARE(loc.indexInGop, 2);
+    QVERIFY(!snap->locate(300));
+    QVERIFY(bakeGopMatches(path, loc.gop[-1], 7, 4, 50));
+    QVERIFY(bakeGopMatches(path, *loc.gop, 8, 4, 50));
+    QVERIFY(bakeGopMatches(path, snap->locate(503).gop[0], 21, 8, 40));
+    QCOMPARE(quint64(QFileInfo(path).size()), f->fileBytes());
+}
+
+void EngineTest::bakeFileFallsBackWhenSuperblockIsLost()
+{
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    QString a, b;
+    {
+        auto f = drift::BakeFile::open(path);
+        a = fakeBake(*f, 0, 2, 4, 50, 1);
+        QVERIFY(f->commit());
+        b = fakeBake(*f, 100, 2, 4, 50, 2);
+        f->setCrashBeforeSuperblockForTest(true);
+        QVERIFY(!f->commit());
+    }
+    {
+        auto f = drift::BakeFile::open(path);
+        QCOMPARE(int(f->snapshot()->bakes.size()), 1);
+        QCOMPARE(f->snapshot()->bakes[0].id, a);
+        QVERIFY(fakeBake(*f, 100, 2, 4, 50, 2).size());
+        QVERIFY(f->commit());
+        QCOMPARE(int(f->snapshot()->bakes.size()), 2);
+    }
+    {
+        // Tear the newest superblock slot: the previous generation must take over.
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::ReadWrite));
+        QByteArray s0, s1;
+        file.seek(64);
+        s0 = file.read(8);
+        file.seek(96);
+        s1 = file.read(8);
+        const qint64 newer = qFromLittleEndian<quint64>(s0.constData()) > qFromLittleEndian<quint64>(s1.constData()) ? 64 : 96;
+        file.seek(newer + 10);
+        file.write("\xff\xff\xff", 3);
+    }
+    auto f = drift::BakeFile::open(path);
+    QCOMPARE(int(f->snapshot()->bakes.size()), 1);
+    QCOMPARE(f->snapshot()->bakes[0].id, a);
+    QVERIFY(bakeGopMatches(path, f->snapshot()->bakes[0].gops[1], 7 + 1, 4, 50));
+}
+
+void EngineTest::bakeFileRemoveRangeSplitsAndSharesGops()
+{
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    auto f = drift::BakeFile::open(path);
+    const QString id = fakeBake(*f, 0, 4, 10, 100, 1); // gops at 0,10,20,30
+    QVERIFY(f->commit());
+
+    QVERIFY(f->removeRange(15, 25)); // cuts inside gops 10 and 20
+    QVERIFY(f->commit());
+    auto snap = f->snapshot();
+    QCOMPARE(int(snap->bakes.size()), 2);
+    const drift::Bake &left = snap->bakes[0];
+    const drift::Bake &right = snap->bakes[1];
+    QCOMPARE(left.id, id);
+    QVERIFY(right.id != id);
+    QCOMPARE(left.endFrame, qint64(15));
+    QCOMPARE(right.startFrame, qint64(25));
+    QCOMPARE(right.endFrame, qint64(40));
+    QCOMPARE(right.extradata, left.extradata);
+    QCOMPARE(int(left.gops.size()), 2);
+    QCOMPARE(int(right.gops.size()), 2);
+    QVERIFY(!snap->bakeAt(20));
+    QVERIFY(snap->locate(14));
+    QVERIFY(snap->locate(25));
+
+    // Cutting inside a single GOP leaves both halves referencing it.
+    QVERIFY(f->removeRange(32, 34));
+    QVERIFY(f->commit());
+    snap = f->snapshot();
+    QCOMPARE(int(snap->bakes.size()), 3);
+    QCOMPARE(snap->bakes[1].gops.back().offset, snap->bakes[2].gops.back().offset);
+    const quint64 live = f->liveBytes();
+
+    QVERIFY(f->deleteBake(snap->bakes[1].id));
+    QVERIFY(f->commit());
+    QCOMPARE(int(f->snapshot()->bakes.size()), 2);
+    QVERIFY(f->liveBytes() <= live);
+    QVERIFY(bakeGopMatches(path, f->snapshot()->bakes[1].gops.back(), 7 + 3, 10, 100));
+}
+
+void EngineTest::bakeFileReusesFreedSpace()
+{
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    auto f = drift::BakeFile::open(path);
+    const QString a = fakeBake(*f, 0, 3, 4, 4000, 1);
+    fakeBake(*f, 1000, 3, 4, 4000, 2);
+    QVERIFY(f->commit());
+    const quint64 aOffset = f->snapshot()->bakes[0].gops[0].offset;
+    const quint64 before = f->fileBytes();
+
+    QVERIFY(f->deleteBake(a));
+    QVERIFY(f->commit());
+    fakeBake(*f, 2000, 3, 4, 4000, 3);
+    QVERIFY(f->commit());
+    const auto snap = f->snapshot();
+    QCOMPARE(snap->bakes[0].startFrame, qint64(1000));
+    QCOMPARE(snap->bakes[1].gops[0].offset, aOffset);
+    QVERIFY(f->fileBytes() <= before + 1024);
+    QVERIFY(bakeGopMatches(path, snap->bakes[1].gops[2], 3 * 7 + 2, 4, 4000));
+    QVERIFY(bakeGopMatches(path, snap->bakes[0].gops[2], 2 * 7 + 2, 4, 4000));
+}
+
+void EngineTest::bakeFileKeepsSpaceWhileSnapshotLives()
+{
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    auto f = drift::BakeFile::open(path);
+    const QString a = fakeBake(*f, 0, 3, 4, 4000, 1);
+    fakeBake(*f, 1000, 3, 4, 4000, 2);
+    QVERIFY(f->commit());
+    const quint64 aOffset = f->snapshot()->bakes[0].gops[0].offset;
+    auto held = f->snapshot();
+
+    QVERIFY(f->deleteBake(a));
+    QVERIFY(f->commit());
+    fakeBake(*f, 2000, 3, 4, 4000, 3);
+    QVERIFY(f->commit());
+    QVERIFY(f->snapshot()->bakes[1].gops[0].offset != aOffset);
+    QVERIFY(bakeGopMatches(path, held->bakes[0].gops[0], 7, 4, 4000));
+
+    held.reset();
+    fakeBake(*f, 3000, 3, 4, 4000, 4);
+    QVERIFY(f->commit());
+    bool reused = false;
+    for (const auto &b : f->snapshot()->bakes)
+        reused = reused || (b.startFrame == 3000 && b.gops[0].offset == aOffset);
+    QVERIFY(reused);
+}
+
+void EngineTest::bakeFileCompactionShrinksAndKeepsBytes()
+{
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("p.driftbake"));
+    auto f = drift::BakeFile::open(path);
+    const QString a = fakeBake(*f, 0, 5, 4, 4000, 1);
+    const QString b = fakeBake(*f, 1000, 3, 4, 3000, 2);
+    fakeBake(*f, 2000, 5, 4, 4000, 3);
+    QVERIFY(f->commit());
+    QVERIFY(f->deleteBake(a));
+    QVERIFY(f->removeRange(1004, 1012));
+    QVERIFY(f->commit());
+    Q_UNUSED(b);
+    const quint64 before = f->fileBytes();
+
+    QVERIFY(f->compact());
+    QVERIFY(f->fileBytes() < before);
+    QVERIFY(!QFileInfo::exists(path + ".part"));
+    QCOMPARE(quint64(QFileInfo(path).size()), f->fileBytes());
+    QCOMPARE(f->fileBytes(), f->liveBytes() + 4096);
+    const auto snap = f->snapshot();
+    QCOMPARE(int(snap->bakes.size()), 2);
+    QCOMPARE(snap->bakes[0].startFrame, qint64(1000));
+    QCOMPARE(snap->bakes[0].endFrame, qint64(1004));
+    QVERIFY(bakeGopMatches(path, snap->bakes[0].gops[0], 2 * 7, 4, 3000));
+    for (int i = 0; i < 5; ++i)
+        QVERIFY(bakeGopMatches(path, snap->bakes[1].gops[size_t(i)], 3 * 7 + i, 4, 4000));
+
+    QVERIFY(fakeBake(*f, 5000, 1, 4, 100, 9).size());
+    QVERIFY(f->commit());
+    auto g = drift::BakeFile::open(path);
+    QCOMPARE(int(g->snapshot()->bakes.size()), 3);
+}
+
+void EngineTest::bakeWriterStoresClosedGopsAndReplacesOverlap()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    if (!avcodec_find_encoder_by_name("libx264"))
+        QSKIP("No libx264 in this FFmpeg build");
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("shape");
+    clip.type = drift::ClipType::Shape;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
+    clip.transformX.setKeyframe(0, 10.0);
+    clip.transformY.setKeyframe(0, 10.0);
+    clip.transformW.setKeyframe(0, 30.0);
+    clip.transformH.setKeyframe(0, 30.0);
+    project.tracks()[0].clips.append(clip);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    auto file = drift::BakeFile::open(dir.filePath(QStringLiteral("p.driftbake")));
+    QVERIFY(file);
+
+    const auto first = drift::BakeWriter::bake(*file, project, 10, 55, 1, QByteArray("fp"));
+    QVERIFY2(first.ok, qPrintable(first.error));
+    QCOMPARE(first.endFrame, qint64(55));
+    {
+        const auto snap = file->snapshot();
+        QCOMPARE(int(snap->bakes.size()), 1);
+        const drift::Bake &bake = snap->bakes[0];
+        QCOMPARE(bake.startFrame, qint64(10));
+        QCOMPARE(bake.endFrame, qint64(55));
+        QCOMPARE(bake.preset, 1);
+        QCOMPARE(bake.fingerprint, QByteArray("fp"));
+        QVERIFY(!bake.extradata.isEmpty());
+        QCOMPARE(int(bake.gops.size()), 3);
+
+        const AVCodec *h264 = avcodec_find_decoder(AV_CODEC_ID_H264);
+        QFile f(file->path());
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        qint64 frame = 10;
+        for (const drift::BakeGop &gop : bake.gops) {
+            QCOMPARE(gop.firstFrame, frame);
+            QCOMPARE(int(gop.packetSizes.size()), 15);
+            QByteArray bytes;
+            QVERIFY(drift::readGop(f, gop, bytes));
+
+            AVCodecContext *ctx = avcodec_alloc_context3(h264);
+            ctx->extradata = static_cast<uint8_t *>(av_mallocz(bake.extradata.size() + AV_INPUT_BUFFER_PADDING_SIZE));
+            std::memcpy(ctx->extradata, bake.extradata.constData(), size_t(bake.extradata.size()));
+            ctx->extradata_size = bake.extradata.size();
+            QVERIFY(avcodec_open2(ctx, h264, nullptr) >= 0);
+            AVPacket *pkt = av_packet_alloc();
+            AVFrame *out = av_frame_alloc();
+            int decoded = 0;
+            qsizetype offset = 0;
+            for (int i = 0; i < gop.packetSizes.size(); ++i) {
+                QByteArray data = bytes.mid(offset, qsizetype(gop.packetSizes[i]));
+                offset += gop.packetSizes[i];
+                QVERIFY(av_new_packet(pkt, data.size()) >= 0);
+                std::memcpy(pkt->data, data.constData(), size_t(data.size()));
+                QVERIFY(avcodec_send_packet(ctx, pkt) >= 0);
+                av_packet_unref(pkt);
+                while (avcodec_receive_frame(ctx, out) == 0)
+                    ++decoded;
+            }
+            avcodec_send_packet(ctx, nullptr);
+            while (avcodec_receive_frame(ctx, out) == 0)
+                ++decoded;
+            QCOMPARE(decoded, int(gop.packetSizes.size()));
+            av_frame_free(&out);
+            av_packet_free(&pkt);
+            avcodec_free_context(&ctx);
+            frame += gop.packetSizes.size();
+        }
+    }
+
+    const auto second = drift::BakeWriter::bake(*file, project, 30, 40, 1, QByteArray("fp2"));
+    QVERIFY2(second.ok, qPrintable(second.error));
+    const auto snap = file->snapshot();
+    QCOMPARE(int(snap->bakes.size()), 3);
+    QCOMPARE(snap->bakes[0].startFrame, qint64(10));
+    QCOMPARE(snap->bakes[0].endFrame, qint64(30));
+    QCOMPARE(snap->bakes[1].startFrame, qint64(30));
+    QCOMPARE(snap->bakes[1].endFrame, qint64(40));
+    QCOMPARE(snap->bakes[2].startFrame, qint64(40));
+    QCOMPARE(snap->bakes[2].endFrame, qint64(55));
+
+    int seen = 0;
+    const auto cancelled = drift::BakeWriter::bake(*file, project, 0, 50, 0, QByteArray(),
+                                                   [&](double) { return ++seen < 20; });
+    QVERIFY(cancelled.cancelled);
+    QVERIFY(cancelled.endFrame > 0 && cancelled.endFrame < 50);
+    QCOMPARE(file->snapshot()->bakeAt(0) != nullptr, true);
+}
+
+namespace {
+
+drift::Project movingShapeProject()
+{
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("shape");
+    clip.type = drift::ClipType::Shape;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
+    clip.transformX.setKeyframe(0, 4.0);
+    clip.transformX.setKeyframe(drift::secondsToUs(2.0), 30.0);
+    clip.transformY.setKeyframe(0, 10.0);
+    clip.transformW.setKeyframe(0, 30.0);
+    clip.transformH.setKeyframe(0, 30.0);
+    project.tracks()[0].clips.append(clip);
+    return project;
+}
+
+qint64 bakeTestTimeUs(qint64 frame, int fps)
+{
+    return std::llround(double(frame) * 1e6 / fps);
+}
+
+} // namespace
+
+void EngineTest::bakeFrameForTimeInvertsTheWriterMapping()
+{
+    for (const int fps : {24, 25, 30, 60}) {
+        for (qint64 f = 0; f < 200000; ++f)
+            QCOMPARE(drift::BakeReaderPool::frameForTime(bakeTestTimeUs(f, fps), fps), f);
+    }
+}
+
+void EngineTest::bakeReaderRandomAccessMatchesSequential()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    if (!avcodec_find_encoder_by_name("libx264"))
+        QSKIP("No libx264 in this FFmpeg build");
+
+    const drift::Project project = movingShapeProject();
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    auto file = drift::BakeFile::open(dir.filePath(QStringLiteral("p.driftbake")));
+    QVERIFY(file);
+    const auto baked = drift::BakeWriter::bake(*file, project, 10, 55, 1, QByteArray("fp"));
+    QVERIFY2(baked.ok, qPrintable(baked.error));
+
+    drift::BakeReaderPool pool;
+    pool.setSource(file->path(), file->snapshot());
+
+    const auto lumaOf = [](const PreviewVideoFrame &v) {
+        QByteArray out;
+        for (int y = 0; y < v.frame->height; ++y)
+            out.append(reinterpret_cast<const char *>(v.frame->data[0] + y * v.frame->linesize[0]), v.frame->width);
+        return out;
+    };
+
+    QMap<qint64, QByteArray> sequential;
+    for (qint64 f = 10; f < 55; ++f) {
+        const PreviewVideoFrame v = pool.read(f, 1, false, 64, 64, 30);
+        QVERIFY2(v.isValid(), qPrintable(QString::number(f)));
+        QCOMPARE(v.frame->format, int(AV_PIX_FMT_NV12));
+        QCOMPARE(v.displayWidth(), 64);
+        QCOMPARE(v.displayHeight(), 64);
+        QCOMPARE(v.colorspace, int(AVCOL_SPC_BT709));
+        QCOMPARE(v.colorRange, int(AVCOL_RANGE_MPEG));
+        sequential.insert(f, lumaOf(v));
+    }
+    QVERIFY(sequential.value(10) != sequential.value(50));
+
+    QList<qint64> order;
+    for (qint64 f = 10; f < 55; ++f)
+        order.append(f);
+    std::mt19937 rng(7);
+    std::shuffle(order.begin(), order.end(), rng);
+    for (const qint64 f : order) {
+        const PreviewVideoFrame v = pool.read(f, 2, false, 64, 64, 30);
+        QVERIFY(v.isValid());
+        QCOMPARE(lumaOf(v), sequential.value(f));
+    }
+
+    QVERIFY(!pool.read(9, 3, false, 64, 64, 30).isValid());
+    QVERIFY(!pool.read(55, 3, false, 64, 64, 30).isValid());
+    QVERIFY(!pool.read(20, 3, false, 128, 64, 30).isValid());
+    QVERIFY(!pool.read(20, 3, false, 64, 64, 25).isValid());
+
+    const PreviewVideoFrame key = pool.read(27, 4, true, 64, 64, 30);
+    QVERIFY(key.isValid());
+    QCOMPARE(lumaOf(key), sequential.value(25));
+}
+
+void EngineTest::compositorServesBakedFramesAndReportsTheBake()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    if (!avcodec_find_encoder_by_name("libx264"))
+        QSKIP("No libx264 in this FFmpeg build");
+
+    const drift::Project project = movingShapeProject();
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    auto file = drift::BakeFile::open(dir.filePath(QStringLiteral("p.driftbake")));
+    QVERIFY(file);
+    const auto baked = drift::BakeWriter::bake(*file, project, 10, 55, 2, QByteArray("fp"));
+    QVERIFY2(baked.ok, qPrintable(baked.error));
+    const QString bakeId = file->snapshot()->bakes[0].id;
+
+    auto pool = std::make_shared<drift::BakeReaderPool>();
+    pool->setSource(file->path(), file->snapshot());
+    FrameCompositor live;
+    live.setProject(&project);
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    compositor.setBakeSource(pool);
+
+    const drift::TimeUs inside = bakeTestTimeUs(30, 30);
+    const QImage want = live.compositeAt(inside);
+    const QImage got = compositor.compositeAt(inside);
+    QVERIFY(!want.isNull() && got.size() == want.size());
+    const QImage a = want.convertToFormat(QImage::Format_RGBA8888);
+    const QImage b = got.convertToFormat(QImage::Format_RGBA8888);
+    qint64 diff = 0;
+    for (int y = 0; y < a.height(); ++y)
+        for (int x = 0; x < a.width() * 4; ++x)
+            diff += qAbs(int(a.constScanLine(y)[x]) - int(b.constScanLine(y)[x]));
+    QVERIFY2(double(diff) / (a.width() * a.height() * 4) < 6.0, qPrintable(QString::number(double(diff))));
+
+    GpuScene scene;
+    FrameCompositor::RenderOptions options;
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QCOMPARE(scene.bakeId, bakeId);
+    QCOMPARE(int(scene.items.size()), 1);
+
+    options.useBakes = false;
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QVERIFY(scene.bakeId.isEmpty());
+
+    options.useBakes = true;
+    options.maskView.clipId = QStringLiteral("shape");
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QVERIFY(scene.bakeId.isEmpty());
+    options.maskView.clipId.clear();
+    options.textEdit.clipId = QStringLiteral("shape");
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QVERIFY(scene.bakeId.isEmpty());
+    options.textEdit.clipId.clear();
+    options.editor.active = true;
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QVERIFY(scene.bakeId.isEmpty());
+    options.editor.active = false;
+
+    for (const qint64 frame : {5, 55, 60}) {
+        QVERIFY(compositor.buildSceneAt(bakeTestTimeUs(frame, 30), options, &scene));
+        QVERIFY(scene.bakeId.isEmpty());
+    }
+
+    options.previewScale = 0.5;
+    QVERIFY(compositor.buildSceneAt(inside, options, &scene));
+    QCOMPARE(scene.bakeId, bakeId);
+    QCOMPARE(scene.canvasSize, QSize(32, 32));
+
+    options.previewScale = 1.0;
+    const GpuFrameTexture tex = compositor.compositeToTextureAt(inside, options);
+    QVERIFY(tex.isValid());
+    QCOMPARE(tex.bakeId, bakeId);
 }
 
 QTEST_MAIN(EngineTest)

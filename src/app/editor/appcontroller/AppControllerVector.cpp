@@ -1,4 +1,7 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
+#include "engine/procedural/ProceduralDiagnostics.h"
+#include "app/editor/PreferencesController.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/render3d/models/ModelAsset.h"
 #include "engine/render2d/pdf/PdfiumRuntime.h"
@@ -488,6 +491,240 @@ QVariantMap AppController::addModel3dClip(const QString &path, int trackIndex, d
     if (!unknown.isEmpty())
         out.insert(QStringLiteral("unknownOptions"), unknown);
     return out;
+}
+
+QVariantMap AppController::addProceduralClip(const QString &packageId, int trackIndex, double atSeconds,
+                                             const QVariantMap &opts)
+{
+    const drift::ProceduralPackage package = proceduralForId(packageId);
+    if (!package.valid)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), tr("unknown procedural package")}};
+    const QVariantMap initial = opts.value(QStringLiteral("params")).toMap();
+    for (auto it = initial.constBegin(); it != initial.constEnd(); ++it) {
+        const bool known = std::any_of(package.parameters.cbegin(), package.parameters.cend(),
+                                       [&](const drift::EffectParamSpec &spec) { return spec.key == it.key(); });
+        if (!known)
+            return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), tr("unknown param \"%1\"").arg(it.key())}};
+    }
+
+    const drift::Project before = m_project;
+
+    drift::TimeUs duration = drift::imageClipDurationUs();
+    if (opts.value(QStringLiteral("duration")).toDouble() > 0.0)
+        duration = drift::secondsToUs(opts.value(QStringLiteral("duration")).toDouble());
+    duration = qMax(duration, drift::minClipDurationUs(m_project.fps()));
+
+    const drift::TimeUs startUs = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    int target = trackIndex;
+    if (target < 0 || target >= m_project.tracks().size()
+        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Procedural)) {
+        target = drift::ensureFreeTrackForClipType(m_project, drift::ClipType::Procedural, startUs,
+                                                   duration, true);
+    }
+    if (target < 0)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("no graphic track")}};
+
+    drift::Track &track = m_project.tracks()[target];
+    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startUs, duration,
+                                                        m_snapEnabled, m_playheadUs);
+
+    drift::Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.type = drift::ClipType::Procedural;
+    clip.procedural.packageId = package.id;
+    for (const drift::EffectParamSpec &spec : package.parameters)
+        spec.insertDefault(clip.procedural.parameters);
+    for (auto it = initial.constBegin(); it != initial.constEnd(); ++it)
+        clip.procedural.parameters.insert(it.key(), it.value());
+    clip.procedural.seed = opts.value(QStringLiteral("seed")).toInt();
+    clip.name = opts.value(QStringLiteral("name")).toString();
+    if (clip.name.isEmpty())
+        clip.name = package.displayName.isEmpty() ? package.id : package.displayName;
+    clip.timelineStart = start;
+    clip.timelineDuration = duration;
+    clip.srcIn = 0;
+    clip.srcOut = duration;
+    setClipLayoutPixels(clip, 0, 0, m_project.width(), m_project.height());
+    clip.layer3d = true;
+
+    track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
+    pushProjectEdit(before, tr("Procedural clip added"));
+    finishEdit(tr("Procedural clip added"));
+    selectClip(target, newClipIndex);
+
+    return {{QStringLiteral("ok"), true},
+            {QStringLiteral("id"), clip.id},
+            {QStringLiteral("track"), target},
+            {QStringLiteral("index"), newClipIndex}};
+}
+
+QVariantList AppController::proceduralPackages() const
+{
+    QVariantList out;
+    for (const drift::ProceduralPackage &package : proceduralCatalog()) {
+        if (!package.valid)
+            continue;
+        out.append(QVariantMap{{QStringLiteral("id"), package.id},
+                               {QStringLiteral("name"), package.displayName.isEmpty() ? package.id : package.displayName},
+                               {QStringLiteral("description"), package.description},
+                               {QStringLiteral("category"), package.category},
+                               {QStringLiteral("thumbnail"), package.thumbnailPath}});
+    }
+    return out;
+}
+
+bool AppController::setProceduralPackage(int trackIndex, int clipIndex, const QString &packageId)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    const drift::ProceduralPackage package = proceduralForId(packageId);
+    if (clip.type != drift::ClipType::Procedural || !package.valid)
+        return false;
+    if (clip.procedural.packageId == package.id)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.procedural.packageId = package.id;
+    clip.procedural.parameters.clear();
+    for (const drift::EffectParamSpec &spec : package.parameters)
+        spec.insertDefault(clip.procedural.parameters);
+    for (auto it = clip.procedural.paramKeyframes.begin(); it != clip.procedural.paramKeyframes.end();) {
+        QString key;
+        if (parseProceduralProp(clip, QStringLiteral("proc.") + it.key(), &key))
+            ++it;
+        else
+            it = clip.procedural.paramKeyframes.erase(it);
+    }
+    pushProjectEdit(before, tr("Change procedural"));
+    finishEdit(tr("Procedural changed"));
+    return true;
+}
+
+bool AppController::setProceduralParam(int trackIndex, int clipIndex, const QString &key, double value)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Procedural)
+        return false;
+    const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
+    const auto spec = std::find_if(package.parameters.cbegin(), package.parameters.cend(),
+                                   [&](const drift::EffectParamSpec &p) { return p.key == key; });
+    if (spec == package.parameters.cend() || spec->isText() || spec->isVec2() || spec->isRegion())
+        return false;
+    const QVariant newValue = spec->isBoolean() ? QVariant(value > 0.5) : QVariant(value);
+    if (clip.procedural.parameters.value(key) == newValue)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.procedural.parameters.insert(key, newValue);
+    pushProjectEdit(before, tr("Edit procedural"));
+    finishEdit(tr("Procedural updated"));
+    return true;
+}
+
+bool AppController::setProceduralVec2Param(int trackIndex, int clipIndex, const QString &key, double x,
+                                           double y)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Procedural)
+        return false;
+    const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
+    const auto spec = std::find_if(package.parameters.cbegin(), package.parameters.cend(),
+                                   [&](const drift::EffectParamSpec &p) { return p.key == key; });
+    if (spec == package.parameters.cend() || !spec->isVec2())
+        return false;
+
+    const drift::Project before = m_project;
+    clip.procedural.parameters.insert(key + QLatin1String(".x"), std::clamp(x, spec->min, spec->max));
+    clip.procedural.parameters.insert(key + QLatin1String(".y"), std::clamp(y, spec->min, spec->max));
+    pushProjectEdit(before, tr("Edit procedural"));
+    finishEdit(tr("Procedural updated"));
+    return true;
+}
+
+bool AppController::setProceduralColorParam(int trackIndex, int clipIndex, const QString &key,
+                                            const QString &value)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Procedural)
+        return false;
+    const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
+    const auto spec = std::find_if(package.parameters.cbegin(), package.parameters.cend(),
+                                   [&](const drift::EffectParamSpec &p) { return p.key == key; });
+    if (spec == package.parameters.cend() || !spec->isColor())
+        return false;
+
+    // Same rule as effect colours: an alpha param stores #rrggbbaa, and a six-digit pick keeps the
+    // opacity already stored.
+    QString stored;
+    if (spec->alpha && value.size() == 9 && value.startsWith(QLatin1Char('#'))) {
+        const QColor rgb(value.left(7));
+        bool alphaOk = false;
+        value.right(2).toInt(&alphaOk, 16);
+        if (!rgb.isValid() || !alphaOk)
+            return false;
+        stored = rgb.name(QColor::HexRgb) + value.right(2).toLower();
+    } else {
+        const QColor color(value);
+        if (!color.isValid())
+            return false;
+        stored = color.name(QColor::HexRgb);
+        if (spec->alpha) {
+            const QString old = clip.procedural.parameters.value(key).toString();
+            stored += old.size() == 9 ? old.right(2) : QStringLiteral("ff");
+        }
+    }
+    if (clip.procedural.parameters.value(key).toString() == stored)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.procedural.parameters.insert(key, stored);
+    pushProjectEdit(before, tr("Edit procedural"));
+    finishEdit(tr("Procedural updated"));
+    return true;
+}
+
+bool AppController::setProceduralSeed(int trackIndex, int clipIndex, int seed)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Procedural)
+        return false;
+    if (clip.procedural.seed == seed)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.procedural.seed = seed;
+    pushProjectEdit(before, tr("Change seed"));
+    finishEdit(tr("Seed changed"));
+    return true;
+}
+
+QVariantMap AppController::proceduralDiagnostics(const QString &clipId) const
+{
+    drift::ProceduralClipReport report;
+    if (!drift::ProceduralDiagnostics::shared().clip(clipId.toStdString(), &report))
+        return {{QStringLiteral("known"), false}};
+    const auto toList = [](const std::vector<std::string> &lines) {
+        QStringList out;
+        for (const std::string &line : lines)
+            out << QString::fromStdString(line);
+        return out;
+    };
+    return {{QStringLiteral("known"), true},
+            {QStringLiteral("packageId"), QString::fromStdString(report.packageId)},
+            {QStringLiteral("error"), QString::fromStdString(report.error)},
+            {QStringLiteral("errors"), report.scene ? toList(report.scene->errors) : QStringList()},
+            {QStringLiteral("log"), report.scene ? toList(report.scene->log) : QStringList()},
+            {QStringLiteral("serial"), QVariant::fromValue<qulonglong>(report.serial)}};
 }
 
 QVariantMap AppController::setModel3dSource(int trackIndex, int clipIndex, const QString &path,
@@ -1068,6 +1305,7 @@ drift::TransformParent AppController::transformParentFor(int trackIndex) const
 void AppController::addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds,
                                   bool linkedAudio)
 {
+    endTransitionPreview();
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
 
@@ -1120,6 +1358,7 @@ void AppController::addTransition(int trackIndex, int clipIndex, const QString &
                    transitionKindFitsTrack(drift::TrackType::Audio, kindId) ? kindId : QStringLiteral("crossfade"));
     }
     pushProjectEdit(before, replaced ? tr("Replace transition") : tr("Add transition"));
+    m_preferences->pushRecentTransition(kindId);
     finishEdit(replaced ? tr("Transition updated") : tr("Transition added"));
     selectTransition(trackIndex, clipIndex);
 }
@@ -1205,6 +1444,7 @@ void AppController::setTransitionKind(int trackIndex, const QString &transitionI
     if (!transitionDefForId(kind))
         return;
 
+    endTransitionPreview();
     drift::Track &track = m_project.tracks()[trackIndex];
     if (!transitionKindFitsTrack(track.type, kind))
         return;
@@ -1220,6 +1460,7 @@ void AppController::setTransitionKind(int trackIndex, const QString &transitionI
                 mirror->parameters.clear();
             }
             pushProjectEdit(before, tr("Transition kind"));
+            m_preferences->pushRecentTransition(kind);
             finishEdit(tr("Transition kind updated"));
             emit selectedTransitionDataChanged();
             return;
@@ -1393,6 +1634,267 @@ void AppController::selectTransition(int trackIndex, int leftClipIndex)
     m_selection = {qMakePair(trackIndex, leftClipIndex)};
     notifySelectionChanged();
     emit selectedTransitionDataChanged();
+}
+
+QList<int> AppController::eligibleCutLefts(int trackIndex, bool selectionOnly) const
+{
+    QList<int> lefts;
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return lefts;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (!trackAllowsTransitions(track.type))
+        return lefts;
+    for (int left = 0; left < track.clips.size(); ++left) {
+        const int right = findTransitionPartnerIndex(track, left);
+        if (right < 0)
+            continue;
+        if (selectionOnly
+            && !(m_selection.contains(qMakePair(trackIndex, left))
+                 && m_selection.contains(qMakePair(trackIndex, right))))
+            continue;
+        lefts.append(left);
+    }
+    return lefts;
+}
+
+int AppController::selectedCutCount(int trackIndex) const
+{
+    return int(eligibleCutLefts(trackIndex, true).size());
+}
+
+void AppController::applyTransitionToCuts(int trackIndex, const QString &kind, bool selectionOnly)
+{
+    endTransitionPreview();
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size() || !transitionDefForId(kind))
+        return;
+    if (!transitionKindFitsTrack(m_project.tracks().at(trackIndex).type, kind)) {
+        setLastMessage(tr("That transition has no sound; audio tracks take crossfade or dip"),
+                       QStringLiteral("warning"));
+        return;
+    }
+    const QList<int> lefts = eligibleCutLefts(trackIndex, selectionOnly);
+    if (lefts.isEmpty())
+        return;
+
+    const drift::Project before = m_project;
+    const drift::TimeUs defaultUs =
+        qMax<drift::TimeUs>(drift::secondsToUs(0.1), drift::secondsToUs(m_preferences->transitionDurationSeconds()));
+    const auto upsert = [&](int t, const QString &a, const QString &b, const QString &kindForTrack,
+                            drift::TimeUs durationUs) {
+        drift::Track &target = m_project.tracks()[t];
+        if (drift::Transition *existing = findTransitionBetween(target, a, b)) {
+            if (existing->kindId == kindForTrack)
+                return;
+            existing->kindId = kindForTrack;
+            existing->parameters.clear();
+            return;
+        }
+        drift::Transition transition;
+        transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        transition.fromClipId = a;
+        transition.toClipId = b;
+        transition.kindId = kindForTrack;
+        transition.durationUs = durationUs;
+        target.transitions.append(transition);
+    };
+    for (const int left : lefts) {
+        const drift::Track &track = m_project.tracks().at(trackIndex);
+        const int right = findTransitionPartnerIndex(track, left);
+        if (right < 0)
+            continue;
+        const QString fromId = track.clips.at(left).id;
+        const QString toId = track.clips.at(right).id;
+        const drift::TimeUs overlapUs = drift::physicalOverlapDurationUs(track.clips.at(left), track.clips.at(right));
+        const drift::TimeUs durationUs = overlapUs > 0 ? overlapUs : defaultUs;
+        const LinkedAudioPair pair = linkedAudioPairFor(m_project, track, fromId, toId);
+        upsert(trackIndex, fromId, toId, kind, durationUs);
+        if (pair.valid())
+            upsert(pair.track, pair.fromId, pair.toId,
+                   transitionKindFitsTrack(drift::TrackType::Audio, kind) ? kind : QStringLiteral("crossfade"),
+                   durationUs);
+    }
+    pushProjectEdit(before, tr("Apply transition to cuts"));
+    m_preferences->pushRecentTransition(kind);
+    finishEdit(tr("Transitions updated"));
+}
+
+void AppController::refreshAfterTransitionPreview()
+{
+    m_tracksCacheValid = false;
+    m_durationCacheValid = false;
+    m_playback.notifyProjectEdited();
+    notifyTracksChanged();
+}
+
+void AppController::beginTransitionPreview(int trackIndex, int leftClipIndex, const QString &kind)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size() || !transitionDefForId(kind))
+        return;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (!trackAllowsTransitions(track.type) || !transitionKindFitsTrack(track.type, kind))
+        return;
+    const int partnerIndex = findTransitionPartnerIndex(track, leftClipIndex);
+    if (partnerIndex < 0)
+        return;
+    const QString fromId = track.clips.at(leftClipIndex).id;
+    const QString toId = track.clips.at(partnerIndex).id;
+
+    TransitionPreviewState &state = m_transitionPreview;
+    if (state.active) {
+        drift::Transition *current = state.track >= 0 && state.track < m_project.tracks().size()
+                                         ? findTransitionBetween(m_project.tracks()[state.track], state.fromClipId,
+                                                                 state.toClipId)
+                                         : nullptr;
+        if (current && state.track == trackIndex && state.fromClipId == fromId && state.toClipId == toId) {
+            if (current->kindId == kind)
+                return;
+            current->kindId = kind;
+            current->parameters.clear();
+            m_tracksCacheValid = false;
+            m_playback.notifyProjectEdited();
+            return;
+        }
+        endTransitionPreview();
+        if (trackIndex >= m_project.tracks().size())
+            return;
+    }
+
+    drift::Track &target = m_project.tracks()[trackIndex];
+    const drift::Clip &fromClip = target.clips.at(leftClipIndex);
+    const drift::Clip &toClip = target.clips.at(partnerIndex);
+    state = {};
+    state.track = trackIndex;
+    state.fromClipId = fromId;
+    state.toClipId = toId;
+    state.playheadUs = m_playheadUs;
+    if (drift::Transition *existing = findTransitionBetween(target, fromId, toId)) {
+        state.existed = true;
+        state.transitionId = existing->id;
+        state.originalKind = existing->kindId;
+        state.originalParameters = existing->parameters;
+        existing->kindId = kind;
+        existing->parameters.clear();
+    } else {
+        const drift::TimeUs overlapUs = drift::physicalOverlapDurationUs(fromClip, toClip);
+        drift::Transition transition;
+        transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        transition.fromClipId = fromId;
+        transition.toClipId = toId;
+        transition.kindId = kind;
+        transition.durationUs =
+            overlapUs > 0 ? overlapUs
+                          : qMax<drift::TimeUs>(drift::secondsToUs(0.1),
+                                                drift::secondsToUs(m_preferences->transitionDurationSeconds()));
+        state.transitionId = transition.id;
+        target.transitions.append(transition);
+    }
+    state.active = true;
+
+    drift::TimeUs windowStartUs = 0;
+    drift::TimeUs windowEndUs = 0;
+    const drift::Transition *placed = findTransitionBetween(target, fromId, toId);
+    const bool windowOk = placed && drift::transitionWindow(target, *placed, windowStartUs, windowEndUs);
+    refreshAfterTransitionPreview();
+    if (!windowOk) {
+        endTransitionPreview();
+        return;
+    }
+
+    constexpr drift::TimeUs kPad = drift::secondsToUs(0.5);
+    const drift::TimeUs rangeStart = qMax<drift::TimeUs>(0, windowStartUs - kPad);
+    const drift::TimeUs rangeEnd = qMin(windowEndUs + kPad, m_project.durationUs());
+    if (rangeEnd > rangeStart) {
+        m_playback.setPreviewRange(rangeStart, rangeEnd);
+        setPlayheadUs(rangeStart);
+    }
+    setPlaying(true);
+}
+
+void AppController::endTransitionPreview()
+{
+    TransitionPreviewState &state = m_transitionPreview;
+    if (!state.active)
+        return;
+    const TransitionPreviewState saved = state;
+    state = {};
+
+    m_playback.clearPreviewRange();
+    setPlaying(false);
+
+    if (saved.track >= 0 && saved.track < m_project.tracks().size()) {
+        drift::Track &track = m_project.tracks()[saved.track];
+        if (saved.existed) {
+            if (drift::Transition *t = findTransition(track, saved.transitionId)) {
+                t->kindId = saved.originalKind;
+                t->parameters = saved.originalParameters;
+            }
+        } else {
+            for (int i = track.transitions.size() - 1; i >= 0; --i) {
+                if (track.transitions.at(i).id == saved.transitionId)
+                    track.transitions.removeAt(i);
+            }
+        }
+    }
+    refreshAfterTransitionPreview();
+    setPlayheadUs(saved.playheadUs);
+}
+
+void AppController::addTransitionAtPlayhead()
+{
+    endTransitionPreview();
+    const double seconds = drift::usToSeconds(m_playheadUs);
+
+    const auto nearestCut = [&](int trackIndex, int &leftOut) {
+        const drift::Track &track = m_project.tracks().at(trackIndex);
+        double bestDistance = 1e18;
+        leftOut = -1;
+        for (const int left : eligibleCutLefts(trackIndex, false)) {
+            const int right = findTransitionPartnerIndex(track, left);
+            const drift::Clip &a = track.clips.at(left);
+            const drift::Clip &b = track.clips.at(right);
+            const double cut = drift::clipsPhysicallyOverlap(a, b)
+                                   ? drift::usToSeconds((b.timelineStart + a.timelineEnd()) / 2)
+                                   : drift::usToSeconds(a.timelineEnd());
+            const double distance = qAbs(cut - seconds);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                leftOut = left;
+            }
+        }
+        return leftOut >= 0;
+    };
+
+    int trackIndex = -1;
+    int left = -1;
+    if (m_selectedTrack >= 0 && m_selectedTrack < m_project.tracks().size() && nearestCut(m_selectedTrack, left))
+        trackIndex = m_selectedTrack;
+    for (int t = 0; trackIndex < 0 && t < m_project.tracks().size(); ++t) {
+        if (m_project.tracks().at(t).type != drift::TrackType::Audio && nearestCut(t, left))
+            trackIndex = t;
+    }
+    if (trackIndex < 0) {
+        setLastMessage(tr("No cut between two clips to add a transition to"), QStringLiteral("warning"));
+        return;
+    }
+
+    if (!transitionBetweenClips(trackIndex, left).isEmpty()) {
+        selectTransition(trackIndex, left);
+        return;
+    }
+
+    QStringList valid;
+    for (const QVariant &entry : transitionKindsForTrack(trackIndex))
+        valid.append(entry.toMap().value(QStringLiteral("kind")).toString());
+    QString kind = QStringLiteral("crossfade");
+    for (const QString &recent : m_preferences->recentTransitions()) {
+        if (valid.contains(recent)) {
+            kind = recent;
+            break;
+        }
+    }
+    if (!valid.contains(kind) && !valid.isEmpty())
+        kind = valid.first();
+    addTransition(trackIndex, left, kind, m_preferences->transitionDurationSeconds());
 }
 
 void AppController::clearTransitionSelection()

@@ -54,10 +54,12 @@ void ProjectSnapshotCommand::restore(const Project &snapshot)
 {
     if (!m_project)
         return;
-    // Transcripts are not part of the undoable state (see Project::transcript).
+    // Transcripts and the teleprompter script are not part of the undoable state (see Project::transcript).
     const QHash<QString, TranscriptPtr> transcripts = m_project->transcripts();
+    const QString teleprompterScript = m_project->teleprompterScript();
     *m_project = snapshot;
     m_project->setTranscripts(transcripts);
+    m_project->setTeleprompterScript(teleprompterScript);
 }
 
 namespace {

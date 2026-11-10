@@ -21,6 +21,7 @@ Item {
 
     // Voiceover recording indicator overlay
     PreviewVoiceoverBadge {
+        id: voiceoverBadge
         visible: !root.compact && EditorState.isRecordingAudio
         anchors.right: parent.right
         anchors.top: parent.top
@@ -28,6 +29,67 @@ Item {
         z: 11
         paused: EditorState.isAudioRecordingPaused
         seconds: EditorState.audioRecordSeconds
+    }
+
+    Rectangle {
+        id: bakeBadge
+
+        readonly property string bakeId: EditorState.playback.currentFrameBakeId
+        readonly property var bake: {
+            const list = EditorState.bakes.bakes
+            for (let i = 0; i < list.length; ++i) {
+                if (list[i].id === bakeId)
+                    return list[i]
+            }
+            return null
+        }
+        readonly property bool stale: bake !== null && bake.state === "stale"
+
+        visible: !root.compact && bakeId !== "" && bake !== null
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.rightMargin: Theme.spacingLg
+        anchors.topMargin: voiceoverBadge.visible ? Theme.spacingLg * 2 + voiceoverBadge.height : Theme.spacingLg
+        z: 11
+        width: bakeBadgeLabel.implicitWidth + Theme.spacingLg * 2
+        height: bakeBadgeLabel.implicitHeight + Theme.spacingXs * 2
+        radius: Theme.c.previewBakeBadge.radius
+        color: stale ? Theme.c.previewBakeBadge.stale : Theme.c.previewBakeBadge.fresh
+
+        Text {
+            id: bakeBadgeLabel
+            anchors.centerIn: parent
+            text: bakeBadge.stale ? qsTr("Stale bake") : qsTr("Baked")
+            color: Theme.c.previewBakeBadge.text
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeTiny
+        }
+    }
+
+    // Interface only, like the rest of this layer: it never reaches a render or export.
+    Loader {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: Theme.spacingLg
+        height: Math.round(parent.height * 0.3)
+        z: 5
+        active: !root.compact && EditorState.teleprompter.overlayEnabled && EditorState.teleprompter.script.length > 0
+        sourceComponent: Component {
+            Rectangle {
+                radius: Theme.c.teleprompterOverlay.radius
+                color: Theme.c.teleprompterOverlay.background
+                clip: true
+
+                TeleprompterView {
+                    anchors.fill: parent
+                    fontScale: 0.75
+                    readLineRatio: 0.4
+                    textColor: Theme.c.teleprompterOverlay.foreground
+                    markerColor: Theme.c.teleprompterOverlay.marker
+                }
+            }
+        }
     }
 
     // On a brand-new project this — the largest, most central panel — said nothing at all, while
