@@ -220,11 +220,31 @@ Lights are written in script space and mapped through `u_model` to world space, 
 
 ### Camera modes
 
-The mode is decided per frame by the script.
+The mode is decided per frame by the script. **Prefer world mode with a Drift Camera clip** for anything that moves the view; own-camera mode is for special cases.
 
-**World mode** (the script never calls `scene:camera`). Geometry is in project world space and shares depth with the other 3D clips, seen through the scene camera (the covering Camera clip, or the default flat camera). In the 3D workspace's orbit view only the drawing view changes; `camera` in Lua still reports the scene camera. Here `u_view * world` is **not** a rigid view matrix: it takes world pixels to homogeneous canvas pixels and `u_proj` takes those to clip space, so write `gl_Position = u_proj * u_view * world` and nothing cleverer. Do not rely on `u_view` for eye-space depth or on `u_proj` being a perspective matrix. Use `u_cameraPos` and world positions for lighting and ray directions.
+**World mode** (the script never calls `scene:camera`; recommended). Geometry is in project world space and shares depth with the other 3D clips, seen through the scene camera (the covering Camera clip, or the default flat camera). In the 3D workspace's orbit view only the drawing view changes; `camera` in Lua still reports the scene camera. Here `u_view * world` is **not** a rigid view matrix: it takes world pixels to homogeneous canvas pixels and `u_proj` takes those to clip space, so write `gl_Position = u_proj * u_view * world` and nothing cleverer. Do not rely on `u_view` for eye-space depth or on `u_proj` being a perspective matrix. Use `u_cameraPos` and world positions for lighting and ray directions.
 
-**Own-camera mode** (the script calls `scene:camera{...}`). The clip becomes a flat full-canvas layer: `u_view` is the `lookAt` view matrix, `u_proj` is a perspective projection (y-flipped so the picture is upright), `u_model` is the identity, and the result does not take part in shared depth. The editor view draws a frustum guide for the camera. `gl_Position = u_proj * u_view * world` is again the right formula.
+**Own-camera mode** (the script calls `scene:camera{...}`). Use it only for a self-contained shot that must not follow the timeline's camera. The clip becomes a flat full-canvas layer: `u_view` is the `lookAt` view matrix, `u_proj` is a perspective projection (y-flipped so the picture is upright), `u_model` is the identity, and the result does not take part in shared depth. The editor view draws a frustum guide for the camera. `gl_Position = u_proj * u_view * world` is again the right formula.
+
+### Driving the view with a Camera clip
+
+Animate the view with a Camera clip, not with `scene:camera`: the user can then edit, retime and cut between framings on the timeline like any other clip, and other 3D clips share the same camera.
+
+1. `add_camera` (whole sequence, or `at`/`dur` for a cut), then write its keys with **one** `set_keyframes` call and `interpolation: "smooth"`, for example `{keys: {x: [[0, 960], [4, 1400]], y: [...], z: [[0, -1200], [4, -700]], anchorX: [...], anchorY: [...], anchorZ: [...]}, interpolation: "smooth"}`. Smooth gives Catmull-Rom tangents, so the velocity is continuous across keys; dense `linear` keys make the camera jerk at every key and `ease` stops at every key.
+2. `camera_look_at` with `aimAtTarget: true` makes the camera aim at the point of interest `anchorX/Y/Z` (key those to move the target); otherwise key `rotationX/rotationY/rotation` (degrees).
+3. Units: the eye `x/y/z` is in world pixels, canvas top-left origin, y down, +z away from the viewer; at rest it is `[w/2, h/2, -zoom]`. `perspective` is the zoom in pixels and the vertical field of view is `2 * atan((h / 2) / zoom)`.
+
+Build the scene in a unit space of your own and let the camera frame it. Pass matrices to the shader as uniforms: `toWorld` takes your units to the clip's pixels and `toBlock` is its inverse. For a y-up world of scale `s` pixels per unit:
+
+```lua
+local s = canvas.h * 0.25
+local toWorld = mat.translate(canvas.w / 2, canvas.h / 2 + s * eyeY, 0) * mat.scale(s, -s, -s)
+scene:add(mesh, "lit", {toWorld = toWorld, toBlock = toWorld:inverse()})
+```
+
+`mat.scale(s, -s, -s)` flips two axes, so it is a proper rotation (180 degrees about X), not a mirror: winding and normals stay correct. In the vertex shader use `u_model * toWorld * vec4(a_position, 1.0)`. In GLSL the eye in your unit space is `toBlock * inverse(u_model) * vec4(u_cameraPos, 1.0)`; use it for lighting, fog and ray origins.
+
+In Lua, `camera.eye` is the eye in world pixels (`toWorld:inverse():apply(x, y, z)` maps a point into unit space, ignoring the clip's own `u_model`) and reading it marks the scene camera-dependent, so it is re-evaluated as the camera moves. Use it to centre camera-relative things, such as a sky sphere or particles that must follow the viewer; scenes that never read `camera` are cached per time value.
 
 ### Faces, depth and blending
 
@@ -404,6 +424,6 @@ void main()
 2. `create_procedural({slug, manifest, files})` with `files` = `{"main.lua": ..., "<name>.vert": ..., "<name>.frag": ...}`. The package is parsed, `main.lua` is run at `t = 0` with default parameters and camera, and every shader pair is compiled on the GL thread, all before anything is installed. The reply has `stats` (counts, `elapsedMs`), `log` (your `print` output), `shaders` (`{name: {ok, log}}`) and, on failure, `errors[]` with the Lua error or the driver log prefixed by the shader name. When OpenGL is unavailable the shaders are not compiled and `shaderCheck` is `"skipped"`.
 3. `evaluate_procedural({id, t, params})` runs the script without rendering and reports `stats`, `bounds` (world-space AABB over all instances), `meshes`, `lights`, `cameraMode` (`world` or `own`, with the camera) and `errors`. Use it to see how big the scene is and whether it sits on the canvas, for example the bounds against `canvas`, before placing it.
 4. `add_procedural({id, at, duration, params, seed})` places the clip. Change parameters over time with `set_keyframe({prop: "proc.<identifier>", ...})`.
-5. `update_procedural({id, files, manifest, remove_files})` iterates; only the files you pass change. `get_procedural_source` reads any package, bundled ones included, to fork; `delete_procedural` removes a user package.
+5. `update_procedural({id, files, edits, manifest, remove_files})` iterates; only the files you pass change. `edits` is `[{file, old, new}]`, exact-string replacements applied after `files`; each `old` must match exactly once, otherwise nothing is written and the error names the file and edit index. Use it for small fixes instead of resending the script. `get_procedural_source` reads any package, bundled ones included, to fork; `delete_procedural` removes a user package.
 
 When the script reports an error the clip renders nothing, and the message is shown in the Procedural workspace console and in `evaluate_procedural`. A clip whose package is missing keeps its data and shows a warning badge.

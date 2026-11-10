@@ -4229,6 +4229,14 @@
         <translation>Klatka kluczowa interpoluje</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">Dodaj klatki kluczowe</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>Zresetuj kamerę</translation>
     </message>

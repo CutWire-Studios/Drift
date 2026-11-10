@@ -4221,6 +4221,14 @@
         <translation>Fotograma clave interpolado</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">Añadir fotogramas clave</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>Restablecer cámara</translation>
     </message>

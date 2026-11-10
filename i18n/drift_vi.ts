@@ -4221,6 +4221,14 @@
         <translation>Nội suy keyframe</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">Thêm keyframe</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>Đặt lại camera</translation>
     </message>

@@ -82,6 +82,7 @@ private slots:
     void easingCssRoundTrip();
     void easingSetSegmentOnLastKeyTargetsIncomingSegment();
     void keyframeBezierTangents();
+    void keyframeSmoothTangents();
     void disabledKeyframesFreezeAtFirstKey();
     void legacyTrackInterpolationMigratesLosslessly();
     void keyframeNearestQuery();
@@ -291,6 +292,46 @@ void CoreTest::disabledKeyframesFreezeAtFirstKey()
     QCOMPARE(loadedTrack.keyframes().size(), 2);
     // A project written before the switch existed loads with its animations on.
     QVERIFY(loaded.tracks().at(0).clips.at(0).transformX.enabled());
+}
+
+void CoreTest::keyframeSmoothTangents()
+{
+    drift::KeyframeTrack<double> track;
+    track.setKeyframe(0, 0.0);
+    track.setKeyframe(drift::secondsToUs(1.0), 10.0);
+    track.setKeyframe(drift::secondsToUs(3.0), 4.0);
+    track.setKeyframe(drift::secondsToUs(4.0), 4.0);
+    track.setEasing(0, drift::Interpolation::Hold);
+    track.setSmoothAll();
+
+    const auto &keys = track.keyframes();
+    const drift::Keyframe<double> first = keys.value(0);
+    QVERIFY(!first.hold);
+    QCOMPARE(first.inDx, 0.0);
+    // One-sided slope at the ends: 10 over 1 s, handle a third of the segment.
+    QCOMPARE(first.outDx, drift::kUsPerSecond / 3.0);
+    QVERIFY(qAbs(first.outDy - 10.0 / 3.0) < 1e-9);
+
+    // Middle key: slope is the chord between its neighbours, (4 - 0) / 3 s.
+    const drift::Keyframe<double> mid = keys.value(drift::secondsToUs(1.0));
+    QCOMPARE(mid.inDx, -drift::kUsPerSecond / 3.0);
+    QCOMPARE(mid.outDx, 2.0 * drift::kUsPerSecond / 3.0);
+    const double slope = 4.0 / (3.0 * drift::kUsPerSecond);
+    QVERIFY(qAbs(mid.outDy - slope * mid.outDx) < 1e-9);
+    QVERIFY(qAbs(mid.inDy - slope * mid.inDx) < 1e-9);
+
+    const drift::Keyframe<double> last = keys.value(drift::secondsToUs(4.0));
+    QCOMPARE(last.outDx, 0.0);
+    QCOMPARE(last.outDy, 0.0);
+
+    // C1: the velocity just before and after a key agrees.
+    const drift::TimeUs key = drift::secondsToUs(1.0);
+    const drift::TimeUs h = 1000;
+    const double before = (track.evaluateAt(key) - track.evaluateAt(key - h)) / h;
+    const double after = (track.evaluateAt(key + h) - track.evaluateAt(key)) / h;
+    QVERIFY(qAbs(before - slope) < 0.03 * slope);
+    QVERIFY(qAbs(after - slope) < 0.03 * slope);
+    QCOMPARE(track.evaluateAt(key), 10.0);
 }
 
 void CoreTest::keyframeBezierTangents()

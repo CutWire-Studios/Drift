@@ -79,6 +79,20 @@ double jsonNumber(const QJsonValue &v, double fallback)
     return fallback;
 }
 
+// The editor's X/Y link is a UI convenience that quietly writes the other axis. Agents address each
+// property on its own, so keyframe ops run with it off unless they ask for it.
+struct PositionLinkGuard
+{
+    PositionLinkGuard(AppController *controller, bool linked)
+        : m_controller(controller), m_was(controller->positionLinked())
+    {
+        m_controller->setPositionLinked(linked);
+    }
+    ~PositionLinkGuard() { m_controller->setPositionLinked(m_was); }
+    AppController *m_controller;
+    bool m_was;
+};
+
 bool jsonBool(const QJsonValue &v, bool fallback = false)
 {
     if (v.isBool())
@@ -904,6 +918,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opListKeyframes(args);
     if (tool == QLatin1String("set_keyframe"))
         return opSetKeyframe(args);
+    if (tool == QLatin1String("set_keyframes"))
+        return opSetKeyframes(args);
     if (tool == QLatin1String("remove_keyframe"))
         return opRemoveKeyframe(args);
     if (tool == QLatin1String("set_keyframe_interpolation"))
@@ -2452,6 +2468,7 @@ QJsonObject McpDispatcher::opListKeyframes(const QJsonObject &args) const
 
 QJsonObject McpDispatcher::opSetKeyframe(const QJsonObject &args)
 {
+    const PositionLinkGuard unlinked(m_controller, false);
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
@@ -2462,9 +2479,7 @@ QJsonObject McpDispatcher::opSetKeyframe(const QJsonObject &args)
         return err("bad_args", QStringLiteral("at and value required"));
     const double at = jsonNumber(args.value(QStringLiteral("at")), 0);
     const double value = jsonNumber(args.value(QStringLiteral("value")), 0);
-    m_controller->setClipKeyframe(ref.track, ref.clip, prop, at, value);
-    // The controller drops keys on a property the clip does not have without a word.
-    if (m_controller->clipKeyframes(ref.track, ref.clip, prop).isEmpty()) {
+    if (!m_controller->setClipKeyframe(ref.track, ref.clip, prop, at, value)) {
         return err("bad_args", QStringLiteral("%1 has no property \"%2\"; the spellings are in the set_keyframe schema")
                                    .arg(ref.id, prop));
     }
@@ -2472,8 +2487,67 @@ QJsonObject McpDispatcher::opSetKeyframe(const QJsonObject &args)
     return ok(clipFeedback(after, {{QStringLiteral("prop"), prop}, {QStringLiteral("at"), at}}));
 }
 
+QJsonObject McpDispatcher::opSetKeyframes(const QJsonObject &args)
+{
+    const PositionLinkGuard unlinked(m_controller, false);
+    const ClipRef ref = resolveClip(args);
+    if (!ref.valid())
+        return clipRefError(args);
+    const QJsonObject keys = args.value(QStringLiteral("keys")).toObject();
+    if (keys.isEmpty())
+        return err("bad_args", QStringLiteral("keys required: {prop: [[seconds, value], ...]}"));
+    const QString interpolation = args.value(QStringLiteral("interpolation")).toString().trimmed().toLower();
+    if (!interpolation.isEmpty() && interpolation != QLatin1String("linear") && interpolation != QLatin1String("hold")
+        && interpolation != QLatin1String("ease") && interpolation != QLatin1String("smooth"))
+        return err("bad_args", QStringLiteral("interpolation must be linear, hold, ease or smooth"));
+
+    QList<AppController::KeyframeBatch> batches;
+    for (auto it = keys.constBegin(); it != keys.constEnd(); ++it) {
+        const QJsonArray entries = it.value().toArray();
+        if (entries.isEmpty())
+            return err("bad_args", QStringLiteral("keys.%1 must be a non-empty array of [seconds, value] or {at, value}").arg(it.key()));
+        AppController::KeyframeBatch batch;
+        batch.prop = it.key().trimmed();
+        for (qsizetype i = 0; i < entries.size(); ++i) {
+            const QJsonValue entry = entries.at(i);
+            QJsonValue at;
+            QJsonValue value;
+            if (entry.isArray() && entry.toArray().size() == 2) {
+                at = entry.toArray().at(0);
+                value = entry.toArray().at(1);
+            } else if (entry.isObject() && entry.toObject().contains(QStringLiteral("at"))
+                       && entry.toObject().contains(QStringLiteral("value"))) {
+                at = entry.toObject().value(QStringLiteral("at"));
+                value = entry.toObject().value(QStringLiteral("value"));
+            } else {
+                return err("bad_args", QStringLiteral("keys.%1[%2] must be [seconds, value] or {at, value}").arg(it.key()).arg(i));
+            }
+            const bool numeric = (at.isDouble() || at.isString()) && (value.isDouble() || value.isString());
+            const double seconds = jsonNumber(at, qQNaN());
+            const double number = jsonNumber(value, qQNaN());
+            if (!numeric || std::isnan(seconds) || std::isnan(number))
+                return err("bad_args", QStringLiteral("keys.%1[%2] needs numeric seconds and value").arg(it.key()).arg(i));
+            batch.keys.append(QPointF(seconds, number));
+        }
+        batches.append(batch);
+    }
+
+    const QString bad = m_controller->setClipKeyframes(ref.track, ref.clip, batches,
+                                                       jsonBool(args.value(QStringLiteral("replace"))), interpolation);
+    if (!bad.isEmpty()) {
+        return err("bad_args", QStringLiteral("%1 has no property \"%2\"; the spellings are in the set_keyframe schema")
+                                   .arg(ref.id, bad));
+    }
+    QJsonObject written;
+    for (const AppController::KeyframeBatch &batch : batches)
+        written.insert(batch.prop, int(batch.keys.size()));
+    const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
+    return ok(clipFeedback(after, {{QStringLiteral("written"), written}}));
+}
+
 QJsonObject McpDispatcher::opRemoveKeyframe(const QJsonObject &args)
 {
+    const PositionLinkGuard unlinked(m_controller, false);
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
@@ -2488,6 +2562,7 @@ QJsonObject McpDispatcher::opRemoveKeyframe(const QJsonObject &args)
 
 QJsonObject McpDispatcher::opSetKeyframeInterpolation(const QJsonObject &args)
 {
+    const PositionLinkGuard unlinked(m_controller, false);
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
@@ -2498,13 +2573,18 @@ QJsonObject McpDispatcher::opSetKeyframeInterpolation(const QJsonObject &args)
     if (m_controller->clipKeyframes(ref.track, ref.clip, prop).isEmpty())
         return err("not_found", QStringLiteral("%1 has no keyframes on \"%2\"").arg(ref.id, prop));
     const double at = jsonNumber(args.value(QStringLiteral("at")), 0);
-    m_controller->setPlayheadSeconds(at);
-    m_controller->setKeyframeInterpolation(ref.track, ref.clip, prop, mode);
+    if (mode == QLatin1String("smooth")) {
+        if (!m_controller->setKeyframeSmooth(ref.track, ref.clip, prop, at, false))
+            return err("not_found", QStringLiteral("%1 has no key near %2 on \"%3\"").arg(ref.id).arg(at).arg(prop));
+        return ok({{QStringLiteral("prop"), prop}, {QStringLiteral("at"), at}, {QStringLiteral("mode"), mode}});
+    }
+    m_controller->setKeyframeEasingAt(ref.track, ref.clip, prop, at, mode);
     return ok({{QStringLiteral("prop"), prop}, {QStringLiteral("at"), at}, {QStringLiteral("mode"), mode}});
 }
 
 QJsonObject McpDispatcher::opSetKeyframeTangents(const QJsonObject &args)
 {
+    const PositionLinkGuard linkGuard(m_controller, jsonBool(args.value(QStringLiteral("linked"))));
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
@@ -2536,6 +2616,7 @@ QJsonObject McpDispatcher::opListEasingPresets() const
 
 QJsonObject McpDispatcher::opSetKeyframeEasing(const QJsonObject &args)
 {
+    const PositionLinkGuard unlinked(m_controller, false);
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
@@ -2552,8 +2633,17 @@ QJsonObject McpDispatcher::opSetKeyframeEasing(const QJsonObject &args)
         return !v.isUndefined() && !v.isNull();
     };
     const int shapes = int(given("preset")) + int(given("bezier")) + int(given("fn"));
+    if (jsonBool(args.value(QStringLiteral("smooth")))) {
+        if (shapes != 0)
+            return err("bad_args", QStringLiteral("smooth cannot be combined with preset, bezier, or fn"));
+        const double at = all ? keys.first().toMap().value(QStringLiteral("seconds")).toDouble()
+                              : jsonNumber(args.value(QStringLiteral("at")), 0);
+        if (!m_controller->setKeyframeSmooth(ref.track, ref.clip, prop, at, all))
+            return err("not_found", QStringLiteral("%1 has no key near %2 on \"%3\"").arg(ref.id).arg(at).arg(prop));
+        return ok({{QStringLiteral("prop"), prop}, {QStringLiteral("smooth"), true}, {QStringLiteral("all"), all}});
+    }
     if (shapes != 1)
-        return err("bad_args", QStringLiteral("give exactly one of preset, bezier, or fn"));
+        return err("bad_args", QStringLiteral("give exactly one of preset, bezier, fn, or smooth:true"));
 
     drift::EasingSpec spec;
     if (given("preset")) {
@@ -2612,6 +2702,7 @@ QJsonObject McpDispatcher::opSetKeyframeEasing(const QJsonObject &args)
 
 QJsonObject McpDispatcher::opSetKeyframeHold(const QJsonObject &args)
 {
+    const PositionLinkGuard unlinked(m_controller, false);
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
@@ -2627,6 +2718,7 @@ QJsonObject McpDispatcher::opSetKeyframeHold(const QJsonObject &args)
 
 QJsonObject McpDispatcher::opSetPropertyKeyframesEnabled(const QJsonObject &args)
 {
+    const PositionLinkGuard unlinked(m_controller, false);
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);

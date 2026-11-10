@@ -4226,6 +4226,14 @@
         <translation>Interpolation de l&apos;image clé</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">Ajouter des images clés</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>Réinitialiser la caméra</translation>
     </message>

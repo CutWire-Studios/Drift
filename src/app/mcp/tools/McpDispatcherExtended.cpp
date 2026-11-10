@@ -2773,8 +2773,11 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const double value = args.contains(QStringLiteral("value"))
                                  ? jsonNumber(args.value(QStringLiteral("value")), 0)
                                  : m_controller->propertyValueAt(ref.track, ref.clip, prop, fromSec, 0);
+        const bool wasLinked = m_controller->positionLinked();
+        m_controller->setPositionLinked(false);
         m_controller->previewMoveClipKeyframe(ref.track, ref.clip, prop, fromSec, toSec, value);
         m_controller->commitPreviewDrag();
+        m_controller->setPositionLinked(wasLinked);
         return ok(clipFeedback(ref, {{QStringLiteral("prop"), prop}, {QStringLiteral("from"), fromSec}, {QStringLiteral("to"), toSec}}));
     }
 

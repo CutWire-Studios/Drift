@@ -4221,6 +4221,14 @@
         <translation>কীফ্রেম ইন্টারপোলেট করে</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">কীফ্রেম যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>ক্যামেরা রিসেট করুন</translation>
     </message>

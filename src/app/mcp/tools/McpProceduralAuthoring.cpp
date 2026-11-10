@@ -105,9 +105,32 @@ QJsonObject create(const QJsonObject &args)
 QJsonObject update(const QJsonObject &args)
 {
     QJsonObject error;
-    const QMap<QString, QString> files = filesArg(args, &error);
+    QMap<QString, QString> files = filesArg(args, &error);
     if (!error.isEmpty())
         return error;
+    const QJsonArray edits = args.value(QStringLiteral("edits")).toArray();
+    if (!edits.isEmpty()) {
+        const ProceduralAuthoringService::Source current =
+            ProceduralAuthoringService::getSource(args.value(QStringLiteral("id")).toString().trimmed());
+        if (!current.ok)
+            return err(current.code.toUtf8().constData(), current.message);
+        for (qsizetype i = 0; i < edits.size(); ++i) {
+            const QJsonObject edit = edits.at(i).toObject();
+            const QString name = edit.value(QStringLiteral("file")).toString();
+            const QString from = edit.value(QStringLiteral("old")).toString();
+            if (name.isEmpty() || from.isEmpty() || !edit.value(QStringLiteral("new")).isString())
+                return err("bad_args", QStringLiteral("edits[%1] needs file, a non-empty old and a string new").arg(i));
+            if (!files.contains(name) && !current.files.contains(name))
+                return err("bad_args", QStringLiteral("edits[%1]: file \"%2\" does not exist in the package").arg(i).arg(name));
+            QString &text = files.contains(name) ? files[name] : (files[name] = current.files.value(name));
+            const qsizetype found = text.count(from);
+            if (found != 1) {
+                return err("bad_args", QStringLiteral("edits[%1] (%2): old text matched %3 times, it must match exactly once; nothing was written")
+                                           .arg(i).arg(name).arg(found));
+            }
+            text.replace(text.indexOf(from), from.size(), edit.value(QStringLiteral("new")).toString());
+        }
+    }
     std::optional<QJsonObject> manifest;
     if (args.contains(QStringLiteral("manifest"))) {
         if (!args.value(QStringLiteral("manifest")).isObject())

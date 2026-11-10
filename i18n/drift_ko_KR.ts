@@ -4213,6 +4213,14 @@
         <translation>키프레임 보간</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">키프레임 추가</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>카메라 초기화</translation>
     </message>

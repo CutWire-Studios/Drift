@@ -1295,7 +1295,8 @@ public:
     // one undo step. Clears every channel when the colour is invalid.
     Q_INVOKABLE void setClipColorKeyframe(int trackIndex, int clipIndex, const QString &prop,
                                           double atSeconds, const QColor &color);
-    Q_INVOKABLE void setClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
+    // False when nothing was written: a bad clip index or a property the clip does not have.
+    Q_INVOKABLE bool setClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
                                      double value);
     // A vec2 effect param ("fx.<i>.<key>") keys its two axis tracks (<prop>.x/.y) as one undo step.
     Q_INVOKABLE void setClipVec2Keyframe(int trackIndex, int clipIndex, const QString &prop,
@@ -1334,6 +1335,20 @@ public:
                                                 double outDx, double outDy, bool corner);
     Q_INVOKABLE void setKeyframeHold(int trackIndex, int clipIndex, const QString &prop,
                                      double atSeconds, bool hold);
+    // Catmull-Rom auto tangents on the key at atSeconds, or on every key when `all`. Never touches
+    // the other position axis. Returns false when the property has no such key.
+    bool setKeyframeSmooth(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
+                           bool all);
+    struct KeyframeBatch
+    {
+        QString prop;
+        QList<QPointF> keys; // x = timeline seconds, y = value
+    };
+    // Writes many keys in one undo step. `interpolation` (linear, hold, ease, smooth; empty keeps
+    // the tangents) is applied to every key of each property afterwards. Returns the first prop
+    // the clip does not have, in which case nothing is changed; empty on success.
+    QString setClipKeyframes(int trackIndex, int clipIndex, const QList<KeyframeBatch> &batches,
+                             bool replace, const QString &interpolation);
     Q_INVOKABLE void setKeyframeInterpolation(int trackIndex, int clipIndex, const QString &prop,
                                               const QString &mode);
     Q_INVOKABLE void setKeyframeEasingAt(int trackIndex, int clipIndex, const QString &prop,

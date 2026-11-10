@@ -634,7 +634,8 @@ const QList<Op> &ops()
           "the clip covers the whole sequence (what a first camera wants); with `at` it is one clip "
           "starting there, so two in a row read as a camera cut. A camera at rest looks exactly like "
           "no camera, so adding one changes nothing until you move it. Frame it with set_keyframe on "
-          "the returned clip using x/y/z (the eye, world px: canvas top-left origin, y down, +z away "
+          "the returned clip (for a path of several keys, write them with set_keyframes and "
+          "interpolation \"smooth\" in one call) using x/y/z (the eye, world px: canvas top-left origin, y down, +z away "
           "from the viewer; at rest [w/2, h/2, -zoom]), rotationX/rotationY/rotation (pitch, yaw, "
           "roll, degrees; yaw is applied first, so the horizon stays level with zero roll), "
           "anchorX/anchorY/anchorZ (the point of interest, used when camera_look_at is given "
@@ -1068,6 +1069,26 @@ const QList<Op> &ops()
                                    {QStringLiteral("value"), numberProp(QStringLiteral("Property value, in the property's own units (pixels, degrees, 0..1)"))}},
                                   clipRefProps()),
                        {QStringLiteral("prop"), QStringLiteral("at"), QStringLiteral("value")}) },
+        { "set_keyframes", "keyframes", "Write many keys at once (bulk path, smooth)",
+          "Write many keys on one or more properties in ONE call and one undo step; use it instead of a "
+          "set_keyframe per key for camera paths and other dense animation. `keys` maps each prop to an "
+          "array of [seconds, value] pairs ({at, value} objects work too); times are timeline seconds, "
+          "clamped to the clip like set_keyframe. A key at an existing time overwrites its value. "
+          "`replace:true` first clears each listed prop's existing keys. `interpolation` is applied to "
+          "every key of each listed prop afterwards: linear, hold, ease, or smooth (Catmull-Rom auto "
+          "tangents from neighbouring keys, written as bezier handles, so velocity is continuous "
+          "across keys; dense linear keys look jerky, ease stops at every key). Omit it to leave the "
+          "tangents alone. Props are validated like set_keyframe; one bad prop fails bad_args and "
+          "nothing is written. Never writes the other axis of x/y. Returns {written:{prop:count}}.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                    {QStringLiteral("description"), QStringLiteral("{prop: [[seconds, value], ...]} e.g. {\"x\": [[0, 100], [2, 400]], \"z\": [[0, -800], [2, -500]]}")}}},
+               {QStringLiteral("replace"), boolProp(QStringLiteral("Clear each listed prop's existing keys first (default false)"))},
+               {QStringLiteral("interpolation"), enumProp(QStringLiteral("Applied to every key of each listed prop after writing"),
+                                                          {QStringLiteral("linear"), QStringLiteral("hold"),
+                                                           QStringLiteral("ease"), QStringLiteral("smooth")})}},
+              clipRefProps()),
+                       {QStringLiteral("keys")}) },
         { "remove_keyframe", "keyframes", "Delete a key",
           "Remove the keyframe NEAREST to `at` — there is no distance limit, so a time that misses "
           "every key still deletes the closest one. Confirm the exact key time with list_keyframes "
@@ -1077,17 +1098,17 @@ const QList<Op> &ops()
                                   clipRefProps()),
                        {QStringLiteral("prop"), QStringLiteral("at")}),
           false, true },
-        { "set_keyframe_interpolation", "keyframes", "Set linear/hold/ease on a key",
-          "Set the easing preset on the key nearest `at`. SIDE EFFECT: this moves the playhead to `at`, "
-          "which changes the default time of later ops in the same apply batch and the target of "
-          "set_transform — seek back if that matters. For custom beziers, elastic or bounce curves, "
-          "or saved presets, use set_keyframe_easing.",
+        { "set_keyframe_interpolation", "keyframes", "Set linear/hold/ease/smooth on a key",
+          "Set the easing preset on the key nearest `at`; the playhead does not move. Mode smooth writes "
+          "Catmull-Rom auto tangents from the neighbouring keys onto that key (velocity continuous "
+          "through it; for a whole property use set_keyframe_easing smooth+all, or set_keyframes). For "
+          "custom beziers, elastic or bounce curves, or saved presets, use set_keyframe_easing.",
           objectSchema(mergeProps(
               {{QStringLiteral("prop"), animPropProp()},
-               {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds; the playhead is moved here"))},
+               {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds of the key"))},
                {QStringLiteral("mode"), enumProp(QStringLiteral("Interpolation"),
                                                 {QStringLiteral("linear"), QStringLiteral("hold"),
-                                                 QStringLiteral("ease")})}},
+                                                 QStringLiteral("ease"), QStringLiteral("smooth")})}},
               clipRefProps()),
                        {QStringLiteral("prop"), QStringLiteral("at"), QStringLiteral("mode")}) },
         { "list_easing_presets", "keyframes", "See the easing presets",
@@ -1097,7 +1118,10 @@ const QList<Op> &ops()
           "Shape the segment that leaves the key at `at` (on the last key, the segment that arrives "
           "there). Give exactly one of `preset` (an id from list_easing_presets; linear and hold are "
           "presets too), `bezier` [x1, y1, x2, y2] with x in 0..1, or `fn` (elastic or bounce, with "
-          "optional amplitude and period). `all:true` applies the curve to every segment of the "
+          "optional amplitude and period). Or `smooth:true` instead of those: Catmull-Rom auto "
+          "tangents from the neighbouring keys (slope = chord between neighbours, handles a third of "
+          "each segment), so velocity is continuous across keys; it shapes the key at `at`, and with "
+          "`all:true` every key of the property. `all:true` applies the curve to every segment of the "
           "property and `at` is then not needed. Does NOT move the playhead.",
           objectSchema(mergeProps(
               {{QStringLiteral("prop"), animPropProp()},
@@ -1111,12 +1135,15 @@ const QList<Op> &ops()
                                                 QStringLiteral("bounceOut"), QStringLiteral("bounceInOut")})},
                {QStringLiteral("amplitude"), numberProp(QStringLiteral("Elastic amplitude (defaults to 1)"))},
                {QStringLiteral("period"), numberProp(QStringLiteral("Elastic period, above 0 (defaults to 0.3)"))},
+               {QStringLiteral("smooth"), boolProp(QStringLiteral("Auto Catmull-Rom tangents instead of preset/bezier/fn (use with all:true for the whole property)"))},
                {QStringLiteral("all"), boolProp(QStringLiteral("Apply to every segment of the property; at is ignored"))}},
               clipRefProps()),
                        {QStringLiteral("prop")}) },
         { "set_keyframe_tangents", "keyframes", "Shape bezier handles",
           "Set tangent handles on the key at `at`, relative to it. Omitted handle fields are sent as 0, "
-          "not left alone — pass all four to avoid flattening the ones you skip.",
+          "not left alone — pass all four to avoid flattening the ones you skip. Writes only this "
+          "property: the editor's X/Y link (which copies x's handles onto y) is OFF over MCP unless "
+          "you pass linked:true.",
           objectSchema(mergeProps(
               {{QStringLiteral("prop"), animPropProp()},
                {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds"))},
@@ -1124,7 +1151,8 @@ const QList<Op> &ops()
                {QStringLiteral("inDy"), numberProp(QStringLiteral("Incoming handle dy in property units (defaults to 0)"))},
                {QStringLiteral("outDx"), numberProp(QStringLiteral("Outgoing handle dx in seconds (defaults to 0)"))},
                {QStringLiteral("outDy"), numberProp(QStringLiteral("Outgoing handle dy in property units (defaults to 0)"))},
-               {QStringLiteral("corner"), boolProp(QStringLiteral("Break tangent collinearity"))}},
+               {QStringLiteral("corner"), boolProp(QStringLiteral("Break tangent collinearity"))},
+               {QStringLiteral("linked"), boolProp(QStringLiteral("x/y only: also copy the shape onto the other axis, scaled by segment delta, like the editor's link toggle (default false)"))}},
               clipRefProps()),
                        {QStringLiteral("prop"), QStringLiteral("at")}) },
         { "set_keyframe_hold", "keyframes", "Step-hold a key",
@@ -1405,7 +1433,10 @@ QString agentGuideText()
         "Toolbox ops may also be called by name directly on /mcp instead of through apply, but only "
         "apply gives you one undo step for a batch.\n"
         "\n"
-        "Conventions:\n"
+        "Batches: a big batch in one apply call is fine (and is one undo step); do not split it up to be\n"
+        "careful. For animation paths use set_keyframes (many keys, many props, one op; interpolation\n"
+        "\"smooth\" gives continuous velocity) rather than one set_keyframe per key.\n"
+        "\n"        "Conventions:\n"
         "- Times are seconds. Track index 0 is the top lane.\n"
         "- Identify clips by UUID from inspect({clips:true}); track+index are positional and shift as\n"
         "  tracks and clips move. Clip-ref ops need one or the other — they never fall back to the\n"
@@ -1490,9 +1521,12 @@ QString agentGuideText()
         "\n"
         "Procedural 3D (procedural toolbox):\n"
         "1. procedural_authoring_guide for the Lua API, the manifest and the shader contract.\n"
+        "   Leave the script in world mode and move the view with add_camera + set_keyframes\n"
+        "   (interpolation \"smooth\"); scene:camera is only for self-contained shots.\n"
         "2. create_procedural({slug, manifest, files:{\"main.lua\", \"<n>.vert\", \"<n>.frag\"}}) - the Lua is run and\n"
         "   the shaders compiled first; fix and retry on lua_error / shader_compile_failed.\n"
-        "3. evaluate_procedural({id, t}) for counts, bounds, lights and print output; update_procedural to iterate.\n"
+        "3. evaluate_procedural({id, t}) for counts, bounds, lights and print output; update_procedural to iterate\n"
+        "   (edits:[{file, old, new}] patches a file without resending it).\n"
         "4. add_procedural({id}) places it; set_keyframe on proc.<key> animates a manifest param.\n"
         "\n"
         "Understanding the footage (scene toolbox):\n"

@@ -98,6 +98,8 @@ public:
 
     void removeKeyframe(TimeUs time) { m_values.remove(time); }
 
+    void clearKeyframes() { m_values.clear(); }
+
     // Pin whatever the curve already evaluates to at `time` as a real key there. Used when a clip
     // is cut: the new half has to start from the value the animation had at the cut, not from
     // whichever neighbouring key happens to survive.
@@ -175,6 +177,48 @@ public:
             it->outDx = 0.0;
             it->outDy = 0.0;
         }
+    }
+
+    // Catmull-Rom auto tangents: the slope through a key is the chord between its neighbours, and
+    // each handle reaches a third of the way along its own segment, so velocity is continuous
+    // across the key. The ends use their single neighbour's chord. Replaces whatever shaped the
+    // key before, hold and function easing included.
+    void setSmooth(TimeUs time)
+    {
+        auto it = m_values.find(time);
+        if (it == m_values.end())
+            return;
+
+        const bool hasPrev = it != m_values.begin();
+        auto next = std::next(it);
+        const bool hasNext = next != m_values.end();
+        it->hold = false;
+        it->fn = EasingFn::None;
+        it->corner = false;
+        it->inDx = it->inDy = it->outDx = it->outDy = 0.0;
+        if (!hasPrev && !hasNext)
+            return;
+
+        const auto lo = hasPrev ? std::prev(it) : it;
+        const auto hi = hasNext ? next : it;
+        const double dt = static_cast<double>(hi.key() - lo.key());
+        const double slope =
+            dt > 0.0 ? (static_cast<double>(hi->value) - static_cast<double>(lo->value)) / dt : 0.0;
+        if (hasPrev) {
+            it->inDx = -static_cast<double>(time - lo.key()) / 3.0;
+            it->inDy = slope * it->inDx;
+        }
+        if (hasNext) {
+            it->outDx = static_cast<double>(hi.key() - time) / 3.0;
+            it->outDy = slope * it->outDx;
+        }
+    }
+
+    void setSmoothAll()
+    {
+        const QList<TimeUs> times = m_values.keys();
+        for (TimeUs time : times)
+            setSmooth(time);
     }
 
     // Writes an easing onto the segment that starts at `keyTime`. The last key has no outgoing

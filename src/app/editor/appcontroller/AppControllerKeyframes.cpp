@@ -59,18 +59,18 @@ static QVariantList easingSamplesToVariant(const drift::EasingSpec &spec, int n)
 }
 } // namespace
 
-void AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
+bool AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
                                     double value)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
+        return false;
     // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
     // linked to this clip. Transform props are untouched by this.
     redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
+        return false;
 
     drift::Clip &clip = track.clips[clipIndex];
     const drift::Project before = m_project;
@@ -84,9 +84,9 @@ void AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
         for (const auto &write : legacyModel3dPoseWrites(clip, prop.mid(8), value, rel, m_project.height()))
             wrote = writeClipPropValue(clip, write.first, rel, write.second, m_autoKeyEnabled, true) || wrote;
         if (!wrote)
-            return;
+            return false;
     } else if (!writeClipPropValue(clip, prop, rel, value, m_autoKeyEnabled, /*force=*/true)) {
-        return;
+        return false;
     }
 
     if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
@@ -105,6 +105,7 @@ void AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
     }
     pushProjectEdit(before, tr("Add keyframe"));
     finishEdit(tr("Keyframe set"));
+    return true;
 }
 
 void AppController::setClipColorKeyframe(int trackIndex, int clipIndex, const QString &prop,
@@ -1085,6 +1086,90 @@ void AppController::setKeyframeHold(int trackIndex, int clipIndex, const QString
     }
     pushProjectEdit(before, tr("Keyframe hold changed"));
     finishEdit(hold ? tr("Keyframe holds") : tr("Keyframe interpolates"));
+}
+
+bool AppController::setKeyframeSmooth(int trackIndex, int clipIndex, const QString &prop,
+                                       double atSeconds, bool all)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return false;
+
+    const drift::Project before = m_project;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    drift::KeyframeTrack<double> *kt = keyframeTrackForProp(clip, prop, /*createIfMissing=*/false);
+    if (!kt || kt->isEmpty())
+        return false;
+    if (all) {
+        kt->setSmoothAll();
+    } else {
+        const drift::TimeUs at = kt->nearestKeyframe(
+            drift::secondsToUs(atSeconds) - clip.timelineStart, drift::kUsPerSecond / 60);
+        if (at < 0)
+            return false;
+        kt->setSmooth(at);
+    }
+    pushProjectEdit(before, tr("Keyframe curve changed"));
+    finishEdit(tr("Keyframe curve updated"));
+    return true;
+}
+
+QString AppController::setClipKeyframes(int trackIndex, int clipIndex,
+                                        const QList<KeyframeBatch> &batches, bool replace,
+                                        const QString &interpolation)
+{
+    const drift::Project before = m_project;
+    for (const KeyframeBatch &batch : batches) {
+        int hostTrack = trackIndex;
+        int hostClip = clipIndex;
+        redirectToKeyframeHost(&hostTrack, &hostClip, batch.prop);
+        if (!isValidClipIndex(hostTrack, hostClip)) {
+            m_project = before;
+            return batch.prop;
+        }
+        drift::Clip &clip = m_project.tracks()[hostTrack].clips[hostClip];
+        if (replace) {
+            if (drift::KeyframeTrack<double> *kt = keyframeTrackForProp(clip, batch.prop, false))
+                kt->clearKeyframes();
+        }
+
+        bool wrote = !batch.keys.isEmpty();
+        for (const QPointF &key : batch.keys) {
+            const drift::TimeUs rel = qBound<drift::TimeUs>(
+                0, drift::secondsToUs(key.x()) - clip.timelineStart, clip.timelineDuration);
+            if (batch.prop.startsWith(QLatin1String("model3d."))
+                && isLegacyModel3dPoseKey(batch.prop.mid(8))) {
+                bool any = false;
+                for (const auto &write : legacyModel3dPoseWrites(clip, batch.prop.mid(8), key.y(), rel,
+                                                                 m_project.height()))
+                    any = writeClipPropValue(clip, write.first, rel, write.second, m_autoKeyEnabled, true) || any;
+                wrote = any;
+            } else {
+                wrote = writeClipPropValue(clip, batch.prop, rel, key.y(), m_autoKeyEnabled, true);
+            }
+            if (!wrote)
+                break;
+        }
+        drift::KeyframeTrack<double> *kt = keyframeTrackForProp(clip, batch.prop, false);
+        if (!wrote || !kt) {
+            m_project = before;
+            return batch.prop;
+        }
+
+        if (interpolation == QLatin1String("smooth")) {
+            kt->setSmoothAll();
+        } else if (!interpolation.isEmpty()) {
+            const drift::Interpolation mode = drift::interpolationFromString(interpolation);
+            for (const drift::TimeUs time : kt->keyframes().keys())
+                kt->setEasing(time, mode);
+        }
+    }
+    pushProjectEdit(before, tr("Add keyframes"));
+    finishEdit(tr("Keyframes set"));
+    return {};
 }
 
 void AppController::resetClipTransform(int trackIndex, int clipIndex)

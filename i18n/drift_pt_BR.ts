@@ -4221,6 +4221,14 @@
         <translation>Quadro-chave com interpolação</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">Adicionar quadros-chave</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>Redefinir câmera</translation>
     </message>

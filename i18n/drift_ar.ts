@@ -4201,6 +4201,14 @@
         <translation>الإطار المفتاحي يستكمل</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">إضافة إطارات مفتاحية</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>إعادة تعيين الكاميرا</translation>
     </message>

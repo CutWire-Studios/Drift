@@ -4213,6 +4213,14 @@
         <translation>關鍵格插值</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">添加關鍵格</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>重置攝影機</translation>
     </message>

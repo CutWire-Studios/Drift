@@ -220,6 +220,7 @@ private slots:
     void writingAtAKeyframeReadbackTimeReusesTheKey();
     void keyframeWritesStayInsideTheClip();
     void keyframeEasingThroughMcp();
+    void bulkSmoothKeyframesAndUnlinkedTangents();
     void normalizeVolumeIsRelativeAndIdempotent();
     void duckUnderIsIdempotentAndKeepsTheEnvelope();
     void audioReadOpsAreNotUndoable();
@@ -3780,6 +3781,115 @@ void McpTest::keyframeEasingThroughMcp()
     QCOMPARE(twoShapes.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
 }
 
+void McpTest::bulkSmoothKeyframesAndUnlinkedTangents()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QVERIFY(state.positionLinked());
+
+    const QJsonObject text = dispatcher.applyOne(
+        QStringLiteral("add_text"),
+        {{QStringLiteral("text"), QStringLiteral("A")}, {QStringLiteral("at"), 0.0}});
+    const QString clip = text.value(QStringLiteral("id")).toString();
+    auto call = [&](const char *tool, QJsonObject args) {
+        args.insert(QStringLiteral("clip"), clip);
+        return dispatcher.applyOne(QString::fromLatin1(tool), args);
+    };
+    auto keysOf = [&](const char *prop) {
+        return call("list_keyframes", {{QStringLiteral("prop"), QString::fromLatin1(prop)}})
+            .value(QStringLiteral("keys")).toArray();
+    };
+
+    const int undoBefore = state.undoIndex();
+    QJsonObject r = call("set_keyframes",
+                         {{QStringLiteral("keys"),
+                           QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}, QJsonArray{2.0, 50.0}}},
+                                       {QStringLiteral("y"), QJsonArray{QJsonObject{{QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 0.0}},
+                                                                        QJsonObject{{QStringLiteral("at"), 2.0}, {QStringLiteral("value"), 20.0}}}}}},
+                          {QStringLiteral("interpolation"), QStringLiteral("smooth")}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    QCOMPARE(r.value(QStringLiteral("written")).toObject().value(QStringLiteral("x")).toInt(), 3);
+    QCOMPARE(state.undoIndex(), undoBefore + 1);
+    QCOMPARE(keysOf("x").size(), 3);
+    QCOMPARE(keysOf("y").size(), 2);
+    const QJsonObject mid = keysOf("x").at(1).toObject();
+    // slope = (50 - 0) / 2 s = 25/s; handles are a third of a 1 s segment.
+    QVERIFY(qAbs(mid.value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+    QVERIFY(qAbs(mid.value(QStringLiteral("outDy")).toDouble() - 25.0 / 3.0) < 1e-3);
+    QVERIFY(qAbs(mid.value(QStringLiteral("inDy")).toDouble() + 25.0 / 3.0) < 1e-3);
+
+    r = call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 5.0}, QJsonArray{1.5, 6.0}}}}},
+                               {QStringLiteral("replace"), true}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(keysOf("x").size(), 2);
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 0.0);
+
+    r = call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 9.0}}},
+                                                                    {QStringLiteral("nope.prop"), QJsonArray{QJsonArray{0.0, 1.0}}}}},
+                               {QStringLiteral("replace"), true}});
+    QVERIFY(!r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(keysOf("x").size(), 2);
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("value")).toDouble(), 5.0);
+
+    QVERIFY(!call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0}}}}}})
+                 .value(QStringLiteral("ok")).toBool());
+    QVERIFY(!call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 1.0}}}}},
+                                    {QStringLiteral("interpolation"), QStringLiteral("wobbly")}})
+                 .value(QStringLiteral("ok")).toBool());
+
+    // x and y tangents are independent over MCP although the editor's link toggle is on.
+    call("set_keyframes", {{QStringLiteral("keys"),
+                            QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}}},
+                                        {QStringLiteral("y"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}}}}},
+                           {QStringLiteral("replace"), true}});
+    auto tangents = [&](const char *prop, double outDy) {
+        return call("set_keyframe_tangents", {{QStringLiteral("prop"), QString::fromLatin1(prop)}, {QStringLiteral("at"), 0.0},
+                                              {QStringLiteral("outDx"), 0.2}, {QStringLiteral("outDy"), outDy}});
+    };
+    QVERIFY(tangents("x", 30.0).value(QStringLiteral("ok")).toBool());
+    QVERIFY(tangents("y", 70.0).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 30.0);
+    QCOMPARE(keysOf("y").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 70.0);
+    QVERIFY(state.positionLinked());
+
+    QVERIFY(call("set_keyframe_tangents", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 0.0},
+                                           {QStringLiteral("outDx"), 0.2}, {QStringLiteral("outDy"), 10.0},
+                                           {QStringLiteral("linked"), true}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(keysOf("y").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 10.0);
+
+    // Per-key and whole-property smooth.
+    call("set_keyframes", {{QStringLiteral("keys"),
+                            QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 10.0}, QJsonArray{2.0, 0.0}}}}},
+                           {QStringLiteral("replace"), true}});
+    state.setPlayheadSeconds(0.25);
+    for (const char *mode : {"ease", "linear", "hold"}) {
+        QVERIFY(call("set_keyframe_interpolation", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0},
+                                                    {QStringLiteral("mode"), QString::fromLatin1(mode)}})
+                    .value(QStringLiteral("ok")).toBool());
+        QCOMPARE(state.playheadSeconds(), 0.25);
+    }
+    QCOMPARE(keysOf("x").at(1).toObject().value(QStringLiteral("hold")).toBool(), true);
+    QVERIFY(call("set_keyframe", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0}, {QStringLiteral("value"), 10.0}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject unknownProp = call("set_keyframe", {{QStringLiteral("prop"), QStringLiteral("text.nope")}, {QStringLiteral("at"), 1.0},
+                                                          {QStringLiteral("value"), 1.0}});
+    QVERIFY(!unknownProp.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(unknownProp.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY(!state.setClipKeyframe(0, 0, QStringLiteral("nope"), 1.0, 1.0));
+    QVERIFY(call("set_keyframe_interpolation", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0},
+                                                {QStringLiteral("mode"), QStringLiteral("smooth")}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(qAbs(keysOf("x").at(1).toObject().value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDx")).toDouble(), 0.0);
+    QVERIFY(call("set_keyframe_easing", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("all"), true},
+                                         {QStringLiteral("smooth"), true}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(qAbs(keysOf("x").at(0).toObject().value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+}
+
 void McpTest::setVolumeRoundTrips()
 {
     AssetLibrary library;
@@ -6453,6 +6563,34 @@ void McpTest::proceduralAuthoringLifecycle()
                                         {QStringLiteral("remove_files"), QJsonArray{QStringLiteral("lit.frag")}}})
                  .value(QStringLiteral("error")).toString(),
              QStringLiteral("bad_manifest"));
+
+    // edits: exact-once replacements applied before validation; a miss writes nothing.
+    const QJsonObject edited = call("update_procedural",
+                                    {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                     {QStringLiteral("edits"), QJsonArray{QJsonObject{{QStringLiteral("file"), QStringLiteral("main.lua")},
+                                                                                       {QStringLiteral("old"), QStringLiteral("print('own camera')")},
+                                                                                       {QStringLiteral("new"), QStringLiteral("print('edited')")}}}}});
+    QVERIFY2(edited.value(QStringLiteral("ok")).toBool(), dump(edited));
+    QCOMPARE(edited.value(QStringLiteral("log")).toArray().at(0).toString(), QStringLiteral("edited"));
+    const QString mainAfter = call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}})
+                                  .value(QStringLiteral("files")).toObject().value(QStringLiteral("main.lua")).toString();
+    QVERIFY(mainAfter.contains(QStringLiteral("print('edited')")) && !mainAfter.contains(QStringLiteral("own camera')")));
+    for (const QString &old : {QStringLiteral("no such text"), QStringLiteral("local")}) {
+        const QJsonObject missed = call("update_procedural",
+                                        {{QStringLiteral("id"), QStringLiteral("user.orbs")},
+                                         {QStringLiteral("edits"), QJsonArray{QJsonObject{{QStringLiteral("file"), QStringLiteral("main.lua")},
+                                                                                           {QStringLiteral("old"), QStringLiteral("print('edited')")},
+                                                                                           {QStringLiteral("new"), QStringLiteral("print('again')")}},
+                                                                              QJsonObject{{QStringLiteral("file"), QStringLiteral("main.lua")},
+                                                                                           {QStringLiteral("old"), old},
+                                                                                           {QStringLiteral("new"), QStringLiteral("x")}}}}});
+        QCOMPARE(missed.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY2(missed.value(QStringLiteral("detail")).toString().contains(QStringLiteral("edits[1] (main.lua)")),
+                 dump(missed));
+    }
+    QCOMPARE(call("get_procedural_source", {{QStringLiteral("id"), QStringLiteral("user.orbs")}})
+                 .value(QStringLiteral("files")).toObject().value(QStringLiteral("main.lua")).toString(),
+             mainAfter);
 
     // Back to the world camera for the clip.
     QVERIFY(call("update_procedural", {{QStringLiteral("id"), QStringLiteral("user.orbs")},

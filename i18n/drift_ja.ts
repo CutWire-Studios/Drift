@@ -4213,6 +4213,14 @@
         <translation>キーフレームを補間</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">キーフレームを追加</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>カメラをリセット</translation>
     </message>

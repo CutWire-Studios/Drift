@@ -4229,6 +4229,14 @@
         <translation>Ключевой кадр интерполирует значение</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">Добавить ключевые кадры</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>Сбросить камеру</translation>
     </message>

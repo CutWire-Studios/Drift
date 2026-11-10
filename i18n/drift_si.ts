@@ -4221,6 +4221,14 @@
         <translation>කීෆ්‍රේමය අන්තර්නිවේශනය වේ (Interpolates)</translation>
     </message>
     <message>
+        <source>Add keyframes</source>
+        <translation type="unfinished">කීෆ්‍රේම එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Keyframes set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>කැමරාව යළි සකසන්න</translation>
     </message>
