@@ -58,15 +58,27 @@
         <translation>自動 (推奨)</translation>
     </message>
     <message>
-        <source>NVIDIA graphics (faster)</source>
-        <translation>NVIDIA グラフィックス (高速)</translation>
+        <source>Processor (CPU)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>AMD graphics (faster)</source>
-        <translation>AMD グラフィックス (高速)</translation>
+        <source>NVIDIA CUDA</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>CPU</source>
+        <source>AMD MIGraphX (Windows ML)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AMD ROCm (MIGraphX)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows ML (DirectX 12)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebGPU (any graphics card)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3205,8 +3217,28 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip inserted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip can&apos;t completely cover another</source>
         <translation>クリップを別のクリップの上に完全に重ねることはできません</translation>
+    </message>
+    <message>
+        <source>Ripple trim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gaps closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips swapped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set sequence</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Replace clip</source>
@@ -3853,10 +3885,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Change look</source>
-        <translation>ルックを変更</translation>
-    </message>
-    <message>
         <source>Edit curve</source>
         <translation>カーブを編集</translation>
     </message>
@@ -4311,6 +4339,10 @@
     <message>
         <source>Effect updated</source>
         <translation>エフェクトを更新しました</translation>
+    </message>
+    <message>
+        <source>Change LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not read the selected file</source>
@@ -6528,16 +6560,8 @@
         <translation>なし</translation>
     </message>
     <message>
-        <source>Missing look</source>
-        <translation>見つからないルック</translation>
-    </message>
-    <message>
         <source>Adjust color</source>
         <translation>カラーを調整</translation>
-    </message>
-    <message>
-        <source>Set look</source>
-        <translation>ルックを設定</translation>
     </message>
     <message>
         <source>Reset %1</source>
@@ -6547,37 +6571,45 @@
         <source>Reset grade</source>
         <translation>グレーディングをリセット</translation>
     </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
-        <source>Imported %n look(s)</source>
-        <translation>
-            <numerusform>%n 個のルックをインポートしました</numerusform>
+        <source>Imported %n LUT(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <source>Imported %n look(s), %1 failed</source>
-        <translation>
-            <numerusform>%n 個のルックをインポートしました (%1 個失敗)</numerusform>
+        <source>Imported %n LUT(s), %1 failed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Could not import that look</source>
-        <translation>そのルックをインポートできませんでした</translation>
+        <source>Could not import that LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not remove the look</source>
-        <translation>ルックを削除できませんでした</translation>
+        <source>Could not remove the LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Look removed</source>
-        <translation>ルックを削除しました</translation>
+        <source>LUT removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not rename the look</source>
-        <translation>ルックの名前を変更できませんでした</translation>
+        <source>Could not rename the LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Look renamed</source>
-        <translation>ルックの名前を変更しました</translation>
+        <source>LUT renamed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
@@ -6844,18 +6876,6 @@
         <translation>カラー</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation>ルック</translation>
-    </message>
-    <message>
-        <source>None. Choose a look in the Looks panel.</source>
-        <translation>なし。ルックパネルでルックを選択してください。</translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>ルックの強度</translation>
-    </message>
-    <message>
         <source>Color wheels</source>
         <translation>カラーホイール</translation>
     </message>
@@ -6894,6 +6914,18 @@
     <message>
         <source>Apply to all clips</source>
         <translation>すべてのクリップに適用</translation>
+    </message>
+    <message>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None. Choose one in the Color Grading LUTs panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>
@@ -8778,16 +8810,16 @@
         <translation>インポート…</translation>
     </message>
     <message>
-        <source>Import looks</source>
-        <translation>ルックをインポート</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
         <translation>LUT ファイル (*.cube)</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>見つからないルック</translation>
     </message>
 </context>
 <context>
@@ -10028,7 +10060,7 @@
     </message>
     <message>
         <source>Label</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ラベル</translation>
     </message>
     <message>
         <source>Clip label</source>
@@ -11409,60 +11441,56 @@
 <context>
     <name>LooksPanel</name>
     <message>
-        <source>Looks</source>
-        <translation>ルック</translation>
-    </message>
-    <message>
-        <source>My Looks</source>
-        <translation>マイルック</translation>
-    </message>
-    <message>
-        <source>Import looks</source>
-        <translation>ルックをインポート</translation>
-    </message>
-    <message>
         <source>LUT files (*.cube)</source>
         <translation>LUT ファイル (*.cube)</translation>
-    </message>
-    <message>
-        <source>Search looks</source>
-        <translation>ルックを検索</translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>ルックの強度</translation>
     </message>
     <message>
         <source>Adjust %1</source>
         <translation>%1 を調整</translation>
     </message>
     <message>
-        <source>Get free looks</source>
-        <translation>無料のルックを取得</translation>
-    </message>
-    <message>
         <source>Rename…</source>
         <translation>名前の変更…</translation>
-    </message>
-    <message>
-        <source>Import .cube looks</source>
-        <translation>.cube ルックをインポート</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>見つからないルック</translation>
     </message>
     <message>
         <source>Remove</source>
         <translation>削除</translation>
     </message>
     <message>
-        <source>No looks match “%1”.</source>
-        <translation>「%1」に一致するルックはありません。</translation>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No favorites yet. Star looks to save them here.</source>
-        <translation>お気に入りはまだありません。ルックに星を付けるとここに保存されます。</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import .cube LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No LUTs match “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No favorites yet. Star LUTs to save them here.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
@@ -11481,30 +11509,34 @@
         <translation>インポート</translation>
     </message>
     <message>
-        <source>No looks</source>
-        <translation>ルックなし</translation>
+        <source>No LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Download a free pack of ready-made looks, or import your own .cube files.</source>
-        <translation>無料の既成ルックパックをダウンロードするか、独自の .cube ファイルをインポートしてください。</translation>
+        <source>Download a free pack of ready-made color grading LUTs, or import your own .cube files.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select a clip to try looks on it</source>
-        <translation>ルックを試すクリップを選択してください</translation>
+        <source>Get free LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove this look?</source>
-        <translation>このルックを削除しますか?</translation>
+        <source>Select a clip to try LUTs on it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove this LUT?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>“%1” is used by %n clip(s). They will show it as missing until it is imported again.</source>
         <translation>
             <numerusform>「%1」は %n 個のクリップで使用されています。再度インポートされるまで、それらのクリップでは見つからないルックとして表示されます。</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Rename look</source>
-        <translation>ルックの名前を変更</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -11971,8 +12003,8 @@
         <translation>テーマ</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation>ルック</translation>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Effect template</source>
@@ -16602,8 +16634,8 @@ If playback stutters, try another.</source>
         <translation>必須アドオンをインストール</translation>
     </message>
     <message>
-        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and looks come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
-        <translation>Drift の基本エフェクト、トランジション、オーディオエフェクト、フォント、ルックはアドオンとして提供されます。これらがないと、エディターで期待される機能の大部分が欠けるため、今インストールします。</translation>
+        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Needs a newer version of Drift.</source>
@@ -16784,8 +16816,8 @@ If playback stutters, try another.</source>
         <translation>トランジション</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation>ルック</translation>
+        <source>LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fonts</source>
@@ -16867,12 +16899,12 @@ If playback stutters, try another.</source>
         <translation>エクストラでさらに入手</translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
-        <translation>その他のエフェクト、トランジション、ルック、フォント、ステッカー、AI モデルは、トップバーの「エクストラ」からインストールされます。</translation>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the header.</source>
-        <translation>その他のエフェクト、トランジション、ルック、フォント、ステッカー、AI モデルは、ヘッダーの「エクストラ」からインストールされます。</translation>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use your fingers</source>
@@ -26183,7 +26215,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Drift Forge で作成した .driftfx または zip をインポートして、独自のものを追加できます。</translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>
@@ -27492,10 +27524,6 @@ If playback stutters, try another.</source>
         <translation>カラー</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation>ルック</translation>
-    </message>
-    <message>
         <source>Scopes</source>
         <translation>スコープ</translation>
     </message>
@@ -27610,6 +27638,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Camera</source>
         <translation>カメラ</translation>
+    </message>
+    <message>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization</source>

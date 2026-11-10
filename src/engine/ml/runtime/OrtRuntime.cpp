@@ -316,7 +316,7 @@ BOOL CALLBACK registerCatalogEp(WinMLEp *ep, const WinMLEpInfo *info, void *cont
     if (!info || !info->name || info->certification != WinMLEpCertification_Certified)
         return TRUE;
     if (info->readyState != WinMLEpReadyState_Ready) {
-        scan->pending.append({info->name, info->packageFamilyName ? info->packageFamilyName : ""});
+        scan->pending.emplaceBack(info->name, info->packageFamilyName ? info->packageFamilyName : "");
         return TRUE;
     }
     // Microsoft's catalog sample calls EnsureReady on ready providers too before asking for the

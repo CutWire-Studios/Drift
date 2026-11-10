@@ -16,6 +16,9 @@
 #include <set>
 
 #ifdef Q_OS_WIN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <io.h>
 #include <windows.h>
 #else

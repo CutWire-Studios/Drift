@@ -58,15 +58,27 @@
         <translation>Tự động (được khuyến nghị)</translation>
     </message>
     <message>
-        <source>NVIDIA graphics (faster)</source>
-        <translation>Đồ họa NVIDIA (nhanh hơn)</translation>
+        <source>Processor (CPU)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>AMD graphics (faster)</source>
-        <translation>Đồ họa AMD (nhanh hơn)</translation>
+        <source>NVIDIA CUDA</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>CPU</source>
+        <source>AMD MIGraphX (Windows ML)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AMD ROCm (MIGraphX)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows ML (DirectX 12)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebGPU (any graphics card)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3209,6 +3221,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip inserted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple trim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gaps closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips swapped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation>Thay thế clip</translation>
     </message>
@@ -3861,10 +3893,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Change look</source>
-        <translation>Thay đổi giao diện màu</translation>
-    </message>
-    <message>
         <source>Edit curve</source>
         <translation>Chỉnh sửa đường cong</translation>
     </message>
@@ -4319,6 +4347,10 @@
     <message>
         <source>Effect updated</source>
         <translation>Đã cập nhật hiệu ứng</translation>
+    </message>
+    <message>
+        <source>Change LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not read the selected file</source>
@@ -6528,16 +6560,8 @@
         <translation>Không</translation>
     </message>
     <message>
-        <source>Missing look</source>
-        <translation>Thiếu giao diện màu</translation>
-    </message>
-    <message>
         <source>Adjust color</source>
         <translation>Điều chỉnh màu sắc</translation>
-    </message>
-    <message>
-        <source>Set look</source>
-        <translation>Đặt giao diện màu</translation>
     </message>
     <message>
         <source>Reset %1</source>
@@ -6547,37 +6571,45 @@
         <source>Reset grade</source>
         <translation>Đặt lại chỉnh màu</translation>
     </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
-        <source>Imported %n look(s)</source>
-        <translation>
-            <numerusform>Đã nhập %n giao diện màu</numerusform>
+        <source>Imported %n LUT(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <source>Imported %n look(s), %1 failed</source>
-        <translation>
-            <numerusform>Đã nhập %n giao diện màu, thất bại %1</numerusform>
+        <source>Imported %n LUT(s), %1 failed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Could not import that look</source>
-        <translation>Không thể nhập diện mạo đó</translation>
+        <source>Could not import that LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not remove the look</source>
-        <translation>Không thể xóa giao diện màu</translation>
+        <source>Could not remove the LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Look removed</source>
-        <translation>Đã xóa giao diện màu</translation>
+        <source>LUT removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not rename the look</source>
-        <translation>Không thể đổi tên giao diện màu</translation>
+        <source>Could not rename the LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Look renamed</source>
-        <translation>Đã đổi tên giao diện màu</translation>
+        <source>LUT renamed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
@@ -6844,18 +6876,6 @@
         <translation>Màu</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation>Giao diện màu</translation>
-    </message>
-    <message>
-        <source>None. Choose a look in the Looks panel.</source>
-        <translation>Không có. Chọn một tông màu trong bảng Tông màu.</translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>Cường độ giao diện màu</translation>
-    </message>
-    <message>
         <source>Color wheels</source>
         <translation>Bánh xe màu</translation>
     </message>
@@ -6894,6 +6914,18 @@
     <message>
         <source>Apply to all clips</source>
         <translation>Áp dụng cho tất cả clip</translation>
+    </message>
+    <message>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None. Choose one in the Color Grading LUTs panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>
@@ -8778,16 +8810,16 @@
         <translation>Nhập…</translation>
     </message>
     <message>
-        <source>Import looks</source>
-        <translation>Nhập giao diện màu</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
         <translation>Tệp LUT (*.cube)</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>Thiếu giao diện màu</translation>
     </message>
 </context>
 <context>
@@ -10028,7 +10060,7 @@
     </message>
     <message>
         <source>Label</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nhãn</translation>
     </message>
     <message>
         <source>Clip label</source>
@@ -11409,60 +11441,56 @@
 <context>
     <name>LooksPanel</name>
     <message>
-        <source>Looks</source>
-        <translation>Giao diện màu</translation>
-    </message>
-    <message>
-        <source>My Looks</source>
-        <translation>Giao diện màu của tôi</translation>
-    </message>
-    <message>
-        <source>Import looks</source>
-        <translation>Nhập giao diện màu</translation>
-    </message>
-    <message>
         <source>LUT files (*.cube)</source>
         <translation>Tệp LUT (*.cube)</translation>
-    </message>
-    <message>
-        <source>Search looks</source>
-        <translation>Tìm kiếm giao diện màu</translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>Cường độ giao diện màu</translation>
     </message>
     <message>
         <source>Adjust %1</source>
         <translation>Điều chỉnh %1</translation>
     </message>
     <message>
-        <source>Get free looks</source>
-        <translation>Tải giao diện màu miễn phí</translation>
-    </message>
-    <message>
         <source>Rename…</source>
         <translation>Đổi tên…</translation>
-    </message>
-    <message>
-        <source>Import .cube looks</source>
-        <translation>Nhập giao diện màu .cube</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>Thiếu giao diện màu</translation>
     </message>
     <message>
         <source>Remove</source>
         <translation>Xóa</translation>
     </message>
     <message>
-        <source>No looks match “%1”.</source>
-        <translation>Không có giao diện màu nào khớp với “%1”.</translation>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No favorites yet. Star looks to save them here.</source>
-        <translation>Chưa có mục yêu thích nào. Đánh dấu sao giao diện màu để lưu vào đây.</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import .cube LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No LUTs match “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No favorites yet. Star LUTs to save them here.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
@@ -11481,30 +11509,34 @@
         <translation>Nhập</translation>
     </message>
     <message>
-        <source>No looks</source>
-        <translation>Không có giao diện màu</translation>
+        <source>No LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Download a free pack of ready-made looks, or import your own .cube files.</source>
-        <translation>Tải về gói giao diện màu tạo sẵn miễn phí, hoặc nhập các tệp .cube của riêng bạn.</translation>
+        <source>Download a free pack of ready-made color grading LUTs, or import your own .cube files.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select a clip to try looks on it</source>
-        <translation>Chọn một clip để thử các giao diện màu</translation>
+        <source>Get free LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove this look?</source>
-        <translation>Xóa giao diện màu này?</translation>
+        <source>Select a clip to try LUTs on it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove this LUT?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>“%1” is used by %n clip(s). They will show it as missing until it is imported again.</source>
         <translation>
             <numerusform>“%1” đang được sử dụng bởi %n clip. Chúng sẽ hiển thị là bị thiếu cho đến khi được nhập lại.</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Rename look</source>
-        <translation>Đổi tên giao diện màu</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -11971,8 +12003,8 @@
         <translation>Chủ đề</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation>Giao diện màu</translation>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Effect template</source>
@@ -16602,8 +16634,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Cài đặt thành phần thiết yếu</translation>
     </message>
     <message>
-        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and looks come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
-        <translation>Các hiệu ứng cơ bản, chuyển cảnh, hiệu ứng âm thanh, phông chữ và tông màu của Drift đều được cung cấp dưới dạng add-on. Nếu không có chúng, trình chỉnh sửa sẽ thiếu đi hầu hết những gì bạn mong đợi, vì vậy chúng đang được cài đặt ngay bây giờ.</translation>
+        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Needs a newer version of Drift.</source>
@@ -16784,8 +16816,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Chuyển cảnh</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation>Giao diện màu</translation>
+        <source>LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fonts</source>
@@ -16867,12 +16899,12 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Tải nhiều hơn từ Bổ trợ</translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
-        <translation>Thêm hiệu ứng, chuyển cảnh, tông màu, phông chữ, nhãn dán và mô hình AI được cài đặt từ mục Bổ trợ ở thanh trên cùng.</translation>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the header.</source>
-        <translation>Thêm hiệu ứng, chuyển cảnh, tông màu, phông chữ, nhãn dán và mô hình AI được cài đặt từ mục Bổ trợ trên thanh tiêu đề.</translation>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use your fingers</source>
@@ -26183,7 +26215,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nhập tệp .driftfx hoặc zip được tạo trong Drift Forge để thêm tệp của riêng bạn.</translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>
@@ -27492,10 +27524,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Màu</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation>Giao diện màu</translation>
-    </message>
-    <message>
         <source>Scopes</source>
         <translation>Scopes</translation>
     </message>
@@ -27610,6 +27638,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Camera</source>
         <translation>Camera</translation>
+    </message>
+    <message>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization</source>

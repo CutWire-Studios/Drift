@@ -58,15 +58,27 @@
         <translation>স্বয়ংক্রিয় (প্রস্তাবিত)</translation>
     </message>
     <message>
-        <source>NVIDIA graphics (faster)</source>
-        <translation>NVIDIA গ্রাফিক্স (দ্রুততর)</translation>
-    </message>
-    <message>
-        <source>AMD graphics (faster)</source>
+        <source>Processor (CPU)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>CPU</source>
+        <source>NVIDIA CUDA</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AMD MIGraphX (Windows ML)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AMD ROCm (MIGraphX)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows ML (DirectX 12)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebGPU (any graphics card)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3215,6 +3227,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip inserted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple trim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gaps closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips swapped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3859,10 +3891,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Change look</source>
-        <translation>লুক পরিবর্তন করুন</translation>
-    </message>
-    <message>
         <source>Edit curve</source>
         <translation>কার্ভ সম্পাদনা করুন</translation>
     </message>
@@ -4319,6 +4347,10 @@
     <message>
         <source>Effect updated</source>
         <translation>ইফেক্ট আপডেট করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Change LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not read the selected file</source>
@@ -6552,16 +6584,8 @@
         <translation>কোনোটিই নয়</translation>
     </message>
     <message>
-        <source>Missing look</source>
-        <translation type="unfinished">অনুপস্থিত লুক</translation>
-    </message>
-    <message>
         <source>Adjust color</source>
         <translation>রং সামঞ্জস্য করুন</translation>
-    </message>
-    <message>
-        <source>Set look</source>
-        <translation>লুক সেট করুন</translation>
     </message>
     <message>
         <source>Reset %1</source>
@@ -6571,39 +6595,47 @@
         <source>Reset grade</source>
         <translation>গ্রেড রিসেট করুন</translation>
     </message>
-    <message numerus="yes">
-        <source>Imported %n look(s)</source>
-        <translation>
-            <numerusform>%nটি লুক ইম্পোর্ট করা হয়েছে</numerusform>
-            <numerusform>%nটি লুক ইম্পোর্ট করা হয়েছে</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Imported %n look(s), %1 failed</source>
-        <translation>
-            <numerusform>%nটি লুক ইম্পোর্ট করা হয়েছে, %1টি ব্যর্থ হয়েছে</numerusform>
-            <numerusform>%nটি লুক ইম্পোর্ট করা হয়েছে, %1টি ব্যর্থ হয়েছে</numerusform>
-        </translation>
-    </message>
     <message>
-        <source>Could not import that look</source>
+        <source>Missing LUT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not remove the look</source>
-        <translation>লুকটি সরানো যায়নি</translation>
+        <source>Set LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n LUT(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n LUT(s), %1 failed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>Look removed</source>
-        <translation>লুক সরানো হয়েছে</translation>
+        <source>Could not import that LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not rename the look</source>
-        <translation>লুকের নাম পরিবর্তন করা যায়নি</translation>
+        <source>Could not remove the LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Look renamed</source>
-        <translation>লুকের নাম পরিবর্তন করা হয়েছে</translation>
+        <source>LUT removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not rename the LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT renamed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
@@ -6871,18 +6903,6 @@
         <translation>রঙ</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation>লুক</translation>
-    </message>
-    <message>
-        <source>None. Choose a look in the Looks panel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>লুক তীব্রতা</translation>
-    </message>
-    <message>
         <source>Color wheels</source>
         <translation type="unfinished">কালার হুইল</translation>
     </message>
@@ -6921,6 +6941,18 @@
     <message>
         <source>Apply to all clips</source>
         <translation>সমস্ত ক্লিপে প্রয়োগ করুন</translation>
+    </message>
+    <message>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None. Choose one in the Color Grading LUTs panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>
@@ -8812,16 +8844,16 @@
         <translation>ইম্পোর্ট করুন…</translation>
     </message>
     <message>
-        <source>Import looks</source>
-        <translation>লুক ইম্পোর্ট করুন</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
         <translation>LUT ফাইল (*.cube)</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>অনুপস্থিত লুক</translation>
     </message>
 </context>
 <context>
@@ -10064,7 +10096,7 @@
     </message>
     <message>
         <source>Label</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">লেবেল</translation>
     </message>
     <message>
         <source>Clip label</source>
@@ -11451,60 +11483,56 @@
 <context>
     <name>LooksPanel</name>
     <message>
-        <source>Looks</source>
-        <translation>লুকস</translation>
-    </message>
-    <message>
-        <source>My Looks</source>
-        <translation>আমার লুক</translation>
-    </message>
-    <message>
-        <source>Import looks</source>
-        <translation>লুক ইম্পোর্ট করুন</translation>
-    </message>
-    <message>
         <source>LUT files (*.cube)</source>
         <translation>LUT ফাইল (*.cube)</translation>
-    </message>
-    <message>
-        <source>Search looks</source>
-        <translation>লুক অনুসন্ধান করুন</translation>
-    </message>
-    <message>
-        <source>Look Intensity</source>
-        <translation>লুকের তীব্রতা</translation>
     </message>
     <message>
         <source>Adjust %1</source>
         <translation>%1 সামঞ্জস্য করুন</translation>
     </message>
     <message>
-        <source>Get free looks</source>
-        <translation>বিনামূল্যে লুক পান</translation>
-    </message>
-    <message>
         <source>Rename…</source>
         <translation>নাম পরিবর্তন করুন…</translation>
-    </message>
-    <message>
-        <source>Import .cube looks</source>
-        <translation>.cube লুক ইম্পোর্ট করুন</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>অনুপস্থিত লুক</translation>
     </message>
     <message>
         <source>Remove</source>
         <translation>সরান</translation>
     </message>
     <message>
-        <source>No looks match “%1”.</source>
-        <translation>“%1”-এর সাথে কোনো লুক মেলেনি।</translation>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No favorites yet. Star looks to save them here.</source>
-        <translation>এখনও কোনো প্রিয় তালিকা নেই। এখানে সংরক্ষণ করতে লুকে স্টার দিন।</translation>
+        <source>Import LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import .cube LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My LUTs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing LUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LUT Intensity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No LUTs match “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No favorites yet. Star LUTs to save them here.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
@@ -11523,20 +11551,28 @@
         <translation>ইমপোর্ট</translation>
     </message>
     <message>
-        <source>No looks</source>
-        <translation>কোনো লুক নেই</translation>
+        <source>No LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Download a free pack of ready-made looks, or import your own .cube files.</source>
-        <translation>তৈরি করা লুকের একটি বিনামূল্যের প্যাক ডাউনলোড করুন, অথবা আপনার নিজস্ব .cube ফাইল ইম্পোর্ট করুন।</translation>
+        <source>Download a free pack of ready-made color grading LUTs, or import your own .cube files.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select a clip to try looks on it</source>
-        <translation>লুক পরীক্ষা করতে একটি ক্লিপ নির্বাচন করুন</translation>
+        <source>Get free LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove this look?</source>
-        <translation>এই লুকটি সরাবেন?</translation>
+        <source>Select a clip to try LUTs on it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove this LUT?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>“%1” is used by %n clip(s). They will show it as missing until it is imported again.</source>
@@ -11544,10 +11580,6 @@
             <numerusform>“%1” %nটি ক্লিপে ব্যবহৃত হচ্ছে। এটি পুনরায় ইম্পোর্ট না করা পর্যন্ত সেগুলি এটিকে অনুপস্থিত হিসেবে দেখাবে।</numerusform>
             <numerusform>“%1” %nটি ক্লিপে ব্যবহৃত হচ্ছে। এটি পুনরায় ইম্পোর্ট না করা পর্যন্ত সেগুলি এটিকে অনুপস্থিত হিসেবে দেখাবে।</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Rename look</source>
-        <translation>লুকের নাম পরিবর্তন করুন</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -12016,8 +12048,8 @@
         <translation type="unfinished">থিম</translation>
     </message>
     <message>
-        <source>Look</source>
-        <translation type="unfinished">লুক</translation>
+        <source>LUT</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Effect template</source>
@@ -16672,7 +16704,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and looks come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
+        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16854,8 +16886,8 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ট্রানজিশন</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation type="unfinished">লুকস</translation>
+        <source>LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fonts</source>
@@ -16937,11 +16969,11 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the header.</source>
+        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -27581,10 +27613,6 @@ If playback stutters, try another.</source>
         <translation>রঙ</translation>
     </message>
     <message>
-        <source>Looks</source>
-        <translation>লুকস</translation>
-    </message>
-    <message>
         <source>Scopes</source>
         <translation>স্কোপস</translation>
     </message>
@@ -27699,6 +27727,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Camera</source>
         <translation>ক্যামেরা</translation>
+    </message>
+    <message>
+        <source>Color Grading LUTs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization</source>
