@@ -494,6 +494,7 @@ QtObject {
     readonly property real trackHeightShape: ThemeManager.metrics.timeline.trackHeightShape
     readonly property real trackHeightAdjustment: inputMetric(ThemeManager.metrics.timeline.trackHeightAdjustment)
     readonly property real adjustmentLaneHeight: inputMetric(ThemeManager.metrics.timeline.adjustmentLaneHeight)
+    readonly property real adjustmentRibbonHeight: ThemeManager.metrics.timeline.adjustmentRibbonHeight
     readonly property real trackGap: ThemeManager.metrics.timeline.trackGap
     readonly property real newTrackHitSlop: ThemeManager.metrics.timeline.newTrackHitSlop
     readonly property real trackLabelsWidth: ThemeManager.metrics.timeline.trackLabelsWidth
@@ -509,6 +510,7 @@ QtObject {
     readonly property real clipMinInteractiveWidth: ThemeManager.metrics.timeline.clipMinInteractiveWidth
     readonly property real clipControlsMinWidth: clipMinInteractiveWidth
     readonly property real clipMinWidth: 2
+    readonly property real timelineBakeStripHeight: 4
 
     // --- Layout: Android / touch -----------------------------------------------
     readonly property real androidIconButtonSize: ThemeManager.metrics.android.iconButtonSize

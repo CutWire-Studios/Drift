@@ -67,7 +67,7 @@ Rectangle {
         case "transition": return qsTr("Transition")
         case "audio-effect": return qsTr("Audio effect")
         case "theme": return qsTr("Theme")
-        case "look": return qsTr("Look")
+        case "look": return qsTr("LUT")
         case "effect-template": return qsTr("Effect template")
         case "lottie": return qsTr("Animation")
         case "model3d": return qsTr("3D object")

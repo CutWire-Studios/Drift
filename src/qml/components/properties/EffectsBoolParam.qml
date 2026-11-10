@@ -4,6 +4,7 @@ import Drift
 Column {
     property var row
     property int effectIndex: -1
+    property bool procedural: false
     spacing: 4
     width: parent ? parent.width : implicitWidth
     visible: row && row.paramData.type === "bool"
@@ -66,9 +67,13 @@ Column {
                              EditorState.selectedTrack, EditorState.selectedClip,
                              row.paramData.prop, EditorState.playheadSeconds,
                              checked ? 1 : 0)
-                       : EditorState.setEffectParam(
-                             EditorState.selectedTrack, EditorState.selectedClip,
-                             effectIndex, row.paramData.key, checked ? 1 : 0)
+                       : procedural
+                         ? EditorState.setProceduralParam(
+                               EditorState.selectedTrack, EditorState.selectedClip,
+                               row.paramData.key, checked ? 1 : 0)
+                         : EditorState.setEffectParam(
+                               EditorState.selectedTrack, EditorState.selectedClip,
+                               effectIndex, row.paramData.key, checked ? 1 : 0)
         }
     }
 }

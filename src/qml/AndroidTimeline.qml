@@ -965,7 +965,8 @@ Item {
             "subtitle": Theme.trackHeightSubtitle,
             "shape": Theme.trackHeightShape,
             "adjustment": Theme.trackHeightAdjustment,
-            "lane": Theme.adjustmentLaneHeight
+            "lane": Theme.adjustmentLaneHeight,
+            "ribbon": Theme.adjustmentLaneHeight
         })
     }
 
@@ -1532,16 +1533,16 @@ Item {
                                     }
                                 }
 
-                                // Transition chrome. Same geometry as the desktop panel,
-                                // minus its DropArea — there is no drag-and-drop here, so
-                                // a tap on a bare overlap creates the crossfade instead.
-                                // No preventStealing: a pan across an overlap must still
-                                // reach the Flickable.
+                                // Transition chrome: "+" on empty cuts, a toffee on
+                                // existing transitions. Taps open the transition picker sheet.
                                 Repeater {
                                     model: EditorState.clipsModel(trackRow.trackIndex).transitionRegions
                                     delegate: AndroidTimelineTransitionMark {
+                                        panel: root
                                         trackIndex: trackRow.trackIndex
                                         pxPerSecond: root.pxPerSecond
+                                        clipAreaTop: trackClipArea.y
+                                        clipAreaHeight: trackClipArea.height
                                     }
                                 }
                             }

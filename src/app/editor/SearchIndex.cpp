@@ -377,6 +377,8 @@ void SearchIndex::addCommands()
     command(tr("Language…"), QStringLiteral("translate locale"), QStringLiteral("dialog:language"));
     command(tr("Video size and layout"), QStringLiteral("canvas resolution aspect ratio"),
             QStringLiteral("dialog:videoSize"));
+    command(tr("Bakes"), QStringLiteral("bake cache pre-render render work area stale"), QStringLiteral("dialog:bakes"));
+    command(tr("Crop video"), QStringLiteral("canvas crop frame edges"), QStringLiteral("dialog:cropVideo"));
     command(tr("Switch to mobile layout…"), QStringLiteral("phone shell"), QStringLiteral("dialog:mobileShell"));
     command(tr("Settings"), QStringLiteral("preferences options"), QStringLiteral("dialog:settings"));
     command(tr("Extras"), QStringLiteral("add-ons addons packs"), QStringLiteral("dialog:extras"));

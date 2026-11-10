@@ -9,6 +9,7 @@ Column {
 
     required property var paramData
     required property int effectIndex
+    property bool procedural: false
 
     readonly property var keys: (paramData.keyframes && paramData.keyframes.points) || []
     readonly property bool animated: keys.length > 0
@@ -35,7 +36,7 @@ Column {
     function preview(x, y) {
         liveX = x
         liveY = y
-        if (animated) {
+        if (animated || procedural) {
             EditorState.previewSetClipKeyframe(EditorState.selectedTrack, EditorState.selectedClip,
                                                paramData.prop + ".x", EditorState.playheadSeconds, x)
             EditorState.previewSetClipKeyframe(EditorState.selectedTrack, EditorState.selectedClip,
@@ -50,6 +51,9 @@ Column {
         if (animated) {
             EditorState.setClipVec2Keyframe(EditorState.selectedTrack, EditorState.selectedClip,
                                             paramData.prop, EditorState.playheadSeconds, x, y)
+        } else if (procedural) {
+            EditorState.setProceduralVec2Param(EditorState.selectedTrack, EditorState.selectedClip,
+                                               paramData.key, x, y)
         } else {
             EditorState.setEffectVec2Param(EditorState.selectedTrack, EditorState.selectedClip,
                                            effectIndex, paramData.key, x, y)
@@ -81,7 +85,60 @@ Column {
         }
     }
 
-    Vec2ParamPad { host: root }
+    readonly property bool isWheel: paramData.widget === "colorWheel"
+
+    Vec2ParamPad {
+        host: root
+        visible: !root.isWheel
+    }
+
+    ColorWheelPad {
+        id: wheel
+        visible: root.isWheel
+        width: Math.min(parent.width * 0.6, 140)
+        height: width
+        anchors.horizontalCenter: parent.horizontalCenter
+        offset: Qt.point(root.curX, root.curY)
+        neutralColor: Theme.c.colorWheel.discNeutral
+        rimStrength: Theme.c.colorWheel.rimStrength
+        ringColor: Theme.c.colorWheel.ring
+        ringActiveColor: Theme.c.colorWheel.ringActive
+        focusRingColor: Theme.focusRing
+        ringWidth: Theme.c.colorWheel.ringWidth
+        crosshairColor: Theme.c.colorWheel.crosshair
+        crosshairOpacity: Theme.c.colorWheel.crosshairOpacity
+        crosshairWidth: Theme.c.vec2ParamPad.crosshairWidth
+        puckColor: Theme.c.colorWheel.puck
+        puckBorderColor: Theme.c.colorWheel.puckBorder
+        puckBorderWidth: Theme.c.colorWheel.puckBorderWidth
+        puckSize: Theme.touchInput ? 18 : 12
+        vectorColor: Theme.c.colorWheel.vector
+        vectorOpacity: Theme.c.colorWheel.vectorOpacity
+        onBegan: EditorState.beginPreviewDrag(qsTr("Edit %1").arg(root.paramData.label))
+        onOffsetMoved: (x, y) => root.preview(root.clampAxis(x), root.clampAxis(y))
+        onEnded: {
+            EditorState.commitPreviewDrag()
+            root.liveX = NaN
+            root.liveY = NaN
+        }
+        onResetRequested: {
+            EditorState.beginPreviewDrag(qsTr("Reset %1").arg(root.paramData.label))
+            root.preview(root.clampAxis(0), root.clampAxis(0))
+            EditorState.commitPreviewDrag()
+            root.liveX = NaN
+            root.liveY = NaN
+        }
+
+        HoverHandler {
+            id: wheelHover
+        }
+    }
+
+    ThemedToolTip {
+        parent: wheel
+        visible: root.isWheel && wheelHover.hovered && !wheel.pressed
+        text: qsTr("Drag to tint. Shift for fine control. Double-click to reset the color.")
+    }
 
     Row {
         width: parent.width

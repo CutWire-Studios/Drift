@@ -84,7 +84,8 @@ inline QString providerToTry(const char *tag)
     // A core carries at most one of these, so the order does not rank them.
     const std::vector<std::string> providers = Ort::GetAvailableProviders();
     for (const auto &[provider, variant] : {std::pair{"CUDAExecutionProvider", "cuda"},
-                                            std::pair{"MIGraphXExecutionProvider", "migraphx"}}) {
+                                            std::pair{"MIGraphXExecutionProvider", "migraphx"},
+                                            std::pair{"DmlExecutionProvider", "directml"}}) {
         if (std::find(providers.begin(), providers.end(), provider) == providers.end())
             continue;
         if (autoProviderFailed(tag, QLatin1String(variant)))
@@ -95,7 +96,8 @@ inline QString providerToTry(const char *tag)
 }
 
 // Applies that choice. The acceleration preference (or DRIFT_ORT_EP) selects between the CUDA or
-// MIGraphX provider carried by a GPU core, a plugin EP registered on the env, and plain CPU.
+// MIGraphX provider carried by a GPU core, DirectML in the Windows ML core, a plugin EP registered
+// on the env, and plain CPU.
 //
 // Whether a failure is worth complaining about depends on who asked. An explicit choice that
 // cannot be honoured must be loud, or identical timings look like "the GPU did not help" when in
@@ -133,6 +135,14 @@ inline QString appendRequestedProvider(Ort::SessionOptions &opts, Ort::Env &env,
             }
             opts.AppendExecutionProvider_V2(env, devices,
                                             std::unordered_map<std::string, std::string>{});
+        } else if (ep == QLatin1String("directml")) {
+            // DirectML cannot use ONNX Runtime's memory patterns or parallel execution, and fails
+            // session creation when either is on.
+            opts.DisableMemPattern();
+            opts.SetExecutionMode(ORT_SEQUENTIAL);
+            // Adapter 0 is often the integrated GPU on a hybrid laptop; ask for the fast one.
+            opts.AppendExecutionProvider("DML", {{"performance_preference", "high_performance"},
+                                                 {"device_filter", "gpu"}});
         } else if (ep == QLatin1String("openvino")) {
             opts.AppendExecutionProvider("OpenVINO", {{"device_type", "GPU"}});
         } else if (ep == QLatin1String("migraphx")) {

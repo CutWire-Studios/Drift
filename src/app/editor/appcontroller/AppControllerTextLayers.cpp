@@ -1,5 +1,6 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "core/base/CacheRoot.h"
+#include "engine/packages/procedurals/ProceduralCatalog.h"
 
 #include "core/project/sources/DotLottie.h"
 #include "core/text/animation/LottieTextImport.h"
@@ -522,6 +523,16 @@ QString AppController::keyframePropertyLabel(int trackIndex, int clipIndex, cons
         return drift::model3dKeyframeLabel(prop.mid(8));
     if (prop.startsWith(QLatin1String("pdf.")))
         return drift::pdfKeyframeLabel(prop.mid(4));
+    if (prop.startsWith(QLatin1String("proc."))) {
+        const QString key = prop.mid(5);
+        if (clip) {
+            for (const drift::EffectParamSpec &spec : proceduralForId(clip->procedural.packageId).parameters) {
+                if (spec.key == key)
+                    return spec.label.isEmpty() ? key : spec.label;
+            }
+        }
+        return key;
+    }
     if (prop.startsWith(QLatin1String("vector."))) {
         QString key = prop.mid(7);
         QString channel;
