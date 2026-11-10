@@ -32,6 +32,21 @@ Item {
 
     function refreshFields() {}
 
+    function trackGradient(track) {
+        if (track === "temperature" || track === "tint" || track === "luma")
+            return Theme.c.colorGradeTracks[track]
+        const m = /^(hue|sat|lum):(-?[\d.]+)$/.exec(track || "")
+        if (!m)
+            return []
+        const hue = Number(m[2])
+        const shade = d => Qt.hsla((((hue + d) % 360) + 360) % 360 / 360, 1, 0.5, 1)
+        if (m[1] === "hue")
+            return [shade(-30), shade(0), shade(30)]
+        if (m[1] === "sat")
+            return [Qt.hsla(0, 0, 0.5, 1), shade(0)]
+        return [Theme.c.colorGradeTracks.luma[0], shade(0), Theme.c.colorGradeTracks.luma[1]]
+    }
+
     // An eyedropper aimed at the preview would otherwise sample this effect's own output, which
     // for a chroma key is the very colour already keyed out. Undone by cancelPreviewDrag.
     function bypassForEyedropper(effectIndex) {
@@ -278,6 +293,7 @@ Item {
                                     sliderFrom: paramRow.paramData.min
                                     sliderTo: paramRow.paramData.max
                                     sliderStep: paramRow.paramData.step || 0
+                                    sliderGradient: root.trackGradient(paramRow.paramData.track)
                                 }
                             }
                         }

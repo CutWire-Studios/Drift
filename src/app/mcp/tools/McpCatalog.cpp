@@ -88,7 +88,7 @@ QJsonObject animPropProp()
         "transform like any 3D layer (x, y, width, height, z, rotationX, rotationY, rotation, "
         "perspective), and the older model3d.<scale|depth|rotX|rotY|rotZ> are still accepted as "
         "shorthands that write those; model3d.modelScale and modelScaleZ resize the model about the clip's anchor "
-        "(modelScaleZ only its depth). On a PDF clip pdf.scrollX and pdf.scrollY (page units: 1 moves "
+        "(modelScaleZ only its depth). On a procedural clip proc.<paramKey> for any numeric, switch, enum or colour-channel param of its package (proc.tint.r, proc.origin.x for vec2). On a PDF clip pdf.scrollX and pdf.scrollY (page units: 1 moves "
         "one page, or one grid row/column) and pdf.zoom (0.1..10). "
         "Note width/height here vs w/h in set_transform. Spellings live in this "
 "schema — list_animated_properties returns only properties that already have keys (empty on a "
@@ -268,7 +268,19 @@ QJsonObject textLayerSchema(const QString &description)
         {QStringLiteral("paint"), paint},
         {QStringLiteral("opacity"), numberProp(QStringLiteral("0..1"), 0.0, 1.0)},
         {QStringLiteral("blend"), enumProp(QStringLiteral("Blend mode"),
-                                           {QStringLiteral("normal"), QStringLiteral("multiply"), QStringLiteral("screen"), QStringLiteral("overlay"), QStringLiteral("add"), QStringLiteral("darken"), QStringLiteral("lighten")})},
+                                           {QStringLiteral("normal"), QStringLiteral("multiply"),
+                                               QStringLiteral("screen"), QStringLiteral("overlay"),
+                                               QStringLiteral("add"), QStringLiteral("darken"),
+                                               QStringLiteral("lighten"), QStringLiteral("colorBurn"),
+                                               QStringLiteral("linearBurn"), QStringLiteral("darkerColor"),
+                                               QStringLiteral("colorDodge"), QStringLiteral("lighterColor"),
+                                               QStringLiteral("softLight"), QStringLiteral("hardLight"),
+                                               QStringLiteral("vividLight"), QStringLiteral("linearLight"),
+                                               QStringLiteral("pinLight"), QStringLiteral("hardMix"),
+                                               QStringLiteral("difference"), QStringLiteral("exclusion"),
+                                               QStringLiteral("subtract"), QStringLiteral("divide"),
+                                               QStringLiteral("hue"), QStringLiteral("saturation"),
+                                               QStringLiteral("color"), QStringLiteral("luminosity")})},
         {QStringLiteral("offsetX"), numberProp(QStringLiteral("px at pixelSize"))},
         {QStringLiteral("offsetY"), numberProp(QStringLiteral("px at pixelSize"))},
         {QStringLiteral("blur"), numberProp(QStringLiteral("Shadow blur / glow radius in px"))},
@@ -622,7 +634,8 @@ const QList<Op> &ops()
           "the clip covers the whole sequence (what a first camera wants); with `at` it is one clip "
           "starting there, so two in a row read as a camera cut. A camera at rest looks exactly like "
           "no camera, so adding one changes nothing until you move it. Frame it with set_keyframe on "
-          "the returned clip using x/y/z (the eye, world px: canvas top-left origin, y down, +z away "
+          "the returned clip (for a path of several keys, write them with set_keyframes and "
+          "interpolation \"smooth\" in one call) using x/y/z (the eye, world px: canvas top-left origin, y down, +z away "
           "from the viewer; at rest [w/2, h/2, -zoom]), rotationX/rotationY/rotation (pitch, yaw, "
           "roll, degrees; yaw is applied first, so the horizon stays level with zero roll), "
           "anchorX/anchorY/anchorZ (the point of interest, used when camera_look_at is given "
@@ -648,11 +661,12 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))}},
                        {QStringLiteral("track")}),
           false, true },
-        { "set_track", "timeline", "Mute or hide a lane",
-          "Set track muted/hidden.",
+        { "set_track", "timeline", "Mute, hide or lock a lane",
+          "Set track muted/hidden/locked.",
           objectSchema(mergeProps({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                                    {QStringLiteral("muted"), boolProp(QStringLiteral("Mute"))},
-                                   {QStringLiteral("hidden"), boolProp(QStringLiteral("Hide from composite"))}},
+                                   {QStringLiteral("hidden"), boolProp(QStringLiteral("Hide from composite"))},
+                                   {QStringLiteral("locked"), boolProp(QStringLiteral("Lock against edits"))}},
                                   {}),
                        {QStringLiteral("track")}) },
         { "place_clip", "timeline", "Put media on the timeline",
@@ -786,6 +800,37 @@ const QList<Op> &ops()
           "the project. Caps at 32 files (oldest dropped). Not undoable.",
           objectSchema({{QStringLiteral("label"),
                          stringProp(QStringLiteral("Optional note stored only in the reply"))}}) },
+        { "clear_history", "timeline", "Free undo history",
+          "Drop undo history to free memory and shrink the next save: keeps the newest keep_last "
+          "steps that can be undone (default 0: none) and drops every undone (redo) step. The "
+          "project is unchanged; media only the dropped steps used is no longer kept for them. "
+          "Returns {removed, steps, index}. Not undoable.",
+          objectSchema({{QStringLiteral("keep_last"),
+                         propWithDefault(integerProp(QStringLiteral("Newest undoable steps to keep"), 0, 100000), 0)}}),
+          false, true },
+        { "set_history_limit", "timeline", "Cap or stop undo history",
+          "This project's own undo history setting, saved with it; each part set overrides the app "
+          "setting the user picks in Settings › General. steps: most steps that can be undone, "
+          "oldest dropped first; 0 = no history, -1 = no limit; a non-zero value turns history on "
+          "even when the app has it off. persist: true saves history into the project, false keeps "
+          "it for this session only (with history on again, unset persist follows the app setting, "
+          "or the session when the app has history off). reset:true drops both parts first. "
+          "Returns {mode, steps, source, steps_kept}. Not undoable.",
+          objectSchema({{QStringLiteral("steps"),
+                         integerProp(QStringLiteral("Most undoable steps; 0 = no history, -1 = no limit"), -1, 100000)},
+                        {QStringLiteral("persist"),
+                         boolProp(QStringLiteral("Save history into the project (true) or keep it for this session only (false)"))},
+                        {QStringLiteral("reset"),
+                         boolProp(QStringLiteral("Drop this project's setting and use the app's"))}}) },
+        { "history_stats", "timeline", "How much undo history holds",
+          "Returns {steps, undoable, redoable, snapshots (project copies held in memory), "
+          "saved_with_project, history_only_media (count of files only history still uses), "
+          "history_only_media_paths (first 20), settings:{mode, steps, source}}. size:true adds "
+          "json_bytes, the history as uncompressed JSON (what a save adds before compression; memory "
+          "use is higher and not measured); it serialises every state, so it is slow on a long history.",
+          objectSchema({{QStringLiteral("size"),
+                         boolProp(QStringLiteral("Also measure json_bytes (serialises every state)"))}}),
+          true, false, true },
         { "list_snapshots", "timeline", "On-disk history JSON files",
           "Snapshots written by take_snapshot. Returns {snapshots:[{hash, short, path, bytes, savedAt}]}.",
           objectSchema({}), true, false, true },
@@ -816,6 +861,7 @@ const QList<Op> &ops()
                                    {QStringLiteral("h"), numberProp(QStringLiteral("On-canvas height in pixels"))},
                                    {QStringLiteral("rotation"), numberProp(QStringLiteral("Degrees clockwise"))},
                                    {QStringLiteral("layer3d"), boolProp(QStringLiteral("Make the clip a 3D layer (true) or flat (false). Writing any of the 3D fields below turns it on; false resets them to 0 and the default perspective"))},
+                                   {QStringLiteral("depth_occlude"), boolProp(QStringLiteral("Occlude by depth: this 3D layer hides and is hidden by other depth-occluding 3D layers (model and procedural clips) by z instead of track order. Needs a 3D layer with blend mode Normal; set it on every clip that should sort"))},
                                    {QStringLiteral("rotationX"), numberProp(QStringLiteral("Rotation about X in degrees (right-handed; + tips the top edge toward the viewer)"))},
                                    {QStringLiteral("rotationY"), numberProp(QStringLiteral("Rotation about Y in degrees (right-handed; + swings the right edge toward the viewer)"))},
                                    {QStringLiteral("z"), numberProp(QStringLiteral("Position Z in pixels; + away from the viewer, - toward it (After Effects' convention)"))},
@@ -1075,7 +1121,7 @@ const QList<Op> &ops()
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
           "on a fresh clip. Property spellings live in the `prop` schema of the other keyframes ops "
-          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, afx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>, model3d.<key>, pdf.<key>), not here.",
+          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, afx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>, model3d.<key>, pdf.<key>, proc.<key>), not here.",
           objectSchema(clipRefProps()), true, false, true },
         { "list_keyframes", "keyframes", "Read keys for one property",
           "Returns {prop, enabled, keys:[{seconds, value, inDx, inDy, outDx, outDy, corner, hold, "
@@ -1094,6 +1140,26 @@ const QList<Op> &ops()
                                    {QStringLiteral("value"), numberProp(QStringLiteral("Property value, in the property's own units (pixels, degrees, 0..1)"))}},
                                   clipRefProps()),
                        {QStringLiteral("prop"), QStringLiteral("at"), QStringLiteral("value")}) },
+        { "set_keyframes", "keyframes", "Write many keys at once (bulk path, smooth)",
+          "Write many keys on one or more properties in ONE call and one undo step; use it instead of a "
+          "set_keyframe per key for camera paths and other dense animation. `keys` maps each prop to an "
+          "array of [seconds, value] pairs ({at, value} objects work too); times are timeline seconds, "
+          "clamped to the clip like set_keyframe. A key at an existing time overwrites its value. "
+          "`replace:true` first clears each listed prop's existing keys. `interpolation` is applied to "
+          "every key of each listed prop afterwards: linear, hold, ease, or smooth (Catmull-Rom auto "
+          "tangents from neighbouring keys, written as bezier handles, so velocity is continuous "
+          "across keys; dense linear keys look jerky, ease stops at every key). Omit it to leave the "
+          "tangents alone. Props are validated like set_keyframe; one bad prop fails bad_args and "
+          "nothing is written. Never writes the other axis of x/y. Returns {written:{prop:count}}.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                    {QStringLiteral("description"), QStringLiteral("{prop: [[seconds, value], ...]} e.g. {\"x\": [[0, 100], [2, 400]], \"z\": [[0, -800], [2, -500]]}")}}},
+               {QStringLiteral("replace"), boolProp(QStringLiteral("Clear each listed prop's existing keys first (default false)"))},
+               {QStringLiteral("interpolation"), enumProp(QStringLiteral("Applied to every key of each listed prop after writing"),
+                                                          {QStringLiteral("linear"), QStringLiteral("hold"),
+                                                           QStringLiteral("ease"), QStringLiteral("smooth")})}},
+              clipRefProps()),
+                       {QStringLiteral("keys")}) },
         { "remove_keyframe", "keyframes", "Delete a key",
           "Remove the keyframe NEAREST to `at` — there is no distance limit, so a time that misses "
           "every key still deletes the closest one. Confirm the exact key time with list_keyframes "
@@ -1103,17 +1169,17 @@ const QList<Op> &ops()
                                   clipRefProps()),
                        {QStringLiteral("prop"), QStringLiteral("at")}),
           false, true },
-        { "set_keyframe_interpolation", "keyframes", "Set linear/hold/ease on a key",
-          "Set the easing preset on the key nearest `at`. SIDE EFFECT: this moves the playhead to `at`, "
-          "which changes the default time of later ops in the same apply batch and the target of "
-          "set_transform — seek back if that matters. For custom beziers, elastic or bounce curves, "
-          "or saved presets, use set_keyframe_easing.",
+        { "set_keyframe_interpolation", "keyframes", "Set linear/hold/ease/smooth on a key",
+          "Set the easing preset on the key nearest `at`; the playhead does not move. Mode smooth writes "
+          "Catmull-Rom auto tangents from the neighbouring keys onto that key (velocity continuous "
+          "through it; for a whole property use set_keyframe_easing smooth+all, or set_keyframes). For "
+          "custom beziers, elastic or bounce curves, or saved presets, use set_keyframe_easing.",
           objectSchema(mergeProps(
               {{QStringLiteral("prop"), animPropProp()},
-               {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds; the playhead is moved here"))},
+               {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds of the key"))},
                {QStringLiteral("mode"), enumProp(QStringLiteral("Interpolation"),
                                                 {QStringLiteral("linear"), QStringLiteral("hold"),
-                                                 QStringLiteral("ease")})}},
+                                                 QStringLiteral("ease"), QStringLiteral("smooth")})}},
               clipRefProps()),
                        {QStringLiteral("prop"), QStringLiteral("at"), QStringLiteral("mode")}) },
         { "list_easing_presets", "keyframes", "See the easing presets",
@@ -1123,7 +1189,10 @@ const QList<Op> &ops()
           "Shape the segment that leaves the key at `at` (on the last key, the segment that arrives "
           "there). Give exactly one of `preset` (an id from list_easing_presets; linear and hold are "
           "presets too), `bezier` [x1, y1, x2, y2] with x in 0..1, or `fn` (elastic or bounce, with "
-          "optional amplitude and period). `all:true` applies the curve to every segment of the "
+          "optional amplitude and period). Or `smooth:true` instead of those: Catmull-Rom auto "
+          "tangents from the neighbouring keys (slope = chord between neighbours, handles a third of "
+          "each segment), so velocity is continuous across keys; it shapes the key at `at`, and with "
+          "`all:true` every key of the property. `all:true` applies the curve to every segment of the "
           "property and `at` is then not needed. Does NOT move the playhead.",
           objectSchema(mergeProps(
               {{QStringLiteral("prop"), animPropProp()},
@@ -1137,12 +1206,15 @@ const QList<Op> &ops()
                                                 QStringLiteral("bounceOut"), QStringLiteral("bounceInOut")})},
                {QStringLiteral("amplitude"), numberProp(QStringLiteral("Elastic amplitude (defaults to 1)"))},
                {QStringLiteral("period"), numberProp(QStringLiteral("Elastic period, above 0 (defaults to 0.3)"))},
+               {QStringLiteral("smooth"), boolProp(QStringLiteral("Auto Catmull-Rom tangents instead of preset/bezier/fn (use with all:true for the whole property)"))},
                {QStringLiteral("all"), boolProp(QStringLiteral("Apply to every segment of the property; at is ignored"))}},
               clipRefProps()),
                        {QStringLiteral("prop")}) },
         { "set_keyframe_tangents", "keyframes", "Shape bezier handles",
           "Set tangent handles on the key at `at`, relative to it. Omitted handle fields are sent as 0, "
-          "not left alone — pass all four to avoid flattening the ones you skip.",
+          "not left alone — pass all four to avoid flattening the ones you skip. Writes only this "
+          "property: the editor's X/Y link (which copies x's handles onto y) is OFF over MCP unless "
+          "you pass linked:true.",
           objectSchema(mergeProps(
               {{QStringLiteral("prop"), animPropProp()},
                {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds"))},
@@ -1150,7 +1222,8 @@ const QList<Op> &ops()
                {QStringLiteral("inDy"), numberProp(QStringLiteral("Incoming handle dy in property units (defaults to 0)"))},
                {QStringLiteral("outDx"), numberProp(QStringLiteral("Outgoing handle dx in seconds (defaults to 0)"))},
                {QStringLiteral("outDy"), numberProp(QStringLiteral("Outgoing handle dy in property units (defaults to 0)"))},
-               {QStringLiteral("corner"), boolProp(QStringLiteral("Break tangent collinearity"))}},
+               {QStringLiteral("corner"), boolProp(QStringLiteral("Break tangent collinearity"))},
+               {QStringLiteral("linked"), boolProp(QStringLiteral("x/y only: also copy the shape onto the other axis, scaled by segment delta, like the editor's link toggle (default false)"))}},
               clipRefProps()),
                        {QStringLiteral("prop"), QStringLiteral("at")}) },
         { "set_keyframe_hold", "keyframes", "Step-hold a key",
@@ -1345,7 +1418,8 @@ QStringList toolboxNames()
             QStringLiteral("ui"),        QStringLiteral("shapes"),   QStringLiteral("motion"),
             QStringLiteral("model3d"),   QStringLiteral("subtitles"), QStringLiteral("segmentation"), QStringLiteral("ai"),
             QStringLiteral("audio"),     QStringLiteral("scene"),    QStringLiteral("multicam"),
-            QStringLiteral("market"),    QStringLiteral("transcript"), QStringLiteral("voice")};
+            QStringLiteral("market"),    QStringLiteral("transcript"), QStringLiteral("voice"),
+            QStringLiteral("procedural")};
 }
 
 QStringList undoExemptOps()
@@ -1360,6 +1434,7 @@ QStringList undoExemptOps()
         QStringLiteral("pause"),               QStringLiteral("undo"),
         QStringLiteral("redo"),                QStringLiteral("undo_to"),
         QStringLiteral("take_snapshot"),       QStringLiteral("restore_snapshot"),
+        QStringLiteral("clear_history"),       QStringLiteral("set_history_limit"),
         QStringLiteral("set_overlap"),         QStringLiteral("set_ripple"),
         QStringLiteral("set_snap"),            QStringLiteral("set_loop_work_area"),
         QStringLiteral("export_video"),
@@ -1375,6 +1450,8 @@ QStringList undoExemptOps()
         QStringLiteral("install_addons"),
         QStringLiteral("create_effect"),       QStringLiteral("update_effect"),
         QStringLiteral("delete_effect"),       QStringLiteral("export_effect"),
+        QStringLiteral("create_procedural"),   QStringLiteral("update_procedural"),
+        QStringLiteral("delete_procedural"),
         QStringLiteral("set_acceleration"),    QStringLiteral("switch_angle"),
         QStringLiteral("end_multicam"),
         // Background work and stored analysis: nothing on the timeline changes.
@@ -1428,7 +1505,10 @@ QString agentGuideText()
         "Toolbox ops may also be called by name directly on /mcp instead of through apply, but only "
         "apply gives you one undo step for a batch.\n"
         "\n"
-        "Conventions:\n"
+        "Batches: a big batch in one apply call is fine (and is one undo step); do not split it up to be\n"
+        "careful. For animation paths use set_keyframes (many keys, many props, one op; interpolation\n"
+        "\"smooth\" gives continuous velocity) rather than one set_keyframe per key.\n"
+        "\n"        "Conventions:\n"
         "- Times are seconds. Track index 0 is the top lane.\n"
         "- Identify clips by UUID from inspect({clips:true}); track+index are positional and shift as\n"
         "  tracks and clips move. Clip-ref ops need one or the other — they never fall back to the\n"
@@ -1511,6 +1591,16 @@ QString agentGuideText()
         "   add_effect / add_transition / add_audio_effect straight away.\n"
         "4. update_effect to iterate, delete_effect to drop it, export_effect for a .driftfx.\n"
         "\n"
+        "Procedural 3D (procedural toolbox):\n"
+        "1. procedural_authoring_guide for the Lua API, the manifest and the shader contract.\n"
+        "   Leave the script in world mode and move the view with add_camera + set_keyframes\n"
+        "   (interpolation \"smooth\"); scene:camera is only for self-contained shots.\n"
+        "2. create_procedural({slug, manifest, files:{\"main.lua\", \"<n>.vert\", \"<n>.frag\"}}) - the Lua is run and\n"
+        "   the shaders compiled first; fix and retry on lua_error / shader_compile_failed.\n"
+        "3. evaluate_procedural({id, t}) for counts, bounds, lights and print output; update_procedural to iterate\n"
+        "   (edits:[{file, old, new}] patches a file without resending it).\n"
+        "4. add_procedural({id}) places it; set_keyframe on proc.<key> animates a manifest param.\n"
+        "\n"
         "Understanding the footage (scene toolbox):\n"
         "0. activity → frames → capture shows you the pictures before any scan: activity for\n"
         "   where content changes, frames for a labelled contact sheet, capture for one moment.\n"
@@ -1553,7 +1643,7 @@ QString agentGuideText()
         "shape.layer.<id>.<field>. A fresh shape has layers \"fill\" and \"stroke\".\n"
         "\n"
         "Toolboxes: media, timeline, canvas, playback, text, effects, project, keyframes, speed, ui, "
-        "shapes, motion, model3d, subtitles, segmentation, ai, audio, scene, multicam, market.\n");
+        "shapes, motion, model3d, subtitles, segmentation, ai, audio, scene, multicam, market, procedural.\n");
 }
 
 QJsonObject catalogPayload(const QJsonObject &args)
@@ -1585,6 +1675,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
         {"market", "The Cutwire marketplace: stock media, Drift assets, sound effects and community add-ons. Browse sources, preview, install (optionally onto the timeline), and manage Downloads. Stock installs spend a per-machine quota."},
         {"transcript", "Transcript-first editing: transcribe once, read phrases/words with times, cut by words or by source ranges, assemble takes, label speakers."},
+        {"procedural", "Procedural 3D clips: Lua-built scenes with your own GLSL shaders. Read the guide, write packages into My Procedurals, try them with evaluate_procedural, place them as clips and animate their params with proc.<key> keyframes."},
         {"voice", "Voices: ElevenLabs / Fish Audio text-to-speech and ElevenLabs sound effects (billable, need the user's API key), plus local Chatterbox TTS with a cloneable voice library and subtitle voiceovers (free, needs the tts-model addon)."},
     };
 
@@ -1756,14 +1847,18 @@ QJsonArray homepageTools()
         toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("apply"),
-        QStringLiteral("When: Mutate. Runs ops in order and stops at the first failure. NOT atomic — ops before the failure stay applied; the reply is {ok:false, error:\"apply_failed\", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops before it]}. On success: {ok:true, n, done}. Successful mutations collapse into a single undo step labelled from the op names, except the ops listed in catalog.limitations (import, save, playback, export, view-state toggles including set_beat_layers), which undo cannot revert. Only toolbox ops go here — catalog, toolbox, search, inspect, capture, frames, activity, and apply itself return unknown_op, so call those directly. Args are validated against the op schema (required, type, enum, min/max); unknown keys are reported back as ignored:[…]. An ops array cannot reference an id produced earlier in the same batch — end the batch after set_speed_curve or any op that mints a clip id you need next."),
+        QStringLiteral("When: Mutate. Runs ops in order and stops at the first failure. NOT atomic — ops before the failure stay applied; the reply is {ok:false, error:\"apply_failed\", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops before it]}. On success: {ok:true, n, done}. Successful mutations collapse into a single undo step labelled from the op names (with history:false, into the newest existing step instead), except the ops listed in catalog.limitations (import, save, playback, export, view-state toggles including set_beat_layers), which undo cannot revert. Only toolbox ops go here — catalog, toolbox, search, inspect, capture, frames, activity, and apply itself return unknown_op, so call those directly. Args are validated against the op schema (required, type, enum, min/max); unknown keys are reported back as ignored:[…]. An ops array cannot reference an id produced earlier in the same batch — end the batch after set_speed_curve or any op that mints a clip id you need next."),
         objectSchema({{QStringLiteral("ops"),
                        arrayProp(objectSchema({{QStringLiteral("tool"), stringProp(QStringLiteral("Toolbox op name, e.g. place_clip"))},
                                                {QStringLiteral("args"),
                                                 QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
                                                             {QStringLiteral("description"), QStringLiteral("That op's arguments, per its inputSchema from toolbox")}}}},
                                               {QStringLiteral("tool")}),
-                                 QStringLiteral("Sequential operations"))}},
+                                 QStringLiteral("Sequential operations"))},
+                      {QStringLiteral("history"),
+                       propWithDefault(boolProp(QStringLiteral(
+                           "false: no undo step of its own, for scripted batches. The changes join the newest "
+                           "undo step (undone and redone with it), and undone steps are dropped")), true)}},
                      {QStringLiteral("ops")})));
     tools.append(toolDef(
         QStringLiteral("capture"),

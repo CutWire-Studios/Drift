@@ -259,6 +259,13 @@ Item {
         }
 
         TimelineToolbarToolButton {
+            glyph: Theme.icons.spline
+            tooltip: qsTr("Toggle keyframe strip")
+            active: EditorState.preferences.keyframeStripVisible
+            onClicked: EditorState.preferences.keyframeStripVisible = !EditorState.preferences.keyframeStripVisible
+        }
+
+        TimelineToolbarToolButton {
             glyph: Theme.icons.panelTop
             tooltip: qsTr("Timeline overview — a minimap of the whole project; click or drag it to jump the view")
             active: EditorState.preferences.timelineOverviewVisible

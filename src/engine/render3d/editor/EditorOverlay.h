@@ -24,6 +24,19 @@ struct EditorLine
     bool under = false;
 };
 
+// A camera a procedural script set for itself: where it stands and what it frames, in world px.
+struct FrustumGuide
+{
+    QVector3D eye;
+    QVector3D target;
+    QVector3D up;
+    double fov = 1.0; // vertical, radians
+    double aspect = 1.0;
+    double nearPlane = 1.0;
+    double farPlane = 1.0e5;
+    bool selected = false;
+};
+
 struct EditorOverlayInput
 {
     QSizeF canvas; // in the same px as the world (render scale applied)
@@ -40,6 +53,7 @@ struct EditorOverlayInput
     QMatrix4x4 selectedModel;
     QVector3D selectedModelMin;
     QVector3D selectedModelMax;
+    QList<FrustumGuide> frustums;
 };
 
 QList<EditorLine> buildEditorOverlay(const EditorOverlayInput &input);

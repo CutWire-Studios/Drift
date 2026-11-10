@@ -13,6 +13,9 @@
 #include <memory>
 
 class PlaybackStats;
+namespace drift {
+class BakeReaderPool;
+}
 
 // What one composite cost, measured inside the worker that ran it. Reported with the frame
 // rather than timed from the service, because the service cannot tell queue wait from work
@@ -42,6 +45,7 @@ public slots:
     // service tells a frame that superseded what is on screen from one that has been overtaken.
     void composite(drift::TimeUs timeUs, FrameCompositor::RenderOptions options,
                    std::shared_ptr<const drift::Project> snapshot, quint64 sequence);
+    void setBakeSource(std::shared_ptr<drift::BakeReaderPool> bakes);
 
 signals:
     void frameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs, CompositeTiming timing,
@@ -114,6 +118,10 @@ public:
     // Preview-only: effects whose clip is in clipIds and whose catalog id is in catalogIds are
     // skipped when the snapshot is taken. Nothing in the live project changes.
     void setPreviewBypass(const QSet<QString> &clipIds, const QSet<QString> &catalogIds);
+
+    // Where baked frames come from. The pool's index may change at any time (it is thread safe);
+    // call invalidateSnapshot() after it does so the current frame is drawn again.
+    void setBakeSource(std::shared_ptr<drift::BakeReaderPool> bakes);
 
     // Wall-clock budget for one composite before it counts against the adaptive
     // scale. Callers derive it from the display cadence so it tracks project fps
@@ -205,4 +213,5 @@ public:
 
 Q_DECLARE_METATYPE(GpuFrameTexture)
 Q_DECLARE_METATYPE(CompositeTiming)
+Q_DECLARE_METATYPE(std::shared_ptr<drift::BakeReaderPool>)
 Q_DECLARE_METATYPE(std::shared_ptr<const drift::Project>)
