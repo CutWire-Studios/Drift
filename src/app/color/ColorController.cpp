@@ -273,7 +273,7 @@ QVariantMap ColorController::buildTarget() const
         const std::optional<drift::LookEntry> look = lookId.isEmpty() ? std::nullopt : drift::lookForId(lookId);
         out.insert(QStringLiteral("lookMissing"), !lookId.isEmpty() && !look);
         out.insert(QStringLiteral("lookLabel"), lookId.isEmpty() ? tr("None")
-                                                : look ? look->label : tr("Missing look"));
+                                                : look ? look->label : tr("Missing LUT"));
     }
 
     QVariantList finishing;
@@ -521,7 +521,7 @@ void ColorController::setLook(const QString &id)
 {
     const bool implicit = !m_editing;
     if (implicit)
-        beginEdit(tr("Set look"));
+        beginEdit(tr("Set LUT"));
     writeText(QStringLiteral("look"), id);
     if (implicit)
         commitEdit();
@@ -611,9 +611,9 @@ void ColorController::importLooks(const QList<QUrl> &urls)
     const int imported = result.importedIds.size();
     const int failed = result.errors.size();
     if (failed == 0)
-        m_app->setLastMessage(tr("Imported %n look(s)", "", imported), QStringLiteral("success"));
+        m_app->setLastMessage(tr("Imported %n LUT(s)", "", imported), QStringLiteral("success"));
     else
-        m_app->setLastMessage(tr("Imported %n look(s), %1 failed", "", imported).arg(failed),
+        m_app->setLastMessage(tr("Imported %n LUT(s), %1 failed", "", imported).arg(failed),
                               QStringLiteral("warning"));
 }
 
@@ -624,7 +624,7 @@ QString ColorController::importLookFile(const QString &path, QString *error)
     rebuildLooks();
     if (result.importedIds.isEmpty()) {
         if (error)
-            *error = result.errors.value(0, tr("Could not import that look"));
+            *error = result.errors.value(0, tr("Could not import that LUT"));
         return {};
     }
     return result.importedIds.first();
@@ -649,23 +649,23 @@ int ColorController::clipsUsingLook(const QString &id) const
 void ColorController::removeLook(const QString &id)
 {
     if (!drift::removeUserLook(id)) {
-        m_app->setLastMessage(tr("Could not remove the look"), QStringLiteral("error"));
+        m_app->setLastMessage(tr("Could not remove the LUT"), QStringLiteral("error"));
         return;
     }
     drift::reloadLookCatalog();
     rebuildLooks();
-    m_app->setLastMessage(tr("Look removed"), QStringLiteral("success"));
+    m_app->setLastMessage(tr("LUT removed"), QStringLiteral("success"));
 }
 
 void ColorController::renameLook(const QString &id, const QString &name)
 {
     if (!drift::renameUserLook(id, name)) {
-        m_app->setLastMessage(tr("Could not rename the look"), QStringLiteral("error"));
+        m_app->setLastMessage(tr("Could not rename the LUT"), QStringLiteral("error"));
         return;
     }
     drift::reloadLookCatalog();
     rebuildLooks();
-    m_app->setLastMessage(tr("Look renamed"), QStringLiteral("success"));
+    m_app->setLastMessage(tr("LUT renamed"), QStringLiteral("success"));
 }
 
 void ColorController::refreshForKind(const QString &kind)

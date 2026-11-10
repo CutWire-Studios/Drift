@@ -204,7 +204,7 @@
       "id": "color-looks",
       "target": "panel:looks#color-looks",
       "context": "LooksPanel",
-      "source": "Looks",
+      "source": "Color Grading LUTs",
       "keywords": "lut filter preset cube",
       "needs": []
     },
@@ -212,7 +212,7 @@
       "id": "color-import-looks",
       "target": "panel:looks#color-import-looks",
       "context": "LooksPanel",
-      "source": "Import looks",
+      "source": "Import LUTs",
       "keywords": "import cube lut look",
       "needs": []
     },

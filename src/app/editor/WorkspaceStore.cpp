@@ -51,7 +51,7 @@ const PanelType kPanelTypes[] = {
     {"teleprompter", QT_TRANSLATE_NOOP("WorkspaceStore", "Teleprompter")},
     {"denoise", QT_TRANSLATE_NOOP("WorkspaceStore", "Noise Removal")},
     {"color", QT_TRANSLATE_NOOP("WorkspaceStore", "Color")},
-    {"looks", QT_TRANSLATE_NOOP("WorkspaceStore", "Looks")},
+    {"looks", QT_TRANSLATE_NOOP("WorkspaceStore", "Color Grading LUTs")},
     {"scopes", QT_TRANSLATE_NOOP("WorkspaceStore", "Scopes")},
     {"keyframes", QT_TRANSLATE_NOOP("WorkspaceStore", "Keyframes")},
     {"masking", QT_TRANSLATE_NOOP("WorkspaceStore", "Masking")},

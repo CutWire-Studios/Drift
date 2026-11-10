@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": "c33e5f418164d222",
-  "generated": "2026-11-10T14:05:39+00:00",
+  "revision": "630851f65afc99c4",
+  "generated": "2026-11-10T14:18:47+00:00",
   "categories": [
     {
       "id": "essentials",
@@ -19,8 +19,8 @@
     },
     {
       "id": "color-looks",
-      "title": "Color & Looks",
-      "subtitle": "One-click film and creative color grades",
+      "title": "Color Grading",
+      "subtitle": "One-click film and creative color grading LUTs",
       "icon": "palette",
       "order": 30
     },
@@ -1548,8 +1548,10 @@
     },
     {
       "id": "looks.essentials",
-      "tagline": "Film looks and editor's-choice color grades",
-      "summary": "One-click color looks, including film emulations of classic stocks and hand-made grades. Each look has an intensity slider so you can make it as subtle as you like.",
+      "name": "Essential Color Grading LUTs",
+      "description": "Film emulations and editor's-choice color grading LUTs.",
+      "tagline": "Film emulation and editor's-choice color grading LUTs",
+      "summary": "One-click color grading LUTs, including film emulations of classic stocks and hand-made grades. Each LUT has an intensity slider so you can make it as subtle as you like.",
       "categories": [
         "color-looks"
       ],
@@ -1563,20 +1565,20 @@
       ],
       "icon": "palette",
       "useCases": [
-        "Give a whole video a consistent look quickly",
+        "Give a whole video a consistent grade quickly",
         "Get a classic film feel",
         "Start from a grade and fine-tune it"
       ],
       "howTo": [
         "Select a clip and open the Color workspace",
-        "Open the Looks panel",
-        "Click a look to preview it",
+        "Open the Color Grading LUTs panel",
+        "Click a LUT to preview it",
         "Use the intensity slider to blend it in"
       ],
       "unlocks": [
         {
-          "label": "Looks",
-          "location": "Color workspace, Looks panel"
+          "label": "Color grading LUTs",
+          "location": "Color workspace, Color Grading LUTs panel"
         }
       ],
       "requires": [],
@@ -1587,8 +1589,10 @@
     },
     {
       "id": "looks.extra",
-      "tagline": "Hundreds more creative color looks",
-      "summary": "A large extra collection of creative color looks for when the essentials are not enough. Works the same way, with an intensity slider for each.",
+      "name": "More Color Grading LUTs",
+      "description": "Hundreds of creative color grading LUTs.",
+      "tagline": "Hundreds more creative color grading LUTs",
+      "summary": "A large extra collection of creative color grading LUTs for when the essentials are not enough. Works the same way, with an intensity slider for each.",
       "categories": [
         "color-looks"
       ],
@@ -1603,18 +1607,18 @@
       "useCases": [
         "Explore bolder, more stylized colors",
         "Match the mood of a scene",
-        "Find a look that fits your brand"
+        "Find a grade that fits your brand"
       ],
       "howTo": [
         "Select a clip and open the Color workspace",
-        "Open the Looks panel",
-        "Browse or search the extra looks",
+        "Open the Color Grading LUTs panel",
+        "Browse or search the extra LUTs",
         "Click one and adjust its intensity"
       ],
       "unlocks": [
         {
-          "label": "More looks",
-          "location": "Color workspace, Looks panel"
+          "label": "More color grading LUTs",
+          "location": "Color workspace, Color Grading LUTs panel"
         }
       ],
       "requires": [],
