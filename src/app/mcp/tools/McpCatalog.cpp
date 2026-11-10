@@ -760,6 +760,37 @@ const QList<Op> &ops()
           "the project. Caps at 32 files (oldest dropped). Not undoable.",
           objectSchema({{QStringLiteral("label"),
                          stringProp(QStringLiteral("Optional note stored only in the reply"))}}) },
+        { "clear_history", "timeline", "Free undo history",
+          "Drop undo history to free memory and shrink the next save: keeps the newest keep_last "
+          "steps that can be undone (default 0: none) and drops every undone (redo) step. The "
+          "project is unchanged; media only the dropped steps used is no longer kept for them. "
+          "Returns {removed, steps, index}. Not undoable.",
+          objectSchema({{QStringLiteral("keep_last"),
+                         propWithDefault(integerProp(QStringLiteral("Newest undoable steps to keep"), 0, 100000), 0)}}),
+          false, true },
+        { "set_history_limit", "timeline", "Cap or stop undo history",
+          "This project's own undo history setting, saved with it; each part set overrides the app "
+          "setting the user picks in Settings › General. steps: most steps that can be undone, "
+          "oldest dropped first; 0 = no history, -1 = no limit; a non-zero value turns history on "
+          "even when the app has it off. persist: true saves history into the project, false keeps "
+          "it for this session only (with history on again, unset persist follows the app setting, "
+          "or the session when the app has history off). reset:true drops both parts first. "
+          "Returns {mode, steps, source, steps_kept}. Not undoable.",
+          objectSchema({{QStringLiteral("steps"),
+                         integerProp(QStringLiteral("Most undoable steps; 0 = no history, -1 = no limit"), -1, 100000)},
+                        {QStringLiteral("persist"),
+                         boolProp(QStringLiteral("Save history into the project (true) or keep it for this session only (false)"))},
+                        {QStringLiteral("reset"),
+                         boolProp(QStringLiteral("Drop this project's setting and use the app's"))}}) },
+        { "history_stats", "timeline", "How much undo history holds",
+          "Returns {steps, undoable, redoable, snapshots (project copies held in memory), "
+          "saved_with_project, history_only_media (count of files only history still uses), "
+          "history_only_media_paths (first 20), settings:{mode, steps, source}}. size:true adds "
+          "json_bytes, the history as uncompressed JSON (what a save adds before compression; memory "
+          "use is higher and not measured); it serialises every state, so it is slow on a long history.",
+          objectSchema({{QStringLiteral("size"),
+                         boolProp(QStringLiteral("Also measure json_bytes (serialises every state)"))}}),
+          true, false, true },
         { "list_snapshots", "timeline", "On-disk history JSON files",
           "Snapshots written by take_snapshot. Returns {snapshots:[{hash, short, path, bytes, savedAt}]}.",
           objectSchema({}), true, false, true },
@@ -1363,6 +1394,7 @@ QStringList undoExemptOps()
         QStringLiteral("pause"),               QStringLiteral("undo"),
         QStringLiteral("redo"),                QStringLiteral("undo_to"),
         QStringLiteral("take_snapshot"),       QStringLiteral("restore_snapshot"),
+        QStringLiteral("clear_history"),       QStringLiteral("set_history_limit"),
         QStringLiteral("set_overlap"),         QStringLiteral("set_ripple"),
         QStringLiteral("set_snap"),            QStringLiteral("set_loop_work_area"),
         QStringLiteral("export_video"),
@@ -1775,14 +1807,18 @@ QJsonArray homepageTools()
         toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("apply"),
-        QStringLiteral("When: Mutate. Runs ops in order and stops at the first failure. NOT atomic — ops before the failure stay applied; the reply is {ok:false, error:\"apply_failed\", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops before it]}. On success: {ok:true, n, done}. Successful mutations collapse into a single undo step labelled from the op names, except the ops listed in catalog.limitations (import, save, playback, export, view-state toggles including set_beat_layers), which undo cannot revert. Only toolbox ops go here — catalog, toolbox, search, inspect, capture, frames, activity, and apply itself return unknown_op, so call those directly. Args are validated against the op schema (required, type, enum, min/max); unknown keys are reported back as ignored:[…]. An ops array cannot reference an id produced earlier in the same batch — end the batch after set_speed_curve or any op that mints a clip id you need next."),
+        QStringLiteral("When: Mutate. Runs ops in order and stops at the first failure. NOT atomic — ops before the failure stay applied; the reply is {ok:false, error:\"apply_failed\", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops before it]}. On success: {ok:true, n, done}. Successful mutations collapse into a single undo step labelled from the op names (with history:false, into the newest existing step instead), except the ops listed in catalog.limitations (import, save, playback, export, view-state toggles including set_beat_layers), which undo cannot revert. Only toolbox ops go here — catalog, toolbox, search, inspect, capture, frames, activity, and apply itself return unknown_op, so call those directly. Args are validated against the op schema (required, type, enum, min/max); unknown keys are reported back as ignored:[…]. An ops array cannot reference an id produced earlier in the same batch — end the batch after set_speed_curve or any op that mints a clip id you need next."),
         objectSchema({{QStringLiteral("ops"),
                        arrayProp(objectSchema({{QStringLiteral("tool"), stringProp(QStringLiteral("Toolbox op name, e.g. place_clip"))},
                                                {QStringLiteral("args"),
                                                 QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
                                                             {QStringLiteral("description"), QStringLiteral("That op's arguments, per its inputSchema from toolbox")}}}},
                                               {QStringLiteral("tool")}),
-                                 QStringLiteral("Sequential operations"))}},
+                                 QStringLiteral("Sequential operations"))},
+                      {QStringLiteral("history"),
+                       propWithDefault(boolProp(QStringLiteral(
+                           "false: no undo step of its own, for scripted batches. The changes join the newest "
+                           "undo step (undone and redone with it), and undone steps are dropped")), true)}},
                      {QStringLiteral("ops")})));
     tools.append(toolDef(
         QStringLiteral("capture"),

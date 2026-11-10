@@ -234,6 +234,8 @@ private slots:
     void memoryStatsAndClearCache();
     void listHistoryReflectsTheHistoryLimit();
     void historyOpsSeeTheTrimmedStack();
+    void historyHousekeepingOps();
+    void applyWithoutHistoryJoinsTheNewestStep();
     void undoToRestoresSnapshot();
     void setRippleIsNotUndoable();
     void closeGapClosesOneHole();
@@ -4718,6 +4720,212 @@ void McpTest::historyOpsSeeTheTrimmedStack()
     const QJsonObject undo = dispatcher.applyOne(QStringLiteral("undo"), {});
     QVERIFY(!undo.value(QStringLiteral("ok")).toBool());
     QCOMPARE(state.undoHistory().size(), 0);
+}
+
+void McpTest::historyHousekeepingOps()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto testMode = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const auto restore = isolateUndoHistorySettings();
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("history.drift"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (int i = 0; i < 5; ++i)
+        QVERIFY(dispatcher.apply(addTextOp(i)).value(QStringLiteral("ok")).toBool());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    // Saved, so the clear below is what makes it changed again.
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+
+    QJsonObject stats = dispatcher.applyOne(QStringLiteral("history_stats"), {});
+    QVERIFY2(stats.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(stats).toJson()));
+    QCOMPARE(stats.value(QStringLiteral("steps")).toInt(), 5);
+    QCOMPARE(stats.value(QStringLiteral("undoable")).toInt(), 4);
+    QCOMPARE(stats.value(QStringLiteral("redoable")).toInt(), 1);
+    QCOMPARE(stats.value(QStringLiteral("snapshots")).toInt(), 10); // a before and an after per step
+    QVERIFY(!stats.contains(QStringLiteral("json_bytes"))); // only on request: it serialises every state
+    QVERIFY(dispatcher.applyOne(QStringLiteral("history_stats"), {{QStringLiteral("size"), true}})
+                .value(QStringLiteral("json_bytes")).toDouble() > 0);
+    QVERIFY(stats.value(QStringLiteral("saved_with_project")).toBool());
+    QCOMPARE(stats.value(QStringLiteral("history_only_media")).toInt(), 0);
+    QJsonObject settings = stats.value(QStringLiteral("settings")).toObject();
+    QCOMPARE(settings.value(QStringLiteral("source")).toString(), QStringLiteral("global"));
+    QCOMPARE(settings.value(QStringLiteral("steps")).toInt(), -1);
+
+    // keep_last keeps the newest undoable steps and drops the redo one; the project stays.
+    const int clipsBefore = dispatcher.inspect({}).value(QStringLiteral("clips")).toInt();
+    const QJsonObject cleared = dispatcher.applyOne(QStringLiteral("clear_history"), {{QStringLiteral("keep_last"), 2}});
+    QVERIFY(cleared.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(cleared.value(QStringLiteral("removed")).toInt(), 3);
+    QCOMPARE(cleared.value(QStringLiteral("steps")).toInt(), 2);
+    QCOMPARE(cleared.value(QStringLiteral("index")).toInt(), 2);
+    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), clipsBefore);
+    QVERIFY(!state.redoAvailable());
+    // A saved history is part of the file, so clearing it is a change to save.
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    // The kept steps still undo and redo.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), clipsBefore - 1);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("redo"), {}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), clipsBefore);
+
+    // This project's own limit, saved with it.
+    QJsonObject limit = dispatcher.applyOne(QStringLiteral("set_history_limit"),
+                                            {{QStringLiteral("steps"), 1}, {QStringLiteral("persist"), false}});
+    QVERIFY2(limit.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(limit).toJson()));
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), 1);
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("session"));
+    QCOMPARE(limit.value(QStringLiteral("source")).toString(), QStringLiteral("project"));
+    QCOMPARE(limit.value(QStringLiteral("steps_kept")).toInt(), 1);
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("history_stats"), {})
+                 .value(QStringLiteral("saved_with_project")).toBool());
+
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+    AppController reopened(&library);
+    reopened.projectFile()->loadProject(QUrl::fromLocalFile(path));
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    drift::mcp::McpDispatcher reopenedDispatcher(&reopened);
+    settings = reopenedDispatcher.applyOne(QStringLiteral("history_stats"), {})
+                   .value(QStringLiteral("settings")).toObject();
+    QCOMPARE(settings.value(QStringLiteral("source")).toString(), QStringLiteral("project"));
+    QCOMPARE(settings.value(QStringLiteral("mode")).toString(), QStringLiteral("session"));
+    QCOMPARE(settings.value(QStringLiteral("steps")).toInt(), 1);
+    QCOMPARE(reopened.undoHistory().size(), 0); // session mode: nothing was saved to load
+
+    // 0 turns history off for this project without losing its persist choice: a limit again
+    // brings back "session". Numbers and booleans as strings are read as such.
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), QStringLiteral("0")}});
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("off"));
+    QCOMPARE(limit.value(QStringLiteral("steps_kept")).toInt(), 0);
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), QStringLiteral("5")}});
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("session"));
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), 5);
+
+    // The same setting again is not a change to the project.
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), 5}});
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+
+    // With the app's history off, a project limit turns it on (for the session, unless asked).
+    state.preferences()->setUndoHistoryMode(QStringLiteral("off"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("history_stats"), {})
+                 .value(QStringLiteral("settings")).toObject().value(QStringLiteral("mode")).toString(),
+             QStringLiteral("session"));
+    dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("reset"), true}});
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("history_stats"), {})
+                 .value(QStringLiteral("settings")).toObject().value(QStringLiteral("mode")).toString(),
+             QStringLiteral("off"));
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), -1}});
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("session"));
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), -1);
+    QVERIFY(dispatcher.apply(addTextOp(9)).value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.undoAvailable());
+    state.preferences()->setUndoHistoryMode(QStringLiteral("project"));
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("reset"), true}});
+    QCOMPARE(limit.value(QStringLiteral("source")).toString(), QStringLiteral("global"));
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("project"));
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), -1);
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("set_history_limit"), {}).value(QStringLiteral("ok")).toBool());
+}
+
+void McpTest::applyWithoutHistoryJoinsTheNewestStep()
+{
+    const auto restore = isolateUndoHistorySettings();
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto clips = [&] { return dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(); };
+    const auto quiet = [&](int i) {
+        QJsonObject args = addTextOp(i);
+        args.insert(QStringLiteral("history"), QStringLiteral("false")); // string form, as agents send it
+        return dispatcher.apply(args);
+    };
+
+    // No step yet: the edit becomes part of the starting state, with nothing to undo.
+    QVERIFY(quiet(0).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clips(), 1);
+    QVERIFY(!state.undoAvailable());
+
+    // One step, then a batch without its own: undo takes both back, redo brings both.
+    QVERIFY(dispatcher.apply(addTextOp(1)).value(QStringLiteral("ok")).toBool());
+    QVERIFY(quiet(2).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), 1);
+    QCOMPARE(clips(), 3);
+    state.undo();
+    QCOMPARE(clips(), 1);
+    state.redo();
+    QCOMPARE(clips(), 3);
+
+    // Undone steps are dropped: their states no longer follow from the project.
+    QVERIFY(dispatcher.apply(addTextOp(3)).value(QStringLiteral("ok")).toBool());
+    state.undo();
+    QVERIFY(state.redoAvailable());
+    QVERIFY(quiet(4).value(QStringLiteral("ok")).toBool());
+    QVERIFY(!state.redoAvailable());
+    QCOMPARE(clips(), 4);
+    state.undo();
+    QCOMPARE(clips(), 1);
+
+    // A batch that fails part-way still folds what ran.
+    state.redo();
+    QJsonObject failing = addTextOp(5);
+    QJsonArray ops = failing.value(QStringLiteral("ops")).toArray();
+    ops.append(QJsonObject{{QStringLiteral("tool"), QStringLiteral("delete_clip")},
+                           {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), QStringLiteral("nope")}}}});
+    failing.insert(QStringLiteral("ops"), ops);
+    failing.insert(QStringLiteral("history"), false);
+    QVERIFY(!dispatcher.apply(failing).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clips(), 5);
+    QCOMPARE(state.undoHistory().size(), 1);
+    state.undo(); // the folded op goes with the step it joined
+    QCOMPARE(clips(), 1);
+    state.redo();
+    QCOMPARE(clips(), 5);
+
+    // Unsaved afterwards, like any edit: nothing was pushed, so this is set explicitly.
+    {
+        QStandardPaths::setTestModeEnabled(true);
+        const auto testMode = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        state.projectFile()->saveProject(QUrl::fromLocalFile(dir.filePath(QStringLiteral("quiet.drift"))));
+        state.projectFile()->waitForSave();
+        QVERIFY(!state.projectFile()->hasUnsavedChanges());
+        QVERIFY(quiet(6).value(QStringLiteral("ok")).toBool());
+        QVERIFY(state.projectFile()->hasUnsavedChanges());
+        QVERIFY(dispatcher.inspect({}).value(QStringLiteral("dirty")).toBool());
+
+        // A batch that changes nothing leaves history and the saved state alone: redo survives
+        // and a clean project stays clean.
+        state.undo();
+        QVERIFY(state.redoAvailable());
+        state.projectFile()->saveProject(QUrl::fromLocalFile(dir.filePath(QStringLiteral("quiet.drift"))));
+        state.projectFile()->waitForSave();
+        QVERIFY(!state.projectFile()->hasUnsavedChanges());
+        const QString anyClip = dispatcher.inspect({{QStringLiteral("clips"), true}})
+                                    .value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                    .value(QStringLiteral("items")).toArray().at(0).toObject()
+                                    .value(QStringLiteral("id")).toString();
+        QVERIFY(!anyClip.isEmpty());
+        const QString sameName = state.project()->tracks().at(0).clips.at(0).name;
+        QJsonObject noop{{QStringLiteral("history"), false},
+                         {QStringLiteral("ops"),
+                          QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_clip_name")},
+                                                 {QStringLiteral("args"),
+                                                  QJsonObject{{QStringLiteral("clip"), anyClip},
+                                                              {QStringLiteral("name"), sameName}}}}}}};
+        QVERIFY(dispatcher.apply(noop).value(QStringLiteral("ok")).toBool());
+        QVERIFY(state.redoAvailable());
+        QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    }
 }
 
 void McpTest::undoToRestoresSnapshot()
