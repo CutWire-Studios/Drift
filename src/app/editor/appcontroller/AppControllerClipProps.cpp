@@ -621,6 +621,22 @@ void AppController::setClipTextContent(int trackIndex, int clipIndex, const QStr
     finishEdit(tr("Text updated"));
 }
 
+void AppController::setClipLabel(int trackIndex, int clipIndex, const QString &label)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    QString trimmed = label.trimmed();
+    // A trailing dot would read as a number separator on the copies ("intro..2").
+    while (trimmed.endsWith(QLatin1Char('.')))
+        trimmed.chop(1);
+    if (m_project.tracks().at(trackIndex).clips.at(clipIndex).label == trimmed)
+        return;
+    const drift::Project before = m_project.detachedCopy();
+    m_project.tracks()[trackIndex].clips[clipIndex].label = trimmed;
+    pushProjectEdit(before, trimmed.isEmpty() ? tr("Clear clip label") : tr("Label clip"));
+    finishEdit(trimmed.isEmpty() ? tr("Clip label cleared") : tr("Clip labelled"));
+}
+
 void AppController::setClipName(int trackIndex, int clipIndex, const QString &name)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -1083,6 +1099,16 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
     applyTextStylePatch(s, m);
     pushProjectEdit(before, tr("Edit text style"));
     finishEdit(tr("Text style updated"));
+}
+
+void AppController::previewSetTextStyle(int trackIndex, int clipIndex, const QVariantMap &m)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    beginImplicitPreviewDrag(tr("Edit text style"));
+    applyTextStylePatch(clip->textStyle, m);
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("style.*")});
 }
 
 // The partial patch both the inspector and set_text send: the canonical keys (layers, layer,
@@ -1821,7 +1847,7 @@ void AppController::setClipLayer3d(int trackIndex, int clipIndex, bool enabled)
         return;
     drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
     if (clip.type == drift::ClipType::Audio || clip.type == drift::ClipType::Model3d
-        || clip.layer3d == enabled)
+        || clip.type == drift::ClipType::Procedural || clip.layer3d == enabled)
         return;
     const drift::Project before = m_project;
     clip.layer3d = enabled;

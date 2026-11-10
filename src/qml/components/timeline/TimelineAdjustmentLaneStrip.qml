@@ -18,7 +18,9 @@ Item {
     height: Theme.adjustmentLaneHeight
     opacity: (panel.tracks[trackIndex] && panel.tracks[trackIndex].hidden === true) ? 0.4 : 1
 
-    TimelineAdjustmentLaneChrome { }
+    TimelineAdjustmentLaneChrome {
+        kind: EditorState.adjustmentLaneKind(laneStrip.trackIndex)
+    }
 
     TimelineTrackArea {
         anchors.fill: parent

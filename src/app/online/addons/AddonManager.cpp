@@ -271,6 +271,14 @@ QVariantList AddonManager::catalog() const
         return out;
     };
     const auto storeFields = [&](QVariantMap &row, const QJsonObject &entry, const QString &id) {
+        // The catalog can rename or re-describe an addon without a repack, so its text wins over
+        // what the package carries.
+        for (const QLatin1String key : {QLatin1String("name"), QLatin1String("description"),
+                                        QLatin1String("details")}) {
+            const QString text = entry.value(key).toString();
+            if (!text.isEmpty())
+                row.insert(key, text);
+        }
         const QString description = row.value(QStringLiteral("description")).toString();
         const QString tagline = entry.value(QStringLiteral("tagline")).toString();
         const QJsonArray categories = entry.value(QStringLiteral("categories")).toArray();
@@ -471,6 +479,9 @@ QVariantMap AddonManager::entry(const QString &id) const
 
 QString AddonManager::addonName(const QString &id) const
 {
+    if (const QString name = m_catalog.entryFor(id).value(QStringLiteral("name")).toString();
+        !name.isEmpty())
+        return name;
     for (const QJsonObject &addon : m_remote) {
         if (addon.value(QStringLiteral("id")).toString() == id)
             return addon.value(QStringLiteral("name")).toString();
@@ -577,11 +588,15 @@ QVariantList AddonManager::missingEssentialAddons() const
         for (const QJsonObject &addon : m_remote) {
             if (addon.value(QStringLiteral("id")).toString() != id)
                 continue;
+            const QString description =
+                m_catalog.entryFor(id).value(QStringLiteral("description")).toString();
             rows.append(QVariantMap{
                 {QStringLiteral("id"), id},
-                {QStringLiteral("name"), addon.value(QStringLiteral("name")).toString()},
+                {QStringLiteral("name"), addonName(id)},
                 {QStringLiteral("version"), addon.value(QStringLiteral("version")).toString()},
-                {QStringLiteral("description"), addon.value(QStringLiteral("description")).toString()},
+                {QStringLiteral("description"),
+                 description.isEmpty() ? addon.value(QStringLiteral("description")).toString()
+                                       : description},
                 {QStringLiteral("downloadSize"), addon.value(QStringLiteral("downloadSize")).toDouble()},
             });
             break;
@@ -664,16 +679,23 @@ QVariantList AddonManager::accelerationOptions() const
     };
 
     QVariantList rows{row(QStringLiteral("auto"), tr("Automatic (recommended)")),
-                      row(QStringLiteral("cpu"), tr("This computer"))};
+                      row(QStringLiteral("cpu"), tr("Processor (CPU)"))};
     for (const QString &variant : installed) {
         if (variant == QLatin1String("cpu"))
             continue;
         if (variant == QLatin1String("cuda"))
-            rows.append(row(variant, tr("NVIDIA graphics (faster)")));
+            rows.append(row(variant, tr("NVIDIA CUDA")));
         else if (variant == QLatin1String("migraphx"))
-            rows.append(row(variant, tr("AMD graphics (faster)")));
+#ifdef Q_OS_WIN
+            // On Windows this is the MIGraphX provider Windows ML installs, not a ROCm build.
+            rows.append(row(variant, tr("AMD MIGraphX (Windows ML)")));
+#else
+            rows.append(row(variant, tr("AMD ROCm (MIGraphX)")));
+#endif
+        else if (variant == QLatin1String("directml"))
+            rows.append(row(variant, tr("Windows ML (DirectX 12)")));
         else if (variant == QLatin1String("webgpu"))
-            rows.append(row(variant, tr("Graphics card (faster)")));
+            rows.append(row(variant, tr("WebGPU (any graphics card)")));
         else
             rows.append(row(variant, variant.toUpper()));
     }
@@ -695,9 +717,10 @@ void AddonManager::setAcceleration(const QString &variant)
     // effect immediately — it layers onto the core already loaded. Switching to a *different core*
     // does not: that library is loaded once per process.
     const QString active = drift::ort::activeVariant();
-    if (!active.isEmpty() && variant != active && variant != QLatin1String("auto")) {
+    const QString core = drift::ort::coreVariantFor(variant);
+    if (!active.isEmpty() && core != active && variant != QLatin1String("auto")) {
         for (const drift::ort::RuntimeInfo &runtime : drift::ort::installedRuntimes()) {
-            if (runtime.variant == variant) {
+            if (runtime.variant == core) {
                 m_runtimeRestartRequired = true;
                 break;
             }
@@ -738,7 +761,8 @@ QVariantList AddonManager::fallbackAccelerationOptions(const QString &failed) co
             continue;
         // A different core only loads on the next launch, which is no use to the job waiting.
         const bool usableNow = value == QLatin1String("auto") || value == QLatin1String("cpu")
-            || value == active || !drift::ort::pluginEpNameForVariant(value).isEmpty();
+            || drift::ort::coreVariantFor(value) == active
+            || !drift::ort::pluginEpNameForVariant(value).isEmpty();
         if (usableNow)
             rows.append(row);
     }

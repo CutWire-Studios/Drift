@@ -89,6 +89,8 @@ CollapsibleSection {
                 tooltip: inspector.frontFillPaintKind === "gradient"
                          ? qsTr("Choose the gradient's first colour")
                          : qsTr("Choose text colour")
+                livePreview: true
+                onPreviewed: value => inspector.previewTextStyle({ "color": value })
                 onEdited: value => inspector.setTextStyleKey("color", value)
             }
             Text {

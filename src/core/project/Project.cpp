@@ -330,6 +330,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("model3d"), clip.model3d.toJson());
     if (clip.type == ClipType::Pdf)
         json.insert(QStringLiteral("pdf"), clip.pdf.toJson());
+    if (clip.type == ClipType::Procedural)
+        json.insert(QStringLiteral("procedural"), clip.procedural.toJson());
     if (!clip.sequenceId.isEmpty())
         json.insert(QStringLiteral("sequenceId"), clip.sequenceId);
     if (clip.sourceFrame != QRectF(0, 0, 1, 1))
@@ -362,6 +364,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("anchorY"), keyframesToJson(clip.anchorY));
     if (!clip.anchorZ.isEmpty())
         json.insert(QStringLiteral("anchorZ"), keyframesToJson(clip.anchorZ));
+    if (!clip.label.isEmpty())
+        json.insert(QStringLiteral("label"), clip.label);
     return json;
 }
 
@@ -414,6 +418,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
         adjustmentKindFromString(object.value(QStringLiteral("adjustmentKind")).toString());
     clip.linkedClipId = object.value(QStringLiteral("linkedClipId")).toString();
     clip.name = object.value(QStringLiteral("name")).toString();
+    clip.label = object.value(QStringLiteral("label")).toString();
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
     clip.textStyle = textStyleFromJson(object.value(QStringLiteral("textStyle")).toObject());
     clip.subtitleCues = subtitleCuesFromJson(object.value(QStringLiteral("subtitleCues")).toArray());
@@ -421,6 +426,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.vector = VectorSource::fromJson(object.value(QStringLiteral("vector")).toObject());
     clip.model3d = Model3dSource::fromJson(object.value(QStringLiteral("model3d")).toObject());
     clip.pdf = PdfSource::fromJson(object.value(QStringLiteral("pdf")).toObject());
+    clip.procedural = ProceduralSource::fromJson(object.value(QStringLiteral("procedural")).toObject());
     clip.sequenceId = object.value(QStringLiteral("sequenceId")).toString();
     clip.path = object.value(QStringLiteral("path")).toString();
     clip.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
@@ -836,6 +842,10 @@ void detachClip(Clip &clip)
     clip.model3d.animations.detach();
     clip.model3d.keyframes.detach();
     for (auto it = clip.model3d.keyframes.begin(); it != clip.model3d.keyframes.end(); ++it)
+        it.value().detachSharedData();
+    clip.procedural.parameters.detach();
+    clip.procedural.paramKeyframes.detach();
+    for (auto it = clip.procedural.paramKeyframes.begin(); it != clip.procedural.paramKeyframes.end(); ++it)
         it.value().detachSharedData();
     clip.pdf.pageSizes.detach();
     clip.pdf.keyframes.detach();
@@ -1292,6 +1302,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
                 trackObject.value(QStringLiteral("showChannelWaveforms")).toBool(false);
             track.heightScale = qBound(
                 0.6, trackObject.value(QStringLiteral("heightScale")).toDouble(1.0), 4.0);
+            track.lanesCollapsed = trackObject.value(QStringLiteral("lanesCollapsed")).toBool(false);
 
             const QJsonArray clipsArray = trackObject.value(QStringLiteral("clips")).toArray();
             for (const QJsonValue &clipValue : clipsArray) {
@@ -1350,6 +1361,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         // combinable. Runs after the v4 pass, which is what mints the track ids a lane needs.
         migrateClipMasksToAdjustmentLanes(project);
     }
+    project.forEachTrackList([](QList<Track> &tracks) {
+        tracks.removeIf([](const Track &track) { return track.isAdjustmentLane() && track.clips.isEmpty(); });
+    });
     if (version < 13) {
         const double width = project.width();
         const double height = project.height();
@@ -1399,7 +1413,11 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 21 added Mask::cropShape, the clip Shape picker's mask marker. Nothing to migrate; the
     // bump is a gate, as for versions 6 and 9. An older build would drop the marker and no longer
     // treat the mask as the clip's shape.
+    // Version 23 added the teleprompter script. Nothing to migrate; the bump is a gate so an older
+    // build does not silently drop the script on save.
     // Version 22 moved the 3D world to After Effects' convention (migrateWorldTo22 above).
+    // Version 24 added ClipType::Procedural. Nothing to migrate; the bump is a gate, as for versions
+    // 6 and 9. An older build would load those clips as videos with no path.
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 
@@ -1432,6 +1450,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         project.m_id = savedId;
     project.m_author = object.value(QStringLiteral("author")).toString();
     project.m_description = object.value(QStringLiteral("description")).toString();
+    project.m_teleprompterScript = object.value(QStringLiteral("teleprompterScript")).toString();
     const QDateTime created =
         QDateTime::fromString(object.value(QStringLiteral("createdAt")).toString(), Qt::ISODate);
     if (created.isValid())
@@ -1498,6 +1517,7 @@ QJsonObject Project::toJson(bool includeTranscripts) const
                 {QStringLiteral("clipDisplay"), static_cast<int>(track.clipDisplay)},
                 {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
                 {QStringLiteral("heightScale"), track.heightScale},
+                {QStringLiteral("lanesCollapsed"), track.lanesCollapsed},
                 {QStringLiteral("clips"), clipsArray},
                 {QStringLiteral("transitions"), transitionsArray},
             };
@@ -1548,6 +1568,8 @@ QJsonObject Project::toJson(bool includeTranscripts) const
     };
     if (!sequencesArray.isEmpty())
         root.insert(QStringLiteral("sequences"), sequencesArray);
+    if (!m_teleprompterScript.isEmpty())
+        root.insert(QStringLiteral("teleprompterScript"), m_teleprompterScript);
     if (!m_openSequenceTabs.isEmpty())
         root.insert(QStringLiteral("openSequenceTabs"), QJsonArray::fromStringList(m_openSequenceTabs));
     if (hasWorkArea()) {

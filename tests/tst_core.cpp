@@ -82,6 +82,7 @@ private slots:
     void easingCssRoundTrip();
     void easingSetSegmentOnLastKeyTargetsIncomingSegment();
     void keyframeBezierTangents();
+    void keyframeSmoothTangents();
     void disabledKeyframesFreezeAtFirstKey();
     void legacyTrackInterpolationMigratesLosslessly();
     void keyframeNearestQuery();
@@ -120,6 +121,7 @@ private slots:
     void insertTrackAtTopAllowsDuplicateTypes();
     void multiTrackSerializationRoundTrip();
     void textStyleAndBlendModeSerialization();
+    void blendModeRoundTripsEveryMode();
     void legacyBoldMigratesToFontWeight();
     void textPresetsAreWellFormed();
     void userTextPresetsRoundTrip();
@@ -155,6 +157,7 @@ private slots:
     void textStyleKeyframesSerialization();
     void vectorClipIsSyntheticOnGraphicTracks();
     void model3dSourceSerialization();
+    void proceduralSourceSerializationAndSplit();
     void model3dScalarClampsAndResolves();
     void model3dPoseMigratesToTransform();
     void model3dKeyLightKeysMigrate();
@@ -225,6 +228,9 @@ private slots:
     void applyMulticamSwitchMergesAdjacentSameCamera();
     void applyMulticamSwitchRejectsEdges();
     void sliceClipToTimelineRangeKeepsSourceInSync();
+    void rippleGroupsFollowLinksAcrossTracks();
+    void closeRippleRangesShiftsEachGroupOnce();
+    void clipLabelsRoundTripAndNumberCopies();
 };
 
 void CoreTest::timeConversion()
@@ -289,6 +295,46 @@ void CoreTest::disabledKeyframesFreezeAtFirstKey()
     QCOMPARE(loadedTrack.keyframes().size(), 2);
     // A project written before the switch existed loads with its animations on.
     QVERIFY(loaded.tracks().at(0).clips.at(0).transformX.enabled());
+}
+
+void CoreTest::keyframeSmoothTangents()
+{
+    drift::KeyframeTrack<double> track;
+    track.setKeyframe(0, 0.0);
+    track.setKeyframe(drift::secondsToUs(1.0), 10.0);
+    track.setKeyframe(drift::secondsToUs(3.0), 4.0);
+    track.setKeyframe(drift::secondsToUs(4.0), 4.0);
+    track.setEasing(0, drift::Interpolation::Hold);
+    track.setSmoothAll();
+
+    const auto &keys = track.keyframes();
+    const drift::Keyframe<double> first = keys.value(0);
+    QVERIFY(!first.hold);
+    QCOMPARE(first.inDx, 0.0);
+    // One-sided slope at the ends: 10 over 1 s, handle a third of the segment.
+    QCOMPARE(first.outDx, drift::kUsPerSecond / 3.0);
+    QVERIFY(qAbs(first.outDy - 10.0 / 3.0) < 1e-9);
+
+    // Middle key: slope is the chord between its neighbours, (4 - 0) / 3 s.
+    const drift::Keyframe<double> mid = keys.value(drift::secondsToUs(1.0));
+    QCOMPARE(mid.inDx, -drift::kUsPerSecond / 3.0);
+    QCOMPARE(mid.outDx, 2.0 * drift::kUsPerSecond / 3.0);
+    const double slope = 4.0 / (3.0 * drift::kUsPerSecond);
+    QVERIFY(qAbs(mid.outDy - slope * mid.outDx) < 1e-9);
+    QVERIFY(qAbs(mid.inDy - slope * mid.inDx) < 1e-9);
+
+    const drift::Keyframe<double> last = keys.value(drift::secondsToUs(4.0));
+    QCOMPARE(last.outDx, 0.0);
+    QCOMPARE(last.outDy, 0.0);
+
+    // C1: the velocity just before and after a key agrees.
+    const drift::TimeUs key = drift::secondsToUs(1.0);
+    const drift::TimeUs h = 1000;
+    const double before = (track.evaluateAt(key) - track.evaluateAt(key - h)) / h;
+    const double after = (track.evaluateAt(key + h) - track.evaluateAt(key)) / h;
+    QVERIFY(qAbs(before - slope) < 0.03 * slope);
+    QVERIFY(qAbs(after - slope) < 0.03 * slope);
+    QCOMPARE(track.evaluateAt(key), 10.0);
 }
 
 void CoreTest::keyframeBezierTangents()
@@ -1668,6 +1714,52 @@ void CoreTest::multiTrackSerializationRoundTrip()
     QCOMPARE(loaded.tracks()[3].type, drift::TrackType::Text);
 }
 
+void CoreTest::blendModeRoundTripsEveryMode()
+{
+    for (int i = 0; i <= int(drift::BlendMode::Luminosity); ++i) {
+        const auto mode = drift::BlendMode(i);
+        drift::Project project;
+        project.tracks().clear();
+        project.tracks().append(drift::Track{.type = drift::TrackType::Text});
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-blend");
+        clip.type = drift::ClipType::Text;
+        clip.timelineDuration = drift::secondsToUs(1.0);
+        clip.blendMode = mode;
+        project.tracks()[0].clips.append(clip);
+
+        QString error;
+        const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+        QVERIFY(error.isEmpty());
+        QCOMPARE(loaded.tracks().at(0).clips.at(0).blendMode, mode);
+    }
+
+    QJsonObject json = [] {
+        drift::Project project;
+        project.tracks().clear();
+        project.tracks().append(drift::Track{.type = drift::TrackType::Text});
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-blend");
+        clip.type = drift::ClipType::Text;
+        clip.timelineDuration = drift::secondsToUs(1.0);
+        clip.blendMode = drift::BlendMode::Multiply;
+        project.tracks()[0].clips.append(clip);
+        return project.toJson();
+    }();
+    QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
+    QJsonObject track = tracks.at(0).toObject();
+    QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+    QJsonObject clipJson = clips.at(0).toObject();
+    clipJson.insert(QStringLiteral("blendMode"), QStringLiteral("notAMode"));
+    clips.replace(0, clipJson);
+    track.insert(QStringLiteral("clips"), clips);
+    tracks.replace(0, track);
+    json.insert(QStringLiteral("tracks"), tracks);
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QCOMPARE(loaded.tracks().at(0).clips.at(0).blendMode, drift::BlendMode::Normal);
+}
+
 void CoreTest::textStyleAndBlendModeSerialization()
 {
     drift::Project project;
@@ -2055,14 +2147,16 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
     asset.ranges.append({QStringLiteral("r2"), drift::secondsToUs(5), drift::secondsToUs(9), -1, {}, {}});
     asset.markers.append({QStringLiteral("m1"), drift::secondsToUs(2), QStringLiteral("Cue"), QStringLiteral("note")});
     project.addAsset(asset);
+    project.setTeleprompterScript(QStringLiteral("Hello\nworld"));
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 22);
+    QCOMPARE(drift::Project::kCurrentVersion, 24);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
     QVERIFY(error.isEmpty());
+    QCOMPARE(loaded.teleprompterScript(), QStringLiteral("Hello\nworld"));
     const drift::MediaAsset *back = loaded.asset(QStringLiteral("asset-lab"));
     QVERIFY(back);
     QCOMPARE(back->rating, 1);
@@ -2097,7 +2191,7 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 22);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 24);
     const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                    .value(QStringLiteral("clips")).toArray().at(0).toObject()
                                    .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();
@@ -2604,6 +2698,63 @@ void CoreTest::vectorClipIsSyntheticOnGraphicTracks()
     QCOMPARE(clip.timelineToSourceUs(drift::secondsToUs(1.5)), drift::secondsToUs(1.0));
     clip.reverse = true;
     QCOMPARE(clip.timelineToSourceUs(drift::secondsToUs(1.5)), drift::secondsToUs(3.0));
+}
+
+void CoreTest::proceduralSourceSerializationAndSplit()
+{
+    drift::Track shapeTrack{.type = drift::TrackType::Shape};
+    QVERIFY(shapeTrack.allowsClipType(drift::ClipType::Procedural));
+    QVERIFY(!drift::Track{.type = drift::TrackType::Video}.allowsClipType(drift::ClipType::Procedural));
+    QCOMPARE(drift::clipTypeFromString(drift::clipTypeToString(drift::ClipType::Procedural)),
+             drift::ClipType::Procedural);
+
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-proc");
+    clip.type = drift::ClipType::Procedural;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    clip.procedural.packageId = QStringLiteral("missing.pkg");
+    clip.procedural.seed = 42;
+    clip.procedural.parameters.insert(QStringLiteral("count"), 12);
+    clip.procedural.parameters.insert(QStringLiteral("tint"), QStringLiteral("#ff8800"));
+    clip.procedural.paramKeyframes[QStringLiteral("speed")].setKeyframe(0, 0.0);
+    clip.procedural.paramKeyframes[QStringLiteral("speed")].setKeyframe(drift::secondsToUs(4.0), 4.0);
+    project.tracks()[0].clips.append(clip);
+    drift::Clip shape;
+    shape.id = QStringLiteral("clip-shape");
+    shape.type = drift::ClipType::Shape;
+    project.tracks()[0].clips.append(shape);
+
+    const QJsonObject json = project.toJson();
+    const QJsonArray clips = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                 .value(QStringLiteral("clips")).toArray();
+    QVERIFY(clips.at(0).toObject().contains(QStringLiteral("procedural")));
+    QVERIFY(!clips.at(1).toObject().contains(QStringLiteral("procedural")));
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const drift::Clip &c = loaded.tracks()[0].clips[0];
+    QCOMPARE(c.type, drift::ClipType::Procedural);
+    QCOMPARE(c.procedural.packageId, QStringLiteral("missing.pkg"));
+    QCOMPARE(c.procedural.seed, 42);
+    QCOMPARE(c.procedural.parameters.value(QStringLiteral("count")).toInt(), 12);
+    QCOMPARE(c.procedural.parameters.value(QStringLiteral("tint")).toString(), QStringLiteral("#ff8800"));
+    const auto &track = c.procedural.paramKeyframes.value(QStringLiteral("speed"));
+    QCOMPARE(track.keyframes().size(), 2);
+    QCOMPARE(track.evaluateAt(drift::secondsToUs(2.0)), 2.0);
+
+    drift::Clip head = clip;
+    drift::Clip tail;
+    QVERIFY(drift::splitClipAtOffset(head, tail, drift::secondsToUs(2.0)));
+    QCOMPARE(tail.procedural.packageId, QStringLiteral("missing.pkg"));
+    QCOMPARE(head.procedural.paramKeyframes.value(QStringLiteral("speed")).evaluateAt(drift::secondsToUs(2.0)), 2.0);
+    const auto &tailTrack = tail.procedural.paramKeyframes.value(QStringLiteral("speed"));
+    QCOMPARE(tailTrack.evaluateAt(0), 2.0);
+    QCOMPARE(tailTrack.evaluateAt(drift::secondsToUs(2.0)), 4.0);
 }
 
 void CoreTest::model3dSourceSerialization()
@@ -6864,6 +7015,149 @@ void CoreTest::subtitleNamesFollowCuesOnlyWhenGenerated()
     QCOMPARE(name, QStringLiteral("VO script"));
 }
 
+namespace {
+drift::Clip rippleClip(const char *id, double start, double dur, const char *link = "")
+{
+    drift::Clip c;
+    c.id = QString::fromLatin1(id);
+    c.timelineStart = drift::secondsToUs(start);
+    c.timelineDuration = drift::secondsToUs(dur);
+    c.srcOut = c.timelineDuration;
+    c.linkId = QString::fromLatin1(link);
+    return c;
+}
+double rippleStart(const drift::Project &project, const char *id)
+{
+    for (const drift::Track &t : project.tracks())
+        for (const drift::Clip &c : t.clips)
+            if (c.id == QLatin1String(id))
+                return drift::usToSeconds(c.timelineStart);
+    return -1;
+}
+} // namespace
+
+void CoreTest::rippleGroupsFollowLinksAcrossTracks()
+{
+    drift::Project project;
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.clips = {rippleClip("a", 0, 2), rippleClip("b", 2, 2, "ab"), rippleClip("c", 5, 1)};
+    drift::Track a1{.type = drift::TrackType::Audio};
+    // b's audio starts earlier (a J-cut); d links on to a third track.
+    a1.clips = {rippleClip("b-audio", 1.5, 2.5, "ab"), rippleClip("d", 4, 1, "dv")};
+    drift::Track v2{.type = drift::TrackType::Video};
+    v2.clips = {rippleClip("d-video", 4, 1, "dv"), rippleClip("e", 7, 1)};
+    drift::Track other{.type = drift::TrackType::Audio};
+    other.clips = {rippleClip("music", 3, 4)};
+    drift::Track lane{.type = drift::TrackType::Adjustment};
+    lane.clips = {rippleClip("grade", 2, 2)};
+    project.tracks() = {v1, a1, v2, other, lane};
+
+    QCOMPARE(drift::rippleTrackGroup(project, 0), (QSet<int>{0, 1, 2}));
+    QCOMPARE(drift::rippleTrackGroup(project, 3), (QSet<int>{3}));
+    QVERIFY(drift::rippleTrackGroup(project, 4).isEmpty());
+
+    const QStringList moved =
+        drift::rippleTracks(project, drift::rippleTrackGroup(project, 0), drift::secondsToUs(2), drift::secondsToUs(1));
+    QCOMPARE(rippleStart(project, "a"), 0.0);
+    QCOMPARE(rippleStart(project, "b"), 3.0);
+    QCOMPARE(rippleStart(project, "b-audio"), 2.5); // the J-cut partner keeps its offset
+    QCOMPARE(rippleStart(project, "d"), 5.0);
+    QCOMPARE(rippleStart(project, "d-video"), 5.0); // through the third track
+    QCOMPARE(rippleStart(project, "e"), 8.0);
+    QCOMPARE(rippleStart(project, "music"), 3.0);
+    QCOMPARE(rippleStart(project, "grade"), 2.0);
+    QCOMPARE(moved.size(), 6);
+    QVERIFY(drift::rippleTracks(project, {0}, 0, drift::secondsToUs(1),
+                                {QStringLiteral("a"), QStringLiteral("b"), QStringLiteral("c")})
+                .isEmpty());
+}
+
+void CoreTest::closeRippleRangesShiftsEachGroupOnce()
+{
+    // A linked pair deleted from video and audio: one cleared range per track, but the following
+    // pair moves back once (2 s), not once per track.
+    drift::Project project;
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.clips = {rippleClip("next", 6, 2, "n")};
+    drift::Track a1{.type = drift::TrackType::Audio};
+    a1.clips = {rippleClip("next-audio", 6, 2, "n")};
+    project.tracks() = {v1, a1};
+    QStringList moved;
+    QVERIFY(drift::closeRippleRanges(project, {{0, 0, drift::secondsToUs(2)}, {1, 0, drift::secondsToUs(2)}}, nullptr, &moved));
+    QCOMPARE(rippleStart(project, "next"), 4.0);
+    QCOMPARE(rippleStart(project, "next-audio"), 4.0);
+    QCOMPARE(moved.size(), 2);
+
+    // Overlapping cleared ranges close by their union (6 s), not the sum (8 s).
+    drift::Project overlap;
+    drift::Track single{.type = drift::TrackType::Video};
+    single.clips = {rippleClip("later", 10, 1)};
+    overlap.tracks() = {single};
+    QVERIFY(drift::closeRippleRanges(overlap, {{0, 0, drift::secondsToUs(4)}, {0, drift::secondsToUs(2), drift::secondsToUs(6)}}));
+    QCOMPARE(rippleStart(overlap, "later"), 4.0);
+
+    // A link held only by a deleted clip still joins its tracks when the groups come from before
+    // the delete: the two followers close together over the union, once.
+    {
+        drift::Project was;
+        drift::Track wv{.type = drift::TrackType::Video};
+        wv.clips = {rippleClip("v", 2, 2, "only"), rippleClip("v-next", 6, 1)};
+        drift::Track wa{.type = drift::TrackType::Audio};
+        wa.clips = {rippleClip("a", 1, 3, "only"), rippleClip("a-next", 6, 1)};
+        was.tracks() = {wv, wa};
+        drift::Project now = was;
+        now.tracks()[0].clips.removeFirst();
+        now.tracks()[1].clips.removeFirst();
+        QVERIFY(drift::closeRippleRanges(now, {{0, drift::secondsToUs(2), drift::secondsToUs(4)},
+                                               {1, drift::secondsToUs(1), drift::secondsToUs(4)}},
+                                         nullptr, nullptr, &was));
+        QCOMPARE(rippleStart(now, "v-next"), 3.0);
+        QCOMPARE(rippleStart(now, "a-next"), 3.0);
+    }
+
+    // An earlier loose partner shifted with its clip would land on a clip that stayed: refused.
+    {
+        drift::Project loose;
+        drift::Track lv{.type = drift::TrackType::Video};
+        lv.clips = {rippleClip("follower", 7, 1, "l")};
+        drift::Track la{.type = drift::TrackType::Audio};
+        la.clips = {rippleClip("still", 0, 1), rippleClip("partner", 2, 1, "l")};
+        loose.tracks() = {lv, la};
+        QString hit;
+        QVERIFY(!drift::closeRippleRanges(loose, {{0, drift::secondsToUs(5), drift::secondsToUs(7)}}, &hit));
+        QVERIFY(!hit.isEmpty());
+        QCOMPARE(rippleStart(loose, "follower"), 7.0);
+        QCOMPARE(rippleStart(loose, "partner"), 2.0);
+    }
+
+    // A clip of the group inside a range to close blocks it, and nothing changes.
+    drift::Project blocked;
+    drift::Track bv{.type = drift::TrackType::Video};
+    bv.clips = {rippleClip("pair", 6, 2, "p")};
+    drift::Track ba{.type = drift::TrackType::Audio};
+    ba.clips = {rippleClip("inside", 1, 1), rippleClip("pair-audio", 6, 2, "p")};
+    blocked.tracks() = {bv, ba};
+    QString blocker;
+    QVERIFY(!drift::closeRippleRanges(blocked, {{0, 0, drift::secondsToUs(4)}}, &blocker));
+    QCOMPARE(blocker, QStringLiteral("inside"));
+    QCOMPARE(rippleStart(blocked, "pair"), 6.0);
+
+    // Two earlier partners: one lands exactly on 0, the other would cross it. The blocker is the
+    // one that clamped.
+    drift::Project clamping;
+    drift::Track cv{.type = drift::TrackType::Video};
+    cv.clips = {rippleClip("first", 3, 1), rippleClip("later", 6, 1, "c")};
+    drift::Track ca{.type = drift::TrackType::Audio};
+    ca.clips = {rippleClip("lands-on-zero", 2, 1, "c")};
+    drift::Track cb{.type = drift::TrackType::Audio};
+    cb.clips = {rippleClip("crosses-zero", 1, 1, "c")};
+    clamping.tracks() = {cv, ca, cb};
+    blocker.clear();
+    QVERIFY(!drift::closeRippleRanges(clamping, {{0, drift::secondsToUs(4), drift::secondsToUs(6)}}, &blocker));
+    QCOMPARE(blocker, QStringLiteral("crosses-zero"));
+    QCOMPARE(rippleStart(clamping, "later"), 6.0);
+}
+
 // The new piece of a split gets the next free " (N)" for its base name on the track, so the
 // halves can be told apart. A year in parentheses is part of the name, not a piece number.
 void CoreTest::splitPieceNamesAreNumberedPerTrack()
@@ -7340,6 +7634,100 @@ void CoreTest::imageSequenceDetection()
     QCOMPARE(found.size(), 2);
     QCOMPARE(found[0].sequence.pattern, dir.filePath(QStringLiteral("m_%03d.png")));
     QCOMPARE(found[1].sequence.pattern, dir.filePath(QStringLiteral("m_%05d.png")));
+}
+
+void CoreTest::clipLabelsRoundTripAndNumberCopies()
+{
+    // Saved and loaded; an unlabelled clip writes no key.
+    drift::Project project;
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip intro;
+    intro.id = QStringLiteral("intro");
+    intro.type = drift::ClipType::Text;
+    intro.timelineDuration = drift::secondsToUs(2.0);
+    intro.label = QStringLiteral("intro");
+    drift::Clip plain = intro;
+    plain.id = QStringLiteral("plain");
+    plain.label.clear();
+    plain.timelineStart = drift::secondsToUs(5.0);
+    project.tracks()[0].clips = {intro, plain};
+    QString error;
+    const QJsonObject json = project.toJson();
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+    QCOMPARE(loaded.tracks().at(0).clips.at(0).label, QStringLiteral("intro"));
+    QVERIFY(loaded.tracks().at(0).clips.at(1).label.isEmpty());
+    const QString saved = QString::fromUtf8(QJsonDocument(json).toJson(QJsonDocument::Compact));
+    QCOMPARE(saved.count(QStringLiteral("\"label\"")), 1);
+
+    // Parsing and matching.
+    QCOMPARE(drift::splitLabel(QStringLiteral("intro.3")), qMakePair(QStringLiteral("intro"), 3));
+    QCOMPARE(drift::splitLabel(QStringLiteral("v1.0")), qMakePair(QStringLiteral("v1.0"), 1));
+    QCOMPARE(drift::splitLabel(QStringLiteral("take.1")), qMakePair(QStringLiteral("take.1"), 1));
+    QVERIFY(drift::labelMatches(QStringLiteral("intro.2"), QStringLiteral("intro")));
+    QVERIFY(!drift::labelMatches(QStringLiteral("intro"), QStringLiteral("intro.2")));
+    QVERIFY(!drift::labelMatches(QStringLiteral("introduction"), QStringLiteral("intro")));
+
+    // A split copy and a duplicate take the next numbers, left to right; the original keeps its
+    // label, a linked pair shares one number, and a new clip with a fresh label is left alone.
+    drift::Project after = project;
+    drift::Clip tail = intro;
+    tail.id = QStringLiteral("tail");
+    tail.timelineStart = drift::secondsToUs(1.0);
+    tail.linkId = QStringLiteral("pair");
+    drift::Clip tailAudio = tail;
+    tailAudio.id = QStringLiteral("tail-audio");
+    tailAudio.type = drift::ClipType::Audio;
+    drift::Clip copy = intro;
+    copy.id = QStringLiteral("copy");
+    copy.timelineStart = drift::secondsToUs(8.0);
+    drift::Clip fresh = intro;
+    fresh.id = QStringLiteral("fresh");
+    fresh.label = QStringLiteral("outro");
+    after.tracks()[0].clips += {copy, tail, fresh};
+    after.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    after.tracks()[1].clips = {tailAudio};
+    QCOMPARE(drift::numberCopiedLabels(project, after), 3);
+    const auto labelOf = [&after](const QString &id) {
+        for (const drift::Track &track : after.tracks())
+            for (const drift::Clip &clip : track.clips)
+                if (clip.id == id)
+                    return clip.label;
+        return QString();
+    };
+    QCOMPARE(labelOf(QStringLiteral("intro")), QStringLiteral("intro"));
+    QCOMPARE(labelOf(QStringLiteral("tail")), QStringLiteral("intro.2"));
+    QCOMPARE(labelOf(QStringLiteral("tail-audio")), QStringLiteral("intro.2"));
+    QCOMPARE(labelOf(QStringLiteral("copy")), QStringLiteral("intro.3"));
+    QCOMPARE(labelOf(QStringLiteral("fresh")), QStringLiteral("outro"));
+
+    // A clip replaced by a new one (speed ramp, subtitle conversion, cut and paste) keeps its
+    // label: nothing else holds it.
+    drift::Project replaced = project;
+    drift::Clip successor = intro;
+    successor.id = QStringLiteral("successor");
+    replaced.tracks()[0].clips = {successor, plain};
+    QCOMPARE(drift::numberCopiedLabels(project, replaced), 0);
+    QCOMPARE(replaced.tracks().at(0).clips.at(0).label, QStringLiteral("intro"));
+    // Two pieces replacing it: the first keeps the label, the second is numbered.
+    drift::Project pieces = replaced;
+    drift::Clip piece = successor;
+    piece.id = QStringLiteral("piece");
+    piece.timelineStart = drift::secondsToUs(1.0);
+    pieces.tracks()[0].clips.append(piece);
+    QCOMPARE(drift::numberCopiedLabels(project, pieces), 1);
+    QCOMPARE(pieces.tracks().at(0).clips.at(0).label, QStringLiteral("intro"));
+    QCOMPARE(pieces.tracks().at(0).clips.at(2).label, QStringLiteral("intro.2"));
+
+    // The top number in use doesn't overflow: the copy takes the lowest free one.
+    drift::Project top = project;
+    top.tracks()[0].clips[0].label = QStringLiteral("intro.2147483647");
+    drift::Project topAfter = top;
+    drift::Clip topCopy = top.tracks().at(0).clips.at(0);
+    topCopy.id = QStringLiteral("top-copy");
+    topAfter.tracks()[0].clips.append(topCopy);
+    QCOMPARE(drift::numberCopiedLabels(top, topAfter), 1);
+    QCOMPARE(topAfter.tracks().at(0).clips.last().label, QStringLiteral("intro.2"));
 }
 
 QTEST_MAIN(CoreTest)

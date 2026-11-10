@@ -182,10 +182,11 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `shapes` | Builtin shapes, stickers, emoji |
 | `motion` | Lottie animations and SVG drawings as vector clips: add, inspect, swap the document, re-theme through slots or the `svg.*` element overrides |
 | `model3d` | 3D models (glTF binary `.glb`) as model clips: add, inspect, pick the animation, pose and light them — see [3D models](#3d-models) |
+| `procedural` | Lua-built 3D scenes with your own GLSL shaders: guide, write packages into My Procedurals, evaluate, place, keyframe `proc.<key>` — see [Procedural 3D](#procedural-3d) |
 | `subtitles` | Subtitle clips, cues, import/export, Whisper generation |
 | `effects` | Video/audio effects, transitions, templates, effect clipboard, writing new ones into My Effects — see [Custom effects](#custom-effects) |
 | `project` | Open/new/save/package, canvas, background, metadata, export |
-| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos, effect.<param> for an effect paint's scalar params); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion); on PDF clips `pdf.scrollX`, `pdf.scrollY` (page units) and `pdf.zoom` (0.1..10) (see PDF documents); on 3D model clips `model3d.ambient` and `model3d.light<n>_<x\|y\|z\|intensity\|radius\|cone\|aimX\|aimY>` (n 1..4), with the model placed by the clip transform (see 3D models). `set_keyframe` on a property the clip does not have fails `bad_args` |
+| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos, effect.<param> for an effect paint's scalar params); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion); on PDF clips `pdf.scrollX`, `pdf.scrollY` (page units) and `pdf.zoom` (0.1..10) (see PDF documents); on procedural clips `proc.<identifier>` for any numeric, switch, enum or colour-channel param (`proc.tint.r`, `proc.origin.x`; see Procedural 3D); on 3D model clips `model3d.ambient` and `model3d.light<n>_<x\|y\|z\|intensity\|radius\|cone\|aimX\|aimY>` (n 1..4), with the model placed by the clip transform (see 3D models). `set_keyframe` on a property the clip does not have fails `bad_args` |
 | `speed` | Speed ramps; reading custom fade curves (write them with `set_fade_curve` in `canvas`) |
 | `segmentation` | SAM-style cutout (session or one-shot) |
 | `ai` | Denoise, face detection, auto-reframe, depth estimation for the depth effects (`estimate_depth`, `sample_depth`, `clear_depth`) — see [Depth effects](#depth-effects), add-on install |
@@ -661,6 +662,39 @@ the clip, 1 = nearest, consistent across the clip) and pass the frame through un
 change (replace source, switch angle, orientation); `clear_depth` removes it by hand. Standalone
 adjustment tracks have no depth of their own, so depth effects there pass through.
 
+### Procedural 3D
+
+A Procedural clip is a scene a Lua script builds every frame, drawn with GLSL shader pairs the package
+carries. Packages are ordinary user folders under `<AppData>/procedurals/<slug>/`; the full format, the
+Lua API and the shader contract are in [procedural.md](procedural.md), which is also what
+`procedural_authoring_guide` returns.
+
+1. `procedural_authoring_guide` returns the guide (no arguments).
+2. `create_procedural({slug, manifest, files})` — `files` is `{"main.lua": …, "<name>.vert": …,
+   "<name>.frag": …}`. Before anything is installed the package is parsed, `main.lua` is run at `t=0`
+   with default params and the default camera, and every shader pair is compiled on the GL thread. It
+   fails `bad_manifest`, `lua_error` or `shader_compile_failed` (`errors[]` has the Lua error or the
+   driver log prefixed by the shader name) and leaves nothing on disk. Success returns `{id, stats,
+   log, shaders:{name:{ok, log}}, shaderCheck, warnings?}`; `shaderCheck` is `skipped` without OpenGL.
+   The id is always `user.<slug>`.
+3. `evaluate_procedural({id, t?, params?, seed?})` runs the script without rendering and returns
+   `{cameraMode: world|own, cameraRead, stats, bounds:{min,max}, meshes, lights, camera?, log, errors}`.
+   With `clip` instead of `id` it evaluates the placed clip at timeline second `t` (keyframes, seed and
+   the covering Camera clip included); `params` still overrides.
+4. `add_procedural({id, at?, track?, duration?, seed?, name?, params?})` places a clip on a graphic
+   track and returns `{id, track, index}`. `params` sets starting values by identifier (unknown keys fail
+   `bad_args`).
+5. Animate with `set_keyframe` / `list_keyframes` / `remove_keyframe` and the other keyframe ops on
+   `proc.<identifier>`; colour params animate per channel (`proc.tint.r`), vec2 per axis
+   (`proc.origin.x`). `list_animated_properties` lists the keyed ones. Writing a key on an
+   unkeyed param with one key holds a constant value.
+6. `update_procedural({id, manifest?, files?, remove_files?})` replaces only what you pass and
+   revalidates; `get_procedural_source({id})` returns `{manifest, files, user, uses}` for any package
+   to read or fork; `list_procedurals` lists ids with their params; `delete_procedural({id, force?})`
+   refuses `in_use` unless `force:true` (clips keep their data and render nothing).
+
+Create, update and delete are not undoable. `layer3d` is ignored on a procedural clip, as on a model clip: it is always a 3D layer.
+
 ### Custom effects
 
 Agents can write new GPU video effects, transitions and audio effects. Each one is an ordinary user
@@ -785,6 +819,7 @@ local fake) without rebuilding.
 
 ## Traps
 
+- **Names are for people; labels are for you.** A clip `name` is free text the user renames, so ids kept in it break silently. `set_clip_label({clip, label})` tags a clip with a label that survives renames (the user sees and edits it in the inspector). A split or `duplicate_clip` gives the copy the next number (`intro` → `intro.2`, `intro.3`); the original keeps its label, and a clip that replaces another (a speed ramp, a subtitle conversion, cut and paste) keeps it as well. `find_clips({label, name, asset, track, kind})` returns matching clips in timeline order, with their ids and labels. An unnumbered label also finds its numbered copies, and `label:""` finds the unlabelled clips.
 - **`set_transform` can write at the playhead.** If the property is already animated (two or more keys), or `autoKey` is on, it creates a keyframe there instead of a constant value. Seek first, or mute the animation with `set_property_keyframes_enabled(false)`.
 - **`export_video` inherits the settings you leave out** from the last export made through MCP (agent exports keep their own memory, separate from the export dialog's). Mode switches are the exception — `audio_only` and `gif` never carry over — but a codec, a bitrate or a scale does. Pass every setting you care about.
 - **A single key is moved, not added to.** Visual clips are born with one key at their start on x/y/width/height; with auto-key off `set_transform` moves that key, so the value holds for the whole clip. Only a property that already has two or more keys (or any property with `autoKey` on) gets a key at the playhead, or at `at` (timeline seconds). That time must be inside the clip: a keyed write outside it fails `bad_args` and writes nothing.
@@ -798,9 +833,11 @@ local fake) without rebuilding.
 - **`copy_effects` appends.** `copy_effects({from, to:[…]})` adds the source's whole stack after whatever each target already has; clear a target first (`remove_effect`) for a replacement. Audio effects only land on clips with audio; read `to[]` in the reply for what each target actually got.
 - **Keyframe property names are not the transform names**: `width`/`height`, not `w`/`h` (`set_transform` uses w/h, `set_keyframe` uses width/height). The 3D names `rotationX`, `rotationY`, `z`, `anchorX`, `anchorY`, `anchorZ` and `perspective` are the same in both.
 - **A clip's `z` does not change stacking.** Track order alone decides what draws on top, and rotated clips never intersect. A clip turned past 90° shows its mirror image; there is no back face.
+- **Undo history holds full project snapshots.** Every step costs memory, and by default the history is saved into the project and loaded back with it. For scripted rounds, `apply({ops, history:false})` adds no step of its own (the batch joins the newest step and is undone with it; a HEAD hash read before it no longer resolves in `undo_to`), `history_stats` shows what history holds, `clear_history({keep_last})` frees it, and `set_history_limit({steps, persist})` caps it for this project (`steps:0` = no history, `persist:false` = this session only). With a limit set, each new step can renumber `list_history` indices: keep hashes, not indices, across edits.
 - **`remove_keyframe` deletes the *nearest* key** with no distance limit. Confirm the exact time with `list_keyframes`.
 - **`set_keyframe_interpolation` moves the playhead** to `at`, changing the default time of later ops in the same batch.
 - **Long sessions grow.** `memory_stats` shows the process size, the decoded-frame caches (up to an eighth of RAM by default, Settings › Performance), the open decoders and the undo step count. `clear_cache` closes idle decoders and drops their frames (the next frame reopens what it needs). It does not touch undo history, which holds full project snapshots per step.
+- **Inserting into a cut moves everything after it.** `insert_clip({asset, before|after: <clip>, in, out})` puts the clip at that clip boundary and pushes the rest of the track right in one undo step, together with linked audio on other tracks. Effect adjustments follow their clips. The reply carries the new clip and every moved clip's final `start`. A transition at that cut is removed (its clips no longer touch) and listed in `removed_transitions`. A point inside a clip is refused: split it first. Use `place_clip` for free placement. The reverse is `delete_clips({clips:[…]})`: several clips go in one undo step, with their linked audio and their effects, and the space closes up whatever `set_ripple` says. `set_trim({…, ripple:true})` does the same for a new length, and `close_gaps({track, from?, to?})` closes every hole on a track at once (a hole a linked track's clip sits in stays open, listed in `skipped`). `replace_clip({clip, asset, in?, out?})` puts new media in the same slot, keeping the clip's name, transform, effects and keyframes, and ripples by any change in length (unless `ripple:false`); with a silent file the linked audio stays, loosely linked. `set_sequence({track, clips:[{clip|asset, in?, out?, name?}], start?})` lays a whole track out from a list, end to end, in one undo step: listed clips keep their settings, assets become new clips, and unlisted clips go (with their linked audio and effects). To reorder, `move_clip({clip, before|after: <clip>})` moves a clip to another clip's start or end on the same track, and `swap_clips({a, b})` exchanges two; the clips in between move so the spacing stays (two clips linked to each other are refused), the reply lists `moved` and any `removed_transitions`. In all of them, tracks joined by linked clips move together, and a locked track refuses the edit; a clip in the way refuses it too, except in `close_gaps`, which skips that hole instead of overlapping.
 - **`add_track` shifts every track index** — index 0 is the new track.
 - **Replaced media stays in the bin.** `list_assets({usage:true})` shows how many clips use each asset; `remove_unused_assets({dry_run:true})` lists the unused ones and, without `dry_run`, removes them in one undo step. Composite assets (nested timelines) and the originals of stabilized renders (`derived` in `list_assets`) are kept; the files on disk are never touched.
 - **`import_media_bytes` without `path`** writes to a temp dir that is deleted when the call returns, leaving a broken asset. Always pass `path`.

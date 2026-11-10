@@ -73,12 +73,17 @@ private:
     QJsonObject opRemoveTrack(const QJsonObject &args);
     QJsonObject opSetTrack(const QJsonObject &args);
     QJsonObject opPlaceClip(const QJsonObject &args);
+    QJsonObject opInsertClip(const QJsonObject &args);
     QJsonObject opMoveClip(const QJsonObject &args);
+    QJsonObject opSwapClips(const QJsonObject &args);
+    QJsonObject opReplaceClip(const QJsonObject &args);
+    QJsonObject opSetSequence(const QJsonObject &args);
     QJsonObject opSetDuration(const QJsonObject &args);
     QJsonObject opSetTrim(const QJsonObject &args);
     QJsonObject opMoveToTrack(const QJsonObject &args);
     QJsonObject opSplitClip(const QJsonObject &args);
     QJsonObject opDeleteClip(const QJsonObject &args);
+    QJsonObject opDeleteClips(const QJsonObject &args);
     QJsonObject opDuplicateClip(const QJsonObject &args);
     QJsonObject opUndo();
     QJsonObject opRedo();
@@ -117,6 +122,7 @@ private:
     QJsonObject opListAnimatedProperties(const QJsonObject &args) const;
     QJsonObject opListKeyframes(const QJsonObject &args) const;
     QJsonObject opSetKeyframe(const QJsonObject &args);
+    QJsonObject opSetKeyframes(const QJsonObject &args);
     QJsonObject opRemoveKeyframe(const QJsonObject &args);
     QJsonObject opSetKeyframeInterpolation(const QJsonObject &args);
     QJsonObject opSetKeyframeTangents(const QJsonObject &args);

@@ -1298,7 +1298,7 @@ bool AppController::setEffectTextParam(int trackIndex, int clipIndex, int effect
             return false;
     }
 
-    const QString undoText = specIt->type == drift::EffectParamType::Lut     ? tr("Change look")
+    const QString undoText = specIt->type == drift::EffectParamType::Lut     ? tr("Change LUT")
                              : specIt->type == drift::EffectParamType::Curve ? tr("Edit curve")
                                                                              : tr("Edit gradient");
     const drift::Project before = m_project;
