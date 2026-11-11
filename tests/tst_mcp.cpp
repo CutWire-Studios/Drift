@@ -3,6 +3,7 @@
 #include "app/editor/PreferencesController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/mcp/McpController.h"
+#include "app/jobs/JobRegistry.h"
 #include "core/project/Transcript.h"
 #include "app/online/CloudProviders.h"
 
@@ -178,6 +179,7 @@ private slots:
     void undoToCarriesTheSelectionById();
     void applyBatchOfNoOpsAddsNoUndoStep();
     void inspectIsCompact();
+    void waitIdleWaitsForBackgroundWork();
     void inspectDetailRowIsCompact();
     void inspectClipAndTrackFilters();
     void mergeClipsMergesSubtitleTrack();
@@ -3727,6 +3729,84 @@ void McpTest::inspectIsCompact()
     const QJsonArray tracks = withClips.value(QStringLiteral("tracks")).toArray();
     QVERIFY(!tracks.isEmpty());
     QVERIFY(tracks.at(0).toObject().contains(QStringLiteral("items")));
+}
+
+// #53: wait_idle blocks (serving the event loop) until background work settles or the timeout
+// passes, and says what was still running.
+void McpTest::waitIdleWaitsForBackgroundWork()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto waitIdle = [&](const QJsonObject &args) { return dispatcher.applyOne(QStringLiteral("wait_idle"), args); };
+
+    // Nothing running: idle at once.
+    QJsonObject reply = waitIdle({});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), true);
+    QVERIFY(!reply.contains(QStringLiteral("busy")));
+
+    // A job that ends on its own: the wait returns once it has.
+    state.jobRegistry()->start(QStringLiteral("test"), QString(), JobRegistry::Lane::Network,
+                               [](JobContext &job) {
+                                   QThread::msleep(300);
+                                   job.succeed({});
+                               });
+    reply = waitIdle({{QStringLiteral("timeout"), 10}});
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), true);
+    QVERIFY(reply.value(QStringLiteral("waited")).toDouble() > 0.0);
+    QVERIFY(reply.value(QStringLiteral("waited")).toDouble() < 10.0);
+
+    // One that doesn't: the timeout ends the wait, and the reply says what is still running.
+    std::atomic<bool> release{false};
+    const QString id = state.jobRegistry()->start(QStringLiteral("test"), QString(), JobRegistry::Lane::Network,
+                                                  [&](JobContext &job) {
+                                                      while (!release.load() && !job.cancelled())
+                                                          QThread::msleep(10);
+                                                      job.succeed({});
+                                                  });
+    reply = waitIdle({{QStringLiteral("timeout"), 0.3}});
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), false);
+    QVERIFY2(reply.value(QStringLiteral("busy")).toObject().contains(QStringLiteral("jobs")),
+             qPrintable(QJsonDocument(reply).toJson()));
+
+    // kinds narrows the wait: the job isn't an export.
+    reply = waitIdle({{QStringLiteral("timeout"), 5}, {QStringLiteral("kinds"), QJsonArray{QStringLiteral("export")}}});
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), true);
+    QVERIFY(reply.value(QStringLiteral("waited")).toDouble() < 1.0);
+
+    // An unknown kind is refused, naming the known ones.
+    reply = waitIdle({{QStringLiteral("kinds"), QJsonArray{QStringLiteral("nope")}}});
+    QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+
+    // A job an agent started can be waited on by its kind; a cloud voice job counts as tts.
+    const QString transcribing = state.jobRegistry()->start(QStringLiteral("transcribe"), QString(), JobRegistry::Lane::Network,
+                                                            [&](JobContext &job) {
+                                                                while (!release.load() && !job.cancelled())
+                                                                    QThread::msleep(10);
+                                                                job.succeed({});
+                                                            });
+    const QString voicing = state.jobRegistry()->start(QStringLiteral("tts"), QString(), JobRegistry::Lane::Network,
+                                                       [&](JobContext &job) {
+                                                           while (!release.load() && !job.cancelled())
+                                                               QThread::msleep(10);
+                                                           job.succeed({});
+                                                       });
+    reply = waitIdle({{QStringLiteral("timeout"), 0.2},
+                      {QStringLiteral("kinds"), QJsonArray{QStringLiteral("transcribe"), QStringLiteral("tts")}}});
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), false);
+    QCOMPARE(reply.value(QStringLiteral("busy")).toObject().value(QStringLiteral("transcribe")).toInt(), 1);
+    QCOMPARE(reply.value(QStringLiteral("busy")).toObject().value(QStringLiteral("tts")).toInt(), 1);
+
+    // Not inside a batch, which holds undo suspended for as long as it runs.
+    const QJsonObject batched = dispatcher.apply(
+        {{QStringLiteral("ops"), QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("wait_idle")},
+                                                        {QStringLiteral("args"), QJsonObject{}}}}}});
+    QCOMPARE(batched.value(QStringLiteral("failed")).toObject().value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+
+    release = true;
+    QCOMPARE(waitIdle({{QStringLiteral("timeout"), 10}}).value(QStringLiteral("idle")).toBool(), true);
+    QCOMPARE(state.jobRegistry()->job(id).value(QStringLiteral("active")).toBool(), false);
 }
 
 namespace {

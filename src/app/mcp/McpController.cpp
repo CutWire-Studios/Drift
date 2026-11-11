@@ -13,6 +13,15 @@
 #include "app/online/downloads/DownloadCenter.h"
 #include "app/jobs/JobRegistry.h"
 #include "app/jobs/audio/TtsController.h"
+#include "app/jobs/audio/AudioAlignController.h"
+#include "app/jobs/audio/DenoiseController.h"
+#include "app/jobs/render/BakeController.h"
+#include "app/jobs/vision/FaceTrackingController.h"
+#include "app/jobs/vision/SegmentationController.h"
+#include "app/jobs/vision/StabilizeController.h"
+#include "app/jobs/vision/TrackingController.h"
+#include "app/bin/MediaBinController.h"
+#include "app/bin/SourceLabController.h"
 #include "app/jobs/audio/VoiceLibrary.h"
 #include "engine/audio/AudioMixer.h"
 #include "engine/decode/readers/ClipReaderPool.h"
@@ -223,6 +232,95 @@ QString McpController::cursorSnippet() const
 #else
     return QString();
 #endif
+}
+
+const QStringList &McpController::backgroundKinds()
+{
+    static const QStringList kinds{
+        QStringLiteral("probe"),      QStringLiteral("thumbnails"), QStringLiteral("proxy"),
+        QStringLiteral("filmstrips"), QStringLiteral("waveforms"),  QStringLiteral("export"),
+        QStringLiteral("project"),    QStringLiteral("subtitles"),  QStringLiteral("reverse"),
+        QStringLiteral("scenes"),     QStringLiteral("beats"),      QStringLiteral("stabilize"),
+        QStringLiteral("segmentation"), QStringLiteral("denoise"),  QStringLiteral("faces"),
+        QStringLiteral("tracking"),   QStringLiteral("tts"),        QStringLiteral("align"),
+        QStringLiteral("bake"),       QStringLiteral("source_lab"), QStringLiteral("loudness"),
+        QStringLiteral("bin_edit"),   QStringLiteral("downloads"),  QStringLiteral("jobs"),
+        // Job kinds of their own (JobRegistry), each also counted under `jobs`.
+        QStringLiteral("transcribe"), QStringLiteral("diarize"),    QStringLiteral("depth"),
+        QStringLiteral("restore"),    QStringLiteral("sfx"),
+    };
+    return kinds;
+}
+
+QJsonObject McpController::backgroundWork(const QStringList &only, QStringList *suspended) const
+{
+    QJsonObject busy;
+    const auto add = [&](const QString &kind, int count) {
+        if (count > 0 && (only.isEmpty() || only.contains(kind)))
+            busy.insert(kind, busy.value(kind).toInt() + count);
+    };
+    // Decoding paused (playback, a source preview) won't finish until it resumes.
+    const auto addCache = [&](const QString &kind, int count, bool paused) {
+        if (count <= 0 || !(only.isEmpty() || only.contains(kind)))
+            return;
+        if (paused) {
+            if (suspended)
+                suspended->append(kind);
+        } else {
+            add(kind, count);
+        }
+    };
+    const AppController *app = m_app;
+    if (const AssetLibrary *lib = app->assetLibrary()) {
+        // A copy into the bin, a folder walk or a replace comes before the probe it ends in.
+        int probes = lib->pendingProbeCount() + (lib->importing() ? 1 : 0);
+        if (const MediaBinController *bin = app->bin())
+            probes += (bin->importingFolder() ? 1 : 0) + (bin->replacingAssetId().isEmpty() ? 0 : 1);
+        add(QStringLiteral("probe"), probes);
+        add(QStringLiteral("thumbnails"), lib->pendingThumbnailCount());
+        add(QStringLiteral("proxy"), lib->pendingProxyCount());
+    }
+    addCache(QStringLiteral("filmstrips"), app->m_filmstripTiles.pendingCount(), app->m_filmstripTiles.isSuspended());
+    addCache(QStringLiteral("waveforms"), app->m_waveformBlocks.pendingCount(), app->m_waveformBlocks.isSuspended());
+    add(QStringLiteral("waveforms"), int(app->m_waveformPending.size() + app->m_subtitleWaveformPending.size()));
+    add(QStringLiteral("export"), app->m_exportInProgress ? 1 : 0);
+    const ProjectFileController *file = app->projectFile();
+    add(QStringLiteral("project"), (file->packaging() ? 1 : 0) + (file->saveInFlight() ? 1 : 0)
+                                       + (file->projectLoadPending() || file->startupProjectQueued() ? 1 : 0)
+                                       + (file->collectingMedia() ? 1 : 0));
+    add(QStringLiteral("subtitles"), app->subtitleGenerating() ? 1 : 0);
+    add(QStringLiteral("reverse"), app->reverseRendering() ? 1 : 0);
+    add(QStringLiteral("scenes"), app->scenes()->detecting() ? 1 : 0);
+    add(QStringLiteral("beats"), app->m_beatAnalysisRunning ? 1 : 0);
+    add(QStringLiteral("stabilize"), app->stabilize()->activeCount());
+    add(QStringLiteral("segmentation"), app->segmentation()->running() || app->segmentation()->previewBusy() ? 1 : 0);
+    add(QStringLiteral("denoise"), app->denoise()->running() ? 1 : 0);
+    add(QStringLiteral("faces"), app->faces()->detecting() ? 1 : 0);
+    add(QStringLiteral("tracking"), app->tracking()->busy() ? 1 : 0);
+    add(QStringLiteral("tts"), app->tts()->running() || app->tts()->loading() ? 1 : 0);
+    add(QStringLiteral("align"), app->audioAlign()->running() ? 1 : 0);
+    add(QStringLiteral("bake"), app->bakes()->busy() ? 1 : 0);
+    add(QStringLiteral("source_lab"), app->sourceLab()->busy() || app->sourceLab()->previewBusy() ? 1 : 0);
+    add(QStringLiteral("loudness"), app->loudnessBusy() ? 1 : 0);
+    if (const MediaBinController *bin = app->bin())
+        add(QStringLiteral("bin_edit"), bin->editing() ? 1 : 0);
+    add(QStringLiteral("downloads"), DownloadCenter::instance()->activeCount());
+    const QHash<QString, int> counts = app->m_jobs->activeCounts();
+    // Cloud voice generation runs as a job without touching TtsController; the job kinds an agent
+    // starts (transcribe, depth, ...) can be waited on by name.
+    add(QStringLiteral("tts"), counts.value(QStringLiteral("tts")) + counts.value(QStringLiteral("tts-load")));
+    for (const QString &kind : {QStringLiteral("transcribe"), QStringLiteral("diarize"), QStringLiteral("depth"),
+                                QStringLiteral("sfx")})
+        add(kind, counts.value(kind));
+    add(QStringLiteral("restore"), counts.value(QStringLiteral("restore")) + counts.value(QStringLiteral("restore-preview")));
+    if (only.isEmpty() || only.contains(QStringLiteral("jobs"))) {
+        QJsonObject jobs;
+        for (auto it = counts.constBegin(); it != counts.constEnd(); ++it)
+            jobs.insert(it.key(), it.value());
+        if (!jobs.isEmpty())
+            busy.insert(QStringLiteral("jobs"), jobs);
+    }
+    return busy;
 }
 
 QString McpController::claudeCommand() const

@@ -198,6 +198,19 @@ public:
     double proxyProgress() const { return m_proxyProgress; }
     QString proxyCurrentName() const;
     int proxyQueuedCount() const { return m_proxyQueue.size(); }
+    // Background work still to land, for wait_idle: probes (imports, replaces, refreshes, and the
+    // audio and frame-rate passes), bin thumbnails, and proxies building, queued or waiting for
+    // their sidecar scan before they're queued.
+    int pendingProbeCount() const
+    {
+        return int(m_importPending.size() + m_refreshPending.size() + m_audioProbePending.size()
+                   + m_frameRateProbePending.size());
+    }
+    int pendingThumbnailCount() const { return int(m_thumbPending.size()); }
+    int pendingProxyCount() const
+    {
+        return int(m_proxyBuilding.size() + m_proxyQueue.size() + m_autoProxyPending.size());
+    }
     // "none", "queued", "building", "ready" or "linked" for a video asset; empty for anything
     // else. "ready" means a proxy exists at the current proxy size, whether or not preview is set
     // to use proxies. "linked" means the proxy in use is a file made elsewhere that matched a

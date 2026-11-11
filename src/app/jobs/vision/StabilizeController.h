@@ -41,6 +41,8 @@ public:
     // paths are remapped.
     void migrateLegacyClips();
     double progressFor(const QString &clipId) const { return m_progress.value(clipId, 0.0); }
+    // Clips being stabilized right now.
+    int activeCount() const { return int(m_jobs.size()); }
     QString statusFor(const QString &clipId) const { return m_status.value(clipId); }
 
 private:

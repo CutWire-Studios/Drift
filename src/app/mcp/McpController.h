@@ -73,6 +73,11 @@ public:
     QString error() const;
     QString cursorSnippet() const;
     QString claudeCommand() const;
+    // Background work still running, for wait_idle: {kind: how many} for each kind in `only`
+    // (every kind when empty) that is busy; `jobs` is {job kind: how many}. Empty when idle.
+    // Filmstrips and waveforms paused by playback can't drain: they go to `suspended` instead.
+    QJsonObject backgroundWork(const QStringList &only = {}, QStringList *suspended = nullptr) const;
+    static const QStringList &backgroundKinds();
     QString stdioSnippet() const;
     Q_INVOKABLE void copyCursorSnippet();
     Q_INVOKABLE void copyClaudeCommand();
