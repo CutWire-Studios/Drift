@@ -203,7 +203,9 @@ void StabilizeController::run(int trackIndex, int clipIndex)
     }
 
     const QString clipId = clip.id;
-    if (clip.stabilizing || m_jobs.contains(clipId)) {
+    // A keyframe plan still running counts too: a second run would share its planning entry,
+    // and the first to finish would clear it while the other still runs.
+    if (clip.stabilizing || m_jobs.contains(clipId) || m_planning.contains(clipId)) {
         m_app->setLastMessage(tr("Stabilization already in progress for this clip"), QStringLiteral("warning"));
         return;
     }

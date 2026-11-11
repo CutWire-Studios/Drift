@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QHash>
+#include <QMutex>
 #include <QHostAddress>
 #include <QJsonValue>
 #include <QObject>
@@ -22,7 +23,12 @@ public:
 
     explicit McpHttp(QObject *parent = nullptr);
 
-    void setToken(const QString &token) { m_token = token; }
+    // Any thread: the server swaps it from its own while this one may be checking a request.
+    void setToken(const QString &token)
+    {
+        QMutexLocker lock(&m_tokenMutex);
+        m_token = token;
+    }
     void setRpcHandler(RpcHandler handler) { m_handler = std::move(handler); }
 
     quint16 port() const { return m_port; }
@@ -42,6 +48,7 @@ private:
     bool authorized(const QByteArray &header) const;
 
     QTcpServer *m_server = nullptr;
+    mutable QMutex m_tokenMutex;
     QString m_token;
     RpcHandler m_handler;
     quint16 m_port = 0;
