@@ -363,11 +363,12 @@ QJsonObject McpController::relinkMedia(const QJsonObject &args)
         const drift::MediaAsset *owner = asset ? assetByPath.value(key(target)) : nullptr;
         if (owner && owner != asset)
             return QStringLiteral("another asset (%1) already uses %2").arg(owner->name, target);
-        if (asset && claimed.contains(key(target)))
-            return QStringLiteral("another missing file was relinked to %1").arg(target);
+        // Size before claims, so the reason doesn't depend on which asset was looked at first.
         if (asset && asset->sourceSize > 0 && !drift::parseImageSequencePath(target)
             && QFileInfo(target).size() != asset->sourceSize)
             return QStringLiteral("%1 isn't the same size as the file was").arg(target);
+        if (asset && claimed.contains(key(target)))
+            return QStringLiteral("another missing file was relinked to %1").arg(target);
         return {};
     };
 
@@ -445,6 +446,24 @@ QJsonObject McpController::relinkMedia(const QJsonObject &args)
             const bool ambiguous = sharing.size() > 1
                                    && std::any_of(sharing.cbegin(), sharing.cend(),
                                                   [](const drift::MediaAsset *a) { return a->sourceSize <= 0; });
+            // A walk cut short may have missed another file of the name, so no match is sure.
+            if (truncated) {
+                for (const drift::MediaAsset *asset : sharing)
+                    unresolved({{QStringLiteral("path"), asset->path}},
+                               QStringLiteral("search_dir holds over 200,000 files and wasn't searched in full; "
+                                              "search a narrower folder"));
+                continue;
+            }
+            // Which of the files of this name pass for each asset: the same size when known, not
+            // another asset's, not taken.
+            QHash<const drift::MediaAsset *, QStringList> fits;
+            QHash<QString, int> fittedBy;
+            for (const drift::MediaAsset *asset : ambiguous ? QList<const drift::MediaAsset *>{} : sharing)
+                for (const QString &candidate : candidates)
+                    if (refusal(asset->path, candidate).isEmpty()) {
+                        fits[asset].append(candidate);
+                        ++fittedBy[candidate];
+                    }
             for (const drift::MediaAsset *asset : sharing) {
                 if (ambiguous) {
                     unresolved({{QStringLiteral("path"), asset->path}},
@@ -452,11 +471,14 @@ QJsonObject McpController::relinkMedia(const QJsonObject &args)
                                               "replace_asset"));
                     continue;
                 }
-                // Those that pass: the same size when known, not another asset's, not taken.
-                QStringList fit;
-                for (const QString &candidate : candidates)
-                    if (refusal(asset->path, candidate).isEmpty())
-                        fit.append(candidate);
+                const QStringList fit = fits.value(asset);
+                // A file that fits two of them (same name and size) can't be told to be either's.
+                if (fit.size() == 1 && fittedBy.value(fit.first()) > 1) {
+                    unresolved({{QStringLiteral("path"), asset->path}},
+                               QStringLiteral("another missing file has the same name and size; relink them with "
+                                              "from/to or replace_asset"));
+                    continue;
+                }
                 if (fit.size() == 1) {
                     claimed.insert(key(fit.first()));
                     remap.insert(asset->path, fit.first());

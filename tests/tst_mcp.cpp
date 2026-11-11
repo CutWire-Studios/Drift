@@ -3870,6 +3870,35 @@ void McpTest::relinkMediaMovesAFolder()
     QCOMPARE(dispatcher.applyOne(QStringLiteral("relink_media"), {{QStringLiteral("from"), newRoot}, {QStringLiteral("to"), newRoot + QLatin1Char('/')}})
                  .value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
 
+    // Two missing files of one name and the same size, and one such file found: it can't be told
+    // to be either's, so neither takes it. Once the sizes differ, the one that fits does.
+    QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("twins"))));
+    touch(dir.filePath(QStringLiteral("twins/twin.mov")), 5);
+    for (const auto &[id, path] : {std::pair{QStringLiteral("twin1"), dir.filePath(QStringLiteral("old1/twin.mov"))},
+                                   std::pair{QStringLiteral("twin2"), dir.filePath(QStringLiteral("old2/twin.mov"))}}) {
+        drift::MediaAsset twin;
+        twin.id = id;
+        twin.name = QStringLiteral("twin.mov");
+        twin.kind = drift::MediaKind::Video;
+        twin.path = path;
+        twin.sourceSize = 5;
+        project.assets().insert(id, twin);
+        project.assetOrder().append(id);
+    }
+    const QJsonObject twins{{QStringLiteral("search_dir"), dir.filePath(QStringLiteral("twins"))}, {QStringLiteral("dry_run"), true}};
+    reply = dispatcher.applyOne(QStringLiteral("relink_media"), twins);
+    QCOMPARE(reply.value(QStringLiteral("n")).toInt(), 0);
+    int sameSize = 0;
+    for (const QJsonValue &row : reply.value(QStringLiteral("still_missing")).toArray())
+        if (row.toObject().value(QStringLiteral("reason")).toString().contains(QStringLiteral("same name and size")))
+            ++sameSize;
+    QCOMPARE(sameSize, 2);
+    project.assets()[QStringLiteral("twin2")].sourceSize = 6;
+    reply = dispatcher.applyOne(QStringLiteral("relink_media"), twins);
+    QCOMPARE(reply.value(QStringLiteral("n")).toInt(), 1);
+    QCOMPARE(reply.value(QStringLiteral("relinked")).toArray().at(0).toObject().value(QStringLiteral("from")).toString(),
+             dir.filePath(QStringLiteral("old1/twin.mov")));
+
     // Both ways at once, or neither, is refused.
     QCOMPARE(dispatcher.applyOne(QStringLiteral("relink_media"), {}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     QJsonObject both = move;
