@@ -661,6 +661,8 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     if (m_assetLibrary) {
         connect(m_assetLibrary, &AssetLibrary::assetMetadataChanged, this,
                 &AppController::editCapabilitiesChanged);
+        // A clip placed before its asset's preview existed just got it: redraw its filmstrip.
+        connect(m_assetLibrary, &AssetLibrary::clipPreviewsFilled, this, &AppController::notifyTracksChanged);
     }
 
     connect(&m_filmstripTiles, &FilmstripTileCache::tileReady, this,

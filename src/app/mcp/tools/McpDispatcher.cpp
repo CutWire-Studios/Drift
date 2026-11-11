@@ -1206,7 +1206,10 @@ QJsonObject McpDispatcher::opImportMedia(const QJsonObject &args)
     if (args.contains(QStringLiteral("folder")) && !resolveFolder(args.value(QStringLiteral("folder")), &folder))
         return err("not_found", QStringLiteral("Unknown or ambiguous folder"));
     lib->setImportFolderId(folder);
+    // previews:false: probe only; thumbnails and filmstrips wait until something asks for them.
+    lib->setDeferPreviews(!jsonBool(args.value(QStringLiteral("previews")), true));
     const QStringList ids = lib->importLocalPaths(paths);
+    lib->setDeferPreviews(false);
     lib->setImportFolderId(m_controller->bin()->currentFolderId());
     if (ids.isEmpty() && !missing.isEmpty())
         return err("import_failed", QStringLiteral("No readable files"));

@@ -846,6 +846,8 @@ void AssetLibrary::snapshotAssets()
 
 void AssetLibrary::syncToProject()
 {
+    // An undo can bring back an asset without its preview: ensurePreview may try again.
+    m_previewTried.clear();
     if (!m_project)
         return;
 
@@ -910,6 +912,7 @@ void AssetLibrary::syncToProject()
 
 void AssetLibrary::setProject(drift::Project *project, bool newDocument)
 {
+    m_previewTried.clear();
     beginResetModel();
     if (newDocument || m_project != project) {
         m_probeToken.clear();
@@ -1046,6 +1049,20 @@ void AssetLibrary::emitAssetRowChanged(int index, const QList<int> &roles)
     emit dataChanged(modelIndex, modelIndex, roles);
 }
 
+void AssetLibrary::ensurePreview(int index)
+{
+    const drift::MediaAsset *asset = assetAtIndex(index);
+    // Audio has no thumbnail to make; composites get theirs elsewhere.
+    if (!asset || asset->kind == drift::MediaKind::Composite || asset->kind == drift::MediaKind::Audio
+        || m_thumbPending.contains(asset->id) || m_importPending.contains(asset->id)
+        || m_previewTried.contains(asset->id))
+        return;
+    if (asset->thumbnailPath.isEmpty() || asset->filmstripPath.isEmpty()) {
+        m_previewTried.insert(asset->id);
+        startThumbJob(asset->id);
+    }
+}
+
 void AssetLibrary::startThumbJob(const QString &assetId)
 {
     if (!m_project || assetId.isEmpty())
@@ -1149,6 +1166,27 @@ void AssetLibrary::applyThumbResult(const QString &assetId, const QString &sourc
 
     emitAssetRowChanged(indexOfId(assetId), {ThumbnailPathRole, FilmstripPathRole});
     emit assetMetadataChanged(assetId);
+
+    // Clips placed before this existed copied empty paths, and the timeline draws no filmstrip
+    // without one: give them these.
+    bool filled = false;
+    m_project->forEachTrackList([&](QList<drift::Track> &tracks) {
+        for (drift::Track &track : tracks)
+            for (drift::Clip &clip : track.clips) {
+                if (clip.assetId != assetId || clip.path != asset->path)
+                    continue;
+                if (clip.thumbnailPath.isEmpty() && !asset->thumbnailPath.isEmpty()) {
+                    clip.thumbnailPath = asset->thumbnailPath;
+                    filled = true;
+                }
+                if (clip.filmstripPath.isEmpty() && !asset->filmstripPath.isEmpty()) {
+                    clip.filmstripPath = asset->filmstripPath;
+                    filled = true;
+                }
+            }
+    });
+    if (filled)
+        emit clipPreviewsFilled();
 }
 
 void AssetLibrary::refreshMediaAt(int index)
@@ -1165,6 +1203,8 @@ void AssetLibrary::startImportJob(const QString &assetId, const QString &absolut
         return;
 
     m_importPending.insert(assetId);
+    if (m_deferPreviews)
+        m_previewsDeferred.insert(assetId);
 
     (void)QtConcurrent::run(&m_jobs, [this, assetId, absolutePath, imageOnly]() {
         // Taken before the probe: a file still being written must not get its final size and
@@ -1295,6 +1335,7 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
                                      bool suggestProxy)
 {
     m_importPending.remove(assetId);
+    const bool previewsDeferred = m_previewsDeferred.remove(assetId);
     // Flushed on every way out below, so a failed or withdrawn last probe still delivers the
     // suggestions the rest of the batch collected.
     const auto flushSuggestions = qScopeGuard([this] {
@@ -1377,7 +1418,9 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
     refreshSidecars({assetId});
     // The bin/timeline can use the file as soon as its metadata is ready. Generating
     // thumbnails and scanning packets for VFR now happen independently in the job pool.
-    startThumbJob(assetId);
+    // Not for an import that skipped previews: ensurePreview builds them when something shows it.
+    if (!previewsDeferred)
+        startThumbJob(assetId);
     if (asset->kind == drift::MediaKind::Video)
         isVariableFrameRate(assetId);
 }
