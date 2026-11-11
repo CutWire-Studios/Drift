@@ -35,7 +35,7 @@ Item {
             return
         const target = panel.snapKeyTime(Math.max(0, timeView.secondsFor(x)), pressRefs, false)
         const factor = Math.max(0.01, (target - pivot) / denom)
-        const res = EditorState.keyframes.previewStretchKeys(panel.track, panel.clip, pressRefs, pivot, factor)
+        const res = EditorState.keyframes.previewStretchKeys(panel.track, panel.clipIndex, pressRefs, pivot, factor)
         if (res && res.length > 0)
             panel.selection.replace(res)
     }
@@ -61,7 +61,7 @@ Item {
         target: root.panel
 
         function onTrackChanged() { root.cancel() }
-        function onClipChanged() { root.cancel() }
+        function onClipIndexChanged() { root.cancel() }
     }
 
     Rectangle {

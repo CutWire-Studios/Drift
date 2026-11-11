@@ -9,7 +9,7 @@ Rectangle {
     property var entry
     property bool optional: false
     property bool checked: false
-    readonly property string state: entry ? page.rowState(entry) : "queued"
+    readonly property string installState: entry ? page.rowState(entry) : "queued"
     readonly property bool pending: !optional || checked
     readonly property real fraction: entry && page.transfers[entry.id] ? page.transfers[entry.id].fraction : 0
 
@@ -19,7 +19,7 @@ Rectangle {
     radius: Theme.c.quickSetupCard.radius
     color: Theme.c.quickSetupCard.background
     border.width: Theme.c.quickSetupCard.borderWidth
-    border.color: row.state === "failed" && pending ? Theme.c.quickSetup.danger : Theme.c.quickSetupCard.border
+    border.color: row.installState === "failed" && pending ? Theme.c.quickSetup.danger : Theme.c.quickSetupCard.border
 
     ColumnLayout {
         id: body
@@ -72,18 +72,18 @@ Rectangle {
                 spacing: Theme.spacingSm
 
                 IconGlyph {
-                    visible: row.state === "installed" || row.state === "failed"
-                    glyph: row.state === "installed" ? Theme.icons.success : Theme.icons.error
+                    visible: row.installState === "installed" || row.installState === "failed"
+                    glyph: row.installState === "installed" ? Theme.icons.success : Theme.icons.error
                     iconSize: page.mobile ? 22 : 18
-                    iconColor: row.state === "installed" ? Theme.c.quickSetup.success : Theme.c.quickSetup.danger
+                    iconColor: row.installState === "installed" ? Theme.c.quickSetup.success : Theme.c.quickSetup.danger
                 }
 
                 ThemedLabel {
                     size: page.mobile ? "sm" : "xs"
-                    tone: row.state === "installed" ? "default" : "muted"
+                    tone: row.installState === "installed" ? "default" : "muted"
                     wrapMode: Text.NoWrap
                     text: {
-                        switch (row.state) {
+                        switch (row.installState) {
                         case "installed": return qsTr("Installed")
                         case "installing": return qsTr("Installing…")
                         case "downloading": return qsTr("%1%").arg(Math.round(row.fraction * 100))
@@ -97,14 +97,14 @@ Rectangle {
 
         ThemedProgressBar {
             Layout.fillWidth: true
-            visible: row.pending && (row.state === "downloading" || row.state === "installing")
+            visible: row.pending && (row.installState === "downloading" || row.installState === "installing")
             barHeight: Theme.spacingXs
-            value: row.state === "installing" ? 1 : row.fraction
+            value: row.installState === "installing" ? 1 : row.fraction
         }
 
         ThemedLabel {
             Layout.fillWidth: true
-            visible: row.pending && row.state === "failed"
+            visible: row.pending && row.installState === "failed"
             size: page.mobile ? "sm" : "xs"
             text: row.entry ? page.rowError(row.entry) : ""
             color: Theme.c.quickSetup.danger

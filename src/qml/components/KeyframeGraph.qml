@@ -25,7 +25,7 @@ Item {
     property bool keyframesTab: false
 
     readonly property bool hasClip: EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
-    readonly property var clip: {
+    readonly property var clipData: {
         void EditorState.selectedClipData
         return EditorState.selectedClipData
     }
@@ -34,12 +34,12 @@ Item {
     // "afx.<effectIndex>.<paramKey>"; the label, range and color all come from the effect's own
     // param spec on the selected clip.
     function effectParam(id) {
-        if (!clip)
+        if (!clipData)
             return null
         const audio = id.substring(0, 4) === "afx."
         if (!audio && id.substring(0, 3) !== "fx.")
             return null
-        const stack = audio ? clip.audioEffects : clip.effects
+        const stack = audio ? clipData.audioEffects : clipData.effects
         const start = audio ? 4 : 3
         if (!stack)
             return null
@@ -60,7 +60,7 @@ Item {
     }
 
     // Spelled-out names for the one-to-three character property chips.
-    readonly property bool cameraClip: !!clip && clip.kind === "adjustment" && clip.adjustmentKind === "camera"
+    readonly property bool cameraClip: !!clipData && clipData.kind === "adjustment" && clipData.adjustmentKind === "camera"
 
     function propertyLabel(id) {
         if (cameraClip) {
@@ -141,21 +141,21 @@ Item {
     }
     // Volume and audio effects only exist on clips that carry audio; the rest are visual.
     function supportsProperty(id) {
-        if (!clip)
+        if (!clipData)
             return false
         if (cameraClip && (id === "width" || id === "height"))
             return false
         if (id === "volume")
-            return clip.kind === "audio" || clip.kind === "video"
+            return clipData.kind === "audio" || clipData.kind === "video"
         if (id.substring(0, 3) === "fx.")
-            return clip.kind !== "audio" && effectParam(id) !== null
+            return clipData.kind !== "audio" && effectParam(id) !== null
         if (id.substring(0, 4) === "afx.")
             return effectParam(id) !== null
         // A mask lives on the clip's lane, so the strip offers it for the same clips the Masks
         // tab does. There is no per-id validation to do: the id set is fixed and closed.
         if (id.substring(0, 5) === "mask.")
-            return clip.kind !== "audio"
-        return clip.kind !== "audio"
+            return clipData.kind !== "audio"
+        return clipData.kind !== "audio"
     }
 
     // Each series is normalized against its own value range, so curves in wildly
@@ -293,8 +293,8 @@ Item {
         return point.value + (outgoing ? (point.outDy || 0) : (point.inDy || 0))
     }
 
-    readonly property real clipStart: clip.start || 0
-    readonly property real clipDuration: Math.max(0.1, clip.duration || 1)
+    readonly property real clipStart: clipData.start || 0
+    readonly property real clipDuration: Math.max(0.1, clipData.duration || 1)
 
     // Beat detection results for whatever range was last analyzed. Analysis is explicit
     // (the gutter buttons) because it renders the timeline mix — never on selection change.
@@ -352,7 +352,7 @@ Item {
     height: visible ? laneHeight : 0
     // Open whenever the clip has an animation to show, even if every curve is currently folded
     // away — otherwise hiding the last one would take the chips with it.
-    visible: keyframesTab && hasClip && clip && allSeries.length > 0
+    visible: keyframesTab && hasClip && clipData && allSeries.length > 0
 
     // Curve editing focuses one series: it gets tangent handles and owns the value axis,
     // while the others stay drawn as dimmed context. Handles from two series normalized to

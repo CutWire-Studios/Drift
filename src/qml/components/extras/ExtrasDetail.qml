@@ -12,11 +12,11 @@ Rectangle {
     property var plan: ({})
     property bool detailsOpen: false
 
-    readonly property string state: row.state || ""
-    readonly property bool active: state === "downloading" || state === "installing"
-    readonly property bool busy: active || state === "queued"
-    readonly property bool installable: state === "available" || state === "failed" || state === "update-available"
-    readonly property bool installed: state === "installed" || state === "update-available"
+    readonly property string installState: row.state || ""
+    readonly property bool active: installState === "downloading" || installState === "installing"
+    readonly property bool busy: active || installState === "queued"
+    readonly property bool installable: installState === "available" || installState === "failed" || installState === "update-available"
+    readonly property bool installed: installState === "installed" || installState === "update-available"
     readonly property var transfer: store.transfers[addonId]
     readonly property var alsoInstalls: (plan.added || []).filter(a => a.id !== addonId)
     readonly property bool hasRuntimeKind: {
@@ -148,7 +148,7 @@ Rectangle {
                             if (root.row.license)
                                 parts.push(root.row.license)
                             if (root.row.version)
-                                parts.push(root.state === "update-available"
+                                parts.push(root.installState === "update-available"
                                            ? qsTr("%1 → %2").arg(root.row.installedVersion).arg(root.row.version)
                                            : root.row.version)
                             const size = root.installed && !root.installable
@@ -172,17 +172,17 @@ Rectangle {
                     spacing: Theme.spacingLg
 
                     ThemedButton {
-                        visible: root.installable || root.busy || root.state === "needs-newer-app"
-                        enabled: root.state !== "needs-newer-app"
+                        visible: root.installable || root.busy || root.installState === "needs-newer-app"
+                        enabled: root.installState !== "needs-newer-app"
                         variant: root.busy ? "secondary" : "primary"
                         text: {
-                            if (root.state === "needs-newer-app")
+                            if (root.installState === "needs-newer-app")
                                 return qsTr("Needs a newer Drift")
                             if (root.busy)
                                 return qsTr("Cancel")
-                            if (root.state === "update-available")
+                            if (root.installState === "update-available")
                                 return qsTr("Update")
-                            if (root.state === "failed")
+                            if (root.installState === "failed")
                                 return qsTr("Retry")
                             return qsTr("Install")
                         }
@@ -195,7 +195,7 @@ Rectangle {
                     }
 
                     Row {
-                        visible: root.state === "installed"
+                        visible: root.installState === "installed"
                         height: Theme.controlHeight
                         spacing: Theme.spacingSm
 
@@ -232,16 +232,16 @@ Rectangle {
                     visible: text.length > 0
                     wrapMode: Text.WordWrap
                     size: "sm"
-                    color: root.state === "failed" || root.state === "needs-newer-app"
+                    color: root.installState === "failed" || root.installState === "needs-newer-app"
                            ? Theme.c.extrasStore.stateFailed : Theme.c.extrasStore.foregroundMuted
                     text: {
-                        if (root.state === "queued")
+                        if (root.installState === "queued")
                             return qsTr("Waiting for other downloads to finish…")
                         if (root.active)
                             return root.transfer ? qsTr("%1… %2%").arg(root.transfer.phase).arg(Math.round(root.transfer.fraction * 100)) : ""
-                        if (root.state === "failed")
+                        if (root.installState === "failed")
                             return root.row.error || ""
-                        if (root.state === "needs-newer-app")
+                        if (root.installState === "needs-newer-app")
                             return qsTr("Requires Drift %1 or newer").arg(root.row.minAppVersion)
                         if (root.installable && root.alsoInstalls.length > 0)
                             return qsTr("Also installs: %1").arg(root.alsoInstalls.map(a => {

@@ -19,7 +19,7 @@ Item {
     }
 
     function setEasing(spec) {
-        EditorState.keyframes.setSegmentsEasing(panel.track, panel.clip, panel.selection.refs(), spec)
+        EditorState.keyframes.setSegmentsEasing(panel.track, panel.clipIndex, panel.selection.refs(), spec)
     }
 
     function openEasing() {
@@ -32,16 +32,16 @@ Item {
         popupLoader.active = true
         popupLoader.item.anchorItem = anchorItem
         popupLoader.item.propLabel = hit && hit.rowData && hit.rowData.label ? hit.rowData.label : ""
-        popupLoader.item.openFor(panel.track, panel.clip, refs[0].prop, refs[0].seconds)
+        popupLoader.item.openFor(panel.track, panel.clipIndex, refs[0].prop, refs[0].seconds)
     }
 
     function applyEasingToRest() {
         if (easingRefs.length < 2)
             return
         const first = easingRefs[0]
-        const segment = EditorState.keyframeSegmentEasing(panel.track, panel.clip, first.prop, first.seconds)
+        const segment = EditorState.keyframeSegmentEasing(panel.track, panel.clipIndex, first.prop, first.seconds)
         if (segment && segment.spec)
-            EditorState.keyframes.setSegmentsEasing(panel.track, panel.clip, easingRefs.slice(1), segment.spec)
+            EditorState.keyframes.setSegmentsEasing(panel.track, panel.clipIndex, easingRefs.slice(1), segment.spec)
         easingRefs = []
     }
 
