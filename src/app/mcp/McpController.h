@@ -73,6 +73,10 @@ public:
     QString error() const;
     QString cursorSnippet() const;
     QString claudeCommand() const;
+    // list_missing_media: assets whose file is gone, with how many clips use each.
+    QJsonObject missingMedia() const;
+    // relink_media({from, to} | {search_dir}, dry_run?): see the catalog entry.
+    QJsonObject relinkMedia(const QJsonObject &args);
     QString stdioSnippet() const;
     Q_INVOKABLE void copyCursorSnippet();
     Q_INVOKABLE void copyClaudeCommand();

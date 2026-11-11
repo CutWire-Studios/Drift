@@ -178,6 +178,7 @@ private slots:
     void undoToCarriesTheSelectionById();
     void applyBatchOfNoOpsAddsNoUndoStep();
     void inspectIsCompact();
+    void relinkMediaMovesAFolder();
     void inspectDetailRowIsCompact();
     void inspectClipAndTrackFilters();
     void mergeClipsMergesSubtitleTrack();
@@ -3727,6 +3728,153 @@ void McpTest::inspectIsCompact()
     const QJsonArray tracks = withClips.value(QStringLiteral("tracks")).toArray();
     QVERIFY(!tracks.isEmpty());
     QVERIFY(tracks.at(0).toObject().contains(QStringLiteral("items")));
+}
+
+// #55: list_missing_media names what's gone; relink_media points a moved folder (or files found by
+// name) at their new place, assets and clips and masks alike, in one undo step.
+void McpTest::relinkMediaMovesAFolder()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString oldRoot = dir.filePath(QStringLiteral("old"));
+    const QString newRoot = dir.filePath(QStringLiteral("new"));
+    QVERIFY(QDir().mkpath(newRoot + QStringLiteral("/shots")));
+    QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("search/deep"))));
+    const auto touch = [](const QString &path, int bytes) {
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write(QByteArray(bytes, 'x'));
+    };
+    touch(newRoot + QStringLiteral("/shots/a.mp4"), 10);
+    touch(newRoot + QStringLiteral("/shots/b.mp4"), 10);
+    touch(newRoot + QStringLiteral("/mask.png"), 10);
+    touch(dir.filePath(QStringLiteral("search/deep/d.mp4")), 7);
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    drift::Project &project = *state.project();
+    drift::Track video{.type = drift::TrackType::Video};
+    video.id = QStringLiteral("v");
+    const auto addAsset = [&](const QString &id, const QString &path, bool used) {
+        drift::MediaAsset media;
+        media.id = id;
+        media.name = QFileInfo(path).fileName();
+        media.kind = drift::MediaKind::Video;
+        media.path = path;
+        media.durationUs = drift::secondsToUs(4.0);
+        project.assets().insert(id, media);
+        project.assetOrder().append(id);
+        if (!used)
+            return;
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-") + id;
+        clip.type = drift::ClipType::Video;
+        clip.assetId = id;
+        clip.path = path;
+        clip.timelineStart = drift::secondsToUs(4.0 * video.clips.size());
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.srcOut = clip.timelineDuration;
+        if (id == QLatin1String("a"))
+            clip.mask.mediaPath = oldRoot + QStringLiteral("/mask.png");
+        video.clips.append(clip);
+    };
+    addAsset(QStringLiteral("a"), oldRoot + QStringLiteral("/shots/a.mp4"), true);
+    addAsset(QStringLiteral("b"), oldRoot + QStringLiteral("/shots/b.mp4"), true);
+    addAsset(QStringLiteral("c"), oldRoot + QStringLiteral("/shots/c.mp4"), false); // not under new/
+    addAsset(QStringLiteral("d"), dir.filePath(QStringLiteral("gone/d.mp4")), false);
+    project.tracks() = {video};
+    library.syncToProject();
+
+    QJsonObject reply = dispatcher.applyOne(QStringLiteral("list_missing_media"), {});
+    QCOMPARE(reply.value(QStringLiteral("n")).toInt(), 4);
+    QCOMPARE(reply.value(QStringLiteral("missing")).toArray().at(0).toObject().value(QStringLiteral("clips")).toInt(), 1);
+
+    // A dry run changes nothing.
+    const QJsonObject move{{QStringLiteral("from"), oldRoot}, {QStringLiteral("to"), newRoot}};
+    QJsonObject dry = move;
+    dry.insert(QStringLiteral("dry_run"), true);
+    reply = dispatcher.applyOne(QStringLiteral("relink_media"), dry);
+    QCOMPARE(reply.value(QStringLiteral("n")).toInt(), 3); // a.mp4 and b.mp4 (assets and clips share them), the mask
+    QCOMPARE(project.asset(QStringLiteral("a"))->path, oldRoot + QStringLiteral("/shots/a.mp4"));
+
+    const int steps = int(state.undoHistory().size());
+    reply = dispatcher.applyOne(QStringLiteral("relink_media"), move);
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    QCOMPARE(project.asset(QStringLiteral("a"))->path, newRoot + QStringLiteral("/shots/a.mp4"));
+    QCOMPARE(project.asset(QStringLiteral("b"))->path, newRoot + QStringLiteral("/shots/b.mp4"));
+    QCOMPARE(project.tracks().at(0).clips.at(0).path, newRoot + QStringLiteral("/shots/a.mp4"));
+    QCOMPARE(project.tracks().at(0).clips.at(0).mask.mediaPath, newRoot + QStringLiteral("/mask.png"));
+    QCOMPARE(project.asset(QStringLiteral("c"))->path, oldRoot + QStringLiteral("/shots/c.mp4"));
+    QCOMPARE(reply.value(QStringLiteral("still_missing")).toArray().size(), 1);
+    QCOMPARE(int(state.undoHistory().size()), steps + 1);
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("list_missing_media"), {}).value(QStringLiteral("n")).toInt(), 2);
+
+    // Found by name under a folder.
+    reply = dispatcher.applyOne(QStringLiteral("relink_media"), {{QStringLiteral("search_dir"), dir.filePath(QStringLiteral("search"))}});
+    QCOMPARE(project.asset(QStringLiteral("d"))->path, dir.filePath(QStringLiteral("search/deep/d.mp4")));
+    QCOMPARE(reply.value(QStringLiteral("still_missing")).toArray().size(), 1); // c: no file of that name
+
+    // One step each: undo puts the folder move back.
+    state.undo();
+    state.undo();
+    QCOMPARE(project.asset(QStringLiteral("a"))->path, oldRoot + QStringLiteral("/shots/a.mp4"));
+
+    // Not onto a file another asset already uses, nor one of another size than the file was.
+    project.assets()[QStringLiteral("b")].sourceSize = 99;
+    {
+        drift::MediaAsset dup = *project.asset(QStringLiteral("a"));
+        dup.id = QStringLiteral("dup");
+        dup.path = newRoot + QStringLiteral("/shots/a.mp4");
+        project.assets().insert(dup.id, dup);
+        project.assetOrder().append(dup.id);
+    }
+    reply = dispatcher.applyOne(QStringLiteral("relink_media"), dry);
+    QCOMPARE(reply.value(QStringLiteral("n")).toInt(), 1); // the mask only
+    QStringList reasons;
+    for (const QJsonValue &row : reply.value(QStringLiteral("still_missing")).toArray())
+        reasons.append(row.toObject().value(QStringLiteral("reason")).toString());
+    QVERIFY2(reasons.join(QLatin1Char('|')).contains(QStringLiteral("another asset")), qPrintable(reasons.join(QLatin1Char('|'))));
+    QVERIFY2(reasons.join(QLatin1Char('|')).contains(QStringLiteral("same size")), qPrintable(reasons.join(QLatin1Char('|'))));
+
+    // A root as from: the whole tree, mirrored under to.
+    const QString mirror = dir.filePath(QStringLiteral("mirror"));
+    QVERIFY(QDir().mkpath(mirror + oldRoot + QStringLiteral("/shots")));
+    touch(mirror + oldRoot + QStringLiteral("/shots/c.mp4"), 10);
+    reply = dispatcher.applyOne(QStringLiteral("relink_media"), {{QStringLiteral("from"), QStringLiteral("/")},
+                                                                 {QStringLiteral("to"), mirror},
+                                                                 {QStringLiteral("dry_run"), true}});
+    QVERIFY(reply.value(QStringLiteral("matched")).toInt() > 0);
+    bool mirrored = false;
+    for (const QJsonValue &row : reply.value(QStringLiteral("relinked")).toArray())
+        mirrored = mirrored || row.toObject().value(QStringLiteral("to")).toString() == mirror + oldRoot + QStringLiteral("/shots/c.mp4");
+    QVERIFY2(mirrored, qPrintable(QJsonDocument(reply).toJson()));
+
+    // A from that names nothing in the project says so.
+    reply = dispatcher.applyOne(QStringLiteral("relink_media"), {{QStringLiteral("from"), dir.filePath(QStringLiteral("elsewhere"))},
+                                                                 {QStringLiteral("to"), newRoot}});
+    QCOMPARE(reply.value(QStringLiteral("matched")).toInt(), 0);
+
+    // A locked track holding one of the clips refuses the whole relink.
+    for (int t = 0; t < project.tracks().size(); ++t)
+        project.tracks()[t].locked = true;
+    reply = dispatcher.applyOne(QStringLiteral("relink_media"), move);
+    QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("locked"));
+    QCOMPARE(project.tracks().at(0).clips.at(0).mask.mediaPath, oldRoot + QStringLiteral("/mask.png"));
+    for (int t = 0; t < project.tracks().size(); ++t)
+        project.tracks()[t].locked = false;
+
+    // Relative paths, or the same place twice, are refused.
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("relink_media"), {{QStringLiteral("from"), QStringLiteral("old")}, {QStringLiteral("to"), newRoot}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("relink_media"), {{QStringLiteral("from"), newRoot}, {QStringLiteral("to"), newRoot + QLatin1Char('/')}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+
+    // Both ways at once, or neither, is refused.
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("relink_media"), {}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QJsonObject both = move;
+    both.insert(QStringLiteral("search_dir"), dir.path());
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("relink_media"), both).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
 }
 
 namespace {
