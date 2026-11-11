@@ -9235,6 +9235,10 @@
         <translation>Экспорт видео</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>Экспорт</translation>
     </message>
@@ -9249,6 +9253,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>Видео обрабатывается. Закройте окно, чтобы продолжить редактирование, или отмените экспорт.</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>

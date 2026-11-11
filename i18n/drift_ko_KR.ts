@@ -9165,6 +9165,10 @@
         <translation>동영상 내보내기</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>내보내기</translation>
     </message>
@@ -9179,6 +9183,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>동영상을 렌더링하는 중입니다. 계속 편집하려면 이 창을 닫고, 중지하려면 취소하세요.</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>

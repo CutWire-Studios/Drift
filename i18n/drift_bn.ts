@@ -9200,6 +9200,10 @@
         <translation>ভিডিও এক্সপোর্ট করা হচ্ছে</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>এক্সপোর্ট</translation>
     </message>
@@ -9214,6 +9218,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>আপনার ভিডিও রেন্ডারিং। সম্পাদনা চালিয়ে যেতে বন্ধ করুন বা বন্ধ করতে বাতিল করুন.</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>
