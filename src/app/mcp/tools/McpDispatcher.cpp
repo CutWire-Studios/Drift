@@ -940,46 +940,53 @@ QJsonObject McpDispatcher::dryRunOp(const QString &tool, const QJsonObject &args
     if (const QJsonObject invalid = checkOp(tool, &checked, &ignored); !invalid.isEmpty())
         return invalid;
     const drift::Project &project = *m_controller->project();
+    // Only keys the op takes: one it ignores (and reports as ignored) names nothing.
+    const QJsonObject props = opInputSchema(tool).value(QStringLiteral("properties")).toObject();
+    const auto takes = [&](const QString &key) { return props.contains(key) && checked.contains(key); };
+    // Numbers as the ops read them: a number, or a numeric string.
+    const auto intOf = [&](const QString &key, int *out) {
+        const QJsonValue v = checked.value(key);
+        bool ok = v.isDouble();
+        *out = ok ? v.toInt() : v.toString().trimmed().toInt(&ok);
+        return takes(key) && ok;
+    };
     const auto clipExists = [&](const QString &id) { return m_controller->mcp()->locateClip(id).first >= 0; };
     const auto missingClip = [&](const QString &id) {
         return err("not_found", QStringLiteral("No clip %1 (unless an earlier op in this batch creates it)").arg(id));
     };
     for (const QString &key : {QStringLiteral("clip"), QStringLiteral("before"), QStringLiteral("after")}) {
         const QJsonValue v = checked.value(key);
-        if (v.isString() && !v.toString().trimmed().isEmpty() && !clipExists(v.toString()))
+        if (takes(key) && v.isString() && !v.toString().trimmed().isEmpty() && !clipExists(v.toString()))
             return missingClip(v.toString());
     }
-    for (const QJsonValue &v : checked.value(QStringLiteral("clips")).toArray())
-        if (v.isString() && !clipExists(v.toString()))
-            return missingClip(v.toString());
-    const QJsonObject props = opInputSchema(tool).value(QStringLiteral("properties")).toObject();
+    if (takes(QStringLiteral("clips")))
+        for (const QJsonValue &v : checked.value(QStringLiteral("clips")).toArray())
+            if (v.isString() && !clipExists(v.toString()))
+                return missingClip(v.toString());
     const bool clipRef = props.contains(QStringLiteral("clip")) && props.contains(QStringLiteral("track"))
                          && props.contains(QStringLiteral("index"));
-    const bool byId = !checked.value(QStringLiteral("clip")).toString().trimmed().isEmpty();
+    const bool byId = takes(QStringLiteral("clip")) && !checked.value(QStringLiteral("clip")).toString().trimmed().isEmpty();
     const int trackCount = int(project.tracks().size());
     // `track` names an existing track, except where the op ignores it (a clip given by id) or
     // takes it as a place to insert a new one (new_track). A negative one means "pick" in the ops
     // that take it, so only one past the end is flagged.
-    const bool newTrack = props.contains(QStringLiteral("new_track"))
-                          && jsonBool(checked.value(QStringLiteral("new_track")), false);
+    const bool newTrack = takes(QStringLiteral("new_track")) && jsonBool(checked.value(QStringLiteral("new_track")), false);
     for (const QString &key : {QStringLiteral("track"), QStringLiteral("to_track")}) {
-        const QJsonValue track = checked.value(key);
-        if (!track.isDouble() || (key == QLatin1String("track") && (newTrack || (clipRef && byId))))
+        int t = 0;
+        if (!intOf(key, &t) || (key == QLatin1String("track") && (newTrack || (clipRef && byId))))
             continue;
-        const int t = track.toInt();
         if (t >= trackCount)
             return err("not_found", QStringLiteral("No track %1; the timeline has %2 (unless an earlier op in this "
                                                    "batch adds it)").arg(t).arg(trackCount));
     }
     // A clip given by track+index. (A clip left out isn't flagged: some ops take none, and then act
     // on the whole timeline.)
-    if (clipRef && !byId && checked.value(QStringLiteral("track")).isDouble() && checked.value(QStringLiteral("index")).isDouble()) {
-        const int t = checked.value(QStringLiteral("track")).toInt();
-        const int index = checked.value(QStringLiteral("index")).toInt();
-        if (t < 0 || t >= trackCount || index < 0 || index >= project.tracks().at(t).clips.size())
-            return err("not_found", QStringLiteral("No clip %1 on track %2").arg(index).arg(t));
-    }
-    if (checked.contains(QStringLiteral("asset")) && resolveAsset(checked.value(QStringLiteral("asset"))) < 0)
+    int t = 0;
+    int index = 0;
+    if (clipRef && !byId && intOf(QStringLiteral("track"), &t) && intOf(QStringLiteral("index"), &index)
+        && (t < 0 || t >= trackCount || index < 0 || index >= project.tracks().at(t).clips.size()))
+        return err("not_found", QStringLiteral("No clip %1 on track %2").arg(index).arg(t));
+    if (takes(QStringLiteral("asset")) && resolveAsset(checked.value(QStringLiteral("asset"))) < 0)
         return err("not_found", QStringLiteral("No asset %1").arg(checked.value(QStringLiteral("asset")).toVariant().toString()));
     QJsonObject result = ok({});
     if (!ignored.isEmpty())

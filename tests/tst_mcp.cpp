@@ -3916,6 +3916,15 @@ void McpTest::applyDryRunChecksWithoutChanging()
                                                                      {QStringLiteral("at"), 1.0}, {QStringLiteral("new_track"), true}})}}});
     QCOMPARE(reply.value(QStringLiteral("problems")).toArray().at(0).toObject().value(QStringLiteral("error")).toString(),
              QStringLiteral("not_found"));
+    // Numbers as strings count as the ops read them; a key an op ignores names nothing.
+    reply = dispatcher.apply({{QStringLiteral("dry_run"), true},
+                              {QStringLiteral("ops"), QJsonArray{op(QStringLiteral("split_clip"),
+                                                                    {{QStringLiteral("track"), QStringLiteral("99")},
+                                                                     {QStringLiteral("index"), QStringLiteral("0")}, {QStringLiteral("at"), 1.0}}),
+                                                                 op(QStringLiteral("add_track"), {{QStringLiteral("type"), QStringLiteral("video")},
+                                                                                                  {QStringLiteral("clip"), QStringLiteral("gone")}})}}});
+    QCOMPARE(reply.value(QStringLiteral("problems")).toArray().size(), 1);
+    QCOMPARE(reply.value(QStringLiteral("problems")).toArray().at(0).toObject().value(QStringLiteral("i")).toInt(), 0);
     QCOMPARE(state.project()->contentHash(), before);
 
     // A clean batch passes, still changing nothing.
