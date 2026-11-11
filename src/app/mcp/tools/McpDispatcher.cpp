@@ -2706,10 +2706,13 @@ QJsonObject McpDispatcher::opWaitIdle(const QJsonObject &args)
     QTimer tick;
     tick.setSingleShot(true);
     QObject::connect(&tick, &QTimer::timeout, &loop, &QEventLoop::quit);
-    QObject::connect(qApp, &QCoreApplication::aboutToQuit, &loop, [&] {
+    const auto stop = [&] {
         quitting = true;
         loop.quit();
-    });
+    };
+    QObject::connect(qApp, &QCoreApplication::aboutToQuit, &loop, stop);
+    // Access being turned off waits for this call to return.
+    QObject::connect(m_controller->mcp(), &McpController::transportStopping, &loop, stop);
     bool idleOnce = false;
     while (!quitting && elapsed.elapsed() < timeoutMs) {
         if (busy.isEmpty() && idleOnce)

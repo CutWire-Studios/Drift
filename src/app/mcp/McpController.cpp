@@ -350,9 +350,15 @@ void McpController::setEnabled(bool enabled)
     if (!m_mcp)
         return;
     if (enabled) {
+        m_pendingStop = false;
         m_mcp->start();
     } else {
-        m_mcp->stop();
+        if (!m_agentCalls.isEmpty()) {
+            m_pendingStop = true;
+            emit transportStopping();
+        } else {
+            m_mcp->stop();
+        }
         // Turning access off is the security-relevant choice; carrying "start on
         // launch" past it would silently reopen access next launch that nobody
         // asked for at the time. Only a manual disable resets it — an error-driven
@@ -365,8 +371,28 @@ void McpController::setEnabled(bool enabled)
 void McpController::rotateToken()
 {
 #ifndef Q_OS_WASM
-    if (m_mcp)
+    if (!m_mcp)
+        return;
+    if (!m_agentCalls.isEmpty()) {
+        m_pendingRotate = true;
+        emit transportStopping();
+        return;
+    }
+    m_mcp->rotateToken();
+#endif
+}
+
+void McpController::applyPendingTransportChange()
+{
+#ifndef Q_OS_WASM
+    if (!m_mcp || !m_agentCalls.isEmpty())
+        return;
+    if (std::exchange(m_pendingStop, false)) {
+        m_pendingRotate = false;
+        m_mcp->stop();
+    } else if (std::exchange(m_pendingRotate, false)) {
         m_mcp->rotateToken();
+    }
 #endif
 }
 
@@ -1504,6 +1530,9 @@ void McpController::endAgentCall()
 {
     if (!m_agentCalls.isEmpty())
         m_agentCalls.removeLast();
+    // From the event loop, once the transport thread has its reply and is free again.
+    if (m_agentCalls.isEmpty() && (m_pendingStop || m_pendingRotate))
+        QTimer::singleShot(0, this, &McpController::applyPendingTransportChange);
 }
 
 bool McpController::inAgentCall() const

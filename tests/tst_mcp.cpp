@@ -3804,6 +3804,12 @@ void McpTest::waitIdleWaitsForBackgroundWork()
                                                         {QStringLiteral("args"), QJsonObject{}}}}}});
     QCOMPARE(batched.value(QStringLiteral("failed")).toObject().value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
 
+    // Access being turned off ends the wait at once (the transport waits for this call).
+    QTimer::singleShot(100, state.mcp(), [&] { emit state.mcp()->transportStopping(); });
+    reply = waitIdle({{QStringLiteral("timeout"), 30}});
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), false);
+    QVERIFY(reply.value(QStringLiteral("waited")).toDouble() < 5.0);
+
     release = true;
     QCOMPARE(waitIdle({{QStringLiteral("timeout"), 10}}).value(QStringLiteral("idle")).toBool(), true);
     QCOMPARE(state.jobRegistry()->job(id).value(QStringLiteral("active")).toBool(), false);
