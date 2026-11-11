@@ -387,12 +387,11 @@ void McpController::applyPendingTransportChange()
 #ifndef Q_OS_WASM
     if (!m_mcp || !m_agentCalls.isEmpty())
         return;
-    if (std::exchange(m_pendingStop, false)) {
-        m_pendingRotate = false;
+    // Both can be pending: the rotation still lands (it persists the new token while stopped).
+    if (std::exchange(m_pendingStop, false))
         m_mcp->stop();
-    } else if (std::exchange(m_pendingRotate, false)) {
+    if (std::exchange(m_pendingRotate, false))
         m_mcp->rotateToken();
-    }
 #endif
 }
 

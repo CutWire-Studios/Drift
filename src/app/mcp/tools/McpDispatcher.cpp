@@ -2701,7 +2701,8 @@ QJsonObject McpDispatcher::opWaitIdle(const QJsonObject &args)
     elapsed.start();
     QStringList suspended;
     QJsonObject busy = m_controller->mcp()->backgroundWork(kinds, &suspended);
-    bool quitting = false;
+    // Access already on its way off: don't hold the call that it waits for.
+    bool quitting = m_controller->mcp()->transportChangePending();
     QEventLoop loop;
     QTimer tick;
     tick.setSingleShot(true);

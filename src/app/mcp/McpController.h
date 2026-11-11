@@ -384,6 +384,10 @@ signals:
     // Access is being turned off or its token rotated while agent calls are still open. Waits
     // that serve the event loop (wait_idle) end early: the change runs once the calls return.
     void transportStopping();
+public:
+    // A stop or token rotation waiting for open agent calls to return (see transportStopping).
+    bool transportChangePending() const { return m_pendingStop || m_pendingRotate; }
+signals:
     void runningChanged();
     void errorChanged();
     void startOnLaunchChanged();
