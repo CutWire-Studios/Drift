@@ -1481,7 +1481,8 @@ bool AppController::flattenComposite(int trackIndex, int clipIndex)
 
     // Exactly the part of the composite this clip plays. A file cannot carry the transparency
     // around the composite's content, so the project background fills it.
-    const drift::Project source = m_project.sequenceView(clip.sequenceId);
+    // A flattened composite is exported content, so its review tracks stay out of the render.
+    const drift::Project source = m_project.exportView(clip.sequenceId);
     ExportSettings settings = Exporter::defaultSettings();
     settings.startUs = clip.srcIn;
     settings.endUs = clip.srcOut;

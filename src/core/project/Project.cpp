@@ -794,6 +794,31 @@ Project Project::sequenceView(const QString &id) const
     return view;
 }
 
+Project Project::exportView(const QString &id) const
+{
+    Project view = sequenceView(id);
+    view.forEachTrackList([](QList<Track> &tracks) {
+        for (Track &track : tracks) {
+            if (track.excludeFromExport) {
+                track.hidden = true;
+                track.muted = true;
+                track.solo = false;
+            }
+        }
+    });
+    return view;
+}
+
+bool Project::hasExportExcludedTracks() const
+{
+    bool any = false;
+    forEachTrackList([&any](const QList<Track> &tracks) {
+        for (const Track &track : tracks)
+            any = any || track.excludeFromExport;
+    });
+    return any;
+}
+
 QString Project::addSequence(TrackList tracks)
 {
     Sequence sequence;
@@ -1305,6 +1330,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             track.hidden = trackObject.value(QStringLiteral("hidden")).toBool(false);
             track.locked = trackObject.value(QStringLiteral("locked")).toBool(false);
             track.solo = trackObject.value(QStringLiteral("solo")).toBool(false);
+            track.excludeFromExport = trackObject.value(QStringLiteral("excludeFromExport")).toBool(false);
             track.volume = trackObject.value(QStringLiteral("volume")).toDouble(1.0);
             track.pan = trackObject.value(QStringLiteral("pan")).toDouble(0.0);
             // Projects before clipDisplay only had a waveform-instead-of-filmstrip flag.
@@ -1538,6 +1564,9 @@ QJsonObject Project::toJson(bool includeTranscripts) const
             };
             if (track.isTransformLayer())
                 trackObject.insert(QStringLiteral("spanEndTrackId"), track.spanEndTrackId);
+            // Written only when set, so projects without it stay byte-identical.
+            if (track.excludeFromExport)
+                trackObject.insert(QStringLiteral("excludeFromExport"), true);
             tracksArray.append(trackObject);
         }
         return tracksArray;

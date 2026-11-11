@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/base/Time.h"
+
 #include <QHash>
 #include <QList>
 #include <QObject>
@@ -68,8 +70,11 @@ public:
     Q_INVOKABLE void setWorkAreaToBake(const QString &id);
 
     // The reader pool an export should use: the preview's pool with every bake (includeStale), or
-    // a private one without the stale bakes. Null when there are no bakes.
-    std::shared_ptr<drift::BakeReaderPool> exportPool(bool includeStale);
+    // a private one without the stale bakes. Null when there are no bakes. Bakes overlapping any
+    // of `skip` (main-timeline [start, end) spans) are left out too: a bake is the picture as the
+    // preview shows it, review tracks included, which an export must not reuse.
+    std::shared_ptr<drift::BakeReaderPool> exportPool(bool includeStale,
+                                                      const QList<QPair<drift::TimeUs, drift::TimeUs>> &skip = {});
 
 signals:
     void bakesChanged();

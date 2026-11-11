@@ -180,6 +180,8 @@ QStringList changedTrackFields(const Track &a, const Track &b, int fromIndex, in
         fields.append(QStringLiteral("hidden"));
     if (a.solo != b.solo)
         fields.append(QStringLiteral("solo"));
+    if (a.excludeFromExport != b.excludeFromExport)
+        fields.append(QStringLiteral("exclude_from_export"));
     if (!qFuzzyCompare(a.volume, b.volume) || !qFuzzyCompare(1.0 + a.pan, 1.0 + b.pan))
         fields.append(QStringLiteral("audio"));
     if (!sameTransitions(a, b))

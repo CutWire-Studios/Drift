@@ -560,8 +560,32 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
         ? settings.value(QStringLiteral("bakes"), QStringLiteral("all")).toString()
         : QStringLiteral("none");
     exportSettings.useBakes = bakeMode != QLatin1String("none");
-    if (exportSettings.useBakes)
-        exportSettings.bakes = m_bakes->exportPool(bakeMode != QLatin1String("fresh"));
+    if (exportSettings.useBakes) {
+        // Where a review track (excludeFromExport) shows on the main timeline, directly or inside
+        // a composite clip: a bake there has it burnt in.
+        QList<QPair<drift::TimeUs, drift::TimeUs>> reviewSpans;
+        if (m_project.hasExportExcludedTracks()) {
+            for (const drift::Track &track : m_project.rootTracks()) {
+                for (const drift::Clip &clip : track.clips) {
+                    bool review = track.excludeFromExport;
+                    if (!review && clip.type == drift::ClipType::Composite) {
+                        for (const drift::Track &inner : m_project.sequenceTracks(clip.sequenceId))
+                            review = review || inner.excludeFromExport;
+                    }
+                    if (!review)
+                        continue;
+                    // A transition draws the clip up to its duration past its own edges.
+                    drift::TimeUs pad = 0;
+                    for (const drift::Transition &transition : track.transitions) {
+                        if (transition.fromClipId == clip.id || transition.toClipId == clip.id)
+                            pad = qMax(pad, transition.durationUs);
+                    }
+                    reviewSpans.append({clip.timelineStart - pad, clip.timelineEnd() + pad});
+                }
+            }
+        }
+        exportSettings.bakes = m_bakes->exportPool(bakeMode != QLatin1String("fresh"), reviewSpans);
+    }
 
     // The muxer is chosen from the output file's extension, and a created document's URI has
     // none — so the staging file the encoder writes is given the one the settings imply.
@@ -609,7 +633,8 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
 
     // Snapshot the project so edits during export can't race the encoder. Always the main
     // timeline, even while a composite's tab is open.
-    const drift::Project snapshot = m_project.sequenceView({});
+    // Review tracks (excludeFromExport) are hidden and muted in what gets rendered.
+    const drift::Project snapshot = m_project.exportView({});
 
     const bool disposable = writeTargetIsDisposable(outputUrl);
 
@@ -674,7 +699,15 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
                     thumbnail = thumbPath;
             }
         }
-        const double durationSeconds = drift::usToSeconds(snapshot.durationUs());
+        // What was rendered: hidden tracks (review tracks among them) don't stretch it.
+        drift::TimeUs renderedEndUs = 0;
+        for (const drift::Track &track : snapshot.tracks()) {
+            if (track.hidden || (track.type == drift::TrackType::Audio && track.muted))
+                continue;
+            for (const drift::Clip &clip : track.clips)
+                renderedEndUs = qMax(renderedEndUs, clip.timelineEnd());
+        }
+        const double durationSeconds = drift::usToSeconds(renderedEndUs > 0 ? renderedEndUs : snapshot.durationUs());
 
         QMetaObject::invokeMethod(
             this,

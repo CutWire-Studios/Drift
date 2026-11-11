@@ -67,6 +67,7 @@
 #include "ui/preview/PreviewController.h"
 #include "TestZip.h"
 #include "app/bin/AssetLibrary.h"
+#include "app/jobs/render/BakeController.h"
 #include "app/bin/MediaBinController.h"
 #include "app/online/downloads/DownloadCenter.h"
 #include "app/online/assets/DriftAssetStore.h"
@@ -300,6 +301,7 @@ private slots:
     void paintDiscoveryOpsListPresets();
     void duplicateLayerAndUserPresetLifecycle();
     void rotationOpsRoundTripThroughInspect();
+    void reviewTrackIsLeftOutOfExport();
     void binFolderOps();
 };
 
@@ -11539,6 +11541,100 @@ void McpTest::replaceAssetWaitsForTheReprobe()
     QVERIFY(!replaced.value(QStringLiteral("detail")).toString().isEmpty());
     QVERIFY(!library.isImportPending(assetId));
     QCOMPARE(state.project()->asset(assetId)->path, QFileInfo(other).absoluteFilePath());
+}
+
+// A review lane (the VO script to read along) stays on screen while editing and never reaches
+// the export, including the time it covers past the real content.
+void McpTest::reviewTrackIsLeftOutOfExport()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpReviewTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpReviewTest"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("add_text"), {{QStringLiteral("text"), QStringLiteral("Kept")}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    const QString kept = r.value(QStringLiteral("id")).toString();
+    const QJsonObject keptRow = inspectRow(dispatcher, kept);
+    const double keptEnd = keptRow.value(QStringLiteral("start")).toDouble() + keptRow.value(QStringLiteral("duration")).toDouble();
+    QVERIFY2(keptEnd > 0 && keptEnd < 6.0, qPrintable(dump(keptRow)));
+    r = dispatcher.applyOne(QStringLiteral("add_text"), {{QStringLiteral("text"), QStringLiteral("Script")}, {QStringLiteral("at"), 6.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    const QString script = r.value(QStringLiteral("id")).toString();
+    // Its own lane: a new text track on top.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("add_track"), {{QStringLiteral("type"), QStringLiteral("text")}}).value(QStringLiteral("ok")).toBool());
+    r = dispatcher.applyOne(QStringLiteral("move_to_track"), {{QStringLiteral("clip"), script}, {QStringLiteral("to_track"), 0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    const auto trackOf = [&](const QString &clip) {
+        return dispatcher.inspect({{QStringLiteral("clip"), clip}}).value(QStringLiteral("tracks")).toArray()
+            .at(0).toObject().value(QStringLiteral("i")).toInt(-1);
+    };
+    const int reviewTrack = trackOf(script);
+    QCOMPARE(reviewTrack, 0);
+    QVERIFY(trackOf(kept) != reviewTrack);
+    QVERIFY(reviewTrack >= 0);
+
+    const int undoBefore = state.undoIndex();
+    r = dispatcher.applyOne(QStringLiteral("set_track"), {{QStringLiteral("track"), reviewTrack}, {QStringLiteral("exclude_from_export"), true}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    QVERIFY(r.value(QStringLiteral("exclude_from_export")).toBool());
+    QCOMPARE(state.undoIndex(), undoBefore + 1);
+    // Still shown while editing; inspect names it.
+    QVERIFY(!state.trackHidden(reviewTrack));
+    bool listed = false;
+    for (const QJsonValue &v : dispatcher.inspect({}).value(QStringLiteral("tracks")).toArray()) {
+        const QJsonObject row = v.toObject();
+        if (row.value(QStringLiteral("i")).toInt() == reviewTrack)
+            listed = row.value(QStringLiteral("exclude_from_export")).toBool();
+        else
+            QVERIFY(!row.contains(QStringLiteral("exclude_from_export")));
+    }
+    QVERIFY(listed);
+
+    const QString out = dir.filePath(QStringLiteral("review.mp4"));
+    r = dispatcher.applyOne(QStringLiteral("export_video"),
+                            {{QStringLiteral("path"), out}, {QStringLiteral("video"), QStringLiteral("h264")},
+                             {QStringLiteral("crf"), 35}, {QStringLiteral("scale"), QStringLiteral("480p")}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    const QString written = r.value(QStringLiteral("path")).toString();
+    QTRY_VERIFY_WITH_TIMEOUT(!state.exportInProgress(), 180000);
+    QVERIFY2(QFileInfo::exists(written), qPrintable(state.lastMessage()));
+    const QString ffprobe = QStandardPaths::findExecutable(QStringLiteral("ffprobe"));
+    if (ffprobe.isEmpty())
+        QSKIP("ffprobe not available to inspect the export");
+    QProcess probe;
+    probe.start(ffprobe, {QStringLiteral("-v"), QStringLiteral("error"), QStringLiteral("-show_entries"),
+                          QStringLiteral("format=duration"), QStringLiteral("-of"), QStringLiteral("csv=p=0"), written});
+    QVERIFY(probe.waitForFinished(60000));
+    const double duration = QString::fromUtf8(probe.readAllStandardOutput()).trimmed().toDouble();
+    // Only the kept clip's length: the review clip, from 6 s on, isn't in it.
+    QVERIFY2(duration > 0 && duration < 6.0, qPrintable(QString::number(duration)));
+    QVERIFY2(qAbs(duration - keptEnd) < 0.5, qPrintable(QString::number(duration)));
+
+    // A bake is the picture as the preview shows it, review track included: an export must not
+    // reuse one that overlaps the review track.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_work_area"), {{QStringLiteral("in"), 0.0}, {QStringLiteral("out"), 2.0}})
+                .value(QStringLiteral("ok")).toBool());
+    state.bakes()->bakeWorkArea();
+    QTRY_VERIFY_WITH_TIMEOUT(!state.bakes()->busy() && !state.bakes()->bakes().isEmpty(), 120000);
+    QVERIFY(state.bakes()->exportPool(true) != nullptr);
+    const drift::TimeUs s1 = drift::secondsToUs(1.0);
+    QVERIFY(state.bakes()->exportPool(true, {{s1, 2 * s1}}) == nullptr);
+    QVERIFY(state.bakes()->exportPool(false, {{s1, 2 * s1}}) == nullptr);
+    QVERIFY(state.bakes()->exportPool(true, {{3 * s1, 4 * s1}}) != nullptr);
+    state.bakes()->deleteAllBakes();
 }
 
 QTEST_MAIN(McpTest)

@@ -93,6 +93,7 @@ private slots:
     void binFolderSerializationRoundTrip();
     void compositeSequenceRoundTrip();
     void activateSequenceSwapsTracks();
+    void exportViewLeavesOutReviewTracks();
     void binFolderDeletionMovesChildrenToParent();
     void assetFrameRateMarksRoundTrip();
     void assetSourceFingerprintRoundTripsAndDetectsChange();
@@ -831,6 +832,68 @@ void CoreTest::activateSequenceSwapsTracks()
 
     project.removeSequence(sequenceId);
     QVERIFY(!project.hasSequence(sequenceId));
+}
+
+void CoreTest::exportViewLeavesOutReviewTracks()
+{
+    drift::Project project;
+    drift::Clip shot;
+    shot.id = QStringLiteral("shot");
+    shot.type = drift::ClipType::Shape;
+    shot.timelineDuration = drift::secondsToUs(2.0);
+    shot.srcOut = shot.timelineDuration;
+    project.tracks()[0].clips.append(shot);
+    drift::Clip script = shot;
+    script.id = QStringLiteral("script");
+    script.type = drift::ClipType::Subtitle;
+    script.timelineDuration = drift::secondsToUs(10.0);
+    drift::Track review{.id = QStringLiteral("review"), .type = drift::TrackType::Subtitle, .clips = {script}};
+    review.excludeFromExport = true;
+    review.solo = true;
+    project.tracks().append(review);
+    drift::Track innerReview{.id = QStringLiteral("inner-review"), .type = drift::TrackType::Text};
+    innerReview.excludeFromExport = true;
+    const QString sequenceId = project.addSequence({innerReview, drift::Track{.id = QStringLiteral("inner-kept"), .type = drift::TrackType::Shape}});
+    QVERIFY(project.hasExportExcludedTracks());
+
+    // Saved only when set, and loaded back.
+    const QJsonObject saved = QJsonDocument::fromJson(project.toCompactJson()).object();
+    const QJsonArray savedTracks = saved.value(QStringLiteral("tracks")).toArray();
+    QVERIFY(!savedTracks.at(0).toObject().contains(QStringLiteral("excludeFromExport")));
+    QVERIFY(savedTracks.at(1).toObject().value(QStringLiteral("excludeFromExport")).toBool());
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QVERIFY(!loaded.tracks().at(0).excludeFromExport);
+    QVERIFY(loaded.tracks().at(1).excludeFromExport);
+    QVERIFY(loaded.sequenceTracks(sequenceId).at(0).excludeFromExport);
+
+    // The export copy hides and mutes them everywhere and drops their solo; the project keeps
+    // showing them.
+    const drift::Project view = project.exportView({});
+    QVERIFY(view.tracks().at(1).hidden);
+    QVERIFY(view.tracks().at(1).muted);
+    QVERIFY(!view.tracks().at(1).solo);
+    QVERIFY(!view.tracks().at(0).hidden);
+    QVERIFY(!view.tracks().at(0).muted);
+    QVERIFY(view.sequenceTracks(sequenceId).at(0).hidden);
+    QVERIFY(!view.sequenceTracks(sequenceId).at(1).hidden);
+    QVERIFY(!project.tracks().at(1).hidden);
+    QVERIFY(project.tracks().at(1).solo);
+    // The composite's own timeline, as flattening renders it.
+    const drift::Project inside = project.exportView(sequenceId);
+    QCOMPARE(inside.activeSequenceId(), sequenceId);
+    QVERIFY(inside.tracks().at(0).hidden);
+    QVERIFY(inside.rootTracks().at(1).hidden);
+
+    // The change feed names it.
+    drift::Project toggled = project;
+    toggled.tracks()[1].excludeFromExport = false;
+    const drift::ProjectDiff diff = drift::diffProjects(project, toggled);
+    QCOMPARE(diff.tracks.size(), 1);
+    QCOMPARE(diff.tracks.first().fields, QStringList{QStringLiteral("exclude_from_export")});
+    // Still flagged inside the composite.
+    QVERIFY(toggled.hasExportExcludedTracks());
 }
 
 void CoreTest::binFolderSerializationRoundTrip()

@@ -178,6 +178,10 @@ public:
     QStringList sequenceIds() const { return m_sequences.keys(); }
     // A copy with `id` active, for rendering that timeline through code that reads tracks().
     Project sequenceView(const QString &id) const;
+    // sequenceView for an export: tracks marked excludeFromExport, in every timeline, are hidden
+    // and muted, so they draw nothing, play nothing and don't stretch the export range.
+    Project exportView(const QString &id) const;
+    bool hasExportExcludedTracks() const;
     QString addSequence(TrackList tracks);
     // Must not be the active sequence.
     void removeSequence(const QString &id);
