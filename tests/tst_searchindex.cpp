@@ -44,6 +44,7 @@ private slots:
     void multiWordMatchesAcrossLabelAndSub();
     void jsonRowsAndTargets();
     void enabledFollowsSelection();
+    void enabledRoleDoesNotShadowItemEnabled();
     void activateNavigatesOnlyWhenEnabled();
     void realIndexParses();
 };
@@ -131,6 +132,17 @@ void SearchIndexTest::enabledFollowsSelection()
     QVERIFY(row >= 0);
     QVERIFY(index.data(index.index(row, 0), SearchIndex::EnabledRole).toBool());
     QVERIFY(index.data(index.index(row, 0), SearchIndex::HintRole).toString().isEmpty());
+}
+
+// #50: the row delegate takes each role as a required property of the same name, and a role named
+// "enabled" shadowed Item.enabled (a QML warning on every start).
+void SearchIndexTest::enabledRoleDoesNotShadowItemEnabled()
+{
+    SearchIndex index;
+    const QHash<int, QByteArray> roles = index.roleNames();
+    QCOMPARE(roles.value(SearchIndex::EnabledRole), QByteArray("available"));
+    for (const QByteArray &name : roles)
+        QVERIFY2(name != "enabled" && name != "visible" && name != "opacity", name.constData());
 }
 
 void SearchIndexTest::activateNavigatesOnlyWhenEnabled()

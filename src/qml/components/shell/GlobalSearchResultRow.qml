@@ -8,14 +8,15 @@ Rectangle {
     required property string sub
     required property string hint
     required property string shortcut
-    required property bool enabled
+    // Whether the result can run now. Not "enabled", which would shadow Item.enabled.
+    required property bool available
     required property string target
     property int highlightIndex
     property var kindLabels
     signal activated(int rowIndex)
     id: resultRow
 
-    readonly property bool runnable: enabled && target !== ""
+    readonly property bool runnable: available && target !== ""
     readonly property string detail: [sub, hint].filter(s => s && s.length > 0).join("  ·  ")
     readonly property string shortcutText: shortcut.length > 0 ? Theme.shortcutDisplay(shortcut) : ""
 
@@ -24,7 +25,7 @@ Rectangle {
     radius: Theme.c.globalSearchResultRow.radius
     color: rowMouse.containsMouse || highlightIndex === index
            ? Theme.c.globalSearchResultRow.backgroundHover : "transparent"
-    opacity: enabled ? 1.0 : 0.5
+    opacity: available ? 1.0 : 0.5
 
     Column {
         id: column
