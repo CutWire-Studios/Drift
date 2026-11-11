@@ -79,6 +79,7 @@ private:
     void remember(const QString &voiceId, const QString &lang, double exaggeration);
     void pollJob();
     void endJob();
+    void clearStaleLoading();
     void setStatus(const QString &status);
 
     AppController *m_app = nullptr;
