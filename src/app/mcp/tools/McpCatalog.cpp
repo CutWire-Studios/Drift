@@ -1190,6 +1190,18 @@ const QList<Op> &ops()
         { "export_status", "project", "Check an in-flight encode",
           "Returns {busy, progress 0..1, message}. Same data as inspect().export.",
           objectSchema({}), true, false, true },
+        { "validate_project", "project", "Check the project is sound",
+          "Read-only health check, quick enough to run after every round. Returns {problems:[{kind, "
+          "message, clip?, asset?, track?, sequence?}], n, counts?:{kind: n}, truncated?, "
+          "open_sequence?}; rows without sequence are on the main timeline. Kinds: missing_media "
+          "(file gone; clips: how many use the asset), missing_asset (a clip's asset isn't in the project), "
+          "asset_mismatch (a clip plays another file than its asset), range_past_media (out point "
+          "past the end of its media), overlap (overlap off; crossfades don't count), "
+          "orphaned_effect (pinned to a clip that's gone), empty_lane, broken_link (A/V link with "
+          "one side missing), dangling_transition. overlap and broken_link are advisory. Covers "
+          "every composite's timeline too (sequence). Fixing is up to you.",
+          objectSchema({{QStringLiteral("limit"), integerProp(QStringLiteral("Rows at most (default 200)"), 1, 1000)}}),
+          true, false, true },
 
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "

@@ -178,6 +178,7 @@ private slots:
     void undoToCarriesTheSelectionById();
     void applyBatchOfNoOpsAddsNoUndoStep();
     void inspectIsCompact();
+    void validateProjectListsProblems();
     void inspectDetailRowIsCompact();
     void inspectClipAndTrackFilters();
     void mergeClipsMergesSubtitleTrack();
@@ -3727,6 +3728,134 @@ void McpTest::inspectIsCompact()
     const QJsonArray tracks = withClips.value(QStringLiteral("tracks")).toArray();
     QVERIFY(!tracks.isEmpty());
     QVERIFY(tracks.at(0).toObject().contains(QStringLiteral("items")));
+}
+
+// #54: validate_project names what is wrong, by kind, without changing anything.
+void McpTest::validateProjectListsProblems()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    QJsonObject reply = dispatcher.applyOne(QStringLiteral("validate_project"), {});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    QCOMPARE(reply.value(QStringLiteral("n")).toInt(), 0);
+
+    drift::Project &project = *state.project();
+    drift::MediaAsset media;
+    media.id = QStringLiteral("asset-a");
+    media.name = QStringLiteral("a.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/a.mp4");
+    media.durationUs = drift::secondsToUs(4.0);
+    project.assets().insert(media.id, media);
+    project.assetOrder().append(media.id);
+
+    const auto clip = [&](const QString &id, double start, double dur) {
+        drift::Clip c;
+        c.id = id;
+        c.type = drift::ClipType::Video;
+        c.assetId = media.id;
+        c.path = media.path;
+        c.timelineStart = drift::secondsToUs(start);
+        c.timelineDuration = drift::secondsToUs(dur);
+        c.srcIn = 0;
+        c.srcOut = c.timelineDuration;
+        return c;
+    };
+    drift::Track video{.type = drift::TrackType::Video};
+    video.id = QStringLiteral("v");
+    drift::Clip past = clip(QStringLiteral("past"), 0, 6);   // 6 s of a 4 s file
+    drift::Clip other = clip(QStringLiteral("other"), 5, 2); // overlaps "past", plays another file
+    other.path = QStringLiteral("/nonexistent/b.mp4");
+    drift::Clip lonely = clip(QStringLiteral("lonely"), 10, 1);
+    lonely.linkId = QStringLiteral("link-x");
+    drift::Clip noAsset = clip(QStringLiteral("no-asset"), 12, 1);
+    noAsset.assetId = QStringLiteral("gone-asset");
+    drift::Clip faded = clip(QStringLiteral("faded"), 14, 2); // a crossfade into "fadedB": fine
+    drift::Clip fadedB = clip(QStringLiteral("fadedB"), 15, 2);
+    video.clips = {past, other, lonely, noAsset, faded, fadedB};
+    video.transitions.append(drift::Transition{});
+    video.transitions.last().fromClipId = faded.id;
+    video.transitions.last().toClipId = fadedB.id;
+    video.transitions.append(drift::Transition{});
+    video.transitions.last().fromClipId = past.id;
+    video.transitions.last().toClipId = QStringLiteral("gone-clip");
+    drift::Track lane{.type = drift::TrackType::Adjustment};
+    lane.id = QStringLiteral("lane");
+    lane.adjustmentScope = drift::AdjustmentScope::ParentTrack;
+    lane.parentTrackId = video.id;
+    drift::Clip effect;
+    effect.id = QStringLiteral("effect");
+    effect.type = drift::ClipType::Adjustment;
+    effect.linkedClipId = QStringLiteral("gone-clip");
+    effect.timelineDuration = drift::secondsToUs(1.0);
+    lane.clips = {effect};
+    drift::Track emptyLane = lane;
+    emptyLane.id = QStringLiteral("empty-lane");
+    emptyLane.clips.clear();
+    // Two clips inside a long one: both overlap it.
+    drift::Track titles{.type = drift::TrackType::Text};
+    titles.id = QStringLiteral("titles");
+    for (const auto &[id, start, dur] : {std::tuple{QStringLiteral("long"), 0.0, 10.0}, std::tuple{QStringLiteral("in1"), 2.0, 1.0},
+                                         std::tuple{QStringLiteral("in2"), 5.0, 1.0}}) {
+        drift::Clip text;
+        text.id = id;
+        text.type = drift::ClipType::Text;
+        text.timelineStart = drift::secondsToUs(start);
+        text.timelineDuration = drift::secondsToUs(dur);
+        titles.clips.append(text);
+    }
+    // A recording keeps only its path, and that file is gone.
+    drift::Track voice{.type = drift::TrackType::Audio};
+    voice.id = QStringLiteral("voice");
+    drift::Clip recording;
+    recording.id = QStringLiteral("recording");
+    recording.type = drift::ClipType::Audio;
+    recording.path = QStringLiteral("/nonexistent/take1.wav");
+    recording.timelineDuration = drift::secondsToUs(1.0);
+    voice.clips = {recording};
+    project.tracks() = {video, lane, emptyLane, titles, voice};
+    // An image sequence's path is a pattern, not a file: not missing.
+    drift::MediaAsset sequence;
+    sequence.id = QStringLiteral("frames");
+    sequence.name = QStringLiteral("r_####.png");
+    sequence.kind = drift::MediaKind::Image;
+    sequence.path = QStringLiteral("/renders/r_%04d.png#start=1&fps=24:1");
+    project.assets().insert(sequence.id, sequence);
+    project.assetOrder().append(sequence.id);
+
+    reply = dispatcher.applyOne(QStringLiteral("validate_project"), {});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    const QJsonObject counts = reply.value(QStringLiteral("counts")).toObject();
+    QCOMPARE(counts.value(QStringLiteral("missing_media")).toInt(), 2);
+    QCOMPARE(counts.value(QStringLiteral("range_past_media")).toInt(), 1);
+    QCOMPARE(counts.value(QStringLiteral("asset_mismatch")).toInt(), 1);
+    QCOMPARE(counts.value(QStringLiteral("overlap")).toInt(), 3);
+    QCOMPARE(counts.value(QStringLiteral("broken_link")).toInt(), 1);
+    QCOMPARE(counts.value(QStringLiteral("missing_asset")).toInt(), 1);
+    QCOMPARE(counts.value(QStringLiteral("dangling_transition")).toInt(), 1);
+    QCOMPARE(counts.value(QStringLiteral("orphaned_effect")).toInt(), 1);
+    QCOMPARE(counts.value(QStringLiteral("empty_lane")).toInt(), 1);
+    QCOMPARE(reply.value(QStringLiteral("n")).toInt(), 12);
+    QStringList overlapping;
+    for (const QJsonValue &row : reply.value(QStringLiteral("problems")).toArray()) {
+        const QJsonObject p = row.toObject();
+        if (p.value(QStringLiteral("kind")).toString() == QLatin1String("overlap"))
+            overlapping.append(p.value(QStringLiteral("clip")).toString());
+        if (p.value(QStringLiteral("kind")).toString() == QLatin1String("missing_media") && p.contains(QStringLiteral("asset")))
+            QCOMPARE(p.value(QStringLiteral("clips")).toInt(), 5);
+        if (p.value(QStringLiteral("kind")).toString() == QLatin1String("range_past_media"))
+            QCOMPARE(p.value(QStringLiteral("clip")).toString(), QStringLiteral("past"));
+    }
+    overlapping.sort();
+    QCOMPARE(overlapping, (QStringList{QStringLiteral("in1"), QStringLiteral("in2"), QStringLiteral("other")}));
+
+    // A limit cuts the rows, not the count.
+    reply = dispatcher.applyOne(QStringLiteral("validate_project"), {{QStringLiteral("limit"), 2}});
+    QCOMPARE(reply.value(QStringLiteral("problems")).toArray().size(), 2);
+    QCOMPARE(reply.value(QStringLiteral("n")).toInt(), 12);
+    QCOMPARE(reply.value(QStringLiteral("truncated")).toBool(), true);
 }
 
 namespace {

@@ -73,6 +73,10 @@ public:
     QString error() const;
     QString cursorSnippet() const;
     QString claudeCommand() const;
+    // validate_project: what's wrong with the project, read-only. {problems:[{kind, message,
+    // clip?, asset?, track?, sequence?, ...}], n, counts?:{kind: n}, truncated?, open_sequence?},
+    // at most `limit` rows (n counts them all).
+    QJsonObject validateProject(int limit = 200) const;
     QString stdioSnippet() const;
     Q_INVOKABLE void copyCursorSnippet();
     Q_INVOKABLE void copyClaudeCommand();
