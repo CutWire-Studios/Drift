@@ -931,6 +931,10 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opSetMetadata(args);
     if (tool == QLatin1String("save_project"))
         return opSaveProject(args);
+    if (tool == QLatin1String("get_performance"))
+        return m_controller->mcp()->performance();
+    if (tool == QLatin1String("set_performance"))
+        return m_controller->mcp()->setPerformance(args);
     if (tool == QLatin1String("memory_stats"))
         return m_controller->mcp()->memoryStats();
     if (tool == QLatin1String("clear_cache"))
