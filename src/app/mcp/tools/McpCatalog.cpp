@@ -553,7 +553,8 @@ const QList<Op> &ops()
                         {QStringLiteral("folder"), stringProp(QStringLiteral("Bin folder id (or unique name) new files land in; \"\" for the bin root. Default: the folder the user is viewing. Paths already in the bin stay where they are"))}},
                        {QStringLiteral("paths")}) },
         { "list_assets", "media", "See what is in the bin",
-          "List imported assets. Returns {assets:[{index, id, name, kind, dur, w, h, folderId}]}; "
+          "List imported assets. Returns {assets:[{index, id, name, kind, dur, w, h, folderId, proxy?}]}; "
+          "proxy, on videos, is the create_proxies state; "
           "folderId \"\" is the bin root (see list_folders). usage:true adds clips, how many clips use "
           "each asset (inside composites too), and derived, how many assets were made from it (a "
           "stabilized render's original; in use even with clips 0; absent when none). There is no "
@@ -571,6 +572,53 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("dry_run"),
                          boolProp(QStringLiteral("List what would go without removing it"))}}),
           false, true },
+        { "create_proxies", "media", "Make preview proxies for footage",
+          "Queue preview proxies (small, fast-decoding copies preview reads instead of the original; "
+          "export always reads the original). Pick assets, the assets of clips, all:true (every video "
+          "in the bin) or all_slow:true (every video that would preview slowly: past 1080p, or "
+          "10-bit HEVC/AV1/VP9; probes each file, error timeout past a minute). A composite isn't a "
+          "video: pick the clips inside it. Built one at a time in the background: poll "
+          "proxy_status. Preview only reads them with useProxies on "
+          "(set_ui_preferences). Not undoable: a proxy is a cache. Returns {queued:[ids], already:"
+          "[{asset, state}], skipped:[{asset|clip, reason: not_video|missing|no_media|gone}], not_slow? (all_slow), queue:"
+          "{busy, progress, current, queued}, useProxies, proxySize}.",
+          objectSchema({{QStringLiteral("assets"),
+                         arrayProp(assetRefProp(), QStringLiteral("Asset ids, names or indexes"))},
+                        {QStringLiteral("clips"),
+                         arrayProp({{QStringLiteral("type"), QStringLiteral("string")}},
+                                   QStringLiteral("Clip ids whose assets get proxies"))},
+                        {QStringLiteral("all"), boolProp(QStringLiteral("Every video asset"))},
+                        {QStringLiteral("all_slow"), boolProp(QStringLiteral("Every video asset that would preview slowly"))}}) },
+        { "proxy_status", "media", "Check preview proxies",
+          "Per-asset proxy state for video assets: none, queued, building, ready (made by Drift at "
+          "the current size) or linked (a file made elsewhere, matched by name). A failed build reads "
+          "none with error. Default every video asset; or pick assets/clips. Returns {proxies:[{asset, "
+          "name, state, error?}], counts:{state: n}, truncated? (rows cut at 500), queue:{busy, "
+          "progress, current, queued}, useProxies, proxySize}; picked assets or clips with no video "
+          "come back in skipped.",
+          objectSchema({{QStringLiteral("assets"),
+                         arrayProp(assetRefProp(), QStringLiteral("Asset ids, names or indexes"))},
+                        {QStringLiteral("clips"),
+                         arrayProp({{QStringLiteral("type"), QStringLiteral("string")}},
+                                   QStringLiteral("Clip ids"))}}),
+          true, false, true },
+        { "remove_proxies", "media", "Delete preview proxies",
+          "Drop queued proxies, stop one being built and delete the proxies Drift made at the current "
+          "size (assets, clips or all:true). A linked proxy (made elsewhere) is never deleted. Not "
+          "undoable. Returns {removed:[ids], kept:[{asset|clip, reason: none|linked|not_video|"
+          "no_media}], queue, useProxies, proxySize}.",
+          objectSchema({{QStringLiteral("assets"),
+                         arrayProp(assetRefProp(), QStringLiteral("Asset ids, names or indexes"))},
+                        {QStringLiteral("clips"),
+                         arrayProp({{QStringLiteral("type"), QStringLiteral("string")}},
+                                   QStringLiteral("Clip ids whose assets lose their proxies"))},
+                        {QStringLiteral("all"), boolProp(QStringLiteral("Every video asset"))}}),
+          false, true },
+        { "cancel_proxies", "media", "Stop building proxies",
+          "Empty the proxy queue (automatic ones from import included) and stop the one being built; "
+          "one whose last frames already landed may still finish. Proxies already made stay. Returns "
+          "{cancelled, queue, useProxies, proxySize}.",
+          objectSchema({}) },
         { "rename_asset", "media", "Rename a bin row",
           "Rename an asset in the bin. Does not rename the file on disk.",
           objectSchema({{QStringLiteral("asset"), assetRefProp()},
@@ -1339,7 +1387,7 @@ const QList<Op> &ops()
 
         { "get_ui_preferences", "ui", "Read editor UI settings",
           "Returns {theme:{overridden, dark}, autoKey, mediaGrid, reopenLastProject, proxySuggestion, "
-          "agentNotifications}. autoKey matters "
+          "useProxies, proxySize, agentNotifications}. autoKey matters "
           "for set_transform: when true, transform writes become keyframes at the playhead (or its `at`), which must be inside the clip.",
           objectSchema({}), true, false, true },
         { "set_theme", "ui", "Set dark or light theme",
@@ -1513,6 +1561,8 @@ QStringList undoExemptOps()
         QStringLiteral("export_video"),
         QStringLiteral("save_project"),        QStringLiteral("quit_instance"),
         QStringLiteral("clear_cache"),
+        QStringLiteral("create_proxies"),      QStringLiteral("remove_proxies"),
+        QStringLiteral("cancel_proxies"),
         QStringLiteral("set_theme"),        QStringLiteral("set_preview_view"),
         QStringLiteral("set_shortcut"),        QStringLiteral("reset_shortcuts"),
         QStringLiteral("export_theme"),        QStringLiteral("import_theme"),
@@ -1622,6 +1672,7 @@ QString agentGuideText()
         "- generate_subtitles-> jobs.subtitleGen.{active,progress,status}\n"
         "- detect_scenes     -> jobs.sceneDetect.{active,progress,status}\n"
         "- set_clip_reverse  -> jobs.reverseRender.{active,progress,status}\n"
+        "- create_proxies    -> proxy_status (queue and per-asset state; not under jobs)\n"
         "- market_install    -> jobs.downloads.{active,byKind} (every download, addons and updates included),\n"
         "  or market_downloads for per-job status\n"
         "- transcribe, diarize, tts_generate, sfx_generate, add_voice, voiceover_from_subtitles return {job_id}: poll get_job({id});\n"

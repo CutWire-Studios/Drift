@@ -1278,6 +1278,9 @@ QJsonObject McpDispatcher::opListAssets(const QJsonObject &args) const
                 {QStringLiteral("h"), a.value(QStringLiteral("height")).toInt()},
                 {QStringLiteral("folderId"), a.value(QStringLiteral("folderId")).toString()},
             };
+            // Videos only: none, queued, building, ready or linked.
+            if (const QString proxy = lib->proxyState(a.value(QStringLiteral("id")).toString()); !proxy.isEmpty())
+                row.insert(QStringLiteral("proxy"), proxy);
             if (usage) {
                 const QString id = a.value(QStringLiteral("id")).toString();
                 row.insert(QStringLiteral("clips"), counts.value(id));
@@ -3107,6 +3110,8 @@ QJsonObject McpDispatcher::opGetUiPreferences() const
         {QStringLiteral("reopenLastProject"), m_controller->preferences()->reopenLastProject()},
         {QStringLiteral("agentNotifications"), m_controller->preferences()->agentNotifications()},
         {QStringLiteral("proxySuggestion"), m_controller->preferences()->proxySuggestion()},
+        {QStringLiteral("useProxies"), m_controller->playback()->useProxies()},
+        {QStringLiteral("proxySize"), m_controller->playback()->proxySize()},
     });
 }
 

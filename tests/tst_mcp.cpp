@@ -300,6 +300,7 @@ private slots:
     void paintDiscoveryOpsListPresets();
     void duplicateLayerAndUserPresetLifecycle();
     void rotationOpsRoundTripThroughInspect();
+    void proxyOpsCreateCheckAndRemove();
     void binFolderOps();
 };
 
@@ -396,7 +397,8 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("guide")));
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
-    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 24600);
+    const qsizetype compactSize = QJsonDocument(compact).toJson(QJsonDocument::Compact).size();
+    QVERIFY2(compactSize < 24800, qPrintable(QString::number(compactSize)));
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
                 .toJson(QJsonDocument::Compact).size() < 12500);
 
@@ -11539,6 +11541,135 @@ void McpTest::replaceAssetWaitsForTheReprobe()
     QVERIFY(!replaced.value(QStringLiteral("detail")).toString().isEmpty());
     QVERIFY(!library.isImportPending(assetId));
     QCOMPARE(state.project()->asset(assetId)->path, QFileInfo(other).absoluteFilePath());
+}
+
+void McpTest::proxyOpsCreateCheckAndRemove()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    QTemporaryDir dir;
+    const QString video = dir.filePath(QStringLiteral("small.mp4"));
+    QVERIFY(runFfmpeg({QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                       QStringLiteral("testsrc2=size=320x180:rate=25:duration=2"), QStringLiteral("-c:v"),
+                       QStringLiteral("libx264"), QStringLiteral("-preset"), QStringLiteral("ultrafast"),
+                       QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"), video}));
+    const QString still = dir.filePath(QStringLiteral("still.png"));
+    {
+        QImage image(64, 36, QImage::Format_RGB32);
+        image.fill(Qt::darkCyan);
+        QVERIFY(image.save(still));
+    }
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    // Global preferences: put them back however the test ends.
+    const bool usedProxies = state.playback()->useProxies();
+    const int oldSize = state.playback()->proxySize();
+    const auto restore = qScopeGuard([&] {
+        state.playback()->setUseProxies(usedProxies);
+        state.playback()->setProxySize(oldSize);
+    });
+    const QString clip = importAndPlace(dispatcher, video, 0.0);
+    QVERIFY(!clip.isEmpty());
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("import_media"), {{QStringLiteral("paths"), QJsonArray{still}}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    const QString image = r.value(QStringLiteral("assets")).toArray().at(0).toObject().value(QStringLiteral("id")).toString();
+    const QString asset = library.assetIdForPath(video);
+    QVERIFY(!asset.isEmpty() && !image.isEmpty());
+
+    const auto stateOf = [&](const QString &id) {
+        const QJsonObject status = dispatcher.applyOne(QStringLiteral("proxy_status"), {{QStringLiteral("assets"), QJsonArray{id}}});
+        return status.value(QStringLiteral("proxies")).toArray().at(0).toObject().value(QStringLiteral("state")).toString();
+    };
+
+    // Every video by default; the image isn't one.
+    r = dispatcher.applyOne(QStringLiteral("proxy_status"), {});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("proxies")).toArray().size(), 1);
+    QCOMPARE(r.value(QStringLiteral("counts")).toObject().value(QStringLiteral("none")).toInt(), 1);
+    QVERIFY(r.value(QStringLiteral("queue")).toObject().contains(QStringLiteral("busy")));
+    // list_assets shows the state for videos only.
+    for (const QJsonValue &v : dispatcher.applyOne(QStringLiteral("list_assets"), {}).value(QStringLiteral("assets")).toArray()) {
+        const QJsonObject row = v.toObject();
+        if (row.value(QStringLiteral("id")).toString() == asset)
+            QCOMPARE(row.value(QStringLiteral("proxy")).toString(), QStringLiteral("none"));
+        else
+            QVERIFY(!row.contains(QStringLiteral("proxy")));
+    }
+
+    // Refusals.
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("create_proxies"), {}).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("assets"), QJsonArray{QStringLiteral("nope")}}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("assets"), QJsonArray{asset}}, {QStringLiteral("all"), true}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+
+    // A small H.264 file doesn't preview slowly, and an image gets no proxy.
+    r = dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("all_slow"), true}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("queued")).toArray().size(), 0);
+    QCOMPARE(r.value(QStringLiteral("not_slow")).toInt(), 1);
+    r = dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("assets"), QJsonArray{image}}});
+    QCOMPARE(r.value(QStringLiteral("skipped")).toArray().at(0).toObject().value(QStringLiteral("reason")).toString(), QStringLiteral("not_video"));
+
+    // By clip: its asset is queued, built in the background, not an undo step.
+    const int undoBefore = state.undoIndex();
+    r = dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("clips"), QJsonArray{clip}}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("queued")).toArray(), QJsonArray{asset});
+    QTRY_COMPARE_WITH_TIMEOUT(stateOf(asset), QStringLiteral("ready"), 60000);
+    QCOMPARE(state.undoIndex(), undoBefore);
+    QVERIFY(library.hasProxyForPath(video));
+    r = dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("assets"), QJsonArray{asset}}});
+    QCOMPARE(r.value(QStringLiteral("queued")).toArray().size(), 0);
+    QCOMPARE(r.value(QStringLiteral("already")).toArray().at(0).toObject().value(QStringLiteral("state")).toString(), QStringLiteral("ready"));
+
+    // Preview settings.
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_ui_preferences"), {{QStringLiteral("proxySize"), 500}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    r = dispatcher.applyOne(QStringLiteral("set_ui_preferences"), {{QStringLiteral("useProxies"), true}});
+    QVERIFY(r.value(QStringLiteral("useProxies")).toBool());
+    QVERIFY(state.playback()->useProxies());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("get_ui_preferences"), {}).value(QStringLiteral("useProxies")).toBool());
+
+    // Removing deletes the file Drift made.
+    r = dispatcher.applyOne(QStringLiteral("remove_proxies"), {{QStringLiteral("assets"), QJsonArray{asset, image}}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("removed")).toArray(), QJsonArray{asset});
+    QCOMPARE(r.value(QStringLiteral("kept")).toArray().at(0).toObject().value(QStringLiteral("reason")).toString(), QStringLiteral("not_video"));
+    QCOMPARE(stateOf(asset), QStringLiteral("none"));
+    QVERIFY(!library.hasProxyForPath(video));
+
+    // Cancelling empties the queue. The build's job winds down on the event loop, so the
+    // asset is still "building" right after; asking again queues it to start after.
+    r = dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("all"), true}});
+    QCOMPARE(r.value(QStringLiteral("queued")).toArray(), QJsonArray{asset});
+    r = dispatcher.applyOne(QStringLiteral("cancel_proxies"), {});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("cancelled")).toInt(), 1);
+    QCOMPARE(library.proxyQueuedCount(), 0);
+    r = dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("all"), true}});
+    QCOMPARE(r.value(QStringLiteral("queued")).toArray(), QJsonArray{asset});
+    QTRY_COMPARE_WITH_TIMEOUT(stateOf(asset), QStringLiteral("ready"), 60000);
+    QTRY_VERIFY_WITH_TIMEOUT(!library.proxyBusy(), 30000);
+
+    // A clip with no media is reported, not dropped.
+    const QString text = dispatcher.applyOne(QStringLiteral("add_text"), {{QStringLiteral("text"), QStringLiteral("t")}, {QStringLiteral("at"), 0.0}})
+                             .value(QStringLiteral("id")).toString();
+    r = dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("clips"), QJsonArray{text}}});
+    QCOMPARE(r.value(QStringLiteral("skipped")).toArray().at(0).toObject().value(QStringLiteral("reason")).toString(), QStringLiteral("no_media"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("clips"), QJsonArray{1}}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("type_mismatch"));
+
+    // A proxy made at another size isn't used until made again.
+    const int other = oldSize == 360 ? 540 : 360;
+    r = dispatcher.applyOne(QStringLiteral("set_ui_preferences"), {{QStringLiteral("proxySize"), other}});
+    QCOMPARE(r.value(QStringLiteral("proxySize")).toInt(), other);
+    QCOMPARE(stateOf(asset), QStringLiteral("none"));
+    state.playback()->setProxySize(oldSize);
+    QCOMPARE(stateOf(asset), QStringLiteral("ready"));
+    QVERIFY(dispatcher.applyOne(QStringLiteral("remove_proxies"), {{QStringLiteral("all"), true}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(stateOf(asset), QStringLiteral("none"));
 }
 
 QTEST_MAIN(McpTest)
