@@ -604,6 +604,7 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
     emit exportProgressChanged();
     m_exportInProgress = true;
     m_exportByAgent = m_exportRequestedByAgent;
+    m_exportAudioOnly = exportSettings.audioOnly && !exportSettings.gifExport;
     emit exportInProgressChanged();
     setLastMessage(tr("Exporting…"));
 
