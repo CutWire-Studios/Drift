@@ -155,6 +155,7 @@ private slots:
     void removeEmptyTracksKeepsPopulatedAndUndoes();
     void compositeSeparateAudioAndRemoval();
     void dissolveCompositeRoundTrip();
+    void dissolveCompositeKeepsTrackNumbers();
     void retimeKeepsDisabledKeyframeTrackDisabled();
     void effectStackCopyPasteAppendsAndRescales();
     void chromaKeyHueIsFlaggedForTheColourSwatch();
@@ -1636,6 +1637,75 @@ void EditorStateTest::dissolveCompositeRoundTrip()
 
     state.undo();
     QCOMPARE(project.sequenceIds().size(), 1);
+}
+
+// #48: rows a dissolve adds take the next free numbers; tracks already there keep theirs.
+void EditorStateTest::dissolveCompositeKeepsTrackNumbers()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    setUpTwoClipSelection(library, state);
+    drift::Track second;
+    second.type = drift::TrackType::Video;
+    drift::Clip moved = state.project()->tracks()[0].clips.takeLast();
+    second.clips.append(moved);
+    state.project()->tracks().append(second);
+    state.project()->ensureTrackIds();
+    state.setSelection({QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 0}},
+                        QVariantMap{{QStringLiteral("track"), 1}, {QStringLiteral("clip"), 0}}});
+    state.makeCompositeFromSelection();
+    // Inside the composite, its tracks are numbered on their own.
+    const QString sequenceId = state.project()->sequenceIds().constFirst();
+    QList<int> inner;
+    for (const drift::Track &track : state.project()->sequenceTracks(sequenceId))
+        inner.append(track.number);
+    std::sort(inner.begin(), inner.end());
+    QCOMPARE(inner, (QList<int>{1, 2}));
+
+    // Busy tracks everywhere the composite plays, so the dissolve has to add rows.
+    int compositeTrack = -1;
+    drift::TimeUs end = 0;
+    for (int t = 0; t < state.project()->tracks().size(); ++t)
+        for (const drift::Clip &clip : state.project()->tracks().at(t).clips)
+            if (clip.type == drift::ClipType::Composite) {
+                compositeTrack = t;
+                end = clip.timelineEnd();
+            }
+    QVERIFY(compositeTrack >= 0);
+    for (int t = 0; t < state.project()->tracks().size(); ++t) {
+        if (t == compositeTrack)
+            continue;
+        drift::Clip filler;
+        filler.id = QStringLiteral("filler-%1").arg(t);
+        filler.type = drift::ClipType::Text;
+        filler.timelineStart = 0;
+        filler.timelineDuration = end;
+        state.project()->tracks()[t].clips = {filler};
+    }
+    drift::Track top{.type = drift::TrackType::Video};
+    drift::Clip topFiller;
+    topFiller.id = QStringLiteral("filler-top");
+    topFiller.type = drift::ClipType::Text;
+    topFiller.timelineDuration = end;
+    top.clips = {topFiller};
+    state.project()->tracks().prepend(top);
+    state.project()->ensureTrackIds();
+    compositeTrack += 1;
+    QHash<QString, int> numbers;
+    for (const drift::Track &track : state.project()->tracks())
+        numbers.insert(track.id, track.number);
+
+    state.dissolveComposite(compositeTrack, 0);
+    QSet<QString> seen;
+    for (const drift::Track &track : state.project()->tracks()) {
+        if (numbers.contains(track.id))
+            QCOMPARE(track.number, numbers.value(track.id));
+        if (track.number == 0)
+            continue;
+        const QString key = drift::trackNumberKind(track) + QString::number(track.number);
+        QVERIFY2(!seen.contains(key), qPrintable(key));
+        seen.insert(key);
+    }
 }
 
 void EditorStateTest::compositeSeparateAudioAndRemoval()

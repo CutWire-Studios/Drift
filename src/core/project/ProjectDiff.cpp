@@ -172,6 +172,8 @@ QStringList changedTrackFields(const Track &a, const Track &b, int fromIndex, in
         fields.append(QStringLiteral("index"));
     if (a.name != b.name)
         fields.append(QStringLiteral("name"));
+    if (a.number != b.number)
+        fields.append(QStringLiteral("number"));
     if (a.locked != b.locked)
         fields.append(QStringLiteral("locked"));
     if (a.muted != b.muted)
