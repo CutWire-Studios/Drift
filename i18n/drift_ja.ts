@@ -59,27 +59,27 @@
     </message>
     <message>
         <source>Processor (CPU)</source>
-        <translation type="unfinished"></translation>
+        <translation>Processor (CPU)</translation>
     </message>
     <message>
         <source>NVIDIA CUDA</source>
-        <translation type="unfinished"></translation>
+        <translation>NVIDIA CUDA</translation>
     </message>
     <message>
         <source>AMD MIGraphX (Windows ML)</source>
-        <translation type="unfinished"></translation>
+        <translation>AMD MIGraphX (Windows ML)</translation>
     </message>
     <message>
         <source>AMD ROCm (MIGraphX)</source>
-        <translation type="unfinished"></translation>
+        <translation>AMD ROCm (MIGraphX)</translation>
     </message>
     <message>
         <source>Windows ML (DirectX 12)</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows ML (DirectX 12)</translation>
     </message>
     <message>
         <source>WebGPU (any graphics card)</source>
-        <translation type="unfinished"></translation>
+        <translation>WebGPU (任意のグラフィックカード)</translation>
     </message>
     <message>
         <source>Could not open that file.</source>
@@ -2375,7 +2375,7 @@
     <name>AndroidTransitionPickerSheet</name>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished">トランジション</translation>
+        <translation>トランジション</translation>
     </message>
 </context>
 <context>
@@ -2998,7 +2998,7 @@
     </message>
     <message>
         <source>Add transition at playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>再生ヘッド位置にトランジションを追加</translation>
     </message>
     <message>
         <source>Go to previous cut point</source>
@@ -3214,11 +3214,11 @@
     </message>
     <message>
         <source>Track is locked</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックはロックされています</translation>
     </message>
     <message>
         <source>Clip inserted</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップを挿入しました</translation>
     </message>
     <message>
         <source>A clip can&apos;t completely cover another</source>
@@ -3226,19 +3226,19 @@
     </message>
     <message>
         <source>Ripple trim</source>
-        <translation type="unfinished"></translation>
+        <translation>リップルトリム</translation>
     </message>
     <message>
         <source>Gaps closed</source>
-        <translation type="unfinished"></translation>
+        <translation>ギャップを埋めました</translation>
     </message>
     <message>
         <source>Clips swapped</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップを入れ替えました</translation>
     </message>
     <message>
         <source>Set sequence</source>
-        <translation type="unfinished"></translation>
+        <translation>シーケンスを設定</translation>
     </message>
     <message>
         <source>Replace clip</source>
@@ -3726,39 +3726,39 @@
     </message>
     <message>
         <source>unknown procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>不明なプロシージャルパッケージ</translation>
     </message>
     <message>
         <source>unknown param &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>不明なパラメーター &quot;%1&quot;</translation>
     </message>
     <message>
         <source>Procedural clip added</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルクリップを追加しました</translation>
     </message>
     <message>
         <source>Change procedural</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルを変更</translation>
     </message>
     <message>
         <source>Procedural changed</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルを変更しました</translation>
     </message>
     <message>
         <source>Edit procedural</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルを編集</translation>
     </message>
     <message>
         <source>Procedural updated</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルを更新しました</translation>
     </message>
     <message>
         <source>Change seed</source>
-        <translation type="unfinished"></translation>
+        <translation>シードを変更</translation>
     </message>
     <message>
         <source>Seed changed</source>
-        <translation type="unfinished"></translation>
+        <translation>シードを変更しました</translation>
     </message>
     <message>
         <source>3D model replaced</source>
@@ -3874,15 +3874,15 @@
     </message>
     <message>
         <source>Apply transition to cuts</source>
-        <translation type="unfinished"></translation>
+        <translation>カットにトランジションを適用</translation>
     </message>
     <message>
         <source>Transitions updated</source>
-        <translation type="unfinished"></translation>
+        <translation>トランジションを更新しました</translation>
     </message>
     <message>
         <source>No cut between two clips to add a transition to</source>
-        <translation type="unfinished"></translation>
+        <translation>トランジションを追加できる、2 つのクリップ間のカットがありません</translation>
     </message>
     <message>
         <source>Edit curve</source>
@@ -4242,11 +4242,11 @@
     </message>
     <message>
         <source>Add keyframes</source>
-        <translation type="unfinished">キーフレームを追加</translation>
+        <translation>キーフレームを追加</translation>
     </message>
     <message>
         <source>Keyframes set</source>
-        <translation type="unfinished"></translation>
+        <translation>キーフレームを設定しました</translation>
     </message>
     <message>
         <source>Reset camera</source>
@@ -4342,7 +4342,7 @@
     </message>
     <message>
         <source>Change LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT を変更</translation>
     </message>
     <message>
         <source>Could not read the selected file</source>
@@ -4576,15 +4576,15 @@
     </message>
     <message>
         <source>Track lock</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックのロック</translation>
     </message>
     <message>
         <source>Track locked</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックをロックしました</translation>
     </message>
     <message>
         <source>Track unlocked</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックのロックを解除しました</translation>
     </message>
     <message>
         <source>Move track</source>
@@ -4898,19 +4898,19 @@
     </message>
     <message>
         <source>Clear clip label</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップのラベルをクリア</translation>
     </message>
     <message>
         <source>Label clip</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップにラベルを付ける</translation>
     </message>
     <message>
         <source>Clip label cleared</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップのラベルをクリアしました</translation>
     </message>
     <message>
         <source>Clip labelled</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップにラベルを付けました</translation>
     </message>
 </context>
 <context>
@@ -4940,7 +4940,7 @@
     </message>
     <message>
         <source>Recent</source>
-        <translation type="unfinished"></translation>
+        <translation>最近使用</translation>
     </message>
 </context>
 <context>
@@ -6049,180 +6049,180 @@
     <name>BakeController</name>
     <message>
         <source>Set a work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクするワークエリアを設定してください</translation>
     </message>
     <message>
         <source>Could not open the bake cache</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクキャッシュを開けませんでした</translation>
     </message>
     <message>
         <source>Baking…</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク中…</translation>
     </message>
     <message>
         <source>Bake cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクをキャンセルしました</translation>
     </message>
     <message>
         <source>Bake failed</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクに失敗しました</translation>
     </message>
     <message>
         <source>Bake complete</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクが完了しました</translation>
     </message>
     <message>
         <source>Set work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクするワークエリアを設定</translation>
     </message>
     <message>
         <source>Work area set</source>
-        <translation type="unfinished"></translation>
+        <translation>ワークエリアを設定しました</translation>
     </message>
 </context>
 <context>
     <name>BakesDialog</name>
     <message>
         <source>Bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">閉じる</translation>
+        <translation>閉じる</translation>
     </message>
     <message>
         <source>Compact</source>
-        <translation type="unfinished"></translation>
+        <translation>コンパクト</translation>
     </message>
     <message>
         <source>Balanced</source>
-        <translation type="unfinished"></translation>
+        <translation>バランス</translation>
     </message>
     <message>
         <source>High</source>
-        <translation type="unfinished">高</translation>
+        <translation>高</translation>
     </message>
     <message>
         <source>%1m %2s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1m %2s</translation>
     </message>
     <message>
         <source>%1s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1s</translation>
     </message>
     <message>
         <source>Baking %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク中 %1%</translation>
     </message>
     <message>
         <source>Stale</source>
-        <translation type="unfinished"></translation>
+        <translation>古い</translation>
     </message>
     <message>
         <source>Fresh</source>
-        <translation type="unfinished"></translation>
+        <translation>最新</translation>
     </message>
     <message>
         <source>Delete all bakes?</source>
-        <translation type="unfinished"></translation>
+        <translation>すべてのベイクを削除しますか?</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">削除</translation>
+        <translation>削除</translation>
     </message>
     <message>
         <source>Playback and export will render these ranges live again. Your project is not changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>再生とエクスポートでは、これらの範囲が再びリアルタイムでレンダリングされます。プロジェクトは変更されません。</translation>
     </message>
     <message>
         <source>Re-bake at current quality</source>
-        <translation type="unfinished"></translation>
+        <translation>現在の品質で再ベイク</translation>
     </message>
     <message>
         <source>Set work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクするワークエリアを設定</translation>
     </message>
     <message>
         <source>Quality for new bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>新しいベイクの品質</translation>
     </message>
     <message>
         <source>≈ %1 per minute</source>
-        <translation type="unfinished"></translation>
+        <translation>≈ 1 分あたり %1</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">キャンセル</translation>
+        <translation>キャンセル</translation>
     </message>
     <message>
         <source>Bake work area</source>
-        <translation type="unfinished"></translation>
+        <translation>ワークエリアをベイク</translation>
     </message>
     <message>
         <source>Set a work area on the timeline first</source>
-        <translation type="unfinished"></translation>
+        <translation>先にタイムラインでワークエリアを設定してください</translation>
     </message>
     <message>
         <source>I</source>
-        <translation type="unfinished"></translation>
+        <translation>I</translation>
     </message>
     <message>
         <source>O</source>
-        <translation type="unfinished"></translation>
+        <translation>O</translation>
     </message>
     <message>
         <source>Bake a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Bake.</source>
-        <translation type="unfinished"></translation>
+        <translation>タイムラインの完成した部分をベイクすると、スムーズに再生・エクスポートできます。%1 と %2 でワークエリアを設定し、「ベイク」を押してください。</translation>
     </message>
     <message>
         <source>Range</source>
-        <translation type="unfinished">範囲</translation>
+        <translation>範囲</translation>
     </message>
     <message>
         <source>Duration</source>
-        <translation type="unfinished">長さ</translation>
+        <translation>長さ</translation>
     </message>
     <message>
         <source>Quality</source>
-        <translation type="unfinished">品質</translation>
+        <translation>品質</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished">サイズ</translation>
+        <translation>サイズ</translation>
     </message>
     <message>
         <source>State</source>
-        <translation type="unfinished"></translation>
+        <translation>状態</translation>
     </message>
     <message>
         <source>Re-bake</source>
-        <translation type="unfinished"></translation>
+        <translation>再ベイク</translation>
     </message>
     <message>
         <source>More</source>
-        <translation type="unfinished">その他</translation>
+        <translation>その他</translation>
     </message>
     <message>
         <source>Delete bake</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクを削除</translation>
     </message>
     <message numerus="yes">
         <source>%n bake(s) · %1</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 個のベイク · %1</numerusform>
         </translation>
     </message>
     <message>
         <source>0 B</source>
-        <translation type="unfinished"></translation>
+        <translation>0 B</translation>
     </message>
     <message>
         <source>Re-bake all stale</source>
-        <translation type="unfinished"></translation>
+        <translation>古いベイクをすべて再ベイク</translation>
     </message>
     <message>
         <source>Delete all bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>すべてのベイクを削除</translation>
     </message>
 </context>
 <context>
@@ -6573,43 +6573,43 @@
     </message>
     <message>
         <source>Missing LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT が見つかりません</translation>
     </message>
     <message>
         <source>Set LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT を設定</translation>
     </message>
     <message numerus="yes">
         <source>Imported %n LUT(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 個の LUT をインポートしました</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n LUT(s), %1 failed</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 個の LUT をインポートしました (%1 個は失敗)</numerusform>
         </translation>
     </message>
     <message>
         <source>Could not import that LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>その LUT をインポートできませんでした</translation>
     </message>
     <message>
         <source>Could not remove the LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT を削除できませんでした</translation>
     </message>
     <message>
         <source>LUT removed</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT を削除しました</translation>
     </message>
     <message>
         <source>Could not rename the LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT の名前を変更できませんでした</translation>
     </message>
     <message>
         <source>LUT renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT の名前を変更しました</translation>
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
@@ -6917,15 +6917,15 @@
     </message>
     <message>
         <source>LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT</translation>
     </message>
     <message>
         <source>None. Choose one in the Color Grading LUTs panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>なし。カラーグレーディング LUT パネルで選択してください。</translation>
     </message>
     <message>
         <source>LUT Intensity</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT の強度</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -6965,7 +6965,7 @@
     </message>
     <message>
         <source>Edit colour</source>
-        <translation type="unfinished"></translation>
+        <translation>色の編集</translation>
     </message>
 </context>
 <context>
@@ -8199,11 +8199,11 @@
     <name>EditorHeaderVideoButton</name>
     <message>
         <source>Video</source>
-        <translation type="unfinished">ビデオ</translation>
+        <translation>ビデオ</translation>
     </message>
     <message>
         <source>Bakes, crop and video layout</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク、クロップ、ビデオレイアウト</translation>
     </message>
 </context>
 <context>
@@ -8811,11 +8811,11 @@
     </message>
     <message>
         <source>Import LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT をインポート</translation>
     </message>
     <message>
         <source>Missing LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT が見つかりません</translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
@@ -8938,41 +8938,41 @@
     </message>
     <message>
         <source>Some bakes are out of date</source>
-        <translation type="unfinished"></translation>
+        <translation>古くなっているベイクがあります</translation>
     </message>
     <message numerus="yes">
         <source>%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 個のベイク済み範囲が編集内容と一致しなくなっています。そのままエクスポートすると、古い映像が使用されます。</numerusform>
         </translation>
     </message>
     <message>
         <source>Re-bake first</source>
-        <translation type="unfinished"></translation>
+        <translation>先に再ベイク</translation>
     </message>
     <message>
         <source>Re-baking. Export again when it finishes.</source>
-        <translation type="unfinished"></translation>
+        <translation>再ベイク中です。完了したら、もう一度エクスポートしてください。</translation>
     </message>
     <message>
         <source>Render them live</source>
-        <translation type="unfinished"></translation>
+        <translation>リアルタイムでレンダリング</translation>
     </message>
     <message>
         <source>Export as is</source>
-        <translation type="unfinished"></translation>
+        <translation>そのままエクスポート</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">キャンセル</translation>
+        <translation>キャンセル</translation>
     </message>
     <message>
         <source>Use baked ranges</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク済み範囲を使用</translation>
     </message>
     <message>
         <source>Read pre-rendered ranges instead of compositing them again</source>
-        <translation type="unfinished"></translation>
+        <translation>再度コンポジットする代わりに、事前レンダリング済みの範囲を読み込みます</translation>
     </message>
 </context>
 <context>
@@ -10060,23 +10060,23 @@
     </message>
     <message>
         <source>Label</source>
-        <translation type="unfinished">ラベル</translation>
+        <translation>ラベル</translation>
     </message>
     <message>
         <source>Clip label</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップのラベル</translation>
     </message>
     <message>
         <source>No label</source>
-        <translation type="unfinished"></translation>
+        <translation>ラベルなし</translation>
     </message>
     <message>
         <source>Edit label</source>
-        <translation type="unfinished"></translation>
+        <translation>ラベルを編集</translation>
     </message>
     <message>
         <source>e.g. intro (empty clears it)</source>
-        <translation type="unfinished"></translation>
+        <translation>例 : イントロ (空にするとクリア)</translation>
     </message>
 </context>
 <context>
@@ -11458,39 +11458,39 @@
     </message>
     <message>
         <source>Color Grading LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>カラーグレーディング LUT</translation>
     </message>
     <message>
         <source>Import LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT をインポート</translation>
     </message>
     <message>
         <source>Search LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT を検索</translation>
     </message>
     <message>
         <source>Import .cube LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>.cube LUT をインポート</translation>
     </message>
     <message>
         <source>My LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>マイ LUT</translation>
     </message>
     <message>
         <source>Missing LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT が見つかりません</translation>
     </message>
     <message>
         <source>LUT Intensity</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT の強度</translation>
     </message>
     <message>
         <source>No LUTs match “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>「%1」に一致する LUT はありません。</translation>
     </message>
     <message>
         <source>No favorites yet. Star LUTs to save them here.</source>
-        <translation type="unfinished"></translation>
+        <translation>お気に入りはまだありません。LUT に星を付けると、ここに保存されます。</translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
@@ -11510,27 +11510,27 @@
     </message>
     <message>
         <source>No LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT はありません</translation>
     </message>
     <message>
         <source>Download a free pack of ready-made color grading LUTs, or import your own .cube files.</source>
-        <translation type="unfinished"></translation>
+        <translation>作成済みのカラーグレーディング LUT の無料パックをダウンロードするか、独自の .cube ファイルをインポートしてください。</translation>
     </message>
     <message>
         <source>Get free LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>無料の LUT を入手</translation>
     </message>
     <message>
         <source>Select a clip to try LUTs on it</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップを選択すると、LUT を試せます</translation>
     </message>
     <message>
         <source>Remove this LUT?</source>
-        <translation type="unfinished"></translation>
+        <translation>この LUT を削除しますか?</translation>
     </message>
     <message>
         <source>Rename LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT の名前を変更</translation>
     </message>
     <message numerus="yes">
         <source>“%1” is used by %n clip(s). They will show it as missing until it is imported again.</source>
@@ -12004,7 +12004,7 @@
     </message>
     <message>
         <source>LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT</translation>
     </message>
     <message>
         <source>Effect template</source>
@@ -15216,11 +15216,11 @@ If playback stutters, try another.</source>
     <name>PreviewStatusLayer</name>
     <message>
         <source>Stale bake</source>
-        <translation type="unfinished"></translation>
+        <translation>古いベイク</translation>
     </message>
     <message>
         <source>Baked</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク済み</translation>
     </message>
     <message>
         <source>Nothing to preview yet</source>
@@ -15347,287 +15347,287 @@ If playback stutters, try another.</source>
     <name>ProceduralConsolePanel</name>
     <message>
         <source>Procedural console</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルコンソール</translation>
     </message>
     <message>
         <source>Console</source>
-        <translation type="unfinished"></translation>
+        <translation>コンソール</translation>
     </message>
     <message>
         <source>Clear the Apply output</source>
-        <translation type="unfinished"></translation>
+        <translation>適用の出力をクリア</translation>
     </message>
     <message>
         <source>Apply or Check a package to see its output here</source>
-        <translation type="unfinished"></translation>
+        <translation>パッケージを適用またはチェックすると、その出力がここに表示されます</translation>
     </message>
     <message>
         <source>Selected clip</source>
-        <translation type="unfinished">選択中のクリップ</translation>
+        <translation>選択中のクリップ</translation>
     </message>
     <message>
         <source>No errors or output</source>
-        <translation type="unfinished"></translation>
+        <translation>エラーや出力はありません</translation>
     </message>
 </context>
 <context>
     <name>ProceduralEditorController</name>
     <message>
         <source>procedural.json is not valid JSON: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>procedural.json は有効な JSON ではありません : %1</translation>
     </message>
     <message>
         <source>expected an object</source>
-        <translation type="unfinished"></translation>
+        <translation>オブジェクトが必要です</translation>
     </message>
     <message>
         <source>%1: ok - %2 meshes, %3 vertices, %4 instances (%5 ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 : OK - メッシュ %2 個、頂点 %3 個、インスタンス %4 個 (%5 ms)</translation>
     </message>
     <message>
         <source>%1 failed: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 に失敗しました : %2</translation>
     </message>
     <message>
         <source>shader %1 compiled</source>
-        <translation type="unfinished"></translation>
+        <translation>シェーダー %1 をコンパイルしました</translation>
     </message>
     <message>
         <source>Shaders were not compiled: no OpenGL context</source>
-        <translation type="unfinished"></translation>
+        <translation>シェーダーはコンパイルされませんでした : OpenGL コンテキストがありません</translation>
     </message>
     <message>
         <source>%1 is read-only. Duplicate it to edit.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 は読み取り専用です。編集するには複製してください。</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">適用</translation>
+        <translation>適用</translation>
     </message>
     <message>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation>チェック</translation>
     </message>
     <message>
         <source>%1 copy</source>
-        <translation type="unfinished">%1 をコピー</translation>
+        <translation>%1 をコピー</translation>
     </message>
     <message>
         <source>Duplicate</source>
-        <translation type="unfinished">複製</translation>
+        <translation>複製</translation>
     </message>
     <message>
         <source>Use 1-48 letters, digits or underscores for the name</source>
-        <translation type="unfinished"></translation>
+        <translation>名前には 1-48 文字の英字、数字、アンダースコアを使用してください</translation>
     </message>
     <message>
         <source>Radius</source>
-        <translation type="unfinished">半径</translation>
+        <translation>半径</translation>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished">速度</translation>
+        <translation>速度</translation>
     </message>
     <message>
         <source>Tint</source>
-        <translation type="unfinished">色合い</translation>
+        <translation>色合い</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">作成</translation>
+        <translation>作成</translation>
     </message>
     <message>
         <source>Use letters, digits or underscores for a new shader name, not an existing one</source>
-        <translation type="unfinished"></translation>
+        <translation>新しいシェーダー名には、既存のものではなく、英字、数字、アンダースコアを使用してください</translation>
     </message>
 </context>
 <context>
     <name>ProceduralEditorPanel</name>
     <message>
         <source>Procedural code editor</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルコードエディター</translation>
     </message>
     <message>
         <source>%1 (read-only)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (読み取り専用)</translation>
     </message>
     <message>
         <source>Pick a package</source>
-        <translation type="unfinished"></translation>
+        <translation>パッケージを選択</translation>
     </message>
     <message>
         <source>The package to edit. Selecting a procedural clip opens its package.</source>
-        <translation type="unfinished"></translation>
+        <translation>編集するパッケージ。プロシージャルクリップを選択すると、そのパッケージが開きます。</translation>
     </message>
     <message>
         <source>New</source>
-        <translation type="unfinished">新規</translation>
+        <translation>新規</translation>
     </message>
     <message>
         <source>Apply or revert your edits first</source>
-        <translation type="unfinished"></translation>
+        <translation>先に編集を適用するか元に戻してください</translation>
     </message>
     <message>
         <source>Create a minimal procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>最小限のプロシージャルパッケージを作成</translation>
     </message>
     <message>
         <source>New procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>新しいプロシージャルパッケージ</translation>
     </message>
     <message>
         <source>Duplicate to edit</source>
-        <translation type="unfinished"></translation>
+        <translation>複製して編集</translation>
     </message>
     <message>
         <source>Copy this package to your own procedurals and edit the copy</source>
-        <translation type="unfinished"></translation>
+        <translation>このパッケージを自分のプロシージャルにコピーして、そのコピーを編集します</translation>
     </message>
     <message>
         <source>Duplicate procedural to edit</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルを複製して編集</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">適用</translation>
+        <translation>適用</translation>
     </message>
     <message>
         <source>Validate and install the package, then refresh the preview (Ctrl+S)</source>
-        <translation type="unfinished"></translation>
+        <translation>パッケージを検証してインストールし、プレビューを更新します (Ctrl+S)</translation>
     </message>
     <message>
         <source>Apply procedural code</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルコードを適用</translation>
     </message>
     <message>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation>チェック</translation>
     </message>
     <message>
         <source>Validate the edits without installing them</source>
-        <translation type="unfinished"></translation>
+        <translation>インストールせずに編集内容を検証します</translation>
     </message>
     <message>
         <source>Revert</source>
-        <translation type="unfinished">元に戻す</translation>
+        <translation>元に戻す</translation>
     </message>
     <message>
         <source>Discard edits and reload the package from disk</source>
-        <translation type="unfinished"></translation>
+        <translation>編集を破棄して、ディスクからパッケージを再読み込みします</translation>
     </message>
     <message>
         <source>Add clip</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップを追加</translation>
     </message>
     <message>
         <source>Add a clip using this package at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>このパッケージを使用するクリップを再生ヘッド位置に追加します</translation>
     </message>
     <message>
         <source>Discard unapplied edits?</source>
-        <translation type="unfinished"></translation>
+        <translation>未適用の編集を破棄しますか?</translation>
     </message>
     <message>
         <source>Discard</source>
-        <translation type="unfinished">破棄</translation>
+        <translation>破棄</translation>
     </message>
     <message>
         <source>Keep editing</source>
-        <translation type="unfinished">編集を続ける</translation>
+        <translation>編集を続ける</translation>
     </message>
     <message>
         <source>Package name</source>
-        <translation type="unfinished"></translation>
+        <translation>パッケージ名</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">作成</translation>
+        <translation>作成</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">キャンセル</translation>
+        <translation>キャンセル</translation>
     </message>
     <message>
         <source>Add a shader pair</source>
-        <translation type="unfinished"></translation>
+        <translation>シェーダーペアを追加</translation>
     </message>
     <message>
         <source>Shader name</source>
-        <translation type="unfinished"></translation>
+        <translation>シェーダー名</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished">加算</translation>
+        <translation>加算</translation>
     </message>
     <message>
         <source>%1 is read-only</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 は読み取り専用です</translation>
     </message>
     <message>
         <source>%1 - unapplied edits</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 - 未適用の編集</translation>
     </message>
     <message>
         <source>No package open</source>
-        <translation type="unfinished"></translation>
+        <translation>開いているパッケージはありません</translation>
     </message>
     <message>
         <source>Select a procedural clip, pick a package above, or create a new one.</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルクリップを選択するか、上でパッケージを選択するか、新しく作成してください。</translation>
     </message>
 </context>
 <context>
     <name>ProceduralInspector</name>
     <message>
         <source>Package &quot;%1&quot; is not installed; the clip renders nothing until it returns.</source>
-        <translation type="unfinished"></translation>
+        <translation>パッケージ &quot;%1&quot; はインストールされていないため、戻るまでクリップは何も表示されません。</translation>
     </message>
     <message>
         <source>Package</source>
-        <translation type="unfinished"></translation>
+        <translation>パッケージ</translation>
     </message>
     <message>
         <source>Procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルパッケージ</translation>
     </message>
     <message>
         <source>The package that builds this clip&apos;s scene. Changing it resets the parameters.</source>
-        <translation type="unfinished"></translation>
+        <translation>このクリップのシーンを構築するパッケージ。変更するとパラメーターがリセットされます。</translation>
     </message>
     <message>
         <source>Could not change the package</source>
-        <translation type="unfinished"></translation>
+        <translation>パッケージを変更できませんでした</translation>
     </message>
     <message>
         <source>Seed</source>
-        <translation type="unfinished">シード</translation>
+        <translation>シード</translation>
     </message>
     <message>
         <source>Procedural seed</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルシード</translation>
     </message>
     <message>
         <source>Parameters</source>
-        <translation type="unfinished"></translation>
+        <translation>パラメーター</translation>
     </message>
     <message>
         <source>Procedural parameters</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルパラメーター</translation>
     </message>
 </context>
 <context>
     <name>ProceduralParamsPanel</name>
     <message>
         <source>Procedural parameters panel</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルパラメーターパネル</translation>
     </message>
     <message>
         <source>Select a procedural clip</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルクリップを選択</translation>
     </message>
     <message>
         <source>Pick a Procedural 3D clip on the timeline to edit its parameters here.</source>
-        <translation type="unfinished"></translation>
+        <translation>タイムライン上のプロシージャル 3D クリップを選択すると、ここでパラメーターを編集できます。</translation>
     </message>
 </context>
 <context>
@@ -16133,7 +16133,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Procedural</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャル</translation>
     </message>
     <message>
         <source>Subtitles</source>
@@ -16570,15 +16570,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Compact</source>
-        <translation type="unfinished"></translation>
+        <translation>コンパクト</translation>
     </message>
     <message>
         <source>High</source>
-        <translation type="unfinished">高</translation>
+        <translation>高</translation>
     </message>
     <message>
         <source>Balanced</source>
-        <translation type="unfinished"></translation>
+        <translation>バランス</translation>
     </message>
 </context>
 <context>
@@ -16635,7 +16635,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift の基本的なエフェクト、トランジション、オーディオエフェクト、フォント、カラーグレーディング LUT はアドオンとして提供されます。これらがないと、エディターに期待される機能のほとんどが欠けてしまうため、今インストールします。</translation>
     </message>
     <message>
         <source>Needs a newer version of Drift.</source>
@@ -16817,7 +16817,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>LUTs</translation>
     </message>
     <message>
         <source>Fonts</source>
@@ -16900,11 +16900,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
-        <translation type="unfinished"></translation>
+        <translation>エフェクト、トランジション、カラーグレーディング LUT、フォント、ステッカー、AI モデルは、上部バーの「拡張機能」から追加でインストールできます。</translation>
     </message>
     <message>
         <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
-        <translation type="unfinished"></translation>
+        <translation>エフェクト、トランジション、カラーグレーディング LUT、フォント、ステッカー、AI モデルは、ヘッダーの「拡張機能」から追加でインストールできます。</translation>
     </message>
     <message>
         <source>Use your fingers</source>
@@ -17603,11 +17603,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク</translation>
     </message>
     <message>
         <source>Crop video</source>
-        <translation type="unfinished">ビデオを切り抜き</translation>
+        <translation>ビデオを切り抜き</translation>
     </message>
     <message>
         <source>Switch to mobile layout…</source>
@@ -23827,42 +23827,42 @@ If playback stutters, try another.</source>
     <name>TimelineBakeContextMenu</name>
     <message>
         <source>Re-bake</source>
-        <translation type="unfinished"></translation>
+        <translation>再ベイク</translation>
     </message>
     <message>
         <source>Set work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクするワークエリアを設定</translation>
     </message>
     <message>
         <source>Delete bake</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクを削除</translation>
     </message>
     <message>
         <source>Manage bakes…</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクを管理…</translation>
     </message>
 </context>
 <context>
     <name>TimelineBakeStrip</name>
     <message>
         <source>Baking %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク中 %1%</translation>
     </message>
     <message>
         <source>Stale</source>
-        <translation type="unfinished"></translation>
+        <translation>古い</translation>
     </message>
     <message>
         <source>Fresh</source>
-        <translation type="unfinished"></translation>
+        <translation>最新</translation>
     </message>
     <message>
         <source>%1 – %2 · %3 · %4%5</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 – %2 · %3 · %4%5</translation>
     </message>
     <message>
         <source>%1 · %2×%3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2×%3</translation>
     </message>
 </context>
 <context>
@@ -24078,7 +24078,7 @@ If playback stutters, try another.</source>
     <name>TimelineCutButton</name>
     <message>
         <source>Add transition</source>
-        <translation type="unfinished">トランジションを追加</translation>
+        <translation>トランジションを追加</translation>
     </message>
 </context>
 <context>
@@ -24122,19 +24122,19 @@ If playback stutters, try another.</source>
     <name>TimelineLaneRibbons</name>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished">オーディオ FX</translation>
+        <translation>オーディオ FX</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished">マスク</translation>
+        <translation>マスク</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished">エフェクト</translation>
+        <translation>エフェクト</translation>
     </message>
     <message>
         <source>%1 — click to expand</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 — クリックして展開</translation>
     </message>
 </context>
 <context>
@@ -24195,15 +24195,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shrink all tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>すべてのトラックを縮小</translation>
     </message>
     <message>
         <source>Grow all tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>すべてのトラックを拡大</translation>
     </message>
     <message>
         <source>Fit tracks to panel</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックをパネルに合わせる</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -24578,7 +24578,7 @@ If playback stutters, try another.</source>
     <name>TimelineTrackItem</name>
     <message>
         <source>Procedural package not found. The clip renders nothing until it is installed again.</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルパッケージが見つかりません。再インストールされるまで、クリップは何も表示されません。</translation>
     </message>
     <message>
         <source>Audio adjustment</source>
@@ -24624,19 +24624,19 @@ If playback stutters, try another.</source>
     <name>TimelineWorkAreaBakeChip</name>
     <message>
         <source>Baking %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク中 %1%</translation>
     </message>
     <message>
         <source>Bake</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク</translation>
     </message>
     <message>
         <source>Cancel baking</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイクをキャンセル</translation>
     </message>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
-        <translation type="unfinished"></translation>
+        <translation>スムーズな再生とエクスポートのために、ワークエリアを事前レンダリングします</translation>
     </message>
 </context>
 <context>
@@ -24773,11 +24773,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Expand child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>子レーンを展開</translation>
     </message>
     <message>
         <source>Collapse child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>子レーンを折りたたむ</translation>
     </message>
     <message>
         <source>Unmute track</source>
@@ -24789,11 +24789,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unsolo track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックのソロを解除</translation>
     </message>
     <message>
         <source>Solo track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックをソロにする</translation>
     </message>
     <message>
         <source>Stop recording</source>
@@ -24821,11 +24821,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unlock track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックのロックを解除</translation>
     </message>
     <message>
         <source>Lock track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックをロック</translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -24861,7 +24861,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drag the bottom edge or scroll over the header to fine-tune</source>
-        <translation type="unfinished"></translation>
+        <translation>下端をドラッグするか、ヘッダー上でスクロールして微調整</translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -24930,37 +24930,37 @@ If playback stutters, try another.</source>
     <name>TrackHeaderLaneRow</name>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished">オーディオ FX</translation>
+        <translation>オーディオ FX</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished">マスク</translation>
+        <translation>マスク</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished">エフェクト</translation>
+        <translation>エフェクト</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderLaneToggle</name>
     <message>
         <source>Expand child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>子レーンを展開</translation>
     </message>
     <message>
         <source>Collapse child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>子レーンを折りたたむ</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderLockButton</name>
     <message>
         <source>Unlock track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックのロックを解除</translation>
     </message>
     <message>
         <source>Lock track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックをロック</translation>
     </message>
 </context>
 <context>
@@ -25050,15 +25050,15 @@ If playback stutters, try another.</source>
     <name>TrackHeaderSoloButton</name>
     <message>
         <source>Unsolo track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックのソロを解除</translation>
     </message>
     <message>
         <source>Solo track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックをソロにする</translation>
     </message>
     <message>
         <source>S</source>
-        <translation type="unfinished">S</translation>
+        <translation>S</translation>
     </message>
 </context>
 <context>
@@ -26094,7 +26094,7 @@ If playback stutters, try another.</source>
     <name>TransitionInspector</name>
     <message>
         <source>Hover the cut between two clips and click + to add a transition.</source>
-        <translation type="unfinished"></translation>
+        <translation>2 つのクリップ間のカットにカーソルを合わせて + をクリックすると、トランジションを追加できます。</translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -26106,7 +26106,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add transition…</source>
-        <translation type="unfinished"></translation>
+        <translation>トランジションを追加…</translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -26161,77 +26161,77 @@ If playback stutters, try another.</source>
     <name>TransitionPickerGrid</name>
     <message>
         <source>Search transitions</source>
-        <translation type="unfinished">トランジションを検索</translation>
+        <translation>トランジションを検索</translation>
     </message>
     <message>
         <source>My Transitions</source>
-        <translation type="unfinished">マイトランジション</translation>
+        <translation>マイトランジション</translation>
     </message>
     <message numerus="yes">
         <source>Apply to %n selected cuts</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>選択した %n 個のカットに適用</numerusform>
         </translation>
     </message>
     <message>
         <source>Apply to all cuts on track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラック上のすべてのカットに適用</translation>
     </message>
     <message>
         <source>No transitions available</source>
-        <translation type="unfinished">利用可能なトランジションがありません</translation>
+        <translation>利用可能なトランジションがありません</translation>
     </message>
     <message>
         <source>Install a transitions pack to add more.</source>
-        <translation type="unfinished">トランジションパックをインストールして追加してください。</translation>
+        <translation>トランジションパックをインストールして追加してください。</translation>
     </message>
     <message>
         <source>Get extras</source>
-        <translation type="unfinished">拡張機能を入手</translation>
+        <translation>拡張機能を入手</translation>
     </message>
     <message>
         <source>No transitions match “%1”</source>
-        <translation type="unfinished">「%1」に一致するトランジションはありません</translation>
+        <translation>「%1」に一致するトランジションはありません</translation>
     </message>
     <message>
         <source>No custom transitions yet</source>
-        <translation type="unfinished">カスタムトランジションはまだありません</translation>
+        <translation>カスタムトランジションはまだありません</translation>
     </message>
     <message>
         <source>No favorites yet</source>
-        <translation type="unfinished">お気に入りはまだありません</translation>
+        <translation>お気に入りはまだありません</translation>
     </message>
     <message>
         <source>No recent transitions</source>
-        <translation type="unfinished"></translation>
+        <translation>最近のトランジションはありません</translation>
     </message>
     <message>
         <source>Nothing in this category</source>
-        <translation type="unfinished">このカテゴリには何もありません</translation>
+        <translation>このカテゴリには何もありません</translation>
     </message>
     <message>
         <source>Try a different name.</source>
-        <translation type="unfinished">別の名前を試してください。</translation>
+        <translation>別の名前を試してください。</translation>
     </message>
     <message>
         <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished">Drift Forge で作成した .driftfx または zip をインポートして、独自のものを追加できます。</translation>
+        <translation>Drift Forge で作成した .driftfx または zip をインポートして、独自のものを追加できます。</translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>
-        <translation type="unfinished">トランジションにスターを付けてここに保存します。</translation>
+        <translation>トランジションにスターを付けてここに保存します。</translation>
     </message>
     <message>
         <source>Transitions you add show up here.</source>
-        <translation type="unfinished"></translation>
+        <translation>追加したトランジションがここに表示されます。</translation>
     </message>
     <message>
         <source>Pick another category.</source>
-        <translation type="unfinished">別のカテゴリを選択してください。</translation>
+        <translation>別のカテゴリを選択してください。</translation>
     </message>
     <message>
         <source>Import</source>
-        <translation type="unfinished">インポート</translation>
+        <translation>インポート</translation>
     </message>
 </context>
 <context>
@@ -26840,19 +26840,19 @@ If playback stutters, try another.</source>
     <name>VideoMenu</name>
     <message>
         <source>Bakes…</source>
-        <translation type="unfinished"></translation>
+        <translation>ベイク…</translation>
     </message>
     <message>
         <source>Cancel crop</source>
-        <translation type="unfinished">クロップをキャンセル</translation>
+        <translation>クロップをキャンセル</translation>
     </message>
     <message>
         <source>Crop video</source>
-        <translation type="unfinished">ビデオを切り抜き</translation>
+        <translation>ビデオを切り抜き</translation>
     </message>
     <message>
         <source>Adjust video layout…</source>
-        <translation type="unfinished"></translation>
+        <translation>ビデオレイアウトを調整…</translation>
     </message>
 </context>
 <context>
@@ -27557,15 +27557,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Procedural Code</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルコード</translation>
     </message>
     <message>
         <source>Procedural Parameters</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルパラメーター</translation>
     </message>
     <message>
         <source>Procedural Console</source>
-        <translation type="unfinished"></translation>
+        <translation>プロシージャルコンソール</translation>
     </message>
     <message>
         <source>Media</source>
@@ -27641,7 +27641,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Color Grading LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>カラーグレーディング LUT</translation>
     </message>
     <message>
         <source>Stabilization</source>
