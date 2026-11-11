@@ -1769,8 +1769,9 @@ QJsonObject McpController::frameSheet(const FrameSheetRequest &request)
         if (sourceMode)
             row.insert(QStringLiteral("tl"), round3(clipLocalToTimelineSeconds(clip, drift::secondsToUs(t))));
         // On the timeline: the footage showing there and from where in its source, with what sits
-        // over it (jmn8718/Drift#42). Tracks from the top, as the compositor stacks them; on a track
-        // where two clips overlap (a transition), the one that started first, as it picks.
+        // over it (jmn8718/Drift#42). Tracks from the top, as the compositor stacks them. One clip
+        // per track stands for it: the one that started first where clips overlap. The compositor
+        // draws them all; a transition's other side is named in `with`.
         if (!sourceMode && sceneOf.isEmpty()) {
             const drift::TimeUs at = drift::secondsToUs(qMax(0.0, t));
             const QList<drift::Track> &tracks = src.project->tracks();
@@ -1816,6 +1817,28 @@ QJsonObject McpController::frameSheet(const FrameSheetRequest &request)
                 // throughout.
                 if (showing->type == drift::ClipType::Video)
                     row.insert(QStringLiteral("src"), round3(drift::usToSeconds(showing->timelineToSourceUs(at))));
+                // Inside a transition window: both sides are drawn, blending from one to the other.
+                const drift::Track &footageTrack = tracks.at(tr);
+                for (const drift::Transition &transition : footageTrack.transitions) {
+                    if (transition.fromClipId != showing->id && transition.toClipId != showing->id)
+                        continue;
+                    drift::TimeUs windowStart = 0;
+                    drift::TimeUs windowEnd = 0;
+                    if (!drift::transitionWindow(footageTrack, transition, windowStart, windowEnd) || at < windowStart
+                        || at >= windowEnd)
+                        continue;
+                    const QString other = transition.fromClipId == showing->id ? transition.toClipId : transition.fromClipId;
+                    row.insert(QStringLiteral("with"),
+                               QJsonObject{{QStringLiteral("clip"), other},
+                                           // Which side of the blend `with.clip` is.
+                                           {QStringLiteral("side"), transition.toClipId == other ? QStringLiteral("incoming")
+                                                                                                  : QStringLiteral("outgoing")},
+                                           {QStringLiteral("transition"), transition.id},
+                                           // 0 all outgoing, 1 all incoming.
+                                           {QStringLiteral("progress"),
+                                            round3(drift::transitionProgress(transition, at, windowStart, windowEnd))}});
+                    break;
+                }
                 if (!over.isEmpty())
                     row.insert(QStringLiteral("over"), over);
                 break;

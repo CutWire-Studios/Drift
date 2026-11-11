@@ -9451,6 +9451,46 @@ void McpTest::framesAtNamesTheClipShowing()
     QCOMPARE(at3.value(QStringLiteral("track")).toInt(), videoTrack);
     QCOMPARE(at3.value(QStringLiteral("src")).toDouble(), 2.0); // 1 s into the clip, which starts 1 s in
     QCOMPARE(at3.value(QStringLiteral("over")).toArray(), QJsonArray{title});
+    QVERIFY(!at3.contains(QStringLiteral("with")));
+
+    // A cut at 8 s with a 1 s crossfade: inside the window both sides are drawn, and the row
+    // names the other one with how far the blend has gone; outside it, no `with`.
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("split_clip"), {{QStringLiteral("clip"), clip}, {QStringLiteral("at"), 8.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    const QString tail = r.value(QStringLiteral("clips")).toArray().at(1).toString();
+    r = dispatcher.applyOne(QStringLiteral("add_transition"), {{QStringLiteral("clip"), clip}, {QStringLiteral("duration"), 1.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    const QString transition = r.value(QStringLiteral("id")).toString();
+    const QJsonArray around = firstText(dispatcher.frames({{QStringLiteral("at"), QJsonArray{7.0, 7.75, 8.25, 9.0}}}))
+                                  .value(QStringLiteral("frames")).toArray();
+    QCOMPARE(around.size(), 4);
+    QCOMPARE(around.at(0).toObject().value(QStringLiteral("clip")).toString(), clip);
+    QVERIFY(!around.at(0).toObject().contains(QStringLiteral("with")));
+    const QJsonObject before = around.at(1).toObject();
+    QCOMPARE(before.value(QStringLiteral("clip")).toString(), clip);
+    QCOMPARE(before.value(QStringLiteral("with")).toObject().value(QStringLiteral("clip")).toString(), tail);
+    QCOMPARE(before.value(QStringLiteral("with")).toObject().value(QStringLiteral("transition")).toString(), transition);
+    QCOMPARE(before.value(QStringLiteral("with")).toObject().value(QStringLiteral("progress")).toDouble(), 0.25);
+    QCOMPARE(before.value(QStringLiteral("with")).toObject().value(QStringLiteral("side")).toString(), QStringLiteral("incoming"));
+    const QJsonObject after = around.at(2).toObject();
+    QCOMPARE(after.value(QStringLiteral("clip")).toString(), tail);
+    QCOMPARE(after.value(QStringLiteral("with")).toObject().value(QStringLiteral("clip")).toString(), clip);
+    QCOMPARE(after.value(QStringLiteral("with")).toObject().value(QStringLiteral("progress")).toDouble(), 0.75);
+    QCOMPARE(after.value(QStringLiteral("with")).toObject().value(QStringLiteral("side")).toString(), QStringLiteral("outgoing"));
+    QCOMPARE(after.value(QStringLiteral("with")).toObject().value(QStringLiteral("transition")).toString(), transition);
+    QCOMPARE(around.at(3).toObject().value(QStringLiteral("clip")).toString(), tail);
+    QVERIFY(!around.at(3).toObject().contains(QStringLiteral("with")));
+
+    // The same names in the other timeline modes.
+    const QJsonArray uniform = firstText(dispatcher.frames({{QStringLiteral("sample"), QStringLiteral("uniform")},
+                                                            {QStringLiteral("start"), 3.0}, {QStringLiteral("end"), 6.0},
+                                                            {QStringLiteral("n"), 2}}))
+                                   .value(QStringLiteral("frames")).toArray();
+    QVERIFY(!uniform.isEmpty());
+    for (const QJsonValue &v : uniform) {
+        QCOMPARE(v.toObject().value(QStringLiteral("clip")).toString(), clip);
+        QVERIFY(v.toObject().contains(QStringLiteral("src")));
+    }
 }
 
 void McpTest::framesClipModeReportsSourceAndTimeline()
