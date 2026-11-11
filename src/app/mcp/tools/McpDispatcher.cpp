@@ -817,15 +817,6 @@ void addGeometry(QJsonObject &reply, const QHash<QString, ClipGeometry> &before,
     }
 }
 
-// Raises a depth counter for as long as it lives.
-struct DepthGuard
-{
-    int &n;
-    explicit DepthGuard(int &depth) : n(depth) { ++n; }
-    ~DepthGuard() { --n; }
-    DepthGuard(const DepthGuard &) = delete;
-    DepthGuard &operator=(const DepthGuard &) = delete;
-};
 
 } // namespace
 
@@ -868,20 +859,19 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
     // The batch says once where the clips ended up; its ops don't (see applyOne). When an op opens
     // another timeline (a composite's), the comparison starts again from there, so the edits made
     // in the timeline the batch ends in are still reported.
-    const bool reportGeometry = m_geometryDepth == 0;
-    QHash<QString, ClipGeometry> geometryBefore =
-        reportGeometry ? clipGeometry(*m_controller->project()) : QHash<QString, ClipGeometry>();
+    // Its ops run with reportGeometry off; a request another transport delivers meanwhile is a
+    // call of its own and reports its own.
+    QHash<QString, ClipGeometry> geometryBefore = clipGeometry(*m_controller->project());
     QString timelineBefore = timelineKey(*m_controller);
     const auto followTimeline = [&] {
         const QString now = timelineKey(*m_controller);
-        if (!reportGeometry || now == timelineBefore)
+        if (now == timelineBefore)
             return;
         geometryBefore = clipGeometry(*m_controller->project());
         timelineBefore = now;
     };
     const auto withGeometry = [&](QJsonObject reply) {
-        if (reportGeometry)
-            addGeometry(reply, geometryBefore, clipGeometry(*m_controller->project()));
+        addGeometry(reply, geometryBefore, clipGeometry(*m_controller->project()));
         return reply;
     };
 
@@ -901,8 +891,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         if (rawImage) {
             one = err("bad_args", QStringLiteral("%1 returns an image and cannot be batched — call it directly").arg(tool));
         } else {
-            const DepthGuard nested(m_geometryDepth);
-            one = applyOne(tool, opArgs);
+            one = applyOne(tool, opArgs, /*reportGeometry=*/false);
         }
         followTimeline();
         if (!one.value(QStringLiteral("ok")).toBool()) {
@@ -925,7 +914,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
     return withGeometry(ok({{QStringLiteral("n"), ops.size()}, {QStringLiteral("done"), results}}));
 }
 
-QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args)
+QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args, bool reportGeometryArg)
 {
     m_controller->flushUndoHistoryTrim(); // see apply()
     if (!isKnownOp(tool))
@@ -949,7 +938,7 @@ QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args
     // ended up (ripple followers, split pieces and linked partners included), so the agent needs
     // no inspect after it (jmn8718/Drift#20). Not when the op opened another timeline (another
     // project, or a composite's sequence): the two aren't comparable.
-    const bool reportGeometry = m_geometryDepth == 0 && !isReadOnlyOp(tool);
+    const bool reportGeometry = reportGeometryArg && !isReadOnlyOp(tool);
     QHash<QString, ClipGeometry> before;
     QString timeline;
     if (reportGeometry) {

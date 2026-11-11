@@ -4095,7 +4095,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             }
             QJsonObject placeArgs = args.value(QStringLiteral("place")).toObject();
             placeArgs.insert(QStringLiteral("asset"), asset);
-            const QJsonObject placed = applyOne(QStringLiteral("place_clip"), placeArgs);
+            const QJsonObject placed = applyOne(QStringLiteral("place_clip"), placeArgs, /*reportGeometry=*/false);
             if (!placed.value(QStringLiteral("ok")).toBool()) {
                 QJsonObject out = placed;
                 out.insert(QStringLiteral("job"), installed.value(QStringLiteral("job")));

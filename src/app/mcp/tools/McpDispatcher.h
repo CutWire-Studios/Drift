@@ -20,7 +20,8 @@ public:
     QJsonObject inspect(const QJsonObject &args) const;
     QJsonObject apply(const QJsonObject &args);
     // Validates against the op schema, then runs; appends ignored:[unknown keys] on success.
-    QJsonObject applyOne(const QString &tool, const QJsonObject &args);
+    // reportGeometry false: a batch's own ops, whose changes the batch reports once.
+    QJsonObject applyOne(const QString &tool, const QJsonObject &args, bool reportGeometry = true);
     QJsonObject applyOneUnchecked(const QString &tool, const QJsonObject &args);
     QJsonObject applyOneExtended(const QString &tool, const QJsonObject &args);
     QJsonObject capture(const QJsonObject &args);
@@ -153,9 +154,6 @@ private:
     static QVariantList speedPointsFromJson(const QJsonArray &points);
 
     AppController *m_controller = nullptr;
-    // Raised while apply runs a batch's ops, which then leave `geometry` to the batch's reply, so
-    // it reports once, with final values.
-    int m_geometryDepth = 0;
 };
 
 } // namespace drift::mcp
