@@ -3926,6 +3926,24 @@ void McpTest::applyDryRunChecksWithoutChanging()
     QCOMPARE(reply.value(QStringLiteral("problems")).toArray().size(), 1);
     QCOMPARE(reply.value(QStringLiteral("problems")).toArray().at(0).toObject().value(QStringLiteral("i")).toInt(), 0);
     QCOMPARE(state.project()->contentHash(), before);
+    // As the ops read them: a padded id resolves, a negative destination track doesn't.
+    reply = dispatcher.apply({{QStringLiteral("dry_run"), true},
+                              {QStringLiteral("ops"), QJsonArray{op(QStringLiteral("split_clip"),
+                                                                    {{QStringLiteral("clip"), QStringLiteral(" ") + ids.at(0) + QStringLiteral(" ")},
+                                                                     {QStringLiteral("at"), 1.0}}),
+                                                                 op(QStringLiteral("move_to_track"),
+                                                                    {{QStringLiteral("clip"), ids.at(0)}, {QStringLiteral("to_track"), -1}}),
+                                                                 op(QStringLiteral("remove_track"), {{QStringLiteral("track"), -1}}),
+                                                                 op(QStringLiteral("delete_clips"),
+                                                                    {{QStringLiteral("clips"), QJsonArray{QStringLiteral(" ") + ids.at(1)}}})}}});
+    QCOMPARE(reply.value(QStringLiteral("problems")).toArray().size(), 2);
+    QCOMPARE(reply.value(QStringLiteral("problems")).toArray().at(0).toObject().value(QStringLiteral("i")).toInt(), 1);
+    QCOMPARE(reply.value(QStringLiteral("problems")).toArray().at(1).toObject().value(QStringLiteral("i")).toInt(), 2);
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("remove_track"), {{QStringLiteral("track"), -1}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("move_to_track"), {{QStringLiteral("clip"), ids.at(0)}, {QStringLiteral("to_track"), -1}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QCOMPARE(state.project()->contentHash(), before);
 
     // A clean batch passes, still changing nothing.
     reply = dispatcher.apply(

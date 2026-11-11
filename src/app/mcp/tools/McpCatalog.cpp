@@ -1954,7 +1954,8 @@ QJsonArray homepageTools()
                            "history, playback, background work, another project) are refused up front")), false)},
                       {QStringLiteral("dry_run"),
                        propWithDefault(boolProp(QStringLiteral(
-                           "true: run nothing; check each op's args and the clips, assets and tracks it names. "
+                           "true: run nothing; check each op's args and the clips, assets and tracks it names "
+                           "(not each op's own rules, such as move_clip needing one of at/before/after). "
                            "{ok:true, dry_run, n}, or {ok:false, error:\"dry_run_failed\", problems:[{i, tool, error, detail}]}. "
                            "An id an earlier op would create reads as not_found")), false)}},
                      {QStringLiteral("ops")})));

@@ -950,7 +950,8 @@ QJsonObject McpDispatcher::dryRunOp(const QString &tool, const QJsonObject &args
         *out = ok ? v.toInt() : v.toString().trimmed().toInt(&ok);
         return takes(key) && ok;
     };
-    const auto clipExists = [&](const QString &id) { return m_controller->mcp()->locateClip(id).first >= 0; };
+    // Trimmed, as resolveClip and argString read them.
+    const auto clipExists = [&](const QString &id) { return m_controller->mcp()->locateClip(id.trimmed()).first >= 0; };
     const auto missingClip = [&](const QString &id) {
         return err("not_found", QStringLiteral("No clip %1 (unless an earlier op in this batch creates it)").arg(id));
     };
@@ -975,7 +976,11 @@ QJsonObject McpDispatcher::dryRunOp(const QString &tool, const QJsonObject &args
         int t = 0;
         if (!intOf(key, &t) || (key == QLatin1String("track") && (newTrack || (clipRef && byId))))
             continue;
-        if (t >= trackCount)
+        // A destination (to_track) is never "pick": move_to_track refuses a negative one. Nor is a
+        // track an op requires (remove_track, set_track…): only the placing ops, where it is
+        // optional, take -1 as "pick".
+        const bool required = opInputSchema(tool).value(QStringLiteral("required")).toArray().contains(key);
+        if (t >= trackCount || (t < 0 && (key == QLatin1String("to_track") || required)))
             return err("not_found", QStringLiteral("No track %1; the timeline has %2 (unless an earlier op in this "
                                                    "batch adds it)").arg(t).arg(trackCount));
     }
@@ -2095,7 +2100,7 @@ QJsonObject McpDispatcher::opDeleteClips(const QJsonObject &args)
     QStringList ids;
     QStringList unknown;
     for (const QJsonValue &v : args.value(QStringLiteral("clips")).toArray()) {
-        const QString id = v.toString();
+        const QString id = v.toString().trimmed();
         if (id.isEmpty())
             return err("bad_args", QStringLiteral("clips must be non-empty clip ids"));
         if (m_controller->mcp()->locateClip(id).first < 0)
