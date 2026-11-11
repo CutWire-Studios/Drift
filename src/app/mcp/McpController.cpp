@@ -155,6 +155,17 @@ McpController::McpController(AppController *app, QObject *parent)
         QSettings().value(QStringLiteral("mcp/startOnLaunch"), false).toBool();
 }
 
+// What apply({atomic:true}) puts back besides the project (setRollbackPoint).
+struct McpController::RollbackPoint
+{
+    QStringList selectionIds;
+    QString primaryId;
+    QString transitionLeftClipId;
+    bool dirty = false;
+    drift::TimeUs playheadUs = 0;
+    AppController::BeatState beats;
+};
+
 McpController::~McpController()
 {
 #ifndef Q_OS_WASM
@@ -1453,12 +1464,64 @@ bool McpController::batchChangedProject() const
            || m_batchBefore.contentHash() != m_app->m_project.contentHash();
 }
 
+
+bool McpController::editOpen() const
+{
+    // A multicam session keeps its recorded cuts outside the project, and an edit ends it: a
+    // rollback couldn't bring it back.
+    return m_batchDepth > 0 || m_app->m_previewDragActive || m_app->m_multicamActive;
+}
+
+void McpController::setRollbackPoint()
+{
+    // Captured the way undo captures it, then copied out: the shared flag stays down, so an undo
+    // step that lands mid-batch doesn't snap the selection back.
+    m_app->captureSelectionClipIds();
+    m_app->m_undoSelectionCaptured = false;
+    m_rollback = std::make_unique<RollbackPoint>(RollbackPoint{
+        m_app->m_undoSelectionIds, m_app->m_undoPrimaryId, m_app->m_undoTransitionLeftClipId,
+        m_app->projectFile()->hasUnsavedChanges(), m_app->playheadUs(), m_app->beatState()});
+}
+
+void McpController::rollbackBatch()
+{
+    if (m_batchDepth <= 0 || !m_rollback)
+        return;
+    const std::unique_ptr<RollbackPoint> point = std::move(m_rollback);
+    // As an undo restores a snapshot: transcripts and the teleprompter script aren't part of the
+    // undoable state, so what landed in them meanwhile stays (and keeps the project unsaved).
+    const auto transcripts = m_app->m_project.transcripts();
+    const QString teleprompterScript = m_app->m_project.teleprompterScript();
+    const bool keptChanges = transcripts != m_batchBefore.transcripts()
+                             || teleprompterScript != m_batchBefore.teleprompterScript();
+    m_app->m_project = m_batchBefore.detachedCopy();
+    m_app->m_project.setTranscripts(transcripts);
+    m_app->m_project.setTeleprompterScript(teleprompterScript);
+    m_app->m_tracksCacheValid = false;
+    m_app->m_durationCacheValid = false;
+    m_app->m_undoSelectionIds = point->selectionIds;
+    m_app->m_undoPrimaryId = point->primaryId;
+    m_app->m_undoTransitionLeftClipId = point->transitionLeftClipId;
+    m_app->m_undoSelectionCaptured = true;
+    m_app->syncAfterProjectSwap();
+    m_app->m_undoSelectionCaptured = false;
+    m_app->projectFile()->setDirty(point->dirty || keptChanges);
+    // Playing, the engine clock owns the playhead (see finishEdit).
+    if (!m_app->playing())
+        m_app->setPlayheadUs(point->playheadUs);
+    m_app->restoreBeatState(point->beats);
+    // A warning from an op that was rolled back no longer applies.
+    m_pendingWarning.clear();
+    emit m_app->undoStackChanged();
+}
+
 void McpController::endBatch(const QString &text, bool pushUndo)
 {
     if (m_batchDepth <= 0)
         return;
     if (--m_batchDepth > 0)
         return;
+    m_rollback.reset();
     m_undoSuspended = false;
     if (m_app->m_previewDragActive) {
         m_app->m_previewDragActive = false;

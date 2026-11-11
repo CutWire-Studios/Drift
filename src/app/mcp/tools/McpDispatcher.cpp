@@ -729,6 +729,56 @@ const QSet<QString> kRawResultOps = {QStringLiteral("get_waveform"), QStringLite
 
 } // namespace
 
+// Whether an op may run in an atomic batch: only ops whose effects stay inside the project, so
+// putting the project back undoes them. An allow-list by toolbox, less the ops in those toolboxes
+// that write files or settings, use a clipboard, start background work that lands later, or keep
+// state the project doesn't (history, playback, stored analyses, sessions).
+static bool allowedInAtomic(const QString &tool)
+{
+    if (isReadOnlyOp(tool))
+        return true;
+    static const QSet<QString> kProjectToolboxes{
+        QStringLiteral("timeline"), QStringLiteral("canvas"),   QStringLiteral("effects"),
+        QStringLiteral("keyframes"), QStringLiteral("motion"),  QStringLiteral("text"),
+        QStringLiteral("shapes"),   QStringLiteral("speed"),    QStringLiteral("subtitles"),
+        QStringLiteral("audio"),    QStringLiteral("procedural"), QStringLiteral("transcript"),
+        QStringLiteral("media"),    QStringLiteral("project"),  QStringLiteral("scene"),
+        QStringLiteral("playback")};
+    static const QSet<QString> kOutside{
+        // clipboards
+        QStringLiteral("copy_selection"), QStringLiteral("cut_selection"), QStringLiteral("copy_clip_effects"),
+        // files and on-disk stores
+        QStringLiteral("freeze_frame"), QStringLiteral("export_subtitle_file"), QStringLiteral("export_asset_image"),
+        QStringLiteral("export_with_preset"), QStringLiteral("save_text_preset"), QStringLiteral("save_effect_preset"),
+        QStringLiteral("import_text_animation"),
+        // background work that lands later, and probes
+        QStringLiteral("generate_subtitles"), QStringLiteral("set_clip_reverse"), QStringLiteral("stabilize_clip"),
+        QStringLiteral("auto_reframe"), QStringLiteral("detect_scenes"), QStringLiteral("replace_asset"),
+        QStringLiteral("refresh_asset"), QStringLiteral("package_project"), QStringLiteral("set_asset_rotation"),
+        QStringLiteral("set_pdf_options"),
+        // stored analyses and settings outside the project
+        QStringLiteral("clear_beat_analysis"), QStringLiteral("set_scene_threshold"), QStringLiteral("clear_scenes"),
+        // other documents, and the playhead
+        QStringLiteral("load_project"), QStringLiteral("new_project"), QStringLiteral("close_project"),
+        QStringLiteral("go_to_bookmark")};
+    if (undoExemptOps().contains(tool) || kOutside.contains(tool) || tool.startsWith(QLatin1String("cancel_")))
+        return false;
+    return kProjectToolboxes.contains(toolboxForOp(tool));
+}
+
+// Ops a batch can't hold at all: image replies, and waiting (a batch holds undo suspended).
+static QJsonObject batchRefusal(const QString &tool, const QJsonObject &args)
+{
+    if (kRawResultOps.contains(tool)
+        && (tool == QLatin1String("audio_sheet")
+                ? args.value(QStringLiteral("return")).toString() != QLatin1String("path")
+                : jsonBool(args.value(QStringLiteral("image")), tool == QLatin1String("market_preview"))))
+        return err("bad_args", QStringLiteral("%1 returns an image and cannot be batched — call it directly").arg(tool));
+    if (tool == QLatin1String("wait_idle") && isKnownOp(tool))
+        return err("bad_args", QStringLiteral("wait_idle cannot run inside apply — call it directly"));
+    return {};
+}
+
 QJsonObject McpDispatcher::apply(const QJsonObject &args)
 {
     // A history-limit trim still queued from the last edit runs before any op reads or moves
@@ -737,6 +787,62 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
     const QJsonArray ops = args.value(QStringLiteral("ops")).toArray();
     if (ops.isEmpty())
         return err("bad_args", QStringLiteral("ops must be a non-empty array"));
+
+    // atomic: all or nothing. Refused up front, with nothing run, when an op's effects reach
+    // outside the project, since putting the project back wouldn't undo that part.
+    const bool atomic = jsonBool(args.value(QStringLiteral("atomic")), false);
+    const auto atomicRefusal = [](const QString &tool) {
+        return err("bad_args", QStringLiteral("atomic: %1 has effects outside the project and can't be rolled "
+                                              "back; run it in a batch of its own")
+                                   .arg(tool));
+    };
+
+    if (atomic && m_controller->mcp()->editOpen())
+        return err("conflict", QStringLiteral("atomic: another batch, edit, drag or multicam session is still open, "
+                                              "and rolling back would undo it too; try again once it ends"));
+
+    // dry_run: check every op, run none (jmn8718/Drift#56).
+    if (jsonBool(args.value(QStringLiteral("dry_run")), false)) {
+        QJsonArray problems;
+        QJsonArray ignored;
+        for (int i = 0; i < ops.size(); ++i) {
+            const QJsonObject op = ops.at(i).toObject();
+            const QString tool = op.value(QStringLiteral("tool")).toString();
+            const QJsonObject opArgs = op.value(QStringLiteral("args")).toObject();
+            QJsonObject one = batchRefusal(tool, opArgs);
+            if (one.isEmpty() && atomic && isKnownOp(tool) && !allowedInAtomic(tool))
+                one = atomicRefusal(tool);
+            if (one.isEmpty())
+                one = dryRunOp(tool, opArgs);
+            if (one.contains(QStringLiteral("ignored")))
+                ignored.append(QJsonObject{{QStringLiteral("i"), i}, {QStringLiteral("tool"), tool},
+                                           {QStringLiteral("keys"), one.value(QStringLiteral("ignored"))}});
+            if (!one.value(QStringLiteral("ok")).toBool()) {
+                one.remove(QStringLiteral("ok"));
+                one.remove(QStringLiteral("ignored"));
+                one.insert(QStringLiteral("i"), i);
+                one.insert(QStringLiteral("tool"), tool);
+                problems.append(one);
+            }
+        }
+        QJsonObject reply{{QStringLiteral("dry_run"), true}, {QStringLiteral("n"), ops.size()}};
+        if (!ignored.isEmpty())
+            reply.insert(QStringLiteral("ignored"), ignored);
+        if (problems.isEmpty())
+            return ok(reply);
+        reply.insert(QStringLiteral("ok"), false);
+        reply.insert(QStringLiteral("error"), QStringLiteral("dry_run_failed"));
+        reply.insert(QStringLiteral("problems"), problems);
+        return reply;
+    }
+
+    if (atomic) {
+        for (const QJsonValue &v : ops) {
+            const QString tool = v.toObject().value(QStringLiteral("tool")).toString();
+            if (isKnownOp(tool) && !allowedInAtomic(tool))
+                return atomicRefusal(tool);
+        }
+    }
 
     auto batchLabel = [&](int count) {
         QStringList names;
@@ -766,6 +872,8 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
     };
 
     m_controller->mcp()->beginBatch();
+    if (atomic)
+        m_controller->mcp()->setRollbackPoint();
     bool hadUndoable = false;
     QJsonArray results;
     int i = 0;
@@ -773,21 +881,24 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         const QJsonObject op = ops.at(i).toObject();
         const QString tool = op.value(QStringLiteral("tool")).toString();
         const QJsonObject opArgs = op.value(QStringLiteral("args")).toObject();
-        const bool rawImage = kRawResultOps.contains(tool)
-                              && (tool == QLatin1String("audio_sheet")
-                                      ? opArgs.value(QStringLiteral("return")).toString() != QLatin1String("path")
-                                      : jsonBool(opArgs.value(QStringLiteral("image")), tool == QLatin1String("market_preview")));
-        const QJsonObject one =
-            rawImage ? err("bad_args", QStringLiteral("%1 returns an image and cannot be batched — call it directly").arg(tool))
-                     : applyOne(tool, opArgs);
+        const QJsonObject refused = batchRefusal(tool, opArgs);
+        const QJsonObject one = refused.isEmpty() ? applyOne(tool, opArgs) : refused;
         if (!one.value(QStringLiteral("ok")).toBool()) {
+            QJsonObject failed{{QStringLiteral("ok"), false},
+                               {QStringLiteral("error"), QStringLiteral("apply_failed")},
+                               {QStringLiteral("stopped"), i},
+                               {QStringLiteral("tool"), tool},
+                               {QStringLiteral("failed"), one},
+                               {QStringLiteral("done"), results}};
+            if (atomic) {
+                // Back as it was: no undo step, the selection and unsaved flag restored too.
+                m_controller->mcp()->rollbackBatch();
+                m_controller->mcp()->endBatch(batchLabel(i), false);
+                failed.insert(QStringLiteral("rolled_back"), true);
+                return failed;
+            }
             endBatch(batchLabel(i), hadUndoable && i > 0);
-            return {{QStringLiteral("ok"), false},
-                    {QStringLiteral("error"), QStringLiteral("apply_failed")},
-                    {QStringLiteral("stopped"), i},
-                    {QStringLiteral("tool"), tool},
-                    {QStringLiteral("failed"), one},
-                    {QStringLiteral("done"), results}};
+            return failed;
         }
         results.append(QJsonObject{{QStringLiteral("tool"), tool}, {QStringLiteral("result"), one}});
         // A re-read lands its "Media refreshed" edit inside this batch, where undo is suspended.
@@ -799,14 +910,11 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
     return ok({{QStringLiteral("n"), ops.size()}, {QStringLiteral("done"), results}});
 }
 
-QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args)
+QJsonObject McpDispatcher::checkOp(const QString &tool, QJsonObject *args, QStringList *ignored) const
 {
-    m_controller->flushUndoHistoryTrim(); // see apply()
     if (!isKnownOp(tool))
         return unknownOpError(tool);
-    QJsonObject checked = args;
-    QStringList ignored;
-    const QJsonObject invalid = validateArgs(tool, opInputSchema(tool), checked, &ignored);
+    const QJsonObject invalid = validateArgs(tool, opInputSchema(tool), *args, ignored);
     if (!invalid.isEmpty())
         return invalid;
     // Ops whose index is an effect's stack position address the clip by id only: with the id
@@ -816,9 +924,76 @@ QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args
         QStringLiteral("remove_audio_effect"),     QStringLiteral("set_audio_effect_param"),
         QStringLiteral("set_effect_enabled"),      QStringLiteral("set_effect_color_param"),
         QStringLiteral("set_audio_effect_enabled"), QStringLiteral("set_effect_string_param")};
-    if (kEffectIndexOps.contains(tool) && checked.value(QStringLiteral("clip")).toString().trimmed().isEmpty())
+    if (kEffectIndexOps.contains(tool) && args->value(QStringLiteral("clip")).toString().trimmed().isEmpty())
         return err("bad_args", QStringLiteral("clip required: a clip id from inspect({clips:true}); on %1, index is "
                                               "the effect's stack position, not the clip's").arg(tool));
+    return {};
+}
+
+// dry_run: what checkOp checks, plus the clips, assets and tracks the args name, by key: clip /
+// clips / before / after (clip ids, or track+index), asset, track. Nothing runs. An id an earlier
+// op of the batch would create can't be known yet, so it reads as not_found.
+QJsonObject McpDispatcher::dryRunOp(const QString &tool, const QJsonObject &args) const
+{
+    QJsonObject checked = args;
+    QStringList ignored;
+    if (const QJsonObject invalid = checkOp(tool, &checked, &ignored); !invalid.isEmpty())
+        return invalid;
+    const drift::Project &project = *m_controller->project();
+    const auto clipExists = [&](const QString &id) { return m_controller->mcp()->locateClip(id).first >= 0; };
+    const auto missingClip = [&](const QString &id) {
+        return err("not_found", QStringLiteral("No clip %1 (unless an earlier op in this batch creates it)").arg(id));
+    };
+    for (const QString &key : {QStringLiteral("clip"), QStringLiteral("before"), QStringLiteral("after")}) {
+        const QJsonValue v = checked.value(key);
+        if (v.isString() && !v.toString().trimmed().isEmpty() && !clipExists(v.toString()))
+            return missingClip(v.toString());
+    }
+    for (const QJsonValue &v : checked.value(QStringLiteral("clips")).toArray())
+        if (v.isString() && !clipExists(v.toString()))
+            return missingClip(v.toString());
+    const QJsonObject props = opInputSchema(tool).value(QStringLiteral("properties")).toObject();
+    const bool clipRef = props.contains(QStringLiteral("clip")) && props.contains(QStringLiteral("track"))
+                         && props.contains(QStringLiteral("index"));
+    const bool byId = !checked.value(QStringLiteral("clip")).toString().trimmed().isEmpty();
+    const int trackCount = int(project.tracks().size());
+    // `track` names an existing track, except where the op ignores it (a clip given by id) or
+    // takes it as a place to insert a new one (new_track). A negative one means "pick" in the ops
+    // that take it, so only one past the end is flagged.
+    const bool newTrack = props.contains(QStringLiteral("new_track"))
+                          && jsonBool(checked.value(QStringLiteral("new_track")), false);
+    for (const QString &key : {QStringLiteral("track"), QStringLiteral("to_track")}) {
+        const QJsonValue track = checked.value(key);
+        if (!track.isDouble() || (key == QLatin1String("track") && (newTrack || (clipRef && byId))))
+            continue;
+        const int t = track.toInt();
+        if (t >= trackCount)
+            return err("not_found", QStringLiteral("No track %1; the timeline has %2 (unless an earlier op in this "
+                                                   "batch adds it)").arg(t).arg(trackCount));
+    }
+    // A clip given by track+index. (A clip left out isn't flagged: some ops take none, and then act
+    // on the whole timeline.)
+    if (clipRef && !byId && checked.value(QStringLiteral("track")).isDouble() && checked.value(QStringLiteral("index")).isDouble()) {
+        const int t = checked.value(QStringLiteral("track")).toInt();
+        const int index = checked.value(QStringLiteral("index")).toInt();
+        if (t < 0 || t >= trackCount || index < 0 || index >= project.tracks().at(t).clips.size())
+            return err("not_found", QStringLiteral("No clip %1 on track %2").arg(index).arg(t));
+    }
+    if (checked.contains(QStringLiteral("asset")) && resolveAsset(checked.value(QStringLiteral("asset"))) < 0)
+        return err("not_found", QStringLiteral("No asset %1").arg(checked.value(QStringLiteral("asset")).toVariant().toString()));
+    QJsonObject result = ok({});
+    if (!ignored.isEmpty())
+        result.insert(QStringLiteral("ignored"), QJsonArray::fromStringList(ignored));
+    return result;
+}
+
+QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args)
+{
+    m_controller->flushUndoHistoryTrim(); // see apply()
+    QJsonObject checked = args;
+    QStringList ignored;
+    if (const QJsonObject invalid = checkOp(tool, &checked, &ignored); !invalid.isEmpty())
+        return invalid;
     QJsonObject result = applyOneUnchecked(tool, checked);
     if (!ignored.isEmpty() && result.value(QStringLiteral("ok")).toBool())
         result.insert(QStringLiteral("ignored"), QJsonArray::fromStringList(ignored));
