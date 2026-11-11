@@ -248,7 +248,14 @@ something happen” to “what is it”:
    | `sample:"changes"` (default) | Up to `n` (12) visually distinct frames. Candidates are hashed (dHash) at ~4 per second, capped at 120; a frame is kept only if it differs from the last four kept by more than `min_change` bits (default 12; in-shot motion scores ~5–10, a cut 30+). `skipped` says how many looked the same; `next:{start,end}` appears when more distinct frames remained than `n` allowed |
    | `sample:"uniform"` | `n` evenly spaced frames |
    | `sample:"scenes"` | The `detect_scenes` thumbnail of every scanned shot in the range (`frames[].clip`, `frames[].scene`); unscanned clips contribute their first frame and are listed in `unscanned` |
-   | `at:[…]` | Exactly those times (max 20) |
+   | `at:[…]` | Exactly those times (max 20), e.g. one per clip to check several cuts in one call |
+
+   On the timeline, each frame row also names what shows at that time: `clip`, the topmost footage
+   (a video or composite clip, or an image with no video under it, on a track that isn't hidden),
+   its `track`, `src` (the source time it plays, for a video clip) and `over:[ids]` (titles, shapes,
+   logos and other clips drawn above it). Where there's no footage, `clip` is the topmost clip.
+   Where two clips on a track overlap, it's the one that started first. Opacity and size aren't
+   weighed: a clip faded out or shrunk still counts.
 
    Add `clip` (or `track`+`index`) to render one clip's **source** frames instead of the
    composition: `t` is then source seconds and `tl` the timeline time. `return:"path"` writes the
