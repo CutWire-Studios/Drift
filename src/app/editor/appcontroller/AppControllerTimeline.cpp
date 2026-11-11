@@ -1716,6 +1716,7 @@ bool AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bo
         }
     }
     QSet<QString> removedClipIds;
+    QString gapWarning;
     struct RemovedRange { int track; drift::TimeUs start; drift::TimeUs duration; };
     QList<RemovedRange> removedRanges;
     std::sort(pairs.begin(), pairs.end(), [](const QPair<int, int> &a, const QPair<int, int> &b) {
@@ -1768,10 +1769,84 @@ bool AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bo
             return false;
         }
     } else if (m_rippleEnabled) {
+        // The same ripple core as the agent ops: tracks joined by linked clips close together, each
+        // merged range once, so a linked pair's followers move once and nothing lands on a clip that
+        // stayed. Groups come from before the delete (a link held only by a deleted clip still
+        // joins its tracks). Each group closes on its own; where the agent op refuses, or a track
+        // of the group is locked, the delete stands and that group's gap stays.
+        // Adjustment lanes are never in a group; a free clip removed from one closes its lane alone.
+        QList<RemovedRange> laneRanges;
+        QList<QSet<int>> groups;
+        QList<QList<QPair<drift::TimeUs, drift::TimeUs>>> groupRanges;
+        for (const RemovedRange &range : std::as_const(removedRanges)) {
+            if (before.tracks().at(range.track).isAdjustment()) {
+                laneRanges.append(range);
+                continue;
+            }
+            int g = 0;
+            while (g < groups.size() && !groups.at(g).contains(range.track))
+                ++g;
+            if (g == groups.size()) {
+                groups.append(drift::rippleTrackGroup(before, range.track));
+                groupRanges.append(QList<QPair<drift::TimeUs, drift::TimeUs>>());
+            }
+            groupRanges[g].append(qMakePair(range.start, range.start + range.duration));
+        }
+        for (int g = 0; g < groups.size(); ++g) {
+            // Merge, then trim each range's edges to what no clip left on the group's tracks still
+            // covers: a crossfade (an overlap) or an L-cut keeps its part, and only the rest closes,
+            // so the next clip lands against it instead of blocking the close. A clip inside what
+            // is left still blocks it.
+            QList<QPair<drift::TimeUs, drift::TimeUs>> list = groupRanges.at(g);
+            std::sort(list.begin(), list.end());
+            QList<drift::RippleRange> ranges;
+            const int track = *groups.at(g).cbegin();
+            for (int i = 0; i < list.size(); ++i) {
+                drift::TimeUs start = list.at(i).first;
+                drift::TimeUs end = list.at(i).second;
+                while (i + 1 < list.size() && list.at(i + 1).first <= end)
+                    end = qMax(end, list.at(++i).second);
+                for (bool trimmed = true; trimmed && start < end;) {
+                    trimmed = false;
+                    for (const int t : groups.at(g)) {
+                        for (const drift::Clip &kept : std::as_const(m_project.tracks().at(t).clips)) {
+                            if (kept.timelineStart <= start && kept.timelineEnd() > start) {
+                                start = qMin(end, kept.timelineEnd());
+                                trimmed = true;
+                            }
+                            if (kept.timelineStart < end && kept.timelineEnd() >= end && kept.timelineStart >= start) {
+                                end = kept.timelineStart;
+                                trimmed = true;
+                            }
+                        }
+                    }
+                }
+                if (end > start)
+                    ranges.append({track, start, end});
+            }
+            if (ranges.isEmpty())
+                continue;
+            bool locked = false;
+            for (const int t : groups.at(g))
+                locked = locked || before.tracks().at(t).locked;
+            QString blocker;
+            if (locked) {
+                if (gapWarning.isEmpty())
+                    gapWarning = tr("The gap stays open: a linked track is locked");
+            } else if (!drift::closeRippleRanges(m_project, ranges, &blocker, nullptr, &before) && gapWarning.isEmpty()) {
+                int t = -1;
+                int c = -1;
+                const QString name = findClipById(m_project, blocker, &t, &c)
+                                         ? m_project.tracks().at(t).clips.at(c).name
+                                         : QString();
+                gapWarning = name.isEmpty() ? tr("The gap stays open: a clip is in the way of closing it")
+                                            : tr("The gap stays open: \"%1\" is in the way of closing it").arg(name);
+            }
+        }
         // Latest first, so each range is closed while the clips before it are still in place.
-        std::sort(removedRanges.begin(), removedRanges.end(),
+        std::sort(laneRanges.begin(), laneRanges.end(),
                   [](const RemovedRange &a, const RemovedRange &b) { return a.start > b.start; });
-        for (const RemovedRange &range : std::as_const(removedRanges))
+        for (const RemovedRange &range : std::as_const(laneRanges))
             rippleTracksFrom(m_project, {range.track}, range.start + range.duration, -range.duration, {});
     }
     for (drift::Track &track : m_project.tracks()) {
@@ -1804,8 +1879,12 @@ bool AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bo
         }
     }
     pushProjectEdit(before, tr("Clip deleted"));
+    const bool refusedByLock = m_editRefusedByLock;
     clearSelection();
     finishEdit(tr("Clip deleted"));
+    // After finishEdit, which clears the status line for a routine edit.
+    if (!gapWarning.isEmpty() && !refusedByLock)
+        setLastMessage(gapWarning, QStringLiteral("warning"));
     return true;
 }
 
