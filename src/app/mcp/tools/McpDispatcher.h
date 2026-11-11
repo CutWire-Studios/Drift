@@ -153,6 +153,9 @@ private:
     static QVariantList speedPointsFromJson(const QJsonArray &points);
 
     AppController *m_controller = nullptr;
+    // Raised while apply runs a batch's ops, which then leave `geometry` to the batch's reply, so
+    // it reports once, with final values.
+    int m_geometryDepth = 0;
 };
 
 } // namespace drift::mcp

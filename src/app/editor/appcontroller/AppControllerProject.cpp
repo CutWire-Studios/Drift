@@ -98,6 +98,7 @@ QJsonObject AppController::sessionJson() const
 
 void AppController::resetSessionState()
 {
+    ++m_documentGeneration;
     m_projectHistorySteps = kProjectHistoryUnset;
     m_projectHistoryPersist = -1;
     // These end up editing the project, so they have to run while it is still the one they were
