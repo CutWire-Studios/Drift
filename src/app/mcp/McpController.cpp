@@ -242,15 +242,17 @@ QJsonObject McpController::validateProject(int limit) const
     };
 
     // Files are checked once each. Paths that aren't plain files (content: URIs, resources) are
-    // left to the platform; an image sequence's path is a pattern, as the bin treats it.
+    // left to the platform; an image sequence is there when its first frame is, as the bin checks it.
     QHash<QString, bool> present;
     const auto fileMissing = [&](const QString &path) {
-        if (path.isEmpty() || path.startsWith(QLatin1String("content:")) || path.startsWith(QLatin1Char(':'))
-            || drift::parseImageSequencePath(path))
+        if (path.isEmpty() || path.startsWith(QLatin1String("content:")) || path.startsWith(QLatin1Char(':')))
             return false;
         auto it = present.constFind(path);
-        if (it == present.constEnd())
-            it = present.insert(path, QFileInfo::exists(path));
+        if (it == present.constEnd()) {
+            const std::optional<drift::ImageSequence> sequence = drift::parseImageSequencePath(path);
+            it = present.insert(path, QFileInfo::exists(sequence ? drift::imageSequenceFramePath(*sequence, sequence->start)
+                                                                 : path));
+        }
         return !it.value();
     };
     // How many clips use each asset, anywhere: an unused bin item that's gone is less urgent.
@@ -274,6 +276,27 @@ QJsonObject McpController::validateProject(int limit) const
             add(QStringLiteral("missing_media"), QStringLiteral("%1 isn't at %2").arg(asset.name, asset.path),
                 {{QStringLiteral("asset"), id}, {QStringLiteral("clips"), uses.value(id)}});
     }
+
+    // A clip's own file that's gone, once per file (a split clip is many clips on one file), with how
+    // many clips play it; reported after the timelines are walked. Not one an asset row has named.
+    QSet<QString> assetFiles;
+    for (const drift::MediaAsset &asset : project.assets())
+        if (!asset.path.isEmpty())
+            assetFiles.insert(QDir::cleanPath(asset.path));
+    QStringList goneClipFiles;
+    QHash<QString, QPair<QJsonObject, int>> goneClipFile;
+    const auto clipFileGone = [&](const QString &path, const QJsonObject &where) {
+        const QString cleaned = QDir::cleanPath(path);
+        if (assetFiles.contains(cleaned) || !fileMissing(path))
+            return;
+        auto it = goneClipFile.find(cleaned);
+        if (it == goneClipFile.end()) {
+            goneClipFiles.append(cleaned);
+            goneClipFile.insert(cleaned, {where, 1});
+        } else {
+            ++it->second;
+        }
+    };
 
     const drift::TimeUs frameUs = project.fps() > 0 ? 1000000 / project.fps() : 0;
     const auto checkTracks = [&](const QList<drift::Track> &tracks, const QString &sequence) {
@@ -309,8 +332,7 @@ QJsonObject McpController::validateProject(int limit) const
                                    || clip.type == drift::ClipType::Image;
                 // A recording, denoised audio or a 3D model keeps only its path.
                 if (clip.assetId.isEmpty()) {
-                    if (fileMissing(clip.path))
-                        add(QStringLiteral("missing_media"), QStringLiteral("Plays %1, which is gone").arg(clip.path), here);
+                    clipFileGone(clip.path, here);
                     continue;
                 }
                 const drift::MediaAsset *asset = project.asset(clip.assetId);
@@ -321,6 +343,10 @@ QJsonObject McpController::validateProject(int limit) const
                 }
                 QJsonObject withAsset = here;
                 withAsset.insert(QStringLiteral("asset"), clip.assetId);
+                // The file the clip itself plays, when it isn't its asset's (reported above): a 3D
+                // model swapped in place, or a clip relinked on its own.
+                if (!clip.path.isEmpty() && QDir::cleanPath(clip.path) != QDir::cleanPath(asset->path))
+                    clipFileGone(clip.path, withAsset);
                 // Media clips only: a 3D model swapped in place (set_model3d_source) keeps its old
                 // asset id on purpose, and resources (stickers) were moved by a load migration.
                 if (media && !clip.path.isEmpty() && !asset->path.isEmpty() && !clip.path.startsWith(QLatin1Char(':'))
@@ -358,16 +384,23 @@ QJsonObject McpController::validateProject(int limit) const
             QList<const drift::Clip *> byStart;
             for (const drift::Clip &clip : track.clips)
                 byStart.append(&clip);
-            std::sort(byStart.begin(), byStart.end(),
+            // Stable: clips starting together keep their track order, so a crossfade between them
+            // reads the same way on every call.
+            std::stable_sort(byStart.begin(), byStart.end(),
                       [](const drift::Clip *a, const drift::Clip *b) { return a->timelineStart < b->timelineStart; });
-            // Against the clip reaching furthest so far, so one inside a long clip isn't missed.
-            const drift::Clip *reach = nullptr;
+            // Against every earlier clip still running, so one inside a long clip isn't missed and a
+            // crossfade with one of them doesn't hide an overlap with another.
+            QList<const drift::Clip *> running;
             for (const drift::Clip *b : std::as_const(byStart)) {
-                if (reach && reach->timelineEnd() > b->timelineStart && !joined.contains({reach->id, b->id}))
-                    add(QStringLiteral("overlap"), QStringLiteral("Overlaps %1").arg(reach->id),
-                        at({{QStringLiteral("clip"), b->id}}, t));
-                if (!reach || b->timelineEnd() > reach->timelineEnd())
-                    reach = b;
+                running.removeIf([b](const drift::Clip *a) { return a->timelineEnd() <= b->timelineStart; });
+                for (const drift::Clip *a : std::as_const(running)) {
+                    if (!joined.contains({a->id, b->id}) && !joined.contains({b->id, a->id})) {
+                        add(QStringLiteral("overlap"), QStringLiteral("Overlaps %1").arg(a->id),
+                            at({{QStringLiteral("clip"), b->id}}, t));
+                        break;
+                    }
+                }
+                running.append(b);
             }
         }
     };
@@ -376,6 +409,11 @@ QJsonObject McpController::validateProject(int limit) const
     sequences.sort();
     for (const QString &id : std::as_const(sequences))
         checkTracks(project.sequenceTracks(id), id);
+    for (const QString &path : std::as_const(goneClipFiles)) {
+        QJsonObject where = goneClipFile.value(path).first;
+        where.insert(QStringLiteral("clips"), goneClipFile.value(path).second);
+        add(QStringLiteral("missing_media"), QStringLiteral("Plays %1, which is gone").arg(path), where);
+    }
 
     QJsonObject out{{QStringLiteral("problems"), problems}, {QStringLiteral("n"), total}};
     // Rows without a sequence are on the main timeline; track indexes there are its own, not the
