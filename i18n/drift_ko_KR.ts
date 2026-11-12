@@ -2571,6 +2571,10 @@
         <translation>현재 시점에서 분할</translation>
     </message>
     <message>
+        <source>Split selected clip at current time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add transition at playhead</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2745,6 +2749,14 @@
     <message>
         <source>Clip moved</source>
         <translation>클립이 이동됨</translation>
+    </message>
+    <message>
+        <source>Select a clip to split first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The playhead isn&apos;t over a selected clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing to split here — move to a clip first</source>
@@ -4587,6 +4599,18 @@
         <translation>트랙 표시</translation>
     </message>
     <message>
+        <source>Exclude from export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track left out of export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track included in export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Track lock</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4971,6 +4995,10 @@
     <message>
         <source>Media files (%1)</source>
         <translation>미디어 파일(%1)</translation>
+    </message>
+    <message>
+        <source>The proxy could not be made</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -13313,6 +13341,13 @@
     </message>
 </context>
 <context>
+    <name>McpController</name>
+    <message>
+        <source>Relink media</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MediaAssetsEmptyState</name>
     <message>
         <source>No media yet</source>
@@ -13772,6 +13807,14 @@
         <translation>%1(%2)</translation>
     </message>
     <message>
+        <source>The project was closed before the replace landed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project was closed before the edit landed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Relink media</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13780,6 +13823,10 @@
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sub-clip added</source>
@@ -24217,6 +24264,54 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Paste here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add bookmark here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select clips on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select clips after here on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all clips</source>
+        <translation type="unfinished">모든 클립 선택</translation>
+    </message>
+    <message>
+        <source>Unmute track</source>
+        <translation type="unfinished">트랙 음소거 해제</translation>
+    </message>
+    <message>
+        <source>Mute track</source>
+        <translation type="unfinished">트랙 음소거</translation>
+    </message>
+    <message>
+        <source>Show track</source>
+        <translation type="unfinished">트랙 표시</translation>
+    </message>
+    <message>
+        <source>Hide track</source>
+        <translation type="unfinished">트랙 숨기기</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>책갈피 이름 변경</translation>
     </message>
@@ -24839,6 +24934,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Include in export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude from export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add camera clip at playhead</source>
         <translation>재생 헤드 위치에 카메라 클립 추가</translation>
     </message>
@@ -25006,6 +25109,17 @@ If playback stutters, try another.</source>
     <message>
         <source>Mute track</source>
         <translation>트랙 음소거</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderName</name>
+    <message>
+        <source>not exported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shown while editing, left out of every export</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -2571,6 +2571,10 @@
         <translation>Tách ở điểm hiện tại</translation>
     </message>
     <message>
+        <source>Split selected clip at current time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add transition at playhead</source>
         <translation>Thêm chuyển cảnh tại đầu phát</translation>
     </message>
@@ -2745,6 +2749,14 @@
     <message>
         <source>Clip moved</source>
         <translation>Đã di chuyển clip</translation>
+    </message>
+    <message>
+        <source>Select a clip to split first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The playhead isn&apos;t over a selected clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing to split here — move to a clip first</source>
@@ -4595,6 +4607,18 @@
         <translation>Hiện track</translation>
     </message>
     <message>
+        <source>Exclude from export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track left out of export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track included in export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Track lock</source>
         <translation>Khóa track</translation>
     </message>
@@ -4971,6 +4995,10 @@
     <message>
         <source>Media files (%1)</source>
         <translation>Tệp phương tiện (%1)</translation>
+    </message>
+    <message>
+        <source>The proxy could not be made</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -13313,6 +13341,13 @@
     </message>
 </context>
 <context>
+    <name>McpController</name>
+    <message>
+        <source>Relink media</source>
+        <translation type="unfinished">Liên kết lại phương tiện</translation>
+    </message>
+</context>
+<context>
     <name>MediaAssetsEmptyState</name>
     <message>
         <source>No media yet</source>
@@ -13772,6 +13807,14 @@
         <translation>%1 (%2)</translation>
     </message>
     <message>
+        <source>The project was closed before the replace landed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project was closed before the edit landed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Relink media</source>
         <translation>Liên kết lại phương tiện</translation>
     </message>
@@ -13780,6 +13823,10 @@
         <translation>
             <numerusform>Đã liên kết lại %n tệp</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Track is locked</source>
+        <translation type="unfinished">Track đã bị khóa</translation>
     </message>
     <message>
         <source>Sub-clip added</source>
@@ -24226,6 +24273,54 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Vừa track với bảng</translation>
     </message>
     <message>
+        <source>Paste here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add bookmark here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select clips on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select clips after here on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all clips</source>
+        <translation type="unfinished">Chọn tất cả clip</translation>
+    </message>
+    <message>
+        <source>Unmute track</source>
+        <translation type="unfinished">Bật tiếng track</translation>
+    </message>
+    <message>
+        <source>Mute track</source>
+        <translation type="unfinished">Tắt tiếng track</translation>
+    </message>
+    <message>
+        <source>Show track</source>
+        <translation type="unfinished">Hiện track</translation>
+    </message>
+    <message>
+        <source>Hide track</source>
+        <translation type="unfinished">Ẩn track</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished">Mở khóa track</translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished">Khóa track</translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
+        <translation type="unfinished">Xóa track rỗng</translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>Đổi tên dấu trang</translation>
     </message>
@@ -24848,6 +24943,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Khóa track</translation>
     </message>
     <message>
+        <source>Include in export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude from export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add camera clip at playhead</source>
         <translation>Thêm clip camera tại đầu phát</translation>
     </message>
@@ -25015,6 +25118,17 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Mute track</source>
         <translation>Tắt tiếng track</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderName</name>
+    <message>
+        <source>not exported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shown while editing, left out of every export</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
