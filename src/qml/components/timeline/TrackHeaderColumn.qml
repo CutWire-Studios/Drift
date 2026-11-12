@@ -163,12 +163,14 @@ Item {
         return qsTr("Video");
     }
 
-    // Track numbers are scoped to their media type rather than the absolute row.
-    // A project with Video 1 followed by its first extracted audio lane should read
-    // Audio 1, not Audio 2. Reordering mixed track types keeps each sequence natural.
+    // The number in a track's default label ("Video 2"). Each track keeps its own (counted per
+    // kind, from the bottom), so adding, deleting or reordering tracks renumbers nothing. The
+    // count by position below is only a fallback for a track the model gives no number.
     function trackTypeOrdinal(index) {
         if (index < 0 || index >= tracks.length)
             return 1
+        if (tracks[index].number > 0)
+            return tracks[index].number
         // Transform layers are adjustment tracks by type but count on their own, so an
         // adjustment and a transform layer never share a number.
         const type = tracks[index].type

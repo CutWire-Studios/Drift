@@ -733,6 +733,40 @@ void ensureTrackIds(QList<Track> &tracks)
             track.adjustmentScope = AdjustmentScope::AllBelow;
         }
     }
+
+    // Default labels ("Video 2") take each track's own number, so adding, deleting or reordering
+    // tracks renumbers nothing. A track without one (new, or from a project saved before numbers)
+    // or with one already taken lower down gets the next free number of its kind. When several
+    // need one, they're numbered from the bottom up, since new tracks go on top, except audio:
+    // extracted and companion audio goes below the rest, so audio counts from the top, which also
+    // keeps the labels a project saved before numbers showed for its audio.
+    QHash<QString, int> highest;
+    QHash<QString, QSet<int>> used;
+    QList<int> pending;
+    for (int i = int(tracks.size()) - 1; i >= 0; --i) {
+        Track &track = tracks[i];
+        const QString kind = trackNumberKind(track);
+        if (kind.isEmpty()) {
+            track.number = 0;
+            continue;
+        }
+        if (track.number > 0 && !used.value(kind).contains(track.number)) {
+            used[kind].insert(track.number);
+            highest[kind] = qMax(highest.value(kind), track.number);
+        } else {
+            pending.append(i);
+        }
+    }
+    const auto assign = [&](int i) {
+        Track &track = tracks[i];
+        track.number = ++highest[trackNumberKind(track)];
+    };
+    for (const int i : std::as_const(pending)) // bottom up
+        if (tracks.at(i).type != TrackType::Audio)
+            assign(i);
+    for (auto it = pending.crbegin(); it != pending.crend(); ++it) // top down
+        if (tracks.at(*it).type == TrackType::Audio)
+            assign(*it);
 }
 
 int Project::trackIndexById(const QString &id) const
@@ -1301,6 +1335,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             if (track.isTransformLayer())
                 track.spanEndTrackId = trackObject.value(QStringLiteral("spanEndTrackId")).toString();
             track.name = trackObject.value(QStringLiteral("name")).toString();
+            track.number = qMax(0, trackObject.value(QStringLiteral("number")).toInt(0));
             track.muted = trackObject.value(QStringLiteral("muted")).toBool(false);
             track.hidden = trackObject.value(QStringLiteral("hidden")).toBool(false);
             track.locked = trackObject.value(QStringLiteral("locked")).toBool(false);
@@ -1538,6 +1573,8 @@ QJsonObject Project::toJson(bool includeTranscripts) const
             };
             if (track.isTransformLayer())
                 trackObject.insert(QStringLiteral("spanEndTrackId"), track.spanEndTrackId);
+            if (track.number > 0)
+                trackObject.insert(QStringLiteral("number"), track.number);
             tracksArray.append(trackObject);
         }
         return tracksArray;

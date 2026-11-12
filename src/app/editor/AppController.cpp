@@ -1115,6 +1115,7 @@ QVariantList AppController::tracks() const
             {QStringLiteral("spanDepth"), track.isTransformLayer() ? coveredBy.size() : 0},
             {QStringLiteral("transformCoveredBy"), coveredBy},
             {QStringLiteral("name"), track.name},
+            {QStringLiteral("number"), track.number},
             {QStringLiteral("clips"), clips},
             {QStringLiteral("hasAudio"), hasAudio},
             {QStringLiteral("transitions"), transitions},

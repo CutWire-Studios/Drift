@@ -409,6 +409,7 @@ bool applyTemplateToProject(const MogrtTemplate &tmpl,
         if (prproj) {
             for (const Track &t : prproj->tracks()) {
                 Track copy = t;
+                copy.number = 0; // numbered in this project, after its own tracks
                 for (Clip &c : copy.clips) {
                     c.timelineStart += insertTimeUs;
                 }

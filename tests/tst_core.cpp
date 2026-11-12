@@ -217,6 +217,9 @@ private slots:
     void transformLayerRoundTrips();
     void transformSpanFollowsTrackEdits();
     void transformNormalizerLiftsStrays();
+    void trackNumbersStayPutWhenTracksAreAdded();
+    void trackNumbersAreAssignedOnLoad();
+    void trackDefaultLabelUsesTheNumber();
     void cameraLayerRoundTripsAndNormalizes();
     void retargetClipToSourceKeepsPlacementAndSyncsSource();
     void retargetClipToSourceClearsPerSourceState();
@@ -5261,6 +5264,138 @@ void CoreTest::transformNormalizerLiftsStrays()
         for (const drift::Clip &clip : track.clips)
             QVERIFY(track.acceptsClip(clip));
     }
+}
+
+// #48: default labels ("Video 2") used to count tracks by position, so adding a track on top
+// renumbered every track of its kind below it. Each track now keeps a number.
+void CoreTest::trackNumbersStayPutWhenTracksAreAdded()
+{
+    QList<drift::Track> tracks{namedTrack(drift::TrackType::Video, QStringLiteral("v"))};
+    drift::ensureTrackIds(tracks);
+    QCOMPARE(tracks.at(0).number, 1);
+
+    // New tracks go on top and take the next free number of their kind.
+    tracks.prepend(drift::Track{.type = drift::TrackType::Video});
+    tracks.prepend(drift::Track{.type = drift::TrackType::Audio});
+    drift::ensureTrackIds(tracks);
+    QCOMPARE(tracks.at(2).number, 1);
+    QCOMPARE(tracks.at(1).number, 2);
+    QCOMPARE(tracks.at(0).number, 1);
+
+    // Deleting and reordering renumber nothing.
+    tracks.removeAt(1);
+    tracks.move(0, 1);
+    drift::ensureTrackIds(tracks);
+    QCOMPARE(tracks.at(0).number, 1);
+    QCOMPARE(tracks.at(0).type, drift::TrackType::Video);
+    QCOMPARE(tracks.at(1).number, 1);
+
+    // A copied track brings its number along; the copy higher up takes the next free one.
+    drift::Track copy = tracks.at(0);
+    copy.id.clear();
+    tracks.prepend(copy);
+    drift::ensureTrackIds(tracks);
+    QCOMPARE(tracks.at(1).number, 1);
+    QCOMPARE(tracks.at(0).number, 2);
+
+    // Kinds count on their own: transform layers apart from adjustment tracks; nested lanes and
+    // the camera layer show no number.
+    drift::Track adjustment{.type = drift::TrackType::Adjustment};
+    drift::Track transform{.type = drift::TrackType::Adjustment};
+    transform.adjustmentScope = drift::AdjustmentScope::Range;
+    drift::Track lane{.type = drift::TrackType::Adjustment};
+    lane.adjustmentScope = drift::AdjustmentScope::ParentTrack;
+    lane.parentTrackId = tracks.at(1).id;
+    drift::Track camera{.type = drift::TrackType::Adjustment};
+    camera.adjustmentScope = drift::AdjustmentScope::Camera;
+    tracks.prepend(lane);
+    tracks.prepend(adjustment);
+    tracks.prepend(transform);
+    tracks.prepend(camera);
+    drift::ensureTrackIds(tracks);
+    QCOMPARE(tracks.at(0).number, 0);
+    QCOMPARE(tracks.at(1).number, 1);
+    QCOMPARE(tracks.at(2).number, 1);
+    QCOMPARE(tracks.at(3).number, 0);
+}
+
+void CoreTest::trackNumbersAreAssignedOnLoad()
+{
+    drift::Project project;
+    project.tracks() = {
+        namedTrack(drift::TrackType::Video, QStringLiteral("v-top")),
+        namedTrack(drift::TrackType::Audio, QStringLiteral("a-top")),
+        namedTrack(drift::TrackType::Video, QStringLiteral("v-bottom")),
+        namedTrack(drift::TrackType::Audio, QStringLiteral("a-bottom")),
+    };
+    // A project saved before numbers: none in the file.
+    QJsonObject json = project.toJson();
+    QJsonArray saved = json.value(QStringLiteral("tracks")).toArray();
+    for (int i = 0; i < saved.size(); ++i) {
+        QJsonObject track = saved.at(i).toObject();
+        QVERIFY(!track.contains(QStringLiteral("number")));
+        saved[i] = track;
+    }
+
+    QString error;
+    drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+    // Video counts from the bottom (new tracks go on top); audio from the top (extracted audio
+    // goes below), which keeps the labels such a project showed for its audio.
+    QCOMPARE(loaded.tracks().at(2).number, 1);
+    QCOMPARE(loaded.tracks().at(0).number, 2);
+    QCOMPARE(loaded.tracks().at(1).number, 1);
+    QCOMPARE(loaded.tracks().at(3).number, 2);
+
+    // Saved and loaded as they are.
+    loaded.tracks().move(0, 3);
+    const drift::Project again = drift::Project::fromJson(loaded.toJson(), &error);
+    QVERIFY(error.isEmpty());
+    QCOMPARE(again.tracks().at(3).id, QStringLiteral("v-top"));
+    QCOMPARE(again.tracks().at(3).number, 2);
+    QCOMPARE(again.tracks().at(2).id, QStringLiteral("a-bottom"));
+    QCOMPARE(again.tracks().at(2).number, 2);
+}
+
+void CoreTest::trackDefaultLabelUsesTheNumber()
+{
+    drift::Track video{.type = drift::TrackType::Video};
+    video.number = 3;
+    QCOMPARE(drift::trackDefaultLabel(video), QStringLiteral("Video 3"));
+    video.name = QStringLiteral("B-roll");
+    QCOMPARE(drift::trackDefaultLabel(video), QStringLiteral("B-roll"));
+    drift::Track transform{.type = drift::TrackType::Adjustment};
+    transform.adjustmentScope = drift::AdjustmentScope::Range;
+    transform.number = 1;
+    QCOMPARE(drift::trackDefaultLabel(transform), QStringLiteral("Transform 1"));
+    drift::Track camera{.type = drift::TrackType::Adjustment};
+    camera.adjustmentScope = drift::AdjustmentScope::Camera;
+    QCOMPARE(drift::trackDefaultLabel(camera), QStringLiteral("Camera"));
+    drift::Track shape{.type = drift::TrackType::Shape};
+    shape.number = 2;
+    QCOMPARE(drift::trackDefaultLabel(shape), QStringLiteral("Graphic 2"));
+    // A nested lane is named after what it holds, as its row in the timeline is.
+    drift::Track lane{.type = drift::TrackType::Adjustment};
+    lane.adjustmentScope = drift::AdjustmentScope::ParentTrack;
+    lane.parentTrackId = QStringLiteral("v");
+    QCOMPARE(drift::trackDefaultLabel(lane), QStringLiteral("Effects"));
+    drift::Clip mask;
+    mask.type = drift::ClipType::Adjustment;
+    mask.adjustmentKind = drift::AdjustmentKind::Mask;
+    lane.clips = {mask};
+    QCOMPARE(drift::trackDefaultLabel(lane), QStringLiteral("Mask"));
+    lane.clips.first().adjustmentKind = drift::AdjustmentKind::AudioEffects;
+    QCOMPARE(drift::trackDefaultLabel(lane), QStringLiteral("Audio FX"));
+
+    // A label that changes shows in the change feed.
+    drift::Project from;
+    from.tracks() = {namedTrack(drift::TrackType::Video, QStringLiteral("v"))};
+    from.tracks()[0].number = 1;
+    drift::Project to = from;
+    to.tracks()[0].number = 2;
+    const drift::ProjectDiff diff = drift::diffProjects(from, to);
+    QCOMPARE(diff.tracks.size(), 1);
+    QCOMPARE(diff.tracks.first().fields, QStringList{QStringLiteral("number")});
 }
 
 // A canvas resize reaches every sequence, and a composite's box scales with the canvas it shows,

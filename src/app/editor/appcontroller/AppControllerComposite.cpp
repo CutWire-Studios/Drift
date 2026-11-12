@@ -668,6 +668,8 @@ void AppController::makeCompositeFromSelection()
     for (const drift::Track &source : m_project.tracks()) {
         drift::Track copy = source;
         copy.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        // Numbered afresh inside the composite.
+        copy.number = 0;
         copy.locked = false;
         copy.clips.clear();
         copy.transitions.clear();
@@ -796,6 +798,9 @@ void AppController::dissolveComposite(int trackIndex, int clipIndex)
     QList<drift::Track> released;
     for (const drift::Track &source : m_project.sequenceTracks(composite.sequenceId)) {
         drift::Track copy = source;
+        // A row the dissolve adds takes the next free number; the inner one could be taken, and
+        // the track holding it would be renumbered.
+        copy.number = 0;
         copy.locked = false;
         copy.clips.clear();
         copy.transitions.clear();

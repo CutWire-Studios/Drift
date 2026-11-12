@@ -134,7 +134,8 @@ Rectangle {
                     result.push({
                         trackIndex: i,
                         isVideo: isVideo,
-                        name: t.name && t.name.length > 0 ? t.name : (isVideo ? "V" + videoCount : "A" + audioCount),
+                        name: t.name && t.name.length > 0 ? t.name
+                              : (isVideo ? "V" : "A") + (t.number > 0 ? t.number : (isVideo ? videoCount : audioCount)),
                         muted: t.muted === true,
                         solo: t.solo === true,
                         volume: t.volume !== undefined ? t.volume : 1.0,

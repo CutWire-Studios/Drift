@@ -65,9 +65,10 @@ QByteArray sourceStamp(const QString &path, QHash<QString, QByteArray> &cache)
 Timeline prepare(const QJsonArray &tracks, QHash<QString, QByteArray> &stamps)
 {
     static const QStringList trackUiKeys{
-        QStringLiteral("name"),         QStringLiteral("locked"),
-        QStringLiteral("volume"),       QStringLiteral("pan"),
-        QStringLiteral("clipDisplay"),  QStringLiteral("showChannelWaveforms"),
+        QStringLiteral("name"),         QStringLiteral("number"),
+        QStringLiteral("locked"),       QStringLiteral("volume"),
+        QStringLiteral("pan"),          QStringLiteral("clipDisplay"),
+        QStringLiteral("showChannelWaveforms"),
         QStringLiteral("heightScale"),  QStringLiteral("lanesCollapsed"),
         QStringLiteral("clips"),        QStringLiteral("transitions"),
     };
