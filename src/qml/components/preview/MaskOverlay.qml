@@ -27,10 +27,6 @@ Item {
     readonly property real sx: root.width / canvasW
     readonly property real sy: root.height / canvasH
 
-    // Stickiness in normalized mask units. The tolerance is a screen distance so the pull feels
-    // the same whatever the project resolution or preview zoom.
-    readonly property real snapTolPx: 8
-
     function refreshOverlay() {
         // Hidden: onVisibleChanged catches up when shown.
         if (!visible || interacting)
@@ -205,6 +201,18 @@ Item {
     Item {
         id: clipFrame
         visible: root.hasFrame
+
+        TransformOverlaySnapGuide {
+            alongX: true
+            position: EditorState.masking.editSession.snapGuideX >= 0
+                      ? EditorState.masking.editSession.snapGuideX * clipFrame.width : -1
+        }
+        TransformOverlaySnapGuide {
+            alongX: false
+            position: EditorState.masking.editSession.snapGuideY >= 0
+                      ? EditorState.masking.editSession.snapGuideY * clipFrame.height : -1
+        }
+
         x: (root.editorState.x || 0) * root.sx
         y: (root.editorState.y || 0) * root.sy
         width: Math.max(1, (root.editorState.width || root.canvasW) * root.sx)

@@ -13233,8 +13233,30 @@ void EditorStateTest::maskEditSessionResizeRotateAndSnap()
     session->moveBody(0.504, 0.6, false);
     QVERIFY(qAbs(session->liveX() - 0.5) < 1e-9);
     QVERIFY(qAbs(session->liveY() - 0.6) < 1e-9);
+    QCOMPARE(session->snapGuideX(), 0.5);
+    QCOMPARE(session->snapGuideY(), 0.5);
     session->moveBody(0.504, 0.6, true);
     QVERIFY(qAbs(session->liveX() - 0.504) < 1e-9);
+    QCOMPARE(session->snapGuideX(), -1.0);
+    session->cancel();
+
+    // Resize: the moving edge pulls to the frame edge, Ctrl bypasses, the locked corner snaps one axis.
+    QVERIFY(session->begin(id2, 1000, 1000));
+    session->beginResize(1, 0, 0.6, 0.5);
+    session->resize(0.996, 0.5, false);
+    QVERIFY(qAbs(session->liveW() - 0.6) < 1e-9);
+    QVERIFY(qAbs(session->liveX() - 0.7) < 1e-9);
+    QCOMPARE(session->snapGuideX(), 1.0);
+    session->resize(0.996, 0.5, false, true);
+    QVERIFY(qAbs(session->liveW() - 0.596) < 1e-9);
+    QCOMPARE(session->snapGuideX(), -1.0);
+    session->cancel();
+    QVERIFY(session->begin(id2, 1000, 1000));
+    session->beginResize(1, 1, 0.6, 0.6);
+    session->resize(0.996, 0.9, true);
+    QVERIFY(qAbs(session->liveW() - 0.6) < 1e-9);
+    QVERIFY(qAbs(session->liveH() - 0.6) < 1e-9);
+    QCOMPARE(session->snapGuideY(), -1.0);
     session->cancel();
 }
 

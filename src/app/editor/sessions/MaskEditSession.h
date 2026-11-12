@@ -26,6 +26,8 @@ class MaskEditSession : public QObject
     Q_PROPERTY(double liveW READ liveW NOTIFY liveChanged)
     Q_PROPERTY(double liveH READ liveH NOTIFY liveChanged)
     Q_PROPERTY(double liveRotation READ liveRotation NOTIFY liveChanged)
+    Q_PROPERTY(double snapGuideX READ snapGuideX NOTIFY snapGuidesChanged)
+    Q_PROPERTY(double snapGuideY READ snapGuideY NOTIFY snapGuidesChanged)
     Q_PROPERTY(QList<QPointF> livePoints READ livePoints NOTIFY liveChanged)
     Q_PROPERTY(QList<int> selectedPoints READ selectedPoints NOTIFY selectionChanged)
     Q_PROPERTY(QString selectionClipId READ selectionClipId NOTIFY selectionChanged)
@@ -40,6 +42,8 @@ public:
     double liveW() const { return m_w; }
     double liveH() const { return m_h; }
     double liveRotation() const { return m_rotation; }
+    double snapGuideX() const { return m_snapGuideX; }
+    double snapGuideY() const { return m_snapGuideY; }
     QList<QPointF> livePoints() const { return m_points; }
     QList<int> selectedPoints() const { return m_selected; }
     QString selectionClipId() const { return m_selClipId; }
@@ -59,7 +63,8 @@ public:
     Q_INVOKABLE void moveBody(double nx, double ny, bool bypassSnap);
     // Resize about the opposite edge. gripDx/gripDy are -1/0/1 for the grip's side.
     Q_INVOKABLE void beginResize(int gripDx, int gripDy, double nx, double ny);
-    Q_INVOKABLE void resize(double nx, double ny, bool lockAspect);
+    // Edges snap to the clip frame's 0, 0.5 and 1 unless bypassSnap (Ctrl) or the mask is rotated.
+    Q_INVOKABLE void resize(double nx, double ny, bool lockAspect, bool bypassSnap = false);
     // Angle of the pointer about the mask centre; snap15 rounds to 15 degrees.
     Q_INVOKABLE void rotate(double nx, double ny, bool snap15);
     Q_INVOKABLE void movePoint(int index, double nx, double ny);
@@ -90,6 +95,7 @@ public:
 
 signals:
     void liveChanged();
+    void snapGuidesChanged();
     void selectionChanged();
 
 private:
@@ -103,7 +109,8 @@ private:
     // Writes the live geometry (or points) through the right channel for the mask's animation state.
     void write(bool includeRotation);
     void writeStatic(const drift::Mask &mask);
-    void snapCentre(double &nx, double &ny) const;
+    void snapCentre(double &nx, double &ny);
+    void setSnapGuides(double x, double y);
     void syncFreeformBounds();
     QList<QPointF> pointsOf(const QString &clipId) const;
     void setSelection(const QString &clipId, QList<int> indices);
@@ -120,6 +127,7 @@ private:
     bool m_freeform = false;
     bool m_pathAnimated = false;
     bool m_bodyMoved = false;
+    double m_snapGuideX = -1, m_snapGuideY = -1;
 
     double m_x = 0, m_y = 0, m_w = 0, m_h = 0, m_rotation = 0;
     QList<QPointF> m_points;

@@ -19,8 +19,10 @@ namespace {
 constexpr double kSnapTolPx = 8.0;
 
 // Nearest target within `tol` of any candidate, as the delta to add to the moving value.
-double snapAxis(const double (&candidates)[3], const double (&targets)[3], double tol)
+double snapAxis(const double (&candidates)[3], const double (&targets)[3], double tol, double *hit = nullptr)
 {
+    if (hit)
+        *hit = -1.0;
     double result = 0.0;
     double best = tol;
     for (const double c : candidates) {
@@ -29,6 +31,8 @@ double snapAxis(const double (&candidates)[3], const double (&targets)[3], doubl
             if (std::abs(d) < best) {
                 best = std::abs(d);
                 result = d;
+                if (hit)
+                    *hit = t;
             }
         }
     }
@@ -129,6 +133,7 @@ bool MaskEditSession::begin(const QString &clipId, double frameW, double frameH)
     m_frameH = std::max(1.0, frameH);
     m_active = true;
     m_bodyMoved = false;
+    m_snapGuideX = m_snapGuideY = -1;
     m_startPoints = m_points;
     m_app->beginPreviewDrag(tr("Mask changed"));
     emit liveChanged();
@@ -144,6 +149,8 @@ void MaskEditSession::commit()
     m_active = false;
     m_bodyMoved = false;
     m_clipId.clear();
+    m_snapGuideX = m_snapGuideY = -1;
+    emit snapGuidesChanged();
     emit liveChanged();
     m_app->commitPreviewDrag();
     // Dragging a tracked mask back onto the object is the correction gesture.
@@ -158,6 +165,8 @@ void MaskEditSession::cancel()
     m_active = false;
     m_bodyMoved = false;
     m_clipId.clear();
+    m_snapGuideX = m_snapGuideY = -1;
+    emit snapGuidesChanged();
     emit liveChanged();
     m_app->cancelPreviewDrag();
 }
@@ -225,17 +234,31 @@ void MaskEditSession::beginBody(double nx, double ny)
     m_startPoints = m_points;
 }
 
-void MaskEditSession::snapCentre(double &nx, double &ny) const
+void MaskEditSession::setSnapGuides(double x, double y)
 {
-    if (std::abs(m_rotation) >= 0.01)
+    if (x == m_snapGuideX && y == m_snapGuideY)
         return;
+    m_snapGuideX = x;
+    m_snapGuideY = y;
+    emit snapGuidesChanged();
+}
+
+void MaskEditSession::snapCentre(double &nx, double &ny)
+{
+    if (std::abs(m_rotation) >= 0.01) {
+        setSnapGuides(-1, -1);
+        return;
+    }
     static constexpr double targets[3] = {0.0, 0.5, 1.0};
     const double halfW = m_w / 2;
     const double halfH = m_h / 2;
     const double xs[3] = {nx - halfW, nx, nx + halfW};
     const double ys[3] = {ny - halfH, ny, ny + halfH};
-    nx += snapAxis(xs, targets, kSnapTolPx / m_frameW);
-    ny += snapAxis(ys, targets, kSnapTolPx / m_frameH);
+    double gx = -1;
+    double gy = -1;
+    nx += snapAxis(xs, targets, kSnapTolPx / m_frameW, &gx);
+    ny += snapAxis(ys, targets, kSnapTolPx / m_frameH, &gy);
+    setSnapGuides(gx, gy);
 }
 
 void MaskEditSession::moveBody(double nx, double ny, bool bypassSnap)
@@ -246,6 +269,8 @@ void MaskEditSession::moveBody(double nx, double ny, bool bypassSnap)
     double y = m_startY + (ny - m_pressY);
     if (!bypassSnap)
         snapCentre(x, y);
+    else
+        setSnapGuides(-1, -1);
     m_x = x;
     m_y = y;
     m_bodyMoved = true;
@@ -272,7 +297,7 @@ void MaskEditSession::beginResize(int gripDx, int gripDy, double nx, double ny)
     m_startH = m_h;
 }
 
-void MaskEditSession::resize(double nx, double ny, bool lockAspect)
+void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassSnap)
 {
     if (!m_active)
         return;
@@ -284,11 +309,53 @@ void MaskEditSession::resize(double nx, double ny, bool lockAspect)
 
     double w = std::max(0.01, m_startW + lx * m_gripDx);
     double h = std::max(0.01, m_startH + ly * m_gripDy);
-    if (m_gripDx != 0 && m_gripDy != 0 && lockAspect) {
-        const double s = std::max(w / std::max(0.01, m_startW), h / std::max(0.01, m_startH));
+    const bool corner = m_gripDx != 0 && m_gripDy != 0;
+    const bool locked = corner && lockAspect;
+    const bool snapping = !bypassSnap && std::abs(m_rotation) < 0.01;
+    bool snapX = snapping && m_gripDx != 0;
+    bool snapY = snapping && m_gripDy != 0;
+    if (locked) {
+        const double rw = w / std::max(0.01, m_startW);
+        const double rh = h / std::max(0.01, m_startH);
+        const double s = std::max(rw, rh);
         w = std::max(0.01, m_startW * s);
         h = std::max(0.01, m_startH * s);
+        snapX = snapX && rw >= rh;
+        snapY = snapY && rh > rw;
     }
+
+    double gx = -1;
+    double gy = -1;
+    static constexpr double targets[3] = {0.0, 0.5, 1.0};
+    if (snapX) {
+        const double fixed = m_startX - m_gripDx * m_startW / 2;
+        const double edge = fixed + m_gripDx * w;
+        const double c[3] = {edge, edge, edge};
+        const double snapped = edge + snapAxis(c, targets, kSnapTolPx / m_frameW, &gx);
+        const double nw = m_gripDx * (snapped - fixed);
+        if (gx >= 0 && nw >= 0.01) {
+            w = nw;
+            if (locked)
+                h = std::max(0.01, m_startH * w / std::max(0.01, m_startW));
+        } else {
+            gx = -1;
+        }
+    }
+    if (snapY) {
+        const double fixed = m_startY - m_gripDy * m_startH / 2;
+        const double edge = fixed + m_gripDy * h;
+        const double c[3] = {edge, edge, edge};
+        const double snapped = edge + snapAxis(c, targets, kSnapTolPx / m_frameH, &gy);
+        const double nh = m_gripDy * (snapped - fixed);
+        if (gy >= 0 && nh >= 0.01) {
+            h = nh;
+            if (locked)
+                w = std::max(0.01, m_startW * h / std::max(0.01, m_startH));
+        } else {
+            gy = -1;
+        }
+    }
+    setSnapGuides(gx, gy);
 
     const double shiftX = (w - m_startW) / 2 * m_gripDx;
     const double shiftY = (h - m_startH) / 2 * m_gripDy;
