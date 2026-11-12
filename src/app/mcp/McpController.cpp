@@ -1,4 +1,6 @@
 #include "app/mcp/McpController.h"
+#include "app/bin/MediaBinController.h"
+#include "core/project/media/ImageSequence.h"
 #include "core/project/media/ImageSequence.h"
 #include "core/project/ProjectDiff.h"
 #include "app/editor/ProjectFileController.h"
@@ -69,6 +71,8 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
+#include <QRegularExpression>
+#include <QDirIterator>
 #include <QEventLoop>
 #include <QFile>
 #include <QThread>
@@ -79,6 +83,7 @@
 #include <filesystem>
 #include <QStandardPaths>
 #include <QUuid>
+#include <QUrl>
 #include <QtConcurrent>
 
 #include <QClipboard>
@@ -534,6 +539,295 @@ QJsonObject McpController::validateProject(int limit) const
     if (total > 0)
         out.insert(QStringLiteral("counts"), counts);
     if (total > limit)
+        out.insert(QStringLiteral("truncated"), true);
+    return out;
+}
+
+namespace {
+
+// The file a path stands for: an image sequence's first frame (its path is a pattern).
+QString fileOf(const QString &path)
+{
+    if (const auto seq = drift::parseImageSequencePath(path))
+        return drift::imageSequenceFramePath(*seq, seq->start);
+    return path;
+}
+
+// A path that names a file which isn't there. Paths that aren't plain files (content: URIs,
+// resources) are left to the platform.
+bool fileGone(const QString &path)
+{
+    return !path.isEmpty() && !path.startsWith(QLatin1String("content:")) && !path.startsWith(QLatin1Char(':'))
+           && !QFileInfo::exists(fileOf(path));
+}
+
+QHash<QString, int> clipsPerAsset(const drift::Project &project)
+{
+    QHash<QString, int> uses;
+    const auto count = [&](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks)
+            for (const drift::Clip &clip : track.clips)
+                if (!clip.assetId.isEmpty())
+                    ++uses[clip.assetId];
+    };
+    count(project.rootTracks());
+    for (const QString &id : project.sequenceIds())
+        count(project.sequenceTracks(id));
+    return uses;
+}
+
+// File names compare as the platform's file system does.
+constexpr Qt::CaseSensitivity kPathCase =
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+    Qt::CaseInsensitive;
+#else
+    Qt::CaseSensitive;
+#endif
+
+} // namespace
+
+QJsonObject McpController::missingMedia() const
+{
+    const drift::Project &project = m_app->m_project;
+    const QHash<QString, int> uses = clipsPerAsset(project);
+    QJsonArray missing;
+    for (const QString &id : project.assetOrder()) {
+        const drift::MediaAsset *asset = project.asset(id);
+        if (!asset || asset->kind == drift::MediaKind::Composite || asset->path.isEmpty())
+            continue;
+        // The bin's own answer, so this agrees with what the user sees; an image sequence is
+        // missing when its first frame is.
+        const bool gone = m_app->m_assetLibrary ? m_app->m_assetLibrary->isMissing(id) || fileGone(asset->path)
+                                                : fileGone(asset->path);
+        if (!gone)
+            continue;
+        missing.append(QJsonObject{{QStringLiteral("asset"), id},
+                                   {QStringLiteral("name"), asset->name},
+                                   {QStringLiteral("path"), asset->path},
+                                   {QStringLiteral("clips"), uses.value(id)}});
+    }
+    return {{QStringLiteral("ok"), true}, {QStringLiteral("missing"), missing}, {QStringLiteral("n"), missing.size()}};
+}
+
+QJsonObject McpController::relinkMedia(const QJsonObject &args)
+{
+    const auto fail = [](const char *code, const QString &detail) {
+        return QJsonObject{{QStringLiteral("ok"), false}, {QStringLiteral("error"), QString::fromLatin1(code)},
+                           {QStringLiteral("detail"), detail}};
+    };
+    // As given: a file:// URL or a path, either separator, without a trailing slash.
+    const auto clean = [](QString path) {
+        path = path.trimmed();
+        if (path.startsWith(QLatin1String("file:"), Qt::CaseInsensitive))
+            path = QUrl(path).toLocalFile();
+        path.replace(QLatin1Char('\\'), QLatin1Char('/'));
+        path = QDir::cleanPath(path);
+        while (path.size() > 1 && path.endsWith(QLatin1Char('/')) && !path.endsWith(QLatin1String(":/")))
+            path.chop(1);
+        return path;
+    };
+    const QString from = clean(args.value(QStringLiteral("from")).toString());
+    const QString to = clean(args.value(QStringLiteral("to")).toString());
+    const QString searchDir = clean(args.value(QStringLiteral("search_dir")).toString());
+    const bool dryRun = args.value(QStringLiteral("dry_run")).toBool();
+    const bool byPrefix = !from.isEmpty() || !to.isEmpty();
+    if (byPrefix == !searchDir.isEmpty())
+        return fail("bad_args", QStringLiteral("Give from and to (a folder or drive that moved), or search_dir (where "
+                                               "to look for missing files by name), not both"));
+    if (byPrefix && (from.isEmpty() || to.isEmpty()))
+        return fail("bad_args", QStringLiteral("from and to go together"));
+    // `from` only has to match the paths the project stores, which may come from another platform
+    // ("D:/footage" in a project made on Windows); `to` and `search_dir` are read here.
+    static const QRegularExpression kForeignAbsolute(QStringLiteral("^(/|[A-Za-z]:/)"));
+    if (!from.isEmpty() && !QDir::isAbsolutePath(from) && !kForeignAbsolute.match(from).hasMatch())
+        return fail("bad_args", QStringLiteral("%1 isn't an absolute path").arg(from));
+    for (const QString &path : {to, searchDir})
+        if (!path.isEmpty() && !QDir::isAbsolutePath(path))
+            return fail("bad_args", QStringLiteral("%1 isn't an absolute path").arg(path));
+    if (byPrefix && from.compare(to, kPathCase) == 0)
+        return fail("bad_args", QStringLiteral("from and to are the same"));
+    if (!searchDir.isEmpty() && !QFileInfo(searchDir).isDir())
+        return fail("bad_args", QStringLiteral("search_dir %1 isn't a folder").arg(searchDir));
+
+    const drift::Project &project = m_app->m_project;
+    // Every path the project names a file by, the way a relink rewrites them.
+    QSet<QString> paths;
+    {
+        drift::Project scratch = project;
+        ProjectFileController::remapPaths(scratch, [&paths](const QString &path) -> std::optional<QString> {
+            paths.insert(path);
+            return std::nullopt;
+        });
+    }
+    // What already names each file, so a relink never points two assets at one file, and what a
+    // missing asset's file weighed, to tell its file from another of the same name.
+    const auto key = [](const QString &path) {
+        const QString cleaned = QDir::cleanPath(path);
+        return kPathCase == Qt::CaseInsensitive ? cleaned.toLower() : cleaned;
+    };
+    QHash<QString, const drift::MediaAsset *> assetByPath;
+    for (const drift::MediaAsset &asset : project.assets())
+        assetByPath.insert(key(asset.path), &asset);
+    QSet<QString> claimed;
+    const auto refusal = [&](const QString &path, const QString &target) -> QString {
+        const drift::MediaAsset *asset = assetByPath.value(key(path));
+        // Two assets on one file breaks the bin (import dedupes by path); a mask or an effect file
+        // sharing an asset's file is fine.
+        const drift::MediaAsset *owner = asset ? assetByPath.value(key(target)) : nullptr;
+        if (owner && owner != asset)
+            return QStringLiteral("another asset (%1) already uses %2").arg(owner->name, target);
+        // Size before claims, so the reason doesn't depend on which asset was looked at first.
+        if (asset && asset->sourceSize > 0 && !drift::parseImageSequencePath(target)
+            && QFileInfo(target).size() != asset->sourceSize)
+            return QStringLiteral("%1 isn't the same size as the file was").arg(target);
+        if (asset && claimed.contains(key(target)))
+            return QStringLiteral("another missing file was relinked to %1").arg(target);
+        return {};
+    };
+
+    QHash<QString, QString> remap;
+    QJsonArray stillMissing;
+    int matched = 0;
+    bool truncated = false;
+    int unresolvedCount = 0;
+    const auto unresolved = [&](QJsonObject row, const QString &reason) {
+        ++unresolvedCount;
+        if (const drift::MediaAsset *asset = assetByPath.value(key(row.value(QStringLiteral("path")).toString())))
+            row.insert(QStringLiteral("asset"), asset->id);
+        row.insert(QStringLiteral("reason"), reason);
+        if (stillMissing.size() < 200)
+            stillMissing.append(row);
+    };
+    if (byPrefix) {
+        // A missing file under `from` moves to the same place under `to`, where that file is. A root
+        // ("/", "D:/") already ends with its separator.
+        const QString fromPrefix = from.endsWith(QLatin1Char('/')) ? from : from + QLatin1Char('/');
+        const QString toPrefix = to.endsWith(QLatin1Char('/')) ? to : to + QLatin1Char('/');
+        QStringList sorted(paths.cbegin(), paths.cend());
+        sorted.sort();
+        for (const QString &path : std::as_const(sorted)) {
+            QString cleaned = QDir::cleanPath(path);
+            cleaned.replace(QLatin1Char('\\'), QLatin1Char('/'));
+            const bool exact = cleaned.compare(from, kPathCase) == 0;
+            if (!exact && !cleaned.startsWith(fromPrefix, kPathCase))
+                continue;
+            ++matched;
+            if (!fileGone(path))
+                continue; // still there: not ours to move
+            const QString moved = exact ? to : toPrefix + cleaned.mid(fromPrefix.size());
+            if (!QFileInfo::exists(fileOf(moved))) {
+                unresolved({{QStringLiteral("path"), path}, {QStringLiteral("tried"), moved}}, QStringLiteral("no file there"));
+                continue;
+            }
+            if (const QString why = refusal(path, moved); !why.isEmpty()) {
+                unresolved({{QStringLiteral("path"), path}, {QStringLiteral("tried"), moved}}, why);
+                continue;
+            }
+            claimed.insert(key(moved));
+            remap.insert(path, moved);
+        }
+    } else {
+        // Missing assets, found by file name under search_dir.
+        QHash<QString, QList<const drift::MediaAsset *>> wanted;
+        for (const drift::MediaAsset &asset : project.assets())
+            if (asset.kind != drift::MediaKind::Composite && fileGone(asset.path)
+                && !drift::parseImageSequencePath(asset.path))
+                wanted[kPathCase == Qt::CaseInsensitive ? QFileInfo(asset.path).fileName().toLower()
+                                                        : QFileInfo(asset.path).fileName()]
+                    .append(&asset);
+        QHash<QString, QStringList> found;
+        if (!wanted.isEmpty()) {
+            int seen = 0;
+            QDirIterator it(searchDir, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+            while (it.hasNext()) {
+                if (++seen > 200000) {
+                    truncated = true;
+                    break;
+                }
+                const QString path = it.next();
+                const QString name = kPathCase == Qt::CaseInsensitive ? it.fileName().toLower() : it.fileName();
+                if (wanted.contains(name))
+                    found[name].append(path);
+            }
+        }
+        QStringList names = wanted.keys();
+        names.sort();
+        for (const QString &name : std::as_const(names)) {
+            const QStringList candidates = found.value(name);
+            const QList<const drift::MediaAsset *> sharing = wanted.value(name);
+            // Several missing files of one name, and nothing to tell them apart: none is guessed.
+            const bool ambiguous = sharing.size() > 1
+                                   && std::any_of(sharing.cbegin(), sharing.cend(),
+                                                  [](const drift::MediaAsset *a) { return a->sourceSize <= 0; });
+            // A walk cut short may have missed another file of the name, so no match is sure.
+            if (truncated) {
+                for (const drift::MediaAsset *asset : sharing)
+                    unresolved({{QStringLiteral("path"), asset->path}},
+                               QStringLiteral("search_dir holds over 200,000 files and wasn't searched in full; "
+                                              "search a narrower folder"));
+                continue;
+            }
+            // Which of the files of this name pass for each asset: the same size when known, not
+            // another asset's, not taken.
+            QHash<const drift::MediaAsset *, QStringList> fits;
+            QHash<QString, int> fittedBy;
+            for (const drift::MediaAsset *asset : ambiguous ? QList<const drift::MediaAsset *>{} : sharing)
+                for (const QString &candidate : candidates)
+                    if (refusal(asset->path, candidate).isEmpty()) {
+                        fits[asset].append(candidate);
+                        ++fittedBy[candidate];
+                    }
+            for (const drift::MediaAsset *asset : sharing) {
+                if (ambiguous) {
+                    unresolved({{QStringLiteral("path"), asset->path}},
+                               QStringLiteral("several missing files share this name; relink them with from/to or "
+                                              "replace_asset"));
+                    continue;
+                }
+                const QStringList fit = fits.value(asset);
+                // A file that fits two of them (same name and size) can't be told to be either's.
+                if (fit.size() == 1 && fittedBy.value(fit.first()) > 1) {
+                    unresolved({{QStringLiteral("path"), asset->path}},
+                               QStringLiteral("another missing file has the same name and size; relink them with "
+                                              "from/to or replace_asset"));
+                    continue;
+                }
+                if (fit.size() == 1) {
+                    claimed.insert(key(fit.first()));
+                    remap.insert(asset->path, fit.first());
+                    continue;
+                }
+                QJsonObject row{{QStringLiteral("path"), asset->path}};
+                if (candidates.size() > 1)
+                    row.insert(QStringLiteral("candidates"), QJsonArray::fromStringList(candidates.mid(0, 10)));
+                unresolved(row, candidates.isEmpty() ? QStringLiteral("no file of that name")
+                                : fit.isEmpty()
+                                    ? (candidates.size() == 1 ? refusal(asset->path, candidates.first())
+                                                              : QStringLiteral("none of the files of that name fits"))
+                                    : QStringLiteral("several files of that name fit"));
+            }
+        }
+    }
+
+    QJsonArray relinked;
+    QStringList keys = remap.keys();
+    keys.sort();
+    for (const QString &path : std::as_const(keys))
+        if (relinked.size() < 200)
+            relinked.append(QJsonObject{{QStringLiteral("from"), path}, {QStringLiteral("to"), remap.value(path)}});
+    if (!dryRun && !remap.isEmpty() && !m_app->bin()->relinkPaths(remap, tr("Relink media")))
+        return fail("locked", QStringLiteral("A locked track holds a clip using these files; unlock it and try again. "
+                                             "Nothing was relinked"));
+    QJsonObject out{{QStringLiteral("ok"), true},
+                    {QStringLiteral("relinked"), relinked},
+                    {QStringLiteral("n"), int(remap.size())},
+                    {QStringLiteral("still_missing"), stillMissing},
+                    {QStringLiteral("still_missing_n"), unresolvedCount}};
+    if (byPrefix)
+        out.insert(QStringLiteral("matched"), matched);
+    if (dryRun)
+        out.insert(QStringLiteral("dry_run"), true);
+    if (truncated)
         out.insert(QStringLiteral("truncated"), true);
     return out;
 }

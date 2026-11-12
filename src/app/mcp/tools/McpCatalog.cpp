@@ -573,6 +573,28 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("dry_run"),
                          boolProp(QStringLiteral("List what would go without removing it"))}}),
           false, true },
+        { "list_missing_media", "media", "Find media whose file is gone",
+          "Returns {missing:[{asset, name, path, clips}], n}: assets whose file isn't there any more "
+          "(moved, renamed, or on a drive this session can't see), with how many clips use each. Fix "
+          "them with relink_media.",
+          objectSchema({}), true, false, true },
+        { "relink_media", "media", "Point moved media at its new place",
+          "Relinks missing media in one undo step. {from, to}: a folder or drive that moved, e.g. "
+          "{from:\"/mnt/hd/VIDEOS\", to:\"/mnt/x/VIDEOS\"} (from may be another platform's path, e.g. "
+          "\"D:/footage\"): each missing file under from is pointed at the same place under to (assets, "
+          "clips, masks, transcripts, effect files). {search_dir}: finds each missing asset's file by name "
+          "under that folder; missing files of one name it can't tell apart (no known size, or the same "
+          "one) aren't guessed, and a search cut short at 200,000 files relinks nothing. A file is only "
+          "relinked when it's there, isn't another asset's, and is the "
+          "same size as before (when known); files still in place aren't touched. Returns {relinked:"
+          "[{from, to}], n (paths), matched (from/to only: paths under from), still_missing:[{path, "
+          "reason, tried?, asset?, candidates?}], still_missing_n, truncated?}; lists cut at 200. Error "
+          "locked when a locked track holds one of the clips (a dry_run can't foresee that). "
+          "dry_run:true reports without changing anything.",
+          objectSchema({{QStringLiteral("from"), stringProp(QStringLiteral("Old folder or drive (absolute)"))},
+                        {QStringLiteral("to"), stringProp(QStringLiteral("New folder or drive (absolute)"))},
+                        {QStringLiteral("search_dir"), stringProp(QStringLiteral("Folder to search for missing files by name"))},
+                        {QStringLiteral("dry_run"), boolProp(QStringLiteral("Report only"))}}) },
         { "create_proxies", "media", "Make preview proxies for footage",
           "Queue preview proxies (small, fast-decoding copies preview reads instead of the original; "
           "export always reads the original). Pick assets, the assets of clips, all:true (every video "

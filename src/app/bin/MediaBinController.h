@@ -142,6 +142,10 @@ public:
     void dropPendingReplace();
     // Applies the relinks offered by the last siblingRelinkAvailable, as one undoable edit.
     Q_INVOKABLE void relinkSiblings();
+    // Points every path in `remap` (old file -> new file) at its new file, as one undoable edit
+    // labelled `label`, and refreshes the bin and the timeline's caches. False when a locked track
+    // holds one of the clips: the edit is then refused as a whole and nothing changes.
+    bool relinkPaths(const QHash<QString, QString> &remap, const QString &label);
 
 signals:
     void currentFolderIdChanged();

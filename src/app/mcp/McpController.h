@@ -73,6 +73,10 @@ public:
     QString error() const;
     QString cursorSnippet() const;
     QString claudeCommand() const;
+    // list_missing_media: assets whose file is gone, with how many clips use each.
+    QJsonObject missingMedia() const;
+    // relink_media({from, to} | {search_dir}, dry_run?): see the catalog entry.
+    QJsonObject relinkMedia(const QJsonObject &args);
     // Background work still running, for wait_idle: {kind: how many} for each kind in `only`
     // (every kind when empty) that is busy; `jobs` is {job kind: how many}. Empty when idle.
     // Filmstrips and waveforms paused by playback can't drain: they go to `suspended` instead.

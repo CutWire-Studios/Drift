@@ -1149,6 +1149,10 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opListAssets(args);
     if (tool == QLatin1String("remove_unused_assets"))
         return opRemoveUnusedAssets(args);
+    if (tool == QLatin1String("list_missing_media"))
+        return m_controller->mcp()->missingMedia();
+    if (tool == QLatin1String("relink_media"))
+        return m_controller->mcp()->relinkMedia(args);
     if (tool == QLatin1String("rename_asset"))
         return opRenameAsset(args);
     if (tool == QLatin1String("add_track"))

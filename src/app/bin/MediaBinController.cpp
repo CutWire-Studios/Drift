@@ -1170,9 +1170,24 @@ void MediaBinController::relinkSiblings()
     const QHash<QString, QString> remap = std::exchange(m_siblingRelink, {});
     if (remap.isEmpty() || !m_app->m_assetLibrary)
         return;
+    if (relinkPaths(remap, tr("Relink media")))
+        m_app->setLastMessage(tr("Relinked %n file(s)", nullptr, int(remap.size())),
+                              QStringLiteral("success"));
+}
+
+bool MediaBinController::relinkPaths(const QHash<QString, QString> &remap, const QString &label)
+{
+    if (remap.isEmpty() || !m_app->m_assetLibrary)
+        return false;
     const drift::Project before = m_app->m_project;
     m_app->projectFile()->remapProjectPaths(remap);
-    m_app->pushProjectEdit(before, tr("Relink media"));
+    m_app->pushProjectEdit(before, label);
+    if (m_app->m_editRefusedByLock) {
+        // pushProjectEdit put the project back.
+        m_app->m_editRefusedByLock = false;
+        m_app->setLastMessage(tr("Track is locked"), QStringLiteral("warning"));
+        return false;
+    }
     // An undo step without finishEdit: the revision (and the change feed) moves here.
     if (McpController *mcp = m_app->mcp())
         mcp->bumpEditRevision();
@@ -1182,8 +1197,7 @@ void MediaBinController::relinkSiblings()
     m_app->restoreFilmstripsAfterLoad();
     m_app->notifyTracksChanged();
     m_app->projectFile()->setDirty(true);
-    m_app->setLastMessage(tr("Relinked %n file(s)", nullptr, int(remap.size())),
-                          QStringLiteral("success"));
+    return true;
 }
 
 int MediaBinController::rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset,
