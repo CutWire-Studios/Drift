@@ -131,6 +131,16 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 
 `apply` takes **toolbox ops only**. The eight homepage tools return `unknown_op` inside an `ops` array; call them directly. `get_waveform({image:true})` is also refused inside `apply`.
 
+### Long sessions and scripted rounds
+
+The served guide (`catalog({guide:true})`) has the same advice, and the `initialize` instructions point to it.
+
+- Every undo step holds full project snapshots, so a long round of batches fills memory and, unless `set_history_limit({persist:false})`, the saved file. Run batches that don't need their own step as `apply({ops, history:false})`: it joins the newest step, whose hash changes, and with no step to join it can't be undone. Cap history with `set_history_limit({steps})` or free it with `clear_history({keep_last})` between rounds; `history_stats` and `memory_stats` show the cost.
+- With a step limit set, each new step can renumber `list_history`: keep hashes, not indices.
+- Decoded frames: `clear_cache` frees them; the frame cache cap is in Settings › Performance.
+- Replaced media stays in the bin. `list_assets({usage:true})` counts each asset's clips; `remove_unused_assets({dry_run:true})` lists the unused ones; without `dry_run` it removes them in one undo step.
+- `delete_clip` leaves the clip's effects (adjustments pinned to it) on the timeline, still applying to whatever is under them; pass `with_effects:true` to delete them with it.
+
 ## Conventions
 
 | Topic | Rule |
