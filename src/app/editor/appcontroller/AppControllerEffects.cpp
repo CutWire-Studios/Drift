@@ -172,6 +172,7 @@ void AppController::addEffect(int trackIndex, int clipIndex, const QString &effe
     // along with the effect rather than leaving an empty row behind.
     const drift::Project before = m_project;
 
+    const QString clipId = track.clips.at(clipIndex).id;
     int hostTrack = trackIndex;
     int hostClip = clipIndex;
     if (!redirectToEffectHost(&hostTrack, &hostClip, drift::AdjustmentKind::VideoEffects,
@@ -180,13 +181,17 @@ void AppController::addEffect(int trackIndex, int clipIndex, const QString &effe
     }
     m_project.tracks()[hostTrack].clips[hostClip].effects.append(effect);
 
-    // Selection moves to the adjustment carrying the stack, because that is the only thing whose
-    // inspector shows it: the Effects tab is no longer offered for the clip the effect was aimed
-    // at. redirectToEffectHost already returns post-insert indices, and normalizeProjectStructure
-    // carries the selection across any reorder by track id.
-    m_selectedTrack = hostTrack;
-    m_selectedClip = hostClip;
-    m_selection = {qMakePair(hostTrack, hostClip)};
+    // The clip stays selected: its Effects tab edits the linked adjustment's stack. Minting a lane
+    // can shift the clip's track, so the selection is re-pointed by id.
+    if (!clipId.isEmpty()) {
+        int selTrack = -1;
+        int selClip = -1;
+        if (findClipById(m_project, clipId, &selTrack, &selClip)) {
+            m_selectedTrack = selTrack;
+            m_selectedClip = selClip;
+            m_selection = {qMakePair(selTrack, selClip)};
+        }
+    }
 
     pushProjectEdit(before, tr("Add effect"));
     finishEdit(tr("Effect added"));

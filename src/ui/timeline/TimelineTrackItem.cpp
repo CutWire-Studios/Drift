@@ -790,7 +790,7 @@ void TimelineTrackItem::build()
             it = ids.contains(it.key().section(QLatin1Char('#'), 0, 0)) ? std::next(it) : m_waveCache.erase(it);
     }
     for (int i = 0; i < rows.size(); ++i) {
-        if (m_drag.moving && i == m_drag.clipIndex)
+        if ((m_drag.moving && i == m_drag.clipIndex) || rows.at(i).hiddenInLane)
             continue;
         const QRectF rect = effectiveRect(i);
         const bool selected = isSelected(i);
@@ -1136,6 +1136,28 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     QColor clipEdge = s.scrim;
     clipEdge.setAlpha(185);
     appendOutline(m_over, rect, s.radiusSm, 1.25, clipEdge, ox);
+
+    // --- fx button: the clip's effects layer, shown or tucked away ---------------------------
+    if (!isAdjustment && row.fxLayer > 0) {
+        const QFont fxFont = labelFont(m_fontFamily, s.fontSizeTiny, true);
+        const QFontMetricsF fxMetrics(fxFont);
+        const QString fxText = QStringLiteral("fx");
+        const QSizeF fxSize(fxMetrics.horizontalAdvance(fxText) + s.spacingMd,
+                            fxMetrics.height() + 2.0);
+        const double inset = edgeMargin(rect.width()) + 2.0;
+        if (rect.width() >= fxSize.width() + 2.0 * inset && rect.height() >= fxSize.height() + 4.0) {
+            const QRectF pill(rect.right() - inset - fxSize.width(), rect.bottom() - 2.0 - fxSize.height(),
+                              fxSize.width(), fxSize.height());
+            appendRoundedRect(m_over, pill, s.radiusXs, row.fxLayer == 2 ? s.clipEffect : s.scrim, ox);
+            m_labels.append({fxText,
+                             QPointF(pill.center().x() - fxMetrics.horizontalAdvance(fxText) / 2.0 - ox,
+                                     pill.center().y() - fxMetrics.height() / 2.0),
+                             s.fontSizeTiny, s.onMedia, true});
+            visual.fxRect = pill;
+            visual.toolTips.append({pill, row.fxLayer == 2 ? tr("Hide the effects layer")
+                                                           : tr("Show the effects layer")});
+        }
+    }
 
     // --- effect drop and selection -----------------------------------------------------------
     const bool dropTarget = m_viewState->effectDropTrack() == m_trackIndex
@@ -1541,6 +1563,17 @@ void TimelineTrackItem::callHaptic(const char *method)
 
 void TimelineTrackItem::mousePressEvent(QMouseEvent *event)
 {
+    if (event->button() == Qt::LeftButton && m_editor && m_clips) {
+        for (auto it = m_visible.crbegin(); it != m_visible.crend(); ++it) {
+            if (!it->fxRect.isNull() && it->fxRect.contains(event->position())
+                && it->index >= 0 && it->index < m_clips->rows().size()
+                && m_clips->rows().at(it->index).id == it->id) {
+                m_editor->toggleEffectsLayerRevealed(m_trackIndex, it->index);
+                event->accept();
+                return;
+            }
+        }
+    }
     Zone zone = Zone::None;
     const int index = clipAt(event->position(), &zone);
     // The device behind this press, not the timeline's mode: a finger on the desktop timeline

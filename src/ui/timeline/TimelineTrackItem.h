@@ -183,6 +183,7 @@ private:
         QString id;
         QRectF rect;
         bool selected = false;
+        QRectF fxRect;
         QList<QPair<QRectF, QString>> toolTips;
     };
 

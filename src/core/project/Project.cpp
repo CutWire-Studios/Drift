@@ -326,6 +326,8 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("effects"), effectsToJson(clip.effects)},
         {QStringLiteral("audioEffects"), effectsToJson(clip.audioEffects)},
     };
+    if (clip.hiddenInLane)
+        json.insert(QStringLiteral("hiddenInLane"), true);
     if (clip.audioFadeInUs > 0)
         json.insert(QStringLiteral("audioFadeInUs"), static_cast<double>(clip.audioFadeInUs));
     if (clip.audioFadeOutUs > 0)
@@ -424,6 +426,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.adjustmentKind =
         adjustmentKindFromString(object.value(QStringLiteral("adjustmentKind")).toString());
     clip.linkedClipId = object.value(QStringLiteral("linkedClipId")).toString();
+    clip.hiddenInLane = object.value(QStringLiteral("hiddenInLane")).toBool(false);
     clip.name = object.value(QStringLiteral("name")).toString();
     clip.label = object.value(QStringLiteral("label")).toString();
     clip.textContent = object.value(QStringLiteral("textContent")).toString();

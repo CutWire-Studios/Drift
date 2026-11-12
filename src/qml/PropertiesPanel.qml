@@ -164,7 +164,7 @@ PanelFrame {
         { id: "masks", label: qsTr("Masks"), icon: Theme.icons.mask, group: 2,
           needs: ["maskable"], opens: "adj:mask", keyframes: true },
         { id: "effects", label: qsTr("Effects"), icon: Theme.icons.wand, group: 2,
-          needs: ["adj:videoEffects"], opens: "adj:videoEffects", keyframes: true },
+          needs: ["effectable"], opens: "adj:videoEffects", keyframes: true },
         { id: "audioEffects", label: qsTr("Audio FX"), icon: Theme.icons.audioLines, group: 2,
           needs: ["adj:audioEffects"], opens: "adj:audioEffects", keyframes: true },
         { id: "transition", label: qsTr("Transition"), icon: Theme.icons.chevronsRight, group: 2,

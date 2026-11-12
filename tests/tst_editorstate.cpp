@@ -401,6 +401,7 @@ private slots:
     void multicamSetUpBuildsAWorkingRigFromTheBin();
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
+    void addedEffectsLayerIsHiddenAndTheClipStaysSelected();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
     void agentCallNotificationsFollowThePreference();
     void deletingWithEffectsAlsoHandlesASelectedAdjustment();
@@ -11920,6 +11921,45 @@ void EditorStateTest::redoAfterASpeedDragKeepsTheGradeOnTheClip()
     QCOMPARE(grade->timelineDuration, host.timelineDuration);
 }
 
+void EditorStateTest::addedEffectsLayerIsHiddenAndTheClipStaysSelected()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.selectClip(0, 0);
+    const QString clipId = state.project()->tracks().at(0).clips.at(0).id;
+
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+
+    QCOMPARE(state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip()).id, clipId);
+    QCOMPARE(state.selectedClipEffects().size(), 1);
+    QVERIFY(state.selectedClipData().value(QStringLiteral("caps")).toStringList()
+                .contains(QStringLiteral("effectable")));
+
+    QCOMPARE(state.project()->tracks().size(), 2);
+    QVERIFY(state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+    QCOMPARE(state.adjustmentLaneCount(0), 0);
+    QCOMPARE(static_cast<TimelineClipsModel *>(state.clipsModel(0))->rows().at(0).fxLayer, 1);
+
+    state.toggleEffectsLayerRevealed(0, 0);
+    QVERIFY(!state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+    QCOMPARE(state.adjustmentLaneCount(0), 1);
+    QCOMPARE(static_cast<TimelineClipsModel *>(state.clipsModel(0))->rows().at(0).fxLayer, 2);
+    state.undo();
+    QVERIFY(state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+    state.redo();
+    QVERIFY(!state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+
+    QCOMPARE(state.effectsLayerHostClip(1, 0, 0, 0.1), 0);
+    QCOMPARE(state.effectsLayerHostClip(1, 0, 0, 1e6), -1);
+    state.hideEffectsLayer(1, 0);
+    QVERIFY(state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+
+    const drift::Project back = drift::Project::fromJson(state.project()->toJson());
+    QVERIFY(back.tracks().at(1).clips.at(0).hiddenInLane);
+    QVERIFY(!back.tracks().at(0).clips.at(0).hiddenInLane);
+}
+
 void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
 {
     AssetLibrary library;
@@ -12482,9 +12522,8 @@ void EditorStateTest::maskingFrameFollowsTheSelectedClip()
 // as well made the handles undiscoverable — you had to already know they existed.
 // The assets-panel drop path. Dropping onto a clip pins a mask and selects the adjustment it
 // minted — that selection is what opens the Masks inspector and the preview handles.
-// An effect stack is only editable in the inspector of the adjustment holding it — the Effects
-// tab is not offered for the clip the effect was aimed at — so adding one has to leave the
-// selection there rather than back on the media clip.
+// The Effects tab is offered on the clip itself and edits its linked layer's stack, so adding an
+// effect leaves the clip selected instead of jumping to the layer.
 void EditorStateTest::addingAnEffectSelectsTheAdjustmentCarryingIt()
 {
     AssetLibrary library;
@@ -12496,11 +12535,7 @@ void EditorStateTest::addingAnEffectSelectsTheAdjustmentCarryingIt()
 
     const drift::Clip &selected =
         state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip());
-    QCOMPARE(selected.type, drift::ClipType::Adjustment);
-    QCOMPARE(selected.adjustmentKind, drift::AdjustmentKind::VideoEffects);
-    QVERIFY(state.project()->tracks().at(state.selectedTrack()).isAdjustmentLane());
-    QCOMPARE(state.selectedClipData().value(QStringLiteral("adjustmentKind")).toString(),
-             QStringLiteral("videoEffects"));
+    QCOMPARE(selected.type, drift::ClipType::Video);
     QCOMPARE(state.selectedClipEffects().size(), 1);
 
     // A second effect on the same clip reuses that adjustment and stays on it.
@@ -13652,6 +13687,7 @@ void EditorStateTest::trackRowHeightsForAdjustmentsAndLanes()
     appendTwoVideoClips(*laned.project());
     laned.selectClip(0, 0);
     laned.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    laned.toggleEffectsLayerRevealed(0, 0);
     const int parent = 0;
     const QList<int> lanes = drift::adjustmentLaneIndexes(*laned.project(), parent);
     QCOMPARE(lanes.size(), 1);
@@ -13673,6 +13709,7 @@ void EditorStateTest::collapsedLanesAndEmptyLaneCleanup()
     AppController state(&library);
     appendTwoVideoClips(*state.project());
     state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.toggleEffectsLayerRevealed(0, 0);
     state.addAudioEffect(0, 0, QStringLiteral("space.autopan"));
     const QVariantMap metrics{{QStringLiteral("video"), 65.0}, {QStringLiteral("lane"), 20.0},
                               {QStringLiteral("ribbon"), 3.0}};

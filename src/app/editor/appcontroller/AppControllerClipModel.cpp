@@ -96,7 +96,8 @@ QStringList inspectorCaps(const drift::Clip &clip, drift::TrackType trackType)
     if (clip.type == ClipType::Adjustment) {
         switch (clip.adjustmentKind) {
         case drift::AdjustmentKind::VideoEffects:
-            caps << QStringLiteral("blendable") << QStringLiteral("maskable") << QStringLiteral("adj:videoEffects");
+            caps << QStringLiteral("blendable") << QStringLiteral("maskable") << QStringLiteral("adj:videoEffects")
+                 << QStringLiteral("effectable");
             break;
         case drift::AdjustmentKind::Mask:
             caps << QStringLiteral("blendable") << QStringLiteral("maskable") << QStringLiteral("adj:mask");
@@ -121,10 +122,12 @@ QStringList inspectorCaps(const drift::Clip &clip, drift::TrackType trackType)
     case ClipType::Video:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("animatable")
              << QStringLiteral("audible") << QStringLiteral("retimable") << QStringLiteral("stabilizable");
+        caps << QStringLiteral("effectable");
         break;
     case ClipType::Composite:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("animatable")
              << QStringLiteral("audible") << QStringLiteral("retimable");
+        caps << QStringLiteral("effectable");
         break;
     case ClipType::Audio:
         caps << QStringLiteral("animatable") << QStringLiteral("audible") << QStringLiteral("retimable");
@@ -132,6 +135,7 @@ QStringList inspectorCaps(const drift::Clip &clip, drift::TrackType trackType)
     case ClipType::Text:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("animatable")
              << QStringLiteral("textStyled");
+        caps << QStringLiteral("effectable");
         break;
     case ClipType::Subtitle:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("textStyled")
@@ -139,14 +143,17 @@ QStringList inspectorCaps(const drift::Clip &clip, drift::TrackType trackType)
         break;
     case ClipType::Image:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("animatable");
+        caps << QStringLiteral("effectable");
         break;
     case ClipType::Shape:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("animatable")
              << QStringLiteral("shape");
+        caps << QStringLiteral("effectable");
         break;
     case ClipType::Vector:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("animatable")
              << QStringLiteral("vector");
+        caps << QStringLiteral("effectable");
         break;
     case ClipType::Pdf:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("animatable")
@@ -906,6 +913,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         // treat their edges as pinned.
         {QStringLiteral("adjustmentKind"), drift::adjustmentKindToString(clip.adjustmentKind)},
         {QStringLiteral("linkedClipId"), clip.linkedClipId},
+        {QStringLiteral("hiddenInLane"), clip.hiddenInLane},
         {QStringLiteral("thumbnailPath"), clip.thumbnailPath},
         {QStringLiteral("filmstripPath"), clip.filmstripPath},
         {QStringLiteral("textContent"), clip.textContent},
@@ -1042,6 +1050,9 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
     row.packageMissing = clip.type == drift::ClipType::Procedural && !hasProcedural(clip.procedural.packageId);
     row.adjustmentKind = drift::adjustmentKindToString(clip.adjustmentKind);
     row.linkedClipId = clip.linkedClipId;
+    row.hiddenInLane = clip.hiddenInLane;
+    if (videoEffectHost && !videoEffectHost->effects.isEmpty())
+        row.fxLayer = videoEffectHost->hiddenInLane ? 1 : 2;
     row.linkId = clip.linkId;
     row.linked = !clip.linkId.isEmpty();
     row.filmstripPath = clip.filmstripPath;
@@ -1150,7 +1161,7 @@ void AppController::syncClipModels()
                                 audioHosts.value(clip.id, nullptr)));
         }
         m_clipModels[ti]->setRows(std::move(rows));
-        m_clipModels[ti]->setDecorations(trackDecorations(track, laneIndexes));
+        m_clipModels[ti]->setDecorations(trackDecorations(track, visibleAdjustmentLanes(ti)));
     }
 
     // Slots past the end belong to tracks that are gone. Emptied rather than deleted — see the
