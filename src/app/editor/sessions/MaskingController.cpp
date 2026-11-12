@@ -477,7 +477,8 @@ QList<QPair<int, int>> MaskingController::sequenceMaskSources(const QVariantList
     for (const QPair<int, int> &pair : std::as_const(pairs)) {
         if (!m_app->isValidClipIndex(pair.first, pair.second))
             return {};
-        if (!canBecomeSequenceMask(project.tracks().at(pair.first).clips.at(pair.second)))
+        const drift::Clip &source = project.tracks().at(pair.first).clips.at(pair.second);
+        if (!canBecomeSequenceMask(source) || !source.sequenceId.isEmpty())
             return {};
         if (!valid.contains(pair))
             valid.append(pair);

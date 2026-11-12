@@ -12763,6 +12763,11 @@ void EditorStateTest::useTextClipAsSequenceMask()
         {QVariantMap{{QStringLiteral("track"), 1}, {QStringLiteral("clip"), 0}}}));
     QVERIFY(!state.masking()->canConvertClipsToSequenceMask({QVariantMap{{QStringLiteral("track"), 5}}}));
 
+    state.project()->tracks()[0].clips[0].sequenceId = QStringLiteral("nested");
+    QVERIFY(!state.masking()->canConvertClipsToSequenceMask(ref));
+    QVERIFY(!state.masking()->convertClipsToSequenceMask(ref));
+    state.project()->tracks()[0].clips[0].sequenceId.clear();
+
     QVERIFY(state.masking()->convertClipsToSequenceMask(ref));
 
     drift::Project &project = *state.project();
