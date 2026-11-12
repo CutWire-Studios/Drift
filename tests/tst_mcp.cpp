@@ -4105,6 +4105,8 @@ void McpTest::relinkMediaMovesAFolder()
     touch(newRoot + QStringLiteral("/shots/b.mp4"), 10);
     touch(newRoot + QStringLiteral("/mask.png"), 10);
     touch(dir.filePath(QStringLiteral("search/deep/d.mp4")), 7);
+    // A folder where c.mp4 would be is not its file: c stays missing.
+    QVERIFY(QDir().mkpath(newRoot + QStringLiteral("/shots/c.mp4")));
 
     AssetLibrary library;
     AppController state(&library);

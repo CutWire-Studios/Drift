@@ -125,6 +125,7 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("pasteAttributes"), QStringLiteral("Ctrl+Alt+V")},
         {QStringLiteral("addTransitionAtPlayhead"), QStringLiteral("Ctrl+Shift+D")},
         {QStringLiteral("split"), QStringLiteral("S")},
+        {QStringLiteral("splitSelection"), QStringLiteral("Shift+S")},
         {QStringLiteral("merge"), QStringLiteral("Ctrl+M")},
         {QStringLiteral("unlink"), QStringLiteral("Ctrl+Shift+U")},
         {QStringLiteral("link"), QStringLiteral("Ctrl+Shift+L")},
@@ -1784,6 +1785,8 @@ void AppController::triggerAction(const QString &actionId)
         requestPasteAttributes();
     else if (actionId == QStringLiteral("split"))
         splitAtPlayhead();
+    else if (actionId == QStringLiteral("splitSelection"))
+        splitSelectionAtPlayhead();
     else if (actionId == QStringLiteral("addTransitionAtPlayhead"))
         addTransitionAtPlayhead();
     else if (actionId == QStringLiteral("merge"))

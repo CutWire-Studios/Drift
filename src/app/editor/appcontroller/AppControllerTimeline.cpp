@@ -1882,6 +1882,17 @@ bool AppController::deleteSelection(bool withPinnedAdjustments, std::optional<bo
     const bool refusedByLock = m_editRefusedByLock;
     clearSelection();
     finishEdit(tr("Clip deleted"));
+    // #521: a ripple delete under the playhead lands it where the closed gap began, on the clip
+    // that slid in, instead of partway into it. Agent ops leave the playhead alone.
+    if (!ripple.has_value() && m_rippleEnabled && gapWarning.isEmpty() && !refusedByLock) {
+        std::optional<drift::TimeUs> landing;
+        for (const RemovedRange &range : std::as_const(removedRanges)) {
+            if (m_playheadUs >= range.start && m_playheadUs < range.start + range.duration)
+                landing = qMin(landing.value_or(range.start), range.start);
+        }
+        if (landing)
+            setPlayheadUs(*landing);
+    }
     // After finishEdit, which clears the status line for a routine edit.
     if (!gapWarning.isEmpty() && !refusedByLock)
         setLastMessage(gapWarning, QStringLiteral("warning"));
@@ -2067,6 +2078,28 @@ void AppController::closeGap(int trackIndex, double gapStartSeconds)
 
 void AppController::splitAtPlayhead()
 {
+    splitClipsAtPlayhead(nullptr);
+}
+
+void AppController::splitSelectionAtPlayhead()
+{
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && isValidClipIndex(m_selectedTrack, m_selectedClip))
+        pairs = {qMakePair(m_selectedTrack, m_selectedClip)};
+    QSet<QString> ids;
+    for (const QPair<int, int> &pair : std::as_const(pairs)) {
+        if (isValidClipIndex(pair.first, pair.second))
+            ids.insert(m_project.tracks().at(pair.first).clips.at(pair.second).id);
+    }
+    if (ids.isEmpty()) {
+        setLastMessage(tr("Select a clip to split first"), QStringLiteral("warning"));
+        return;
+    }
+    splitClipsAtPlayhead(&ids);
+}
+
+void AppController::splitClipsAtPlayhead(const QSet<QString> *onlyClipIds)
+{
     const drift::Project before = m_project;
     bool splitAny = false;
     QSet<QString> handledLinkIds;
@@ -2089,6 +2122,8 @@ void AppController::splitAtPlayhead()
             if (!clip.containsTime(m_playheadUs))
                 continue;
             if (m_playheadUs == clip.timelineStart)
+                continue;
+            if (onlyClipIds && !onlyClipIds->contains(clip.id))
                 continue;
             if (!clip.linkId.isEmpty() && handledLinkIds.contains(clip.linkId))
                 continue;
@@ -2126,6 +2161,8 @@ void AppController::splitAtPlayhead()
     if (splitAny) {
         pushProjectEdit(before, tr("Split at current time"));
         finishEdit(tr("Split at current time"));
+    } else if (onlyClipIds) {
+        setLastMessage(tr("The playhead isn't over a selected clip"), QStringLiteral("warning"));
     } else {
         setLastMessage(tr("Nothing to split here — move to a clip first"), QStringLiteral("warning"));
     }

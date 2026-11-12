@@ -547,11 +547,6 @@ void TimelineTrackItem::setHaptics(QObject *haptics)
     emit servicesChanged();
 }
 
-bool TimelineTrackItem::touchDragging() const
-{
-    return m_drag.moving && m_drag.touch;
-}
-
 bool TimelineTrackItem::lifted() const
 {
     return (m_drag.moving || m_drag.armed) && m_drag.touch;

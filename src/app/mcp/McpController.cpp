@@ -715,7 +715,7 @@ QJsonObject McpController::relinkMedia(const QJsonObject &args)
             if (!fileGone(path))
                 continue; // still there: not ours to move
             const QString moved = exact ? to : toPrefix + cleaned.mid(fromPrefix.size());
-            if (!QFileInfo::exists(fileOf(moved))) {
+            if (!QFileInfo(fileOf(moved)).isFile()) {
                 unresolved({{QStringLiteral("path"), path}, {QStringLiteral("tried"), moved}}, QStringLiteral("no file there"));
                 continue;
             }
@@ -815,6 +815,8 @@ QJsonObject McpController::relinkMedia(const QJsonObject &args)
     for (const QString &path : std::as_const(keys))
         if (relinked.size() < 200)
             relinked.append(QJsonObject{{QStringLiteral("from"), path}, {QStringLiteral("to"), remap.value(path)}});
+    if (!dryRun && !remap.isEmpty() && !m_app->m_assetLibrary)
+        return fail("internal", QStringLiteral("The media bin isn't available. Nothing was relinked"));
     if (!dryRun && !remap.isEmpty() && !m_app->bin()->relinkPaths(remap, tr("Relink media")))
         return fail("locked", QStringLiteral("A locked track holds a clip using these files; unlock it and try again. "
                                              "Nothing was relinked"));
