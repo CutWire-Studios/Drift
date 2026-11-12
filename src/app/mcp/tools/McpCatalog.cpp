@@ -1238,6 +1238,19 @@ const QList<Op> &ops()
         { "export_status", "project", "Check an in-flight encode",
           "Returns {busy, progress 0..1, message}. Same data as inspect().export.",
           objectSchema({}), true, false, true },
+        { "wait_idle", "project", "Wait for background work to finish",
+          "Blocks until background work settles or `timeout` seconds pass (default 30, max 600), then "
+          "returns {idle, waited, busy?, suspended?}: busy is what was still running, {kind: count} "
+          "(jobs: by job kind); suspended lists filmstrips/waveforms paused by playback, which don't "
+          "hold the wait. kinds limits the wait; default all: probe, thumbnails, proxy, filmstrips, "
+          "waveforms, export, project (save, load, package, collect), subtitles, reverse, scenes, "
+          "beats, stabilize, segmentation, denoise, faces, tracking, tts, align, bake, source_lab, "
+          "loudness, bin_edit, downloads (add-ons, updates), jobs, and the job kinds transcribe, "
+          "diarize, depth, restore, sfx. Other calls are served while it waits. Not inside apply.",
+          objectSchema({{QStringLiteral("timeout"), numberProp(QStringLiteral("Seconds to wait at most"), 0, 600)},
+                        {QStringLiteral("kinds"), arrayProp(stringProp(QStringLiteral("Kind of work")),
+                                                            QStringLiteral("Only wait for these"))}}),
+          true, false, true },
 
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
@@ -1669,6 +1682,9 @@ QString agentGuideText()
         "bytes hash to the same value; restore_snapshot loads a disk copy only if it has fallen off\n"
         "the stack (and resets Origin).\n"
         "\n"
+        "wait_idle({timeout, kinds?}) waits for all background work (probes, thumbnails, proxies,\n"
+        "filmstrips, waveforms and every job below) and returns {idle, waited, busy?, suspended?}.\n"
+        "Call it directly, not inside apply.\n"
         "Async jobs return {started:true} immediately. Poll these fields, all of which need\n"
         "inspect({detail:true}) except export:\n"
         "- export_video      -> export.{active,progress}      (or export_status)\n"

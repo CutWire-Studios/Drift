@@ -21,6 +21,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
@@ -887,9 +888,12 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
                               && (tool == QLatin1String("audio_sheet")
                                       ? opArgs.value(QStringLiteral("return")).toString() != QLatin1String("path")
                                       : jsonBool(opArgs.value(QStringLiteral("image")), tool == QLatin1String("market_preview")));
+        // A batch holds undo suspended: edits landing during a long wait would join no step.
         QJsonObject one;
         if (rawImage) {
             one = err("bad_args", QStringLiteral("%1 returns an image and cannot be batched — call it directly").arg(tool));
+        } else if (tool == QLatin1String("wait_idle")) {
+            one = err("bad_args", QStringLiteral("wait_idle cannot run inside apply — call it directly"));
         } else {
             one = applyOne(tool, opArgs, /*reportGeometry=*/false);
         }
@@ -1074,6 +1078,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opExportVideo(args);
     if (tool == QLatin1String("export_status"))
         return opExportStatus();
+    if (tool == QLatin1String("wait_idle"))
+        return opWaitIdle(args);
     if (tool == QLatin1String("list_animated_properties"))
         return opListAnimatedProperties(args);
     if (tool == QLatin1String("list_keyframes"))
@@ -2808,6 +2814,59 @@ QJsonObject McpDispatcher::opExport(const QJsonObject &args)
     extra.insert(QStringLiteral("path"), info.absoluteFilePath());
     extra.insert(QStringLiteral("bytes"), QFile(info.absoluteFilePath()).size());
     return ok(extra);
+}
+
+// Waits for background work to settle, or for the timeout, keeping the event loop going so the
+// UI and other MCP calls are served meanwhile (as import_media's probe wait does). Polled every
+// 50 ms: background work signals completion in a dozen different ways. Idle has to hold on two
+// polls in a row, since some work (filmstrips, waveforms) is only asked for on the next repaint.
+QJsonObject McpDispatcher::opWaitIdle(const QJsonObject &args)
+{
+    QStringList kinds;
+    const QStringList &known = McpController::backgroundKinds();
+    for (const QJsonValue &v : args.value(QStringLiteral("kinds")).toArray()) {
+        const QString kind = v.toString();
+        if (!known.contains(kind))
+            return err("bad_args", QStringLiteral("Unknown kind '%1'; kinds: %2").arg(kind, known.join(QStringLiteral(", "))));
+        kinds.append(kind);
+    }
+    const qint64 timeoutMs = qint64(qBound(0.0, jsonNumber(args.value(QStringLiteral("timeout")), 30.0), 600.0) * 1000.0);
+    QElapsedTimer elapsed;
+    elapsed.start();
+    QStringList suspended;
+    QJsonObject busy = m_controller->mcp()->backgroundWork(kinds, &suspended);
+    // Access already on its way off: don't hold the call that it waits for.
+    bool quitting = m_controller->mcp()->transportChangePending();
+    QEventLoop loop;
+    QTimer tick;
+    tick.setSingleShot(true);
+    QObject::connect(&tick, &QTimer::timeout, &loop, &QEventLoop::quit);
+    const auto stop = [&] {
+        quitting = true;
+        loop.quit();
+    };
+    QObject::connect(qApp, &QCoreApplication::aboutToQuit, &loop, stop);
+    // Access being turned off waits for this call to return.
+    QObject::connect(m_controller->mcp(), &McpController::transportStopping, &loop, stop);
+    bool idleOnce = false;
+    while (!quitting && elapsed.elapsed() < timeoutMs) {
+        if (busy.isEmpty() && idleOnce)
+            break;
+        idleOnce = busy.isEmpty();
+        tick.start(int(qBound(qint64(0), timeoutMs - elapsed.elapsed(), qint64(50))));
+        // Non-zero once the application is shutting down: its loops no longer wait.
+        if (loop.exec() != 0)
+            quitting = true;
+        suspended.clear();
+        busy = m_controller->mcp()->backgroundWork(kinds, &suspended);
+    }
+    QJsonObject reply{{QStringLiteral("idle"), busy.isEmpty()},
+                      {QStringLiteral("waited"), double(elapsed.elapsed()) / 1000.0}};
+    if (!busy.isEmpty())
+        reply.insert(QStringLiteral("busy"), busy);
+    if (!suspended.isEmpty())
+        reply.insert(QStringLiteral("suspended"), QJsonArray::fromStringList(suspended));
+    return ok(reply);
 }
 
 QJsonObject McpDispatcher::opExportStatus() const

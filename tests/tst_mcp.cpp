@@ -3,6 +3,7 @@
 #include "app/editor/PreferencesController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/mcp/McpController.h"
+#include "app/jobs/JobRegistry.h"
 #include "core/project/Transcript.h"
 #include "app/online/CloudProviders.h"
 
@@ -27,6 +28,7 @@
 #include <QTcpSocket>
 #include <QHostAddress>
 #include <QImage>
+#include <QElapsedTimer>
 #include <QTemporaryDir>
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
@@ -180,6 +182,8 @@ private slots:
     void applyBatchOfNoOpsAddsNoUndoStep();
     void inspectIsCompact();
     void inspectLabelsTracksStably();
+    void waitIdleWaitsForBackgroundWork();
+    void transportStopAndRotateDuringAWait();
     void inspectDetailRowIsCompact();
     void inspectClipAndTrackFilters();
     void mergeClipsMergesSubtitleTrack();
@@ -3882,6 +3886,195 @@ void McpTest::inspectLabelsTracksStably()
     QCOMPARE(labels(), (QStringList{QStringLiteral("Video 2"), QStringLiteral("Video 1")}));
     state.redo();
     QCOMPARE(labels(), (QStringList{QStringLiteral("Audio 1"), QStringLiteral("Video 2"), QStringLiteral("Video 1")}));
+}
+
+// #53: wait_idle blocks (serving the event loop) until background work settles or the timeout
+// passes, and says what was still running.
+void McpTest::waitIdleWaitsForBackgroundWork()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto waitIdle = [&](const QJsonObject &args) { return dispatcher.applyOne(QStringLiteral("wait_idle"), args); };
+
+    // Nothing running: idle at once.
+    QJsonObject reply = waitIdle({});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), true);
+    QVERIFY(!reply.contains(QStringLiteral("busy")));
+
+    // A job that ends on its own: the wait returns once it has.
+    state.jobRegistry()->start(QStringLiteral("test"), QString(), JobRegistry::Lane::Network,
+                               [](JobContext &job) {
+                                   QThread::msleep(300);
+                                   job.succeed({});
+                               });
+    reply = waitIdle({{QStringLiteral("timeout"), 10}});
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), true);
+    QVERIFY(reply.value(QStringLiteral("waited")).toDouble() > 0.0);
+    QVERIFY(reply.value(QStringLiteral("waited")).toDouble() < 10.0);
+
+    // One that doesn't: the timeout ends the wait, and the reply says what is still running.
+    std::atomic<bool> release{false};
+    const QString id = state.jobRegistry()->start(QStringLiteral("test"), QString(), JobRegistry::Lane::Network,
+                                                  [&](JobContext &job) {
+                                                      while (!release.load() && !job.cancelled())
+                                                          QThread::msleep(10);
+                                                      job.succeed({});
+                                                  });
+    reply = waitIdle({{QStringLiteral("timeout"), 0.3}});
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), false);
+    QVERIFY2(reply.value(QStringLiteral("busy")).toObject().contains(QStringLiteral("jobs")),
+             qPrintable(QJsonDocument(reply).toJson()));
+
+    // kinds narrows the wait: the job isn't an export.
+    reply = waitIdle({{QStringLiteral("timeout"), 5}, {QStringLiteral("kinds"), QJsonArray{QStringLiteral("export")}}});
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), true);
+    QVERIFY(reply.value(QStringLiteral("waited")).toDouble() < 1.0);
+
+    // An unknown kind is refused, naming the known ones.
+    reply = waitIdle({{QStringLiteral("kinds"), QJsonArray{QStringLiteral("nope")}}});
+    QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+
+    // A job an agent started can be waited on by its kind; a cloud voice job counts as tts.
+    const QString transcribing = state.jobRegistry()->start(QStringLiteral("transcribe"), QString(), JobRegistry::Lane::Network,
+                                                            [&](JobContext &job) {
+                                                                while (!release.load() && !job.cancelled())
+                                                                    QThread::msleep(10);
+                                                                job.succeed({});
+                                                            });
+    const QString voicing = state.jobRegistry()->start(QStringLiteral("tts"), QString(), JobRegistry::Lane::Network,
+                                                       [&](JobContext &job) {
+                                                           while (!release.load() && !job.cancelled())
+                                                               QThread::msleep(10);
+                                                           job.succeed({});
+                                                       });
+    reply = waitIdle({{QStringLiteral("timeout"), 0.2},
+                      {QStringLiteral("kinds"), QJsonArray{QStringLiteral("transcribe"), QStringLiteral("tts")}}});
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), false);
+    QCOMPARE(reply.value(QStringLiteral("busy")).toObject().value(QStringLiteral("transcribe")).toInt(), 1);
+    QCOMPARE(reply.value(QStringLiteral("busy")).toObject().value(QStringLiteral("tts")).toInt(), 1);
+
+    // Not inside a batch, which holds undo suspended for as long as it runs.
+    const QJsonObject batched = dispatcher.apply(
+        {{QStringLiteral("ops"), QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("wait_idle")},
+                                                        {QStringLiteral("args"), QJsonObject{}}}}}});
+    QCOMPARE(batched.value(QStringLiteral("failed")).toObject().value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+
+    // Access being turned off ends the wait at once (the transport waits for this call).
+    QTimer::singleShot(100, state.mcp(), [&] { emit state.mcp()->transportStopping(); });
+    reply = waitIdle({{QStringLiteral("timeout"), 30}});
+    QCOMPARE(reply.value(QStringLiteral("idle")).toBool(), false);
+    QVERIFY(reply.value(QStringLiteral("waited")).toDouble() < 5.0);
+
+    release = true;
+    QCOMPARE(waitIdle({{QStringLiteral("timeout"), 10}}).value(QStringLiteral("idle")).toBool(), true);
+    QCOMPARE(state.jobRegistry()->job(id).value(QStringLiteral("active")).toBool(), false);
+}
+
+// The real transport: turning access off while an HTTP call waits (with another request
+// pipelined behind it on the same connection) must not deadlock, and a token rotation asked for
+// during a call lands once it ends.
+void McpTest::transportStopAndRotateDuringAWait()
+{
+    QTemporaryDir dir;
+    qputenv("DRIFT_MCP_SESSION_PATH", dir.filePath(QStringLiteral("s.json")).toUtf8());
+    const auto unset = qScopeGuard([] { qunsetenv("DRIFT_MCP_SESSION_PATH"); });
+    AssetLibrary library;
+    AppController state(&library);
+    std::atomic<bool> release{false};
+    const auto restart = qScopeGuard([&] { release = true; });
+    state.jobRegistry()->start(QStringLiteral("test"), QString(), JobRegistry::Lane::Network, [&](JobContext &job) {
+        while (!release.load() && !job.cancelled())
+            QThread::msleep(10);
+        job.succeed({});
+    });
+
+    const auto request = [](const QByteArray &auth, const QJsonObject &body, bool last = false) {
+        const QByteArray json = QJsonDocument(body).toJson(QJsonDocument::Compact);
+        return "POST /mcp HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nAuthorization: " + auth
+            + "\r\nContent-Length: " + QByteArray::number(json.size()) + (last ? "\r\nConnection: close" : "")
+            + "\r\n\r\n" + json;
+    };
+    const QJsonObject waitCall = rpc(QStringLiteral("tools/call"),
+                                     {{QStringLiteral("name"), QStringLiteral("wait_idle")},
+                                      {QStringLiteral("arguments"), QJsonObject{{QStringLiteral("timeout"), 30}}}});
+    // Sends `payload` on one connection from its own thread and reads until it closes.
+    const auto client = [](quint16 port, QByteArray payload, QByteArray *out, std::atomic<bool> *finished) {
+        return QThread::create([=]() {
+            QTcpSocket socket;
+            socket.connectToHost(QStringLiteral("127.0.0.1"), port);
+            if (socket.waitForConnected(2000)) {
+                socket.write(payload);
+                socket.waitForBytesWritten(2000);
+                QElapsedTimer timer;
+                timer.start();
+                while (socket.state() == QAbstractSocket::ConnectedState && timer.elapsed() < 20000) {
+                    if (socket.waitForReadyRead(100))
+                        *out += socket.readAll();
+                }
+                *out += socket.readAll();
+            }
+            *finished = true;
+        });
+    };
+
+    // Stop during the wait, with a ping pipelined behind it.
+    state.mcp()->setEnabled(true);
+    QVERIFY2(state.mcp()->running(), qPrintable(state.mcp()->error()));
+    const QByteArray auth = "Bearer " + state.mcp()->token().toUtf8();
+    QByteArray replies;
+    std::atomic<bool> finished{false};
+    QThread *first = client(quint16(state.mcp()->port()),
+                            request(auth, waitCall) + request(auth, rpc(QStringLiteral("ping"), {}, 2)), &replies, &finished);
+    // Once the call is under way: from inside its wait, the stop has to be deferred.
+    QMetaObject::Connection started = connect(state.mcp(), &McpController::toolCallStarted, state.mcp(), [&] {
+        QObject::disconnect(started);
+        QTimer::singleShot(100, state.mcp(), [&] { state.mcp()->setEnabled(false); });
+    });
+    first->start();
+    // Joined however the test ends: the thread writes to locals.
+    const auto joinFirst = qScopeGuard([&] {
+        first->wait(25000);
+        delete first;
+    });
+    QElapsedTimer stopTimer;
+    stopTimer.start();
+    QTRY_VERIFY_WITH_TIMEOUT(finished.load(), 15000);
+    QVERIFY2(stopTimer.elapsed() < 10000, "the wait should end as soon as access is turned off");
+    QTRY_VERIFY_WITH_TIMEOUT(!state.mcp()->running(), 5000);
+    QObject::disconnect(started);
+    QVERIFY2(replies.contains("idle"), qPrintable(QString::number(replies.size()) + QLatin1Char(' ') + QString::fromUtf8(replies.left(600))));
+
+    // Rotate during a call: it lands once the call has ended, and only the new token works.
+    state.mcp()->setEnabled(true);
+    QVERIFY2(state.mcp()->running(), qPrintable(state.mcp()->error()));
+    const QString oldToken = state.mcp()->token();
+    replies.clear();
+    finished = false;
+    QThread *second = client(quint16(state.mcp()->port()),
+                             request("Bearer " + oldToken.toUtf8(), waitCall, true), &replies, &finished);
+    started = connect(state.mcp(), &McpController::toolCallStarted, state.mcp(), [&] {
+        QObject::disconnect(started);
+        QTimer::singleShot(100, state.mcp(), [&] { state.mcp()->rotateToken(); });
+    });
+    second->start();
+    const auto joinSecond = qScopeGuard([&] {
+        second->wait(25000);
+        delete second;
+    });
+    QTRY_VERIFY_WITH_TIMEOUT(finished.load(), 15000);
+    QVERIFY2(replies.contains("idle"), replies.constData());
+    QTRY_VERIFY_WITH_TIMEOUT(state.mcp()->token() != oldToken, 5000);
+    QVERIFY(state.mcp()->running());
+    int status = 0;
+    httpPost(quint16(state.mcp()->port()), "Bearer " + oldToken.toUtf8(),
+             QJsonDocument(rpc(QStringLiteral("ping"))).toJson(QJsonDocument::Compact), &status);
+    QCOMPARE(status, 401);
+    httpPost(quint16(state.mcp()->port()), "Bearer " + state.mcp()->token().toUtf8(),
+             QJsonDocument(rpc(QStringLiteral("ping"))).toJson(QJsonDocument::Compact), &status);
+    QCOMPARE(status, 200);
+    state.mcp()->setEnabled(false);
 }
 
 namespace {

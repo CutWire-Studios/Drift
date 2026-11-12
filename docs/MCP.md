@@ -170,6 +170,20 @@ The served guide (`catalog({guide:true})`) has the same advice, and the `initial
 
 All return `{started:true}` immediately. Every field below except `export` lives under `inspect({detail:true}).jobs`, which lists only the jobs that are running (the whole `jobs` key is absent when nothing is).
 
+To wait for all of it instead of polling, call **`wait_idle({timeout?, kinds?})`**. It blocks until background work settles or `timeout` seconds pass (default 30, max 600), serving other calls meanwhile, and returns `{idle, waited, busy?, suspended?}`.
+- **`busy`** is what was still running, as `{kind: count}`, with `jobs` broken down by job kind. Counts are approximate (one item can count in two kinds).
+- **What it covers:** also work nothing above reports: media probes, bin thumbnails, proxies, timeline filmstrips and waveforms.
+- **`suspended`:** filmstrips and waveforms don't decode during playback or a source preview. When that's why they're pending, they go there instead and don't hold the wait.
+- **`kinds`** limits the wait to some of:
+  - `probe`, `thumbnails`, `proxy`, `filmstrips`, `waveforms`, `export`, `project` (save, load, package, collect media);
+  - `subtitles`, `reverse`, `scenes`, `beats`, `stabilize`, `segmentation`, `denoise`, `faces`, `tracking`;
+  - `tts` (local or cloud), `align`, `bake`, `source_lab`, `loudness`, `bin_edit`;
+  - `downloads` (add-ons and app updates too), `jobs` (every job);
+  - the job kinds an agent starts: `transcribe`, `diarize`, `depth`, `restore`, `sfx`.
+- **Not inside `apply`:** refused there (`bad_args`), since a batch holds undo suspended.
+- **Nesting:** a call that arrives during the wait runs nested, so the wait returns only after it does.
+- **Client timeouts:** many MCP clients time out well below 600 s.
+
 | Started by | Poll |
 |---|---|
 | `export_video` | `export.{active, progress}` (or `export_status`) |

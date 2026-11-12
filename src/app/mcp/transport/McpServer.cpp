@@ -14,6 +14,7 @@
 #include <QScopeGuard>
 #include <QElapsedTimer>
 #include <QEventLoop>
+#include <QSemaphore>
 #include <QMetaObject>
 #include <QRandomGenerator>
 #include <QSettings>
@@ -117,9 +118,9 @@ void McpServer::rotateToken()
     if (!m_running)
         return;
     m_token = token;
-    // m_http reads its token on its own thread.
-    QMetaObject::invokeMethod(
-        m_http, [this, token]() { m_http->setToken(token); }, Qt::BlockingQueuedConnection);
+    // Guarded on m_http's side, so this never waits for its thread (which may be waiting on this
+    // one for a request).
+    m_http->setToken(token);
     if (m_wroteSessionFile)
         publishSession();
     emit tokenChanged();
@@ -136,13 +137,45 @@ bool McpServer::start()
     m_thread = new QThread(this);
     m_http = new McpHttp;
     m_http->setToken(m_token);
-    m_http->setRpcHandler([this](const QString &toolbox, const QJsonValue &body) {
-        QJsonValue result;
+    m_stopping->storeRelease(0);
+    // The request runs on this (the main) thread while the HTTP thread waits for it. Not a
+    // blocking connection: stop() waits for the HTTP thread, so a request it is still waiting on
+    // (one pipelined behind the call that asked to stop, say) would hold both forever. Once
+    // stopping, the HTTP thread gives up on a request that hasn't started, and it never runs.
+    m_http->setRpcHandler([this, stopping = m_stopping](const QString &toolbox, const QJsonValue &body) {
+        struct Call
+        {
+            QAtomicInt state; // 0 queued, 1 running on the main thread, 2 abandoned
+            QSemaphore done;
+            QJsonValue result;
+        };
+        const auto stoppingError = [&body]() {
+            // A single request's id, so the client can match it; a batch gets one error with none.
+            const QJsonValue id = body.isObject() ? body.toObject().value(QStringLiteral("id")) : QJsonValue();
+            return QJsonValue(QJsonObject{
+                {QStringLiteral("jsonrpc"), QStringLiteral("2.0")},
+                {QStringLiteral("id"), id.isUndefined() ? QJsonValue(QJsonValue::Null) : id},
+                {QStringLiteral("error"), QJsonObject{{QStringLiteral("code"), -32000},
+                                                      {QStringLiteral("message"), QStringLiteral("Drift's MCP server is stopping")}}}});
+        };
+        // Already stopping: don't queue anything (each would cost stop() a wait slice).
+        if (stopping->loadAcquire())
+            return stoppingError();
+        auto call = std::make_shared<Call>();
         QMetaObject::invokeMethod(
             this,
-            [this, toolbox, body, &result]() { result = handleRpc(toolbox, body); },
-            Qt::BlockingQueuedConnection);
-        return result;
+            [this, call, toolbox, body]() {
+                if (!call->state.testAndSetAcquire(0, 1))
+                    return;
+                call->result = handleRpc(toolbox, body);
+                call->done.release();
+            },
+            Qt::QueuedConnection);
+        while (!call->done.tryAcquire(1, 50)) {
+            if (stopping->loadAcquire() && call->state.testAndSetAcquire(0, 2))
+                return stoppingError();
+        }
+        return call->result;
     });
     m_http->moveToThread(m_thread);
 
@@ -195,6 +228,7 @@ bool McpServer::start()
 
 void McpServer::stop()
 {
+    m_stopping->storeRelease(1);
     if (m_wroteSessionFile) {
         removeSessionFile();
         m_wroteSessionFile = false;

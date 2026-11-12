@@ -119,6 +119,7 @@ private:
     QJsonObject opListExportOptions() const;
     QJsonObject opExportVideo(const QJsonObject &args);
     QJsonObject opExportStatus() const;
+    QJsonObject opWaitIdle(const QJsonObject &args);
     QJsonObject opExport(const QJsonObject &args);
     QJsonObject opListAnimatedProperties(const QJsonObject &args) const;
     QJsonObject opListKeyframes(const QJsonObject &args) const;

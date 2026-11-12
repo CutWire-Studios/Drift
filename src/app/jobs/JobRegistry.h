@@ -51,6 +51,8 @@ public:
     QJsonObject job(const QString &id) const;
     QJsonArray jobs() const;
     bool hasActive(const QString &kind, const QString &target) const;
+    // Jobs queued or running, by kind.
+    QHash<QString, int> activeCounts() const;
 
 signals:
     void jobChanged(const QString &id);

@@ -200,4 +200,13 @@ bool JobRegistry::hasActive(const QString &kind, const QString &target) const
     return false;
 }
 
+QHash<QString, int> JobRegistry::activeCounts() const
+{
+    QHash<QString, int> counts;
+    for (const auto &entry : m_jobs)
+        if (entry->active)
+            ++counts[entry->kind];
+    return counts;
+}
+
 #include "moc_JobRegistry.cpp"

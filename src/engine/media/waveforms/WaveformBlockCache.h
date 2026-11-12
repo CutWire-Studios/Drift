@@ -64,6 +64,8 @@ public:
     // own decoders for the CPU — the frames it would have produced scroll past unseen anyway.
     void setSuspended(bool suspended);
     bool isSuspended() const { return m_suspended; }
+    // Requests still to decode, the running batch included. While suspended they don't drain.
+    int pendingCount() const { return int(m_queue.size()) + (m_busy ? 1 : 0); }
 
 signals:
     void rangeReady(const QString &sourcePath);

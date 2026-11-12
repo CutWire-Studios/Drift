@@ -73,6 +73,11 @@ public:
     QString error() const;
     QString cursorSnippet() const;
     QString claudeCommand() const;
+    // Background work still running, for wait_idle: {kind: how many} for each kind in `only`
+    // (every kind when empty) that is busy; `jobs` is {job kind: how many}. Empty when idle.
+    // Filmstrips and waveforms paused by playback can't drain: they go to `suspended` instead.
+    QJsonObject backgroundWork(const QStringList &only = {}, QStringList *suspended = nullptr) const;
+    static const QStringList &backgroundKinds();
     QString stdioSnippet() const;
     Q_INVOKABLE void copyCursorSnippet();
     Q_INVOKABLE void copyClaudeCommand();
@@ -376,6 +381,13 @@ public:
     QJsonObject setAcceleration(const QString &variant);
 
 signals:
+    // Access is being turned off or its token rotated while agent calls are still open. Waits
+    // that serve the event loop (wait_idle) end early: the change runs once the calls return.
+    void transportStopping();
+public:
+    // A stop or token rotation waiting for open agent calls to return (see transportStopping).
+    bool transportChangePending() const { return m_pendingStop || m_pendingRotate; }
+signals:
     void runningChanged();
     void errorChanged();
     void startOnLaunchChanged();
@@ -430,6 +442,12 @@ private:
         int loopLevel = 0;
         int pausedAtStart = 0; // a call that starts inside a paused pump is still the agent's
     };
+    // setEnabled(false) / rotateToken during an agent call: done once the last call returns.
+    // Stopping the HTTP transport waits for its thread, which waits for the call in progress on
+    // this one, so doing it from inside that call (a wait's event loop) would deadlock.
+    bool m_pendingStop = false;
+    bool m_pendingRotate = false;
+    void applyPendingTransportChange();
     QList<AgentCallFrame> m_agentCalls;
     // One finished edit. Its diff is worked out when `changes` reads it, from the project as it was
     // after the previous entry (or the feed's start) to `state`; a snapshot costs a project copy,
