@@ -9165,6 +9165,10 @@
         <translation>正在导出视频</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>导出</translation>
     </message>
@@ -9179,6 +9183,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>正在渲染你的视频。关闭窗口可继续编辑，或取消以停止导出。</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>

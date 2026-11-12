@@ -9200,6 +9200,10 @@
         <translation>Esportazione video in corso</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>Esporta</translation>
     </message>
@@ -9214,6 +9218,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>Rendering del video in corso. Chiudi per continuare le modifiche, o annulla per interrompere.</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>

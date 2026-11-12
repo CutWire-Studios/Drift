@@ -8,7 +8,8 @@ import Drift
 ThemedDialog {
     id: root
 
-    title: EditorState.exportInProgress ? qsTr("Exporting video") : qsTr("Export")
+    title: !EditorState.exportInProgress ? qsTr("Export")
+           : EditorState.exportAudioOnly ? qsTr("Exporting audio") : qsTr("Exporting video")
     preferredWidth: Theme.dialogWidthSm
     // Cancel export is the primary destructive action while busy; Close dismisses
     // the dialog without stopping the job (badge in the header reopens it).
@@ -43,9 +44,10 @@ ThemedDialog {
             horizontalAlignment: Text.AlignHCenter
             size: "sm"
             wrapMode: Text.WordWrap
-            text: EditorState.exportInProgress
-                  ? qsTr("Rendering your video. Close to keep editing, or cancel to stop.")
-                  : qsTr("Export finished.")
+            text: !EditorState.exportInProgress ? qsTr("Export finished.")
+                  : EditorState.exportAudioOnly
+                  ? qsTr("Rendering your audio. Close to keep editing, or cancel to stop.")
+                  : qsTr("Rendering your video. Close to keep editing, or cancel to stop.")
         }
 
         // The finished state used to be that sentence and nothing else — the file was on the

@@ -9201,6 +9201,10 @@
         <translation>Exportation vidéo</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>Exporter</translation>
     </message>
@@ -9215,6 +9219,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>Rendu de votre vidéo. Fermez pour continuer à éditer ou annulez pour arrêter.</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>

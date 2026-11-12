@@ -9200,6 +9200,10 @@
         <translation>Nag-e-export ng video</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>I-export</translation>
     </message>
@@ -9214,6 +9218,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>Rine-render ang iyong video. Isara upang magpatuloy sa pag-edit, o kanselahin upang ihinto.</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>

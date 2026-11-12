@@ -9200,6 +9200,10 @@
         <translation>වීඩියෝව නිර්යාත කරමින්</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>නිර්යාත කරන්න</translation>
     </message>
@@ -9214,6 +9218,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>ඔබේ වීඩියෝව රෙන්ඩර් කරමින්. දිගටම සංස්කරණය කිරීමට වසන්න, නැතහොත් නැවැත්වීමට අවලංගු කරන්න.</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>

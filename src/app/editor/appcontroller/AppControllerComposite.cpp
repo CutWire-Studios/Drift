@@ -1476,6 +1476,7 @@ bool AppController::flattenComposite(int trackIndex, int clipIndex)
     emit exportProgressChanged();
     m_exportInProgress = true;
     m_exportByAgent = m_exportRequestedByAgent;
+    m_exportAudioOnly = false;
     emit exportInProgressChanged();
     setLastMessage(tr("Flattening composite…"));
 

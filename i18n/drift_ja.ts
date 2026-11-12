@@ -9165,6 +9165,10 @@
         <translation>ビデオをエクスポート中</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>エクスポート</translation>
     </message>
@@ -9179,6 +9183,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>ビデオをレンダリング中です。閉じて編集を続けるか、キャンセルして停止します。</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>
