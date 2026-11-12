@@ -450,6 +450,7 @@ private slots:
     void maskEditSessionMovesVertexOnPathKeyedMask();
     void maskEditSessionMovesKeyframedRect();
     void maskEditSessionResizeRotateAndSnap();
+    void maskLockAspectPersistsAndGatesCornerResize();
     void maskEditSessionNudgeAndBars();
     void trackingTranslationDrivesMaskKeys();
     void trackingPlanarConvertsRectangleToFreeform();
@@ -13257,6 +13258,38 @@ void EditorStateTest::maskEditSessionResizeRotateAndSnap()
     QVERIFY(qAbs(session->liveW() - 0.6) < 1e-9);
     QVERIFY(qAbs(session->liveH() - 0.6) < 1e-9);
     QCOMPARE(session->snapGuideY(), -1.0);
+    session->cancel();
+}
+
+void EditorStateTest::maskLockAspectPersistsAndGatesCornerResize()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->addShapeMask(0, 0, QStringLiteral("rectangle"), 0.5, 0.5, 0.3, 0.2);
+    const drift::ClipRef ref = drift::linkedMaskAdjustments(*state.project(), 0, 0).constFirst();
+    QVERIFY(!pinnedMaskClip(state).mask.lockAspect);
+    QVERIFY(!QJsonDocument(state.project()->toJson()).toJson().contains("lockAspect"));
+
+    state.masking()->setMaskProperty(ref.trackIndex, ref.clipIndex, QStringLiteral("lockAspect"), true);
+    QVERIFY(pinnedMaskClip(state).mask.lockAspect);
+    const QJsonObject json = state.project()->toJson();
+    QVERIFY(QJsonDocument(json).toJson().contains("lockAspect"));
+    const drift::Project loaded = drift::Project::fromJson(json);
+    const drift::ClipRef lref = drift::linkedMaskAdjustments(loaded, 0, 0).constFirst();
+    QVERIFY(loaded.tracks()[lref.trackIndex].clips[lref.clipIndex].mask.lockAspect);
+    state.undo();
+    QVERIFY(!pinnedMaskClip(state).mask.lockAspect);
+
+    // The overlay passes lockAspect XOR Shift: a corner keeps the ratio only when that is true.
+    MaskEditSession *session = state.masking()->editSession();
+    const QString id = pinnedMaskClip(state).id;
+    QVERIFY(session->begin(id, 1000, 1000));
+    session->beginResize(1, 1, 0.65, 0.6);
+    session->resize(0.8, 0.62, false, true);
+    QVERIFY(qAbs(session->liveW() / session->liveH() - 0.3 / 0.2) > 0.05);
+    session->resize(0.8, 0.62, true, true);
+    QVERIFY(qAbs(session->liveW() / session->liveH() - 0.3 / 0.2) < 1e-9);
     session->cancel();
 }
 

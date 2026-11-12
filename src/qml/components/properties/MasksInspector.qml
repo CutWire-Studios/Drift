@@ -20,6 +20,8 @@ Item {
     // its rect only ever crops the subject, so the sliders stay hidden and invert plus removal
     // are what is offered.
     readonly property bool isMedia: maskShape === "media"
+    readonly property bool hasBox: ["rectangle", "ellipse", "star", "heart"].indexOf(maskShape) >= 0
+    readonly property bool aspectLocked: !!(clipData.mask && clipData.mask.lockAspect)
 
     height: contentCol.height
     implicitHeight: contentCol.height
@@ -176,6 +178,35 @@ Item {
                 sliderFrom: modelData.min
                 sliderTo: modelData.max
                 unit: modelData.unit || ""
+                aspectPartnerKey: root.aspectLocked && modelData.key === "mask.w" ? "mask.h"
+                                  : (root.aspectLocked && modelData.key === "mask.h" ? "mask.w" : "")
+                aspectPartnerDef: 0.6
+            }
+        }
+
+        Row {
+            width: parent.width
+            spacing: 8
+            visible: root.hasBox
+            Text {
+                text: qsTr("Lock aspect ratio")
+                SearchAnchor {
+                    searchId: "masks-lock-aspect"
+                    title: qsTr("Lock aspect ratio")
+                    keywords: "proportional link width height"
+                }
+                color: Theme.c.masksInspector.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            ThemedSwitch {
+                checked: root.aspectLocked
+                onToggled: {
+                    const mask = Object.assign({}, root.clipData.mask || {})
+                    mask.lockAspect = checked
+                    EditorState.setClipMask(EditorState.selectedTrack, EditorState.selectedClip, mask)
+                }
             }
         }
 

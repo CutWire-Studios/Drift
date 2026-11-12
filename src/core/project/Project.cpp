@@ -66,6 +66,8 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("keyframes"), maskKeyframesJson},
         {QStringLiteral("pathKeys"), pathKeys},
     };
+    if (m.lockAspect)
+        object.insert(QStringLiteral("lockAspect"), true);
     if (!m.mediaPatches.isEmpty()) {
         QJsonArray patches;
         for (auto it = m.mediaPatches.constBegin(); it != m.mediaPatches.constEnd(); ++it)
@@ -89,6 +91,7 @@ Mask maskFromJson(const QJsonObject &o)
     m.rotation = o.value(QStringLiteral("rotation")).toDouble(m.rotation);
     m.feather = o.value(QStringLiteral("feather")).toDouble(m.feather);
     m.invert = o.value(QStringLiteral("invert")).toBool(m.invert);
+    m.lockAspect = o.value(QStringLiteral("lockAspect")).toBool(false);
     m.op = maskOpFromString(o.value(QStringLiteral("op")).toString());
     m.enabled = o.value(QStringLiteral("enabled")).toBool(m.enabled);
     m.name = o.value(QStringLiteral("name")).toString(m.name);

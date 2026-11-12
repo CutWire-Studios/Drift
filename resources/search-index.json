@@ -687,6 +687,16 @@
       ]
     },
     {
+      "id": "masks-lock-aspect",
+      "target": "panel:properties.masks#masks-lock-aspect",
+      "context": "MasksInspector",
+      "source": "Lock aspect ratio",
+      "keywords": "proportional link width height",
+      "needs": [
+        "maskable"
+      ]
+    },
+    {
       "id": "masks-invert",
       "target": "panel:properties.masks#masks-invert",
       "context": "MasksInspector",

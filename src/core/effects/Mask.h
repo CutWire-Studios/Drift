@@ -75,6 +75,7 @@ struct Mask
     double rotation = 0.0;
     double feather = 0.0; // px blur on the alpha edge
     bool invert = false;
+    bool lockAspect = false; // editing only: corner grips and the inspector keep w:h; the renderer ignores it
     QVector<QPointF> points; // normalized, for Freeform
 
     // Media only: an image or video whose pixels are the coverage map.

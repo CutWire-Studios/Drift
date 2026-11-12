@@ -457,6 +457,21 @@ Item {
                     }
                 }
 
+                IconButton {
+                    visible: maskBox.editable && maskBox.isSelected && !root.interacting
+                    x: maskBox.width + Theme.spacingMd
+                    y: -height - Theme.spacingMd
+                    rotation: -maskBox.rotation
+                    glyph: maskBox.maskData.lockAspect ? Theme.icons.lock : Theme.icons.lockOpen
+                    tooltip: maskBox.maskData.lockAspect ? qsTr("Unlock aspect ratio") : qsTr("Lock aspect ratio")
+                    active: !!maskBox.maskData.lockAspect
+                    buttonSize: 24
+                    iconSize: Theme.iconSizeSm
+                    variant: "ghost"
+                    onClicked: EditorState.masking.setMaskProperty(maskBox.layerTrack, maskBox.layerClip,
+                                                                   "lockAspect", !maskBox.maskData.lockAspect)
+                }
+
                 // Resize grips — the same frame the canvas crop tool and TransformOverlay use.
                 Repeater {
                     model: (maskBox.editable && maskBox.isSelected)

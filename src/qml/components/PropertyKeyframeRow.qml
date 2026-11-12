@@ -10,6 +10,9 @@ Column {
 
     required property var propDef       // {key, label, def, decimals}
     required property var keyframeList  // [{seconds, value}, ...] for this property
+    property string aspectPartnerKey: "" // when set, edits also scale this property by the ratio taken at edit start
+    property real aspectPartnerDef: 0
+    property real aspectRatio: 1
     property string linkedPropKey: ""   // partner property whose keyframes stay in lockstep (e.g. x with y)
     // The phone shell opens easing in a bottom sheet instead of the popup.
     property bool useSheet: ShellBridge.phoneShell
@@ -182,7 +185,26 @@ Column {
         return Number(v.toFixed(percent ? 2 : propDef.decimals))
     }
 
+    function captureAspect() {
+        if (aspectPartnerKey === "")
+            return
+        const own = currentValue
+        const partner = EditorState.propertyValueAt(EditorState.selectedTrack, EditorState.selectedClip,
+                                                    aspectPartnerKey, EditorState.inspectorPlayheadSeconds,
+                                                    aspectPartnerDef)
+        aspectRatio = own > 0 ? partner / own : 1
+    }
+
+    function previewPartner(v) {
+        if (aspectPartnerKey === "")
+            return
+        EditorState.previewSetClipKeyframe(EditorState.selectedTrack, EditorState.selectedClip,
+                                           aspectPartnerKey, EditorState.playheadSeconds,
+                                           Math.max(0.05, Math.min(1, v * aspectRatio)))
+    }
+
     function beginScrub() {
+        captureAspect()
         editing = true
         liveValue = currentValue
         scrubStart = currentValue
@@ -196,6 +218,7 @@ Column {
             valueField.text = formatValue(liveValue)
         EditorState.previewSetClipKeyframe(EditorState.selectedTrack, EditorState.selectedClip,
                                            propDef.key, EditorState.playheadSeconds, liveValue)
+        previewPartner(liveValue)
     }
 
     function endScrub() {
@@ -217,6 +240,15 @@ Column {
         if (isNaN(v))
             return
         EditorState.showKeyframeGraphProperty(root.propDef.key)
+        if (root.aspectPartnerKey !== "") {
+            root.captureAspect()
+            EditorState.beginPreviewDrag(qsTr("Edit %1").arg(root.propDef.label))
+            EditorState.previewSetClipKeyframe(EditorState.selectedTrack, EditorState.selectedClip,
+                                               root.propDef.key, EditorState.playheadSeconds, v)
+            root.previewPartner(v)
+            EditorState.commitPreviewDrag()
+            return
+        }
         EditorState.setClipKeyframe(
             EditorState.selectedTrack, EditorState.selectedClip, root.propDef.key,
             EditorState.playheadSeconds, v)
@@ -639,14 +671,18 @@ Column {
                 onMoved: {
                     root.liveValue = value
                     // Keyboard nudges arrive without a press.
-                    if (!pressed)
+                    if (!pressed) {
+                        root.captureAspect()
                         EditorState.showKeyframeGraphProperty(root.propDef.key)
+                    }
                     EditorState.previewSetClipKeyframe(
                         EditorState.selectedTrack, EditorState.selectedClip, root.propDef.key,
                         EditorState.playheadSeconds, value)
+                    root.previewPartner(value)
                 }
                 onPressedChanged: {
                     if (pressed) {
+                        root.captureAspect()
                         root.editing = true
                         root.liveValue = value
                         EditorState.showKeyframeGraphProperty(root.propDef.key)
