@@ -1097,6 +1097,7 @@ QVariantList AppController::tracks() const
             {QStringLiteral("transitions"), transitions},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
+            {QStringLiteral("excludeFromExport"), track.excludeFromExport},
             {QStringLiteral("solo"), track.solo},
             {QStringLiteral("locked"), track.locked},
             {QStringLiteral("volume"), track.volume},

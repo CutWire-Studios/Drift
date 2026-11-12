@@ -593,16 +593,29 @@ void BakeController::setWorkAreaToBake(const QString &id)
     emit m_app->workAreaChanged();
 }
 
-std::shared_ptr<drift::BakeReaderPool> BakeController::exportPool(bool includeStale)
+std::shared_ptr<drift::BakeReaderPool> BakeController::exportPool(bool includeStale,
+                                                                  const QList<QPair<drift::TimeUs, drift::TimeUs>> &skip)
 {
     if (m_detached || !m_file || !m_index || m_index->bakes.empty())
         return nullptr;
-    if (includeStale)
+    if (includeStale && skip.isEmpty())
         return m_app->playback()->bakeReaderPool();
-    if (m_staleTimer.isActive())
+    if (!includeStale && m_staleTimer.isActive())
         recomputeStale();
+    const auto overlapsSkip = [&skip](const drift::Bake &bake) {
+        if (bake.fps <= 0)
+            return !skip.isEmpty();
+        const drift::TimeUs start = bake.startFrame * 1000000 / bake.fps;
+        const drift::TimeUs end = (bake.endFrame * 1000000 + bake.fps - 1) / bake.fps;
+        return std::any_of(skip.begin(), skip.end(),
+                           [&](const auto &span) { return span.first < end && start < span.second; });
+    };
     auto filtered = std::make_shared<drift::BakeIndex>(*m_index);
-    std::erase_if(filtered->bakes, [this](const drift::Bake &bake) { return m_staleIds.contains(bake.id); });
+    std::erase_if(filtered->bakes, [&](const drift::Bake &bake) {
+        return (!includeStale && m_staleIds.contains(bake.id)) || overlapsSkip(bake);
+    });
+    if (filtered->bakes.empty())
+        return nullptr;
     auto pool = std::make_shared<drift::BakeReaderPool>();
     pool->setSource(m_file->path(), std::move(filtered));
     return pool;

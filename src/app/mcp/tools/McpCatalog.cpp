@@ -732,12 +732,16 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))}},
                        {QStringLiteral("track")}),
           false, true },
-        { "set_track", "timeline", "Mute, hide or lock a lane",
-          "Set track muted/hidden/locked.",
+        { "set_track", "timeline", "Mute, hide, lock or keep a lane out of export",
+          "Set track muted/hidden/locked. exclude_from_export:true makes it a review track: still "
+          "shown and heard while editing, but left out of export_video and flatten_composite (e.g. a "
+          "subtitle lane with the VO script to read along); bakes overlapping it aren't reused. Refused "
+          "on a transform or camera layer. Undoable.",
           objectSchema(mergeProps({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                                    {QStringLiteral("muted"), boolProp(QStringLiteral("Mute"))},
                                    {QStringLiteral("hidden"), boolProp(QStringLiteral("Hide from composite"))},
-                                   {QStringLiteral("locked"), boolProp(QStringLiteral("Lock against edits"))}},
+                                   {QStringLiteral("locked"), boolProp(QStringLiteral("Lock against edits"))},
+                                   {QStringLiteral("exclude_from_export"), boolProp(QStringLiteral("Keep this track out of export (a review track)"))}},
                                   {}),
                        {QStringLiteral("track")}) },
         { "place_clip", "timeline", "Put media on the timeline",

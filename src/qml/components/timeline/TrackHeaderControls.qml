@@ -53,6 +53,7 @@ Item {
         label: ctl.row.trackDisplayName
         trackIndex: ctl.row.index
         customName: ctl.row.column.tracks[ctl.row.index].name || ""
+        excludedFromExport: ctl.row.trackExcludedFromExport
         dimmed: ctl.row.trackHidden
         opacity: ctl.row.trackHidden ? 0.55 : 1
     }

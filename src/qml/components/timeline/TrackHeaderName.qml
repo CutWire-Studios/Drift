@@ -10,6 +10,8 @@ Item {
     property int trackIndex: -1
     property string customName: ""
     property bool editing: false
+    // A review track (Exclude from export): tagged after the name so it isn't forgotten.
+    property bool excludedFromExport: false
 
     function commit() {
         if (!editing)
@@ -19,7 +21,9 @@ Item {
     }
 
     Text {
-        anchors.fill: parent
+        id: nameText
+        height: parent.height
+        width: Math.max(0, parent.width - (exportTag.visible ? exportTag.implicitWidth + Theme.spacingXs : 0))
         visible: !nameRoot.editing
         verticalAlignment: Text.AlignVCenter
         text: nameRoot.label
@@ -27,6 +31,26 @@ Item {
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeXs
         elide: Text.ElideRight
+    }
+
+    Text {
+        id: exportTag
+        // Dropped when the column is too narrow to keep some of the name beside it.
+        visible: nameRoot.excludedFromExport && !nameRoot.editing && nameRoot.width >= implicitWidth + 40
+        x: Math.min(nameText.contentWidth, nameText.width) + Theme.spacingXs
+        height: parent.height
+        verticalAlignment: Text.AlignVCenter
+        text: qsTr("not exported")
+        color: Theme.c.trackHeaderName.foregroundMuted
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
+        font.italic: true
+
+        HoverHandler { id: exportTagHover }
+        ThemedToolTip {
+            visible: exportTagHover.hovered
+            text: qsTr("Shown while editing, left out of every export")
+        }
     }
 
     TapHandler {

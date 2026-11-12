@@ -1623,6 +1623,9 @@ public:
     Q_INVOKABLE bool renameTrack(int trackIndex, const QString &name);
     Q_INVOKABLE bool trackMuted(int trackIndex) const;
     Q_INVOKABLE bool trackHidden(int trackIndex) const;
+    // A review track: shown and heard while editing, left out of every export.
+    Q_INVOKABLE void setTrackExcludedFromExport(int trackIndex, bool excluded);
+    Q_INVOKABLE bool trackExcludedFromExport(int trackIndex) const;
     // 0 = filmstrip only, 1 = filmstrip + waveform bar, 2 = waveform only (Track::ClipDisplay).
     Q_INVOKABLE void setTrackClipDisplay(int trackIndex, int mode);
     Q_INVOKABLE int trackClipDisplay(int trackIndex) const;

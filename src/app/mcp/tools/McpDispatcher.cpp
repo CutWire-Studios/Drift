@@ -1843,16 +1843,25 @@ QJsonObject McpDispatcher::opSetTrack(const QJsonObject &args)
     const int track = jsonInt(args.value(QStringLiteral("track")));
     if (track < 0 || track >= m_controller->tracks().size())
         return err("not_found", QStringLiteral("No such track"));
+    // Checked first, so a refusal changes nothing.
+    if (args.contains(QStringLiteral("exclude_from_export")) && jsonBool(args.value(QStringLiteral("exclude_from_export")))) {
+        const drift::Track &t = m_controller->project()->tracks().at(track);
+        if (t.isTransformLayer() || t.isCameraLayer())
+            return err("bad_args", QStringLiteral("A transform or camera layer can't be left out of export: everything under it would export reframed"));
+    }
     if (args.contains(QStringLiteral("muted")))
         m_controller->setTrackMuted(track, jsonBool(args.value(QStringLiteral("muted"))));
     if (args.contains(QStringLiteral("hidden")))
         m_controller->setTrackHidden(track, jsonBool(args.value(QStringLiteral("hidden"))));
     if (args.contains(QStringLiteral("locked")))
         m_controller->setTrackLocked(track, jsonBool(args.value(QStringLiteral("locked"))));
+    if (args.contains(QStringLiteral("exclude_from_export")))
+        m_controller->setTrackExcludedFromExport(track, jsonBool(args.value(QStringLiteral("exclude_from_export"))));
     return ok({{QStringLiteral("track"), track},
                {QStringLiteral("muted"), m_controller->trackMuted(track)},
                {QStringLiteral("hidden"), m_controller->trackHidden(track)},
-               {QStringLiteral("locked"), m_controller->trackLocked(track)}});
+               {QStringLiteral("locked"), m_controller->trackLocked(track)},
+               {QStringLiteral("exclude_from_export"), m_controller->trackExcludedFromExport(track)}});
 }
 
 QJsonObject McpDispatcher::opPlaceClip(const QJsonObject &args)

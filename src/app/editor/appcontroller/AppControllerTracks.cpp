@@ -278,6 +278,26 @@ bool AppController::trackHidden(int trackIndex) const
     return m_project.tracks().at(trackIndex).hidden;
 }
 
+void AppController::setTrackExcludedFromExport(int trackIndex, bool excluded)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (m_project.tracks()[trackIndex].excludeFromExport == excluded)
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].excludeFromExport = excluded;
+    pushProjectEdit(before, tr("Exclude from export"));
+    finishEdit(excluded ? tr("Track left out of export") : tr("Track included in export"));
+}
+
+bool AppController::trackExcludedFromExport(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    return m_project.tracks().at(trackIndex).excludeFromExport;
+}
+
 void AppController::setTrackSolo(int trackIndex, bool solo)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())

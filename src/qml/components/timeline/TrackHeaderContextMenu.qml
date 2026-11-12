@@ -81,6 +81,15 @@ ThemedContextMenu {
         icon.name: header.trackLocked ? Theme.icons.lockOpen : Theme.icons.lock
         onTriggered: EditorState.setTrackLocked(header.index, !header.trackLocked)
     }
+    // A review track: still shown and heard while editing, never exported. Not offered for a
+    // transform or camera layer, whose absence would silently reframe everything under it.
+    ThemedMenuItem {
+        visible: (!header.isTransformLayer && !header.isCameraLayer) || header.trackExcludedFromExport
+        height: visible ? implicitHeight : 0
+        text: header.trackExcludedFromExport ? qsTr("Include in export") : qsTr("Exclude from export")
+        icon.name: Theme.icons.film
+        onTriggered: EditorState.setTrackExcludedFromExport(header.index, !header.trackExcludedFromExport)
+    }
     ThemedMenuSeparator {
         visible: header.isTransformLayer || header.transformable
                  || header.isCameraLayer

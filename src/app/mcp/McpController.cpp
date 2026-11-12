@@ -1294,6 +1294,9 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
             {QStringLiteral("hidden"), track.hidden},
             {QStringLiteral("locked"), track.locked},
         };
+        // Only when set: a review track that export leaves out.
+        if (track.excludeFromExport)
+            row.insert(QStringLiteral("exclude_from_export"), true);
         if (track.isAdjustment())
             row.insert(QStringLiteral("scope"), drift::adjustmentScopeToString(track.adjustmentScope));
         if (track.isAdjustmentLane())
