@@ -1172,6 +1172,36 @@ QString AppController::setClipKeyframes(int trackIndex, int clipIndex,
     return {};
 }
 
+static void applyDefaultClipLayout(const drift::Project &project, drift::Clip &clip)
+{
+    // Media resets to how it first landed: its own shape, fitted and centred. Everything else
+    // (text, shapes, composites, transform layers) resets to the full canvas.
+    int mediaW = 0;
+    int mediaH = 0;
+    if (clip.type == drift::ClipType::Vector) {
+        mediaW = clip.vector.width;
+        mediaH = clip.vector.height;
+    } else if (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Image
+               || clip.type == drift::ClipType::Pdf) {
+        if (const drift::MediaAsset *asset = project.asset(clip.assetId)) {
+            mediaW = asset->width;
+            mediaH = asset->height;
+            if ((asset->rotationDegrees + clip.rotationCorrection) % 180 == 90)
+                std::swap(mediaW, mediaH);
+            if (clip.type == drift::ClipType::Video && mediaW > 0 && mediaH > 0) {
+                mediaW = qMax(1, qRound(mediaW * clip.sourceFrame.width()));
+                mediaH = qMax(1, qRound(mediaH * clip.sourceFrame.height()));
+            }
+        }
+    }
+    if (clip.type == drift::ClipType::Model3d)
+        placeModelClipLayout(clip, project.width(), project.height());
+    else if (mediaW > 0 && mediaH > 0)
+        fitClipLayoutToCanvas(clip, mediaW, mediaH, project.width(), project.height());
+    else
+        setClipLayoutPixels(clip, 0, 0, project.width(), project.height());
+}
+
 void AppController::resetClipTransform(int trackIndex, int clipIndex)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -1195,32 +1225,46 @@ void AppController::resetClipTransform(int trackIndex, int clipIndex)
     clearClipPose3d(clip);
     clip.flipH = false;
     clip.flipV = false;
-    // Media resets to how it first landed: its own shape, fitted and centred. Everything else
-    // (text, shapes, composites, transform layers) resets to the full canvas.
-    int mediaW = 0;
-    int mediaH = 0;
-    if (clip.type == drift::ClipType::Vector) {
-        mediaW = clip.vector.width;
-        mediaH = clip.vector.height;
-    } else if (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Image
-               || clip.type == drift::ClipType::Pdf) {
-        if (const drift::MediaAsset *asset = m_project.asset(clip.assetId)) {
-            mediaW = asset->width;
-            mediaH = asset->height;
-            if ((asset->rotationDegrees + clip.rotationCorrection) % 180 == 90)
-                std::swap(mediaW, mediaH);
-            if (clip.type == drift::ClipType::Video && mediaW > 0 && mediaH > 0) {
-                mediaW = qMax(1, qRound(mediaW * clip.sourceFrame.width()));
-                mediaH = qMax(1, qRound(mediaH * clip.sourceFrame.height()));
-            }
+    applyDefaultClipLayout(m_project, clip);
+    pushProjectEdit(before, tr("Reset transform"));
+    finishEdit(tr("Transform reset"));
+}
+
+void AppController::resetClipTransformGroup(int trackIndex, int clipIndex, const QString &group)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return;
+
+    drift::Clip &clip = track.clips[clipIndex];
+    if (clip.type == drift::ClipType::Audio)
+        return;
+
+    const drift::Project before = m_project;
+    if (group == QLatin1String("opacity")) {
+        clip.opacity = {};
+    } else if (group == QLatin1String("rotation")) {
+        clip.rotation = {};
+    } else if (group == QLatin1String("position") || group == QLatin1String("size")) {
+        drift::Clip layout = clip;
+        layout.transformX = {};
+        layout.transformY = {};
+        layout.transformW = {};
+        layout.transformH = {};
+        applyDefaultClipLayout(m_project, layout);
+        if (group == QLatin1String("position")) {
+            clip.transformX = layout.transformX;
+            clip.transformY = layout.transformY;
+        } else {
+            clip.transformW = layout.transformW;
+            clip.transformH = layout.transformH;
         }
+    } else {
+        return;
     }
-    if (clip.type == drift::ClipType::Model3d)
-        placeModelClipLayout(clip, m_project.width(), m_project.height());
-    else if (mediaW > 0 && mediaH > 0)
-        fitClipLayoutToCanvas(clip, mediaW, mediaH, m_project.width(), m_project.height());
-    else
-        setClipLayoutPixels(clip, 0, 0, m_project.width(), m_project.height());
     pushProjectEdit(before, tr("Reset transform"));
     finishEdit(tr("Transform reset"));
 }

@@ -1511,6 +1511,7 @@ public:
     Q_INVOKABLE void copyEasingToClipboard(const QVariantMap &spec) const;
     Q_INVOKABLE QVariantMap easingFromClipboard() const;
     Q_INVOKABLE void resetClipTransform(int trackIndex, int clipIndex);
+    Q_INVOKABLE void resetClipTransformGroup(int trackIndex, int clipIndex, const QString &group);
     Q_INVOKABLE QVariantList effectCatalog() const;
     Q_INVOKABLE QVariantList effectCategories() const;
     Q_INVOKABLE QVariantList effectTemplateCatalog() const;
