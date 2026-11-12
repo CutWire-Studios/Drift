@@ -9340,6 +9340,10 @@
         <translation>تصدير الفيديو</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>تصدير</translation>
     </message>
@@ -9354,6 +9358,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>تجري معالجة الفيديو الخاص بك. أغلق للاستمرار في التعديل، أو ألغِ للإيقاف.</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>

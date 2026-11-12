@@ -287,6 +287,9 @@ class AppController : public QObject
     // True while (and after) an export an MCP agent started, until the next export begins.
     // The progress dialog closes itself when such an export ends: nobody at the desk asked for it.
     Q_PROPERTY(bool exportByAgent READ exportByAgent NOTIFY exportInProgressChanged)
+    // True while (and after) an audio-only export, until the next export begins, so the progress
+    // dialog says "audio" rather than "video".
+    Q_PROPERTY(bool exportAudioOnly READ exportAudioOnly NOTIFY exportInProgressChanged)
     Q_PROPERTY(double exportProgress READ exportProgress NOTIFY exportProgressChanged)
     Q_PROPERTY(bool canShareExport READ canShareExport NOTIFY canShareExportChanged)
     Q_PROPERTY(QVariantList exportHistory READ exportHistory NOTIFY exportHistoryChanged)
@@ -498,6 +501,7 @@ public:
     int undoIndex() const { return m_undoStack.index(); }
     bool exportInProgress() const { return m_exportInProgress; }
     bool exportByAgent() const { return m_exportByAgent; }
+    bool exportAudioOnly() const { return m_exportAudioOnly; }
     // Set by the MCP dispatcher around the call that starts an export, so the start
     // records who asked for it. Not invokable.
     void setExportRequestedByAgent(bool byAgent) { m_exportRequestedByAgent = byAgent; }
@@ -2401,6 +2405,7 @@ protected:
     int m_selectedSubtitleCue = -1;
     bool m_exportInProgress = false;
     bool m_exportByAgent = false;
+    bool m_exportAudioOnly = false;
     bool m_exportRequestedByAgent = false;
     double m_exportProgress = 0.0;
     QAtomicInt m_exportCancel = 0;

@@ -9165,6 +9165,10 @@
         <translation>Đang xuất video</translation>
     </message>
     <message>
+        <source>Exporting audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export</source>
         <translation>Xuất</translation>
     </message>
@@ -9179,6 +9183,10 @@
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
         <translation>Đang kết xuất video của bạn. Đóng để tiếp tục chỉnh sửa hoặc hủy để dừng.</translation>
+    </message>
+    <message>
+        <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>

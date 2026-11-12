@@ -276,6 +276,7 @@ private slots:
     void decodeModePickerListsOnlyWorkingBackends();
     void decodeModePickerMarksOffGpuBackends();
     void exportFrameRatePersistsAcrossSessions();
+    void exportAudioOnlyIsExposedWhileExporting();
     void lastExportSettingsNormalisesStringTypedValues();
     void textStyleBlendModeKeyframesAndEffects();
     void previewSetTextRectScalesPixelSize();
@@ -5126,6 +5127,53 @@ void EditorStateTest::exportFrameRatePersistsAcrossSessions()
     QCOMPARE(remembered.value(QStringLiteral("fpsNum")).toInt(), 30000);
     QCOMPARE(remembered.value(QStringLiteral("fpsDen")).toInt(), 1001);
     QCOMPARE(relaunched.lastExportFolder(), dir.path());
+}
+
+// #61: the export progress dialog said "Exporting video" for an audio-only export. It reads
+// exportAudioOnly, set when the export starts.
+void EditorStateTest::exportAudioOnlyIsExposedWhileExporting()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTest"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("export"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+    QSettings().remove(QStringLiteral("export"));
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    AssetLibrary library;
+    AppController state(&library);
+    QVERIFY(!state.exportAudioOnly());
+
+    // What the property says at the moment the export starts, for each kind of export.
+    QList<bool> seenAtStart;
+    connect(&state, &AppController::exportInProgressChanged, &state, [&] {
+        if (state.exportInProgress())
+            seenAtStart.append(state.exportAudioOnly());
+    });
+
+    // Audio only, a video, then a GIF with audioOnly also set (a GIF wins, as in the exporter).
+    const QList<QPair<bool, bool>> kinds{{true, false}, {false, false}, {true, true}};
+    for (const auto &[audioOnly, gif] : kinds) {
+        QVariantMap settings;
+        settings.insert(QStringLiteral("audioOnly"), audioOnly);
+        settings.insert(QStringLiteral("gifExport"), gif);
+        settings.insert(QStringLiteral("videoCodecId"), QStringLiteral("h264"));
+        settings.insert(QStringLiteral("audioCodecId"), QStringLiteral("aac"));
+        const QString name = gif ? QStringLiteral("out.gif") : audioOnly ? QStringLiteral("out.m4a") : QStringLiteral("out.mp4");
+        QSignalSpy finished(&state, &AppController::exportFinished);
+        state.exportWithSettings(QUrl::fromLocalFile(dir.filePath(name)), settings);
+        // Must not outlive the worker: it captures `state`.
+        QVERIFY(finished.wait(15000));
+    }
+    QCOMPARE(seenAtStart, (QList<bool>{true, false, false}));
 }
 
 // A real relaunch re-parses the INI and every value comes back a QString. QML reads
