@@ -87,7 +87,7 @@ Column {
             enabled: !presetDrag.active
             acceptedButtons: Qt.LeftButton
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
-            onTapped: applyRequested(root.modelData.id)
+            onTapped: if (tapCount === 1) applyRequested(root.modelData.id)
         }
 
         TapHandler {

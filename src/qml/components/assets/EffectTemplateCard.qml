@@ -161,7 +161,7 @@ Column {
             payload: root.modelData.id
             label: root.modelData.label
             glyph: Theme.icons.layers
-            onTapped: applyRequested(root.modelData.id)
+            onTapped: if (tapCount === 1) applyRequested(root.modelData.id)
         }
 
         ThemedContextMenu {

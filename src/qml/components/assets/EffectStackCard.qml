@@ -41,7 +41,7 @@ Column {
             glyph: Theme.icons.layers
             hasContextMenu: true
             onContextMenuRequested: stackMenu.popup()
-            onTapped: applyRequested(root.modelData)
+            onTapped: if (tapCount === 1) applyRequested(root.modelData)
         }
 
         // There is no rendered preview for a stack, so the card says what is in it.

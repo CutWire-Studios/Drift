@@ -966,8 +966,8 @@
       "id": "transform-reset-size",
       "target": "panel:properties.transform#transform-reset-size",
       "context": "TransformInspector",
-      "source": "Reset position & size",
-      "keywords": "fit",
+      "source": "Reset all",
+      "keywords": "fit position size transform opacity rotation flip",
       "needs": [
         "transformable"
       ]

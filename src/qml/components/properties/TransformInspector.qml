@@ -635,13 +635,13 @@ Item {
 
             SearchAnchor {
                 searchId: "transform-reset-size"
-                title: qsTr("Reset position & size")
-                keywords: "fit"
+                title: qsTr("Reset all")
+                keywords: "fit position size transform opacity rotation flip"
                 target: transformResetButton
             }
             ThemedButton {
                 id: transformResetButton
-                text: qsTr("Reset position & size")
+                text: qsTr("Reset all")
                 onClicked: EditorState.resetClipTransform(
                                EditorState.selectedTrack, EditorState.selectedClip)
             }
