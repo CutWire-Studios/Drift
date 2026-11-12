@@ -153,6 +153,14 @@ public:
     // Never touches the source file — applied to a clip's srcIn/srcOut when placed on the
     // timeline (see AppController::applyAssetLayout). Undo snapshot is the caller's, as above.
     bool setAssetTrim(int index, qint64 trimInUs, qint64 trimOutUs);
+    // import_media({previews:false}): assets imported while this is set get no thumbnail or
+    // filmstrip when their probe lands (the probe itself still runs); ensurePreview builds them
+    // when something shows the asset.
+    void setDeferPreviews(bool defer) { m_deferPreviews = defer; }
+    // Starts the thumbnail and filmstrip job when the asset has none and none is running: for a
+    // view showing it (the bin's cards), or anything that needs them now. Cheap to call often.
+    Q_INVOKABLE void ensurePreview(int index);
+    bool thumbnailJobPending(const QString &assetId) const { return m_thumbPending.contains(assetId); }
     int indexOfPath(const QString &path) const;
     // Drops the row from the project's asset table. Callers own the undo
     // snapshot and the in-use check; this only touches the bin.
@@ -274,6 +282,9 @@ public:
     Q_INVOKABLE void commitProxyRule(const QString &pattern);
 
 signals:
+    // Clips on the timeline got the thumbnail or filmstrip their asset just received (they were
+    // placed before it existed).
+    void clipPreviewsFilled();
     void countChanged();
     void importingChanged();
     void importProgress(int done, int total, const QString &name);
@@ -375,6 +386,12 @@ private:
     QHash<QString, quint64> m_probeToken;
     quint64 m_completingProbeToken = 0;
     quint64 m_lastProbeToken = 0;
+    bool m_deferPreviews = false;
+    // ensurePreview tried these already (an asset whose first frame won't decode never gets a
+    // thumbnail); cleared when the project changes under the bin (undo, load).
+    QSet<QString> m_previewTried;
+    // Imported with previews deferred, probe still running.
+    QSet<QString> m_previewsDeferred;
     QSet<QString> m_thumbPending;
     // Asset ids whose settings (rotation/trim) changed again while a thumbnail job for them was
     // already in flight — the in-flight job's result is stale the moment it lands, so its landing

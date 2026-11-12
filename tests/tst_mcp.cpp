@@ -186,6 +186,7 @@ private slots:
     void transportStopAndRotateDuringAWait();
     void applyAtomicRollsBack();
     void applyDryRunChecksWithoutChanging();
+    void importWithoutPreviewsDefersThumbnails();
     void inspectDetailRowIsCompact();
     void inspectClipAndTrackFilters();
     void mergeClipsMergesSubtitleTrack();
@@ -9895,6 +9896,55 @@ bool nearAny(const QJsonArray &frames, double target, double tolerance)
 }
 
 } // namespace
+
+// #52: import_media({previews:false}) probes but builds no thumbnail or filmstrip until something
+// shows the asset (ensurePreview, as the bin's cards call it) or places it.
+void McpTest::importWithoutPreviewsDefersThumbnails()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    // Video: a still gets its thumbnail inline in its probe, which is cheap.
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString shown = dir.filePath(QStringLiteral("shown.mp4"));
+    const QString placed = dir.filePath(QStringLiteral("placed.mp4"));
+    const QString eager = dir.filePath(QStringLiteral("eager.mp4"));
+    QVERIFY(writeFourShotClip(shown));
+    QVERIFY(writeFourShotClip(placed));
+    QVERIFY(writeFourShotClip(eager));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto importOne = [&](const QString &path, bool previews) {
+        const QJsonObject reply = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                      {{QStringLiteral("paths"), QJsonArray{path}}, {QStringLiteral("previews"), previews}});
+        return reply.value(QStringLiteral("assets")).toArray().at(0).toObject().value(QStringLiteral("id")).toString();
+    };
+    const QString shownId = importOne(shown, false);
+    const QString placedId = importOne(placed, false);
+    const QString eagerId = importOne(eager, true);
+
+    // Probed either way; only the eager one gets its preview.
+    QVERIFY(state.project()->asset(shownId)->durationUs > 0);
+    QTRY_VERIFY_WITH_TIMEOUT(!state.project()->asset(eagerId)->thumbnailPath.isEmpty(), 10000);
+    QVERIFY(state.project()->asset(shownId)->thumbnailPath.isEmpty());
+    QVERIFY(!library.thumbnailJobPending(shownId));
+
+    // Shown (a bin card asks): built then.
+    library.ensurePreview(library.indexOfId(shownId));
+    QTRY_VERIFY_WITH_TIMEOUT(!state.project()->asset(shownId)->thumbnailPath.isEmpty(), 10000);
+
+    // Placed before it had one: the clip gets the filmstrip when it lands.
+    const QJsonObject place = dispatcher.applyOne(QStringLiteral("place_clip"),
+                                                  {{QStringLiteral("asset"), library.indexOfId(placedId)}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(place.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(place).toJson()));
+    const QString clipId = place.value(QStringLiteral("id")).toString();
+    QTRY_VERIFY_WITH_TIMEOUT(!state.project()->asset(placedId)->filmstripPath.isEmpty(), 10000);
+    const QPair<int, int> loc = state.mcp()->locateClip(clipId);
+    QCOMPARE(state.project()->tracks().at(loc.first).clips.at(loc.second).filmstripPath,
+             state.project()->asset(placedId)->filmstripPath);
+}
 
 void McpTest::framesUniformReturnsN()
 {

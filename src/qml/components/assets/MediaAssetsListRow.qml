@@ -68,7 +68,17 @@ Rectangle {
     // See the matching property on gridDelegate's cardRoot: lets a rotate/trim edit
     // refresh just this row's thumbnail without MediaAssetsTab rebuilding the whole list.
     property string liveThumbnailPath: thumbnailPath
-    ListView.onReused: root.liveThumbnailPath = Qt.binding(() => root.thumbnailPath)
+    ListView.onReused: {
+        root.liveThumbnailPath = Qt.binding(() => root.thumbnailPath)
+        root.askForPreview()
+    }
+    // An asset imported without previews (import_media previews:false), or one whose preview an
+    // undo took away, gets it built when a card shows it.
+    function askForPreview() {
+        if (!root.isFolder && root.thumbnailPath === "")
+            AssetLibrary.ensurePreview(root.assetIndex)
+    }
+    Component.onCompleted: askForPreview()
     ListView.onPooled: {
         rowMenu.close()
         folderRowMenu.close()

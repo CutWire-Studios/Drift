@@ -116,6 +116,9 @@ Item {
         root.sourcePath = asset.path || ""
         root.assetName = asset.name || ""
         root.filmstripPath = asset.filmstripPath || ""
+        // Imported without previews: build the strip now; it lands through onAssetMetadataChanged.
+        if (root.filmstripPath === "")
+            AssetLibrary.ensurePreview(index)
         root.durationSeconds = asset.durationSeconds || 0
         root.sourceWidth = asset.width || 0
         root.sourceHeight = asset.height || 0

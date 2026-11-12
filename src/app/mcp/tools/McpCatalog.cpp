@@ -550,7 +550,8 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("paths"),
                          arrayProp({{QStringLiteral("type"), QStringLiteral("string")}},
                                    QStringLiteral("Absolute file paths from your own filesystem search"))},
-                        {QStringLiteral("folder"), stringProp(QStringLiteral("Bin folder id (or unique name) new files land in; \"\" for the bin root. Default: the folder the user is viewing. Paths already in the bin stay where they are"))}},
+                        {QStringLiteral("folder"), stringProp(QStringLiteral("Bin folder id (or unique name) new files land in; \"\" for the bin root. Default: the folder the user is viewing. Paths already in the bin stay where they are"))},
+                        {QStringLiteral("previews"), propWithDefault(boolProp(QStringLiteral("false: probe only; video and audio get no thumbnail or filmstrip until something needs one (the bin showing the file, or place_clip), which saves decoding on big scripted imports")), true)}},
                        {QStringLiteral("paths")}) },
         { "list_assets", "media", "See what is in the bin",
           "List imported assets. Returns {assets:[{index, id, name, kind, dur, w, h, folderId, proxy?}]}; "

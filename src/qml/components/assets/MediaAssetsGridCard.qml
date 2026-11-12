@@ -36,7 +36,17 @@ Column {
     // single-image update.
     property string liveThumbnailPath: thumbnailPath
     // The Connections below replaces the binding, so a recycled card has to get it back.
-    GridView.onReused: root.liveThumbnailPath = Qt.binding(() => root.thumbnailPath)
+    GridView.onReused: {
+        root.liveThumbnailPath = Qt.binding(() => root.thumbnailPath)
+        root.askForPreview()
+    }
+    // An asset imported without previews (import_media previews:false), or one whose preview an
+    // undo took away, gets it built when a card shows it.
+    function askForPreview() {
+        if (!root.isFolder && root.thumbnailPath === "")
+            AssetLibrary.ensurePreview(root.assetIndex)
+    }
+    Component.onCompleted: askForPreview()
     GridView.onPooled: frame.closeMenus()
     // The thumbnail file keeps its name when its media is re-read, so the image URL carries this
     // to make the Image fetch the new pixels.
