@@ -213,6 +213,15 @@ public:
     // Whether the open batch has changed the project: an edit went through finishEdit, or the
     // saved content differs from the batch's start. Ops can succeed without either (renaming a
     // clip to its own name), and such a batch should not leave an undo step that undoes nothing.
+    // apply({atomic:true}): taken after beginBatch, before the batch's first op. rollbackBatch
+    // then puts the project back as beginBatch found it, with the selection, playhead, unsaved
+    // flag and beat analysis, and drops the point; endBatch drops it as well.
+    void setRollbackPoint();
+    void rollbackBatch();
+    // An atomic batch can't start while another edit is open: a batch or edit group (rolling back
+    // would reach its start), a preview drag (its edit would lose its undo step) or a multicam
+    // session (an edit ends it, and its cuts live outside the project).
+    bool editOpen() const;
     bool batchChangedProject() const;
     QJsonObject listHistory(int limit = 20) const;
     QJsonObject undoTo(int index, const QString &hash);
@@ -479,6 +488,8 @@ private:
     int m_agentCallsPaused = 0;
     QString m_pendingWarning;
     drift::Project m_batchBefore;
+    struct RollbackPoint;
+    std::unique_ptr<RollbackPoint> m_rollback;
     int m_batchRevision = 0;
     int m_editRevision = 0;
     mutable QHash<QString, QPair<int, int>> m_clipIndex;

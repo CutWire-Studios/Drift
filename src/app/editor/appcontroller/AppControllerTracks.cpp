@@ -2442,6 +2442,27 @@ void AppController::clearBeatAnalysis()
     emit beatAnalysisChanged();
 }
 
+AppController::BeatState AppController::beatState() const
+{
+    return {m_beatAnalysisRaw, m_beatAnalysis, m_beatSnapTargets, m_beatAudioFingerprint, m_beatGridVisible,
+            m_onsetsVisible};
+}
+
+void AppController::restoreBeatState(const BeatState &state)
+{
+    // A newer analysis started since wins; so does one still running.
+    if (m_beatAnalysisRunning || !m_beatAnalysis.isEmpty() || state.analysis.isEmpty())
+        return;
+    ++m_beatAnalysisGeneration;
+    m_beatAnalysisRaw = state.raw;
+    m_beatAnalysis = state.analysis;
+    m_beatSnapTargets = state.snapTargets;
+    m_beatAudioFingerprint = state.fingerprint;
+    m_beatGridVisible = state.gridVisible;
+    m_onsetsVisible = state.onsetsVisible;
+    emit beatAnalysisChanged();
+}
+
 void AppController::restoreFilmstripsAfterLoad()
 {
     if (!m_assetLibrary)

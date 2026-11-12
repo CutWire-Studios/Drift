@@ -1657,12 +1657,14 @@ QString agentGuideText()
         "  apply reply. Over 100 rows: geometry_truncated, geometry_total.\n"
         "- Every op returns {ok:true, …} or {ok:false, error:<code>, detail:<text>}. Codes: bad_args,\n"
         "  not_found, type_mismatch (also: wrong clip kind for the op), unknown_op, unknown_toolbox,\n"
-        "  wrong_endpoint, wrong_toolbox, apply_failed, import_failed, import_timeout, export_busy,\n"
+        "  wrong_endpoint, wrong_toolbox, apply_failed, dry_run_failed, import_failed, import_timeout, export_busy,\n"
         "  export_failed, export_timeout, capture_failed, conflict, unsupported (no vector renderer\n"
         "  in this build), market_unavailable, market_error, rate_limited, app_too_old, quota_exceeded,\n"
         "  install_timeout, download_failed,\n"
         "  exists, in_use, not_user_effect, bad_manifest, shader_compile_failed, io_error.\n"
         "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
+        "  apply({ops, atomic:true}) puts the project back instead (rolled_back:true); it refuses ops\n"
+        "  that reach outside the project. apply({ops, dry_run:true}) runs nothing and lists problems.\n"
         "- Toolbox op args are validated against the schema: bad_args (missing/enum/range),\n"
         "  type_mismatch; unknown keys come back as ignored:[…]. The homepage tools (catalog,\n"
         "  toolbox, search, inspect, apply, capture, frames, activity) are checked too and reject\n"
@@ -2017,7 +2019,7 @@ QJsonArray homepageTools()
         toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("apply"),
-        QStringLiteral("When: Mutate. Runs ops in order and stops at the first failure. NOT atomic — ops before the failure stay applied; the reply is {ok:false, error:\"apply_failed\", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops before it]}. On success: {ok:true, n, done}. Successful mutations collapse into a single undo step labelled from the op names (with history:false, into the newest existing step instead), except the ops listed in catalog.limitations (import, save, playback, export, view-state toggles including set_beat_layers), which undo cannot revert. Only toolbox ops go here — catalog, toolbox, search, inspect, capture, frames, activity, and apply itself return unknown_op, so call those directly. Args are validated against the op schema (required, type, enum, min/max); unknown keys are reported back as ignored:[…]. An ops array cannot reference an id produced earlier in the same batch — end the batch after set_speed_curve or any op that mints a clip id you need next."),
+        QStringLiteral("When: Mutate. Runs ops in order and stops at the first failure. Not atomic unless atomic:true — ops before the failure stay applied; the reply is {ok:false, error:\"apply_failed\", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops before it]}. On success: {ok:true, n, done}. Successful mutations collapse into a single undo step labelled from the op names (with history:false, into the newest existing step instead), except the ops listed in catalog.limitations (import, save, playback, export, view-state toggles including set_beat_layers), which undo cannot revert. Only toolbox ops go here — catalog, toolbox, search, inspect, capture, frames, activity, and apply itself return unknown_op, so call those directly. Args are validated against the op schema (required, type, enum, min/max); unknown keys are reported back as ignored:[…]. An ops array cannot reference an id produced earlier in the same batch — end the batch after set_speed_curve or any op that mints a clip id you need next."),
         objectSchema({{QStringLiteral("ops"),
                        arrayProp(objectSchema({{QStringLiteral("tool"), stringProp(QStringLiteral("Toolbox op name, e.g. place_clip"))},
                                                {QStringLiteral("args"),
@@ -2028,7 +2030,19 @@ QJsonArray homepageTools()
                       {QStringLiteral("history"),
                        propWithDefault(boolProp(QStringLiteral(
                            "false: no undo step of its own, for scripted batches. The changes join the newest "
-                           "undo step (undone and redone with it), and undone steps are dropped")), true)}},
+                           "undo step (undone and redone with it), and undone steps are dropped")), true)},
+                      {QStringLiteral("atomic"),
+                       propWithDefault(boolProp(QStringLiteral(
+                           "true: all or nothing. If an op fails, the project is put back as it was (no undo step, "
+                           "rolled_back:true; selection and playhead too). Only project edits are allowed: ops whose "
+                           "effects reach outside it (imports, saves, exports, files, clipboards, presets, settings, "
+                           "history, playback, background work, another project) are refused up front")), false)},
+                      {QStringLiteral("dry_run"),
+                       propWithDefault(boolProp(QStringLiteral(
+                           "true: run nothing; check each op's args and the clips, assets and tracks it names "
+                           "(not each op's own rules, such as move_clip needing one of at/before/after). "
+                           "{ok:true, dry_run, n}, or {ok:false, error:\"dry_run_failed\", problems:[{i, tool, error, detail}]}. "
+                           "An id an earlier op would create reads as not_found")), false)}},
                      {QStringLiteral("ops")})));
     tools.append(toolDef(
         QStringLiteral("capture"),

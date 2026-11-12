@@ -57,6 +57,10 @@ private:
     // stale (refused, or still running), inserting each list into `result` when non-empty.
     void addRefreshOutcome(QJsonObject &result, const QStringList &refreshed);
     bool isUndoable(const QString &tool) const;
+    // applyOne's checks before an op runs: known op, args against its schema (ignored keys go to
+    // `ignored`), clip required where index means something else. Empty when the op may run.
+    QJsonObject checkOp(const QString &tool, QJsonObject *args, QStringList *ignored) const;
+    QJsonObject dryRunOp(const QString &tool, const QJsonObject &args) const;
     void moveClipToRequested(const ClipRef &ref, double at);
 
     QJsonObject opImportMedia(const QJsonObject &args);

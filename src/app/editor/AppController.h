@@ -2287,6 +2287,23 @@ protected:
     // Raised each time the open document is replaced by another (a load, crash recovery, a new or
     // closed project), not by Save As, which keeps the document under a new id.
     quint64 m_documentGeneration = 0;
+    // After the whole project was swapped for another state of itself (undo, redo, an atomic MCP
+    // batch rolled back): resync the bin, folders and Source Lab, restore the selection captured
+    // before, and refresh. Marks the project unsaved.
+    void syncAfterProjectSwap();
+    // The beat analysis an edit drops when it changes the mix (finishEdit), kept so an atomic MCP
+    // batch that is rolled back can put it back.
+    struct BeatState
+    {
+        AudioBeatAnalysis raw;
+        QVariantMap analysis;
+        QList<drift::TimeUs> snapTargets;
+        QByteArray fingerprint;
+        bool gridVisible = false;
+        bool onsetsVisible = false;
+    };
+    BeatState beatState() const;
+    void restoreBeatState(const BeatState &state);
 
     QByteArray serializeProjectJson() const;
     bool applyProjectJson(const QByteArray &data, QString *error);
