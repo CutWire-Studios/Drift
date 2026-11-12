@@ -915,6 +915,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("speed"), clip.speed},
         {QStringLiteral("hasSpeedCurve"), clip.hasSpeedCurve()},
         {QStringLiteral("reverse"), clip.reverse},
+        {QStringLiteral("loop"), clip.loop},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("layer3d"), clip.layer3d},
         {QStringLiteral("depthOcclude"), clip.depthOcclude},
@@ -1050,6 +1051,11 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
     row.inPoint = drift::usToSeconds(clip.srcIn);
     row.outPoint = drift::usToSeconds(clip.srcOut);
     row.sourceDuration = sourceAsset ? drift::usToSeconds(sourceAsset->durationUs) : 0.0;
+    row.loop = clip.loops();
+    if (row.loop) {
+        row.loopPeriod = drift::usToSeconds(clip.loopPeriodUs());
+        row.loopPhase = drift::usToSeconds(clip.loopOffsetUs) / clip.effectiveSpeed();
+    }
     row.audioStreamIndex = clip.audioStreamIndex;
     // For the waveform bar: not once the audio has been separated, nor when the source has no
     // audio stream. An unprobed source gets the benefit of the doubt; its waveform stays empty.

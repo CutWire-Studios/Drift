@@ -579,8 +579,11 @@ void AppController::setClipDuration(int trackIndex, int clipIndex, double durati
                    ? static_cast<drift::TimeUs>(
                          llround(static_cast<double>(maxSourceSpan) / clip.effectiveSpeed()))
                    : maxSourceSpan);
-    clip.timelineDuration = qBound(drift::minClipDurationUs(m_project.fps()), drift::secondsToUs(duration), maxDuration);
-    if (syntheticVisual) {
+    clip.timelineDuration = qBound(drift::minClipDurationUs(m_project.fps()), drift::secondsToUs(duration),
+                                   clip.loops() ? syntheticClipMaxDurationUs() : maxDuration);
+    if (clip.loops()) {
+        // More or fewer passes through the same range.
+    } else if (syntheticVisual) {
         syncSyntheticSourceRange(clip);
     } else {
         const drift::TimeUs span = clip.sourceSpanUs();
@@ -1660,6 +1663,39 @@ void AppController::setClipReverse(int trackIndex, int clipIndex, bool reverse)
     drift::retimeLinkedSubtitles(before, m_project);
     pushProjectEdit(before, reverse ? tr("Reverse on") : tr("Reverse off"));
     finishEdit(reverse ? tr("Clip reversed") : tr("Clip forward"));
+}
+
+bool AppController::setClipLoop(int trackIndex, int clipIndex, bool loop)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio)
+        return false;
+    if (clip.loop == loop)
+        return true;
+    if (loop && clip.hasSpeedCurve()) {
+        setLastMessage(tr("A clip with a speed ramp can't loop"), QStringLiteral("warning"));
+        return false;
+    }
+
+    const drift::Project before = m_project;
+    clip.loop = loop;
+    if (!loop) {
+        // Back to a plain clip: at most one pass of the range, starting at its head, so the
+        // duration is derived from the range again.
+        clip.loopOffsetUs = 0;
+        clip.timelineDuration = qMin(clip.timelineDuration, clip.loopPeriodUs());
+        const drift::TimeUs span = qMin(clip.sourceSpanUs(), clip.srcOut - clip.srcIn);
+        if (clip.reverse)
+            clip.srcIn = clip.srcOut - span;
+        else
+            clip.srcOut = clip.srcIn + span;
+    }
+    syncLinkedPartnersFrom(m_project, clip);
+    pushProjectEdit(before, loop ? tr("Loop on") : tr("Loop off"));
+    finishEdit(loop ? tr("Clip looping") : tr("Clip not looping"));
+    return true;
 }
 
 void AppController::requestClipReverse(int trackIndex, int clipIndex)

@@ -353,6 +353,15 @@
           objectSchema(mergeProps({{QStringLiteral("reverse"), boolProp(QStringLiteral("Reversed"))}},
                                   clipRefProps()),
                        {QStringLiteral("reverse")}) },
+        { "set_clip_loop", "canvas", "Repeat a clip's trimmed range",
+          "Loop a video or audio clip: its In/Out range (srcIn..srcOut) repeats for as long as the clip "
+          "runs, so its duration is no longer limited by the source; compact clips then show loop:true. "
+          "Lengthen or shorten it with set_duration; set_trim changes the repeated range and "
+          "keeps the duration. Turning loop off cuts the clip back to one pass of the range from its head. Fails bad_args on "
+          "other clip kinds and on clips with a speed curve.",
+          objectSchema(mergeProps({{QStringLiteral("loop"), boolProp(QStringLiteral("Loop on or off"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("loop")}) },
         { "cancel_reverse_render", "canvas", "Stop reverse proxy",
           "Cancel the in-flight reverse proxy render. Returns ok even when nothing was running; "
           "confirm with inspect({detail:true}).jobs.reverseRender.active.",

@@ -1250,7 +1250,7 @@ int MediaBinController::rebindClipsToAsset(const QString &assetId, const drift::
                     // Pulls timelineDuration along with the shortened range, so the clip never
                     // addresses frames past the end of its media. The range is re-derived from the
                     // timeline span first, so a rebased srcIn keeps the span instead of the old srcOut.
-                    clip.srcOut = clip.srcIn + clip.sourceSpanUs();
+                    clip.srcOut = clip.srcIn + (clip.loops() ? clip.srcOut - clip.srcIn : clip.sourceSpanUs());
                     clip.syncSrcOutFromSpeed(asset.durationUs);
                 }
                 ++adjusted;

@@ -279,6 +279,8 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("speed"), clip.speed},
         {QStringLiteral("speedCurve"), clip.speedCurve.toJson()},
         {QStringLiteral("reverse"), clip.reverse},
+        {QStringLiteral("loop"), clip.loop},
+        {QStringLiteral("loopOffsetUs"), qint64(clip.loopOffsetUs)},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("flipV"), clip.flipV},
         {QStringLiteral("mask"), maskToJson(clip.mask)},
@@ -438,6 +440,8 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.speed = object.value(QStringLiteral("speed")).toDouble(1.0);
     clip.speedCurve = SpeedCurve::fromJson(object.value(QStringLiteral("speedCurve")).toArray());
     clip.reverse = object.value(QStringLiteral("reverse")).toBool(false);
+    clip.loop = object.value(QStringLiteral("loop")).toBool(false);
+    clip.loopOffsetUs = object.value(QStringLiteral("loopOffsetUs")).toInteger(0);
     clip.flipH = object.value(QStringLiteral("flipH")).toBool(false);
     clip.flipV = object.value(QStringLiteral("flipV")).toBool(false);
     clip.mask = maskFromJson(object.value(QStringLiteral("mask")).toObject());
@@ -1494,6 +1498,8 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 22 moved the 3D world to After Effects' convention (migrateWorldTo22 above).
     // Version 24 added ClipType::Procedural. Nothing to migrate; the bump is a gate, as for versions
     // 6 and 9. An older build would load those clips as videos with no path.
+    // Version 25 added looping clips. Nothing to migrate; the bump is a gate, as for versions 6
+    // and 9. An older build would cut a looped clip off at the end of its first pass.
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 

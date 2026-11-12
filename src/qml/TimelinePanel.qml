@@ -215,6 +215,7 @@ PanelFrame {
             "editFriendlyPillForeground": Theme.c.timelineClipItem.editFriendlyForeground,
             "warning": Theme.c.timelineClipItem.warning,
             "missing": Theme.c.timelineClipItem.missing,
+            "loopMarker": Theme.c.timelineClipItem.loopMarker,
             "fontFamily": Theme.fontFamily,
             "fontSizeTiny": Theme.fontSizeTiny,
             "fontSizeXs": Theme.fontSizeXs,

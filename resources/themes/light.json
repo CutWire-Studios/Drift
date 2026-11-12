@@ -1416,6 +1416,7 @@
       "border": "$semantic.primaryForeground"
     },
     "timelineClipItem": {
+      "loopMarker": "$palette.guideMedium",
       "videoBackground": "$semantic.clip.videoPlaceholder",
       "audioBackground": "$semantic.clip.audio",
       "textBackground": "$semantic.clip.text",
@@ -1658,7 +1659,9 @@
     },
     "timelineTrimHandle": {
       "radius": "$metrics.radius.xs",
-      "background": "$semantic.primary"
+      "background": "$semantic.primary",
+      "loopBackground": "$palette.categoryCyan",
+      "loopForeground": "$semantic.primaryForeground"
     },
     "timelineWorkAreaEdge": {
       "foreground": "$semantic.primary"
@@ -3854,6 +3857,7 @@
       "borderWidth": "$metrics.borderWidth"
     },
     "androidTimeline": {
+      "loopMarker": "$palette.guideMedium",
       "clipVideo": "$semantic.clip.videoPlaceholder",
       "clipAudio": "$semantic.clip.audio",
       "clipText": "$semantic.clip.text",

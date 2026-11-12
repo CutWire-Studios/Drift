@@ -785,8 +785,9 @@ void TimelineTrackItem::build()
         QSet<QString> ids;
         for (const TimelineClipsModel::Row &row : rows)
             ids.insert(row.id);
+        // A looping clip keeps one entry per repeat, keyed "<id>#<repeat>".
         for (auto it = m_waveCache.begin(); it != m_waveCache.end();)
-            it = ids.contains(it.key()) ? std::next(it) : m_waveCache.erase(it);
+            it = ids.contains(it.key().section(QLatin1Char('#'), 0, 0)) ? std::next(it) : m_waveCache.erase(it);
     }
     for (int i = 0; i < rows.size(); ++i) {
         if (m_drag.moving && i == m_drag.clipIndex)
@@ -825,6 +826,46 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     double inPoint = row.inPoint;
     double outPoint = row.outPoint;
     effectiveRect(index, &inPoint, &outPoint);
+
+    // A looping clip shows its range once per repeat. A live left-edge drag moves the clip's start
+    // but not its repeats, so the phase is carried along by however far the edge has moved.
+    struct Pass
+    {
+        double left = 0.0;
+        double width = 0.0;
+        double in = 0.0;
+        double out = 0.0;
+        int number = 0;
+    };
+    QList<Pass> passes;
+    if (row.loop && row.loopPeriod > 0.0 && row.loopPeriod * pps >= 4.0 && outPoint > inPoint) {
+        double liveStart = row.start;
+        if (const auto live = m_livePreviews.constFind(row.id); live != m_livePreviews.constEnd())
+            liveStart = live->start;
+        else if (m_viewState->trimFollowActive() && !row.linkId.isEmpty()
+                 && row.linkId == m_viewState->trimFollowLinkId())
+            liveStart = m_viewState->trimFollowStart();
+        const double period = row.loopPeriod;
+        double phase = std::fmod(row.loopPhase + (liveStart - row.start), period);
+        if (phase < 0.0)
+            phase += period;
+        const double length = rect.width() / pps;
+        const double srcPerSec = (outPoint - inPoint) / period;
+        const double viewLeft = (m_window.left - rect.left()) / pps;
+        const double viewRight = (m_window.right - rect.left()) / pps;
+        for (double k = std::max(0.0, std::floor((viewLeft + phase) / period));; k += 1.0) {
+            const double passStart = k * period - phase;
+            const double a = std::max(0.0, passStart);
+            const double b = std::min(length, passStart + period);
+            if (a >= b || a > viewRight)
+                break;
+            passes.append({rect.left() + a * pps, (b - a) * pps, inPoint + (a - passStart) * srcPerSec,
+                           inPoint + (b - passStart) * srcPerSec, int(k)});
+        }
+    } else {
+        passes.append({rect.left(), rect.width(), inPoint, outPoint, 0});
+    }
+    const bool looping = row.loop && passes.size() != 1;
 
     ClipVisual visual;
     visual.index = index;
@@ -875,7 +916,10 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     if (filmstrip) {
         const QRectF body = rect.adjusted(0.0, bandTrack ? band : 0.0, 0.0,
                                           showWaveformBar ? -barHeight : 0.0);
-        buildFilmstrip(index, body, rect, clipRadius, inPoint, outPoint);
+        for (const Pass &p : std::as_const(passes)) {
+            const QRectF passBody(p.left, body.top(), p.width, body.height());
+            buildFilmstrip(index, passBody, rect, clipRadius, p.in, p.out);
+        }
     }
 
     // --- waveform ----------------------------------------------------------------------------
@@ -889,7 +933,19 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
         if (showWaveformBar)
             appendRoundedRect(m_over, area, clipRadius, QColor(0, 0, 0, 89), ox,
                               BottomLeft | BottomRight);
-        buildWaveform(index, area, rect.left(), rect.width(), inPoint, outPoint, showWaveformBar);
+        for (const Pass &p : std::as_const(passes)) {
+            const QRectF passArea(p.left, area.top(), p.width, area.height());
+            buildWaveform(index, passArea, p.left, p.width, p.in, p.out, showWaveformBar,
+                          looping ? row.id + QLatin1Char('#') + QString::number(p.number) : row.id,
+                          rect.left(), rect.width());
+        }
+    }
+
+    // A hairline where each repeat starts over.
+    if (looping) {
+        for (int i = 1; i < passes.size(); ++i)
+            appendRect(m_over, QRectF(std::round(passes.at(i).left), rect.top(), 1.0, rect.height()),
+                       s.loopMarker, ox);
     }
 
     // --- header band and labels --------------------------------------------------------------
@@ -1097,7 +1153,8 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
 }
 
 void TimelineTrackItem::buildWaveform(int index, const QRectF &area, double clipX,
-                                      double clipWidth, double inPoint, double outPoint, bool bar)
+                                      double clipWidth, double inPoint, double outPoint, bool bar,
+                                      const QString &cacheId, double fullX, double fullWidth)
 {
     const TimelineClipsModel::Row &row = m_clips->rows().at(index);
     if (!m_editor || row.path.isEmpty() || area.height() <= 0.0)
@@ -1126,7 +1183,7 @@ void TimelineTrackItem::buildWaveform(int index, const QRectF &area, double clip
                             .arg(buckets)
                             .arg(row.audioStreamIndex)
                             .arg(laneCount);
-    WaveCacheEntry &cached = m_waveCache[row.id];
+    WaveCacheEntry &cached = m_waveCache[cacheId];
     if (cached.key != key) {
         cached = WaveCacheEntry{};
         cached.key = key;
@@ -1162,10 +1219,11 @@ void TimelineTrackItem::buildWaveform(int index, const QRectF &area, double clip
         return double(peak);
     };
 
-    const auto volumeAt = [&row, clipWidth, &span](int x) {
+    // Volume keys are over the whole clip; this area may be just one repeat of it.
+    const auto volumeAt = [&row, clipX, fullX, fullWidth, &span](int x) {
         if (row.volumeTyped.isEmpty())
             return 1.0;
-        const double seconds = (span.left + x + 0.5) / clipWidth * row.duration;
+        const double seconds = (clipX - fullX + span.left + x + 0.5) / fullWidth * row.duration;
         return std::clamp(row.volumeTyped.evaluateAt(drift::secondsToUs(seconds)), 0.0, 2.0);
     };
 

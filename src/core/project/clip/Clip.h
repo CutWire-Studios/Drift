@@ -123,6 +123,13 @@ struct Clip
     // moment. The source range stays fixed and the timeline duration is what the ramp derives.
     SpeedCurve speedCurve;
     bool reverse = false; // play source range backward; speed still applies as magnitude
+    // Repeat srcIn..srcOut for as long as the clip runs, so timelineDuration is free of the source
+    // range rather than derived from it. loopOffsetUs is how far into the range (in playback
+    // order, source time, [0, range)) the clip's left edge falls; it is what keeps the picture in
+    // place when the left edge is dragged or the clip is split. Video and audio clips only, and
+    // ignored on a speed ramp (see loops()).
+    bool loop = false;
+    TimeUs loopOffsetUs = 0;
     bool flipH = false;
     bool flipV = false;
     // Meaningful on a Mask-kind adjustment clip and nowhere else — a media clip's masks live on
@@ -248,8 +255,31 @@ struct Clip
 
     bool hasSpeedCurve() const { return !speedCurve.isEmpty(); }
 
+    bool loops() const
+    {
+        return loop && (type == ClipType::Video || type == ClipType::Audio) && !hasSpeedCurve() && srcOut > srcIn;
+    }
+
+    // Timeline length of one pass through srcIn..srcOut.
+    TimeUs loopPeriodUs() const
+    {
+        return qMax(TimeUs{1}, static_cast<TimeUs>(llround(static_cast<double>(srcOut - srcIn) / effectiveSpeed())));
+    }
+
+    // Offset into the range, in playback order, reached `rel` after the left edge. Wraps either way.
+    TimeUs loopedSourceOffset(TimeUs rel) const
+    {
+        const TimeUs range = srcOut - srcIn;
+        const TimeUs offset = (loopOffsetUs + sourceDeltaForTimelineDelta(rel)) % range;
+        return offset < 0 ? offset + range : offset;
+    }
+
     TimeUs timelineToSourceUs(TimeUs timelineUs) const
     {
+        if (loops()) {
+            const TimeUs offset = loopedSourceOffset(qBound(TimeUs{0}, timelineUs - timelineStart, timelineDuration));
+            return reverse ? srcOut - offset : srcIn + offset;
+        }
         const TimeUs rel = qBound(TimeUs{0}, timelineUs - timelineStart, timelineDuration);
         const TimeUs offset =
             hasSpeedCurve() ? speedCurve.sourceOffsetForTimelineOffset(rel, srcOut - srcIn)
@@ -268,6 +298,10 @@ struct Clip
     // so this ignores the curve.
     TimeUs timelineToSourceUsUnclamped(TimeUs timelineUs) const
     {
+        if (loops()) {
+            const TimeUs offset = loopedSourceOffset(timelineUs - timelineStart);
+            return reverse ? srcOut - offset : srcIn + offset;
+        }
         const TimeUs rel = timelineUs - timelineStart;
         const TimeUs offset = static_cast<TimeUs>(llround(static_cast<double>(rel) * effectiveSpeed()));
         return reverse ? srcOut - offset : srcIn + offset;
@@ -281,6 +315,12 @@ struct Clip
             return 0;
         TimeUs offset = reverse ? (srcOut - sourceUs) : (sourceUs - srcIn);
         offset = qBound(TimeUs{0}, offset, range);
+        // A looped clip shows each source moment once per pass; this answers with the first.
+        if (loops()) {
+            offset = (offset - loopOffsetUs) % range;
+            if (offset < 0)
+                offset += range;
+        }
         if (hasSpeedCurve())
             return speedCurve.timelineOffsetForSourceOffset(offset, range);
         return static_cast<TimeUs>(llround(static_cast<double>(offset) / effectiveSpeed()));
@@ -289,6 +329,12 @@ struct Clip
     void syncSrcOutFromSpeed(TimeUs maxSourceUs)
     {
         srcOut = qMin(srcOut, maxSourceUs);
+        // The length of a looped clip is the user's, not the range's: a new speed only changes
+        // how many passes fit in it.
+        if (loops()) {
+            loopOffsetUs %= srcOut - srcIn;
+            return;
+        }
         if (effectiveSpeed() > 0.0) {
             const TimeUs actualSpan = srcOut - srcIn;
             timelineDuration = static_cast<TimeUs>(llround(static_cast<double>(actualSpan) / effectiveSpeed()));

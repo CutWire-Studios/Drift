@@ -233,7 +233,8 @@ private:
     void build();
     void appendClip(int index, const QRectF &rect, bool selected, bool lit, bool lifted);
     void buildWaveform(int index, const QRectF &area, double clipX, double clipWidth,
-                       double inPoint, double outPoint, bool bar);
+                       double inPoint, double outPoint, bool bar, const QString &cacheId,
+                       double fullX, double fullWidth);
     void buildFilmstrip(int index, const QRectF &body, const QRectF &clipRect, double clipRadius,
                         double inPoint, double outPoint);
     void appendTile(const QString &key, const QImage &image, const QRectF &target,

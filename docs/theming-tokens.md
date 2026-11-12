@@ -1104,6 +1104,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineBookmarkMarker | radius | 1 | 1 |
 | timelineBookmarkMarker | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | timelineBookmarkMarker | border | $semantic.primaryForeground | $semantic.primaryForeground |
+| timelineClipItem | loopMarker | $palette.guideMedium | $palette.guideMedium |
 | timelineClipItem | videoBackground | $semantic.clip.videoPlaceholder | $semantic.clip.videoPlaceholder |
 | timelineClipItem | audioBackground | $semantic.clip.audio | $semantic.clip.audio |
 | timelineClipItem | textBackground | $semantic.clip.text | $semantic.clip.text |
@@ -1255,6 +1256,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineTrimGrip | foreground | $semantic.onMedia | $semantic.onMedia |
 | timelineTrimHandle | radius | $metrics.radius.xs | $metrics.radius.xs |
 | timelineTrimHandle | background | $semantic.primary | $semantic.primary |
+| timelineTrimHandle | loopBackground | $palette.categoryCyan | $palette.categoryCyan |
+| timelineTrimHandle | loopForeground | $semantic.primaryForeground | $semantic.primaryForeground |
 | timelineWorkAreaEdge | foreground | $semantic.primary | $semantic.primary |
 | timelineWorkAreaShade | background | $semantic.primary | $semantic.primary |
 | trackHeaderChannelLanesButton | accent | $semantic.primary | $semantic.primary |
@@ -2754,6 +2757,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTopBar | background | $semantic.surface.panel | $semantic.surface.panel |
 | androidTopBar | border | $semantic.panel.border | $semantic.panel.border |
 | androidTopBar | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| androidTimeline | loopMarker | $palette.guideMedium | $palette.guideMedium |
 | androidTimeline | clipVideo | $semantic.clip.videoPlaceholder | $semantic.clip.videoPlaceholder |
 | androidTimeline | clipAudio | $semantic.clip.audio | $semantic.clip.audio |
 | androidTimeline | clipText | $semantic.clip.text | $semantic.clip.text |

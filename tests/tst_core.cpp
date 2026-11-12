@@ -186,6 +186,7 @@ private slots:
     void speedCurveSubRangePreservesShape();
     void speedCurveSerialization();
     void clipReverseAndFlipSerialization();
+    void loopedClipMapsSplitsAndMerges();
     void clipSplitMergeRoundTrip();
     void subtitleClipsMergeWithGaps();
     void subtitlesFollowRetimedClip();
@@ -2219,7 +2220,7 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 24);
+    QCOMPARE(drift::Project::kCurrentVersion, 25);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
@@ -2259,7 +2260,7 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 24);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 25);
     const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                    .value(QStringLiteral("clips")).toArray().at(0).toObject()
                                    .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();
@@ -3911,6 +3912,67 @@ void CoreTest::clipReverseAndFlipSerialization()
     QCOMPARE(out.flipH, true);
     QCOMPARE(out.flipV, true);
     QCOMPARE(out.speed, 1.5);
+}
+
+void CoreTest::loopedClipMapsSplitsAndMerges()
+{
+    using drift::secondsToUs;
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-loop");
+    clip.assetId = QStringLiteral("asset-loop");
+    clip.type = drift::ClipType::Video;
+    clip.timelineStart = secondsToUs(10.0);
+    clip.timelineDuration = secondsToUs(7.0);
+    clip.srcIn = secondsToUs(1.0);
+    clip.srcOut = secondsToUs(3.0);
+    clip.loop = true;
+    clip.loopOffsetUs = secondsToUs(0.5);
+    QVERIFY(clip.loops());
+    QCOMPARE(clip.loopPeriodUs(), secondsToUs(2.0));
+
+    // Starts half a second into the range, wraps back to srcIn 1.5 s later.
+    QCOMPARE(clip.timelineToSourceUs(secondsToUs(10.0)), secondsToUs(1.5));
+    QCOMPARE(clip.timelineToSourceUs(secondsToUs(11.0)), secondsToUs(2.5));
+    QCOMPARE(clip.timelineToSourceUs(secondsToUs(11.5)), secondsToUs(1.0));
+    QCOMPARE(clip.timelineToSourceUs(secondsToUs(16.0)), secondsToUs(1.5));
+    QCOMPARE(clip.sourceUsToClipLocalUs(secondsToUs(1.0)), secondsToUs(1.5));
+
+    drift::Clip reversed = clip;
+    reversed.reverse = true;
+    QCOMPARE(reversed.timelineToSourceUs(secondsToUs(10.0)), secondsToUs(2.5));
+    QCOMPARE(reversed.timelineToSourceUs(secondsToUs(11.5)), secondsToUs(3.0));
+
+    // Speed keeps the length and fits more passes into it.
+    drift::Clip fast = clip;
+    fast.speed = 2.0;
+    fast.syncSrcOutFromSpeed(secondsToUs(60.0));
+    QCOMPARE(fast.timelineDuration, secondsToUs(7.0));
+    QCOMPARE(fast.timelineToSourceUs(secondsToUs(11.0)), secondsToUs(1.5));
+
+    // A split keeps the range on both halves and the tail resumes where the head stopped.
+    drift::Clip head = clip;
+    drift::Clip tail;
+    QVERIFY(drift::splitClipAtOffset(head, tail, secondsToUs(3.0)));
+    QCOMPARE(head.srcIn, clip.srcIn);
+    QCOMPARE(head.srcOut, clip.srcOut);
+    QCOMPARE(tail.srcIn, clip.srcIn);
+    QCOMPARE(tail.srcOut, clip.srcOut);
+    QCOMPARE(tail.loopOffsetUs, secondsToUs(1.5));
+    for (const double t : {13.0, 14.25, 16.9})
+        QCOMPARE(tail.timelineToSourceUs(secondsToUs(t)), clip.timelineToSourceUs(secondsToUs(t)));
+
+    QVERIFY(drift::clipsCanMerge(head, tail));
+    const drift::Clip merged = drift::mergeClips(head, tail);
+    QCOMPARE(merged.timelineDuration, clip.timelineDuration);
+    QCOMPARE(merged.loopOffsetUs, clip.loopOffsetUs);
+
+    drift::Project project;
+    project.tracks()[0].clips.append(clip);
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY(error.isEmpty());
+    QCOMPARE(loaded.tracks()[0].clips[0].loop, true);
+    QCOMPARE(loaded.tracks()[0].clips[0].loopOffsetUs, secondsToUs(0.5));
 }
 
 // A cut should be invisible: play the two halves and you should see exactly what the whole clip

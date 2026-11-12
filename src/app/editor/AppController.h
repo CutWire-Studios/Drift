@@ -1178,6 +1178,10 @@ public:
     Q_INVOKABLE void setClipBlendMode(int trackIndex, int clipIndex, const QString &mode);
     Q_INVOKABLE bool setClipSpeed(int trackIndex, int clipIndex, double speed);
     Q_INVOKABLE void setClipReverse(int trackIndex, int clipIndex, bool reverse);
+    // Repeats the clip's In/Out range for as long as the clip runs (video and audio clips, not on a
+    // speed ramp). Switching it off cuts the clip back to one pass from its head.
+    // False when the clip can't loop (not video/audio, or ramped).
+    Q_INVOKABLE bool setClipLoop(int trackIndex, int clipIndex, bool loop);
     // Turns reverse on for a video clip and renders the proxy that makes it play back smoothly.
     // Reverse itself applies immediately; cancelling the render leaves the clip reversed on the
     // slow live-decode path, which is what clipHasReverseProxy reports.

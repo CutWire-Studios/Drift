@@ -41,6 +41,7 @@ QString fieldName(const QString &key)
         {QStringLiteral("textStyle"), QStringLiteral("text")},
         {QStringLiteral("speedCurve"), QStringLiteral("speed")},
         {QStringLiteral("reverse"), QStringLiteral("speed")},
+        {QStringLiteral("loopOffsetUs"), QStringLiteral("loop")},
         {QStringLiteral("fadeInUs"), QStringLiteral("fade")},
         {QStringLiteral("fadeOutUs"), QStringLiteral("fade")},
         {QStringLiteral("fadeCurve"), QStringLiteral("fade")},

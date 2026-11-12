@@ -659,6 +659,14 @@
       "needs": []
     },
     {
+      "id": "general-loop",
+      "target": "panel:properties.general#general-loop",
+      "context": "GeneralInspector",
+      "source": "Loop",
+      "keywords": "repeat cycle extend",
+      "needs": []
+    },
+    {
       "id": "masks-combine",
       "target": "panel:properties.masks#masks-combine",
       "context": "MasksInspector",

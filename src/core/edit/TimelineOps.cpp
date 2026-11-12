@@ -1748,8 +1748,11 @@ bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeU
         return false;
 
     const TimeUs sourceSpan = head.srcOut - head.srcIn;
+    // A looped clip keeps its range on both sides; only where the tail's first pass begins moves.
+    const bool looped = head.loops();
     const TimeUs sourceOffset =
-        head.hasSpeedCurve() ? head.speedCurve.sourceOffsetForTimelineOffset(offset, sourceSpan)
+        looped ? 1
+        : head.hasSpeedCurve() ? head.speedCurve.sourceOffsetForTimelineOffset(offset, sourceSpan)
                              : head.sourceDeltaForTimelineDelta(offset);
     if (sourceOffset <= 0 || sourceOffset >= sourceSpan)
         return false;
@@ -1768,7 +1771,9 @@ bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeU
         tail.speedCurve = parent.subRange(cut, 1.0);
     }
 
-    if (head.reverse) {
+    if (looped) {
+        tail.loopOffsetUs = head.loopedSourceOffset(offset);
+    } else if (head.reverse) {
         const TimeUs sourceAtSplit = head.srcOut - sourceOffset;
         tail.srcIn = head.srcIn;
         tail.srcOut = sourceAtSplit;
@@ -1902,6 +1907,12 @@ bool clipsCanMerge(const Clip &left, const Clip &right)
     if (left.timelineEnd() != right.timelineStart)
         return false;
 
+    // Two halves of a split loop: same range, and the right one picks up where the left stopped.
+    if (left.loops() || right.loops()) {
+        return left.loops() && right.loops() && left.srcIn == right.srcIn && left.srcOut == right.srcOut
+               && left.loopedSourceOffset(left.timelineDuration) == right.loopOffsetUs;
+    }
+
     if (left.reverse)
         return left.srcIn == right.srcOut;
     return left.srcOut == right.srcIn;
@@ -1911,7 +1922,9 @@ Clip mergeClips(const Clip &left, const Clip &right)
 {
     Clip out = left;
     out.timelineDuration = left.timelineDuration + right.timelineDuration;
-    if (left.reverse) {
+    if (left.loops()) {
+        // Same range on both sides; the left one's offset already starts the merged clip right.
+    } else if (left.reverse) {
         out.srcIn = right.srcIn;
         out.srcOut = left.srcOut;
     } else {
@@ -2151,6 +2164,8 @@ void syncLinkedTiming(Clip &dst, const Clip &src)
     dst.speed = src.speed;
     dst.speedCurve = src.speedCurve;
     dst.reverse = src.reverse;
+    dst.loop = src.loop;
+    dst.loopOffsetUs = src.loopOffsetUs;
     dst.fadeInUs = src.fadeInUs;
     dst.fadeOutUs = src.fadeOutUs;
     dst.fadeCurve = src.fadeCurve;

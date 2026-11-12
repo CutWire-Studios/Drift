@@ -187,6 +187,12 @@ ThemedContextMenu {
         onTriggered: EditorState.separateAllAudioTracks(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
+        text: owner.clipData.loop ? qsTr("Stop looping") : qsTr("Loop")
+        icon.name: Theme.icons.repeat
+        visible: owner.clipData.kind === "video" || owner.clipData.kind === "audio"
+        onTriggered: EditorState.setClipLoop(owner.trackIndex, owner.clipIndex, !owner.clipData.loop)
+    }
+    ThemedMenuItem {
         text: qsTr("Remove silence")
         icon.name: Theme.icons.audioLines
         visible: clipContextMenu.canRemoveSilence
