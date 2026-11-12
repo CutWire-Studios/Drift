@@ -140,6 +140,7 @@ PanelFrame {
         AssetSearchBar {
             id: search
             placeholderText: qsTr("Search LUTs")
+            historyKey: "looks"
             onTextChanged: root.query = text
 
             SearchAnchor {

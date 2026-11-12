@@ -182,6 +182,7 @@ Item {
         AssetSearchBar {
             id: searchBar
             placeholderText: qsTr("Search transitions")
+            historyKey: "transitions"
         }
 
         Item { width: 1; height: Theme.spacingSm }

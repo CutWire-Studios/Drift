@@ -83,6 +83,7 @@ Column {
         AssetSearchBar {
             id: search
             placeholderText: qsTr("Search audio effects")
+            historyKey: "audioEffects"
 
             IconButton {
                 glyph: Theme.icons.download
@@ -180,7 +181,11 @@ Column {
 
                 delegate: AudioEffectPresetCard {
                     cardSize: presetGrid.cardSize
-                    onApplyRequested: (effectId) => root.applyPreset(effectId)
+                    onApplyRequested: (effectId) => {
+                        search.commitHistory()
+                        root.applyPreset(effectId)
+                    }
+                    onSearchClearRequested: search.text = ""
                 }
             }
         }
