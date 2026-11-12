@@ -1964,7 +1964,13 @@ QJsonArray homepageTools()
                        "spaces n evenly; scenes uses detect_scenes thumbnails; at:[…] renders exact times. Every "
                        "tile has its time burned in AND listed in frames[].t, with diff = how different it is from "
                        "the previous kept tile (in-shot motion ~5-10, a cut 30+). Times are timeline seconds, or source "
-                       "seconds when clip/track+index is given (tl is then the timeline time). Tiles past the "
+                       "seconds when clip/track+index is given (tl is then the timeline time). On the timeline "
+                       "(at, uniform, changes), each row also names what shows there: clip (the topmost footage: "
+                       "video or composite, or an image with no video under it; on a track, the clip that started "
+                       "first), its track, src (the source time, for video), over:[ids] (titles, shapes, logos above "
+                       "it) and, inside a transition, with:{clip, side, transition, progress} (the other side, incoming "
+                       "or outgoing; progress 0 all outgoing, 1 all incoming); with no footage there, clip is the topmost clip. With scenes, clip is the clip the "
+                       "shot was scanned from. Tiles past the "
                        "end of the material render black and carry beyond_end:true. Cannot run inside "
                        "apply. Follow up with capture({at}) for a full-size look."),
         objectSchema(mergeProps(
