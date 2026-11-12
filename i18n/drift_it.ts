@@ -2574,6 +2574,10 @@
         <translation>Dividi alla posizione corrente</translation>
     </message>
     <message>
+        <source>Split selected clip at current time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add transition at playhead</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2748,6 +2752,14 @@
     <message>
         <source>Clip moved</source>
         <translation>Clip spostata</translation>
+    </message>
+    <message>
+        <source>Select a clip to split first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The playhead isn&apos;t over a selected clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing to split here — move to a clip first</source>
@@ -4598,6 +4610,18 @@
         <translation>Traccia mostrata</translation>
     </message>
     <message>
+        <source>Exclude from export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track left out of export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track included in export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Track lock</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4985,6 +5009,10 @@
     <message>
         <source>Media files (%1)</source>
         <translation>File multimediali (%1)</translation>
+    </message>
+    <message>
+        <source>The proxy could not be made</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -13364,6 +13392,13 @@
     </message>
 </context>
 <context>
+    <name>McpController</name>
+    <message>
+        <source>Relink media</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MediaAssetsEmptyState</name>
     <message>
         <source>No media yet</source>
@@ -13829,6 +13864,14 @@
         <translation>%1 (%2)</translation>
     </message>
     <message>
+        <source>The project was closed before the replace landed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project was closed before the edit landed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Relink media</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13838,6 +13881,10 @@
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sub-clip added</source>
@@ -24305,6 +24352,54 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Paste here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add bookmark here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select clips on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select clips after here on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all clips</source>
+        <translation type="unfinished">Seleziona tutte le clip</translation>
+    </message>
+    <message>
+        <source>Unmute track</source>
+        <translation type="unfinished">Riattiva audio traccia</translation>
+    </message>
+    <message>
+        <source>Mute track</source>
+        <translation type="unfinished">Disattiva audio traccia</translation>
+    </message>
+    <message>
+        <source>Show track</source>
+        <translation type="unfinished">Mostra traccia</translation>
+    </message>
+    <message>
+        <source>Hide track</source>
+        <translation type="unfinished">Nascondi traccia</translation>
+    </message>
+    <message>
+        <source>Unlock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>Rinomina segnalibro</translation>
     </message>
@@ -24929,6 +25024,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Include in export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude from export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add camera clip at playhead</source>
         <translation>Aggiungi clip telecamera alla testina</translation>
     </message>
@@ -25097,6 +25200,17 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Mute track</source>
         <translation>Disattiva audio traccia</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderName</name>
+    <message>
+        <source>not exported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shown while editing, left out of every export</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
