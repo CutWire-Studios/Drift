@@ -348,6 +348,7 @@ Item {
                     scaleX: root.sx
                     scaleY: root.sy
                     shape: maskBox.maskData.shape || ""
+                    roundness: maskBox.maskData.roundness || 0
                 }
 
                 Item {
