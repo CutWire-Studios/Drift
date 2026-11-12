@@ -217,6 +217,19 @@ silhouette and depth only decides in front or behind. The occluder is looked for
 scene, so inside a composite clip it stays inside it. Not applied in transitions or the CPU
 compositor, and a 3D model counts as one flat plane at `depth`.
 
+### Motion Blur (`motion.blur`)
+
+A compositor-backend package: shutter blur of the clip's own movement. `buildGpuScene` evaluates
+the layer's placement (layout keyframes, body animation, 3D pose, transform parents, scene camera)
+at `samples` instants spread over `shutter` degrees of a frame, centred on it, into
+`GpuLayer::motionSamples`. `drawLayerOnCanvas` then averages the layer over those placements in one
+pass (`kMotionBlurFragShader`, one inverse plane-to-screen homography per sample) into a
+canvas-sized target and draws that in place, so opacity, blend mode and occlusion apply to the
+blurred whole. It always comes after the rest of the chain, wherever it sits in the stack, and only
+the first enabled one counts. The preview caps samples at 8. Motion inside the footage, per-word text
+animation, model and procedural clips, depth-occluding clips, the 3D view and standalone adjustment
+layers are not blurred; a layer that does not move during the shutter draws exactly as without it.
+
 ## Mask effects
 
 A package with `"requires": "mask"` reads the clip's masks: every Mask-kind adjustment pinned to

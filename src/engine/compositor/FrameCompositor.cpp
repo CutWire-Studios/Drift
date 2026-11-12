@@ -91,6 +91,9 @@ thread_local QStringList t_sequenceChain;
 thread_local QHash<QString, std::shared_ptr<const drift::Project>> *t_nestedViews = nullptr;
 
 constexpr int kMaxCompositeDepth = 4;
+// Motion blur samples the preview takes at most, so a blurred clip stays cheap while scrubbing.
+// Export takes the clip's own count.
+constexpr int kPreviewMotionBlurSamples = 8;
 // How far ahead of the first frame a clip needs its decoder opens: covers a cold 4K software
 // seek or a MediaCodec open, a few hundred ms each.
 constexpr drift::TimeUs kClipLookaheadUs = 1'000'000;
@@ -1105,6 +1108,22 @@ void applyClipBodyAnimation(const drift::Clip &clip, drift::TimeUs timelineUs, d
     *rotation += body.rotationDeg;
 }
 
+// The clip's own placement at `timelineUs`, before any per-type bleed margin: the layout rect and
+// rotation with the body animation on top. Motion blur maps the layer's rect along it.
+QRectF motionCoreRect(const drift::Clip &clip, drift::TimeUs timelineUs, int projectWidth, int projectHeight,
+                      double renderScale, double *rotation)
+{
+    double x = 0.0;
+    double y = 0.0;
+    double w = 0.0;
+    double h = 0.0;
+    layoutRectForClip(clip, timelineUs, projectWidth, projectHeight, renderScale, 1.0, &x, &y, &w, &h, rotation);
+    QRectF rect(x, y, w, h);
+    double opacity = 1.0;
+    applyClipBodyAnimation(clip, timelineUs, w, h, &rect, &opacity, rotation);
+    return rect;
+}
+
 // One media file's pixels at `mediaUs`. Video goes through the preview read, the same path
 // collectVideoRequests warms: reading it as a QImage instead made the warm-up a second decode that
 // moved the stream's cursor past the frame the image read then asked for, and every mask frame
@@ -1895,6 +1914,82 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         layer.viewActive = sceneViewActive;
         layer.layoutCanvas = layoutCanvas;
     };
+    // Motion blur: where the layer sits at each sample across the open shutter. Every blurred clip
+    // with the same shutter samples the same instants, so the parents and camera are kept per instant.
+    QHash<drift::TimeUs, QList<drift::TransformParent>> parentsAtSample;
+    QHash<drift::TimeUs, QMatrix4x4> viewAtSample;
+    const auto attachMotionBlur = [&](const drift::Clip &clip, GpuLayer &layer, int trackIndex) {
+        // A model or procedural clip is placed inside its own request, and a depth-sorted one
+        // writes the quad's depth, which an average of placements has none of.
+        if (editorView || !layer.valid || layer.screenSpace || layer.depthOcclude)
+            return;
+        // The "motion.blur" effect has no pixels of its own: its params tell the compositor how to
+        // place the layer. The first enabled one counts. Resolved already, so a keyframed shutter
+        // reads this frame's value.
+        const drift::Effect *blur = nullptr;
+        for (const drift::Effect &effect : std::as_const(layer.effects)) {
+            if (effect.enabled && effect.catalogId == QLatin1String("motion.blur")) {
+                blur = &effect;
+                break;
+            }
+        }
+        if (!blur)
+            return;
+        const EffectPresetEntry *def = effectDefForId(blur->catalogId);
+        if (!def)
+            return;
+        const QMap<QString, QVariant> params = resolvedEffectParameters(*blur, *def);
+        const int clipSamples = params.value(QStringLiteral("samples"), 16).toInt();
+        const int wanted = t_exporting ? clipSamples : qMin(clipSamples, kPreviewMotionBlurSamples);
+        const int samples = qBound(2, wanted, drift::kMaxMotionBlurSamples);
+        const double shutter = params.value(QStringLiteral("shutter"), 180.0).toDouble();
+        const double openUs = 1e6 / (fps > 0 ? fps : 30) * qBound(0.0, shutter, 360.0) / 360.0;
+        if (openUs < 1.0)
+            return;
+        double rotationHere = 0.0;
+        const QRectF here = motionCoreRect(clip, timelineUs, projectWidth, projectHeight, renderScale, &rotationHere);
+        if (here.width() < 0.5 || here.height() < 0.5)
+            return;
+        for (int i = 0; i < samples; ++i) {
+            const drift::TimeUs at =
+                timelineUs + drift::TimeUs(std::llround((double(i) / (samples - 1) - 0.5) * openUs));
+            double rotationAt = 0.0;
+            const QRectF core = motionCoreRect(clip, at, projectWidth, projectHeight, renderScale, &rotationAt);
+            // The layer's rect can differ from the core one (a text or shape bleed margin): it
+            // follows the core rect's move and resize.
+            const double sx = core.width() / here.width();
+            const double sy = core.height() / here.height();
+            GpuLayerPlacement placement;
+            placement.rect = QRectF(core.x() + (layer.rect.x() - here.x()) * sx,
+                                    core.y() + (layer.rect.y() - here.y()) * sy, layer.rect.width() * sx,
+                                    layer.rect.height() * sy);
+            placement.rotation = layer.rotation + rotationAt - rotationHere;
+            placement.pose3d = drift::clipPoseAt(clip, at - clip.timelineStart, renderScale, projectHeight);
+            placement.parent = layer.parent;
+            placement.hasParent = layer.hasParent;
+            if (!parents.isEmpty()) {
+                auto it = parentsAtSample.find(at);
+                if (it == parentsAtSample.end())
+                    it = parentsAtSample.insert(at, drift::transformParentsAt(project, at, renderScale));
+                const drift::TransformParent &parent = it->at(trackIndex);
+                placement.parent = parent.matrix;
+                placement.hasParent = parent.hasParent;
+            }
+            placement.viewProj = layer.viewProj;
+            if (layer.viewActive) {
+                auto it = viewAtSample.find(at);
+                if (it == viewAtSample.end()) {
+                    drift::SceneCamera3d camera = drift::defaultSceneCamera(QSizeF(width, height));
+                    if (const drift::Clip *cameraClip = drift::cameraClipAt(project.tracks(), at))
+                        camera = drift::sceneCameraFromClip(*cameraClip, at, renderScale,
+                                                            QSizeF(projectWidth, projectHeight));
+                    it = viewAtSample.insert(at, drift::cameraViewProjection(camera, QSizeF(width, height)));
+                }
+                placement.viewProj = *it;
+            }
+            layer.motionSamples.append(placement);
+        }
+    };
     // The pictures and masks a layer's track params read, built as a transition side is: on its own
     // track's transform and camera, with its lanes. They carry no track inputs of their own.
     const auto attachTrackInputs = [&](GpuLayer &layer) {
@@ -1988,6 +2083,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 // is framed by the camera just as a plain layer would be.
                 applyCamera(item.from);
                 applyCamera(item.to);
+                attachMotionBlur(*fromClip, item.from, ti);
+                attachMotionBlur(*toClip, item.to, ti);
                 item.progress =
                     drift::transitionProgress(*activeTransition, timelineUs, transitionStart, transitionEnd);
                 // Time is measured from the start of the transition window so a
@@ -2062,6 +2159,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 continue;
             applyParent(item.layer, ti);
             applyCamera(item.layer);
+            if (!editingText)
+                attachMotionBlur(clip, item.layer, ti);
 #ifdef DRIFT_WITH_SKIA
             rasterAtDrawnSize(item.layer, QSize(width, height));
 #endif

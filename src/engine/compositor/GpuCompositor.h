@@ -64,6 +64,22 @@ struct MaskMediaFrame
 // as grayscale. Only the preview sets it; export never does.
 enum class MaskViewMode : quint8 { Off, Overlay, Matte };
 
+namespace drift {
+// The most placements one motion-blurred layer is averaged over; the blur shader's array size.
+inline constexpr int kMaxMotionBlurSamples = 32;
+}
+
+// Where a layer sits at one instant: the GpuLayer fields modelMatrixFor reads that move over time.
+struct GpuLayerPlacement
+{
+    QRectF rect;
+    double rotation = 0.0;
+    drift::ClipPose3d pose3d;
+    QTransform parent;
+    bool hasParent = false;
+    QMatrix4x4 viewProj;
+};
+
 // A single textured layer: the clip's source pixels plus everything needed to
 // place it on the canvas. Prefer `video` when set (hardware frames stay on the
 // GPU until the importer); then `vector`, drawn by Skia straight into the layer
@@ -131,6 +147,9 @@ struct GpuLayer
     // Drawn already in place (a model clip renders itself through the viewpoint into a
     // canvas-sized target): the layer covers the canvas and is not placed a second time.
     bool screenSpace = false;
+    // Motion blur: the layer's placement at each sample across the open shutter, in time order.
+    // Empty draws the layer once at its own placement; the draw averages the layer over these.
+    QList<GpuLayerPlacement> motionSamples;
     double opacity = 1.0;
     MaskViewMode maskView = MaskViewMode::Off;
     QColor maskViewTint = QColor(0xFF, 0x30, 0x30, 0x80);

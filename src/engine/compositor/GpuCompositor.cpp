@@ -19,6 +19,7 @@
 #include "engine/render3d/procedural/ProceduralRequest.h"
 #include "engine/compositor/layers/TransformLayer.h"
 
+#include <QGenericMatrix>
 #include <QLineF>
 #include <QMatrix4x4>
 #include <QMutex>
@@ -30,7 +31,9 @@
 #include <QtMath>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <limits>
 #include <map>
 #include <vector>
 
@@ -125,6 +128,43 @@ void main() {
     if (u_depthWrite > 0.5 && a < 0.5)
         discard;
     fragColor = vec4(u_layerPremul > 0.5 ? c.rgb * s : c.rgb * a, a);
+}
+)";
+
+// Motion blur: the layer averaged over its placements across the open shutter, drawn on a
+// fullscreen quad into a canvas-sized target. u_inverse[i] maps a canvas fragment (NDC, w = 1) back
+// onto sample i's unit quad, the inverse of that placement's plane-to-screen homography, so a tap
+// is exact under rotation, scale and perspective alike. Its z is 1/w of the forward map, so a
+// fragment the plane only reaches from behind the eye has z <= 0. Mask and coverage are folded per
+// tap, the same way kLayerFragShader would at that placement; the result is premultiplied.
+constexpr const char *kMotionBlurFragShader = R"(#version 330 core
+out vec4 fragColor;
+uniform sampler2D u_layer;
+uniform sampler2D u_mask;
+uniform float u_hasMask;
+uniform float u_maskInvert;
+uniform float u_layerPremul;
+uniform vec2 u_canvasSize;
+uniform int u_samples;
+uniform mat3 u_inverse[32];
+void main() {
+    vec2 ndc = gl_FragCoord.xy / u_canvasSize * 2.0 - 1.0;
+    vec4 sum = vec4(0.0);
+    for (int i = 0; i < u_samples; ++i) {
+        vec3 q = u_inverse[i] * vec3(ndc, 1.0);
+        vec2 p = q.xy / (abs(q.z) > 1e-8 ? q.z : 1e-8);
+        float inside = q.z > 0.0 && abs(p.x) <= 1.0 && abs(p.y) <= 1.0 ? 1.0 : 0.0;
+        vec2 uv = clamp(p * 0.5 + 0.5, 0.0, 1.0);
+        vec4 c = texture(u_layer, uv);
+        if (u_layerPremul < 0.5)
+            c.rgb *= c.a;
+        if (u_hasMask > 0.5) {
+            float m = texture(u_mask, uv).r;
+            c *= mix(m, 1.0 - m, u_maskInvert);
+        }
+        sum += c * inside;
+    }
+    fragColor = sum / float(max(u_samples, 1));
 }
 )";
 
@@ -1376,6 +1416,125 @@ QSizeF drawnLayerSize(const GpuLayer &layer, const QSize &canvasSize, bool exact
     return drawnSize;
 }
 
+// The layer averaged over layer.motionSamples, laid out on a canvas-sized premultiplied target.
+// Invalid when the samples do not move the layer, which then draws once as usual.
+GlTarget motionBlurredLayer(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer, GLuint layerTex,
+                            float layerPremul, GLuint maskTex, float maskInvert, const QSize &canvasSize)
+{
+    const int count = int(qMin<qsizetype>(layer.motionSamples.size(), drift::kMaxMotionBlurSamples));
+    if (count < 2)
+        return {};
+
+    std::array<QMatrix3x3, drift::kMaxMotionBlurSamples> inverses;
+    QMatrix4x4 first;
+    bool moves = false;
+    // The scissor: every placement's quad on the canvas, or all of it when one crosses the eye.
+    double minX = std::numeric_limits<double>::max();
+    double minY = minX;
+    double maxX = std::numeric_limits<double>::lowest();
+    double maxY = maxX;
+    bool unbounded = false;
+    for (int i = 0; i < count; ++i) {
+        GpuLayer at = layer;
+        const GpuLayerPlacement &placement = layer.motionSamples.at(i);
+        at.rect = placement.rect;
+        at.rotation = placement.rotation;
+        at.pose3d = placement.pose3d;
+        at.parent = placement.parent;
+        at.hasParent = placement.hasParent;
+        at.viewProj = placement.viewProj;
+        const QMatrix4x4 m = modelMatrixFor(at, canvasSize);
+        if (i == 0)
+            first = m;
+        else if (!qFuzzyCompare(m, first))
+            moves = true;
+
+        // The quad's plane (x, y, 0, 1) to clip space (x', y', w'), with z dropped.
+        const double h[3][3] = {{m(0, 0), m(0, 1), m(0, 3)},
+                                {m(1, 0), m(1, 1), m(1, 3)},
+                                {m(3, 0), m(3, 1), m(3, 3)}};
+        const double c00 = h[1][1] * h[2][2] - h[1][2] * h[2][1];
+        const double c01 = h[1][2] * h[2][0] - h[1][0] * h[2][2];
+        const double c02 = h[1][0] * h[2][1] - h[1][1] * h[2][0];
+        const double det = h[0][0] * c00 + h[0][1] * c01 + h[0][2] * c02;
+        QMatrix3x3 inverse; // a degenerate (edge-on) placement stays zero and contributes nothing
+        inverse.fill(0.f);
+        if (std::abs(det) > 1e-12) {
+            const double k = 1.0 / det;
+            inverse(0, 0) = float(c00 * k);
+            inverse(0, 1) = float((h[0][2] * h[2][1] - h[0][1] * h[2][2]) * k);
+            inverse(0, 2) = float((h[0][1] * h[1][2] - h[0][2] * h[1][1]) * k);
+            inverse(1, 0) = float(c01 * k);
+            inverse(1, 1) = float((h[0][0] * h[2][2] - h[0][2] * h[2][0]) * k);
+            inverse(1, 2) = float((h[0][2] * h[1][0] - h[0][0] * h[1][2]) * k);
+            inverse(2, 0) = float(c02 * k);
+            inverse(2, 1) = float((h[0][1] * h[2][0] - h[0][0] * h[2][1]) * k);
+            inverse(2, 2) = float((h[0][0] * h[1][1] - h[0][1] * h[1][0]) * k);
+        }
+        inverses[size_t(i)] = inverse;
+
+        for (const QPointF corner : {QPointF(-1, -1), QPointF(1, -1), QPointF(1, 1), QPointF(-1, 1)}) {
+            const QVector4D clip = m.map(QVector4D(float(corner.x()), float(corner.y()), 0.f, 1.f));
+            if (clip.w() <= 1e-6f) {
+                unbounded = true;
+                continue;
+            }
+            const double px = (clip.x() / clip.w() + 1.0) * 0.5 * canvasSize.width();
+            const double py = (clip.y() / clip.w() + 1.0) * 0.5 * canvasSize.height();
+            minX = std::min(minX, px);
+            minY = std::min(minY, py);
+            maxX = std::max(maxX, px);
+            maxY = std::max(maxY, py);
+        }
+    }
+    if (!moves)
+        return {};
+
+    QOpenGLShaderProgram *program =
+        rt.builtinProgram(QStringLiteral("__layer_motion_blur__"), kLayerVertexShader, kMotionBlurFragShader);
+    if (!program)
+        return {};
+    GlTarget out = rt.acquireTarget(canvasSize.width(), canvasSize.height());
+    if (!out.isValid())
+        return {};
+    out.premultiplied = true;
+
+    const QRect canvasRect(QPoint(0, 0), canvasSize);
+    const QRect scissor =
+        unbounded || minX > maxX
+            ? canvasRect
+            : QRectF(QPointF(minX, minY), QPointF(maxX, maxY)).toAlignedRect().adjusted(-1, -1, 1, 1) & canvasRect;
+
+    out.fbo->bind();
+    gl->glViewport(0, 0, out.width, out.height);
+    gl->glDisable(GL_BLEND);
+    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClear(GL_COLOR_BUFFER_BIT);
+    if (!scissor.isEmpty()) {
+        gl->glEnable(GL_SCISSOR_TEST);
+        gl->glScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
+        program->bind();
+        program->setUniformValue("u_model", QMatrix4x4());
+        program->setUniformValue("u_layer", 0);
+        program->setUniformValue("u_mask", 1);
+        program->setUniformValue("u_hasMask", maskTex ? 1.f : 0.f);
+        program->setUniformValue("u_maskInvert", maskInvert);
+        program->setUniformValue("u_layerPremul", layerPremul);
+        program->setUniformValue("u_canvasSize", QVector2D(float(canvasSize.width()), float(canvasSize.height())));
+        program->setUniformValue("u_samples", count);
+        program->setUniformValueArray("u_inverse", inverses.data(), count);
+        gl->glActiveTexture(GL_TEXTURE1);
+        gl->glBindTexture(GL_TEXTURE_2D, maskTex);
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, layerTex);
+        bindQuad(rt, gl);
+        program->release();
+        gl->glDisable(GL_SCISSOR_TEST);
+    }
+    out.fbo->release();
+    return out;
+}
+
 // Draw a prepared layer target onto the canvas with transform, opacity, mask and
 // blend mode. For non-fixed-function modes the canvas is ping-ponged.
 void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas,
@@ -1462,6 +1621,23 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
             rt.releaseTarget(std::move(target));
         }
     } mipGuard{rt, gl, mipTarget};
+
+    // Motion blur averages the placements into a canvas-sized picture first, which is then drawn
+    // in place like any layer: opacity, blend mode and occlusion apply to the blurred whole.
+    if (!layer.motionSamples.isEmpty() && viewPass == ViewPass::None && !layerDepth
+        && layer.reliefDepth <= 0.f) {
+        GlTarget blurred =
+            motionBlurredLayer(rt, gl, layer, layerTex, layerPremul, maskTex, maskInvert, canvasSize);
+        if (blurred.isValid()) {
+            GpuLayer placed;
+            placed.valid = true;
+            placed.rect = QRectF(QPointF(0, 0), QSizeF(canvasSize));
+            placed.opacity = layer.opacity;
+            drawLayerOnCanvas(rt, gl, canvas, blurred, placed, blend, canvasSize, occlusion, write);
+            rt.releaseTarget(std::move(blurred));
+            return;
+        }
+    }
 
     if (isFixedFunctionBlend(blend)) {
         const bool ownDepth = layerDepth && layer.depthOcclude && canvas.hasDepth

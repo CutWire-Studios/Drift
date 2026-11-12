@@ -240,6 +240,7 @@ private slots:
     void sceneCameraMovesTheViewpoint();
     void previewSnapFollowsThePointerThroughTheCamera();
     void previewSnapLandsProjectedEdgesOnTargets();
+    void motionBlurSmearsAlongTheMove();
     void clipGizmoWorksThroughAView();
     void editorViewLooksAtTheWorld();
     void gizmoOrientationAxes();
@@ -2033,6 +2034,83 @@ void EngineTest::depthOcclusionOverridesTrackOrderWhenOptedIn()
     QVERIFY2(through.blue() > 150 && through.red() < 100,
              qPrintable(QStringLiteral("through %1,%2,%3")
                                 .arg(through.red()).arg(through.green()).arg(through.blue())));
+}
+
+void EngineTest::motionBlurSmearsAlongTheMove()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QImage white(20, 20, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+    const QString whitePath = dir.filePath(QStringLiteral("white.png"));
+    QVERIFY(white.save(whitePath));
+
+    drift::Project project;
+    project.setResolution(200, 100);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.ensureTrackIds();
+
+    // 1800 px/s: 60 px a frame, so a 180 degree shutter smears the card over 30 px.
+    drift::Clip card;
+    card.id = QStringLiteral("card");
+    card.type = drift::ClipType::Image;
+    card.path = whitePath;
+    card.timelineDuration = drift::secondsToUs(1.0);
+    card.srcOut = card.timelineDuration;
+    card.transformX.setKeyframe(0, {0.0});
+    card.transformX.setKeyframe(drift::secondsToUs(0.1), {180.0});
+    card.transformY.setKeyframe(0, {40.0});
+    card.transformW.setKeyframe(0, {20.0});
+    card.transformH.setKeyframe(0, {20.0});
+    project.tracks()[0].clips.append(card);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const drift::TimeUs moving = drift::secondsToUs(0.05); // card at x 90..110
+    const drift::TimeUs resting = drift::secondsToUs(0.5);
+    const QImage sharp = compositor.compositeAt(moving).convertToFormat(QImage::Format_RGBA8888);
+    const QImage sharpRest = compositor.compositeAt(resting).convertToFormat(QImage::Format_RGBA8888);
+
+    QVERIFY(effectDefForId(QStringLiteral("motion.blur")));
+    drift::Effect blur;
+    blur.catalogId = QStringLiteral("motion.blur");
+    project.tracks()[0].clips[0].effects.append(blur);
+    compositor.setProject(&project);
+
+    GpuScene preview;
+    QVERIFY(compositor.buildSceneAt(moving, {}, &preview));
+    QCOMPARE(preview.items.size(), 1);
+    QCOMPARE(preview.items.at(0).layer.motionSamples.size(), 8);
+    FrameCompositor::RenderOptions exporting;
+    exporting.exporting = true;
+    GpuScene exported;
+    QVERIFY(compositor.buildSceneAt(moving, exporting, &exported));
+    QCOMPARE(exported.items.at(0).layer.motionSamples.size(), 16);
+    // Centred on the frame: the first and last samples are a quarter frame either side.
+    QVERIFY(std::abs(exported.items.at(0).layer.motionSamples.first().rect.x() - 75.0) < 0.5);
+    QVERIFY(std::abs(exported.items.at(0).layer.motionSamples.last().rect.x() - 105.0) < 0.5);
+
+    const QImage blurred = compositor.compositeAt(moving).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY(!sharp.isNull() && !blurred.isNull());
+    const auto lum = [](const QImage &img, int x) { return img.pixelColor(x, 50).red(); };
+    QCOMPARE(lum(sharp, 80), 0);
+    QCOMPARE(lum(sharp, 120), 0);
+    QCOMPARE(lum(sharp, 100), 255);
+    // Behind and ahead of the card the smear shows; the middle is no longer solid.
+    QVERIFY2(lum(blurred, 80) > 20, qPrintable(QString::number(lum(blurred, 80))));
+    QVERIFY2(lum(blurred, 120) > 20, qPrintable(QString::number(lum(blurred, 120))));
+    QVERIFY2(lum(blurred, 100) < 220, qPrintable(QString::number(lum(blurred, 100))));
+    // Past the shutter's reach nothing is touched.
+    QCOMPARE(lum(blurred, 60), 0);
+    QCOMPARE(lum(blurred, 140), 0);
+
+    // At rest the samples coincide and the layer draws exactly as without blur.
+    QCOMPARE(compositor.compositeAt(resting).convertToFormat(QImage::Format_RGBA8888), sharpRest);
 }
 
 void EngineTest::clipGizmoWorksThroughAView()
