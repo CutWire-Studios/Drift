@@ -2007,10 +2007,15 @@ void AppController::moveClip(int trackIndex, int clipIndex, double newStart)
         setLastMessage(tr("A clip can't completely cover another"), QStringLiteral("warning"));
         return;
     }
-    m_undoStack.beginMacro(tr("Clip moved"));
+    // Inside an MCP batch the push is suspended, and an empty macro would still land on the stack
+    // as a step that restores nothing.
+    const bool macro = !(m_mcpController && m_mcpController->undoSuspended());
+    if (macro)
+        m_undoStack.beginMacro(tr("Clip moved"));
     pushProjectEdit(before, tr("Clip moved"));
     autoCrossfadeNewOverlaps(before);
-    m_undoStack.endMacro();
+    if (macro)
+        m_undoStack.endMacro();
     finishEdit(tr("Clip moved"));
 }
 
@@ -4004,9 +4009,14 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
     m_selectedTransitionTrack = -1;
     m_selectedTransitionLeftClip = -1;
 
-    m_undoStack.beginMacro(tr("Clips moved"));
+    // Inside an MCP batch the push is suspended, and an empty macro would still land on the stack
+    // as a step that restores nothing.
+    const bool macro = !(m_mcpController && m_mcpController->undoSuspended());
+    if (macro)
+        m_undoStack.beginMacro(tr("Clips moved"));
     pushProjectEdit(before, tr("Clips moved"));
     autoCrossfadeNewOverlaps(before);
-    m_undoStack.endMacro();
+    if (macro)
+        m_undoStack.endMacro();
     finishEdit(tr("Clips moved"));
 }

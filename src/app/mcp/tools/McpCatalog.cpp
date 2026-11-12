@@ -550,7 +550,8 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("paths"),
                          arrayProp({{QStringLiteral("type"), QStringLiteral("string")}},
                                    QStringLiteral("Absolute file paths from your own filesystem search"))},
-                        {QStringLiteral("folder"), stringProp(QStringLiteral("Bin folder id (or unique name) new files land in; \"\" for the bin root. Default: the folder the user is viewing. Paths already in the bin stay where they are"))}},
+                        {QStringLiteral("folder"), stringProp(QStringLiteral("Bin folder id (or unique name) new files land in; \"\" for the bin root. Default: the folder the user is viewing. Paths already in the bin stay where they are"))},
+                        {QStringLiteral("previews"), propWithDefault(boolProp(QStringLiteral("false: probe only; video and audio get no thumbnail or filmstrip until something needs one (the bin showing the file, or place_clip), which saves decoding on big scripted imports")), true)}},
                        {QStringLiteral("paths")}) },
         { "list_assets", "media", "See what is in the bin",
           "List imported assets. Returns {assets:[{index, id, name, kind, dur, w, h, folderId, proxy?}]}; "
@@ -572,6 +573,28 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("dry_run"),
                          boolProp(QStringLiteral("List what would go without removing it"))}}),
           false, true },
+        { "list_missing_media", "media", "Find media whose file is gone",
+          "Returns {missing:[{asset, name, path, clips}], n}: assets whose file isn't there any more "
+          "(moved, renamed, or on a drive this session can't see), with how many clips use each. Fix "
+          "them with relink_media.",
+          objectSchema({}), true, false, true },
+        { "relink_media", "media", "Point moved media at its new place",
+          "Relinks missing media in one undo step. {from, to}: a folder or drive that moved, e.g. "
+          "{from:\"/mnt/hd/VIDEOS\", to:\"/mnt/x/VIDEOS\"} (from may be another platform's path, e.g. "
+          "\"D:/footage\"): each missing file under from is pointed at the same place under to (assets, "
+          "clips, masks, transcripts, effect files). {search_dir}: finds each missing asset's file by name "
+          "under that folder; missing files of one name it can't tell apart (no known size, or the same "
+          "one) aren't guessed, and a search cut short at 200,000 files relinks nothing. A file is only "
+          "relinked when it's there, isn't another asset's, and is the "
+          "same size as before (when known); files still in place aren't touched. Returns {relinked:"
+          "[{from, to}], n (paths), matched (from/to only: paths under from), still_missing:[{path, "
+          "reason, tried?, asset?, candidates?}], still_missing_n, truncated?}; lists cut at 200. Error "
+          "locked when a locked track holds one of the clips (a dry_run can't foresee that). "
+          "dry_run:true reports without changing anything.",
+          objectSchema({{QStringLiteral("from"), stringProp(QStringLiteral("Old folder or drive (absolute)"))},
+                        {QStringLiteral("to"), stringProp(QStringLiteral("New folder or drive (absolute)"))},
+                        {QStringLiteral("search_dir"), stringProp(QStringLiteral("Folder to search for missing files by name"))},
+                        {QStringLiteral("dry_run"), boolProp(QStringLiteral("Report only"))}}) },
         { "create_proxies", "media", "Make preview proxies for footage",
           "Queue preview proxies (small, fast-decoding copies preview reads instead of the original; "
           "export always reads the original). Pick assets, the assets of clips, all:true (every video "
@@ -709,12 +732,16 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))}},
                        {QStringLiteral("track")}),
           false, true },
-        { "set_track", "timeline", "Mute, hide or lock a lane",
-          "Set track muted/hidden/locked.",
+        { "set_track", "timeline", "Mute, hide, lock or keep a lane out of export",
+          "Set track muted/hidden/locked. exclude_from_export:true makes it a review track: still "
+          "shown and heard while editing, but left out of export_video and flatten_composite (e.g. a "
+          "subtitle lane with the VO script to read along); bakes overlapping it aren't reused. Refused "
+          "on a transform or camera layer. Undoable.",
           objectSchema(mergeProps({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                                    {QStringLiteral("muted"), boolProp(QStringLiteral("Mute"))},
                                    {QStringLiteral("hidden"), boolProp(QStringLiteral("Hide from composite"))},
-                                   {QStringLiteral("locked"), boolProp(QStringLiteral("Lock against edits"))}},
+                                   {QStringLiteral("locked"), boolProp(QStringLiteral("Lock against edits"))},
+                                   {QStringLiteral("exclude_from_export"), boolProp(QStringLiteral("Keep this track out of export (a review track)"))}},
                                   {}),
                        {QStringLiteral("track")}) },
         { "place_clip", "timeline", "Put media on the timeline",
@@ -1192,6 +1219,41 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("discard"),
                          boolProp(QStringLiteral("Quit even with unsaved changes, losing them"))}}),
           false, true },
+        { "get_performance", "project", "Read playback and cache settings",
+          "The global settings that decide how much is decoded and kept (Settings › Performance and "
+          "Settings › Preview). Returns {settings:{frame_cache_mib (0 = automatic), preview_quality, "
+          "decode_mode, read_ahead_ms, continuous_read_ahead, stale_frame_lag_ms, target_pool_max, "
+          "target_pool_mib, upload_cache_max, upload_cache_mib, reader_history_mib, "
+          "prefer_hardware_export}, frame_cache_budget_mib (what the frame cache is actually capped "
+          "at, automatic resolved), decode_modes:[ids decode_mode takes on this machine]}.",
+          objectSchema({}), true, false, true },
+        { "set_performance", "project", "Tune playback and cache settings",
+          "Change the global settings get_performance reports; only supplied keys change. They are "
+          "the user's own settings, kept across sessions: change them for a round, then pass the "
+          "reply's previous back to restore them. frame_cache_mib caps the decoded frame cache (0 = "
+          "automatic, an eighth of RAM (a sixteenth on Android), at least 128; else 128–8192); clear_cache frees what's cached now. "
+          "preview_quality auto|full|half|quarter|eighth. read_ahead_ms (0–5000) is how much each "
+          "clip decodes ahead during playback. reset:true first puts the Performance page back to its "
+          "defaults (not preview_quality or decode_mode). Out-of-range values are refused, and "
+          "nothing changes. Not undoable. Returns get_performance's reply plus previous:{key: old "
+          "value} for each key that changed.",
+          objectSchema({{QStringLiteral("frame_cache_mib"), integerProp(QStringLiteral("Decoded frame cache cap in MiB; 0 = automatic, else 128–8192"))},
+                        {QStringLiteral("preview_quality"),
+                         enumProp(QStringLiteral("Preview resolution"),
+                                  {QStringLiteral("auto"), QStringLiteral("full"), QStringLiteral("half"),
+                                   QStringLiteral("quarter"), QStringLiteral("eighth")})},
+                        {QStringLiteral("decode_mode"), stringProp(QStringLiteral("auto, software, or a hw: id from get_performance's decode_modes"))},
+                        {QStringLiteral("read_ahead_ms"), integerProp(QStringLiteral("Decode-ahead per clip during playback, 0–5000"))},
+                        {QStringLiteral("continuous_read_ahead"), boolProp(QStringLiteral("Keep decoding until the read-ahead window is full; off decodes one frame ahead per frame shown"))},
+                        {QStringLiteral("stale_frame_lag_ms"), integerProp(QStringLiteral("Drop preview frames this late, 0–1000 (0 never)"))},
+                        {QStringLiteral("target_pool_max"), integerProp(QStringLiteral("Render targets kept, 4–64"))},
+                        {QStringLiteral("target_pool_mib"), integerProp(QStringLiteral("Render target memory cap, 0–4096 (0 none)"))},
+                        {QStringLiteral("upload_cache_max"), integerProp(QStringLiteral("GPU uploads kept, 8–96"))},
+                        {QStringLiteral("upload_cache_mib"), integerProp(QStringLiteral("GPU upload memory cap, 0–4096 (0 none)"))},
+                        {QStringLiteral("reader_history_mib"), integerProp(QStringLiteral("Decoded history per reader, 0–1024 (0 = frame count only)"))},
+                        {QStringLiteral("prefer_hardware_export"), boolProp(QStringLiteral("Export with the GPU encoder when there is one"))},
+                        {QStringLiteral("reset"), boolProp(QStringLiteral("Put the Performance page back to its defaults first"))}}),
+          false, false, true },
         { "memory_stats", "project", "Where Drift's memory goes",
           "Returns {process:{rss_bytes, peak_rss_bytes} (-1 where the platform does not say), "
           "frame_cache:{bytes, frames, gpu_frames, budget_bytes, setting_mib} (decoded frames the "
@@ -1238,6 +1300,32 @@ const QList<Op> &ops()
         { "export_status", "project", "Check an in-flight encode",
           "Returns {busy, progress 0..1, message}. Same data as inspect().export.",
           objectSchema({}), true, false, true },
+        { "wait_idle", "project", "Wait for background work to finish",
+          "Blocks until background work settles or `timeout` seconds pass (default 30, max 600), then "
+          "returns {idle, waited, busy?, suspended?}: busy is what was still running, {kind: count} "
+          "(jobs: by job kind); suspended lists filmstrips/waveforms paused by playback, which don't "
+          "hold the wait. kinds limits the wait; default all: probe, thumbnails, proxy, filmstrips, "
+          "waveforms, export, project (save, load, package, collect), subtitles, reverse, scenes, "
+          "beats, stabilize, segmentation, denoise, faces, tracking, tts, align, bake, source_lab, "
+          "loudness, bin_edit, downloads (add-ons, updates), jobs, and the job kinds transcribe, "
+          "diarize, depth, restore, sfx. Other calls are served while it waits. Not inside apply.",
+          objectSchema({{QStringLiteral("timeout"), numberProp(QStringLiteral("Seconds to wait at most"), 0, 600)},
+                        {QStringLiteral("kinds"), arrayProp(stringProp(QStringLiteral("Kind of work")),
+                                                            QStringLiteral("Only wait for these"))}}),
+          true, false, true },
+
+        { "validate_project", "project", "Check the project is sound",
+          "Read-only health check, quick enough to run after every round. Returns {problems:[{kind, "
+          "message, clip?, asset?, track?, sequence?}], n, counts?:{kind: n}, truncated?, "
+          "open_sequence?}; rows without sequence are on the main timeline. Kinds: missing_media "
+          "(file gone; clips: how many use the asset), missing_asset (a clip's asset isn't in the project), "
+          "asset_mismatch (a clip plays another file than its asset), range_past_media (out point "
+          "past the end of its media), overlap (overlap off; crossfades don't count), "
+          "orphaned_effect (pinned to a clip that's gone), empty_lane, broken_link (A/V link with "
+          "one side missing), dangling_transition. overlap and broken_link are advisory. Covers "
+          "every composite's timeline too (sequence). Fixing is up to you.",
+          objectSchema({{QStringLiteral("limit"), integerProp(QStringLiteral("Rows at most (default 200)"), 1, 1000)}}),
+          true, false, true },
 
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
@@ -1560,7 +1648,7 @@ QStringList undoExemptOps()
         QStringLiteral("set_snap"),            QStringLiteral("set_loop_work_area"),
         QStringLiteral("export_video"),
         QStringLiteral("save_project"),        QStringLiteral("quit_instance"),
-        QStringLiteral("clear_cache"),
+        QStringLiteral("clear_cache"),         QStringLiteral("set_performance"),
         QStringLiteral("create_proxies"),      QStringLiteral("remove_proxies"),
         QStringLiteral("cancel_proxies"),
         QStringLiteral("set_theme"),        QStringLiteral("set_preview_view"),
@@ -1638,14 +1726,20 @@ QString agentGuideText()
         "  selection.\n"
         "- Clip overlap is off by default (place/move snap to the next gap; the reply reports\n"
         "  requested vs placed).\n"
+        "- An op that changes the timeline adds geometry:[{id,track,start,dur,in,out}], the final\n"
+        "  place of every clip it moved, trimmed or created (ripple followers and split pieces too),\n"
+        "  and removed_clips:[ids], so no inspect is needed after it. A batch lists them once, on the\n"
+        "  apply reply. Over 100 rows: geometry_truncated, geometry_total.\n"
         "- Every op returns {ok:true, …} or {ok:false, error:<code>, detail:<text>}. Codes: bad_args,\n"
         "  not_found, type_mismatch (also: wrong clip kind for the op), unknown_op, unknown_toolbox,\n"
-        "  wrong_endpoint, wrong_toolbox, apply_failed, import_failed, import_timeout, export_busy,\n"
+        "  wrong_endpoint, wrong_toolbox, apply_failed, dry_run_failed, import_failed, import_timeout, export_busy,\n"
         "  export_failed, export_timeout, capture_failed, conflict, unsupported (no vector renderer\n"
         "  in this build), market_unavailable, market_error, rate_limited, app_too_old, quota_exceeded,\n"
         "  install_timeout, download_failed,\n"
         "  exists, in_use, not_user_effect, bad_manifest, shader_compile_failed, io_error.\n"
         "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
+        "  apply({ops, atomic:true}) puts the project back instead (rolled_back:true); it refuses ops\n"
+        "  that reach outside the project. apply({ops, dry_run:true}) runs nothing and lists problems.\n"
         "- Toolbox op args are validated against the schema: bad_args (missing/enum/range),\n"
         "  type_mismatch; unknown keys come back as ignored:[…]. The homepage tools (catalog,\n"
         "  toolbox, search, inspect, apply, capture, frames, activity) are checked too and reject\n"
@@ -1665,6 +1759,9 @@ QString agentGuideText()
         "bytes hash to the same value; restore_snapshot loads a disk copy only if it has fallen off\n"
         "the stack (and resets Origin).\n"
         "\n"
+        "wait_idle({timeout, kinds?}) waits for all background work (probes, thumbnails, proxies,\n"
+        "filmstrips, waveforms and every job below) and returns {idle, waited, busy?, suspended?}.\n"
+        "Call it directly, not inside apply.\n"
         "Async jobs return {started:true} immediately. Poll these fields, all of which need\n"
         "inspect({detail:true}) except export:\n"
         "- export_video      -> export.{active,progress}      (or export_status)\n"
@@ -1997,7 +2094,7 @@ QJsonArray homepageTools()
         toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("apply"),
-        QStringLiteral("When: Mutate. Runs ops in order and stops at the first failure. NOT atomic — ops before the failure stay applied; the reply is {ok:false, error:\"apply_failed\", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops before it]}. On success: {ok:true, n, done}. Successful mutations collapse into a single undo step labelled from the op names (with history:false, into the newest existing step instead), except the ops listed in catalog.limitations (import, save, playback, export, view-state toggles including set_beat_layers), which undo cannot revert. Only toolbox ops go here — catalog, toolbox, search, inspect, capture, frames, activity, and apply itself return unknown_op, so call those directly. Args are validated against the op schema (required, type, enum, min/max); unknown keys are reported back as ignored:[…]. An ops array cannot reference an id produced earlier in the same batch — end the batch after set_speed_curve or any op that mints a clip id you need next."),
+        QStringLiteral("When: Mutate. Runs ops in order and stops at the first failure. Not atomic unless atomic:true — ops before the failure stay applied; the reply is {ok:false, error:\"apply_failed\", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops before it]}. On success: {ok:true, n, done}. Successful mutations collapse into a single undo step labelled from the op names (with history:false, into the newest existing step instead), except the ops listed in catalog.limitations (import, save, playback, export, view-state toggles including set_beat_layers), which undo cannot revert. Only toolbox ops go here — catalog, toolbox, search, inspect, capture, frames, activity, and apply itself return unknown_op, so call those directly. Args are validated against the op schema (required, type, enum, min/max); unknown keys are reported back as ignored:[…]. An ops array cannot reference an id produced earlier in the same batch — end the batch after set_speed_curve or any op that mints a clip id you need next."),
         objectSchema({{QStringLiteral("ops"),
                        arrayProp(objectSchema({{QStringLiteral("tool"), stringProp(QStringLiteral("Toolbox op name, e.g. place_clip"))},
                                                {QStringLiteral("args"),
@@ -2008,7 +2105,19 @@ QJsonArray homepageTools()
                       {QStringLiteral("history"),
                        propWithDefault(boolProp(QStringLiteral(
                            "false: no undo step of its own, for scripted batches. The changes join the newest "
-                           "undo step (undone and redone with it), and undone steps are dropped")), true)}},
+                           "undo step (undone and redone with it), and undone steps are dropped")), true)},
+                      {QStringLiteral("atomic"),
+                       propWithDefault(boolProp(QStringLiteral(
+                           "true: all or nothing. If an op fails, the project is put back as it was (no undo step, "
+                           "rolled_back:true; selection and playhead too). Only project edits are allowed: ops whose "
+                           "effects reach outside it (imports, saves, exports, files, clipboards, presets, settings, "
+                           "history, playback, background work, another project) are refused up front")), false)},
+                      {QStringLiteral("dry_run"),
+                       propWithDefault(boolProp(QStringLiteral(
+                           "true: run nothing; check each op's args and the clips, assets and tracks it names "
+                           "(not each op's own rules, such as move_clip needing one of at/before/after). "
+                           "{ok:true, dry_run, n}, or {ok:false, error:\"dry_run_failed\", problems:[{i, tool, error, detail}]}. "
+                           "An id an earlier op would create reads as not_found")), false)}},
                      {QStringLiteral("ops")})));
     tools.append(toolDef(
         QStringLiteral("capture"),

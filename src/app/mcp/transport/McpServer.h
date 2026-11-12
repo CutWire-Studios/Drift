@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QAtomicInt>
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QObject>
@@ -80,6 +81,9 @@ private:
     // serving only stdio would otherwise unregister a GUI editor running alongside it.
     bool m_wroteSessionFile = false;
     bool m_running = false;
+    // Set by stop() before it waits for the HTTP thread: a request that thread is waiting on
+    // the main thread for is abandoned rather than holding stop() up forever.
+    std::shared_ptr<QAtomicInt> m_stopping = std::make_shared<QAtomicInt>(0);
 };
 
 } // namespace drift::mcp

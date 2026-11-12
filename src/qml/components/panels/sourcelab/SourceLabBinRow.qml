@@ -22,6 +22,11 @@ Rectangle {
 
     property string liveThumbnailPath: root.asset.thumbnailPath
     property int thumbnailRevision: 0
+    // An asset imported without previews gets its thumbnail when a row shows it.
+    Component.onCompleted: {
+        if (root.liveThumbnailPath === "")
+            AssetLibrary.ensurePreview(AssetLibrary.indexOfId(root.assetId))
+    }
 
     signal pressed()
 

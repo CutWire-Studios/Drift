@@ -41,6 +41,8 @@ public:
     // paths are remapped.
     void migrateLegacyClips();
     double progressFor(const QString &clipId) const { return m_progress.value(clipId, 0.0); }
+    // Clips being stabilized right now: analysing, or planning the keyframes after it.
+    int activeCount() const { return int(m_jobs.size() + m_planning.size()); }
     QString statusFor(const QString &clipId) const { return m_status.value(clipId); }
 
 private:
@@ -54,6 +56,8 @@ private:
 
     AppController *m_app = nullptr;
     QMap<QString, QSharedPointer<QAtomicInt>> m_jobs;
+    // Clips whose keyframes are being planned on a worker (no analysis job left by then).
+    QSet<QString> m_planning;
     QMap<QString, double> m_progress;
     QMap<QString, QString> m_status;
     QMap<QString, qint64> m_lastProgressEmit;

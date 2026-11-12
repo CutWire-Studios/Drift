@@ -11,6 +11,7 @@
 #include <QList>
 #include <QJsonObject>
 #include <QObject>
+#include <functional>
 #include <QSet>
 #include <QString>
 #include <QStringList>
@@ -183,6 +184,10 @@ public:
     const QSet<QString> &embeddedSources() const { return m_embeddedSources; }
     void remapProjectPaths(const QHash<QString, QString> &remap);
     static void remapPaths(drift::Project &project, const QHash<QString, QString> &remap);
+    // The same walk over every path that names a file (assets, clips, masks, transcripts, face
+    // tracks, effect files, ...): `map` returns a path's new form, or nothing to leave it.
+    using PathMap = std::function<std::optional<QString>(const QString &)>;
+    static void remapPaths(drift::Project &project, const PathMap &map);
     void rehydrateMissingSources();
     void reportMissingCatalogEntries();
     void sweepExtractionDirs();

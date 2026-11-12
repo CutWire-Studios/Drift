@@ -73,6 +73,19 @@ public:
     QString error() const;
     QString cursorSnippet() const;
     QString claudeCommand() const;
+    // list_missing_media: assets whose file is gone, with how many clips use each.
+    QJsonObject missingMedia() const;
+    // relink_media({from, to} | {search_dir}, dry_run?): see the catalog entry.
+    QJsonObject relinkMedia(const QJsonObject &args);
+    // Background work still running, for wait_idle: {kind: how many} for each kind in `only`
+    // (every kind when empty) that is busy; `jobs` is {job kind: how many}. Empty when idle.
+    // Filmstrips and waveforms paused by playback can't drain: they go to `suspended` instead.
+    QJsonObject backgroundWork(const QStringList &only = {}, QStringList *suspended = nullptr) const;
+    static const QStringList &backgroundKinds();
+    // validate_project: what's wrong with the project, read-only. {problems:[{kind, message,
+    // clip?, asset?, track?, sequence?, ...}], n, counts?:{kind: n}, truncated?, open_sequence?},
+    // at most `limit` rows (n counts them all).
+    QJsonObject validateProject(int limit = 200) const;
     QString stdioSnippet() const;
     Q_INVOKABLE void copyCursorSnippet();
     Q_INVOKABLE void copyClaudeCommand();
@@ -208,6 +221,15 @@ public:
     // Whether the open batch has changed the project: an edit went through finishEdit, or the
     // saved content differs from the batch's start. Ops can succeed without either (renaming a
     // clip to its own name), and such a batch should not leave an undo step that undoes nothing.
+    // apply({atomic:true}): taken after beginBatch, before the batch's first op. rollbackBatch
+    // then puts the project back as beginBatch found it, with the selection, playhead, unsaved
+    // flag and beat analysis, and drops the point; endBatch drops it as well.
+    void setRollbackPoint();
+    void rollbackBatch();
+    // An atomic batch can't start while another edit is open: a batch or edit group (rolling back
+    // would reach its start), a preview drag (its edit would lose its undo step) or a multicam
+    // session (an edit ends it, and its cuts live outside the project).
+    bool editOpen() const;
     bool batchChangedProject() const;
     QJsonObject listHistory(int limit = 20) const;
     QJsonObject undoTo(int index, const QString &hash);
@@ -215,6 +237,10 @@ public:
     // jmn8718/Drift#32: where the memory goes, and dropping what can be rebuilt.
     QJsonObject memoryStats() const;
     QJsonObject clearCache();
+    // get_performance / set_performance: the Settings › Performance knobs, preview quality and
+    // decode mode, with what the automatic frame cache resolves to.
+    QJsonObject performance() const;
+    QJsonObject setPerformance(const QJsonObject &given);
     // Undo history housekeeping (jmn8718/Drift#30).
     QJsonObject clearHistory(int keepLast);
     // Unset optionals leave that part of the project's setting as it is.
@@ -376,6 +402,13 @@ public:
     QJsonObject setAcceleration(const QString &variant);
 
 signals:
+    // Access is being turned off or its token rotated while agent calls are still open. Waits
+    // that serve the event loop (wait_idle) end early: the change runs once the calls return.
+    void transportStopping();
+public:
+    // A stop or token rotation waiting for open agent calls to return (see transportStopping).
+    bool transportChangePending() const { return m_pendingStop || m_pendingRotate; }
+signals:
     void runningChanged();
     void errorChanged();
     void startOnLaunchChanged();
@@ -430,6 +463,12 @@ private:
         int loopLevel = 0;
         int pausedAtStart = 0; // a call that starts inside a paused pump is still the agent's
     };
+    // setEnabled(false) / rotateToken during an agent call: done once the last call returns.
+    // Stopping the HTTP transport waits for its thread, which waits for the call in progress on
+    // this one, so doing it from inside that call (a wait's event loop) would deadlock.
+    bool m_pendingStop = false;
+    bool m_pendingRotate = false;
+    void applyPendingTransportChange();
     QList<AgentCallFrame> m_agentCalls;
     // One finished edit. Its diff is worked out when `changes` reads it, from the project as it was
     // after the previous entry (or the feed's start) to `state`; a snapshot costs a project copy,
@@ -461,6 +500,8 @@ private:
     int m_agentCallsPaused = 0;
     QString m_pendingWarning;
     drift::Project m_batchBefore;
+    struct RollbackPoint;
+    std::unique_ptr<RollbackPoint> m_rollback;
     int m_batchRevision = 0;
     int m_editRevision = 0;
     mutable QHash<QString, QPair<int, int>> m_clipIndex;

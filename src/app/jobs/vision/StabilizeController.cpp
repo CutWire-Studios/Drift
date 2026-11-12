@@ -203,7 +203,9 @@ void StabilizeController::run(int trackIndex, int clipIndex)
     }
 
     const QString clipId = clip.id;
-    if (clip.stabilizing || m_jobs.contains(clipId)) {
+    // A keyframe plan still running counts too: a second run would share its planning entry,
+    // and the first to finish would clear it while the other still runs.
+    if (clip.stabilizing || m_jobs.contains(clipId) || m_planning.contains(clipId)) {
         m_app->setLastMessage(tr("Stabilization already in progress for this clip"), QStringLiteral("warning"));
         return;
     }
@@ -311,6 +313,7 @@ void StabilizeController::run(int trackIndex, int clipIndex)
         const int smoothing = clipCopy.stabilizeSmoothing;
         const bool tripod = clipCopy.stabilizeTripod;
 
+        m_planning.insert(clipId);
         (void)QtConcurrent::run([this, clipId, trfPath, rangeIn, clipCopy, fps, scaleX, scaleY,
                                  smoothing, tripod, finishStabilizeFailure]() {
             const drift::StabilizePlan plan = drift::planStabilizeKeyframes(
@@ -318,6 +321,7 @@ void StabilizeController::run(int trackIndex, int clipIndex)
             QMetaObject::invokeMethod(
                 this,
                 [this, clipId, plan, finishStabilizeFailure]() {
+                    m_planning.remove(clipId);
                     if (m_cancelRequested.contains(clipId)) {
                         finishStabilizeFailure(tr("Stabilization cancelled."), QStringLiteral("info"));
                         return;

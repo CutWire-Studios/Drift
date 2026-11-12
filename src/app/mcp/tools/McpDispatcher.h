@@ -20,7 +20,8 @@ public:
     QJsonObject inspect(const QJsonObject &args) const;
     QJsonObject apply(const QJsonObject &args);
     // Validates against the op schema, then runs; appends ignored:[unknown keys] on success.
-    QJsonObject applyOne(const QString &tool, const QJsonObject &args);
+    // reportGeometry false: a batch's own ops, whose changes the batch reports once.
+    QJsonObject applyOne(const QString &tool, const QJsonObject &args, bool reportGeometry = true);
     QJsonObject applyOneUnchecked(const QString &tool, const QJsonObject &args);
     QJsonObject applyOneExtended(const QString &tool, const QJsonObject &args);
     QJsonObject capture(const QJsonObject &args);
@@ -56,6 +57,10 @@ private:
     // stale (refused, or still running), inserting each list into `result` when non-empty.
     void addRefreshOutcome(QJsonObject &result, const QStringList &refreshed);
     bool isUndoable(const QString &tool) const;
+    // applyOne's checks before an op runs: known op, args against its schema (ignored keys go to
+    // `ignored`), clip required where index means something else. Empty when the op may run.
+    QJsonObject checkOp(const QString &tool, QJsonObject *args, QStringList *ignored) const;
+    QJsonObject dryRunOp(const QString &tool, const QJsonObject &args) const;
     void moveClipToRequested(const ClipRef &ref, double at);
 
     QJsonObject opImportMedia(const QJsonObject &args);
@@ -118,6 +123,7 @@ private:
     QJsonObject opListExportOptions() const;
     QJsonObject opExportVideo(const QJsonObject &args);
     QJsonObject opExportStatus() const;
+    QJsonObject opWaitIdle(const QJsonObject &args);
     QJsonObject opExport(const QJsonObject &args);
     QJsonObject opListAnimatedProperties(const QJsonObject &args) const;
     QJsonObject opListKeyframes(const QJsonObject &args) const;

@@ -17,6 +17,7 @@ Item {
     readonly property bool trackMuted: column.tracks[index].muted === true
     readonly property bool trackHidden: column.tracks[index].hidden === true
     readonly property bool trackLocked: column.tracks[index].locked === true
+    readonly property bool trackExcludedFromExport: column.tracks[index].excludeFromExport === true
     readonly property bool trackSolo: column.tracks[index].solo === true
     readonly property int clipDisplay: column.tracks[index].clipDisplay !== undefined
                                        ? column.tracks[index].clipDisplay : 1

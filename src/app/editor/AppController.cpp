@@ -661,6 +661,8 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     if (m_assetLibrary) {
         connect(m_assetLibrary, &AssetLibrary::assetMetadataChanged, this,
                 &AppController::editCapabilitiesChanged);
+        // A clip placed before its asset's preview existed just got it: redraw its filmstrip.
+        connect(m_assetLibrary, &AssetLibrary::clipPreviewsFilled, this, &AppController::notifyTracksChanged);
     }
 
     connect(&m_filmstripTiles, &FilmstripTileCache::tileReady, this,
@@ -712,33 +714,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::undoHistoryChanged);
     connect(&m_undoStack, &QUndoStack::undoTextChanged, this, &AppController::undoHistoryChanged);
     connect(&m_undoStack, &QUndoStack::redoTextChanged, this, &AppController::undoHistoryChanged);
-    connect(&m_undoStack, &QUndoStack::indexChanged, this, [this] {
-        // Undo/redo swaps the whole project, including the asset table the
-        // media bin reads through; without this an undone removal leaves the
-        // model with a stale row count.
-        if (m_assetLibrary)
-            m_assetLibrary->syncToProject();
-        m_bin->folderModel()->syncToProject();
-        m_sourceLab->refresh();
-        // An undo/redo can restore a project state where the folder currently being viewed no
-        // longer exists (its creation was undone) — back the viewer out to root rather than
-        // leaving it pointed at nothing.
-        if (!m_bin->currentFolderId().isEmpty() && !m_project.binFolder(m_bin->currentFolderId()))
-            m_bin->setCurrentFolderId(QString());
-        restoreSelectionClipIds();
-        normalizeSelection();
-        reconcileSequenceTabs();
-        m_projectFile->setDirty(true);
-        emit bookmarksChanged();
-        emit workAreaChanged();
-        emit m_projectFile->projectNameChanged();
-        emit m_projectFile->backgroundChanged();
-        // The timeline and selection refresh is the expensive part. An edit's own push leaves it
-        // to finishEdit, which sends it anyway; undo and redo send it here.
-        m_undoRefreshOwed = true;
-        if (!m_quietUndoPush)
-            settleUndoRefresh();
-    });
+    connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::syncAfterProjectSwap);
 
     m_audioOutputDeviceId =
         QSettings().value(QStringLiteral("audio/outputDeviceId")).toString();
@@ -1121,6 +1097,7 @@ QVariantList AppController::tracks() const
             {QStringLiteral("transitions"), transitions},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
+            {QStringLiteral("excludeFromExport"), track.excludeFromExport},
             {QStringLiteral("solo"), track.solo},
             {QStringLiteral("locked"), track.locked},
             {QStringLiteral("volume"), track.volume},
@@ -1137,4 +1114,31 @@ QVariantList AppController::tracks() const
     return m_tracksCache;
 }
 
-
+void AppController::syncAfterProjectSwap()
+{
+    // Undo/redo swaps the whole project, including the asset table the
+    // media bin reads through; without this an undone removal leaves the
+    // model with a stale row count.
+    if (m_assetLibrary)
+        m_assetLibrary->syncToProject();
+    m_bin->folderModel()->syncToProject();
+    m_sourceLab->refresh();
+    // An undo/redo can restore a project state where the folder currently being viewed no
+    // longer exists (its creation was undone) — back the viewer out to root rather than
+    // leaving it pointed at nothing.
+    if (!m_bin->currentFolderId().isEmpty() && !m_project.binFolder(m_bin->currentFolderId()))
+        m_bin->setCurrentFolderId(QString());
+    restoreSelectionClipIds();
+    normalizeSelection();
+    reconcileSequenceTabs();
+    m_projectFile->setDirty(true);
+    emit bookmarksChanged();
+    emit workAreaChanged();
+    emit m_projectFile->projectNameChanged();
+    emit m_projectFile->backgroundChanged();
+    // The timeline and selection refresh is the expensive part. An edit's own push leaves it
+    // to finishEdit, which sends it anyway; undo and redo send it here.
+    m_undoRefreshOwed = true;
+    if (!m_quietUndoPush)
+        settleUndoRefresh();
+}

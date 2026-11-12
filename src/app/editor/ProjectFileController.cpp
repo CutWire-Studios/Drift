@@ -1598,11 +1598,23 @@ void ProjectFileController::remapPaths(drift::Project &project, const QHash<QStr
 {
     if (remap.isEmpty())
         return;
-    const auto repoint = [&remap](QString &path) {
+    remapPaths(project, [&remap](const QString &path) -> std::optional<QString> {
         const auto it = remap.constFind(path);
         if (it == remap.constEnd())
+            return std::nullopt;
+        return it.value();
+    });
+}
+
+void ProjectFileController::remapPaths(drift::Project &project, const PathMap &map)
+{
+    const auto repoint = [&map](QString &path) {
+        if (path.isEmpty())
             return false;
-        path = it.value();
+        const std::optional<QString> to = map(path);
+        if (!to || *to == path)
+            return false;
+        path = *to;
         return true;
     };
 

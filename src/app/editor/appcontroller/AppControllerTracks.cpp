@@ -278,6 +278,26 @@ bool AppController::trackHidden(int trackIndex) const
     return m_project.tracks().at(trackIndex).hidden;
 }
 
+void AppController::setTrackExcludedFromExport(int trackIndex, bool excluded)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (m_project.tracks()[trackIndex].excludeFromExport == excluded)
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].excludeFromExport = excluded;
+    pushProjectEdit(before, tr("Exclude from export"));
+    finishEdit(excluded ? tr("Track left out of export") : tr("Track included in export"));
+}
+
+bool AppController::trackExcludedFromExport(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    return m_project.tracks().at(trackIndex).excludeFromExport;
+}
+
 void AppController::setTrackSolo(int trackIndex, bool solo)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -2439,6 +2459,27 @@ void AppController::clearBeatAnalysis()
     // would mean a full mix render on every clip nudge.
     m_beatGridVisible = false;
     m_onsetsVisible = false;
+    emit beatAnalysisChanged();
+}
+
+AppController::BeatState AppController::beatState() const
+{
+    return {m_beatAnalysisRaw, m_beatAnalysis, m_beatSnapTargets, m_beatAudioFingerprint, m_beatGridVisible,
+            m_onsetsVisible};
+}
+
+void AppController::restoreBeatState(const BeatState &state)
+{
+    // A newer analysis started since wins; so does one still running.
+    if (m_beatAnalysisRunning || !m_beatAnalysis.isEmpty() || state.analysis.isEmpty())
+        return;
+    ++m_beatAnalysisGeneration;
+    m_beatAnalysisRaw = state.raw;
+    m_beatAnalysis = state.analysis;
+    m_beatSnapTargets = state.snapTargets;
+    m_beatAudioFingerprint = state.fingerprint;
+    m_beatGridVisible = state.gridVisible;
+    m_onsetsVisible = state.onsetsVisible;
     emit beatAnalysisChanged();
 }
 

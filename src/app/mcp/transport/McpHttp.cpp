@@ -1,4 +1,6 @@
 #include "app/mcp/transport/McpHttp.h"
+
+#include <QElapsedTimer>
 #include "app/mcp/tools/McpCatalog.h"
 
 #include <QHash>
@@ -148,6 +150,17 @@ bool McpHttp::listen(quint16 preferredPort)
 
 void McpHttp::close()
 {
+    // Replies already written (the call that asked to stop, say) still reach their clients:
+    // deleting a socket aborts it, dropping whatever it hadn't sent yet.
+    for (QTcpSocket *socket : findChildren<QTcpSocket *>()) {
+        socket->flush();
+        // Each wait returns after one chunk; a large reply (a capture) takes several.
+        QElapsedTimer sending;
+        sending.start();
+        while (socket->bytesToWrite() > 0 && sending.elapsed() < 1000)
+            socket->waitForBytesWritten(int(1000 - sending.elapsed()));
+        socket->disconnectFromHost();
+    }
     m_buffers.clear();
     if (m_server) {
         m_server->close();
@@ -198,6 +211,7 @@ bool McpHttp::authorized(const QByteArray &header) const
     QByteArray got = raw;
     if (got.startsWith("Bearer ") || got.startsWith("bearer "))
         got = got.mid(7).trimmed();
+    QMutexLocker lock(&m_tokenMutex);
     return tokensEqual(got, m_token.toUtf8());
 }
 

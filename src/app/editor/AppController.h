@@ -500,6 +500,8 @@ public:
     QStringList undoHistory() const;
     int undoIndex() const { return m_undoStack.index(); }
     bool exportInProgress() const { return m_exportInProgress; }
+    // Which document is open; see m_documentGeneration. MCP replies compare clips only within one.
+    quint64 documentGeneration() const { return m_documentGeneration; }
     bool exportByAgent() const { return m_exportByAgent; }
     bool exportAudioOnly() const { return m_exportAudioOnly; }
     // Set by the MCP dispatcher around the call that starts an export, so the start
@@ -1621,6 +1623,9 @@ public:
     Q_INVOKABLE bool renameTrack(int trackIndex, const QString &name);
     Q_INVOKABLE bool trackMuted(int trackIndex) const;
     Q_INVOKABLE bool trackHidden(int trackIndex) const;
+    // A review track: shown and heard while editing, left out of every export.
+    Q_INVOKABLE void setTrackExcludedFromExport(int trackIndex, bool excluded);
+    Q_INVOKABLE bool trackExcludedFromExport(int trackIndex) const;
     // 0 = filmstrip only, 1 = filmstrip + waveform bar, 2 = waveform only (Track::ClipDisplay).
     Q_INVOKABLE void setTrackClipDisplay(int trackIndex, int mode);
     Q_INVOKABLE int trackClipDisplay(int trackIndex) const;
@@ -2282,6 +2287,26 @@ protected:
     // auxiliary-window sessions. Called by both newProject and applyProjectJson, before the
     // document is replaced, so the two paths cannot drift apart again.
     void resetSessionState();
+    // Raised each time the open document is replaced by another (a load, crash recovery, a new or
+    // closed project), not by Save As, which keeps the document under a new id.
+    quint64 m_documentGeneration = 0;
+    // After the whole project was swapped for another state of itself (undo, redo, an atomic MCP
+    // batch rolled back): resync the bin, folders and Source Lab, restore the selection captured
+    // before, and refresh. Marks the project unsaved.
+    void syncAfterProjectSwap();
+    // The beat analysis an edit drops when it changes the mix (finishEdit), kept so an atomic MCP
+    // batch that is rolled back can put it back.
+    struct BeatState
+    {
+        AudioBeatAnalysis raw;
+        QVariantMap analysis;
+        QList<drift::TimeUs> snapTargets;
+        QByteArray fingerprint;
+        bool gridVisible = false;
+        bool onsetsVisible = false;
+    };
+    BeatState beatState() const;
+    void restoreBeatState(const BeatState &state);
 
     QByteArray serializeProjectJson() const;
     bool applyProjectJson(const QByteArray &data, QString *error);
