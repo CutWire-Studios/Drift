@@ -156,6 +156,7 @@ private slots:
     void compositeSeparateAudioAndRemoval();
     void dissolveCompositeRoundTrip();
     void dissolveCompositeKeepsTrackNumbers();
+    void replaceInterruptedByNewProjectClearsBusyRow();
     void retimeKeepsDisabledKeyframeTrackDisabled();
     void effectStackCopyPasteAppendsAndRescales();
     void chromaKeyHueIsFlaggedForTheColourSwatch();
@@ -1718,6 +1719,44 @@ void EditorStateTest::dissolveCompositeKeepsTrackNumbers()
         QVERIFY2(!seen.contains(key), qPrintable(key));
         seen.insert(key);
     }
+}
+
+// #74: a replace whose probe a new project drops left its bin row busy until restart.
+void EditorStateTest::replaceInterruptedByNewProjectClearsBusyRow()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto writeImage = [&](const QString &name) {
+        QImage image(32, 24, QImage::Format_RGB32);
+        image.fill(Qt::darkMagenta);
+        const QString path = dir.filePath(name);
+        return image.save(path) ? path : QString();
+    };
+    const QString first = writeImage(QStringLiteral("first.png"));
+    const QString second = writeImage(QStringLiteral("second.png"));
+    QVERIFY(!first.isEmpty() && !second.isEmpty());
+
+    AssetLibrary library;
+    AppController state(&library);
+    const QStringList ids = library.importLocalPaths({first});
+    QVERIFY(!ids.isEmpty());
+    QTRY_VERIFY_WITH_TIMEOUT(!library.isImportPending(ids.first()), 10000);
+
+    QVERIFY(state.bin()->replaceSource(library.indexOfId(ids.first()), QUrl::fromLocalFile(second)));
+    QCOMPARE(state.bin()->replacingAssetId(), ids.first());
+    QSignalSpy busy(state.bin(), &MediaBinController::replacingAssetIdChanged);
+    QSignalSpy finished(state.bin(), &MediaBinController::replaceFinishedFor);
+    // Before the probe lands.
+    state.projectFile()->newProject(/*silent=*/true);
+    QVERIFY(state.bin()->replacingAssetId().isEmpty());
+    QVERIFY(busy.count() >= 1);
+    // Whoever waits on it (the replace dialog, the Source Lab) hears it failed.
+    QCOMPARE(finished.count(), 1);
+    QCOMPARE(finished.first().at(0).toString(), ids.first());
+    QCOMPARE(finished.first().at(1).toBool(), false);
+    // And it stays clear once the dropped probe would have landed.
+    QTest::qWait(500);
+    QVERIFY(state.bin()->replacingAssetId().isEmpty());
 }
 
 void EditorStateTest::compositeSeparateAudioAndRemoval()

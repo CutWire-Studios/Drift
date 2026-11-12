@@ -1666,14 +1666,21 @@ void AssetLibrary::refreshSidecars()
 
 void AssetLibrary::refreshSidecars(const QStringList &assetIds)
 {
-    if (!m_project)
+    if (!m_project) {
+        for (const QString &id : assetIds)
+            m_autoProxyPending.remove(id);
         return;
+    }
 
     QList<QPair<QString, QString>> targets;
     for (const QString &id : assetIds) {
         const drift::MediaAsset *asset = m_project->asset(id);
         if (asset && asset->kind == drift::MediaKind::Video && drift::isLocalSourcePath(asset->path))
             targets.append({id, asset->path});
+        else
+            // Not scanned (not a local video file), so the scan that would create its proxy never
+            // lands: it would wait forever (jmn8718/Drift#74).
+            m_autoProxyPending.remove(id);
     }
     if (targets.isEmpty())
         return;

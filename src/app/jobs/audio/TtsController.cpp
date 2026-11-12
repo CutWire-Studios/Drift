@@ -153,9 +153,19 @@ void TtsController::pollJob()
         m_poll.stop();
 }
 
+void TtsController::clearStaleLoading()
+{
+    // A job cancelled while still queued never ran ensureLoaded, which is what clears this
+    // (jmn8718/Drift#74). Left to whichever of the load and generate jobs ends last, since a
+    // job still pending may be loading the model. pollJob reports the change.
+    if (!m_loaded.load() && m_jobId.isEmpty() && m_loadJobId.isEmpty())
+        m_loading.store(false);
+}
+
 void TtsController::endJob()
 {
     m_jobId.clear();
+    clearStaleLoading();
     m_running = false;
     m_progress = 0.0;
     emit runningChanged();
@@ -182,6 +192,7 @@ void TtsController::warmUp()
             if (!self)
                 return QJsonObject{};
             self->m_loadJobId.clear();
+            self->clearStaleLoading();
             self->pollJob();
             if (!job.value(QStringLiteral("ok")).toBool())
                 emit self->finished(false, jobError(job));
