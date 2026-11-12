@@ -219,7 +219,7 @@ public:
     int pendingThumbnailCount() const { return int(m_thumbPending.size()); }
     int pendingProxyCount() const
     {
-        return int(m_proxyBuilding.size() + m_proxyQueue.size() + m_autoProxyPending.size());
+        return int((m_proxyBuilding.isEmpty() ? 0 : 1) + m_proxyQueue.size() + m_autoProxyPending.size());
     }
     // "none", "queued", "building", "ready" or "linked" for a video asset; empty for anything
     // else. "ready" means a proxy exists at the current proxy size, whether or not preview is set
