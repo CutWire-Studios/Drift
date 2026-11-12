@@ -1716,6 +1716,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("pasteEffects"), tr("Paste effects onto clip")),
         action(QStringLiteral("pasteAttributes"), tr("Paste attributes…")),
         action(QStringLiteral("split"), tr("Split at current time")),
+        action(QStringLiteral("splitSelection"), tr("Split selected clip at current time")),
         action(QStringLiteral("addTransitionAtPlayhead"), tr("Add transition at playhead")),
         action(QStringLiteral("merge"), tr("Merge adjacent clips")),
         action(QStringLiteral("transformTogether"), tr("Transform selection together")),

@@ -921,6 +921,8 @@ public:
     Q_INVOKABLE void splitSelectedClipLeft();
     Q_INVOKABLE void splitSelectedClipRight();
     Q_INVOKABLE void splitAtPlayhead();
+    // Only the selected clips under the playhead (and their linked partners), not every track's.
+    Q_INVOKABLE void splitSelectionAtPlayhead();
     Q_INVOKABLE void splitClipAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipLeftAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipRightAt(int trackIndex, int clipIndex, double seconds);
@@ -1705,6 +1707,7 @@ public:
     Q_INVOKABLE void copySelection();
     Q_INVOKABLE void cutSelection();
     Q_INVOKABLE void pasteAtPlayhead();
+    Q_INVOKABLE bool canPasteClips() const { return !m_clipboard.isEmpty(); }
     Q_INVOKABLE void nudgeSelection(double deltaSeconds);
     Q_INVOKABLE bool selectionContains(int trackIndex, int clipIndex) const;
     Q_INVOKABLE double selectionEarliestStartSeconds() const;
@@ -2256,6 +2259,8 @@ protected:
                                       const std::function<QList<drift::Clip>(const drift::Clip &)> &build,
                                       bool ripple, SegmentReplaceResult *out, QString *error);
     void trimClipGroupAt(int trackIndex, int clipIndex, drift::TimeUs atUs, bool dropLeft);
+    // Null splits every clip under the playhead.
+    void splitClipsAtPlayhead(const QSet<QString> *onlyClipIds);
     void autoCrossfadeNewOverlaps(const drift::Project &before);
     // Without `ripple` the project's ripple setting applies, as for the UI's Delete. With it (agent
     // ops), true closes the cleared ranges with closeRippleRanges, linked tracks once, and refuses

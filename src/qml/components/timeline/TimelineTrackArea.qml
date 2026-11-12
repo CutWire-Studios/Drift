@@ -158,11 +158,11 @@ Item {
         }
     }
 
-    // Touch: scroll the timeline while a picked-up clip is held near an edge.
+    // Scroll the timeline while a dragged clip is held near an edge.
     Timer {
         interval: 16
         repeat: true
-        running: renderer.touchDragging && typeof area.panel.dragEdgeScroll === "function"
+        running: renderer.dragging && typeof area.panel.dragEdgeScroll === "function"
 
         function step(depth) { return Math.min(24, 6 + depth * 0.4) }
 

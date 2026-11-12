@@ -1648,7 +1648,7 @@ PanelFrame {
                                          flick.height - flick.headerHeight)
                         z: 0
                         enabled: root.timelineTool === ""
-                        acceptedButtons: Qt.LeftButton
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
                         // CapCut: empty-space drag is marquee, not flick-scroll. A finger has no
                         // marquee: the same drag pans the timeline instead, so only a real
                         // mouse press sets preventStealing (in onPressed, undone on release).
@@ -1656,6 +1656,12 @@ PanelFrame {
 
                         onPressed: (mouse) => {
                             root.forceActiveFocus()
+                            if (mouse.button === Qt.RightButton) {
+                                // Same coordinates as trackColumn: both sit at the same y.
+                                root.openTrackAreaMenu(root.trackIndexAtY(mouse.y),
+                                                       mouse.x / root.pxPerSecond, -1)
+                                return
+                            }
                             if (mouse.source !== Qt.MouseEventNotSynthesized) {
                                 if (!(mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)))
                                     EditorState.clearSelection()
@@ -2047,18 +2053,21 @@ PanelFrame {
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             acceptedButtons: Qt.RightButton
-                                            onPressed: root.openGapMenu(trackRow.trackIndex,
-                                                                        gapItem.modelData.start)
+                                            onPressed: (mouse) => root.openTrackAreaMenu(
+                                                           trackRow.trackIndex,
+                                                           gapItem.modelData.start + mouse.x / root.pxPerSecond,
+                                                           gapItem.modelData.start)
                                         }
 
                                         // A handler rather than a left-button MouseArea, so the press
                                         // still reaches the marquee/pan area underneath.
                                         TapHandler {
                                             acceptedDevices: PointerDevice.TouchScreen
-                                            onLongPressed: root.openGapMenu(trackRow.trackIndex,
-                                                                            gapItem.modelData.start,
-                                                                            gapItem, point.position.x,
-                                                                            point.position.y)
+                                            onLongPressed: root.openTrackAreaMenu(
+                                                               trackRow.trackIndex,
+                                                               gapItem.modelData.start + point.position.x / root.pxPerSecond,
+                                                               gapItem.modelData.start,
+                                                               gapItem, point.position.x, point.position.y)
                                         }
                                     }
                                 }
@@ -2235,24 +2244,119 @@ PanelFrame {
         }
     }
 
-    // One gap menu for the whole timeline, rather than one built up front inside every gap.
-    property int gapMenuTrack: -1
-    property real gapMenuStart: 0
-    function openGapMenu(trackIndex, start, anchor, ax, ay) {
-        gapMenuTrack = trackIndex
-        gapMenuStart = start
+    // One menu for empty track space (gaps included) across the whole timeline, rather than one
+    // built up front inside every gap. trackIndex is -1 below the last row; gapStart is -1 outside
+    // a gap between clips.
+    property int areaMenuTrack: -1
+    property real areaMenuSeconds: 0
+    property real areaMenuGapStart: -1
+    function openTrackAreaMenu(trackIndex, seconds, gapStart, anchor, ax, ay) {
+        areaMenuTrack = trackIndex
+        areaMenuSeconds = Math.max(0, seconds)
+        areaMenuGapStart = gapStart
         if (anchor)
-            gapContextMenu.popup(anchor, ax, ay)
+            trackAreaContextMenu.popup(anchor, ax, ay)
         else
-            gapContextMenu.popup()
+            trackAreaContextMenu.popup()
     }
 
     ThemedContextMenu {
-        id: gapContextMenu
+        id: trackAreaContextMenu
+
+        readonly property var track: root.areaMenuTrack >= 0 && root.areaMenuTrack < root.tracks.length
+                                     ? root.tracks[root.areaMenuTrack] : null
+        // Neither has a change signal, so both are read as the menu opens.
+        property bool canPaste: false
+        property bool hasEmptyTracks: false
+        onAboutToShow: {
+            canPaste = EditorState.canPasteClips()
+            hasEmptyTracks = EditorState.hasEmptyTracks()
+        }
+
+        function trackClipPairs(fromSeconds) {
+            const pairs = []
+            const clips = track.clips
+            for (let c = 0; c < clips.length; c++) {
+                if (clips[c].start + clips[c].duration > fromSeconds)
+                    pairs.push({ "track": root.areaMenuTrack, "clip": c })
+            }
+            return pairs
+        }
+
         ThemedMenuItem {
+            text: qsTr("Paste here")
+            icon.name: Theme.icons.clipboardPaste
+            enabled: trackAreaContextMenu.canPaste
+            onTriggered: {
+                EditorState.setPlayheadSeconds(root.areaMenuSeconds)
+                EditorState.pasteAtPlayhead()
+            }
+        }
+        ThemedMenuItem {
+            visible: root.areaMenuGapStart >= 0
+            height: visible ? implicitHeight : 0
             text: qsTr("Close Gap")
             icon.name: Theme.icons.chevronsRightLeft
-            onTriggered: EditorState.closeGap(root.gapMenuTrack, root.gapMenuStart)
+            onTriggered: EditorState.closeGap(root.areaMenuTrack, root.areaMenuGapStart)
+        }
+        ThemedMenuItem {
+            text: qsTr("Add bookmark here")
+            icon.name: Theme.icons.bookmark
+            onTriggered: EditorState.addBookmark(root.areaMenuSeconds, "")
+        }
+        ThemedMenuSeparator {}
+        ThemedMenuItem {
+            visible: trackAreaContextMenu.track !== null
+            height: visible ? implicitHeight : 0
+            text: qsTr("Select clips on track")
+            icon.name: Theme.icons.maximize
+            onTriggered: EditorState.setSelection(trackAreaContextMenu.trackClipPairs(-1))
+        }
+        ThemedMenuItem {
+            visible: trackAreaContextMenu.track !== null
+            height: visible ? implicitHeight : 0
+            text: qsTr("Select clips after here on track")
+            icon.name: Theme.icons.chevronsRight
+            onTriggered: EditorState.setSelection(trackAreaContextMenu.trackClipPairs(root.areaMenuSeconds))
+        }
+        ThemedMenuItem {
+            text: qsTr("Select all clips")
+            icon.name: Theme.icons.maximize
+            onTriggered: EditorState.selectAllClips()
+        }
+        ThemedMenuSeparator {
+            visible: trackAreaContextMenu.track !== null
+        }
+        ThemedMenuItem {
+            readonly property bool on: trackAreaContextMenu.track !== null && trackAreaContextMenu.track.muted === true
+            visible: trackAreaContextMenu.track !== null
+            height: visible ? implicitHeight : 0
+            text: on ? qsTr("Unmute track") : qsTr("Mute track")
+            icon.name: on ? Theme.icons.volumeHigh : Theme.icons.volumeOff
+            onTriggered: EditorState.setTrackMuted(root.areaMenuTrack, !on)
+        }
+        ThemedMenuItem {
+            readonly property bool on: trackAreaContextMenu.track !== null && trackAreaContextMenu.track.hidden === true
+            visible: trackAreaContextMenu.track !== null
+            height: visible ? implicitHeight : 0
+            text: on ? qsTr("Show track") : qsTr("Hide track")
+            icon.name: on ? Theme.icons.eye : Theme.icons.eyeOff
+            onTriggered: EditorState.setTrackHidden(root.areaMenuTrack, !on)
+        }
+        ThemedMenuItem {
+            readonly property bool on: trackAreaContextMenu.track !== null && trackAreaContextMenu.track.locked === true
+            visible: trackAreaContextMenu.track !== null
+            height: visible ? implicitHeight : 0
+            text: on ? qsTr("Unlock track") : qsTr("Lock track")
+            icon.name: on ? Theme.icons.lockOpen : Theme.icons.lock
+            onTriggered: EditorState.setTrackLocked(root.areaMenuTrack, !on)
+        }
+        ThemedMenuSeparator {}
+        ThemedMenuItem {
+            text: qsTr("Remove empty tracks")
+            icon.name: Theme.icons.trash
+            enabled: trackAreaContextMenu.hasEmptyTracks
+            onTriggered: EditorState.removeEmptyTracks()
         }
     }
 
