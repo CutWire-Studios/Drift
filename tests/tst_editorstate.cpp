@@ -435,6 +435,7 @@ private slots:
     void droppingAMaskOnEmptyTrackSpaceMakesALaneClip();
     void droppingAMaskAssetOnAClipPinsAMatte();
     void convertClipToMaskMakesALaneMatteBelow();
+    void useTextClipAsSequenceMask();
     void assetMaskRoleRoundTripsThroughUndo();
     void addingAnEffectSelectsTheAdjustmentCarryingIt();
     void effectAdjustmentReportsItsSourceClipsFaceState();
@@ -12729,6 +12730,117 @@ void EditorStateTest::convertClipToMaskMakesALaneMatteBelow()
     QCOMPARE(masks.constFirst().mask.shape, drift::MaskShape::Media);
     QCOMPARE(masks.constFirst().mask.mediaTimeBase, drift::MaskMediaTimeBase::Adjustment);
     QCOMPARE(masks.constFirst().mask.mediaSrcOffsetUs, drift::secondsToUs(1.5));
+}
+
+void EditorStateTest::useTextClipAsSequenceMask()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip text;
+    text.id = QStringLiteral("title");
+    text.type = drift::ClipType::Text;
+    text.name = QStringLiteral("Big Title");
+    text.timelineStart = drift::secondsToUs(1.0);
+    text.timelineDuration = drift::secondsToUs(3.0);
+    text.srcOut = text.timelineDuration;
+    state.project()->tracks()[0].clips.append(text);
+
+    drift::Clip under;
+    under.id = QStringLiteral("under");
+    under.type = drift::ClipType::Video;
+    under.timelineDuration = drift::secondsToUs(6.0);
+    under.srcOut = under.timelineDuration;
+    state.project()->tracks()[1].clips.append(under);
+
+    const QVariantList ref{QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 0}}};
+    QVERIFY(state.masking()->canConvertClipsToSequenceMask(ref));
+    // The video clip has no track below it.
+    QVERIFY(!state.masking()->canConvertClipsToSequenceMask(
+        {QVariantMap{{QStringLiteral("track"), 1}, {QStringLiteral("clip"), 0}}}));
+    QVERIFY(!state.masking()->canConvertClipsToSequenceMask({QVariantMap{{QStringLiteral("track"), 5}}}));
+
+    QVERIFY(state.masking()->convertClipsToSequenceMask(ref));
+
+    drift::Project &project = *state.project();
+    QVERIFY(project.tracks().at(0).clips.isEmpty());
+    QCOMPARE(project.sequenceIds().size(), 1);
+    const QString sequenceId = project.sequenceIds().constFirst();
+    const QList<drift::Track> &inner = project.sequenceTracks(sequenceId);
+    QCOMPARE(inner.size(), 1);
+    QCOMPARE(inner.constFirst().clips.size(), 1);
+    QCOMPARE(inner.constFirst().clips.constFirst().id, QStringLiteral("title"));
+    QCOMPARE(inner.constFirst().clips.constFirst().timelineStart, drift::TimeUs(0));
+
+    int composites = 0;
+    for (const drift::MediaAsset &asset : project.assets()) {
+        if (asset.kind == drift::MediaKind::Composite) {
+            ++composites;
+            QCOMPARE(asset.sequenceId, sequenceId);
+            QCOMPARE(asset.name, QStringLiteral("Big Title mask"));
+        }
+    }
+    QCOMPARE(composites, 1);
+
+    drift::Clip mask;
+    int maskTrack = -1;
+    int maskIndex = -1;
+    for (int t = 0; t < project.tracks().size(); ++t) {
+        const drift::Track &track = project.tracks().at(t);
+        for (int c = 0; c < track.clips.size(); ++c) {
+            if (track.clips.at(c).adjustmentKind == drift::AdjustmentKind::Mask) {
+                mask = track.clips.at(c);
+                maskTrack = t;
+                maskIndex = c;
+            }
+        }
+    }
+    QVERIFY(maskTrack > 0);
+    QCOMPARE(mask.mask.shape, drift::MaskShape::Sequence);
+    QCOMPARE(mask.mask.sequenceId, sequenceId);
+    QCOMPARE(mask.mask.mediaChannel, drift::MaskMediaChannel::Alpha);
+    QCOMPARE(mask.timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(mask.timelineDuration, drift::secondsToUs(3.0));
+    QCOMPARE(state.masking()->maskSequenceId(maskTrack, maskIndex), sequenceId);
+    QCOMPARE(state.masking()->maskSequenceId(1, 0), QString());
+
+    const QList<drift::LaneMask> lane =
+        drift::laneMasksAt(project, 1, drift::secondsToUs(2.0), QStringLiteral("under"));
+    QCOMPARE(lane.size(), 1);
+    QCOMPARE(lane.constFirst().mask.sequenceId, sequenceId);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QVERIFY(loaded.hasSequence(sequenceId));
+    QCOMPARE(loaded.tracks().at(maskTrack).clips.at(maskIndex).mask.sequenceId, sequenceId);
+    QCOMPARE(loaded.tracks().at(maskTrack).clips.at(maskIndex).mask.shape, drift::MaskShape::Sequence);
+
+    // The bin item goes away but the mask still plays the sequence, so it stays.
+    const QStringList assetIds = project.assetOrder();
+    for (const QString &id : assetIds)
+        project.assets().remove(id);
+    project.assetOrder().clear();
+    state.pruneOrphanSequences();
+    QVERIFY(project.hasSequence(sequenceId));
+    QCOMPARE(project.sequenceIds().size(), 1);
+
+    project.tracks()[maskTrack].clips.removeAt(maskIndex);
+    state.pruneOrphanSequences();
+    QVERIFY(project.sequenceIds().isEmpty());
+
+    // One undo step (the later edits above bypassed the stack) restores the clip and drops the mask.
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.constFirst().id, QStringLiteral("title"));
+    QVERIFY(state.project()->sequenceIds().isEmpty());
+    for (const drift::Track &track : state.project()->tracks()) {
+        for (const drift::Clip &clip : track.clips)
+            QVERIFY(clip.adjustmentKind != drift::AdjustmentKind::Mask);
+    }
 }
 
 void EditorStateTest::assetMaskRoleRoundTripsThroughUndo()

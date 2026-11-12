@@ -21,6 +21,8 @@ QString maskShapeToString(MaskShape shape)
         return QStringLiteral("media");
     case MaskShape::Split:
         return QStringLiteral("split");
+    case MaskShape::Sequence:
+        return QStringLiteral("sequence");
     case MaskShape::None:
         break;
     }
@@ -43,6 +45,8 @@ MaskShape maskShapeFromString(const QString &shape)
         return MaskShape::Freeform;
     if (shape == QStringLiteral("split"))
         return MaskShape::Split;
+    if (shape == QStringLiteral("sequence"))
+        return MaskShape::Sequence;
     // "matte" is what Media was called before v5.
     if (shape == QStringLiteral("media") || shape == QStringLiteral("matte"))
         return MaskShape::Media;

@@ -533,6 +533,7 @@ QVector<QPointF> restVertices(const drift::Mask &rest, QSizeF px, QString *error
     case drift::MaskShape::Bars:
     case drift::MaskShape::Split:
     case drift::MaskShape::Media:
+    case drift::MaskShape::Sequence:
     case drift::MaskShape::None:
         break;
     }

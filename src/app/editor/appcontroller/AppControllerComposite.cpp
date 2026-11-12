@@ -614,16 +614,9 @@ bool AppController::canMakeCompositeFromSelection() const
     return any;
 }
 
-void AppController::makeCompositeFromSelection()
+// Linked A/V partners and the adjustments pinned to a clip travel with it.
+QSet<QString> AppController::clipIdsWithPartners(const QList<QPair<int, int>> &pairs) const
 {
-    if (!canMakeCompositeFromSelection())
-        return;
-
-    QList<QPair<int, int>> pairs = m_selection;
-    if (pairs.isEmpty())
-        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
-
-    // Linked A/V partners and the adjustments pinned to a clip travel with it.
     QSet<QString> ids;
     for (const QPair<int, int> &pair : pairs) {
         if (!isValidClipIndex(pair.first, pair.second))
@@ -637,32 +630,14 @@ void AppController::makeCompositeFromSelection()
                 ids.insert(clip.id);
         }
     }
+    return ids;
+}
 
-    drift::TimeUs startUs = std::numeric_limits<drift::TimeUs>::max();
-    drift::TimeUs endUs = 0;
-    int bottomVideoTrack = -1;
-    for (int t = 0; t < m_project.tracks().size(); ++t) {
-        const drift::Track &track = m_project.tracks().at(t);
-        for (const drift::Clip &clip : track.clips) {
-            if (!ids.contains(clip.id))
-                continue;
-            if (!clip.sequenceId.isEmpty())
-                return;
-            startUs = qMin(startUs, clip.timelineStart);
-            endUs = qMax(endUs, clip.timelineEnd());
-            if (track.type == drift::TrackType::Video)
-                bottomVideoTrack = t;
-        }
-    }
-    if (endUs <= startUs)
-        return;
-
-    setPlaying(false);
-    const drift::Project before = m_project.detachedCopy();
-
-    // The composite keeps the selection's track layout, shifted to start at zero. Only tracks that
-    // contribute a clip come along; a lane whose parent stays behind becomes a standalone
-    // adjustment track (ensureTrackIds unparents it).
+// The new sequence keeps the clips' track layout, shifted to start at zero. Only tracks that
+// contribute a clip come along; a lane whose parent stays behind becomes a standalone adjustment
+// track (ensureTrackIds unparents it). The clips are removed from the open timeline.
+QString AppController::moveClipsToNewSequence(const QSet<QString> &ids, drift::TimeUs startUs)
+{
     drift::TrackList inner;
     QHash<QString, QString> innerTrackIds;
     for (const drift::Track &source : m_project.tracks()) {
@@ -703,6 +678,43 @@ void AppController::makeCompositeFromSelection()
                 track.transitions.removeAt(i);
         }
     }
+    return sequenceId;
+}
+
+void AppController::makeCompositeFromSelection()
+{
+    if (!canMakeCompositeFromSelection())
+        return;
+
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty())
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+
+    const QSet<QString> ids = clipIdsWithPartners(pairs);
+
+    drift::TimeUs startUs = std::numeric_limits<drift::TimeUs>::max();
+    drift::TimeUs endUs = 0;
+    int bottomVideoTrack = -1;
+    for (int t = 0; t < m_project.tracks().size(); ++t) {
+        const drift::Track &track = m_project.tracks().at(t);
+        for (const drift::Clip &clip : track.clips) {
+            if (!ids.contains(clip.id))
+                continue;
+            if (!clip.sequenceId.isEmpty())
+                return;
+            startUs = qMin(startUs, clip.timelineStart);
+            endUs = qMax(endUs, clip.timelineEnd());
+            if (track.type == drift::TrackType::Video)
+                bottomVideoTrack = t;
+        }
+    }
+    if (endUs <= startUs)
+        return;
+
+    setPlaying(false);
+    const drift::Project before = m_project.detachedCopy();
+
+    const QString sequenceId = moveClipsToNewSequence(ids, startUs);
 
     int compositeCount = 0;
     for (const drift::MediaAsset &existing : m_project.assets()) {
@@ -1656,6 +1668,14 @@ void AppController::pruneOrphanSequences()
         if (asset.kind == drift::MediaKind::Composite)
             referenced.insert(asset.sequenceId);
     }
+    m_project.forEachTrackList([&referenced](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks) {
+            for (const drift::Clip &clip : track.clips) {
+                if (clip.mask.isSequence())
+                    referenced.insert(clip.mask.sequenceId);
+            }
+        }
+    });
     const QString active = m_project.activeSequenceId();
     bool changed = false;
     for (const QString &id : m_project.sequenceIds()) {

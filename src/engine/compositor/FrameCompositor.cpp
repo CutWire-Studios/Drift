@@ -102,10 +102,11 @@ quint64 streamIdFor(const QString &clipId)
 
 struct NestedScope
 {
-    explicit NestedScope(const drift::Clip &instance) : previousSalt(t_streamSalt)
+    explicit NestedScope(const drift::Clip &instance) : NestedScope(instance.id, instance.sequenceId) {}
+    NestedScope(const QString &instanceId, const QString &sequenceId) : previousSalt(t_streamSalt)
     {
-        t_streamSalt = qHashMulti(t_streamSalt, instance.id);
-        t_sequenceChain.append(instance.sequenceId);
+        t_streamSalt = qHashMulti(t_streamSalt, instanceId);
+        t_sequenceChain.append(sequenceId);
     }
     ~NestedScope()
     {
@@ -128,20 +129,24 @@ struct TrackInputScope
 };
 
 // The timeline a composite clip plays, or null when there is none or reading it would recurse.
-const drift::Project *nestedProject(const drift::Project &parent, const drift::Clip &clip)
+const drift::Project *nestedProject(const drift::Project &parent, const QString &sequenceId)
 {
-    if (clip.sequenceId.isEmpty() || !parent.hasSequence(clip.sequenceId)
-        || t_sequenceChain.contains(clip.sequenceId) || t_sequenceChain.size() >= kMaxCompositeDepth)
+    if (sequenceId.isEmpty() || !parent.hasSequence(sequenceId)
+        || t_sequenceChain.contains(sequenceId) || t_sequenceChain.size() >= kMaxCompositeDepth)
         return nullptr;
     if (!t_nestedViews)
         return nullptr;
-    auto it = t_nestedViews->constFind(clip.sequenceId);
+    auto it = t_nestedViews->constFind(sequenceId);
     if (it == t_nestedViews->constEnd()) {
         it = t_nestedViews->insert(
-            clip.sequenceId,
-            std::make_shared<const drift::Project>(parent.sequenceView(clip.sequenceId)));
+            sequenceId, std::make_shared<const drift::Project>(parent.sequenceView(sequenceId)));
     }
     return it->get();
+}
+
+const drift::Project *nestedProject(const drift::Project &parent, const drift::Clip &clip)
+{
+    return nestedProject(parent, clip.sequenceId);
 }
 
 struct NestedViewsScope
@@ -253,7 +258,7 @@ void forEachLaneMediaMask(const drift::Project &project, int trackIndex, const d
                           drift::TimeUs timelineUs, Visit &&visit)
 {
     for (const drift::LaneMask &laneMask : drift::laneMasksAt(project, trackIndex, timelineUs, clip.id)) {
-        if (laneMask.mask.isMedia())
+        if (laneMask.mask.isMedia() || laneMask.mask.isSequence())
             visit(clip, laneMask.mask, streamIdFor(laneMask.adjustmentId), laneMask.adjustmentStartUs,
                   laneMask.adjustmentSrcInUs);
     }
@@ -284,7 +289,7 @@ void forEachMediaMask(const drift::Project &project, drift::TimeUs timelineUs, V
             for (const drift::Clip &clip : track.clips) {
                 if (clip.adjustmentKind != drift::AdjustmentKind::Mask)
                     continue;
-                if (!clip.containsTime(timelineUs) || !clip.mask.isMedia())
+                if (!clip.containsTime(timelineUs) || !(clip.mask.isMedia() || clip.mask.isSequence()))
                     continue;
                 visit(clip, clip.mask, streamIdFor(clip.id), clip.timelineStart, clip.srcIn);
             }
@@ -427,8 +432,19 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
     // Retained separately from clip.path: mask media has its own reader, and dropping it here
     // would tear the worker down and re-open the file every frame.
-    const auto retainMask = [&](const drift::Clip &, const drift::Mask &mask, quint64, drift::TimeUs,
-                                  drift::TimeUs) {
+    const auto retainMask = [&](const drift::Clip &, const drift::Mask &mask, quint64,
+                                drift::TimeUs adjustmentStartUs, drift::TimeUs adjustmentSrcInUs) {
+        if (mask.isSequence()) {
+            if (const drift::Project *nested = nestedProject(*project, mask.sequenceId)) {
+                const NestedScope scope(QString(), mask.sequenceId);
+                QSet<QString> mutedAudio;
+                collectActivePaths(nested,
+                                   qMax<drift::TimeUs>(0, timelineUs - adjustmentStartUs + adjustmentSrcInUs
+                                                              + mask.mediaSrcOffsetUs),
+                                   videoPaths, mutedAudio);
+            }
+            return;
+        }
         videoPaths.insert(mask.mediaPath);
         if (!mask.mediaFgrPath.isEmpty() && !mask.invert)
             videoPaths.insert(mask.mediaFgrPath);
@@ -536,6 +552,9 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
     // stalling the composite on a serial read later.
     const auto warmMask = [&](const drift::Clip &host, const drift::Mask &mask, quint64 streamId,
                               drift::TimeUs adjustmentStartUs, drift::TimeUs adjustmentSrcInUs) {
+        // A sequence matte is composed from clips the scene decodes itself; it has no file to warm.
+        if (mask.isSequence())
+            return;
         const drift::TimeUs mediaUs =
             maskMediaTimeUs(host, mask, adjustmentStartUs, adjustmentSrcInUs, timelineUs);
         if (!maskMediaIsStillImage(mask.mediaPath)) {
@@ -1102,11 +1121,15 @@ MaskMediaFrame decodeMaskMedia(const QString &path, quint64 streamId, drift::Tim
     return out;
 }
 
+GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, int width, int height,
+                       double renderScale, const FrameCompositor::RenderOptions &options,
+                       bool nested = false);
+
 // The stack, plus this frame's decoded coverage for each media entry. Media is decoded here
 // because this is the only place that knows the frame time; the GPU fold consumes the pair.
-void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
+void fillGpuLayerMasks(const drift::Project &project, GpuLayer &layer, const drift::Clip &host,
                        const QList<drift::LaneMask> &laneMasks, drift::TimeUs timelineUs,
-                       int canvasWidth, int canvasHeight, int fps)
+                       int canvasWidth, int canvasHeight, double renderScale, int fps)
 {
     if (laneMasks.isEmpty())
         return;
@@ -1119,6 +1142,24 @@ void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
     layer.maskPatch.resize(layer.masks.size());
     for (int i = 0; i < laneMasks.size(); ++i) {
         const drift::Mask &mask = laneMasks.at(i).mask;
+        if (mask.isSequence()) {
+            // Played from the adjustment's own start, as a Composite clip plays its sequence. A
+            // sequence that is already being rendered (a mask inside its own sequence) has no
+            // nested view, so the entry stays null and contributes nothing.
+            if (const drift::Project *nested = nestedProject(project, mask.sequenceId)) {
+                const drift::TimeUs sequenceUs = qMax<drift::TimeUs>(
+                    0, timelineUs - laneMasks.at(i).adjustmentStartUs + laneMasks.at(i).adjustmentSrcInUs
+                           + mask.mediaSrcOffsetUs);
+                const NestedScope scope(laneMasks.at(i).adjustmentId, mask.sequenceId);
+                auto scene = std::make_shared<GpuScene>(
+                    buildGpuScene(*nested, sequenceUs, canvasWidth, canvasHeight, renderScale, {}, true));
+                if (!scene->items.isEmpty()) {
+                    layer.maskMedia[i].nestedSize = scene->canvasSize;
+                    layer.maskMedia[i].nested = std::move(scene);
+                }
+            }
+            continue;
+        }
         if (!mask.isMedia())
             continue;
 
@@ -1270,10 +1311,6 @@ void rasterAtDrawnSize(GpuLayer &layer, const QSize &canvas)
         layer.vector = drift::skia::scaledPainter(layer.vector, k);
 }
 #endif
-
-GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, int width, int height,
-                       double renderScale, const FrameCompositor::RenderOptions &options,
-                       bool nested = false);
 
 GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
                        drift::TimeUs timelineUs, int projectWidth,
@@ -1453,7 +1490,8 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
     if (!editingText)
         applyClipBodyAnimation(clip, timelineUs, w, h, &destRect, &opacity, &rotation);
 
-    fillGpuLayerMasks(layer, clip, laneMasks, timelineUs, canvasWidth, canvasHeight, projectFps);
+    fillGpuLayerMasks(project, layer, clip, laneMasks, timelineUs, canvasWidth, canvasHeight, renderScale,
+                      projectFps);
     layer.rect = destRect;
     layer.rotation = rotation;
     // Depth sorting needs a pose to sort by, and the dest-reading blend modes copy the canvas
@@ -2000,8 +2038,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                     const drift::Mask resolved = clip.mask.isAnimated()
                                                      ? clip.mask.resolvedAt(maskTimeUs)
                                                      : clip.mask;
-                    fillGpuLayerMasks(item.layer, clip, {drift::LaneMask{resolved, clip.id, clip.timelineStart, clip.srcIn}},
-                                      timelineUs, width, height, fps);
+                    fillGpuLayerMasks(project, item.layer, clip, {drift::LaneMask{resolved, clip.id, clip.timelineStart, clip.srcIn}},
+                                      timelineUs, width, height, renderScale, fps);
                 }
                 item.layer.rect = QRectF(0, 0, width, height);
                 item.layer.opacity = opacityForClip(clip, timelineUs);

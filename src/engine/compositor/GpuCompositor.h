@@ -42,14 +42,20 @@ struct ProceduralRequest;
 // One frame of a media mask's pixels. A video decodes through the preview path like any clip, so
 // it uploads as YUV (or imports on the GPU) instead of being converted to RGBA on the CPU first,
 // and it shares the reader cache the compositor's warm-up filled. A still stays an image.
+//
+// A Sequence mask has no file: `nested` is the sequence's scene for this frame, composed on the GPU.
 struct MaskMediaFrame
 {
     PreviewVideoFrame video;
     QImage image;
+    std::shared_ptr<const struct GpuScene> nested;
+    QSize nestedSize;
 
-    bool isNull() const { return !video.isValid() && image.isNull(); }
+    bool isNull() const { return !video.isValid() && image.isNull() && !nested; }
     QSize size() const
     {
+        if (nested)
+            return nestedSize;
         return video.isValid() ? QSize(video.displayWidth(), video.displayHeight()) : image.size();
     }
 };

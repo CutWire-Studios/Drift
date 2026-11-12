@@ -443,6 +443,8 @@ private slots:
     void vectorLayerRasterFollowsItsDrawnScale();
     void maskApplierEllipseMasksCorners();
     void maskMediaTimeBaseIndexesHostOrAdjustment();
+    void sequenceMaskRevealsWhereTheNestedSequenceIsOpaque();
+    void sequenceMaskInsideItsOwnSequenceDoesNotRecurse();
     void maskApplierFoldsAStackByItsOps();
     void maskShapesUseBothSizeAxes();
     void maskRoundnessRoundsRectangleCorners();
@@ -11938,6 +11940,127 @@ void EngineTest::maskMediaTimeBaseIndexesHostOrAdjustment()
     mask.mediaSrcOffsetUs = 0;
     QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, drift::secondsToUs(11.0), drift::secondsToUs(3.0), t),
              drift::secondsToUs(5.0));
+}
+
+namespace {
+
+drift::Clip sequenceMaskTestShape(const QString &id, const QColor &color, double x, double w)
+{
+    drift::Clip clip;
+    clip.id = id;
+    clip.type = drift::ClipType::Shape;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
+    clip.shapeStyle.setSolidFill(color);
+    clip.transformX.setKeyframe(0, x);
+    clip.transformY.setKeyframe(0, 0.0);
+    clip.transformW.setKeyframe(0, w);
+    clip.transformH.setKeyframe(0, 128.0);
+    return clip;
+}
+
+drift::Mask sequenceMaskTestMask(const QString &sequenceId, drift::MaskMediaChannel channel, bool invert)
+{
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Sequence;
+    mask.sequenceId = sequenceId;
+    mask.mediaChannel = channel;
+    mask.mediaTimeBase = drift::MaskMediaTimeBase::Adjustment;
+    mask.w = 1.0;
+    mask.h = 1.0;
+    mask.invert = invert;
+    return mask;
+}
+
+} // namespace
+
+void EngineTest::sequenceMaskRevealsWhereTheNestedSequenceIsOpaque()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    const auto render = [](const QColor &matteColor, drift::MaskMediaChannel channel, bool invert) {
+        drift::Project project;
+        project.setResolution(128, 128);
+        project.tracks().clear();
+        project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+        project.tracks()[0].clips.append(
+            sequenceMaskTestShape(QStringLiteral("masked"), QColor(0, 255, 0), 0.0, 128.0));
+        const QString sequenceId = project.addSequence(
+            {drift::Track{.type = drift::TrackType::Shape,
+                          .clips = {sequenceMaskTestShape(QStringLiteral("matte"), matteColor, 0.0, 64.0)}}});
+        const drift::ClipRef added = drift::addLaneMask(project, 0, sequenceMaskTestMask(sequenceId, channel, invert),
+                                                        0, drift::secondsToUs(2.0));
+        if (added.trackIndex < 0)
+            return QImage();
+        FrameCompositor compositor;
+        compositor.setProject(&project);
+        return compositor.compositeAt(drift::secondsToUs(0.5));
+    };
+
+    // Alpha: the opaque left half reveals the clip, the empty right half hides it.
+    QImage frame = render(QColor(255, 0, 0), drift::MaskMediaChannel::Alpha, false);
+    QVERIFY(!frame.isNull());
+    QVERIFY(frame.pixelColor(32, 64).green() > 200);
+    QVERIFY(frame.pixelColor(96, 64).green() < 20);
+
+    frame = render(QColor(255, 0, 0), drift::MaskMediaChannel::Alpha, true);
+    QVERIFY(frame.pixelColor(32, 64).green() < 20);
+    QVERIFY(frame.pixelColor(96, 64).green() > 200);
+
+    // Luma: an opaque black matte has alpha but no brightness, so it reveals nothing.
+    frame = render(QColor(0, 0, 0), drift::MaskMediaChannel::Luma, false);
+    QVERIFY(frame.pixelColor(32, 64).green() < 20);
+    QVERIFY(frame.pixelColor(96, 64).green() < 20);
+
+    frame = render(QColor(255, 255, 255), drift::MaskMediaChannel::Luma, false);
+    QVERIFY(frame.pixelColor(32, 64).green() > 200);
+    QVERIFY(frame.pixelColor(96, 64).green() < 20);
+}
+
+void EngineTest::sequenceMaskInsideItsOwnSequenceDoesNotRecurse()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    drift::Project project;
+    project.setResolution(128, 128);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+
+    const QString sequenceId = project.addSequence(
+        {drift::Track{.type = drift::TrackType::Shape,
+                      .clips = {sequenceMaskTestShape(QStringLiteral("inner"), QColor(0, 255, 0), 0.0, 128.0)}}});
+    project.activateSequence(sequenceId);
+    QVERIFY(drift::addLaneMask(project, 0, sequenceMaskTestMask(sequenceId, drift::MaskMediaChannel::Alpha, false),
+                               0, drift::secondsToUs(2.0))
+                .trackIndex
+            >= 0);
+    project.activateSequence(QString());
+
+    drift::Clip outer;
+    outer.id = QStringLiteral("outer");
+    outer.type = drift::ClipType::Composite;
+    outer.sequenceId = sequenceId;
+    outer.timelineStart = 0;
+    outer.timelineDuration = drift::secondsToUs(2.0);
+    outer.srcOut = outer.timelineDuration;
+    project.tracks()[0].clips.append(outer);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    // The mask's source is the sequence being drawn, so it has no view to read and adds nothing.
+    QImage frame = compositor.compositeAt(drift::secondsToUs(0.5));
+    QVERIFY(!frame.isNull());
+    QVERIFY(frame.pixelColor(64, 64).green() > 200);
+
+    // Open for editing, the sequence is the root: the mask reads one nested copy of it, whose own
+    // copy of the mask is then cut off.
+    project.activateSequence(sequenceId);
+    frame = compositor.compositeAt(drift::secondsToUs(0.5));
+    QVERIFY(!frame.isNull());
+    QVERIFY(frame.pixelColor(64, 64).green() > 200);
 }
 
 void EngineTest::maskApplierEllipseMasksCorners()

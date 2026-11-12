@@ -995,6 +995,8 @@ GlTarget mipmappedLayerCopy(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GlTa
 // clip's frame (YUV planes, or a GPU import), not an RGBA image.
 GlTarget promoteMaskMedia(GlRuntime &rt, QOpenGLExtraFunctions *gl, const MaskMediaFrame &media)
 {
+    if (media.nested)
+        return nestedLayerTarget(rt, gl, *media.nested);
     if (media.video.isValid())
         return promoteVideoFrameToTargetCached(rt, gl, media.video);
     return promoteImageToTargetCached(rt, gl, media.image, media.image.size());
@@ -1157,7 +1159,7 @@ GlTarget composeMaskTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLa
 
         // This entry's raw coverage, before feather and invert.
         GlTarget coverage;
-        if (mask.shape == drift::MaskShape::Media) {
+        if (mask.isRaster()) {
             // Media whose frame failed to decode contributes nothing this frame; treating it as
             // present would blank the clip.
             if (i >= layer.maskMedia.size() || layer.maskMedia.at(i).isNull())
@@ -1238,7 +1240,7 @@ GlTarget composeMaskTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLa
         fold->setUniformValue("u_seed", seeded ? 0.f : 1.f);
         fold->setUniformValue("u_invert", mask.invert ? 1.f : 0.f);
         fold->setUniformValue("u_alphaChannel",
-                              mask.shape == drift::MaskShape::Media
+                              mask.isRaster()
                                       && mask.mediaChannel == drift::MaskMediaChannel::Alpha
                                   ? 1.f
                                   : 0.f);

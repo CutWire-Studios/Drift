@@ -70,6 +70,7 @@ QPainterPath maskPath(const Mask &mask, int canvasWidth, int canvasHeight)
         return path;
     }
     case drift::MaskShape::Media:
+    case drift::MaskShape::Sequence:
         // Raster, not parametric: the coverage map is decoded per frame in FrameCompositor and
         // rides on GpuLayer::maskMedia. There is no path to rasterize.
         break;
@@ -140,7 +141,7 @@ namespace drift {
 
 QImage maskAlphaMap(const Mask &mask, int canvasWidth, int canvasHeight)
 {
-    if (!mask.contributes() || mask.shape == MaskShape::Media || canvasWidth <= 0
+    if (!mask.contributes() || mask.isRaster() || canvasWidth <= 0
         || canvasHeight <= 0)
         return {};
 
@@ -181,7 +182,7 @@ QImage maskAlphaMap(const QList<Mask> &masks, int canvasWidth, int canvasHeight)
     for (const Mask &mask : masks) {
         // Media coverage is decoded per frame by the compositor, which is the only place that
         // knows the frame time; there is nothing to rasterize here.
-        if (!mask.contributes() || mask.shape == MaskShape::Media)
+        if (!mask.contributes() || mask.isRaster())
             continue;
 
         const QImage coverage = maskAlphaMap(mask, canvasWidth, canvasHeight);
@@ -218,7 +219,7 @@ QImage maskAlphaMap(const QList<Mask> &masks, int canvasWidth, int canvasHeight)
 
 QImage applyMask(const QImage &frame, const Mask &mask, int canvasWidth, int canvasHeight)
 {
-    if (!mask.contributes() || mask.shape == MaskShape::Media || frame.isNull())
+    if (!mask.contributes() || mask.isRaster() || frame.isNull())
         return frame;
 
     const QImage alpha = maskAlphaMap(mask, canvasWidth, canvasHeight);

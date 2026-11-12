@@ -1124,7 +1124,7 @@ drift::Mask AppController::maskFromCatalogId(const QString &shape) const
     mask.shape = drift::maskShapeFromString(shape);
     // maskShapeFromString falls back to None for anything it does not know, and Media needs a
     // path it cannot invent — either way the mask contributes nothing and the caller does nothing.
-    if (mask.shape == drift::MaskShape::Media)
+    if (mask.isRaster())
         mask.shape = drift::MaskShape::None;
     seedFreeformMask(mask);
     return mask;

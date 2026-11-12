@@ -2,6 +2,7 @@
 #include "app/editor/ProjectFileController.h"
 
 #include "app/bin/AssetLibrary.h"
+#include "app/bin/MediaBinController.h"
 #include "app/editor/AppController.h"
 #include "app/editor/sessions/MaskEditSession.h"
 #include "app/editor/sessions/MaskStackModel.h"
@@ -31,6 +32,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <utility>
 
 namespace {
@@ -104,6 +106,27 @@ void removeClipWithPartners(drift::Project &project, int trackIndex, int clipInd
                 track.transitions.removeAt(i);
         }
     }
+}
+
+bool canBecomeSequenceMask(const drift::Clip &clip)
+{
+    switch (clip.type) {
+    case drift::ClipType::Video:
+    case drift::ClipType::Image:
+    case drift::ClipType::Text:
+    case drift::ClipType::Shape:
+    case drift::ClipType::Vector:
+    case drift::ClipType::Pdf:
+    case drift::ClipType::Composite:
+        return true;
+    case drift::ClipType::Audio:
+    case drift::ClipType::Subtitle:
+    case drift::ClipType::Adjustment:
+    case drift::ClipType::Model3d:
+    case drift::ClipType::Procedural:
+        break;
+    }
+    return false;
 }
 
 QVector<QPointF> verticesFrom(const QVariantList &points)
@@ -431,6 +454,127 @@ void MaskingController::convertClipToMask(int trackIndex, int clipIndex)
     m_app->pushProjectEdit(before, tr("Convert to mask"));
     m_app->finishEdit(tr("Clip converted to mask"));
     m_app->selectClipById(addedId);
+}
+
+QList<QPair<int, int>> MaskingController::sequenceMaskSources(const QVariantList &clipRefs) const
+{
+    const drift::Project &project = m_app->m_project;
+    QList<QPair<int, int>> pairs;
+    for (const QVariant &ref : clipRefs) {
+        const QVariantMap map = ref.toMap();
+        pairs.append(qMakePair(map.value(QStringLiteral("track"), -1).toInt(),
+                               map.value(QStringLiteral("clip"), -1).toInt()));
+    }
+    if (clipRefs.isEmpty()) {
+        pairs = m_app->m_selection;
+        if (pairs.isEmpty() && m_app->m_selectedTrack >= 0 && m_app->m_selectedClip >= 0)
+            pairs.append(qMakePair(m_app->m_selectedTrack, m_app->m_selectedClip));
+    }
+
+    QList<QPair<int, int>> valid;
+    for (const QPair<int, int> &pair : std::as_const(pairs)) {
+        if (!m_app->isValidClipIndex(pair.first, pair.second))
+            return {};
+        if (!canBecomeSequenceMask(project.tracks().at(pair.first).clips.at(pair.second)))
+            return {};
+        if (!valid.contains(pair))
+            valid.append(pair);
+    }
+    return valid;
+}
+
+bool MaskingController::canConvertClipsToSequenceMask(const QVariantList &clipRefs) const
+{
+    const drift::Project &project = m_app->m_project;
+    if (!project.activeSequenceId().isEmpty())
+        return false;
+    const QList<QPair<int, int>> pairs = sequenceMaskSources(clipRefs);
+    if (pairs.isEmpty())
+        return false;
+    int lowest = 0;
+    for (const QPair<int, int> &pair : pairs)
+        lowest = qMax(lowest, pair.first);
+    return trackBelow(project, lowest) >= 0;
+}
+
+bool MaskingController::convertClipsToSequenceMask(const QVariantList &clipRefs)
+{
+    if (!canConvertClipsToSequenceMask(clipRefs))
+        return false;
+
+    drift::Project &project = m_app->m_project;
+    const QList<QPair<int, int>> pairs = sequenceMaskSources(clipRefs);
+    const QSet<QString> ids = m_app->clipIdsWithPartners(pairs);
+
+    int lowestTrack = 0;
+    for (const QPair<int, int> &pair : pairs)
+        lowestTrack = qMax(lowestTrack, pair.first);
+    QString name = project.tracks().at(pairs.constFirst().first).clips.at(pairs.constFirst().second).name;
+    if (name.isEmpty())
+        name = tr("Clip");
+
+    drift::TimeUs startUs = std::numeric_limits<drift::TimeUs>::max();
+    drift::TimeUs endUs = 0;
+    for (const drift::Track &track : project.tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (!ids.contains(clip.id))
+                continue;
+            startUs = qMin(startUs, clip.timelineStart);
+            endUs = qMax(endUs, clip.timelineEnd());
+        }
+    }
+    if (endUs <= startUs)
+        return false;
+
+    m_app->setPlaying(false);
+    const drift::Project before = project.detachedCopy();
+
+    const QString sequenceId = m_app->moveClipsToNewSequence(ids, startUs);
+
+    drift::MediaAsset asset;
+    asset.kind = drift::MediaKind::Composite;
+    asset.name = tr("%1 mask").arg(name);
+    asset.sequenceId = sequenceId;
+    asset.durationUs = endUs - startUs;
+    asset.width = project.width();
+    asset.height = project.height();
+    asset.fps = project.fps();
+    asset.folderId = m_app->m_bin->currentFolderId();
+    project.addAsset(asset);
+
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Sequence;
+    mask.sequenceId = sequenceId;
+    mask.mediaChannel = drift::MaskMediaChannel::Alpha;
+    mask.mediaTimeBase = drift::MaskMediaTimeBase::Adjustment;
+    mask.w = 1.0;
+    mask.h = 1.0;
+    mask.name = asset.name;
+    const drift::ClipRef added = drift::addLaneMask(project, trackBelow(project, lowestTrack), mask,
+                                                    startUs, endUs - startUs);
+    if (added.trackIndex < 0) {
+        project = before.detachedCopy();
+        return false;
+    }
+    const QString addedId = project.tracks().at(added.trackIndex).clips.at(added.clipIndex).id;
+
+    if (m_app->m_assetLibrary)
+        m_app->m_assetLibrary->syncToProject();
+    m_app->pushProjectEdit(before, tr("Use as mask"));
+    m_app->finishEdit(tr("Clips used as mask"));
+    m_app->selectClipById(addedId);
+    emit m_app->sequenceTabsChanged();
+    return true;
+}
+
+QString MaskingController::maskSequenceId(int trackIndex, int clipIndex) const
+{
+    if (!m_app->isValidClipIndex(trackIndex, clipIndex))
+        return {};
+    const drift::Clip &clip = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    return clip.adjustmentKind == drift::AdjustmentKind::Mask && clip.mask.isSequence()
+               ? clip.mask.sequenceId
+               : QString();
 }
 
 QString MaskingController::moveMaskToEffectLayer(const QString &maskAdjustmentId, const QString &effectId)
@@ -1430,6 +1574,8 @@ QString MaskingController::maskLabel(const drift::Mask &mask) const
         return tr("Split");
     case drift::MaskShape::Media:
         return tr("Matte");
+    case drift::MaskShape::Sequence:
+        return tr("Sequence matte");
     case drift::MaskShape::None:
         break;
     }

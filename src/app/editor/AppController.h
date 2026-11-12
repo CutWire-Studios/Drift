@@ -2227,6 +2227,9 @@ protected:
     void syncCompositeAssetDurations();
     // Drops sequences no composite bin item refers to any more, leaving their tab if open.
     void pruneOrphanSequences();
+    QSet<QString> clipIdsWithPartners(const QList<QPair<int, int>> &pairs) const;
+    // Returns the new sequence's id.
+    QString moveClipsToNewSequence(const QSet<QString> &ids, drift::TimeUs startUs);
     bool compositeAssetPlaceable(const QVariantMap &asset) const;
     void finishFlatten(const QString &clipId, const QString &sequenceId, const QString &path,
                        const QString &name, drift::TimeUs srcInUs, drift::TimeUs durationUs);

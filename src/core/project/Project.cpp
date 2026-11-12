@@ -69,6 +69,8 @@ QJsonObject maskToJson(const Mask &m)
     };
     if (m.lockAspect)
         object.insert(QStringLiteral("lockAspect"), true);
+    if (!m.sequenceId.isEmpty())
+        object.insert(QStringLiteral("sequenceId"), m.sequenceId);
     if (!m.mediaPatches.isEmpty()) {
         QJsonArray patches;
         for (auto it = m.mediaPatches.constBegin(); it != m.mediaPatches.constEnd(); ++it)
@@ -94,6 +96,7 @@ Mask maskFromJson(const QJsonObject &o)
     m.roundness = o.value(QStringLiteral("roundness")).toDouble(m.roundness);
     m.invert = o.value(QStringLiteral("invert")).toBool(m.invert);
     m.lockAspect = o.value(QStringLiteral("lockAspect")).toBool(false);
+    m.sequenceId = o.value(QStringLiteral("sequenceId")).toString();
     m.op = maskOpFromString(o.value(QStringLiteral("op")).toString());
     m.enabled = o.value(QStringLiteral("enabled")).toBool(m.enabled);
     m.name = o.value(QStringLiteral("name")).toString(m.name);
@@ -1511,6 +1514,8 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 26 added mask roundness. Nothing to migrate; the bump is a gate, as for versions 6
     // and 9. An older build would draw a rounded rectangle mask with sharp corners.
     // Version 27 added the Split mask shape. Nothing to migrate; the bump is a gate, as for
+    // versions 6 and 9. An older build would read the shape as none and drop the mask.
+    // Version 28 added the Sequence mask shape. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
