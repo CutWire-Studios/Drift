@@ -69,6 +69,7 @@
 #include "ui/preview/PreviewController.h"
 #include "TestZip.h"
 #include "app/bin/AssetLibrary.h"
+#include "engine/EngineTuning.h"
 #include "app/bin/MediaBinController.h"
 #include "app/online/downloads/DownloadCenter.h"
 #include "app/online/assets/DriftAssetStore.h"
@@ -311,6 +312,7 @@ private slots:
     void duplicateLayerAndUserPresetLifecycle();
     void rotationOpsRoundTripThroughInspect();
     void proxyOpsCreateCheckAndRemove();
+    void performanceSettingsRoundTrip();
     void binFolderOps();
 };
 
@@ -12381,6 +12383,86 @@ void McpTest::proxyOpsCreateCheckAndRemove()
     QCOMPARE(stateOf(asset), QStringLiteral("ready"));
     QVERIFY(dispatcher.applyOne(QStringLiteral("remove_proxies"), {{QStringLiteral("all"), true}}).value(QStringLiteral("ok")).toBool());
     QCOMPARE(stateOf(asset), QStringLiteral("none"));
+}
+
+void McpTest::performanceSettingsRoundTrip()
+{
+    // Global settings: a throwaway profile, and the process-wide values put back after.
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpPerfTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpPerfTest"));
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QJsonObject original = dispatcher.applyOne(QStringLiteral("get_performance"), {});
+    const auto restore = qScopeGuard([&] {
+        QJsonObject back = original.value(QStringLiteral("settings")).toObject();
+        dispatcher.applyOne(QStringLiteral("set_performance"), back);
+        QSettings().clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    QVERIFY2(original.value(QStringLiteral("ok")).toBool(), qPrintable(dump(original)));
+    const QJsonObject settings = original.value(QStringLiteral("settings")).toObject();
+    for (const char *key : {"frame_cache_mib", "preview_quality", "decode_mode", "read_ahead_ms",
+                            "continuous_read_ahead", "reader_history_mib", "prefer_hardware_export"})
+        QVERIFY2(settings.contains(QLatin1String(key)), key);
+    QVERIFY(original.value(QStringLiteral("frame_cache_budget_mib")).toDouble() >= 128);
+    QVERIFY(original.value(QStringLiteral("decode_modes")).toArray().contains(QStringLiteral("software")));
+
+    // Bad values change nothing, even the good keys sent with them.
+    const int readAhead = settings.value(QStringLiteral("read_ahead_ms")).toInt();
+    for (const QJsonObject &bad : {QJsonObject{{QStringLiteral("frame_cache_mib"), 64}, {QStringLiteral("read_ahead_ms"), readAhead == 500 ? 600 : 500}},
+                                   QJsonObject{{QStringLiteral("read_ahead_ms"), 9000}},
+                                   QJsonObject{{QStringLiteral("preview_quality"), QStringLiteral("tiny")}},
+                                   QJsonObject{{QStringLiteral("decode_mode"), QStringLiteral("hw:nope")}},
+                                   QJsonObject{{QStringLiteral("read_ahead_ms"), 1e20}},
+                                   QJsonObject{{QStringLiteral("continuous_read_ahead"), QStringLiteral("maybe")}}}) {
+        const QJsonObject r = dispatcher.applyOne(QStringLiteral("set_performance"), bad);
+        QVERIFY2(!r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(bad)));
+    }
+    QCOMPARE(state.preferences()->readAheadMs(), readAhead);
+
+    // A capped round: the cache budget follows, and previous holds what to put back.
+    const QString otherQuality = settings.value(QStringLiteral("preview_quality")).toString() == QLatin1String("quarter")
+        ? QStringLiteral("eighth") : QStringLiteral("quarter");
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("set_performance"),
+                                        {{QStringLiteral("frame_cache_mib"), 256},
+                                         {QStringLiteral("preview_quality"), otherQuality},
+                                         {QStringLiteral("read_ahead_ms"), QStringLiteral("500")},
+                                         {QStringLiteral("continuous_read_ahead"), 0},
+                                         {QStringLiteral("decode_mode"), QStringLiteral("software")},
+                                         {QStringLiteral("target_pool_max"), QJsonValue()}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("settings")).toObject().value(QStringLiteral("frame_cache_mib")).toInt(), 256);
+    QCOMPARE(r.value(QStringLiteral("frame_cache_budget_mib")).toInt(), 256);
+    QCOMPARE(state.playback()->previewQuality(), otherQuality);
+    QCOMPARE(drift::tuning::readAheadMs.load(), 500);
+    QVERIFY(!state.preferences()->continuousReadAhead());
+    const QJsonObject previous = r.value(QStringLiteral("previous")).toObject();
+    QCOMPARE(previous.value(QStringLiteral("preview_quality")), settings.value(QStringLiteral("preview_quality")));
+    QVERIFY(previous.contains(QStringLiteral("frame_cache_mib")) || settings.value(QStringLiteral("frame_cache_mib")).toInt() == 256);
+    QCOMPARE(state.playback()->decodeMode(), QStringLiteral("software"));
+    QCOMPARE(previous.contains(QStringLiteral("decode_mode")), settings.value(QStringLiteral("decode_mode")).toString() != QLatin1String("software"));
+    QVERIFY(!previous.contains(QStringLiteral("target_pool_max")));
+
+    // Passing previous back restores the round's changes.
+    r = dispatcher.applyOne(QStringLiteral("set_performance"), previous);
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("settings")).toObject(), settings);
+    QCOMPARE(r.value(QStringLiteral("frame_cache_budget_mib")), original.value(QStringLiteral("frame_cache_budget_mib")));
+
+    // reset puts the Performance page back; keys sent with it apply on top.
+    r = dispatcher.applyOne(QStringLiteral("set_performance"), {{QStringLiteral("reset"), true}, {QStringLiteral("reader_history_mib"), 64}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("settings")).toObject().value(QStringLiteral("frame_cache_mib")).toInt(), 0);
+    QCOMPARE(r.value(QStringLiteral("settings")).toObject().value(QStringLiteral("read_ahead_ms")).toInt(), drift::tuning::Defaults::readAheadMs);
+    QCOMPARE(r.value(QStringLiteral("settings")).toObject().value(QStringLiteral("reader_history_mib")).toInt(), 64);
+    QVERIFY(drift::mcp::undoExemptOps().contains(QStringLiteral("set_performance")));
 }
 
 QTEST_MAIN(McpTest)

@@ -229,6 +229,10 @@ public:
     // jmn8718/Drift#32: where the memory goes, and dropping what can be rebuilt.
     QJsonObject memoryStats() const;
     QJsonObject clearCache();
+    // get_performance / set_performance: the Settings › Performance knobs, preview quality and
+    // decode mode, with what the automatic frame cache resolves to.
+    QJsonObject performance() const;
+    QJsonObject setPerformance(const QJsonObject &given);
     // Undo history housekeeping (jmn8718/Drift#30).
     QJsonObject clearHistory(int keepLast);
     // Unset optionals leave that part of the project's setting as it is.

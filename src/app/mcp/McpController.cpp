@@ -46,6 +46,8 @@
 #include "engine/media/waveforms/MediaWaveform.h"
 #include "engine/ml/runtime/OrtRuntime.h"
 #include "engine/EngineTuning.h"
+#include <array>
+#include "app/editor/PreferencesController.h"
 #include "engine/decode/readers/ClipReader.h"
 #include "engine/decode/readers/ClipReaderPool.h"
 #include "app/platform/ProcessMemory.h"
@@ -2369,6 +2371,158 @@ QJsonObject McpController::clearCache()
                {QStringLiteral("after"),
                 QJsonObject{{QStringLiteral("frame_cache"), frameCacheJson()},
                             {QStringLiteral("decoders"), decodersJson()}}}});
+}
+
+namespace {
+
+// Settings › Performance knobs as set_performance names them, with the range each accepts.
+struct PerformanceKnob
+{
+    const char *key;
+    int min;
+    int max;
+    int (PreferencesController::*get)() const;
+    void (PreferencesController::*set)(int);
+};
+
+const std::array<PerformanceKnob, 7> &performanceKnobs()
+{
+    static const std::array<PerformanceKnob, 7> k = {{
+        {"read_ahead_ms", 0, 5000, &PreferencesController::readAheadMs, &PreferencesController::setReadAheadMs},
+        {"stale_frame_lag_ms", 0, 1000, &PreferencesController::staleFrameLagMs, &PreferencesController::setStaleFrameLagMs},
+        {"target_pool_max", 4, 64, &PreferencesController::targetPoolMax, &PreferencesController::setTargetPoolMax},
+        {"target_pool_mib", 0, 4096, &PreferencesController::targetPoolMiB, &PreferencesController::setTargetPoolMiB},
+        {"upload_cache_max", 8, 96, &PreferencesController::uploadCacheMax, &PreferencesController::setUploadCacheMax},
+        {"upload_cache_mib", 0, 4096, &PreferencesController::uploadCacheMiB, &PreferencesController::setUploadCacheMiB},
+        {"reader_history_mib", 0, 1024, &PreferencesController::readerHistoryMiB, &PreferencesController::setReaderHistoryMiB},
+    }};
+    return k;
+}
+
+} // namespace
+
+QJsonObject McpController::performance() const
+{
+    using namespace drift::mcp;
+    const PreferencesController *prefs = m_app->m_preferences;
+    const PlaybackEngine &playback = m_app->m_playback;
+    QJsonObject settings{
+        {QStringLiteral("frame_cache_mib"), prefs->frameCacheMiB()},
+        {QStringLiteral("preview_quality"), playback.previewQuality()},
+        {QStringLiteral("decode_mode"), playback.decodeMode()},
+        {QStringLiteral("continuous_read_ahead"), prefs->continuousReadAhead()},
+        {QStringLiteral("prefer_hardware_export"), prefs->preferHardwareExport()},
+    };
+    for (const PerformanceKnob &knob : performanceKnobs())
+        settings.insert(QLatin1String(knob.key), (prefs->*knob.get)());
+    QJsonArray decodeModes;
+    for (const QVariant &mode : playback.decodeModes())
+        decodeModes.append(mode.toMap().value(QStringLiteral("id")).toString());
+    return ok({{QStringLiteral("settings"), settings},
+               // What the automatic (0) frame cache resolves to on this machine.
+               {QStringLiteral("frame_cache_budget_mib"),
+                double(ClipReader::cacheStats().budgetBytes / qsizetype(drift::tuning::kMiB))},
+               {QStringLiteral("decode_modes"), decodeModes}});
+}
+
+QJsonObject McpController::setPerformance(const QJsonObject &given)
+{
+    // An explicit null is the key left out, as the schema check treats it.
+    QJsonObject args;
+    for (auto it = given.begin(); it != given.end(); ++it) {
+        if (!it.value().isNull())
+            args.insert(it.key(), it.value());
+    }
+    using namespace drift::mcp;
+    PreferencesController *prefs = m_app->m_preferences;
+    PlaybackEngine &playback = m_app->m_playback;
+    const QJsonObject before = performance().value(QStringLiteral("settings")).toObject();
+
+    // Everything is checked before anything changes.
+    const auto intArg = [&args](const char *key, int *out) {
+        const QJsonValue v = args.value(QLatin1String(key));
+        if (v.isUndefined())
+            return true;
+        bool parsed = true;
+        const double d = v.isString() ? v.toString().toDouble(&parsed) : v.toDouble(qQNaN());
+        // Range-checked here so the cast below is defined; each key's own range comes after.
+        if (!parsed || !std::isfinite(d) || d != std::floor(d) || std::abs(d) > 1e9)
+            return false;
+        *out = int(d);
+        return true;
+    };
+    int frameCache = 0;
+    if (!intArg("frame_cache_mib", &frameCache)
+        || (args.contains(QStringLiteral("frame_cache_mib")) && frameCache != 0
+            && (frameCache < 128 || frameCache > 8192)))
+        return err("bad_args", QStringLiteral("frame_cache_mib must be 0 (automatic) or 128–8192"));
+    QHash<QString, int> knobValues;
+    for (const PerformanceKnob &knob : performanceKnobs()) {
+        if (!args.contains(QLatin1String(knob.key)))
+            continue;
+        int value = 0;
+        if (!intArg(knob.key, &value) || value < knob.min || value > knob.max)
+            return err("bad_args", QStringLiteral("%1 must be an integer in %2–%3")
+                                       .arg(QLatin1String(knob.key)).arg(knob.min).arg(knob.max));
+        knobValues.insert(QLatin1String(knob.key), value);
+    }
+    const QString quality = args.value(QStringLiteral("preview_quality")).toString().toLower();
+    static const QStringList qualities = {QStringLiteral("auto"), QStringLiteral("full"), QStringLiteral("half"),
+                                          QStringLiteral("quarter"), QStringLiteral("eighth")};
+    if (args.contains(QStringLiteral("preview_quality")) && !qualities.contains(quality))
+        return err("bad_args", QStringLiteral("preview_quality must be one of %1").arg(qualities.join(QStringLiteral(", "))));
+    const QString decodeMode = args.value(QStringLiteral("decode_mode")).toString().toLower();
+    if (args.contains(QStringLiteral("decode_mode"))) {
+        const QJsonArray modes = performance().value(QStringLiteral("decode_modes")).toArray();
+        if (!modes.contains(decodeMode))
+            return err("bad_args", QStringLiteral("decode_mode must be one of %1")
+                                       .arg(QJsonDocument(modes).toJson(QJsonDocument::Compact)));
+    }
+    // As the schema check takes them: true/false, 1/0, or those as strings.
+    QHash<QString, bool> flags;
+    for (const char *key : {"continuous_read_ahead", "prefer_hardware_export", "reset"}) {
+        const QJsonValue v = args.value(QLatin1String(key));
+        if (v.isUndefined())
+            continue;
+        const QString text = v.isString() ? v.toString().toLower() : QString();
+        if (v.isBool())
+            flags.insert(QLatin1String(key), v.toBool());
+        else if ((v.isDouble() && v.toDouble() == 1) || text == QLatin1String("true") || text == QLatin1String("1"))
+            flags.insert(QLatin1String(key), true);
+        else if ((v.isDouble() && v.toDouble() == 0) || text == QLatin1String("false") || text == QLatin1String("0"))
+            flags.insert(QLatin1String(key), false);
+        else
+            return err("bad_args", QStringLiteral("%1 must be true or false").arg(QLatin1String(key)));
+    }
+
+    // reset first, so keys given with it apply on top of the defaults.
+    if (flags.value(QStringLiteral("reset")))
+        prefs->resetPerformanceDefaults();
+    if (args.contains(QStringLiteral("frame_cache_mib")))
+        prefs->setFrameCacheMiB(frameCache);
+    for (const PerformanceKnob &knob : performanceKnobs()) {
+        if (knobValues.contains(QLatin1String(knob.key)))
+            (prefs->*knob.set)(knobValues.value(QLatin1String(knob.key)));
+    }
+    if (flags.contains(QStringLiteral("continuous_read_ahead")))
+        prefs->setContinuousReadAhead(flags.value(QStringLiteral("continuous_read_ahead")));
+    if (flags.contains(QStringLiteral("prefer_hardware_export")))
+        prefs->setPreferHardwareExport(flags.value(QStringLiteral("prefer_hardware_export")));
+    if (args.contains(QStringLiteral("preview_quality")))
+        playback.setPreviewQuality(quality);
+    if (args.contains(QStringLiteral("decode_mode")))
+        playback.setDecodeMode(decodeMode);
+
+    QJsonObject out = performance();
+    // The values that changed, as they were: pass previous back to restore them.
+    const QJsonObject after = out.value(QStringLiteral("settings")).toObject();
+    QJsonObject previous;
+    for (auto it = before.begin(); it != before.end(); ++it) {
+        if (after.value(it.key()) != it.value())
+            previous.insert(it.key(), it.value());
+    }
+    out.insert(QStringLiteral("previous"), previous);
+    return out;
 }
 
 QJsonObject McpController::historySettings() const

@@ -1193,6 +1193,41 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("discard"),
                          boolProp(QStringLiteral("Quit even with unsaved changes, losing them"))}}),
           false, true },
+        { "get_performance", "project", "Read playback and cache settings",
+          "The global settings that decide how much is decoded and kept (Settings › Performance and "
+          "Settings › Preview). Returns {settings:{frame_cache_mib (0 = automatic), preview_quality, "
+          "decode_mode, read_ahead_ms, continuous_read_ahead, stale_frame_lag_ms, target_pool_max, "
+          "target_pool_mib, upload_cache_max, upload_cache_mib, reader_history_mib, "
+          "prefer_hardware_export}, frame_cache_budget_mib (what the frame cache is actually capped "
+          "at, automatic resolved), decode_modes:[ids decode_mode takes on this machine]}.",
+          objectSchema({}), true, false, true },
+        { "set_performance", "project", "Tune playback and cache settings",
+          "Change the global settings get_performance reports; only supplied keys change. They are "
+          "the user's own settings, kept across sessions: change them for a round, then pass the "
+          "reply's previous back to restore them. frame_cache_mib caps the decoded frame cache (0 = "
+          "automatic, an eighth of RAM (a sixteenth on Android), at least 128; else 128–8192); clear_cache frees what's cached now. "
+          "preview_quality auto|full|half|quarter|eighth. read_ahead_ms (0–5000) is how much each "
+          "clip decodes ahead during playback. reset:true first puts the Performance page back to its "
+          "defaults (not preview_quality or decode_mode). Out-of-range values are refused, and "
+          "nothing changes. Not undoable. Returns get_performance's reply plus previous:{key: old "
+          "value} for each key that changed.",
+          objectSchema({{QStringLiteral("frame_cache_mib"), integerProp(QStringLiteral("Decoded frame cache cap in MiB; 0 = automatic, else 128–8192"))},
+                        {QStringLiteral("preview_quality"),
+                         enumProp(QStringLiteral("Preview resolution"),
+                                  {QStringLiteral("auto"), QStringLiteral("full"), QStringLiteral("half"),
+                                   QStringLiteral("quarter"), QStringLiteral("eighth")})},
+                        {QStringLiteral("decode_mode"), stringProp(QStringLiteral("auto, software, or a hw: id from get_performance's decode_modes"))},
+                        {QStringLiteral("read_ahead_ms"), integerProp(QStringLiteral("Decode-ahead per clip during playback, 0–5000"))},
+                        {QStringLiteral("continuous_read_ahead"), boolProp(QStringLiteral("Keep decoding until the read-ahead window is full; off decodes one frame ahead per frame shown"))},
+                        {QStringLiteral("stale_frame_lag_ms"), integerProp(QStringLiteral("Drop preview frames this late, 0–1000 (0 never)"))},
+                        {QStringLiteral("target_pool_max"), integerProp(QStringLiteral("Render targets kept, 4–64"))},
+                        {QStringLiteral("target_pool_mib"), integerProp(QStringLiteral("Render target memory cap, 0–4096 (0 none)"))},
+                        {QStringLiteral("upload_cache_max"), integerProp(QStringLiteral("GPU uploads kept, 8–96"))},
+                        {QStringLiteral("upload_cache_mib"), integerProp(QStringLiteral("GPU upload memory cap, 0–4096 (0 none)"))},
+                        {QStringLiteral("reader_history_mib"), integerProp(QStringLiteral("Decoded history per reader, 0–1024 (0 = frame count only)"))},
+                        {QStringLiteral("prefer_hardware_export"), boolProp(QStringLiteral("Export with the GPU encoder when there is one"))},
+                        {QStringLiteral("reset"), boolProp(QStringLiteral("Put the Performance page back to its defaults first"))}}),
+          false, false, true },
         { "memory_stats", "project", "Where Drift's memory goes",
           "Returns {process:{rss_bytes, peak_rss_bytes} (-1 where the platform does not say), "
           "frame_cache:{bytes, frames, gpu_frames, budget_bytes, setting_mib} (decoded frames the "
@@ -1574,7 +1609,7 @@ QStringList undoExemptOps()
         QStringLiteral("set_snap"),            QStringLiteral("set_loop_work_area"),
         QStringLiteral("export_video"),
         QStringLiteral("save_project"),        QStringLiteral("quit_instance"),
-        QStringLiteral("clear_cache"),
+        QStringLiteral("clear_cache"),         QStringLiteral("set_performance"),
         QStringLiteral("create_proxies"),      QStringLiteral("remove_proxies"),
         QStringLiteral("cancel_proxies"),
         QStringLiteral("set_theme"),        QStringLiteral("set_preview_view"),
