@@ -1460,6 +1460,9 @@
           "theme. autoKey matters for set_transform: when on, transform writes become keyframes at the "
           "playhead. proxySuggestion sets what import_media does with slow-to-preview footage; only the "
           "user can choose always (Settings › Preview), since it transcodes every later import. "
+          "useProxies makes preview read proxies where they exist (create them with create_proxies); "
+          "export always reads the original media. proxySize is the short side of new proxies; "
+          "proxies made at another size aren't used until made again. "
           "Returns the resulting flags plus theme {overridden, dark}.",
           objectSchema({{QStringLiteral("autoKey"), boolProp(QStringLiteral("Auto-keyframe: transform edits create keyframes at the playhead"))},
                         {QStringLiteral("mediaGrid"), boolProp(QStringLiteral("Media bin grid mode"))},
@@ -1470,7 +1473,9 @@
                                   {QStringLiteral("all"), QStringLiteral("problems")})},
                         {QStringLiteral("proxySuggestion"),
                          enumProp(QStringLiteral("What imports do with footage that would preview slowly: ask (a notification offers proxies; default) or never. always is user-only. Global, kept across sessions"),
-                                  {QStringLiteral("ask"), QStringLiteral("never")})}}) },
+                                  {QStringLiteral("ask"), QStringLiteral("never")})},
+                        {QStringLiteral("useProxies"), boolProp(QStringLiteral("Preview reads proxies where they exist (Settings › Preview › Use proxies). Global, kept across sessions"))},
+                        {QStringLiteral("proxySize"), integerProp(QStringLiteral("Short side of new proxies: 360, 540, 720 or 1080. Global, kept across sessions"))}}) },
 
         { "get_camera_state", "timeline", "Read the scene camera's pose at a time",
           "The camera clip covering `at` (default the playhead), or `clip`, as it is posed then, "

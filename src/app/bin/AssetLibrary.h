@@ -3,6 +3,7 @@
 #include "core/project/media/MediaAsset.h"
 
 #include <QAbstractListModel>
+#include <QFuture>
 #include <QJsonArray>
 #include <QHash>
 #include <QSet>
@@ -198,6 +199,7 @@ public:
     double proxyProgress() const { return m_proxyProgress; }
     QString proxyCurrentName() const;
     int proxyQueuedCount() const { return m_proxyQueue.size(); }
+    QString proxyBuildingId() const { return m_proxyBuilding; }
     // "none", "queued", "building", "ready" or "linked" for a video asset; empty for anything
     // else. "ready" means a proxy exists at the current proxy size, whether or not preview is set
     // to use proxies. "linked" means the proxy in use is a file made elsewhere that matched a
@@ -218,6 +220,21 @@ public:
     Q_INVOKABLE bool isMissing(const QString &assetId) const;
     int missingCount() const { return int(m_missing.size()); }
     Q_INVOKABLE void createProxies(const QStringList &assetIds);
+    // Why the last proxy build for this asset failed, or empty. Cleared when it is queued again
+    // or removed.
+    QString proxyError(const QString &assetId) const { return m_proxyErrors.value(assetId); }
+    // The video assets among these whose footage would preview slowly (what import's proxy
+    // suggestion flags). Probes each file, in parallel.
+    // Runs off the calling thread; the future yields the ids.
+    QFuture<QStringList> slowToPreview(const QStringList &assetIds) const;
+    // Waiting for its sidecar scan before an automatic proxy (proxySuggestion "always").
+    bool isAutoProxyPending(const QString &assetId) const { return m_autoProxyPending.contains(assetId); }
+    int autoProxyPendingCount() const { return int(m_autoProxyPending.size()); }
+    // The proxy being built was cancelled or removed, and its job hasn't wound down yet.
+    bool proxyCancelling(const QString &assetId) const
+    {
+        return !assetId.isEmpty() && assetId == m_proxyBuilding && m_proxyCancel.loadRelaxed() != 0;
+    }
     // What the end of an import does with footage that would preview slowly: "ask" emits it in
     // importSuggestions, "always" queues proxies for it, "never" drops it (the preference).
     void setProxySuggestionMode(const QString &mode) { m_proxySuggestionMode = mode; }
@@ -378,6 +395,7 @@ private:
     // Asset ids whose file is absent from disk. Image sequences and composites are never in it.
     QSet<QString> m_missing;
     QAtomicInt m_proxyCancel;
+    QHash<QString, QString> m_proxyErrors;
     // Its own single-thread pool: a proxy render runs for minutes and must not hold up the
     // probe and thumbnail jobs on m_jobs.
     QThreadPool m_proxyPool;

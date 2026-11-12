@@ -131,6 +131,16 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 
 `apply` takes **toolbox ops only**. The eight homepage tools return `unknown_op` inside an `ops` array; call them directly. `get_waveform({image:true})` is also refused inside `apply`.
 
+### Long sessions and scripted rounds
+
+The served guide (`catalog({guide:true})`) has the same advice, and the `initialize` instructions point to it.
+
+- Every undo step holds full project snapshots, so a long round of batches fills memory and, unless `set_history_limit({persist:false})`, the saved file. Run batches that don't need their own step as `apply({ops, history:false})`: it joins the newest step, whose hash changes, and with no step to join it can't be undone. Cap history with `set_history_limit({steps})` or free it with `clear_history({keep_last})` between rounds; `history_stats` and `memory_stats` show the cost.
+- With a step limit set, each new step can renumber `list_history`: keep hashes, not indices.
+- Decoded frames: `clear_cache` frees them; the frame cache cap is in Settings › Performance.
+- Replaced media stays in the bin. `list_assets({usage:true})` counts each asset's clips; `remove_unused_assets({dry_run:true})` lists the unused ones; without `dry_run` it removes them in one undo step.
+- `delete_clip` leaves the clip's effects (adjustments pinned to it) on the timeline, still applying to whatever is under them; pass `with_effects:true` to delete them with it.
+
 ## Conventions
 
 | Topic | Rule |
@@ -153,6 +163,7 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 | Notifications | Your own calls raise pop-ups on the user's screen while they run. `set_ui_preferences({agentNotifications})` picks which: `all` or `problems` (warnings and errors; default). The user can also pick `none` (errors only) in Settings › AI; an agent cannot, so it can't hide its own warnings. It is global and kept across sessions, and the user can change it in Settings › AI. Error details still come back in your replies, and results that finish after the call returns (an export) still notify |
 | Change detection | Every `inspect` includes `revision`; pass `since:<revision>` to get `{unchanged:true}` when state is current |
 | Media import | Absolute paths or `file://`, or `import_media_bytes` (base64 — always pass an explicit `path`). **No directory listing.** If the user gave a fuzzy name (`GX010023.mp4` in Downloads), glob/search with **your own filesystem tools**, then pass the hits to `import_media` and confirm `missing:[]` is empty. Footage that would preview slowly follows `proxySuggestion` (`get_ui_preferences` / `set_ui_preferences`): `ask` offers proxies in a notification (default), `always` creates them, `never` skips both. It is global, kept across sessions, and also in Settings › Preview. An agent can set `ask` or `never`; `always` is the user's choice in Settings, since it starts transcodes and writes proxy files beside the source media on every later import |
+| Preview proxies | Small, fast-decoding copies that preview reads instead of the original (export always reads the original). `create_proxies({assets?, clips?, all?, all_slow?})` queues them: `all` takes every video asset, `all_slow` only those that would preview slowly (past 1080p, or 10-bit HEVC/AV1/VP9; probes each file, and answers `timeout` past a minute; inside `apply` that wait holds the batch open, so call it on its own). A composite isn't a video: pick the clips inside it. They're built one at a time in the background; poll `proxy_status({assets?, clips?})` (per-asset `none`/`queued`/`building`/`ready`/`linked`, a failed build is `none` with `error`). `list_assets` shows the same state as `proxy` on video rows. Picked assets or clips with no video come back in `skipped`. `remove_proxies` drops queued ones and deletes the ones Drift made at the current size (never a `linked` file made elsewhere), and `cancel_proxies()` empties the queue, automatic ones from import included. A proxy cancelled while it builds can be created again at once. Preview reads them only with `useProxies` on, and only at the current `proxySize` (360/540/720/1080; proxies made at another size aren't used until made again): both are in `set_ui_preferences`, global and kept across sessions. None of these is an undo step: a proxy is a cache. Every reply ends with `queue:{busy, progress, current, queued}`, `useProxies` and `proxySize` |
 
 ### Async jobs
 
@@ -164,6 +175,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `package_project` | `jobs.package.{active, progress}` |
 | `generate_subtitles` | `jobs.subtitleGen.{active, progress, status}` |
 | `set_clip_reverse` (video) | `jobs.reverseRender.{active, progress, status}` |
+| `create_proxies` | `proxy_status`: `queue.{busy, progress, current, queued}` and each asset's `state` (not under `jobs`) |
 | `market_install` | `jobs.downloads.{active, byKind}` (every running download, add-ons and updates included); per-job status, progress, error and result from `market_downloads` |
 | `detect_scenes` | `jobs.sceneDetect.{active, progress, status, clip, scenes}` (also present, inactive, while a scan result is loaded) |
 | `run_segmentation`, `segment_clip`, `apply_denoise`, `detect_faces` | No progress field — re-read `inspect({clips:true, detail:true})` and compare |

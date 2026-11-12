@@ -47,7 +47,9 @@ QJsonObject initializeResult()
              "and empties are omitted; verbose:true keeps them), clip:<uuid>/track:<n> filter. Async "
              "jobs report under inspect({detail:true}).jobs and inspect().export. Selection-based ops "
              "(separate_audio, merge_clips, copy_selection…) need select_clip first. Stock media: "
-             "market_status → market_search → market_install (stock spends quota). Full guide: catalog({guide:true}).")},
+             "market_status → market_search → market_install (stock spends quota). "
+             "Long scripted rounds fill undo history and memory: see \"Long sessions\" in the guide. "
+             "Full guide: catalog({guide:true}).")},
     };
 }
 

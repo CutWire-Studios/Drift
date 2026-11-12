@@ -12,6 +12,7 @@
 #include "app/mcp/tools/McpDispatcher.h"
 
 #include <QColor>
+#include <QFutureWatcher>
 
 #include "core/shapes/ShapeStyle.h"
 #include "core/text/animation/TextAnimationPreset.h"
@@ -26,6 +27,7 @@
 #include "app/editor/AppController.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/bin/MediaBinController.h"
+#include "playback/PlaybackEngine.h"
 #include "app/editor/ProjectFileController.h"
 #include "ui/preview/PreviewController.h"
 #include "ui/theme/ThemeManager.h"
@@ -949,8 +951,201 @@ QJsonObject McpDispatcher::opCameraMove(const QJsonObject &args)
                                                   {QStringLiteral("zoom"), to.zoom}}}});
 }
 
+QJsonObject McpDispatcher::opProxies(const QString &tool, const QJsonObject &args)
+{
+    AssetLibrary *lib = m_controller->assetLibrary();
+    if (!lib)
+        return err("unsupported", QStringLiteral("No media library"));
+    // Every reply ends with the queue and the preview settings, as proxy_status gives them.
+    const auto reply = [this, lib](QJsonObject out) {
+        out.insert(QStringLiteral("queue"),
+                   QJsonObject{{QStringLiteral("busy"), lib->proxyBusy()},
+                               {QStringLiteral("progress"), lib->proxyProgress()},
+                               {QStringLiteral("current"), lib->proxyCurrentName()},
+                               {QStringLiteral("queued"), lib->proxyQueuedCount()}});
+        // Named as in set_ui_preferences.
+        out.insert(QStringLiteral("useProxies"), m_controller->playback()->useProxies());
+        out.insert(QStringLiteral("proxySize"), m_controller->playback()->proxySize());
+        return ok(out);
+    };
+
+    if (tool == QLatin1String("cancel_proxies")) {
+        // Includes automatic proxies still waiting for their sidecar scan. A build whose last
+        // frames already landed may still finish as ready.
+        const int cancelled = lib->proxyQueuedCount() + lib->autoProxyPendingCount()
+            + (lib->proxyBusy() && !lib->proxyCancelling(lib->proxyBuildingId()) ? 1 : 0);
+        lib->cancelProxies();
+        return reply({{QStringLiteral("cancelled"), cancelled}});
+    }
+
+    // Which assets: listed ones, the assets of listed clips, or (all / all_slow) every video.
+    const drift::Project &project = *m_controller->project();
+    QStringList ids;
+    QStringList unknown;
+    QJsonArray noMedia;
+    bool picked = false;
+    for (const QJsonValue &v : args.value(QStringLiteral("assets")).toArray()) {
+        picked = true;
+        const int index = resolveAsset(v);
+        const QString id = index >= 0 ? lib->assetIdAt(index) : QString();
+        if (id.isEmpty())
+            unknown.append(v.isDouble() ? QString::number(v.toInt()) : v.toString());
+        else if (!ids.contains(id))
+            ids.append(id);
+    }
+    for (const QJsonValue &v : args.value(QStringLiteral("clips")).toArray()) {
+        picked = true;
+        if (!v.isString())
+            return err("bad_args", QStringLiteral("clips must be clip ids"));
+        const QString clipId = v.toString();
+        const QPair<int, int> at = clipId.isEmpty() ? qMakePair(-1, -1) : m_controller->mcp()->locateClip(clipId);
+        const drift::Clip *clip = at.first >= 0 && at.first < project.tracks().size()
+                && at.second >= 0 && at.second < project.tracks().at(at.first).clips.size()
+            ? &project.tracks().at(at.first).clips.at(at.second)
+            : nullptr;
+        if (!clip)
+            unknown.append(clipId);
+        else if (clip->assetId.isEmpty())
+            noMedia.append(QJsonObject{{QStringLiteral("clip"), clipId}, {QStringLiteral("reason"), QStringLiteral("no_media")}});
+        else if (!ids.contains(clip->assetId))
+            ids.append(clip->assetId);
+    }
+    if (!unknown.isEmpty())
+        return err("not_found", QStringLiteral("Unknown assets or clips: %1").arg(unknown.join(QStringLiteral(", "))));
+    const bool allSlow = jsonBool(args.value(QStringLiteral("all_slow")), false);
+    const bool all = jsonBool(args.value(QStringLiteral("all")), false) || allSlow;
+    if (picked && all)
+        return err("bad_args", QStringLiteral("Pass assets/clips or all/all_slow, not both"));
+    if (!picked) {
+        if (!all && tool != QLatin1String("proxy_status"))
+            return err("bad_args", QStringLiteral("Pass assets, clips, all:true or all_slow:true"));
+        for (const QString &id : project.assetOrder()) {
+            const drift::MediaAsset *asset = project.asset(id);
+            if (asset && asset->kind == drift::MediaKind::Video)
+                ids.append(id);
+        }
+    }
+
+    if (tool == QLatin1String("proxy_status")) {
+        constexpr int kMaxRows = 500;
+        QJsonArray rows;
+        QJsonObject counts;
+        QJsonArray skipped = noMedia;
+        for (const QString &id : std::as_const(ids)) {
+            const QString state = lib->proxyState(id);
+            if (state.isEmpty()) {
+                if (picked)
+                    skipped.append(QJsonObject{{QStringLiteral("asset"), id}, {QStringLiteral("reason"), QStringLiteral("not_video")}});
+                continue;
+            }
+            counts.insert(state, counts.value(state).toInt() + 1);
+            if (rows.size() >= kMaxRows)
+                continue;
+            QJsonObject row{{QStringLiteral("asset"), id},
+                            {QStringLiteral("name"), project.asset(id)->name},
+                            {QStringLiteral("state"), state}};
+            if (state == QLatin1String("none")) {
+                if (const QString error = lib->proxyError(id); !error.isEmpty())
+                    row.insert(QStringLiteral("error"), error);
+            }
+            rows.append(row);
+        }
+        QJsonObject out{{QStringLiteral("proxies"), rows}, {QStringLiteral("counts"), counts}};
+        if (!skipped.isEmpty())
+            out.insert(QStringLiteral("skipped"), skipped);
+        int total = 0;
+        for (const QJsonValue &n : std::as_const(counts))
+            total += n.toInt();
+        if (total > rows.size())
+            out.insert(QStringLiteral("truncated"), true);
+        return reply(out);
+    }
+
+    if (tool == QLatin1String("remove_proxies")) {
+        QStringList removable;
+        QJsonArray kept = noMedia;
+        for (const QString &id : std::as_const(ids)) {
+            const QString state = lib->proxyState(id);
+            if (state == QLatin1String("queued") || state == QLatin1String("building")
+                || state == QLatin1String("ready") || lib->isAutoProxyPending(id)) {
+                removable.append(id);
+            } else if (picked) {
+                kept.append(QJsonObject{
+                    {QStringLiteral("asset"), id},
+                    // Drift never deletes a proxy made elsewhere.
+                    {QStringLiteral("reason"), state.isEmpty() ? QStringLiteral("not_video") : state}});
+            }
+        }
+        lib->removeProxies(removable);
+        return reply({{QStringLiteral("removed"), QJsonArray::fromStringList(removable)},
+                      {QStringLiteral("kept"), kept}});
+    }
+
+    // create_proxies
+    QStringList candidates;
+    QJsonArray already;
+    QJsonArray skipped = noMedia;
+    for (const QString &id : std::as_const(ids)) {
+        const QString state = lib->proxyState(id);
+        if (state.isEmpty()) {
+            skipped.append(QJsonObject{{QStringLiteral("asset"), id}, {QStringLiteral("reason"), QStringLiteral("not_video")}});
+        } else if (lib->isMissing(id)) {
+            skipped.append(QJsonObject{{QStringLiteral("asset"), id}, {QStringLiteral("reason"), QStringLiteral("missing")}});
+        } else if (state != QLatin1String("none") && !lib->proxyCancelling(id)) {
+            already.append(QJsonObject{{QStringLiteral("asset"), id}, {QStringLiteral("state"), state}});
+        } else {
+            candidates.append(id);
+        }
+    }
+    QJsonObject out;
+    QStringList queue = candidates;
+    if (allSlow) {
+        // Probing every file can take a while on slow storage: wait without freezing the UI,
+        // and only so long.
+        constexpr int kProbeTimeoutMs = 60000;
+        QFuture<QStringList> slow = lib->slowToPreview(candidates);
+        if (!slow.isFinished()) {
+            QEventLoop loop;
+            QFutureWatcher<QStringList> watcher;
+            QObject::connect(&watcher, &QFutureWatcherBase::finished, &loop, &QEventLoop::quit);
+            QTimer timeout;
+            timeout.setSingleShot(true);
+            QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+            watcher.setFuture(slow);
+            timeout.start(kProbeTimeoutMs);
+            if (!slow.isFinished())
+                loop.exec();
+        }
+        if (!slow.isFinished())
+            return err("timeout", QStringLiteral("Probing the footage took over a minute; pass assets or all:true instead"));
+        queue.clear();
+        // The project may have changed while the loop ran.
+        for (const QString &id : slow.result()) {
+            const QString state = lib->proxyState(id);
+            if (state.isEmpty())
+                skipped.append(QJsonObject{{QStringLiteral("asset"), id}, {QStringLiteral("reason"), QStringLiteral("gone")}});
+            else if (lib->isMissing(id))
+                skipped.append(QJsonObject{{QStringLiteral("asset"), id}, {QStringLiteral("reason"), QStringLiteral("missing")}});
+            else if (state == QLatin1String("none") || lib->proxyCancelling(id))
+                queue.append(id);
+            else
+                already.append(QJsonObject{{QStringLiteral("asset"), id}, {QStringLiteral("state"), state}});
+        }
+        out.insert(QStringLiteral("not_slow"), int(candidates.size() - slow.result().size()));
+    }
+    lib->createProxies(queue);
+    out.insert(QStringLiteral("queued"), QJsonArray::fromStringList(queue));
+    out.insert(QStringLiteral("already"), already);
+    out.insert(QStringLiteral("skipped"), skipped);
+    return reply(out);
+}
+
 QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObject &args)
 {
+    if (tool == QLatin1String("create_proxies") || tool == QLatin1String("proxy_status")
+        || tool == QLatin1String("remove_proxies") || tool == QLatin1String("cancel_proxies"))
+        return opProxies(tool, args);
+
     // --- media ---
     if (tool == QLatin1String("remove_asset")) {
         const int index = resolveAsset(args.value(QStringLiteral("asset")));
@@ -3228,6 +3423,11 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
 
     // --- ui ---
     if (tool == QLatin1String("set_ui_preferences")) {
+        // Checked first, so a bad size changes nothing.
+        const int proxySize = jsonInt(args.value(QStringLiteral("proxySize")), 0);
+        if (args.contains(QStringLiteral("proxySize")) && proxySize != 360 && proxySize != 540
+            && proxySize != 720 && proxySize != 1080)
+            return err("bad_args", QStringLiteral("proxySize must be 360, 540, 720 or 1080"));
         if (args.contains(QStringLiteral("autoKey")))
             m_controller->setAutoKeyEnabled(jsonBool(args.value(QStringLiteral("autoKey"))));
         if (args.contains(QStringLiteral("mediaGrid")))
@@ -3240,7 +3440,13 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             m_controller->preferences()->setAgentNotifications(args.value(QStringLiteral("agentNotifications")).toString());
         if (args.contains(QStringLiteral("proxySuggestion")))
             m_controller->preferences()->setProxySuggestion(args.value(QStringLiteral("proxySuggestion")).toString());
+        if (args.contains(QStringLiteral("useProxies")))
+            m_controller->playback()->setUseProxies(jsonBool(args.value(QStringLiteral("useProxies"))));
+        if (args.contains(QStringLiteral("proxySize")))
+            m_controller->playback()->setProxySize(proxySize);
         return ok({
+            {QStringLiteral("useProxies"), m_controller->playback()->useProxies()},
+            {QStringLiteral("proxySize"), m_controller->playback()->proxySize()},
             {QStringLiteral("agentNotifications"), m_controller->preferences()->agentNotifications()},
             {QStringLiteral("proxySuggestion"), m_controller->preferences()->proxySuggestion()},
             {QStringLiteral("autoKey"), m_controller->autoKeyEnabled()},
