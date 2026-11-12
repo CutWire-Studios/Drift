@@ -10,6 +10,8 @@ Item {
     required property var preset
     property bool selected: false
     property real thumbHeight: Theme.touchInput ? 56 : 40
+    // Set for presets that can be starred; empty hides the star (curve styles, "+ New curve").
+    property string favoriteTab: ""
 
     signal activated()
     // Mouse right-click or touch long-press; the caller decides which applies.
@@ -75,5 +77,16 @@ Item {
             if (!held)
                 root.activated()
         }
+    }
+
+    AssetFavoriteButton {
+        id: favoriteButton
+        anchors.left: thumb.left
+        anchors.top: thumb.top
+        anchors.margins: 2
+        visible: root.favoriteTab.length > 0
+                 && (favoriteButton.favorited || tileArea.containsMouse || Theme.touchUi)
+        tabId: root.favoriteTab
+        itemId: root.preset.id
     }
 }

@@ -16,6 +16,18 @@ Item {
     signal lookPicked(string lookId)
 
     readonly property var looks: EditorState.textLooks()
+    property int favoritesTick: 0
+    readonly property var orderedLooks: {
+        void root.favoritesTick
+        const fav = root.looks.filter(l => EditorState.isAssetFavorite("textLooks", l.id))
+        return fav.concat(root.looks.filter(l => !EditorState.isAssetFavorite("textLooks", l.id)))
+    }
+
+    Connections {
+        target: EditorState
+        function onAssetFavoritesChanged() { root.favoritesTick++ }
+    }
+
     readonly property string displayLabel: {
         for (let i = 0; i < root.looks.length; ++i) {
             if (root.looks[i].id === root.lookId)
@@ -140,7 +152,7 @@ Item {
                 Repeater {
                     // Popup content exists while closed; building the tiles only while open keeps
                     // their preview renders from running on every edit behind a closed dialog.
-                    model: dialog.visible ? root.looks : []
+                    model: dialog.visible ? root.orderedLooks : []
                     delegate: TextLookTile {
                         tileWidth: lookGrid.tileWidth
                         host: root

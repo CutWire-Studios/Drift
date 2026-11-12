@@ -41,6 +41,8 @@ Column {
     // Set while a bezier handle is dragged: the drawn shape is the drag's own, not the
     // engine's, which only catches up on commit.
     property var dragSpec: null
+    // Bumped when a favourite is toggled, so the grids re-order.
+    property int favoritesTick: 0
 
     readonly property var current: {
         void revision
@@ -61,7 +63,10 @@ Column {
         return EditorState.easingPresets()
     }
     readonly property var pickable: curveMode ? presets.filter(p => root.pickableSpec(p.spec)) : presets
-    readonly property var userPresets: pickable.filter(p => p.user)
+    readonly property var userPresets: {
+        void favoritesTick
+        return favoritesFirst(pickable.filter(p => p.user))
+    }
 
     // Handle positions for the kinds drawn with a unit-square editor; null for the rest.
     readonly property var handles: {
@@ -85,12 +90,13 @@ Column {
     property string variant: "Out"
     readonly property var familyPresets: {
         void variant
+        void favoritesTick
         const out = []
         for (const p of pickable) {
             if (p.family === "basic" || (!p.user && p.id === p.family + variant))
                 out.push(p)
         }
-        return out
+        return favoritesFirst(out)
     }
 
     onCurrentSpecChanged: draft = null
@@ -115,6 +121,11 @@ Column {
         if (id.endsWith("Out"))
             return "Out"
         return ""
+    }
+
+    function favoritesFirst(list) {
+        const fav = list.filter(p => EditorState.isAssetFavorite("easings", p.id))
+        return fav.concat(list.filter(p => !EditorState.isAssetFavorite("easings", p.id)))
     }
 
     function pickableSpec(s) {
@@ -211,6 +222,7 @@ Column {
         function onTracksChanged() { root.revision++ }
         function onSelectedClipDataChanged() { root.revision++ }
         function onEasingPresetsChanged() { root.revision++ }
+        function onAssetFavoritesChanged() { root.favoritesTick++ }
     }
 
     Text {
@@ -550,6 +562,7 @@ Column {
                     id: familyTile
                     required property var modelData
                     preset: familyTile.modelData
+                    favoriteTab: "easings"
                     width: root.tileWidth
                     selected: root.current.presetId === familyTile.modelData.id
                     onActivated: {
@@ -591,6 +604,7 @@ Column {
                     id: userTile
                     required property var modelData
                     preset: userTile.modelData
+                    favoriteTab: "easings"
                     width: root.tileWidth
                     selected: root.current.presetId === userTile.modelData.id
                     onActivated: {

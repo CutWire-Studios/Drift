@@ -31,4 +31,15 @@ Canvas {
                                          "angle": presetChip.modelData.angle,
                                          "stops": editor.cloneStops(presetChip.modelData.stops || []) })
     }
+
+    AssetFavoriteButton {
+        id: favoriteButton
+        anchors.left: parent.left
+        anchors.top: parent.top
+        buttonSize: 14
+        iconSize: 9
+        visible: favoriteButton.favorited || presetHover.hovered || Theme.touchUi
+        tabId: "textGradients"
+        itemId: presetChip.modelData.id
+    }
 }

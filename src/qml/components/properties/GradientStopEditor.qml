@@ -15,6 +15,20 @@ Column {
 
     readonly property var stops: (gradient && gradient.stops) || []
     readonly property var presets: EditorState.textGradientPresets()
+    property bool presetsFavoritesOnly: false
+    property int favoritesTick: 0
+    readonly property var shownPresets: {
+        void root.favoritesTick
+        const fav = root.presets.filter(p => EditorState.isAssetFavorite("textGradients", p.id))
+        if (root.presetsFavoritesOnly)
+            return fav
+        return fav.concat(root.presets.filter(p => !EditorState.isAssetFavorite("textGradients", p.id)))
+    }
+
+    Connections {
+        target: EditorState
+        function onAssetFavoritesChanged() { root.favoritesTick++ }
+    }
 
     // A working copy of the stops while one is being dragged, so the preview and the chips
     // follow the finger without waiting for the project round-trip.
@@ -128,11 +142,28 @@ Column {
         }
     }
 
-    Text {
-        text: qsTr("Presets")
-        color: Theme.c.gradientStopEditor.foregroundMuted
-        font.pixelSize: Theme.fontSizeXs
-        font.family: Theme.fontFamily
+    Row {
+        width: parent.width
+        spacing: Theme.spacingSm
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: qsTr("Presets")
+            color: Theme.c.gradientStopEditor.foregroundMuted
+            font.pixelSize: Theme.fontSizeXs
+            font.family: Theme.fontFamily
+        }
+
+        IconButton {
+            anchors.verticalCenter: parent.verticalCenter
+            glyph: Theme.icons.star
+            variant: "ghost"
+            buttonSize: 16
+            iconSize: 10
+            active: root.presetsFavoritesOnly
+            tooltip: qsTr("Favorites")
+            onClicked: root.presetsFavoritesOnly = !root.presetsFavoritesOnly
+        }
     }
 
     Flickable {
@@ -149,7 +180,7 @@ Column {
             spacing: Theme.spacingSm
 
             Repeater {
-                model: root.presets
+                model: root.shownPresets
                 delegate: GradientPresetSwatch {
                     editor: root
                 }

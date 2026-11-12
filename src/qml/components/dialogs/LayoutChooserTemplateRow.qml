@@ -67,6 +67,7 @@ ItemDelegate {
 
         // Mini aspect-ratio box on the right of each row.
         Item {
+            id: aspectBox
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             width: 28
@@ -99,6 +100,16 @@ ItemDelegate {
                 border.color: row.highlighted ? Theme.c.layoutChooserTemplateRow.previewBorderSelected
                                               : Theme.c.layoutChooserTemplateRow.previewBorder
             }
+        }
+
+        AssetFavoriteButton {
+            id: favoriteButton
+            anchors.right: aspectBox.left
+            anchors.rightMargin: Theme.spacingSm
+            anchors.verticalCenter: parent.verticalCenter
+            visible: favoriteButton.favorited || row.hovered || Theme.touchUi
+            tabId: "layouts"
+            itemId: row.modelData.id
         }
     }
 

@@ -26,6 +26,7 @@ Item {
         function onSelectionChanged() { root.clipDataRevision++ }
         function onSelectedClipDataChanged() { root.clipDataRevision++ }
         function onTracksChanged() { root.clipDataRevision++ }
+        function onAssetFavoritesChanged() { root.favoritesTick++ }
     }
 
     readonly property string clipKind: (clipData && clipData.kind) || ""
@@ -35,7 +36,13 @@ Item {
                                                && clipKind !== "audio" && clipKind !== "text"
                                                && clipKind !== "subtitle"
 
-    readonly property var masks: EditorState.maskCatalog()
+    property int favoritesTick: 0
+    readonly property var masks: {
+        void favoritesTick
+        const all = EditorState.maskCatalog()
+        const fav = all.filter(m => EditorState.isAssetFavorite("masks", m.id))
+        return fav.concat(all.filter(m => !EditorState.isAssetFavorite("masks", m.id)))
+    }
 
     function applyMask(maskId) {
         if (!root.hasVisualSelection)

@@ -21,6 +21,7 @@ Grid {
             presetId: modelData.id
             label: modelData.label
             tileWidth: root.tileWidth
+            favoriteTab: "textAnim"
             selected: modelData.id.length === 0
                       ? (!inspector.slotHasPreset && !inspector.slotData.custom)
                       : inspector.slotData.preset === modelData.id
