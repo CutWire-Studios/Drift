@@ -1770,6 +1770,87 @@ QJsonObject McpController::frameSheet(const FrameSheetRequest &request)
         }
         if (sourceMode)
             row.insert(QStringLiteral("tl"), round3(clipLocalToTimelineSeconds(clip, drift::secondsToUs(t))));
+        // On the timeline: the footage showing there and from where in its source, with what sits
+        // over it (jmn8718/Drift#42). Tracks from the top, as the compositor stacks them. One clip
+        // per track stands for it: the one that started first where clips overlap. The compositor
+        // draws them all; a transition's other side is named in `with`.
+        if (!sourceMode && sceneOf.isEmpty()) {
+            const drift::TimeUs at = drift::secondsToUs(qMax(0.0, t));
+            const QList<drift::Track> &tracks = src.project->tracks();
+            QJsonArray over;
+            QString topId;
+            int topTrack = -1;
+            const auto showingOn = [&](const drift::Track &track) -> const drift::Clip * {
+                if (track.hidden || track.isAdjustment() || track.type == drift::TrackType::Audio)
+                    return nullptr;
+                const drift::Clip *showing = nullptr;
+                for (const drift::Clip &c : track.clips)
+                    if (c.type != drift::ClipType::Audio && at >= c.timelineStart && at < c.timelineEnd()
+                        && (!showing || c.timelineStart < showing->timelineStart))
+                        showing = &c;
+                return showing;
+            };
+            // Video or a composite below: an image above it is a logo or a sticker, not the footage.
+            const auto movingBelow = [&](int from) {
+                for (int below = from + 1; below < tracks.size(); ++below)
+                    if (const drift::Clip *c = showingOn(tracks.at(below)))
+                        if (c->type == drift::ClipType::Video || c->type == drift::ClipType::Composite)
+                            return true;
+                return false;
+            };
+            for (int tr = 0; tr < tracks.size(); ++tr) {
+                const drift::Clip *showing = showingOn(tracks.at(tr));
+                if (!showing)
+                    continue;
+                const bool footage = showing->type == drift::ClipType::Video
+                                     || showing->type == drift::ClipType::Composite
+                                     || (showing->type == drift::ClipType::Image && !movingBelow(tr));
+                if (!footage) {
+                    if (topId.isEmpty()) {
+                        topId = showing->id;
+                        topTrack = tr;
+                    }
+                    over.append(showing->id);
+                    continue;
+                }
+                row.insert(QStringLiteral("clip"), showing->id);
+                row.insert(QStringLiteral("track"), tr);
+                // Source time for video only: a still (or a freeze frame) shows the same picture
+                // throughout.
+                if (showing->type == drift::ClipType::Video)
+                    row.insert(QStringLiteral("src"), round3(drift::usToSeconds(showing->timelineToSourceUs(at))));
+                // Inside a transition window: both sides are drawn, blending from one to the other.
+                const drift::Track &footageTrack = tracks.at(tr);
+                for (const drift::Transition &transition : footageTrack.transitions) {
+                    if (transition.fromClipId != showing->id && transition.toClipId != showing->id)
+                        continue;
+                    drift::TimeUs windowStart = 0;
+                    drift::TimeUs windowEnd = 0;
+                    if (!drift::transitionWindow(footageTrack, transition, windowStart, windowEnd) || at < windowStart
+                        || at >= windowEnd)
+                        continue;
+                    const QString other = transition.fromClipId == showing->id ? transition.toClipId : transition.fromClipId;
+                    row.insert(QStringLiteral("with"),
+                               QJsonObject{{QStringLiteral("clip"), other},
+                                           // Which side of the blend `with.clip` is.
+                                           {QStringLiteral("side"), transition.toClipId == other ? QStringLiteral("incoming")
+                                                                                                  : QStringLiteral("outgoing")},
+                                           {QStringLiteral("transition"), transition.id},
+                                           // 0 all outgoing, 1 all incoming.
+                                           {QStringLiteral("progress"),
+                                            round3(drift::transitionProgress(transition, at, windowStart, windowEnd))}});
+                    break;
+                }
+                if (!over.isEmpty())
+                    row.insert(QStringLiteral("over"), over);
+                break;
+            }
+            // No footage there: the topmost clip (a title on black, say).
+            if (!row.contains(QStringLiteral("clip")) && !topId.isEmpty()) {
+                row.insert(QStringLiteral("clip"), topId);
+                row.insert(QStringLiteral("track"), topTrack);
+            }
+        }
         if (!sceneOf.isEmpty()) {
             row.insert(QStringLiteral("clip"), sceneOf.at(idx).first);
             if (sceneOf.at(idx).second >= 0)
