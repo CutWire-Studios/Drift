@@ -455,7 +455,7 @@
     </message>
     <message>
         <source>Solid</source>
-        <translation>Liền khối</translation>
+        <translation>Đậm đặc</translation>
     </message>
     <message>
         <source>Blur</source>
@@ -1049,7 +1049,7 @@
     </message>
     <message>
         <source>Trim</source>
-        <translation>Cắt ngắn</translation>
+        <translation>Cắt</translation>
     </message>
     <message>
         <source>Video to audio</source>
@@ -1246,7 +1246,7 @@
     </message>
     <message>
         <source>Captions created.</source>
-        <translation>Đã tạo phụ đề.</translation>
+        <translation>Đã tạo chú thích.</translation>
     </message>
     <message>
         <source>Couldn’t create captions: %1</source>
@@ -1280,7 +1280,7 @@
     <name>AndroidMediaPreview</name>
     <message>
         <source>Audio only — trim it below</source>
-        <translation>Chỉ âm thanh - cắt ngắn nó bên dưới</translation>
+        <translation>Chỉ âm thanh - cắt nó bên dưới</translation>
     </message>
     <message>
         <source>Unlock crop ratio</source>
@@ -1292,7 +1292,7 @@
     </message>
     <message>
         <source>Trim</source>
-        <translation>Cắt ngắn</translation>
+        <translation>Cắt</translation>
     </message>
     <message>
         <source>Crop</source>
@@ -1316,7 +1316,7 @@
     </message>
     <message>
         <source>Undo trim</source>
-        <translation>Hoàn tác cắt ngắn</translation>
+        <translation>Hoàn tác cắt</translation>
     </message>
     <message>
         <source>Drag inside the box to move it, corners to resize</source>
@@ -1340,7 +1340,7 @@
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
-        <translation>Vẫn chưa có gì thay đổi. Cắt ngắn hoặc cắt khung hình trên hoặc quay lại và kéo phần này vào dòng thời gian.</translation>
+        <translation>Vẫn chưa có gì thay đổi. Cắt hoặc cắt khung hình trên hoặc quay lại và kéo phần này vào dòng thời gian.</translation>
     </message>
 </context>
 <context>
@@ -1585,7 +1585,7 @@
     </message>
     <message>
         <source>Trim &amp; timing</source>
-        <translation>Cắt ngắn &amp; căn thời gian</translation>
+        <translation>Cắt &amp; căn thời gian</translation>
     </message>
     <message>
         <source>Split all tracks</source>
@@ -1597,7 +1597,7 @@
     </message>
     <message>
         <source>Trim start</source>
-        <translation>Cắt ngắn phần đầu</translation>
+        <translation>Cắt phần đầu</translation>
     </message>
     <message>
         <source>Drop everything before the playhead</source>
@@ -1605,7 +1605,7 @@
     </message>
     <message>
         <source>Trim end</source>
-        <translation>Cắt ngắn phần cuối</translation>
+        <translation>Cắt phần cuối</translation>
     </message>
     <message>
         <source>Drop everything after the playhead</source>
@@ -1673,7 +1673,7 @@
     </message>
     <message>
         <source>Close gaps when trimming</source>
-        <translation>Xóa khoảng trống khi cắt ngắn</translation>
+        <translation>Xóa khoảng trống khi cắt</translation>
     </message>
     <message>
         <source>Overlap</source>
@@ -2780,7 +2780,7 @@
     </message>
     <message>
         <source>Subtitle clip added</source>
-        <translation>Đã thêm phụ đề clip</translation>
+        <translation>Đã thêm clip phụ đề</translation>
     </message>
     <message>
         <source>No subtitle file selected</source>
@@ -2864,15 +2864,15 @@
     </message>
     <message>
         <source>Transcribing…</source>
-        <translation>Đang chuyển âm…</translation>
+        <translation>Đang phiên âm…</translation>
     </message>
     <message>
         <source>Transcribing (%1)…</source>
-        <translation>Đang chuyển âm (%1)…</translation>
+        <translation>Đang phiên âm (%1)…</translation>
     </message>
     <message>
         <source>Building caption track…</source>
-        <translation>Đang tạo track phụ đề…</translation>
+        <translation>Đang tạo track chú thích…</translation>
     </message>
     <message>
         <source>No speech detected</source>
@@ -3146,7 +3146,7 @@
     </message>
     <message>
         <source>Track backward</source>
-        <translation>Track sau</translation>
+        <translation>Theo dõi lùi</translation>
     </message>
     <message>
         <source>Track one frame forward</source>
@@ -3222,15 +3222,15 @@
     </message>
     <message>
         <source>The gap stays open: a linked track is locked</source>
-        <translation type="unfinished"></translation>
+        <translation>Khoảng trống vẫn để mở: track được liên kết đang bị khóa</translation>
     </message>
     <message>
         <source>The gap stays open: a clip is in the way of closing it</source>
-        <translation type="unfinished"></translation>
+        <translation>Khoảng trống vẫn để mở: có một clip đang cản trở việc đóng khoảng trống</translation>
     </message>
     <message>
         <source>The gap stays open: &quot;%1&quot; is in the way of closing it</source>
-        <translation type="unfinished"></translation>
+        <translation>Khoảng trống vẫn để mở: &quot;%1&quot; đang cản trở việc đóng khoảng trống</translation>
     </message>
     <message>
         <source>Clip inserted</source>
@@ -3374,7 +3374,7 @@
     </message>
     <message>
         <source>Turn on Auto keyframes to move this</source>
-        <translation>Bật Keyfreame tự động để di chuyển</translation>
+        <translation>Bật Keyframe tự động để di chuyển</translation>
     </message>
     <message>
         <source>Move clip</source>
@@ -3474,7 +3474,7 @@
     </message>
     <message>
         <source>Subtitle cue updated</source>
-        <translation>Đã cập nhật tín hiệu phụ đề</translation>
+        <translation>Đã cập nhật đoạn phụ đề</translation>
     </message>
     <message>
         <source>Edit text style</source>
@@ -3934,11 +3934,11 @@
     </message>
     <message>
         <source>Track pan</source>
-        <translation>Kéo track</translation>
+        <translation>Cân bằng track</translation>
     </message>
     <message>
         <source>Track pan changed</source>
-        <translation>Đã thay đổi kéo track</translation>
+        <translation>Đã thay đổi cân bằng track</translation>
     </message>
     <message>
         <source>Keep ranges</source>
@@ -3966,7 +3966,7 @@
     </message>
     <message>
         <source>Transform selection together</source>
-        <translation>Chuyển đổi vùng chọn cùng nhau</translation>
+        <translation>Chuyển đổi cùng lúc vùng chọn</translation>
     </message>
     <message>
         <source>Select transform layer</source>
@@ -4112,7 +4112,7 @@
     </message>
     <message>
         <source>Add camera clip</source>
-        <translation>Thêm camera clip</translation>
+        <translation>Thêm clip camera</translation>
     </message>
     <message>
         <source>Camera added</source>
@@ -4120,7 +4120,7 @@
     </message>
     <message>
         <source>Camera clip added</source>
-        <translation>Đã thêm camera clip</translation>
+        <translation>Đã thêm clip camera</translation>
     </message>
     <message>
         <source>Transform together</source>
@@ -5638,7 +5638,7 @@
     </message>
     <message>
         <source>Pan</source>
-        <translation>Kéo</translation>
+        <translation>Cân bằng</translation>
     </message>
     <message>
         <source>C</source>
@@ -5654,7 +5654,7 @@
     </message>
     <message>
         <source>Pan changed</source>
-        <translation>Đã thay đổi kéo</translation>
+        <translation>Đã thay đổi cân bằng</translation>
     </message>
     <message>
         <source>Centre</source>
@@ -6769,7 +6769,7 @@
     </message>
     <message>
         <source>Glow</source>
-        <translation>Tỏa sáng</translation>
+        <translation>Phát sáng</translation>
     </message>
     <message>
         <source>Chromatic Aberration</source>
@@ -7042,7 +7042,7 @@
     </message>
     <message>
         <source>Reset crop to the full video size</source>
-        <translation>Đặt lại cắt xén về kích thước video đầy đủ</translation>
+        <translation>Đặt lại cắt khung về kích thước video đầy đủ</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -7437,7 +7437,7 @@
     </message>
     <message>
         <source>Open Add-ons</source>
-        <translation>Mở tiện ích bổ sung</translation>
+        <translation>Mở Add-on</translation>
     </message>
 </context>
 <context>
@@ -7532,7 +7532,7 @@
     <name>DepthEffectAimRing</name>
     <message>
         <source>Aim light</source>
-        <translation>Định hướng ánh sáng</translation>
+        <translation>Ánh sáng định hướng</translation>
     </message>
 </context>
 <context>
@@ -7561,7 +7561,7 @@
     <name>DepthLight3dAimRing</name>
     <message>
         <source>Aim light</source>
-        <translation>Định hướng ánh sáng</translation>
+        <translation>Ánh sáng định hướng</translation>
     </message>
 </context>
 <context>
@@ -8215,7 +8215,7 @@
     </message>
     <message>
         <source>Bakes, crop and video layout</source>
-        <translation>Kết xuất sẵn, cắt xén và bố cục video</translation>
+        <translation>Kết xuất sẵn, cắt khung và bố cục video</translation>
     </message>
 </context>
 <context>
@@ -9178,7 +9178,7 @@
     </message>
     <message>
         <source>Exporting audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang xuất âm thanh</translation>
     </message>
     <message>
         <source>Export</source>
@@ -9198,7 +9198,7 @@
     </message>
     <message>
         <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang kết xuất âm thanh của bạn. Đóng để tiếp tục chỉnh sửa hoặc hủy để dừng.</translation>
     </message>
     <message>
         <source>Export finished.</source>
@@ -10044,7 +10044,7 @@
     </message>
     <message>
         <source>Trim</source>
-        <translation>Cắt ngắn</translation>
+        <translation>Cắt</translation>
     </message>
     <message>
         <source>Crop</source>
@@ -11603,7 +11603,7 @@
     </message>
     <message>
         <source>Captions created.</source>
-        <translation>Đã tạo phụ đề.</translation>
+        <translation>Đã tạo chú thích.</translation>
     </message>
     <message>
         <source>Couldn’t create captions: %1</source>
@@ -13461,7 +13461,7 @@
     </message>
     <message>
         <source>Trim, crop and upscale…</source>
-        <translation>Cắt, xén và nâng độ phân giải…</translation>
+        <translation>Cắt, cắt khung và nâng độ phân giải…</translation>
     </message>
     <message>
         <source>Preview and edit…</source>
@@ -13745,7 +13745,7 @@
     </message>
     <message>
         <source>Trim saved</source>
-        <translation>Đã lưu cắt xén</translation>
+        <translation>Đã lưu cắt</translation>
     </message>
     <message>
         <source>Could not create an output file</source>
@@ -14004,15 +14004,15 @@
     </message>
     <message>
         <source>This video is under 700 pixels on its shorter side. Upscaling it with an AI model can make it look sharper.</source>
-        <translation>Video này có cạnh ngắn dưới 700 pixel. Nâng cấp bằng mô hình AI có thể làm nó nét hơn.</translation>
+        <translation>Video này có cạnh ngắn dưới 700 pixel. Nâng độ phân giải bằng mô hình AI có thể làm nó nét hơn.</translation>
     </message>
     <message>
         <source>This resolution is already good for most projects. You can still upscale it.</source>
-        <translation>Độ phân giải này đã tốt cho hầu hết các dự án. Bạn vẫn có thể nâng cấp nó.</translation>
+        <translation>Độ phân giải này đã tốt cho hầu hết các dự án. Bạn vẫn có thể nâng độ phân giải của nó.</translation>
     </message>
     <message>
         <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation>Hoàn tất sẽ giữ nguyên video gốc và lưu phạm vi cùng phần cắt khung này. Nâng cấp sẽ kết xuất chúng thành video mới trong ngăn media, rồi mở nó trong cửa sổ Nâng cấp.</translation>
+        <translation>Hoàn tất sẽ giữ nguyên video gốc và lưu phạm vi cùng phần cắt khung này. Nâng độ phân giải sẽ kết xuất chúng thành video mới trong ngăn media, rồi mở nó trong cửa sổ Nâng cấp.</translation>
     </message>
     <message>
         <source>Saving…</source>
@@ -14664,7 +14664,7 @@
     </message>
     <message>
         <source>Solid</source>
-        <translation>Liền khối</translation>
+        <translation>Đậm đặc</translation>
     </message>
     <message>
         <source>Gradient</source>
@@ -15689,7 +15689,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>project file is truncated</source>
-        <translation>tệp dự án bị cắt ngắn</translation>
+        <translation>tệp dự án đã bị cắt</translation>
     </message>
     <message>
         <source>project manifest is corrupt</source>
@@ -15729,7 +15729,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>project file is truncated or has trailing data</source>
-        <translation>tệp dự án bị cắt ngắn hoặc có dữ liệu theo dõi</translation>
+        <translation>tệp dự án bị cắt hoặc có dữ liệu theo dõi</translation>
     </message>
     <message>
         <source>compressed block is too large</source>
@@ -16582,7 +16582,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Enhancing…</source>
-        <translation>Đang tăng cường…</translation>
+        <translation>Đang nâng cấp…</translation>
     </message>
     <message>
         <source>The rendered file could not be read</source>
@@ -17501,7 +17501,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Needs the Scene Labels add-on — install it from Extras</source>
-        <translation>Cần tiện ích bổ sung Nhãn phân cảnh - cài đặt nó từ Bổ trợ</translation>
+        <translation>Cần add-on Nhãn phân cảnh - cài đặt nó từ Bổ trợ</translation>
     </message>
     <message>
         <source>Sensitivity</source>
@@ -18404,7 +18404,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Needed before Drift or a connected agent can transcribe or generate audio with this service</source>
-        <translation>Cần thiết trước khi Drift hoặc tác nhân được kết nối có thể phiên âm hoặc tạo âm thanh bằng dịch vụ này</translation>
+        <translation>Cần thiết trước khi Drift hoặc trợ lý được kết nối có thể phiên âm hoặc tạo âm thanh bằng dịch vụ này</translation>
     </message>
     <message>
         <source>Default voice id</source>
@@ -18554,7 +18554,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed.</source>
-        <translation>Làm nhấp nháy biểu tượng Tiện ích bổ sung khi các gói video, chuyển cảnh và âm thanh chưa được cài đặt.</translation>
+        <translation>Làm nhấp nháy biểu tượng Bổ trợ khi các gói video, chuyển cảnh và âm thanh chưa được cài đặt.</translation>
     </message>
     <message>
         <source>Remind about pack updates</source>
@@ -18562,7 +18562,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Pulse the Extras icon when updates are available for packs you already have installed.</source>
-        <translation>Làm nhấp nháy biểu tượng Tiện ích bổ sung khi có bản cập nhật cho các gói bạn đã cài đặt.</translation>
+        <translation>Làm nhấp nháy biểu tượng Bổ trợ khi có bản cập nhật cho các gói bạn đã cài đặt.</translation>
     </message>
     <message>
         <source>Feedback</source>
@@ -19009,7 +19009,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Colour of the solid background.</source>
-        <translation>Màu của nền đồng nhất.</translation>
+        <translation>Màu của nền đặc.</translation>
     </message>
     <message>
         <source>Blur strength</source>
@@ -19452,7 +19452,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Glow</source>
-        <translation>Tỏa sáng</translation>
+        <translation>Phát sáng</translation>
     </message>
     <message>
         <source>Extrude</source>
@@ -19460,7 +19460,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Solid</source>
-        <translation>Liền khối</translation>
+        <translation>Đậm đặc</translation>
     </message>
     <message>
         <source>Gradient</source>
@@ -19556,11 +19556,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Trim start</source>
-        <translation>Cắt ngắn phần đầu</translation>
+        <translation>Cắt phần đầu</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation>Cắt ngắn phần cuối</translation>
+        <translation>Cắt phần cuối</translation>
     </message>
     <message>
         <source>Sketchy</source>
@@ -19770,7 +19770,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Add a fill, stroke, shadow, glow or extrude layer</source>
-        <translation>Thêm lớp tô màu, nét, bóng, ánh sáng hoặc độ nổi</translation>
+        <translation>Thêm lớp tô màu, nét, bóng, phát sáng hoặc độ nổi</translation>
     </message>
     <message>
         <source>Shadow</source>
@@ -20231,11 +20231,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Enhancing this frame...</source>
-        <translation>Đang tăng cường khung hình này...</translation>
+        <translation>Đang nâng cấp khung hình này...</translation>
     </message>
     <message>
         <source>Press Preview frame to see the enhanced picture.</source>
-        <translation>Nhấn Xem trước khung hình để xem hình ảnh đã được tăng cường.</translation>
+        <translation>Nhấn Xem trước khung hình để xem hình ảnh đã được nâng cấp.</translation>
     </message>
     <message>
         <source>Rendering preview...</source>
@@ -20326,15 +20326,15 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>The trim leaves nothing to keep</source>
-        <translation>Phần cắt ngắn không giữ lại nội dung nào</translation>
+        <translation>Phần cắt không giữ lại nội dung nào</translation>
     </message>
     <message>
         <source>Only a plain trim can be copied without re-encoding</source>
-        <translation>Chỉ phần cắt ngắn đơn thuần mới có thể sao chép mà không cần mã hóa lại</translation>
+        <translation>Chỉ phần cắt đơn thuần mới có thể sao chép mà không cần mã hóa lại</translation>
     </message>
     <message>
         <source>Trim by copying the streams (no re-encode)</source>
-        <translation>Cắt ngắn bằng cách sao chép các luồng (không mã hóa lại)</translation>
+        <translation>Cắt bằng cách sao chép các luồng (không mã hóa lại)</translation>
     </message>
     <message>
         <source>This build of Drift has no video stabilization support</source>
@@ -20354,11 +20354,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Trim to the kept range</source>
-        <translation>Cắt ngắn theo phạm vi được giữ lại</translation>
+        <translation>Cắt theo phạm vi được giữ lại</translation>
     </message>
     <message>
         <source>Crop the picture</source>
-        <translation>Cắt xén hình ảnh</translation>
+        <translation>Cắt khung hình ảnh</translation>
     </message>
     <message>
         <source>Remove compression artifacts</source>
@@ -20386,11 +20386,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Add a sub-clip with the trim and crop (no re-encode)</source>
-        <translation>Thêm sub-clip với phần cắt ngắn và cắt xén (không mã hóa lại)</translation>
+        <translation>Thêm clip phụ với phần cắt và cắt khung (không mã hóa lại)</translation>
     </message>
     <message>
         <source>Set the trim and crop on the source (no re-encode)</source>
-        <translation>Đặt phần cắt ngắn và cắt xén trên nguồn (không mã hóa lại)</translation>
+        <translation>Đặt phần cắt và cắt khung trên nguồn (không mã hóa lại)</translation>
     </message>
     <message>
         <source>Apply source edit</source>
@@ -20470,7 +20470,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>The trim leaves nothing to scan</source>
-        <translation>Phần cắt ngắn không còn gì để quét</translation>
+        <translation>Phần cắt không còn gì để quét</translation>
     </message>
     <message>
         <source>Looking for shots…</source>
@@ -20485,11 +20485,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <name>SourceLabCropSection</name>
     <message>
         <source>Crop / Reframe</source>
-        <translation>Cắt xén / Đổi khung hình</translation>
+        <translation>Cắt khung / Đổi khung hình</translation>
     </message>
     <message>
         <source>Crop / reframe source</source>
-        <translation>Cắt xén / đổi khung hình nguồn</translation>
+        <translation>Cắt khung / đổi khung hình nguồn</translation>
     </message>
     <message>
         <source>Free</source>
@@ -20513,14 +20513,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Reset crop</source>
-        <translation>Đặt lại cắt xén</translation>
+        <translation>Đặt lại cắt khung</translation>
     </message>
 </context>
 <context>
     <name>SourceLabEnhanceSection</name>
     <message>
         <source>Enhance</source>
-        <translation>Tăng cường</translation>
+        <translation>Nâng cấp</translation>
     </message>
     <message>
         <source>%1 h %2 min</source>
@@ -20548,7 +20548,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>No enhance models are installed.</source>
-        <translation>Chưa cài đặt mô hình tăng cường nào.</translation>
+        <translation>Chưa cài đặt mô hình nâng cấp nào.</translation>
     </message>
     <message>
         <source>Get models</source>
@@ -20576,7 +20576,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Enhancing this range takes about %1. Trim to the part you need first.</source>
-        <translation>Việc tăng cường phạm vi này mất khoảng %1. Hãy cắt ngắn phần bạn cần trước.</translation>
+        <translation>Việc nâng cấp phạm vi này mất khoảng %1. Hãy cắt phần bạn cần trước.</translation>
     </message>
 </context>
 <context>
@@ -20635,7 +20635,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Fast trim (stream copy)</source>
-        <translation>Cắt ngắn nhanh (sao chép luồng)</translation>
+        <translation>Cắt nhanh (sao chép luồng)</translation>
     </message>
     <message>
         <source>Cut without re-encoding. Starts at the previous keyframe.</source>
@@ -20643,7 +20643,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Only a plain trim can be copied without re-encoding</source>
-        <translation>Chỉ phần cắt ngắn đơn thuần mới có thể sao chép mà không cần mã hóa lại</translation>
+        <translation>Chỉ phần cắt đơn thuần mới có thể sao chép mà không cần mã hóa lại</translation>
     </message>
     <message>
         <source>Container</source>
@@ -20670,7 +20670,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <name>SourceLabOutputPanel</name>
     <message>
         <source>Export trimmed clip</source>
-        <translation>Xuất clip đã cắt ngắn</translation>
+        <translation>Xuất clip đã cắt</translation>
     </message>
     <message>
         <source>Output</source>
@@ -20917,7 +20917,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Press M to drop a marker, or save the trimmed part as a range.</source>
-        <translation>Nhấn M để đặt điểm đánh dấu, hoặc lưu phần cắt ngắn thành một phạm vi.</translation>
+        <translation>Nhấn M để đặt điểm đánh dấu, hoặc lưu phần đã cắt thành một phạm vi.</translation>
     </message>
 </context>
 <context>
@@ -20996,11 +20996,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <name>SourceLabTrimPanel</name>
     <message>
         <source>Trim source clip</source>
-        <translation>Cắt ngắn clip nguồn</translation>
+        <translation>Cắt clip nguồn</translation>
     </message>
     <message>
         <source>Source Lab Trim</source>
-        <translation>Cắt ngắn Source Lab</translation>
+        <translation>Cắt Source Lab</translation>
     </message>
     <message>
         <source>Range from In/Out</source>
@@ -21008,7 +21008,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Save the trimmed part as a range</source>
-        <translation>Lưu phần đã cắt ngắn dưới dạng một phạm vi</translation>
+        <translation>Lưu phần đã cắt dưới dạng một phạm vi</translation>
     </message>
     <message>
         <source>Marker</source>
@@ -21032,7 +21032,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Snap to the playhead, markers, ranges and trim</source>
-        <translation>Hút dính vào đầu phát, điểm đánh dấu, phạm vi và phần cắt ngắn</translation>
+        <translation>Bắt dính vào đầu phát, điểm đánh dấu, phạm vi và phần cắt</translation>
     </message>
     <message>
         <source>Zero-crossing</source>
@@ -21107,7 +21107,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Enhancing...</source>
-        <translation>Đang tăng cường...</translation>
+        <translation>Đang nâng cấp...</translation>
     </message>
     <message>
         <source>Preview frame</source>
@@ -21115,7 +21115,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Run the enhance models on the frame under the playhead</source>
-        <translation>Chạy các mô hình tăng cường trên khung hình dưới đầu phát</translation>
+        <translation>Chạy các mô hình nâng cấp trên khung hình dưới đầu phát</translation>
     </message>
     <message>
         <source>Select a clip in the media bin</source>
@@ -21662,7 +21662,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>How many frames the smoother looks ahead and behind. Higher values hide more shake but crop the picture more.</source>
-        <translation>Số khung hình càng nhiều thì hình ảnh phía trước và phía sau càng mượt mà. Giá trị càng cao thì độ rung càng giảm nhưng hình ảnh sẽ bị cắt xén nhiều hơn.</translation>
+        <translation>Số khung hình càng nhiều thì hình ảnh phía trước và phía sau càng mượt mà. Giá trị càng cao thì độ rung càng giảm nhưng hình ảnh sẽ bị cắt khung nhiều hơn.</translation>
     </message>
     <message>
         <source>Tripod mode</source>
@@ -21670,7 +21670,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Locks the framing as if the camera were on a tripod. Crops more aggressively than smoothing alone.</source>
-        <translation>Khóa khung hình như thể máy ảnh đang được đặt trên giá ba chân. Cắt xén ảnh mạnh hơn so với chỉ làm mịn ảnh đơn thuần.</translation>
+        <translation>Khóa khung hình như thể máy ảnh đang được đặt trên giá ba chân. Cắt khung ảnh mạnh hơn so với chỉ làm mịn ảnh đơn thuần.</translation>
     </message>
     <message>
         <source>Position keys still use the last run. Update to apply these settings.</source>
@@ -23394,7 +23394,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Add a fill, stroke, shadow, glow or extrude layer</source>
-        <translation>Thêm lớp tô màu, nét, bóng, ánh sáng hoặc độ nổi</translation>
+        <translation>Thêm lớp tô màu, nét, bóng, phát sáng hoặc độ nổi</translation>
     </message>
     <message>
         <source>Fill</source>
@@ -23600,11 +23600,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Trim start</source>
-        <translation>Cắt ngắn phần đầu</translation>
+        <translation>Cắt phần đầu</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation>Cắt ngắn phần cuối</translation>
+        <translation>Cắt phần cuối</translation>
     </message>
     <message>
         <source>Dash offset</source>
@@ -24352,7 +24352,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Ripple editing: keep following clips together when trimming</source>
-        <translation>Chỉnh sửa cuộn đẩy: giữ các clip phía sau liền mạch khi cắt ngắn</translation>
+        <translation>Chỉnh sửa cuộn đẩy: giữ các clip phía sau liền mạch khi cắt</translation>
     </message>
     <message>
         <source>Toggle audio mixer strip</source>
@@ -24403,7 +24403,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Trim start</source>
-        <translation>Cắt ngắn phần đầu</translation>
+        <translation>Cắt phần đầu</translation>
     </message>
     <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
@@ -24411,7 +24411,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation>Cắt ngắn phần cuối</translation>
+        <translation>Cắt phần cuối</translation>
     </message>
     <message>
         <source>Trim end — click a clip to drop everything right of the cut</source>
@@ -24419,11 +24419,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Trim start to playhead</source>
-        <translation>Cắt ngắn điểm đầu đến đầu phát</translation>
+        <translation>Cắt điểm đầu đến đầu phát</translation>
     </message>
     <message>
         <source>Trim end to playhead</source>
-        <translation>Cắt ngắn điểm cuối đến đầu phát</translation>
+        <translation>Cắt điểm cuối đến đầu phát</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -27485,7 +27485,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Source Lab Trim</source>
-        <translation>Cắt ngắn Source Lab</translation>
+        <translation>Cắt Source Lab</translation>
     </message>
     <message>
         <source>Ranges &amp; Markers</source>
