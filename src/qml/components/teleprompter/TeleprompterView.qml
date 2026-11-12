@@ -38,7 +38,7 @@ Item {
         }
 
         onContentYChanged: {
-            if (moving || wheel.active)
+            if (moving || wheel.scrolling)
                 root.pushPosition()
         }
 
@@ -58,13 +58,14 @@ Item {
 
         WheelHandler {
             id: wheel
-            property bool active: false
+            // Not "active": that would shadow the handler's own.
+            property bool scrolling: false
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: (event) => {
-                active = true
+                scrolling = true
                 const dy = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y / 120 * root.lineHeight * 2
                 flick.contentY = Math.max(0, Math.min(root.maxY, flick.contentY - dy))
-                active = false
+                scrolling = false
             }
         }
     }

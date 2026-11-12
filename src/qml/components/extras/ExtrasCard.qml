@@ -12,8 +12,8 @@ Rectangle {
     readonly property bool selecting: store.selecting
     readonly property bool selectable: store.isSelectable(row)
     readonly property var transfer: store.transfers[row.id]
-    readonly property string state: row.state || ""
-    readonly property bool active: state === "downloading" || state === "installing"
+    readonly property string installState: row.state || ""
+    readonly property bool active: installState === "downloading" || installState === "installing"
     readonly property bool showCheck: selectable && (selecting || mouseHover.hovered)
 
     signal openRequested()
@@ -136,7 +136,7 @@ Rectangle {
                 iconColor: statusLabel.color
                 spinning: root.active
                 glyph: {
-                    switch (root.state) {
+                    switch (root.installState) {
                     case "installed": return Theme.icons.success
                     case "update-available": return Theme.icons.download
                     case "failed": return Theme.icons.error
@@ -156,7 +156,7 @@ Rectangle {
                                 - (stateIcon.visible ? Theme.iconSizeSm + parent.spacing : 0))
                 elide: Text.ElideRight
                 color: {
-                    switch (root.state) {
+                    switch (root.installState) {
                     case "installed": return Theme.c.extrasStore.stateInstalled
                     case "update-available": return Theme.c.extrasStore.stateUpdate
                     case "failed":
@@ -165,13 +165,13 @@ Rectangle {
                     return Theme.c.extrasStore.foregroundMuted
                 }
                 text: {
-                    switch (root.state) {
+                    switch (root.installState) {
                     case "queued": return qsTr("Waiting…")
                     case "downloading":
                     case "installing":
                         return root.transfer && root.transfer.fraction > 0
                                ? qsTr("%1 %2%").arg(root.transfer.phase).arg(Math.round(root.transfer.fraction * 100))
-                               : (root.state === "installing" ? qsTr("Installing…") : qsTr("Downloading…"))
+                               : (root.installState === "installing" ? qsTr("Installing…") : qsTr("Downloading…"))
                     case "failed": return qsTr("Failed · open to retry")
                     case "needs-newer-app": return qsTr("Needs Drift %1").arg(root.row.minAppVersion)
                     case "installed": return root.row.custom ? qsTr("Installed from file") : qsTr("Installed")

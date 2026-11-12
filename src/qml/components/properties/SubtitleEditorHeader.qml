@@ -78,7 +78,7 @@ Column {
                 const url = FileDialogs.saveFile(
                     qsTr("Export Subtitles"),
                     [qsTr("SubRip subtitles (*.srt)"), qsTr("WebVTT subtitles (*.vtt)")],
-                    (editor.clip && editor.clip.name) ? editor.clip.name : EditorState.projectFile.projectName,
+                    (editor.clipData && editor.clipData.name) ? editor.clipData.name : EditorState.projectFile.projectName,
                     "srt")
                 if (url != "")
                     EditorState.subtitles.exportFile(

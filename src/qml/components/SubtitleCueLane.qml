@@ -24,17 +24,17 @@ Item {
     // composer from it.
     signal cueTapped(int index)
 
-    readonly property var clip: {
+    readonly property var clipData: {
         void EditorState.selectedClipData
         return EditorState.selectedClipData
     }
-    readonly property bool isSubtitle: !!clip && clip.kind === "subtitle"
+    readonly property bool isSubtitle: !!clipData && clipData.kind === "subtitle"
     readonly property var cues: {
         void EditorState.tracksRevision
-        return (clip && clip.subtitleCues) ? clip.subtitleCues : []
+        return (clipData && clipData.subtitleCues) ? clipData.subtitleCues : []
     }
-    readonly property real clipStart: clip ? (clip.start || 0) : 0
-    readonly property real clipDuration: clip ? (clip.duration || 0) : 0
+    readonly property real clipStart: clipData ? (clipData.start || 0) : 0
+    readonly property real clipDuration: clipData ? (clipData.duration || 0) : 0
 
     // Voice waveform is locked to video/audio clips on the timeline — never to the
     // selected subtitle clip's start/duration (resizing subtitles must not stretch it).

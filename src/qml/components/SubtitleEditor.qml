@@ -8,7 +8,7 @@ import Drift
 Item {
     id: root
 
-    property var clip: null
+    property var clipData: null
     property var formatSeconds: (function (v) { return Number(v || 0).toFixed(2) })
     property int trackIndex: EditorState.selectedTrack
     property int clipIndex: EditorState.selectedClip
@@ -26,11 +26,11 @@ Item {
 
     readonly property double localPlayhead: {
         void EditorState.inspectorPlayheadSeconds
-        void root.clip
-        return clip ? EditorState.subtitleLocalPlayheadSeconds(trackIndex, clipIndex) : -1
+        void root.clipData
+        return clipData ? EditorState.subtitleLocalPlayheadSeconds(trackIndex, clipIndex) : -1
     }
-    readonly property double clipDuration: (clip && clip.duration) ? clip.duration : 0
-    readonly property var cues: (clip && clip.subtitleCues) ? clip.subtitleCues : []
+    readonly property double clipDuration: (clipData && clipData.duration) ? clipData.duration : 0
+    readonly property var cues: (clipData && clipData.subtitleCues) ? clipData.subtitleCues : []
     readonly property int activeCueIndex: EditorState.subtitles.activeCue
     readonly property var selectedCue: (selectedCueIndex >= 0 && selectedCueIndex < cues.length)
                                        ? cues[selectedCueIndex] : null

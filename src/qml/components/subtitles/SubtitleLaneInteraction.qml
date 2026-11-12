@@ -108,7 +108,7 @@ Item {
                 list[i0].end = Math.max(lo, Math.min(hi, v))
         }
         panel.liveCues = list
-        EditorState.previewSetSubtitleCues(panel.track, panel.clip, list)
+        EditorState.previewSetSubtitleCues(panel.track, panel.clipIndex, list)
     }
 
     function finishDrag() {
@@ -170,7 +170,7 @@ Item {
         target: root.panel
 
         function onTrackChanged() { root.cancelGesture() }
-        function onClipChanged() { root.cancelGesture() }
+        function onClipIndexChanged() { root.cancelGesture() }
     }
 
     MouseArea {

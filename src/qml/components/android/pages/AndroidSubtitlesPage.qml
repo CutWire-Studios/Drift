@@ -17,7 +17,7 @@ Item {
 
     SubtitleEditor {
         anchors.fill: parent
-        clip: root.clipData
+        clipData: root.clipData
         compactEdit: true
         onCueEditRequested: index => ShellBridge.main.editorPage.openCueComposer(index)
     }

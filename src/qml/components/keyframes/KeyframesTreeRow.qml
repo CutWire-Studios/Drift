@@ -7,7 +7,7 @@ Item {
 
     required property var row
     required property int track
-    required property int clip
+    required property int clipIndex
     required property real playhead
     required property real displayPlayhead
     required property bool curvesMode
@@ -47,16 +47,16 @@ Item {
 
     function toggleKeyHere() {
         if (!isGroup && rowsModel.refsAt(rowIndex, playhead, halfFrame).length > 0)
-            EditorState.keyframes.removeKeysAt(track, clip, row.tracks, playhead)
+            EditorState.keyframes.removeKeysAt(track, clipIndex, row.tracks, playhead)
         else
-            EditorState.keyframes.addKeysAt(track, clip, row.tracks, playhead)
+            EditorState.keyframes.addKeysAt(track, clipIndex, row.tracks, playhead)
     }
 
     function toggleAnimation() {
         const target = !row.enabled
         for (let i = 0; i < row.tracks.length; ++i) {
-            if (EditorState.clipPropertyKeyframesEnabled(track, clip, row.tracks[i]) !== target)
-                EditorState.toggleClipPropertyKeyframesEnabled(track, clip, row.tracks[i])
+            if (EditorState.clipPropertyKeyframesEnabled(track, clipIndex, row.tracks[i]) !== target)
+                EditorState.toggleClipPropertyKeyframesEnabled(track, clipIndex, row.tracks[i])
         }
     }
 
@@ -184,7 +184,7 @@ Item {
             visible: !root.isGroup
             row: root.row
             track: root.track
-            clip: root.clip
+            clipIndex: root.clipIndex
             playhead: root.displayPlayhead
             onEditingChanged: if (editing) root.focusRequested()
         }
