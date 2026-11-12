@@ -1265,6 +1265,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opExportStatus();
     if (tool == QLatin1String("wait_idle"))
         return opWaitIdle(args);
+    if (tool == QLatin1String("validate_project"))
+        return ok(m_controller->mcp()->validateProject(jsonInt(args.value(QStringLiteral("limit")), 200)));
     if (tool == QLatin1String("list_animated_properties"))
         return opListAnimatedProperties(args);
     if (tool == QLatin1String("list_keyframes"))
