@@ -57,6 +57,15 @@ AbstractButton {
     }
 
     contentItem: Item {
+        AssetFavoriteButton {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: Theme.spacingSm
+            z: 1
+            tabId: "layouts"
+            itemId: card.modelData.id
+        }
+
         Item {
             id: swatchBox
             anchors.top: parent.top
