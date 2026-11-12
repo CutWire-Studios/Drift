@@ -1001,6 +1001,16 @@ QString McpController::clipId(int trackIndex, int clipIndex) const
     return m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
 }
 
+QPair<int, int> McpController::effectHostOf(const QString &clipId, bool audio) const
+{
+    const auto [track, clip] = locateClip(clipId);
+    if (track < 0)
+        return {-1, -1};
+    const drift::Clip *host = m_app->effectHostClip(
+        track, clip, audio ? drift::AdjustmentKind::AudioEffects : drift::AdjustmentKind::VideoEffects);
+    return host ? locateClip(host->id) : QPair<int, int>{-1, -1};
+}
+
 namespace {
 
 // Detail rows come from the QML clip map, which spells out every field for the inspector's

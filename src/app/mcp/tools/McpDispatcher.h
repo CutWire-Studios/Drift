@@ -48,7 +48,7 @@ private:
     // transitionKinds() rows carry their id under "kind"; the catalog helpers key on "id".
     QVariantList transitionCatalog() const;
     QJsonObject clipFeedback(const ClipRef &ref, const QJsonObject &extra = {}) const;
-    QJsonObject effectHost(const ClipRef &ref, QJsonObject extra) const;
+    QJsonObject effectHost(const QString &clipId, bool audio, QJsonObject extra) const;
     QJsonObject waitImport(const QStringList &ids);
     // Ids among `ids` an import or load re-probed because their file changed in place, read
     // before waiting on them (landing clears the mark).

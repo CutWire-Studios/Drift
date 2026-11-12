@@ -8810,7 +8810,9 @@ void McpTest::authoredEffectLifecycle()
     const QJsonObject applied = call("add_effect", {{QStringLiteral("clip"), holder}, {QStringLiteral("effect"), QStringLiteral("user.test_tint")}});
     QVERIFY2(applied.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(applied).toJson()));
     {
-        const drift::Clip &clip = state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip());
+        const auto [hostTrack, hostClip] = state.mcp()->effectHostOf(holder, false);
+        QVERIFY(hostTrack >= 0);
+        const drift::Clip &clip = state.project()->tracks().at(hostTrack).clips.at(hostClip);
         QCOMPARE(clip.effects.size(), 1);
         QCOMPARE(clip.effects.first().catalogId, QStringLiteral("user.test_tint"));
     }
