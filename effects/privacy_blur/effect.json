@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "displayName": "Privacy Blur",
   "category": "dreamy",
+  "thumbnail": "thumbnail.webp",
   "description": "Hides a rectangular area with a blur, a mosaic or a solid bar.",
   "backend": "gpu",
   "order": 165,
