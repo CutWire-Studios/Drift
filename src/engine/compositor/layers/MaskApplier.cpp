@@ -47,6 +47,14 @@ QPainterPath maskPath(const Mask &mask, int canvasWidth, int canvasHeight)
         path.addRect(QRectF(0, canvasHeight - barH, canvasWidth, barH));
         return path;
     }
+    case drift::MaskShape::Split: {
+        // The half-plane left of a vertical seam through the centre, reaching far enough that any
+        // rotation about the centre still covers the whole canvas. maskAlphaMap turns it.
+        const double reach = qHypot(canvasWidth, canvasHeight) * 2.0;
+        QPainterPath path;
+        path.addRect(QRectF(center.x() - reach, center.y() - reach, reach, reach * 2.0));
+        return path;
+    }
     case drift::MaskShape::Freeform: {
         QPainterPath path;
         if (mask.points.isEmpty())

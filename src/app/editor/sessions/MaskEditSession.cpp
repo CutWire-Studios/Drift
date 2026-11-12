@@ -250,8 +250,9 @@ void MaskEditSession::snapCentre(double &nx, double &ny)
         return;
     }
     static constexpr double targets[3] = {0.0, 0.5, 1.0};
-    const double halfW = m_w / 2;
-    const double halfH = m_h / 2;
+    const bool seam = m_base.shape == drift::MaskShape::Split;
+    const double halfW = seam ? 0.0 : m_w / 2;
+    const double halfH = seam ? 0.0 : m_h / 2;
     const double xs[3] = {nx - halfW, nx, nx + halfW};
     const double ys[3] = {ny - halfH, ny, ny + halfH};
     double gx = -1;

@@ -20,7 +20,7 @@ Rectangle {
     border.color: rotateArea.containsMouse || rotateArea.pressed
                   ? Theme.c.maskOverlayRotateHandle.borderHover : Theme.c.maskOverlayRotateHandle.border
     x: parent.width / 2 - width / 2
-    y: -28 - height / 2
+    y: (mask.isSplit ? mask.height / 2 - 64 : -28) - height / 2
 
     MouseArea {
         id: rotateArea

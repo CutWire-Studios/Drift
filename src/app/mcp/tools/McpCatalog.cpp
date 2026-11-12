@@ -114,7 +114,7 @@ QJsonObject maskSchema()
          enumProp(QStringLiteral("Mask shape. Omitted or unrecognised = none, i.e. mask off."),
                   {QStringLiteral("none"), QStringLiteral("rectangle"), QStringLiteral("ellipse"),
                    QStringLiteral("star"), QStringLiteral("heart"), QStringLiteral("bars"),
-                   QStringLiteral("freeform"), QStringLiteral("media"), QStringLiteral("matte")})},
+                   QStringLiteral("split"), QStringLiteral("freeform"), QStringLiteral("media"), QStringLiteral("matte")})},
         {QStringLiteral("x"), numberProp(QStringLiteral("Center x, fraction of canvas (default 0.5)"), 0, 1)},
         {QStringLiteral("y"), numberProp(QStringLiteral("Center y, fraction of canvas (default 0.5)"), 0, 1)},
         {QStringLiteral("w"), numberProp(QStringLiteral("Width, fraction of canvas (default 0.6)"), 0, 1)},

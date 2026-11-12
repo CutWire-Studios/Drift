@@ -16,7 +16,7 @@ namespace drift {
 // pixels are the coverage map. Segmentation produces one (a grayscale matte written by
 // MatteWriter); the user can also point it at any image or video. Spelled "matte" in projects
 // written before v5.
-enum class MaskShape { None, Rectangle, Ellipse, Star, Heart, Bars, Freeform, Media };
+enum class MaskShape { None, Rectangle, Ellipse, Star, Heart, Bars, Freeform, Media, Split };
 
 QString maskShapeToString(MaskShape shape);
 MaskShape maskShapeFromString(const QString &shape);

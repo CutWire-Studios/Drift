@@ -1144,7 +1144,8 @@ QVariantList AppController::maskCatalog() const
     const QList<QPair<QString, QString>> entries = {
         {QStringLiteral("rectangle"), tr("Rectangle")}, {QStringLiteral("ellipse"), tr("Ellipse")},
         {QStringLiteral("star"), tr("Star")},           {QStringLiteral("heart"), tr("Heart")},
-        {QStringLiteral("bars"), tr("Bars")},           {QStringLiteral("freeform"), tr("Freeform")},
+        {QStringLiteral("bars"), tr("Bars")},           {QStringLiteral("split"), tr("Split")},
+        {QStringLiteral("freeform"), tr("Freeform")},
     };
 
     QVariantList out;
@@ -1170,7 +1171,14 @@ QString AppController::maskShapeSvgPath(const QString &shape) const
         mask.points.clear();
         seedFreeformMask(mask);
     }
-    return drift::painterPathToSvg(drift::maskPath(mask, 100, 100));
+    QPainterPath path = drift::maskPath(mask, 100, 100);
+    if (mask.shape == drift::MaskShape::Split)
+    {
+        QPainterPath frame;
+        frame.addRect(QRectF(3, 3, 94, 94));
+        path = path.intersected(frame);
+    }
+    return drift::painterPathToSvg(path);
 }
 
 void AppController::addMaskToClip(int trackIndex, int clipIndex, const QString &shape)

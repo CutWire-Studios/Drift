@@ -57,7 +57,7 @@ Item {
             // would clamp to 0 and the control would read "None" next to an applied cutout.
             visible: !root.isMedia
             width: parent.width
-            model: ["none", "rectangle", "ellipse", "star", "heart", "bars", "freeform"]
+            model: ["none", "rectangle", "ellipse", "star", "heart", "bars", "split", "freeform"]
             // Human labels — the raw ids were shown to the user.
             readonly property var labels: ({
                 "none": qsTr("None"),
@@ -66,6 +66,7 @@ Item {
                 "star": qsTr("Star"),
                 "heart": qsTr("Heart"),
                 "bars": qsTr("Bars"),
+                "split": qsTr("Split"),
                 "freeform": qsTr("Polygon")
             })
             displayText: labels[model[currentIndex]] || model[currentIndex]
@@ -152,22 +153,22 @@ Item {
             // nothing. Offering those sliders anyway just invites dragging something inert.
             model: [
                 { key: "mask.x", label: qsTr("Center X"), def: 0.5, decimals: 3, min: 0, max: 1,
-                  shapes: ["rectangle", "ellipse", "star", "heart"] },
+                  shapes: ["rectangle", "ellipse", "star", "heart", "split"] },
                 { key: "mask.y", label: qsTr("Center Y"), def: 0.5, decimals: 3, min: 0, max: 1,
-                  shapes: ["rectangle", "ellipse", "star", "heart"] },
+                  shapes: ["rectangle", "ellipse", "star", "heart", "split"] },
                 { key: "mask.w", label: qsTr("Width"), def: 0.6, decimals: 3, min: 0.05, max: 1,
                   shapes: ["rectangle", "ellipse", "star", "heart"] },
                 { key: "mask.h", label: qsTr("Height"), def: 0.6, decimals: 3, min: 0.05, max: 1,
                   shapes: ["rectangle", "ellipse", "star", "heart", "bars"] },
                 { key: "mask.rotation", label: qsTr("Rotation"), def: 0, decimals: 1,
                   min: -180, max: 180, unit: "°",
-                  shapes: ["rectangle", "ellipse", "star", "heart"] },
+                  shapes: ["rectangle", "ellipse", "star", "heart", "split"] },
                 { key: "mask.roundness", label: qsTr("Roundness"), def: 0, decimals: 2,
                   min: 0, max: 1, percent: true, shapes: ["rectangle"] },
                 // Feather blurs the finished coverage map, so it applies to every shape.
                 { key: "mask.feather", label: qsTr("Feather"), def: 0, decimals: 0,
                   min: 0, max: 64, unit: "px",
-                  shapes: ["rectangle", "ellipse", "star", "heart", "bars", "freeform"] }
+                  shapes: ["rectangle", "ellipse", "star", "heart", "bars", "split", "freeform"] }
             ]
             delegate: PropertyKeyframeRow {
                 required property var modelData

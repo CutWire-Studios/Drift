@@ -262,6 +262,9 @@ Item {
                 // bounding rect, shown for reference, and it is edited vertex by vertex — bbox
                 // grips would appear to do something and do nothing.
                 readonly property bool isFreeform: maskData.shape === "freeform"
+                // Split is a seam: only x, y and rotation mean anything. Its box is a strip along
+                // the seam, so the body drag and the rotate handle sit on the line itself.
+                readonly property bool isSplit: maskData.shape === "split"
                 readonly property bool editable: !isBars && !isFreeform && maskData.enabled !== false
                 readonly property bool movable: editable
                                                 || (isFreeform && maskData.enabled !== false)
@@ -289,10 +292,11 @@ Item {
                                                                         : (maskData.points || [])
 
                 visible: !maskBox.isBars
-                x: (mx - mw / 2) * clipFrame.width
-                y: (my - mh / 2) * clipFrame.height
-                width: Math.max(1, mw * clipFrame.width)
-                height: Math.max(1, mh * clipFrame.height)
+                x: isSplit ? mx * clipFrame.width - width / 2 : (mx - mw / 2) * clipFrame.width
+                y: isSplit ? my * clipFrame.height - height / 2 : (my - mh / 2) * clipFrame.height
+                width: isSplit ? Theme.spacingLg * 2 : Math.max(1, mw * clipFrame.width)
+                height: isSplit ? Math.hypot(clipFrame.width, clipFrame.height)
+                               : Math.max(1, mh * clipFrame.height)
                 transformOrigin: Item.Center
                 // A freeform's box is derived from its (already absolute) points, so rotating it
                 // here would double-apply the rotation the rasterizer does.
@@ -328,6 +332,7 @@ Item {
                 // point of the box is the handles, and the real shape is visible in the composite
                 // behind it.
                 MaskOverlayOutline {
+                    visible: !maskBox.isSplit
                     selected: maskBox.isSelected
                     enabledMask: maskBox.maskData.enabled !== false
                     shape: maskBox.maskData.shape || ""
@@ -337,11 +342,26 @@ Item {
                 // Feather reaches beyond the shape's edge, so show how far. Drawn outside so it
                 // reads as "the edge fades out to here".
                 MaskOverlayFeatherRing {
+                    visible: !maskBox.isSplit && selected && feather > 0
                     selected: maskBox.isSelected
                     feather: maskBox.maskData.feather || 0
                     scaleX: root.sx
                     scaleY: root.sy
                     shape: maskBox.maskData.shape || ""
+                }
+
+                Item {
+                    parent: clipFrame
+                    anchors.fill: parent
+                    visible: maskBox.isSplit && maskBox.maskData.enabled !== false
+
+                    MaskOverlaySplitSide {
+                        anchors.fill: parent
+                        selected: maskBox.isSelected
+                        seamX: maskBox.mx * clipFrame.width
+                        seamY: maskBox.my * clipFrame.height
+                        angle: maskBox.live ? maskBox.session.liveRotation : (maskBox.maskData.rotation || 0)
+                    }
                 }
 
                 MaskOverlayFeatherHandle {
@@ -470,7 +490,7 @@ Item {
                 }
 
                 IconButton {
-                    visible: maskBox.editable && maskBox.isSelected && !root.interacting
+                    visible: maskBox.editable && !maskBox.isSplit && maskBox.isSelected && !root.interacting
                     x: maskBox.width + Theme.spacingMd
                     y: -height - Theme.spacingMd
                     rotation: -maskBox.rotation
@@ -486,7 +506,7 @@ Item {
 
                 // Resize grips — the same frame the canvas crop tool and TransformOverlay use.
                 Repeater {
-                    model: (maskBox.editable && maskBox.isSelected)
+                    model: (maskBox.editable && !maskBox.isSplit && maskBox.isSelected)
                            ? [
                                { dx: -1, dy:  0, cursor: Qt.SizeHorCursor },
                                { dx:  1, dy:  0, cursor: Qt.SizeHorCursor },

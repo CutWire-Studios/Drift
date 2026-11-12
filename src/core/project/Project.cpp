@@ -1507,6 +1507,8 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // and 9. An older build would cut a looped clip off at the end of its first pass.
     // Version 26 added mask roundness. Nothing to migrate; the bump is a gate, as for versions 6
     // and 9. An older build would draw a rounded rectangle mask with sharp corners.
+    // Version 27 added the Split mask shape. Nothing to migrate; the bump is a gate, as for
+    // versions 6 and 9. An older build would read the shape as none and drop the mask.
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 

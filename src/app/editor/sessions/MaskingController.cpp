@@ -1426,6 +1426,8 @@ QString MaskingController::maskLabel(const drift::Mask &mask) const
         return tr("Heart");
     case drift::MaskShape::Bars:
         return tr("Bars");
+    case drift::MaskShape::Split:
+        return tr("Split");
     case drift::MaskShape::Media:
         return tr("Matte");
     case drift::MaskShape::None:

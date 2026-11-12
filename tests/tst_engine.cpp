@@ -446,6 +446,7 @@ private slots:
     void maskApplierFoldsAStackByItsOps();
     void maskShapesUseBothSizeAxes();
     void maskRoundnessRoundsRectangleCorners();
+    void splitMaskRevealsOneSideOfASeam();
     void starMaskRotatesOnceNotTwice();
     void maskAdjustmentLaneMasksItsParentsClips();
     void maskLaneOpsCombineAcrossLanes();
@@ -12037,6 +12038,53 @@ void EngineTest::maskRoundnessRoundsRectangleCorners()
     const drift::Mask &back = loaded.tracks()[0].clips[0].mask;
     QCOMPARE(back.roundness, 0.4);
     QVERIFY(!back.keyframes.value(QStringLiteral("roundness")).isEmpty());
+}
+
+void EngineTest::splitMaskRevealsOneSideOfASeam()
+{
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Split;
+    QImage alpha = drift::maskAlphaMap(mask, 128, 128);
+    QCOMPARE(qGray(alpha.pixel(10, 64)), 255);
+    QCOMPARE(qGray(alpha.pixel(118, 64)), 0);
+
+    mask.invert = true;
+    alpha = drift::maskAlphaMap(mask, 128, 128);
+    QCOMPARE(qGray(alpha.pixel(10, 64)), 0);
+    QCOMPARE(qGray(alpha.pixel(118, 64)), 255);
+
+    mask.invert = false;
+    mask.rotation = 90.0;
+    alpha = drift::maskAlphaMap(mask, 128, 128);
+    QCOMPARE(qGray(alpha.pixel(64, 10)), 255);
+    QCOMPARE(qGray(alpha.pixel(64, 118)), 0);
+
+    mask.rotation = 0.0;
+    mask.feather = 8.0;
+    alpha = drift::maskAlphaMap(mask, 128, 128);
+    QCOMPARE(qGray(alpha.pixel(0, 0)), 255);
+    QCOMPARE(qGray(alpha.pixel(0, 127)), 255);
+    QCOMPARE(qGray(alpha.pixel(127, 0)), 0);
+    QCOMPARE(qGray(alpha.pixel(127, 127)), 0);
+    const int seam = qGray(alpha.pixel(64, 64));
+    QVERIFY(seam > 20 && seam < 235);
+
+    mask.x = 0.25;
+    mask.rotation = 30.0;
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    clip.mask = mask;
+    project.tracks()[0].clips.append(clip);
+    const drift::Project loaded = drift::Project::fromJson(project.toJson());
+    const drift::Mask &back = loaded.tracks()[0].clips[0].mask;
+    QCOMPARE(back.shape, drift::MaskShape::Split);
+    QCOMPARE(back.x, 0.25);
+    QCOMPARE(back.rotation, 30.0);
 }
 
 // Star and heart were forced into a square of qMin(halfW, halfH), which quietly discarded

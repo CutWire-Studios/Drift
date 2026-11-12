@@ -10,6 +10,7 @@ Rectangle {
 
     readonly property bool onEllipse: mask.maskData.shape === "ellipse"
     readonly property real feather: mask.maskData.feather || 0
+    readonly property bool onSplit: mask.isSplit
     readonly property real diag: Math.SQRT1_2
 
     visible: mask.isSelected && mask.maskData.enabled !== false && !EditorState.playing
@@ -23,14 +24,14 @@ Rectangle {
     border.width: Theme.c.maskOverlayRotateHandle.borderWidth
     border.color: area.containsMouse || area.pressed
                   ? Theme.c.maskOverlayRotateHandle.borderHover : Theme.c.maskOverlayRotateHandle.border
-    x: (onEllipse ? mask.width / 2 + (mask.width / 2 + feather * scaleX) * diag
+    x: (onSplit ? mask.width / 2 + feather * scaleX : onEllipse ? mask.width / 2 + (mask.width / 2 + feather * scaleX) * diag
                   : mask.width + feather * scaleX) - width / 2
-    y: (onEllipse ? mask.height / 2 - (mask.height / 2 + feather * scaleX) * diag
+    y: (onSplit ? mask.height / 2 + 40 : onEllipse ? mask.height / 2 - (mask.height / 2 + feather * scaleX) * diag
                   : mask.height * 0.25) - height / 2
 
     function setFrom(mouse) {
         const p = area.mapToItem(knob.mask, mouse.x, mouse.y)
-        const edge = knob.onEllipse
+        const edge = knob.onSplit ? p.x - knob.mask.width / 2 : knob.onEllipse
                      ? ((p.x - knob.mask.width / 2) / knob.diag - knob.mask.width / 2)
                      : p.x - knob.mask.width
         EditorState.previewSetClipKeyframe(knob.mask.layerTrack, knob.mask.layerClip, "mask.feather",
