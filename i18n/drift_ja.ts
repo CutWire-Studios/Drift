@@ -2692,11 +2692,11 @@
     </message>
     <message>
         <source>Select a clip to split first</source>
-        <translation type="unfinished"></translation>
+        <translation>先に分割するクリップを選択してください</translation>
     </message>
     <message>
         <source>The playhead isn&apos;t over a selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>再生ヘッドが選択中のクリップ上にありません</translation>
     </message>
     <message>
         <source>Nothing to split here — move to a clip first</source>
@@ -3006,7 +3006,7 @@
     </message>
     <message>
         <source>Split selected clip at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>選択中のクリップを現在の時間で分割</translation>
     </message>
     <message>
         <source>Add transition at playhead</source>
@@ -3230,15 +3230,15 @@
     </message>
     <message>
         <source>The gap stays open: a linked track is locked</source>
-        <translation type="unfinished"></translation>
+        <translation>ギャップは開いたままです: リンクされたトラックがロックされています</translation>
     </message>
     <message>
         <source>The gap stays open: a clip is in the way of closing it</source>
-        <translation type="unfinished"></translation>
+        <translation>ギャップは開いたままです: クリップが邪魔をして閉じられません</translation>
     </message>
     <message>
         <source>The gap stays open: &quot;%1&quot; is in the way of closing it</source>
-        <translation type="unfinished"></translation>
+        <translation>ギャップは開いたままです: 「%1」が邪魔をして閉じられません</translation>
     </message>
     <message>
         <source>Clip inserted</source>
@@ -4600,15 +4600,15 @@
     </message>
     <message>
         <source>Exclude from export</source>
-        <translation type="unfinished"></translation>
+        <translation>エクスポートから除外</translation>
     </message>
     <message>
         <source>Track left out of export</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックをエクスポートから除外しました</translation>
     </message>
     <message>
         <source>Track included in export</source>
-        <translation type="unfinished"></translation>
+        <translation>トラックをエクスポートに含めました</translation>
     </message>
     <message>
         <source>Track lock</source>
@@ -4998,7 +4998,7 @@
     </message>
     <message>
         <source>The proxy could not be made</source>
-        <translation type="unfinished"></translation>
+        <translation>プロキシを作成できませんでした</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -9206,7 +9206,7 @@
     </message>
     <message>
         <source>Exporting audio</source>
-        <translation type="unfinished"></translation>
+        <translation>オーディオをエクスポート中</translation>
     </message>
     <message>
         <source>Export</source>
@@ -9226,7 +9226,7 @@
     </message>
     <message>
         <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
-        <translation type="unfinished"></translation>
+        <translation>オーディオをレンダリングしています。閉じて編集を続けるか、キャンセルして停止します。</translation>
     </message>
     <message>
         <source>Export finished.</source>
@@ -13344,7 +13344,7 @@
     <name>McpController</name>
     <message>
         <source>Relink media</source>
-        <translation type="unfinished">メディアを再リンク</translation>
+        <translation>メディアを再リンク</translation>
     </message>
 </context>
 <context>
@@ -13808,11 +13808,11 @@
     </message>
     <message>
         <source>The project was closed before the replace landed</source>
-        <translation type="unfinished"></translation>
+        <translation>置き換えが完了する前にプロジェクトが閉じられました</translation>
     </message>
     <message>
         <source>The project was closed before the edit landed</source>
-        <translation type="unfinished"></translation>
+        <translation>編集が完了する前にプロジェクトが閉じられました</translation>
     </message>
     <message>
         <source>Relink media</source>
@@ -13826,7 +13826,7 @@
     </message>
     <message>
         <source>Track is locked</source>
-        <translation type="unfinished">トラックはロックされています</translation>
+        <translation>トラックはロックされています</translation>
     </message>
     <message>
         <source>Sub-clip added</source>
@@ -24274,51 +24274,51 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Paste here</source>
-        <translation type="unfinished"></translation>
+        <translation>ここに貼り付け</translation>
     </message>
     <message>
         <source>Add bookmark here</source>
-        <translation type="unfinished"></translation>
+        <translation>ここにブックマークを追加</translation>
     </message>
     <message>
         <source>Select clips on track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラック上のクリップを選択</translation>
     </message>
     <message>
         <source>Select clips after here on track</source>
-        <translation type="unfinished"></translation>
+        <translation>トラック上のここ以降のクリップを選択</translation>
     </message>
     <message>
         <source>Select all clips</source>
-        <translation type="unfinished">すべてのクリップを選択</translation>
+        <translation>すべてのクリップを選択</translation>
     </message>
     <message>
         <source>Unmute track</source>
-        <translation type="unfinished">トラックのミュートを解除</translation>
+        <translation>トラックのミュートを解除</translation>
     </message>
     <message>
         <source>Mute track</source>
-        <translation type="unfinished">トラックをミュート</translation>
+        <translation>トラックをミュート</translation>
     </message>
     <message>
         <source>Show track</source>
-        <translation type="unfinished">トラックを表示</translation>
+        <translation>トラックを表示</translation>
     </message>
     <message>
         <source>Hide track</source>
-        <translation type="unfinished">トラックを非表示</translation>
+        <translation>トラックを非表示</translation>
     </message>
     <message>
         <source>Unlock track</source>
-        <translation type="unfinished">トラックのロックを解除</translation>
+        <translation>トラックのロックを解除</translation>
     </message>
     <message>
         <source>Lock track</source>
-        <translation type="unfinished">トラックをロック</translation>
+        <translation>トラックをロック</translation>
     </message>
     <message>
         <source>Remove empty tracks</source>
-        <translation type="unfinished">空のトラックを削除</translation>
+        <translation>空のトラックを削除</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -24944,11 +24944,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Include in export</source>
-        <translation type="unfinished"></translation>
+        <translation>エクスポートに含める</translation>
     </message>
     <message>
         <source>Exclude from export</source>
-        <translation type="unfinished"></translation>
+        <translation>エクスポートから除外</translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -25124,11 +25124,11 @@ If playback stutters, try another.</source>
     <name>TrackHeaderName</name>
     <message>
         <source>not exported</source>
-        <translation type="unfinished"></translation>
+        <translation>エクスポートされません</translation>
     </message>
     <message>
         <source>Shown while editing, left out of every export</source>
-        <translation type="unfinished"></translation>
+        <translation>編集中は表示されますが、すべてのエクスポートから除外されます</translation>
     </message>
 </context>
 <context>
