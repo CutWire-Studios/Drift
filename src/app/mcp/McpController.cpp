@@ -655,6 +655,8 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
         QJsonObject row{
             {QStringLiteral("i"), t},
             {QStringLiteral("type"), drift::trackTypeToString(track.type)},
+            // The name the timeline shows: the user's, else "Video 2" (stable, unlike `i`).
+            {QStringLiteral("label"), drift::trackDefaultLabel(track)},
             {QStringLiteral("clips"), track.clips.size()},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},

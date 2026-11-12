@@ -1061,6 +1061,7 @@ void liftAdjustmentClipsToOwnTracks(Project &project)
             track.type = TrackType::Adjustment;
             track.adjustmentScope = AdjustmentScope::AllBelow;
             track.parentTrackId.clear();
+            track.number = 0; // numbered again among the adjustment tracks
             continue;
         }
 

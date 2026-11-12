@@ -32,8 +32,8 @@ PanelFrame {
     readonly property alias treeList: treeList
 
     readonly property int track: EditorState.selectedTrack
-    readonly property int clip: EditorState.selectedClip
-    readonly property bool hasClip: track >= 0 && clip >= 0
+    readonly property int clipIndex: EditorState.selectedClip
+    readonly property bool hasClip: track >= 0 && clipIndex >= 0
                                     && Object.keys(EditorState.selectedClipData).length > 0
     readonly property real playhead: EditorState.playheadSeconds
     readonly property bool wantsActions: shown && (activeFocus || hover.hovered)
@@ -149,15 +149,15 @@ PanelFrame {
             return
         const tracks = rowsModelObject.targetTracks(targets)
         if (allTargetsKeyed)
-            EditorState.keyframes.removeKeysAt(track, clip, tracks, playhead)
+            EditorState.keyframes.removeKeysAt(track, clipIndex, tracks, playhead)
         else
-            EditorState.keyframes.addKeysAt(track, clip, tracks, playhead)
+            EditorState.keyframes.addKeysAt(track, clipIndex, tracks, playhead)
     }
 
     function clearTargetKeys() {
         if (targets.length === 0)
             return
-        EditorState.keyframes.clearProperties(track, clip, rowsModelObject.targetTracks(targets))
+        EditorState.keyframes.clearProperties(track, clipIndex, rowsModelObject.targetTracks(targets))
         selectionObject.clear()
     }
 
@@ -177,7 +177,7 @@ PanelFrame {
 
     function nudgeSelection(frames) {
         const dt = frames / Math.max(1, EditorState.projectFile.projectFps())
-        const moved = EditorState.keyframes.nudgeKeys(track, clip, selectionObject.refs(), dt)
+        const moved = EditorState.keyframes.nudgeKeys(track, clipIndex, selectionObject.refs(), dt)
         if (moved && moved.length > 0)
             selectionObject.replace(moved)
     }
@@ -203,7 +203,7 @@ PanelFrame {
         if (id === "paste") {
             if (selectionObject.count === 0 && !(EditorState.keyframes.clipboardCount > 0 && mine))
                 return false
-            const pasted = EditorState.keyframes.pasteKeys(track, clip, playhead)
+            const pasted = EditorState.keyframes.pasteKeys(track, clipIndex, playhead)
             if (pasted && pasted.length > 0)
                 selectionObject.replace(pasted)
             return true
@@ -217,12 +217,12 @@ PanelFrame {
         if (selectionObject.count === 0)
             return false
         if (id === "delete") {
-            EditorState.keyframes.removeKeys(track, clip, selectionObject.refs())
+            EditorState.keyframes.removeKeys(track, clipIndex, selectionObject.refs())
             selectionObject.clear()
             return true
         }
         if (id === "copy") {
-            EditorState.keyframes.copyKeys(track, clip, selectionObject.refs())
+            EditorState.keyframes.copyKeys(track, clipIndex, selectionObject.refs())
             return true
         }
         return false
@@ -244,7 +244,7 @@ PanelFrame {
 
     onShownChanged: scheduleRebuild()
     onTrackChanged: Qt.callLater(onClipSwitched)
-    onClipChanged: Qt.callLater(onClipSwitched)
+    onClipIndexChanged: Qt.callLater(onClipSwitched)
     onAnimatedOnlyChanged: scheduleRebuild()
     onCollapsedChanged: scheduleRebuild()
     Component.onCompleted: onClipSwitched()
@@ -283,7 +283,7 @@ PanelFrame {
         controller: EditorState.keyframes
         timeView: timeViewObject
         track: root.track
-        clip: root.clip
+        clip: root.clipIndex
         revision: EditorState.tracksRevision
         sizeLinked: EditorState.sizeLinked
         animatedOnly: root.animatedOnly
@@ -304,7 +304,7 @@ PanelFrame {
         function onTracksRevisionChanged() { root.scheduleRebuild() }
         function onSizeLinkedChanged() { root.scheduleRebuild() }
         function onClipPropertiesPreviewed(t, c, keys) {
-            if (t === root.track && c === root.clip)
+            if (t === root.track && c === root.clipIndex)
                 root.scheduleRebuild()
         }
         function onSelectedClipDataChanged() {
@@ -386,7 +386,7 @@ PanelFrame {
                 rowsModel: rowsModelObject
                 rowIndex: delegate.index
                 track: root.track
-                clip: root.clip
+                clipIndex: root.clipIndex
                 playhead: root.playhead
                 displayPlayhead: EditorState.inspectorPlayheadSeconds
                 curvesMode: root.mode === "curves"

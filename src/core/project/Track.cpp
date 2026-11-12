@@ -94,4 +94,43 @@ bool Track::acceptsClip(const Clip &clip) const
     return (clip.adjustmentKind == AdjustmentKind::Transform) == isTransformLayer();
 }
 
+QString trackNumberKind(const Track &track)
+{
+    if (track.isAdjustmentLane() || track.isCameraLayer())
+        return {};
+    if (track.isTransformLayer())
+        return QStringLiteral("transform");
+    return trackTypeToString(track.type);
+}
+
+QString trackDefaultLabel(const Track &track)
+{
+    if (!track.name.isEmpty())
+        return track.name;
+    if (track.isCameraLayer())
+        return QStringLiteral("Camera");
+    // A nested lane is named after what it holds, as its row in the timeline is.
+    if (track.isAdjustmentLane()) {
+        const AdjustmentKind kind = track.clips.isEmpty() ? AdjustmentKind::VideoEffects
+                                                          : track.clips.first().adjustmentKind;
+        return kind == AdjustmentKind::AudioEffects ? QStringLiteral("Audio FX")
+               : kind == AdjustmentKind::Mask       ? QStringLiteral("Mask")
+                                                    : QStringLiteral("Effects");
+    }
+    QString type;
+    if (track.isTransformLayer()) {
+        type = QStringLiteral("Transform");
+    } else {
+        switch (track.type) {
+        case TrackType::Video: type = QStringLiteral("Video"); break;
+        case TrackType::Audio: type = QStringLiteral("Audio"); break;
+        case TrackType::Text: type = QStringLiteral("Text"); break;
+        case TrackType::Subtitle: type = QStringLiteral("Subtitle"); break;
+        case TrackType::Shape: type = QStringLiteral("Graphic"); break;
+        case TrackType::Adjustment: type = QStringLiteral("Adjustment"); break;
+        }
+    }
+    return track.number > 0 ? QStringLiteral("%1 %2").arg(type).arg(track.number) : type;
+}
+
 } // namespace drift

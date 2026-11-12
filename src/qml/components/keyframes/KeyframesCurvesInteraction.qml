@@ -76,7 +76,7 @@ Item {
         dragTime = dragOrigin + dt
         dragValue = Number(pressHit.value) + view.curves.valueDelta(view.series[pressHit.entryIndex].prop, dy)
         const refs = view.curves.dragRefs(dragRefs, dy)
-        const res = EditorState.keyframes.previewMoveKeys(panel.track, panel.clip, refs, dt)
+        const res = EditorState.keyframes.previewMoveKeys(panel.track, panel.clipIndex, refs, dt)
         if (res && res.length > 0) {
             dragResult = res
             selection.replace(res)
@@ -129,7 +129,7 @@ Item {
                                       shift ? hit.point.value : hit.value + dValue)]
             : view.curves.deformSegment(hit.a, hit.b, hit.t, shift ? 0 : dSeconds, dValue)
         for (const k of keys)
-            EditorState.previewSetKeyframeTangents(panel.track, panel.clip, prop, k.seconds,
+            EditorState.previewSetKeyframeTangents(panel.track, panel.clipIndex, prop, k.seconds,
                                                    k.inDx, k.inDy, k.outDx, k.outDy, k.corner)
     }
 
@@ -226,7 +226,7 @@ Item {
         const s = Math.max(timeView.clipStart,
                            Math.min(timeView.clipStart + timeView.clipDuration,
                                     panel.snapKeyTime(timeView.secondsFor(x), [], false)))
-        EditorState.keyframes.addKeysAt(panel.track, panel.clip, [view.series[view.focusedIndex].prop], s)
+        EditorState.keyframes.addKeysAt(panel.track, panel.clipIndex, [view.series[view.focusedIndex].prop], s)
     }
 
     KeyframesMarquee {
@@ -261,7 +261,7 @@ Item {
         target: root.panel
 
         function onTrackChanged() { root.cancelDrag() }
-        function onClipChanged() { root.cancelDrag() }
+        function onClipIndexChanged() { root.cancelDrag() }
     }
 
     MouseArea {

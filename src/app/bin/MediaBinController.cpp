@@ -886,8 +886,12 @@ void MediaBinController::startEditJob(const QString &assetId, const QString &nam
                 const int assetIndex = m_app->m_assetLibrary
                                            ? m_app->m_assetLibrary->indexOfId(assetId)
                                            : -1;
+                m_editOutputPath = spec.outputPath;
+                m_editOutputAssetId = assetId;
                 if (assetIndex < 0
                     || !replaceSource(assetIndex, QUrl::fromLocalFile(spec.outputPath))) {
+                    m_editOutputPath.clear();
+                    m_editOutputAssetId.clear();
                     QFile::remove(spec.outputPath);
                     m_editing = false;
                     m_editingAssetId.clear();
@@ -965,6 +969,12 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
         adjust = nullptr;
 
     const bool fromEdit = (m_editingAssetId == assetId);
+    // The edit's own replace has landed. Not keyed on fromEdit: a replace of the asset while it
+    // encoded ends the edit early, and its render still lands here afterwards.
+    if (!refresh && assetId == m_editOutputAssetId) {
+        m_editOutputPath.clear();
+        m_editOutputAssetId.clear();
+    }
     const QString keptEditName = fromEdit ? m_editKeepName : QString();
     auto finishEditJob = [&](bool editOk, const QString &message) {
         if (!fromEdit)
@@ -1118,6 +1128,41 @@ QHash<QString, QString> MediaBinController::findSiblingRelinks(const QString &as
         remap.insert(asset->path, candidate.absoluteFilePath());
     }
     return remap;
+}
+
+void MediaBinController::dropPendingReplace()
+{
+    // An edit (crop, trim, convert) whose render has started its replace. One still encoding
+    // hasn't, and is left to finish.
+    const QString editOutput = std::exchange(m_editOutputPath, QString());
+    const QString editAssetId = std::exchange(m_editOutputAssetId, QString());
+    if (!m_replacingAssetId.isEmpty()) {
+        const QString assetId = std::exchange(m_replacingAssetId, QString());
+        m_replacingAssetSourceUri.clear();
+        m_replacesByAgent.remove(assetId);
+        m_replaceAdjust = nullptr;
+        emit replacingAssetIdChanged();
+        // Ends whoever waits on it (the replace dialog, the Source Lab, which removes its
+        // render). The edit's own replace ends below.
+        if (editOutput.isEmpty() || assetId != editAssetId)
+            reportReplace(assetId, false, tr("The project was closed before the replace landed"), 0);
+    }
+    if (!editOutput.isEmpty()) {
+        // The edit's own render, which nothing else points at.
+        QFile::remove(editOutput);
+        // Conversions queued behind it were picked in the old project.
+        m_conversionQueue.clear();
+        // Unless a replace of the asset while it encoded ended the edit already.
+        if (m_editing && m_editingAssetId == editAssetId) {
+            m_editing = false;
+            m_editingAssetId.clear();
+            m_editKeepName.clear();
+            m_editProgress = 0.0;
+            m_editStatus = tr("The project was closed before the edit landed");
+            emit editChanged();
+            emit editFinished(false, m_editStatus);
+        }
+    }
 }
 
 void MediaBinController::relinkSiblings()

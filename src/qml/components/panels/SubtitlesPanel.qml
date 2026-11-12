@@ -22,7 +22,7 @@ PanelFrame {
                                               + colTimeWidth * 2 + colDurationWidth
 
     readonly property int track: EditorState.selectedTrack
-    readonly property int clip: EditorState.selectedClip
+    readonly property int clipIndex: EditorState.selectedClip
     readonly property var clipData: EditorState.selectedClipData
     readonly property bool isSubtitle: (clipData?.kind ?? "") === "subtitle"
     readonly property real clipStart: clipData?.start || 0
@@ -57,7 +57,7 @@ PanelFrame {
     function commitList(list, tag) {
         const items = list.map((c, i) => ({ "c": c, "i": i }))
         items.sort((a, b) => (a.c.start - b.c.start) || (a.i - b.i))
-        EditorState.setSubtitleCues(track, clip, items.map(x => x.c))
+        EditorState.setSubtitleCues(track, clipIndex, items.map(x => x.c))
         return items.findIndex(x => x.i === tag)
     }
 
@@ -71,7 +71,7 @@ PanelFrame {
         cursorCue = cueIndex
         EditorState.subtitles.selectCue(cueIndex, 0)
         if (seek)
-            EditorState.seekToSubtitleCue(track, clip, cueIndex)
+            EditorState.seekToSubtitleCue(track, clipIndex, cueIndex)
     }
 
     function clickCue(cueIndex, modifiers) {
@@ -82,7 +82,7 @@ PanelFrame {
             EditorState.subtitles.selectCue(cueIndex, 2)
         } else {
             EditorState.subtitles.selectCue(cueIndex, 0)
-            EditorState.seekToSubtitleCue(track, clip, cueIndex)
+            EditorState.seekToSubtitleCue(track, clipIndex, cueIndex)
         }
     }
 
@@ -139,7 +139,7 @@ PanelFrame {
         if (isNaN(t) || cueIndex >= EditorState.subtitles.count)
             return
         const value = Math.max(0, t - timeOffset)
-        const list = EditorState.subtitles.cues(track, clip)
+        const list = EditorState.subtitles.cues(track, clipIndex)
         const cue = list[cueIndex]
         const other = column === "start" ? cue.end : cue.start
         if (column === "start" ? value >= other : value <= other)
@@ -159,21 +159,21 @@ PanelFrame {
         cancelEdit()
         if (cueIndex >= EditorState.subtitles.count)
             return
-        const list = EditorState.subtitles.cues(track, clip)
+        const list = EditorState.subtitles.cues(track, clipIndex)
         if (list[cueIndex].text === text)
             return
         list[cueIndex].text = text
-        EditorState.setSubtitleCues(track, clip, list)
+        EditorState.setSubtitleCues(track, clipIndex, list)
     }
 
     function insertCue(start, end) {
         toolbar.filterText = ""
-        const list = EditorState.subtitles.cues(track, clip)
+        const list = EditorState.subtitles.cues(track, clipIndex)
         let at = 0
         while (at < list.length && list[at].start < start)
             ++at
         list.splice(at, 0, { "start": start, "end": end, "text": "", "source": "" })
-        EditorState.setSubtitleCues(track, clip, list)
+        EditorState.setSubtitleCues(track, clipIndex, list)
         selectOnly(at, false)
         Qt.callLater(() => {
             scrollToCue(at)
@@ -189,7 +189,7 @@ PanelFrame {
         if (!isSubtitle)
             return
         const dur = clipDuration > 0 ? clipDuration : Infinity
-        const cues = EditorState.subtitles.cues(track, clip)
+        const cues = EditorState.subtitles.cues(track, clipIndex)
         let start = Math.max(0, Math.min(dur, EditorState.playheadSeconds - clipStart))
         for (let i = 0; i < cues.length; ++i) {
             if (start >= cues[i].start && start < cues[i].end)
@@ -209,7 +209,7 @@ PanelFrame {
         if (!isSubtitle || sel.length === 0)
             return
         const base = Math.max.apply(null, sel)
-        const cues = EditorState.subtitles.cues(track, clip)
+        const cues = EditorState.subtitles.cues(track, clipIndex)
         if (base >= cues.length)
             return
         const dur = clipDuration > 0 ? clipDuration : Infinity
@@ -224,10 +224,10 @@ PanelFrame {
     function deleteSelected() {
         if (selectedCount === 0)
             return
-        const list = EditorState.subtitles.cues(track, clip).filter((c, i) => !selectedMap[i])
+        const list = EditorState.subtitles.cues(track, clipIndex).filter((c, i) => !selectedMap[i])
         EditorState.subtitles.clearSelection()
         cursorCue = -1
-        EditorState.setSubtitleCues(track, clip, list)
+        EditorState.setSubtitleCues(track, clipIndex, list)
     }
 
     function onClipSwitched() {
@@ -248,7 +248,7 @@ PanelFrame {
         if (!shown || !isSubtitle || textFieldFocused())
             return false
         if (id === "selectAll") {
-            EditorState.subtitles.selectAll(track, clip)
+            EditorState.subtitles.selectAll(track, clipIndex)
             return true
         }
         if (id === "delete") {
@@ -275,7 +275,7 @@ PanelFrame {
     activeFocusOnTab: true
 
     onTrackChanged: onClipSwitched()
-    onClipChanged: onClipSwitched()
+    onClipIndexChanged: onClipSwitched()
     onActiveCueChanged: {
         if (follow && shown && EditorState.playing && activeCue >= 0)
             scrollToCue(activeCue)
@@ -292,7 +292,7 @@ PanelFrame {
         if (event.key === Qt.Key_Delete) {
             root.deleteSelected()
         } else if (event.key === Qt.Key_A && (mods & Qt.ControlModifier)) {
-            EditorState.subtitles.selectAll(root.track, root.clip)
+            EditorState.subtitles.selectAll(root.track, root.clipIndex)
         } else if (event.key === Qt.Key_F && (mods & Qt.ControlModifier)) {
             toolbar.focusFilter()
         } else if (event.key === Qt.Key_Escape) {

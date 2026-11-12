@@ -36,9 +36,13 @@ struct Track
     TrackType type = TrackType::Video;
     QList<Clip> clips;
     QList<Transition> transitions;
-    // User-given label, shown instead of the type+position fallback ("Video 1") once set.
+    // User-given label, shown instead of the default one ("Video 1") once set.
     // Empty by default — most tracks never get a custom name.
     QString name;
+    // The number in the default label ("Video 2"), kept by the track so adding, deleting or
+    // reordering tracks never renumbers the others. Counted per kind (trackNumberKind) and given
+    // out by ensureTrackIds; 0 for the kinds whose label has no number (nested lanes, camera).
+    int number = 0;
     bool muted = false;
     bool hidden = false;
     bool locked = false;
@@ -89,5 +93,13 @@ struct Track
         return type == TrackType::Adjustment && adjustmentScope == AdjustmentScope::Camera;
     }
 };
+
+// What a track's number counts among: its type, with transform layers counted apart from other
+// adjustment tracks. Empty for nested lanes and the camera layer, whose labels have no number.
+QString trackNumberKind(const Track &track);
+
+// The track's name, else its default label in English ("Video 2", "Transform 1", "Camera", or a
+// nested lane's "Effects" / "Audio FX" / "Mask"), as the timeline shows it. For replies to agents; the UI builds the same label translated.
+QString trackDefaultLabel(const Track &track);
 
 } // namespace drift

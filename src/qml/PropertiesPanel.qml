@@ -638,7 +638,7 @@ PanelFrame {
             visible: active
             sourceComponent: Component {
                 SubtitleEditor {
-                    clip: root.hasSelection ? root.clipData : null
+                    clipData: root.hasSelection ? root.clipData : null
                     formatSeconds: root.formatSeconds
                     compactEdit: root.sheetMode
                     onCueEditRequested: index => root.cueEditRequested(index)

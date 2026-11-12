@@ -136,6 +136,10 @@ public:
     // frame rate and swaps it in, one at a time, the same undoable way a crop does, marking the
     // asset edit-friendly. The original file is left where it was.
     Q_INVOKABLE void convertToConstantFrameRate(const QStringList &assetIds);
+    // The document was replaced (load, new, close) while a replace's probe ran: AssetLibrary
+    // drops the probe, so finalizeReplace never runs. Clears the busy row, and the edit that
+    // was waiting on it (jmn8718/Drift#74).
+    void dropPendingReplace();
     // Applies the relinks offered by the last siblingRelinkAvailable, as one undoable edit.
     Q_INVOKABLE void relinkSiblings();
 
@@ -198,6 +202,10 @@ private:
     QString m_editStatus;
     QString m_editKeepName;
     QString m_editingAssetId;
+    // The edit's render while the replace it started is pending; removed if that replace is
+    // dropped (jmn8718/Drift#74).
+    QString m_editOutputPath;
+    QString m_editOutputAssetId;
     QAtomicInt m_editCancel = 0;
     bool m_editIsConversion = false;
     // Asset ids waiting for convertToConstantFrameRate; the edit job runs one at a time.

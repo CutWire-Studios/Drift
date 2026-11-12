@@ -152,7 +152,9 @@ QHash<int, QByteArray> SearchIndex::roleNames() const
         {SubRole, "sub"},
         {HintRole, "hint"},
         {ShortcutRole, "shortcut"},
-        {EnabledRole, "enabled"},
+        // Not "enabled": the row delegate takes roles as required properties of the same name,
+        // and that one would shadow Item.enabled.
+        {EnabledRole, "available"},
         {TargetRole, "target"},
     };
 }

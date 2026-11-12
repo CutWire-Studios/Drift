@@ -64,7 +64,7 @@ Item {
         const dt = rowsModel.moveDelta(dragOrigin, x - pressX + timeView.contentX - pressContentX, dragRefs,
                                        lastInvert, false)
         dragTime = dragOrigin + dt
-        const res = EditorState.keyframes.previewMoveKeys(panel.track, panel.clip, dragRefs, dt)
+        const res = EditorState.keyframes.previewMoveKeys(panel.track, panel.clipIndex, dragRefs, dt)
         if (res && res.length > 0) {
             dragResult = res
             selection.replace(res)
@@ -211,7 +211,7 @@ Item {
         target: root.panel
 
         function onTrackChanged() { root.cancelDrag() }
-        function onClipChanged() { root.cancelDrag() }
+        function onClipIndexChanged() { root.cancelDrag() }
     }
 
     MouseArea {
@@ -352,7 +352,7 @@ Item {
             if (hit.dot)
                 EditorState.playheadSeconds = hit.seconds
             else if (hit.rowData.type !== "group")
-                EditorState.keyframes.addKeysAt(root.panel.track, root.panel.clip, hit.rowData.tracks,
+                EditorState.keyframes.addKeysAt(root.panel.track, root.panel.clipIndex, hit.rowData.tracks,
                                                 root.panel.snapKeyTime(hit.seconds, [], false))
         }
 

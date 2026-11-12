@@ -3217,6 +3217,18 @@
         <translation>トラックはロックされています</translation>
     </message>
     <message>
+        <source>The gap stays open: a linked track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The gap stays open: a clip is in the way of closing it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The gap stays open: &quot;%1&quot; is in the way of closing it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clip inserted</source>
         <translation>クリップを挿入しました</translation>
     </message>

@@ -178,6 +178,7 @@ private slots:
     void undoToCarriesTheSelectionById();
     void applyBatchOfNoOpsAddsNoUndoStep();
     void inspectIsCompact();
+    void inspectLabelsTracksStably();
     void inspectDetailRowIsCompact();
     void inspectClipAndTrackFilters();
     void mergeClipsMergesSubtitleTrack();
@@ -3727,6 +3728,32 @@ void McpTest::inspectIsCompact()
     const QJsonArray tracks = withClips.value(QStringLiteral("tracks")).toArray();
     QVERIFY(!tracks.isEmpty());
     QVERIFY(tracks.at(0).toObject().contains(QStringLiteral("items")));
+}
+
+// #48: each track row carries the label the timeline shows, which stays put when tracks are added.
+void McpTest::inspectLabelsTracksStably()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    const auto labels = [&] {
+        QStringList out;
+        drift::mcp::McpDispatcher dispatcher(&state);
+        for (const QJsonValue &row : dispatcher.inspect({}).value(QStringLiteral("tracks")).toArray())
+            out.append(row.toObject().value(QStringLiteral("label")).toString());
+        return out;
+    };
+    QCOMPARE(labels(), (QStringList{QStringLiteral("Video 1")}));
+    state.addTrack(QStringLiteral("video"));
+    state.addTrack(QStringLiteral("audio"));
+    // New tracks go on top; the first video track is still "Video 1".
+    QCOMPARE(labels(), (QStringList{QStringLiteral("Audio 1"), QStringLiteral("Video 2"), QStringLiteral("Video 1")}));
+    QCOMPARE(state.tracks().at(2).toMap().value(QStringLiteral("number")).toInt(), 1);
+    QCOMPARE(state.tracks().at(1).toMap().value(QStringLiteral("number")).toInt(), 2);
+    // Undo and redo bring the numbers back with the tracks.
+    state.undo();
+    QCOMPARE(labels(), (QStringList{QStringLiteral("Video 2"), QStringLiteral("Video 1")}));
+    state.redo();
+    QCOMPARE(labels(), (QStringList{QStringLiteral("Audio 1"), QStringLiteral("Video 2"), QStringLiteral("Video 1")}));
 }
 
 namespace {

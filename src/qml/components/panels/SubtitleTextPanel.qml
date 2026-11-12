@@ -24,10 +24,10 @@ PanelFrame {
     property var parseResult: ({ "count": 0, "errorCount": 0, "errors": [] })
 
     readonly property int track: EditorState.selectedTrack
-    readonly property int clip: EditorState.selectedClip
+    readonly property int clipIndex: EditorState.selectedClip
     readonly property var clipData: EditorState.selectedClipData
     readonly property bool isSubtitle: (clipData?.kind ?? "") === "subtitle"
-    readonly property bool clipMismatch: externalChange && (loadedTrack !== track || loadedClip !== clip)
+    readonly property bool clipMismatch: externalChange && (loadedTrack !== track || loadedClip !== clipIndex)
     readonly property bool canApply: dirty && parseResult.count > 0 && !clipMismatch && isSubtitle
     readonly property var errorLines: {
         const map = ({})
@@ -44,11 +44,11 @@ PanelFrame {
         if (!isSubtitle)
             return
         loading = true
-        editor.text = EditorState.subtitles.cuesText(track, clip, format, timelineTimes)
+        editor.text = EditorState.subtitles.cuesText(track, clipIndex, format, timelineTimes)
         loadedText = editor.text
         loading = false
         loadedTrack = track
-        loadedClip = clip
+        loadedClip = clipIndex
         dirty = false
         externalChange = false
         pending = null
@@ -81,7 +81,7 @@ PanelFrame {
     function applyEdits() {
         if (!canApply)
             return
-        if (EditorState.subtitles.applyText(track, clip, editor.text, format, timelineTimes))
+        if (EditorState.subtitles.applyText(track, clipIndex, editor.text, format, timelineTimes))
             load()
     }
 
@@ -106,7 +106,7 @@ PanelFrame {
             [qsTr("Subtitles (*.srt *.vtt)"), qsTr("All files (*)")])
         if (url == "")
             return
-        if (EditorState.subtitles.importFile(track, clip, url)) {
+        if (EditorState.subtitles.importFile(track, clipIndex, url)) {
             format = String(url).toLowerCase().endsWith(".vtt") ? "vtt" : "srt"
             syncCombo()
             load()
@@ -120,7 +120,7 @@ PanelFrame {
             clipData.name || EditorState.projectFile.projectName,
             format)
         if (url != "")
-            EditorState.subtitles.exportFile(track, clip, url, timelineTimes)
+            EditorState.subtitles.exportFile(track, clipIndex, url, timelineTimes)
     }
 
     function copyAll() {
@@ -143,7 +143,7 @@ PanelFrame {
 
     focus: true
     onTrackChanged: Qt.callLater(onClipSwitched)
-    onClipChanged: Qt.callLater(onClipSwitched)
+    onClipIndexChanged: Qt.callLater(onClipSwitched)
     onIsSubtitleChanged: Qt.callLater(onClipSwitched)
     Component.onCompleted: load()
 

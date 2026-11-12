@@ -21,9 +21,9 @@ PanelFrame {
 
     readonly property alias timeView: timeViewObject
     readonly property int track: EditorState.selectedTrack
-    readonly property int clip: EditorState.selectedClip
+    readonly property int clipIndex: EditorState.selectedClip
     readonly property var clipData: EditorState.selectedClipData
-    readonly property bool hasClip: track >= 0 && clip >= 0 && Object.keys(clipData).length > 0
+    readonly property bool hasClip: track >= 0 && clipIndex >= 0 && Object.keys(clipData).length > 0
     readonly property bool isSubtitle: hasClip && clipData.kind === "subtitle"
     readonly property real clipStart: clipData.start || 0
     readonly property real clipDuration: clipData.duration || 0
@@ -91,7 +91,7 @@ PanelFrame {
             return
         const list = copyCues(liveCues)
         list[i].text = text
-        EditorState.setSubtitleCues(track, clip, list)
+        EditorState.setSubtitleCues(track, clipIndex, list)
     }
 
     function insertCue(start, end) {
@@ -101,7 +101,7 @@ PanelFrame {
             ++at
         list.splice(at, 0, { "start": start, "end": end, "text": "", "source": "" })
         liveCues = list
-        EditorState.setSubtitleCues(track, clip, list)
+        EditorState.setSubtitleCues(track, clipIndex, list)
         EditorState.subtitles.setSelectedCues([at])
         beginEdit(at)
     }
@@ -131,12 +131,12 @@ PanelFrame {
             return
         const list = copyCues(liveCues).filter((c, i) => !selectedMap[i])
         EditorState.subtitles.clearSelection()
-        EditorState.setSubtitleCues(track, clip, list)
+        EditorState.setSubtitleCues(track, clipIndex, list)
     }
 
     function nudgeSelected(seconds) {
         if (selectedCount > 0)
-            EditorState.subtitles.applyShift(track, clip, 1, seconds, 0)
+            EditorState.subtitles.applyShift(track, clipIndex, 1, seconds, 0)
     }
 
     function zoomBy(factor) {
@@ -161,7 +161,7 @@ PanelFrame {
         if (!shown || !isSubtitle || textFieldFocused())
             return false
         if (id === "selectAll") {
-            EditorState.subtitles.selectAll(track, clip)
+            EditorState.subtitles.selectAll(track, clipIndex)
             return true
         }
         if (id === "delete") {
@@ -192,7 +192,7 @@ PanelFrame {
             liveCues = committedCues
     }
     onTrackChanged: Qt.callLater(onClipSwitched)
-    onClipChanged: Qt.callLater(onClipSwitched)
+    onClipIndexChanged: Qt.callLater(onClipSwitched)
     onShownChanged: {
         if (shown)
             Qt.callLater(onClipSwitched)
@@ -208,7 +208,7 @@ PanelFrame {
             root.deleteSelected()
             event.accepted = true
         } else if (event.key === Qt.Key_A && (mods & Qt.ControlModifier)) {
-            EditorState.subtitles.selectAll(root.track, root.clip)
+            EditorState.subtitles.selectAll(root.track, root.clipIndex)
             event.accepted = true
         } else if (event.key === Qt.Key_Escape) {
             if (!view.surface.busy)

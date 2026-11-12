@@ -9,7 +9,7 @@ Item {
 
     required property var row
     required property int track
-    required property int clip
+    required property int clipIndex
     required property real playhead
 
     readonly property bool isScale: row.type === "scale"
@@ -47,7 +47,7 @@ Item {
     readonly property real shownValue: dragging ? liveValue : currentValue
 
     function trackValue(prop, def) {
-        return EditorState.propertyValueAt(track, clip, prop, playhead, def)
+        return EditorState.propertyValueAt(track, clipIndex, prop, playhead, def)
     }
 
     function valueAt() {
@@ -117,7 +117,7 @@ Item {
     }
 
     function previewScale(value) {
-        EditorState.keyframes.previewScale(track, clip, scaleStart, value)
+        EditorState.keyframes.previewScale(track, clipIndex, scaleStart, value)
     }
 
     function preview(value) {
@@ -125,7 +125,7 @@ Item {
         if (isScale)
             previewScale(value)
         else
-            EditorState.previewSetClipKeyframe(track, clip, row.keyProp, EditorState.playheadSeconds, value)
+            EditorState.previewSetClipKeyframe(track, clipIndex, row.keyProp, EditorState.playheadSeconds, value)
     }
 
     function beginDrag() {
@@ -153,7 +153,7 @@ Item {
             EditorState.commitPreviewDrag()
             return
         }
-        EditorState.setClipKeyframe(track, clip, row.keyProp, EditorState.playheadSeconds, quantize(v))
+        EditorState.setClipKeyframe(track, clipIndex, row.keyProp, EditorState.playheadSeconds, quantize(v))
     }
 
     function openEditor() {
@@ -179,7 +179,7 @@ Item {
     implicitHeight: Theme.controlHeightSm
 
     Component.onDestruction: endDrag()
-    onClipChanged: {
+    onClipIndexChanged: {
         if (dragging) {
             EditorState.cancelPreviewDrag()
             dragging = false
@@ -273,7 +273,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         checked: root.currentValue > 0.5
         enabled: !root.locked
-        onToggled: EditorState.setClipKeyframe(root.track, root.clip, root.row.keyProp,
+        onToggled: EditorState.setClipKeyframe(root.track, root.clipIndex, root.row.keyProp,
                                                EditorState.playheadSeconds, checked ? 1 : 0)
     }
 

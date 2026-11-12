@@ -31,7 +31,7 @@ QuickSetupMockEditor {
         return Math.max(0, Math.min(1, (phase - a) / (b - a)))
     }
 
-    function smooth(t) {
+    function smoothstep(t) {
         return t * t * (3 - 2 * t)
     }
 
@@ -52,7 +52,7 @@ QuickSetupMockEditor {
         anchors.fill: parent
         visible: root.kind === "search"
 
-        readonly property real fade: root.smooth(root.seg(0, 0.08)) * (1 - root.seg(0.92, 1))
+        readonly property real fade: root.smoothstep(root.seg(0, 0.08)) * (1 - root.seg(0.92, 1))
         readonly property string query: qsTr("color")
         readonly property int typed: Math.floor(root.seg(0.14, 0.4) * query.length + 0.0001)
         readonly property var rows: [qsTr("Color workspace"), qsTr("Color grade effect"), qsTr("Appearance settings")]
@@ -121,7 +121,7 @@ QuickSetupMockEditor {
                         height: 22
                         radius: root.corner / 2
                         color: index === (root.phase < 0.72 ? 0 : 1) ? root.mc.tile : "transparent"
-                        opacity: root.smooth(root.seg(0.3 + index * 0.05, 0.4 + index * 0.05))
+                        opacity: root.smoothstep(root.seg(0.3 + index * 0.05, 0.4 + index * 0.05))
 
                         Text {
                             x: root.gap * 1.5
@@ -147,7 +147,7 @@ QuickSetupMockEditor {
         readonly property int step: Math.min(3, Math.floor(stepPos))
         readonly property real local: stepPos - Math.floor(stepPos)
         readonly property int current: local > 0.4 ? step : (step + 3) % 4
-        readonly property real menuOpen: root.smooth(Math.max(0, Math.min(1, local / 0.12, (0.5 - local) / 0.1)))
+        readonly property real menuOpen: root.smoothstep(Math.max(0, Math.min(1, local / 0.12, (0.5 - local) / 0.1)))
 
         Rectangle {
             id: pill
@@ -314,7 +314,7 @@ QuickSetupMockEditor {
         anchors.fill: parent
         visible: root.kind === "extras"
 
-        readonly property real fade: root.smooth(root.seg(0.04, 0.14)) * (1 - root.seg(0.9, 1))
+        readonly property real fade: root.smoothstep(root.seg(0.04, 0.14)) * (1 - root.seg(0.9, 1))
         readonly property real progress: root.seg(0.3, 0.68)
         readonly property bool done: root.phase >= 0.68
 
@@ -419,7 +419,7 @@ QuickSetupMockEditor {
         anchors.fill: parent
         visible: root.kind === "shortcuts"
 
-        readonly property real fade: root.smooth(root.seg(0, 0.06)) * (1 - root.seg(0.94, 1))
+        readonly property real fade: root.smoothstep(root.seg(0, 0.06)) * (1 - root.seg(0.94, 1))
         readonly property real stepPos: root.phase * Math.max(1, root.keycaps.length)
         readonly property int current: Math.floor(stepPos)
         readonly property real press: Math.sin(Math.PI * Math.min(1, (stepPos - current) * 2.2))
@@ -504,7 +504,7 @@ QuickSetupMockEditor {
         readonly property real local: root.phase * 3 - Math.floor(root.phase * 3)
         readonly property var chips: [qsTr("Auto subtitles"), qsTr("People cutout"), qsTr("Find scenes")]
         readonly property var words: qsTr("Hello and welcome back").split(" ")
-        readonly property int shownWords: stage === 0 ? Math.floor(root.smooth(Math.min(1, local / 0.7)) * words.length + 0.0001) : 0
+        readonly property int shownWords: stage === 0 ? Math.floor(root.smoothstep(Math.min(1, local / 0.7)) * words.length + 0.0001) : 0
 
         Rectangle {
             x: root.stageX
@@ -563,7 +563,7 @@ QuickSetupMockEditor {
                 Rectangle {
                     anchors.fill: parent
                     color: root.mc.clipVideo
-                    opacity: aiArt.stage === 1 ? 0.6 * (1 - root.smooth(Math.min(1, Math.max(0, (aiArt.local - 0.25) / 0.35)))) : 0.6
+                    opacity: aiArt.stage === 1 ? 0.6 * (1 - root.smoothstep(Math.min(1, Math.max(0, (aiArt.local - 0.25) / 0.35)))) : 0.6
                 }
 
                 Item {
@@ -624,7 +624,7 @@ QuickSetupMockEditor {
                 required property int index
                 required property real modelData
 
-                readonly property real appear: aiArt.stage === 2 ? root.smooth(Math.min(1, Math.max(0, (aiArt.local - 0.15 - index * 0.25) / 0.2))) : 0
+                readonly property real appear: aiArt.stage === 2 ? root.smoothstep(Math.min(1, Math.max(0, (aiArt.local - 0.15 - index * 0.25) / 0.2))) : 0
 
                 x: root.gap * 2 + modelData * (root.width - root.gap * 4)
                 y: root.timelineY + root.gap
@@ -642,10 +642,10 @@ QuickSetupMockEditor {
         anchors.fill: parent
         visible: root.kind === "touch"
 
-        readonly property real zoom: 1 + 1.2 * root.smooth(root.seg(0.05, 0.4)) - 1.2 * root.smooth(root.seg(0.45, 0.52))
-        readonly property real spread: 8 + 46 * root.smooth(root.seg(0.05, 0.4))
+        readonly property real zoom: 1 + 1.2 * root.smoothstep(root.seg(0.05, 0.4)) - 1.2 * root.smoothstep(root.seg(0.45, 0.52))
+        readonly property real spread: 8 + 46 * root.smoothstep(root.seg(0.05, 0.4))
         readonly property real hold: root.seg(0.58, 0.8)
-        readonly property real menu: root.smooth(root.seg(0.78, 0.86)) * (1 - root.seg(0.94, 1))
+        readonly property real menu: root.smoothstep(root.seg(0.78, 0.86)) * (1 - root.seg(0.94, 1))
 
         Rectangle {
             id: touchTimeline
@@ -723,7 +723,7 @@ QuickSetupMockEditor {
                 height: width
                 radius: width / 2
                 color: root.mc.primary
-                opacity: 0.45 * root.smooth(root.seg(0, 0.05))
+                opacity: 0.45 * root.smoothstep(root.seg(0, 0.05))
                 border.width: 2
                 border.color: root.mc.primary
             }

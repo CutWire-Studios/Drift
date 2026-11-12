@@ -48,7 +48,7 @@ Item {
         target: root.panel
 
         function onTrackChanged() { curvesModel.requestFit() }
-        function onClipChanged() { curvesModel.requestFit() }
+        function onClipIndexChanged() { curvesModel.requestFit() }
         function onNormalizeChanged() {
             if (!root.panel.normalize)
                 curvesModel.fitValues(false)

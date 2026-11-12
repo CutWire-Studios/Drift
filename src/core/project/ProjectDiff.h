@@ -29,7 +29,7 @@ struct TrackDiff
     QString sequence;
     QString change; // "added", "removed" or "changed"
     int index = -1;
-    QStringList fields; // "changed": name, locked, muted, hidden, solo, audio, index, transitions, view
+    QStringList fields; // "changed": name, number, locked, muted, hidden, solo, audio, index, transitions, view
 };
 
 struct AssetDiff

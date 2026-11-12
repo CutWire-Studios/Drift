@@ -45,13 +45,15 @@ Column {
         return qsTr("Video")
     }
 
-    // Same fallback the track headers show: a custom name, else type and ordinal by kind.
+    // Same fallback the track headers show: a custom name, else type and the track's number.
     function trackName(index) {
         const track = tracks[index]
         if (!track)
             return ""
         if (track.name && track.name.length > 0)
             return track.name
+        if (track.number > 0)
+            return trackTypeLabel(track) + " " + track.number
         let ordinal = 0
         for (let i = 0; i <= index; ++i) {
             if (tracks[i].type === track.type && !!tracks[i].isTransformLayer === !!track.isTransformLayer)

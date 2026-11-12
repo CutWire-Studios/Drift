@@ -98,6 +98,9 @@ QJsonObject AppController::sessionJson() const
 
 void AppController::resetSessionState()
 {
+    // A replace whose probe the bin is about to drop would leave its row busy for good.
+    if (m_bin)
+        m_bin->dropPendingReplace();
     m_projectHistorySteps = kProjectHistoryUnset;
     m_projectHistoryPersist = -1;
     // These end up editing the project, so they have to run while it is still the one they were
@@ -121,7 +124,6 @@ void AppController::resetSessionState()
     // several projects in turn would otherwise hold the peaks of every source in all of them.
     m_waveformBlocks.clear();
 
-    m_bin->m_replacingAssetId.clear();
     m_sequencePlayheads.clear();
     m_pendingEffectTemplate.reset();
     m_previewDragActive = false;

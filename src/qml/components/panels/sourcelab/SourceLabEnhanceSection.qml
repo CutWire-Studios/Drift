@@ -18,16 +18,16 @@ SourceLabSection {
                                          ?? root.upscaleModels[0] ?? ({ value: "", scale: 1 })
     readonly property var decompressChoice: root.decompressModels.find(m => m.value === root.decompressId)
                                             ?? ({ value: "", scale: 1 })
-    readonly property real scale: (root.upscaleChoice.scale || 1) * (root.decompressChoice.scale || 1)
+    readonly property real totalScale: (root.upscaleChoice.scale || 1) * (root.decompressChoice.scale || 1)
     readonly property var crop: root.recipe.crop ?? Qt.rect(0, 0, 1, 1)
     readonly property bool rotated: {
         const index = AssetLibrary.indexOfId(root.lab.currentAssetId)
         return index >= 0 && AssetLibrary.assetAt(index).effectiveRotation % 180 === 90
     }
     readonly property int outWidth: Math.round((root.rotated ? root.lab.height : root.lab.width)
-                                               * root.crop.width * root.scale)
+                                               * root.crop.width * root.totalScale)
     readonly property int outHeight: Math.round((root.rotated ? root.lab.width : root.lab.height)
-                                                * root.crop.height * root.scale)
+                                                * root.crop.height * root.totalScale)
     readonly property real enhanceSeconds: {
         void root.recipe
         return root.dirty ? (root.lab.plan("replace").enhanceSeconds ?? -1) : -1
