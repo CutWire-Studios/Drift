@@ -915,6 +915,7 @@ void AssetLibrary::setProject(drift::Project *project, bool newDocument)
         m_probeToken.clear();
         m_refreshPending.clear();
         m_autoProxyPending.clear();
+        m_proxyErrors.clear();
     }
     m_project = project;
     m_importPending.clear();
@@ -1495,8 +1496,11 @@ bool AssetLibrary::hasProxyForPath(const QString &path) const
 void AssetLibrary::createProxies(const QStringList &assetIds)
 {
     for (const QString &id : assetIds) {
-        if (proxyState(id) != QLatin1String("none"))
+        // One cancelled while it builds is queued again, to start once its job winds down.
+        if (proxyState(id) != QLatin1String("none")
+            && !(proxyCancelling(id) && !m_proxyQueue.contains(id)))
             continue;
+        m_proxyErrors.remove(id);
         m_proxyQueue.append(id);
         emit proxyStateChanged(id);
     }
@@ -1504,11 +1508,33 @@ void AssetLibrary::createProxies(const QStringList &assetIds)
     startNextProxy();
 }
 
+QFuture<QStringList> AssetLibrary::slowToPreview(const QStringList &assetIds) const
+{
+    QList<QPair<QString, QString>> videos;
+    for (const QString &id : assetIds) {
+        const drift::MediaAsset *asset = m_project ? m_project->asset(id) : nullptr;
+        if (asset && asset->kind == drift::MediaKind::Video && !asset->path.isEmpty())
+            videos.append({id, asset->path});
+    }
+    return QtConcurrent::run([videos]() {
+        const QList<QPair<QString, QString>> slow = QtConcurrent::blockingFiltered(
+            videos, [](const QPair<QString, QString> &video) {
+                const MediaInfo info = MediaProbe::probe(video.second);
+                return info.ok && wantsPreviewProxy(info);
+            });
+        QStringList ids;
+        for (const auto &video : slow)
+            ids.append(video.first);
+        return ids;
+    });
+}
+
 void AssetLibrary::removeProxies(const QStringList &assetIds)
 {
     bool removedAny = false;
     for (const QString &id : assetIds) {
         m_autoProxyPending.remove(id);
+        m_proxyErrors.remove(id);
         if (m_proxyQueue.removeAll(id) > 0)
             emit proxyStateChanged(id);
         if (id == m_proxyBuilding)
@@ -1633,9 +1659,12 @@ void AssetLibrary::startNextProxy()
                     } else {
                         cache.insertPreview(sourcePath, shortSide, outPath);
                     }
+                    // Asked for again after a cancel that came too late: it's made now.
+                    m_proxyQueue.removeAll(assetId);
                     bumpBadges();
                     emit proxiesChanged();
                 } else if (!cancelled) {
+                    m_proxyErrors.insert(assetId, error.isEmpty() ? tr("The proxy could not be made") : error);
                     emit proxyFailed(name, error);
                 }
                 emit proxyStateChanged(assetId);
