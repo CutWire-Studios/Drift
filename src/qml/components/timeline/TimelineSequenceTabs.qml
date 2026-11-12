@@ -2,7 +2,6 @@ import QtQuick
 import Drift
 
 // Tab strip switching between the main timeline and the opened composite clips.
-// Hidden while only Main is open.
 ListView {
     id: strip
 
@@ -23,7 +22,7 @@ ListView {
 
     x: Qt.application.layoutDirection === Qt.RightToLeft ? parent.width - ltrX - width : ltrX
     anchors.verticalCenter: parent.verticalCenter
-    visible: EditorState.sequenceTabs.length > 0 && gapEnd - gapStart >= 96
+    visible: gapEnd - gapStart >= 96
     width: Math.min(contentWidth, Math.max(0, gapEnd - gapStart))
     height: Math.min(Theme.controlHeightSm, parent.height - Theme.spacingXs * 2)
     orientation: ListView.Horizontal
@@ -46,6 +45,38 @@ ListView {
                     strip.currentIndex = i
                     return
                 }
+            }
+        }
+    }
+
+    footer: Item {
+        width: addButton.width + Theme.spacingXs
+        height: strip.height
+
+        Rectangle {
+            id: addButton
+            x: Theme.spacingXs
+            width: Theme.touchInput ? 28 : 22
+            height: strip.height
+            radius: Theme.c.timelineSequenceTabs.radius
+            color: addMouse.containsMouse ? Theme.c.timelineSequenceTabs.backgroundHover : "transparent"
+
+            IconGlyph {
+                anchors.centerIn: parent
+                glyph: Theme.icons.plus
+                iconSize: 14
+                iconColor: Theme.c.timelineSequenceTabs.icon
+            }
+            MouseArea {
+                id: addMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: EditorState.newTimeline()
+            }
+            ThemedToolTip {
+                visible: addMouse.containsMouse
+                text: qsTr("New timeline")
             }
         }
     }

@@ -154,6 +154,7 @@ private slots:
     void compositeTabEditUndoesFromMain();
     void removeEmptyTracksKeepsPopulatedAndUndoes();
     void compositeSeparateAudioAndRemoval();
+    void newTimelineCreatesEmptyComposite();
     void dissolveCompositeRoundTrip();
     void dissolveCompositeKeepsTrackNumbers();
     void replaceInterruptedByNewProjectClearsBusyRow();
@@ -1594,6 +1595,42 @@ void EditorStateTest::compositeTabEditUndoesFromMain()
     state.closeSequenceTab(sequenceId);
     QVERIFY(state.activeSequenceId().isEmpty());
     QVERIFY(state.sequenceTabs().isEmpty());
+}
+
+void EditorStateTest::newTimelineCreatesEmptyComposite()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    const int assetsBefore = state.project()->assets().size();
+
+    state.newTimeline();
+    QCOMPARE(state.project()->assets().size(), assetsBefore + 1);
+    const QString sequenceId = state.activeSequenceId();
+    QVERIFY(!sequenceId.isEmpty());
+    QCOMPARE(state.sequenceTabs().size(), 1);
+    QVERIFY(!state.project()->tracks().isEmpty());
+    const drift::MediaAsset *asset = nullptr;
+    for (const drift::MediaAsset &candidate : state.project()->assets()) {
+        if (candidate.sequenceId == sequenceId)
+            asset = &candidate;
+    }
+    QVERIFY(asset);
+    QCOMPARE(asset->name, QStringLiteral("Timeline 1"));
+    QCOMPARE(asset->durationUs, drift::TimeUs(0));
+
+    state.openSequence(QString());
+    state.newTimeline();
+    state.openSequence(QString());
+    QVERIFY(state.project()->hasSequence(sequenceId));
+    QCOMPARE(state.project()->sequenceIds().size(), 2);
+
+    const drift::Project loaded = drift::Project::fromJson(state.project()->toJson());
+    QCOMPARE(loaded.sequenceIds().size(), 2);
+    QVERIFY(loaded.hasSequence(sequenceId));
+    QVERIFY(!loaded.sequenceTracks(sequenceId).isEmpty());
+
+    state.undo();
+    QCOMPARE(state.project()->sequenceIds().size(), 1);
 }
 
 void EditorStateTest::dissolveCompositeRoundTrip()

@@ -890,9 +890,12 @@ void AppController::applyRippleShift(drift::Track &track, int fromClipIndex, dri
 
 bool AppController::compositeAssetPlaceable(const QVariantMap &asset) const
 {
-    // One level of nesting: a composite goes on the main timeline only.
-    return asset.value(QStringLiteral("kind")).toString() != QLatin1String("composite")
-           || m_project.activeSequenceId().isEmpty();
+    if (asset.value(QStringLiteral("kind")).toString() != QLatin1String("composite"))
+        return true;
+    // One level of nesting: a composite goes on the main timeline only. An empty one has no length
+    // to place.
+    return m_project.activeSequenceId().isEmpty()
+           && m_project.sequenceDurationUs(asset.value(QStringLiteral("sequenceId")).toString()) > 0;
 }
 
 void AppController::addClipFromAsset(int assetIndex)

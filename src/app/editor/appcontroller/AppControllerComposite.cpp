@@ -1407,6 +1407,39 @@ QVariantList AppController::compositeSequences() const
     return sequences;
 }
 
+void AppController::newTimeline()
+{
+    setPlaying(false);
+    const drift::Project before = m_project.detachedCopy();
+
+    QSet<QString> names;
+    for (const drift::MediaAsset &existing : m_project.assets())
+        names.insert(existing.name);
+    int number = 1;
+    while (names.contains(tr("Timeline %1").arg(number)))
+        ++number;
+
+    drift::TrackList tracks;
+    tracks.append(drift::Track{.type = drift::TrackType::Video});
+    drift::MediaAsset asset;
+    asset.kind = drift::MediaKind::Composite;
+    asset.name = tr("Timeline %1").arg(number);
+    asset.sequenceId = m_project.addSequence(tracks);
+    asset.durationUs = 0;
+    asset.width = m_project.width();
+    asset.height = m_project.height();
+    asset.fps = m_project.fps();
+    asset.folderId = m_bin->currentFolderId();
+    const QString sequenceId = asset.sequenceId;
+    m_project.addAsset(asset);
+
+    if (m_assetLibrary)
+        m_assetLibrary->syncToProject();
+    pushProjectEdit(before, tr("Timeline created"));
+    finishEdit(tr("Timeline created"));
+    openSequence(sequenceId);
+}
+
 void AppController::openSequence(const QString &sequenceId)
 {
     if (!m_project.hasSequence(sequenceId))
