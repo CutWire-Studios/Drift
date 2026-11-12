@@ -101,6 +101,7 @@ void AppController::resetSessionState()
     // A replace whose probe the bin is about to drop would leave its row busy for good.
     if (m_bin)
         m_bin->dropPendingReplace();
+    ++m_documentGeneration;
     m_projectHistorySteps = kProjectHistoryUnset;
     m_projectHistoryPersist = -1;
     // These end up editing the project, so they have to run while it is still the one they were

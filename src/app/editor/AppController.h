@@ -500,6 +500,8 @@ public:
     QStringList undoHistory() const;
     int undoIndex() const { return m_undoStack.index(); }
     bool exportInProgress() const { return m_exportInProgress; }
+    // Which document is open; see m_documentGeneration. MCP replies compare clips only within one.
+    quint64 documentGeneration() const { return m_documentGeneration; }
     bool exportByAgent() const { return m_exportByAgent; }
     bool exportAudioOnly() const { return m_exportAudioOnly; }
     // Set by the MCP dispatcher around the call that starts an export, so the start
@@ -2282,6 +2284,9 @@ protected:
     // auxiliary-window sessions. Called by both newProject and applyProjectJson, before the
     // document is replaced, so the two paths cannot drift apart again.
     void resetSessionState();
+    // Raised each time the open document is replaced by another (a load, crash recovery, a new or
+    // closed project), not by Save As, which keeps the document under a new id.
+    quint64 m_documentGeneration = 0;
 
     QByteArray serializeProjectJson() const;
     bool applyProjectJson(const QByteArray &data, QString *error);

@@ -104,6 +104,7 @@ private slots:
     void splittingANamedSubtitleClipNumbersThePieces();
     void insertClipRipplesTheTrack();
     void deleteClipsClosesTheSpace();
+    void mutatingOpsReturnFinalGeometry();
     void rippleTrimMovesTheRest();
     void closeGapsClosesEveryHole();
     void reorderClipsKeepsTheSpacing();
@@ -1259,6 +1260,130 @@ void McpTest::deleteClipsClosesTheSpace()
                 .value(QStringLiteral("ok")).toBool());
     QCOMPARE(startOf(ids.at(2)), -1.0);
     QCOMPARE(startOf(ids.at(3)), 6.0);
+}
+
+// #20: an op that changes the timeline returns the final start/dur/in/out of every clip it moved,
+// trimmed or created, ripple followers and split pieces included, so no inspect is needed after.
+void McpTest::mutatingOpsReturnFinalGeometry()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QStringList ids;
+    for (int i = 0; i < 4; ++i) {
+        QJsonObject args{{QStringLiteral("asset"), 0}, {QStringLiteral("in"), i * 2.0}, {QStringLiteral("out"), i * 2.0 + 2.0}};
+        if (ids.isEmpty())
+            args.insert(QStringLiteral("at"), 0.0);
+        else
+            args.insert(QStringLiteral("after"), ids.last());
+        ids.append(dispatcher.applyOne(QStringLiteral("insert_clip"), args).value(QStringLiteral("id")).toString());
+    }
+    const auto rows = [](const QJsonObject &reply) {
+        QHash<QString, QJsonObject> out;
+        for (const QJsonValue &row : reply.value(QStringLiteral("geometry")).toArray())
+            out.insert(row.toObject().value(QStringLiteral("id")).toString(), row.toObject());
+        return out;
+    };
+
+    // A ripple delete: the clips after it moved; the one before it didn't.
+    const QJsonObject deleted = dispatcher.applyOne(
+        QStringLiteral("delete_clips"), {{QStringLiteral("clips"), QJsonArray{ids.at(1)}}, {QStringLiteral("ripple"), true}});
+    QVERIFY2(deleted.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(deleted).toJson()));
+    QHash<QString, QJsonObject> moved = rows(deleted);
+    QCOMPARE(moved.size(), 2);
+    QCOMPARE(moved.value(ids.at(2)).value(QStringLiteral("start")).toDouble(), 2.0);
+    QCOMPARE(moved.value(ids.at(3)).value(QStringLiteral("start")).toDouble(), 4.0);
+    QCOMPARE(moved.value(ids.at(3)).value(QStringLiteral("dur")).toDouble(), 2.0);
+    QCOMPARE(moved.value(ids.at(3)).value(QStringLiteral("in")).toDouble(), 6.0);
+    QCOMPARE(moved.value(ids.at(3)).value(QStringLiteral("out")).toDouble(), 8.0);
+    QCOMPARE(moved.value(ids.at(3)).value(QStringLiteral("track")).toInt(), 0);
+    QCOMPARE(deleted.value(QStringLiteral("removed_clips")).toArray(), QJsonArray{ids.at(1)});
+
+    // A split: the left piece got shorter, the right one is new.
+    const QJsonObject split = dispatcher.applyOne(QStringLiteral("split_clip"),
+                                                  {{QStringLiteral("clip"), ids.at(0)}, {QStringLiteral("at"), 0.5}});
+    QHash<QString, QJsonObject> pieces = rows(split);
+    QCOMPARE(pieces.size(), 2);
+    QCOMPARE(pieces.value(ids.at(0)).value(QStringLiteral("dur")).toDouble(), 0.5);
+    const QString tail = split.value(QStringLiteral("clips")).toArray().at(1).toString();
+    QCOMPARE(pieces.value(tail).value(QStringLiteral("start")).toDouble(), 0.5);
+    QCOMPARE(pieces.value(tail).value(QStringLiteral("in")).toDouble(), 0.5);
+
+    // Undo reports what it put back, and the piece it took away.
+    const QJsonObject undone = dispatcher.applyOne(QStringLiteral("undo"), {});
+    QCOMPARE(rows(undone).value(ids.at(0)).value(QStringLiteral("dur")).toDouble(), 2.0);
+    QCOMPARE(undone.value(QStringLiteral("removed_clips")).toArray(), QJsonArray{tail});
+
+    // A track added above shifts every row index below it, but moves no clip: nothing listed.
+    const QJsonObject added = dispatcher.applyOne(QStringLiteral("add_track"), {{QStringLiteral("type"), QStringLiteral("video")}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(added).toJson()));
+    QVERIFY(!added.contains(QStringLiteral("geometry")));
+    QVERIFY(!added.contains(QStringLiteral("removed_clips")));
+
+    // A batch reports once, with the final values; its ops don't.
+    const QJsonObject batch = dispatcher.apply(
+        {{QStringLiteral("ops"),
+          QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("move_clip")},
+                                 {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), ids.at(3)}, {QStringLiteral("at"), 10.0}}}},
+                     QJsonObject{{QStringLiteral("tool"), QStringLiteral("move_clip")},
+                                 {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), ids.at(3)}, {QStringLiteral("at"), 12.0}}}}}}});
+    QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    QCOMPARE(rows(batch).size(), 1);
+    QCOMPARE(rows(batch).value(ids.at(3)).value(QStringLiteral("start")).toDouble(), 12.0);
+    for (const QJsonValue &done : batch.value(QStringLiteral("done")).toArray())
+        QVERIFY(!done.toObject().value(QStringLiteral("result")).toObject().contains(QStringLiteral("geometry")));
+
+    // Nothing moved, nothing listed: a read, and an edit that leaves every clip where it was.
+    QVERIFY(!dispatcher.inspect({}).contains(QStringLiteral("geometry")));
+    const QJsonObject renamed = dispatcher.applyOne(QStringLiteral("set_track"),
+                                                    {{QStringLiteral("track"), 0}, {QStringLiteral("muted"), true}});
+    QVERIFY2(renamed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(renamed).toJson()));
+    QVERIFY(!renamed.contains(QStringLiteral("geometry")));
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    // Save As gives the open project a new id, but its clips stay: a batch still reports the move.
+    const QJsonObject savedAs = dispatcher.apply(
+        {{QStringLiteral("ops"),
+          QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("move_clip")},
+                                 {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), ids.at(3)}, {QStringLiteral("at"), 14.0}}}},
+                     QJsonObject{{QStringLiteral("tool"), QStringLiteral("save_project")},
+                                 {QStringLiteral("args"), QJsonObject{{QStringLiteral("path"), dir.filePath(QStringLiteral("copy.drift"))},
+                                                                      {QStringLiteral("saveAs"), true}}}}}}});
+    QVERIFY2(savedAs.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(savedAs).toJson()));
+    QCOMPARE(rows(savedAs).value(ids.at(3)).value(QStringLiteral("start")).toDouble(), 14.0);
+    // ...and a clip it deleted before the Save As.
+    const QJsonObject deletedThenSaved = dispatcher.apply(
+        {{QStringLiteral("ops"),
+          QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("delete_clips")},
+                                 {QStringLiteral("args"), QJsonObject{{QStringLiteral("clips"), QJsonArray{ids.at(2)}},
+                                                                      {QStringLiteral("ripple"), false}}}},
+                     QJsonObject{{QStringLiteral("tool"), QStringLiteral("save_project")},
+                                 {QStringLiteral("args"), QJsonObject{{QStringLiteral("path"), dir.filePath(QStringLiteral("copy2.drift"))},
+                                                                      {QStringLiteral("saveAs"), true}}}}}}});
+    QVERIFY2(deletedThenSaved.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(deletedThenSaved).toJson()));
+    QCOMPARE(deletedThenSaved.value(QStringLiteral("removed_clips")).toArray(), QJsonArray{ids.at(2)});
+
+    // Another project's clips aren't changes to this one: none listed after a load.
+    const QString path = dir.filePath(QStringLiteral("geometry.drift"));
+    QVERIFY(dispatcher.applyOne(QStringLiteral("save_project"), {{QStringLiteral("path"), path}}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("new_project"), {}).value(QStringLiteral("ok")).toBool());
+    const QJsonObject loaded = dispatcher.applyOne(QStringLiteral("load_project"), {{QStringLiteral("path"), path}});
+    QVERIFY2(loaded.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(loaded).toJson()));
+    QVERIFY(!loaded.contains(QStringLiteral("geometry")));
+    // Not even a project made from this one (Save As above), which shares its clip ids.
+    const QJsonObject loadedCopy = dispatcher.applyOne(QStringLiteral("load_project"),
+                                                       {{QStringLiteral("path"), dir.filePath(QStringLiteral("copy.drift"))}});
+    QVERIFY2(loadedCopy.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(loadedCopy).toJson()));
+    QVERIFY(!loadedCopy.contains(QStringLiteral("geometry")));
+    QVERIFY(!loadedCopy.contains(QStringLiteral("removed_clips")));
 }
 
 void McpTest::rippleTrimMovesTheRest()

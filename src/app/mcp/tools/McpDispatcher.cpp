@@ -729,6 +729,97 @@ const QSet<QString> kRawResultOps = {QStringLiteral("get_waveform"), QStringLite
 
 } // namespace
 
+namespace {
+
+struct ClipGeometry
+{
+    QString trackId; // compared by id: a track added or removed above shifts indexes, not clips
+    int track = -1;
+    drift::TimeUs start = 0;
+    drift::TimeUs duration = 0;
+    drift::TimeUs in = 0;
+    drift::TimeUs out = 0;
+    bool sameAs(const ClipGeometry &o) const
+    {
+        return trackId == o.trackId && start == o.start && duration == o.duration && in == o.in && out == o.out;
+    }
+};
+
+// Where each clip of the open timeline sits, by id. Effects pinned to a clip are left out: they
+// follow it. A free clip on a nested lane (an unpinned mask) counts.
+QHash<QString, ClipGeometry> clipGeometry(const drift::Project &project)
+{
+    QHash<QString, ClipGeometry> out;
+    const QList<drift::Track> &tracks = project.tracks();
+    for (int t = 0; t < tracks.size(); ++t) {
+        for (const drift::Clip &clip : tracks.at(t).clips) {
+            if (tracks.at(t).isAdjustmentLane() && !clip.linkedClipId.isEmpty())
+                continue;
+            out.insert(clip.id, {tracks.at(t).id, t, clip.timelineStart, clip.timelineDuration, clip.srcIn, clip.srcOut});
+        }
+    }
+    return out;
+}
+
+// Which timeline is open: the document (a load, a new or closed project replaces it, and every
+// clip with it; Save As doesn't) and the sequence within it. Clips are only compared within one.
+QString timelineKey(const AppController &app)
+{
+    return QString::number(app.documentGeneration()) + QLatin1Char('/') + app.project()->activeSequenceId();
+}
+
+// Adds to `reply` the clips that are new in `after` or sit elsewhere than in `before`
+// (geometry, by track and time) and those that are gone (removed_clips). At most kMaxGeometryRows rows;
+// past that, geometry_total says how many there were.
+void addGeometry(QJsonObject &reply, const QHash<QString, ClipGeometry> &before,
+                 const QHash<QString, ClipGeometry> &after)
+{
+    constexpr int kMaxGeometryRows = 100;
+    QList<QPair<QString, ClipGeometry>> changed;
+    for (auto it = after.constBegin(); it != after.constEnd(); ++it) {
+        const auto was = before.constFind(it.key());
+        if (was == before.constEnd() || !was->sameAs(it.value()))
+            changed.append({it.key(), it.value()});
+    }
+    QStringList removed;
+    for (auto it = before.constBegin(); it != before.constEnd(); ++it)
+        if (!after.contains(it.key()))
+            removed.append(it.key());
+    if (!changed.isEmpty()) {
+        std::sort(changed.begin(), changed.end(), [](const auto &a, const auto &b) {
+            return a.second.track != b.second.track ? a.second.track < b.second.track
+                   : a.second.start != b.second.start ? a.second.start < b.second.start
+                                                      : a.first < b.first;
+        });
+        QJsonArray rows;
+        for (const auto &[id, g] : changed) {
+            if (rows.size() == kMaxGeometryRows)
+                break;
+            rows.append(QJsonObject{{QStringLiteral("id"), id},
+                                    {QStringLiteral("track"), g.track},
+                                    {QStringLiteral("start"), drift::usToSeconds(g.start)},
+                                    {QStringLiteral("dur"), drift::usToSeconds(g.duration)},
+                                    {QStringLiteral("in"), drift::usToSeconds(g.in)},
+                                    {QStringLiteral("out"), drift::usToSeconds(g.out)}});
+        }
+        reply.insert(QStringLiteral("geometry"), rows);
+        if (changed.size() > kMaxGeometryRows) {
+            reply.insert(QStringLiteral("geometry_total"), int(changed.size()));
+            reply.insert(QStringLiteral("geometry_truncated"), true);
+        }
+    }
+    // Not "removed": several ops already reply with one of their own (a track, an effect index).
+    if (!removed.isEmpty()) {
+        removed.sort();
+        reply.insert(QStringLiteral("removed_clips"), QJsonArray::fromStringList(removed.mid(0, kMaxGeometryRows)));
+        if (removed.size() > kMaxGeometryRows)
+            reply.insert(QStringLiteral("removed_clips_total"), int(removed.size()));
+    }
+}
+
+
+} // namespace
+
 QJsonObject McpDispatcher::apply(const QJsonObject &args)
 {
     // A history-limit trim still queued from the last edit runs before any op reads or moves
@@ -765,6 +856,25 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         }
     };
 
+    // The batch says once where the clips ended up; its ops don't (see applyOne). When an op opens
+    // another timeline (a composite's), the comparison starts again from there, so the edits made
+    // in the timeline the batch ends in are still reported.
+    // Its ops run with reportGeometry off; a request another transport delivers meanwhile is a
+    // call of its own and reports its own.
+    QHash<QString, ClipGeometry> geometryBefore = clipGeometry(*m_controller->project());
+    QString timelineBefore = timelineKey(*m_controller);
+    const auto followTimeline = [&] {
+        const QString now = timelineKey(*m_controller);
+        if (now == timelineBefore)
+            return;
+        geometryBefore = clipGeometry(*m_controller->project());
+        timelineBefore = now;
+    };
+    const auto withGeometry = [&](QJsonObject reply) {
+        addGeometry(reply, geometryBefore, clipGeometry(*m_controller->project()));
+        return reply;
+    };
+
     m_controller->mcp()->beginBatch();
     bool hadUndoable = false;
     QJsonArray results;
@@ -777,17 +887,22 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
                               && (tool == QLatin1String("audio_sheet")
                                       ? opArgs.value(QStringLiteral("return")).toString() != QLatin1String("path")
                                       : jsonBool(opArgs.value(QStringLiteral("image")), tool == QLatin1String("market_preview")));
-        const QJsonObject one =
-            rawImage ? err("bad_args", QStringLiteral("%1 returns an image and cannot be batched — call it directly").arg(tool))
-                     : applyOne(tool, opArgs);
+        QJsonObject one;
+        if (rawImage) {
+            one = err("bad_args", QStringLiteral("%1 returns an image and cannot be batched — call it directly").arg(tool));
+        } else {
+            one = applyOne(tool, opArgs, /*reportGeometry=*/false);
+        }
+        followTimeline();
         if (!one.value(QStringLiteral("ok")).toBool()) {
             endBatch(batchLabel(i), hadUndoable && i > 0);
-            return {{QStringLiteral("ok"), false},
-                    {QStringLiteral("error"), QStringLiteral("apply_failed")},
-                    {QStringLiteral("stopped"), i},
-                    {QStringLiteral("tool"), tool},
-                    {QStringLiteral("failed"), one},
-                    {QStringLiteral("done"), results}};
+            // The ops before the failed one stay applied: say where they left the clips.
+            return withGeometry({{QStringLiteral("ok"), false},
+                                 {QStringLiteral("error"), QStringLiteral("apply_failed")},
+                                 {QStringLiteral("stopped"), i},
+                                 {QStringLiteral("tool"), tool},
+                                 {QStringLiteral("failed"), one},
+                                 {QStringLiteral("done"), results}});
         }
         results.append(QJsonObject{{QStringLiteral("tool"), tool}, {QStringLiteral("result"), one}});
         // A re-read lands its "Media refreshed" edit inside this batch, where undo is suspended.
@@ -796,10 +911,10 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
             hadUndoable = true;
     }
     endBatch(batchLabel(ops.size()), hadUndoable);
-    return ok({{QStringLiteral("n"), ops.size()}, {QStringLiteral("done"), results}});
+    return withGeometry(ok({{QStringLiteral("n"), ops.size()}, {QStringLiteral("done"), results}}));
 }
 
-QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args)
+QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args, bool reportGeometryArg)
 {
     m_controller->flushUndoHistoryTrim(); // see apply()
     if (!isKnownOp(tool))
@@ -819,7 +934,23 @@ QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args
     if (kEffectIndexOps.contains(tool) && checked.value(QStringLiteral("clip")).toString().trimmed().isEmpty())
         return err("bad_args", QStringLiteral("clip required: a clip id from inspect({clips:true}); on %1, index is "
                                               "the effect's stack position, not the clip's").arg(tool));
+    // Every op that can change the timeline says where the clips it moved, trimmed or created
+    // ended up (ripple followers, split pieces and linked partners included), so the agent needs
+    // no inspect after it (jmn8718/Drift#20). Not when the op opened another timeline (another
+    // project, or a composite's sequence): the two aren't comparable.
+    const bool reportGeometry = reportGeometryArg && !isReadOnlyOp(tool);
+    QHash<QString, ClipGeometry> before;
+    QString timeline;
+    if (reportGeometry) {
+        before = clipGeometry(*m_controller->project());
+        timeline = timelineKey(*m_controller);
+    }
+    // A request another transport delivers while this op waits in an event loop (a load, a
+    // waveform) is a top-level call of its own and reports its own changes; this op's reply then
+    // also counts them, having been open while they happened.
     QJsonObject result = applyOneUnchecked(tool, checked);
+    if (reportGeometry && timelineKey(*m_controller) == timeline)
+        addGeometry(result, before, clipGeometry(*m_controller->project()));
     if (!ignored.isEmpty() && result.value(QStringLiteral("ok")).toBool())
         result.insert(QStringLiteral("ignored"), QJsonArray::fromStringList(ignored));
     return result;
