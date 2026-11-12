@@ -73,7 +73,7 @@ QJsonObject animPropProp()
     return stringProp(QStringLiteral(
         "Animated property: x, y, width, height, rotation, rotationX, rotationY, z, anchorX, anchorY, anchorZ, perspective, "
         "opacity, volume, fx.<effectIndex>.<paramKey>, afx.<audioEffectIndex>.<paramKey> "
-        "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather>, or on a text/subtitle clip text.<key> with "
+        "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather|roundness>, or on a text/subtitle clip text.<key> with "
         "key one of pixelSize, letterSpacing, lineHeight, boxPadding, pathBend, or a shading layer field "
         "text.layer.<layerId>.<opacity|offsetX|offsetY|blur|width|spread|trimStart|trimEnd|dashOffset|"
         "sketchLength|sketchDeviation|color.r|color.g|color.b|color.a|gradient.angle|gradient.offset|"
@@ -121,6 +121,8 @@ QJsonObject maskSchema()
         {QStringLiteral("h"), numberProp(QStringLiteral("Height, fraction of canvas (default 0.6)"), 0, 1)},
         {QStringLiteral("rotation"), numberProp(QStringLiteral("Degrees clockwise (default 0)"))},
         {QStringLiteral("feather"), numberProp(QStringLiteral("Alpha edge blur in pixels (default 0)"))},
+        {QStringLiteral("roundness"),
+         numberProp(QStringLiteral("rectangle only: corner rounding, 0 sharp to 1 pill (default 0)"), 0, 1)},
         {QStringLiteral("invert"), boolProp(QStringLiteral("Invert coverage (default false)"))},
         {QStringLiteral("points"),
          arrayProp({{QStringLiteral("type"), QJsonArray{QStringLiteral("array"), QStringLiteral("object")}}},

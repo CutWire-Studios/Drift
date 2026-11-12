@@ -134,6 +134,7 @@ void writePathKey(drift::Mask &mask, drift::TimeUs maskUs, drift::TimeUs halfFra
 
 const QStringList kMaskKeys{QStringLiteral("name"), QStringLiteral("op"), QStringLiteral("invert"),
                             QStringLiteral("enabled"), QStringLiteral("feather"),
+                            QStringLiteral("roundness"),
                             QStringLiteral("mediaChannel"), QStringLiteral("lockAspect")};
 
 QVariantMap targetMap(const QString &kind, int trackIndex, int clipIndex, const QString &name)
@@ -598,6 +599,7 @@ QVariantList MaskingController::maskStack(int trackIndex, int clipIndex) const
             {QStringLiteral("invert"), mask.invert},
             {QStringLiteral("enabled"), mask.enabled},
             {QStringLiteral("feather"), mask.feather},
+            {QStringLiteral("roundness"), mask.roundness},
             {QStringLiteral("mediaChannel"), drift::maskMediaChannelToString(mask.mediaChannel)},
             {QStringLiteral("isMedia"), mask.isMedia()},
             {QStringLiteral("mediaSource"), mediaSourceKind(mask)},
@@ -1453,6 +1455,8 @@ void MaskingController::applyMaskProperty(int trackIndex, int clipIndex, const Q
         mask.enabled = value.toBool();
     else if (key == QLatin1String("feather"))
         mask.feather = value.toDouble();
+    else if (key == QLatin1String("roundness"))
+        mask.roundness = value.toDouble();
     else
         mask.mediaChannel = drift::maskMediaChannelFromString(value.toString());
     m_app->writeClipMask(trackIndex, clipIndex, mask);

@@ -445,6 +445,7 @@ private slots:
     void maskMediaTimeBaseIndexesHostOrAdjustment();
     void maskApplierFoldsAStackByItsOps();
     void maskShapesUseBothSizeAxes();
+    void maskRoundnessRoundsRectangleCorners();
     void starMaskRotatesOnceNotTwice();
     void maskAdjustmentLaneMasksItsParentsClips();
     void maskLaneOpsCombineAcrossLanes();
@@ -11999,6 +12000,43 @@ void EngineTest::maskApplierFoldsAStackByItsOps()
     const QList<drift::Mask> disabled{off};
     QVERIFY(drift::maskAlphaMap(disabled, 64, 64).isNull());
     QVERIFY(drift::masksAreInert(disabled));
+}
+
+void EngineTest::maskRoundnessRoundsRectangleCorners()
+{
+    const auto cornerAlpha = [](double roundness) {
+        drift::Mask mask;
+        mask.shape = drift::MaskShape::Rectangle;
+        mask.w = 0.5;
+        mask.h = 0.5;
+        mask.roundness = roundness;
+        const QImage alpha = drift::maskAlphaMap(mask, 128, 128);
+        return qGray(alpha.pixel(32, 32));
+    };
+    QCOMPARE(cornerAlpha(0.0), 255);
+    QCOMPARE(cornerAlpha(1.0), 0);
+
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Rectangle;
+    mask.roundness = 0.4;
+    mask.keyframes[QStringLiteral("roundness")].setKeyframe(0, 0.0);
+    mask.keyframes[QStringLiteral("roundness")].setKeyframe(drift::secondsToUs(1.0), 1.0);
+    QVERIFY(qAbs(mask.valueAt(QStringLiteral("roundness"), drift::secondsToUs(0.5)) - 0.5) < 0.01);
+    QVERIFY(qAbs(mask.resolvedAt(drift::secondsToUs(1.0)).roundness - 1.0) < 1e-9);
+
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    clip.mask = mask;
+    project.tracks()[0].clips.append(clip);
+    const drift::Project loaded = drift::Project::fromJson(project.toJson());
+    const drift::Mask &back = loaded.tracks()[0].clips[0].mask;
+    QCOMPARE(back.roundness, 0.4);
+    QVERIFY(!back.keyframes.value(QStringLiteral("roundness")).isEmpty());
 }
 
 // Star and heart were forced into a square of qMin(halfW, halfH), which quietly discarded

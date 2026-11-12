@@ -1091,7 +1091,8 @@ void AppController::writeClipMask(int trackIndex, int clipIndex, const drift::Ma
             {"x", {seeded.x, existing->x}}, {"y", {seeded.y, existing->y}},
             {"w", {seeded.w, existing->w}}, {"h", {seeded.h, existing->h}},
             {"rotation", {seeded.rotation, existing->rotation}},
-            {"feather", {seeded.feather, existing->feather}}};
+            {"feather", {seeded.feather, existing->feather}},
+            {"roundness", {seeded.roundness, existing->roundness}}};
         seeded.keyframes = existing->keyframes;
         for (const auto &[key, values] : scalars) {
             if (!same(values.first, values.second))

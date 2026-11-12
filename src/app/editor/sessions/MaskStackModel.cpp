@@ -15,7 +15,7 @@ constexpr int FirstRole = Qt::UserRole + 1;
 constexpr int KeyTimesRole = Qt::UserRole + 100;
 
 const QList<QByteArray> kKeys = {"track",     "clip",     "id",           "name",         "shape",
-                                 "op",        "invert",   "enabled",      "feather",      "mediaChannel",
+                                 "op",        "invert",   "enabled",      "feather",      "roundness", "mediaChannel",
                                  "isMedia",   "mediaSource", "pinned",    "pathAnimated", "pathKeyCount",
                                  "selected",  "trackerId", "trackState", "solve", "trackerPoints"};
 

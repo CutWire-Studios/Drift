@@ -170,7 +170,7 @@ QVariantList KeyframeController::animatableProperties(int track, int clip) const
         }
         if (const drift::Clip *host = m_app->effectHostClip(track, clip, drift::AdjustmentKind::Mask)) {
             const QStringList labels = {tr("Center X"), tr("Center Y"), tr("Width"),
-                                        tr("Height"), tr("Rotation"), tr("Feather")};
+                                        tr("Height"), tr("Rotation"), tr("Feather"), tr("Roundness")};
             const QStringList &keys = drift::maskKeyframeProperties();
             for (int k = 0; k < keys.size(); ++k) {
                 const QString &key = keys.at(k);

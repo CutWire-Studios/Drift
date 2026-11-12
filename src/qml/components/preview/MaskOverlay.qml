@@ -331,6 +331,7 @@ Item {
                     selected: maskBox.isSelected
                     enabledMask: maskBox.maskData.enabled !== false
                     shape: maskBox.maskData.shape || ""
+                    roundness: maskBox.maskData.roundness || 0
                 }
 
                 // Feather reaches beyond the shape's edge, so show how far. Drawn outside so it
@@ -341,6 +342,17 @@ Item {
                     scaleX: root.sx
                     scaleY: root.sy
                     shape: maskBox.maskData.shape || ""
+                }
+
+                MaskOverlayFeatherHandle {
+                    mask: maskBox
+                    frame: clipFrame
+                    scaleX: root.sx
+                }
+
+                MaskOverlayRoundnessHandle {
+                    mask: maskBox
+                    frame: clipFrame
                 }
 
                 TapHandler {

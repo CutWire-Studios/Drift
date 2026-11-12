@@ -54,6 +54,7 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("h"), m.h},
         {QStringLiteral("rotation"), m.rotation},
         {QStringLiteral("feather"), m.feather},
+        {QStringLiteral("roundness"), m.roundness},
         {QStringLiteral("invert"), m.invert},
         {QStringLiteral("points"), points},
         {QStringLiteral("mediaPath"), m.mediaPath},
@@ -90,6 +91,7 @@ Mask maskFromJson(const QJsonObject &o)
     m.h = o.value(QStringLiteral("h")).toDouble(m.h);
     m.rotation = o.value(QStringLiteral("rotation")).toDouble(m.rotation);
     m.feather = o.value(QStringLiteral("feather")).toDouble(m.feather);
+    m.roundness = o.value(QStringLiteral("roundness")).toDouble(m.roundness);
     m.invert = o.value(QStringLiteral("invert")).toBool(m.invert);
     m.lockAspect = o.value(QStringLiteral("lockAspect")).toBool(false);
     m.op = maskOpFromString(o.value(QStringLiteral("op")).toString());
@@ -1503,6 +1505,8 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // 6 and 9. An older build would load those clips as videos with no path.
     // Version 25 added looping clips. Nothing to migrate; the bump is a gate, as for versions 6
     // and 9. An older build would cut a looped clip off at the end of its first pass.
+    // Version 26 added mask roundness. Nothing to migrate; the bump is a gate, as for versions 6
+    // and 9. An older build would draw a rounded rectangle mask with sharp corners.
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 

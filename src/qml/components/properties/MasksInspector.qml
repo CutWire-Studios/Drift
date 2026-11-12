@@ -140,6 +140,11 @@ Item {
             title: qsTr("Feather")
             keywords: "soft edge blur"
         }
+        SearchAnchor {
+            searchId: "masks-roundness"
+            title: qsTr("Roundness")
+            keywords: "rounded corners radius pill"
+        }
         Repeater {
             // `shapes` is what the rasterizer actually reads for each shape (see
             // MaskApplier::maskPath): Bars derives both bands from `h` alone and ignores the
@@ -157,6 +162,8 @@ Item {
                 { key: "mask.rotation", label: qsTr("Rotation"), def: 0, decimals: 1,
                   min: -180, max: 180, unit: "°",
                   shapes: ["rectangle", "ellipse", "star", "heart"] },
+                { key: "mask.roundness", label: qsTr("Roundness"), def: 0, decimals: 2,
+                  min: 0, max: 1, percent: true, shapes: ["rectangle"] },
                 // Feather blurs the finished coverage map, so it applies to every shape.
                 { key: "mask.feather", label: qsTr("Feather"), def: 0, decimals: 0,
                   min: 0, max: 64, unit: "px",
@@ -175,6 +182,7 @@ Item {
                     return (entry && entry.points) || []
                 }
                 useSlider: true
+                percent: modelData.percent === true
                 sliderFrom: modelData.min
                 sliderTo: modelData.max
                 unit: modelData.unit || ""

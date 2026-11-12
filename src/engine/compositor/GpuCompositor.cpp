@@ -489,7 +489,7 @@ QString maskCacheKey(const drift::Mask &mask)
             ? 0
             : qHashBits(mask.points.constData(), size_t(mask.points.size()) * sizeof(QPointF));
 
-    return QStringLiteral("%1:%2:%3:%4:%5:%6:%7:%8:%9:%10:%11")
+    return QStringLiteral("%1:%2:%3:%4:%5:%6:%7:%8:%9:%10:%11:%12")
         .arg(int(mask.shape))
         .arg(int(mask.op))
         .arg(mask.x)
@@ -498,6 +498,7 @@ QString maskCacheKey(const drift::Mask &mask)
         .arg(mask.h)
         .arg(mask.rotation)
         .arg(mask.feather)
+        .arg(mask.roundness)
         .arg(mask.invert ? 1 : 0)
         .arg(mask.points.size())
         .arg(quint64(pointsHash));

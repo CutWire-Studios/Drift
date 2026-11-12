@@ -687,6 +687,16 @@
       ]
     },
     {
+      "id": "masks-roundness",
+      "target": "panel:properties.masks#masks-roundness",
+      "context": "MasksInspector",
+      "source": "Roundness",
+      "keywords": "rounded corners radius pill",
+      "needs": [
+        "maskable"
+      ]
+    },
+    {
       "id": "masks-lock-aspect",
       "target": "panel:properties.masks#masks-lock-aspect",
       "context": "MasksInspector",

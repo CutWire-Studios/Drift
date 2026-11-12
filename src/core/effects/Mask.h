@@ -74,6 +74,7 @@ struct Mask
     double h = 0.6;
     double rotation = 0.0;
     double feather = 0.0; // px blur on the alpha edge
+    double roundness = 0.0; // Rectangle only: 0 sharp, 1 = corner radius of min(w, h) / 2 in frame pixels
     bool invert = false;
     bool lockAspect = false; // editing only: corner grips and the inspector keep w:h; the renderer ignores it
     QVector<QPointF> points; // normalized, for Freeform
@@ -99,7 +100,7 @@ struct Mask
     QString mediaFgrPath;
 
     // Animated scalars, keyed by the same names the inspector and the keyframe graph use:
-    // "x", "y", "w", "h", "rotation", "feather". A non-empty track wins over the scalar above at
+    // "x", "y", "w", "h", "rotation", "feather", "roundness". A non-empty track wins over the scalar above at
     // render time; the scalar still holds the last static value, so clearing a track returns the
     // property to a constant rather than to the struct default. Mirrors Effect::paramKeyframes.
     //

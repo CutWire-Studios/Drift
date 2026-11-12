@@ -21,7 +21,11 @@ QPainterPath maskPath(const Mask &mask, int canvasWidth, int canvasHeight)
     switch (mask.shape) {
     case drift::MaskShape::Rectangle: {
         QPainterPath path;
-        path.addRect(bounds);
+        const double radius = qBound(0.0, mask.roundness, 1.0) * qMin(halfW, halfH);
+        if (radius > 0.0)
+            path.addRoundedRect(bounds, radius, radius);
+        else
+            path.addRect(bounds);
         return path;
     }
     case drift::MaskShape::Ellipse: {

@@ -129,7 +129,8 @@ const QStringList &maskKeyframeProperties()
 {
     static const QStringList props{QStringLiteral("x"),        QStringLiteral("y"),
                                    QStringLiteral("w"),        QStringLiteral("h"),
-                                   QStringLiteral("rotation"), QStringLiteral("feather")};
+                                   QStringLiteral("rotation"), QStringLiteral("feather"),
+                                   QStringLiteral("roundness")};
     return props;
 }
 
@@ -188,6 +189,8 @@ double Mask::valueAt(const QString &key, TimeUs maskTimeUs) const
         return rotation;
     if (key == QStringLiteral("feather"))
         return feather;
+    if (key == QStringLiteral("roundness"))
+        return roundness;
     return 0.0;
 }
 
@@ -248,6 +251,8 @@ Mask Mask::resolvedAt(TimeUs maskTimeUs) const
             out.rotation = value;
         else if (key == QStringLiteral("feather"))
             out.feather = value;
+        else if (key == QStringLiteral("roundness"))
+            out.roundness = value;
     }
     if (!pathKeys.isEmpty())
         out.points = pointsAt(pathKeys, maskTimeUs, points);

@@ -2305,6 +2305,8 @@ qt_add_qml_module(drift
         src/qml/components/preview/mask/MaskOverlayResizeGrip.qml
         src/qml/components/preview/mask/MaskOverlayOutline.qml
         src/qml/components/preview/mask/MaskOverlayFeatherRing.qml
+        src/qml/components/preview/mask/MaskOverlayFeatherHandle.qml
+        src/qml/components/preview/mask/MaskOverlayRoundnessHandle.qml
         src/qml/components/preview/mask/MaskOverlayEmptyHint.qml
         src/qml/components/preview/mask/MaskOverlayEdgeMidpoint.qml
         src/qml/components/preview/mask/MaskOverlayClipBounds.qml
