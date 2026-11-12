@@ -595,7 +595,7 @@
       "source": "Face tracking",
       "keywords": "face",
       "needs": [
-        "adj:videoEffects"
+        "effectable"
       ]
     },
     {
@@ -605,7 +605,7 @@
       "source": "Effect settings",
       "keywords": "parameters",
       "needs": [
-        "adj:videoEffects"
+        "effectable"
       ]
     },
     {
@@ -615,7 +615,7 @@
       "source": "Save as preset…",
       "keywords": "stack",
       "needs": [
-        "adj:videoEffects"
+        "effectable"
       ]
     },
     {
@@ -702,6 +702,36 @@
       "context": "MasksInspector",
       "source": "Lock aspect ratio",
       "keywords": "proportional link width height",
+      "needs": [
+        "maskable"
+      ]
+    },
+    {
+      "id": "masks-matte-channel",
+      "target": "panel:properties.masks#masks-matte-channel",
+      "context": "MasksInspector",
+      "source": "Matte channel",
+      "keywords": "alpha luma transparency brightness matte",
+      "needs": [
+        "maskable"
+      ]
+    },
+    {
+      "id": "masks-sequence-fit",
+      "target": "panel:properties.masks#masks-sequence-fit",
+      "context": "MasksInspector",
+      "source": "Fit",
+      "keywords": "stretch fill fit scale matte",
+      "needs": [
+        "maskable"
+      ]
+    },
+    {
+      "id": "masks-edit-timeline",
+      "target": "panel:properties.masks#masks-edit-timeline",
+      "context": "MasksInspector",
+      "source": "Edit mask timeline",
+      "keywords": "open nested sequence use as mask",
       "needs": [
         "maskable"
       ]
@@ -1858,7 +1888,7 @@
       "context": "PropertiesPanel",
       "source": "Effects",
       "needs": [
-        "adj:videoEffects"
+        "effectable"
       ]
     },
     {

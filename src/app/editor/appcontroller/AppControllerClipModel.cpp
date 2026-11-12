@@ -284,6 +284,7 @@ QVariantMap maskToMap(const drift::Mask &m, drift::TimeUs timelineStart)
         {QStringLiteral("mediaSrcOffsetUs"), qint64(m.mediaSrcOffsetUs)},
         {QStringLiteral("mediaFit"), drift::maskMediaFitToString(m.mediaFit)},
         {QStringLiteral("mediaChannel"), drift::maskMediaChannelToString(m.mediaChannel)},
+        {QStringLiteral("sequenceId"), m.sequenceId},
         {QStringLiteral("mediaLoop"), m.mediaLoop},
         {QStringLiteral("mediaTimeBase"), drift::maskMediaTimeBaseToString(m.mediaTimeBase)},
         // Read-only, for the inspector and the preview overlay: keyframe edits go through the
@@ -1045,6 +1046,8 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
     TimelineClipsModel::Row row;
     row.id = clip.id;
     row.name = clip.name;
+    if (row.name.isEmpty() && clip.adjustmentKind == drift::AdjustmentKind::Mask && clip.mask.isSequence())
+        row.name = clip.mask.name;
     row.path = clip.path;
     row.kind = drift::clipTypeToString(clip.type);
     row.packageMissing = clip.type == drift::ClipType::Procedural && !hasProcedural(clip.procedural.packageId);

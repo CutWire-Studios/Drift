@@ -1049,9 +1049,10 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
     if (mask.value(QStringLiteral("shape")).toString() == QLatin1String("none")) {
         m.remove(QStringLiteral("mask"));
     } else {
-        if (mask.value(QStringLiteral("mediaPath")).toString().isEmpty()) {
+        if (mask.value(QStringLiteral("mediaPath")).toString().isEmpty()
+            && mask.value(QStringLiteral("shape")).toString() != QLatin1String("sequence")) {
             for (const char *key : {"mediaPath", "mediaFgrPath", "mediaSrcOffsetUs", "mediaFit",
-                                    "mediaChannel", "mediaLoop", "mediaTimeBase"})
+                                    "mediaChannel", "mediaLoop", "mediaTimeBase", "sequenceId"})
                 mask.remove(QLatin1String(key));
         }
         if (!mask.value(QStringLiteral("animated")).toBool())

@@ -762,6 +762,7 @@ drift::Mask maskFromMap(const QVariantMap &m)
     mask.mediaFit = drift::maskMediaFitFromString(m.value(QStringLiteral("mediaFit")).toString());
     mask.mediaChannel =
         drift::maskMediaChannelFromString(m.value(QStringLiteral("mediaChannel")).toString());
+    mask.sequenceId = m.value(QStringLiteral("sequenceId")).toString();
     mask.mediaLoop = m.value(QStringLiteral("mediaLoop"), mask.mediaLoop).toBool();
     if (m.contains(QStringLiteral("mediaTimeBase")))
         mask.mediaTimeBase =

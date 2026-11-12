@@ -221,6 +221,21 @@ ThemedContextMenu {
         onTriggered: EditorState.masking.convertClipToMask(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
+        readonly property var refs: owner.selected ? [] : [{ "track": owner.trackIndex, "clip": owner.clipIndex }]
+        text: qsTr("Use as mask (nested timeline)")
+        icon.name: Theme.icons.mask
+        visible: owner.trackType === "video" && owner.clipData.kind !== "adjustment"
+        enabled: EditorState.masking.canConvertClipsToSequenceMask(refs)
+        onTriggered: EditorState.masking.convertClipsToSequenceMask(refs)
+    }
+    ThemedMenuItem {
+        readonly property string sequenceId: EditorState.masking.maskSequenceId(owner.trackIndex, owner.clipIndex)
+        text: qsTr("Open mask timeline")
+        icon.name: Theme.icons.layers
+        visible: sequenceId !== ""
+        onTriggered: EditorState.openSequence(sequenceId)
+    }
+    ThemedMenuItem {
         text: qsTr("Convert to edit-friendly format")
         icon.name: Theme.icons.rabbit
         // Converts the bin media, so every clip using it follows along.

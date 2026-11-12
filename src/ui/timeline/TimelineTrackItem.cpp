@@ -5,6 +5,7 @@
 #include "app/editor/AppController.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/TimelineClipsModel.h"
+#include "app/editor/sessions/MaskingController.h"
 #include "playback/stats/PerfLog.h"
 #include "playback/PlaybackEngine.h"
 
@@ -1814,6 +1815,11 @@ void TimelineTrackItem::mouseDoubleClickEvent(QMouseEvent *event)
     }
     if (m_clips->rows().at(index).kind == QLatin1String("composite"))
         m_editor->openCompositeClip(m_trackIndex, index);
+    else if (m_clips->rows().at(index).adjustmentKind == QLatin1String("mask")) {
+        const QString sequenceId = m_editor->masking()->maskSequenceId(m_trackIndex, index);
+        if (!sequenceId.isEmpty())
+            m_editor->openSequence(sequenceId);
+    }
     event->accept();
 }
 

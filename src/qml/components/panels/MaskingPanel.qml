@@ -1058,6 +1058,7 @@ PanelFrame {
                             Column {
                                 id: trackRow
                                 visible: !maskEntry.model.isMedia && maskEntry.model.shape !== "bars"
+                                         && maskEntry.model.shape !== "sequence"
                                          && root.target.kind === "clip"
                                 width: parent.width
                                 spacing: Theme.spacingXs
@@ -1178,7 +1179,8 @@ PanelFrame {
 
                             ThemedButton {
                                 id: blurButton
-                                visible: !maskEntry.model.isMedia && maskEntry.model.pinned && root.target.kind === "clip"
+                                visible: !maskEntry.model.isMedia && maskEntry.model.shape !== "sequence"
+                                         && maskEntry.model.pinned && root.target.kind === "clip"
                                 text: qsTr("Blur this area ▾")
                                 tooltip: qsTr("Apply a blur or pixelate effect inside this shape")
                                 onClicked: blurMenu.popup(blurButton, 0, blurButton.height)
@@ -1251,7 +1253,7 @@ PanelFrame {
                             }
 
                             RowLayout {
-                                visible: maskEntry.model.mediaSource === "file"
+                                visible: maskEntry.model.mediaSource === "file" || maskEntry.model.mediaSource === "sequence"
                                 width: parent.width
                                 spacing: Theme.spacingSm
 
@@ -1275,6 +1277,14 @@ PanelFrame {
                                                                                      maskEntry.model.clip,
                                                                                      "mediaChannel", model[currentIndex])
                                 }
+                            }
+
+                            ThemedButton {
+                                visible: maskEntry.model.shape === "sequence"
+                                text: qsTr("Edit mask timeline")
+                                glyph: Theme.icons.layers
+                                onClicked: EditorState.openSequence(EditorState.masking.maskSequenceId(maskEntry.model.track,
+                                                                                                    maskEntry.model.clip))
                             }
                         }
                     }

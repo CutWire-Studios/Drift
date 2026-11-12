@@ -42,6 +42,8 @@ namespace {
 // SAM2 matte video in the matte cache) or "file" (anything the user pointed at).
 QString mediaSourceKind(const drift::Mask &mask)
 {
+    if (mask.isSequence())
+        return QStringLiteral("sequence");
     if (!mask.isMedia())
         return {};
     const QString mattes = QDir(drift::matteCacheDir()).absolutePath() + QLatin1Char('/');
