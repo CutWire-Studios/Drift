@@ -52,6 +52,49 @@ Item {
         const duration = 0.5
         root.setAnim("animIn", { kind: kind, duration: duration, curve: curve })
         root.setAnim("animOut", { kind: kind, duration: duration, curve: curve })
+        root.previewAnimation("animIn", kind, duration)
+    }
+
+    property bool previewActive: false
+    property double previewSavedPlayhead: 0
+    property double previewLastPlayhead: 0
+
+    function previewAnimation(which, kind, duration) {
+        if (kind === "none" || !root.hasSelection)
+            return
+        const clipLength = root.clipData.duration || 0
+        const length = Math.min(duration, clipLength)
+        if (length <= 0)
+            return
+        if (!root.previewActive)
+            root.previewSavedPlayhead = EditorState.playheadSeconds
+        root.previewActive = false
+        EditorState.playing = false
+        EditorState.playheadSeconds = which === "animIn"
+                ? root.clipData.start
+                : root.clipData.start + clipLength - length
+        root.previewLastPlayhead = EditorState.playheadSeconds
+        root.previewActive = true
+        EditorState.playing = true
+        previewTimer.interval = Math.round(length * 1000)
+        previewTimer.restart()
+    }
+
+    function endPreview() {
+        root.previewActive = false
+        EditorState.playing = false
+        EditorState.playheadSeconds = root.previewSavedPlayhead
+    }
+
+    function cancelPreview() {
+        root.previewActive = false
+        previewTimer.stop()
+    }
+
+    Timer {
+        id: previewTimer
+        repeat: false
+        onTriggered: root.endPreview()
     }
 
     function setStyle(which, curve, handles) {
@@ -83,6 +126,20 @@ Item {
         function onSelectionChanged() { root.clipDataRevision++; root.refreshFields() }
         function onSelectedClipDataChanged() { root.clipDataRevision++; root.refreshFields() }
         function onTracksChanged() { root.clipDataRevision++; root.refreshFields() }
+        // Playback ticks move the playhead forward in small steps; a seek jumps it.
+        function onPlayheadSecondsChanged() {
+            if (!root.previewActive)
+                return
+            const now = EditorState.playheadSeconds
+            if (now < root.previewLastPlayhead || now > root.previewLastPlayhead + 0.5)
+                root.cancelPreview()
+            else
+                root.previewLastPlayhead = now
+        }
+        function onPlayingChanged() {
+            if (root.previewActive && !EditorState.playing)
+                root.cancelPreview()
+        }
     }
 
     Component.onCompleted: refreshFields()
@@ -221,7 +278,11 @@ Item {
                 width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
                 model: root.animKindLabels
                 currentIndex: Math.max(0, root.animKinds.indexOf(root.animIn.kind || "none"))
-                onActivated: root.setAnim("animIn", { kind: root.animKinds[currentIndex] })
+                onActivated: {
+                    const kind = root.animKinds[currentIndex]
+                    root.setAnim("animIn", { kind: kind })
+                    root.previewAnimation("animIn", kind, root.animIn.duration || 0.5)
+                }
             }
             CurveField {
                 width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
@@ -265,7 +326,11 @@ Item {
                 width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
                 model: root.animKindLabels
                 currentIndex: Math.max(0, root.animKinds.indexOf(root.animOut.kind || "none"))
-                onActivated: root.setAnim("animOut", { kind: root.animKinds[currentIndex] })
+                onActivated: {
+                    const kind = root.animKinds[currentIndex]
+                    root.setAnim("animOut", { kind: kind })
+                    root.previewAnimation("animOut", kind, root.animOut.duration || 0.5)
+                }
             }
             CurveField {
                 width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
