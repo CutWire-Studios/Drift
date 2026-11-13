@@ -238,6 +238,16 @@ QMap<QString, QVariant> dramaticDefaults(const EffectPresetEntry &def)
         params.insert(QStringLiteral("intensity"), 1.2);
         params.insert(QStringLiteral("streakLength"), 0.35);
         params.insert(QStringLiteral("threshold"), 0.75);
+    } else if (def.meta.id == QLatin1String("move_subject")) {
+        params.insert(QStringLiteral("offsetX"), 0.14);
+        params.insert(QStringLiteral("offsetY"), -0.1);
+        params.insert(QStringLiteral("rotation"), 20.0);
+        params.insert(QStringLiteral("scale"), 1.0);
+        params.insert(QStringLiteral("squash"), 0.0);
+        params.insert(QStringLiteral("shadow"), 0.7);
+        params.insert(QStringLiteral("shake"), 0.0);
+        params.insert(QStringLiteral("pivot"), 0.0);
+        params.insert(QStringLiteral("background"), 1.0);
     } else if (def.meta.id == QLatin1String("camera_punch")) {
         params.insert(QStringLiteral("shake"), 9.0);
         params.insert(QStringLiteral("rgb"), 5.0);
