@@ -56,6 +56,11 @@ const InstalledAddon *addonForPath(const QString &path);
 
 void reloadAddonRegistry();
 
+// Safe mode, for one session: the registry reads as empty, so no addon content is found or
+// loaded, and writes are refused so installed.json is not replaced by that empty view. Call
+// before the first lookup.
+void setSafeMode(bool on);
+
 // Record or drop an entry and rewrite installed.json atomically. Both refresh the in-memory
 // registry on success; callers still need to reload the affected catalog.
 bool recordInstalledAddon(const PackageInfo &info, QString *error, bool unofficial = false);

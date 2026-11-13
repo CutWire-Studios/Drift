@@ -158,4 +158,15 @@ QuickSetupPage {
             }
         }
     }
+
+    Text {
+        width: parent.width
+        visible: CrashReports.supported
+        horizontalAlignment: Text.AlignHCenter
+        wrapMode: Text.WordWrap
+        text: qsTr("If Drift crashes, it sends an error report to help fix it. No project files or media are included. You can turn this off in Settings.")
+        color: Theme.c.quickSetup.foregroundMuted
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeBase * 0.85
+    }
 }

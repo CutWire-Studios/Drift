@@ -1171,6 +1171,19 @@ qt_add_executable(drift
     src/app/editor/SearchIndex.cpp
     src/app/platform/FileDialogs.h
     src/app/platform/FileDialogs.cpp
+    src/app/platform/CrashHandler.h
+    src/app/crash/CrashBundle.h
+    src/app/crash/CrashBundle.cpp
+    src/app/crash/CrashMeta.h
+    src/app/crash/CrashMeta.cpp
+    src/app/crash/CrashReason.h
+    src/app/crash/CrashReason.cpp
+    src/app/crash/CrashReporter.h
+    src/app/crash/CrashReporter.cpp
+    src/app/crash/CrashStore.h
+    src/app/crash/CrashStore.cpp
+    src/app/crash/LogScrubber.h
+    src/app/crash/LogScrubber.cpp
     src/app/platform/Haptics.h
     src/app/platform/Haptics.cpp
     src/app/platform/PointerDevices.h
@@ -1440,8 +1453,9 @@ if(WIN32)
     # console subsystem and Windows opens a console window before the GUI comes up. Qt6::EntryPoint
     # (linked in by Qt6::Core) supplies the WinMain that forwards to main().
     set_target_properties(drift PROPERTIES WIN32_EXECUTABLE TRUE)
-    target_sources(drift PRIVATE resources/windows/drift.rc src/app/platform/PrimaryDisplay_win.cpp)
-    target_link_libraries(drift PRIVATE shcore)
+    target_sources(drift PRIVATE resources/windows/drift.rc src/app/platform/PrimaryDisplay_win.cpp
+        src/app/platform/CrashHandler_win.cpp)
+    target_link_libraries(drift PRIVATE shcore dbghelp version)
     set_source_files_properties(resources/windows/drift.rc PROPERTIES
         OBJECT_DEPENDS "${CMAKE_SOURCE_DIR}/resources/windows/drift.ico")
 endif()
@@ -1690,6 +1704,7 @@ qt_add_qml_module(drift
     QML_FILES
         src/qml/Shell.qml
         src/qml/QuickSetup.qml
+        src/qml/CrashReport.qml
         src/qml/LayoutPresets.qml
         src/qml/MediaImport.qml
         src/qml/Main.qml
@@ -2644,6 +2659,7 @@ target_link_libraries(drift PRIVATE
     driftapp
     driftcore
     driftengine
+    ${DRIFT_ZSTD_TARGET}
 )
 target_include_directories(drift PRIVATE src)
 # qmltyperegistrar emits bare-basename includes (<ThemeManager.h>) for the qml module's headers.

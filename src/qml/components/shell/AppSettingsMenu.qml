@@ -31,6 +31,16 @@ ThemedContextMenu {
         onTriggered: root.helpRequested()
     }
 
+    ThemedMenuItem {
+        text: qsTr("Save diagnostics…")
+        icon.name: Theme.icons.download
+        onTriggered: {
+            CrashReports.saveDiagnostics()
+            if (CrashReports.saveMessage.length > 0)
+                Toasts.info(CrashReports.saveMessage)
+        }
+    }
+
     ThemedMenuSeparator { }
 
     ThemedMenuItem {

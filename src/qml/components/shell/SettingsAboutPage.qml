@@ -54,6 +54,24 @@ SettingsPage {
         }
     }
 
+    SettingsRow {
+        title: qsTr("Save diagnostics")
+        searchId: "about-save-diagnostics"
+        description: qsTr("Saves an archive with your logs and system information to attach to a bug report.")
+        keywords: "diagnostics logs log crash bug report support system info"
+        query: page.query
+
+        ThemedButton {
+            variant: "secondary"
+            text: qsTr("Save diagnostics…")
+            onClicked: {
+                CrashReports.saveDiagnostics()
+                if (CrashReports.saveMessage.length > 0)
+                    Toasts.info(CrashReports.saveMessage)
+            }
+        }
+    }
+
     SettingsGroupHeader {
         text: qsTr("Help")
         query: page.query

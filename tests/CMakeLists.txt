@@ -476,3 +476,14 @@ qt_add_executable(tst_transform3d tst_transform3d.cpp)
 target_include_directories(tst_transform3d PRIVATE ../src)
 target_link_libraries(tst_transform3d PRIVATE Qt6::Test Qt6::Gui driftengine driftcore)
 add_test(NAME Transform3d COMMAND tst_transform3d)
+
+qt_add_executable(tst_crashreport
+    tst_crashreport.cpp
+    ../src/app/crash/CrashBundle.cpp
+    ../src/app/crash/CrashMeta.cpp
+    ../src/app/crash/CrashReason.cpp
+    ../src/app/crash/CrashStore.cpp
+    ../src/app/crash/LogScrubber.cpp)
+target_include_directories(tst_crashreport PRIVATE ../src)
+target_link_libraries(tst_crashreport PRIVATE Qt6::Test Qt6::Core driftcore ${DRIFT_ZSTD_TARGET})
+add_test(NAME CrashReport COMMAND tst_crashreport)

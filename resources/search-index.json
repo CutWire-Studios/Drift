@@ -1068,6 +1068,15 @@
       "needs": []
     },
     {
+      "id": "about-save-diagnostics",
+      "target": "settings:about#about-save-diagnostics",
+      "context": "SettingsAboutPage",
+      "source": "Save diagnostics",
+      "keywords": "diagnostics logs log crash bug report support system info",
+      "needs": [],
+      "descriptionSource": "Saves an archive with your logs and system information to attach to a bug report."
+    },
+    {
       "id": "about-quick-setup",
       "target": "settings:about#about-quick-setup",
       "context": "SettingsAboutPage",
@@ -1287,6 +1296,15 @@
       "keywords": "",
       "needs": [],
       "descriptionSource": "Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them."
+    },
+    {
+      "id": "general-send-crash-reports",
+      "target": "settings:general#general-send-crash-reports",
+      "context": "SettingsGeneralPage",
+      "source": "Send crash reports automatically",
+      "keywords": "crash report privacy telemetry diagnostics error upload",
+      "needs": [],
+      "descriptionSource": "After a crash, send the error details, a short scrubbed log and your system and graphics information to help fix it. No project files or media."
     },
     {
       "id": "general-cache",

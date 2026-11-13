@@ -19,6 +19,7 @@ constexpr int kRegistrySchema = 1;
 QMutex g_mutex;
 QList<InstalledAddon> g_addons;
 bool g_initialized = false;
+bool g_safeMode = false;
 
 QString registryFilePath()
 {
@@ -139,6 +140,8 @@ void rebuildLocked()
 {
     g_addons.clear();
     g_initialized = true;
+    if (g_safeMode)
+        return;
     readRegistryLocked();
     scanCustomLocked();
 }
@@ -251,6 +254,13 @@ const InstalledAddon *addonForPath(const QString &path)
     return nullptr;
 }
 
+void setSafeMode(bool on)
+{
+    QMutexLocker lock(&g_mutex);
+    g_safeMode = on;
+    g_initialized = false;
+}
+
 void reloadAddonRegistry()
 {
     QMutexLocker lock(&g_mutex);
@@ -260,6 +270,11 @@ void reloadAddonRegistry()
 bool recordInstalledAddon(const PackageInfo &info, QString *error, bool unofficial)
 {
     QMutexLocker lock(&g_mutex);
+    if (g_safeMode) {
+        if (error)
+            *error = QStringLiteral("add-ons are disabled in safe mode");
+        return false;
+    }
     ensureLoadedLocked();
 
     InstalledAddon addon;
@@ -289,6 +304,11 @@ bool recordInstalledAddon(const PackageInfo &info, QString *error, bool unoffici
 bool forgetInstalledAddon(const QString &id, QString *error)
 {
     QMutexLocker lock(&g_mutex);
+    if (g_safeMode) {
+        if (error)
+            *error = QStringLiteral("add-ons are disabled in safe mode");
+        return false;
+    }
     ensureLoadedLocked();
 
     g_addons.removeIf([&](const InstalledAddon &addon) { return addon.id == id; });

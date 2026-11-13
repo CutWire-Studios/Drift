@@ -34,6 +34,8 @@ QString argumentApi(int argc, char *argv[])
     const QByteArray prefix = "--graphics-api=";
     for (int i = 1; i < argc; ++i) {
         const QByteArray arg(argv[i]);
+        if (arg == "--safe-mode")
+            return kOpenGl;
         if (arg.startsWith(prefix))
             return QString::fromLatin1(arg.mid(prefix.size())).toLower();
         if (arg == "--graphics-api" && i + 1 < argc)

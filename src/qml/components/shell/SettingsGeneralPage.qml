@@ -213,6 +213,26 @@ SettingsPage {
     }
 
     SettingsGroupHeader {
+        text: qsTr("Privacy")
+        available: CrashReports.supported
+        query: page.query
+    }
+
+    SettingsRow {
+        title: qsTr("Send crash reports automatically")
+        searchId: "general-send-crash-reports"
+        description: qsTr("After a crash, send the error details, a short scrubbed log and your system and graphics information to help fix it. No project files or media.")
+        keywords: "crash report privacy telemetry diagnostics error upload"
+        available: CrashReports.supported
+        query: page.query
+
+        ThemedSwitch {
+            checked: CrashReports.automaticReports
+            onToggled: CrashReports.automaticReports = checked
+        }
+    }
+
+    SettingsGroupHeader {
         text: qsTr("Storage")
         query: page.query
     }
