@@ -574,6 +574,7 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
         {QStringLiteral("params"), params},
         {QStringLiteral("compositorOnly"), def ? def->meta.compositorOnly : false},
         {QStringLiteral("needsDepth"), def ? def->needsDepth : false},
+        {QStringLiteral("needsMask"), def ? def->needsMask : false},
         {QStringLiteral("missing"), def == nullptr},
         {QStringLiteral("enabled"), effect.enabled},
     };

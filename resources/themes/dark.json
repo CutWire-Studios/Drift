@@ -1946,6 +1946,10 @@
     "effectsHueParam": {
       "foregroundMuted": "$semantic.mutedForeground"
     },
+    "effectsMaskSection": {
+      "foregroundMuted": "$semantic.mutedForeground",
+      "warning": "$semantic.warning"
+    },
     "effectsOccludeSection": {
       "foregroundMuted": "$semantic.mutedForeground"
     },

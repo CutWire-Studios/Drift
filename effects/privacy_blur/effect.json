@@ -4,8 +4,9 @@
   "displayName": "Privacy Blur",
   "category": "dreamy",
   "thumbnail": "thumbnail.webp",
-  "description": "Hides a rectangular area with a blur, a mosaic or a solid bar.",
+  "description": "Hides what the clip's mask covers with a blur, a mosaic or a solid bar.",
   "backend": "gpu",
+  "requires": "mask",
   "order": 165,
   "parameters": [
     {
@@ -14,46 +15,6 @@
       "type": "choice",
       "options": ["Blur", "Mosaic", "Solid bar"],
       "defaultValue": 0
-    },
-    {
-      "identifier": "regionX",
-      "displayName": "X",
-      "type": "float",
-      "defaultValue": 0.35,
-      "minValue": 0.0,
-      "maxValue": 1.0,
-      "ui": { "control": "slider", "precision": 3 },
-      "group": "Area"
-    },
-    {
-      "identifier": "regionY",
-      "displayName": "Y",
-      "type": "float",
-      "defaultValue": 0.35,
-      "minValue": 0.0,
-      "maxValue": 1.0,
-      "ui": { "control": "slider", "precision": 3 },
-      "group": "Area"
-    },
-    {
-      "identifier": "regionW",
-      "displayName": "Width",
-      "type": "float",
-      "defaultValue": 0.3,
-      "minValue": 0.0,
-      "maxValue": 1.0,
-      "ui": { "control": "slider", "precision": 3 },
-      "group": "Area"
-    },
-    {
-      "identifier": "regionH",
-      "displayName": "Height",
-      "type": "float",
-      "defaultValue": 0.3,
-      "minValue": 0.0,
-      "maxValue": 1.0,
-      "ui": { "control": "slider", "precision": 3 },
-      "group": "Area"
     },
     {
       "identifier": "strength",

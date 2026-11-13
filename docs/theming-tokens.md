@@ -1423,6 +1423,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | effectsFileParam | destructive | $semantic.destructive | $semantic.destructive |
 | effectsFileParam | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | effectsHueParam | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| effectsMaskSection | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| effectsMaskSection | warning | $semantic.warning | $semantic.warning |
 | effectsOccludeSection | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | effectsParamGroupHeader | backgroundHover | $semantic.panel.accent | $semantic.panel.accent |
 | effectsParamGroupHeader | foreground | $semantic.panel.foreground | $semantic.panel.foreground |

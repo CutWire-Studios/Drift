@@ -5,19 +5,14 @@ uniform sampler2D u_currentTexture;
 uniform vec2 u_resolution;
 uniform float mode;
 uniform float strength;
-uniform float regionX;
-uniform float regionY;
-uniform float regionW;
-uniform float regionH;
 
 vec4 unpremul(vec4 c) {
     return vec4(c.rgb / max(c.a, 1e-4), c.a);
 }
 
 void main() {
-    vec2 rel = (v_texCoord - vec2(regionX, regionY)) / max(vec2(regionW, regionH), vec2(1e-6));
     float sigma = strength * 0.04 * max(u_resolution.x, u_resolution.y);
-    if (mode > 0.5 || sigma < 0.5 || rel.x < 0.0 || rel.x > 1.0 || rel.y < 0.0 || rel.y > 1.0) {
+    if (mode > 0.5 || sigma < 0.5) {
         fragColor = unpremul(texture(u_currentTexture, v_texCoord));
         return;
     }

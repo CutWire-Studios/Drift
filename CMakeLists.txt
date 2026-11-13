@@ -1869,6 +1869,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/EffectsCurveParam.qml
         src/qml/components/properties/EffectsLookParam.qml
         src/qml/components/properties/EffectsFaceSection.qml
+        src/qml/components/properties/EffectsMaskSection.qml
         src/qml/components/properties/EffectsFaceIndexParam.qml
         src/qml/components/properties/EffectsEnumParam.qml
         src/qml/components/properties/EffectsEffectHeader.qml

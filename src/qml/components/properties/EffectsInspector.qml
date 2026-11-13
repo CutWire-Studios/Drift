@@ -93,6 +93,11 @@ Item {
             clipDataRevision: root.clipDataRevision
         }
 
+        EffectsMaskSection {
+            width: parent.width
+            clipDataRevision: root.clipDataRevision
+        }
+
         EffectsAutoKeyHint {
             width: parent.width
             inspector: root
