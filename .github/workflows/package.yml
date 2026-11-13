@@ -884,6 +884,22 @@ jobs:
             }
           }
 
+      # App-local CRT: drift.exe is built with MSVC 14.4x, whose constexpr std::mutex crashes
+      # (c0000005 in MSVCP140.dll) against the older system runtime many machines still have.
+      # The exe's own folder comes first in DLL search order, so these win over System32.
+      - name: Bundle MSVC runtime
+        shell: pwsh
+        run: |
+          Remove-Item dist\bin\vc_redist*.exe -Force -ErrorAction SilentlyContinue
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $redist = Get-ChildItem "$vs\VC\Redist\MSVC" -Directory |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Name } | Select-Object -Last 1
+          $crt = Get-ChildItem "$($redist.FullName)\${{ matrix.arch }}" -Directory -Filter 'Microsoft.VC*.CRT' | Select-Object -First 1
+          if (-not $crt) { throw "no Microsoft.VC*.CRT under $($redist.FullName)\${{ matrix.arch }}" }
+          Write-Host "CRT from $($crt.FullName)"
+          Copy-Item "$($crt.FullName)\*.dll" dist\bin -Force
+
       # The one part of this package that can break silently. QAudioSink gets its devices from Qt's
       # multimedia backend plugin, and the FFmpeg copy above deliberately lands on top of the DLLs
       # windeployqt took out of Qt (see FFMPEG_TAG). If that combination leaves the plugin unable
