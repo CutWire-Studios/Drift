@@ -1087,6 +1087,10 @@
         <translation>カスタム</translation>
     </message>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">お気に入り</translation>
+    </message>
+    <message>
         <source>Template</source>
         <translation>テンプレート</translation>
     </message>
@@ -3353,6 +3357,22 @@
         <translation>調整のリンクを解除しました</translation>
     </message>
     <message>
+        <source>Hide effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Link adjustment to clip</source>
         <translation>調整をクリップにリンク</translation>
     </message>
@@ -3593,6 +3613,26 @@
         <translation>クリップを順再生に</translation>
     </message>
     <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip not looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip is already being reversed</source>
         <translation>クリップは既に逆再生中です</translation>
     </message>
@@ -3667,6 +3707,14 @@
     <message>
         <source>Composite</source>
         <translation>コンポジット</translation>
+    </message>
+    <message>
+        <source>Timeline %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline created</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Flattening composite…</source>
@@ -3855,6 +3903,10 @@
     <message>
         <source>Bars</source>
         <translation>バー</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation type="unfinished">分割</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -4287,6 +4339,10 @@
     <message>
         <source>Transform reset</source>
         <translation>変形をリセットしました</translation>
+    </message>
+    <message>
+        <source>Motion blur follows one clip&apos;s movement, so it goes on a clip, not on an adjustment layer.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Depth effects read one clip&apos;s depth, so they go on a clip, not on an adjustment layer.</source>
@@ -5025,6 +5081,17 @@
     </message>
 </context>
 <context>
+    <name>AssetSearchBar</name>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished">検索をクリア</translation>
+    </message>
+    <message>
+        <source>Remove from history</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AssetsPanel</name>
     <message>
         <source>Remove this media?</source>
@@ -5329,6 +5396,14 @@
     <message>
         <source>Create a new folder here</source>
         <translation>ここに新しいフォルダーを作成</translation>
+    </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10067,6 +10142,18 @@
         <translation>終了</translation>
     </message>
     <message>
+        <source>Loop</source>
+        <translation type="unfinished">ループ</translation>
+    </message>
+    <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the trimmed part for as long as the clip runs. Drag the clip&apos;s edges past the end to add repeats. Turn it off to change the trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename</source>
         <translation>名前の変更</translation>
     </message>
@@ -10221,6 +10308,10 @@
     <message>
         <source>Presets</source>
         <translation>プリセット</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">お気に入り</translation>
     </message>
     <message>
         <source>Type</source>
@@ -10770,6 +10861,10 @@
     <message>
         <source>Feather</source>
         <translation>ぼかし</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11357,6 +11452,10 @@
     <message>
         <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
         <translation>カテゴリを選択し、テンプレートと品質を選択します。これはいつでも設定 → レイアウトを選択 で変更できます。</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">お気に入り</translation>
     </message>
     <message>
         <source>Template</source>
@@ -12508,6 +12607,14 @@
 <context>
     <name>MaskOverlay</name>
     <message>
+        <source>Unlock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
         <translation>ポイントをドラッグして形状を変更 · 辺上の ○ をタップしてポイントを追加 · ポイントを長押しして削除</translation>
     </message>
@@ -12529,6 +12636,28 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>再生ヘッドにあるクリップを選択して、そのマスクを編集します</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayFeatherHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 を編集</translation>
+    </message>
+    <message>
+        <source>Feather</source>
+        <translation type="unfinished">ぼかし</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRoundnessHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 を編集</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12583,6 +12712,18 @@
     <message>
         <source>Clip converted to mask</source>
         <translation>クリップをマスクに変換しました</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">クリップ</translation>
+    </message>
+    <message>
+        <source>%1 mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips used as mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cutouts can&apos;t be moved yet</source>
@@ -12725,8 +12866,16 @@
         <translation>バー</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">分割</translation>
+    </message>
+    <message>
         <source>Matte</source>
         <translation>マット</translation>
+    </message>
+    <message>
+        <source>Sequence matte</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -13193,6 +13342,10 @@
             <numerusform>%n 個のシェイプキー</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -13225,6 +13378,10 @@
         <translation>バー</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">分割</translation>
+    </message>
+    <message>
         <source>Combine</source>
         <translation>結合</translation>
     </message>
@@ -13247,6 +13404,10 @@
     <message>
         <source>Remove mask</source>
         <translation>マスクを削除</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -13275,6 +13436,38 @@
     <message>
         <source>Polygon</source>
         <translation>多角形</translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Matte channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha (transparency)</source>
+        <translation type="unfinished">アルファ (透明度)</translation>
+    </message>
+    <message>
+        <source>Luma (brightness)</source>
+        <translation type="unfinished">ルマ (輝度)</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">フィット</translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation type="unfinished">ストレッチ</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">フィル</translation>
+    </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invert</source>
@@ -23131,6 +23324,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">お気に入り</translation>
+    </message>
+    <message>
         <source>All</source>
         <translation>すべて</translation>
     </message>
@@ -24014,6 +24211,14 @@ If playback stutters, try another.</source>
         <translation>すべてのオーディオトラックを分離</translation>
     </message>
     <message>
+        <source>Stop looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop</source>
+        <translation type="unfinished">ループ</translation>
+    </message>
+    <message>
         <source>Remove silence</source>
         <translation>無音部分を削除</translation>
     </message>
@@ -24028,6 +24233,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Convert to mask</source>
         <translation>マスクに変換</translation>
+    </message>
+    <message>
+        <source>Use as mask (nested timeline)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -24405,6 +24618,10 @@ If playback stutters, try another.</source>
         <source>Main</source>
         <translation>メイン</translation>
     </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TimelineSpanBracketChip</name>
@@ -24716,12 +24933,24 @@ If playback stutters, try another.</source>
         <translation>字幕</translation>
     </message>
     <message>
+        <source>Hide the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1, track %2</source>
         <translation>%1, トラック %2</translation>
     </message>
 </context>
 <context>
     <name>TimelineTrimHandle</name>
+    <message>
+        <source>Drag to repeat the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag to trim the start</source>
         <translation>ドラッグして開始をトリム</translation>
@@ -25987,6 +26216,14 @@ If playback stutters, try another.</source>
         <translation>位置</translation>
     </message>
     <message>
+        <source>Reset position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>幅と高さを個別に編集</translation>
     </message>
@@ -26027,6 +26264,14 @@ If playback stutters, try another.</source>
         <translation>不透明度 / 回転</translation>
     </message>
     <message>
+        <source>Reset opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished">回転をリセット</translation>
+    </message>
+    <message>
         <source>Rotate the whole group as one flat card</source>
         <translation>グループ全体を 1 枚の平面カードとして回転します</translation>
     </message>
@@ -26041,6 +26286,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
         <translation>位置、回転、アンカーポイント、深度オクルージョンは、3D ワークスペースの 3D トランスフォームパネルにあります</translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished">すべてリセット</translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26065,10 +26314,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Flip V</source>
         <translation>上下反転</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>位置とサイズをリセット</translation>
     </message>
     <message>
         <source>Fix orientation</source>

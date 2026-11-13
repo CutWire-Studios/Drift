@@ -1089,6 +1089,10 @@
         <translation>Niestandardowy</translation>
     </message>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Ulubione</translation>
+    </message>
+    <message>
         <source>Template</source>
         <translation>Szablon</translation>
     </message>
@@ -3365,6 +3369,22 @@
         <translation>Odłączono korektę</translation>
     </message>
     <message>
+        <source>Hide effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Link adjustment to clip</source>
         <translation>Połącz korektę z klipem</translation>
     </message>
@@ -3605,6 +3625,26 @@
         <translation>Klip do przodu</translation>
     </message>
     <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip not looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip is already being reversed</source>
         <translation>Klip jest już odwracany</translation>
     </message>
@@ -3679,6 +3719,14 @@
     <message>
         <source>Composite</source>
         <translation>Kompozycja</translation>
+    </message>
+    <message>
+        <source>Timeline %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline created</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Flattening composite…</source>
@@ -3867,6 +3915,10 @@
     <message>
         <source>Bars</source>
         <translation>Paski</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation type="unfinished">Podziel</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -4303,6 +4355,10 @@
     <message>
         <source>Transform reset</source>
         <translation>Zresetowano transformację</translation>
+    </message>
+    <message>
+        <source>Motion blur follows one clip&apos;s movement, so it goes on a clip, not on an adjustment layer.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Depth effects read one clip&apos;s depth, so they go on a clip, not on an adjustment layer.</source>
@@ -5053,6 +5109,17 @@
     </message>
 </context>
 <context>
+    <name>AssetSearchBar</name>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from history</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AssetsPanel</name>
     <message>
         <source>Remove this media?</source>
@@ -5375,6 +5442,14 @@
     <message>
         <source>Create a new folder here</source>
         <translation>Utwórz nowy folder tutaj</translation>
+    </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10139,6 +10214,18 @@
         <translation>Do</translation>
     </message>
     <message>
+        <source>Loop</source>
+        <translation type="unfinished">Pętla</translation>
+    </message>
+    <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the trimmed part for as long as the clip runs. Drag the clip&apos;s edges past the end to add repeats. Turn it off to change the trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename</source>
         <translation>Zmień nazwę</translation>
     </message>
@@ -10293,6 +10380,10 @@
     <message>
         <source>Presets</source>
         <translation>Presety</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Ulubione</translation>
     </message>
     <message>
         <source>Type</source>
@@ -10848,6 +10939,10 @@
     <message>
         <source>Feather</source>
         <translation>Pióro</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11441,6 +11536,10 @@
     <message>
         <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
         <translation>Wybierz kategorię, a następnie szablon i jakość. Możesz to zmienić w dowolnym momencie w Ustawienia → Wybierz układ.</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Ulubione</translation>
     </message>
     <message>
         <source>Template</source>
@@ -12604,6 +12703,14 @@
 <context>
     <name>MaskOverlay</name>
     <message>
+        <source>Unlock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12625,6 +12732,28 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>Wybierz klip przy głowicy odtwarzania, aby edytować jego maski</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayFeatherHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Edytuj %1</translation>
+    </message>
+    <message>
+        <source>Feather</source>
+        <translation type="unfinished">Pióro</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRoundnessHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Edytuj %1</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12679,6 +12808,18 @@
     <message>
         <source>Clip converted to mask</source>
         <translation>Przekonwertowano klip na maskę</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">Klip</translation>
+    </message>
+    <message>
+        <source>%1 mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips used as mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cutouts can&apos;t be moved yet</source>
@@ -12821,8 +12962,16 @@
         <translation>Paski</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">Podziel</translation>
+    </message>
+    <message>
         <source>Matte</source>
         <translation>Maska kryjąca</translation>
+    </message>
+    <message>
+        <source>Sequence matte</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -13295,6 +13444,10 @@
             <numerusform>%n kluczy kształtu</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -13327,6 +13480,10 @@
         <translation>Paski</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">Podziel</translation>
+    </message>
+    <message>
         <source>Combine</source>
         <translation>Połączone</translation>
     </message>
@@ -13349,6 +13506,10 @@
     <message>
         <source>Remove mask</source>
         <translation>Usuń maskę</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -13377,6 +13538,38 @@
     <message>
         <source>Polygon</source>
         <translation type="unfinished">Wielokąt</translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Matte channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha (transparency)</source>
+        <translation type="unfinished">Alfa (przezroczystość)</translation>
+    </message>
+    <message>
+        <source>Luma (brightness)</source>
+        <translation type="unfinished">Luma (jasność)</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">Dopasuj</translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation type="unfinished">Rozciągnij</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Wypełnienie</translation>
+    </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invert</source>
@@ -23291,6 +23484,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
 <context>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Ulubione</translation>
+    </message>
+    <message>
         <source>All</source>
         <translation>Wszystko</translation>
     </message>
@@ -24174,6 +24371,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Oddziel wszystkie ścieżki audio</translation>
     </message>
     <message>
+        <source>Stop looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop</source>
+        <translation type="unfinished">Pętla</translation>
+    </message>
+    <message>
         <source>Remove silence</source>
         <translation type="unfinished">Usuń ciszę</translation>
     </message>
@@ -24188,6 +24393,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Convert to mask</source>
         <translation>Konwertuj na maskę</translation>
+    </message>
+    <message>
+        <source>Use as mask (nested timeline)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -24565,6 +24778,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <source>Main</source>
         <translation type="unfinished">Główna</translation>
     </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TimelineSpanBracketChip</name>
@@ -24878,12 +25095,24 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Napisy</translation>
     </message>
     <message>
+        <source>Hide the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1, track %2</source>
         <translation>%1, ścieżka %2</translation>
     </message>
 </context>
 <context>
     <name>TimelineTrimHandle</name>
+    <message>
+        <source>Drag to repeat the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag to trim the start</source>
         <translation>Przeciągnij, aby przyciąć początek</translation>
@@ -26155,6 +26384,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation type="unfinished">Pozycja</translation>
     </message>
     <message>
+        <source>Reset position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>Edytuj szerokość i wysokość osobno</translation>
     </message>
@@ -26195,6 +26432,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Krycie i obrót</translation>
     </message>
     <message>
+        <source>Reset opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotate the whole group as one flat card</source>
         <translation type="unfinished"></translation>
     </message>
@@ -26209,6 +26454,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished">Resetuj wszystko</translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26233,10 +26482,6 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Flip V</source>
         <translation>Odbij w pionie</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>Resetuj pozycję i rozmiar</translation>
     </message>
     <message>
         <source>Fix orientation</source>

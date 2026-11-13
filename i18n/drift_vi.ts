@@ -1087,6 +1087,10 @@
         <translation>Tùy chỉnh</translation>
     </message>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Yêu thích</translation>
+    </message>
+    <message>
         <source>Template</source>
         <translation>Mẫu</translation>
     </message>
@@ -3353,6 +3357,22 @@
         <translation>Đã hủy liên kết lớp điều chỉnh</translation>
     </message>
     <message>
+        <source>Hide effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Link adjustment to clip</source>
         <translation>Liên kết lớp điều chỉnh vào clip</translation>
     </message>
@@ -3593,6 +3613,26 @@
         <translation>Chuyển tiếp clip</translation>
     </message>
     <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip not looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip is already being reversed</source>
         <translation>Một clip đang được đảo ngược</translation>
     </message>
@@ -3675,6 +3715,14 @@
     <message>
         <source>Composite</source>
         <translation>Tổ hợp</translation>
+    </message>
+    <message>
+        <source>Timeline %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline created</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Flattening composite…</source>
@@ -3863,6 +3911,10 @@
     <message>
         <source>Bars</source>
         <translation>Thanh</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation type="unfinished">Tách</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -4295,6 +4347,10 @@
     <message>
         <source>Transform reset</source>
         <translation>Đặt lại chuyển đổi</translation>
+    </message>
+    <message>
+        <source>Motion blur follows one clip&apos;s movement, so it goes on a clip, not on an adjustment layer.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Depth effects read one clip&apos;s depth, so they go on a clip, not on an adjustment layer.</source>
@@ -5025,6 +5081,17 @@
     </message>
 </context>
 <context>
+    <name>AssetSearchBar</name>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished">Xóa tìm kiếm</translation>
+    </message>
+    <message>
+        <source>Remove from history</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AssetsPanel</name>
     <message>
         <source>Remove this media?</source>
@@ -5329,6 +5396,14 @@
     <message>
         <source>Create a new folder here</source>
         <translation>Tạo một thư mục mới ở đây</translation>
+    </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10067,6 +10142,18 @@
         <translation>Đến</translation>
     </message>
     <message>
+        <source>Loop</source>
+        <translation type="unfinished">Lặp lại</translation>
+    </message>
+    <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the trimmed part for as long as the clip runs. Drag the clip&apos;s edges past the end to add repeats. Turn it off to change the trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename</source>
         <translation>Đổi tên</translation>
     </message>
@@ -10221,6 +10308,10 @@
     <message>
         <source>Presets</source>
         <translation>Các preset</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Yêu thích</translation>
     </message>
     <message>
         <source>Type</source>
@@ -10770,6 +10861,10 @@
     <message>
         <source>Feather</source>
         <translation>Độ mờ biên</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11357,6 +11452,10 @@
     <message>
         <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
         <translation>Chọn một danh mục, sau đó chọn mẫu và chất lượng. Bạn có thể thay đổi điều này bất cứ lúc nào trong Cài đặt → Chọn bố cục.</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Yêu thích</translation>
     </message>
     <message>
         <source>Template</source>
@@ -12508,6 +12607,14 @@
 <context>
     <name>MaskOverlay</name>
     <message>
+        <source>Unlock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
         <translation>Kéo điểm để chỉnh hình · Chạm ○ trên cạnh để thêm điểm · Giữ điểm để xóa</translation>
     </message>
@@ -12529,6 +12636,28 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>Chọn một clip ở đầu phát để chỉnh sửa mặt nạ của nó</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayFeatherHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Chỉnh sửa %1</translation>
+    </message>
+    <message>
+        <source>Feather</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRoundnessHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Chỉnh sửa %1</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12583,6 +12712,18 @@
     <message>
         <source>Clip converted to mask</source>
         <translation>Clip đã được chuyển đổi thành mặt nạ</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">Clip</translation>
+    </message>
+    <message>
+        <source>%1 mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips used as mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cutouts can&apos;t be moved yet</source>
@@ -12725,8 +12866,16 @@
         <translation>Thanh</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">Tách</translation>
+    </message>
+    <message>
         <source>Matte</source>
         <translation>Matte</translation>
+    </message>
+    <message>
+        <source>Sequence matte</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -13193,6 +13342,10 @@
             <numerusform>%n key hình dạng</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -13225,6 +13378,10 @@
         <translation>Thanh</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">Tách</translation>
+    </message>
+    <message>
         <source>Combine</source>
         <translation>Hợp nhất</translation>
     </message>
@@ -13247,6 +13404,10 @@
     <message>
         <source>Remove mask</source>
         <translation>Xóa mặt nạ</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -13275,6 +13436,38 @@
     <message>
         <source>Polygon</source>
         <translation>Đa giác</translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Matte channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha (transparency)</source>
+        <translation type="unfinished">Alpha (độ trong suốt)</translation>
+    </message>
+    <message>
+        <source>Luma (brightness)</source>
+        <translation type="unfinished">Luma (độ sáng)</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">Vừa</translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation type="unfinished">Kéo giãn</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Đầy</translation>
+    </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invert</source>
@@ -23131,6 +23324,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Yêu thích</translation>
+    </message>
+    <message>
         <source>All</source>
         <translation>Tất cả</translation>
     </message>
@@ -24014,6 +24211,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Tách tất cả các track âm thanh</translation>
     </message>
     <message>
+        <source>Stop looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop</source>
+        <translation type="unfinished">Lặp lại</translation>
+    </message>
+    <message>
         <source>Remove silence</source>
         <translation>Xóa im lặng</translation>
     </message>
@@ -24028,6 +24233,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Convert to mask</source>
         <translation>Chuyển đổi thành mặt nạ</translation>
+    </message>
+    <message>
+        <source>Use as mask (nested timeline)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -24405,6 +24618,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <source>Main</source>
         <translation>Chính</translation>
     </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TimelineSpanBracketChip</name>
@@ -24716,12 +24933,24 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Phụ đề</translation>
     </message>
     <message>
+        <source>Hide the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1, track %2</source>
         <translation>%1, track %2</translation>
     </message>
 </context>
 <context>
     <name>TimelineTrimHandle</name>
+    <message>
+        <source>Drag to repeat the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag to trim the start</source>
         <translation>Kéo để cắt phần bắt đầu</translation>
@@ -25991,6 +26220,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Vị trí</translation>
     </message>
     <message>
+        <source>Reset position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>Chỉnh sửa chiều rộng và chiều cao riêng biệt</translation>
     </message>
@@ -26031,6 +26268,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Độ mờ &amp; xoay</translation>
     </message>
     <message>
+        <source>Reset opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished">Đặt lại xoay</translation>
+    </message>
+    <message>
         <source>Rotate the whole group as one flat card</source>
         <translation>Xoay toàn bộ nhóm như một tấm phẳng</translation>
     </message>
@@ -26049,6 +26294,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Corrects the source&apos;s own rotation losslessly — unlike Rotation above, this changes decoding, not just the on-screen box.</source>
         <translation>Sửa xoay riêng của nguồn một cách không mất dữ liệu — không giống như Xoay ở trên, thao tác này thay đổi quá trình giải mã, không chỉ hộp trên màn hình.</translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished">Đặt lại tất cả</translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26077,10 +26326,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Flip V</source>
         <translation>Lật Dọc</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>Đặt lại vị trí &amp; kích thước</translation>
     </message>
 </context>
 <context>

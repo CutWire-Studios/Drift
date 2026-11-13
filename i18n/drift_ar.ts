@@ -1092,6 +1092,10 @@
         <translation>مخصص</translation>
     </message>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">المفضلة</translation>
+    </message>
+    <message>
         <source>Template</source>
         <translation>قالب</translation>
     </message>
@@ -3207,6 +3211,22 @@
         <translation>تم إلغاء ربط الضبط</translation>
     </message>
     <message>
+        <source>Hide effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Link adjustment to clip</source>
         <translation>ربط الضبط بالمقطع</translation>
     </message>
@@ -3447,6 +3467,26 @@
         <translation>المقطع للأمام</translation>
     </message>
     <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip not looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip is already being reversed</source>
         <translation>يجري عكس مقطع بالفعل</translation>
     </message>
@@ -3504,6 +3544,14 @@
     </message>
     <message>
         <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3649,6 +3697,10 @@
     <message>
         <source>Bars</source>
         <translation>أشرطة</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation type="unfinished">تقسيم</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -4279,6 +4331,10 @@
     <message>
         <source>Transform reset</source>
         <translation>تمت إعادة تعيين التحويل</translation>
+    </message>
+    <message>
+        <source>Motion blur follows one clip&apos;s movement, so it goes on a clip, not on an adjustment layer.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Depth effects read one clip&apos;s depth, so they go on a clip, not on an adjustment layer.</source>
@@ -5095,6 +5151,17 @@
     </message>
 </context>
 <context>
+    <name>AssetSearchBar</name>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from history</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AssetsPanel</name>
     <message>
         <source>Remove this media?</source>
@@ -5444,6 +5511,14 @@
     <message>
         <source>Create a new folder here</source>
         <translation>إنشاء مجلد جديد هنا</translation>
+    </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10247,6 +10322,18 @@
         <translation>إلى</translation>
     </message>
     <message>
+        <source>Loop</source>
+        <translation type="unfinished">تكرار</translation>
+    </message>
+    <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the trimmed part for as long as the clip runs. Drag the clip&apos;s edges past the end to add repeats. Turn it off to change the trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename</source>
         <translation>إعادة تسمية</translation>
     </message>
@@ -10401,6 +10488,10 @@
     <message>
         <source>Presets</source>
         <translation>إعدادات مسبقة</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">المفضلة</translation>
     </message>
     <message>
         <source>Type</source>
@@ -10965,6 +11056,10 @@
     <message>
         <source>Feather</source>
         <translation>تنعيم الحواف</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11567,6 +11662,10 @@
     <message>
         <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
         <translation>اختر فئة، ثم قالبًا وجودة. يمكنك تغيير هذا في أي وقت من الإعدادات ← اختيار التخطيط.</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">المفضلة</translation>
     </message>
     <message>
         <source>Template</source>
@@ -12748,6 +12847,14 @@
 <context>
     <name>MaskOverlay</name>
     <message>
+        <source>Unlock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12769,6 +12876,28 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>حدد مقطعًا عند مؤشر التشغيل لتعديل أقنعته</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayFeatherHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">تعديل %1</translation>
+    </message>
+    <message>
+        <source>Feather</source>
+        <translation type="unfinished">تنعيم الحواف</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRoundnessHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">تعديل %1</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12823,6 +12952,18 @@
     <message>
         <source>Clip converted to mask</source>
         <translation>تم تحويل المقطع إلى قناع</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips used as mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cutouts can&apos;t be moved yet</source>
@@ -12965,8 +13106,16 @@
         <translation>أشرطة</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">تقسيم</translation>
+    </message>
+    <message>
         <source>Matte</source>
         <translation>قناع (Matte)</translation>
+    </message>
+    <message>
+        <source>Sequence matte</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -13448,6 +13597,10 @@
             <numerusform>%n مفتاح شكل</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -13480,6 +13633,10 @@
         <translation>أشرطة</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">تقسيم</translation>
+    </message>
+    <message>
         <source>Combine</source>
         <translation>دمج</translation>
     </message>
@@ -13502,6 +13659,10 @@
     <message>
         <source>Remove mask</source>
         <translation>إزالة القناع</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -13530,6 +13691,38 @@
     <message>
         <source>Polygon</source>
         <translation type="unfinished">مضلع</translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Matte channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha (transparency)</source>
+        <translation type="unfinished">ألفا (الشفافية)</translation>
+    </message>
+    <message>
+        <source>Luma (brightness)</source>
+        <translation type="unfinished">إضاءة (السطوع)</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">ملاءمة</translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation type="unfinished">تمديد</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">تعبئة</translation>
+    </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invert</source>
@@ -23530,6 +23723,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">المفضلة</translation>
+    </message>
+    <message>
         <source>All</source>
         <translation>الكل</translation>
     </message>
@@ -24413,6 +24610,14 @@ If playback stutters, try another.</source>
         <translation>فصل كل مسارات الصوت</translation>
     </message>
     <message>
+        <source>Stop looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop</source>
+        <translation type="unfinished">تكرار</translation>
+    </message>
+    <message>
         <source>Remove silence</source>
         <translation type="unfinished">إزالة الصمت</translation>
     </message>
@@ -24427,6 +24632,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Convert to mask</source>
         <translation>تحويل إلى قناع</translation>
+    </message>
+    <message>
+        <source>Use as mask (nested timeline)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -24804,6 +25017,10 @@ If playback stutters, try another.</source>
         <source>Main</source>
         <translation type="unfinished">الرئيسي</translation>
     </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TimelineSpanBracketChip</name>
@@ -25120,12 +25337,24 @@ If playback stutters, try another.</source>
         <translation>الترجمة</translation>
     </message>
     <message>
+        <source>Hide the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1, track %2</source>
         <translation>%1، المسار %2</translation>
     </message>
 </context>
 <context>
     <name>TimelineTrimHandle</name>
+    <message>
+        <source>Drag to repeat the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag to trim the start</source>
         <translation>اسحب لقص البداية</translation>
@@ -26406,6 +26635,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished">الموضع</translation>
     </message>
     <message>
+        <source>Reset position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>تعديل العرض والارتفاع بشكل منفصل</translation>
     </message>
@@ -26446,6 +26683,14 @@ If playback stutters, try another.</source>
         <translation>العتامة والدوران</translation>
     </message>
     <message>
+        <source>Reset opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotate the whole group as one flat card</source>
         <translation type="unfinished"></translation>
     </message>
@@ -26460,6 +26705,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished">إعادة تعيين الكل</translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26484,10 +26733,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Flip V</source>
         <translation>انعكاس رأسي</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>إعادة تعيين الموضع والحجم</translation>
     </message>
     <message>
         <source>Fix orientation</source>

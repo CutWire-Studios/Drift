@@ -1088,6 +1088,10 @@
         <translation>Personalizzato</translation>
     </message>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Preferiti</translation>
+    </message>
+    <message>
         <source>Template</source>
         <translation>Modello</translation>
     </message>
@@ -3359,6 +3363,22 @@
         <translation>Regolazione scollegata</translation>
     </message>
     <message>
+        <source>Hide effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Link adjustment to clip</source>
         <translation>Collega regolazione alla clip</translation>
     </message>
@@ -3599,6 +3619,26 @@
         <translation>Clip in avanti</translation>
     </message>
     <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip not looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip is already being reversed</source>
         <translation>L&apos;inversione di una clip è già in corso</translation>
     </message>
@@ -3673,6 +3713,14 @@
     <message>
         <source>Composite</source>
         <translation>Composito</translation>
+    </message>
+    <message>
+        <source>Timeline %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline created</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Flattening composite…</source>
@@ -3861,6 +3909,10 @@
     <message>
         <source>Bars</source>
         <translation>Barre</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation type="unfinished">Dividi</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -4295,6 +4347,10 @@
     <message>
         <source>Transform reset</source>
         <translation>Trasformazione reimpostata</translation>
+    </message>
+    <message>
+        <source>Motion blur follows one clip&apos;s movement, so it goes on a clip, not on an adjustment layer.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Depth effects read one clip&apos;s depth, so they go on a clip, not on an adjustment layer.</source>
@@ -5039,6 +5095,17 @@
     </message>
 </context>
 <context>
+    <name>AssetSearchBar</name>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from history</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AssetsPanel</name>
     <message>
         <source>Remove this media?</source>
@@ -5352,6 +5419,14 @@
     <message>
         <source>Create a new folder here</source>
         <translation>Crea una nuova cartella qui</translation>
+    </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10103,6 +10178,18 @@
         <translation>A</translation>
     </message>
     <message>
+        <source>Loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the trimmed part for as long as the clip runs. Drag the clip&apos;s edges past the end to add repeats. Turn it off to change the trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename</source>
         <translation>Rinomina</translation>
     </message>
@@ -10257,6 +10344,10 @@
     <message>
         <source>Presets</source>
         <translation>Predefiniti</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Preferiti</translation>
     </message>
     <message>
         <source>Type</source>
@@ -10809,6 +10900,10 @@
     <message>
         <source>Feather</source>
         <translation>Sfumatura bordi</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11399,6 +11494,10 @@
     <message>
         <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
         <translation>Scegli una categoria, quindi un modello e la qualità. Puoi modificarlo in qualsiasi momento in Impostazioni → Scegli layout.</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Preferiti</translation>
     </message>
     <message>
         <source>Template</source>
@@ -12556,6 +12655,14 @@
 <context>
     <name>MaskOverlay</name>
     <message>
+        <source>Unlock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12577,6 +12684,28 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>Seleziona una clip in corrispondenza della testina di riproduzione per modificarne le maschere</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayFeatherHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Modifica %1</translation>
+    </message>
+    <message>
+        <source>Feather</source>
+        <translation type="unfinished">Sfumatura bordi</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRoundnessHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Modifica %1</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12631,6 +12760,18 @@
     <message>
         <source>Clip converted to mask</source>
         <translation>Clip convertita in maschera</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">Clip</translation>
+    </message>
+    <message>
+        <source>%1 mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips used as mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cutouts can&apos;t be moved yet</source>
@@ -12773,8 +12914,16 @@
         <translation>Barre</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">Dividi</translation>
+    </message>
+    <message>
         <source>Matte</source>
         <translation>Mascherino</translation>
+    </message>
+    <message>
+        <source>Sequence matte</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -13244,6 +13393,10 @@
             <numerusform>%n chiavi di forma</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -13276,6 +13429,10 @@
         <translation>Barre</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">Dividi</translation>
+    </message>
+    <message>
         <source>Combine</source>
         <translation>Combina</translation>
     </message>
@@ -13298,6 +13455,10 @@
     <message>
         <source>Remove mask</source>
         <translation>Rimuovi maschera</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -13326,6 +13487,38 @@
     <message>
         <source>Polygon</source>
         <translation type="unfinished">Poligono</translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Matte channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha (transparency)</source>
+        <translation type="unfinished">Alfa (trasparenza)</translation>
+    </message>
+    <message>
+        <source>Luma (brightness)</source>
+        <translation type="unfinished">Luma (luminosità)</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">Adatta</translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation type="unfinished">Estendi</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Riempimento</translation>
+    </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invert</source>
@@ -23210,6 +23403,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
 <context>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Preferiti</translation>
+    </message>
+    <message>
         <source>All</source>
         <translation>Tutti</translation>
     </message>
@@ -24093,6 +24290,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Separa tutte le tracce audio</translation>
     </message>
     <message>
+        <source>Stop looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Remove silence</source>
         <translation type="unfinished">Rimuovi silenzio</translation>
     </message>
@@ -24107,6 +24312,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Convert to mask</source>
         <translation>Converti in maschera</translation>
+    </message>
+    <message>
+        <source>Use as mask (nested timeline)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -24484,6 +24697,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <source>Main</source>
         <translation type="unfinished">Principale</translation>
     </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TimelineSpanBracketChip</name>
@@ -24796,12 +25013,24 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Sottotitoli</translation>
     </message>
     <message>
+        <source>Hide the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1, track %2</source>
         <translation>%1, traccia %2</translation>
     </message>
 </context>
 <context>
     <name>TimelineTrimHandle</name>
+    <message>
+        <source>Drag to repeat the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag to trim the start</source>
         <translation>Trascina per ritagliare l&apos;inizio</translation>
@@ -26070,6 +26299,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished">Posizione</translation>
     </message>
     <message>
+        <source>Reset position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>Modifica larghezza e altezza separatamente</translation>
     </message>
@@ -26110,6 +26347,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Opacità e rotazione</translation>
     </message>
     <message>
+        <source>Reset opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotate the whole group as one flat card</source>
         <translation type="unfinished"></translation>
     </message>
@@ -26124,6 +26369,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished">Reimposta tutto</translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26148,10 +26397,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Flip V</source>
         <translation>Capovolgi vert.</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>Reimposta posizione e dimensioni</translation>
     </message>
     <message>
         <source>Fix orientation</source>
