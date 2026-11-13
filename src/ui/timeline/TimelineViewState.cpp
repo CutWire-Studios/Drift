@@ -83,6 +83,7 @@ void TimelineViewState::setStyle(const QVariantMap &style)
     color("editFriendlyPillForeground", m_style.editFriendlyPillForeground);
     color("warning", m_style.warning);
     color("missing", m_style.missing);
+    color("loopMarker", m_style.loopMarker);
     text("fontFamily", m_style.fontFamily);
     real("fontSizeTiny", m_style.fontSizeTiny);
     real("fontSizeXs", m_style.fontSizeXs);

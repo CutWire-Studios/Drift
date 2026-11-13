@@ -7,6 +7,8 @@ Rectangle {
     property bool selected: false
     property bool playing: false
     property real tileWidth: 104
+    // Empty hides the star; the "None" tile has no preset to favourite.
+    property string favoriteTab: ""
     readonly property alias hovered: tileHover.hovered
     signal clicked()
     id: root
@@ -70,5 +72,16 @@ Rectangle {
             Haptics.select()
             root.clicked()
         }
+    }
+
+    AssetFavoriteButton {
+        id: favoriteButton
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.margins: 3
+        visible: root.favoriteTab.length > 0 && root.presetId.length > 0
+                 && (favoriteButton.favorited || tileHover.hovered || Theme.touchUi)
+        tabId: root.favoriteTab
+        itemId: root.presetId
     }
 }

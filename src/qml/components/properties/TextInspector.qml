@@ -124,6 +124,9 @@ Item {
     // ----- Animation ---------------------------------------------------------
     property string animSlot: "in"
     property string animCategory: ""
+    // Overrides the category while on: the Favorites chip shows starred presets from every category.
+    property bool animFavoritesOnly: false
+    property int favoritesTick: 0
     readonly property var animPresets: {
         void root.animSlot
         return EditorState.textAnimationPresets(root.animSlot)
@@ -133,10 +136,15 @@ Item {
         return EditorState.textAnimationCategories(root.animSlot)
     }
     readonly property var animTileModel: {
-        const filtered = root.animCategory.length === 0
-                         ? root.animPresets
-                         : root.animPresets.filter(p => p.category === root.animCategory)
-        return [{ "id": "", "label": qsTr("None") }].concat(filtered)
+        void root.favoritesTick
+        const filtered = root.animFavoritesOnly
+                         ? root.animPresets.filter(p => EditorState.isAssetFavorite("textAnim", p.id))
+                         : root.animCategory.length === 0
+                           ? root.animPresets
+                           : root.animPresets.filter(p => p.category === root.animCategory)
+        const favs = filtered.filter(p => EditorState.isAssetFavorite("textAnim", p.id))
+        const rest = filtered.filter(p => !EditorState.isAssetFavorite("textAnim", p.id))
+        return [{ "id": "", "label": qsTr("None") }].concat(favs, rest)
     }
     readonly property var animation: (textStyle && textStyle.animation) || ({})
     readonly property var slotData: animation[animSlot] || ({ "preset": "", "enabled": true, "custom": false })
@@ -343,6 +351,7 @@ Item {
         function onSelectionChanged() { root.clipDataRevision++; root.refreshFields() }
         function onSelectedClipDataChanged() { root.clipDataRevision++; root.refreshFields() }
         function onTracksChanged() { root.clipDataRevision++; root.refreshFields() }
+        function onAssetFavoritesChanged() { root.favoritesTick++ }
     }
 
     Component.onCompleted: refreshFields()

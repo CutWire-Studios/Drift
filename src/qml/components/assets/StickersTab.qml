@@ -67,6 +67,7 @@ Item {
             visible: root.hasStickers
             height: visible ? implicitHeight : 0
             placeholderText: qsTr("Search stickers")
+            historyKey: "stickers"
 
             // The sticker packs are a curated subset of the emoji set, so the rest live behind
             // this button rather than being unreachable.

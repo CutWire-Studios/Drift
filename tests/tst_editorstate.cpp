@@ -154,6 +154,7 @@ private slots:
     void compositeTabEditUndoesFromMain();
     void removeEmptyTracksKeepsPopulatedAndUndoes();
     void compositeSeparateAudioAndRemoval();
+    void newTimelineCreatesEmptyComposite();
     void dissolveCompositeRoundTrip();
     void dissolveCompositeKeepsTrackNumbers();
     void replaceInterruptedByNewProjectClearsBusyRow();
@@ -400,6 +401,7 @@ private slots:
     void multicamSetUpBuildsAWorkingRigFromTheBin();
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
+    void addedEffectsLayerIsHiddenAndTheClipStaysSelected();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
     void agentCallNotificationsFollowThePreference();
     void deletingWithEffectsAlsoHandlesASelectedAdjustment();
@@ -433,6 +435,7 @@ private slots:
     void droppingAMaskOnEmptyTrackSpaceMakesALaneClip();
     void droppingAMaskAssetOnAClipPinsAMatte();
     void convertClipToMaskMakesALaneMatteBelow();
+    void useTextClipAsSequenceMask();
     void assetMaskRoleRoundTripsThroughUndo();
     void addingAnEffectSelectsTheAdjustmentCarryingIt();
     void effectAdjustmentReportsItsSourceClipsFaceState();
@@ -449,6 +452,7 @@ private slots:
     void maskEditSessionMovesVertexOnPathKeyedMask();
     void maskEditSessionMovesKeyframedRect();
     void maskEditSessionResizeRotateAndSnap();
+    void maskLockAspectPersistsAndGatesCornerResize();
     void maskEditSessionNudgeAndBars();
     void trackingTranslationDrivesMaskKeys();
     void trackingPlanarConvertsRectangleToFreeform();
@@ -1594,6 +1598,42 @@ void EditorStateTest::compositeTabEditUndoesFromMain()
     state.closeSequenceTab(sequenceId);
     QVERIFY(state.activeSequenceId().isEmpty());
     QVERIFY(state.sequenceTabs().isEmpty());
+}
+
+void EditorStateTest::newTimelineCreatesEmptyComposite()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    const int assetsBefore = state.project()->assets().size();
+
+    state.newTimeline();
+    QCOMPARE(state.project()->assets().size(), assetsBefore + 1);
+    const QString sequenceId = state.activeSequenceId();
+    QVERIFY(!sequenceId.isEmpty());
+    QCOMPARE(state.sequenceTabs().size(), 1);
+    QVERIFY(!state.project()->tracks().isEmpty());
+    const drift::MediaAsset *asset = nullptr;
+    for (const drift::MediaAsset &candidate : state.project()->assets()) {
+        if (candidate.sequenceId == sequenceId)
+            asset = &candidate;
+    }
+    QVERIFY(asset);
+    QCOMPARE(asset->name, QStringLiteral("Timeline 1"));
+    QCOMPARE(asset->durationUs, drift::TimeUs(0));
+
+    state.openSequence(QString());
+    state.newTimeline();
+    state.openSequence(QString());
+    QVERIFY(state.project()->hasSequence(sequenceId));
+    QCOMPARE(state.project()->sequenceIds().size(), 2);
+
+    const drift::Project loaded = drift::Project::fromJson(state.project()->toJson());
+    QCOMPARE(loaded.sequenceIds().size(), 2);
+    QVERIFY(loaded.hasSequence(sequenceId));
+    QVERIFY(!loaded.sequenceTracks(sequenceId).isEmpty());
+
+    state.undo();
+    QCOMPARE(state.project()->sequenceIds().size(), 1);
 }
 
 void EditorStateTest::dissolveCompositeRoundTrip()
@@ -11882,6 +11922,45 @@ void EditorStateTest::redoAfterASpeedDragKeepsTheGradeOnTheClip()
     QCOMPARE(grade->timelineDuration, host.timelineDuration);
 }
 
+void EditorStateTest::addedEffectsLayerIsHiddenAndTheClipStaysSelected()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.selectClip(0, 0);
+    const QString clipId = state.project()->tracks().at(0).clips.at(0).id;
+
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+
+    QCOMPARE(state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip()).id, clipId);
+    QCOMPARE(state.selectedClipEffects().size(), 1);
+    QVERIFY(state.selectedClipData().value(QStringLiteral("caps")).toStringList()
+                .contains(QStringLiteral("effectable")));
+
+    QCOMPARE(state.project()->tracks().size(), 2);
+    QVERIFY(state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+    QCOMPARE(state.adjustmentLaneCount(0), 0);
+    QCOMPARE(static_cast<TimelineClipsModel *>(state.clipsModel(0))->rows().at(0).fxLayer, 1);
+
+    state.toggleEffectsLayerRevealed(0, 0);
+    QVERIFY(!state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+    QCOMPARE(state.adjustmentLaneCount(0), 1);
+    QCOMPARE(static_cast<TimelineClipsModel *>(state.clipsModel(0))->rows().at(0).fxLayer, 2);
+    state.undo();
+    QVERIFY(state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+    state.redo();
+    QVERIFY(!state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+
+    QCOMPARE(state.effectsLayerHostClip(1, 0, 0, 0.1), 0);
+    QCOMPARE(state.effectsLayerHostClip(1, 0, 0, 1e6), -1);
+    state.hideEffectsLayer(1, 0);
+    QVERIFY(state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+
+    const drift::Project back = drift::Project::fromJson(state.project()->toJson());
+    QVERIFY(back.tracks().at(1).clips.at(0).hiddenInLane);
+    QVERIFY(!back.tracks().at(0).clips.at(0).hiddenInLane);
+}
+
 void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
 {
     AssetLibrary library;
@@ -12444,9 +12523,8 @@ void EditorStateTest::maskingFrameFollowsTheSelectedClip()
 // as well made the handles undiscoverable — you had to already know they existed.
 // The assets-panel drop path. Dropping onto a clip pins a mask and selects the adjustment it
 // minted — that selection is what opens the Masks inspector and the preview handles.
-// An effect stack is only editable in the inspector of the adjustment holding it — the Effects
-// tab is not offered for the clip the effect was aimed at — so adding one has to leave the
-// selection there rather than back on the media clip.
+// The Effects tab is offered on the clip itself and edits its linked layer's stack, so adding an
+// effect leaves the clip selected instead of jumping to the layer.
 void EditorStateTest::addingAnEffectSelectsTheAdjustmentCarryingIt()
 {
     AssetLibrary library;
@@ -12458,11 +12536,7 @@ void EditorStateTest::addingAnEffectSelectsTheAdjustmentCarryingIt()
 
     const drift::Clip &selected =
         state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip());
-    QCOMPARE(selected.type, drift::ClipType::Adjustment);
-    QCOMPARE(selected.adjustmentKind, drift::AdjustmentKind::VideoEffects);
-    QVERIFY(state.project()->tracks().at(state.selectedTrack()).isAdjustmentLane());
-    QCOMPARE(state.selectedClipData().value(QStringLiteral("adjustmentKind")).toString(),
-             QStringLiteral("videoEffects"));
+    QCOMPARE(selected.type, drift::ClipType::Video);
     QCOMPARE(state.selectedClipEffects().size(), 1);
 
     // A second effect on the same clip reuses that adjustment and stays on it.
@@ -12656,6 +12730,122 @@ void EditorStateTest::convertClipToMaskMakesALaneMatteBelow()
     QCOMPARE(masks.constFirst().mask.shape, drift::MaskShape::Media);
     QCOMPARE(masks.constFirst().mask.mediaTimeBase, drift::MaskMediaTimeBase::Adjustment);
     QCOMPARE(masks.constFirst().mask.mediaSrcOffsetUs, drift::secondsToUs(1.5));
+}
+
+void EditorStateTest::useTextClipAsSequenceMask()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip text;
+    text.id = QStringLiteral("title");
+    text.type = drift::ClipType::Text;
+    text.name = QStringLiteral("Big Title");
+    text.timelineStart = drift::secondsToUs(1.0);
+    text.timelineDuration = drift::secondsToUs(3.0);
+    text.srcOut = text.timelineDuration;
+    state.project()->tracks()[0].clips.append(text);
+
+    drift::Clip under;
+    under.id = QStringLiteral("under");
+    under.type = drift::ClipType::Video;
+    under.timelineDuration = drift::secondsToUs(6.0);
+    under.srcOut = under.timelineDuration;
+    state.project()->tracks()[1].clips.append(under);
+
+    const QVariantList ref{QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 0}}};
+    QVERIFY(state.masking()->canConvertClipsToSequenceMask(ref));
+    // The video clip has no track below it.
+    QVERIFY(!state.masking()->canConvertClipsToSequenceMask(
+        {QVariantMap{{QStringLiteral("track"), 1}, {QStringLiteral("clip"), 0}}}));
+    QVERIFY(!state.masking()->canConvertClipsToSequenceMask({QVariantMap{{QStringLiteral("track"), 5}}}));
+
+    state.project()->tracks()[0].clips[0].sequenceId = QStringLiteral("nested");
+    QVERIFY(!state.masking()->canConvertClipsToSequenceMask(ref));
+    QVERIFY(!state.masking()->convertClipsToSequenceMask(ref));
+    state.project()->tracks()[0].clips[0].sequenceId.clear();
+
+    QVERIFY(state.masking()->convertClipsToSequenceMask(ref));
+
+    drift::Project &project = *state.project();
+    QVERIFY(project.tracks().at(0).clips.isEmpty());
+    QCOMPARE(project.sequenceIds().size(), 1);
+    const QString sequenceId = project.sequenceIds().constFirst();
+    const QList<drift::Track> &inner = project.sequenceTracks(sequenceId);
+    QCOMPARE(inner.size(), 1);
+    QCOMPARE(inner.constFirst().clips.size(), 1);
+    QCOMPARE(inner.constFirst().clips.constFirst().id, QStringLiteral("title"));
+    QCOMPARE(inner.constFirst().clips.constFirst().timelineStart, drift::TimeUs(0));
+
+    int composites = 0;
+    for (const drift::MediaAsset &asset : project.assets()) {
+        if (asset.kind == drift::MediaKind::Composite) {
+            ++composites;
+            QCOMPARE(asset.sequenceId, sequenceId);
+            QCOMPARE(asset.name, QStringLiteral("Big Title mask"));
+        }
+    }
+    QCOMPARE(composites, 1);
+
+    drift::Clip mask;
+    int maskTrack = -1;
+    int maskIndex = -1;
+    for (int t = 0; t < project.tracks().size(); ++t) {
+        const drift::Track &track = project.tracks().at(t);
+        for (int c = 0; c < track.clips.size(); ++c) {
+            if (track.clips.at(c).adjustmentKind == drift::AdjustmentKind::Mask) {
+                mask = track.clips.at(c);
+                maskTrack = t;
+                maskIndex = c;
+            }
+        }
+    }
+    QVERIFY(maskTrack > 0);
+    QCOMPARE(mask.mask.shape, drift::MaskShape::Sequence);
+    QCOMPARE(mask.mask.sequenceId, sequenceId);
+    QCOMPARE(mask.mask.mediaChannel, drift::MaskMediaChannel::Alpha);
+    QCOMPARE(mask.timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(mask.timelineDuration, drift::secondsToUs(3.0));
+    QCOMPARE(state.masking()->maskSequenceId(maskTrack, maskIndex), sequenceId);
+    QCOMPARE(state.masking()->maskSequenceId(1, 0), QString());
+
+    const QList<drift::LaneMask> lane =
+        drift::laneMasksAt(project, 1, drift::secondsToUs(2.0), QStringLiteral("under"));
+    QCOMPARE(lane.size(), 1);
+    QCOMPARE(lane.constFirst().mask.sequenceId, sequenceId);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QVERIFY(loaded.hasSequence(sequenceId));
+    QCOMPARE(loaded.tracks().at(maskTrack).clips.at(maskIndex).mask.sequenceId, sequenceId);
+    QCOMPARE(loaded.tracks().at(maskTrack).clips.at(maskIndex).mask.shape, drift::MaskShape::Sequence);
+
+    // The bin item goes away but the mask still plays the sequence, so it stays.
+    const QStringList assetIds = project.assetOrder();
+    for (const QString &id : assetIds)
+        project.assets().remove(id);
+    project.assetOrder().clear();
+    state.pruneOrphanSequences();
+    QVERIFY(project.hasSequence(sequenceId));
+    QCOMPARE(project.sequenceIds().size(), 1);
+
+    project.tracks()[maskTrack].clips.removeAt(maskIndex);
+    state.pruneOrphanSequences();
+    QVERIFY(project.sequenceIds().isEmpty());
+
+    // One undo step (the later edits above bypassed the stack) restores the clip and drops the mask.
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.constFirst().id, QStringLiteral("title"));
+    QVERIFY(state.project()->sequenceIds().isEmpty());
+    for (const drift::Track &track : state.project()->tracks()) {
+        for (const drift::Clip &clip : track.clips)
+            QVERIFY(clip.adjustmentKind != drift::AdjustmentKind::Mask);
+    }
 }
 
 void EditorStateTest::assetMaskRoleRoundTripsThroughUndo()
@@ -13196,8 +13386,62 @@ void EditorStateTest::maskEditSessionResizeRotateAndSnap()
     session->moveBody(0.504, 0.6, false);
     QVERIFY(qAbs(session->liveX() - 0.5) < 1e-9);
     QVERIFY(qAbs(session->liveY() - 0.6) < 1e-9);
+    QCOMPARE(session->snapGuideX(), 0.5);
+    QCOMPARE(session->snapGuideY(), 0.5);
     session->moveBody(0.504, 0.6, true);
     QVERIFY(qAbs(session->liveX() - 0.504) < 1e-9);
+    QCOMPARE(session->snapGuideX(), -1.0);
+    session->cancel();
+
+    // Resize: the moving edge pulls to the frame edge, Ctrl bypasses, the locked corner snaps one axis.
+    QVERIFY(session->begin(id2, 1000, 1000));
+    session->beginResize(1, 0, 0.6, 0.5);
+    session->resize(0.996, 0.5, false);
+    QVERIFY(qAbs(session->liveW() - 0.6) < 1e-9);
+    QVERIFY(qAbs(session->liveX() - 0.7) < 1e-9);
+    QCOMPARE(session->snapGuideX(), 1.0);
+    session->resize(0.996, 0.5, false, true);
+    QVERIFY(qAbs(session->liveW() - 0.596) < 1e-9);
+    QCOMPARE(session->snapGuideX(), -1.0);
+    session->cancel();
+    QVERIFY(session->begin(id2, 1000, 1000));
+    session->beginResize(1, 1, 0.6, 0.6);
+    session->resize(0.996, 0.9, true);
+    QVERIFY(qAbs(session->liveW() - 0.6) < 1e-9);
+    QVERIFY(qAbs(session->liveH() - 0.6) < 1e-9);
+    QCOMPARE(session->snapGuideY(), -1.0);
+    session->cancel();
+}
+
+void EditorStateTest::maskLockAspectPersistsAndGatesCornerResize()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->addShapeMask(0, 0, QStringLiteral("rectangle"), 0.5, 0.5, 0.3, 0.2);
+    const drift::ClipRef ref = drift::linkedMaskAdjustments(*state.project(), 0, 0).constFirst();
+    QVERIFY(!pinnedMaskClip(state).mask.lockAspect);
+    QVERIFY(!QJsonDocument(state.project()->toJson()).toJson().contains("lockAspect"));
+
+    state.masking()->setMaskProperty(ref.trackIndex, ref.clipIndex, QStringLiteral("lockAspect"), true);
+    QVERIFY(pinnedMaskClip(state).mask.lockAspect);
+    const QJsonObject json = state.project()->toJson();
+    QVERIFY(QJsonDocument(json).toJson().contains("lockAspect"));
+    const drift::Project loaded = drift::Project::fromJson(json);
+    const drift::ClipRef lref = drift::linkedMaskAdjustments(loaded, 0, 0).constFirst();
+    QVERIFY(loaded.tracks()[lref.trackIndex].clips[lref.clipIndex].mask.lockAspect);
+    state.undo();
+    QVERIFY(!pinnedMaskClip(state).mask.lockAspect);
+
+    // The overlay passes lockAspect XOR Shift: a corner keeps the ratio only when that is true.
+    MaskEditSession *session = state.masking()->editSession();
+    const QString id = pinnedMaskClip(state).id;
+    QVERIFY(session->begin(id, 1000, 1000));
+    session->beginResize(1, 1, 0.65, 0.6);
+    session->resize(0.8, 0.62, false, true);
+    QVERIFY(qAbs(session->liveW() / session->liveH() - 0.3 / 0.2) > 0.05);
+    session->resize(0.8, 0.62, true, true);
+    QVERIFY(qAbs(session->liveW() / session->liveH() - 0.3 / 0.2) < 1e-9);
     session->cancel();
 }
 
@@ -13560,6 +13804,7 @@ void EditorStateTest::trackRowHeightsForAdjustmentsAndLanes()
     appendTwoVideoClips(*laned.project());
     laned.selectClip(0, 0);
     laned.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    laned.toggleEffectsLayerRevealed(0, 0);
     const int parent = 0;
     const QList<int> lanes = drift::adjustmentLaneIndexes(*laned.project(), parent);
     QCOMPARE(lanes.size(), 1);
@@ -13581,6 +13826,7 @@ void EditorStateTest::collapsedLanesAndEmptyLaneCleanup()
     AppController state(&library);
     appendTwoVideoClips(*state.project());
     state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.toggleEffectsLayerRevealed(0, 0);
     state.addAudioEffect(0, 0, QStringLiteral("space.autopan"));
     const QVariantMap metrics{{QStringLiteral("video"), 65.0}, {QStringLiteral("lane"), 20.0},
                               {QStringLiteral("ribbon"), 3.0}};

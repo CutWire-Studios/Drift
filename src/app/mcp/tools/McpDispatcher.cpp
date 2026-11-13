@@ -2521,13 +2521,14 @@ QJsonObject McpDispatcher::opAddEffect(const QJsonObject &args)
     QString why;
     if (!m_controller->effectFitsTrack(ref.track, effect, &why))
         return err("bad_args", why);
+    const QString id = m_controller->mcp()->clipId(ref.track, ref.clip);
     const QVariantList before = m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("effects")).toList();
     m_controller->addEffect(ref.track, ref.clip, effect);
     const QVariantList after = m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("effects")).toList();
     if (after.size() <= before.size())
         return err("not_found", QStringLiteral("Unknown effect id"));
     // effectIndex, not only index: clipFeedback overwrites index with the clip's own position.
-    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("effectIndex"), after.size() - 1},
+    return ok(clipFeedback(ref, effectHost(id, false, {{QStringLiteral("effectIndex"), after.size() - 1},
                                                  {QStringLiteral("effect"), effect}})));
 }
 
@@ -2692,6 +2693,7 @@ QJsonObject McpDispatcher::opAddAudioEffect(const QJsonObject &args)
     const QString effect = resolveCatalogId(raw, catalogIds(m_controller->audioEffectCatalog()), &nearest);
     if (effect.isEmpty())
         return unknownCatalogId("audio effect", raw, nearest, "list_audio_effects");
+    const QString id = m_controller->mcp()->clipId(ref.track, ref.clip);
     const int before =
         m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("audioEffects")).toList().size();
     m_controller->addAudioEffect(ref.track, ref.clip, effect);
@@ -2699,22 +2701,22 @@ QJsonObject McpDispatcher::opAddAudioEffect(const QJsonObject &args)
         m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("audioEffects")).toList().size();
     if (after <= before)
         return err("not_found", QStringLiteral("Unknown audio effect id"));
-    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("effectIndex"), after - 1},
+    return ok(clipFeedback(ref, effectHost(id, true, {{QStringLiteral("effectIndex"), after - 1},
                                                  {QStringLiteral("effect"), effect}})));
 }
 
 // Effects live on an adjustment clip that hosts the target clip's stack (the app creates one on
 // its own lane the first time). Every effect op still addresses the original clip, but the
 // agent sees a new track and clip in inspect, so say where the stack went.
-QJsonObject McpDispatcher::effectHost(const ClipRef &ref, QJsonObject extra) const
+QJsonObject McpDispatcher::effectHost(const QString &clipId, bool audio, QJsonObject extra) const
 {
-    const int hostTrack = m_controller->selectedTrack();
-    const int hostClip = m_controller->selectedClip();
-    if (hostTrack >= 0 && hostClip >= 0 && (hostTrack != ref.track || hostClip != ref.clip)) {
+    const auto [hostTrack, hostClip] = m_controller->mcp()->effectHostOf(clipId, audio);
+    const QString hostId = m_controller->mcp()->clipId(hostTrack, hostClip);
+    if (!hostId.isEmpty() && hostId != clipId) {
         extra.insert(QStringLiteral("host"),
                      QJsonObject{{QStringLiteral("track"), hostTrack},
                                  {QStringLiteral("index"), hostClip},
-                                 {QStringLiteral("clip"), m_controller->mcp()->clipId(hostTrack, hostClip)},
+                                 {QStringLiteral("clip"), hostId},
                                  {QStringLiteral("kind"), QStringLiteral("adjustment")}});
     }
     return extra;

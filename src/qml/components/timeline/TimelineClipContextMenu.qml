@@ -187,6 +187,12 @@ ThemedContextMenu {
         onTriggered: EditorState.separateAllAudioTracks(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
+        text: owner.clipData.loop ? qsTr("Stop looping") : qsTr("Loop")
+        icon.name: Theme.icons.repeat
+        visible: owner.clipData.kind === "video" || owner.clipData.kind === "audio"
+        onTriggered: EditorState.setClipLoop(owner.trackIndex, owner.clipIndex, !owner.clipData.loop)
+    }
+    ThemedMenuItem {
         text: qsTr("Remove silence")
         icon.name: Theme.icons.audioLines
         visible: clipContextMenu.canRemoveSilence
@@ -213,6 +219,21 @@ ThemedContextMenu {
         visible: owner.trackType === "video"
         enabled: EditorState.masking.canConvertClipToMask(owner.trackIndex, owner.clipIndex)
         onTriggered: EditorState.masking.convertClipToMask(owner.trackIndex, owner.clipIndex)
+    }
+    ThemedMenuItem {
+        readonly property var refs: owner.selected ? [] : [{ "track": owner.trackIndex, "clip": owner.clipIndex }]
+        text: qsTr("Use as mask (nested timeline)")
+        icon.name: Theme.icons.mask
+        visible: owner.trackType === "video" && owner.clipData.kind !== "adjustment"
+        enabled: EditorState.masking.canConvertClipsToSequenceMask(refs)
+        onTriggered: EditorState.masking.convertClipsToSequenceMask(refs)
+    }
+    ThemedMenuItem {
+        readonly property string sequenceId: EditorState.masking.maskSequenceId(owner.trackIndex, owner.clipIndex)
+        text: qsTr("Open mask timeline")
+        icon.name: Theme.icons.layers
+        visible: sequenceId !== ""
+        onTriggered: EditorState.openSequence(sequenceId)
     }
     ThemedMenuItem {
         text: qsTr("Convert to edit-friendly format")

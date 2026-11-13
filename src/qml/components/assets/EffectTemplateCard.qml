@@ -8,6 +8,7 @@ Column {
     required property var modelData
     required property real cardSize
     signal applyRequested(string templateId)
+    signal searchClearRequested()
     width: cardSize
     spacing: 4
 
@@ -161,7 +162,12 @@ Column {
             payload: root.modelData.id
             label: root.modelData.label
             glyph: Theme.icons.layers
-            onTapped: applyRequested(root.modelData.id)
+            onTapped: (count) => {
+                if (count === 1)
+                    applyRequested(root.modelData.id)
+                else if (count === 2)
+                    searchClearRequested()
+            }
         }
 
         ThemedContextMenu {
@@ -175,7 +181,7 @@ Column {
                 text: qsTr("Apply to selected clip")
                 icon.name: Theme.icons.plus
                 enabled: EditorState.selectedClip >= 0
-                onTriggered: templateDrag.tapped()
+                onTriggered: applyRequested(root.modelData.id)
             }
             ThemedMenuItem {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")

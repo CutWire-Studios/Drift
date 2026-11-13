@@ -750,6 +750,7 @@ drift::Mask maskFromMap(const QVariantMap &m)
     mask.h = m.value(QStringLiteral("h"), mask.h).toDouble();
     mask.rotation = m.value(QStringLiteral("rotation"), mask.rotation).toDouble();
     mask.feather = m.value(QStringLiteral("feather"), mask.feather).toDouble();
+    mask.roundness = m.value(QStringLiteral("roundness"), mask.roundness).toDouble();
     mask.invert = m.value(QStringLiteral("invert"), mask.invert).toBool();
     mask.op = drift::maskOpFromString(m.value(QStringLiteral("op")).toString());
     mask.enabled = m.value(QStringLiteral("enabled"), mask.enabled).toBool();
@@ -761,6 +762,7 @@ drift::Mask maskFromMap(const QVariantMap &m)
     mask.mediaFit = drift::maskMediaFitFromString(m.value(QStringLiteral("mediaFit")).toString());
     mask.mediaChannel =
         drift::maskMediaChannelFromString(m.value(QStringLiteral("mediaChannel")).toString());
+    mask.sequenceId = m.value(QStringLiteral("sequenceId")).toString();
     mask.mediaLoop = m.value(QStringLiteral("mediaLoop"), mask.mediaLoop).toBool();
     if (m.contains(QStringLiteral("mediaTimeBase")))
         mask.mediaTimeBase =
@@ -1145,6 +1147,8 @@ bool writeMaskScalar(drift::Mask &mask, const QString &key, double value)
         mask.rotation = value;
     else if (key == QStringLiteral("feather"))
         mask.feather = value;
+    else if (key == QStringLiteral("roundness"))
+        mask.roundness = value;
     else
         return false;
     return true;

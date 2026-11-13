@@ -73,7 +73,7 @@ QJsonObject animPropProp()
     return stringProp(QStringLiteral(
         "Animated property: x, y, width, height, rotation, rotationX, rotationY, z, anchorX, anchorY, anchorZ, perspective, "
         "opacity, volume, fx.<effectIndex>.<paramKey>, afx.<audioEffectIndex>.<paramKey> "
-        "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather>, or on a text/subtitle clip text.<key> with "
+        "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather|roundness>, or on a text/subtitle clip text.<key> with "
         "key one of pixelSize, letterSpacing, lineHeight, boxPadding, pathBend, or a shading layer field "
         "text.layer.<layerId>.<opacity|offsetX|offsetY|blur|width|spread|trimStart|trimEnd|dashOffset|"
         "sketchLength|sketchDeviation|color.r|color.g|color.b|color.a|gradient.angle|gradient.offset|"
@@ -114,13 +114,16 @@ QJsonObject maskSchema()
          enumProp(QStringLiteral("Mask shape. Omitted or unrecognised = none, i.e. mask off."),
                   {QStringLiteral("none"), QStringLiteral("rectangle"), QStringLiteral("ellipse"),
                    QStringLiteral("star"), QStringLiteral("heart"), QStringLiteral("bars"),
-                   QStringLiteral("freeform"), QStringLiteral("media"), QStringLiteral("matte")})},
+                   QStringLiteral("split"), QStringLiteral("freeform"), QStringLiteral("media"), QStringLiteral("matte"),
+                   QStringLiteral("sequence")})},
         {QStringLiteral("x"), numberProp(QStringLiteral("Center x, fraction of canvas (default 0.5)"), 0, 1)},
         {QStringLiteral("y"), numberProp(QStringLiteral("Center y, fraction of canvas (default 0.5)"), 0, 1)},
         {QStringLiteral("w"), numberProp(QStringLiteral("Width, fraction of canvas (default 0.6)"), 0, 1)},
         {QStringLiteral("h"), numberProp(QStringLiteral("Height, fraction of canvas (default 0.6)"), 0, 1)},
         {QStringLiteral("rotation"), numberProp(QStringLiteral("Degrees clockwise (default 0)"))},
         {QStringLiteral("feather"), numberProp(QStringLiteral("Alpha edge blur in pixels (default 0)"))},
+        {QStringLiteral("roundness"),
+         numberProp(QStringLiteral("rectangle only: corner rounding, 0 sharp to 1 pill (default 0)"), 0, 1)},
         {QStringLiteral("invert"), boolProp(QStringLiteral("Invert coverage (default false)"))},
         {QStringLiteral("points"),
          arrayProp({{QStringLiteral("type"), QJsonArray{QStringLiteral("array"), QStringLiteral("object")}}},
@@ -130,6 +133,7 @@ QJsonObject maskSchema()
         {QStringLiteral("enabled"), boolProp(QStringLiteral("Mask on/off without losing it (default true)"))},
         {QStringLiteral("name"), stringProp(QStringLiteral("Display name"))},
         {QStringLiteral("mediaPath"), stringProp(QStringLiteral("matte/media only: absolute path of the matte video or image"))},
+        {QStringLiteral("sequenceId"), stringProp(QStringLiteral("sequence only: id of the nested sequence whose render is the matte; mediaChannel and mediaFit apply"))},
         {QStringLiteral("mediaFgrPath"), stringProp(QStringLiteral("matte/media only: foreground pass of a cutout, when one exists"))},
         {QStringLiteral("mediaSrcOffsetUs"), integerProp(QStringLiteral("matte/media only: source offset in microseconds"))},
         {QStringLiteral("mediaFit"), enumProp(QStringLiteral("matte/media only: how the matte fills the clip"),

@@ -8,6 +8,7 @@ Column {
     required property var modelData
     required property real cardSize
     signal applyRequested(string effectId)
+    signal searchClearRequested()
     width: cardSize
     spacing: 4
     opacity: presetDrag.active ? Theme.c.audioEffectPresetCard.dragOpacity : 1
@@ -87,7 +88,12 @@ Column {
             enabled: !presetDrag.active
             acceptedButtons: Qt.LeftButton
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
-            onTapped: applyRequested(root.modelData.id)
+            onTapped: {
+                if (tapCount === 1)
+                    applyRequested(root.modelData.id)
+                else if (tapCount === 2)
+                    searchClearRequested()
+            }
         }
 
         TapHandler {

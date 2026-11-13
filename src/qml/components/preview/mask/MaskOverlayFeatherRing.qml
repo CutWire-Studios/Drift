@@ -11,6 +11,7 @@ Rectangle {
     required property real scaleX
     required property real scaleY
     required property string shape
+    property real roundness: 0
 
     visible: ring.selected && ring.feather > 0
     anchors.centerIn: parent
@@ -20,5 +21,7 @@ Rectangle {
     border.width: Theme.c.maskOverlayFeatherRing.borderWidth
     border.color: Theme.c.maskOverlayFeatherRing.border
     opacity: 0.35
-    radius: ring.shape === "ellipse" ? Math.min(width, height) / 2 : 0
+    radius: ring.shape === "ellipse" ? Math.min(width, height) / 2
+            : (ring.shape === "rectangle" && ring.roundness > 0
+               ? ring.roundness * Math.min(parent.width, parent.height) / 2 + ring.feather * ring.scaleX : 0)
 }

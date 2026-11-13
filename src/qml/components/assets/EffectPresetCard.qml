@@ -9,6 +9,7 @@ Column {
     required property real cardSize
     signal applyRequested(string effectId)
     signal deleteRequested(var preset)
+    signal searchClearRequested()
     width: cardSize
     spacing: 4
     // Lift on grab: the card dims and grows slightly, so it reads
@@ -113,7 +114,12 @@ Column {
             enabled: !presetDrag.active
             acceptedButtons: Qt.LeftButton
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
-            onTapped: applyRequested(root.modelData.id)
+            onTapped: {
+                if (tapCount === 1)
+                    applyRequested(root.modelData.id)
+                else if (tapCount === 2)
+                    searchClearRequested()
+            }
         }
 
         TapHandler {

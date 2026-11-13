@@ -116,6 +116,7 @@ private slots:
     void setSequenceLaysOutTheTrack();
     void setTransformKeysOnlyInsideTheClip();
     void clipLabelsSurviveSplitsAndFind();
+    void setClipLoopRepeatsTheRange();
     void inspectFiltersTracksAndFields();
     void changeFeedListsEditsBySource();
     void dirtyDetailTellsTimelineFromView();
@@ -2149,6 +2150,61 @@ void McpTest::setSequenceLaysOutTheTrack()
         QVERIFY(find(c));
         QCOMPARE(int(state.project()->tracks().size()), tracksWithLane);
     }
+}
+
+void McpTest::setClipLoopRepeatsTheRange()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip video;
+    video.id = QStringLiteral("clip-video");
+    video.type = drift::ClipType::Video;
+    video.timelineDuration = drift::secondsToUs(2.0);
+    video.srcIn = drift::secondsToUs(1.0);
+    video.srcOut = drift::secondsToUs(3.0);
+    state.project()->tracks()[0].clips.append(video);
+    drift::Clip text;
+    text.id = QStringLiteral("clip-text");
+    text.type = drift::ClipType::Text;
+    text.timelineStart = drift::secondsToUs(20.0);
+    text.timelineDuration = drift::secondsToUs(2.0);
+    text.srcOut = text.timelineDuration;
+    state.project()->tracks()[0].clips.append(text);
+    state.project()->ensureTrackIds();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto clip = [&]() -> const drift::Clip & { return state.project()->tracks().at(0).clips.at(0); };
+
+    const QJsonObject looped = dispatcher.applyOne(
+        QStringLiteral("set_clip_loop"), {{QStringLiteral("clip"), QStringLiteral("clip-video")}, {QStringLiteral("loop"), true}});
+    QVERIFY2(looped.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(looped).toJson()));
+    QVERIFY(clip().loop);
+
+    // Past the end of the range: more passes, same range.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_duration"),
+                                {{QStringLiteral("clip"), QStringLiteral("clip-video")}, {QStringLiteral("duration"), 7.0}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clip().timelineDuration, drift::secondsToUs(7.0));
+    QCOMPARE(clip().srcIn, drift::secondsToUs(1.0));
+    QCOMPARE(clip().srcOut, drift::secondsToUs(3.0));
+    QCOMPARE(clip().timelineToSourceUs(drift::secondsToUs(5.0)), drift::secondsToUs(2.0));
+    QCOMPARE(state.mcp()->compactClip(0, 0).value(QStringLiteral("loop")).toBool(), true);
+
+    // Off cuts it back to one pass.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_loop"),
+                                {{QStringLiteral("clip"), QStringLiteral("clip-video")}, {QStringLiteral("loop"), false}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(!clip().loop);
+    QCOMPARE(clip().timelineDuration, drift::secondsToUs(2.0));
+    state.undo();
+    QVERIFY(clip().loop);
+    QCOMPARE(clip().timelineDuration, drift::secondsToUs(7.0));
+
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_clip_loop"),
+                                 {{QStringLiteral("clip"), QStringLiteral("clip-text")}, {QStringLiteral("loop"), true}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
 }
 
 void McpTest::clipLabelsSurviveSplitsAndFind()
@@ -8754,7 +8810,9 @@ void McpTest::authoredEffectLifecycle()
     const QJsonObject applied = call("add_effect", {{QStringLiteral("clip"), holder}, {QStringLiteral("effect"), QStringLiteral("user.test_tint")}});
     QVERIFY2(applied.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(applied).toJson()));
     {
-        const drift::Clip &clip = state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip());
+        const auto [hostTrack, hostClip] = state.mcp()->effectHostOf(holder, false);
+        QVERIFY(hostTrack >= 0);
+        const drift::Clip &clip = state.project()->tracks().at(hostTrack).clips.at(hostClip);
         QCOMPARE(clip.effects.size(), 1);
         QCOMPARE(clip.effects.first().catalogId, QStringLiteral("user.test_tint"));
     }

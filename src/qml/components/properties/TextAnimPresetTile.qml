@@ -15,6 +15,7 @@ Column {
     property bool selected: false
     property bool playing: false
     property real tileWidth: 104
+    property string favoriteTab: ""
     readonly property alias hovered: animFrame.hovered
 
     signal clicked()
@@ -29,6 +30,7 @@ Column {
         selected: tile.selected
         playing: tile.playing
         tileWidth: tile.tileWidth
+        favoriteTab: tile.favoriteTab
         onClicked: tile.clicked()
     }
 

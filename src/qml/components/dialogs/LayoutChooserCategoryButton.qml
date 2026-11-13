@@ -18,7 +18,7 @@ AbstractButton {
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
 
-    readonly property bool selected: modelData.id === dialog.activeCategory
+    readonly property bool selected: modelData.id === dialog.activeCategory && !dialog.favoritesOnly
 
     background: Rectangle {
         radius: Theme.c.layoutChooserCategoryButton.radius

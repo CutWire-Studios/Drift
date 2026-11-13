@@ -1989,6 +1989,20 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref, {{QStringLiteral("reverse"), reverse}}));
     }
 
+    if (tool == QLatin1String("set_clip_loop")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        if (!args.contains(QStringLiteral("loop")))
+            return err("bad_args", QStringLiteral("loop required"));
+        const bool loop = jsonBool(args.value(QStringLiteral("loop")));
+        if (!m_controller->setClipLoop(ref.track, ref.clip, loop))
+            return err("bad_args", QStringLiteral("Only video and audio clips without a speed curve can loop"));
+        const drift::Clip &clip = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip);
+        return ok(clipFeedback(ref, {{QStringLiteral("loop"), loop},
+                                     {QStringLiteral("duration"), drift::usToSeconds(clip.timelineDuration)}}));
+    }
+
     if (tool == QLatin1String("cancel_reverse_render")) {
         m_controller->cancelReverseRender();
         return ok({{QStringLiteral("cancelled"), true}});

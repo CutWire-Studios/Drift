@@ -100,6 +100,15 @@ public:
     Q_INVOKABLE QString convertClipToMaskBlocker(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void convertClipToMask(int trackIndex, int clipIndex);
 
+    // "Use as mask": moves the clips (with their linked partners) into a new composite sequence and
+    // lays a Mask-kind lane clip over the video track below them that renders that sequence live,
+    // alpha by default. `clipRefs` is a list of {track, clip} maps; empty means the current
+    // selection. Main timeline only; video, image, text, shape, vector, PDF and composite clips.
+    Q_INVOKABLE bool canConvertClipsToSequenceMask(const QVariantList &clipRefs = {}) const;
+    Q_INVOKABLE bool convertClipsToSequenceMask(const QVariantList &clipRefs = {});
+    // The sequence a Sequence-shape mask clip plays, else empty. Open it with AppController::openSequence.
+    Q_INVOKABLE QString maskSequenceId(int trackIndex, int clipIndex) const;
+
     // How long a lane matte from this asset lasts: a video's own length, else a still's default.
     drift::TimeUs assetMaskDurationUs(int assetIndex) const;
 
@@ -248,6 +257,7 @@ signals:
     void brushApplied(const QString &clipId);
 
 private:
+    QList<QPair<int, int>> sequenceMaskSources(const QVariantList &clipRefs) const;
     bool isFramedClip(int trackIndex, int clipIndex) const;
     // Writes the reframed source window onto the clip in place; false when nothing changed.
     bool writeReframe(int trackIndex, int clipIndex, double zoom, double x, double y);

@@ -57,6 +57,11 @@ public:
         EffectsRole,
         AudioEffectsRole,
         VolumeKeysRole,
+        LoopRole,
+        LoopPeriodRole,
+        LoopPhaseRole,
+        HiddenInLaneRole,
+        FxLayerRole,
     };
     Q_ENUM(Role)
 
@@ -88,6 +93,16 @@ public:
         QVariantList effects;
         QVariantList audioEffects;
         QVariantList volumeKeys;
+        // A looping clip: the timeline length of one pass through inPoint..outPoint, and how far
+        // into the first pass the clip starts (both seconds, both 0 when not looping).
+        bool loop = false;
+        double loopPeriod = 0.0;
+        double loopPhase = 0.0;
+        // An adjustment tucked out of its lane (not drawn, not hit-tested).
+        bool hiddenInLane = false;
+        // On a media clip, its linked effects layer: 0 none with effects, 1 tucked away, 2 shown
+        // in the lane.
+        int fxLayer = 0;
 
         // Not roles: typed copies for the scene-graph renderer, derived from the fields above so
         // any change to them already arrives as a changed row.

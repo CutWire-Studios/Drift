@@ -58,7 +58,9 @@ Rectangle {
             const p = mapToItem(grip.frame, mouse.x, mouse.y)
             EditorState.masking.editSession.resize(p.x / Math.max(1, grip.frame.width),
                                                    p.y / Math.max(1, grip.frame.height),
-                                                   grip.isCorner && (mouse.modifiers & Qt.ShiftModifier) !== 0)
+                                                   grip.isCorner && (!!(grip.mask.maskData.lockAspect)
+                                                                     !== ((mouse.modifiers & Qt.ShiftModifier) !== 0)),
+                                                   (mouse.modifiers & Qt.ControlModifier) !== 0)
         }
 
         onReleased: grip.overlay.endInteraction()

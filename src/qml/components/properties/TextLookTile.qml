@@ -46,6 +46,16 @@ Column {
             lookTile.chosen(lookTile.modelData.id)
             }
         }
+
+        AssetFavoriteButton {
+            id: favoriteButton
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.margins: 3
+            visible: favoriteButton.favorited || lookHover.hovered || Theme.touchUi
+            tabId: "textLooks"
+            itemId: lookTile.modelData.id
+        }
     }
 
     Text {

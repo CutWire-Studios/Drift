@@ -1088,6 +1088,10 @@
         <translation>අභිරුචි</translation>
     </message>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">ප්‍රියතමයන්</translation>
+    </message>
+    <message>
         <source>Template</source>
         <translation>ආකෘතිය</translation>
     </message>
@@ -3359,6 +3363,22 @@
         <translation>ගැලපුම අසම්බන්ධ කරන ලදී</translation>
     </message>
     <message>
+        <source>Hide effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Link adjustment to clip</source>
         <translation>ගැලපුම ක්ලිපයට සම්බන්ධ කරන්න</translation>
     </message>
@@ -3599,6 +3619,26 @@
         <translation>ක්ලිපය සාමාන්‍ය ධාවනයට සැකසිණි</translation>
     </message>
     <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip not looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip is already being reversed</source>
         <translation>ක්ලිපයක් දැනටමත් ප්‍රතිලෝම වෙමින් පවතී</translation>
     </message>
@@ -3673,6 +3713,14 @@
     <message>
         <source>Composite</source>
         <translation>සංයුක්තය (Composite)</translation>
+    </message>
+    <message>
+        <source>Timeline %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline created</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Flattening composite…</source>
@@ -3861,6 +3909,10 @@
     <message>
         <source>Bars</source>
         <translation>තීරු (Bars)</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation type="unfinished">බෙදන්න</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -4295,6 +4347,10 @@
     <message>
         <source>Transform reset</source>
         <translation>පරිණාමනය යළි සකසන ලදී</translation>
+    </message>
+    <message>
+        <source>Motion blur follows one clip&apos;s movement, so it goes on a clip, not on an adjustment layer.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Depth effects read one clip&apos;s depth, so they go on a clip, not on an adjustment layer.</source>
@@ -5039,6 +5095,17 @@
     </message>
 </context>
 <context>
+    <name>AssetSearchBar</name>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from history</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AssetsPanel</name>
     <message>
         <source>Remove this media?</source>
@@ -5352,6 +5419,14 @@
     <message>
         <source>Create a new folder here</source>
         <translation>මෙහි නව ෆෝල්ඩරයක් සාදන්න</translation>
+    </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10103,6 +10178,18 @@
         <translation>දක්වා</translation>
     </message>
     <message>
+        <source>Loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the trimmed part for as long as the clip runs. Drag the clip&apos;s edges past the end to add repeats. Turn it off to change the trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename</source>
         <translation>නම වෙනස් කරන්න</translation>
     </message>
@@ -10257,6 +10344,10 @@
     <message>
         <source>Presets</source>
         <translation>පෙරසැකසුම්</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">ප්‍රියතමයන්</translation>
     </message>
     <message>
         <source>Type</source>
@@ -10809,6 +10900,10 @@
     <message>
         <source>Feather</source>
         <translation>Feather (මෘදු දාර)</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11399,6 +11494,10 @@
     <message>
         <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
         <translation>ප්‍රවර්ගයක් තෝරා, පසුව ආකෘතියක් සහ ගුණාත්මකභාවයක් තෝරන්න. ඔබට ඕනෑම වේලාවක සැකසීම් → පිරිසැලසුම තෝරන්න වෙතින් මෙය වෙනස් කළ හැක.</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">ප්‍රියතමයන්</translation>
     </message>
     <message>
         <source>Template</source>
@@ -12556,6 +12655,14 @@
 <context>
     <name>MaskOverlay</name>
     <message>
+        <source>Unlock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12577,6 +12684,28 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>ආවරණ සංස්කරණය කිරීමට ධාවන ශීර්ෂයේ ඇති ක්ලිපයක් තෝරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayFeatherHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 සංස්කරණය කරන්න</translation>
+    </message>
+    <message>
+        <source>Feather</source>
+        <translation type="unfinished">Feather (මෘදු දාර)</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRoundnessHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 සංස්කරණය කරන්න</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12631,6 +12760,18 @@
     <message>
         <source>Clip converted to mask</source>
         <translation>ක්ලිප් එක ආවරණයක් බවට පරිවර්තනය කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">ක්ලිප්</translation>
+    </message>
+    <message>
+        <source>%1 mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips used as mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cutouts can&apos;t be moved yet</source>
@@ -12773,8 +12914,16 @@
         <translation>තීරු (Bars)</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">බෙදන්න</translation>
+    </message>
+    <message>
         <source>Matte</source>
         <translation>Matte</translation>
+    </message>
+    <message>
+        <source>Sequence matte</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -13244,6 +13393,10 @@
             <numerusform>හැඩතල කී %nක්</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -13276,6 +13429,10 @@
         <translation>තීරු (Bars)</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">බෙදන්න</translation>
+    </message>
+    <message>
         <source>Combine</source>
         <translation>ඒකාබද්ධ කරන්න</translation>
     </message>
@@ -13298,6 +13455,10 @@
     <message>
         <source>Remove mask</source>
         <translation>ආවරණය ඉවත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -13326,6 +13487,38 @@
     <message>
         <source>Polygon</source>
         <translation type="unfinished">බහුඅස්‍රය</translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Matte channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha (transparency)</source>
+        <translation type="unfinished">Alpha (පාරදෘශ්‍යතාව)</translation>
+    </message>
+    <message>
+        <source>Luma (brightness)</source>
+        <translation type="unfinished">Luma (දීප්තිය)</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">සරිලන (Fit)</translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation type="unfinished">අදින්න (Stretch)</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">පිරවුම (Fill)</translation>
+    </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invert</source>
@@ -23210,6 +23403,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">ප්‍රියතමයන්</translation>
+    </message>
+    <message>
         <source>All</source>
         <translation>සියල්ල</translation>
     </message>
@@ -24093,6 +24290,14 @@ If playback stutters, try another.</source>
         <translation>සියලු ශ්‍රව්‍ය ට්‍රැක් වෙන් කරන්න</translation>
     </message>
     <message>
+        <source>Stop looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Remove silence</source>
         <translation type="unfinished">නිශ්ශබ්දතාව ඉවත් කරන්න</translation>
     </message>
@@ -24107,6 +24312,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Convert to mask</source>
         <translation>ආවරණයක් බවට පරිවර්තනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Use as mask (nested timeline)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -24484,6 +24697,10 @@ If playback stutters, try another.</source>
         <source>Main</source>
         <translation type="unfinished">ප්‍රධාන</translation>
     </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TimelineSpanBracketChip</name>
@@ -24796,12 +25013,24 @@ If playback stutters, try another.</source>
         <translation>උපසිරැසි</translation>
     </message>
     <message>
+        <source>Hide the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1, track %2</source>
         <translation>%1, ට්‍රැකය %2</translation>
     </message>
 </context>
 <context>
     <name>TimelineTrimHandle</name>
+    <message>
+        <source>Drag to repeat the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag to trim the start</source>
         <translation>ආරම්භය කප්පාදු කිරීමට අදින්න</translation>
@@ -26070,6 +26299,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished">පිහිටීම</translation>
     </message>
     <message>
+        <source>Reset position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>පළල සහ උස වෙන වෙනම සංස්කරණය කරන්න</translation>
     </message>
@@ -26110,6 +26347,14 @@ If playback stutters, try another.</source>
         <translation>පාරාන්ධතාව සහ භ්‍රමණය</translation>
     </message>
     <message>
+        <source>Reset opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotate the whole group as one flat card</source>
         <translation type="unfinished"></translation>
     </message>
@@ -26124,6 +26369,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished">සියල්ල යළි සකසන්න</translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26148,10 +26397,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Flip V</source>
         <translation>සිරස්ව පෙරළන්න (Flip V)</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>පිහිටීම සහ ප්‍රමාණය යළි සකසන්න</translation>
     </message>
     <message>
         <source>Fix orientation</source>

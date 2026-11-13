@@ -77,6 +77,7 @@ public:
         QColor editFriendlyPillForeground{"#06203A"};
         QColor warning{"#f97316"};
         QColor missing;
+        QColor loopMarker{255, 255, 255, 128};
         QString fontFamily;
         double fontSizeTiny = 9.6;
         double fontSizeXs = 11.52;

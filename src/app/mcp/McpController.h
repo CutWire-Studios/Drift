@@ -106,6 +106,9 @@ public:
     // Helpers (GUI thread). Used by src/app/mcp, not QML.
     QPair<int, int> locateClip(const QString &id) const;
     QString clipId(int trackIndex, int clipIndex) const;
+    // Where the effect stack of the clip with this id lives: a linked adjustment for a media clip,
+    // the clip itself for an adjustment. {-1,-1} when it has none.
+    QPair<int, int> effectHostOf(const QString &clipId, bool audio) const;
     QVariantMap compactClip(int trackIndex, int clipIndex, bool includeCanvas = true) const;
     // A video/image clip's crop: the normalised source window and its straighten angle, plus the
     // window in source pixels when the asset's size is known. Empty for any other clip.

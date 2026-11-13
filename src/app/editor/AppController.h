@@ -776,6 +776,13 @@ public:
     // Release an adjustment from the clip it is pinned to, leaving it where it is. Its edges
     // become draggable and it stops following the clip.
     Q_INVOKABLE void unlinkAdjustment(int trackIndex, int clipIndex);
+    // Reveal or tuck away the effects layer linked to a media clip (the fx button).
+    Q_INVOKABLE void toggleEffectsLayerRevealed(int trackIndex, int clipIndex);
+    // Tuck a revealed effects layer back behind its clip.
+    Q_INVOKABLE void hideEffectsLayer(int trackIndex, int clipIndex);
+    // The clip in `targetTrack` that a dragged effects layer would hide behind when held over it
+    // at `atSeconds`; -1 when it is not its own host there or the layer is not a linked one.
+    Q_INVOKABLE int effectsLayerHostClip(int fromTrack, int fromClip, int targetTrack, double atSeconds) const;
     Q_INVOKABLE void relinkAdjustment(int trackIndex, int clipIndex, int mediaTrack, int mediaClip);
     Q_INVOKABLE void addStickerClip(const QString &stickerId, double atSeconds,
                                     int trackIndex = -1);
@@ -1178,6 +1185,10 @@ public:
     Q_INVOKABLE void setClipBlendMode(int trackIndex, int clipIndex, const QString &mode);
     Q_INVOKABLE bool setClipSpeed(int trackIndex, int clipIndex, double speed);
     Q_INVOKABLE void setClipReverse(int trackIndex, int clipIndex, bool reverse);
+    // Repeats the clip's In/Out range for as long as the clip runs (video and audio clips, not on a
+    // speed ramp). Switching it off cuts the clip back to one pass from its head.
+    // False when the clip can't loop (not video/audio, or ramped).
+    Q_INVOKABLE bool setClipLoop(int trackIndex, int clipIndex, bool loop);
     // Turns reverse on for a video clip and renders the proxy that makes it play back smoothly.
     // Reverse itself applies immediately; cancelling the render leaves the clip reversed on the
     // slow live-decode path, which is what clipHasReverseProxy reports.
@@ -1292,6 +1303,7 @@ public:
     QString activeSequenceId() const { return m_project.activeSequenceId(); }
     // Opens (or switches to) a composite's tab. "" switches to the main timeline.
     Q_INVOKABLE void openSequence(const QString &sequenceId);
+    Q_INVOKABLE void newTimeline();
     Q_INVOKABLE void openCompositeClip(int trackIndex, int clipIndex);
     Q_INVOKABLE void openCompositeAsset(const QString &assetId);
     Q_INVOKABLE void closeSequenceTab(const QString &sequenceId);
@@ -1507,6 +1519,7 @@ public:
     Q_INVOKABLE void copyEasingToClipboard(const QVariantMap &spec) const;
     Q_INVOKABLE QVariantMap easingFromClipboard() const;
     Q_INVOKABLE void resetClipTransform(int trackIndex, int clipIndex);
+    Q_INVOKABLE void resetClipTransformGroup(int trackIndex, int clipIndex, const QString &group);
     Q_INVOKABLE QVariantList effectCatalog() const;
     Q_INVOKABLE QVariantList effectCategories() const;
     Q_INVOKABLE QVariantList effectTemplateCatalog() const;
@@ -1658,6 +1671,8 @@ public:
     Q_INVOKABLE int trackRowHeight(int trackIndex, const QVariantMap &metrics) const;
 
     // How many nested lanes a track is carrying, so the delegate knows how many strips to draw.
+    // The nested lanes that take space: a lane holding only hidden effects layers takes none.
+    QList<int> visibleAdjustmentLanes(int trackIndex) const;
     Q_INVOKABLE int adjustmentLaneCount(int trackIndex) const;
     // Track indices of those lanes, topmost first.
     Q_INVOKABLE QVariantList adjustmentLanes(int trackIndex) const;
@@ -2212,6 +2227,9 @@ protected:
     void syncCompositeAssetDurations();
     // Drops sequences no composite bin item refers to any more, leaving their tab if open.
     void pruneOrphanSequences();
+    QSet<QString> clipIdsWithPartners(const QList<QPair<int, int>> &pairs) const;
+    // Returns the new sequence's id.
+    QString moveClipsToNewSequence(const QSet<QString> &ids, drift::TimeUs startUs);
     bool compositeAssetPlaceable(const QVariantMap &asset) const;
     void finishFlatten(const QString &clipId, const QString &sequenceId, const QString &path,
                        const QString &name, drift::TimeUs srcInUs, drift::TimeUs durationUs);

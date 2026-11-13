@@ -1,4 +1,6 @@
 #include "engine/ml/vision/depth/DepthSidecar.h"
+#include "engine/compositor/FrameCompositor.h"
+#include "core/project/Project.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/packages/effects/EffectPackageLoader.h"
 #include "engine/compositor/effects/EffectProcessor.h"
@@ -225,6 +227,14 @@ QMap<QString, QVariant> dramaticDefaults(const EffectPresetEntry &def)
         params.insert(QStringLiteral("u_tolerance"), 0.55);
         params.insert(QStringLiteral("u_softness"), 0.35);
         params.insert(QStringLiteral("u_spill"), 1.0);
+    } else if (def.meta.id == QLatin1String("builtin.effects.privacy_blur")) {
+        // Its sliders are a placement, not an intensity: aimed at the face in street-portrait.jpg.
+        params.insert(QStringLiteral("mode"), 0.0);
+        params.insert(QStringLiteral("regionX"), 0.37);
+        params.insert(QStringLiteral("regionY"), 0.29);
+        params.insert(QStringLiteral("regionW"), 0.27);
+        params.insert(QStringLiteral("regionH"), 0.37);
+        params.insert(QStringLiteral("strength"), 1.0);
     } else if (def.meta.id == QLatin1String("face_big_eyes")) {
         params.insert(QStringLiteral("amount"), 0.7);
         params.insert(QStringLiteral("radius"), 5.0);
@@ -417,6 +427,70 @@ QImage squareCrop(const QImage &image, int size)
     const QImage scaled =
         image.scaled(size, size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
     return scaled.copy((scaled.width() - size) / 2, (scaled.height() - size) / 2, size, size);
+}
+
+// Motion Blur has no shader either: it averages a moving clip over the open shutter. Rendered
+// through the real compositor, the photo as a card whipping across the frame at the default 180°,
+// over a dimmed, softened copy of itself so the smear has something to read against.
+QImage motionBlurPreview(const EffectPresetEntry &def, const QString &photoPath, const QImage &base)
+{
+    const int canvas = base.width() * 2;
+    QImage photo(photoPath);
+    if (photo.isNull())
+        return {};
+
+    drift::Project project;
+    project.setResolution(canvas, canvas);
+    project.setFps(30);
+    drift::Background background;
+    background.kind = drift::BackgroundKind::Transparent;
+    project.setBackground(background);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.ensureTrackIds();
+
+    const double w = canvas * 0.74;
+    const double h = w * photo.height() / photo.width();
+    // Centred at 0.5 s, moving 0.1 of the frame per frame, so the shutter smears it over 0.05:
+    // enough to streak the edges while the car still reads.
+    const double perFrame = canvas * 0.1;
+    drift::Clip card;
+    card.id = QStringLiteral("card");
+    card.type = drift::ClipType::Image;
+    card.path = photoPath;
+    card.timelineDuration = drift::secondsToUs(1.0);
+    card.srcOut = card.timelineDuration;
+    card.transformX.setKeyframe(0, {(canvas - w) / 2 - 15 * perFrame});
+    card.transformX.setKeyframe(drift::secondsToUs(1.0), {(canvas - w) / 2 + 15 * perFrame});
+    card.transformY.setKeyframe(0, {(canvas - h) / 2});
+    card.transformW.setKeyframe(0, {w});
+    card.transformH.setKeyframe(0, {h});
+    card.rotation.setKeyframe(0, {-60.0});
+    card.rotation.setKeyframe(drift::secondsToUs(1.0), {60.0});
+    drift::Effect blur;
+    blur.catalogId = def.meta.id;
+    for (const drift::EffectParamSpec &spec : def.meta.parameters)
+        spec.insertDefault(blur.parameters);
+    blur.parameters.insert(QStringLiteral("samples"), 32);
+    card.effects.append(blur);
+    project.tracks()[0].clips.append(card);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    FrameCompositor::RenderOptions options;
+    options.exporting = true;
+    const QImage moving = compositor.compositeAt(drift::secondsToUs(0.5), options);
+    if (moving.isNull())
+        return {};
+
+    QImage out = base.scaled(12, 12, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                     .scaled(canvas, canvas, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                     .convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    QPainter p(&out);
+    p.fillRect(out.rect(), QColor(0, 0, 0, 170));
+    p.drawImage(0, 0, moving.convertToFormat(QImage::Format_ARGB32_Premultiplied));
+    p.end();
+    return out;
 }
 
 // Behind Subject has no shader to run: it tells the compositor to hide a layer wherever the clip
@@ -645,7 +719,8 @@ int main(int argc, char *argv[])
         if (!onlyId.isEmpty() && def.meta.id != onlyId)
             continue;
         const bool occlude = def.meta.id == QLatin1String("depth.occlude");
-        if ((!def.isGpu || !def.gpu.valid) && !occlude && !def.isFaceSwap) {
+        const bool motionBlur = def.meta.id == QLatin1String("motion.blur");
+        if ((!def.isGpu || !def.gpu.valid) && !occlude && !motionBlur && !def.isFaceSwap) {
             err << "skip non-gpu " << def.meta.id << "\n";
             continue;
         }
@@ -666,6 +741,8 @@ int main(int argc, char *argv[])
         const QMap<QString, QVariant> params = dramaticDefaults(def);
         if (occlude) {
             result = behindSubjectPreview(base, *depthFor(basePhoto));
+        } else if (motionBlur) {
+            result = motionBlurPreview(def, basePhoto, base);
         } else if (def.isFaceSwap) {
             result = faceSwapPreview(def, faceFor(basePhoto), faceFor(chooser.faceSwapSource),
                                      chooser.faceSwapSource, err);

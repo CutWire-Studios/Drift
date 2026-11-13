@@ -115,6 +115,16 @@ Column {
                 onTriggered: maskDrag.tapped()
             }
         }
+
+        AssetFavoriteButton {
+            id: favoriteButton
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.margins: 3
+            visible: favoriteButton.favorited || maskDrag.hovered || Theme.touchUi
+            tabId: "masks"
+            itemId: root.modelData.id
+        }
     }
 
     Text {

@@ -240,6 +240,7 @@ private slots:
     void sceneCameraMovesTheViewpoint();
     void previewSnapFollowsThePointerThroughTheCamera();
     void previewSnapLandsProjectedEdgesOnTargets();
+    void motionBlurSmearsAlongTheMove();
     void clipGizmoWorksThroughAView();
     void editorViewLooksAtTheWorld();
     void gizmoOrientationAxes();
@@ -443,8 +444,12 @@ private slots:
     void vectorLayerRasterFollowsItsDrawnScale();
     void maskApplierEllipseMasksCorners();
     void maskMediaTimeBaseIndexesHostOrAdjustment();
+    void sequenceMaskRevealsWhereTheNestedSequenceIsOpaque();
+    void sequenceMaskInsideItsOwnSequenceDoesNotRecurse();
     void maskApplierFoldsAStackByItsOps();
     void maskShapesUseBothSizeAxes();
+    void maskRoundnessRoundsRectangleCorners();
+    void splitMaskRevealsOneSideOfASeam();
     void starMaskRotatesOnceNotTwice();
     void maskAdjustmentLaneMasksItsParentsClips();
     void maskLaneOpsCombineAcrossLanes();
@@ -2029,6 +2034,83 @@ void EngineTest::depthOcclusionOverridesTrackOrderWhenOptedIn()
     QVERIFY2(through.blue() > 150 && through.red() < 100,
              qPrintable(QStringLiteral("through %1,%2,%3")
                                 .arg(through.red()).arg(through.green()).arg(through.blue())));
+}
+
+void EngineTest::motionBlurSmearsAlongTheMove()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QImage white(20, 20, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+    const QString whitePath = dir.filePath(QStringLiteral("white.png"));
+    QVERIFY(white.save(whitePath));
+
+    drift::Project project;
+    project.setResolution(200, 100);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.ensureTrackIds();
+
+    // 1800 px/s: 60 px a frame, so a 180 degree shutter smears the card over 30 px.
+    drift::Clip card;
+    card.id = QStringLiteral("card");
+    card.type = drift::ClipType::Image;
+    card.path = whitePath;
+    card.timelineDuration = drift::secondsToUs(1.0);
+    card.srcOut = card.timelineDuration;
+    card.transformX.setKeyframe(0, {0.0});
+    card.transformX.setKeyframe(drift::secondsToUs(0.1), {180.0});
+    card.transformY.setKeyframe(0, {40.0});
+    card.transformW.setKeyframe(0, {20.0});
+    card.transformH.setKeyframe(0, {20.0});
+    project.tracks()[0].clips.append(card);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const drift::TimeUs moving = drift::secondsToUs(0.05); // card at x 90..110
+    const drift::TimeUs resting = drift::secondsToUs(0.5);
+    const QImage sharp = compositor.compositeAt(moving).convertToFormat(QImage::Format_RGBA8888);
+    const QImage sharpRest = compositor.compositeAt(resting).convertToFormat(QImage::Format_RGBA8888);
+
+    QVERIFY(effectDefForId(QStringLiteral("motion.blur")));
+    drift::Effect blur;
+    blur.catalogId = QStringLiteral("motion.blur");
+    project.tracks()[0].clips[0].effects.append(blur);
+    compositor.setProject(&project);
+
+    GpuScene preview;
+    QVERIFY(compositor.buildSceneAt(moving, {}, &preview));
+    QCOMPARE(preview.items.size(), 1);
+    QCOMPARE(preview.items.at(0).layer.motionSamples.size(), 8);
+    FrameCompositor::RenderOptions exporting;
+    exporting.exporting = true;
+    GpuScene exported;
+    QVERIFY(compositor.buildSceneAt(moving, exporting, &exported));
+    QCOMPARE(exported.items.at(0).layer.motionSamples.size(), 16);
+    // Centred on the frame: the first and last samples are a quarter frame either side.
+    QVERIFY(std::abs(exported.items.at(0).layer.motionSamples.first().rect.x() - 75.0) < 0.5);
+    QVERIFY(std::abs(exported.items.at(0).layer.motionSamples.last().rect.x() - 105.0) < 0.5);
+
+    const QImage blurred = compositor.compositeAt(moving).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY(!sharp.isNull() && !blurred.isNull());
+    const auto lum = [](const QImage &img, int x) { return img.pixelColor(x, 50).red(); };
+    QCOMPARE(lum(sharp, 80), 0);
+    QCOMPARE(lum(sharp, 120), 0);
+    QCOMPARE(lum(sharp, 100), 255);
+    // Behind and ahead of the card the smear shows; the middle is no longer solid.
+    QVERIFY2(lum(blurred, 80) > 20, qPrintable(QString::number(lum(blurred, 80))));
+    QVERIFY2(lum(blurred, 120) > 20, qPrintable(QString::number(lum(blurred, 120))));
+    QVERIFY2(lum(blurred, 100) < 220, qPrintable(QString::number(lum(blurred, 100))));
+    // Past the shutter's reach nothing is touched.
+    QCOMPARE(lum(blurred, 60), 0);
+    QCOMPARE(lum(blurred, 140), 0);
+
+    // At rest the samples coincide and the layer draws exactly as without blur.
+    QCOMPARE(compositor.compositeAt(resting).convertToFormat(QImage::Format_RGBA8888), sharpRest);
 }
 
 void EngineTest::clipGizmoWorksThroughAView()
@@ -11938,6 +12020,127 @@ void EngineTest::maskMediaTimeBaseIndexesHostOrAdjustment()
              drift::secondsToUs(5.0));
 }
 
+namespace {
+
+drift::Clip sequenceMaskTestShape(const QString &id, const QColor &color, double x, double w)
+{
+    drift::Clip clip;
+    clip.id = id;
+    clip.type = drift::ClipType::Shape;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
+    clip.shapeStyle.setSolidFill(color);
+    clip.transformX.setKeyframe(0, x);
+    clip.transformY.setKeyframe(0, 0.0);
+    clip.transformW.setKeyframe(0, w);
+    clip.transformH.setKeyframe(0, 128.0);
+    return clip;
+}
+
+drift::Mask sequenceMaskTestMask(const QString &sequenceId, drift::MaskMediaChannel channel, bool invert)
+{
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Sequence;
+    mask.sequenceId = sequenceId;
+    mask.mediaChannel = channel;
+    mask.mediaTimeBase = drift::MaskMediaTimeBase::Adjustment;
+    mask.w = 1.0;
+    mask.h = 1.0;
+    mask.invert = invert;
+    return mask;
+}
+
+} // namespace
+
+void EngineTest::sequenceMaskRevealsWhereTheNestedSequenceIsOpaque()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    const auto render = [](const QColor &matteColor, drift::MaskMediaChannel channel, bool invert) {
+        drift::Project project;
+        project.setResolution(128, 128);
+        project.tracks().clear();
+        project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+        project.tracks()[0].clips.append(
+            sequenceMaskTestShape(QStringLiteral("masked"), QColor(0, 255, 0), 0.0, 128.0));
+        const QString sequenceId = project.addSequence(
+            {drift::Track{.type = drift::TrackType::Shape,
+                          .clips = {sequenceMaskTestShape(QStringLiteral("matte"), matteColor, 0.0, 64.0)}}});
+        const drift::ClipRef added = drift::addLaneMask(project, 0, sequenceMaskTestMask(sequenceId, channel, invert),
+                                                        0, drift::secondsToUs(2.0));
+        if (added.trackIndex < 0)
+            return QImage();
+        FrameCompositor compositor;
+        compositor.setProject(&project);
+        return compositor.compositeAt(drift::secondsToUs(0.5));
+    };
+
+    // Alpha: the opaque left half reveals the clip, the empty right half hides it.
+    QImage frame = render(QColor(255, 0, 0), drift::MaskMediaChannel::Alpha, false);
+    QVERIFY(!frame.isNull());
+    QVERIFY(frame.pixelColor(32, 64).green() > 200);
+    QVERIFY(frame.pixelColor(96, 64).green() < 20);
+
+    frame = render(QColor(255, 0, 0), drift::MaskMediaChannel::Alpha, true);
+    QVERIFY(frame.pixelColor(32, 64).green() < 20);
+    QVERIFY(frame.pixelColor(96, 64).green() > 200);
+
+    // Luma: an opaque black matte has alpha but no brightness, so it reveals nothing.
+    frame = render(QColor(0, 0, 0), drift::MaskMediaChannel::Luma, false);
+    QVERIFY(frame.pixelColor(32, 64).green() < 20);
+    QVERIFY(frame.pixelColor(96, 64).green() < 20);
+
+    frame = render(QColor(255, 255, 255), drift::MaskMediaChannel::Luma, false);
+    QVERIFY(frame.pixelColor(32, 64).green() > 200);
+    QVERIFY(frame.pixelColor(96, 64).green() < 20);
+}
+
+void EngineTest::sequenceMaskInsideItsOwnSequenceDoesNotRecurse()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    drift::Project project;
+    project.setResolution(128, 128);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+
+    const QString sequenceId = project.addSequence(
+        {drift::Track{.type = drift::TrackType::Shape,
+                      .clips = {sequenceMaskTestShape(QStringLiteral("inner"), QColor(0, 255, 0), 0.0, 128.0)}}});
+    project.activateSequence(sequenceId);
+    QVERIFY(drift::addLaneMask(project, 0, sequenceMaskTestMask(sequenceId, drift::MaskMediaChannel::Alpha, false),
+                               0, drift::secondsToUs(2.0))
+                .trackIndex
+            >= 0);
+    project.activateSequence(QString());
+
+    drift::Clip outer;
+    outer.id = QStringLiteral("outer");
+    outer.type = drift::ClipType::Composite;
+    outer.sequenceId = sequenceId;
+    outer.timelineStart = 0;
+    outer.timelineDuration = drift::secondsToUs(2.0);
+    outer.srcOut = outer.timelineDuration;
+    project.tracks()[0].clips.append(outer);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    // The mask's source is the sequence being drawn, so it has no view to read and adds nothing.
+    QImage frame = compositor.compositeAt(drift::secondsToUs(0.5));
+    QVERIFY(!frame.isNull());
+    QVERIFY(frame.pixelColor(64, 64).green() > 200);
+
+    // Open for editing, the sequence is the root: the mask reads one nested copy of it, whose own
+    // copy of the mask is then cut off.
+    project.activateSequence(sequenceId);
+    frame = compositor.compositeAt(drift::secondsToUs(0.5));
+    QVERIFY(!frame.isNull());
+    QVERIFY(frame.pixelColor(64, 64).green() > 200);
+}
+
 void EngineTest::maskApplierEllipseMasksCorners()
 {
     QImage image(64, 64, QImage::Format_RGBA8888);
@@ -11999,6 +12202,90 @@ void EngineTest::maskApplierFoldsAStackByItsOps()
     const QList<drift::Mask> disabled{off};
     QVERIFY(drift::maskAlphaMap(disabled, 64, 64).isNull());
     QVERIFY(drift::masksAreInert(disabled));
+}
+
+void EngineTest::maskRoundnessRoundsRectangleCorners()
+{
+    const auto cornerAlpha = [](double roundness) {
+        drift::Mask mask;
+        mask.shape = drift::MaskShape::Rectangle;
+        mask.w = 0.5;
+        mask.h = 0.5;
+        mask.roundness = roundness;
+        const QImage alpha = drift::maskAlphaMap(mask, 128, 128);
+        return qGray(alpha.pixel(32, 32));
+    };
+    QCOMPARE(cornerAlpha(0.0), 255);
+    QCOMPARE(cornerAlpha(1.0), 0);
+
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Rectangle;
+    mask.roundness = 0.4;
+    mask.keyframes[QStringLiteral("roundness")].setKeyframe(0, 0.0);
+    mask.keyframes[QStringLiteral("roundness")].setKeyframe(drift::secondsToUs(1.0), 1.0);
+    QVERIFY(qAbs(mask.valueAt(QStringLiteral("roundness"), drift::secondsToUs(0.5)) - 0.5) < 0.01);
+    QVERIFY(qAbs(mask.resolvedAt(drift::secondsToUs(1.0)).roundness - 1.0) < 1e-9);
+
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    clip.mask = mask;
+    project.tracks()[0].clips.append(clip);
+    const drift::Project loaded = drift::Project::fromJson(project.toJson());
+    const drift::Mask &back = loaded.tracks()[0].clips[0].mask;
+    QCOMPARE(back.roundness, 0.4);
+    QVERIFY(!back.keyframes.value(QStringLiteral("roundness")).isEmpty());
+}
+
+void EngineTest::splitMaskRevealsOneSideOfASeam()
+{
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Split;
+    QImage alpha = drift::maskAlphaMap(mask, 128, 128);
+    QCOMPARE(qGray(alpha.pixel(10, 64)), 255);
+    QCOMPARE(qGray(alpha.pixel(118, 64)), 0);
+
+    mask.invert = true;
+    alpha = drift::maskAlphaMap(mask, 128, 128);
+    QCOMPARE(qGray(alpha.pixel(10, 64)), 0);
+    QCOMPARE(qGray(alpha.pixel(118, 64)), 255);
+
+    mask.invert = false;
+    mask.rotation = 90.0;
+    alpha = drift::maskAlphaMap(mask, 128, 128);
+    QCOMPARE(qGray(alpha.pixel(64, 10)), 255);
+    QCOMPARE(qGray(alpha.pixel(64, 118)), 0);
+
+    mask.rotation = 0.0;
+    mask.feather = 8.0;
+    alpha = drift::maskAlphaMap(mask, 128, 128);
+    QCOMPARE(qGray(alpha.pixel(0, 0)), 255);
+    QCOMPARE(qGray(alpha.pixel(0, 127)), 255);
+    QCOMPARE(qGray(alpha.pixel(127, 0)), 0);
+    QCOMPARE(qGray(alpha.pixel(127, 127)), 0);
+    const int seam = qGray(alpha.pixel(64, 64));
+    QVERIFY(seam > 20 && seam < 235);
+
+    mask.x = 0.25;
+    mask.rotation = 30.0;
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    clip.mask = mask;
+    project.tracks()[0].clips.append(clip);
+    const drift::Project loaded = drift::Project::fromJson(project.toJson());
+    const drift::Mask &back = loaded.tracks()[0].clips[0].mask;
+    QCOMPARE(back.shape, drift::MaskShape::Split);
+    QCOMPARE(back.x, 0.25);
+    QCOMPARE(back.rotation, 30.0);
 }
 
 // Star and heart were forced into a square of qMin(halfW, halfH), which quietly discarded

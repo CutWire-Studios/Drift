@@ -107,7 +107,9 @@ bool isFaceEffectId(const QString &catalogId)
 bool AppController::effectFitsTrack(int trackIndex, const QString &effectId, QString *why) const
 {
     const EffectPresetEntry *def = effectDefForId(effectId);
-    if (!def || !(def->needsFace || def->needsDepth || def->needsMask || def->isFaceSwap || def->isModel3d))
+    const bool motionBlur = def && def->meta.id == QLatin1String("motion.blur");
+    if (!def || !(def->needsFace || def->needsDepth || def->needsMask || def->isFaceSwap || def->isModel3d
+                  || motionBlur))
         return true;
     const bool standalone = trackIndex < 0
                             || (trackIndex < m_project.tracks().size()
@@ -116,7 +118,9 @@ bool AppController::effectFitsTrack(int trackIndex, const QString &effectId, QSt
     if (!standalone)
         return true;
     if (why) {
-        *why = def->needsDepth
+        *why = motionBlur
+                   ? tr("Motion blur follows one clip's movement, so it goes on a clip, not on an adjustment layer.")
+               : def->needsDepth
                    ? tr("Depth effects read one clip's depth, so they go on a clip, not on an adjustment layer.")
                : def->needsMask
                    ? tr("Mask effects read one clip's masks, so they go on a clip, not on an adjustment layer.")
@@ -172,6 +176,7 @@ void AppController::addEffect(int trackIndex, int clipIndex, const QString &effe
     // along with the effect rather than leaving an empty row behind.
     const drift::Project before = m_project;
 
+    const QString clipId = track.clips.at(clipIndex).id;
     int hostTrack = trackIndex;
     int hostClip = clipIndex;
     if (!redirectToEffectHost(&hostTrack, &hostClip, drift::AdjustmentKind::VideoEffects,
@@ -180,13 +185,17 @@ void AppController::addEffect(int trackIndex, int clipIndex, const QString &effe
     }
     m_project.tracks()[hostTrack].clips[hostClip].effects.append(effect);
 
-    // Selection moves to the adjustment carrying the stack, because that is the only thing whose
-    // inspector shows it: the Effects tab is no longer offered for the clip the effect was aimed
-    // at. redirectToEffectHost already returns post-insert indices, and normalizeProjectStructure
-    // carries the selection across any reorder by track id.
-    m_selectedTrack = hostTrack;
-    m_selectedClip = hostClip;
-    m_selection = {qMakePair(hostTrack, hostClip)};
+    // The clip stays selected: its Effects tab edits the linked adjustment's stack. Minting a lane
+    // can shift the clip's track, so the selection is re-pointed by id.
+    if (!clipId.isEmpty()) {
+        int selTrack = -1;
+        int selClip = -1;
+        if (findClipById(m_project, clipId, &selTrack, &selClip)) {
+            m_selectedTrack = selTrack;
+            m_selectedClip = selClip;
+            m_selection = {qMakePair(selTrack, selClip)};
+        }
+    }
 
     pushProjectEdit(before, tr("Add effect"));
     finishEdit(tr("Effect added"));

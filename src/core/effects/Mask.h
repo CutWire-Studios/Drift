@@ -16,7 +16,9 @@ namespace drift {
 // pixels are the coverage map. Segmentation produces one (a grayscale matte written by
 // MatteWriter); the user can also point it at any image or video. Spelled "matte" in projects
 // written before v5.
-enum class MaskShape { None, Rectangle, Ellipse, Star, Heart, Bars, Freeform, Media };
+// Sequence is a raster mask like Media, but its pixels are the live render of a nested sequence
+// (`sequenceId`): any clips can become a matte. It reuses the Media rect, fit and channel members.
+enum class MaskShape { None, Rectangle, Ellipse, Star, Heart, Bars, Freeform, Media, Split, Sequence };
 
 QString maskShapeToString(MaskShape shape);
 MaskShape maskShapeFromString(const QString &shape);
@@ -74,7 +76,9 @@ struct Mask
     double h = 0.6;
     double rotation = 0.0;
     double feather = 0.0; // px blur on the alpha edge
+    double roundness = 0.0; // Rectangle only: 0 sharp, 1 = corner radius of min(w, h) / 2 in frame pixels
     bool invert = false;
+    bool lockAspect = false; // editing only: corner grips and the inspector keep w:h; the renderer ignores it
     QVector<QPointF> points; // normalized, for Freeform
 
     // Media only: an image or video whose pixels are the coverage map.
@@ -97,8 +101,12 @@ struct Mask
     // inverting a cutout keeps the background, which must keep its own colours.
     QString mediaFgrPath;
 
+    // Sequence only: the nested sequence whose render is the coverage map. Played from the carrying
+    // adjustment's own start, like a Composite clip plays its sequence.
+    QString sequenceId;
+
     // Animated scalars, keyed by the same names the inspector and the keyframe graph use:
-    // "x", "y", "w", "h", "rotation", "feather". A non-empty track wins over the scalar above at
+    // "x", "y", "w", "h", "rotation", "feather", "roundness". A non-empty track wins over the scalar above at
     // render time; the scalar still holds the last static value, so clearing a track returns the
     // property to a constant rather than to the struct default. Mirrors Effect::paramKeyframes.
     //
@@ -125,6 +133,9 @@ struct Mask
 
     // Media coverage is decoded per frame by the compositor, so it has no rasterizable path.
     bool isMedia() const { return shape == MaskShape::Media && !mediaPath.isEmpty(); }
+    bool isSequence() const { return shape == MaskShape::Sequence && !sequenceId.isEmpty(); }
+    // Coverage that comes from decoded or rendered pixels rather than a rasterizable shape.
+    bool isRaster() const { return shape == MaskShape::Media || shape == MaskShape::Sequence; }
     bool contributes() const { return enabled && shape != MaskShape::None; }
 
     bool isAnimated() const;

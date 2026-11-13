@@ -19,6 +19,10 @@ QString maskShapeToString(MaskShape shape)
         return QStringLiteral("freeform");
     case MaskShape::Media:
         return QStringLiteral("media");
+    case MaskShape::Split:
+        return QStringLiteral("split");
+    case MaskShape::Sequence:
+        return QStringLiteral("sequence");
     case MaskShape::None:
         break;
     }
@@ -39,6 +43,10 @@ MaskShape maskShapeFromString(const QString &shape)
         return MaskShape::Bars;
     if (shape == QStringLiteral("freeform"))
         return MaskShape::Freeform;
+    if (shape == QStringLiteral("split"))
+        return MaskShape::Split;
+    if (shape == QStringLiteral("sequence"))
+        return MaskShape::Sequence;
     // "matte" is what Media was called before v5.
     if (shape == QStringLiteral("media") || shape == QStringLiteral("matte"))
         return MaskShape::Media;
@@ -129,7 +137,8 @@ const QStringList &maskKeyframeProperties()
 {
     static const QStringList props{QStringLiteral("x"),        QStringLiteral("y"),
                                    QStringLiteral("w"),        QStringLiteral("h"),
-                                   QStringLiteral("rotation"), QStringLiteral("feather")};
+                                   QStringLiteral("rotation"), QStringLiteral("feather"),
+                                   QStringLiteral("roundness")};
     return props;
 }
 
@@ -188,6 +197,8 @@ double Mask::valueAt(const QString &key, TimeUs maskTimeUs) const
         return rotation;
     if (key == QStringLiteral("feather"))
         return feather;
+    if (key == QStringLiteral("roundness"))
+        return roundness;
     return 0.0;
 }
 
@@ -248,6 +259,8 @@ Mask Mask::resolvedAt(TimeUs maskTimeUs) const
             out.rotation = value;
         else if (key == QStringLiteral("feather"))
             out.feather = value;
+        else if (key == QStringLiteral("roundness"))
+            out.roundness = value;
     }
     if (!pathKeys.isEmpty())
         out.points = pointsAt(pathKeys, maskTimeUs, points);

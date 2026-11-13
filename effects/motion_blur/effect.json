@@ -1,0 +1,27 @@
+{
+  "id": "motion.blur",
+  "displayName": "Motion Blur",
+  "category": "impact",
+  "thumbnail": "thumbnail.webp",
+  "order": 94,
+  "description": "Blurs the clip along its own movement, as a camera shutter would: keyframed position, scale and rotation, intro and outro animations, 3D pose, transform layers and camera moves. Motion inside the footage is not blurred. Applied as the clip is placed, so it comes after every other effect whatever its place in the stack. The preview uses at most 8 samples; export uses them all.",
+  "backend": "compositor",
+  "parameters": [
+    {
+      "identifier": "shutter",
+      "displayName": "Shutter angle",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 360,
+      "defaultValue": 180
+    },
+    {
+      "identifier": "samples",
+      "displayName": "Samples",
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 32,
+      "defaultValue": 16
+    }
+  ]
+}

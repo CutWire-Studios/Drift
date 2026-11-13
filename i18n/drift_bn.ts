@@ -1088,6 +1088,10 @@
         <translation>কাস্টম</translation>
     </message>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">প্রিয়</translation>
+    </message>
+    <message>
         <source>Template</source>
         <translation>টেমপ্লেট</translation>
     </message>
@@ -3359,6 +3363,22 @@
         <translation>অ্যাডজাস্টমেন্ট আনলিঙ্ক করা হয়েছে</translation>
     </message>
     <message>
+        <source>Hide effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects layer shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Link adjustment to clip</source>
         <translation>ক্লিপের সাথে লিঙ্ক সমন্বয়</translation>
     </message>
@@ -3599,6 +3619,26 @@
         <translation>ক্লিপ ফরোয়ার্ড করুন</translation>
     </message>
     <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip not looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip is already being reversed</source>
         <translation>একটি ক্লিপ ইতিমধ্যেই বিপরীত করা হচ্ছে।</translation>
     </message>
@@ -3673,6 +3713,14 @@
     <message>
         <source>Composite</source>
         <translation>কম্পোজিট</translation>
+    </message>
+    <message>
+        <source>Timeline %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline created</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Flattening composite…</source>
@@ -3861,6 +3909,10 @@
     <message>
         <source>Bars</source>
         <translation>বার</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation type="unfinished">বিভক্ত করুন</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -4295,6 +4347,10 @@
     <message>
         <source>Transform reset</source>
         <translation>ট্রান্সফর্ম রিসেট</translation>
+    </message>
+    <message>
+        <source>Motion blur follows one clip&apos;s movement, so it goes on a clip, not on an adjustment layer.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Depth effects read one clip&apos;s depth, so they go on a clip, not on an adjustment layer.</source>
@@ -5039,6 +5095,17 @@
     </message>
 </context>
 <context>
+    <name>AssetSearchBar</name>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from history</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AssetsPanel</name>
     <message>
         <source>Remove this media?</source>
@@ -5352,6 +5419,14 @@
     <message>
         <source>Create a new folder here</source>
         <translation>এখানে একটি নতুন ফোল্ডার তৈরি করুন</translation>
+    </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10103,6 +10178,18 @@
         <translation>থেকে</translation>
     </message>
     <message>
+        <source>Loop</source>
+        <translation type="unfinished">লুপ</translation>
+    </message>
+    <message>
+        <source>A clip with a speed ramp can&apos;t loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the trimmed part for as long as the clip runs. Drag the clip&apos;s edges past the end to add repeats. Turn it off to change the trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename</source>
         <translation>নাম পরিবর্তন করুন</translation>
     </message>
@@ -10257,6 +10344,10 @@
     <message>
         <source>Presets</source>
         <translation>প্রিসেট</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">প্রিয়</translation>
     </message>
     <message>
         <source>Type</source>
@@ -10809,6 +10900,10 @@
     <message>
         <source>Feather</source>
         <translation>পালক</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11399,6 +11494,10 @@
     <message>
         <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
         <translation>একটি বিভাগ বেছে নিন, তারপর একটি টেমপ্লেট এবং গুণমান। আপনি সেটিংস → লেআউট চয়ন করুন থেকে যেকোনো সময় এটি পরিবর্তন করতে পারেন.</translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">প্রিয়</translation>
     </message>
     <message>
         <source>Template</source>
@@ -12556,6 +12655,14 @@
 <context>
     <name>MaskOverlay</name>
     <message>
+        <source>Unlock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12577,6 +12684,28 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>এর মুখোশগুলি সম্পাদনা করতে প্লেহেডে একটি ক্লিপ নির্বাচন করুন।</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayFeatherHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">সম্পাদনা %1</translation>
+    </message>
+    <message>
+        <source>Feather</source>
+        <translation type="unfinished">পালক</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRoundnessHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">সম্পাদনা %1</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12631,6 +12760,18 @@
     <message>
         <source>Clip converted to mask</source>
         <translation>ক্লিপ মাস্কে রূপান্তরিত হয়েছে</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">ক্লিপ</translation>
+    </message>
+    <message>
+        <source>%1 mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips used as mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cutouts can&apos;t be moved yet</source>
@@ -12773,8 +12914,16 @@
         <translation>বার</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">বিভক্ত করুন</translation>
+    </message>
+    <message>
         <source>Matte</source>
         <translation>ম্যাট</translation>
+    </message>
+    <message>
+        <source>Sequence matte</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Mask</source>
@@ -13244,6 +13393,10 @@
             <numerusform>%nটি শেপ কি</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -13276,6 +13429,10 @@
         <translation>বার</translation>
     </message>
     <message>
+        <source>Split</source>
+        <translation type="unfinished">বিভক্ত করুন</translation>
+    </message>
+    <message>
         <source>Combine</source>
         <translation>একত্রিত করুন</translation>
     </message>
@@ -13298,6 +13455,10 @@
     <message>
         <source>Remove mask</source>
         <translation>মাস্ক সরান</translation>
+    </message>
+    <message>
+        <source>Roundness</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -13326,6 +13487,38 @@
     <message>
         <source>Polygon</source>
         <translation type="unfinished">পলিগন</translation>
+    </message>
+    <message>
+        <source>Lock aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Matte channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha (transparency)</source>
+        <translation type="unfinished">আলফা (স্বচ্ছতা)</translation>
+    </message>
+    <message>
+        <source>Luma (brightness)</source>
+        <translation type="unfinished">লুমা (উজ্জ্বলতা)</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">মানানসই করুন</translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation type="unfinished">প্রসারিত</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">ভরাট</translation>
+    </message>
+    <message>
+        <source>Edit mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invert</source>
@@ -23210,6 +23403,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
+        <source>Favorites</source>
+        <translation type="unfinished">প্রিয়</translation>
+    </message>
+    <message>
         <source>All</source>
         <translation>সব</translation>
     </message>
@@ -24093,6 +24290,14 @@ If playback stutters, try another.</source>
         <translation>সব অডিও ট্র্যাক আলাদা করুন</translation>
     </message>
     <message>
+        <source>Stop looping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop</source>
+        <translation type="unfinished">লুপ</translation>
+    </message>
+    <message>
         <source>Remove silence</source>
         <translation type="unfinished">নীরবতা সরান</translation>
     </message>
@@ -24107,6 +24312,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Convert to mask</source>
         <translation>মাস্কে রূপান্তর করুন</translation>
+    </message>
+    <message>
+        <source>Use as mask (nested timeline)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open mask timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -24484,6 +24697,10 @@ If playback stutters, try another.</source>
         <source>Main</source>
         <translation type="unfinished">মূল</translation>
     </message>
+    <message>
+        <source>New timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TimelineSpanBracketChip</name>
@@ -24796,12 +25013,24 @@ If playback stutters, try another.</source>
         <translation>সাবটাইটেল</translation>
     </message>
     <message>
+        <source>Hide the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the effects layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1, track %2</source>
         <translation>%1, ট্র্যাক %2</translation>
     </message>
 </context>
 <context>
     <name>TimelineTrimHandle</name>
+    <message>
+        <source>Drag to repeat the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag to trim the start</source>
         <translation>শুরু ট্রিম করতে টেনে আনুন</translation>
@@ -26070,6 +26299,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished">পজিশন</translation>
     </message>
     <message>
+        <source>Reset position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>প্রস্থ এবং উচ্চতা আলাদাভাবে সম্পাদনা করুন</translation>
     </message>
@@ -26110,6 +26347,14 @@ If playback stutters, try another.</source>
         <translation>অস্বচ্ছতা এবং ঘূর্ণন</translation>
     </message>
     <message>
+        <source>Reset opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotate the whole group as one flat card</source>
         <translation type="unfinished"></translation>
     </message>
@@ -26124,6 +26369,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished">সব রিসেট করুন</translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26148,10 +26397,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Flip V</source>
         <translation>ফ্লিপ V</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>অবস্থান এবং আকার রিসেট করুন</translation>
     </message>
     <message>
         <source>Fix orientation</source>

@@ -54,6 +54,7 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("h"), m.h},
         {QStringLiteral("rotation"), m.rotation},
         {QStringLiteral("feather"), m.feather},
+        {QStringLiteral("roundness"), m.roundness},
         {QStringLiteral("invert"), m.invert},
         {QStringLiteral("points"), points},
         {QStringLiteral("mediaPath"), m.mediaPath},
@@ -66,6 +67,10 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("keyframes"), maskKeyframesJson},
         {QStringLiteral("pathKeys"), pathKeys},
     };
+    if (m.lockAspect)
+        object.insert(QStringLiteral("lockAspect"), true);
+    if (!m.sequenceId.isEmpty())
+        object.insert(QStringLiteral("sequenceId"), m.sequenceId);
     if (!m.mediaPatches.isEmpty()) {
         QJsonArray patches;
         for (auto it = m.mediaPatches.constBegin(); it != m.mediaPatches.constEnd(); ++it)
@@ -88,7 +93,10 @@ Mask maskFromJson(const QJsonObject &o)
     m.h = o.value(QStringLiteral("h")).toDouble(m.h);
     m.rotation = o.value(QStringLiteral("rotation")).toDouble(m.rotation);
     m.feather = o.value(QStringLiteral("feather")).toDouble(m.feather);
+    m.roundness = o.value(QStringLiteral("roundness")).toDouble(m.roundness);
     m.invert = o.value(QStringLiteral("invert")).toBool(m.invert);
+    m.lockAspect = o.value(QStringLiteral("lockAspect")).toBool(false);
+    m.sequenceId = o.value(QStringLiteral("sequenceId")).toString();
     m.op = maskOpFromString(o.value(QStringLiteral("op")).toString());
     m.enabled = o.value(QStringLiteral("enabled")).toBool(m.enabled);
     m.name = o.value(QStringLiteral("name")).toString(m.name);
@@ -279,6 +287,8 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("speed"), clip.speed},
         {QStringLiteral("speedCurve"), clip.speedCurve.toJson()},
         {QStringLiteral("reverse"), clip.reverse},
+        {QStringLiteral("loop"), clip.loop},
+        {QStringLiteral("loopOffsetUs"), qint64(clip.loopOffsetUs)},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("flipV"), clip.flipV},
         {QStringLiteral("mask"), maskToJson(clip.mask)},
@@ -319,6 +329,8 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("effects"), effectsToJson(clip.effects)},
         {QStringLiteral("audioEffects"), effectsToJson(clip.audioEffects)},
     };
+    if (clip.hiddenInLane)
+        json.insert(QStringLiteral("hiddenInLane"), true);
     if (clip.audioFadeInUs > 0)
         json.insert(QStringLiteral("audioFadeInUs"), static_cast<double>(clip.audioFadeInUs));
     if (clip.audioFadeOutUs > 0)
@@ -417,6 +429,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.adjustmentKind =
         adjustmentKindFromString(object.value(QStringLiteral("adjustmentKind")).toString());
     clip.linkedClipId = object.value(QStringLiteral("linkedClipId")).toString();
+    clip.hiddenInLane = object.value(QStringLiteral("hiddenInLane")).toBool(false);
     clip.name = object.value(QStringLiteral("name")).toString();
     clip.label = object.value(QStringLiteral("label")).toString();
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
@@ -438,6 +451,8 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.speed = object.value(QStringLiteral("speed")).toDouble(1.0);
     clip.speedCurve = SpeedCurve::fromJson(object.value(QStringLiteral("speedCurve")).toArray());
     clip.reverse = object.value(QStringLiteral("reverse")).toBool(false);
+    clip.loop = object.value(QStringLiteral("loop")).toBool(false);
+    clip.loopOffsetUs = object.value(QStringLiteral("loopOffsetUs")).toInteger(0);
     clip.flipH = object.value(QStringLiteral("flipH")).toBool(false);
     clip.flipV = object.value(QStringLiteral("flipV")).toBool(false);
     clip.mask = maskFromJson(object.value(QStringLiteral("mask")).toObject());
@@ -1494,6 +1509,14 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 22 moved the 3D world to After Effects' convention (migrateWorldTo22 above).
     // Version 24 added ClipType::Procedural. Nothing to migrate; the bump is a gate, as for versions
     // 6 and 9. An older build would load those clips as videos with no path.
+    // Version 25 added looping clips. Nothing to migrate; the bump is a gate, as for versions 6
+    // and 9. An older build would cut a looped clip off at the end of its first pass.
+    // Version 26 added mask roundness. Nothing to migrate; the bump is a gate, as for versions 6
+    // and 9. An older build would draw a rounded rectangle mask with sharp corners.
+    // Version 27 added the Split mask shape. Nothing to migrate; the bump is a gate, as for
+    // versions 6 and 9. An older build would read the shape as none and drop the mask.
+    // Version 28 added the Sequence mask shape. Nothing to migrate; the bump is a gate, as for
+    // versions 6 and 9. An older build would read the shape as none and drop the mask.
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 

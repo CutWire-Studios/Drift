@@ -104,6 +104,9 @@
 #include <condition_variable>
 #include <QElapsedTimer>
 #include <QTimer>
+#include <QDateTime>
+#include <QSysInfo>
+#include <QTime>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -116,6 +119,9 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <share.h>
+
+#include <cstdio>
 #endif
 
 #ifdef Q_OS_ANDROID
@@ -146,6 +152,83 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 0;
 #endif
 
 namespace {
+
+#ifdef Q_OS_WIN
+// A GUI process on Windows has no console, so when Drift dies or never shows a window the user
+// has nothing to attach to a report (#475). Every launch writes logs/drift.log under the app's
+// local data folder and keeps the launch before it as drift.prev.log. Splash steps go in
+// unconditionally, so the last line says how far startup got even with no warning printed.
+std::FILE *g_startupLog = nullptr;
+QtMessageHandler g_previousHandler = nullptr;
+
+void writeStartupLog(const QByteArray &line)
+{
+    if (!g_startupLog)
+        return;
+    const QByteArray stamped =
+        QTime::currentTime().toString(QStringLiteral("HH:mm:ss.zzz ")).toLatin1() + line + '\n';
+    std::fwrite(stamped.constData(), 1, size_t(stamped.size()), g_startupLog);
+    std::fflush(g_startupLog);
+}
+
+void startupLogHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
+{
+    static const char *const kLevels[] = {"debug", "warning", "critical", "fatal", "info"};
+    writeStartupLog(QByteArray(kLevels[type]) + ": " + message.toUtf8());
+    if (g_previousHandler)
+        g_previousHandler(type, context, message);
+}
+
+// Nothing in Qt sees an access violation, so without this a crash leaves the log ending at the
+// last splash step with no word on why.
+LONG WINAPI logUnhandledException(EXCEPTION_POINTERS *info)
+{
+    const EXCEPTION_RECORD *record = info->ExceptionRecord;
+    wchar_t module[MAX_PATH] = L"?";
+    HMODULE handle = nullptr;
+    if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+                               | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                           static_cast<LPCWSTR>(record->ExceptionAddress), &handle)) {
+        GetModuleFileNameW(handle, module, MAX_PATH);
+    }
+    if (!g_startupLog)
+        return EXCEPTION_CONTINUE_SEARCH;
+    // Straight to the file: the heap may be what broke, so nothing here allocates.
+    std::fprintf(g_startupLog, "crash: exception 0x%08lX at %p (+0x%llX in %ls)\n",
+                  record->ExceptionCode, record->ExceptionAddress,
+                  handle ? static_cast<unsigned long long>(static_cast<const char *>(record->ExceptionAddress)
+                                                           - reinterpret_cast<const char *>(handle))
+                         : 0ULL,
+                  module);
+    std::fflush(g_startupLog);
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+// Needs the application names, which pick the folder.
+void openStartupLog()
+{
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)
+                        + QStringLiteral("/logs");
+    if (!QDir().mkpath(dir))
+        return;
+    const QString path = dir + QStringLiteral("/drift.log");
+    const QString previous = dir + QStringLiteral("/drift.prev.log");
+    // Fails while another instance still has the file open; both then append to it, told apart
+    // by the pid in each launch's header.
+    QFile::remove(previous);
+    QFile::rename(path, previous);
+    g_startupLog = _wfsopen(reinterpret_cast<const wchar_t *>(QDir::toNativeSeparators(path).utf16()),
+                            L"ab", _SH_DENYNO);
+    if (!g_startupLog)
+        return;
+    writeStartupLog(QByteArray("Drift " DRIFT_VERSION ", pid ")
+                    + QByteArray::number(qint64(GetCurrentProcessId())) + ", "
+                    + QSysInfo::prettyProductName().toUtf8() + ", "
+                    + QDateTime::currentDateTime().toString(Qt::ISODate).toUtf8());
+    g_previousHandler = qInstallMessageHandler(startupLogHandler);
+    SetUnhandledExceptionFilter(logUnhandledException);
+}
+#endif
 
 bool verboseLoggingRequested(int argc, char *argv[])
 {
@@ -614,6 +697,9 @@ int main(int argc, char *argv[])
     // must be in the environment before QApplication is constructed.
     QCoreApplication::setApplicationName("CutWire Drift");
     QCoreApplication::setOrganizationName("CutWire Drift");
+#ifdef Q_OS_WIN
+    openStartupLog();
+#endif
     // Reads QSettings, so after the names. Qt Quick stays on OpenGL with a global share context
     // unless the user picked another API in Settings; see GraphicsApiChoice.h.
     [[maybe_unused]] const bool graphicsApiGuarded = drift::graphics::applyAtStartup(argc, argv);
@@ -720,6 +806,9 @@ int main(int argc, char *argv[])
     }
 #endif
     const auto step = [splash](const QString &status, double progress) {
+#ifdef Q_OS_WIN
+        writeStartupLog("step: " + status.toUtf8());
+#endif
         if (splash)
             splash->step(status, progress);
     };
@@ -958,6 +1047,24 @@ int main(int argc, char *argv[])
             new FirstFrameWatchdog(window);
         if (first)
             splash->finishOn(window);
+#ifdef Q_OS_WIN
+        // Tells "no window" apart from "a window nobody can see" when the screen stays empty.
+        if (window && first) {
+            QObject::connect(window, &QQuickWindow::frameSwapped, &app, [window] {
+                const QRect geometry = window->geometry();
+                writeStartupLog(QStringLiteral("first frame drawn: '%1' at %2,%3 %4x%5, visibility %6")
+                                    .arg(window->title())
+                                    .arg(geometry.x())
+                                    .arg(geometry.y())
+                                    .arg(geometry.width())
+                                    .arg(geometry.height())
+                                    .arg(int(window->visibility()))
+                                    .toUtf8());
+            }, static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
+        } else if (first) {
+            writeStartupLog("no window was created");
+        }
+#endif
         if (window && graphicsApiGuarded) {
             if (first) {
                 QObject::connect(window, &QQuickWindow::frameSwapped, &app, [] {

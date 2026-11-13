@@ -19,6 +19,9 @@ ThemedDialog {
     property string qualityId: "1080p"
     // First-launch uses "Decide later"; Settings reopen uses "Cancel".
     property bool fromSettings: false
+    // Lists starred templates from every category; picking a category turns it off.
+    property bool favoritesOnly: false
+    property int favoritesTick: 0
 
     rejectText: fromSettings ? qsTr("Cancel") : qsTr("Decide later")
     closePolicy: fromSettings ? Popup.CloseOnEscape | Popup.CloseOnPressOutside : Popup.NoAutoClose
@@ -30,7 +33,14 @@ ThemedDialog {
     readonly property var templates: LayoutPresets.templates
     readonly property var qualities: LayoutPresets.qualities
 
-    readonly property var categoryTemplates: LayoutPresets.templatesFor(activeCategory)
+    readonly property var categoryTemplates: {
+        void favoritesTick
+        const isFav = t => EditorState.isAssetFavorite("layouts", t.id)
+        if (favoritesOnly)
+            return LayoutPresets.templates.filter(isFav)
+        const list = LayoutPresets.templatesFor(activeCategory)
+        return list.filter(isFav).concat(list.filter(t => !isFav(t)))
+    }
     readonly property var selectedTemplate: LayoutPresets.templateById(templateId)
     readonly property var selectedQuality: LayoutPresets.qualityById(qualityId)
 
@@ -50,6 +60,7 @@ ThemedDialog {
     readonly property real previewH: Math.max(8, outHeight * aspectScale)
 
     function selectCategory(categoryId) {
+        favoritesOnly = false
         activeCategory = categoryId
         if (selectedTemplate.category === categoryId)
             return
@@ -62,6 +73,7 @@ ThemedDialog {
     }
 
     function resetSelection() {
+        favoritesOnly = false
         activeCategory = "youtube"
         templateId = "yt_video"
         qualityId = "1080p"
@@ -104,6 +116,11 @@ ThemedDialog {
             root.firstRunDismissed()
     }
 
+    Connections {
+        target: EditorState
+        function onAssetFavoritesChanged() { root.favoritesTick++ }
+    }
+
     // The question can be answered elsewhere while the first-run chooser is up — an MCP agent
     // setting the canvas, say. close() rather than reject() so this is not mistaken for
     // "Decide later". Gated on visible, not opened: opened only turns true once the enter
@@ -142,6 +159,16 @@ ThemedDialog {
                 id: categoryRow
                 height: parent.height
                 spacing: Theme.spacingMd
+
+                IconButton {
+                    glyph: Theme.icons.star
+                    variant: "ghost"
+                    buttonSize: Theme.controlHeight
+                    iconSize: 14
+                    active: root.favoritesOnly
+                    tooltip: qsTr("Favorites")
+                    onClicked: root.favoritesOnly = !root.favoritesOnly
+                }
 
                 Repeater {
                     model: root.categories

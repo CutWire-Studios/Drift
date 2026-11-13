@@ -1091,7 +1091,8 @@ void AppController::writeClipMask(int trackIndex, int clipIndex, const drift::Ma
             {"x", {seeded.x, existing->x}}, {"y", {seeded.y, existing->y}},
             {"w", {seeded.w, existing->w}}, {"h", {seeded.h, existing->h}},
             {"rotation", {seeded.rotation, existing->rotation}},
-            {"feather", {seeded.feather, existing->feather}}};
+            {"feather", {seeded.feather, existing->feather}},
+            {"roundness", {seeded.roundness, existing->roundness}}};
         seeded.keyframes = existing->keyframes;
         for (const auto &[key, values] : scalars) {
             if (!same(values.first, values.second))
@@ -1123,7 +1124,7 @@ drift::Mask AppController::maskFromCatalogId(const QString &shape) const
     mask.shape = drift::maskShapeFromString(shape);
     // maskShapeFromString falls back to None for anything it does not know, and Media needs a
     // path it cannot invent — either way the mask contributes nothing and the caller does nothing.
-    if (mask.shape == drift::MaskShape::Media)
+    if (mask.isRaster())
         mask.shape = drift::MaskShape::None;
     seedFreeformMask(mask);
     return mask;
@@ -1143,7 +1144,8 @@ QVariantList AppController::maskCatalog() const
     const QList<QPair<QString, QString>> entries = {
         {QStringLiteral("rectangle"), tr("Rectangle")}, {QStringLiteral("ellipse"), tr("Ellipse")},
         {QStringLiteral("star"), tr("Star")},           {QStringLiteral("heart"), tr("Heart")},
-        {QStringLiteral("bars"), tr("Bars")},           {QStringLiteral("freeform"), tr("Freeform")},
+        {QStringLiteral("bars"), tr("Bars")},           {QStringLiteral("split"), tr("Split")},
+        {QStringLiteral("freeform"), tr("Freeform")},
     };
 
     QVariantList out;
@@ -1169,7 +1171,14 @@ QString AppController::maskShapeSvgPath(const QString &shape) const
         mask.points.clear();
         seedFreeformMask(mask);
     }
-    return drift::painterPathToSvg(drift::maskPath(mask, 100, 100));
+    QPainterPath path = drift::maskPath(mask, 100, 100);
+    if (mask.shape == drift::MaskShape::Split)
+    {
+        QPainterPath frame;
+        frame.addRect(QRectF(3, 3, 94, 94));
+        path = path.intersected(frame);
+    }
+    return drift::painterPathToSvg(path);
 }
 
 void AppController::addMaskToClip(int trackIndex, int clipIndex, const QString &shape)

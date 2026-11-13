@@ -45,11 +45,23 @@ AndroidBottomSheet {
     // customTemplate is deliberately absent from LayoutPresets.templates — a free size needs
     // width and height fields to mean anything and the desktop dialog has none. This view has
     // them, so it appends it to the category it belongs to.
+    property bool favoritesOnly: false
+    property int favoritesTick: 0
+
     readonly property var categoryTemplates: {
+        void root.favoritesTick
+        const isFav = t => EditorState.isAssetFavorite("layouts", t.id)
+        if (root.favoritesOnly)
+            return LayoutPresets.templates.filter(isFav)
         const out = LayoutPresets.templatesFor(root.activeCategory)
         if (root.activeCategory === LayoutPresets.customTemplate.category)
             out.push(LayoutPresets.customTemplate)
-        return out
+        return out.filter(isFav).concat(out.filter(t => !isFav(t)))
+    }
+
+    Connections {
+        target: EditorState
+        function onAssetFavoritesChanged() { root.favoritesTick++ }
     }
 
     readonly property var selectedTemplate: LayoutPresets.templateById(root.templateId)
@@ -64,6 +76,7 @@ AndroidBottomSheet {
     readonly property int outHeight: outSize.height
 
     function selectCategory(categoryId) {
+        root.favoritesOnly = false
         root.activeCategory = categoryId
         if (root.selectedTemplate.category === categoryId)
             return
@@ -141,6 +154,16 @@ AndroidBottomSheet {
                         rightPadding: Theme.androidPagePadding
                         spacing: Theme.androidTouchGap
 
+                        IconButton {
+                            glyph: Theme.icons.star
+                            variant: "ghost"
+                            buttonSize: Theme.controlHeight
+                            iconSize: 14
+                            active: root.favoritesOnly
+                            tooltip: qsTr("Favorites")
+                            onClicked: root.favoritesOnly = !root.favoritesOnly
+                        }
+
                         Repeater {
                             model: LayoutPresets.categories
 
@@ -148,7 +171,7 @@ AndroidBottomSheet {
                                 required property var modelData
                                 text: modelData.label
                                 chipHeight: Theme.controlHeight
-                                selected: modelData.id === root.activeCategory
+                                selected: modelData.id === root.activeCategory && !root.favoritesOnly
                                 onClicked: root.selectCategory(modelData.id)
                             }
                         }

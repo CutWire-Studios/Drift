@@ -11,6 +11,7 @@ Rectangle {
     property bool importing: false
 
     signal newFolderRequested()
+    signal newTimelineRequested()
     signal importFilesRequested()
     signal importFolderRequested()
     signal collectMediaRequested()
@@ -56,6 +57,15 @@ Rectangle {
             tooltip: qsTr("Create a new folder here")
             anchors.verticalCenter: parent.verticalCenter
             onClicked: root.newFolderRequested()
+        }
+
+        ThemedButton {
+            text: qsTr("New timeline")
+            variant: "ghost"
+            glyph: Theme.icons.layers
+            tooltip: qsTr("Create an empty timeline and open it")
+            anchors.verticalCenter: parent.verticalCenter
+            onClicked: root.newTimelineRequested()
         }
 
         AssetsPanelImportSplit {

@@ -13,12 +13,26 @@ ScrollStrip {
         height: parent.height
         spacing: Theme.spacingSm
 
+        IconButton {
+            anchors.verticalCenter: parent.verticalCenter
+            glyph: Theme.icons.star
+            variant: "ghost"
+            buttonSize: Theme.controlHeightSm
+            iconSize: 14
+            active: inspector.animFavoritesOnly
+            tooltip: qsTr("Favorites")
+            onClicked: inspector.animFavoritesOnly = !inspector.animFavoritesOnly
+        }
+
         ThemedChip {
             anchors.verticalCenter: parent.verticalCenter
             text: qsTr("All")
             variant: "secondary"
-            selected: inspector.animCategory.length === 0
-            onClicked: inspector.animCategory = ""
+            selected: !inspector.animFavoritesOnly && inspector.animCategory.length === 0
+            onClicked: {
+                inspector.animFavoritesOnly = false
+                inspector.animCategory = ""
+            }
         }
 
         Repeater {
@@ -30,8 +44,11 @@ ScrollStrip {
                 text: modelData.label
                 variant: "secondary"
                 accentColor: Theme.categoryColor(index)
-                selected: inspector.animCategory === modelData.id
-                onClicked: inspector.animCategory = modelData.id
+                selected: !inspector.animFavoritesOnly && inspector.animCategory === modelData.id
+                onClicked: {
+                    inspector.animFavoritesOnly = false
+                    inspector.animCategory = modelData.id
+                }
             }
         }
     }

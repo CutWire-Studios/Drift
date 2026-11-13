@@ -90,6 +90,7 @@ Column {
         AssetSearchBar {
             id: search
             placeholderText: qsTr("Search effects")
+            historyKey: "effects"
 
             IconButton {
                 glyph: Theme.icons.wand
@@ -214,8 +215,12 @@ Column {
 
                 delegate: EffectPresetCard {
                     cardSize: presetGrid.cardSize
-                    onApplyRequested: (effectId) => root.applyPreset(effectId)
+                    onApplyRequested: (effectId) => {
+                        search.commitHistory()
+                        root.applyPreset(effectId)
+                    }
                     onDeleteRequested: (preset) => deleteEffectDialog.openFor(preset)
+                    onSearchClearRequested: search.text = ""
                 }
             }
         }

@@ -469,6 +469,7 @@ Item {
             "editFriendlyPill": Theme.c.androidTimeline.editFriendlyPill,
             "editFriendlyPillForeground": Theme.c.androidTimeline.editFriendlyPillForeground,
             "warning": Theme.c.androidTimeline.warning,
+            "loopMarker": Theme.c.androidTimeline.loopMarker,
             "fontFamily": Theme.fontFamily,
             "fontSizeTiny": Theme.fontSizeTiny,
             "fontSizeXs": Theme.fontSizeXs,

@@ -965,6 +965,7 @@ PanelFrame {
                 showActions: hasActions
                 importing: root.importing
                 onNewFolderRequested: newFolderDialog.open()
+                onNewTimelineRequested: EditorState.newTimeline()
                 onImportFilesRequested: root.importMedia()
                 onImportFolderRequested: root.importFolder()
                 onCollectMediaRequested: root.collectMedia()

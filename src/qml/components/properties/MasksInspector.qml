@@ -20,6 +20,9 @@ Item {
     // its rect only ever crops the subject, so the sliders stay hidden and invert plus removal
     // are what is offered.
     readonly property bool isMedia: maskShape === "media"
+    readonly property bool isSequence: maskShape === "sequence"
+    readonly property bool hasBox: ["rectangle", "ellipse", "star", "heart"].indexOf(maskShape) >= 0
+    readonly property bool aspectLocked: !!(clipData.mask && clipData.mask.lockAspect)
 
     height: contentCol.height
     implicitHeight: contentCol.height
@@ -53,9 +56,9 @@ Item {
             id: maskShapeBox
             // Hidden for a media mask: "media" is not one of the shapes below, so currentIndex
             // would clamp to 0 and the control would read "None" next to an applied cutout.
-            visible: !root.isMedia
+            visible: !root.isMedia && !root.isSequence
             width: parent.width
-            model: ["none", "rectangle", "ellipse", "star", "heart", "bars", "freeform"]
+            model: ["none", "rectangle", "ellipse", "star", "heart", "bars", "split", "freeform"]
             // Human labels — the raw ids were shown to the user.
             readonly property var labels: ({
                 "none": qsTr("None"),
@@ -64,6 +67,7 @@ Item {
                 "star": qsTr("Star"),
                 "heart": qsTr("Heart"),
                 "bars": qsTr("Bars"),
+                "split": qsTr("Split"),
                 "freeform": qsTr("Polygon")
             })
             displayText: labels[model[currentIndex]] || model[currentIndex]
@@ -119,7 +123,7 @@ Item {
         // "none" in the combo above.
         ThemedButton {
             visible: root.maskShape !== "none"
-            text: root.isMedia ? qsTr("Remove cutout layer") : qsTr("Remove mask")
+            text: root.isMedia || root.isSequence ? qsTr("Remove cutout layer") : qsTr("Remove mask")
             variant: "destructive"
             glyph: Theme.icons.trash
             onClicked: {
@@ -138,6 +142,11 @@ Item {
             title: qsTr("Feather")
             keywords: "soft edge blur"
         }
+        SearchAnchor {
+            searchId: "masks-roundness"
+            title: qsTr("Roundness")
+            keywords: "rounded corners radius pill"
+        }
         Repeater {
             // `shapes` is what the rasterizer actually reads for each shape (see
             // MaskApplier::maskPath): Bars derives both bands from `h` alone and ignores the
@@ -145,20 +154,22 @@ Item {
             // nothing. Offering those sliders anyway just invites dragging something inert.
             model: [
                 { key: "mask.x", label: qsTr("Center X"), def: 0.5, decimals: 3, min: 0, max: 1,
-                  shapes: ["rectangle", "ellipse", "star", "heart"] },
+                  shapes: ["rectangle", "ellipse", "star", "heart", "split"] },
                 { key: "mask.y", label: qsTr("Center Y"), def: 0.5, decimals: 3, min: 0, max: 1,
-                  shapes: ["rectangle", "ellipse", "star", "heart"] },
+                  shapes: ["rectangle", "ellipse", "star", "heart", "split"] },
                 { key: "mask.w", label: qsTr("Width"), def: 0.6, decimals: 3, min: 0.05, max: 1,
                   shapes: ["rectangle", "ellipse", "star", "heart"] },
                 { key: "mask.h", label: qsTr("Height"), def: 0.6, decimals: 3, min: 0.05, max: 1,
                   shapes: ["rectangle", "ellipse", "star", "heart", "bars"] },
                 { key: "mask.rotation", label: qsTr("Rotation"), def: 0, decimals: 1,
                   min: -180, max: 180, unit: "°",
-                  shapes: ["rectangle", "ellipse", "star", "heart"] },
+                  shapes: ["rectangle", "ellipse", "star", "heart", "split"] },
+                { key: "mask.roundness", label: qsTr("Roundness"), def: 0, decimals: 2,
+                  min: 0, max: 1, percent: true, shapes: ["rectangle"] },
                 // Feather blurs the finished coverage map, so it applies to every shape.
                 { key: "mask.feather", label: qsTr("Feather"), def: 0, decimals: 0,
                   min: 0, max: 64, unit: "px",
-                  shapes: ["rectangle", "ellipse", "star", "heart", "bars", "freeform"] }
+                  shapes: ["rectangle", "ellipse", "star", "heart", "bars", "split", "freeform", "sequence"] }
             ]
             delegate: PropertyKeyframeRow {
                 required property var modelData
@@ -173,10 +184,126 @@ Item {
                     return (entry && entry.points) || []
                 }
                 useSlider: true
+                percent: modelData.percent === true
                 sliderFrom: modelData.min
                 sliderTo: modelData.max
                 unit: modelData.unit || ""
+                aspectPartnerKey: root.aspectLocked && modelData.key === "mask.w" ? "mask.h"
+                                  : (root.aspectLocked && modelData.key === "mask.h" ? "mask.w" : "")
+                aspectPartnerDef: 0.6
             }
+        }
+
+        Row {
+            width: parent.width
+            spacing: 8
+            visible: root.hasBox
+            Text {
+                text: qsTr("Lock aspect ratio")
+                SearchAnchor {
+                    searchId: "masks-lock-aspect"
+                    title: qsTr("Lock aspect ratio")
+                    keywords: "proportional link width height"
+                }
+                color: Theme.c.masksInspector.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            ThemedSwitch {
+                checked: root.aspectLocked
+                onToggled: {
+                    const mask = Object.assign({}, root.clipData.mask || {})
+                    mask.lockAspect = checked
+                    EditorState.setClipMask(EditorState.selectedTrack, EditorState.selectedClip, mask)
+                }
+            }
+        }
+
+        Column {
+            visible: root.isSequence
+            width: parent.width
+            spacing: Theme.spacingSm
+
+            Text {
+                width: parent.width
+                text: qsTr("Matte channel")
+                SearchAnchor {
+                    searchId: "masks-matte-channel"
+                    title: qsTr("Matte channel")
+                    keywords: "alpha luma transparency brightness matte"
+                }
+                color: Theme.c.masksInspector.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            ThemedComboBox {
+                id: matteChannelBox
+                width: parent.width
+                model: ["alpha", "luma"]
+                readonly property var labels: ({
+                    "alpha": qsTr("Alpha (transparency)"),
+                    "luma": qsTr("Luma (brightness)")
+                })
+                displayText: labels[model[currentIndex]] || model[currentIndex]
+                currentIndex: Math.max(0, model.indexOf((root.clipData.mask && root.clipData.mask.mediaChannel) || model[0]))
+                onActivated: {
+                    const mask = Object.assign({}, root.clipData.mask || {})
+                    mask.mediaChannel = model[currentIndex]
+                    EditorState.setClipMask(EditorState.selectedTrack, EditorState.selectedClip, mask)
+                }
+            }
+        }
+
+        Column {
+            visible: root.isSequence
+            width: parent.width
+            spacing: Theme.spacingSm
+
+            Text {
+                width: parent.width
+                text: qsTr("Fit")
+                SearchAnchor {
+                    searchId: "masks-sequence-fit"
+                    title: qsTr("Fit")
+                    keywords: "stretch fill fit scale matte"
+                }
+                color: Theme.c.masksInspector.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            ThemedComboBox {
+                id: sequenceFitBox
+                width: parent.width
+                model: ["stretch", "fit", "fill"]
+                readonly property var labels: ({
+                    "stretch": qsTr("Stretch"),
+                    "fit": qsTr("Fit"),
+                    "fill": qsTr("Fill")
+                })
+                displayText: labels[model[currentIndex]] || model[currentIndex]
+                currentIndex: Math.max(0, model.indexOf((root.clipData.mask && root.clipData.mask.mediaFit) || model[0]))
+                onActivated: {
+                    const mask = Object.assign({}, root.clipData.mask || {})
+                    mask.mediaFit = model[currentIndex]
+                    EditorState.setClipMask(EditorState.selectedTrack, EditorState.selectedClip, mask)
+                }
+            }
+        }
+
+        ThemedButton {
+            visible: root.isSequence
+            text: qsTr("Edit mask timeline")
+            glyph: Theme.icons.layers
+            SearchAnchor {
+                searchId: "masks-edit-timeline"
+                title: qsTr("Edit mask timeline")
+                keywords: "open nested sequence use as mask"
+            }
+            onClicked: EditorState.openSequence(EditorState.masking.maskSequenceId(EditorState.selectedTrack,
+                                                                                    EditorState.selectedClip))
         }
 
         Row {

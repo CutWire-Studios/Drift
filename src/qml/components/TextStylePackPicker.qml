@@ -20,9 +20,25 @@ Item {
         return EditorState.userTextPresets()
     }
 
+    property int favoritesTick: 0
+    readonly property var orderedUserPresets: {
+        void root.favoritesTick
+        return root.favoritesFirst(root.userPresets)
+    }
+    readonly property var orderedPresets: {
+        void root.favoritesTick
+        return root.favoritesFirst(root.presets)
+    }
+
+    function favoritesFirst(list) {
+        const fav = list.filter(p => EditorState.isAssetFavorite("textStyles", p.id))
+        return fav.concat(list.filter(p => !EditorState.isAssetFavorite("textStyles", p.id)))
+    }
+
     Connections {
         target: EditorState
         function onUserTextPresetsChanged() { root.userPresetsTick++ }
+        function onAssetFavoritesChanged() { root.favoritesTick++ }
     }
 
     readonly property string displayLabel: {
@@ -131,6 +147,16 @@ Item {
                         dialog.close()
                     }
                 }
+
+                AssetFavoriteButton {
+                    id: favoriteButton
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.margins: 4
+                    visible: favoriteButton.favorited || packHover.hovered || Theme.touchUi
+                    tabId: "textStyles"
+                    itemId: packCard.modelData.id
+                }
             }
 
             Text {
@@ -190,7 +216,7 @@ Item {
                     Repeater {
                         // Popup content exists while closed; building the tiles only while open keeps
                         // their preview renders from running on every edit behind a closed dialog.
-                        model: dialog.visible ? root.userPresets : []
+                        model: dialog.visible ? root.orderedUserPresets : []
                         delegate: packDelegate
                     }
                 }
@@ -211,7 +237,7 @@ Item {
                     spacing: packColumn.gridSpacing
 
                     Repeater {
-                        model: dialog.visible ? root.presets : []
+                        model: dialog.visible ? root.orderedPresets : []
                         delegate: packDelegate
                     }
                 }

@@ -50,6 +50,7 @@ Item {
         AssetSearchBar {
             id: search
             placeholderText: qsTr("Search shapes")
+            historyKey: "shapes"
         }
 
         Item {

@@ -13,19 +13,31 @@ Rectangle {
     readonly property bool areaPressed: trimMouse.pressed
     readonly property bool areaHovered: trimHover.hovered
     readonly property bool hot: areaContainsMouse || areaHovered || areaPressed
+    // A looping clip's edges add or remove repeats instead of trimming, so they look different.
+    readonly property bool looping: !!owner.clipData.loop
 
     // The pointer gets a hairline to trim to; a finger covers the bar anyway, so on touch it
     // stays full width and keeps its grip.
     width: !owner.touchMode && hot
            ? Math.max(2, owner.trimHandleWidth * 0.35)
            : owner.trimHandleWidth
-    radius: owner.touchMode ? Theme.c.timelineTrimHandle.radius : 0
-    color: owner.showTrimHandles ? Theme.c.timelineTrimHandle.background : "transparent"
+    radius: looping ? width / 2 : owner.touchMode ? Theme.c.timelineTrimHandle.radius : 0
+    color: !owner.showTrimHandles ? "transparent"
+           : looping ? Theme.c.timelineTrimHandle.loopBackground
+                     : Theme.c.timelineTrimHandle.background
     opacity: !owner.showTrimHandles ? 0 : (hot ? 1.0 : 0.85)
     z: 30
 
     TimelineTrimGrip {
-        visible: owner.touchMode && owner.showTrimHandles
+        visible: owner.touchMode && owner.showTrimHandles && !handle.looping
+    }
+
+    IconGlyph {
+        anchors.centerIn: parent
+        visible: handle.looping && owner.showTrimHandles && handle.width >= 8 && parent.height >= 14
+        glyph: Theme.icons.repeat
+        iconSize: Math.min(handle.width - 2, 12)
+        iconColor: Theme.c.timelineTrimHandle.loopForeground
     }
 
     Behavior on opacity {
@@ -42,8 +54,9 @@ Rectangle {
         active: owner.tooltipsActive
         sourceComponent: Component {
             ThemedToolTip {
-                text: handle.edge < 0 ? qsTr("Drag to trim the start")
-                                      : qsTr("Drag to trim the end")
+                text: handle.looping ? qsTr("Drag to repeat the clip")
+                      : handle.edge < 0 ? qsTr("Drag to trim the start")
+                                        : qsTr("Drag to trim the end")
                 visible: owner.showTrimHandles
                          && (handle.areaContainsMouse || handle.areaHovered)
                          && !handle.areaPressed

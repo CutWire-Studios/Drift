@@ -602,6 +602,7 @@ Item {
                     }
                     ThemedNumberField {
                         id: inPointField
+                        enabled: !root.clipData.loop
                         to: 86400
                         unit: "s"
                         width: parent.width
@@ -631,6 +632,7 @@ Item {
                     }
                     ThemedNumberField {
                         id: outPointField
+                        enabled: !root.clipData.loop
                         to: 86400
                         unit: "s"
                         width: parent.width
@@ -640,6 +642,27 @@ Item {
                         onEdited: v => root.applyTrim(root.clipData.inPoint, v)
                     }
                 }
+            }
+
+            ThemedSwitch {
+                visible: root.clipKind === "video" || root.clipKind === "audio"
+                enabled: !root.clipData.hasSpeedCurve
+                text: qsTr("Loop")
+                tooltip: root.clipData.hasSpeedCurve
+                         ? qsTr("A clip with a speed ramp can't loop")
+                         : qsTr("Repeat the trimmed part for as long as the clip runs. Drag the clip's edges past the end to add repeats. Turn it off to change the trim.")
+                SearchAnchor {
+                    searchId: "general-loop"
+                    title: qsTr("Loop")
+                    keywords: "repeat cycle extend"
+                }
+                Binding on checked {
+                    value: {
+                        void root.clipDataRevision
+                        return !!root.clipData.loop
+                    }
+                }
+                onToggled: EditorState.setClipLoop(EditorState.selectedTrack, EditorState.selectedClip, checked)
             }
         }
 

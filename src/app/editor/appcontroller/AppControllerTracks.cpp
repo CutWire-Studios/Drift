@@ -566,20 +566,32 @@ int AppController::trackRowHeight(int trackIndex, const QVariantMap &metrics) co
     }
 
     const double scale = track.heightScale > 0 ? track.heightScale : 1.0;
-    const int laneCount = drift::adjustmentLaneIndexes(m_project, trackIndex).size();
+    const int laneCount = visibleAdjustmentLanes(trackIndex).size();
     const double lanes = laneCount * (track.lanesCollapsed ? metric("ribbon", 3.0) : metric("lane", 20.0));
     return qRound(qMax(20.0, base * scale + lanes));
 }
 
+QList<int> AppController::visibleAdjustmentLanes(int trackIndex) const
+{
+    QList<int> lanes = drift::adjustmentLaneIndexes(m_project, trackIndex);
+    lanes.removeIf([this](int laneIndex) {
+        const QList<drift::Clip> &clips = m_project.tracks().at(laneIndex).clips;
+        return !clips.isEmpty()
+               && std::all_of(clips.cbegin(), clips.cend(),
+                              [](const drift::Clip &clip) { return clip.hiddenInLane; });
+    });
+    return lanes;
+}
+
 int AppController::adjustmentLaneCount(int trackIndex) const
 {
-    return drift::adjustmentLaneIndexes(m_project, trackIndex).size();
+    return visibleAdjustmentLanes(trackIndex).size();
 }
 
 QVariantList AppController::adjustmentLanes(int trackIndex) const
 {
     QVariantList out;
-    for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, trackIndex))
+    for (const int laneIndex : visibleAdjustmentLanes(trackIndex))
         out.append(laneIndex);
     return out;
 }
@@ -606,7 +618,7 @@ QString AppController::adjustmentLaneKind(int laneIndex) const
 QVariantList AppController::adjustmentLaneSpans(int parentIndex) const
 {
     QVariantList out;
-    for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, parentIndex)) {
+    for (const int laneIndex : visibleAdjustmentLanes(parentIndex)) {
         const drift::Track &lane = m_project.tracks().at(laneIndex);
         QVariantList spans;
         for (const drift::Clip &clip : lane.clips) {

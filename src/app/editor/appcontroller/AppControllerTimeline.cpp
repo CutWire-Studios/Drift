@@ -890,9 +890,12 @@ void AppController::applyRippleShift(drift::Track &track, int fromClipIndex, dri
 
 bool AppController::compositeAssetPlaceable(const QVariantMap &asset) const
 {
-    // One level of nesting: a composite goes on the main timeline only.
-    return asset.value(QStringLiteral("kind")).toString() != QLatin1String("composite")
-           || m_project.activeSequenceId().isEmpty();
+    if (asset.value(QStringLiteral("kind")).toString() != QLatin1String("composite"))
+        return true;
+    // One level of nesting: a composite goes on the main timeline only. An empty one has no length
+    // to place.
+    return m_project.activeSequenceId().isEmpty()
+           && m_project.sequenceDurationUs(asset.value(QStringLiteral("sequenceId")).toString()) > 0;
 }
 
 void AppController::addClipFromAsset(int assetIndex)
@@ -2567,6 +2570,28 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
         return out;
     }
 
+    // A looped clip's range is fixed; the edge only changes how much of the repeat is shown, and
+    // the offset moves with it so the passes stay where they were on the timeline.
+    if (clip.loops()) {
+        const drift::TimeUs newDuration = clip.timelineDuration - delta;
+        if (newDuration < drift::minClipDurationUs(m_project.fps()) || newDuration > syntheticClipMaxDurationUs()) {
+            out.outcome = TrimBlocked;
+            return out;
+        }
+        clip.loopOffsetUs = clip.loopedSourceOffset(delta);
+        clip.timelineStart = snappedStart;
+        clip.timelineDuration = newDuration;
+        if (!m_rippleEnabled && trackHasCompleteOverlap(track, clip, &track.clips.at(clipIndex))) {
+            out.outcome = TrimBlocked;
+            return out;
+        }
+        finishRipple(clip);
+        out.clip = clip;
+        out.changed = true;
+        out.outcome = movedOutcome;
+        return out;
+    }
+
     if (delta > 0) {
         if (clip.timelineDuration - delta < drift::minClipDurationUs(m_project.fps())) {
             out.outcome = TrimBlocked;
@@ -2663,7 +2688,7 @@ AppController::TrimComputation AppController::computeTrimRight(int trackIndex, i
             ? static_cast<drift::TimeUs>(llround(static_cast<double>(maxSourceSpan) / clip.effectiveSpeed()))
             : maxSourceSpan;
     const drift::TimeUs maxDuration =
-        syntheticVisual ? syntheticClipMaxDurationUs() : mediaMaxDuration;
+        syntheticVisual || clip.loops() ? syntheticClipMaxDurationUs() : mediaMaxDuration;
     newDuration = qBound(drift::minClipDurationUs(m_project.fps()), newDuration, maxDuration);
 
     // An edge parked against a snap target or against maxDuration has nowhere to go.
@@ -2679,7 +2704,9 @@ AppController::TrimComputation AppController::computeTrimRight(int trackIndex, i
     const drift::TimeUs span =
         clip.hasSpeedCurve() ? trimSourceDelta(clip, newDuration, false, true) : clip.sourceSpanUs();
     const drift::TimeUs maxSrcOut = syntheticVisual ? syntheticClipMaxDurationUs() : maxSource;
-    if (clip.reverse) {
+    if (clip.loops()) {
+        // The range stays as it is; the extra length is more passes through it.
+    } else if (clip.reverse) {
         clip.srcIn = qMax<drift::TimeUs>(0, clip.srcOut - span);
     } else {
         clip.srcOut = qMin(clip.srcIn + span, maxSrcOut);
@@ -2894,6 +2921,11 @@ void AppController::applyClipTrim(drift::Clip &clip, double inPoint, double outP
     const double speed = clip.effectiveSpeed();
     clip.srcIn = clampedIn;
     clip.srcOut = clampedOut;
+    // A looped clip keeps its length; the new range is just what repeats in it.
+    if (clip.loops()) {
+        clip.loopOffsetUs %= newDuration;
+        return;
+    }
     clip.timelineDuration = static_cast<drift::TimeUs>(llround(static_cast<double>(newDuration) / speed));
     clip.timelineDuration = qMax(clip.timelineDuration, drift::minClipDurationUs(m_project.fps()));
     // A ramp re-derives the duration from the range that survived the trim.
@@ -3691,7 +3723,7 @@ bool AppController::rebindClipMedia(int trackIndex, int clipIndex, int assetInde
                 clip.syncDurationFromSpeedCurve();
             }
         } else {
-            clip.srcOut = clip.sourceSpanUs();
+            clip.srcOut = clip.loops() ? span : clip.sourceSpanUs();
             if (available > 0)
                 clip.syncSrcOutFromSpeed(available);
         }

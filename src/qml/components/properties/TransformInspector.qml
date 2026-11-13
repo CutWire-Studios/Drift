@@ -227,6 +227,19 @@ Item {
                 }
 
                 IconButton {
+                    id: posResetButton
+                    anchors.right: posLinkButton.left
+                    anchors.rightMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    buttonSize: 24
+                    iconSize: 14
+                    glyph: Theme.icons.reset
+                    tooltip: qsTr("Reset position")
+                    onClicked: EditorState.resetClipTransformGroup(
+                                   EditorState.selectedTrack, EditorState.selectedClip, "position")
+                }
+
+                IconButton {
                     id: posLinkButton
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
@@ -288,6 +301,19 @@ Item {
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
                     font.weight: Font.Medium
+                }
+
+                IconButton {
+                    id: sizeResetButton
+                    anchors.right: sizeLinkButton.left
+                    anchors.rightMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    buttonSize: 24
+                    iconSize: 14
+                    glyph: Theme.icons.reset
+                    tooltip: qsTr("Reset size")
+                    onClicked: EditorState.resetClipTransformGroup(
+                                   EditorState.selectedTrack, EditorState.selectedClip, "size")
                 }
 
                 IconButton {
@@ -451,12 +477,45 @@ Item {
                 unit: "px"
             }
 
-            Text {
-                text: qsTr("Opacity & rotation")
-                color: Theme.c.transformInspector.foregroundMuted
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-                font.weight: Font.Medium
+            Item {
+                width: parent.width
+                height: rotationResetButton.height
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Opacity & rotation")
+                    color: Theme.c.transformInspector.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                    font.weight: Font.Medium
+                }
+
+                IconButton {
+                    id: opacityResetButton
+                    anchors.right: rotationResetButton.left
+                    anchors.rightMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    buttonSize: 24
+                    iconSize: 14
+                    glyph: Theme.icons.reset
+                    tooltip: qsTr("Reset opacity")
+                    onClicked: EditorState.resetClipTransformGroup(
+                                   EditorState.selectedTrack, EditorState.selectedClip, "opacity")
+                }
+
+                IconButton {
+                    id: rotationResetButton
+                    anchors.right: parent.right
+                    anchors.rightMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    buttonSize: 24
+                    iconSize: 14
+                    glyph: Theme.icons.reset
+                    tooltip: qsTr("Reset rotation")
+                    onClicked: EditorState.resetClipTransformGroup(
+                                   EditorState.selectedTrack, EditorState.selectedClip, "rotation")
+                }
             }
 
             SearchAnchor {
@@ -635,13 +694,13 @@ Item {
 
             SearchAnchor {
                 searchId: "transform-reset-size"
-                title: qsTr("Reset position & size")
-                keywords: "fit"
+                title: qsTr("Reset all")
+                keywords: "fit position size transform opacity rotation flip"
                 target: transformResetButton
             }
             ThemedButton {
                 id: transformResetButton
-                text: qsTr("Reset position & size")
+                text: qsTr("Reset all")
                 onClicked: EditorState.resetClipTransform(
                                EditorState.selectedTrack, EditorState.selectedClip)
             }

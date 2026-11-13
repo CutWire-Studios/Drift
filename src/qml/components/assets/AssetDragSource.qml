@@ -25,7 +25,7 @@ Item {
     // Whether a finger's tap should open the card's menu instead of running its primary action.
     property bool hasContextMenu: false
 
-    signal tapped()
+    signal tapped(int tapCount)
     signal contextMenuRequested()
 
     Drag.active: mouseDrag.active
@@ -49,7 +49,7 @@ Item {
             id: tap
             acceptedButtons: Qt.LeftButton
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
-            onTapped: root.tapped()
+            onTapped: root.tapped(tap.tapCount)
         }
 
         TapHandler {

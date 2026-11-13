@@ -53,6 +53,7 @@ Column {
     AssetSearchBar {
         id: search
         placeholderText: qsTr("Search templates")
+        historyKey: "templates"
 
         IconButton {
             glyph: Theme.icons.folderInput
@@ -153,7 +154,11 @@ Column {
 
             delegate: EffectTemplateCard {
                 cardSize: presetGrid.cardSize
-                onApplyRequested: (templateId) => root.applyTemplate(templateId)
+                onApplyRequested: (templateId) => {
+                    search.commitHistory()
+                    root.applyTemplate(templateId)
+                }
+                onSearchClearRequested: search.text = ""
             }
         }
     }

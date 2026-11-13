@@ -125,6 +125,46 @@ void silencePastEnd(QVector<float> &out, drift::TimeUs winStartUs, drift::TimeUs
     }
 }
 
+// The pass of a looped clip that `timelineUs` falls in, as a plain clip covering just that stretch
+// of the timeline and the matching part of the range.
+drift::Clip loopPassAt(const drift::Clip &clip, drift::TimeUs timelineUs)
+{
+    const drift::TimeUs range = clip.srcOut - clip.srcIn;
+    const double speed = clip.effectiveSpeed();
+    const drift::TimeUs rel = qBound(drift::TimeUs{0}, timelineUs - clip.timelineStart, clip.timelineDuration - 1);
+    const drift::TimeUs pass = (clip.loopOffsetUs + clip.sourceDeltaForTimelineDelta(rel)) / range;
+    const auto boundary = [&](drift::TimeUs k) {
+        return qBound(drift::TimeUs{0},
+                      static_cast<drift::TimeUs>(llround(static_cast<double>(k * range - clip.loopOffsetUs) / speed)),
+                      clip.timelineDuration);
+    };
+    drift::TimeUs startRel = boundary(pass);
+    drift::TimeUs endRel = boundary(pass + 1);
+    // Rounding can put rel a microsecond outside the pass it was computed from.
+    if (rel < startRel)
+        startRel = rel;
+    if (rel >= endRel)
+        endRel = qMin(clip.timelineDuration, rel + 1);
+
+    const drift::TimeUs startOffset = pass == 0 ? clip.loopOffsetUs : 0;
+    const drift::TimeUs endOffset =
+        qMin(range, startOffset + clip.sourceDeltaForTimelineDelta(endRel - startRel));
+
+    drift::Clip out = clip;
+    out.loop = false;
+    out.loopOffsetUs = 0;
+    out.timelineStart = clip.timelineStart + startRel;
+    out.timelineDuration = endRel - startRel;
+    if (clip.reverse) {
+        out.srcOut = clip.srcOut - startOffset;
+        out.srcIn = clip.srcOut - endOffset;
+    } else {
+        out.srcIn = clip.srcIn + startOffset;
+        out.srcOut = clip.srcIn + endOffset;
+    }
+    return out;
+}
+
 } // namespace
 
 QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 streamId,
@@ -147,6 +187,26 @@ void AudioMixer::readClipAudio(QVector<float> &out, const drift::Clip &clip, qui
     std::fill(out.begin(), out.end(), 0.0f);
     if (outFrames <= 0)
         return;
+
+    // A looped clip is read one pass at a time, each as a plain clip; the source jumps back to the
+    // head of the range at every boundary. Transition handles are not extended past its edges.
+    if (clip.loops()) {
+        QVector<float> part;
+        int done = 0;
+        while (done < outFrames) {
+            const drift::TimeUs t = winStartUs + framesToUs(done, sampleRate);
+            if (t >= clip.timelineEnd())
+                break;
+            const drift::Clip pass = loopPassAt(clip, qMax(t, clip.timelineStart));
+            const int64_t untilEnd =
+                ((pass.timelineEnd() - t) * sampleRate + drift::kUsPerSecond - 1) / drift::kUsPerSecond;
+            const int frames = static_cast<int>(std::clamp<int64_t>(untilEnd, 1, outFrames - done));
+            readClipAudio(part, pass, streamId, t, frames, sampleRate, retimer, source, -1, -1);
+            std::copy(part.cbegin(), part.cend(), out.begin() + done * 2);
+            done += frames;
+        }
+        return;
+    }
 
     const drift::TimeUs startUs = audibleStartUs >= 0 ? qMin(audibleStartUs, clip.timelineStart) : clip.timelineStart;
     const drift::TimeUs endUs = audibleEndUs >= 0 ? qMax(audibleEndUs, clip.timelineEnd()) : clip.timelineEnd();

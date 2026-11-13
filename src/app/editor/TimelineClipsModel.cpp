@@ -46,6 +46,11 @@ QList<int> changedRoles(const TimelineClipsModel::Row &a, const TimelineClipsMod
     diff(a.effects != b.effects, TimelineClipsModel::EffectsRole);
     diff(a.audioEffects != b.audioEffects, TimelineClipsModel::AudioEffectsRole);
     diff(a.volumeKeys != b.volumeKeys, TimelineClipsModel::VolumeKeysRole);
+    diff(a.loop != b.loop, TimelineClipsModel::LoopRole);
+    diff(a.loopPeriod != b.loopPeriod, TimelineClipsModel::LoopPeriodRole);
+    diff(a.loopPhase != b.loopPhase, TimelineClipsModel::LoopPhaseRole);
+    diff(a.hiddenInLane != b.hiddenInLane, TimelineClipsModel::HiddenInLaneRole);
+    diff(a.fxLayer != b.fxLayer, TimelineClipsModel::FxLayerRole);
     return roles;
 }
 
@@ -214,6 +219,11 @@ QVariant TimelineClipsModel::data(const QModelIndex &index, int role) const
     case EffectsRole: return row.effects;
     case AudioEffectsRole: return row.audioEffects;
     case VolumeKeysRole: return row.volumeKeys;
+    case LoopRole: return row.loop;
+    case LoopPeriodRole: return row.loopPeriod;
+    case LoopPhaseRole: return row.loopPhase;
+    case HiddenInLaneRole: return row.hiddenInLane;
+    case FxLayerRole: return row.fxLayer;
     default: return {};
     }
 }
@@ -247,6 +257,11 @@ QHash<int, QByteArray> TimelineClipsModel::roleNames() const
         {EffectsRole, "effects"},
         {AudioEffectsRole, "audioEffects"},
         {VolumeKeysRole, "volumeKeys"},
+        {LoopRole, "loop"},
+        {LoopPeriodRole, "loopPeriod"},
+        {LoopPhaseRole, "loopPhase"},
+        {HiddenInLaneRole, "hiddenInLane"},
+        {FxLayerRole, "fxLayer"},
     };
 }
 
