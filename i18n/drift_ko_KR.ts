@@ -5019,16 +5019,8 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
-        <source>My Effects</source>
-        <translation>내 효과</translation>
-    </message>
-    <message>
         <source>Favorites</source>
         <translation>즐겨찾기</translation>
-    </message>
-    <message>
-        <source>Recent</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5565,36 +5557,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>My Audio Effects</source>
         <translation>내 오디오 효과</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>“%1”과(와) 일치하는 오디오 효과가 없습니다.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>아직 즐겨찾기가 없습니다. 프리셋에 별표를 표시하여 여기에 저장하세요.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>이 카테고리에는 항목이 없습니다.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1이(가) 비어 있습니다</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>가져오기</translation>
     </message>
 </context>
 <context>
@@ -8344,18 +8312,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>가져오기</translation>
-    </message>
-    <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
         <translation>조정 레이어 추가 — 클릭하거나 트랙으로 드래그하세요</translation>
     </message>
@@ -8366,18 +8322,6 @@
     <message>
         <source>No effects match “%1”.</source>
         <translation>“%1”과(와) 일치하는 효과가 없습니다.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>아직 즐겨찾기가 없습니다. 프리셋에 별표를 표시하여 여기에 저장하세요.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>이 카테고리에는 항목이 없습니다.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1이(가) 비어 있습니다</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -8583,14 +8527,6 @@
     <message>
         <source>No templates match “%1”.</source>
         <translation>“%1”과(와) 일치하는 템플릿이 없습니다.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star templates to save them here.</source>
-        <translation>아직 즐겨찾기가 없습니다. 템플릿에 별표를 표시하여 여기에 저장하세요.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>이 카테고리에는 항목이 없습니다.</translation>
     </message>
 </context>
 <context>
@@ -11645,26 +11581,6 @@
     <message>
         <source>No LUTs match “%1”.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star LUTs to save them here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>이 카테고리에는 항목이 없습니다.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1이(가) 비어 있습니다</translation>
-    </message>
-    <message>
-        <source>Import a .cube file to add your own.</source>
-        <translation>직접 추가하려면 .cube 파일을 가져오세요.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>가져오기</translation>
     </message>
     <message>
         <source>No LUTs</source>
@@ -17950,6 +17866,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SectionedAssetGrid</name>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">즐겨찾기</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
@@ -20256,14 +20187,6 @@ If playback stutters, try another.</source>
         <source>No shapes match “%1”.</source>
         <translation>“%1”과(와) 일치하는 도형이 없습니다.</translation>
     </message>
-    <message>
-        <source>No favorites yet. Star shapes to save them here.</source>
-        <translation>아직 즐겨찾기가 없습니다. 도형에 별표를 표시하여 여기에 저장하세요.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>이 카테고리에는 항목이 없습니다.</translation>
-    </message>
 </context>
 <context>
     <name>ShellBridge</name>
@@ -22093,24 +22016,8 @@ If playback stutters, try another.</source>
         <translation>“%1”과(와) 일치하는 스티커가 없습니다</translation>
     </message>
     <message>
-        <source>No favorites yet</source>
-        <translation>아직 즐겨찾기가 없습니다</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>이 카테고리에는 항목이 없습니다</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>다른 이름을 입력해 보세요.</translation>
-    </message>
-    <message>
-        <source>Star stickers to save them here.</source>
-        <translation>여기에 저장하려면 스티커에 별표를 표시하세요.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>다른 카테고리를 선택하세요.</translation>
     </message>
 </context>
 <context>
@@ -26575,44 +26482,8 @@ If playback stutters, try another.</source>
         <translation type="unfinished">“%1”과(와) 일치하는 전환이 없습니다</translation>
     </message>
     <message>
-        <source>No custom transitions yet</source>
-        <translation type="unfinished">아직 사용자 정의 전환이 없습니다</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation type="unfinished">아직 즐겨찾기가 없습니다</translation>
-    </message>
-    <message>
-        <source>No recent transitions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">이 카테고리에는 항목이 없습니다</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation type="unfinished">다른 이름을 입력해 보세요.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation type="unfinished">전환에 별표를 표시하여 여기에 저장하세요.</translation>
-    </message>
-    <message>
-        <source>Transitions you add show up here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation type="unfinished">다른 카테고리를 선택하세요.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">가져오기</translation>
     </message>
 </context>
 <context>

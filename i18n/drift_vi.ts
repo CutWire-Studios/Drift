@@ -5019,16 +5019,8 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
-        <source>My Effects</source>
-        <translation>Hiệu ứng của tôi</translation>
-    </message>
-    <message>
         <source>Favorites</source>
         <translation>Yêu thích</translation>
-    </message>
-    <message>
-        <source>Recent</source>
-        <translation>Gần đây</translation>
     </message>
 </context>
 <context>
@@ -5565,36 +5557,12 @@
         <translation>Cài đặt hiệu ứng âm thanh tùy chỉnh từ .driftfx hoặc zip được tạo trong Drift Forge</translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation>Chưa có gì ở đây. Nhập tệp .driftfx hoặc tệp nén của Drift Forge để thêm tệp của riêng bạn.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation>Nhập tệp .driftfx hoặc zip được tạo trong Drift Forge để thêm tệp của riêng bạn.</translation>
-    </message>
-    <message>
         <source>My Audio Effects</source>
         <translation>Hiệu ứng âm thanh của tôi</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>Không có hiệu ứng âm thanh nào khớp với “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>Không có yêu thích nào. Đánh dấu sao preset để lưu chúng tại đây.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Không có gì trong danh mục này.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 đang rỗng</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Nhập</translation>
     </message>
 </context>
 <context>
@@ -8344,18 +8312,6 @@
         <translation>Cài đặt hiệu ứng tùy chỉnh hoặc chuyển tiếp từ .driftfx hoặc zip được tạo trong Drift Forge</translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation>Chưa có gì ở đây. Nhập tệp .driftfx hoặc tệp nén của Drift Forge để thêm tệp của riêng bạn.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation>Nhập tệp .driftfx hoặc zip được tạo trong Drift Forge để thêm tệp của riêng bạn.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Nhập</translation>
-    </message>
-    <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
         <translation>Thêm lớp điều chỉnh — nhấp, hoặc kéo nó vào một track</translation>
     </message>
@@ -8366,18 +8322,6 @@
     <message>
         <source>No effects match “%1”.</source>
         <translation>Không có hiệu ứng nào khớp với “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>Chưa có mục yêu thích nào. Gắn dấu sao cho các preset để lưu chúng ở đây.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Không có gì trong danh mục này.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 đang rỗng</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -8583,14 +8527,6 @@
     <message>
         <source>No templates match “%1”.</source>
         <translation>Không có mẫu nào khớp với “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star templates to save them here.</source>
-        <translation>Chưa có mục yêu thích nào. Gắn dấu sao cho các mẫu để lưu chúng ở đây.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Không có gì trong danh mục này.</translation>
     </message>
 </context>
 <context>
@@ -11645,26 +11581,6 @@
     <message>
         <source>No LUTs match “%1”.</source>
         <translation>Không có LUT nào khớp với “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star LUTs to save them here.</source>
-        <translation>Chưa có mục yêu thích nào. Đánh dấu sao LUT để lưu chúng ở đây.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Không có gì trong danh mục này.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 đang rỗng</translation>
-    </message>
-    <message>
-        <source>Import a .cube file to add your own.</source>
-        <translation>Nhập tệp .cube để thêm giao diện màu của riêng bạn.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Nhập</translation>
     </message>
     <message>
         <source>No LUTs</source>
@@ -17958,6 +17874,21 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>SectionedAssetGrid</name>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Yêu thích</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished">Gần đây</translation>
+    </message>
+</context>
+<context>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
@@ -20264,14 +20195,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <source>No shapes match “%1”.</source>
         <translation>Không có hình dạng nào khớp với “%1”.</translation>
     </message>
-    <message>
-        <source>No favorites yet. Star shapes to save them here.</source>
-        <translation>Chưa có mục yêu thích nào. Đánh dấu sao cho hình dạng để lưu chúng vào đây.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Không có gì trong danh mục này.</translation>
-    </message>
 </context>
 <context>
     <name>ShellBridge</name>
@@ -22102,24 +22025,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Không có nhãn dán nào khớp với “%1”</translation>
     </message>
     <message>
-        <source>No favorites yet</source>
-        <translation>Chưa có sở thích nào</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Không có gì trong danh mục này</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>Hãy thử một tên khác.</translation>
-    </message>
-    <message>
-        <source>Star stickers to save them here.</source>
-        <translation>Đánh dấu sao và lưu chúng lại ở đây.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Chọn một danh mục khác.</translation>
     </message>
 </context>
 <context>
@@ -26584,44 +26491,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Không có hiệu ứng chuyển cảnh nào khớp với “%1”</translation>
     </message>
     <message>
-        <source>No custom transitions yet</source>
-        <translation>Chưa có chuyển cảnh tùy chỉnh nào</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>Chưa có sở thích nào</translation>
-    </message>
-    <message>
-        <source>No recent transitions</source>
-        <translation>Không có chuyển cảnh gần đây</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Không có gì trong danh mục này</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>Hãy thử một tên khác.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation>Nhập tệp .driftfx hoặc zip được tạo trong Drift Forge để thêm tệp của riêng bạn.</translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>Đánh dấu sao hiệu ứng chuyển cảnh để lưu chúng ở đây.</translation>
-    </message>
-    <message>
-        <source>Transitions you add show up here.</source>
-        <translation>Các chuyển cảnh bạn thêm sẽ xuất hiện ở đây.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Chọn một danh mục khác.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Nhập</translation>
     </message>
 </context>
 <context>

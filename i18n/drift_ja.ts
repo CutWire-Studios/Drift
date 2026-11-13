@@ -5019,16 +5019,8 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
-        <source>My Effects</source>
-        <translation>マイエフェクト</translation>
-    </message>
-    <message>
         <source>Favorites</source>
         <translation>お気に入り</translation>
-    </message>
-    <message>
-        <source>Recent</source>
-        <translation>最近使用</translation>
     </message>
 </context>
 <context>
@@ -5565,36 +5557,12 @@
         <translation>Drift Forge で作成した .driftfx または zip から、カスタムオーディオエフェクトまたはエフェクトをインストールします</translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation>まだ何もありません。.driftfx または Drift Forge の zip をインポートして、独自のものを追加できます。</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation>Drift Forge で作成した .driftfx または zip をインポートして、独自のものを追加できます。</translation>
-    </message>
-    <message>
         <source>My Audio Effects</source>
         <translation>マイオーディオエフェクト</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>「%1」に一致するオーディオエフェクトはありません。</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>お気に入りはまだありません。プリセットにスターを付けてここに保存します。</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>このカテゴリには何もありません。</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 は空です</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>インポート</translation>
     </message>
 </context>
 <context>
@@ -8344,18 +8312,6 @@
         <translation>Drift Forge で作成した .driftfx または zip から、カスタムエフェクトまたはトランジションをインストールします</translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation>まだ何もありません。.driftfx または Drift Forge の zip をインポートして、独自のものを追加できます。</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation>Drift Forge で作成した .driftfx または zip をインポートして、独自のものを追加できます。</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>インポート</translation>
-    </message>
-    <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
         <translation>調整レイヤーを追加 — クリック、またはトラックにドラッグ</translation>
     </message>
@@ -8366,18 +8322,6 @@
     <message>
         <source>No effects match “%1”.</source>
         <translation>「%1」に一致するエフェクトはありません。</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>お気に入りはまだありません。プリセットにスターを付けてここに保存します。</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>このカテゴリには何もありません。</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 は空です</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -8583,14 +8527,6 @@
     <message>
         <source>No templates match “%1”.</source>
         <translation>「%1」に一致するテンプレートはありません。</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star templates to save them here.</source>
-        <translation>お気に入りはまだありません。テンプレートにスターを付けてここに保存します。</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>このカテゴリには何もありません。</translation>
     </message>
 </context>
 <context>
@@ -11645,26 +11581,6 @@
     <message>
         <source>No LUTs match “%1”.</source>
         <translation>「%1」に一致する LUT はありません。</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star LUTs to save them here.</source>
-        <translation>お気に入りはまだありません。LUT に星を付けると、ここに保存されます。</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>このカテゴリには何もありません。</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 は空です</translation>
-    </message>
-    <message>
-        <source>Import a .cube file to add your own.</source>
-        <translation>.cube ファイルをインポートして独自のルックを追加します。</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>インポート</translation>
     </message>
     <message>
         <source>No LUTs</source>
@@ -17958,6 +17874,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SectionedAssetGrid</name>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">お気に入り</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished">最近使用</translation>
+    </message>
+</context>
+<context>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
@@ -20264,14 +20195,6 @@ If playback stutters, try another.</source>
         <source>No shapes match “%1”.</source>
         <translation>「%1」に一致するシェイプはありません。</translation>
     </message>
-    <message>
-        <source>No favorites yet. Star shapes to save them here.</source>
-        <translation>お気に入りはまだありません。シェイプにスターを付けてここに保存します。</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>このカテゴリには何もありません。</translation>
-    </message>
 </context>
 <context>
     <name>ShellBridge</name>
@@ -22102,24 +22025,8 @@ If playback stutters, try another.</source>
         <translation>「%1」に一致するスタンプはありません</translation>
     </message>
     <message>
-        <source>No favorites yet</source>
-        <translation>お気に入りはまだありません</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>このカテゴリには何もありません</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>別の名前を試してください。</translation>
-    </message>
-    <message>
-        <source>Star stickers to save them here.</source>
-        <translation>スタンプにスターを付けてここに保存します。</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>別のカテゴリを選択してください。</translation>
     </message>
 </context>
 <context>
@@ -26584,44 +26491,8 @@ If playback stutters, try another.</source>
         <translation>「%1」に一致するトランジションはありません</translation>
     </message>
     <message>
-        <source>No custom transitions yet</source>
-        <translation>カスタムトランジションはまだありません</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>お気に入りはまだありません</translation>
-    </message>
-    <message>
-        <source>No recent transitions</source>
-        <translation>最近のトランジションはありません</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>このカテゴリには何もありません</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>別の名前を試してください。</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation>Drift Forge で作成した .driftfx または zip をインポートして、独自のものを追加できます。</translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>トランジションにスターを付けてここに保存します。</translation>
-    </message>
-    <message>
-        <source>Transitions you add show up here.</source>
-        <translation>追加したトランジションがここに表示されます。</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>別のカテゴリを選択してください。</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>インポート</translation>
     </message>
 </context>
 <context>

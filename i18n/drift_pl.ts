@@ -5047,16 +5047,8 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
-        <source>My Effects</source>
-        <translation>Moje efekty</translation>
-    </message>
-    <message>
         <source>Favorites</source>
         <translation>Ulubione</translation>
-    </message>
-    <message>
-        <source>Recent</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5611,36 +5603,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>My Audio Effects</source>
         <translation>Moje efekty dźwiękowe</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>Brak efektów audio pasujących do „%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>Brak jeszcze ulubionych. Oznacz gwiazdką presety, aby je tutaj zapisać.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Nic w tej kategorii.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 jest pusty</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Importuj</translation>
     </message>
 </context>
 <context>
@@ -8410,18 +8378,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Importuj</translation>
-    </message>
-    <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
         <translation>Dodaj warstwę dopasowania — kliknij lub przeciągnij ją na ścieżkę</translation>
     </message>
@@ -8432,18 +8388,6 @@
     <message>
         <source>No effects match “%1”.</source>
         <translation>Brak efektów pasujących do „%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>Brak jeszcze ulubionych. Oznacz gwiazdką presety, aby je tutaj zapisać.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Nic w tej kategorii.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 jest pusty</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -8651,14 +8595,6 @@
     <message>
         <source>No templates match “%1”.</source>
         <translation>Brak szablonów pasujących do „%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star templates to save them here.</source>
-        <translation>Brak jeszcze ulubionych. Oznacz gwiazdką szablony, aby je tutaj zapisać.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Nic w tej kategorii.</translation>
     </message>
 </context>
 <context>
@@ -11729,26 +11665,6 @@
     <message>
         <source>No LUTs match “%1”.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star LUTs to save them here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Nic w tej kategorii.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 jest pusty</translation>
-    </message>
-    <message>
-        <source>Import a .cube file to add your own.</source>
-        <translation>Zaimportuj plik .cube, aby dodać własny.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Importuj</translation>
     </message>
     <message>
         <source>No LUTs</source>
@@ -18102,6 +18018,21 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
 </context>
 <context>
+    <name>SectionedAssetGrid</name>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Ulubione</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
@@ -20408,14 +20339,6 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <source>No shapes match “%1”.</source>
         <translation>Brak kształtów pasujących do „%1”.</translation>
     </message>
-    <message>
-        <source>No favorites yet. Star shapes to save them here.</source>
-        <translation>Brak jeszcze ulubionych. Oznacz gwiazdką kształty, aby je tutaj zapisać.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Nic w tej kategorii.</translation>
-    </message>
 </context>
 <context>
     <name>ShellBridge</name>
@@ -22250,24 +22173,8 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Brak naklejek pasujących do „%1”</translation>
     </message>
     <message>
-        <source>No favorites yet</source>
-        <translation>Brak jeszcze ulubionych</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Nic w tej kategorii</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>Spróbuj innej nazwy.</translation>
-    </message>
-    <message>
-        <source>Star stickers to save them here.</source>
-        <translation>Oznacz gwiazdką naklejki, aby je tutaj zapisać.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Wybierz inną kategorię.</translation>
     </message>
 </context>
 <context>
@@ -26760,44 +26667,8 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation type="unfinished">Brak przejść pasujących do „%1”</translation>
     </message>
     <message>
-        <source>No custom transitions yet</source>
-        <translation type="unfinished">Brak niestandardowych przejść</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation type="unfinished">Brak jeszcze ulubionych</translation>
-    </message>
-    <message>
-        <source>No recent transitions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">Nic w tej kategorii</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation type="unfinished">Spróbuj innej nazwy.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation type="unfinished">Oznacz gwiazdką przejścia, aby je tutaj zapisać.</translation>
-    </message>
-    <message>
-        <source>Transitions you add show up here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation type="unfinished">Wybierz inną kategorię.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">Importuj</translation>
     </message>
 </context>
 <context>

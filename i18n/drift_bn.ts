@@ -5033,16 +5033,8 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
-        <source>My Effects</source>
-        <translation>আমার ইফেক্ট</translation>
-    </message>
-    <message>
         <source>Favorites</source>
         <translation>প্রিয়</translation>
-    </message>
-    <message>
-        <source>Recent</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5588,36 +5580,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>My Audio Effects</source>
         <translation>আমার অডিও ইফেক্ট</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>কোন অডিও ইফেক্ট মেলে না “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>এখনও কোন পছন্দসই নেই. তারা এখানে সংরক্ষণ করতে প্রিসেট.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>এই বিভাগে কিছুই নেই.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 খালি</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>ইমপোর্ট</translation>
     </message>
 </context>
 <context>
@@ -8377,18 +8345,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>ইমপোর্ট</translation>
-    </message>
-    <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
         <translation>অ্যাডজাস্টমেন্ট লেয়ার যোগ করুন — ক্লিক করুন, বা কোনো ট্র্যাকে টেনে আনুন</translation>
     </message>
@@ -8399,18 +8355,6 @@
     <message>
         <source>No effects match “%1”.</source>
         <translation>কোন ইফেক্ট মেলে না “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>এখনও কোন পছন্দসই নেই. তারা এখানে সংরক্ষণ করতে প্রিসেট.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>এই বিভাগে কিছুই নেই.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 খালি</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -8617,14 +8561,6 @@
     <message>
         <source>No templates match “%1”.</source>
         <translation>“%1” এর সাথে কোনো টেমপ্লেট মেলে না.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star templates to save them here.</source>
-        <translation>এখনও কোন পছন্দসই নেই. স্টার টেমপ্লেট সেগুলি এখানে সংরক্ষণ করুন.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>এই বিভাগে কিছুই নেই.</translation>
     </message>
 </context>
 <context>
@@ -11687,26 +11623,6 @@
     <message>
         <source>No LUTs match “%1”.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star LUTs to save them here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>এই বিভাগে কিছুই নেই.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 খালি</translation>
-    </message>
-    <message>
-        <source>Import a .cube file to add your own.</source>
-        <translation>আপনার নিজস্ব যোগ করতে একটি .cube ফাইল ইম্পোর্ট করুন।</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>ইমপোর্ট</translation>
     </message>
     <message>
         <source>No LUTs</source>
@@ -18029,6 +17945,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SectionedAssetGrid</name>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">প্রিয়</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
@@ -20335,14 +20266,6 @@ If playback stutters, try another.</source>
         <source>No shapes match “%1”.</source>
         <translation>“%1”-এর সঙ্গে মেলে এমন কোনো আকৃতি নেই.</translation>
     </message>
-    <message>
-        <source>No favorites yet. Star shapes to save them here.</source>
-        <translation>এখনও কোনো পছন্দের আকৃতি নেই। এখানে রাখতে আকৃতিতে তারকা চিহ্ন দিন.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>এই বিভাগে কিছুই নেই.</translation>
-    </message>
 </context>
 <context>
     <name>ShellBridge</name>
@@ -22175,24 +22098,8 @@ If playback stutters, try another.</source>
         <translation>কোন স্টিকার মেলে না “%1”</translation>
     </message>
     <message>
-        <source>No favorites yet</source>
-        <translation>এখনও কোন পছন্দসই নেই।</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>এই বিভাগে কিছু নেই</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>একটি ভিন্ন নাম চেষ্টা করুন.</translation>
-    </message>
-    <message>
-        <source>Star stickers to save them here.</source>
-        <translation>স্টার স্টিকার এখানে সেভ করতে.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>অন্য বিভাগ বেছে নিন.</translation>
     </message>
 </context>
 <context>
@@ -26671,44 +26578,8 @@ If playback stutters, try another.</source>
         <translation type="unfinished">কোন ট্রানজিশন মেলে না “%1”</translation>
     </message>
     <message>
-        <source>No custom transitions yet</source>
-        <translation type="unfinished">এখনো কোনো কাস্টম ট্রানজিশন নেই</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation type="unfinished">এখনও কোন পছন্দসই নেই।</translation>
-    </message>
-    <message>
-        <source>No recent transitions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">এই বিভাগে কিছু নেই</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation type="unfinished">একটি ভিন্ন নাম চেষ্টা করুন.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation type="unfinished">স্টার ট্রানজিশন সেগুলিকে এখানে সংরক্ষণ করুন.</translation>
-    </message>
-    <message>
-        <source>Transitions you add show up here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation type="unfinished">অন্য বিভাগ বেছে নিন.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">ইমপোর্ট</translation>
     </message>
 </context>
 <context>

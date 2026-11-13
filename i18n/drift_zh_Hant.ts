@@ -5019,16 +5019,8 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
-        <source>My Effects</source>
-        <translation>我的效果</translation>
-    </message>
-    <message>
         <source>Favorites</source>
         <translation>收藏</translation>
-    </message>
-    <message>
-        <source>Recent</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5565,36 +5557,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>My Audio Effects</source>
         <translation>我的音效</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>沒有符合“%1”的音效。</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>暫無收藏。收藏預設即可儲存在這裡。</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>此分類下沒有內容。</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 為空</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>導入</translation>
     </message>
 </context>
 <context>
@@ -8344,18 +8312,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>導入</translation>
-    </message>
-    <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
         <translation>添加調整圖層 — 點擊，或將其拖到軌道上</translation>
     </message>
@@ -8366,18 +8322,6 @@
     <message>
         <source>No effects match “%1”.</source>
         <translation>沒有符合“%1”的效果。</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>暫無收藏。為預設加星標即可儲存到這裡。</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>此分類下暫無內容。</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 為空</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -8583,14 +8527,6 @@
     <message>
         <source>No templates match “%1”.</source>
         <translation>沒有符合“%1”的模板。</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star templates to save them here.</source>
-        <translation>暫無收藏。為模板加星標即可儲存到這裡。</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>此分類下暫無內容。</translation>
     </message>
 </context>
 <context>
@@ -11645,26 +11581,6 @@
     <message>
         <source>No LUTs match “%1”.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star LUTs to save them here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>該分類下暫無內容。</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 為空</translation>
-    </message>
-    <message>
-        <source>Import a .cube file to add your own.</source>
-        <translation>導入 .cube 檔案即可添加自己的調色風格。</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>導入</translation>
     </message>
     <message>
         <source>No LUTs</source>
@@ -17958,6 +17874,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SectionedAssetGrid</name>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">收藏</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
@@ -20264,14 +20195,6 @@ If playback stutters, try another.</source>
         <source>No shapes match “%1”.</source>
         <translation>沒有與“%1”符合的形狀。</translation>
     </message>
-    <message>
-        <source>No favorites yet. Star shapes to save them here.</source>
-        <translation>暫無收藏，為形狀加星即可儲存到這裡。</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>此分類暫無內容。</translation>
-    </message>
 </context>
 <context>
     <name>ShellBridge</name>
@@ -22102,24 +22025,8 @@ If playback stutters, try another.</source>
         <translation>沒有與 &quot;%1&quot; 符合的貼紙</translation>
     </message>
     <message>
-        <source>No favorites yet</source>
-        <translation>暫無收藏</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>此類別中沒有內容</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>請嘗試其他名稱。</translation>
-    </message>
-    <message>
-        <source>Star stickers to save them here.</source>
-        <translation>將貼紙標記為星標以在此儲存。</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>請選擇其他分類。</translation>
     </message>
 </context>
 <context>
@@ -26584,44 +26491,8 @@ If playback stutters, try another.</source>
         <translation type="unfinished">沒有與 &quot;%1&quot; 符合的轉場</translation>
     </message>
     <message>
-        <source>No custom transitions yet</source>
-        <translation type="unfinished">暫無自訂轉場</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation type="unfinished">暫無收藏</translation>
-    </message>
-    <message>
-        <source>No recent transitions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">此類別中沒有內容</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation type="unfinished">星標轉場以儲存至此。</translation>
-    </message>
-    <message>
-        <source>Transitions you add show up here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation type="unfinished">請選擇其他分類。</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">導入</translation>
     </message>
 </context>
 <context>

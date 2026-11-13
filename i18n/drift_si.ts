@@ -5033,16 +5033,8 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
-        <source>My Effects</source>
-        <translation>මගේ ප්‍රයෝග</translation>
-    </message>
-    <message>
         <source>Favorites</source>
         <translation>ප්‍රියතමයන්</translation>
-    </message>
-    <message>
-        <source>Recent</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5588,36 +5580,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>My Audio Effects</source>
         <translation>මගේ ශ්‍රව්‍ය ප්‍රයෝග</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>“%1” ට ගැලපෙන ශ්‍රව්‍ය ප්‍රයෝග නැත.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>තවමත් ප්‍රියතමයන් නැත. මෙහි සුරැකීමට පෙරසැකසුම් තරු ලකුණු කරන්න.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 හිස්ය</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>ආයාත කරන්න</translation>
     </message>
 </context>
 <context>
@@ -8377,18 +8345,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>ආයාත කරන්න</translation>
-    </message>
-    <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
         <translation>ගැලපුම් ස්තරය එක් කරන්න — ක්ලික් කරන්න, නැතහොත් එය ට්‍රැක් එකක් මතට ඇදගෙන යන්න</translation>
     </message>
@@ -8399,18 +8355,6 @@
     <message>
         <source>No effects match “%1”.</source>
         <translation>“%1” ට ගැලපෙන ප්‍රයෝග නැත.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>තවමත් ප්‍රියතමයන් නැත. මෙහි සුරැකීමට පෙරසැකසුම් තරු ලකුණු කරන්න.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 හිස්ය</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -8617,14 +8561,6 @@
     <message>
         <source>No templates match “%1”.</source>
         <translation>“%1” ට ගැලපෙන ආකෘති නැත.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star templates to save them here.</source>
-        <translation>තවමත් ප්‍රියතමයන් නැත. මෙහි සුරැකීමට ආකෘති තරු ලකුණු කරන්න.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත.</translation>
     </message>
 </context>
 <context>
@@ -11687,26 +11623,6 @@
     <message>
         <source>No LUTs match “%1”.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star LUTs to save them here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 හිස්ය</translation>
-    </message>
-    <message>
-        <source>Import a .cube file to add your own.</source>
-        <translation>ඔබේම දෑ එක් කිරීමට .cube ගොනුවක් ආයාත කරන්න.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>ආයාත කරන්න</translation>
     </message>
     <message>
         <source>No LUTs</source>
@@ -18029,6 +17945,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SectionedAssetGrid</name>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">ප්‍රියතමයන්</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
@@ -20335,14 +20266,6 @@ If playback stutters, try another.</source>
         <source>No shapes match “%1”.</source>
         <translation>“%1” ට ගැලපෙන හැඩතල නැත.</translation>
     </message>
-    <message>
-        <source>No favorites yet. Star shapes to save them here.</source>
-        <translation>තවමත් ප්‍රියතමයන් නැත. මෙහි සුරැකීමට හැඩතල තරු ලකුණු කරන්න.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත.</translation>
-    </message>
 </context>
 <context>
     <name>ShellBridge</name>
@@ -22175,24 +22098,8 @@ If playback stutters, try another.</source>
         <translation>“%1” ට ගැලපෙන ස්ටිකර් නැත</translation>
     </message>
     <message>
-        <source>No favorites yet</source>
-        <translation>තවමත් ප්‍රියතමයන් නැත</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>වෙනත් නමක් උත්සාහ කරන්න.</translation>
-    </message>
-    <message>
-        <source>Star stickers to save them here.</source>
-        <translation>මෙහි සුරැකීමට ස්ටිකර් තරු ලකුණු කරන්න.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>වෙනත් ප්‍රවර්ගයක් තෝරන්න.</translation>
     </message>
 </context>
 <context>
@@ -26671,44 +26578,8 @@ If playback stutters, try another.</source>
         <translation type="unfinished">“%1” ට ගැලපෙන සංක්‍රාන්ති නැත</translation>
     </message>
     <message>
-        <source>No custom transitions yet</source>
-        <translation type="unfinished">මෙතෙක් අභිරුචි සංක්‍රාන්ති නැත</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation type="unfinished">තවමත් ප්‍රියතමයන් නැත</translation>
-    </message>
-    <message>
-        <source>No recent transitions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">මෙම ප්‍රවර්ගයේ කිසිවක් නැත</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation type="unfinished">වෙනත් නමක් උත්සාහ කරන්න.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation type="unfinished">මෙහි සුරැකීමට සංක්‍රාන්ති තරු ලකුණු කරන්න.</translation>
-    </message>
-    <message>
-        <source>Transitions you add show up here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation type="unfinished">වෙනත් ප්‍රවර්ගයක් තෝරන්න.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">ආයාත කරන්න</translation>
     </message>
 </context>
 <context>

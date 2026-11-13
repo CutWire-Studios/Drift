@@ -5089,16 +5089,8 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
-        <source>My Effects</source>
-        <translation>تأثيراتي</translation>
-    </message>
-    <message>
         <source>Favorites</source>
         <translation>المفضلة</translation>
-    </message>
-    <message>
-        <source>Recent</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5680,36 +5672,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>My Audio Effects</source>
         <translation>تأثيراتي الصوتية</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>لا توجد تأثيرات صوتية تطابق “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>لا توجد عناصر مفضلة بعد. ميّز الإعدادات المسبقة بنجمة لحفظها هنا.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>لا يوجد شيء في هذه الفئة.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 فارغ</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>استيراد</translation>
     </message>
 </context>
 <context>
@@ -8509,18 +8477,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>استيراد</translation>
-    </message>
-    <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
         <translation>إضافة طبقة ضبط — انقر عليها أو اسحبها إلى مسار</translation>
     </message>
@@ -8531,18 +8487,6 @@
     <message>
         <source>No effects match “%1”.</source>
         <translation>لا توجد تأثيرات تطابق “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>لا توجد مفضلات بعد. ميّز الإعدادات المسبقة بنجمة لحفظها هنا.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>لا يوجد شيء في هذه الفئة.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 فارغ</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -8753,14 +8697,6 @@
     <message>
         <source>No templates match “%1”.</source>
         <translation>لا توجد قوالب تطابق “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star templates to save them here.</source>
-        <translation>لا توجد عناصر مفضلة بعد. ميّز القوالب بنجمة لحفظها هنا.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>لا يوجد شيء في هذه الفئة.</translation>
     </message>
 </context>
 <context>
@@ -11855,26 +11791,6 @@
     <message>
         <source>No LUTs match “%1”.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star LUTs to save them here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>لا يوجد شيء في هذه الفئة.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>%1 فارغ</translation>
-    </message>
-    <message>
-        <source>Import a .cube file to add your own.</source>
-        <translation>استورد ملف .cube لإضافة مظاهرك الخاصة.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>استيراد</translation>
     </message>
     <message>
         <source>No LUTs</source>
@@ -18317,6 +18233,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SectionedAssetGrid</name>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">المفضلة</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
@@ -20623,14 +20554,6 @@ If playback stutters, try another.</source>
         <source>No shapes match “%1”.</source>
         <translation>لا توجد أشكال تطابق “%1”.</translation>
     </message>
-    <message>
-        <source>No favorites yet. Star shapes to save them here.</source>
-        <translation>لا توجد عناصر مفضلة بعد. ميّز الأشكال بنجمة لحفظها هنا.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>لا يوجد شيء في هذه الفئة.</translation>
-    </message>
 </context>
 <context>
     <name>ShellBridge</name>
@@ -22471,24 +22394,8 @@ If playback stutters, try another.</source>
         <translation>لا توجد ملصقات تطابق “%1”</translation>
     </message>
     <message>
-        <source>No favorites yet</source>
-        <translation>لا توجد مفضلات بعد</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>لا يوجد شيء في هذه الفئة</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>جرب اسمًا آخر.</translation>
-    </message>
-    <message>
-        <source>Star stickers to save them here.</source>
-        <translation>ميّز الملصقات بنجمة لحفظها هنا.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>اختر فئة أخرى.</translation>
     </message>
 </context>
 <context>
@@ -27023,44 +26930,8 @@ If playback stutters, try another.</source>
         <translation type="unfinished">لا توجد انتقالات تطابق “%1”</translation>
     </message>
     <message>
-        <source>No custom transitions yet</source>
-        <translation type="unfinished">لا توجد انتقالات مخصصة بعد</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation type="unfinished">لا توجد مفضلات بعد</translation>
-    </message>
-    <message>
-        <source>No recent transitions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">لا يوجد شيء في هذه الفئة</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation type="unfinished">ميز الانتقالات بنجمة لحفظها هنا.</translation>
-    </message>
-    <message>
-        <source>Transitions you add show up here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation type="unfinished">اختر فئة أخرى.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">استيراد</translation>
     </message>
 </context>
 <context>

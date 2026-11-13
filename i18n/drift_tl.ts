@@ -5033,16 +5033,8 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
-        <source>My Effects</source>
-        <translation>Aking mga Epekto</translation>
-    </message>
-    <message>
         <source>Favorites</source>
         <translation>Mga Paborito</translation>
-    </message>
-    <message>
-        <source>Recent</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5588,36 +5580,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>My Audio Effects</source>
         <translation>Aking mga Epektong Audio</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>Walang epektong audio na tumutugma sa “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>Wala pang mga paborito. Lagyan ng bituin ang mga preset upang i-save ang mga ito rito.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Walang laman sa kategoryang ito.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>Walang laman ang %1</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Mag-import</translation>
     </message>
 </context>
 <context>
@@ -8377,18 +8345,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Mag-import</translation>
-    </message>
-    <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
         <translation>Magdagdag ng adjustment layer — i-click, o i-drag ito sa isang track</translation>
     </message>
@@ -8399,18 +8355,6 @@
     <message>
         <source>No effects match “%1”.</source>
         <translation>Walang mga epektong tumutugma sa “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star presets to save them here.</source>
-        <translation>Wala pang mga paborito. Lagyan ng bituin ang mga preset upang i-save ang mga ito rito.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Walang laman sa kategoryang ito.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>Walang laman ang %1</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -8617,14 +8561,6 @@
     <message>
         <source>No templates match “%1”.</source>
         <translation>Walang mga template na tumutugma sa “%1”.</translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star templates to save them here.</source>
-        <translation>Wala pang mga paborito. Lagyan ng bituin ang mga template upang i-save ang mga ito rito.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Walang laman sa kategoryang ito.</translation>
     </message>
 </context>
 <context>
@@ -11687,26 +11623,6 @@
     <message>
         <source>No LUTs match “%1”.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No favorites yet. Star LUTs to save them here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Walang laman sa kategoryang ito.</translation>
-    </message>
-    <message>
-        <source>%1 is empty</source>
-        <translation>Walang laman ang %1</translation>
-    </message>
-    <message>
-        <source>Import a .cube file to add your own.</source>
-        <translation>Mag-import ng .cube file upang magdagdag ng sarili mo.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Mag-import</translation>
     </message>
     <message>
         <source>No LUTs</source>
@@ -18030,6 +17946,21 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>SectionedAssetGrid</name>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished">Mga Paborito</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
@@ -20336,14 +20267,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <source>No shapes match “%1”.</source>
         <translation>Walang mga hugis na tumutugma sa “%1”.</translation>
     </message>
-    <message>
-        <source>No favorites yet. Star shapes to save them here.</source>
-        <translation>Wala pang mga paborito. Lagyan ng bituin ang mga hugis upang i-save ang mga ito rito.</translation>
-    </message>
-    <message>
-        <source>Nothing in this category.</source>
-        <translation>Walang laman sa kategoryang ito.</translation>
-    </message>
 </context>
 <context>
     <name>ShellBridge</name>
@@ -22176,24 +22099,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Walang mga sticker na tumutugma sa “%1”</translation>
     </message>
     <message>
-        <source>No favorites yet</source>
-        <translation>Wala pang mga paborito</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Walang laman sa kategoryang ito</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation>Subukan ang ibang pangalan.</translation>
-    </message>
-    <message>
-        <source>Star stickers to save them here.</source>
-        <translation>Lagyan ng bituin ang mga sticker upang i-save ang mga ito rito.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Pumili ng ibang kategorya.</translation>
     </message>
 </context>
 <context>
@@ -26672,44 +26579,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation type="unfinished">Walang mga transisyong tumutugma sa “%1”</translation>
     </message>
     <message>
-        <source>No custom transitions yet</source>
-        <translation type="unfinished">Wala pang custom na mga transisyon</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation type="unfinished">Wala pang mga paborito</translation>
-    </message>
-    <message>
-        <source>No recent transitions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">Walang laman sa kategoryang ito</translation>
-    </message>
-    <message>
         <source>Try a different name.</source>
         <translation type="unfinished">Subukan ang ibang pangalan.</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation type="unfinished">Lagyan ng bituin ang mga transisyon upang i-save ang mga ito rito.</translation>
-    </message>
-    <message>
-        <source>Transitions you add show up here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation type="unfinished">Pumili ng ibang kategorya.</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">Mag-import</translation>
     </message>
 </context>
 <context>
