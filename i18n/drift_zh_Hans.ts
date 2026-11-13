@@ -4341,10 +4341,6 @@
         <translation>变换已重置</translation>
     </message>
     <message>
-        <source>Motion blur follows one clip&apos;s movement, so it goes on a clip, not on an adjustment layer.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Depth effects read one clip&apos;s depth, so they go on a clip, not on an adjustment layer.</source>
         <translation>深度效果需要读取单个剪辑的深度信息，因此只能应用于剪辑，而不能应用于调整图层。</translation>
     </message>
@@ -8935,6 +8931,21 @@
     <message>
         <source>LUT files (*.cube)</source>
         <translation>LUT 文件 (*.cube)</translation>
+    </message>
+</context>
+<context>
+    <name>EffectsMaskSection</name>
+    <message>
+        <source>This effect needs a mask.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add new mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout subject</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -4341,10 +4341,6 @@
         <translation>변환이 초기화됨</translation>
     </message>
     <message>
-        <source>Motion blur follows one clip&apos;s movement, so it goes on a clip, not on an adjustment layer.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Depth effects read one clip&apos;s depth, so they go on a clip, not on an adjustment layer.</source>
         <translation>깊이 효과는 한 클립의 깊이 데이터를 읽으므로 보정 레이어가 아닌 클립에 적용합니다.</translation>
     </message>
@@ -8935,6 +8931,21 @@
     <message>
         <source>LUT files (*.cube)</source>
         <translation>LUT 파일 (*.cube)</translation>
+    </message>
+</context>
+<context>
+    <name>EffectsMaskSection</name>
+    <message>
+        <source>This effect needs a mask.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add new mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout subject</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
