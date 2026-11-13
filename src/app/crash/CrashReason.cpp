@@ -28,7 +28,13 @@ bool isCrt(const QString &name)
 bool isGpuDriver(const QString &name)
 {
     static const QRegularExpression pattern(QStringLiteral(
-        "^(nvoglv64|nvwgf2umx|atio6axx|atiumd.*|amdxx64|ig.*icd64|igd10.*|igc64)(\\.dll)?$"));
+        "^(nvoglv64|nvwgf2umx|atio6axx|atiumd.*|amdxx64|ig.*icd64|igd10.*|igc64"
+        // Linux: NVIDIA proprietary, Mesa drivers and the Vulkan ICDs.
+        "|libnvidia-.*|libglx_nvidia.*|libegl_nvidia.*|libgallium.*|libvulkan_.*|libdrm_.*|libglx_mesa.*"
+        "|(nvidia|radeonsi|r600|iris|crocus|i965|swrast|kms_swrast|zink|nouveau|vmwgfx|virtio_gpu|d3d12)_dri"
+        // macOS: Metal drivers and the OpenGL layer.
+        "|agx.*|applemetal.*|amdmtl.*|amdradeonx.*|appleintel.*|glengine|libglimage|libgpusupportmercury"
+        ")(\\.dll|\\.so.*|\\.dylib)?$"));
     return pattern.match(name).hasMatch();
 }
 
@@ -67,7 +73,8 @@ Reason mapReason(const QString &code, const QString &module, const QString &modu
     const QString addons = normalized(addonsDir);
     const QString path = normalized(modulePath);
     const bool inAddons = !addons.isEmpty() && path.startsWith(addons + QLatin1Char('/'));
-    if (inAddons || name.startsWith(QLatin1String("onnxruntime"))) {
+    if (inAddons || name.startsWith(QLatin1String("onnxruntime"))
+                         || name.startsWith(QLatin1String("libonnxruntime"))) {
         reason.key = QStringLiteral("addon");
         if (inAddons) {
             // Cut from the original-case path so the id reads the way the folder is named.

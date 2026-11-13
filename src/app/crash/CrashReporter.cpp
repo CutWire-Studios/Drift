@@ -86,7 +86,7 @@ CrashReporter::CrashReporter(QObject *parent)
 
 bool CrashReporter::supported() const
 {
-#ifdef Q_OS_WIN
+#ifdef DRIFT_HAS_CRASH_HANDLER
     return true;
 #else
     return false;
@@ -223,8 +223,12 @@ SystemInfo CrashReporter::gatherSystemInfo() const
     info.appVersion = QStringLiteral(DRIFT_VERSION);
     info.channel = channelFor(info.appVersion, QStringLiteral(DRIFT_DISTRIBUTION));
     info.arch = archFor(QSysInfo::buildCpuArchitecture());
-    info.osName = QSysInfo::productType();
+    info.osName = osNameFor(QSysInfo::kernelType());
+#ifdef Q_OS_MACOS
+    info.osVersion = QSysInfo::productVersion();
+#else
     info.osVersion = QSysInfo::kernelVersion();
+#endif
     info.osDescription = QSysInfo::prettyProductName();
     info.cpuCores = QThread::idealThreadCount();
     info.locale = QLocale().name().replace(QLatin1Char('_'), QLatin1Char('-'));
@@ -263,7 +267,13 @@ void CrashReporter::saveBundle(const CrashInfo *crash, const QString &prefix)
         + QStringLiteral(".tar.zst"));
     const QString info = systemInfoText(gatherSystemInfo(), crash, m_reasonKey);
     QString error;
-    if (writeTarZst(path, bundleItems(crash ? crash->dir : QString(), logDir(), info), &error))
+    QString appleReport;
+#ifdef Q_OS_MACOS
+    if (crash)
+        appleReport = newestAppleReport(QDir::homePath() + QStringLiteral("/Library/Logs/DiagnosticReports"),
+                                        crash->crashedAt.addSecs(-crash->uptimeSeconds));
+#endif
+    if (writeTarZst(path, bundleItems(crash ? crash->dir : QString(), logDir(), info, appleReport), &error))
         m_saveMessage = tr("Saved to %1").arg(QDir::toNativeSeparators(path));
     else
         m_saveMessage = tr("Could not save the file: %1").arg(error);

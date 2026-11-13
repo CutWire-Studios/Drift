@@ -487,3 +487,12 @@ qt_add_executable(tst_crashreport
 target_include_directories(tst_crashreport PRIVATE ../src)
 target_link_libraries(tst_crashreport PRIVATE Qt6::Test Qt6::Core driftcore ${DRIFT_ZSTD_TARGET})
 add_test(NAME CrashReport COMMAND tst_crashreport)
+
+if(UNIX AND NOT ANDROID AND NOT EMSCRIPTEN)
+    qt_add_executable(tst_crashhandler_posix
+        tst_crashhandler_posix.cpp
+        ../src/app/platform/CrashHandler_posix.cpp)
+    target_include_directories(tst_crashhandler_posix PRIVATE ../src)
+    target_link_libraries(tst_crashhandler_posix PRIVATE Qt6::Test Qt6::Core)
+    add_test(NAME CrashHandlerPosix COMMAND tst_crashhandler_posix)
+endif()

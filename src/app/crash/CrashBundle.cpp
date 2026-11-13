@@ -1,6 +1,7 @@
 #include "app/crash/CrashBundle.h"
 
 #include <QDateTime>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 
@@ -122,7 +123,26 @@ bool writeTarZst(const QString &path, const QList<BundleItem> &items, QString *e
     return true;
 }
 
-QList<BundleItem> bundleItems(const QString &crashDir, const QString &logDir, const QString &systemInfo)
+QString newestAppleReport(const QString &reportsDir, const QDateTime &since)
+{
+    QString newest;
+    QDateTime newestTime;
+    const QFileInfoList files = QDir(reportsDir).entryInfoList(QDir::Files);
+    for (const QFileInfo &file : files) {
+        const QString name = file.fileName();
+        const bool matches = name.startsWith(QLatin1String("drift"), Qt::CaseInsensitive)
+                             && (name.endsWith(QLatin1String(".ips"), Qt::CaseInsensitive)
+                                 || name.endsWith(QLatin1String(".crash"), Qt::CaseInsensitive));
+        if (matches && file.lastModified() >= since && (newest.isEmpty() || file.lastModified() > newestTime)) {
+            newest = file.absoluteFilePath();
+            newestTime = file.lastModified();
+        }
+    }
+    return newest;
+}
+
+QList<BundleItem> bundleItems(const QString &crashDir, const QString &logDir, const QString &systemInfo,
+                              const QString &appleReport)
 {
     QList<BundleItem> items;
     const auto addFile = [&items](const QString &name, const QString &path) {
@@ -132,7 +152,10 @@ QList<BundleItem> bundleItems(const QString &crashDir, const QString &logDir, co
     if (!crashDir.isEmpty()) {
         addFile(QStringLiteral("crash.json"), crashDir + QStringLiteral("/crash.json"));
         addFile(QStringLiteral("full.dmp"), crashDir + QStringLiteral("/full.dmp"));
+        addFile(QStringLiteral("stack.txt"), crashDir + QStringLiteral("/stack.txt"));
     }
+    if (!appleReport.isEmpty())
+        addFile(QFileInfo(appleReport).fileName(), appleReport);
     addFile(QStringLiteral("drift.log"), logDir + QStringLiteral("/drift.log"));
     addFile(QStringLiteral("drift.prev.log"), logDir + QStringLiteral("/drift.prev.log"));
     items.append({QStringLiteral("system-info.txt"), {}, systemInfo.toUtf8()});

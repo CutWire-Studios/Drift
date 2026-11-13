@@ -58,13 +58,29 @@ private slots:
     {
         QTest::addColumn<QString>("module");
         for (const char *name : {"nvoglv64.dll", "nvwgf2umx.dll", "atio6axx.dll", "atiumd64.dll", "amdxx64.dll",
-                                 "igxelpicd64.dll", "ig9icd64.dll", "igd10iumd64.dll", "igc64.dll"})
+                                 "igxelpicd64.dll", "ig9icd64.dll", "igd10iumd64.dll", "igc64.dll",
+                                 "libnvidia-glcore.so.550.54.14", "libGLX_nvidia.so.0", "radeonsi_dri.so",
+                                 "iris_dri.so", "swrast_dri.so", "libgallium-25.0.3.so", "libvulkan_radeon.so",
+                                 "AGXMetalG14G", "AppleMetalOpenGLRenderer", "AMDMTLBronzeDriver",
+                                 "GLEngine"})
             QTest::newRow(name) << name;
     }
     void reasonGpu()
     {
         QFETCH(QString, module);
         QCOMPARE(mapReason("0xC0000005", module, {}, "C:/addons").key, QString("gpu-driver"));
+    }
+
+    void reasonLinuxAddon()
+    {
+        Reason reason = mapReason("0xB", "libfoo.so", "/home/a/.local/share/Drift/addons/Whisper/bin/libfoo.so",
+                                  "/home/a/.local/share/Drift/addons");
+        QCOMPARE(reason.key, QString("addon"));
+        QCOMPARE(reason.addonId, QString("Whisper"));
+        QCOMPARE(mapReason("0xB", "libonnxruntime.so.1.20", "/usr/lib/libonnxruntime.so.1.20", {}).key,
+                 QString("addon"));
+        QCOMPARE(mapReason("0xB", "libonnxruntime.1.20.dylib", {}, {}).key, QString("addon"));
+        QCOMPARE(mapReason("0xB", "drift", "/usr/bin/drift", "/x").key, QString("unknown"));
     }
 
     void reasonAddon()
@@ -187,6 +203,41 @@ private slots:
         QCOMPARE(channelFor("1.4.2", "windows-store"), QString("msstore"));
         QCOMPARE(archFor("x86_64"), QString("x64"));
         QCOMPARE(archFor("arm64"), QString("arm64"));
+        QCOMPARE(osNameFor("winnt"), QString("windows"));
+        QCOMPARE(osNameFor("linux"), QString("linux"));
+        QCOMPARE(osNameFor("darwin"), QString("macos"));
+    }
+
+    void appleReportPickup()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        writeFile(dir.path() + "/Other-2026.ips", "x");
+        writeFile(dir.path() + "/drift-old.ips", "old");
+        QFile old(dir.path() + "/drift-old.ips");
+        QVERIFY(old.open(QIODevice::ReadWrite));
+        QVERIFY(old.setFileTime(QDateTime::currentDateTime().addSecs(-3600), QFileDevice::FileModificationTime));
+        old.close();
+        const QDateTime since = QDateTime::currentDateTime().addSecs(-60);
+        QVERIFY(newestAppleReport(dir.path(), since).isEmpty());
+        writeFile(dir.path() + "/Drift-2026-11-13.ips", "new");
+        QCOMPARE(QFileInfo(newestAppleReport(dir.path(), since)).fileName(), QString("Drift-2026-11-13.ips"));
+        QVERIFY(newestAppleReport(dir.path() + "/missing", since).isEmpty());
+    }
+
+    void bundleCarriesStackAndAppleReport()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        writeFile(dir.path() + "/crashes/abc/crash.json", "{}");
+        writeFile(dir.path() + "/crashes/abc/stack.txt", "frame");
+        writeFile(dir.path() + "/apple/Drift-1.ips", "ips");
+        const auto items = bundleItems(dir.path() + "/crashes/abc", dir.path() + "/logs", "info",
+                                       dir.path() + "/apple/Drift-1.ips");
+        QStringList names;
+        for (const auto &item : items)
+            names << item.name;
+        QCOMPARE(names, QStringList({"crash.json", "stack.txt", "Drift-1.ips", "system-info.txt"}));
     }
 
     void tarZstRoundTrip()

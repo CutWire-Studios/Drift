@@ -21,7 +21,7 @@ struct SystemInfo
     QString appVersion;
     QString channel;       // stable, nightly, msstore
     QString arch;          // x64, arm64
-    QString osName;        // windows
+    QString osName;        // windows, linux, macos
     QString osVersion;     // 10.0.19042
     QString osDescription; // "Windows 11 Version 23H2"; only in the saved bundle
     QList<GpuInfo> gpus;
@@ -33,6 +33,8 @@ struct SystemInfo
 
 // "stable", "nightly" or "msstore" from what the build knows about itself.
 QString channelFor(const QString &version, const QString &distribution);
+// "windows", "linux" or "macos" from QSysInfo::kernelType(); the input verbatim when unknown.
+QString osNameFor(const QString &kernelType);
 // "x64" or "arm64" from QSysInfo::buildCpuArchitecture(); the input verbatim when unknown.
 QString archFor(const QString &cpuArchitecture);
 

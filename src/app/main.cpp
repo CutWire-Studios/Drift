@@ -143,6 +143,11 @@ extern "C" {
 #include <libavutil/log.h>
 }
 
+#if defined(DRIFT_HAS_CRASH_HANDLER) && !defined(Q_OS_WIN)
+#include <cstdio>
+#include <unistd.h>
+#endif
+
 #ifdef Q_OS_WIN
 // Exports NVIDIA Optimus and AMD PowerXpress look up in the executable: 1 asks for the discrete
 // GPU. Variables rather than constants so main() can set them from the stored preference before
@@ -156,7 +161,7 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 0;
 
 namespace {
 
-#ifdef Q_OS_WIN
+#ifdef DRIFT_HAS_CRASH_HANDLER
 // A GUI process on Windows has no console, so when Drift dies or never shows a window the user
 // has nothing to attach to a report (#475). Every launch writes logs/drift.log under the app's
 // local data folder and keeps the launch before it as drift.prev.log. Splash steps go in
@@ -182,6 +187,7 @@ void startupLogHandler(QtMsgType type, const QMessageLogContext &context, const 
         g_previousHandler(type, context, message);
 }
 
+#ifdef Q_OS_WIN
 // Nothing in Qt sees an access violation, so without this a crash leaves the log ending at the
 // last splash step with no word on why.
 LONG WINAPI logUnhandledException(EXCEPTION_POINTERS *info)
@@ -206,6 +212,7 @@ LONG WINAPI logUnhandledException(EXCEPTION_POINTERS *info)
     std::fflush(g_startupLog);
     return EXCEPTION_CONTINUE_SEARCH;
 }
+#endif
 
 // Needs the application names, which pick the folder.
 void openStartupLog()
@@ -220,16 +227,28 @@ void openStartupLog()
     // by the pid in each launch's header.
     QFile::remove(previous);
     QFile::rename(path, previous);
+#ifdef Q_OS_WIN
     g_startupLog = _wfsopen(reinterpret_cast<const wchar_t *>(QDir::toNativeSeparators(path).utf16()),
                             L"ab", _SH_DENYNO);
+#else
+    g_startupLog = std::fopen(QFile::encodeName(path).constData(), "ab");
+#endif
     if (!g_startupLog)
         return;
+#ifdef Q_OS_WIN
+    const qint64 pid = qint64(GetCurrentProcessId());
+#else
+    const qint64 pid = qint64(getpid());
+    drift::crash::setCrashLogFd(fileno(g_startupLog));
+#endif
     writeStartupLog(QByteArray("Drift " DRIFT_VERSION ", pid ")
-                    + QByteArray::number(qint64(GetCurrentProcessId())) + ", "
+                    + QByteArray::number(pid) + ", "
                     + QSysInfo::prettyProductName().toUtf8() + ", "
                     + QDateTime::currentDateTime().toString(Qt::ISODate).toUtf8());
     g_previousHandler = qInstallMessageHandler(startupLogHandler);
+#ifdef Q_OS_WIN
     SetUnhandledExceptionFilter(logUnhandledException);
+#endif
 }
 #endif
 
@@ -709,7 +728,7 @@ int main(int argc, char *argv[])
     // must be in the environment before QApplication is constructed.
     QCoreApplication::setApplicationName("CutWire Drift");
     QCoreApplication::setOrganizationName("CutWire Drift");
-#ifdef Q_OS_WIN
+#ifdef DRIFT_HAS_CRASH_HANDLER
     openStartupLog();
     drift::crash::installCrashHandler(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)
                                       + QStringLiteral("/crashes"));
@@ -824,7 +843,7 @@ int main(int argc, char *argv[])
     }
 #endif
     const auto step = [splash](const QString &status, double progress) {
-#ifdef Q_OS_WIN
+#ifdef DRIFT_HAS_CRASH_HANDLER
         writeStartupLog("step: " + status.toUtf8());
 #endif
         if (splash)
@@ -1156,7 +1175,7 @@ int main(int argc, char *argv[])
         }
     };
 
-#ifdef Q_OS_WIN
+#ifdef DRIFT_HAS_CRASH_HANDLER
     crashReporter.begin();
 #endif
     if (crashReporter.startupKind() != QLatin1String("none")) {

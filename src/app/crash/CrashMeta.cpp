@@ -20,6 +20,15 @@ QString channelFor(const QString &version, const QString &distribution)
     return version.contains(QLatin1String("nightly")) ? QStringLiteral("nightly") : QStringLiteral("stable");
 }
 
+QString osNameFor(const QString &kernelType)
+{
+    if (kernelType == QLatin1String("winnt"))
+        return QStringLiteral("windows");
+    if (kernelType == QLatin1String("darwin"))
+        return QStringLiteral("macos");
+    return kernelType;
+}
+
 QString archFor(const QString &cpuArchitecture)
 {
     if (cpuArchitecture == QLatin1String("x86_64"))

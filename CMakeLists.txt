@@ -1448,6 +1448,9 @@ endif()
 
 # Windows needs the icon embedded in the PE resource section for Explorer and
 # the taskbar; setWindowIcon alone is not enough for the .exe identity.
+if(UNIX AND NOT ANDROID AND NOT EMSCRIPTEN)
+    target_sources(drift PRIVATE src/app/platform/CrashHandler_posix.cpp)
+endif()
 if(WIN32)
     # qt_add_executable() forwards to add_executable() without WIN32, so the linker defaults to the
     # console subsystem and Windows opens a console window before the GUI comes up. Qt6::EntryPoint

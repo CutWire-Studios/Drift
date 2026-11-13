@@ -13,7 +13,7 @@ struct CrashInfo
 {
     QString id;
     QString dir;
-    QString code;          // "0xC0000005"
+    QString code;          // "0xC0000005", or "0xB" for SIGSEGV
     QString module;        // file name only
     QString modulePath;    // full path; stays in the saved bundle, never uploaded
     QString moduleVersion;
@@ -33,6 +33,7 @@ constexpr int kUploadGiveUpDays = 30;
 // local data folder:
 //   sessions/<pid>.running     present while that process is alive and has not quit cleanly
 //   crashes/<id>/crash.json    written by the crash handler, with upload.dmp and full.dmp beside it
+//                              (Windows) or stack.txt (Linux, macOS)
 //   crashes/<id>/shown         the user has been told about this crash
 //   crashes/<id>/upload.json   {"attempts": n, "done": bool}
 //   crashes/<id>/upload-log.txt the scrubbed log tail that goes with the upload
