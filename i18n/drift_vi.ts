@@ -1907,7 +1907,7 @@
     </message>
     <message>
         <source>Crop video size</source>
-        <translation>Cắt kích thước video</translation>
+        <translation>Cắt khung kích thước video</translation>
     </message>
     <message>
         <source>Drag the preview edges to change what’s included</source>
@@ -2572,7 +2572,7 @@
     </message>
     <message>
         <source>Split selected clip at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách clip đã chọn tại thời điểm hiện tại</translation>
     </message>
     <message>
         <source>Add transition at playhead</source>
@@ -2752,11 +2752,11 @@
     </message>
     <message>
         <source>Select a clip to split first</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một clip để tách trước</translation>
     </message>
     <message>
         <source>The playhead isn&apos;t over a selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Đầu phát không nằm trên clip đã chọn</translation>
     </message>
     <message>
         <source>Nothing to split here — move to a clip first</source>
@@ -4608,15 +4608,15 @@
     </message>
     <message>
         <source>Exclude from export</source>
-        <translation type="unfinished"></translation>
+        <translation>Loại trừ khỏi bản xuất</translation>
     </message>
     <message>
         <source>Track left out of export</source>
-        <translation type="unfinished"></translation>
+        <translation>Track bị loại khỏi bản xuất</translation>
     </message>
     <message>
         <source>Track included in export</source>
-        <translation type="unfinished"></translation>
+        <translation>Track được đưa vào bản xuất</translation>
     </message>
     <message>
         <source>Track lock</source>
@@ -4930,7 +4930,7 @@
     </message>
     <message>
         <source>Video size cropped to %1×%2</source>
-        <translation>Kích thước video được cắt thành %1×%2</translation>
+        <translation>Kích thước video được cắt khung thành %1×%2</translation>
     </message>
     <message>
         <source>Clear clip label</source>
@@ -4998,7 +4998,7 @@
     </message>
     <message>
         <source>The proxy could not be made</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể tạo proxy</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -13344,7 +13344,7 @@
     <name>McpController</name>
     <message>
         <source>Relink media</source>
-        <translation type="unfinished">Liên kết lại phương tiện</translation>
+        <translation>Liên kết lại phương tiện</translation>
     </message>
 </context>
 <context>
@@ -13808,11 +13808,11 @@
     </message>
     <message>
         <source>The project was closed before the replace landed</source>
-        <translation type="unfinished"></translation>
+        <translation>Dự án đã bị đóng trước khi quá trình thay thế hoàn tất</translation>
     </message>
     <message>
         <source>The project was closed before the edit landed</source>
-        <translation type="unfinished"></translation>
+        <translation>Dự án đã bị đóng trước khi quá trình chỉnh sửa hoàn tất</translation>
     </message>
     <message>
         <source>Relink media</source>
@@ -13826,7 +13826,7 @@
     </message>
     <message>
         <source>Track is locked</source>
-        <translation type="unfinished">Track đã bị khóa</translation>
+        <translation>Track đã bị khóa</translation>
     </message>
     <message>
         <source>Sub-clip added</source>
@@ -13918,7 +13918,7 @@
     <message numerus="yes">
         <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
         <translation>
-            <numerusform>%n clip có thể phát lại chậm. Proxy giúp việc xem trước trở nên mượt mà hơn; Xuất vẫn sử dụng bản gốc. Cài đặt › Xem trước có thể tự động làm điều này hoặc ngừng yêu cầu.</numerusform>
+            <numerusform>%n clip có thể phát lại chậm. Proxy giúp việc xem trước trở nên mượt mà hơn; xuất vẫn sử dụng bản gốc. Cài đặt › Xem trước có thể tự động làm điều này hoặc ngừng yêu cầu.</numerusform>
         </translation>
     </message>
     <message>
@@ -15434,7 +15434,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>No errors or output</source>
-        <translation>Clip được chọn</translation>
+        <translation>Không có lỗi hoặc kết quả</translation>
     </message>
 </context>
 <context>
@@ -24274,51 +24274,51 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Paste here</source>
-        <translation type="unfinished"></translation>
+        <translation>Dán vào đây</translation>
     </message>
     <message>
         <source>Add bookmark here</source>
-        <translation type="unfinished"></translation>
+        <translation>Thêm dấu trang tại đây</translation>
     </message>
     <message>
         <source>Select clips on track</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn các clip trên track</translation>
     </message>
     <message>
         <source>Select clips after here on track</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn các clip sau đây trên track</translation>
     </message>
     <message>
         <source>Select all clips</source>
-        <translation type="unfinished">Chọn tất cả clip</translation>
+        <translation>Chọn tất cả clip</translation>
     </message>
     <message>
         <source>Unmute track</source>
-        <translation type="unfinished">Bật tiếng track</translation>
+        <translation>Bật tiếng track</translation>
     </message>
     <message>
         <source>Mute track</source>
-        <translation type="unfinished">Tắt tiếng track</translation>
+        <translation>Tắt tiếng track</translation>
     </message>
     <message>
         <source>Show track</source>
-        <translation type="unfinished">Hiện track</translation>
+        <translation>Hiện track</translation>
     </message>
     <message>
         <source>Hide track</source>
-        <translation type="unfinished">Ẩn track</translation>
+        <translation>Ẩn track</translation>
     </message>
     <message>
         <source>Unlock track</source>
-        <translation type="unfinished">Mở khóa track</translation>
+        <translation>Mở khóa track</translation>
     </message>
     <message>
         <source>Lock track</source>
-        <translation type="unfinished">Khóa track</translation>
+        <translation>Khóa track</translation>
     </message>
     <message>
         <source>Remove empty tracks</source>
-        <translation type="unfinished">Xóa track rỗng</translation>
+        <translation>Xóa track rỗng</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -24944,11 +24944,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Include in export</source>
-        <translation type="unfinished"></translation>
+        <translation>Đưa vào bản xuất</translation>
     </message>
     <message>
         <source>Exclude from export</source>
-        <translation type="unfinished"></translation>
+        <translation>Loại trừ khỏi bản xuất</translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -25124,11 +25124,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <name>TrackHeaderName</name>
     <message>
         <source>not exported</source>
-        <translation type="unfinished"></translation>
+        <translation>không được xuất</translation>
     </message>
     <message>
         <source>Shown while editing, left out of every export</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiển thị khi chỉnh sửa, bị loại khỏi mọi bản xuất</translation>
     </message>
 </context>
 <context>
