@@ -442,6 +442,7 @@ bool checkNextFeatures(const QJsonObject &root, QString *errorOut)
         QStringLiteral("param:audio"),      QStringLiteral("param:color-alpha"),
         QStringLiteral("uniform:audio"),    QStringLiteral("requires:mask"),
         QStringLiteral("requires:depth"),   QStringLiteral("requires:face"),
+        QStringLiteral("history:source"),   QStringLiteral("history:previous-output"),
     };
     QStringList unsupported;
     for (const QJsonValue &v : root.value(QStringLiteral("nextFeatures")).toArray()) {

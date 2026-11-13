@@ -4,8 +4,10 @@
   "category": "impact",
   "thumbnail": "thumbnail.webp",
   "order": 94,
-  "description": "Blurs the clip along its own movement, as a camera shutter would: keyframed position, scale and rotation, intro and outro animations, 3D pose, transform layers and camera moves. Motion inside the footage is not blurred. Applied as the clip is placed, so it comes after every other effect whatever its place in the stack. The preview uses at most 8 samples; export uses them all.",
-  "backend": "compositor",
+  "description": "Blurs movement inside the footage along its direction, as a camera shutter would, by measuring the motion between the previous frame and this one. Needs the previous frame, so the first frame after a seek and any frame while scrubbing are not blurred. The clip's own keyframed movement is not blurred.",
+  "backend": "gpu",
+  "history": 1,
+  "nextFeatures": ["history:source"],
   "parameters": [
     {
       "identifier": "shutter",
@@ -21,7 +23,40 @@
       "type": "int",
       "minValue": 2,
       "maxValue": 32,
-      "defaultValue": 16
+      "defaultValue": 12
+    },
+    {
+      "identifier": "maxBlur",
+      "displayName": "Max length (% of width)",
+      "type": "float",
+      "minValue": 0.5,
+      "maxValue": 25,
+      "defaultValue": 8
     }
-  ]
+  ],
+  "pipeline": {
+    "intermediateBuffers": [
+      {"id": "luma4", "scale": 0.25},
+      {"id": "luma16", "scale": 0.0625},
+      {"id": "flow16", "scale": 0.0625},
+      {"id": "flow4", "scale": 0.25},
+      {"id": "flow4s", "scale": 0.25}
+    ],
+    "passes": [
+      {"passIndex": 0, "fragmentShader": "luma4.frag",
+       "inputs": [{"type": "source_texture"}], "output": {"type": "buffer", "id": "luma4"}},
+      {"passIndex": 1, "fragmentShader": "luma16.frag",
+       "inputs": [{"type": "buffer", "id": "luma4"}], "output": {"type": "buffer", "id": "luma16"}},
+      {"passIndex": 2, "fragmentShader": "match16.frag",
+       "inputs": [{"type": "buffer", "id": "luma16"}], "output": {"type": "buffer", "id": "flow16"}},
+      {"passIndex": 3, "fragmentShader": "match4.frag",
+       "inputs": [{"type": "buffer", "id": "luma4"}, {"type": "buffer", "id": "flow16"}],
+       "output": {"type": "buffer", "id": "flow4"}},
+      {"passIndex": 4, "fragmentShader": "smooth.frag",
+       "inputs": [{"type": "buffer", "id": "flow4"}], "output": {"type": "buffer", "id": "flow4s"}},
+      {"passIndex": 5, "fragmentShader": "blur.frag",
+       "inputs": [{"type": "source_texture"}, {"type": "buffer", "id": "flow4s"}],
+       "output": {"type": "canvas"}}
+    ]
+  }
 }

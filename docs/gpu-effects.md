@@ -24,6 +24,8 @@ Search order: `DRIFT_EFFECTS_DIR`, `<applicationDir>/effects`, `<AppDataLocation
 | `parameters[]` | User-facing uniforms — see the parameter types below |
 | `fixedParams` | Hidden uniforms (colors as `#rrggbb`, enums as strings) |
 | `requires` | `"face"` to receive the baked face anchors, `"depth"` to receive the clip's depth map (see below), or an array of both. Any other value is a parse error. `"depth"` is `gpu` backend only |
+| `history` | Whole number 1–32: the effect samples that many of the clip's earlier source frames (see "Time effects" below). `gpu` backend only |
+| `previousOutput` | `true`: the effect can read its own output from the previous frame (see "Time effects"). `gpu` backend only |
 | `pipeline` | `intermediateBuffers` + `passes` |
 
 ### Parameter types
@@ -125,7 +127,7 @@ See `effects/face_retouch` for lipstick and blush templates drawn this way, and
 ## GLSL
 
 - `#version 330 core`
-- Reserved: `u_currentTexture`, `u_textureN`, `u_resolution`, `u_time`, `u_timeUs`, `u_frameIndex`, `u_frameRate`, `u_progress`, `u_fromTexture`, `u_toTexture`, `u_depth*`, `u_hasDepth`, `u_templateBounds`, `u_meshAspect`, `u_face*`
+- Reserved: `u_currentTexture`, `u_textureN`, `u_resolution`, `u_time`, `u_timeUs`, `u_frameIndex`, `u_frameRate`, `u_progress`, `u_fromTexture`, `u_toTexture`, `u_depth*`, `u_hasDepth`, `u_history*`, `u_prevOutput`, `u_templateBounds`, `u_meshAspect`, `u_face*`
 
 **Grace mode:** compile/GL failure → passthrough.
 
@@ -217,19 +219,6 @@ silhouette and depth only decides in front or behind. The occluder is looked for
 scene, so inside a composite clip it stays inside it. Not applied in transitions or the CPU
 compositor, and a 3D model counts as one flat plane at `depth`.
 
-### Motion Blur (`motion.blur`)
-
-A compositor-backend package: shutter blur of the clip's own movement. `buildGpuScene` evaluates
-the layer's placement (layout keyframes, body animation, 3D pose, transform parents, scene camera)
-at `samples` instants spread over `shutter` degrees of a frame, centred on it, into
-`GpuLayer::motionSamples`. `drawLayerOnCanvas` then averages the layer over those placements in one
-pass (`kMotionBlurFragShader`, one inverse plane-to-screen homography per sample) into a
-canvas-sized target and draws that in place, so opacity, blend mode and occlusion apply to the
-blurred whole. It always comes after the rest of the chain, wherever it sits in the stack, and only
-the first enabled one counts. The preview caps samples at 8. Motion inside the footage, per-word text
-animation, model and procedural clips, depth-occluding clips, the 3D view and standalone adjustment
-layers are not blurred; a layer that does not move during the shutter draws exactly as without it.
-
 ## Mask effects
 
 A package with `"requires": "mask"` reads the clip's masks: every Mask-kind adjustment pinned to
@@ -249,6 +238,70 @@ not declare these yourself**:
 A transition with `"requires": "mask"` reads the **outgoing** clip's masks, laid out on the canvas
 where that clip is drawn, and that side is drawn whole for the transition. Neither is applied on the
 CPU compositor, where the package runs with `u_hasClipMask = 0` and the clip is still cut out.
+
+## Time effects (`history`, `previousOutput`)
+
+An effect can look back in time. Two independent top-level fields in `effect.json` say how, and a
+package may set both. Each also has a `nextFeatures` name (`history:source`,
+`history:previous-output`) so an older Drift rejects the package with "needs a newer Drift" instead
+of failing to compile it.
+
+```json
+"history": 32,
+"previousOutput": true,
+"nextFeatures": ["history:source", "history:previous-output"]
+```
+
+**Source history** (`"history": N`, 1–32). The engine keeps the clip's last N source frames — the
+picture before the clip's effect chain runs, one per *project* frame. The prelude, compiled into
+every pass, gives the shader (do not declare these yourself):
+
+| Name | Kind | Notes |
+|---|---|---|
+| `vec4 historyFrame(float age, vec2 uv)` | helper | The source frame `age` project frames ago at `uv` (1 = the previous frame, same uv convention as the source). Ages are rounded and clamped to what is recorded: past the oldest it reads the oldest, and with nothing recorded it reads the effect's own input |
+| `float historyCount()` | helper | How many past frames are recorded so far: 0 on the first frame and after a seek, up to N |
+| `u_historyTexture`, `u_historyGrid`, `u_historyAtlas`, `u_historyTile` | engine-bound | The atlas behind `historyFrame`, bound on unit 14. Reserved (`u_history*`) |
+
+**Previous output** (`"previousOutput": true`). `sampler2D u_prevOutput` (unit 15, declared by the
+prelude) is what this effect — its last pass's canvas — produced for the previous project frame, at
+the same size and uv convention as the source. It is transparent on the first frame and after a
+seek, so a feedback shader that blends `u_prevOutput` over the live picture starts as the plain
+picture. Feeding it back (zoom/rotate it a little, fade it by `decay`) makes tunnels and trails.
+
+Behaviour, shared by both:
+
+- **A history is per clip instance and per compositor.** The preview, an export and a thumbnail
+  pass each keep their own, so scrubbing the preview during an export changes nothing in the file.
+- **Stepping.** Each composite looks at the clip's time in project frames
+  (`round(clipTime * fps)`). The same frame again (a paused re-render after an edit) replaces what
+  was recorded for it; the next frame — or the one after, when playback dropped a frame — appends;
+  anything else (a seek, a scrub, a loop, a trim) clears the history. Until it fills an effect
+  shows something sensible: `historyFrame` clamps to the oldest frame recorded and a transparent
+  `u_prevOutput` leaves the live picture alone.
+- **Export is deterministic.** It composes frame after frame in order, so each frame is built from
+  exactly the frames before it, and the history is empty at the start of the file or range.
+  Starting an export mid-clip begins with an empty history at the range's first frame.
+- **Memory is bounded.** The source ring is one atlas texture per clip, scaled down in steps when
+  N full-size frames would not fit (the frames sampled by `historyFrame` can therefore be softer
+  than the live one on long rings and large canvases), and the whole store is capped (768 MiB
+  desktop, 256 MiB Android), dropping the least recently used history first. When a ring cannot
+  be afforded the effect sees an empty history. A clip that stops being drawn loses its history.
+- Standalone (unlinked) adjustment clips record the canvas below them. Transition packages have no
+  history, and the single-image executor (`GpuEffectExecutor`: effect thumbnails and the CPU
+  compositor) always runs with an empty one, so there a time effect shows the current frame.
+
+`effects/motion_blur` (`motion.blur`) is a plain `history: 1` package: it estimates optical flow
+between `historyFrame(1.0, uv)` and the current frame on a luma pyramid (quarter and sixteenth size, block
+matching, then a flow-aware smoothing pass) and averages the picture along the flow scaled by
+`shutter / 360`, capped by `maxBlur`. It passes the picture through while `historyCount()` is 0.
+
+Compositor code that wants the previous source frame of a clip sets `GpuLayer::sourceHistoryFrames` and, after `buildLayerTarget` has run for the layer, calls
+`drift::gl::pastSourceFrame(rt, layer.historyScope, layer.historyKey, age)` (FrameHistory.h). The
+result is a texture plus the `uv` rectangle of that frame inside it.
+
+The Time effects in the Trending Effects addon (Feedback, Trails, Time Echo, Frame Delay, Slit
+Scan) use the `time` category. The catalog has no fixed list beyond its five built-ins: any other
+category slug appears as an extra group, labelled with the capitalised slug.
 
 ## 3D face mesh (`backend: "model3d"`)
 

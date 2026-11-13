@@ -883,6 +883,8 @@ add_library(driftengine STATIC
     src/engine/gpu/device/GpuStatus.h
     src/engine/gpu/device/GpuStatus.cpp
     src/engine/decode/hw/VaapiZeroCopy.h
+    src/engine/gpu/effects/FrameHistory.h
+    src/engine/gpu/effects/FrameHistory.cpp
     src/engine/gpu/effects/GpuEffectExecutor.h
     src/engine/gpu/effects/GpuEffectExecutor.cpp
     src/engine/gpu/effects/LookupTextures.h

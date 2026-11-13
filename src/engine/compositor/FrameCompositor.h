@@ -174,7 +174,11 @@ private:
     bool prepareFromBake(drift::TimeUs timelineUs, const RenderOptions &options, GpuScene *sceneOut,
                          int width, int height, double renderScale) const;
 
+    static quint64 nextHistoryId();
+
     const drift::Project *m_project = nullptr;
+    // Names this compositor's frame histories apart from every other one's (GpuScene::historyScope).
+    quint64 m_historyId = nextHistoryId();
     std::shared_ptr<drift::BakeReaderPool> m_bakes;
     int m_bakeOwner = 0;
     mutable QHash<QString, std::shared_ptr<const drift::Project>> m_nestedViews;

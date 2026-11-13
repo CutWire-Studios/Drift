@@ -59,6 +59,8 @@ namespace drift::gl {
 class D3d11GlInterop;
 #endif
 
+struct FrameHistoryStore;
+
 // A framebuffer plus its size. Owns the FBO; hand it back to GlRuntime with
 // releaseTarget() so it can be recycled rather than freed.
 struct GlTarget
@@ -283,6 +285,10 @@ public:
     // The 512x2 analysis texture of each audio param, keyed "<effect index>/<param key>". Re-uploaded
     // in place each frame. Destroyed in shutdown().
     std::map<QString, GLuint> audioTextures;
+
+    // Per-clip source frames and per-effect previous outputs; see FrameHistory.h. Created on first
+    // use and emptied by releaseCaches() and shutdown() with the context current.
+    std::shared_ptr<FrameHistoryStore> frameHistory;
 
     // A sampleable depth attachment for model clips that take part in depth occlusion: the
     // pooled targets carry a renderbuffer, which a later pass cannot read. One is enough, since
@@ -655,6 +661,11 @@ GLuint staticTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &pa
 constexpr int kDepthTextureUnit = 8;
 // The clip's folded mask stack, for "requires": "mask" packages. Next to the depth unit.
 constexpr int kClipMaskTextureUnit = 9;
+// The clip's recorded source frames (an atlas) for "history" packages, and the effect's own
+// result from the previous frame for "previousOutput" ones. The top of the 16 units every context
+// guarantees, out of reach of the sampler params paramSamplerUnit hands out from the bottom.
+constexpr int kHistoryTextureUnit = 14;
+constexpr int kPrevOutputTextureUnit = 15;
 
 // The texture unit for a pass's index-th sampler param, after its `inputCount` input units and
 // skipping the depth and mask units. Mirrors paramSamplerUnit in Forge's compiler/passes.ts.
@@ -664,6 +675,20 @@ int paramSamplerUnit(int inputCount, int index);
 // R16 where the context has it; GLES without EXT_texture_norm16 gets R16F, which is filterable in
 // core ES 3.0 and keeps about 11 bits — plenty for normalised depth.
 GLuint depthTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const drift::DepthFrame &frame);
+
+// The clip's recorded source frames as a pipeline binds them: tiles in a grid inside one texture,
+// ring-ordered. `newest` is the slot of the previous project frame (age 1), `count` how many
+// frames are recorded (0 binds the effect's input as the current frame). See historyFrame in the package prelude.
+struct HistoryBinding
+{
+    GLuint atlas = 0;
+    QSize atlasSize;
+    QSize tileSize;
+    int columns = 1;
+    int ringSize = 1;
+    int count = 0;
+    int newest = 0;
+};
 
 // Per-layer data a pipeline may bind besides its source textures.
 struct PipelineAux
@@ -680,6 +705,11 @@ struct PipelineAux
     std::array<float, 3> globalAudio{};
     // The project frame rate for u_frameIndex and u_frameRate; 0 reads as 30.
     int frameRate = 0;
+    // For "history" packages; a count of 0 reads the effect's own input.
+    HistoryBinding history;
+    // For "previousOutput" packages: the effect's result one frame ago, 0 for none (the first
+    // frame, or after a seek), which binds transparent.
+    GLuint prevOutput = 0;
 };
 
 // Upload an audio param's 512x2 RGBA8 analysis (AudioFrame::rgba) into the texture kept under `key`.

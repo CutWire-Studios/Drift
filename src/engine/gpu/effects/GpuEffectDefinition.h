@@ -11,6 +11,9 @@
 
 namespace drift {
 
+// The most past source frames a package may ask for with "history".
+inline constexpr int kMaxHistoryFrames = 32;
+
 // A vecN[] uniform carried through the parameter map. Only the engine produces these — the face
 // contour loops are the one thing too large to spell out as named scalars, and 128 points would
 // otherwise mean 256 uniformLocation() lookups per pass.
@@ -34,11 +37,11 @@ inline bool isEngineBoundGpuUniform(const QString &name)
         || name == QLatin1String("u_fromTexture") || name == QLatin1String("u_toTexture")
         || name == QLatin1String("u_hasDepth") || name == QLatin1String("u_templateBounds")
         || name == QLatin1String("u_clipMask") || name == QLatin1String("u_hasClipMask")
-        || name == QLatin1String("u_meshAspect")) {
+        || name == QLatin1String("u_meshAspect") || name == QLatin1String("u_prevOutput")) {
         return true;
     }
     // The depth map and its size, bound for "requires": "depth" packages.
-    if (name.startsWith(QLatin1String("u_depth")))
+    if (name.startsWith(QLatin1String("u_depth")) || name.startsWith(QLatin1String("u_history")))
         return true;
     // Extra samplers bound for multi-input passes: u_texture1, u_texture2, ...
     return name.startsWith(QLatin1String("u_texture"));
@@ -137,6 +140,11 @@ struct GpuEffectDefinition
     // stack is bound beside the declared inputs. The package consumes the masks: the clip is no
     // longer cut out by them. See docs/gpu-effects.md.
     bool needsMask = false;
+    // "history": N source frames before the current one are kept for the clip and sampled with
+    // historyFrame(age, uv). 0 for packages that do not look back. See docs/gpu-effects.md.
+    int historyFrames = 0;
+    // "previousOutput": true: u_prevOutput is this effect's own result from the previous project frame.
+    bool needsPrevOutput = false;
     // Parameters bound beyond plain scalars, from the package's parameter list (declaration order).
     QList<GpuSamplerParam> samplerParams;
     QStringList regionParams; // bound as a vec4 under the key

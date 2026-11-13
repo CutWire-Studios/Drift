@@ -1,5 +1,6 @@
 #include "engine/gpu/GlRuntime.h"
 #include "engine/EngineTuning.h"
+#include "engine/gpu/effects/FrameHistory.h"
 #include "engine/gpu/effects/LookupTextures.h"
 #include "engine/color/CubeLut.h"
 
@@ -371,10 +372,47 @@ float driftMask(vec2 uv)
 }
 )";
 
+// Compiled into every pass of a "history" package. Same uv convention as the source.
+constexpr const char *kHistoryPrelude = R"(
+uniform sampler2D u_historyTexture;
+uniform vec4 u_historyGrid;   // columns, ring slots, frames recorded, slot of the previous frame
+uniform vec2 u_historyAtlas;  // atlas size in px
+uniform vec2 u_historyTile;   // one frame's tile in px
+
+// How many past frames are recorded for this clip so far; 0 on the first frame and after a seek.
+float historyCount()
+{
+    return u_historyGrid.z;
+}
+
+// The clip's source frame `age` project frames ago (1 = the previous frame) at uv. An age beyond
+// what is recorded reads the oldest recorded frame, and with nothing recorded the engine binds the
+// effect's own input here, so this is the current frame until the history fills.
+vec4 historyFrame(float age, vec2 uv)
+{
+    int n = max(int(u_historyGrid.z + 0.5), 1);
+    int slots = int(u_historyGrid.y + 0.5);
+    int columns = int(u_historyGrid.x + 0.5);
+    int back = clamp(int(floor(age + 0.5)), 1, n);
+    int slot = (int(u_historyGrid.w + 0.5) + 1 - back + slots) % slots;
+    vec2 cell = vec2(float(slot % columns), float(slot / columns));
+    vec2 px = cell * u_historyTile + clamp(uv * u_historyTile, vec2(0.5), u_historyTile - 0.5);
+    return texture(u_historyTexture, px / u_historyAtlas);
+}
+)";
+
+constexpr const char *kPrevOutputPrelude = R"(
+uniform sampler2D u_prevOutput;
+)";
+
 // The engine declarations a package's passes are compiled with.
 QByteArray packagePrelude(const drift::GpuEffectDefinition &gpu)
 {
     QByteArray out;
+    if (gpu.historyFrames > 0)
+        out += kHistoryPrelude;
+    if (gpu.needsPrevOutput)
+        out += kPrevOutputPrelude;
     if (gpu.needsDepth)
         out += kDepthPrelude;
     if (gpu.needsMask)
@@ -1388,6 +1426,7 @@ void GlRuntime::releaseCaches()
         destroyImageUploadCache();
         destroyVideoUploadState();
         destroyExportNv12State();
+        releaseFrameHistory(*this);
         m_targetPool.clear();
         m_pooledTargets = 0;
         m_pooledTargetBytes = 0;
@@ -1429,6 +1468,7 @@ void GlRuntime::shutdown()
                 destroyVideoUploadState();
                 destroyExportNv12State();
             }
+            releaseFrameHistory(*this);
             for (GlTarget &target : m_presentRing)
                 target.fbo.reset();
             for (int &displayed : m_presentDisplayed)
@@ -3234,6 +3274,10 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
         sourceSig += QLatin1String("#depth");
     if (gpu.needsMask)
         sourceSig += QLatin1String("#mask");
+    if (gpu.historyFrames > 0)
+        sourceSig += QLatin1String("#history");
+    if (gpu.needsPrevOutput)
+        sourceSig += QLatin1String("#prev");
     const QByteArray prelude = packagePrelude(gpu);
 
     CompiledEffect &cached = programs[cacheKey];
@@ -4323,6 +4367,37 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
                 gl->glActiveTexture(GL_TEXTURE0);
                 program->setUniformValue("u_clipMask", kClipMaskTextureUnit);
                 program->setUniformValue("u_hasClipMask", maskTex ? 1.f : 0.f);
+            }
+
+            if (gpu.historyFrames > 0) {
+                HistoryBinding h;
+                if (aux && aux->history.atlas && aux->history.count > 0) {
+                    h = aux->history;
+                } else {
+                    h.atlas = sourceTexAt(0);
+                    h.atlasSize = h.tileSize = canvasSize;
+                }
+                gl->glActiveTexture(GL_TEXTURE0 + kHistoryTextureUnit);
+                gl->glBindTexture(GL_TEXTURE_2D, h.atlas);
+                gl->glActiveTexture(GL_TEXTURE0);
+                program->setUniformValue("u_historyTexture", kHistoryTextureUnit);
+                program->setUniformValue("u_historyGrid",
+                                         QVector4D(float(h.columns), float(h.ringSize), float(h.count),
+                                                   float(h.newest)));
+                program->setUniformValue("u_historyAtlas",
+                                         QVector2D(float(qMax(1, h.atlasSize.width())),
+                                                   float(qMax(1, h.atlasSize.height()))));
+                program->setUniformValue("u_historyTile",
+                                         QVector2D(float(qMax(1, h.tileSize.width())),
+                                                   float(qMax(1, h.tileSize.height()))));
+            }
+
+            if (gpu.needsPrevOutput) {
+                const GLuint prev = aux ? aux->prevOutput : 0;
+                gl->glActiveTexture(GL_TEXTURE0 + kPrevOutputTextureUnit);
+                gl->glBindTexture(GL_TEXTURE_2D, prev ? prev : transparentTexture(rt, gl));
+                gl->glActiveTexture(GL_TEXTURE0);
+                program->setUniformValue("u_prevOutput", kPrevOutputTextureUnit);
             }
 
             if (face111) {

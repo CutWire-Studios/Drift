@@ -64,22 +64,6 @@ struct MaskMediaFrame
 // as grayscale. Only the preview sets it; export never does.
 enum class MaskViewMode : quint8 { Off, Overlay, Matte };
 
-namespace drift {
-// The most placements one motion-blurred layer is averaged over; the blur shader's array size.
-inline constexpr int kMaxMotionBlurSamples = 32;
-}
-
-// Where a layer sits at one instant: the GpuLayer fields modelMatrixFor reads that move over time.
-struct GpuLayerPlacement
-{
-    QRectF rect;
-    double rotation = 0.0;
-    drift::ClipPose3d pose3d;
-    QTransform parent;
-    bool hasParent = false;
-    QMatrix4x4 viewProj;
-};
-
 // A single textured layer: the clip's source pixels plus everything needed to
 // place it on the canvas. Prefer `video` when set (hardware frames stay on the
 // GPU until the importer); then `vector`, drawn by Skia straight into the layer
@@ -147,14 +131,20 @@ struct GpuLayer
     // Drawn already in place (a model clip renders itself through the viewpoint into a
     // canvas-sized target): the layer covers the canvas and is not placed a second time.
     bool screenSpace = false;
-    // Motion blur: the layer's placement at each sample across the open shutter, in time order.
-    // Empty draws the layer once at its own placement; the draw averages the layer over these.
-    QList<GpuLayerPlacement> motionSamples;
     double opacity = 1.0;
     MaskViewMode maskView = MaskViewMode::Off;
     QColor maskViewTint = QColor(0xFF, 0x30, 0x30, 0x80);
     drift::TimeUs clipTimeUs = 0; // effect time base (relative to clip start)
     int frameRate = 0;            // the project's, for u_frameIndex; 0 reads as 30
+    // The clip's frame history (drift::gl::FrameHistory.h): (historyScope, historyKey) names the
+    // clip instance across composites, 0 for none. FrameCompositor sets both; the scope is its
+    // own, so a preview, an export and a thumbnail never share one.
+    quint64 historyScope = 0;
+    quint64 historyKey = 0;
+    // Past source frames to keep for this clip beyond what its effects ask for. A compositor pass
+    // that wants the previous frame (optical-flow motion blur) sets 1 and fetches it with
+    // pastSourceFrame(rt, layer.historyScope, layer.historyKey) once buildLayerTarget has run.
+    int sourceHistoryFrames = 0;
     // This frame's baked face anchors, one per tracked slot, sampled by FrameCompositor. Carried
     // by value: the scene outlives the cache lookup that produced them.
     QList<drift::FaceAnchors> faceSlots;
@@ -231,6 +221,9 @@ struct GpuScene
     QList<drift::EditorLine> editorLines;
     // The bake this frame was read from, empty when it was composited live.
     QString bakeId;
+    // The FrameCompositor (and stream) this scene was built by; GpuLayer::historyScope's owner,
+    // and the unit whose unused frame histories are dropped once the scene is composed.
+    quint64 historyScope = 0;
 };
 
 // A composited frame still living in GPU memory. The texture belongs to the GL

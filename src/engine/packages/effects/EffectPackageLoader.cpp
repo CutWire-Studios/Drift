@@ -162,6 +162,18 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
         }
         entry.gpu.needsDepth = entry.needsDepth;
         entry.gpu.needsMask = entry.needsMask;
+        if (root.contains(QStringLiteral("history"))) {
+            const int frames = root.value(QStringLiteral("history")).toInt(0);
+            if (frames < 1 || frames > drift::kMaxHistoryFrames) {
+                entry.gpu.valid = false;
+                setError(errorOut, &entry,
+                         QStringLiteral("history must be a whole number from 1 to %1")
+                             .arg(drift::kMaxHistoryFrames));
+                return entry;
+            }
+            entry.gpu.historyFrames = frames;
+        }
+        entry.gpu.needsPrevOutput = root.value(QStringLiteral("previousOutput")).toBool(false);
         return entry;
     }
 

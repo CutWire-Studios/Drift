@@ -193,6 +193,7 @@ target_compile_definitions(tst_engine PRIVATE
     # Beauty / makeup packages live in the effects.core addon (drift-addons staging), not the
     # bundled VideoEd/effects tree. Optional so a checkout without the sibling repo still builds.
     DRIFT_TEST_ADDON_EFFECTS_DIR="${CMAKE_SOURCE_DIR}/../drift-addons/staging/effects-core/effects"
+    DRIFT_TEST_TRENDING_EFFECTS_DIR="${CMAKE_SOURCE_DIR}/../drift-addons/staging/effects-trending/effects"
     DRIFT_TEST_TRANSITIONS_DIR="${CMAKE_SOURCE_DIR}/transitions"
     DRIFT_TEST_FONTS_DIR="${CMAKE_SOURCE_DIR}/fonts"
     DRIFT_TEST_EMOJI_FONT_DIR="${CMAKE_SOURCE_DIR}/emoji-fonts"

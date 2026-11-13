@@ -107,9 +107,7 @@ bool isFaceEffectId(const QString &catalogId)
 bool AppController::effectFitsTrack(int trackIndex, const QString &effectId, QString *why) const
 {
     const EffectPresetEntry *def = effectDefForId(effectId);
-    const bool motionBlur = def && def->meta.id == QLatin1String("motion.blur");
-    if (!def || !(def->needsFace || def->needsDepth || def->needsMask || def->isFaceSwap || def->isModel3d
-                  || motionBlur))
+    if (!def || !(def->needsFace || def->needsDepth || def->needsMask || def->isFaceSwap || def->isModel3d))
         return true;
     const bool standalone = trackIndex < 0
                             || (trackIndex < m_project.tracks().size()
@@ -118,9 +116,7 @@ bool AppController::effectFitsTrack(int trackIndex, const QString &effectId, QSt
     if (!standalone)
         return true;
     if (why) {
-        *why = motionBlur
-                   ? tr("Motion blur follows one clip's movement, so it goes on a clip, not on an adjustment layer.")
-               : def->needsDepth
+        *why = def->needsDepth
                    ? tr("Depth effects read one clip's depth, so they go on a clip, not on an adjustment layer.")
                : def->needsMask
                    ? tr("Mask effects read one clip's masks, so they go on a clip, not on an adjustment layer.")
