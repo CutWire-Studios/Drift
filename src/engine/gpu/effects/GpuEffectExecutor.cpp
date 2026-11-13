@@ -94,8 +94,16 @@ QImage GpuEffectExecutor::applyChain(const QList<ChainStep> &steps, const QImage
             const std::vector<const GlTarget *> sources{&current};
             PipelineAux aux{step.depth};
             aux.frameRate = frameRate;
+            GlTarget maskTarget;
+            if (step.gpu->needsMask && !step.mask.isNull()) {
+                maskTarget = promoteImageToTarget(rt, gl, step.mask, canvasSize);
+                if (maskTarget.isValid())
+                    aux.clipMask = maskTarget.texture();
+            }
             GlTarget next = runPipeline(rt, gl, step.cacheKey, *step.gpu, sources, step.parameters,
                                         timeUs, 0.0, canvasSize, &aux);
+            if (maskTarget.isValid())
+                rt.releaseTarget(std::move(maskTarget));
             if (!next.isValid())
                 continue; // grace mode: skip this effect, keep the chain going
 

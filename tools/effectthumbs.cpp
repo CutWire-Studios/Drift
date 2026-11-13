@@ -8,6 +8,7 @@
 #include "engine/face/swap/FaceSwapSource.h"
 #include "engine/gpu/effects/GpuEffectExecutor.h"
 #include "engine/ml/vision/depth/VdaDepth.h"
+#include "engine/ml/vision/segmentation/RvmMatter.h"
 
 #include <QGuiApplication>
 #include <QDir>
@@ -20,10 +21,13 @@
 #include <QJsonObject>
 #include <QPainter>
 #include <QPainterPath>
+#include <QProcess>
+#include <QTemporaryDir>
 #include <QTextStream>
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 
 namespace {
 
@@ -228,13 +232,53 @@ QMap<QString, QVariant> dramaticDefaults(const EffectPresetEntry &def)
         params.insert(QStringLiteral("u_softness"), 0.35);
         params.insert(QStringLiteral("u_spill"), 1.0);
     } else if (def.meta.id == QLatin1String("builtin.effects.privacy_blur")) {
-        // Its sliders are a placement, not an intensity: aimed at the face in street-portrait.jpg.
         params.insert(QStringLiteral("mode"), 0.0);
-        params.insert(QStringLiteral("regionX"), 0.37);
-        params.insert(QStringLiteral("regionY"), 0.29);
-        params.insert(QStringLiteral("regionW"), 0.27);
-        params.insert(QStringLiteral("regionH"), 0.37);
         params.insert(QStringLiteral("strength"), 1.0);
+    } else if (def.meta.id == QLatin1String("anamorphic_streak")) {
+        params.insert(QStringLiteral("intensity"), 1.2);
+        params.insert(QStringLiteral("streakLength"), 0.35);
+        params.insert(QStringLiteral("threshold"), 0.75);
+    } else if (def.meta.id == QLatin1String("camera_punch")) {
+        params.insert(QStringLiteral("shake"), 9.0);
+        params.insert(QStringLiteral("rgb"), 5.0);
+        params.insert(QStringLiteral("zoom"), 0.08);
+    } else if (def.meta.id == QLatin1String("speed_streaks")) {
+        params.insert(QStringLiteral("strength"), 0.65);
+        params.insert(QStringLiteral("chromatic"), 0.5);
+    } else if (def.meta.id == QLatin1String("directional_blur")) {
+        params.insert(QStringLiteral("amount"), 0.55);
+        params.insert(QStringLiteral("angle"), 0.0);
+        params.insert(QStringLiteral("samples"), 24.0);
+    } else if (def.meta.id == QLatin1String("corner_pin")) {
+        // A slab receding to the right: the far edge shorter than the near one.
+        params.insert(QStringLiteral("tlX"), 0.1);
+        params.insert(QStringLiteral("tlY"), 0.04);
+        params.insert(QStringLiteral("trX"), 0.92);
+        params.insert(QStringLiteral("trY"), 0.22);
+        params.insert(QStringLiteral("brX"), 0.92);
+        params.insert(QStringLiteral("brY"), 0.76);
+        params.insert(QStringLiteral("blX"), 0.1);
+        params.insert(QStringLiteral("blY"), 0.96);
+    } else if (def.meta.id == QLatin1String("feedback")) {
+        params.insert(QStringLiteral("zoom"), 1.04);
+        params.insert(QStringLiteral("rotation"), 4.0);
+        params.insert(QStringLiteral("decay"), 0.88);
+    } else if (def.meta.id == QLatin1String("trails")) {
+        params.insert(QStringLiteral("decay"), 0.86);
+        params.insert(QStringLiteral("blend"), 0.0);
+    } else if (def.meta.id == QLatin1String("time_echo")) {
+        params.insert(QStringLiteral("echoes"), 5);
+        params.insert(QStringLiteral("spacing"), 3);
+        params.insert(QStringLiteral("decay"), 0.75);
+    } else if (def.meta.id == QLatin1String("frame_delay")) {
+        params.insert(QStringLiteral("delay"), 8);
+    } else if (def.meta.id == QLatin1String("slit_scan")) {
+        params.insert(QStringLiteral("direction"), 0);
+        params.insert(QStringLiteral("frames"), 30);
+    } else if (def.meta.id == QLatin1String("motion.blur")) {
+        params.insert(QStringLiteral("shutter"), 360.0);
+        params.insert(QStringLiteral("samples"), 32);
+        params.insert(QStringLiteral("maxBlur"), 20.0);
     } else if (def.meta.id == QLatin1String("face_big_eyes")) {
         params.insert(QStringLiteral("amount"), 0.7);
         params.insert(QStringLiteral("radius"), 5.0);
@@ -429,68 +473,194 @@ QImage squareCrop(const QImage &image, int size)
     return scaled.copy((scaled.width() - size) / 2, (scaled.height() - size) / 2, size, size);
 }
 
-// Motion Blur has no shader either: it averages a moving clip over the open shutter. Rendered
-// through the real compositor, the photo as a card whipping across the frame at the default 180°,
-// over a dimmed, softened copy of itself so the smear has something to read against.
-QImage motionBlurPreview(const EffectPresetEntry &def, const QString &photoPath, const QImage &base)
-{
-    const int canvas = base.width() * 2;
-    QImage photo(photoPath);
-    if (photo.isNull())
-        return {};
 
+// Coverage in the layout the clip mask has: the value in every channel, opaque.
+QImage maskFromGray(const QImage &gray)
+{
+    const QImage g = gray.convertToFormat(QImage::Format_Grayscale8);
+    QImage out(g.size(), QImage::Format_RGBA8888);
+    for (int y = 0; y < g.height(); ++y) {
+        const uchar *src = g.constScanLine(y);
+        auto *dst = reinterpret_cast<QRgb *>(out.scanLine(y));
+        for (int x = 0; x < g.width(); ++x)
+            dst[x] = qRgba(src[x], src[x], src[x], 255);
+    }
+    return out;
+}
+
+// The person matte the app's own Cut out subject produces.
+bool personMatte(const QImage &photo, QImage *alpha, QImage *foreground, QTextStream &err)
+{
+    std::unique_ptr<drift::RvmMatter::Track> track = drift::RvmMatter::instance().newTrack({});
+    if (!track) {
+        err << "matte: " << drift::RvmMatter::instance().lastError() << "\n";
+        return false;
+    }
+    // Recurrent: the first step has no state, and the matte settles over the next few.
+    drift::RvmResult result;
+    for (int i = 0; i < 4; ++i) {
+        result = track->step(photo);
+        if (!result.ok) {
+            err << "matte: " << result.error << "\n";
+            return false;
+        }
+    }
+    *alpha = result.alpha;
+    if (foreground)
+        *foreground = result.foreground;
+    return true;
+}
+
+// A soft ellipse over a detected face, standing in for the mask a user would draw.
+QImage faceEllipseMask(const drift::FaceAnchors &face, int size)
+{
+    const int small = std::max(32, size / 8);
+    QImage g(small, small, QImage::Format_Grayscale8);
+    g.fill(0);
+    QPainter p(&g);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setPen(Qt::NoPen);
+    p.setBrush(Qt::white);
+    p.drawEllipse(QPointF(face.faceCenter.x() * small, face.faceCenter.y() * small),
+                  face.faceRx * small * 1.2, face.faceRy * small * 1.15);
+    p.end();
+    return maskFromGray(g.scaled(size, size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+}
+
+// The walking person, cut from their photo and trimmed to the matte's bounds.
+QImage cutoutFrom(const QImage &alpha, const QImage &foreground)
+{
+    QImage cut = foreground.convertToFormat(QImage::Format_ARGB32);
+    QRect box;
+    for (int y = 0; y < cut.height(); ++y) {
+        auto *line = reinterpret_cast<QRgb *>(cut.scanLine(y));
+        const uchar *a = alpha.constScanLine(y);
+        for (int x = 0; x < cut.width(); ++x) {
+            line[x] = qRgba(qRed(line[x]), qGreen(line[x]), qBlue(line[x]), a[x]);
+            if (a[x] > 40)
+                box = box.united(QRect(x, y, 1, 1));
+        }
+    }
+    return box.isEmpty() ? QImage() : cut.copy(box.adjusted(-2, -2, 2, 2).intersected(cut.rect()));
+}
+
+constexpr int kSceneFrames = 32;
+constexpr int kSceneFps = 30;
+int sceneCount = 0;
+
+// A person walking across a dark studio gradient, right to left. Time effects need footage whose
+// content changes from frame to frame; a static photo gives them nothing to look back at.
+QImage sceneFrame(const QImage &cut, int canvas, int index, double from, double to)
+{
+    QImage frame(canvas, canvas, QImage::Format_RGB32);
+    QPainter p(&frame);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    QLinearGradient bg(0, 0, 0, canvas);
+    bg.setColorAt(0.0, QColor(8, 12, 38));
+    bg.setColorAt(0.7, QColor(18, 52, 84));
+    bg.setColorAt(1.0, QColor(10, 24, 44));
+    p.fillRect(frame.rect(), bg);
+
+    const double u = double(index) / (kSceneFrames - 1);
+    const double h = canvas * 0.8;
+    const double w = h * cut.width() / cut.height();
+    const double bob = std::sin(index * 0.9) * canvas * 0.006;
+    const double cx = canvas * (from + (to - from) * u);
+    const double top = canvas * 0.1 + bob;
+    p.drawImage(QRectF(cx - w / 2, top, w, h), cut);
+    p.end();
+    return frame;
+}
+
+// Encodes the scene to a short H.264 clip under `dir`, which must outlive the result.
+QString encodeScene(const QImage &cutout, int canvas, const QString &dir, double from, double to,
+                    QTextStream &err)
+{
+    for (int i = 0; i < kSceneFrames; ++i) {
+        const QString name = QStringLiteral("f%1.png").arg(i, 3, 10, QLatin1Char('0'));
+        sceneFrame(cutout, canvas, i, from, to).save(QDir(dir).filePath(name));
+    }
+    const QString video = QDir(dir).filePath(QStringLiteral("scene%1.mp4").arg(sceneCount++));
+    QProcess ffmpeg;
+    ffmpeg.start(QStringLiteral("ffmpeg"),
+                 {QStringLiteral("-v"), QStringLiteral("error"), QStringLiteral("-y"),
+                  QStringLiteral("-framerate"), QString::number(kSceneFps), QStringLiteral("-i"),
+                  QDir(dir).filePath(QStringLiteral("f%03d.png")), QStringLiteral("-c:v"),
+                  QStringLiteral("libx264"), QStringLiteral("-crf"), QStringLiteral("8"),
+                  QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"), video});
+    if (!ffmpeg.waitForFinished(60000) || ffmpeg.exitCode() != 0) {
+        err << "ffmpeg: " << ffmpeg.readAllStandardError() << "\n";
+        return {};
+    }
+    return video;
+}
+
+// Composes the clip frame after frame, so a time effect's history fills the way it does in an
+// export, and returns the last frame.
+QImage lastSceneFrame(const QString &video, int canvas, const EffectPresetEntry *def,
+                      const QMap<QString, QVariant> &params)
+{
     drift::Project project;
     project.setResolution(canvas, canvas);
-    project.setFps(30);
-    drift::Background background;
-    background.kind = drift::BackgroundKind::Transparent;
-    project.setBackground(background);
+    project.setFps(kSceneFps);
     project.tracks().clear();
     project.tracks().append(drift::Track{.type = drift::TrackType::Video});
     project.ensureTrackIds();
 
-    const double w = canvas * 0.74;
-    const double h = w * photo.height() / photo.width();
-    // Centred at 0.5 s, moving 0.1 of the frame per frame, so the shutter smears it over 0.05:
-    // enough to streak the edges while the car still reads.
-    const double perFrame = canvas * 0.1;
-    drift::Clip card;
-    card.id = QStringLiteral("card");
-    card.type = drift::ClipType::Image;
-    card.path = photoPath;
-    card.timelineDuration = drift::secondsToUs(1.0);
-    card.srcOut = card.timelineDuration;
-    card.transformX.setKeyframe(0, {(canvas - w) / 2 - 15 * perFrame});
-    card.transformX.setKeyframe(drift::secondsToUs(1.0), {(canvas - w) / 2 + 15 * perFrame});
-    card.transformY.setKeyframe(0, {(canvas - h) / 2});
-    card.transformW.setKeyframe(0, {w});
-    card.transformH.setKeyframe(0, {h});
-    card.rotation.setKeyframe(0, {-60.0});
-    card.rotation.setKeyframe(drift::secondsToUs(1.0), {60.0});
-    drift::Effect blur;
-    blur.catalogId = def.meta.id;
-    for (const drift::EffectParamSpec &spec : def.meta.parameters)
-        spec.insertDefault(blur.parameters);
-    blur.parameters.insert(QStringLiteral("samples"), 32);
-    card.effects.append(blur);
-    project.tracks()[0].clips.append(card);
+    drift::Clip clip;
+    clip.id = QStringLiteral("scene");
+    clip.type = drift::ClipType::Video;
+    clip.path = video;
+    clip.timelineDuration = drift::secondsToUs(double(kSceneFrames) / kSceneFps);
+    clip.srcOut = clip.timelineDuration;
+    if (def) {
+        drift::Effect effect;
+        effect.catalogId = def->meta.id;
+        effect.parameters = params;
+        clip.effects.append(effect);
+    }
+    project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
     compositor.setProject(&project);
     FrameCompositor::RenderOptions options;
     options.exporting = true;
-    const QImage moving = compositor.compositeAt(drift::secondsToUs(0.5), options);
-    if (moving.isNull())
-        return {};
+    QImage last;
+    for (int i = 0; i < kSceneFrames; ++i)
+        last = compositor.compositeAt(drift::secondsToUs(double(i) / kSceneFps), options);
+    return last;
+}
 
-    QImage out = base.scaled(12, 12, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
-                     .scaled(canvas, canvas, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+// The effect over the corner-pinned frame's own surroundings: outside the quad the effect is
+// transparent, and a darkened, softened copy of the photo gives the pinned picture a surface.
+QImage overBackdrop(const QImage &pinned, const QImage &base)
+{
+    QImage out = base.scaled(16, 16, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                     .scaled(base.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
                      .convertToFormat(QImage::Format_ARGB32_Premultiplied);
     QPainter p(&out);
-    p.fillRect(out.rect(), QColor(0, 0, 0, 170));
-    p.drawImage(0, 0, moving.convertToFormat(QImage::Format_ARGB32_Premultiplied));
+    p.fillRect(out.rect(), QColor(0, 0, 0, 150));
+    p.drawImage(0, 0, pinned.convertToFormat(QImage::Format_ARGB32_Premultiplied));
     p.end();
     return out;
+}
+
+// The prop.json next to a face prop's .glb carries the placement it was designed with.
+QMap<QString, QVariant> facePropParams(const EffectPresetEntry &def, const QString &glb)
+{
+    QMap<QString, QVariant> params;
+    for (const drift::EffectParamSpec &spec : def.meta.parameters)
+        params.insert(spec.key, spec.defaultVariant());
+    params.insert(QStringLiteral("model"), glb);
+    QFile file(QFileInfo(glb).absoluteDir().filePath(QStringLiteral("prop.json")));
+    if (file.open(QIODevice::ReadOnly)) {
+        const QJsonObject placed =
+            QJsonDocument::fromJson(file.readAll()).object().value(QStringLiteral("params")).toObject();
+        for (auto it = placed.begin(); it != placed.end(); ++it)
+            params.insert(it.key(), it.value().toVariant());
+    }
+    return params;
 }
 
 // Behind Subject has no shader to run: it tells the compositor to hide a layer wherever the clip
@@ -612,6 +782,7 @@ int main(int argc, char *argv[])
     QString basePath;
     QString basesPath;
     QString onlyId;
+    QString propPath;
     int size = 256;
     bool force = false;
 
@@ -623,6 +794,8 @@ int main(int argc, char *argv[])
             basePath = args.at(++i);
         else if (a == QLatin1String("--bases") && i + 1 < args.size())
             basesPath = args.at(++i);
+        else if (a == QLatin1String("--prop") && i + 1 < args.size())
+            propPath = args.at(++i);
         else if (a == QLatin1String("--only") && i + 1 < args.size())
             onlyId = args.at(++i);
         else if (a == QLatin1String("--size") && i + 1 < args.size())
@@ -631,7 +804,9 @@ int main(int argc, char *argv[])
             force = true;
         else if (a == QLatin1String("--help") || a == QLatin1String("-h")) {
             err << "usage: effectthumbs [--effects DIR] [--base image | --bases FILE.json] [--only id]\n"
-                   "                    [--size N] [--force]\n"
+                   "                    [--prop FILE.glb] [--size N] [--force]\n"
+                   "\n"
+                   "--prop is the face prop Face Props wears; its prop.json beside it sets the placement.\n"
                    "\n"
                    "--bases picks a photo per effect: {default, face, chroma, categories:{slug: file},\n"
                    "effects:{id: file}}, files relative to the JSON. An effect uses its own entry,\n"
@@ -712,6 +887,9 @@ int main(int argc, char *argv[])
 
     const QImage chromaBase = withGreenScreenBackdrop(baseFor(chooser.chroma));
 
+    QTemporaryDir sceneDir;
+    QHash<QString, QString> scenes;
+
     int ok = 0;
     int failed = 0;
     int skipped = 0;
@@ -719,8 +897,7 @@ int main(int argc, char *argv[])
         if (!onlyId.isEmpty() && def.meta.id != onlyId)
             continue;
         const bool occlude = def.meta.id == QLatin1String("depth.occlude");
-        const bool motionBlur = def.meta.id == QLatin1String("motion.blur");
-        if ((!def.isGpu || !def.gpu.valid) && !occlude && !motionBlur && !def.isFaceSwap) {
+        if ((!def.isGpu || !def.gpu.valid) && !occlude && !def.isFaceSwap && !def.isModel3d) {
             err << "skip non-gpu " << def.meta.id << "\n";
             continue;
         }
@@ -741,8 +918,6 @@ int main(int argc, char *argv[])
         const QMap<QString, QVariant> params = dramaticDefaults(def);
         if (occlude) {
             result = behindSubjectPreview(base, *depthFor(basePhoto));
-        } else if (motionBlur) {
-            result = motionBlurPreview(def, basePhoto, base);
         } else if (def.isFaceSwap) {
             result = faceSwapPreview(def, faceFor(basePhoto), faceFor(chooser.faceSwapSource),
                                      chooser.faceSwapSource, err);
@@ -770,10 +945,68 @@ int main(int argc, char *argv[])
                 out << "depth.focus: focusing at " << nearest << "\n";
             }
             result = EffectProcessor::applyEffects(base, {effect}, 500000, {}, depth);
+        } else if (def.needsMask) {
+            QImage mask;
+            if (def.meta.id == QLatin1String("builtin.effects.privacy_blur")) {
+                mask = faceEllipseMask(faceFor(basePhoto).anchors, base.width());
+            } else {
+                QImage alpha;
+                if (personMatte(base, &alpha, nullptr, err))
+                    mask = maskFromGray(alpha);
+                else
+                    mask = maskFromGray(QImage(basePhoto + QStringLiteral(".mask.png"))
+                                            .scaled(base.size(), Qt::IgnoreAspectRatio,
+                                                    Qt::SmoothTransformation));
+            }
+            if (mask.isNull() || mask.size() != base.size()) {
+                err << "no mask for " << def.meta.id << "\n";
+            } else {
+                QMap<QString, QVariant> maskParams = params;
+                if (def.meta.id == QLatin1String("clone_parade")) {
+                    maskParams.clear();
+                    for (const drift::EffectParamSpec &spec : def.meta.parameters)
+                        maskParams.insert(spec.key, spec.defaultVariant());
+                }
+                GpuEffectExecutor::ChainStep step{def.meta.id, &def.gpu, nullptr, maskParams, {},
+                                                  nullptr, mask};
+                result = GpuEffectExecutor::instance().applyChain({step}, base, 500000);
+            }
+        } else if (def.gpu.historyFrames > 0 || def.gpu.needsPrevOutput) {
+            const int canvas = base.width() * 2;
+            // Slit Scan stretches whatever moves along its own direction, so it wants a slow walker;
+            // the rest want one that has covered ground.
+            const bool slit = def.meta.id == QLatin1String("slit_scan");
+            auto &scene = scenes[basePhoto + (slit ? QStringLiteral("#slow") : QString())];
+            if (scene.isEmpty()) {
+                QImage alpha;
+                QImage foreground;
+                const QImage photo = QImage(basePhoto).convertToFormat(QImage::Format_RGB888);
+                const QImage square = squareCrop(photo, 1024).convertToFormat(QImage::Format_RGB888);
+                if (personMatte(square, &alpha, &foreground, err)) {
+                    const QImage cutout = cutoutFrom(alpha, foreground);
+                    scene = slit ? encodeScene(cutout, canvas, sceneDir.path(), 0.72, 0.38, err)
+                                 : encodeScene(cutout, canvas, sceneDir.path(), 1.12, 0.34, err);
+                }
+            }
+            if (!scene.isEmpty()) {
+                result = lastSceneFrame(scene, canvas, &def, params);
+                // A delayed frame is just an earlier frame; shown over the live one, the lag shows.
+                if (def.meta.id == QLatin1String("frame_delay") && !result.isNull()) {
+                    QImage live = lastSceneFrame(scene, canvas, nullptr, {})
+                                      .convertToFormat(QImage::Format_ARGB32_Premultiplied);
+                    QPainter p(&live);
+                    p.setOpacity(0.6);
+                    p.drawImage(0, 0, result.convertToFormat(QImage::Format_ARGB32_Premultiplied));
+                    p.end();
+                    result = live;
+                }
+            }
         } else if (def.needsFace) {
             drift::Effect effect;
             effect.catalogId = def.meta.id;
-            effect.parameters = params;
+            effect.parameters = def.meta.id == QLatin1String("face_props") && !propPath.isEmpty()
+                ? facePropParams(def, propPath)
+                : params;
             const FacePhoto face = faceFor(basePhoto);
             result = EffectProcessor::applyEffects(face.image, {effect}, 500000, {face.anchors});
         } else {
@@ -781,6 +1014,8 @@ int main(int argc, char *argv[])
             effect.catalogId = def.meta.id;
             effect.parameters = params;
             result = EffectProcessor::applyEffects(base, {effect}, 500000);
+            if (def.meta.id == QLatin1String("corner_pin"))
+                result = overBackdrop(result, base);
         }
 
         if (result.isNull()) {

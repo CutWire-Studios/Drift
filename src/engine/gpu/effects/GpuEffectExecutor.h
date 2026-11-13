@@ -28,6 +28,8 @@ public:
         QMap<QString, QVariant> parameters;
         QList<drift::FaceAnchors> faceSlots;
         std::shared_ptr<const drift::DepthFrame> depth;
+        // Coverage for "requires": "mask" packages, in the red channel, in the input's uv space.
+        QImage mask;
     };
 
     // Run a whole effect chain with a single upload and a single readback, keeping
