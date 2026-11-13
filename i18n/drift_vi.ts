@@ -1088,7 +1088,7 @@
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">Yêu thích</translation>
+        <translation>Yêu thích</translation>
     </message>
     <message>
         <source>Template</source>
@@ -3914,7 +3914,7 @@
     </message>
     <message>
         <source>Split</source>
-        <translation type="unfinished">Tách</translation>
+        <translation>Tách</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -5084,7 +5084,7 @@
     <name>AssetSearchBar</name>
     <message>
         <source>Clear search</source>
-        <translation type="unfinished">Xóa tìm kiếm</translation>
+        <translation>Xóa tìm kiếm</translation>
     </message>
     <message>
         <source>Remove from history</source>
@@ -10143,7 +10143,7 @@
     </message>
     <message>
         <source>Loop</source>
-        <translation type="unfinished">Lặp lại</translation>
+        <translation>Lặp lại</translation>
     </message>
     <message>
         <source>A clip with a speed ramp can&apos;t loop</source>
@@ -10311,7 +10311,7 @@
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">Yêu thích</translation>
+        <translation>Yêu thích</translation>
     </message>
     <message>
         <source>Type</source>
@@ -11455,7 +11455,7 @@
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">Yêu thích</translation>
+        <translation>Yêu thích</translation>
     </message>
     <message>
         <source>Template</source>
@@ -12642,7 +12642,7 @@
     <name>MaskOverlayFeatherHandle</name>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">Chỉnh sửa %1</translation>
+        <translation>Chỉnh sửa %1</translation>
     </message>
     <message>
         <source>Feather</source>
@@ -12653,7 +12653,7 @@
     <name>MaskOverlayRoundnessHandle</name>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">Chỉnh sửa %1</translation>
+        <translation>Chỉnh sửa %1</translation>
     </message>
     <message>
         <source>Roundness</source>
@@ -12715,7 +12715,7 @@
     </message>
     <message>
         <source>Clip</source>
-        <translation type="unfinished">Clip</translation>
+        <translation>Clip</translation>
     </message>
     <message>
         <source>%1 mask</source>
@@ -12867,7 +12867,7 @@
     </message>
     <message>
         <source>Split</source>
-        <translation type="unfinished">Tách</translation>
+        <translation>Tách</translation>
     </message>
     <message>
         <source>Matte</source>
@@ -13379,7 +13379,7 @@
     </message>
     <message>
         <source>Split</source>
-        <translation type="unfinished">Tách</translation>
+        <translation>Tách</translation>
     </message>
     <message>
         <source>Combine</source>
@@ -13447,23 +13447,23 @@
     </message>
     <message>
         <source>Alpha (transparency)</source>
-        <translation type="unfinished">Alpha (độ trong suốt)</translation>
+        <translation>Alpha (độ trong suốt)</translation>
     </message>
     <message>
         <source>Luma (brightness)</source>
-        <translation type="unfinished">Luma (độ sáng)</translation>
+        <translation>Luma (độ sáng)</translation>
     </message>
     <message>
         <source>Fit</source>
-        <translation type="unfinished">Vừa</translation>
+        <translation>Vừa</translation>
     </message>
     <message>
         <source>Stretch</source>
-        <translation type="unfinished">Kéo giãn</translation>
+        <translation>Kéo giãn</translation>
     </message>
     <message>
         <source>Fill</source>
-        <translation type="unfinished">Đầy</translation>
+        <translation>Đầy</translation>
     </message>
     <message>
         <source>Edit mask timeline</source>
@@ -23325,7 +23325,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">Yêu thích</translation>
+        <translation>Yêu thích</translation>
     </message>
     <message>
         <source>All</source>
@@ -24216,7 +24216,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Loop</source>
-        <translation type="unfinished">Lặp lại</translation>
+        <translation>Lặp lại</translation>
     </message>
     <message>
         <source>Remove silence</source>
@@ -26273,7 +26273,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Reset rotation</source>
-        <translation type="unfinished">Đặt lại xoay</translation>
+        <translation>Đặt lại xoay</translation>
     </message>
     <message>
         <source>Rotate the whole group as one flat card</source>
@@ -26297,7 +26297,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Reset all</source>
-        <translation type="unfinished">Đặt lại tất cả</translation>
+        <translation>Đặt lại tất cả</translation>
     </message>
     <message>
         <source>Rotation</source>
