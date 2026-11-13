@@ -5022,6 +5022,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Save diagnostics…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Settings…</source>
         <translation>সেটিংস…</translation>
     </message>
@@ -7119,6 +7123,52 @@
     <message>
         <source>Cancelled</source>
         <translation type="unfinished">বাতিল করা হয়েছে</translation>
+    </message>
+</context>
+<context>
+    <name>CrashReport</name>
+    <message>
+        <source>Drift closed unexpectedly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift did not close properly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift did not close properly last time. If it keeps happening, you can start in safe mode, which uses the default graphics backend and loads no add-ons for this session.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A report was sent to help fix this. You can turn this off in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save crash file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start in safe mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation type="unfinished">এগিয়ে যান</translation>
+    </message>
+</context>
+<context>
+    <name>CrashReporter</name>
+    <message>
+        <source>Choose where to save the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved to %1</source>
+        <translation type="unfinished">%1-এ সংরক্ষণ করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Could not save the file: %1</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -16973,6 +17023,10 @@ If playback stutters, try another.</source>
         <source>Copy email address</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>If Drift crashes, it sends an error report to help fix it. No project files or media are included. You can turn this off in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QuickSetupMockEditor</name>
@@ -18202,6 +18256,18 @@ If playback stutters, try another.</source>
         <translation>এখনই চেক করুন</translation>
     </message>
     <message>
+        <source>Save diagnostics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves an archive with your logs and system information to attach to a bug report.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save diagnostics…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Help</source>
         <translation>সহায়তা</translation>
     </message>
@@ -18828,6 +18894,18 @@ If playback stutters, try another.</source>
     <message>
         <source>Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.</source>
         <translation>ট্যাপ, স্ন্যাপ এবং সম্পাদনায় ভাইব্রেট করুন। এই ডিভাইসের নিজস্ব হ্যাপটিক ইফেক্ট ব্যবহার করে যখন সেগুলি থাকে.</translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send crash reports automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>After a crash, send the error details, a short scrubbed log and your system and graphics information to help fix it. No project files or media.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Storage</source>
@@ -28134,6 +28212,37 @@ If playback stutters, try another.</source>
     <message>
         <source>Holographic</source>
         <translation>হলোগ্রাফিক</translation>
+    </message>
+</context>
+<context>
+    <name>drift::crash</name>
+    <message>
+        <source>Drift ran out of memory. Close other programs, or work with smaller or lower-resolution media.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A Windows component Drift depends on looks out of date. Update the Microsoft Visual C++ Redistributable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download the Visual C++ Redistributable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The graphics driver stopped responding. Update your graphics driver, or try another graphics backend in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An add-on crashed. Try disabling or reinstalling your add-ons.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The add-on &quot;%1&quot; crashed. Try updating or reinstalling it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift closed unexpectedly.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
