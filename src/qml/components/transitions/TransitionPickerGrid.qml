@@ -16,7 +16,6 @@ Item {
 
     // Bumped when an addon changes the transitions on disk (an imported .driftfx, a pack install).
     property int catalogTick: 0
-    property int favoritesTick: 0
     property int selectedCuts: 0
 
     readonly property var catalog: {
@@ -32,10 +31,9 @@ Item {
             return root.catalog.some(function(k) { return k.category === c.id })
         })
     }
-    readonly property string favoritesId: "__favorites__"
-    readonly property string mineId: "__mine__"
-    readonly property string recentId: "__recent__"
-    property string activeCategory: categories.length > 0 ? categories[0].id : ""
+    // The section at the top of the grid; showCategory() scrolls to one.
+    readonly property string activeCategory: transitionGrid.currentSectionId
+    function showCategory(id) { transitionGrid.scrollToSection(id) }
     property alias searchText: searchBar.text
     readonly property string query: searchBar.text.trim().toLowerCase()
     default property alias searchActions: searchBar.actions
@@ -51,30 +49,6 @@ Item {
                 out.push(byKind[kind])
         }
         return out
-    }
-
-    readonly property var visibleTransitions: {
-        void root.favoritesTick
-        const q = root.query
-        if (q.length > 0) {
-            return root.catalog.filter(function(item) {
-                const label = (item.label || "").toLowerCase()
-                const kind = (item.kind || "").toLowerCase()
-                return label.indexOf(q) >= 0 || kind.indexOf(q) >= 0
-            })
-        }
-        if (root.activeCategory === root.favoritesId) {
-            return root.catalog.filter(function(item) {
-                return EditorState.isAssetFavorite("transitions", item.kind)
-            })
-        }
-        if (root.activeCategory === root.mineId)
-            return root.catalog.filter(function(item) { return item.user === true })
-        if (root.activeCategory === root.recentId)
-            return root.recentKinds
-        return root.catalog.filter(function(item) {
-            return item.category === root.activeCategory
-        })
     }
 
     signal picked(string kind)
@@ -159,13 +133,6 @@ Item {
         }
     }
 
-    Connections {
-        target: EditorState
-        function onAssetFavoritesChanged() {
-            root.favoritesTick++
-        }
-    }
-
     FontMetrics {
         id: labelMetrics
         font.family: Theme.fontFamily
@@ -190,13 +157,10 @@ Item {
         AssetCategoryChips {
             id: chips
             width: parent.width
-            categories: root.categories
+            sections: transitionGrid.visibleSections
             activeCategory: root.activeCategory
-            showMine: true
-            showRecent: true
-            mineLabel: qsTr("My Transitions")
             searching: root.query.length > 0
-            onCategoryActivated: (categoryId) => root.activeCategory = categoryId
+            onCategoryActivated: (categoryId) => transitionGrid.scrollToSection(categoryId)
         }
     }
 
@@ -247,58 +211,29 @@ Item {
         EmptyState {
             anchors.centerIn: parent
             width: Math.min(parent.width - Theme.spacing3xl, 260)
-            visible: root.categories.length > 0
-                     && root.visibleTransitions.length === 0
+            visible: root.categories.length > 0 && transitionGrid.itemCount === 0
             compact: true
             glyph: Theme.icons.search
-            title: root.query.length > 0
-                   ? qsTr("No transitions match “%1”").arg(searchBar.text.trim())
-                   : (root.activeCategory === root.mineId
-                      ? qsTr("No custom transitions yet")
-                      : root.activeCategory === root.favoritesId
-                      ? qsTr("No favorites yet")
-                      : root.activeCategory === root.recentId
-                      ? qsTr("No recent transitions")
-                      : qsTr("Nothing in this category"))
-            hint: root.query.length > 0
-                  ? qsTr("Try a different name.")
-                  : (root.activeCategory === root.mineId
-                     ? qsTr("Import a .driftfx or zip made in Drift Forge to add your own.")
-                     : root.activeCategory === root.favoritesId
-                     ? qsTr("Star transitions to save them here.")
-                     : root.activeCategory === root.recentId
-                     ? qsTr("Transitions you add show up here.")
-                     : qsTr("Pick another category."))
-            actionText: root.activeCategory === root.mineId && root.query.length === 0
-                        ? qsTr("Import") : ""
-            onActionTriggered: ShellBridge.main.importUserPackage("")
+            title: qsTr("No transitions match “%1”").arg(searchBar.text.trim())
+            hint: qsTr("Try a different name.")
         }
 
-        GridView {
+        SectionedAssetGrid {
             id: transitionGrid
-            // As many columns as fit at the nominal card size, rounded, with the cards stretched or
-            // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
-            readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
-            readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
-            // One trailing gap wider than the padded area, so the last column's gap
-            // fits and the cards pack from the left exactly as the old Grid did.
-            x: Theme.pagePadding
-            width: parent.width - Theme.pagePadding * 2 + Theme.assetCardGap
-            height: parent.height
-            topMargin: Theme.pagePadding
+            anchors.fill: parent
             bottomMargin: Theme.spacing3xl
-            visible: root.categories.length > 0
-                     && root.visibleTransitions.length > 0
-            clip: true
-            reuseItems: true
-            boundsBehavior: Flickable.StopAtBounds
-            acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
-            ScrollBar.vertical: AppScrollBar { }
-            cellWidth: Math.floor(width / columnCount)
-            cellHeight: transitionGrid.cardSize + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
-            model: root.visibleTransitions
-
-            delegate: TransitionPresetCard {
+            visible: root.categories.length > 0 && itemCount > 0
+            items: root.catalog
+            categories: root.categories
+            isMine: function(item) { return item.user === true }
+            mineLabel: qsTr("My Transitions")
+            recentItems: root.recentKinds
+            favoritesKind: "transitions"
+            idKey: "kind"
+            query: root.query
+            searchFields: ["label", "kind"]
+            cellHeight: cardSize + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
+            cardDelegate: TransitionPresetCard {
                 cardSize: transitionGrid.cardSize
                 draggable: root.draggable
                 selected: modelData.kind === root.currentKind

@@ -12,6 +12,36 @@ ScrollBar {
     padding: 2
     hoverEnabled: true
 
+    // Attached as ScrollBar.vertical/horizontal, the bar's parent is the Flickable, so every list
+    // with an AppScrollBar gets touchpad momentum without a change at each call site.
+    property bool kinetic: true
+    property KineticWheel _kineticWheel: null
+
+    function _attachKinetic() {
+        if (_kineticWheel) {
+            _kineticWheel.destroy()
+            _kineticWheel = null
+        }
+        if (!_ready || !kinetic || !(parent instanceof Flickable))
+            return
+        _kineticWheel = kineticComponent.createObject(parent, { flickable: parent })
+        _kineticWheel.vertical = Qt.binding(() => control.orientation === Qt.Vertical)
+    }
+
+    property bool _ready: false
+    onParentChanged: _attachKinetic()
+    onKineticChanged: _attachKinetic()
+    Component.onCompleted: {
+        _ready = true
+        _attachKinetic()
+    }
+    Component.onDestruction: if (_kineticWheel) _kineticWheel.destroy()
+
+    Component {
+        id: kineticComponent
+        KineticWheel { }
+    }
+
     contentItem: ThemeSlot {
         slot: "AppScrollBarHandle"
         control: control

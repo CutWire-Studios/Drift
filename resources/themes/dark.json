@@ -3334,6 +3334,13 @@
       "divider": "$semantic.panel.border",
       "dividerWidth": "$metrics.borderWidth"
     },
+    "sectionedAssetGrid": {
+      "headerBackground": "$semantic.panel.accent",
+      "headerBorder": "$semantic.panel.border",
+      "headerBorderWidth": "$metrics.borderWidth",
+      "headerForeground": "$semantic.panel.foreground",
+      "headerRadius": "$metrics.radius.sm"
+    },
     "assetsPanel": {
       "background": "$semantic.surface.panel",
       "border": "$semantic.panel.border",

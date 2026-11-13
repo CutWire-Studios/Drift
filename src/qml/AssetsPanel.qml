@@ -836,17 +836,14 @@ PanelFrame {
         root.tabState[tabId][key] = value
     }
 
-    // Search text and category for the catalog browsers. A category that went away
-    // while the tab was unloaded (addon removed) falls back to the tab's default.
+    // Search text and the section scrolled to for the catalog browsers. A category that
+    // went away while the tab was unloaded (addon removed) leaves the grid at the top.
     function restoreBrowserTab(tab, tabId) {
         const saved = root.tabState[tabId] || {}
         if (saved.search)
             tab.searchText = saved.search
-        if (saved.category === undefined || !tab.categories)
-            return
-        if (saved.category === "__favorites__" || saved.category === "__mine__"
-                || tab.categories.some(category => category.id === saved.category))
-            tab.activeCategory = saved.category
+        if (saved.category)
+            tab.showCategory(saved.category)
     }
 
     // Fades the tab body in on a tab change instead of hard-cutting to it. Driven

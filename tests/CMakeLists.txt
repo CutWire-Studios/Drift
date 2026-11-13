@@ -345,9 +345,13 @@ target_compile_definitions(tst_mcp PRIVATE DRIFT_VERSION="${PROJECT_VERSION}"
     DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 qt_add_resources(tst_mcp "procedural_docs"
     PREFIX "/docs"
-    BASE ../docs
-    FILES ../docs/procedural.md
+    BASE "${CMAKE_SOURCE_DIR}/docs"
+    FILES "${CMAKE_SOURCE_DIR}/docs/procedural.md"
 )
+# lupdate parses a source it has no parser for as C++. The exclusion is compared against the
+# source path as written, so the resource is named without "..".
+set_property(TARGET tst_mcp APPEND PROPERTY QT_EXCLUDE_SOURCES_FROM_TRANSLATION
+    "${CMAKE_SOURCE_DIR}/docs/procedural.md")
 add_test(NAME Mcp COMMAND tst_mcp)
 drift_copy_effects(tst_mcp)
 drift_copy_transitions(tst_mcp)

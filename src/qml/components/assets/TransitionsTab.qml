@@ -6,7 +6,8 @@ Item {
 
     property alias catalogTick: grid.catalogTick
     readonly property alias categories: grid.categories
-    property alias activeCategory: grid.activeCategory
+    readonly property alias activeCategory: grid.activeCategory
+    function showCategory(id) { grid.showCategory(id) }
     property alias searchText: grid.searchText
 
     TransitionPickerGrid {

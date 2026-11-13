@@ -7,43 +7,20 @@ Column {
     id: root
     spacing: 0
 
-    readonly property string favoritesId: "__favorites__"
     readonly property string mineId: "__mine__"
     readonly property var categories: EditorState.effectTemplateCategories()
     readonly property var catalog: EditorState.effectTemplateCatalog()
-    property string activeCategory: categories.length > 0 ? categories[0].id : mineId
+    // Saved stacks are a different kind of card with their own actions, so My presets swaps the
+    // grid for EffectStacksSection rather than being a section in it.
+    property bool showStacks: catalog.length === 0
+    readonly property string activeCategory: showStacks ? mineId : presetGrid.currentSectionId
+    function showCategory(id) {
+        showStacks = id === mineId
+        if (!showStacks)
+            presetGrid.scrollToSection(id)
+    }
     property alias searchText: search.text
     readonly property string query: search.text.trim().toLowerCase()
-    property int favoritesTick: 0
-
-    Connections {
-        target: EditorState
-        function onAssetFavoritesChanged() {
-            root.favoritesTick++
-        }
-    }
-
-    // Search spans every category — once you have a name, the sectors are in the way.
-    readonly property var visibleTemplates: {
-        void root.favoritesTick
-        const q = root.query
-        if (q.length > 0) {
-            return root.catalog.filter(function(preset) {
-                const label = (preset.label || "").toLowerCase()
-                const id = (preset.id || "").toLowerCase()
-                return label.indexOf(q) >= 0 || id.indexOf(q) >= 0
-            })
-        }
-        if (root.activeCategory === root.favoritesId) {
-            return root.catalog.filter(function(preset) {
-                return EditorState.isAssetFavorite("templates", preset.id)
-            })
-        }
-        return root.catalog.filter(function(preset) {
-            return preset.category === root.activeCategory
-        })
-    }
-
     function applyTemplate(templateId) {
         if (EditorState.selectedClip < 0)
             return
@@ -72,12 +49,10 @@ Column {
     AssetCategoryChips {
         id: categoryChips
         width: parent.width
-        categories: root.categories
+        sections: [{ id: root.mineId, label: qsTr("My presets") }].concat(presetGrid.visibleSections)
         activeCategory: root.activeCategory
-        showMine: true
-        mineLabel: qsTr("My presets")
         searching: root.query.length > 0
-        onCategoryActivated: (categoryId) => root.activeCategory = categoryId
+        onCategoryActivated: (categoryId) => root.showCategory(categoryId)
     }
 
     Item {
@@ -88,7 +63,7 @@ Column {
         EffectStacksSection {
             id: stacks
             anchors.fill: parent
-            visible: root.activeCategory === root.mineId && root.query.length === 0
+            visible: root.showStacks && root.query.length === 0
         }
 
         // Without the pack installed the catalog is empty and the grid rendered nothing,
@@ -110,12 +85,8 @@ Column {
             x: 12
             y: 12
             width: parent.width - 24
-            visible: root.catalog.length > 0 && !stacks.visible && root.visibleTemplates.length === 0
-            text: root.query.length > 0
-                  ? qsTr("No templates match “%1”.").arg(search.text.trim())
-                  : (root.activeCategory === root.favoritesId
-                     ? qsTr("No favorites yet. Star templates to save them here.")
-                     : qsTr("Nothing in this category."))
+            visible: root.catalog.length > 0 && !stacks.visible && presetGrid.itemCount === 0
+            text: qsTr("No templates match “%1”.").arg(search.text.trim())
             color: Theme.c.effectTemplateBrowser.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSm
@@ -129,30 +100,18 @@ Column {
             font.weight: Font.Medium
         }
 
-        // One trailing gap wider than the padded area, so the cards pack from the left exactly
-        // as the old Grid did. Rows are a fixed two label lines tall.
-        GridView {
+        // Rows are a fixed two label lines tall.
+        SectionedAssetGrid {
             id: presetGrid
-            // As many columns as fit at the nominal card size, rounded, with the cards stretched or
-            // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
-            readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
-            readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
-            x: 12
-            width: parent.width - 24 + Theme.assetCardGap
-            height: parent.height
-            topMargin: 12
-            bottomMargin: 12
-            visible: !stacks.visible && root.visibleTemplates.length > 0
-            clip: true
-            reuseItems: true
-            boundsBehavior: Flickable.StopAtBounds
-            acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
-            ScrollBar.vertical: AppScrollBar { }
-            cellWidth: Math.floor(width / columnCount)
-            cellHeight: presetGrid.cardSize + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
-            model: root.visibleTemplates
-
-            delegate: EffectTemplateCard {
+            anchors.fill: parent
+            sidePadding: 12
+            visible: !stacks.visible && itemCount > 0
+            items: root.catalog
+            categories: root.categories
+            favoritesKind: "templates"
+            query: root.query
+            cellHeight: cardSize + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
+            cardDelegate: EffectTemplateCard {
                 cardSize: presetGrid.cardSize
                 onApplyRequested: (templateId) => {
                     search.commitHistory()

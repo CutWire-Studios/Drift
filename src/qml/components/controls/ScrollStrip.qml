@@ -32,6 +32,17 @@ Item {
         scrollAnimation.restart()
     }
 
+    // Scrolls just enough to bring [start, start + length) into view.
+    function ensureVisible(start, length) {
+        const span = root.vertical ? flick.height : flick.width
+        const pos = scrollAnimation.running ? scrollAnimation.to : root._pos
+        const a = start + root.padding
+        if (a < pos)
+            root.scrollTo(a - Theme.spacingXl)
+        else if (a + length > pos + span)
+            root.scrollTo(a + length - span + Theme.spacingXl)
+    }
+
     function scrollBy(delta) {
         const from = scrollAnimation.running ? scrollAnimation.to : root._pos
         root.scrollTo(from + delta)

@@ -1616,6 +1616,8 @@ qt_add_resources(drift "drift_procedural_docs"
     BASE docs
     FILES docs/procedural.md
 )
+# A resource file is a target source, and lupdate parses a source it has no parser for as C++.
+set_property(TARGET drift APPEND PROPERTY QT_EXCLUDE_SOURCES_FROM_TRANSLATION docs/procedural.md)
 
 qt_add_resources(drift "drift_search_index"
     PREFIX "/"
@@ -1915,6 +1917,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/StockThumb.qml
         src/qml/components/assets/BinBreadcrumb.qml
         src/qml/components/assets/AssetCategoryChips.qml
+        src/qml/components/assets/SectionedAssetGrid.qml
         src/qml/components/assets/EffectStacksSection.qml
         src/qml/components/assets/AssetFavoriteButton.qml
         src/qml/components/assets/AssetQuickAddButton.qml
@@ -2198,6 +2201,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/PanelSplitHandle.qml
         src/qml/components/ClipFilmstrip.qml
         src/qml/components/controls/AppScrollBar.qml
+        src/qml/components/controls/KineticWheel.qml
         src/qml/components/KeyframeDiamond.qml
         src/qml/components/ChannelKeyButton.qml
         src/qml/components/Vec2Param.qml
@@ -2775,7 +2779,7 @@ file(GLOB DRIFT_MCP_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/src/app/mcp/tools/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/app/mcp/tools/*.h")
 if(DRIFT_MCP_SOURCES)
-    set_source_files_properties(${DRIFT_MCP_SOURCES} PROPERTIES QT_EXCLUDE_FROM_TRANSLATION ON)
+    set_property(TARGET drift APPEND PROPERTY QT_EXCLUDE_SOURCES_FROM_TRANSLATION ${DRIFT_MCP_SOURCES})
 endif()
 
 if(Qt6LinguistTools_FOUND)

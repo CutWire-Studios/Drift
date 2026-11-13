@@ -86,6 +86,12 @@ Item {
         }
     }
 
+    FontMetrics {
+        id: labelMetrics
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
+    }
+
     // Built-in packs and the user's own styles are separate grids, switched from the toolbar.
     GridView {
         id: packGrid

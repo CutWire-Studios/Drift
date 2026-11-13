@@ -24,9 +24,6 @@ PanelFrame {
     property var live: undefined
     property string pendingId: ""
 
-    readonly property string favoritesId: "__favorites__"
-    readonly property string mineId: "__mine__"
-    property int favoritesTick: 0
     readonly property string trimmedQuery: query.trim()
 
     readonly property var categories: {
@@ -44,41 +41,11 @@ PanelFrame {
         }
         return out
     }
-    property string activeCategory: categories.length > 0 ? categories[0].id : mineId
-
-    readonly property var visibleLooks: {
-        void favoritesTick
-        const q = trimmedQuery.toLowerCase()
-        const list = colorState.looks
-        const out = []
-        if (q.length > 0) {
-            for (let i = 1; i < list.length; ++i) {
-                if (list[i].label.toLowerCase().indexOf(q) >= 0)
-                    out.push(list[i])
-            }
-            return out
-        }
-        if (activeCategory === favoritesId) {
-            for (let i = 1; i < list.length; ++i) {
-                if (EditorState.isAssetFavorite("looks", list[i].id))
-                    out.push(list[i])
-            }
-            return out
-        }
-        if (activeCategory === mineId) {
-            for (let i = 1; i < list.length; ++i) {
-                if (list[i].userInstalled)
-                    out.push(list[i])
-            }
-            return out
-        }
-        if (list.length > 0)
-            out.push(list[0])
-        for (let i = 1; i < list.length; ++i) {
-            if (!list[i].userInstalled && (list[i].category || qsTr("Color Grading LUTs")) === activeCategory)
-                out.push(list[i])
-        }
-        return out
+    // "None" heads the first category, where it sat when categories were tabs.
+    function lookCategory(look) {
+        if (look.id === "")
+            return categories.length > 0 ? categories[0].id : ""
+        return look.category || qsTr("Color Grading LUTs")
     }
 
     property var menuLook: ({})
@@ -121,13 +88,6 @@ PanelFrame {
         title: qsTr("Color Grading LUTs")
     }
 
-    Connections {
-        target: EditorState
-        function onAssetFavoritesChanged() {
-            root.favoritesTick++
-        }
-    }
-
     readonly property bool nothingInstalled: colorState.looks.length <= 1
 
     Column {
@@ -167,12 +127,10 @@ PanelFrame {
         AssetCategoryChips {
             id: categoryChips
             width: parent.width
-            categories: root.categories
-            activeCategory: root.activeCategory
-            showMine: true
-            mineLabel: qsTr("My LUTs")
+            sections: grid.visibleSections
+            activeCategory: grid.currentSectionId
             searching: root.trimmedQuery.length > 0
-            onCategoryActivated: categoryId => root.activeCategory = categoryId
+            onCategoryActivated: categoryId => grid.scrollToSection(categoryId)
         }
 
         Item {
@@ -217,38 +175,40 @@ PanelFrame {
         font.pixelSize: Theme.fontSizeXs
     }
 
-    GridView {
+    SectionedAssetGrid {
         id: grid
-        readonly property int columnCount: Math.max(2, Math.round(width / 112))
-        readonly property real cardSize: Math.floor(width / columnCount) - Theme.spacingMd
         anchors.top: top.bottom
         anchors.topMargin: Theme.spacingMd
         anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: parent.width - Theme.pagePadding * 2 + Theme.spacingMd
-        visible: root.visibleLooks.length > 0 && !root.nothingInstalled
+        anchors.left: parent.left
+        anchors.right: parent.right
+        gap: Theme.spacingMd
+        nominalCardWidth: 112 - Theme.spacingMd
+        minColumns: 2
+        visible: itemCount > 0 && !root.nothingInstalled
         enabled: root.hasTarget
         opacity: root.hasTarget ? 1 : 0.5
-        clip: true
-        reuseItems: true
-        boundsBehavior: Flickable.StopAtBounds
         cacheBuffer: cellHeight
-        topMargin: 4
         bottomMargin: Theme.spacingLg
-        cellWidth: Math.floor(width / columnCount)
         cellHeight: Math.round(cardSize * 9 / 16) + Theme.spacingXs + Math.ceil(nameMetrics.height)
                     + Theme.spacingMd
-        model: root.visibleLooks
-        ScrollBar.vertical: AppScrollBar { }
+        items: root.colorState.looks
+        categories: root.categories
+        categoryOf: function(look) { return root.lookCategory(look) }
+        isMine: function(look) { return !!look.userInstalled }
+        mineLabel: qsTr("My LUTs")
+        favoritesKind: "looks"
+        query: root.trimmedQuery
+        searchFields: ["label"]
 
-        delegate: Item {
+        cardDelegate: Item {
             id: card
             required property var modelData
             required property int index
             readonly property bool current: root.currentLook === modelData.id
             readonly property real thumbWidth: grid.cardSize
-            width: grid.cellWidth
-            height: grid.cellHeight
+            width: grid.cardSize
+            height: grid.cellHeight - grid.gap
 
             Rectangle {
                 id: thumb
@@ -356,31 +316,12 @@ PanelFrame {
         x: Theme.pagePadding
         y: grid.y + Theme.spacingMd
         width: parent.width - Theme.pagePadding * 2
-        visible: root.hasTarget && root.visibleLooks.length === 0 && !root.nothingInstalled
-                 && !(root.activeCategory === root.mineId && root.trimmedQuery.length === 0)
-        text: root.trimmedQuery.length > 0
-              ? qsTr("No LUTs match “%1”.").arg(root.trimmedQuery)
-              : (root.activeCategory === root.favoritesId
-                 ? qsTr("No favorites yet. Star LUTs to save them here.")
-                 : qsTr("Nothing in this category."))
+        visible: root.hasTarget && grid.itemCount === 0 && !root.nothingInstalled
+        text: qsTr("No LUTs match “%1”.").arg(root.trimmedQuery)
         color: Theme.mutedForeground
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeSm
         wrapMode: Text.WordWrap
-    }
-
-    EmptyState {
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: grid.y + (grid.height - height) / 2
-        width: Math.min(parent.width - Theme.spacing3xl, 260)
-        visible: root.hasTarget && root.activeCategory === root.mineId && root.visibleLooks.length === 0
-                 && root.trimmedQuery.length === 0 && !root.nothingInstalled
-        compact: true
-        glyph: Theme.icons.download
-        title: qsTr("%1 is empty").arg(qsTr("My LUTs"))
-        hint: qsTr("Import a .cube file to add your own.")
-        actionText: qsTr("Import")
-        onActionTriggered: root.importLooks()
     }
 
     EmptyState {

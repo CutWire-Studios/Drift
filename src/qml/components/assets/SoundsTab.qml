@@ -6,7 +6,8 @@ Item {
     id: root
 
     property alias searchText: browser.searchText
-    property alias activeCategory: browser.activeCategory
+    readonly property alias activeCategory: browser.activeCategory
+    function showCategory(id) { browser.showCategory(id) }
     property alias categories: browser.categories
 
     AudioEffectBrowser {
