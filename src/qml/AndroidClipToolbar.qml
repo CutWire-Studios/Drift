@@ -15,7 +15,6 @@ Item {
     property var panel: null
 
     signal moreRequested()
-    signal fadeRequested()
     signal editTextRequested()
 
     readonly property bool hasSelection: {

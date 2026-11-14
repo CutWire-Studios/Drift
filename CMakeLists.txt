@@ -1724,7 +1724,6 @@ qt_add_qml_module(drift
         src/qml/AndroidLayoutSheet.qml
         src/qml/AndroidMain.qml
         src/qml/AndroidMoreToolsSheet.qml
-        src/qml/AndroidFadeSheet.qml
         src/qml/AndroidEasingSheet.qml
         src/qml/AndroidTransitionPickerSheet.qml
         src/qml/AndroidProjectSheet.qml

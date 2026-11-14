@@ -176,21 +176,8 @@ Item {
         preview.textEditor.commit()
         if (assetsSheet.opened)
             assetsSheet.dismiss()
-        if (fadeSheet.opened)
-            fadeSheet.dismiss()
         if (!moreToolsSheet.opened)
             moreToolsSheet.open()
-    }
-
-    function openFadeSheet() {
-        composer.close()
-        preview.textEditor.commit()
-        if (assetsSheet.opened)
-            assetsSheet.dismiss()
-        if (moreToolsSheet.opened)
-            moreToolsSheet.dismiss()
-        if (!fadeSheet.opened)
-            fadeSheet.open()
     }
 
     function openEasingSheet(track, clip, prop, label, seconds) {
@@ -200,8 +187,6 @@ Item {
             assetsSheet.dismiss()
         if (moreToolsSheet.opened)
             moreToolsSheet.dismiss()
-        if (fadeSheet.opened)
-            fadeSheet.dismiss()
         easingSheet.openFor(track, clip, prop, label, seconds)
     }
 
@@ -212,8 +197,6 @@ Item {
             assetsSheet.dismiss()
         if (moreToolsSheet.opened)
             moreToolsSheet.dismiss()
-        if (fadeSheet.opened)
-            fadeSheet.dismiss()
         easingSheet.openForCurve(config, host)
     }
 
@@ -243,8 +226,6 @@ Item {
             addMenu.dismiss()
         if (moreToolsSheet.opened)
             moreToolsSheet.dismiss()
-        if (fadeSheet.opened)
-            fadeSheet.dismiss()
         if (assetsSheet.opened)
             assetsSheet.dismiss()
     }
@@ -280,10 +261,6 @@ Item {
         }
         if (moreToolsSheet.opened) {
             moreToolsSheet.dismiss()
-            return true
-        }
-        if (fadeSheet.opened) {
-            fadeSheet.dismiss()
             return true
         }
         if (addMenu.opened) {
@@ -559,7 +536,6 @@ Item {
                     anchors.right: parent.right
                     panel: timeline
                     onMoreRequested: root.openMoreTools()
-                    onFadeRequested: root.openFadeSheet()
                     onEditTextRequested: root.startInlineTextEdit(EditorState.selectedTrack,
                                                                   EditorState.selectedClip, false)
                 }
@@ -698,10 +674,6 @@ Item {
     AndroidMoreToolsSheet {
         id: moreToolsSheet
         panel: timeline
-    }
-
-    AndroidFadeSheet {
-        id: fadeSheet
     }
 
     AndroidTransitionPickerSheet {
