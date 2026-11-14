@@ -140,6 +140,8 @@ if(DRIFT_CHANNEL STREQUAL "nightly")
     set(DRIFT_VERSION_STRING "${PROJECT_VERSION}-nightly.${DRIFT_BUILD_ID}")
 endif()
 message(STATUS "Drift channel: ${DRIFT_CHANNEL} (${DRIFT_VERSION_STRING}, ${DRIFT_APP_ID})")
+# CI keys uploaded crash symbols by this exact string; it has to match what the app reports.
+file(WRITE "${CMAKE_BINARY_DIR}/drift-version.txt" "${DRIFT_VERSION_STRING}")
 
 # Which package this build ships as. Sent to the marketplace so it can hide sources per store
 # (e.g. Play Store moderation) without a separate client build. Every packaging path sets it.
@@ -1452,17 +1454,27 @@ endif()
 # the taskbar; setWindowIcon alone is not enough for the .exe identity.
 if(UNIX AND NOT ANDROID AND NOT EMSCRIPTEN)
     target_sources(drift PRIVATE src/app/platform/CrashHandler_posix.cpp)
+    # -rdynamic: backtrace_symbols_fd only names symbols in the dynamic table, so without it every
+    # frame in the main binary reads drift+0x... in crash reports.
+    set_target_properties(drift PROPERTIES ENABLE_EXPORTS ON)
 endif()
 if(WIN32)
     # qt_add_executable() forwards to add_executable() without WIN32, so the linker defaults to the
     # console subsystem and Windows opens a console window before the GUI comes up. Qt6::EntryPoint
     # (linked in by Qt6::Core) supplies the WinMain that forwards to main().
     set_target_properties(drift PROPERTIES WIN32_EXECUTABLE TRUE)
-    target_sources(drift PRIVATE resources/windows/drift.rc src/app/platform/PrimaryDisplay_win.cpp
+    configure_file(resources/windows/drift.rc.in "${CMAKE_CURRENT_BINARY_DIR}/drift.rc" @ONLY)
+    target_sources(drift PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/drift.rc" src/app/platform/PrimaryDisplay_win.cpp
         src/app/platform/CrashHandler_win.cpp)
     target_link_libraries(drift PRIVATE shcore dbghelp version)
-    set_source_files_properties(resources/windows/drift.rc PROPERTIES
+    set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/drift.rc" PROPERTIES
         OBJECT_DEPENDS "${CMAKE_SOURCE_DIR}/resources/windows/drift.ico")
+    # Writes drift.pdb for crash symbolication. It only has content when the objects carry debug
+    # info (CI builds them /Z7). /DEBUG switches REF/ICF off, so they are restored to keep the exe
+    # identical to a link without it.
+    if(MSVC)
+        target_link_options(drift PRIVATE "$<$<CONFIG:Release>:/DEBUG:FULL;/OPT:REF;/OPT:ICF>")
+    endif()
 endif()
 
 # Without a bundle macOS runs the app as a background process, with no Dock tile or menu bar.

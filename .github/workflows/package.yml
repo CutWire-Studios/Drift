@@ -30,6 +30,11 @@ on:
         required: false
         default: ""
         type: string
+      upload_symbols:
+        description: "Upload drift.pdb to crash-reporting.cutwire.org; only for builds that ship"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -735,7 +740,9 @@ jobs:
 
       # DRIFT_PCH=OFF: ccache cannot cache MSVC precompiled headers. CMP0141 + Embedded make any
       # debug info /Z7 (in the object), which ccache needs; /Zi writes a shared PDB it cannot cache.
-      # Release itself carries no /Zi. DRIFT_LINKER does not apply to MSVC: link.exe stays.
+      # A non-genex value applies to every config, Release included, so the objects carry /Z7 and
+      # the /DEBUG link in CMakeLists.txt gathers them into drift.pdb for crash symbolication.
+      # DRIFT_LINKER does not apply to MSVC: link.exe stays.
       - name: Configure
         shell: pwsh
         run: |
@@ -866,6 +873,52 @@ jobs:
             if [ -n "$skipped" ]; then echo "$skipped"; else echo none; fi
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Keyed by the exact version string the app reports (a nightly's carries its build stamp), so
+      # the crash dashboard can match a report to its PDB. Manual build.yml runs do not upload:
+      # their version would overwrite the shipped release's symbols with a different build's.
+      # Cloudflare caps a request body at 100 MB, so bigger PDBs go up as an R2 multipart upload.
+      - name: Upload symbols
+        if: inputs.upload_symbols
+        shell: pwsh
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CRASH_REPORTING_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CRASH_REPORTING_ACCESS_CLIENT_SECRET }}
+        run: |
+          if (-not $env:CF_ACCESS_CLIENT_ID) { Write-Host "No crash-reporting service token; skipping"; exit 0 }
+          $version = (Get-Content build\drift-version.txt -Raw).Trim()
+          $pdb = Get-Item build\drift.pdb
+          $url = "https://crash-reporting.cutwire.org/v1/symbols/$version/${{ matrix.arch }}/drift.pdb"
+          $headers = @{ 'CF-Access-Client-Id' = $env:CF_ACCESS_CLIENT_ID; 'CF-Access-Client-Secret' = $env:CF_ACCESS_CLIENT_SECRET }
+          # A rejected token gets a redirect to the Access login page, which would otherwise be
+          # followed and read as success.
+          $PSDefaultParameterValues['Invoke-RestMethod:MaximumRedirection'] = 0
+          Write-Host "Uploading $($pdb.Length) bytes to $url"
+          $partSize = 64MB
+          if ($pdb.Length -le $partSize) {
+            Invoke-RestMethod -Method Put -Uri $url -Headers $headers -InFile $pdb.FullName -ContentType application/octet-stream
+            exit 0
+          }
+          $uploadId = (Invoke-RestMethod -Method Post -Uri "$url`?uploads" -Headers $headers).uploadId
+          $encodedId = [uri]::EscapeDataString($uploadId)
+          $parts = @()
+          $stream = [IO.File]::OpenRead($pdb.FullName)
+          try {
+            $buffer = New-Object byte[] $partSize
+            $number = 1
+            while (($read = $stream.Read($buffer, 0, $partSize)) -gt 0) {
+              $body = $buffer
+              if ($read -lt $partSize) { $body = New-Object byte[] $read; [Array]::Copy($buffer, $body, $read) }
+              $etag = (Invoke-RestMethod -Method Put -Uri "$url`?uploadId=$encodedId&partNumber=$number" `
+                -Headers $headers -Body $body -ContentType application/octet-stream).etag
+              $parts += @{ partNumber = $number; etag = $etag }
+              $number++
+            }
+          } finally {
+            $stream.Dispose()
+          }
+          Invoke-RestMethod -Method Post -Uri "$url`?uploadId=$encodedId" -Headers $headers `
+            -Body (@{ parts = $parts } | ConvertTo-Json -Depth 3) -ContentType application/json
 
       - name: Stage runtime files
         shell: pwsh

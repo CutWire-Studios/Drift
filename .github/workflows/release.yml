@@ -61,6 +61,7 @@ jobs:
     with:
       version: ${{ needs.verify.outputs.version }}
       android_identity: release
+      upload_symbols: true
     secrets: inherit
 
   release:
