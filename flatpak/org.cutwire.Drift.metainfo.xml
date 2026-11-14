@@ -89,6 +89,53 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.9.2" date="2026-11-14">
+      <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.9.2</url>
+      <description>
+        <p>Drift 0.9.2 brings procedural 3D clips, live masks from any clip, a reworked
+        timeline and many tools for AI agents working through MCP.</p>
+        <ul>
+          <li>Procedural clips: Lua-generated 3D scenes with your own shaders, in a new
+          Procedural workspace</li>
+          <li>Masking: use any clip as a live mask, split masks with a feathered seam, rounded
+          rectangle corners, a per-mask aspect lock and snapping while resizing</li>
+          <li>Effects: Motion Blur, Privacy Blur inside the clip's mask, add effects directly to
+          composites, an effects tab on clips and new effect thumbnails</li>
+          <li>19 new blend modes for clips and text shading, with live preview cards</li>
+          <li>Clip edges have separate fade and animation layers, and an animation plays once
+          when you pick it</li>
+          <li>Clip position and scale are now anchored to the clip's center</li>
+          <li>Timeline: tool cursors, disable clips, redesigned handles and transitions,
+          add-transition buttons at cuts, track headers with lock and solo, faster selection,
+          touchpad scrolling, looping video and audio clips, several timelines in one project,
+          and range bakes for smooth playback of heavy sections</li>
+          <li>Teleprompter panel for recording, with an optional preview overlay</li>
+          <li>Favourites in the easing, animation, text, gradient, mask and layout pickers</li>
+          <li>Per-group reset in the inspector, live text colour preview, Shift+E to hide a
+          track, and interface sizes below 100%</li>
+          <li>Settings to limit undo history and the proxy suggestion on import</li>
+          <li>Windows ML engine for AI features on Windows, and WebGPU is back</li>
+          <li>Crash reporting: a crash dialog with a diagnostics archive and optional crash
+          reports</li>
+          <li>MCP: insert, delete, move and replace clips with ripple, atomic and dry-run
+          batches, a change feed, project validation, relinking moved media, proxies,
+          performance settings and waiting for background work</li>
+          <li>Fixes: audio stays in sync after seeking, microphone recordings no longer drop
+          out, context menus work on Windows, ripple delete moves the playhead, the timeline
+          scrolls while dragging, colour grade controls show in the edit inspector, and split
+          clips keep their names</li>
+          <li>Android: tap to add stickers, shapes and masks, a movable crop frame, and a new
+          Animation page</li>
+          <li>Translations: German added; Japanese, Russian and Vietnamese updated</li>
+        </ul>
+        <p>Thanks to @jmn8718 for the MCP editing and project tools, undo history settings and
+        many timeline fixes; to @leris113 for a long list of masking, preset and timeline
+        suggestions; to @gab-luz, @Avbpp, @Mebra2, @RXWrye, @getcheesed, @mightycrystal7 and
+        @kayronnBR for reporting issues fixed and features added here; to @cqwer05 for German;
+        to Mourad Mokrane for Russian; to @coolvitto for Japanese; and to Nguyễn Lam for
+        Vietnamese.</p>
+      </description>
+    </release>
     <release version="0.9.1" date="2026-11-05">
       <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.9.1</url>
       <description>
