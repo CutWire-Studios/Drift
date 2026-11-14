@@ -1495,9 +1495,16 @@ void AppController::selectClip(int trackIndex, int clipIndex)
     if (!isValidClipIndex(trackIndex, clipIndex) || m_project.tracks().at(trackIndex).locked)
         return;
 
+    const QList<QPair<int, int>> next = selectionWithLinkedPartners(m_project, trackIndex, clipIndex);
+    if (next == m_selection && m_selectedTrack == trackIndex && m_selectedClip == clipIndex
+        && m_selectedTransitionTrack < 0) {
+        // Re-selecting is how callers refresh after editing the clip in place.
+        m_selectedClipDataCache.valid = false;
+        return;
+    }
     m_selectedTrack = trackIndex;
     m_selectedClip = clipIndex;
-    m_selection = selectionWithLinkedPartners(m_project, trackIndex, clipIndex);
+    m_selection = next;
     m_selectedTransitionTrack = -1;
     m_selectedTransitionLeftClip = -1;
     notifySelectionChanged();
@@ -1557,10 +1564,15 @@ void AppController::addToSelection(int trackIndex, int clipIndex)
     if (!isValidClipIndex(trackIndex, clipIndex) || m_project.tracks().at(trackIndex).locked)
         return;
 
+    bool changed = m_selectedTrack != trackIndex || m_selectedClip != clipIndex;
     for (const QPair<int, int> &pair : selectionWithLinkedPartners(m_project, trackIndex, clipIndex)) {
-        if (!m_project.tracks().at(pair.first).locked && !m_selection.contains(pair))
+        if (!m_project.tracks().at(pair.first).locked && !selectionContains(pair.first, pair.second)) {
             m_selection.append(pair);
+            changed = true;
+        }
     }
+    if (!changed)
+        return;
     m_selectedTrack = trackIndex;
     m_selectedClip = clipIndex;
     notifySelectionChanged();
@@ -1579,16 +1591,16 @@ void AppController::setSelection(const QVariantList &pairs)
                 next.append(pair);
         }
     }
+    const int nextTrack = next.isEmpty() ? -1 : next.constLast().first;
+    const int nextClip = next.isEmpty() ? -1 : next.constLast().second;
+    if (next == m_selection && m_selectedTrack == nextTrack && m_selectedClip == nextClip
+        && m_selectedTransitionTrack < 0)
+        return;
     m_selection = next;
     m_selectedTransitionTrack = -1;
     m_selectedTransitionLeftClip = -1;
-    if (m_selection.isEmpty()) {
-        m_selectedTrack = -1;
-        m_selectedClip = -1;
-    } else {
-        m_selectedTrack = m_selection.constLast().first;
-        m_selectedClip = m_selection.constLast().second;
-    }
+    m_selectedTrack = nextTrack;
+    m_selectedClip = nextClip;
     notifySelectionChanged();
     emit selectedTransitionDataChanged();
 }
@@ -1987,26 +1999,25 @@ void AppController::moveClip(int trackIndex, int clipIndex, double newStart)
         movedIds.insert(clip.id);
     }
     if (!m_allowClipOverlap) {
-        drift::TimeUs maxPushRight = 0;
+        QList<drift::PlacedSpan> spans;
         for (const QPair<int, int> &pair : targets) {
             if (!isValidClipIndex(pair.first, pair.second))
                 continue;
             const drift::Track &targetTrack = m_project.tracks().at(pair.first);
             const drift::Clip &clip = targetTrack.clips.at(pair.second);
-            const drift::TimeUs clampedStart = drift::clampClipStartNoOverlap(targetTrack, movedIds, clip.timelineStart,
-                                                                              clip.timelineDuration);
-            if (clampedStart > clip.timelineStart) {
-                const drift::TimeUs push = clampedStart - clip.timelineStart;
-                if (push > maxPushRight)
-                    maxPushRight = push;
-            }
+            spans.append({&targetTrack, clip.timelineStart, clip.timelineDuration});
         }
-        if (maxPushRight > 0) {
+        const std::optional<drift::TimeUs> shift = drift::groupShiftNoOverlap(spans, movedIds);
+        if (!shift) {
+            m_project = before;
+            setLastMessage(tr("No space to place the clip there"), QStringLiteral("warning"));
+            return;
+        }
+        if (*shift != 0) {
             for (const QPair<int, int> &pair : targets) {
                 if (!isValidClipIndex(pair.first, pair.second))
                     continue;
-                drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
-                clip.timelineStart += maxPushRight;
+                m_project.tracks()[pair.first].clips[pair.second].timelineStart += *shift;
             }
         }
     }
@@ -2872,6 +2883,30 @@ void AppController::commitTrim(int trackIndex, int clipIndex, int side, double s
     else
         cancelPreviewDrag();
     endTracksBatch();
+}
+
+int AppController::nudgeTrimEdge(int trackIndex, int clipIndex, int side, int frames)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size() || m_project.fps() <= 0)
+        return TrimNone;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return TrimNone;
+    const drift::Clip &clip = track.clips.at(clipIndex);
+    const double step = frames / double(m_project.fps());
+    const TrimComputation computed =
+        side < 0 ? computeTrimLeft(trackIndex, clipIndex, drift::usToSeconds(clip.timelineStart) + step, false)
+                 : computeTrimRight(trackIndex, clipIndex, drift::usToSeconds(clip.timelineEnd()) + step, false);
+    if (!computed.ok || !computed.changed)
+        return computed.ok ? computed.outcome : TrimNone;
+    beginTracksBatch();
+    beginPreviewDrag(tr("Trim clip"));
+    beginTrimGesture(trackIndex, clipIndex, side);
+    const int outcome = applyTrim(trackIndex, clipIndex, computed, side);
+    endTrimGesture();
+    commitPreviewDrag();
+    endTracksBatch();
+    return outcome;
 }
 
 int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
@@ -3940,23 +3975,22 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
     }
 
     if (!m_allowClipOverlap) {
-        drift::TimeUs maxPushRight = 0;
+        QList<drift::PlacedSpan> spans;
         for (const ClipToMove &item : toMove) {
             if (item.followsVideo)
                 continue;
-            const drift::Track &destTrack = m_project.tracks().at(item.toTrack);
-            const drift::TimeUs clampedStart = drift::clampClipStartNoOverlap(destTrack, movedIds, item.newTimelineStart,
-                                                                              item.clip.timelineDuration);
-            if (clampedStart > item.newTimelineStart) {
-                const drift::TimeUs push = clampedStart - item.newTimelineStart;
-                if (push > maxPushRight)
-                    maxPushRight = push;
-            }
+            spans.append({&m_project.tracks().at(item.toTrack), item.newTimelineStart,
+                          item.clip.timelineDuration});
         }
-        if (maxPushRight > 0) {
-            for (ClipToMove &item : toMove) {
-                item.newTimelineStart += maxPushRight;
-            }
+        const std::optional<drift::TimeUs> shift = drift::groupShiftNoOverlap(spans, movedIds);
+        if (!shift) {
+            m_project = before;
+            setLastMessage(tr("No space to place the clip there"), QStringLiteral("warning"));
+            return;
+        }
+        if (*shift != 0) {
+            for (ClipToMove &item : toMove)
+                item.newTimelineStart = qMax<drift::TimeUs>(0, item.newTimelineStart + *shift);
         }
 
         const auto slotFree = [&](int trackIdx, const ClipToMove &self) {

@@ -1931,6 +1931,59 @@ void AppController::setClipFlip(int trackIndex, int clipIndex, bool flipH, bool 
     finishEdit(tr("Clip flip updated"));
 }
 
+namespace {
+QList<QPair<int, int>> withPartners(const drift::Project &project, const QList<QPair<int, int>> &seeds)
+{
+    QList<QPair<int, int>> out;
+    for (const QPair<int, int> &seed : seeds) {
+        for (const QPair<int, int> &pair : selectionWithLinkedPartners(project, seed.first, seed.second)) {
+            if (!out.contains(pair))
+                out.append(pair);
+        }
+    }
+    return out;
+}
+} // namespace
+
+void AppController::setClipEnabled(int trackIndex, int clipIndex, bool enabled)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    const QPair<int, int> self(trackIndex, clipIndex);
+    const QList<QPair<int, int>> targets = withPartners(m_project, m_selection.contains(self) ? m_selection : QList{self});
+
+    const drift::Project before = m_project;
+    bool changed = false;
+    for (const QPair<int, int> &pair : targets) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
+        if (clip.enabled == enabled)
+            continue;
+        clip.enabled = enabled;
+        changed = true;
+    }
+    if (!changed)
+        return;
+    pushProjectEdit(before, enabled ? tr("Enable clips") : tr("Disable clips"));
+    finishEdit(enabled ? tr("Clips enabled") : tr("Clips disabled"));
+}
+
+void AppController::toggleSelectedClipsEnabled()
+{
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+    pairs = withPartners(m_project, pairs);
+    if (pairs.isEmpty())
+        return;
+
+    bool anyEnabled = false;
+    for (const QPair<int, int> &pair : std::as_const(pairs))
+        anyEnabled = anyEnabled || m_project.tracks().at(pair.first).clips.at(pair.second).enabled;
+    setClipEnabled(pairs.first().first, pairs.first().second, !anyEnabled);
+}
+
 // Snapshot first, then index: Project's tracks deep-detach on copy (see drift::TrackList), so
 // aliasing a snapshot is no longer possible either way, but taking the reference after the copy
 // keeps that independent of the container's copy semantics.

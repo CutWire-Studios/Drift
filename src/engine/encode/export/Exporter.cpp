@@ -85,9 +85,9 @@ void resolveExportRange(const drift::Project &project, const ExportSettings &set
         drift::TimeUs visibleEnd = 0;
         drift::TimeUs hiddenStart = 0;
         for (const drift::Track &track : project.tracks()) {
-            const bool visible = outputsToExport(track);
+            const bool trackVisible = outputsToExport(track);
             for (const drift::Clip &clip : track.clips) {
-                if (visible) {
+                if (trackVisible && clip.enabled) {
                     visibleStart = anyVisible ? qMin(visibleStart, clip.timelineStart) : clip.timelineStart;
                     visibleEnd = qMax(visibleEnd, clip.timelineEnd());
                     anyVisible = true;

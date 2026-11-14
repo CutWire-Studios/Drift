@@ -148,6 +148,7 @@ private slots:
     void shapeStyleSerialization();
     void legacyShapeStyleLoadsWithDefaults();
     void sourceLabAnnotationsRoundTrip();
+    void clipEnabledRoundTrip();
     void maskingTrackingFieldsRoundTrip();
     void maskFramePatchesRoundTripAndLookUpByMediaTime();
     void projectWithoutMaskPatchesLoadsEmpty();
@@ -209,6 +210,7 @@ private slots:
     void physicalOverlapTransitionWindow();
     void adjacentTransitionWindowClampsToClipExtents();
     void clampClipStartNoOverlapPushesPastBlockers();
+    void placeClipStartNoOverlapPrefersLeftSlot();
     void clampTrimEdgesIgnoreExistingOverlaps();
     void backgroundSerialization();
     void fadeSerializationAndMultiplier();
@@ -636,6 +638,23 @@ void CoreTest::projectMetadataRoundTrip()
 
     // Two fresh projects are distinct documents, not the same one.
     QVERIFY(drift::Project().id() != drift::Project().id());
+}
+
+void CoreTest::clipEnabledRoundTrip()
+{
+    drift::Project project;
+    drift::Clip off;
+    off.enabled = false;
+    project.tracks()[0].clips.append(off);
+    project.tracks()[0].clips.append(drift::Clip{});
+    const QJsonObject json = project.toJson();
+    const QJsonArray clips = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                 .value(QStringLiteral("clips")).toArray();
+    QCOMPARE(clips.at(0).toObject().value(QStringLiteral("enabled")).toBool(true), false);
+    QVERIFY(!clips.at(1).toObject().contains(QStringLiteral("enabled")));
+    const auto loaded = drift::Project::fromJson(json);
+    QCOMPARE(loaded.tracks()[0].clips[0].enabled, false);
+    QCOMPARE(loaded.tracks()[0].clips[1].enabled, true);
 }
 
 void CoreTest::sourceFramingRoundTrip()
@@ -2220,7 +2239,7 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 28);
+    QCOMPARE(drift::Project::kCurrentVersion, 29);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
@@ -2260,7 +2279,7 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 28);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 29);
     const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                    .value(QStringLiteral("clips")).toArray().at(0).toObject()
                                    .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();
@@ -4813,6 +4832,42 @@ void CoreTest::clampClipStartNoOverlapPushesPastBlockers()
              drift::secondsToUs(3.0));
     // Clear space before the blocker stays put.
     QCOMPARE(drift::clampClipStartNoOverlap(track, exclude, 0, moving.timelineDuration), 0);
+}
+
+void CoreTest::placeClipStartNoOverlapPrefersLeftSlot()
+{
+    drift::Track track;
+    track.type = drift::TrackType::Video;
+    drift::Clip first;
+    first.id = QStringLiteral("first");
+    first.timelineStart = 0;
+    first.timelineDuration = drift::secondsToUs(1.0);
+    drift::Clip blocker;
+    blocker.id = QStringLiteral("blocker");
+    blocker.timelineStart = drift::secondsToUs(4.0);
+    blocker.timelineDuration = drift::secondsToUs(2.0);
+    track.clips = {first, blocker};
+
+    const QSet<QString> exclude{QStringLiteral("moving")};
+    const drift::TimeUs one = drift::secondsToUs(1.0);
+    // Running into the blocker from the left lands against its left edge.
+    QCOMPARE(drift::placeClipStartNoOverlap(track, exclude, drift::secondsToUs(3.5), one),
+             drift::secondsToUs(3.0));
+    // Starting inside the blocker still pushes past it.
+    QCOMPARE(drift::placeClipStartNoOverlap(track, exclude, drift::secondsToUs(4.5), one),
+             drift::secondsToUs(6.0));
+    // Clear space stays put.
+    QCOMPARE(drift::placeClipStartNoOverlap(track, exclude, drift::secondsToUs(2.0), one),
+             drift::secondsToUs(2.0));
+    // The left slot is only 3 s wide, so a 3.5 s clip has no room.
+    QCOMPARE(drift::placeClipStartNoOverlap(track, exclude, drift::secondsToUs(1.5),
+                                            drift::secondsToUs(3.5)),
+             drift::TimeUs(-1));
+
+    QCOMPARE(drift::groupShiftNoOverlap({{&track, drift::secondsToUs(3.5), one}}, exclude),
+             std::optional<drift::TimeUs>(-drift::secondsToUs(0.5)));
+    QVERIFY(!drift::groupShiftNoOverlap({{&track, drift::secondsToUs(1.5), drift::secondsToUs(3.5)}},
+                                        exclude));
 }
 
 void CoreTest::clampTrimEdgesIgnoreExistingOverlaps()

@@ -131,7 +131,7 @@ QList<TransformParent> transformParentsAt(const Project &project, TimeUs timelin
         double opacity = 1.0;
         bool active = false;
         for (const Clip &clip : track.clips) {
-            if (clip.adjustmentKind != AdjustmentKind::Transform || !clip.containsTime(timelineUs))
+            if (clip.adjustmentKind != AdjustmentKind::Transform || !clip.activeAt(timelineUs))
                 continue;
             double clipOpacity = 1.0;
             matrix = matrix * transformLayerMatrix(clip, timelineUs, projectSize, renderScale,

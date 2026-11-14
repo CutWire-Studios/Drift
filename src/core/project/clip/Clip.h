@@ -133,6 +133,9 @@ struct Clip
     // ignored on a speed ramp (see loops()).
     bool loop = false;
     TimeUs loopOffsetUs = 0;
+    // A disabled clip stays on the timeline but is skipped by preview, playback and export, both
+    // picture and sound.
+    bool enabled = true;
     bool flipH = false;
     bool flipV = false;
     // Meaningful on a Mask-kind adjustment clip and nowhere else — a media clip's masks live on
@@ -358,6 +361,9 @@ struct Clip
     {
         return time >= timelineStart && time < timelineEnd();
     }
+
+    // Whether preview, playback and export draw or play the clip at `time`.
+    bool activeAt(TimeUs time) const { return enabled && containsTime(time); }
 
     // Fade gain in [0,1] at a timeline time. CapCut Fade In/Out animations own
     // the ramp when set; otherwise edge fadeInUs/Out + clip fadeCurve apply

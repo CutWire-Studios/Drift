@@ -216,6 +216,9 @@ PanelFrame {
             "warning": Theme.c.timelineClipItem.warning,
             "missing": Theme.c.timelineClipItem.missing,
             "loopMarker": Theme.c.timelineClipItem.loopMarker,
+            "disabledScrim": Theme.c.timelineClipItem.disabledScrim,
+            "disabledStripe": Theme.c.timelineClipItem.disabledStripe,
+            "gapOutline": Theme.c.timelineClipItem.gapOutline,
             "fontFamily": Theme.fontFamily,
             "fontSizeTiny": Theme.fontSizeTiny,
             "fontSizeXs": Theme.fontSizeXs,
@@ -230,6 +233,7 @@ PanelFrame {
             "spacingMd": Theme.spacingMd,
             "edgeMarginDesktop": 14,
             "edgeMarginTouch": Theme.androidClipEdgeMargin,
+            "clipControlsMinWidth": Theme.clipControlsMinWidth,
             "trimHotspotExtraDesktop": 10,
             "trimHotspotExtraTouch": Theme.androidTrimHotspotExtra,
             "proxyLabel": qsTr("Proxy"),
@@ -1056,12 +1060,20 @@ PanelFrame {
     }
 
     function handleTimelineWheel(wheel) {
+        const pixelScroll = wheel.pixelDelta.x !== 0 || wheel.pixelDelta.y !== 0
+        if (pixelScroll && !(wheel.modifiers & Qt.ControlModifier)) {
+            // The OS has already applied natural-scrolling direction to pixelDelta.
+            const maxY = Math.max(0, flick.contentHeight - flick.height)
+            panTimelineBy(wheel.pixelDelta.x, maxY > 0 ? wheel.pixelDelta.y : 0)
+            return
+        }
         if (wheel.modifiers & Qt.ControlModifier) {
             // Wheel MouseAreas live in content space, so wheel.x is already a
             // content X — keep that time fixed under the cursor.
             const anchorSeconds = Math.max(0, wheel.x / pxPerSecond)
             const viewportX = wheel.x - flick.contentX
-            const factor = wheel.angleDelta.y > 0 ? 1.15 : 1.0 / 1.15
+            const factor = pixelScroll ? Math.pow(1.0015, wheel.pixelDelta.y)
+                                       : (wheel.angleDelta.y > 0 ? 1.15 : 1.0 / 1.15)
             setZoomAround(zoom * factor, anchorSeconds, viewportX)
             return
         }
@@ -1558,6 +1570,27 @@ PanelFrame {
                     }
                 }
 
+                PinchHandler {
+                    id: touchpadPinch
+                    target: null
+                    acceptedDevices: PointerDevice.TouchPad
+                    property real startZoom: 1
+                    property real anchorSeconds: 0
+
+                    onActiveChanged: {
+                        if (!active)
+                            return
+                        startZoom = root.zoom
+                        anchorSeconds = Math.max(0, (flick.contentX + centroid.position.x)
+                                                    / root.pxPerSecond)
+                    }
+                    onScaleChanged: {
+                        if (active)
+                            root.setZoomAround(startZoom * activeScale, anchorSeconds,
+                                               centroid.position.x)
+                    }
+                }
+
                 Item {
                     id: timelineContent
                     width: flick.contentWidth
@@ -1581,7 +1614,7 @@ PanelFrame {
                         z: 1
                         acceptedButtons: Qt.MiddleButton
                         preventStealing: true
-                        cursorShape: pressed ? Qt.ClosedHandCursor : Qt.ArrowCursor
+                        TimelineCursorRequest { kind: "pan"; active: rulerWheelArea.pressed }
                         onWheel: (wheel) => root.handleTimelineWheel(wheel)
                         onPressed: (mouse) => root.beginTimelinePan(rulerWheelArea, mouse)
                         onPositionChanged: (mouse) => {
@@ -1600,7 +1633,7 @@ PanelFrame {
                         z: 150
                         acceptedButtons: Qt.MiddleButton
                         preventStealing: true
-                        cursorShape: pressed ? Qt.ClosedHandCursor : Qt.ArrowCursor
+                        TimelineCursorRequest { kind: "pan"; active: tracksWheelArea.pressed }
                         onWheel: (wheel) => root.handleTimelineWheel(wheel)
                         onPressed: (mouse) => root.beginTimelinePan(tracksWheelArea, mouse)
                         onPositionChanged: (mouse) => {
@@ -1655,6 +1688,49 @@ PanelFrame {
                         // mouse press sets preventStealing (in onPressed, undone on release).
                         cursorShape: pressed ? Qt.CrossCursor : Qt.ArrowCursor
 
+                        property real pointerSceneX: 0
+                        property real pointerSceneY: 0
+
+                        function updateMarquee() {
+                            const p = mapFromItem(null, pointerSceneX, pointerSceneY)
+                            root.marqueeCurrentX = Math.max(0, p.x)
+                            root.marqueeCurrentY = Math.max(0, p.y)
+                            if (root.marqueeWidth > 2 || root.marqueeHeight > 2)
+                                root.applyMarqueeSelection()
+                        }
+
+                        Timer {
+                            interval: 16
+                            repeat: true
+                            running: root.marqueeActive
+                            onTriggered: {
+                                const p = marqueeArea.mapFromItem(null, marqueeArea.pointerSceneX,
+                                                                  marqueeArea.pointerSceneY)
+                                const px = p.x - flick.contentX
+                                const py = marqueeArea.y + p.y - flick.contentY
+                                const edgeX = Math.min(48, flick.width * 0.25)
+                                const usableH = Math.max(0, flick.height - flick.headerHeight)
+                                const edgeY = Math.min(48, usableH * 0.25)
+                                let dx = 0
+                                let dy = 0
+                                if (px < edgeX)
+                                    dx = -Math.min(24, 6 + (edgeX - px) * 0.4)
+                                else if (px > flick.width - edgeX)
+                                    dx = Math.min(24, 6 + (px - (flick.width - edgeX)) * 0.4)
+                                if (edgeY > 0) {
+                                    if (py < flick.headerHeight + edgeY)
+                                        dy = -Math.min(24, 6 + (flick.headerHeight + edgeY - py) * 0.4)
+                                    else if (py > flick.height - edgeY)
+                                        dy = Math.min(24, 6 + (py - (flick.height - edgeY)) * 0.4)
+                                }
+                                if (dx === 0 && dy === 0)
+                                    return
+                                const applied = root.dragEdgeScroll(dx, dy)
+                                if (applied.x !== 0 || applied.y !== 0)
+                                    marqueeArea.updateMarquee()
+                            }
+                        }
+
                         onPressed: (mouse) => {
                             root.forceActiveFocus()
                             if (mouse.button === Qt.RightButton) {
@@ -1672,6 +1748,9 @@ PanelFrame {
                             root.marqueeAdditive = (mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0
                             root.marqueeOriginX = mouse.x
                             root.marqueeOriginY = mouse.y
+                            const scene = mapToItem(null, mouse.x, mouse.y)
+                            pointerSceneX = scene.x
+                            pointerSceneY = scene.y
                             root.marqueeCurrentX = mouse.x
                             root.marqueeCurrentY = mouse.y
                             root.marqueeActive = true
@@ -1681,10 +1760,10 @@ PanelFrame {
                         onPositionChanged: (mouse) => {
                             if (!root.marqueeActive)
                                 return
-                            root.marqueeCurrentX = Math.max(0, mouse.x)
-                            root.marqueeCurrentY = Math.max(0, mouse.y)
-                            if (root.marqueeWidth > 2 || root.marqueeHeight > 2)
-                                root.applyMarqueeSelection()
+                            const scene = mapToItem(null, mouse.x, mouse.y)
+                            pointerSceneX = scene.x
+                            pointerSceneY = scene.y
+                            updateMarquee()
                         }
                         onReleased: {
                             preventStealing = false

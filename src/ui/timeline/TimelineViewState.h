@@ -78,6 +78,9 @@ public:
         QColor warning{"#f97316"};
         QColor missing;
         QColor loopMarker{255, 255, 255, 128};
+        QColor disabledScrim{32, 32, 32, 153};
+        QColor disabledStripe{255, 255, 255, 71};
+        QColor gapOutline{255, 255, 255, 56};
         QString fontFamily;
         double fontSizeTiny = 9.6;
         double fontSizeXs = 11.52;
@@ -92,6 +95,7 @@ public:
         double spacingMd = 6.0;
         double edgeMarginDesktop = 14.0;
         double edgeMarginTouch = 22.0;
+        double clipControlsMinWidth = 28.0;
         double trimHotspotExtraDesktop = 10.0;
         double trimHotspotExtraTouch = 14.0;
         QString proxyLabel;

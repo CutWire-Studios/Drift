@@ -948,6 +948,10 @@ public:
     // so there is nothing to commit.
     Q_INVOKABLE void commitTrim(int trackIndex, int clipIndex, int side, double seconds);
     Q_INVOKABLE bool trimGestureChangedProject() const { return m_trimGestureChanged; }
+    // Moves one edge by whole project frames as its own undo step. Unlike a drag it never snaps,
+    // which would swallow a one-frame move. Returns the TrimOutcome; TrimBlocked or TrimNone mean
+    // nothing changed (the source ran out, or the clip would have no length).
+    Q_INVOKABLE int nudgeTrimEdge(int trackIndex, int clipIndex, int side, int frames);
 
     // One step of a live trim drag, in timeline seconds. Returns a TrimOutcome rather than void:
     // snapping and every limit that can stop this edge live inside these, and the one the user
@@ -1193,6 +1197,12 @@ public:
     Q_INVOKABLE void cancelReverseRender();
     Q_INVOKABLE bool clipHasReverseProxy(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void setClipFlip(int trackIndex, int clipIndex, bool flipH, bool flipV);
+    // A disabled clip stays on the timeline but plays and exports as if it were not there. Applies
+    // to the whole selection when the clip is part of it, otherwise to the clip and its linked
+    // partners, as one undo step.
+    Q_INVOKABLE void setClipEnabled(int trackIndex, int clipIndex, bool enabled);
+    // Disables the selected clips, or enables them all when none of them is enabled.
+    Q_INVOKABLE void toggleSelectedClipsEnabled();
     // Per-clip "3D layer" switch: the tilt/depth/perspective values render (and get grips) only
     // while it is on. Off keeps the values.
     Q_INVOKABLE void setClipLayer3d(int trackIndex, int clipIndex, bool enabled);
@@ -1718,14 +1728,15 @@ public:
     Q_INVOKABLE bool canPasteClips() const { return !m_clipboard.isEmpty(); }
     Q_INVOKABLE void nudgeSelection(double deltaSeconds);
     Q_INVOKABLE bool selectionContains(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE bool selectionContainsTrack(int trackIndex) const;
     Q_INVOKABLE double selectionEarliestStartSeconds() const;
     // Premiere-style trim pointer. side: -1=start, 0=off, 1=end.
     // heightPx scales the cursor to the hovered clip/track height.
-    // The trim pointer is an application-wide override cursor, but every clip delegate has an
-    // opinion about it. `owner` says who is asking: a clear from anyone but the current owner is
+    // The timeline pointer is an application-wide override cursor, but many items have an
+    // opinion about it. An empty kind clears. `owner` says who is asking: a clear from anyone but the current owner is
     // ignored, so a neighbouring clip's hover ending cannot drop the cursor of the clip actually
     // being trimmed.
-    Q_INVOKABLE void setTimelineTrimCursor(int side, int heightPx = 0, int owner = 0);
+    Q_INVOKABLE void setTimelineCursor(const QString &kind, int heightPx = 0, int owner = 0);
     Q_INVOKABLE int acquireTrimCursorToken() { return ++m_trimCursorTokenSeq; }
     Q_INVOKABLE QString shortcutFor(const QString &actionId) const;
     // Returns an empty string on success, or the label of the action already bound to
@@ -2508,6 +2519,24 @@ protected:
     int m_selectedTransitionTrack = -1;
     int m_selectedTransitionLeftClip = -1;
     QList<QPair<int, int>> m_selection;
+    // Lookup mirror of m_selection. It holds a shared copy of the list it was built from, so a
+    // pointer match proves m_selection is untouched and any assignment or in-place edit (which
+    // detaches) is noticed without every writer having to maintain the set.
+    mutable QList<QPair<int, int>> m_selectionMirrorSource;
+    mutable QSet<QPair<int, int>> m_selectionSet;
+    mutable QSet<int> m_selectionTracks;
+    void syncSelectionMirror() const;
+    QVariantMap computeSelectedClipData() const;
+    struct SelectedClipDataCache {
+        bool valid = false;
+        quint32 tracksRevision = 0;
+        int selectionRevision = 0;
+        int track = -1;
+        int clip = -1;
+        drift::TimeUs playheadUs = 0;
+        QVariantMap data;
+    };
+    mutable SelectedClipDataCache m_selectedClipDataCache;
     mutable QString m_capturedPrimaryClipId;
     QStringList m_undoSelectionIds;
     QString m_undoPrimaryId;
@@ -2516,15 +2545,11 @@ protected:
     QString m_undoTransitionLeftClipId;
     bool m_undoSelectionCaptured = false;
     int m_selectionRevision = 0;
-    int m_timelineTrimCursorSide = 0;
-    int m_timelineTrimCursorHeight = 0;
-    int m_timelineTrimCursorOwner = 0;
+    bool m_timelineCursorActive = false;
+    QString m_timelineCursorKind;
+    int m_timelineCursorHeight = 0;
+    int m_timelineCursorOwner = 0;
     int m_trimCursorTokenSeq = 0;
-    // The pointer is drawn with QPainter at the track's height. Heights come from a handful of
-    // row sizes, so this stays tiny — and a member rather than a function-local static because a
-    // QCursor holds a platform cursor that must not outlive QGuiApplication.
-    mutable QHash<int, QCursor> m_trimCursorCache;
-    QCursor trimCursorFor(int side, int heightPx) const;
     PreviewController *m_preview = nullptr;
     PreferencesController *m_preferences = nullptr;
     ProjectFileController *m_projectFile = nullptr;

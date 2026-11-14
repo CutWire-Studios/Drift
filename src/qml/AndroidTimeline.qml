@@ -470,6 +470,9 @@ Item {
             "editFriendlyPillForeground": Theme.c.androidTimeline.editFriendlyPillForeground,
             "warning": Theme.c.androidTimeline.warning,
             "loopMarker": Theme.c.androidTimeline.loopMarker,
+            "disabledScrim": Theme.c.androidTimeline.disabledScrim,
+            "disabledStripe": Theme.c.androidTimeline.disabledStripe,
+            "gapOutline": Theme.c.androidTimeline.gapOutline,
             "fontFamily": Theme.fontFamily,
             "fontSizeTiny": Theme.fontSizeTiny,
             "fontSizeXs": Theme.fontSizeXs,
@@ -484,6 +487,7 @@ Item {
             "spacingMd": Theme.spacingMd,
             "edgeMarginDesktop": 14,
             "edgeMarginTouch": Theme.androidClipEdgeMargin,
+            "clipControlsMinWidth": Theme.clipControlsMinWidth,
             "trimHotspotExtraDesktop": 10,
             "trimHotspotExtraTouch": Theme.androidTrimHotspotExtra,
             "proxyLabel": qsTr("Proxy"),
@@ -1191,6 +1195,13 @@ Item {
             // Being outside the content item is also what deletes the four
             // `y: flick.contentY` compensations the old head needed to stay put while the
             // tracks panned vertically.
+            AndroidTimelineTrimNudge {
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: Theme.spacingSm
+                z: 40
+            }
+
             AndroidTimelinePlayhead {
                 id: playhead
                 x: root.labelsWidth + flick.width / 2 - Theme.androidPlayheadCentreWidth / 2

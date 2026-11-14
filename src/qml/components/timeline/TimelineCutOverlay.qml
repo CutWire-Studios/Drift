@@ -44,7 +44,11 @@ Item {
         id: cutMouse
         anchors.fill: parent
         hoverEnabled: true
-        cursorShape: Qt.CrossCursor
+        TimelineCursorRequest {
+            kind: cutOverlay.panel.timelineTool === "trimStart" ? "trimStartTool"
+                  : cutOverlay.panel.timelineTool === "trimEnd" ? "trimEndTool" : "blade"
+            active: cutOverlay.visible && cutMouse.containsMouse
+        }
         acceptedButtons: Qt.LeftButton
         onEntered: cutOverlay.updateHover(mouseX, mouseY)
         onPositionChanged: (mouse) => cutOverlay.updateHover(mouse.x, mouse.y)

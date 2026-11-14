@@ -162,6 +162,55 @@ TimeUs clampClipStartNoOverlap(const Track &track, const QSet<QString> &excludeI
     return start;
 }
 
+TimeUs placeClipStartNoOverlap(const Track &track, const QSet<QString> &excludeIds,
+                               TimeUs desiredStart, TimeUs duration)
+{
+    const TimeUs start = qMax<TimeUs>(0, desiredStart);
+    TimeUs firstBlocker = -1;
+    for (const Clip &clip : track.clips) {
+        if (excludeIds.contains(clip.id))
+            continue;
+        if (start < clip.timelineEnd() && start + duration > clip.timelineStart
+            && (firstBlocker < 0 || clip.timelineStart < firstBlocker))
+            firstBlocker = clip.timelineStart;
+    }
+    if (firstBlocker < 0)
+        return start;
+    if (start >= firstBlocker)
+        return clampClipStartNoOverlap(track, excludeIds, start, duration);
+
+    const TimeUs left = firstBlocker - duration;
+    if (left < 0 || clampClipStartNoOverlap(track, excludeIds, left, duration) != left)
+        return -1;
+    return left;
+}
+
+std::optional<TimeUs> groupShiftNoOverlap(const QList<PlacedSpan> &spans,
+                                          const QSet<QString> &excludeIds)
+{
+    TimeUs mostLeft = 0;
+    TimeUs mostRight = 0;
+    for (const PlacedSpan &span : spans) {
+        const TimeUs placed = placeClipStartNoOverlap(*span.track, excludeIds, span.start, span.duration);
+        if (placed < 0)
+            return std::nullopt;
+        const TimeUs shift = placed - span.start;
+        mostLeft = qMin(mostLeft, shift);
+        mostRight = qMax(mostRight, shift);
+    }
+    if (mostLeft < 0 && mostRight > 0)
+        return std::nullopt;
+    if (mostLeft == 0)
+        return mostRight;
+
+    for (const PlacedSpan &span : spans) {
+        const TimeUs start = span.start + mostLeft;
+        if (start < 0 || clampClipStartNoOverlap(*span.track, excludeIds, start, span.duration) != start)
+            return std::nullopt;
+    }
+    return mostLeft;
+}
+
 TimeUs clampClipStartAgainstLeftNeighbors(const Track &track, const QSet<QString> &excludeIds,
                                           TimeUs currentStart, TimeUs desiredStart)
 {

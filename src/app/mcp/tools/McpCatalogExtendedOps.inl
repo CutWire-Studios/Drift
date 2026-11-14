@@ -362,6 +362,13 @@
           objectSchema(mergeProps({{QStringLiteral("loop"), boolProp(QStringLiteral("Loop on or off"))}},
                                   clipRefProps()),
                        {QStringLiteral("loop")}) },
+        { "set_clip_enabled", "canvas", "Enable or disable a clip",
+          "A disabled clip stays on the timeline (shown striped) but is skipped by preview and export, "
+          "picture and sound; compact clips then show enabled:false. Its linked audio/video partners "
+          "follow, and the change is one undo step.",
+          objectSchema(mergeProps({{QStringLiteral("enabled"), boolProp(QStringLiteral("Enabled (true) or disabled (false)"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("enabled")}) },
         { "cancel_reverse_render", "canvas", "Stop reverse proxy",
           "Cancel the in-flight reverse proxy render. Returns ok even when nothing was running; "
           "confirm with inspect({detail:true}).jobs.reverseRender.active.",

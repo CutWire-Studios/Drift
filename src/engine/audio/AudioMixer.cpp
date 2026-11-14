@@ -618,7 +618,7 @@ size_t liveAdjustments(const QList<const drift::Clip *> &candidates, drift::Time
     live.clear();
     size_t key = 0;
     for (const drift::Clip *adjustment : candidates) {
-        if (!adjustment->containsTime(timelineUs))
+        if (!adjustment->activeAt(timelineUs))
             continue;
         live.append(adjustment);
         key = qHashMulti(key, adjustment->id);
@@ -702,6 +702,8 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
         float peakR = 0.0f;
         if (track.type == drift::TrackType::Audio) {
             for (const drift::Clip &clip : track.clips) {
+                if (!clip.enabled)
+                    continue;
                 const size_t laneKey = adjustmentsForClip(trackLive, clip.id, live);
                 accumulateClipAudio(*project, clip, track, timelineStartUs, sampleCount, sampleRate,
                                     interleavedStereoOut, m_clipAudioMutex, m_clipAudio,
@@ -709,7 +711,7 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
             }
         } else if (track.type == drift::TrackType::Video) {
             for (const drift::Clip &clip : track.clips) {
-                if ((clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Composite)
+                if (clip.enabled && (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Composite)
                     && !clip.suppressEmbeddedAudio) {
                     const size_t laneKey = adjustmentsForClip(trackLive, clip.id, live);
                     accumulateClipAudio(*project, clip, track, timelineStartUs, sampleCount,

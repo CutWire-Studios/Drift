@@ -71,7 +71,25 @@ Item {
                               Theme.c.timelineTransitionToffee.border.b,
                               toffee.active ? 1.0 : 0.75)
 
+        TimelineTransitionChevrons {
+            anchors.fill: parent
+            anchors.leftMargin: toffee.barH * 0.45
+            anchors.rightMargin: toffee.barH * 0.45
+            visible: width >= toffee.barH * 0.6
+            color: Qt.alpha(Theme.c.timelineTransitionToffee.chevron, 0.3)
+        }
+
+        Rectangle {
+            anchors.centerIn: content
+            width: content.implicitWidth + 10
+            height: content.implicitHeight + 2
+            radius: height / 2
+            color: toffee.fill
+            visible: content.visible
+        }
+
         Row {
+            id: content
             anchors.centerIn: parent
             spacing: 4
             visible: parent.width >= 26
@@ -110,20 +128,6 @@ Item {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeTiny
                 font.weight: Font.DemiBold
-            }
-        }
-
-        Repeater {
-            model: toffee.region.overlap ? [-1] : [-1, 1]
-            delegate: Rectangle {
-                required property int modelData
-                visible: toffee.active && body.width >= 20
-                width: 2
-                height: Math.round(toffee.barH * 0.45)
-                radius: 1
-                anchors.verticalCenter: parent.verticalCenter
-                x: modelData < 0 ? toffee.gripW / 2 : body.width - toffee.gripW / 2 - width
-                color: Theme.c.timelineTransitionToffee.grip
             }
         }
 
@@ -176,6 +180,31 @@ Item {
             required property int modelData
             property real pressX: 0
             property real pressDuration: 0
+            property real pointerSceneX: 0
+
+            function pointerLocalX() {
+                return mapFromItem(null, pointerSceneX, 0).x
+            }
+
+            Timer {
+                interval: 16
+                repeat: true
+                running: edgeHandle.pressed
+                         && typeof toffee.panel.dragEdgeScroll === "function"
+                onTriggered: {
+                    const panel = toffee.panel
+                    const px = edgeHandle.mapToItem(toffee.parent, edgeHandle.pointerLocalX(), 0).x
+                             - panel.timelineViewX
+                    const edgeX = Math.min(48, panel.timelineViewW * 0.25)
+                    let dx = 0
+                    if (px < edgeX)
+                        dx = -Math.min(24, 6 + (edgeX - px) * 0.4)
+                    else if (px > panel.timelineViewW - edgeX)
+                        dx = Math.min(24, 6 + (px - (panel.timelineViewW - edgeX)) * 0.4)
+                    if (dx !== 0 && panel.dragEdgeScroll(dx, 0).x !== 0)
+                        toffee.liveDuration = edgeHandle.durationAt(edgeHandle.pointerLocalX())
+                }
+            }
 
             function durationAt(mouseX) {
                 const dx = (mapToItem(toffee.parent, mouseX, 0).x - pressX) / toffee.panel.pxPerSecond
@@ -184,24 +213,43 @@ Item {
                 return Math.max(0.1, Math.min(toffee.region.maxDuration, d))
             }
 
-            x: modelData < 0 ? -4 : toffee.width - toffee.gripW
+            x: modelData < 0 ? -(earItem.implicitWidth - earItem.overlap)
+                             : toffee.width - toffee.gripW
             y: -3
-            width: toffee.gripW + 4
+            width: toffee.gripW + earItem.implicitWidth - earItem.overlap
             height: toffee.barH + 6
             hoverEnabled: true
             preventStealing: true
-            cursorShape: Qt.SizeHorCursor
+            TimelineTransitionEar {
+                id: earItem
+                x: edgeHandle.modelData < 0 ? 0 : toffee.gripW - overlap
+                y: 3
+                width: implicitWidth
+                height: toffee.barH
+                color: Theme.c.timelineTransitionToffee.handle
+                gripColor: Theme.c.timelineTransitionToffee.handleGrip
+                outlineColor: Theme.c.timelineTransitionToffee.outline
+                shown: Theme.touchInput || toffee.active || edgeHandle.containsMouse
+                       || edgeHandle.pressed
+            }
+            TimelineCursorRequest {
+                kind: "transitionResize"
+                active: edgeHandle.containsMouse || edgeHandle.pressed
+            }
             onPressed: (mouse) => {
+                pointerSceneX = mapToItem(null, mouse.x, 0).x
                 pressX = mapToItem(toffee.parent, mouse.x, 0).x
                 pressDuration = toffee.region.end - toffee.region.start
                 toffee.liveDuration = pressDuration
             }
             onPositionChanged: (mouse) => {
-                if (pressed)
-                    toffee.liveDuration = durationAt(mouse.x)
+                if (!pressed)
+                    return
+                pointerSceneX = mapToItem(null, mouse.x, 0).x
+                toffee.liveDuration = durationAt(mouse.x)
             }
             onReleased: (mouse) => {
-                const d = durationAt(mouse.x)
+                const d = durationAt(pointerLocalX())
                 toffee.liveDuration = -1
                 if (Math.abs(d - pressDuration) > 0.001)
                     EditorState.setTransitionDuration(toffee.trackIndex,

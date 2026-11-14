@@ -93,7 +93,7 @@ void forEachSourceClip(const drift::Project &project, const QString &trackId, Vi
         if (trackId.isEmpty() ? track.muted : track.id != trackId)
             continue;
         for (const drift::Clip &clip : track.clips) {
-            if (clip.path.isEmpty() || !clip.sequenceId.isEmpty())
+            if (!clip.enabled || clip.path.isEmpty() || !clip.sequenceId.isEmpty())
                 continue;
             if (track.type == drift::TrackType::Video
                 && (clip.type != drift::ClipType::Video || clip.suppressEmbeddedAudio)) {
@@ -137,7 +137,7 @@ quint64 audioFingerprint(const drift::Project &project, const QString &trackId)
                               clip.timelineDuration, clip.srcIn, clip.srcOut, clip.speed, int(clip.reverse),
                               clip.audioStreamIndex, int(clip.suppressEmbeddedAudio), clip.pan,
                               clip.fadeInUs, clip.fadeOutUs, clip.audioFadeInUs, clip.audioFadeOutUs,
-                              int(clip.fadeCurve));
+                              int(clip.fadeCurve), int(clip.enabled));
             const auto &volumeKeys = clip.volume.keyframes();
             for (auto it = volumeKeys.cbegin(); it != volumeKeys.cend(); ++it)
                 hash = qHashMulti(hash, it.key(), it.value().value);

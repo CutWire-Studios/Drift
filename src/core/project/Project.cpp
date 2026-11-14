@@ -331,6 +331,8 @@ QJsonObject clipToJson(const Clip &clip)
     };
     if (clip.hiddenInLane)
         json.insert(QStringLiteral("hiddenInLane"), true);
+    if (!clip.enabled)
+        json.insert(QStringLiteral("enabled"), false);
     if (clip.audioFadeInUs > 0)
         json.insert(QStringLiteral("audioFadeInUs"), static_cast<double>(clip.audioFadeInUs));
     if (clip.audioFadeOutUs > 0)
@@ -453,6 +455,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.reverse = object.value(QStringLiteral("reverse")).toBool(false);
     clip.loop = object.value(QStringLiteral("loop")).toBool(false);
     clip.loopOffsetUs = object.value(QStringLiteral("loopOffsetUs")).toInteger(0);
+    clip.enabled = object.value(QStringLiteral("enabled")).toBool(true);
     clip.flipH = object.value(QStringLiteral("flipH")).toBool(false);
     clip.flipV = object.value(QStringLiteral("flipV")).toBool(false);
     clip.mask = maskFromJson(object.value(QStringLiteral("mask")).toObject());
@@ -1517,6 +1520,8 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
     // Version 28 added the Sequence mask shape. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
+    // Version 29 added disabled clips. Nothing to migrate; the bump is a gate, as for versions 6
+    // and 9. An older build would play a disabled clip and could export it.
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 

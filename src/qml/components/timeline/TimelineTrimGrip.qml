@@ -1,12 +1,19 @@
 import QtQuick
 import Drift
 
-// Grip notch: says "this edge moves" without a tooltip, which touch cannot show.
-Rectangle {
+// Two short lines: says "this edge moves" without a tooltip, which touch cannot show.
+Row {
     anchors.centerIn: parent
-    width: 3
-    height: Math.min(16, parent.height * 0.4)
-    radius: Theme.c.timelineTrimGrip.radius
-    color: Theme.c.timelineTrimGrip.foreground
-    opacity: 0.9
+    spacing: 2
+
+    Repeater {
+        model: 2
+        delegate: Rectangle {
+            width: 2
+            height: Math.min(14, parent.parent.height * 0.35)
+            radius: Theme.c.timelineTrimGrip.radius
+            color: Theme.c.timelineTrimGrip.foreground
+            opacity: 0.9
+        }
+    }
 }

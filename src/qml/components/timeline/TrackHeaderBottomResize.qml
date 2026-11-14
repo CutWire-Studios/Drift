@@ -33,7 +33,10 @@ MouseArea {
     acceptedButtons: Qt.LeftButton
     hoverEnabled: true
     preventStealing: true
-    cursorShape: Qt.SplitVCursor
+    TimelineCursorRequest {
+        kind: "trackResizeV"
+        active: handle.containsMouse || handle.pressed
+    }
 
     onPressed: (mouse) => {
         if (mouse.source !== Qt.MouseEventNotSynthesized) {

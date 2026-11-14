@@ -54,12 +54,7 @@ Item {
             return false
         if (EditorState.selectedTrack === index)
             return true
-        const picked = EditorState.selection
-        for (let i = 0; i < picked.length; ++i) {
-            if (picked[i].track === index)
-                return true
-        }
-        return false
+        return EditorState.selectionRevision >= 0 && EditorState.selectionContainsTrack(index)
     }
     // On desktop the lanes sit below the parent's own content, or collapse into ribbons along
     // the top. The compact (phone) header keeps them as full strips at the top.
@@ -76,7 +71,8 @@ Item {
     readonly property bool twoLine: !column.compact && contentHeight >= 44 && (wantMic || wantLanes)
     readonly property real line1Height: twoLine ? 24 : contentHeight
     readonly property real line2Height: twoLine ? 22 : 0
-    readonly property real blockTop: contentTop + (contentHeight - line1Height - line2Height) / 2
+    readonly property real blockTop: contentTop + Math.min(3, Math.max(0, contentHeight - line1Height - line2Height))
+    readonly property real laneLineX: 30
     readonly property real centerOffset: contentTop + contentHeight / 2 - height / 2
     readonly property string hideLabel: isTransformLayer
         ? (trackHidden ? qsTr("Turn transform on") : qsTr("Turn transform off"))
@@ -165,8 +161,10 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton
-        cursorShape: column.draggingTrackFrom === index ? Qt.SizeAllCursor
-                                                        : Qt.ArrowCursor
+        TimelineCursorRequest {
+            kind: "trackReorder"
+            active: column.draggingTrackFrom === index
+        }
 
         // A press is not yet a reorder: without a threshold, clicking a
         // header committed a move, because a row's grip already sits
@@ -273,6 +271,12 @@ Item {
         rowHeight: trackLabelRow.column.trackHeight(index)
     }
 
+    Loader {
+        anchors.fill: parent
+        active: trackLabelRow.trackHidden
+        sourceComponent: TimelineDisabledStripes { opacity: 0.6 }
+    }
+
     TrackHeaderTypeStrip {
         trackType: trackLabelRow.trackType
         transformLayer: trackLabelRow.isTransformLayer
@@ -308,6 +312,15 @@ Item {
                 column: trackLabelRow.column
             }
         }
+    }
+
+    Rectangle {
+        visible: !column.compact && !lanesCollapsed && laneCount > 0
+        x: trackLabelRow.laneLineX
+        y: Math.ceil(trackLabelRow.blockTop + trackLabelRow.line1Height / 2 + 7)
+        width: 1
+        height: Math.max(0, trackLabelRow.contentHeight - y)
+        color: Theme.c.trackHeaderLaneRow.connector
     }
 
     Repeater {
@@ -439,8 +452,12 @@ Item {
                 wheel.accepted = false
                 return
             }
-            const dy = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y
-                                                : wheel.pixelDelta.y
+            const touchpad = wheel.pixelDelta.x !== 0 || wheel.pixelDelta.y !== 0
+            if (touchpad && Math.abs(wheel.pixelDelta.x) > Math.abs(wheel.pixelDelta.y)) {
+                wheel.accepted = false
+                return
+            }
+            const dy = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y
             if (dy === 0)
                 return
             if (wheel.modifiers & Qt.AltModifier)

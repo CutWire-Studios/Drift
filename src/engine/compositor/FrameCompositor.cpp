@@ -300,7 +300,7 @@ void forEachMediaMask(const drift::Project &project, drift::TimeUs timelineUs, V
             for (const drift::Clip &clip : track.clips) {
                 if (clip.adjustmentKind != drift::AdjustmentKind::Mask)
                     continue;
-                if (!clip.containsTime(timelineUs) || !(clip.mask.isMedia() || clip.mask.isSequence()))
+                if (!clip.activeAt(timelineUs) || !(clip.mask.isMedia() || clip.mask.isSequence()))
                     continue;
                 visit(clip, clip.mask, streamIdFor(clip.id), clip.timelineStart, clip.srcIn);
             }
@@ -308,7 +308,7 @@ void forEachMediaMask(const drift::Project &project, drift::TimeUs timelineUs, V
         }
 
         for (const drift::Clip &clip : track.clips) {
-            if (clip.containsTime(timelineUs))
+            if (clip.activeAt(timelineUs))
                 forEachLaneMediaMask(project, t, clip, timelineUs, visit);
         }
     }
@@ -322,6 +322,10 @@ QSet<QString> activeTransitionClipIds(const drift::Track &track, drift::TimeUs t
     drift::TimeUs endUs = 0;
     const drift::Transition *transition = drift::activeTransitionAt(track, timelineUs, startUs, endUs);
     if (!transition)
+        return {};
+    const drift::Clip *from = drift::clipById(track, transition->fromClipId);
+    const drift::Clip *to = drift::clipById(track, transition->toClipId);
+    if ((from && !from->enabled) || (to && !to->enabled))
         return {};
     return {transition->fromClipId, transition->toClipId};
 }
@@ -365,7 +369,7 @@ TrackInput trackInputAt(const drift::Project &project, const QString &trackId, d
             return {};
         TrackInput found;
         for (const drift::Clip &clip : track.clips) {
-            if (clip.type == drift::ClipType::Adjustment || !clip.containsTime(timelineUs))
+            if (clip.type == drift::ClipType::Adjustment || !clip.activeAt(timelineUs))
                 continue;
             if (!found.clip || clip.timelineStart < found.clip->timelineStart)
                 found = {&clip, t};
@@ -420,7 +424,7 @@ void forEachTrackParamRead(const drift::Project &project, drift::TimeUs timeline
 
         const QSet<QString> transitionClipIds = activeTransitionClipIds(track, timelineUs);
         for (const drift::Clip &clip : track.clips) {
-            if (transitionClipIds.contains(clip.id) || !clip.containsTime(timelineUs)
+            if (transitionClipIds.contains(clip.id) || !clip.activeAt(timelineUs)
                 || clip.type == drift::ClipType::Adjustment) {
                 continue;
             }
@@ -476,7 +480,7 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
         const QSet<QString> transitionClipIds = activeTransitionClipIds(track, timelineUs);
         for (const drift::Clip &clip : track.clips) {
-            if (!clip.containsTime(timelineUs) && !transitionClipIds.contains(clip.id))
+            if (!clip.enabled || (!clip.containsTime(timelineUs) && !transitionClipIds.contains(clip.id)))
                 continue;
 
             // A composite and its separated audio both read the nested timeline.
@@ -607,6 +611,8 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
         for (const drift::Clip &clip : track.clips) {
             drift::TimeUs readUs = timelineUs;
             bool upcoming = false;
+            if (!clip.enabled)
+                continue;
             if (!clip.containsTime(timelineUs) && !transitionClipIds.contains(clip.id)) {
                 if (lookaheadUs <= 0 || clip.type != drift::ClipType::Video || clip.path.isEmpty())
                     continue;
@@ -806,7 +812,7 @@ QList<drift::Effect> laneAdjustmentEffects(const drift::Project &project, int tr
         for (const drift::Clip &adjustment : lane.clips) {
             if (adjustment.adjustmentKind != drift::AdjustmentKind::VideoEffects)
                 continue;
-            if (!adjustment.containsTime(timelineUs))
+            if (!adjustment.activeAt(timelineUs))
                 continue;
             if (!adjustment.linkedClipId.isEmpty() && adjustment.linkedClipId != hostClipId)
                 continue;
@@ -1029,7 +1035,7 @@ QImage bottommostVisualFrame(const drift::Project &project, drift::TimeUs timeli
         if (track.hidden || track.type == drift::TrackType::Audio)
             continue;
         for (const drift::Clip &clip : track.clips) {
-            if (!clip.containsTime(timelineUs))
+            if (!clip.activeAt(timelineUs))
                 continue;
             if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image)
                 continue;
@@ -1984,7 +1990,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         if (activeTransition) {
             const drift::Clip *fromClip = drift::clipById(track, activeTransition->fromClipId);
             const drift::Clip *toClip = drift::clipById(track, activeTransition->toClipId);
-            if (fromClip && toClip) {
+            if (fromClip && toClip && fromClip->enabled && toClip->enabled) {
                 GpuItem item;
                 item.isTransition = true;
                 item.from = buildGpuLayer(project, *fromClip, timelineUs, projectWidth, projectHeight, renderScale,
@@ -2021,7 +2027,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         }
 
         for (const drift::Clip &clip : track.clips) {
-            if (transitionClipIds.contains(clip.id) || !clip.containsTime(timelineUs))
+            if (transitionClipIds.contains(clip.id) || !clip.activeAt(timelineUs))
                 continue;
 
             if (clip.type == drift::ClipType::Adjustment) {

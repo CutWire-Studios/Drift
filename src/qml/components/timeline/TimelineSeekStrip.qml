@@ -31,9 +31,40 @@ Item {
         // Leave room for the playhead head so its drag can start first.
         z: 1
 
+        // Edge autoscroll while held near the pane edge, so a seek is not limited to what is
+        // on screen. sceneX is kept so the timer can re-resolve the pointer after the view moves.
+        property real pointerSceneX: 0
+
         function scrubTo(x) {
-            EditorState.playheadSeconds =
-                EditorState.snapTime(Math.max(0, x) / seekStrip.panel.pxPerSecond)
+            const raw = Math.max(0, x) / seekStrip.panel.pxPerSecond
+            const snapped = EditorState.snapTime(raw)
+            // The playhead is among its own snap targets, so a scrub near where it already
+            // sits snaps to itself; that is not a snap worth showing.
+            seekStrip.panel.snapGuideSeconds = EditorState.snapEnabled
+                    && Math.abs(snapped - raw) > 0.0005
+                    && Math.abs(snapped - EditorState.playheadSeconds) > 0.0005 ? snapped : -1
+            EditorState.playheadSeconds = snapped
+        }
+
+        Timer {
+            interval: 16
+            repeat: true
+            running: rulerScrub.pressed && typeof seekStrip.panel.dragEdgeScroll === "function"
+            onTriggered: {
+                const panel = seekStrip.panel
+                const px = rulerScrub.mapFromItem(null, rulerScrub.pointerSceneX, 0).x
+                         - panel.timelineViewX
+                const edgeX = Math.min(48, panel.timelineViewW * 0.25)
+                let dx = 0
+                if (px < edgeX)
+                    dx = -Math.min(24, 6 + (edgeX - px) * 0.4)
+                else if (px > panel.timelineViewW - edgeX)
+                    dx = Math.min(24, 6 + (px - (panel.timelineViewW - edgeX)) * 0.4)
+                if (dx === 0)
+                    return
+                if (panel.dragEdgeScroll(dx, 0).x !== 0)
+                    rulerScrub.scrubTo(rulerScrub.mapFromItem(null, rulerScrub.pointerSceneX, 0).x)
+            }
         }
 
         // Seeking is not a selection change: scrubbing to look at a
@@ -41,14 +72,23 @@ Item {
         onPressed: (mouse) => {
             seekStrip.panel.forceActiveFocus()
             seekStrip.panel.beginPlayheadSeek()
+            pointerSceneX = mapToItem(null, mouse.x, 0).x
             scrubTo(mouse.x)
         }
         onPositionChanged: (mouse) => {
-            if (pressed)
-                scrubTo(mouse.x)
+            if (!pressed)
+                return
+            pointerSceneX = mapToItem(null, mouse.x, 0).x
+            scrubTo(mouse.x)
         }
-        onReleased: seekStrip.panel.endPlayheadSeek()
-        onCanceled: seekStrip.panel.endPlayheadSeek()
+        onReleased: {
+            seekStrip.panel.snapGuideSeconds = -1
+            seekStrip.panel.endPlayheadSeek()
+        }
+        onCanceled: {
+            seekStrip.panel.snapGuideSeconds = -1
+            seekStrip.panel.endPlayheadSeek()
+        }
         // MouseArea would otherwise swallow wheel and block Ctrl-zoom.
         onWheel: (wheel) => seekStrip.panel.handleTimelineWheel(wheel)
 

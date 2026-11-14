@@ -5,6 +5,7 @@
 
 #include <QSet>
 
+#include <optional>
 #include <vector>
 
 namespace drift {
@@ -57,6 +58,24 @@ TimeUs resolveClipStart(const Project &project, const Track &track, int excludeC
 // `track` whose id is not in `excludeIds`. Abutting (end == next start) is allowed.
 TimeUs clampClipStartNoOverlap(const Track &track, const QSet<QString> &excludeIds,
                                TimeUs desiredStart, TimeUs duration);
+
+// Where a moved clip lands when overlap is off. A clip that starts inside another is pushed past
+// it; one that runs into a clip from the left is placed against that clip's left edge instead.
+// Returns -1 when that left-hand slot has no room.
+TimeUs placeClipStartNoOverlap(const Track &track, const QSet<QString> &excludeIds,
+                               TimeUs desiredStart, TimeUs duration);
+
+struct PlacedSpan
+{
+    const Track *track = nullptr;
+    TimeUs start = 0;
+    TimeUs duration = 0;
+};
+
+// One shift that applies placeClipStartNoOverlap to a group moving together, or nullopt when
+// there is no room for the whole group.
+std::optional<TimeUs> groupShiftNoOverlap(const QList<PlacedSpan> &spans,
+                                          const QSet<QString> &excludeIds);
 
 // Cap a left-edge extend so it cannot cross into clips that currently end at/before
 // `currentStart`. Already-overlapping clips are ignored (toggle must not un-overlap).

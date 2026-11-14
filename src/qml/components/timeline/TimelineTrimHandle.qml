@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 import Drift
 
 // Trim strip on one clip edge. `edge` is -1 for the start and 1 for the end.
@@ -16,17 +17,81 @@ Rectangle {
     // A looping clip's edges add or remove repeats instead of trimming, so they look different.
     readonly property bool looping: !!owner.clipData.loop
 
-    // The pointer gets a hairline to trim to; a finger covers the bar anyway, so on touch it
-    // stays full width and keeps its grip.
-    width: !owner.touchMode && hot
-           ? Math.max(2, owner.trimHandleWidth * 0.35)
-           : owner.trimHandleWidth
+    // The hit strip keeps its width; only the drawn bracket reacts to hover. On touch the strip
+    // is the finger-sized body, with the same bracket drawn on its outer edge.
+    width: owner.trimHandleWidth
     radius: looping ? width / 2 : owner.touchMode ? Theme.c.timelineTrimHandle.radius : 0
     color: !owner.showTrimHandles ? "transparent"
            : looping ? Theme.c.timelineTrimHandle.loopBackground
-                     : Theme.c.timelineTrimHandle.background
-    opacity: !owner.showTrimHandles ? 0 : (hot ? 1.0 : 0.85)
-    z: 30
+           : owner.touchMode ? Qt.alpha(Theme.c.timelineTrimHandle.background, 0.55)
+                             : "transparent"
+
+    readonly property color accent: Theme.c.timelineTrimHandle.background
+    property real barW: owner.touchMode ? 4 : (hot ? 4 : 3)
+    readonly property real serifLen: owner.touchMode ? Math.max(barW + 2, width - 1) : 5
+    readonly property bool drawBracket: owner.showTrimHandles && !looping
+
+    Behavior on barW {
+        NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+    }
+
+    Item {
+        id: bracket
+        anchors.fill: parent
+        visible: handle.drawBracket
+        opacity: handle.hot ? 1.0 : 0.9
+
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+        }
+
+        Rectangle {
+            x: handle.edge < 0 ? 0 : parent.width - width
+            width: handle.barW
+            height: parent.height
+            color: handle.accent
+        }
+        Repeater {
+            model: 2
+            delegate: Rectangle {
+                required property int index
+                x: handle.edge < 0 ? 0 : parent.width - width
+                y: index === 0 ? 0 : parent.height - height
+                width: handle.serifLen
+                height: handle.barW
+                color: handle.accent
+            }
+        }
+
+        Shape {
+            id: chevron
+            readonly property real cw: 4
+            readonly property real ch: 9
+            width: cw
+            height: ch
+            x: handle.edge < 0 ? handle.barW + 2 : parent.width - handle.barW - 2 - width
+            anchors.verticalCenter: parent.verticalCenter
+            visible: !owner.touchMode && parent.height >= 30
+            opacity: handle.hot ? 1 : 0
+            preferredRendererType: Shape.CurveRenderer
+
+            Behavior on opacity {
+                NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+            }
+
+            ShapePath {
+                strokeColor: handle.accent
+                strokeWidth: 1.5
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                startX: handle.edge < 0 ? chevron.cw : 0
+                startY: 0
+                PathLine { x: handle.edge < 0 ? 0 : chevron.cw; y: chevron.ch / 2 }
+                PathLine { x: handle.edge < 0 ? chevron.cw : 0; y: chevron.ch }
+            }
+        }
+    }
 
     TimelineTrimGrip {
         visible: owner.touchMode && owner.showTrimHandles && !handle.looping
@@ -38,15 +103,6 @@ Rectangle {
         glyph: Theme.icons.repeat
         iconSize: Math.min(handle.width - 2, 12)
         iconColor: Theme.c.timelineTrimHandle.loopForeground
-    }
-
-    Behavior on opacity {
-        enabled: owner.showTrimHandles
-        NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-    }
-    Behavior on width {
-        enabled: owner.showTrimHandles
-        NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
     }
 
     Loader {
@@ -69,21 +125,22 @@ Rectangle {
         anchors.fill: parent
         anchors.leftMargin: handle.edge < 0 ? -owner.trimHotspotExtra : -4
         anchors.rightMargin: handle.edge > 0 ? -owner.trimHotspotExtra : -4
-        // Leave the top corner for the fade dot.
-        anchors.topMargin: owner.timelineFadeHandles && owner.showTrimHandles
-                           && !owner.touchMode ? (owner.height < 35 ? 10 : 16) : -6
         anchors.bottomMargin: -6
         // Same reason as the move drag: these are ~38px strips at both edges of
         // every clip and they hold the grab, so on touch they turned each clip
         // boundary into another place the timeline could not be panned. Only the
         // selected clip — the one actually showing trim handles — arms them.
-        enabled: !owner.touchMode || owner.showTrimHandles
+        // A clip too narrow to show handles has no trim; mid-gesture the shrinking clip must not
+        // pull the area out from under the drag.
+        enabled: (owner.width >= Theme.clipControlsMinWidth || pressed)
+                 && (!owner.touchMode || owner.showTrimHandles)
         preventStealing: true
         hoverEnabled: true
         cursorShape: Qt.BlankCursor
 
         HoverHandler {
             id: trimHover
+            enabled: trimMouse.enabled
             cursorShape: Qt.BlankCursor
         }
 

@@ -84,6 +84,9 @@ void TimelineViewState::setStyle(const QVariantMap &style)
     color("warning", m_style.warning);
     color("missing", m_style.missing);
     color("loopMarker", m_style.loopMarker);
+    color("disabledScrim", m_style.disabledScrim);
+    color("disabledStripe", m_style.disabledStripe);
+    color("gapOutline", m_style.gapOutline);
     text("fontFamily", m_style.fontFamily);
     real("fontSizeTiny", m_style.fontSizeTiny);
     real("fontSizeXs", m_style.fontSizeXs);
@@ -98,6 +101,7 @@ void TimelineViewState::setStyle(const QVariantMap &style)
     real("spacingMd", m_style.spacingMd);
     real("edgeMarginDesktop", m_style.edgeMarginDesktop);
     real("edgeMarginTouch", m_style.edgeMarginTouch);
+    real("clipControlsMinWidth", m_style.clipControlsMinWidth);
     real("trimHotspotExtraDesktop", m_style.trimHotspotExtraDesktop);
     real("trimHotspotExtraTouch", m_style.trimHotspotExtraTouch);
     text("proxyLabel", m_style.proxyLabel);

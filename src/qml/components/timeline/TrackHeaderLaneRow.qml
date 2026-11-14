@@ -34,16 +34,22 @@ Item {
     width: row.width
     height: Theme.adjustmentLaneHeight
 
+    Loader {
+        anchors.fill: parent
+        active: laneRow.laneHidden
+        sourceComponent: TimelineDisabledStripes { opacity: 0.6 }
+    }
+
     Rectangle {
-        x: laneRow.indent
+        x: laneRow.row.laneLineX
         width: 1
         height: laneRow.last ? parent.height / 2 : parent.height
         color: Theme.c.trackHeaderLaneRow.connector
     }
     Rectangle {
-        x: laneRow.indent
+        x: laneRow.row.laneLineX
         y: Math.floor(parent.height / 2)
-        width: 9
+        width: 5
         height: 1
         color: Theme.c.trackHeaderLaneRow.connector
     }
@@ -67,6 +73,15 @@ Item {
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeXs
         elide: Text.ElideRight
+
+        HoverHandler {
+            id: laneLabelHover
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        }
+        ThemedToolTip {
+            visible: laneLabelHover.hovered && parent.truncated
+            text: parent.text
+        }
     }
 
     TrackHeaderLaneEye {

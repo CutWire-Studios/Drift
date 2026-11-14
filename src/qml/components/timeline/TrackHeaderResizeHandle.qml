@@ -32,7 +32,10 @@ Item {
         anchors.bottom: parent.bottom
         width: 6
         hoverEnabled: true
-        cursorShape: Qt.SplitHCursor
+        TimelineCursorRequest {
+            kind: "trackResizeH"
+            active: mouseStrip.containsMouse || mouseStrip.pressed
+        }
         preventStealing: true
         onPressed: (mouse) => mouse.accepted = mouse.source === Qt.MouseEventNotSynthesized
         onPositionChanged: (mouse) => {

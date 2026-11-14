@@ -15,6 +15,8 @@ Item {
     property int trackIndex: -1
     property var viewState
     property bool touchMode: false
+    // Off for a hidden effect lane, which stripes itself as a whole.
+    property bool dimHidden: true
     readonly property bool dragging: renderer.dragging
 
     readonly property var trackData: panel && panel.tracks && trackIndex >= 0
@@ -33,6 +35,8 @@ Item {
         trackType: area.trackData.type || ""
         clipDisplay: area.trackData.clipDisplay !== undefined ? area.trackData.clipDisplay : 1
         showChannelWaveforms: area.trackData.showChannelWaveforms === true
+        trackDimmed: area.dimHidden && (area.trackData.hidden === true
+                     || (area.trackData.type === "audio" && area.trackData.muted === true))
         editor: EditorState
         assets: AssetLibrary
         haptics: Haptics

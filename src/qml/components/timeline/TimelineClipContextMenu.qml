@@ -187,6 +187,11 @@ ThemedContextMenu {
         onTriggered: EditorState.separateAllAudioTracks(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
+        text: owner.clipData.enabled === false ? qsTr("Enable clip") : qsTr("Disable clip")
+        icon.name: owner.clipData.enabled === false ? Theme.icons.eye : Theme.icons.eyeOff
+        onTriggered: EditorState.setClipEnabled(owner.trackIndex, owner.clipIndex, owner.clipData.enabled === false)
+    }
+    ThemedMenuItem {
         text: owner.clipData.loop ? qsTr("Stop looping") : qsTr("Loop")
         icon.name: Theme.icons.repeat
         visible: owner.clipData.kind === "video" || owner.clipData.kind === "audio"

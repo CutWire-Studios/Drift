@@ -64,6 +64,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | clipProxy | #3DBE8B | #3DBE8B |
 | clipProxyForeground | #06261A | #06261A |
 | clipProxyBand | #D9174A36 | #D9174A36 |
+| clipDisabledScrim | #99202020 | #99C8C8C8 |
+| clipDisabledStripe | #47ffffff | #47000000 |
+| clipGapOutline | #38ffffff | #33000000 |
 | clipEditFriendly | #5AA9E6 | #5AA9E6 |
 | clipEditFriendlyForeground | #06203A | #06203A |
 | clipAdjustmentAudio | #9B6BC9 | #9B6BC9 |
@@ -251,6 +254,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | clip.proxy | $palette.clipProxy | $palette.clipProxy |
 | clip.proxyForeground | $palette.clipProxyForeground | $palette.clipProxyForeground |
 | clip.proxyBand | $palette.clipProxyBand | $palette.clipProxyBand |
+| clip.disabledScrim | $palette.clipDisabledScrim | $palette.clipDisabledScrim |
+| clip.disabledStripe | $palette.clipDisabledStripe | $palette.clipDisabledStripe |
+| clip.gapOutline | $palette.clipGapOutline | $palette.clipGapOutline |
 | clip.editFriendly | $palette.clipEditFriendly | $palette.clipEditFriendly |
 | clip.editFriendlyForeground | $palette.clipEditFriendlyForeground | $palette.clipEditFriendlyForeground |
 | clip.adjustment.video | $semantic.clip.effect | $semantic.clip.effect |
@@ -1119,6 +1125,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineClipItem | accent | $semantic.primary | $semantic.primary |
 | timelineClipItem | scrim | $semantic.scrim | $semantic.scrim |
 | timelineClipItem | proxyBand | $semantic.clip.proxyBand | $semantic.clip.proxyBand |
+| timelineClipItem | disabledScrim | $semantic.clip.disabledScrim | $semantic.clip.disabledScrim |
+| timelineClipItem | disabledStripe | $semantic.clip.disabledStripe | $semantic.clip.disabledStripe |
+| timelineClipItem | gapOutline | $semantic.clip.gapOutline | $semantic.clip.gapOutline |
 | timelineClipItem | foreground | $semantic.onMedia | $semantic.onMedia |
 | timelineClipItem | waveform | $semantic.clip.waveform | $semantic.clip.waveform |
 | timelineClipItem | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -1139,6 +1148,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineFadeHandle | background | $semantic.primary | $semantic.primary |
 | timelineFadeHandle | border | $semantic.onMedia | $semantic.onMedia |
 | timelineFadeHandle | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
+| timelineFadeHandle | shadow | $semantic.timeline.scrimStrong | $semantic.timeline.scrimStrong |
+| timelineFadeHandle | labelBackground | $semantic.timeline.scrimStrong | $semantic.timeline.scrimStrong |
+| timelineFadeHandle | labelForeground | $semantic.onMedia | $semantic.onMedia |
 | timelineGapHover | background | $semantic.panel.accent | $semantic.panel.accent |
 | timelineLandingOutline | radius | $metrics.radius.sm | $metrics.radius.sm |
 | timelineLandingOutline | background | $semantic.primary | $semantic.primary |
@@ -1247,6 +1259,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineTransitionToffee | outline | $semantic.timeline.scrimStrong | $semantic.timeline.scrimStrong |
 | timelineTransitionToffee | grip | $semantic.onMedia | $semantic.onMedia |
 | timelineTransitionToffee | foreground | $semantic.onMedia | $semantic.onMedia |
+| timelineTransitionToffee | chevron | $semantic.onMedia | $semantic.onMedia |
+| timelineTransitionToffee | handle | $semantic.primary | $semantic.primary |
+| timelineTransitionToffee | handleGrip | $semantic.primaryForeground | $semantic.primaryForeground |
 | timelineCutButton | background | $semantic.clip.transitionOverlap | $semantic.clip.transitionOverlap |
 | timelineCutButton | border | $semantic.onMedia | $semantic.onMedia |
 | timelineCutButton | outline | $semantic.timeline.scrimStrong | $semantic.timeline.scrimStrong |
@@ -2779,6 +2794,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimeline | primary | $semantic.primary | $semantic.primary |
 | androidTimeline | scrim | $semantic.scrim | $semantic.scrim |
 | androidTimeline | proxyBand | $semantic.clip.proxyBand | $semantic.clip.proxyBand |
+| androidTimeline | disabledScrim | $semantic.clip.disabledScrim | $semantic.clip.disabledScrim |
+| androidTimeline | disabledStripe | $semantic.clip.disabledStripe | $semantic.clip.disabledStripe |
+| androidTimeline | gapOutline | $semantic.clip.gapOutline | $semantic.clip.gapOutline |
 | androidTimeline | onMedia | $semantic.onMedia | $semantic.onMedia |
 | androidTimeline | waveform | $semantic.clip.waveform | $semantic.clip.waveform |
 | androidTimeline | mutedForeground | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -2840,6 +2858,13 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimelineSnapGuide | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | androidTimelineSnapGuide | radius | $metrics.radius.sm | $metrics.radius.sm |
 | androidTimelineSnapGuide | foreground | $semantic.primaryForeground | $semantic.primaryForeground |
+| androidTimelineTrimNudge | background | $semantic.surface.panel | $semantic.surface.panel |
+| androidTimelineTrimNudge | border | $semantic.panel.border | $semantic.panel.border |
+| androidTimelineTrimNudge | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| androidTimelineTrimNudge | radius | $metrics.radius.md | $metrics.radius.md |
+| androidTimelineTrimNudge | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| androidTimelineTrimNudge | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| androidTimelineTrimNudge | pressed | $semantic.panel.muted | $semantic.panel.muted |
 | androidTimelineRulerTick | tick | $semantic.mutedForeground | $semantic.mutedForeground |
 | androidTimelineRulerTick | tickWidth | $metrics.borderWidth | $metrics.borderWidth |
 | androidTimelineRulerTick | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -2887,6 +2912,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimelineTransitionMark | outline | $semantic.timeline.scrimStrong | $semantic.timeline.scrimStrong |
 | androidTimelineTransitionMark | grip | $semantic.onMedia | $semantic.onMedia |
 | androidTimelineTransitionMark | foreground | $semantic.onMedia | $semantic.onMedia |
+| androidTimelineTransitionMark | chevron | $semantic.onMedia | $semantic.onMedia |
+| androidTimelineTransitionMark | handle | $semantic.primary | $semantic.primary |
+| androidTimelineTransitionMark | handleGrip | $semantic.primaryForeground | $semantic.primaryForeground |
 | androidTimelineTransitionMark | addBackground | $semantic.clip.transitionOverlap | $semantic.clip.transitionOverlap |
 | androidTimelineTransitionMark | addBorder | $semantic.onMedia | $semantic.onMedia |
 | androidTimelineTransitionMark | addBorderWidth | $metrics.borderWidth | $metrics.borderWidth |

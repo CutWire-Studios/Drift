@@ -60,6 +60,7 @@ public:
         LoopRole,
         LoopPeriodRole,
         LoopPhaseRole,
+        EnabledRole,
     };
     Q_ENUM(Role)
 
@@ -96,6 +97,7 @@ public:
         bool loop = false;
         double loopPeriod = 0.0;
         double loopPhase = 0.0;
+        bool enabled = true;
 
         // Not roles: typed copies for the scene-graph renderer, derived from the fields above so
         // any change to them already arrives as a changed row.

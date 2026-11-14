@@ -59,6 +59,9 @@
     "clipProxy": "#3DBE8B",
     "clipProxyForeground": "#06261A",
     "clipProxyBand": "#D9174A36",
+    "clipDisabledScrim": "#99C8C8C8",
+    "clipDisabledStripe": "#47000000",
+    "clipGapOutline": "#33000000",
     "clipEditFriendly": "#5AA9E6",
     "clipEditFriendlyForeground": "#06203A",
     "clipAdjustmentAudio": "#9B6BC9",
@@ -258,6 +261,9 @@
       "proxy": "$palette.clipProxy",
       "proxyForeground": "$palette.clipProxyForeground",
       "proxyBand": "$palette.clipProxyBand",
+      "disabledScrim": "$palette.clipDisabledScrim",
+      "disabledStripe": "$palette.clipDisabledStripe",
+      "gapOutline": "$palette.clipGapOutline",
       "editFriendly": "$palette.clipEditFriendly",
       "editFriendlyForeground": "$palette.clipEditFriendlyForeground",
       "adjustment": {
@@ -1431,6 +1437,9 @@
       "accent": "$semantic.primary",
       "scrim": "$semantic.scrim",
       "proxyBand": "$semantic.clip.proxyBand",
+      "disabledScrim": "$semantic.clip.disabledScrim",
+      "disabledStripe": "$semantic.clip.disabledStripe",
+      "gapOutline": "$semantic.clip.gapOutline",
       "foreground": "$semantic.onMedia",
       "waveform": "$semantic.clip.waveform",
       "foregroundMuted": "$semantic.mutedForeground",
@@ -1456,7 +1465,10 @@
     "timelineFadeHandle": {
       "background": "$semantic.primary",
       "border": "$semantic.onMedia",
-      "borderWidth": "$metrics.borderWidthFocus"
+      "borderWidth": "$metrics.borderWidthFocus",
+      "shadow": "$semantic.timeline.scrimStrong",
+      "labelBackground": "$semantic.timeline.scrimStrong",
+      "labelForeground": "$semantic.onMedia"
     },
     "timelineGapHover": {
       "background": "$semantic.panel.accent"
@@ -1644,7 +1656,10 @@
       "borderWidthSelected": "$metrics.borderWidthFocus",
       "outline": "$semantic.timeline.scrimStrong",
       "grip": "$semantic.onMedia",
-      "foreground": "$semantic.onMedia"
+      "foreground": "$semantic.onMedia",
+      "chevron": "$semantic.onMedia",
+      "handle": "$semantic.primary",
+      "handleGrip": "$semantic.primaryForeground"
     },
     "timelineCutButton": {
       "background": "$semantic.clip.transitionOverlap",
@@ -3883,6 +3898,9 @@
       "primary": "$semantic.primary",
       "scrim": "$semantic.scrim",
       "proxyBand": "$semantic.clip.proxyBand",
+      "disabledScrim": "$semantic.clip.disabledScrim",
+      "disabledStripe": "$semantic.clip.disabledStripe",
+      "gapOutline": "$semantic.clip.gapOutline",
       "onMedia": "$semantic.onMedia",
       "waveform": "$semantic.clip.waveform",
       "mutedForeground": "$semantic.mutedForeground",
@@ -3967,6 +3985,15 @@
       "radius": "$metrics.radius.sm",
       "foreground": "$semantic.primaryForeground"
     },
+    "androidTimelineTrimNudge": {
+      "background": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "radius": "$metrics.radius.md",
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "pressed": "$semantic.panel.muted"
+    },
     "androidTimelineRulerTick": {
       "tick": "$semantic.mutedForeground",
       "tickWidth": "$metrics.borderWidth",
@@ -4039,6 +4066,9 @@
       "outline": "$semantic.timeline.scrimStrong",
       "grip": "$semantic.onMedia",
       "foreground": "$semantic.onMedia",
+      "chevron": "$semantic.onMedia",
+      "handle": "$semantic.primary",
+      "handleGrip": "$semantic.primaryForeground",
       "addBackground": "$semantic.clip.transitionOverlap",
       "addBorder": "$semantic.onMedia",
       "addBorderWidth": "$metrics.borderWidth",

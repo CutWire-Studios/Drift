@@ -926,6 +926,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("hasSpeedCurve"), clip.hasSpeedCurve()},
         {QStringLiteral("reverse"), clip.reverse},
         {QStringLiteral("loop"), clip.loop},
+        {QStringLiteral("enabled"), clip.enabled},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("layer3d"), clip.layer3d},
         {QStringLiteral("depthOcclude"), clip.depthOcclude},
@@ -1063,6 +1064,7 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
     row.inPoint = drift::usToSeconds(clip.srcIn);
     row.outPoint = drift::usToSeconds(clip.srcOut);
     row.sourceDuration = sourceAsset ? drift::usToSeconds(sourceAsset->durationUs) : 0.0;
+    row.enabled = clip.enabled;
     row.loop = clip.loops();
     if (row.loop) {
         row.loopPeriod = drift::usToSeconds(clip.loopPeriodUs());
@@ -1644,6 +1646,19 @@ QVariantMap AppController::selectedClipData() const
     if (m_selectedTrack < 0 || m_selectedClip < 0)
         return {};
 
+    SelectedClipDataCache &cache = m_selectedClipDataCache;
+    if (cache.valid && cache.tracksRevision == m_tracksRevision
+        && cache.selectionRevision == m_selectionRevision && cache.track == m_selectedTrack
+        && cache.clip == m_selectedClip && cache.playheadUs == m_playheadUs)
+        return cache.data;
+    const QVariantMap data = computeSelectedClipData();
+    cache = {true, m_tracksRevision, m_selectionRevision, m_selectedTrack, m_selectedClip,
+             m_playheadUs, data};
+    return data;
+}
+
+QVariantMap AppController::computeSelectedClipData() const
+{
     auto enrich = [this](QVariantMap data, int trackIndex, int clipIndex) -> QVariantMap {
         if (data.isEmpty() || !isValidClipIndex(trackIndex, clipIndex))
             return data;
@@ -1742,6 +1757,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("separateAudio"), tr("Separate audio")),
         action(QStringLiteral("unlink"), tr("Unlink audio")),
         action(QStringLiteral("link"), tr("Link clips")),
+        action(QStringLiteral("toggleClipEnabled"), tr("Enable or disable selected clips")),
         action(QStringLiteral("clearSelection"), tr("Clear selection")),
         action(QStringLiteral("selectAll"), tr("Select all clips")),
         action(QStringLiteral("nudgeLeft"), tr("Move selection left a little")),

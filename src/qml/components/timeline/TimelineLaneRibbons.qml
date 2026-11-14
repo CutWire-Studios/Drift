@@ -45,6 +45,12 @@ Item {
                     width: Math.max(1, (modelData.end - modelData.start) * ribbons.panel.pxPerSecond)
                     height: parent.height
                     color: ribbons.kindColor(ribbon.modelData.kind)
+
+                    Loader {
+                        anchors.fill: parent
+                        active: ribbon.modelData.hidden === true
+                        sourceComponent: TimelineDisabledStripes { }
+                    }
                 }
             }
         }

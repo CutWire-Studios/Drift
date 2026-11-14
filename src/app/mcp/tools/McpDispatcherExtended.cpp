@@ -2003,6 +2003,17 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                                      {QStringLiteral("duration"), drift::usToSeconds(clip.timelineDuration)}}));
     }
 
+    if (tool == QLatin1String("set_clip_enabled")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        if (!args.contains(QStringLiteral("enabled")))
+            return err("bad_args", QStringLiteral("enabled required"));
+        const bool enabled = jsonBool(args.value(QStringLiteral("enabled")));
+        m_controller->setClipEnabled(ref.track, ref.clip, enabled);
+        return ok(clipFeedback(ref, {{QStringLiteral("enabled"), enabled}}));
+    }
+
     if (tool == QLatin1String("cancel_reverse_render")) {
         m_controller->cancelReverseRender();
         return ok({{QStringLiteral("cancelled"), true}});

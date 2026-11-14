@@ -31,7 +31,7 @@ const ActionFlag kActionFlags[] = {
 };
 
 const char *const kClipActions[] = {
-    "delete", "deleteWithEffects", "copy", "cut", "duplicate", "copyEffects", "pasteEffects",
+    "delete", "deleteWithEffects", "toggleClipEnabled", "copy", "cut", "duplicate", "copyEffects", "pasteEffects",
     "deleteLeft", "deleteRight", "nudgeLeft", "nudgeRight", "speedUp", "speedDown",
 };
 

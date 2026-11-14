@@ -17,4 +17,13 @@ Text {
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSizeTiny
     elide: Text.ElideRight
+
+    HoverHandler {
+        id: nameHover
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+    }
+    ThemedToolTip {
+        visible: nameHover.hovered && parent.truncated
+        text: parent.text
+    }
 }

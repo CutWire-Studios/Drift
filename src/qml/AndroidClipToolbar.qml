@@ -33,6 +33,11 @@ Item {
         return data.kind === "adjustment" && data.adjustmentKind === "transform"
     }
 
+    readonly property bool clipDisabled: {
+        void EditorState.selectionRevision
+        return root.hasSelection && EditorState.selectedClipData.enabled === false
+    }
+
     readonly property bool textClipSelected: {
         void EditorState.selectionRevision
         const data = root.hasSelection ? EditorState.selectedClipData : ({})
@@ -83,6 +88,8 @@ Item {
                 { id: "editText", label: qsTr("Edit text"), icon: Theme.icons.type },
                 { id: "split", label: qsTr("Split"), icon: Theme.icons.scissors },
                 { id: "fade", label: qsTr("Fade"), icon: Theme.icons.blend },
+                { id: "toggleEnabled", label: root.clipDisabled ? qsTr("Enable") : qsTr("Disable"),
+                  icon: root.clipDisabled ? Theme.icons.eye : Theme.icons.eyeOff },
                 { id: "duplicate", label: qsTr("Duplicate"), icon: Theme.icons.copyPlus },
                 { id: "delete", label: qsTr("Delete"), icon: Theme.icons.trash,
                   destructive: true, gutter: true },
@@ -94,6 +101,8 @@ Item {
                 { id: "split", label: qsTr("Split"), icon: Theme.icons.scissors },
                 { id: "fade", label: qsTr("Fade"), icon: Theme.icons.blend },
                 { id: "speed", label: qsTr("Speed"), icon: Theme.icons.gauge },
+                { id: "toggleEnabled", label: root.clipDisabled ? qsTr("Enable") : qsTr("Disable"),
+                  icon: root.clipDisabled ? Theme.icons.eye : Theme.icons.eyeOff },
                 { id: "duplicate", label: qsTr("Duplicate"), icon: Theme.icons.copyPlus },
                 { id: "delete", label: qsTr("Delete"), icon: Theme.icons.trash,
                   destructive: true, gutter: true },
@@ -159,6 +168,9 @@ Item {
             break
         case "duplicate":
             EditorState.duplicateSelectedClip()
+            break
+        case "toggleEnabled":
+            EditorState.toggleSelectedClipsEnabled()
             break
         case "transform":
             if (ShellBridge.main.editorPage)

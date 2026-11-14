@@ -1177,6 +1177,8 @@ QVariantMap McpController::compactClip(int trackIndex, int clipIndex, bool inclu
     // inPoint..outPoint repeats across the whole duration.
     if (clip.loops())
         out.insert(QStringLiteral("loop"), true);
+    if (!clip.enabled)
+        out.insert(QStringLiteral("enabled"), false);
     if (!includeCanvas)
         return out;
 

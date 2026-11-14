@@ -31,6 +31,15 @@ Item {
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeXs
         elide: Text.ElideRight
+
+        HoverHandler {
+            id: nameHover
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        }
+        ThemedToolTip {
+            visible: nameHover.hovered && nameText.truncated
+            text: nameRoot.label
+        }
     }
 
     Text {

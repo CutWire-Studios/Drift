@@ -173,23 +173,14 @@ Item {
                                           : leftTrimHandle.areaContainsMouse ? -1
                                           : rightTrimHandle.areaContainsMouse ? 1 : 0
     readonly property int trimCursorHeight: Math.round(height)
-    // Identifies this clip to the shared override cursor. Not derived from trackIndex/clipIndex:
-    // those shift when a clip is inserted or removed, which would orphan a held cursor.
-    property int trimCursorToken: 0
-    function applyTrimCursor() {
-        if (trimCursorSide !== 0 && trimCursorToken === 0)
-            trimCursorToken = EditorState.acquireTrimCursorToken()
-        EditorState.setTimelineTrimCursor(trimCursorSide, trimCursorHeight, trimCursorToken)
-        if (trimCursorSide === 0)
-            trimCursorToken = 0
+    TimelineCursorRequest {
+        kind: clipItem.trimCursorSide < 0 ? "trimIn" : "trimOut"
+        active: clipItem.trimCursorSide !== 0
+        height: clipItem.trimCursorHeight
     }
-    onTrimCursorSideChanged: applyTrimCursor()
-    onTrimCursorHeightChanged: if (trimCursorSide !== 0) applyTrimCursor()
     Component.onDestruction: {
         if (trimPreviewActive && trackClips)
             trackClips.setLivePreview(clipData.id, false, 0, 0, 0, 0)
-        if (trimCursorSide !== 0)
-            EditorState.setTimelineTrimCursor(0, 0, trimCursorToken)
     }
 
     // An adjustment pinned to a clip takes its extent from that clip, so its edges are not the
@@ -197,10 +188,7 @@ Item {
     readonly property bool pinnedToClip: clipData.kind === "adjustment"
                                          && !!clipData.linkedClipId
 
-    // Trim handles stay on whenever selected.
-    // Width is floored so the clip never becomes
-    // an unusable sliver; at that floor both
-    // edges stay trimmable and the middle moves.
+    // Below the width floor the whole clip is a move target; trim it after zooming in.
     readonly property bool showTrimHandles: selected && !pinnedToClip && width >= Theme.clipControlsMinWidth
     readonly property real minDurationSeconds: Math.max(
         1.0 / Math.max(1, EditorState.projectFile.projectFps()),
@@ -277,10 +265,11 @@ Item {
         return true
     }
 
-    // Fade dots, pointer only (see timelineFadeHandles): at the clip's top corners, where the trim
-    // strips leave room for them.
-    readonly property real fadeHandleSize: 13
-    readonly property real fadeHandleInset: 0
+    // Fade wedges, pointer only (see timelineFadeHandles): standing on the clip's top edge, clear
+    // of the trim column.
+    readonly property real fadeHandleWidth: 9
+    readonly property real fadeHandleHeight: 15
+    readonly property real fadeHandleInset: Theme.clipTrimHandleWidth + 2
 
     // Floored so short clips stay visible and
     // trimmable even at low zoom.

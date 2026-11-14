@@ -15,9 +15,9 @@
 #include "engine/render2d/vector/VectorClipRenderer.h"
 #include "ui/timeline/ClipThumbnailStore.h"
 
+#include "ui/timeline/TimelineCursors.h"
 #include <QGuiApplication>
-#include <QPainter>
-#include <QPainterPath>
+#include <QScreen>
 
 #include <QSettings>
 #include <QStandardPaths>
@@ -30,52 +30,6 @@ using namespace drift::appcontroller_detail;
 
 namespace {
 QHash<QString, QString> defaultShortcuts();
-
-
-QCursor timelineTrimCursor(int side, int heightPx)
-{
-    // Premiere Selection-tool trim pointer: vertical bar sized to the
-    // clip/track, with a solid triangle pointing toward the clip interior.
-    const int h = qBound(18, heightPx, 160);
-    const int w = 22;
-    QPixmap pixmap(w, h);
-    pixmap.fill(Qt::transparent);
-
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-
-    // Hotspot sits on the bar so it lines up with the clip edge.
-    const qreal barX = side < 0 ? 14.0 : 7.0;
-    const qreal top = 1.0;
-    const qreal bot = h - 2.0;
-    const qreal midY = h * 0.5;
-    // Arrow points into the clip (right on left edge, left on right edge).
-    const qreal tipX = side < 0 ? w - 2.0 : 2.0;
-    const qreal baseX = side < 0 ? barX + 1.0 : barX - 1.0;
-    const qreal arrowH = qBound(5.0, h * 0.18, 9.0);
-
-    QPainterPath arrow;
-    arrow.moveTo(tipX, midY);
-    arrow.lineTo(baseX, midY - arrowH);
-    arrow.lineTo(baseX, midY + arrowH);
-    arrow.closeSubpath();
-
-    // White outline (Premiere contrast on dark/light filmstrips).
-    painter.setPen(QPen(QColor(255, 255, 255), 3.2, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
-    painter.drawLine(QPointF(barX, top), QPointF(barX, bot));
-    painter.setPen(QPen(QColor(255, 255, 255), 2.4, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    painter.setBrush(QColor(255, 255, 255));
-    painter.drawPath(arrow);
-
-    // Black fill — Premiere’s classic trim pointer.
-    painter.setPen(QPen(QColor(20, 20, 20), 1.5, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
-    painter.drawLine(QPointF(barX, top), QPointF(barX, bot));
-    painter.setBrush(QColor(20, 20, 20));
-    painter.setPen(Qt::NoPen);
-    painter.drawPath(arrow);
-
-    return QCursor(pixmap, qRound(barX), qRound(midY));
-}
 
 // Lives in the "shortcuts" group alongside the bindings themselves. Absent means 0.
 const char *const kShortcutsVersionKey = "schemaVersion";
@@ -114,6 +68,8 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("delete"), QStringLiteral("Delete")},
         // No default: Shift+Delete is ripple delete in many editors. Listed so it can be bound.
         {QStringLiteral("deleteWithEffects"), QString()},
+        // No default: Shift+E is toggleTrackHidden. Listed so it can be bound.
+        {QStringLiteral("toggleClipEnabled"), QString()},
         {QStringLiteral("undo"), QStringLiteral("Ctrl+Z")},
         {QStringLiteral("redo"), QStringLiteral("Ctrl+Shift+Z")},
         {QStringLiteral("clearSelection"), QStringLiteral("Escape")},
@@ -1429,26 +1385,25 @@ void AppController::nudgeSelection(double deltaSeconds)
         movedIds.insert(clip.id);
     }
     if (!m_allowClipOverlap) {
-        drift::TimeUs maxPushRight = 0;
+        QList<drift::PlacedSpan> spans;
         for (const QPair<int, int> &pair : pairs) {
             if (!isValidClipIndex(pair.first, pair.second))
                 continue;
             const drift::Track &track = m_project.tracks().at(pair.first);
             const drift::Clip &clip = track.clips.at(pair.second);
-            const drift::TimeUs clampedStart = drift::clampClipStartNoOverlap(track, movedIds, clip.timelineStart,
-                                                                              clip.timelineDuration);
-            if (clampedStart > clip.timelineStart) {
-                const drift::TimeUs push = clampedStart - clip.timelineStart;
-                if (push > maxPushRight)
-                    maxPushRight = push;
-            }
+            spans.append({&track, clip.timelineStart, clip.timelineDuration});
         }
-        if (maxPushRight > 0) {
+        const std::optional<drift::TimeUs> shift = drift::groupShiftNoOverlap(spans, movedIds);
+        if (!shift) {
+            m_project = before;
+            setLastMessage(tr("No space to place the clip there"), QStringLiteral("warning"));
+            return;
+        }
+        if (*shift != 0) {
             for (const QPair<int, int> &pair : pairs) {
                 if (!isValidClipIndex(pair.first, pair.second))
                     continue;
-                drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
-                clip.timelineStart += maxPushRight;
+                m_project.tracks()[pair.first].clips[pair.second].timelineStart += *shift;
             }
         }
     }
@@ -1461,9 +1416,30 @@ void AppController::nudgeSelection(double deltaSeconds)
     finishEdit(tr("Selection nudged"));
 }
 
+void AppController::syncSelectionMirror() const
+{
+    if (m_selectionMirrorSource.constData() == std::as_const(m_selection).constData()
+        && m_selectionMirrorSource.size() == m_selection.size())
+        return;
+    m_selectionMirrorSource = m_selection;
+    m_selectionSet.clear();
+    m_selectionTracks.clear();
+    for (const QPair<int, int> &pair : std::as_const(m_selectionMirrorSource)) {
+        m_selectionSet.insert(pair);
+        m_selectionTracks.insert(pair.first);
+    }
+}
+
 bool AppController::selectionContains(int trackIndex, int clipIndex) const
 {
-    return m_selection.contains(qMakePair(trackIndex, clipIndex));
+    syncSelectionMirror();
+    return m_selectionSet.contains(qMakePair(trackIndex, clipIndex));
+}
+
+bool AppController::selectionContainsTrack(int trackIndex) const
+{
+    syncSelectionMirror();
+    return m_selectionTracks.contains(trackIndex);
 }
 
 double AppController::selectionEarliestStartSeconds() const
@@ -1479,48 +1455,45 @@ double AppController::selectionEarliestStartSeconds() const
     return minStart >= 0 ? drift::usToSeconds(minStart) : 0.0;
 }
 
-QCursor AppController::trimCursorFor(int side, int heightPx) const
+void AppController::setTimelineCursor(const QString &kindName, int heightPx, int owner)
 {
-    const int h = qBound(18, heightPx, 160);
-    const int key = side * 1000 + h;
-    const auto it = m_trimCursorCache.constFind(key);
-    if (it != m_trimCursorCache.constEnd())
-        return *it;
-    return *m_trimCursorCache.insert(key, timelineTrimCursor(side, h));
-}
-
-void AppController::setTimelineTrimCursor(int side, int heightPx, int owner)
-{
-    side = qBound(-1, side, 1);
     heightPx = qMax(0, heightPx);
+    TimelineCursorKind kind = TimelineCursorKind::Move;
+    const bool clear = kindName.isEmpty() || !timelineCursorKindFromName(kindName, &kind);
 
-    if (side == 0) {
+    if (clear) {
         // Only whoever put the cursor up may take it down. Clip delegates sit edge to edge, so
         // crossing from one handle to its neighbour raises the new one before the old one clears
         // — and without this that stale clear would strip the cursor that had just been set.
-        if (owner != 0 && m_timelineTrimCursorOwner != 0 && owner != m_timelineTrimCursorOwner)
+        if (owner != 0 && m_timelineCursorOwner != 0 && owner != m_timelineCursorOwner)
             return;
-        if (m_timelineTrimCursorSide != 0)
+        if (m_timelineCursorActive)
             QGuiApplication::restoreOverrideCursor();
-        m_timelineTrimCursorSide = 0;
-        m_timelineTrimCursorHeight = 0;
-        m_timelineTrimCursorOwner = 0;
+        m_timelineCursorActive = false;
+        m_timelineCursorKind.clear();
+        m_timelineCursorHeight = 0;
+        m_timelineCursorOwner = 0;
         return;
     }
 
-    if (side == m_timelineTrimCursorSide && heightPx == m_timelineTrimCursorHeight
-        && owner == m_timelineTrimCursorOwner) {
+    if (m_timelineCursorActive && kindName == m_timelineCursorKind
+        && heightPx == m_timelineCursorHeight && owner == m_timelineCursorOwner) {
         return;
     }
 
     // The override stack stays exactly one deep: pop whatever is up before pushing.
-    if (m_timelineTrimCursorSide != 0)
+    if (m_timelineCursorActive)
         QGuiApplication::restoreOverrideCursor();
 
-    m_timelineTrimCursorSide = side;
-    m_timelineTrimCursorHeight = heightPx;
-    m_timelineTrimCursorOwner = owner;
-    QGuiApplication::setOverrideCursor(trimCursorFor(side, heightPx > 0 ? heightPx : 28));
+    const QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
+    if (!screen)
+        screen = QGuiApplication::primaryScreen();
+    m_timelineCursorActive = true;
+    m_timelineCursorKind = kindName;
+    m_timelineCursorHeight = heightPx;
+    m_timelineCursorOwner = owner;
+    QGuiApplication::setOverrideCursor(
+        timelineCursor(kind, heightPx > 0 ? heightPx : 28, screen ? screen->devicePixelRatio() : 1.0));
 }
 
 QString AppController::shortcutFor(const QString &actionId) const
@@ -1790,6 +1763,8 @@ void AppController::triggerAction(const QString &actionId)
         requestPasteAttributes();
     else if (actionId == QStringLiteral("split"))
         splitAtPlayhead();
+    else if (actionId == QStringLiteral("toggleClipEnabled"))
+        toggleSelectedClipsEnabled();
     else if (actionId == QStringLiteral("splitSelection"))
         splitSelectionAtPlayhead();
     else if (actionId == QStringLiteral("addTransitionAtPlayhead"))

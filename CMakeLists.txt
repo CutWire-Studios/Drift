@@ -1375,6 +1375,8 @@ target_sources(driftapp PRIVATE
     src/ui/timeline/ClipThumbnailStore.cpp
     src/ui/timeline/TimelineLayout.h
     src/ui/timeline/TimelineLayout.cpp
+    src/ui/timeline/TimelineCursors.h
+    src/ui/timeline/TimelineCursors.cpp
     src/ui/timeline/TimelineTrackItem.h
     src/ui/timeline/TimelineTrackItem.cpp
     src/ui/timeline/TimelineViewState.h
@@ -2182,6 +2184,9 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineFadeHandle.qml
         src/qml/components/timeline/TimelineEmptyState.qml
         src/qml/components/timeline/TimelineCutOverlay.qml
+        src/qml/components/timeline/TimelineCursorRequest.qml
+        src/qml/components/timeline/TimelineTransitionChevrons.qml
+        src/qml/components/timeline/TimelineTransitionEar.qml
         src/qml/components/timeline/TimelineCutDoomGradient.qml
         src/qml/components/timeline/TimelineCutDash.qml
         src/qml/components/timeline/TimelineClipContextMenu.qml
@@ -2191,6 +2196,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineBookmarkContextMenu.qml
         src/qml/components/timeline/TimelineAdjustmentLaneStrip.qml
         src/qml/components/timeline/TimelineAdjustmentLaneChrome.qml
+        src/qml/components/timeline/TimelineDisabledStripes.qml
         src/qml/components/timeline/SubtitleCueWaveform.qml
         src/qml/components/timeline/SubtitleCueSpan.qml
         src/qml/components/timeline/SubtitleCuePlayhead.qml
@@ -2401,6 +2407,7 @@ qt_add_qml_module(drift
         src/qml/components/android/AndroidTimelineTransitionMark.qml
         src/qml/components/android/AndroidTimelineTrackWash.qml
         src/qml/components/android/AndroidTimelineSnapGuide.qml
+        src/qml/components/android/AndroidTimelineTrimNudge.qml
         src/qml/components/android/AndroidTimelineRulerTick.qml
         src/qml/components/android/AndroidTimelineRuler.qml
         src/qml/components/android/AndroidTimelinePlayhead.qml

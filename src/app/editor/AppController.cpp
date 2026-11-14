@@ -1,4 +1,5 @@
 #include "engine/platform/AndroidUri.h"
+#include "ui/timeline/TimelineCursors.h"
 #include "core/base/CacheRoot.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "engine/render2d/pdf/PdfiumRuntime.h"
@@ -545,14 +546,11 @@ AppController::~AppController()
     // below — but by then the members it touches (m_selection, the models) are
     // already gone. Cut the signals before any member is destroyed.
     m_undoStack.disconnect(this);
-    if (m_timelineTrimCursorSide != 0) {
+    if (m_timelineCursorActive) {
         QGuiApplication::restoreOverrideCursor();
-        m_timelineTrimCursorSide = 0;
-        m_timelineTrimCursorHeight = 0;
-        m_timelineTrimCursorOwner = 0;
+        m_timelineCursorActive = false;
     }
-    // Each entry holds a platform cursor; drop them while QGuiApplication is still alive.
-    m_trimCursorCache.clear();
+    clearTimelineCursorCache();
 }
 
 void AppController::updateFrameCacheSuspension()
@@ -599,6 +597,9 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     : QObject(parent)
     , m_assetLibrary(assetLibrary)
 {
+    // First listener, so it runs before any reader reacting to the same emission.
+    connect(this, &AppController::selectedClipDataChanged, this,
+            [this] { m_selectedClipDataCache.valid = false; });
     m_jobs = new JobRegistry(this);
     m_cloud = new CloudProviders(this);
     m_project.resetToDefaultTimeline();

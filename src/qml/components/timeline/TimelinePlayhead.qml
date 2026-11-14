@@ -46,9 +46,12 @@ Item {
         height: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
         x: -(width - Theme.playheadLineWidth) / 2
         y: 0
-        cursorShape: Qt.SizeHorCursor
         preventStealing: true
         hoverEnabled: true
+        TimelineCursorRequest {
+            kind: "playheadScrub"
+            active: playheadDragArea.containsMouse || playheadDragArea.pressed
+        }
         drag.target: playhead
         drag.axis: Drag.XAxis
         drag.threshold: 0
@@ -73,8 +76,12 @@ Item {
         height: parent.height - playheadDragArea.height
         x: -(width - Theme.playheadLineWidth) / 2
         y: playheadDragArea.height
-        cursorShape: Qt.SizeHorCursor
         preventStealing: true
+        hoverEnabled: true
+        TimelineCursorRequest {
+            kind: "playheadScrub"
+            active: playheadLineDrag.containsMouse || playheadLineDrag.pressed
+        }
         drag.target: playhead
         drag.axis: Drag.XAxis
         drag.threshold: 0

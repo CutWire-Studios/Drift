@@ -141,7 +141,25 @@ Item {
                                   Theme.c.androidTimelineTransitionMark.border.b,
                                   mark.selected ? 1.0 : 0.75)
 
+            TimelineTransitionChevrons {
+                anchors.fill: parent
+                anchors.leftMargin: mark.barH * 0.45
+                anchors.rightMargin: mark.barH * 0.45
+                visible: width >= mark.barH * 0.6
+                color: Qt.alpha(Theme.c.androidTimelineTransitionMark.chevron, 0.3)
+            }
+
+            Rectangle {
+                anchors.centerIn: content
+                width: content.implicitWidth + 10
+                height: content.implicitHeight + 2
+                radius: height / 2
+                color: mark.fill
+                visible: content.visible
+            }
+
             Row {
+                id: content
                 anchors.centerIn: parent
                 spacing: 4
                 visible: parent.width >= 26
@@ -182,20 +200,6 @@ Item {
                     font.weight: Font.DemiBold
                 }
             }
-
-            Repeater {
-                model: mark.selected ? (mark.region.overlap ? [-1] : [-1, 1]) : []
-                delegate: Rectangle {
-                    required property int modelData
-                    visible: body.width >= 24
-                    width: 2
-                    height: Math.round(mark.barH * 0.45)
-                    radius: 1
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: modelData < 0 ? mark.gripW / 2 : body.width - mark.gripW / 2 - width
-                    color: Theme.c.androidTimelineTransitionMark.grip
-                }
-            }
         }
 
         // Taller than the bar so it is a fingertip target; anchored to the bar's bottom so it
@@ -221,6 +225,31 @@ Item {
                 required property int modelData
                 property real pressX: 0
                 property real pressDuration: 0
+                property real pointerSceneX: 0
+
+                function pointerLocalX() {
+                    return mapFromItem(null, pointerSceneX, 0).x
+                }
+
+                Timer {
+                    interval: 16
+                    repeat: true
+                    running: edgeHandle.pressed && mark.panel
+                             && typeof mark.panel.dragEdgeScroll === "function"
+                    onTriggered: {
+                        const panel = mark.panel
+                        const px = edgeHandle.mapToItem(null, edgeHandle.pointerLocalX(), 0).x
+                                 - (panel.mapToItem(null, 0, 0).x + panel.labelsWidth)
+                        const edgeX = Math.min(48, panel.timelineViewW * 0.25)
+                        let dx = 0
+                        if (px < edgeX)
+                            dx = -Math.min(24, 6 + (edgeX - px) * 0.4)
+                        else if (px > panel.timelineViewW - edgeX)
+                            dx = Math.min(24, 6 + (px - (panel.timelineViewW - edgeX)) * 0.4)
+                        if (dx !== 0 && panel.dragEdgeScroll(dx, 0).x !== 0)
+                            mark.liveDuration = edgeHandle.durationAt(edgeHandle.pointerLocalX())
+                    }
+                }
 
                 function durationAt(mouseX) {
                     const dx = (mapToItem(mark, mouseX, 0).x - pressX) / mark.pxPerSecond
@@ -229,22 +258,41 @@ Item {
                     return Math.max(0.1, Math.min(mark.region.maxDuration, d))
                 }
 
-                x: modelData < 0 ? -Theme.spacingMd : toffee.width - mark.gripW
+                x: modelData < 0 ? -Math.max(Theme.spacingMd, earItem.implicitWidth)
+                                 : toffee.width - mark.gripW
                 y: toffee.height + mark.bottomInset - height
-                width: mark.gripW + Theme.spacingMd
+                width: mark.gripW + Math.max(Theme.spacingMd, earItem.implicitWidth)
                 height: Theme.androidIconButtonSize * 0.75
                 preventStealing: true
+
+                TimelineTransitionEar {
+                    id: earItem
+                    implicitWidth: 10
+                    x: edgeHandle.modelData < 0
+                       ? edgeHandle.width - mark.gripW - width + overlap
+                       : mark.gripW - overlap
+                    y: edgeHandle.height - mark.bottomInset - toffee.height
+                    width: implicitWidth
+                    height: toffee.height
+                    color: Theme.c.androidTimelineTransitionMark.handle
+                    gripColor: Theme.c.androidTimelineTransitionMark.handleGrip
+                    outlineColor: Theme.c.androidTimelineTransitionMark.outline
+                    shown: true
+                }
                 onPressed: (mouse) => {
+                    pointerSceneX = mapToItem(null, mouse.x, 0).x
                     pressX = mapToItem(mark, mouse.x, 0).x
                     pressDuration = mark.region.end - mark.region.start
                     mark.liveDuration = pressDuration
                 }
                 onPositionChanged: (mouse) => {
-                    if (pressed)
-                        mark.liveDuration = durationAt(mouse.x)
+                    if (!pressed)
+                        return
+                    pointerSceneX = mapToItem(null, mouse.x, 0).x
+                    mark.liveDuration = durationAt(mouse.x)
                 }
                 onReleased: (mouse) => {
-                    const d = durationAt(mouse.x)
+                    const d = durationAt(pointerLocalX())
                     mark.liveDuration = -1
                     if (Math.abs(d - pressDuration) > 0.001)
                         EditorState.setTransitionDuration(mark.trackIndex,

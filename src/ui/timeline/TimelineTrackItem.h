@@ -62,6 +62,7 @@ class TimelineTrackItem : public QQuickItem
     Q_PROPERTY(int trackIndex READ trackIndex WRITE setTrackIndex NOTIFY trackChanged)
     Q_PROPERTY(QString trackType READ trackType WRITE setTrackType NOTIFY trackChanged)
     Q_PROPERTY(int clipDisplay READ clipDisplay WRITE setClipDisplay NOTIFY trackChanged)
+    Q_PROPERTY(bool trackDimmed READ trackDimmed WRITE setTrackDimmed NOTIFY trackChanged)
     Q_PROPERTY(bool showChannelWaveforms READ showChannelWaveforms WRITE setShowChannelWaveforms NOTIFY trackChanged)
     Q_PROPERTY(QObject *editor READ editor WRITE setEditor NOTIFY servicesChanged)
     Q_PROPERTY(QObject *assets READ assets WRITE setAssets NOTIFY servicesChanged)
@@ -89,6 +90,8 @@ public:
     void setTrackType(const QString &type);
     int clipDisplay() const { return m_clipDisplay; }
     void setClipDisplay(int display);
+    bool trackDimmed() const { return m_trackDimmed; }
+    void setTrackDimmed(bool dimmed);
     bool showChannelWaveforms() const { return m_showChannelWaveforms; }
     void setShowChannelWaveforms(bool show);
     QObject *editor() const;
@@ -234,16 +237,19 @@ private:
     void appendClip(int index, const QRectF &rect, bool selected, bool lit, bool lifted);
     void buildWaveform(int index, const QRectF &area, double clipX, double clipWidth,
                        double inPoint, double outPoint, bool bar, const QString &cacheId,
-                       double fullX, double fullWidth);
+                       double fullX, double fullWidth, const QRectF &clipRect, double clipRadius,
+                       int clipCorners);
     void buildFilmstrip(int index, const QRectF &body, const QRectF &clipRect, double clipRadius,
-                        double inPoint, double outPoint);
+                        int clipCorners, double inPoint, double outPoint);
     void appendTile(const QString &key, const QImage &image, const QRectF &target,
-                    const QRectF &source, const QRectF &clipRect, double clipRadius);
+                    const QRectF &source, const QRectF &clipRect, double clipRadius,
+                    int clipCorners);
     QRectF effectiveRect(int index, double *inPoint = nullptr, double *outPoint = nullptr) const;
     int clipAt(const QPointF &point, timelinelayout::Zone *zone = nullptr) const;
     double edgeMargin(double clipWidth) const;
     double hotspotExtra() const;
     bool isSelected(int index) const;
+    QSet<int> m_selectedClips;
     void setHovered(const QString &clipId, bool body, const QPointF &point);
     void beginMove();
     void applyDrag(const QPointF &scenePos);
@@ -261,6 +267,7 @@ private:
     QString m_trackType;
     int m_clipDisplay = 1;
     bool m_showChannelWaveforms = false;
+    bool m_trackDimmed = false;
 
     timelinelayout::Window m_window;
     double m_builtPxPerSecond = 0.0;

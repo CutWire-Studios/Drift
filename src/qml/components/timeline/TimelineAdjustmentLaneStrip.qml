@@ -28,5 +28,12 @@ Item {
         timelineColumn: laneStrip.timelineColumn
         trackIndex: laneStrip.trackIndex
         viewState: laneStrip.viewState
+        dimHidden: false
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: laneStrip.opacity < 1
+        sourceComponent: TimelineDisabledStripes { viewState: laneStrip.viewState }
     }
 }

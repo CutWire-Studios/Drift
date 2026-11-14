@@ -307,6 +307,7 @@ qt_add_executable(tst_mcp
     ../src/app/bin/BinFolderListModel.cpp
     ../src/app/editor/TimelineClipsModel.cpp
     ../src/ui/timeline/ClipThumbnailStore.cpp
+    ../src/ui/timeline/TimelineCursors.cpp
     ../src/playback/PlaybackEngine.cpp
     ../src/playback/PlaybackClock.cpp
     ../src/playback/AudioOutputChannel.cpp
