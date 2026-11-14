@@ -4251,17 +4251,19 @@ void McpTest::relinkMediaMovesAFolder()
     QVERIFY2(reasons.join(QLatin1Char('|')).contains(QStringLiteral("another asset")), qPrintable(reasons.join(QLatin1Char('|'))));
     QVERIFY2(reasons.join(QLatin1Char('|')).contains(QStringLiteral("same size")), qPrintable(reasons.join(QLatin1Char('|'))));
 
-    // A root as from: the whole tree, mirrored under to.
+    // A root as from ("/", or the drive on Windows): the whole tree, mirrored under to.
+    const QString fsRoot = oldRoot.left(oldRoot.indexOf(QLatin1Char('/')) + 1);
     const QString mirror = dir.filePath(QStringLiteral("mirror"));
-    QVERIFY(QDir().mkpath(mirror + oldRoot + QStringLiteral("/shots")));
-    touch(mirror + oldRoot + QStringLiteral("/shots/c.mp4"), 10);
-    reply = dispatcher.applyOne(QStringLiteral("relink_media"), {{QStringLiteral("from"), QStringLiteral("/")},
+    const QString mirroredOld = mirror + QLatin1Char('/') + oldRoot.mid(fsRoot.size());
+    QVERIFY(QDir().mkpath(mirroredOld + QStringLiteral("/shots")));
+    touch(mirroredOld + QStringLiteral("/shots/c.mp4"), 10);
+    reply = dispatcher.applyOne(QStringLiteral("relink_media"), {{QStringLiteral("from"), fsRoot},
                                                                  {QStringLiteral("to"), mirror},
                                                                  {QStringLiteral("dry_run"), true}});
     QVERIFY(reply.value(QStringLiteral("matched")).toInt() > 0);
     bool mirrored = false;
     for (const QJsonValue &row : reply.value(QStringLiteral("relinked")).toArray())
-        mirrored = mirrored || row.toObject().value(QStringLiteral("to")).toString() == mirror + oldRoot + QStringLiteral("/shots/c.mp4");
+        mirrored = mirrored || row.toObject().value(QStringLiteral("to")).toString() == mirroredOld + QStringLiteral("/shots/c.mp4");
     QVERIFY2(mirrored, qPrintable(QJsonDocument(reply).toJson()));
 
     // A from that names nothing in the project says so.
@@ -12603,7 +12605,11 @@ void McpTest::proxyOpsCreateCheckAndRemove()
     QCOMPARE(library.proxyQueuedCount(), 0);
     r = dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("all"), true}});
     QCOMPARE(r.value(QStringLiteral("queued")).toArray(), QJsonArray{asset});
-    QTRY_COMPARE_WITH_TIMEOUT(stateOf(asset), QStringLiteral("ready"), 60000);
+    const auto statusRow = [&] {
+        return QJsonDocument(dispatcher.applyOne(QStringLiteral("proxy_status"), {{QStringLiteral("assets"), QJsonArray{asset}}}))
+            .toJson(QJsonDocument::Compact);
+    };
+    QTRY_VERIFY2_WITH_TIMEOUT(stateOf(asset) == QStringLiteral("ready"), statusRow().constData(), 60000);
     QTRY_VERIFY_WITH_TIMEOUT(!library.proxyBusy(), 30000);
 
     // A clip with no media is reported, not dropped.

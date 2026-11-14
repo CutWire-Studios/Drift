@@ -4,6 +4,7 @@
 #include "core/project/Project.h"
 
 #include "engine/decode/probe/MediaProbe.h"
+#include "engine/decode/readers/ClipReaderPool.h"
 #include "engine/media/thumbnails/MediaThumbnail.h"
 #include "engine/render3d/models/ModelAsset.h"
 #include "engine/render3d/models/ModelClipRenderer.h"
@@ -1586,10 +1587,15 @@ void AssetLibrary::removeProxies(const QStringList &assetIds)
             asset && proxyState(id) == QLatin1String("ready")) {
             drift::ReverseProxyCache &cache = drift::ReverseProxyCache::instance();
             const int shortSide = drift::ReverseProxyCache::previewProxyShortSide;
-            if (cache.sidecars(asset->path).generated.contains(shortSide)) {
+            if (const QString generated = cache.sidecars(asset->path).generated.value(shortSide);
+                !generated.isEmpty()) {
                 cache.updateSidecars(asset->path, [shortSide](auto &sidecars) {
-                    QFile::remove(sidecars.generated.take(shortSide));
+                    sidecars.generated.remove(shortSide);
                 });
+                // Windows won't delete a file a preview decoder still has open. Outside the
+                // cache's mutex, as in ReverseProxyCache::removePreview.
+                ClipReaderPool::instance().releasePath(generated);
+                QFile::remove(generated);
             } else {
                 cache.removePreview(asset->path);
             }
