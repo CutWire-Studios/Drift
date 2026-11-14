@@ -649,7 +649,6 @@ Item {
         anchors.fill: parent
         previewItem: preview
         previewHome: editorSplit
-        previewHomeBefore: timelinePane
     }
 
     AndroidAddMenu {

@@ -3596,6 +3596,7 @@
       "backgroundHover": "$semantic.popoverHover",
       "border": "$semantic.primary",
       "borderWidth": "$metrics.borderWidth",
+      "borderWidthPicked": "$metrics.borderWidthFocus",
       "dragOpacity": 0.85,
       "foregroundMuted": "$semantic.mutedForeground",
       "radius": "$metrics.radius.sm",
@@ -3712,7 +3713,9 @@
       "background": "$semantic.panel.accent",
       "backgroundHover": "$semantic.popoverHover",
       "borderHover": "$semantic.accent",
+      "borderPicked": "$semantic.primary",
       "borderWidth": "$metrics.borderWidth",
+      "borderWidthPicked": "$metrics.borderWidthFocus",
       "dragOpacity": 0.85,
       "foregroundMuted": "$semantic.mutedForeground",
       "radius": "$metrics.radius.sm"
@@ -3732,6 +3735,8 @@
     "stickerPresetCard": {
       "background": "$semantic.panel.accent",
       "backgroundHover": "$semantic.popoverHover",
+      "borderPicked": "$semantic.primary",
+      "borderWidthPicked": "$metrics.borderWidthFocus",
       "dragOpacity": 0.85,
       "foregroundMuted": "$semantic.mutedForeground",
       "icon": "$semantic.mutedForeground",
@@ -4124,12 +4129,10 @@
       "foreground": "$semantic.onMedia"
     },
     "androidCropGrip": {
-      "background": "$semantic.primary",
-      "backgroundPressed": "$semantic.primaryForeground",
-      "border": "$semantic.primaryForeground",
-      "borderPressed": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.xs"
+      "handle": "$semantic.primary",
+      "handlePressed": "$semantic.onMedia",
+      "length": 20,
+      "thickness": 4
     },
     "androidMediaPlayBadge": {
       "background": "$semantic.scrimStrong",

@@ -24,6 +24,9 @@ Item {
 
     // Whether a finger's tap should open the card's menu instead of running its primary action.
     property bool hasContextMenu: false
+    // On a full-page picker there is no timeline to drop a lift on: a finger's tap runs the
+    // primary action and a hold opens the menu.
+    property bool pickerMode: false
 
     signal tapped(int tapCount)
     signal contextMenuRequested()
@@ -78,7 +81,9 @@ Item {
             label: root.label
             thumbnail: root.thumbnail
             glyph: root.glyph
-            onLiftTapped: root.hasContextMenu ? root.contextMenuRequested() : root.tapped()
+            liftEnabled: !root.pickerMode
+            onLiftTapped: root.hasContextMenu && !root.pickerMode ? root.contextMenuRequested() : root.tapped(1)
+            onHeld: if (root.pickerMode && root.hasContextMenu) root.contextMenuRequested()
         }
     }
 }

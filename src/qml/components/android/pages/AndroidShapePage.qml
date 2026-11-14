@@ -10,6 +10,7 @@ AndroidAddPage {
 
     ShapesTab {
         anchors.fill: parent
+        pickerMode: true
         onAdded: page.adopt()
     }
 }

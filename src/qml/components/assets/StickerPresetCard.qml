@@ -8,6 +8,9 @@ Column {
 
     required property var modelData
     required property real cardSize
+    property bool pickerMode: false
+    // The sticker the phone page last added.
+    property bool picked: false
     signal added()
     width: cardSize
     spacing: Theme.spacingSm
@@ -26,6 +29,8 @@ Column {
         height: cardSize
         radius: Theme.c.stickerPresetCard.radius
         color: stickerDrag.hovered ? Theme.c.stickerPresetCard.backgroundHover : Theme.c.stickerPresetCard.background
+        border.width: root.picked ? Theme.c.stickerPresetCard.borderWidthPicked : 0
+        border.color: Theme.c.stickerPresetCard.borderPicked
         clip: true
 
         Behavior on color {
@@ -70,6 +75,7 @@ Column {
         AssetDragSource {
             id: stickerDrag
             hasContextMenu: true
+            pickerMode: root.pickerMode
             onContextMenuRequested: cardMenu.popup()
             anchors.fill: parent
             kind: "sticker"
@@ -89,7 +95,7 @@ Column {
             anchors.margins: 4
             revealed: stickerDrag.hovered
             tooltip: qsTr("Add at playhead")
-            onClicked: stickerDrag.tapped()
+            onClicked: stickerDrag.tapped(1)
         }
 
         ThemedContextMenu {
@@ -102,7 +108,7 @@ Column {
             ThemedMenuItem {
                 text: qsTr("Add at playhead")
                 icon.name: Theme.icons.plus
-                onTriggered: stickerDrag.tapped()
+                onTriggered: stickerDrag.tapped(1)
             }
             ThemedMenuItem {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")

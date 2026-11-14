@@ -28,10 +28,11 @@ Item {
     readonly property int outW: Math.round(cropW)
     readonly property int outH: Math.round(cropH)
 
-    readonly property real gripSize: 14
     readonly property real gripTouch: 44
 
     property bool didResize: false
+    // The frame may be moved past the canvas, as its edges may: that grows the output.
+    readonly property size moveBounds: Qt.size(0, 0)
 
     // Locked w / h of the frame; 0 leaves it free. Read by the grips.
     property real aspect: 0
@@ -90,6 +91,7 @@ Item {
     }
 
     AndroidCropFrame {
+        crop: root
         x: root.frameX
         y: root.frameY
         width: root.frameW

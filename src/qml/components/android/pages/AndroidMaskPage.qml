@@ -8,6 +8,7 @@ AndroidAddPage {
 
     // The clip being masked. clipId (the mask itself) is what the range bar and gizmo follow.
     property string targetId: ""
+    property string pickedMask: ""
     readonly property var masks: EditorState.maskCatalog()
 
     Component.onCompleted: root.targetId = EditorState.clipAt(EditorState.selectedTrack,
@@ -20,6 +21,7 @@ AndroidAddPage {
         root.select(root.targetId)
         EditorState.addMaskToClip(EditorState.selectedTrack, EditorState.selectedClip, maskId)
         root.adopt()
+        root.pickedMask = maskId
     }
 
     propertiesComponent: Component {
@@ -49,6 +51,8 @@ AndroidAddPage {
                 delegate: MaskPresetCard {
                     cardSize: maskGrid.cardSize
                     hasVisualSelection: root.targetId !== ""
+                    pickerMode: true
+                    picked: root.pickedMask === modelData.id
                     onApplyRequested: (maskId) => root.applyMask(maskId)
                 }
             }

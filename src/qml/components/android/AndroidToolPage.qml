@@ -23,7 +23,7 @@ Item {
     // The one AndroidPreview, and where it lives while no page is open.
     property Item previewItem: null
     property Item previewHome: null
-    property Item previewHomeBefore: null
+    property Item _previewParent: null
 
     property bool _open: false
     readonly property bool isOpen: _open
@@ -114,6 +114,8 @@ Item {
         const p = root.previewItem
         if (!p)
             return
+        if (p.parent !== slot)
+            root._previewParent = p.parent
         p.parent = slot
         p.anchors.fill = slot
     }
@@ -123,9 +125,9 @@ Item {
         if (!p || !root.previewHome)
             return
         p.anchors.fill = undefined
-        p.parent = root.previewHome
-        if (root.previewHomeBefore)
-            p.stackBefore(root.previewHomeBefore)
+        // Back to the exact parent it was taken from. The home is a SplitView, which keeps the
+        // preview in its list while it is borrowed, so this restores its slot as well.
+        p.parent = root._previewParent || root.previewHome
     }
 
     visible: false

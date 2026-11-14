@@ -9,6 +9,9 @@ Item {
     // A clip landed on the timeline. The phone shell closes the sheet on this —
     // the thing you came for is behind it.
     signal added()
+    // Set by the phone's add page: tap adds, hold opens the card menu, and the last pick is marked.
+    property bool pickerMode: false
+    property string pickedId: ""
 
     readonly property var categories: EditorState.builtinShapeCategories()
     readonly property var allShapes: EditorState.builtinShapes()
@@ -75,7 +78,12 @@ Item {
                 cellHeight: cardSize + Theme.spacingSm + Math.ceil(labelMetrics.height) + Theme.assetCardGap
                 cardDelegate: ShapePresetCard {
                     cardSize: shapeGrid.cardSize
-                    onAdded: root.added()
+                    pickerMode: root.pickerMode
+                    picked: root.pickerMode && root.pickedId === modelData.id
+                    onAdded: {
+                        root.pickedId = modelData.id
+                        root.added()
+                    }
                 }
             }
         }

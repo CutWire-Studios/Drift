@@ -9,6 +9,9 @@ Column {
     required property var modelData
     required property real cardSize
     property bool hasVisualSelection: false
+    property bool pickerMode: false
+    // The mask the phone page last applied.
+    property bool picked: false
     signal applyRequested(string maskId)
 
     width: cardSize
@@ -31,7 +34,8 @@ Column {
         height: cardSize
         radius: Theme.c.maskPresetCard.radius
         color: maskDrag.hovered ? Theme.c.maskPresetCard.backgroundHover : Theme.c.maskPresetCard.background
-        border.width: maskDrag.active ? Theme.c.maskPresetCard.borderWidth : 0
+        border.width: root.picked ? Theme.c.maskPresetCard.borderWidthPicked
+                                  : maskDrag.active ? Theme.c.maskPresetCard.borderWidth : 0
         border.color: Theme.c.maskPresetCard.border
         clip: true
 
@@ -80,6 +84,7 @@ Column {
         AssetDragSource {
             id: maskDrag
             hasContextMenu: true
+            pickerMode: root.pickerMode
             onContextMenuRequested: cardMenu.popup()
             anchors.fill: parent
             kind: "mask"
@@ -102,7 +107,7 @@ Column {
             revealed: maskDrag.hovered
             tooltip: qsTr("Apply to selected clip")
             enabled: hasVisualSelection
-            onClicked: maskDrag.tapped()
+            onClicked: maskDrag.tapped(1)
         }
 
         ThemedContextMenu {
@@ -112,7 +117,7 @@ Column {
                 text: qsTr("Apply to selected clip")
                 icon.name: Theme.icons.plus
                 enabled: hasVisualSelection
-                onTriggered: maskDrag.tapped()
+                onTriggered: maskDrag.tapped(1)
             }
         }
 

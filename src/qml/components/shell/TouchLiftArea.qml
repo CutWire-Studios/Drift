@@ -27,6 +27,8 @@ MouseArea {
     // A press that never became a lift. Cards with nothing to offer on tap
     // simply leave this unconnected.
     signal liftTapped()
+    // A hold on a card that cannot lift.
+    signal held()
 
     anchors.fill: parent
     pressAndHoldInterval: Theme.touchLiftInterval
@@ -52,8 +54,11 @@ MouseArea {
     }
 
     onPressAndHold: (mouse) => {
-        if (!liftEnabled)
+        if (!liftEnabled) {
+            Haptics.press()
+            liftArea.held()
             return
+        }
         lifted = true
         suppressTap = true
         Haptics.pickUp()

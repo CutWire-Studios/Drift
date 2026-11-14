@@ -50,7 +50,7 @@ Column {
             anchors.margins: 4
             revealed: packDrag.hovered
             tooltip: qsTr("Add at playhead")
-            onClicked: packDrag.tapped()
+            onClicked: packDrag.tapped(1)
         }
 
         ThemedContextMenu {
@@ -59,7 +59,7 @@ Column {
             ThemedMenuItem {
                 text: qsTr("Add at playhead")
                 icon.name: Theme.icons.plus
-                onTriggered: packDrag.tapped()
+                onTriggered: packDrag.tapped(1)
             }
         }
     }

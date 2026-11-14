@@ -1,18 +1,15 @@
 import QtQuick
 import Drift
 
-// One edge or corner of the canvas crop. The touch target is the whole item;
-// the dot inside it stays small enough not to hide the frame it sits on.
-// `crop` is the AndroidCropOverlay: frame geometry, grip sizes, and the crop rect.
+// One edge or corner of a crop frame. The touch target is the whole item; what is drawn is an
+// L bracket on a corner and a short bar on an edge, sitting just outside the frame line so it never
+// covers the picture being judged. `crop` is the overlay: frame geometry, grip size, crop rect.
 Item {
-
     id: grip
 
     required property var crop
     required property var modelData
 
-    // The touch target is the whole delegate; the dot inside it stays
-    // small enough not to hide the frame it sits on.
     width: crop.gripTouch
     height: crop.gripTouch
 
@@ -21,20 +18,36 @@ Item {
     y: crop.frameY + (modelData.dy === 0 ? crop.frameH / 2
                                          : (modelData.dy < 0 ? 0 : crop.frameH)) - height / 2
 
-    Rectangle {
-        anchors.centerIn: parent
-        width: crop.gripSize
-        height: crop.gripSize
-        radius: Theme.c.androidCropGrip.radius
-        color: gripArea.pressed ? Theme.c.androidCropGrip.backgroundPressed
-                                : Theme.c.androidCropGrip.background
-        border.width: Theme.c.androidCropGrip.borderWidth
-        border.color: gripArea.pressed ? Theme.c.androidCropGrip.borderPressed
-                                       : Theme.c.androidCropGrip.border
+    readonly property bool corner: modelData.dx !== 0 && modelData.dy !== 0
+    readonly property real thickness: Theme.c.androidCropGrip.thickness
+    // Capped by the frame so the brackets of a small crop do not run into each other.
+    readonly property real armLength: Math.max(thickness, Math.min(Theme.c.androidCropGrip.length,
+                                                                   crop.frameW / 3, crop.frameH / 3))
+    readonly property color handleColor: gripArea.pressed ? Theme.c.androidCropGrip.handlePressed
+                                                          : Theme.c.androidCropGrip.handle
+    readonly property real cx: width / 2
+    readonly property real cy: height / 2
 
-        Behavior on color {
-            ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-        }
+    // Horizontal arm: a corner's top/bottom stroke, or the whole bar of a top/bottom edge.
+    Rectangle {
+        visible: grip.modelData.dy !== 0
+        color: grip.handleColor
+        width: grip.corner ? grip.armLength + grip.thickness : grip.armLength * 2
+        height: grip.thickness
+        x: grip.corner ? (grip.modelData.dx < 0 ? grip.cx - grip.thickness : grip.cx - grip.armLength)
+                       : grip.cx - width / 2
+        y: grip.modelData.dy < 0 ? grip.cy - grip.thickness : grip.cy
+    }
+
+    // Vertical arm: a corner's left/right stroke, or the whole bar of a left/right edge.
+    Rectangle {
+        visible: grip.modelData.dx !== 0
+        color: grip.handleColor
+        width: grip.thickness
+        height: grip.corner ? grip.armLength + grip.thickness : grip.armLength * 2
+        x: grip.modelData.dx < 0 ? grip.cx - grip.thickness : grip.cx
+        y: grip.corner ? (grip.modelData.dy < 0 ? grip.cy - grip.thickness : grip.cy - grip.armLength)
+                       : grip.cy - height / 2
     }
 
     property real startX: 0

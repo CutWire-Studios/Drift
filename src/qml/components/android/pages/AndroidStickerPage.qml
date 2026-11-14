@@ -10,6 +10,7 @@ AndroidAddPage {
 
     StickersTab {
         anchors.fill: parent
+        pickerMode: true
         onAdded: page.adopt()
     }
 }

@@ -2566,6 +2566,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | maskPresetCard | backgroundHover | $semantic.popoverHover | $semantic.popoverHover |
 | maskPresetCard | border | $semantic.primary | $semantic.primary |
 | maskPresetCard | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| maskPresetCard | borderWidthPicked | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | maskPresetCard | dragOpacity | 0.85 | 0.85 |
 | maskPresetCard | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | maskPresetCard | radius | $metrics.radius.sm | $metrics.radius.sm |
@@ -2646,7 +2647,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | shapePresetCard | background | $semantic.panel.accent | $semantic.panel.accent |
 | shapePresetCard | backgroundHover | $semantic.popoverHover | $semantic.popoverHover |
 | shapePresetCard | borderHover | $semantic.accent | $semantic.accent |
+| shapePresetCard | borderPicked | $semantic.primary | $semantic.primary |
 | shapePresetCard | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| shapePresetCard | borderWidthPicked | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | shapePresetCard | dragOpacity | 0.85 | 0.85 |
 | shapePresetCard | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | shapePresetCard | radius | $metrics.radius.sm | $metrics.radius.sm |
@@ -2660,6 +2663,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | speechTab | progressDimOpacity | 0.4 | 0.4 |
 | stickerPresetCard | background | $semantic.panel.accent | $semantic.panel.accent |
 | stickerPresetCard | backgroundHover | $semantic.popoverHover | $semantic.popoverHover |
+| stickerPresetCard | borderPicked | $semantic.primary | $semantic.primary |
+| stickerPresetCard | borderWidthPicked | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | stickerPresetCard | dragOpacity | 0.85 | 0.85 |
 | stickerPresetCard | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | stickerPresetCard | icon | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -2952,12 +2957,10 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTransformParentFrame | strokeWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | androidTransformParentFrame | background | $semantic.clip.transform | $semantic.clip.transform |
 | androidTransformParentFrame | foreground | $semantic.onMedia | $semantic.onMedia |
-| androidCropGrip | background | $semantic.primary | $semantic.primary |
-| androidCropGrip | backgroundPressed | $semantic.primaryForeground | $semantic.primaryForeground |
-| androidCropGrip | border | $semantic.primaryForeground | $semantic.primaryForeground |
-| androidCropGrip | borderPressed | $semantic.primary | $semantic.primary |
-| androidCropGrip | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
-| androidCropGrip | radius | $metrics.radius.xs | $metrics.radius.xs |
+| androidCropGrip | handle | $semantic.primary | $semantic.primary |
+| androidCropGrip | handlePressed | $semantic.onMedia | $semantic.onMedia |
+| androidCropGrip | length | 20 | 20 |
+| androidCropGrip | thickness | 4 | 4 |
 | androidMediaPlayBadge | background | $semantic.scrimStrong | $semantic.scrimStrong |
 | androidMediaPlayBadge | icon | $semantic.onMedia | $semantic.onMedia |
 | androidTransformLayerChip | background | $semantic.clip.transform | $semantic.clip.transform |

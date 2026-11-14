@@ -258,7 +258,9 @@ Item {
 
     Component {
         id: clipCropTool
-        AndroidClipCropOverlay { }
+        AndroidClipCropOverlay {
+            canvas: viewport.canvas
+        }
     }
 
     // Lifted asset cards can be dropped on the preview as well as on the timeline: overlays land

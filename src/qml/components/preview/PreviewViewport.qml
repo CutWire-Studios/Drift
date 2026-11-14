@@ -31,7 +31,7 @@ Item {
     }
     // Crop mode pulls the canvas in so there is room around it to drag an edge outward and grow
     // the frame.
-    property real cropZoom: EditorState.preview.canvasCropMode ? 0.72 : 1.0
+    property real cropZoom: EditorState.preview.canvasCropMode || EditorState.preview.clipCropMode ? 0.72 : 1.0
     // View navigation. Both reset when crop mode starts or ends, so the view is never entered already scrolled
     // off-centre.
     property real userZoom: 1.0
@@ -75,6 +75,7 @@ Item {
     Connections {
         target: EditorState.preview
         function onCanvasCropModeChanged() { viewport.resetView() }
+        function onClipCropModeChanged() { viewport.resetView() }
     }
 
     ThemeSlot {

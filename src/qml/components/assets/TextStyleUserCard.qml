@@ -66,7 +66,7 @@ Column {
             anchors.margins: 4
             revealed: userDrag.hovered
             tooltip: qsTr("Add at playhead")
-            onClicked: userDrag.tapped()
+            onClicked: userDrag.tapped(1)
         }
 
         ThemedContextMenu {

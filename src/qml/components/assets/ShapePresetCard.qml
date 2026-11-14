@@ -7,6 +7,9 @@ Column {
     id: root
     required property var modelData
     required property real cardSize
+    property bool pickerMode: false
+    // The shape the phone page last added.
+    property bool picked: false
     signal added()
     width: cardSize
     spacing: Theme.spacingSm
@@ -26,8 +29,9 @@ Column {
         height: cardSize
         radius: Theme.c.shapePresetCard.radius
         color: shapeDrag.hovered ? Theme.c.shapePresetCard.backgroundHover : Theme.c.shapePresetCard.background
-        border.width: Theme.c.shapePresetCard.borderWidth
-        border.color: shapeDrag.hovered ? Theme.c.shapePresetCard.borderHover : "transparent"
+        border.width: root.picked ? Theme.c.shapePresetCard.borderWidthPicked : Theme.c.shapePresetCard.borderWidth
+        border.color: root.picked ? Theme.c.shapePresetCard.borderPicked
+                                  : shapeDrag.hovered ? Theme.c.shapePresetCard.borderHover : "transparent"
 
         Behavior on color {
             ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
@@ -60,6 +64,7 @@ Column {
         AssetDragSource {
             id: shapeDrag
             hasContextMenu: true
+            pickerMode: root.pickerMode
             onContextMenuRequested: cardMenu.popup()
             anchors.fill: parent
             kind: "shape"
@@ -79,7 +84,7 @@ Column {
             anchors.margins: 4
             revealed: shapeDrag.hovered
             tooltip: qsTr("Add at playhead")
-            onClicked: shapeDrag.tapped()
+            onClicked: shapeDrag.tapped(1)
         }
 
         ThemedContextMenu {
@@ -92,7 +97,7 @@ Column {
             ThemedMenuItem {
                 text: qsTr("Add at playhead")
                 icon.name: Theme.icons.plus
-                onTriggered: shapeDrag.tapped()
+                onTriggered: shapeDrag.tapped(1)
             }
             ThemedMenuItem {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")

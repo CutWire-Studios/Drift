@@ -44,7 +44,8 @@ Item {
 
     function pushOverlay() {
         const o = root.overlay
-        if (!o)
+        // The previous tool can still be loaded for a moment after the mode switches.
+        if (!o || o.aspect === undefined)
             return
         if (!root.clipMode)
             o.hostedByPage = true
