@@ -776,13 +776,6 @@ public:
     // Release an adjustment from the clip it is pinned to, leaving it where it is. Its edges
     // become draggable and it stops following the clip.
     Q_INVOKABLE void unlinkAdjustment(int trackIndex, int clipIndex);
-    // Reveal or tuck away the effects layer linked to a media clip (the fx button).
-    Q_INVOKABLE void toggleEffectsLayerRevealed(int trackIndex, int clipIndex);
-    // Tuck a revealed effects layer back behind its clip.
-    Q_INVOKABLE void hideEffectsLayer(int trackIndex, int clipIndex);
-    // The clip in `targetTrack` that a dragged effects layer would hide behind when held over it
-    // at `atSeconds`; -1 when it is not its own host there or the layer is not a linked one.
-    Q_INVOKABLE int effectsLayerHostClip(int fromTrack, int fromClip, int targetTrack, double atSeconds) const;
     Q_INVOKABLE void relinkAdjustment(int trackIndex, int clipIndex, int mediaTrack, int mediaClip);
     Q_INVOKABLE void addStickerClip(const QString &stickerId, double atSeconds,
                                     int trackIndex = -1);
@@ -1671,7 +1664,7 @@ public:
     Q_INVOKABLE int trackRowHeight(int trackIndex, const QVariantMap &metrics) const;
 
     // How many nested lanes a track is carrying, so the delegate knows how many strips to draw.
-    // The nested lanes that take space: a lane holding only hidden effects layers takes none.
+    // The nested lanes that take space.
     QList<int> visibleAdjustmentLanes(int trackIndex) const;
     Q_INVOKABLE int adjustmentLaneCount(int trackIndex) const;
     // Track indices of those lanes, topmost first.

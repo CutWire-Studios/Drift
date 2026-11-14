@@ -3369,22 +3369,6 @@
         <translation>Odłączono korektę</translation>
     </message>
     <message>
-        <source>Hide effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer hidden</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer shown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Link adjustment to clip</source>
         <translation>Połącz korektę z klipem</translation>
     </message>
@@ -25071,6 +25055,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Effect</source>
+        <translation type="unfinished">Efekt</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (wył.)</translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>Korekta audio</translation>
     </message>
@@ -25089,14 +25081,6 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Subtitles</source>
         <translation>Napisy</translation>
-    </message>
-    <message>
-        <source>Hide the effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the effects layer</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, track %2</source>

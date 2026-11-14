@@ -401,7 +401,7 @@ private slots:
     void multicamSetUpBuildsAWorkingRigFromTheBin();
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
-    void addedEffectsLayerIsHiddenAndTheClipStaysSelected();
+    void addedEffectsGetALaneAndTheClipStaysSelected();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
     void agentCallNotificationsFollowThePreference();
     void deletingWithEffectsAlsoHandlesASelectedAdjustment();
@@ -11922,7 +11922,7 @@ void EditorStateTest::redoAfterASpeedDragKeepsTheGradeOnTheClip()
     QCOMPARE(grade->timelineDuration, host.timelineDuration);
 }
 
-void EditorStateTest::addedEffectsLayerIsHiddenAndTheClipStaysSelected()
+void EditorStateTest::addedEffectsGetALaneAndTheClipStaysSelected()
 {
     AssetLibrary library;
     AppController state(&library);
@@ -11937,28 +11937,10 @@ void EditorStateTest::addedEffectsLayerIsHiddenAndTheClipStaysSelected()
     QVERIFY(state.selectedClipData().value(QStringLiteral("caps")).toStringList()
                 .contains(QStringLiteral("effectable")));
 
+    // The effects live on a lane pinned to the clip, and that lane always shows.
     QCOMPARE(state.project()->tracks().size(), 2);
-    QVERIFY(state.project()->tracks().at(1).clips.at(0).hiddenInLane);
-    QCOMPARE(state.adjustmentLaneCount(0), 0);
-    QCOMPARE(static_cast<TimelineClipsModel *>(state.clipsModel(0))->rows().at(0).fxLayer, 1);
-
-    state.toggleEffectsLayerRevealed(0, 0);
-    QVERIFY(!state.project()->tracks().at(1).clips.at(0).hiddenInLane);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).linkedClipId, clipId);
     QCOMPARE(state.adjustmentLaneCount(0), 1);
-    QCOMPARE(static_cast<TimelineClipsModel *>(state.clipsModel(0))->rows().at(0).fxLayer, 2);
-    state.undo();
-    QVERIFY(state.project()->tracks().at(1).clips.at(0).hiddenInLane);
-    state.redo();
-    QVERIFY(!state.project()->tracks().at(1).clips.at(0).hiddenInLane);
-
-    QCOMPARE(state.effectsLayerHostClip(1, 0, 0, 0.1), 0);
-    QCOMPARE(state.effectsLayerHostClip(1, 0, 0, 1e6), -1);
-    state.hideEffectsLayer(1, 0);
-    QVERIFY(state.project()->tracks().at(1).clips.at(0).hiddenInLane);
-
-    const drift::Project back = drift::Project::fromJson(state.project()->toJson());
-    QVERIFY(back.tracks().at(1).clips.at(0).hiddenInLane);
-    QVERIFY(!back.tracks().at(0).clips.at(0).hiddenInLane);
 }
 
 void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
@@ -13804,7 +13786,6 @@ void EditorStateTest::trackRowHeightsForAdjustmentsAndLanes()
     appendTwoVideoClips(*laned.project());
     laned.selectClip(0, 0);
     laned.addEffect(0, 0, QStringLiteral("adjust.contrast"));
-    laned.toggleEffectsLayerRevealed(0, 0);
     const int parent = 0;
     const QList<int> lanes = drift::adjustmentLaneIndexes(*laned.project(), parent);
     QCOMPARE(lanes.size(), 1);
@@ -13826,7 +13807,6 @@ void EditorStateTest::collapsedLanesAndEmptyLaneCleanup()
     AppController state(&library);
     appendTwoVideoClips(*state.project());
     state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
-    state.toggleEffectsLayerRevealed(0, 0);
     state.addAudioEffect(0, 0, QStringLiteral("space.autopan"));
     const QVariantMap metrics{{QStringLiteral("video"), 65.0}, {QStringLiteral("lane"), 20.0},
                               {QStringLiteral("ribbon"), 3.0}};

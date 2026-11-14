@@ -3363,22 +3363,6 @@
         <translation>Na-unlink ang adjustment</translation>
     </message>
     <message>
-        <source>Hide effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer hidden</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer shown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Link adjustment to clip</source>
         <translation>I-link ang adjustment sa clip</translation>
     </message>
@@ -24990,6 +24974,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Effect</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (pinatay)</translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>Adjustment ng audio</translation>
     </message>
@@ -25008,14 +25000,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Subtitles</source>
         <translation>Mga Subtitle</translation>
-    </message>
-    <message>
-        <source>Hide the effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the effects layer</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, track %2</source>

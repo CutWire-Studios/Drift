@@ -915,7 +915,6 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         // treat their edges as pinned.
         {QStringLiteral("adjustmentKind"), drift::adjustmentKindToString(clip.adjustmentKind)},
         {QStringLiteral("linkedClipId"), clip.linkedClipId},
-        {QStringLiteral("hiddenInLane"), clip.hiddenInLane},
         {QStringLiteral("thumbnailPath"), clip.thumbnailPath},
         {QStringLiteral("filmstripPath"), clip.filmstripPath},
         {QStringLiteral("textContent"), clip.textContent},
@@ -1054,9 +1053,6 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
     row.packageMissing = clip.type == drift::ClipType::Procedural && !hasProcedural(clip.procedural.packageId);
     row.adjustmentKind = drift::adjustmentKindToString(clip.adjustmentKind);
     row.linkedClipId = clip.linkedClipId;
-    row.hiddenInLane = clip.hiddenInLane;
-    if (videoEffectHost && !videoEffectHost->effects.isEmpty())
-        row.fxLayer = videoEffectHost->hiddenInLane ? 1 : 2;
     row.linkId = clip.linkId;
     row.linked = !clip.linkId.isEmpty();
     row.filmstripPath = clip.filmstripPath;

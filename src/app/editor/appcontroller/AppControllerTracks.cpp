@@ -573,14 +573,7 @@ int AppController::trackRowHeight(int trackIndex, const QVariantMap &metrics) co
 
 QList<int> AppController::visibleAdjustmentLanes(int trackIndex) const
 {
-    QList<int> lanes = drift::adjustmentLaneIndexes(m_project, trackIndex);
-    lanes.removeIf([this](int laneIndex) {
-        const QList<drift::Clip> &clips = m_project.tracks().at(laneIndex).clips;
-        return !clips.isEmpty()
-               && std::all_of(clips.cbegin(), clips.cend(),
-                              [](const drift::Clip &clip) { return clip.hiddenInLane; });
-    });
-    return lanes;
+    return drift::adjustmentLaneIndexes(m_project, trackIndex);
 }
 
 int AppController::adjustmentLaneCount(int trackIndex) const

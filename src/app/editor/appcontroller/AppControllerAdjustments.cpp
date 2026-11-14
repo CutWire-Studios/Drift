@@ -194,7 +194,6 @@ drift::ClipRef AppController::createLinkedAdjustment(int trackIndex, int clipInd
     adjustment.type = drift::ClipType::Adjustment;
     adjustment.adjustmentKind = kind;
     adjustment.linkedClipId = source.id;
-    adjustment.hiddenInLane = kind == drift::AdjustmentKind::VideoEffects;
     adjustment.timelineStart = source.timelineStart;
     adjustment.timelineDuration = source.timelineDuration;
     adjustment.srcIn = 0;
@@ -771,55 +770,6 @@ void AppController::unlinkAdjustment(int trackIndex, int clipIndex)
     m_project.tracks()[trackIndex].clips[clipIndex].linkedClipId.clear();
     pushProjectEdit(before, tr("Unlink adjustment"));
     finishEdit(tr("Adjustment unlinked"));
-}
-
-void AppController::toggleEffectsLayerRevealed(int trackIndex, int clipIndex)
-{
-    const drift::ClipRef ref = effectHostRef(trackIndex, clipIndex, drift::AdjustmentKind::VideoEffects,
-                                             /*create=*/false);
-    if (ref.trackIndex < 0)
-        return;
-    const drift::Project before = m_project;
-    drift::Clip &layer = m_project.tracks()[ref.trackIndex].clips[ref.clipIndex];
-    layer.hiddenInLane = !layer.hiddenInLane;
-    pushProjectEdit(before, layer.hiddenInLane ? tr("Hide effects layer") : tr("Show effects layer"));
-    finishEdit(layer.hiddenInLane ? tr("Effects layer hidden") : tr("Effects layer shown"));
-}
-
-void AppController::hideEffectsLayer(int trackIndex, int clipIndex)
-{
-    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
-    if (clipIndex < 0 || clipIndex >= m_project.tracks().at(trackIndex).clips.size())
-        return;
-    if (m_project.tracks().at(trackIndex).clips.at(clipIndex).hiddenInLane)
-        return;
-    const drift::Project before = m_project;
-    m_project.tracks()[trackIndex].clips[clipIndex].hiddenInLane = true;
-    pushProjectEdit(before, tr("Hide effects layer"));
-    finishEdit(tr("Effects layer hidden"));
-}
-
-int AppController::effectsLayerHostClip(int fromTrack, int fromClip, int targetTrack, double atSeconds) const
-{
-    if (fromTrack < 0 || fromTrack >= m_project.tracks().size() || targetTrack < 0
-        || targetTrack >= m_project.tracks().size())
-        return -1;
-    const QList<drift::Clip> &clips = m_project.tracks().at(fromTrack).clips;
-    if (fromClip < 0 || fromClip >= clips.size())
-        return -1;
-    const drift::Clip &layer = clips.at(fromClip);
-    if (layer.type != drift::ClipType::Adjustment || layer.adjustmentKind != drift::AdjustmentKind::VideoEffects
-        || layer.linkedClipId.isEmpty())
-        return -1;
-    const QList<drift::Clip> &hostClips = m_project.tracks().at(targetTrack).clips;
-    const drift::TimeUs at = drift::secondsToUs(atSeconds);
-    for (int i = 0; i < hostClips.size(); ++i) {
-        const drift::Clip &host = hostClips.at(i);
-        if (host.id == layer.linkedClipId && at >= host.timelineStart && at < host.timelineEnd())
-            return i;
-    }
-    return -1;
 }
 
 void AppController::relinkAdjustment(int trackIndex, int clipIndex, int mediaTrack, int mediaClip)

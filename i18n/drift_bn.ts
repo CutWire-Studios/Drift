@@ -3363,22 +3363,6 @@
         <translation>অ্যাডজাস্টমেন্ট আনলিঙ্ক করা হয়েছে</translation>
     </message>
     <message>
-        <source>Hide effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer hidden</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer shown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Link adjustment to clip</source>
         <translation>ক্লিপের সাথে লিঙ্ক সমন্বয়</translation>
     </message>
@@ -24989,6 +24973,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Effect</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (বন্ধ)</translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>অডিও সমন্বয়</translation>
     </message>
@@ -25007,14 +24999,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Subtitles</source>
         <translation>সাবটাইটেল</translation>
-    </message>
-    <message>
-        <source>Hide the effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the effects layer</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, track %2</source>

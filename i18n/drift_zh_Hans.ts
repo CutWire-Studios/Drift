@@ -3357,22 +3357,6 @@
         <translation>已取消调整图层链接</translation>
     </message>
     <message>
-        <source>Hide effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer hidden</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer shown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Link adjustment to clip</source>
         <translation>将调整图层链接到片段</translation>
     </message>
@@ -24909,6 +24893,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Effect</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1（关闭）</translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>音频调整</translation>
     </message>
@@ -24927,14 +24919,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Subtitles</source>
         <translation>子标题</translation>
-    </message>
-    <message>
-        <source>Hide the effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the effects layer</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, track %2</source>

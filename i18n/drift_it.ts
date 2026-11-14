@@ -3363,22 +3363,6 @@
         <translation>Regolazione scollegata</translation>
     </message>
     <message>
-        <source>Hide effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer hidden</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer shown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Link adjustment to clip</source>
         <translation>Collega regolazione alla clip</translation>
     </message>
@@ -24989,6 +24973,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Effect</source>
+        <translation type="unfinished">Effetto</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (disattivo)</translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>Regolazione audio</translation>
     </message>
@@ -25007,14 +24999,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Subtitles</source>
         <translation>Sottotitoli</translation>
-    </message>
-    <message>
-        <source>Hide the effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the effects layer</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, track %2</source>

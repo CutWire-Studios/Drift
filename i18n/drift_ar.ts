@@ -3211,22 +3211,6 @@
         <translation>تم إلغاء ربط الضبط</translation>
     </message>
     <message>
-        <source>Hide effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer hidden</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer shown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Link adjustment to clip</source>
         <translation>ربط الضبط بالمقطع</translation>
     </message>
@@ -25313,6 +25297,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Effect</source>
+        <translation type="unfinished">تأثير</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (متوقف)</translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>ضبط الصوت</translation>
     </message>
@@ -25331,14 +25323,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Subtitles</source>
         <translation>الترجمة</translation>
-    </message>
-    <message>
-        <source>Hide the effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the effects layer</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, track %2</source>

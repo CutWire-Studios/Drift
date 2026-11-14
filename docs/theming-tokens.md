@@ -3126,7 +3126,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timeline.trackHeightShape | 50 | 50 |
 | timeline.trackHeightAdjustment.pointer | 28 | 28 |
 | timeline.trackHeightAdjustment.touch | 40 | 40 |
-| timeline.adjustmentLaneHeight.pointer | 20 | 20 |
+| timeline.adjustmentLaneHeight.pointer | 14 | 14 |
 | timeline.adjustmentLaneHeight.touch | 24 | 24 |
 | timeline.adjustmentRibbonHeight | 3 | 3 |
 | timeline.trackGap | 6 | 6 |

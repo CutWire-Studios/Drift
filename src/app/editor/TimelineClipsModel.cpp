@@ -49,8 +49,6 @@ QList<int> changedRoles(const TimelineClipsModel::Row &a, const TimelineClipsMod
     diff(a.loop != b.loop, TimelineClipsModel::LoopRole);
     diff(a.loopPeriod != b.loopPeriod, TimelineClipsModel::LoopPeriodRole);
     diff(a.loopPhase != b.loopPhase, TimelineClipsModel::LoopPhaseRole);
-    diff(a.hiddenInLane != b.hiddenInLane, TimelineClipsModel::HiddenInLaneRole);
-    diff(a.fxLayer != b.fxLayer, TimelineClipsModel::FxLayerRole);
     return roles;
 }
 
@@ -222,8 +220,6 @@ QVariant TimelineClipsModel::data(const QModelIndex &index, int role) const
     case LoopRole: return row.loop;
     case LoopPeriodRole: return row.loopPeriod;
     case LoopPhaseRole: return row.loopPhase;
-    case HiddenInLaneRole: return row.hiddenInLane;
-    case FxLayerRole: return row.fxLayer;
     default: return {};
     }
 }
@@ -260,8 +256,6 @@ QHash<int, QByteArray> TimelineClipsModel::roleNames() const
         {LoopRole, "loop"},
         {LoopPeriodRole, "loopPeriod"},
         {LoopPhaseRole, "loopPhase"},
-        {HiddenInLaneRole, "hiddenInLane"},
-        {FxLayerRole, "fxLayer"},
     };
 }
 

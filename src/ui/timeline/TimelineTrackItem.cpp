@@ -154,13 +154,13 @@ void appendRoundedRect(QVector<Vertex> &out, const QRectF &r, double radius, con
 
 // A border drawn inside the rect, like a QML Rectangle's.
 void appendOutline(QVector<Vertex> &out, const QRectF &r, double radius, double width,
-                   const QColor &c, double ox)
+                   const QColor &c, double ox, int corners = AllCorners)
 {
     if (width <= 0.0 || r.width() <= 2.0 * width || r.height() <= 2.0 * width)
         return;
-    const QVector<QPointF> o = roundedPolygon(r, radius);
-    const QVector<QPointF> i =
-        roundedPolygon(r.adjusted(width, width, -width, -width), std::max(0.0, radius - width));
+    const QVector<QPointF> o = roundedPolygon(r, radius, corners);
+    const QVector<QPointF> i = roundedPolygon(r.adjusted(width, width, -width, -width),
+                                              std::max(0.0, radius - width), corners);
     if (o.size() != i.size())
         return;
     const int n = o.size();
@@ -791,7 +791,7 @@ void TimelineTrackItem::build()
             it = ids.contains(it.key().section(QLatin1Char('#'), 0, 0)) ? std::next(it) : m_waveCache.erase(it);
     }
     for (int i = 0; i < rows.size(); ++i) {
-        if ((m_drag.moving && i == m_drag.clipIndex) || rows.at(i).hiddenInLane)
+        if (m_drag.moving && i == m_drag.clipIndex)
             continue;
         const QRectF rect = effectiveRect(i);
         const bool selected = isSelected(i);
@@ -823,6 +823,14 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
         rect = QRectF(c.x() - rect.width() * 0.515, c.y() - rect.height() * 0.515,
                       rect.width() * 1.03, rect.height() * 1.03);
     }
+
+    // A layer pinned to a clip hangs off it: squared top, reaching up to the top of its lane so it
+    // sits flush under the clip (or the pinned layer above). A free one keeps its own rounded block.
+    const bool attached = row.kind == QLatin1String("adjustment") && !row.linkedClipId.isEmpty()
+                          && !lifted && !(m_drag.moving && index == m_drag.clipIndex);
+    const int clipCorners = attached ? BottomLeft | BottomRight : AllCorners;
+    if (attached)
+        rect.setTop(std::min(rect.top(), 0.0));
 
     double inPoint = row.inPoint;
     double outPoint = row.outPoint;
@@ -897,7 +905,7 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     }
     if (lit)
         base = base.lighter(115);
-    appendRoundedRect(m_under, rect, s.radiusSm, base, ox);
+    appendRoundedRect(m_under, rect, s.radiusSm, base, ox, clipCorners);
     const double clipRadius = std::min(s.radiusSm, std::min(rect.width(), rect.height()) / 2.0);
 
     const bool bandTrack = m_trackType == QLatin1String("video")
@@ -1052,9 +1060,75 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
         }
     }
 
-    if (isAdjustment) {
-        // An adjustment is its stack: it shows the effects it carries, and only names its kind
-        // while it is still empty.
+    // An adjustment is its stack: one chip per effect it carries, as many as fit, and a "+N" for
+    // the rest. Falls through to a plain label when it carries none or the lane is too short.
+    const QVariantList &stack = row.adjustmentKind == QLatin1String("audioEffects") ? row.audioEffects
+                                                                                    : row.effects;
+    const QFont chipFont = labelFont(m_fontFamily, s.fontSizeTiny, true);
+    const QFontMetricsF chipMetrics(chipFont);
+    const double chipH = std::min(rect.height() - 4.0, chipMetrics.height());
+    bool drewChips = false;
+    if (isAdjustment && row.adjustmentKind != QLatin1String("transform") && !stack.isEmpty()
+        && chipH >= chipMetrics.height() * 0.75) {
+        const double gap = 3.0;
+        const double right = rect.right() - 4.0;
+        const double chipTop = rect.center().y() - chipH / 2.0;
+        const auto labelOf = [this](const QVariantMap &fx) {
+            const QString label = fx.value(QStringLiteral("label")).toString();
+            return label.isEmpty() ? tr("Effect") : label;
+        };
+        const auto moreLabel = [](qsizetype count) { return QStringLiteral("+%1").arg(count); };
+        double x = rect.left() + 4.0;
+        int shown = 0;
+        for (; shown < stack.size(); ++shown) {
+            const qsizetype rest = stack.size() - shown - 1;
+            const double reserve =
+                rest > 0 ? chipMetrics.horizontalAdvance(moreLabel(rest)) + s.spacingMd + gap : 0.0;
+            const double w = chipMetrics.horizontalAdvance(labelOf(stack.at(shown).toMap())) + s.spacingMd;
+            if (x + w + reserve > right)
+                break;
+            x += w + gap;
+        }
+        if (shown > 0) {
+            drewChips = true;
+            x = rect.left() + 4.0;
+            QStringList hidden;
+            for (int i = 0; i < stack.size(); ++i) {
+                const QVariantMap fx = stack.at(i).toMap();
+                const QString label = labelOf(fx);
+                const bool enabled = fx.value(QStringLiteral("enabled"), true).toBool();
+                const QString tip = enabled ? label : tr("%1 (off)").arg(label);
+                if (i >= shown) {
+                    hidden.append(tip);
+                    continue;
+                }
+                const QRectF chip(x, chipTop, chipMetrics.horizontalAdvance(label) + s.spacingMd, chipH);
+                QColor fg = s.onMedia;
+                if (enabled)
+                    appendRoundedRect(m_over, chip, s.radiusXs, s.scrim, ox);
+                else
+                    fg.setAlphaF(0.55);
+                m_labels.append({label,
+                                 QPointF(chip.left() + s.spacingMd / 2.0 - ox,
+                                         chip.center().y() - chipMetrics.height() / 2.0),
+                                 s.fontSizeTiny, fg, true});
+                visual.toolTips.append({chip, tip});
+                x += chip.width() + gap;
+            }
+            if (!hidden.isEmpty()) {
+                const QString more = moreLabel(hidden.size());
+                const QRectF pill(x, chipTop, chipMetrics.horizontalAdvance(more) + s.spacingMd, chipH);
+                m_labels.append({more,
+                                 QPointF(pill.left() + s.spacingMd / 2.0 - ox,
+                                         pill.center().y() - chipMetrics.height() / 2.0),
+                                 s.fontSizeTiny, s.onMedia, true});
+                visual.toolTips.append({pill, hidden.join(QLatin1Char('\n'))});
+            }
+        }
+    }
+
+    if (isAdjustment && !drewChips) {
+        // Names its kind while it is still empty.
         QString text = row.effectsLabel;
         if (text.isEmpty())
             text = row.name;
@@ -1136,29 +1210,7 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     // Give adjacent clips a visible edge even when neither is selected.
     QColor clipEdge = s.scrim;
     clipEdge.setAlpha(185);
-    appendOutline(m_over, rect, s.radiusSm, 1.25, clipEdge, ox);
-
-    // --- fx button: the clip's effects layer, shown or tucked away ---------------------------
-    if (!isAdjustment && row.fxLayer > 0) {
-        const QFont fxFont = labelFont(m_fontFamily, s.fontSizeTiny, true);
-        const QFontMetricsF fxMetrics(fxFont);
-        const QString fxText = QStringLiteral("fx");
-        const QSizeF fxSize(fxMetrics.horizontalAdvance(fxText) + s.spacingMd,
-                            fxMetrics.height() + 2.0);
-        const double inset = edgeMargin(rect.width()) + 2.0;
-        if (rect.width() >= fxSize.width() + 2.0 * inset && rect.height() >= fxSize.height() + 4.0) {
-            const QRectF pill(rect.right() - inset - fxSize.width(), rect.bottom() - 2.0 - fxSize.height(),
-                              fxSize.width(), fxSize.height());
-            appendRoundedRect(m_over, pill, s.radiusXs, row.fxLayer == 2 ? s.clipEffect : s.scrim, ox);
-            m_labels.append({fxText,
-                             QPointF(pill.center().x() - fxMetrics.horizontalAdvance(fxText) / 2.0 - ox,
-                                     pill.center().y() - fxMetrics.height() / 2.0),
-                             s.fontSizeTiny, s.onMedia, true});
-            visual.fxRect = pill;
-            visual.toolTips.append({pill, row.fxLayer == 2 ? tr("Hide the effects layer")
-                                                           : tr("Show the effects layer")});
-        }
-    }
+    appendOutline(m_over, rect, s.radiusSm, 1.25, clipEdge, ox, clipCorners);
 
     // --- effect drop and selection -----------------------------------------------------------
     const bool dropTarget = m_viewState->effectDropTrack() == m_trackIndex
@@ -1166,10 +1218,10 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     if (dropTarget) {
         QColor tint = s.clipEffect;
         tint.setAlphaF(0.28);
-        appendRoundedRect(m_over, rect, s.radiusSm, tint, ox);
-        appendOutline(m_over, rect, s.radiusSm, s.borderWidthFocus, s.clipEffect, ox);
+        appendRoundedRect(m_over, rect, s.radiusSm, tint, ox, clipCorners);
+        appendOutline(m_over, rect, s.radiusSm, s.borderWidthFocus, s.clipEffect, ox, clipCorners);
     } else if (selected) {
-        appendOutline(m_over, rect, s.radiusSm, s.ringWidth, s.primary, ox);
+        appendOutline(m_over, rect, s.radiusSm, s.ringWidth, s.primary, ox, clipCorners);
     }
 
     m_visible.append(visual);
@@ -1564,17 +1616,6 @@ void TimelineTrackItem::callHaptic(const char *method)
 
 void TimelineTrackItem::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton && m_editor && m_clips) {
-        for (auto it = m_visible.crbegin(); it != m_visible.crend(); ++it) {
-            if (!it->fxRect.isNull() && it->fxRect.contains(event->position())
-                && it->index >= 0 && it->index < m_clips->rows().size()
-                && m_clips->rows().at(it->index).id == it->id) {
-                m_editor->toggleEffectsLayerRevealed(m_trackIndex, it->index);
-                event->accept();
-                return;
-            }
-        }
-    }
     Zone zone = Zone::None;
     const int index = clipAt(event->position(), &zone);
     // The device behind this press, not the timeline's mode: a finger on the desktop timeline

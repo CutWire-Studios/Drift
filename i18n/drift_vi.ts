@@ -3357,22 +3357,6 @@
         <translation>Đã hủy liên kết lớp điều chỉnh</translation>
     </message>
     <message>
-        <source>Hide effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer hidden</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer shown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Link adjustment to clip</source>
         <translation>Liên kết lớp điều chỉnh vào clip</translation>
     </message>
@@ -24909,6 +24893,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Không tìm thấy gói thủ tục. Clip sẽ không kết xuất gì cho đến khi nó được cài đặt lại.</translation>
     </message>
     <message>
+        <source>Effect</source>
+        <translation type="unfinished">Hiệu ứng</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (tắt)</translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>Điều chỉnh âm thanh</translation>
     </message>
@@ -24927,14 +24919,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Subtitles</source>
         <translation>Phụ đề</translation>
-    </message>
-    <message>
-        <source>Hide the effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the effects layer</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, track %2</source>

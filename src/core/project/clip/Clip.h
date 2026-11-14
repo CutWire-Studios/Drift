@@ -70,8 +70,8 @@ struct Clip
     // mirroring is enforced centrally so every move/trim/split path keeps it true.
     // Directional, unlike `linkId`, which symmetrically pairs A/V companions.
     QString linkedClipId;
-    // A linked effects layer the user has tucked away: it renders as before but is not drawn or
-    // hit-tested in its lane, and a lane holding only such layers takes no height.
+    // Legacy: older builds could tuck a linked effects layer out of its lane. Kept so those
+    // projects round-trip; the timeline always draws lanes now.
     bool hiddenInLane = false;
 
     // When true, AudioMixer skips this video clip's embedded audio (companion audio track plays it).

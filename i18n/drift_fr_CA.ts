@@ -3368,22 +3368,6 @@
         <translation>Réglage délié</translation>
     </message>
     <message>
-        <source>Hide effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer hidden</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer shown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Link adjustment to clip</source>
         <translation>Lier le réglage au clip</translation>
     </message>
@@ -24993,6 +24977,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Effect</source>
+        <translation type="unfinished">Effet</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (désactivé)</translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>Ajustement audio</translation>
     </message>
@@ -25011,14 +25003,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Subtitles</source>
         <translation>Sous-titres</translation>
-    </message>
-    <message>
-        <source>Hide the effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the effects layer</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, track %2</source>

@@ -3363,22 +3363,6 @@
         <translation>Ajuste desvinculado</translation>
     </message>
     <message>
-        <source>Hide effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer hidden</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects layer shown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Link adjustment to clip</source>
         <translation>Vincular ajuste ao clipe</translation>
     </message>
@@ -24989,6 +24973,14 @@ Se a reprodução travar, experimente outro.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Effect</source>
+        <translation type="unfinished">Efeito</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (desativado)</translation>
+    </message>
+    <message>
         <source>Audio adjustment</source>
         <translation>Ajuste de áudio</translation>
     </message>
@@ -25007,14 +24999,6 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Subtitles</source>
         <translation>Legendas</translation>
-    </message>
-    <message>
-        <source>Hide the effects layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the effects layer</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, track %2</source>
