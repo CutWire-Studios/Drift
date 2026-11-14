@@ -25,30 +25,30 @@
     </message>
     <message>
         <source>Licensed under GPLv3. Copyright © CutWire Studios.</source>
-        <translation type="unfinished"></translation>
+        <translation>依據 GPLv3 授權。版權所有 © CutWire Studios。</translation>
     </message>
 </context>
 <context>
     <name>AccelerationFailedDialog</name>
     <message>
         <source>AI engine isn&apos;t working</source>
-        <translation type="unfinished"></translation>
+        <translation>AI 引擎無法運作</translation>
     </message>
     <message>
         <source>Use this engine</source>
-        <translation type="unfinished"></translation>
+        <translation>使用此引擎</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">取消</translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine to continue.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1”無法執行此功能。請選取其他 AI 引擎以繼續。</translation>
     </message>
     <message>
         <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine, then try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1”無法執行此功能。請選取其他 AI 引擎後重試。</translation>
     </message>
 </context>
 <context>
@@ -59,27 +59,27 @@
     </message>
     <message>
         <source>Processor (CPU)</source>
-        <translation type="unfinished"></translation>
+        <translation>處理器 (CPU)</translation>
     </message>
     <message>
         <source>NVIDIA CUDA</source>
-        <translation type="unfinished"></translation>
+        <translation>NVIDIA CUDA</translation>
     </message>
     <message>
         <source>AMD MIGraphX (Windows ML)</source>
-        <translation type="unfinished"></translation>
+        <translation>AMD MIGraphX (Windows ML)</translation>
     </message>
     <message>
         <source>AMD ROCm (MIGraphX)</source>
-        <translation type="unfinished"></translation>
+        <translation>AMD ROCm (MIGraphX)</translation>
     </message>
     <message>
         <source>Windows ML (DirectX 12)</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows ML (DirectX 12)</translation>
     </message>
     <message>
         <source>WebGPU (any graphics card)</source>
-        <translation type="unfinished"></translation>
+        <translation>WebGPU (任何顯示卡)</translation>
     </message>
     <message>
         <source>Could not open that file.</source>
@@ -99,11 +99,11 @@
     </message>
     <message>
         <source>This is not a Drift addon, a .driftfx or a Drift Forge zip.</source>
-        <translation type="unfinished"></translation>
+        <translation>這不是 Drift 附加元件、.driftfx 或 Drift Forge zip 檔案。</translation>
     </message>
     <message>
         <source>Drift cannot use this file: %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift 無法使用此檔案：%1。</translation>
     </message>
 </context>
 <context>
@@ -287,19 +287,19 @@
     <name>AgentViewsPanel</name>
     <message>
         <source>Agent Views</source>
-        <translation type="unfinished"></translation>
+        <translation>智慧體視圖</translation>
     </message>
     <message>
         <source>%1 – %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 – %2</translation>
     </message>
     <message>
         <source>No images yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>尚無圖片。</translation>
     </message>
     <message>
         <source>Images the AI requests, such as frames, audio sheets and captures, appear here during this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>AI 請求的圖片（例如影格、音訊表與截圖）會在本次工作階段顯示於此。</translation>
     </message>
 </context>
 <context>
@@ -401,241 +401,241 @@
     <name>AndroidAddPage</name>
     <message>
         <source>Library</source>
-        <translation type="unfinished"></translation>
+        <translation>素材庫</translation>
     </message>
     <message>
         <source>Properties</source>
-        <translation type="unfinished">屬性</translation>
+        <translation>屬性</translation>
     </message>
 </context>
 <context>
     <name>AndroidAdjustPage</name>
     <message>
         <source>Exposure</source>
-        <translation type="unfinished">曝光</translation>
+        <translation>曝光</translation>
     </message>
     <message>
         <source>Contrast</source>
-        <translation type="unfinished">對比度</translation>
+        <translation>對比度</translation>
     </message>
     <message>
         <source>Saturation</source>
-        <translation type="unfinished">飽和度</translation>
+        <translation>飽和度</translation>
     </message>
     <message>
         <source>Temperature</source>
-        <translation type="unfinished">色溫</translation>
+        <translation>色溫</translation>
     </message>
     <message>
         <source>Adjust %1</source>
-        <translation type="unfinished">調整 %1</translation>
+        <translation>調整 %1</translation>
     </message>
     <message>
         <source>Reset</source>
-        <translation type="unfinished">重置</translation>
+        <translation>重置</translation>
     </message>
     <message>
         <source>Reset %1</source>
-        <translation type="unfinished">重置 %1</translation>
+        <translation>重置 %1</translation>
     </message>
 </context>
 <context>
     <name>AndroidAnimationPage</name>
     <message>
         <source>None</source>
-        <translation type="unfinished">無</translation>
+        <translation>無</translation>
     </message>
     <message>
         <source>%1 s</source>
-        <translation type="unfinished">%1 秒</translation>
+        <translation>%1 秒</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished"></translation>
+        <translation>入場</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished"></translation>
+        <translation>出場</translation>
     </message>
     <message>
         <source>Fade also ramps the volume.</source>
-        <translation type="unfinished"></translation>
+        <translation>淡化同時會調節音量。</translation>
     </message>
     <message>
         <source>Fade ramps the volume.</source>
-        <translation type="unfinished"></translation>
+        <translation>淡化會調節音量。</translation>
     </message>
     <message>
         <source>Fade in</source>
-        <translation type="unfinished">淡入</translation>
+        <translation>淡入</translation>
     </message>
     <message>
         <source>Fade out</source>
-        <translation type="unfinished">淡出</translation>
+        <translation>淡出</translation>
     </message>
     <message>
         <source>Fade curve</source>
-        <translation type="unfinished"></translation>
+        <translation>淡化曲線</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished">動畫</translation>
+        <translation>動畫</translation>
     </message>
     <message>
         <source>Duration</source>
-        <translation type="unfinished">時長</translation>
+        <translation>時長</translation>
     </message>
     <message>
         <source>Animation curve</source>
-        <translation type="unfinished"></translation>
+        <translation>動畫曲線</translation>
     </message>
     <message>
         <source>Letter and word animations live in Text animation. This moves the whole clip.</source>
-        <translation type="unfinished"></translation>
+        <translation>字元與單詞動畫位於「文字動畫」中。此處會移動整個片段。</translation>
     </message>
 </context>
 <context>
     <name>AndroidBackgroundPage</name>
     <message>
         <source>Choose background image</source>
-        <translation type="unfinished"></translation>
+        <translation>選擇背景圖片</translation>
     </message>
     <message>
         <source>Images (*.png *.jpg *.jpeg *.webp *.bmp)</source>
-        <translation type="unfinished"></translation>
+        <translation>圖片 (*.png *.jpg *.jpeg *.webp *.bmp)</translation>
     </message>
     <message>
         <source>Fill canvas</source>
-        <translation type="unfinished"></translation>
+        <translation>填滿畫布</translation>
     </message>
     <message>
         <source>Solid</source>
-        <translation type="unfinished">純色</translation>
+        <translation>純色</translation>
     </message>
     <message>
         <source>Blur</source>
-        <translation type="unfinished">模糊</translation>
+        <translation>模糊</translation>
     </message>
     <message>
         <source>Image</source>
-        <translation type="unfinished">圖像</translation>
+        <translation>圖像</translation>
     </message>
     <message>
         <source>Blur strength</source>
-        <translation type="unfinished">模糊強度</translation>
+        <translation>模糊強度</translation>
     </message>
     <message>
         <source>Choose image</source>
-        <translation type="unfinished"></translation>
+        <translation>選擇圖片</translation>
     </message>
     <message>
         <source>Choose another image</source>
-        <translation type="unfinished"></translation>
+        <translation>選擇其他圖片</translation>
     </message>
     <message>
         <source>The image is added on a new bottom track for the length of the video, scaled to fill the frame.</source>
-        <translation type="unfinished"></translation>
+        <translation>圖片會新增至最底部的新軌道，長度與影片相同，並縮放至填滿畫面。</translation>
     </message>
 </context>
 <context>
     <name>AndroidBottomRail</name>
     <message>
         <source>Adjust</source>
-        <translation type="unfinished"></translation>
+        <translation>調整</translation>
     </message>
     <message>
         <source>Volume</source>
-        <translation type="unfinished">音量</translation>
+        <translation>音量</translation>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished">速度</translation>
+        <translation>速度</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished">動畫</translation>
+        <translation>動畫</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished">遮罩</translation>
+        <translation>遮罩</translation>
     </message>
     <message>
         <source>Blending</source>
-        <translation type="unfinished">混合</translation>
+        <translation>混合</translation>
     </message>
     <message>
         <source>Transition</source>
-        <translation type="unfinished">轉場</translation>
+        <translation>轉場</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation>相機</translation>
     </message>
     <message>
         <source>Stabilize</source>
-        <translation type="unfinished">防抖</translation>
+        <translation>防抖</translation>
     </message>
     <message>
         <source>Fade</source>
-        <translation type="unfinished">淡入淡出</translation>
+        <translation>淡入淡出</translation>
     </message>
     <message>
         <source>Edit text</source>
-        <translation type="unfinished"></translation>
+        <translation>編輯文字</translation>
     </message>
     <message>
         <source>Text style</source>
-        <translation type="unfinished">文本樣式</translation>
+        <translation>文本樣式</translation>
     </message>
     <message>
         <source>Text settings</source>
-        <translation type="unfinished"></translation>
+        <translation>文字設定</translation>
     </message>
     <message>
         <source>Text animation</source>
-        <translation type="unfinished"></translation>
+        <translation>文字動畫</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>字幕</translation>
     </message>
     <message>
         <source>Shape style</source>
-        <translation type="unfinished">形狀樣式</translation>
+        <translation>形狀樣式</translation>
     </message>
     <message>
         <source>Motion</source>
-        <translation type="unfinished">運動</translation>
+        <translation>運動</translation>
     </message>
     <message>
         <source>PDF</source>
-        <translation type="unfinished">PDF</translation>
+        <translation>PDF</translation>
     </message>
     <message>
         <source>3D Model</source>
-        <translation type="unfinished">3D 模型</translation>
+        <translation>3D 模型</translation>
     </message>
     <message numerus="yes">
         <source>%n clip(s) selected</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>已選取 %n 個片段</numerusform>
         </translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation type="unfinished">變換</translation>
+        <translation>變換</translation>
     </message>
     <message>
         <source>Details</source>
-        <translation type="unfinished"></translation>
+        <translation>詳細資訊</translation>
     </message>
     <message>
         <source>Crop</source>
-        <translation type="unfinished">裁剪</translation>
+        <translation>裁剪</translation>
     </message>
     <message>
         <source>Background</source>
-        <translation type="unfinished">背景</translation>
+        <translation>背景</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -654,15 +654,15 @@
     <name>AndroidClipRangeBar</name>
     <message>
         <source>Pause</source>
-        <translation type="unfinished">暫停</translation>
+        <translation>暫停</translation>
     </message>
     <message>
         <source>Play</source>
-        <translation type="unfinished">播放</translation>
+        <translation>播放</translation>
     </message>
     <message>
         <source>Seek</source>
-        <translation type="unfinished">跳轉</translation>
+        <translation>跳轉</translation>
     </message>
 </context>
 <context>
@@ -705,11 +705,11 @@
     </message>
     <message>
         <source>Enable</source>
-        <translation type="unfinished"></translation>
+        <translation>啟用</translation>
     </message>
     <message>
         <source>Disable</source>
-        <translation type="unfinished"></translation>
+        <translation>停用</translation>
     </message>
     <message>
         <source>Speed</source>
@@ -717,11 +717,11 @@
     </message>
     <message>
         <source>Editing %1</source>
-        <translation type="unfinished">正在編輯 %1</translation>
+        <translation>正在編輯 %1</translation>
     </message>
     <message>
         <source>Tap a clip to edit</source>
-        <translation type="unfinished">點按片段進行編輯</translation>
+        <translation>點按片段進行編輯</translation>
     </message>
     <message>
         <source>Duplicate</source>
@@ -733,7 +733,7 @@
     </message>
     <message>
         <source>Main</source>
-        <translation type="unfinished">主</translation>
+        <translation>主</translation>
     </message>
     <message>
         <source>Fit</source>
@@ -741,7 +741,7 @@
     </message>
     <message>
         <source>Composite</source>
-        <translation type="unfinished">合成</translation>
+        <translation>合成</translation>
     </message>
     <message>
         <source>Move the playhead over the clip to split it</source>
@@ -785,27 +785,27 @@
     <name>AndroidCropPage</name>
     <message>
         <source>Free</source>
-        <translation type="unfinished">自由</translation>
+        <translation>自由</translation>
     </message>
     <message>
         <source>Original</source>
-        <translation type="unfinished">原始</translation>
+        <translation>原始</translation>
     </message>
     <message>
         <source>Clip</source>
-        <translation type="unfinished">片段</translation>
+        <translation>片段</translation>
     </message>
     <message>
         <source>Video</source>
-        <translation type="unfinished">視頻</translation>
+        <translation>視頻</translation>
     </message>
     <message>
         <source>Rotate</source>
-        <translation type="unfinished">旋轉</translation>
+        <translation>旋轉</translation>
     </message>
     <message>
         <source>Reset</source>
-        <translation type="unfinished">重置</translation>
+        <translation>重置</translation>
     </message>
 </context>
 <context>
@@ -827,7 +827,7 @@
     </message>
     <message>
         <source>Curve</source>
-        <translation type="unfinished">曲線</translation>
+        <translation>曲線</translation>
     </message>
     <message>
         <source>Done</source>
@@ -838,127 +838,127 @@
     <name>AndroidEditor</name>
     <message>
         <source>Effects</source>
-        <translation type="unfinished">效果</translation>
+        <translation>效果</translation>
     </message>
     <message>
         <source>Adjust</source>
-        <translation type="unfinished"></translation>
+        <translation>調整</translation>
     </message>
     <message>
         <source>Volume</source>
-        <translation type="unfinished">音量</translation>
+        <translation>音量</translation>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished">速度</translation>
+        <translation>速度</translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation type="unfinished">變換</translation>
+        <translation>變換</translation>
     </message>
     <message>
         <source>Crop</source>
-        <translation type="unfinished">裁剪</translation>
+        <translation>裁剪</translation>
     </message>
     <message>
         <source>Background</source>
-        <translation type="unfinished">背景</translation>
+        <translation>背景</translation>
     </message>
     <message>
         <source>Sticker</source>
-        <translation type="unfinished"></translation>
+        <translation>貼圖</translation>
     </message>
     <message>
         <source>Add sticker</source>
-        <translation type="unfinished"></translation>
+        <translation>新增貼圖</translation>
     </message>
     <message>
         <source>Shape</source>
-        <translation type="unfinished">形狀</translation>
+        <translation>形狀</translation>
     </message>
     <message>
         <source>Add shape</source>
-        <translation type="unfinished"></translation>
+        <translation>新增形狀</translation>
     </message>
     <message>
         <source>Text</source>
-        <translation type="unfinished">文本</translation>
+        <translation>文本</translation>
     </message>
     <message>
         <source>Add text</source>
-        <translation type="unfinished"></translation>
+        <translation>新增文字</translation>
     </message>
     <message>
         <source>Text style</source>
-        <translation type="unfinished">文本樣式</translation>
+        <translation>文本樣式</translation>
     </message>
     <message>
         <source>Text settings</source>
-        <translation type="unfinished"></translation>
+        <translation>文字設定</translation>
     </message>
     <message>
         <source>Text animation</source>
-        <translation type="unfinished"></translation>
+        <translation>文字動畫</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished">動畫</translation>
+        <translation>動畫</translation>
     </message>
     <message>
         <source>Blending</source>
-        <translation type="unfinished">混合</translation>
+        <translation>混合</translation>
     </message>
     <message>
         <source>Shape style</source>
-        <translation type="unfinished">形狀樣式</translation>
+        <translation>形狀樣式</translation>
     </message>
     <message>
         <source>Stabilize</source>
-        <translation type="unfinished">防抖</translation>
+        <translation>防抖</translation>
     </message>
     <message>
         <source>Motion</source>
-        <translation type="unfinished">運動</translation>
+        <translation>運動</translation>
     </message>
     <message>
         <source>3D Model</source>
-        <translation type="unfinished">3D 模型</translation>
+        <translation>3D 模型</translation>
     </message>
     <message>
         <source>PDF</source>
-        <translation type="unfinished">PDF</translation>
+        <translation>PDF</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation>相機</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished">遮罩</translation>
+        <translation>遮罩</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished">音效</translation>
+        <translation>音效</translation>
     </message>
     <message>
         <source>Transition</source>
-        <translation type="unfinished">轉場</translation>
+        <translation>轉場</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>字幕</translation>
     </message>
     <message>
         <source>Details</source>
-        <translation type="unfinished"></translation>
+        <translation>詳細資訊</translation>
     </message>
     <message>
         <source>Add mask</source>
-        <translation type="unfinished">添加遮罩</translation>
+        <translation>添加遮罩</translation>
     </message>
     <message>
         <source>Tap a clip to edit it</source>
-        <translation type="unfinished">點按片段進行編輯</translation>
+        <translation>點按片段進行編輯</translation>
     </message>
     <message>
         <source>Drift project (*.drift)</source>
@@ -997,49 +997,49 @@
     <name>AndroidExtrasPage</name>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">附加項</translation>
+        <translation>附加項</translation>
     </message>
 </context>
 <context>
     <name>AndroidFiltersPage</name>
     <message>
         <source>Applied</source>
-        <translation type="unfinished"></translation>
+        <translation>已套用</translation>
     </message>
     <message>
         <source>Browse</source>
-        <translation type="unfinished"></translation>
+        <translation>瀏覽</translation>
     </message>
 </context>
 <context>
     <name>AndroidHome</name>
     <message>
         <source>Update available</source>
-        <translation type="unfinished">有可用更新</translation>
+        <translation>有可用更新</translation>
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished">素材市場</translation>
+        <translation>素材市場</translation>
     </message>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">附加項</translation>
+        <translation>附加項</translation>
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished">設置</translation>
+        <translation>設置</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation type="unfinished"></translation>
+        <translation>首頁</translation>
     </message>
     <message>
         <source>Projects</source>
-        <translation type="unfinished">項目</translation>
+        <translation>項目</translation>
     </message>
     <message>
         <source>My videos</source>
-        <translation type="unfinished"></translation>
+        <translation>我的影片</translation>
     </message>
 </context>
 <context>
@@ -1065,55 +1065,55 @@
     <name>AndroidHomeTab</name>
     <message>
         <source>Quick edit</source>
-        <translation type="unfinished">快速剪輯</translation>
+        <translation>快速剪輯</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished">效果</translation>
+        <translation>效果</translation>
     </message>
     <message>
         <source>Adjust</source>
-        <translation type="unfinished"></translation>
+        <translation>調整</translation>
     </message>
     <message>
         <source>Sticker</source>
-        <translation type="unfinished"></translation>
+        <translation>貼圖</translation>
     </message>
     <message>
         <source>Text</source>
-        <translation type="unfinished">文本</translation>
+        <translation>文本</translation>
     </message>
     <message>
         <source>Crop</source>
-        <translation type="unfinished">裁剪</translation>
+        <translation>裁剪</translation>
     </message>
     <message>
         <source>Trim</source>
-        <translation type="unfinished">修剪</translation>
+        <translation>修剪</translation>
     </message>
     <message>
         <source>Video to audio</source>
-        <translation type="unfinished"></translation>
+        <translation>影片轉音訊</translation>
     </message>
     <message>
         <source>Image to video</source>
-        <translation type="unfinished"></translation>
+        <translation>圖片轉影片</translation>
     </message>
     <message>
         <source>New project</source>
-        <translation type="unfinished">新建項目</translation>
+        <translation>新建項目</translation>
     </message>
     <message>
         <source>Recent projects</source>
-        <translation type="unfinished">最近項目</translation>
+        <translation>最近項目</translation>
     </message>
     <message>
         <source>See all</source>
-        <translation type="unfinished">查看全部</translation>
+        <translation>查看全部</translation>
     </message>
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation type="unfinished">這裡還沒有內容——您儲存的項目將顯示在此列表中。</translation>
+        <translation>這裡還沒有內容——您儲存的項目將顯示在此列表中。</translation>
     </message>
 </context>
 <context>
@@ -1128,7 +1128,7 @@
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">收藏</translation>
+        <translation>收藏</translation>
     </message>
     <message>
         <source>Template</source>
@@ -1179,19 +1179,19 @@
     </message>
     <message>
         <source>The marketplace didn’t recognise this link.</source>
-        <translation type="unfinished"></translation>
+        <translation>市集無法辨識此連結。</translation>
     </message>
     <message>
         <source>Save downloads to</source>
-        <translation type="unfinished">下載儲存至</translation>
+        <translation>下載儲存至</translation>
     </message>
     <message>
         <source>Download</source>
-        <translation type="unfinished">下載</translation>
+        <translation>下載</translation>
     </message>
     <message>
         <source>Looking up the link…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在查詢連結…</translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1230,23 +1230,23 @@
     </message>
     <message>
         <source>Pick a video or image to crop.</source>
-        <translation type="unfinished"></translation>
+        <translation>選取要裁剪的影片或圖片。</translation>
     </message>
     <message>
         <source>Pick a video or audio file to trim.</source>
-        <translation type="unfinished"></translation>
+        <translation>選取要修剪的影片或音訊檔案。</translation>
     </message>
     <message>
         <source>Video length</source>
-        <translation type="unfinished"></translation>
+        <translation>影片長度</translation>
     </message>
     <message>
         <source>Export</source>
-        <translation type="unfinished">導出</translation>
+        <translation>導出</translation>
     </message>
     <message>
         <source>How long should the image play?</source>
-        <translation type="unfinished"></translation>
+        <translation>圖片應播放多長時間？</translation>
     </message>
     <message>
         <source>That share had no link in it.</source>
@@ -1286,7 +1286,7 @@
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished">設置</translation>
+        <translation>設置</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -1317,7 +1317,7 @@
     <name>AndroidMarketplacePage</name>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished">素材市場</translation>
+        <translation>素材市場</translation>
     </message>
 </context>
 <context>
@@ -1473,11 +1473,11 @@
     </message>
     <message>
         <source>Dissolve composite</source>
-        <translation type="unfinished"></translation>
+        <translation>解散複合片段</translation>
     </message>
     <message>
         <source>Release the clips inside back onto the timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>將內部的片段釋放回時間軸</translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -1621,11 +1621,11 @@
     </message>
     <message>
         <source>Delete with effects</source>
-        <translation type="unfinished"></translation>
+        <translation>連同效果一起刪除</translation>
     </message>
     <message>
         <source>Remove the clip and its effects together</source>
-        <translation type="unfinished"></translation>
+        <translation>同時移除片段及其效果</translation>
     </message>
     <message>
         <source>Trim &amp; timing</source>
@@ -1792,23 +1792,23 @@
     <name>AndroidMyVideosTab</name>
     <message>
         <source>Video actions</source>
-        <translation type="unfinished"></translation>
+        <translation>影片操作</translation>
     </message>
     <message>
         <source>Share</source>
-        <translation type="unfinished">分享</translation>
+        <translation>分享</translation>
     </message>
     <message>
         <source>Remove from list</source>
-        <translation type="unfinished"></translation>
+        <translation>從清單中移除</translation>
     </message>
     <message>
         <source>No exported videos yet</source>
-        <translation type="unfinished"></translation>
+        <translation>尚無匯出的影片</translation>
     </message>
     <message>
         <source>Exported videos appear here</source>
-        <translation type="unfinished"></translation>
+        <translation>匯出的影片會顯示於此</translation>
     </message>
 </context>
 <context>
@@ -2042,7 +2042,7 @@
     </message>
     <message>
         <source>Search projects</source>
-        <translation type="unfinished"></translation>
+        <translation>搜尋專案</translation>
     </message>
     <message>
         <source>Open</source>
@@ -2054,19 +2054,19 @@
     </message>
     <message>
         <source>No projects yet</source>
-        <translation type="unfinished"></translation>
+        <translation>尚無專案</translation>
     </message>
     <message>
         <source>No matches</source>
-        <translation type="unfinished">無符合項</translation>
+        <translation>無符合項</translation>
     </message>
     <message>
         <source>Projects you save will show up here.</source>
-        <translation type="unfinished"></translation>
+        <translation>您儲存的專案會顯示於此。</translation>
     </message>
     <message>
         <source>Try a different name.</source>
-        <translation type="unfinished"></translation>
+        <translation>嘗試其他名稱。</translation>
     </message>
 </context>
 <context>
@@ -2114,14 +2114,14 @@
     <name>AndroidSpeedPage</name>
     <message>
         <source>Speed curve</source>
-        <translation type="unfinished"></translation>
+        <translation>速度曲線</translation>
     </message>
 </context>
 <context>
     <name>AndroidSubPage</name>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>返回</translation>
     </message>
 </context>
 <context>
@@ -2182,7 +2182,7 @@
     <name>AndroidTextPage</name>
     <message>
         <source>Edit text</source>
-        <translation type="unfinished"></translation>
+        <translation>編輯文字</translation>
     </message>
 </context>
 <context>
@@ -2335,22 +2335,22 @@
     <name>AndroidTimelineTrimNudge</name>
     <message>
         <source>In</source>
-        <translation type="unfinished"></translation>
+        <translation>進點</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished"></translation>
+        <translation>出點</translation>
     </message>
 </context>
 <context>
     <name>AndroidToolPage</name>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">取消</translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">應用</translation>
+        <translation>應用</translation>
     </message>
 </context>
 <context>
@@ -2430,7 +2430,7 @@
     <name>AndroidTransitionPickerSheet</name>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished">轉場</translation>
+        <translation>轉場</translation>
     </message>
 </context>
 <context>
@@ -2445,23 +2445,23 @@
     </message>
     <message>
         <source>Fade in</source>
-        <translation type="unfinished">淡入</translation>
+        <translation>淡入</translation>
     </message>
     <message>
         <source>Fade out</source>
-        <translation type="unfinished">淡出</translation>
+        <translation>淡出</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished">動畫</translation>
+        <translation>動畫</translation>
     </message>
     <message>
         <source>Fade and motion combine — fade also ramps the volume.</source>
-        <translation type="unfinished"></translation>
+        <translation>淡化與動作結合——淡化同時會調節音量。</translation>
     </message>
     <message>
         <source>Fade ramps the volume in and out.</source>
-        <translation type="unfinished"></translation>
+        <translation>淡化會淡入淡出音量。</translation>
     </message>
     <message>
         <source>Slide up</source>
@@ -2469,11 +2469,11 @@
     </message>
     <message>
         <source>Fade and animation in</source>
-        <translation type="unfinished"></translation>
+        <translation>淡入與入場動畫</translation>
     </message>
     <message>
         <source>Fade and animation out</source>
-        <translation type="unfinished"></translation>
+        <translation>淡出與出場動畫</translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -2509,7 +2509,7 @@
     </message>
     <message>
         <source>Custom curve</source>
-        <translation type="unfinished">自訂曲線</translation>
+        <translation>自訂曲線</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -2560,7 +2560,7 @@
     </message>
     <message>
         <source>Delete selection with its effects</source>
-        <translation type="unfinished"></translation>
+        <translation>刪除選取項目及其效果</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -2592,11 +2592,11 @@
     </message>
     <message>
         <source>Split selected clip at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>在當前時間分割選取的片段</translation>
     </message>
     <message>
         <source>Add transition at playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>在播放磁頭處新增轉場</translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -2616,7 +2616,7 @@
     </message>
     <message>
         <source>Enable or disable selected clips</source>
-        <translation type="unfinished"></translation>
+        <translation>啟用或停用選取的片段</translation>
     </message>
     <message>
         <source>Clear selection</source>
@@ -2644,11 +2644,11 @@
     </message>
     <message>
         <source>Hide/show selected clip&apos;s track</source>
-        <translation type="unfinished"></translation>
+        <translation>隱藏/顯示選取片段的軌道</translation>
     </message>
     <message>
         <source>3D gizmo: cycle world/local/view axes</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 操縱器：循環切換世界/自身/視圖坐標軸</translation>
     </message>
     <message>
         <source>Add/remove bookmark at current time</source>
@@ -2768,7 +2768,7 @@
     </message>
     <message>
         <source>No space to place the clip there</source>
-        <translation type="unfinished"></translation>
+        <translation>沒有足夠空間在此放置片段</translation>
     </message>
     <message>
         <source>A clip can&apos;t completely cover another</source>
@@ -2780,11 +2780,11 @@
     </message>
     <message>
         <source>Select a clip to split first</source>
-        <translation type="unfinished"></translation>
+        <translation>請先選取要分割的片段</translation>
     </message>
     <message>
         <source>The playhead isn&apos;t over a selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>播放磁頭不在選取的片段上方</translation>
     </message>
     <message>
         <source>Nothing to split here — move to a clip first</source>
@@ -2804,7 +2804,7 @@
     </message>
     <message>
         <source>Trim clip</source>
-        <translation type="unfinished">修剪片段</translation>
+        <translation>修剪片段</translation>
     </message>
     <message>
         <source>Trim updated</source>
@@ -3062,7 +3062,7 @@
     </message>
     <message>
         <source>The interface graphics API you chose did not start, so Drift went back to OpenGL.</source>
-        <translation type="unfinished"></translation>
+        <translation>您選擇的介面圖形 API 無法啟動，因此 Drift 已還原為 OpenGL。</translation>
     </message>
     <message>
         <source>Could not create a proxy for %1: %2</source>
@@ -3150,19 +3150,19 @@
     </message>
     <message>
         <source>3D gizmo: move / Tracker tool</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 操縱器：移動 / 追蹤器工具</translation>
     </message>
     <message>
         <source>3D gizmo: rotate / Rectangle mask</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 操縱器：旋轉 / 矩形遮罩</translation>
     </message>
     <message>
         <source>3D gizmo: scale / Ellipse mask</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 操縱器：縮放 / 橢圓遮罩</translation>
     </message>
     <message>
         <source>Cut tool / Brush mask</source>
-        <translation type="unfinished"></translation>
+        <translation>切割工具 / 筆刷遮罩</translation>
     </message>
     <message>
         <source>Polygon mask tool</source>
@@ -3182,27 +3182,27 @@
     </message>
     <message>
         <source>Brush: switch paint / erase</source>
-        <translation type="unfinished"></translation>
+        <translation>筆刷：切換繪製 / 擦除</translation>
     </message>
     <message>
         <source>Track forward</source>
-        <translation type="unfinished">向前跟蹤</translation>
+        <translation>向前跟蹤</translation>
     </message>
     <message>
         <source>Track backward</source>
-        <translation type="unfinished">向後跟蹤</translation>
+        <translation>向後跟蹤</translation>
     </message>
     <message>
         <source>Track one frame forward</source>
-        <translation type="unfinished">向前跟蹤一格</translation>
+        <translation>向前跟蹤一格</translation>
     </message>
     <message>
         <source>Track one frame backward</source>
-        <translation type="unfinished"></translation>
+        <translation>向後追蹤一格</translation>
     </message>
     <message>
         <source>Track whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤整個片段</translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -3262,43 +3262,43 @@
     </message>
     <message>
         <source>Track is locked</source>
-        <translation type="unfinished"></translation>
+        <translation>軌道已鎖定</translation>
     </message>
     <message>
         <source>The gap stays open: a linked track is locked</source>
-        <translation type="unfinished"></translation>
+        <translation>間隙保持開啟：關聯的軌道已鎖定</translation>
     </message>
     <message>
         <source>The gap stays open: a clip is in the way of closing it</source>
-        <translation type="unfinished"></translation>
+        <translation>間隙保持開啟：有片段阻礙關閉間隙</translation>
     </message>
     <message>
         <source>The gap stays open: &quot;%1&quot; is in the way of closing it</source>
-        <translation type="unfinished"></translation>
+        <translation>間隙保持開啟：“%1”阻礙關閉間隙</translation>
     </message>
     <message>
         <source>Clip inserted</source>
-        <translation type="unfinished"></translation>
+        <translation>已插入片段</translation>
     </message>
     <message>
         <source>Ripple trim</source>
-        <translation type="unfinished"></translation>
+        <translation>波紋修剪</translation>
     </message>
     <message>
         <source>Gaps closed</source>
-        <translation type="unfinished"></translation>
+        <translation>已閉合間隙</translation>
     </message>
     <message>
         <source>Clips swapped</source>
-        <translation type="unfinished"></translation>
+        <translation>片段已調換</translation>
     </message>
     <message>
         <source>Set sequence</source>
-        <translation type="unfinished"></translation>
+        <translation>設定序列</translation>
     </message>
     <message>
         <source>Replace clip</source>
-        <translation type="unfinished"></translation>
+        <translation>取代片段</translation>
     </message>
     <message>
         <source>Clips moved</source>
@@ -3398,19 +3398,19 @@
     </message>
     <message>
         <source>Aim camera at target</source>
-        <translation type="unfinished"></translation>
+        <translation>攝影機對準目標</translation>
     </message>
     <message>
         <source>Free camera</source>
-        <translation type="unfinished"></translation>
+        <translation>自由攝影機</translation>
     </message>
     <message>
         <source>Camera aims at its point of interest</source>
-        <translation type="unfinished"></translation>
+        <translation>攝影機對準其目標點</translation>
     </message>
     <message>
         <source>Camera uses its own rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>攝影機使用自身旋轉</translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -3626,23 +3626,23 @@
     </message>
     <message>
         <source>A clip with a speed ramp can&apos;t loop</source>
-        <translation type="unfinished"></translation>
+        <translation>包含變速曲線的片段無法循環播放</translation>
     </message>
     <message>
         <source>Loop on</source>
-        <translation type="unfinished"></translation>
+        <translation>開啟循環</translation>
     </message>
     <message>
         <source>Loop off</source>
-        <translation type="unfinished"></translation>
+        <translation>關閉循環</translation>
     </message>
     <message>
         <source>Clip looping</source>
-        <translation type="unfinished"></translation>
+        <translation>片段循環播放</translation>
     </message>
     <message>
         <source>Clip not looping</source>
-        <translation type="unfinished"></translation>
+        <translation>片段不循環播放</translation>
     </message>
     <message>
         <source>A clip is already being reversed</source>
@@ -3666,19 +3666,19 @@
     </message>
     <message>
         <source>Enable clips</source>
-        <translation type="unfinished"></translation>
+        <translation>啟用片段</translation>
     </message>
     <message>
         <source>Disable clips</source>
-        <translation type="unfinished"></translation>
+        <translation>停用片段</translation>
     </message>
     <message>
         <source>Clips enabled</source>
-        <translation type="unfinished"></translation>
+        <translation>片段已啟用</translation>
     </message>
     <message>
         <source>Clips disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>片段已停用</translation>
     </message>
     <message>
         <source>Pan changed</source>
@@ -3718,19 +3718,19 @@
     </message>
     <message>
         <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
-        <translation type="unfinished"></translation>
+        <translation>變速、反向或非正常速度的複合片段無法解散</translation>
     </message>
     <message>
         <source>Dissolve composite</source>
-        <translation type="unfinished"></translation>
+        <translation>解散複合片段</translation>
     </message>
     <message>
         <source>Composite effects and transform were discarded</source>
-        <translation type="unfinished"></translation>
+        <translation>已捨棄複合片段的效果和變換</translation>
     </message>
     <message>
         <source>Composite dissolved</source>
-        <translation type="unfinished"></translation>
+        <translation>已解散複合片段</translation>
     </message>
     <message>
         <source>Composite</source>
@@ -3738,11 +3738,11 @@
     </message>
     <message>
         <source>Timeline %1</source>
-        <translation type="unfinished"></translation>
+        <translation>時間軸 %1</translation>
     </message>
     <message>
         <source>Timeline created</source>
-        <translation type="unfinished"></translation>
+        <translation>已建立時間軸</translation>
     </message>
     <message>
         <source>Flattening composite…</source>
@@ -3826,39 +3826,39 @@
     </message>
     <message>
         <source>unknown procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>未知的程序化套件</translation>
     </message>
     <message>
         <source>unknown param &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>未知的參數“%1”</translation>
     </message>
     <message>
         <source>Procedural clip added</source>
-        <translation type="unfinished"></translation>
+        <translation>已新增程序化片段</translation>
     </message>
     <message>
         <source>Change procedural</source>
-        <translation type="unfinished"></translation>
+        <translation>變更程序化內容</translation>
     </message>
     <message>
         <source>Procedural changed</source>
-        <translation type="unfinished"></translation>
+        <translation>程序化內容已變更</translation>
     </message>
     <message>
         <source>Edit procedural</source>
-        <translation type="unfinished"></translation>
+        <translation>編輯程序化內容</translation>
     </message>
     <message>
         <source>Procedural updated</source>
-        <translation type="unfinished"></translation>
+        <translation>程序化內容已更新</translation>
     </message>
     <message>
         <source>Change seed</source>
-        <translation type="unfinished"></translation>
+        <translation>變更隨機種子</translation>
     </message>
     <message>
         <source>Seed changed</source>
-        <translation type="unfinished"></translation>
+        <translation>隨機種子已變更</translation>
     </message>
     <message>
         <source>3D model replaced</source>
@@ -3934,7 +3934,7 @@
     </message>
     <message>
         <source>Split</source>
-        <translation type="unfinished">分割</translation>
+        <translation>分割</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -3978,15 +3978,15 @@
     </message>
     <message>
         <source>Apply transition to cuts</source>
-        <translation type="unfinished"></translation>
+        <translation>將轉場套用至剪輯切口</translation>
     </message>
     <message>
         <source>Transitions updated</source>
-        <translation type="unfinished"></translation>
+        <translation>轉場已更新</translation>
     </message>
     <message>
         <source>No cut between two clips to add a transition to</source>
-        <translation type="unfinished"></translation>
+        <translation>兩個片段之間沒有切口可新增轉場</translation>
     </message>
     <message>
         <source>Edit curve</source>
@@ -4110,7 +4110,7 @@
     </message>
     <message>
         <source>Align camera to view</source>
-        <translation type="unfinished"></translation>
+        <translation>將攝影機對齊視圖</translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
@@ -4298,31 +4298,31 @@
     </message>
     <message>
         <source>Linear</source>
-        <translation type="unfinished">線性</translation>
+        <translation>線性</translation>
     </message>
     <message>
         <source>Smooth</source>
-        <translation type="unfinished">平滑</translation>
+        <translation>平滑</translation>
     </message>
     <message>
         <source>Natural</source>
-        <translation type="unfinished">自然</translation>
+        <translation>自然</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished">自訂</translation>
+        <translation>自訂</translation>
     </message>
     <message>
         <source>Snappy</source>
-        <translation type="unfinished">彈跳</translation>
+        <translation>彈跳</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>返回</translation>
     </message>
     <message>
         <source>Bounce</source>
-        <translation type="unfinished">彈跳</translation>
+        <translation>彈跳</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -4346,11 +4346,11 @@
     </message>
     <message>
         <source>Add keyframes</source>
-        <translation type="unfinished">添加關鍵格</translation>
+        <translation>添加關鍵格</translation>
     </message>
     <message>
         <source>Keyframes set</source>
-        <translation type="unfinished"></translation>
+        <translation>關鍵影格已設定</translation>
     </message>
     <message>
         <source>Reset camera</source>
@@ -4410,11 +4410,11 @@
     </message>
     <message>
         <source>Remove all effects</source>
-        <translation type="unfinished"></translation>
+        <translation>移除所有效果</translation>
     </message>
     <message>
         <source>All effects removed</source>
-        <translation type="unfinished"></translation>
+        <translation>已移除所有效果</translation>
     </message>
     <message>
         <source>Enable effect</source>
@@ -4446,7 +4446,7 @@
     </message>
     <message>
         <source>Change LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>變更 LUT</translation>
     </message>
     <message>
         <source>Could not read the selected file</source>
@@ -4680,27 +4680,27 @@
     </message>
     <message>
         <source>Exclude from export</source>
-        <translation type="unfinished"></translation>
+        <translation>在匯出時排除</translation>
     </message>
     <message>
         <source>Track left out of export</source>
-        <translation type="unfinished"></translation>
+        <translation>軌道已在匯出中排除</translation>
     </message>
     <message>
         <source>Track included in export</source>
-        <translation type="unfinished"></translation>
+        <translation>軌道已包含在匯出中</translation>
     </message>
     <message>
         <source>Track lock</source>
-        <translation type="unfinished"></translation>
+        <translation>軌道鎖定</translation>
     </message>
     <message>
         <source>Track locked</source>
-        <translation type="unfinished"></translation>
+        <translation>軌道已鎖定</translation>
     </message>
     <message>
         <source>Track unlocked</source>
-        <translation type="unfinished"></translation>
+        <translation>軌道已解除鎖定</translation>
     </message>
     <message>
         <source>Move track</source>
@@ -4720,11 +4720,11 @@
     </message>
     <message>
         <source>Delete empty tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>刪除空白軌道</translation>
     </message>
     <message>
         <source>Empty tracks deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>已刪除空白軌道</translation>
     </message>
     <message>
         <source>Add track</source>
@@ -5014,30 +5014,30 @@
     </message>
     <message>
         <source>Clear clip label</source>
-        <translation type="unfinished"></translation>
+        <translation>清除片段標籤</translation>
     </message>
     <message>
         <source>Label clip</source>
-        <translation type="unfinished"></translation>
+        <translation>標記片段</translation>
     </message>
     <message>
         <source>Clip label cleared</source>
-        <translation type="unfinished"></translation>
+        <translation>已清除片段標籤</translation>
     </message>
     <message>
         <source>Clip labelled</source>
-        <translation type="unfinished"></translation>
+        <translation>片段已標記</translation>
     </message>
 </context>
 <context>
     <name>AppSettingsMenu</name>
     <message>
         <source>Help…</source>
-        <translation type="unfinished"></translation>
+        <translation>說明…</translation>
     </message>
     <message>
         <source>Save diagnostics…</source>
-        <translation type="unfinished"></translation>
+        <translation>儲存診斷資訊…</translation>
     </message>
     <message>
         <source>Settings…</source>
@@ -5074,7 +5074,7 @@
     </message>
     <message>
         <source>The proxy could not be made</source>
-        <translation type="unfinished"></translation>
+        <translation>無法建立代理</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -5104,11 +5104,11 @@
     <name>AssetSearchBar</name>
     <message>
         <source>Clear search</source>
-        <translation type="unfinished"></translation>
+        <translation>清除搜尋</translation>
     </message>
     <message>
         <source>Remove from history</source>
-        <translation type="unfinished"></translation>
+        <translation>從記錄中移除</translation>
     </message>
 </context>
 <context>
@@ -5237,16 +5237,16 @@
     </message>
     <message>
         <source>Relink other missing files?</source>
-        <translation type="unfinished"></translation>
+        <translation>重新連結其他遺失的檔案？</translation>
     </message>
     <message>
         <source>Relink</source>
-        <translation type="unfinished"></translation>
+        <translation>重新連結</translation>
     </message>
     <message numerus="yes">
         <source>%n other missing files from the same folder were found in “%1” with the same name and size. Relink them too?</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>在“%1”中找到了同一資料夾中同名且大小相同的其他 %n 個遺失檔案。是否也重新連結它們？</numerusform>
         </translation>
     </message>
     <message>
@@ -5419,11 +5419,11 @@
     </message>
     <message>
         <source>New timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>新增時間軸</translation>
     </message>
     <message>
         <source>Create an empty timeline and open it</source>
-        <translation type="unfinished"></translation>
+        <translation>建立空白時間軸並開啟</translation>
     </message>
 </context>
 <context>
@@ -5438,7 +5438,7 @@
     </message>
     <message>
         <source>Browse Marketplace…</source>
-        <translation type="unfinished"></translation>
+        <translation>瀏覽市集…</translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -5475,95 +5475,95 @@
     <name>AudioAlignController</name>
     <message>
         <source>Audio analysis already in progress</source>
-        <translation type="unfinished"></translation>
+        <translation>音訊分析已在進行中</translation>
     </message>
     <message>
         <source>Select a clip with audio</source>
-        <translation type="unfinished"></translation>
+        <translation>選取包含音訊的片段</translation>
     </message>
     <message>
         <source>Finding silence…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在尋找靜音…</translation>
     </message>
     <message>
         <source>Silence removal cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>已取消靜音消除</translation>
     </message>
     <message>
         <source>The clip changed while it was analysed</source>
-        <translation type="unfinished"></translation>
+        <translation>分析時片段已變更</translation>
     </message>
     <message>
         <source>No silence found</source>
-        <translation type="unfinished"></translation>
+        <translation>未找到靜音</translation>
     </message>
     <message>
         <source>Could not remove the silence</source>
-        <translation type="unfinished"></translation>
+        <translation>無法消除靜音</translation>
     </message>
     <message>
         <source>Remove silence</source>
-        <translation type="unfinished">移除靜音</translation>
+        <translation>移除靜音</translation>
     </message>
     <message>
         <source>Removed %1 s of silence</source>
-        <translation type="unfinished"></translation>
+        <translation>已消除 %1 秒的靜音</translation>
     </message>
     <message>
         <source>Select exactly two clips with audio to sync</source>
-        <translation type="unfinished"></translation>
+        <translation>選取恰好兩個帶有音訊的片段進行同步</translation>
     </message>
     <message>
         <source>Clips with changed speed or reversed playback can&apos;t be synced. Reset their speed and direction first.</source>
-        <translation type="unfinished"></translation>
+        <translation>變速或反向播放的片段無法同步。請先重設其速度和方向。</translation>
     </message>
     <message>
         <source>Matching audio…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在比對音訊…</translation>
     </message>
     <message>
         <source>Correlating…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在進行關聯計算…</translation>
     </message>
     <message>
         <source>Audio sync cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>已取消音訊同步</translation>
     </message>
     <message>
         <source>One of the clips is silent, so there is nothing to match</source>
-        <translation type="unfinished"></translation>
+        <translation>其中一個片段為靜音，無可比對內容</translation>
     </message>
     <message>
         <source>The clips are too short to match by audio</source>
-        <translation type="unfinished"></translation>
+        <translation>片段過短，無法透過音訊進行比對</translation>
     </message>
     <message>
         <source>No clear match between the clips&apos; audio. Nothing was moved.</source>
-        <translation type="unfinished"></translation>
+        <translation>片段音訊之間沒有明確的比對結果。未移動任何內容。</translation>
     </message>
     <message>
         <source>The clips changed while they were analysed</source>
-        <translation type="unfinished"></translation>
+        <translation>分析時片段已變更</translation>
     </message>
     <message>
         <source>The clips are already in sync</source>
-        <translation type="unfinished"></translation>
+        <translation>片段已同步</translation>
     </message>
     <message>
         <source>Syncing would move the clip before the start of the timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>同步將使片段移動到時間軸起點之前</translation>
     </message>
     <message>
         <source>There is no room to move the clip there</source>
-        <translation type="unfinished"></translation>
+        <translation>沒有空間將片段移動到該處</translation>
     </message>
     <message>
         <source>Sync by audio</source>
-        <translation type="unfinished"></translation>
+        <translation>依音訊同步</translation>
     </message>
     <message>
         <source>Moved the second clip %1 s to match the first</source>
-        <translation type="unfinished"></translation>
+        <translation>將第二個片段移動了 %1 秒以比對第一個片段</translation>
     </message>
 </context>
 <context>
@@ -5586,7 +5586,7 @@
     </message>
     <message>
         <source>Install a custom audio effect or effect from a .driftfx or zip made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation>安裝自訂音訊效果，或安裝來自 Drift Forge 製作的 .driftfx 或 zip 效果</translation>
     </message>
     <message>
         <source>My Audio Effects</source>
@@ -5714,7 +5714,7 @@
     </message>
     <message>
         <source>Audio effect settings</source>
-        <translation type="unfinished">音效設置</translation>
+        <translation>音效設置</translation>
     </message>
 </context>
 <context>
@@ -5969,371 +5969,371 @@
     <name>AudioSheetPanel</name>
     <message>
         <source>Audio Sheet</source>
-        <translation type="unfinished"></translation>
+        <translation>音訊表</translation>
     </message>
     <message>
         <source>Work area</source>
-        <translation type="unfinished"></translation>
+        <translation>工作區域</translation>
     </message>
     <message>
         <source>Selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>選取的片段</translation>
     </message>
     <message>
         <source>Whole timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>整個時間軸</translation>
     </message>
     <message>
         <source>1000 px</source>
-        <translation type="unfinished"></translation>
+        <translation>1000 px</translation>
     </message>
     <message>
         <source>1600 px</source>
-        <translation type="unfinished"></translation>
+        <translation>1600 px</translation>
     </message>
     <message>
         <source>2000 px</source>
-        <translation type="unfinished"></translation>
+        <translation>2000 px</translation>
     </message>
     <message>
         <source>2400 px</source>
-        <translation type="unfinished"></translation>
+        <translation>2400 px</translation>
     </message>
     <message>
         <source>Not a sound Drift knows. Closest: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>非 Drift 已知聲音。最接近的聲音：%1</translation>
     </message>
     <message>
         <source>Integrated</source>
-        <translation type="unfinished"></translation>
+        <translation>整合</translation>
     </message>
     <message>
         <source>%1 LUFS</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 LUFS</translation>
     </message>
     <message>
         <source>Loudness range</source>
-        <translation type="unfinished"></translation>
+        <translation>響度範圍</translation>
     </message>
     <message>
         <source>%1 LU</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 LU</translation>
     </message>
     <message>
         <source>True peak</source>
-        <translation type="unfinished"></translation>
+        <translation>真實峰值</translation>
     </message>
     <message>
         <source>%1 dBTP</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 dBTP</translation>
     </message>
     <message>
         <source>Gaps</source>
-        <translation type="unfinished"></translation>
+        <translation>間隙</translation>
     </message>
     <message>
         <source>Clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>削波</translation>
     </message>
     <message>
         <source>Events</source>
-        <translation type="unfinished"></translation>
+        <translation>事件</translation>
     </message>
     <message>
         <source>Cuts in sync</source>
-        <translation type="unfinished"></translation>
+        <translation>與切點同步</translation>
     </message>
     <message>
         <source>%1 ok, %2 off</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 個正常，%2 個偏離</translation>
     </message>
     <message>
         <source>Width of the sheet</source>
-        <translation type="unfinished"></translation>
+        <translation>表寬度</translation>
     </message>
     <message>
         <source>Frame strip</source>
-        <translation type="unfinished"></translation>
+        <translation>影格膠卷</translation>
     </message>
     <message>
         <source>Sound tags</source>
-        <translation type="unfinished"></translation>
+        <translation>聲音標籤</translation>
     </message>
     <message>
         <source>Generating…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在產生…</translation>
     </message>
     <message>
         <source>Generate</source>
-        <translation type="unfinished">生成</translation>
+        <translation>生成</translation>
     </message>
     <message>
         <source>Export PNG…</source>
-        <translation type="unfinished"></translation>
+        <translation>匯出 PNG…</translation>
     </message>
     <message>
         <source>Name the sounds, split the audio into sections and find a sound by description with the audio tagging add-ons.</source>
-        <translation type="unfinished"></translation>
+        <translation>透過音訊標籤附加元件命名聲音、將音訊劃分為多個部分，並根據描述尋找聲音。</translation>
     </message>
     <message>
         <source>Naming sounds needs the AI engine and the audio tagging add-ons.</source>
-        <translation type="unfinished"></translation>
+        <translation>命名聲音需要 AI 引擎和音訊標籤附加元件。</translation>
     </message>
     <message>
         <source>Get add-ons</source>
-        <translation type="unfinished"></translation>
+        <translation>取得附加元件</translation>
     </message>
     <message>
         <source>Sections</source>
-        <translation type="unfinished"></translation>
+        <translation>分段</translation>
     </message>
     <message>
         <source>Sounds</source>
-        <translation type="unfinished"></translation>
+        <translation>聲音</translation>
     </message>
     <message>
         <source>Find</source>
-        <translation type="unfinished"></translation>
+        <translation>尋找</translation>
     </message>
     <message>
         <source>Speech %1  ·  Music %2</source>
-        <translation type="unfinished"></translation>
+        <translation>語音 %1  ·  音樂 %2</translation>
     </message>
     <message>
         <source>Add speech &amp; music</source>
-        <translation type="unfinished"></translation>
+        <translation>新增語音 &amp; 音樂</translation>
     </message>
     <message>
         <source>Find a sound, e.g. heavy rain or a fast whoosh</source>
-        <translation type="unfinished"></translation>
+        <translation>尋找聲音，例如大雨聲或快速呼嘯聲</translation>
     </message>
     <message>
         <source>hit</source>
-        <translation type="unfinished"></translation>
+        <translation>打擊聲</translation>
     </message>
     <message>
         <source>window</source>
-        <translation type="unfinished"></translation>
+        <translation>窗戶</translation>
     </message>
     <message>
         <source>%1  z %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1  z %2</translation>
     </message>
     <message>
         <source>Searching…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在搜尋…</translation>
     </message>
     <message>
         <source>Type one of the %1 sounds Drift knows, or pick a suggestion.</source>
-        <translation type="unfinished"></translation>
+        <translation>輸入 Drift 已知的 %1 種聲音之一，或選取建議項。</translation>
     </message>
     <message>
         <source>Analysing audio…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在分析音訊…</translation>
     </message>
     <message>
         <source>Nothing to show: turn on Sound tags and generate again.</source>
-        <translation type="unfinished"></translation>
+        <translation>無可顯示內容：請開啟「聲音標籤」並重新產生。</translation>
     </message>
     <message>
         <source>Generate a sheet to name its sections and sounds.</source>
-        <translation type="unfinished"></translation>
+        <translation>產生音訊表以命名其分段和聲音。</translation>
     </message>
     <message>
         <source>Couldn’t build the sheet.</source>
-        <translation type="unfinished"></translation>
+        <translation>無法建立音訊表。</translation>
     </message>
     <message>
         <source>No sheet yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>尚無音訊表。</translation>
     </message>
     <message>
         <source>Pick what to analyse and press Generate to see loudness, spectrogram and sound events laid out against your cuts.</source>
-        <translation type="unfinished"></translation>
+        <translation>選取要分析的內容並點選「產生」，以對照剪輯切口檢視響度、頻譜圖和聲音事件。</translation>
     </message>
     <message>
         <source>%1 – %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 – %2</translation>
     </message>
 </context>
 <context>
     <name>BakeController</name>
     <message>
         <source>Set a work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>設定要預渲染的工作區域</translation>
     </message>
     <message>
         <source>Could not open the bake cache</source>
-        <translation type="unfinished"></translation>
+        <translation>無法開啟預渲染快取</translation>
     </message>
     <message>
         <source>Baking…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在預渲染…</translation>
     </message>
     <message>
         <source>Bake cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染已取消</translation>
     </message>
     <message>
         <source>Bake failed</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染失敗</translation>
     </message>
     <message>
         <source>Bake complete</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染完成</translation>
     </message>
     <message>
         <source>Set work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>設定要預渲染的工作區域</translation>
     </message>
     <message>
         <source>Work area set</source>
-        <translation type="unfinished"></translation>
+        <translation>工作區域已設定</translation>
     </message>
 </context>
 <context>
     <name>BakesDialog</name>
     <message>
         <source>Bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">關閉</translation>
+        <translation>關閉</translation>
     </message>
     <message>
         <source>Compact</source>
-        <translation type="unfinished"></translation>
+        <translation>緊湊</translation>
     </message>
     <message>
         <source>Balanced</source>
-        <translation type="unfinished"></translation>
+        <translation>平衡</translation>
     </message>
     <message>
         <source>High</source>
-        <translation type="unfinished">高</translation>
+        <translation>高</translation>
     </message>
     <message>
         <source>%1m %2s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1分 %2秒</translation>
     </message>
     <message>
         <source>%1s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1秒</translation>
     </message>
     <message>
         <source>Baking %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>正在預渲染 %1%</translation>
     </message>
     <message>
         <source>Stale</source>
-        <translation type="unfinished"></translation>
+        <translation>已過期</translation>
     </message>
     <message>
         <source>Fresh</source>
-        <translation type="unfinished"></translation>
+        <translation>最新</translation>
     </message>
     <message>
         <source>Delete all bakes?</source>
-        <translation type="unfinished"></translation>
+        <translation>刪除所有預渲染？</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">刪除</translation>
+        <translation>刪除</translation>
     </message>
     <message>
         <source>Playback and export will render these ranges live again. Your project is not changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>播放和匯出將重新即時渲染這些範圍。您的專案不會被變更。</translation>
     </message>
     <message>
         <source>Re-bake at current quality</source>
-        <translation type="unfinished"></translation>
+        <translation>以當前品質重新預渲染</translation>
     </message>
     <message>
         <source>Set work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>設定要預渲染的工作區域</translation>
     </message>
     <message>
         <source>Quality for new bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>新預渲染的品質</translation>
     </message>
     <message>
         <source>≈ %1 per minute</source>
-        <translation type="unfinished"></translation>
+        <translation>≈ 每分鐘 %1</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">取消</translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>Bake work area</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染工作區域</translation>
     </message>
     <message>
         <source>Set a work area on the timeline first</source>
-        <translation type="unfinished"></translation>
+        <translation>請先在時間軸上設定工作區域</translation>
     </message>
     <message>
         <source>I</source>
-        <translation type="unfinished"></translation>
+        <translation>I</translation>
     </message>
     <message>
         <source>O</source>
-        <translation type="unfinished"></translation>
+        <translation>O</translation>
     </message>
     <message>
         <source>Bake a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Bake.</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染時間軸的完成部分以使其順暢播放和匯出。使用 %1 和 %2 設定工作區域，然後點選「預渲染」。</translation>
     </message>
     <message>
         <source>Range</source>
-        <translation type="unfinished">區間</translation>
+        <translation>區間</translation>
     </message>
     <message>
         <source>Duration</source>
-        <translation type="unfinished">時長</translation>
+        <translation>時長</translation>
     </message>
     <message>
         <source>Quality</source>
-        <translation type="unfinished"></translation>
+        <translation>品質</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished"></translation>
+        <translation>大小</translation>
     </message>
     <message>
         <source>State</source>
-        <translation type="unfinished"></translation>
+        <translation>狀態</translation>
     </message>
     <message>
         <source>Re-bake</source>
-        <translation type="unfinished"></translation>
+        <translation>重新預渲染</translation>
     </message>
     <message>
         <source>More</source>
-        <translation type="unfinished">更多</translation>
+        <translation>更多</translation>
     </message>
     <message>
         <source>Delete bake</source>
-        <translation type="unfinished"></translation>
+        <translation>刪除預渲染</translation>
     </message>
     <message numerus="yes">
         <source>%n bake(s) · %1</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 個預渲染 · %1</numerusform>
         </translation>
     </message>
     <message>
         <source>0 B</source>
-        <translation type="unfinished"></translation>
+        <translation>0 B</translation>
     </message>
     <message>
         <source>Re-bake all stale</source>
-        <translation type="unfinished"></translation>
+        <translation>重新預渲染所有過期項目</translation>
     </message>
     <message>
         <source>Delete all bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>刪除所有預渲染</translation>
     </message>
 </context>
 <context>
@@ -6347,119 +6347,119 @@
     <name>BlendModes</name>
     <message>
         <source>Normal</source>
-        <translation type="unfinished">正常</translation>
+        <translation>正常</translation>
     </message>
     <message>
         <source>Darken</source>
-        <translation type="unfinished">變暗</translation>
+        <translation>變暗</translation>
     </message>
     <message>
         <source>Multiply</source>
-        <translation type="unfinished">正片疊底</translation>
+        <translation>正片疊底</translation>
     </message>
     <message>
         <source>Color Burn</source>
-        <translation type="unfinished"></translation>
+        <translation>加深顏色</translation>
     </message>
     <message>
         <source>Linear Burn</source>
-        <translation type="unfinished"></translation>
+        <translation>線性加深</translation>
     </message>
     <message>
         <source>Darker Color</source>
-        <translation type="unfinished"></translation>
+        <translation>較深顏色</translation>
     </message>
     <message>
         <source>Lighten</source>
-        <translation type="unfinished">變亮</translation>
+        <translation>變亮</translation>
     </message>
     <message>
         <source>Screen</source>
-        <translation type="unfinished">濾色</translation>
+        <translation>濾色</translation>
     </message>
     <message>
         <source>Color Dodge</source>
-        <translation type="unfinished"></translation>
+        <translation>減淡顏色</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation>相加</translation>
     </message>
     <message>
         <source>Lighter Color</source>
-        <translation type="unfinished"></translation>
+        <translation>較淺顏色</translation>
     </message>
     <message>
         <source>Contrast</source>
-        <translation type="unfinished">對比度</translation>
+        <translation>對比度</translation>
     </message>
     <message>
         <source>Overlay</source>
-        <translation type="unfinished">疊加</translation>
+        <translation>疊加</translation>
     </message>
     <message>
         <source>Soft Light</source>
-        <translation type="unfinished"></translation>
+        <translation>柔光</translation>
     </message>
     <message>
         <source>Hard Light</source>
-        <translation type="unfinished"></translation>
+        <translation>強光</translation>
     </message>
     <message>
         <source>Vivid Light</source>
-        <translation type="unfinished"></translation>
+        <translation>亮光</translation>
     </message>
     <message>
         <source>Linear Light</source>
-        <translation type="unfinished"></translation>
+        <translation>線性光</translation>
     </message>
     <message>
         <source>Pin Light</source>
-        <translation type="unfinished"></translation>
+        <translation>點光</translation>
     </message>
     <message>
         <source>Hard Mix</source>
-        <translation type="unfinished"></translation>
+        <translation>實色混合</translation>
     </message>
     <message>
         <source>Inversion</source>
-        <translation type="unfinished"></translation>
+        <translation>反相</translation>
     </message>
     <message>
         <source>Difference</source>
-        <translation type="unfinished"></translation>
+        <translation>差異化</translation>
     </message>
     <message>
         <source>Exclusion</source>
-        <translation type="unfinished"></translation>
+        <translation>排除</translation>
     </message>
     <message>
         <source>Subtract</source>
-        <translation type="unfinished"></translation>
+        <translation>減去</translation>
     </message>
     <message>
         <source>Divide</source>
-        <translation type="unfinished"></translation>
+        <translation>除法</translation>
     </message>
     <message>
         <source>Component</source>
-        <translation type="unfinished"></translation>
+        <translation>分量</translation>
     </message>
     <message>
         <source>Hue</source>
-        <translation type="unfinished">色相</translation>
+        <translation>色相</translation>
     </message>
     <message>
         <source>Saturation</source>
-        <translation type="unfinished">飽和度</translation>
+        <translation>飽和度</translation>
     </message>
     <message>
         <source>Color</source>
-        <translation type="unfinished">顏色</translation>
+        <translation>顏色</translation>
     </message>
     <message>
         <source>Luminosity</source>
-        <translation type="unfinished"></translation>
+        <translation>明度</translation>
     </message>
 </context>
 <context>
@@ -6481,82 +6481,82 @@
     <name>Camera3dPanel</name>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation>攝影機</translation>
     </message>
     <message>
         <source>Add camera</source>
-        <translation type="unfinished"></translation>
+        <translation>新增攝影機</translation>
     </message>
     <message>
         <source>Add a camera clip at the playhead, for a camera cut</source>
-        <translation type="unfinished"></translation>
+        <translation>在播放磁頭處新增攝影機片段，以實現鏡頭切換</translation>
     </message>
     <message>
         <source>Add a camera track with a camera clip over the sequence</source>
-        <translation type="unfinished"></translation>
+        <translation>新增包含攝影機片段的攝影機軌道，置於序列之上</translation>
     </message>
     <message>
         <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
-        <translation type="unfinished"></translation>
+        <translation>將攝影機鎖定至視圖：透過攝影機檢視時進行導航將移動攝影機</translation>
     </message>
     <message>
         <source>Align the scene camera to the 3D viewport&apos;s view</source>
-        <translation type="unfinished"></translation>
+        <translation>將場景攝影機對齊 3D 視埠的視圖</translation>
     </message>
     <message>
         <source>No camera yet. Without one every clip is seen through its own Perspective.</source>
-        <translation type="unfinished"></translation>
+        <translation>尚無攝影機。如果沒有攝影機，每個片段將透過其自身的透視角度呈現。</translation>
     </message>
     <message>
         <source> (active)</source>
-        <translation type="unfinished"></translation>
+        <translation> (使用中)</translation>
     </message>
     <message>
         <source>Select this camera and look through it</source>
-        <translation type="unfinished"></translation>
+        <translation>選取此攝影機並透過它檢視</translation>
     </message>
 </context>
 <context>
     <name>CameraInspector</name>
     <message>
         <source>Position X</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 X</translation>
     </message>
     <message>
         <source>Position Y</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 Y</translation>
     </message>
     <message>
         <source>Position Z</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 Z</translation>
     </message>
     <message>
         <source>Rotation X</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 X</translation>
     </message>
     <message>
         <source>Rotation Y</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 Y</translation>
     </message>
     <message>
         <source>Rotation Z</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 Z</translation>
     </message>
     <message>
         <source>Point of Interest X</source>
-        <translation type="unfinished"></translation>
+        <translation>目標點 X</translation>
     </message>
     <message>
         <source>Point of Interest Y</source>
-        <translation type="unfinished"></translation>
+        <translation>目標點 Y</translation>
     </message>
     <message>
         <source>Point of Interest Z</source>
-        <translation type="unfinished"></translation>
+        <translation>目標點 Z</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished">縮放</translation>
+        <translation>縮放</translation>
     </message>
     <message>
         <source>Select a camera clip to frame the shot.</source>
@@ -6564,47 +6564,47 @@
     </message>
     <message>
         <source>Everything on the timeline is seen through this camera while the clip lasts. Position is the camera&apos;s eye in the same 3D space as the clips; a camera at rest looks exactly like no camera at all.</source>
-        <translation type="unfinished"></translation>
+        <translation>在該片段持續期間，時間軸上的所有內容都會透過此攝影機呈現。位置是攝影機在與片段相同的 3D 空間中的視點；靜止的攝影機與沒有攝影機時的效果完全相同。</translation>
     </message>
     <message>
         <source>Camera rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>攝影機旋轉</translation>
     </message>
     <message>
         <source>Aim at target</source>
-        <translation type="unfinished"></translation>
+        <translation>對準目標</translation>
     </message>
     <message>
         <source>Keep the camera facing its point of interest. Rotation then turns the camera relative to that aim.</source>
-        <translation type="unfinished"></translation>
+        <translation>保持攝影機朝向其目標點。旋轉時，攝影機會相對於該目標方向轉動。</translation>
     </message>
     <message>
         <source>Camera zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>攝影機縮放</translation>
     </message>
     <message>
         <source>Focal length</source>
-        <translation type="unfinished"></translation>
+        <translation>焦距</translation>
     </message>
     <message>
         <source>Field of view</source>
-        <translation type="unfinished"></translation>
+        <translation>視野</translation>
     </message>
     <message>
         <source>Zoom, focal length (36 × 24 mm film) and field of view are one setting in three units. Zooming does not move the camera. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
-        <translation type="unfinished"></translation>
+        <translation>縮放、焦距（36 × 24 mm 底片）和視野是同一設定的三種單位。縮放不會移動攝影機。在此攝影機運行時，它會取代各個片段自身的「透視」值，因為同一個場景只有一個視角。</translation>
     </message>
     <message>
         <source>Reset camera</source>
-        <translation type="unfinished">重置攝影機</translation>
+        <translation>重置攝影機</translation>
     </message>
     <message>
         <source>Back to rest: the default position, no rotation, no target and the default zoom, framing the canvas head on.</source>
-        <translation type="unfinished"></translation>
+        <translation>返回初始狀態：預設位置、無旋轉、無目標，並使用預設縮放正對畫布取景。</translation>
     </message>
     <message>
         <source>Camera position</source>
-        <translation type="unfinished">相機位置</translation>
+        <translation>相機位置</translation>
     </message>
 </context>
 <context>
@@ -6622,43 +6622,43 @@
     <name>ClipAnimation</name>
     <message>
         <source>Slide up</source>
-        <translation type="unfinished">上滑</translation>
+        <translation>上滑</translation>
     </message>
     <message>
         <source>Slide down</source>
-        <translation type="unfinished">下滑</translation>
+        <translation>下滑</translation>
     </message>
     <message>
         <source>Slide left</source>
-        <translation type="unfinished">左滑</translation>
+        <translation>左滑</translation>
     </message>
     <message>
         <source>Slide right</source>
-        <translation type="unfinished">右滑</translation>
+        <translation>右滑</translation>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation type="unfinished">放大</translation>
+        <translation>放大</translation>
     </message>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished">縮小</translation>
+        <translation>縮小</translation>
     </message>
     <message>
         <source>Pop</source>
-        <translation type="unfinished">彈出</translation>
+        <translation>彈出</translation>
     </message>
     <message>
         <source>Spin CW</source>
-        <translation type="unfinished">順時針旋轉</translation>
+        <translation>順時針旋轉</translation>
     </message>
     <message>
         <source>Spin CCW</source>
-        <translation type="unfinished">逆時針旋轉</translation>
+        <translation>逆時針旋轉</translation>
     </message>
     <message>
         <source>Bounce</source>
-        <translation type="unfinished">彈跳</translation>
+        <translation>彈跳</translation>
     </message>
 </context>
 <context>
@@ -6727,43 +6727,43 @@
     </message>
     <message>
         <source>Missing LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>遺失 LUT</translation>
     </message>
     <message>
         <source>Set LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>設定 LUT</translation>
     </message>
     <message numerus="yes">
         <source>Imported %n LUT(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>已匯入 %n 個 LUT</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n LUT(s), %1 failed</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>已匯入 %n 個 LUT，%1 個失敗</numerusform>
         </translation>
     </message>
     <message>
         <source>Could not import that LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>無法匯入該 LUT</translation>
     </message>
     <message>
         <source>Could not remove the LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>無法移除該 LUT</translation>
     </message>
     <message>
         <source>LUT removed</source>
-        <translation type="unfinished"></translation>
+        <translation>已移除 LUT</translation>
     </message>
     <message>
         <source>Could not rename the LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>無法重新命名該 LUT</translation>
     </message>
     <message>
         <source>LUT renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT 已重新命名</translation>
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
@@ -6951,31 +6951,31 @@
     </message>
     <message>
         <source>Color grade</source>
-        <translation type="unfinished">調色</translation>
+        <translation>調色</translation>
     </message>
     <message>
         <source>Adds film-like noise</source>
-        <translation type="unfinished"></translation>
+        <translation>新增類似底片的噪點</translation>
     </message>
     <message>
         <source>Soft glow around bright areas</source>
-        <translation type="unfinished"></translation>
+        <translation>在明亮區域周圍產生柔光</translation>
     </message>
     <message>
         <source>Color fringing at the edges</source>
-        <translation type="unfinished"></translation>
+        <translation>邊緣色差</translation>
     </message>
     <message>
         <source>Darkens the corners</source>
-        <translation type="unfinished"></translation>
+        <translation>暗角</translation>
     </message>
     <message>
         <source>Red glow around highlights, like film</source>
-        <translation type="unfinished"></translation>
+        <translation>高光周圍呈現類似底片的紅暈</translation>
     </message>
     <message>
         <source>Color: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>色彩：%1</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -6995,11 +6995,11 @@
     </message>
     <message>
         <source>Showing the original. Your grade is hidden until you turn Compare off.</source>
-        <translation type="unfinished"></translation>
+        <translation>正在顯示原始素材。在關閉「對比」前，您的調色將被隱藏。</translation>
     </message>
     <message>
         <source>Show grade</source>
-        <translation type="unfinished"></translation>
+        <translation>顯示調色</translation>
     </message>
     <message>
         <source>The grade is turned off.</source>
@@ -7031,7 +7031,7 @@
     </message>
     <message>
         <source>Color wheels</source>
-        <translation type="unfinished">色彩輪</translation>
+        <translation>色彩輪</translation>
     </message>
     <message>
         <source>Adjust curves</source>
@@ -7043,7 +7043,7 @@
     </message>
     <message>
         <source>Hue curves</source>
-        <translation type="unfinished">色相曲線</translation>
+        <translation>色相曲線</translation>
     </message>
     <message>
         <source>Adjust hue curves</source>
@@ -7071,15 +7071,15 @@
     </message>
     <message>
         <source>LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT</translation>
     </message>
     <message>
         <source>None. Choose one in the Color Grading LUTs panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>無。請在「調色 LUT」面板中選擇一個。</translation>
     </message>
     <message>
         <source>LUT Intensity</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT 強度</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -7119,7 +7119,7 @@
     </message>
     <message>
         <source>Edit colour</source>
-        <translation type="unfinished"></translation>
+        <translation>編輯色彩</translation>
     </message>
 </context>
 <context>
@@ -7134,7 +7134,7 @@
     </message>
     <message>
         <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
-        <translation type="unfinished"></translation>
+        <translation>拖曳以調整色調。按住 Shift 鍵進行微調。連按兩下重設顏色。</translation>
     </message>
     <message>
         <source>Brightness</source>
@@ -7145,73 +7145,73 @@
     <name>CommunityInstaller</name>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished">啟動中…</translation>
+        <translation>啟動中…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">正在下載…</translation>
+        <translation>正在下載…</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">正在安裝中…</translation>
+        <translation>正在安裝中…</translation>
     </message>
     <message>
         <source>This build cannot install that kind of item.</source>
-        <translation type="unfinished"></translation>
+        <translation>此版本無法安裝該類型的項目。</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>已安裝</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished">已取消</translation>
+        <translation>已取消</translation>
     </message>
 </context>
 <context>
     <name>CrashReport</name>
     <message>
         <source>Drift crashed the last time it ran</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift 上次運行時發生當機</translation>
     </message>
     <message>
         <source>Drift did not close properly last time</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift 上次未正常關閉</translation>
     </message>
     <message>
         <source>If it keeps happening, you can start in safe mode, which uses the default graphics backend and loads no add-ons for this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>若問題持續發生，您可以以安全模式啟動，此模式將使用預設圖形後端，且本次工作階段不載入任何附加元件。</translation>
     </message>
     <message>
         <source>A report was sent to help fix this. You can turn this off in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>已傳送報告以協助修正此問題。您可以在「設定」中關閉此功能。</translation>
     </message>
     <message>
         <source>Save crash file…</source>
-        <translation type="unfinished"></translation>
+        <translation>儲存當機檔案…</translation>
     </message>
     <message>
         <source>Start in safe mode</source>
-        <translation type="unfinished"></translation>
+        <translation>以安全模式啟動</translation>
     </message>
     <message>
         <source>Continue</source>
-        <translation type="unfinished">繼續</translation>
+        <translation>繼續</translation>
     </message>
 </context>
 <context>
     <name>CrashReporter</name>
     <message>
         <source>Choose where to save the file</source>
-        <translation type="unfinished"></translation>
+        <translation>選擇檔案儲存位置</translation>
     </message>
     <message>
         <source>Saved to %1</source>
-        <translation type="unfinished">已儲存到 %1</translation>
+        <translation>已儲存到 %1</translation>
     </message>
     <message>
         <source>Could not save the file: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>無法儲存檔案：%1</translation>
     </message>
 </context>
 <context>
@@ -7260,11 +7260,11 @@
     </message>
     <message>
         <source>Saturation</source>
-        <translation type="unfinished">飽和度</translation>
+        <translation>飽和度</translation>
     </message>
     <message>
         <source>Luminance</source>
-        <translation type="unfinished">明度</translation>
+        <translation>明度</translation>
     </message>
     <message>
         <source>Master</source>
@@ -7272,15 +7272,15 @@
     </message>
     <message>
         <source>Hue vs Hue: shift one color toward another</source>
-        <translation type="unfinished"></translation>
+        <translation>色相 vs 色相：將一種顏色偏移為另一種顏色</translation>
     </message>
     <message>
         <source>Hue vs Saturation: make one color more or less vivid</source>
-        <translation type="unfinished"></translation>
+        <translation>色相 vs 飽和度：增強或降低特定顏色的鮮豔度</translation>
     </message>
     <message>
         <source>Hue vs Luminance: brighten or darken one color</source>
-        <translation type="unfinished"></translation>
+        <translation>色相 vs 亮度：調亮或調暗特定顏色</translation>
     </message>
     <message>
         <source>Reset channel</source>
@@ -7288,15 +7288,15 @@
     </message>
     <message>
         <source>Hue %1° → %2</source>
-        <translation type="unfinished"></translation>
+        <translation>色相 %1° → %2</translation>
     </message>
     <message>
         <source>In %1 → Out %2</source>
-        <translation type="unfinished"></translation>
+        <translation>輸入 %1 → 輸出 %2</translation>
     </message>
     <message>
         <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation type="unfinished"></translation>
+        <translation>點選以新增控制點。拖曳以移動。連按兩下或拖出以移除。</translation>
     </message>
 </context>
 <context>
@@ -7323,18 +7323,18 @@
     </message>
     <message>
         <source>Custom animation curve applied</source>
-        <translation type="unfinished"></translation>
+        <translation>已套用自訂動畫曲線</translation>
     </message>
 </context>
 <context>
     <name>CurveField</name>
     <message>
         <source>Custom</source>
-        <translation type="unfinished">自訂</translation>
+        <translation>自訂</translation>
     </message>
     <message>
         <source>Bezier</source>
-        <translation type="unfinished">貝塞爾</translation>
+        <translation>貝塞爾</translation>
     </message>
 </context>
 <context>
@@ -7821,23 +7821,23 @@
     <name>DownloadCenter</name>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">正在安裝中…</translation>
+        <translation>正在安裝中…</translation>
     </message>
     <message>
         <source>Waiting…</source>
-        <translation type="unfinished">等待中…</translation>
+        <translation>等待中…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">正在下載…</translation>
+        <translation>正在下載…</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>已安裝</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished">已取消</translation>
+        <translation>已取消</translation>
     </message>
 </context>
 <context>
@@ -7945,7 +7945,7 @@
     <name>DriftAssetStore</name>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished">啟動中…</translation>
+        <translation>啟動中…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7957,15 +7957,15 @@
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">正在下載…</translation>
+        <translation>正在下載…</translation>
     </message>
     <message>
         <source>In the media bin</source>
-        <translation type="unfinished">已在媒體庫中</translation>
+        <translation>已在媒體庫中</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished">已取消</translation>
+        <translation>已取消</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
@@ -7973,11 +7973,11 @@
     </message>
     <message>
         <source>Added to face props</source>
-        <translation type="unfinished"></translation>
+        <translation>已新增至臉部道具</translation>
     </message>
     <message>
         <source>Importing…</source>
-        <translation type="unfinished">正在導入…</translation>
+        <translation>正在導入…</translation>
     </message>
     <message>
         <source>Could not add that asset to the media bin.</source>
@@ -8012,7 +8012,7 @@
     </message>
     <message>
         <source>Styles</source>
-        <translation type="unfinished"></translation>
+        <translation>樣式</translation>
     </message>
     <message>
         <source>In</source>
@@ -8028,11 +8028,11 @@
     </message>
     <message>
         <source>My curves</source>
-        <translation type="unfinished"></translation>
+        <translation>我的曲線</translation>
     </message>
     <message>
         <source>+ New curve</source>
-        <translation type="unfinished"></translation>
+        <translation>+ 新增曲線</translation>
     </message>
     <message>
         <source>My easing</source>
@@ -8289,13 +8289,13 @@
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
         <source>Marketplace — %n download(s) running</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>市集 — 正在進行 %n 個下載</numerusform>
         </translation>
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished">素材市場</translation>
+        <translation>素材市場</translation>
     </message>
 </context>
 <context>
@@ -8369,19 +8369,19 @@
     <name>EditorHeaderSearchField</name>
     <message>
         <source>Workspace: %1</source>
-        <translation type="unfinished">工作區：%1</translation>
+        <translation>工作區：%1</translation>
     </message>
     <message>
         <source>Workspace:</source>
-        <translation type="unfinished"></translation>
+        <translation>工作區：</translation>
     </message>
     <message>
         <source>Switch workspace</source>
-        <translation type="unfinished">切換工作區</translation>
+        <translation>切換工作區</translation>
     </message>
     <message>
         <source>Customize layouts in Settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>在「設定」中自訂版面配置…</translation>
     </message>
     <message>
         <source>Search  %1</source>
@@ -8403,11 +8403,11 @@
     <name>EditorHeaderVideoButton</name>
     <message>
         <source>Video</source>
-        <translation type="unfinished">視頻</translation>
+        <translation>視頻</translation>
     </message>
     <message>
         <source>Bakes, crop and video layout</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染、裁剪與影片版面配置</translation>
     </message>
 </context>
 <context>
@@ -8434,7 +8434,7 @@
     </message>
     <message>
         <source>Install a custom effect or transition from a .driftfx or zip made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation>安裝自訂效果或轉場（支援 Drift Forge 製作的 .driftfx 或 zip）</translation>
     </message>
     <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
@@ -8968,7 +8968,7 @@
     </message>
     <message>
         <source>Effect settings</source>
-        <translation type="unfinished">效果設置</translation>
+        <translation>效果設置</translation>
     </message>
 </context>
 <context>
@@ -8983,11 +8983,11 @@
     </message>
     <message>
         <source>Import LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>匯入 LUT</translation>
     </message>
     <message>
         <source>Missing LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>遺失 LUT</translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
@@ -8998,15 +8998,15 @@
     <name>EffectsMaskSection</name>
     <message>
         <source>This effect needs a mask.</source>
-        <translation type="unfinished"></translation>
+        <translation>此效果需要遮罩。</translation>
     </message>
     <message>
         <source>Add new mask</source>
-        <translation type="unfinished"></translation>
+        <translation>新增遮罩</translation>
     </message>
     <message>
         <source>Cutout subject</source>
-        <translation type="unfinished"></translation>
+        <translation>摳出主體</translation>
     </message>
 </context>
 <context>
@@ -9125,41 +9125,41 @@
     </message>
     <message>
         <source>Some bakes are out of date</source>
-        <translation type="unfinished"></translation>
+        <translation>部分預渲染已過期</translation>
     </message>
     <message numerus="yes">
         <source>%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 個預渲染範圍與您的編輯不再相符。按原樣匯出將使用舊畫面。</numerusform>
         </translation>
     </message>
     <message>
         <source>Re-bake first</source>
-        <translation type="unfinished"></translation>
+        <translation>先重新預渲染</translation>
     </message>
     <message>
         <source>Re-baking. Export again when it finishes.</source>
-        <translation type="unfinished"></translation>
+        <translation>正在重新預渲染。完成後請再次匯出。</translation>
     </message>
     <message>
         <source>Render them live</source>
-        <translation type="unfinished"></translation>
+        <translation>即時渲染</translation>
     </message>
     <message>
         <source>Export as is</source>
-        <translation type="unfinished"></translation>
+        <translation>按原樣匯出</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">取消</translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>Use baked ranges</source>
-        <translation type="unfinished"></translation>
+        <translation>使用已預渲染範圍</translation>
     </message>
     <message>
         <source>Read pre-rendered ranges instead of compositing them again</source>
-        <translation type="unfinished"></translation>
+        <translation>讀取預渲染範圍，而不再重新合成</translation>
     </message>
 </context>
 <context>
@@ -9353,7 +9353,7 @@
     </message>
     <message>
         <source>Exporting audio</source>
-        <translation type="unfinished"></translation>
+        <translation>正在匯出音訊</translation>
     </message>
     <message>
         <source>Export</source>
@@ -9373,7 +9373,7 @@
     </message>
     <message>
         <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
-        <translation type="unfinished"></translation>
+        <translation>正在渲染音訊。關閉可繼續編輯，或取消以停止。</translation>
     </message>
     <message>
         <source>Export finished.</source>
@@ -9392,333 +9392,333 @@
     <name>ExtrasCard</name>
     <message>
         <source>Select</source>
-        <translation type="unfinished">選擇</translation>
+        <translation>選擇</translation>
     </message>
     <message>
         <source>Waiting…</source>
-        <translation type="unfinished">等待中…</translation>
+        <translation>等待中…</translation>
     </message>
     <message>
         <source>%1 %2%</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 %2%</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">正在安裝中…</translation>
+        <translation>正在安裝中…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">正在下載…</translation>
+        <translation>正在下載…</translation>
     </message>
     <message>
         <source>Failed · open to retry</source>
-        <translation type="unfinished"></translation>
+        <translation>失敗 · 開啟以重試</translation>
     </message>
     <message>
         <source>Needs Drift %1</source>
-        <translation type="unfinished"></translation>
+        <translation>需要 Drift %1</translation>
     </message>
     <message>
         <source>Installed from file</source>
-        <translation type="unfinished">從檔案安裝</translation>
+        <translation>從檔案安裝</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>已安裝</translation>
     </message>
     <message>
         <source>Update · %1</source>
-        <translation type="unfinished"></translation>
+        <translation>更新 · %1</translation>
     </message>
 </context>
 <context>
     <name>ExtrasDetail</name>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>返回</translation>
     </message>
     <message>
         <source>Unofficial</source>
-        <translation type="unfinished">非官方</translation>
+        <translation>非官方</translation>
     </message>
     <message>
         <source>%1 → %2</source>
-        <translation type="unfinished">%1 → %2</translation>
+        <translation>%1 → %2</translation>
     </message>
     <message>
         <source>Needs a newer Drift</source>
-        <translation type="unfinished"></translation>
+        <translation>需要更新版本的 Drift</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">取消</translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>Update</source>
-        <translation type="unfinished">更新</translation>
+        <translation>更新</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">重試</translation>
+        <translation>重試</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">安裝</translation>
+        <translation>安裝</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>已安裝</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">移除</translation>
+        <translation>移除</translation>
     </message>
     <message>
         <source>Delete this pack&apos;s downloaded data</source>
-        <translation type="unfinished">刪除這個包的下載數據</translation>
+        <translation>刪除這個包的下載數據</translation>
     </message>
     <message>
         <source>Waiting for other downloads to finish…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在等待其他下載完成…</translation>
     </message>
     <message>
         <source>%1… %2%</source>
-        <translation type="unfinished">%1… %2%</translation>
+        <translation>%1… %2%</translation>
     </message>
     <message>
         <source>Requires Drift %1 or newer</source>
-        <translation type="unfinished">需要 Drift %1 或更新版本</translation>
+        <translation>需要 Drift %1 或更新版本</translation>
     </message>
     <message>
         <source>Also installs: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>同時安裝：%1</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>About</source>
-        <translation type="unfinished">關於</translation>
+        <translation>關於</translation>
     </message>
     <message>
         <source>Images</source>
-        <translation type="unfinished">圖像</translation>
+        <translation>圖像</translation>
     </message>
     <message>
         <source>What it&apos;s for</source>
-        <translation type="unfinished"></translation>
+        <translation>功能說明</translation>
     </message>
     <message>
         <source>How to use</source>
-        <translation type="unfinished"></translation>
+        <translation>使用方式</translation>
     </message>
     <message>
         <source>Unlocks</source>
-        <translation type="unfinished"></translation>
+        <translation>解鎖功能</translation>
     </message>
     <message>
         <source>%1 — %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 — %2</translation>
     </message>
     <message>
         <source>How AI runs</source>
-        <translation type="unfinished">AI 如何運行</translation>
+        <translation>AI 如何運行</translation>
     </message>
     <message>
         <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">如果你的顯卡不起作用，就會在這台電腦自動以最快選項安裝。</translation>
+        <translation>如果你的顯卡不起作用，就會在這台電腦自動以最快選項安裝。</translation>
     </message>
     <message>
         <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished"></translation>
+        <translation>安裝 AI 引擎以解鎖自動字幕、主體摳圖、趣味臉部效果以及降噪功能。</translation>
     </message>
     <message>
         <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">重啟 Drift 以生效。</translation>
+        <translation>重啟 Drift 以生效。</translation>
     </message>
     <message>
         <source>Needs</source>
-        <translation type="unfinished"></translation>
+        <translation>需要</translation>
     </message>
     <message>
         <source>%1 · Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · 已安裝</translation>
     </message>
     <message>
         <source>%1 · Will be installed</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · 將被安裝</translation>
     </message>
     <message>
         <source>Works well with</source>
-        <translation type="unfinished"></translation>
+        <translation>推薦搭配</translation>
     </message>
     <message>
         <source>Technical details</source>
-        <translation type="unfinished">技術細節</translation>
+        <translation>技術細節</translation>
     </message>
 </context>
 <context>
     <name>ExtrasInstallBar</name>
     <message numerus="yes">
         <source>Install %n extra(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>安裝 %n 個附加元件</numerusform>
         </translation>
     </message>
     <message>
         <source>%1 · %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Installing %1 of %2 · %3</source>
-        <translation type="unfinished"></translation>
+        <translation>正在安裝 %1/%2 · %3</translation>
     </message>
     <message>
         <source>Installing %1</source>
-        <translation type="unfinished"></translation>
+        <translation>正在安裝 %1</translation>
     </message>
     <message>
         <source>Also installs: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>同時安裝：%1</translation>
     </message>
     <message>
         <source>%1 needs %2, which isn&apos;t available for this device</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 需要 %2，但該元件不支援此裝置</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished">清除</translation>
+        <translation>清除</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">安裝</translation>
+        <translation>安裝</translation>
     </message>
 </context>
 <context>
     <name>ExtrasStore</name>
     <message>
         <source>Discover</source>
-        <translation type="unfinished"></translation>
+        <translation>探索</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>已安裝</translation>
     </message>
     <message>
         <source>Updates</source>
-        <translation type="unfinished">更新</translation>
+        <translation>更新</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished">自訂</translation>
+        <translation>自訂</translation>
     </message>
     <message>
         <source>Results for “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1”的搜尋結果</translation>
     </message>
     <message>
         <source>Add-ons that make Drift do more.</source>
-        <translation type="unfinished"></translation>
+        <translation>讓 Drift 功能更強大的附加元件。</translation>
     </message>
     <message>
         <source>Everything you have downloaded.</source>
-        <translation type="unfinished"></translation>
+        <translation>您已下載的所有內容。</translation>
     </message>
     <message>
         <source>Newer versions of what you have installed.</source>
-        <translation type="unfinished"></translation>
+        <translation>已安裝元件的較新版本。</translation>
     </message>
     <message>
         <source>Packs you installed from a file.</source>
-        <translation type="unfinished"></translation>
+        <translation>從檔案安裝的擴充包。</translation>
     </message>
     <message>
         <source>Remove this pack?</source>
-        <translation type="unfinished">要移除這個包嗎？</translation>
+        <translation>要移除這個包嗎？</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">移除</translation>
+        <translation>移除</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">“%1” 和它下載的數據將被刪除。你可以稍後再重新安裝。</translation>
+        <translation>“%1” 和它下載的數據將被刪除。你可以稍後再重新安裝。</translation>
     </message>
     <message>
         <source>Search extras</source>
-        <translation type="unfinished"></translation>
+        <translation>搜尋附加元件</translation>
     </message>
     <message>
         <source>Clear search</source>
-        <translation type="unfinished"></translation>
+        <translation>清除搜尋</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">從檔案安裝…</translation>
+        <translation>從檔案安裝…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation type="unfinished">開啟附加包資料夾</translation>
+        <translation>開啟附加包資料夾</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">將附加包資料夾放到這裡，然後重新開啟“擴展”</translation>
+        <translation>將附加包資料夾放到這裡，然後重新開啟“擴展”</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Select all</source>
-        <translation type="unfinished">全選</translation>
+        <translation>全選</translation>
     </message>
     <message>
         <source>Checking for extras…</source>
-        <translation type="unfinished">正在檢查附加項中…</translation>
+        <translation>正在檢查附加項中…</translation>
     </message>
     <message>
         <source>All extras</source>
-        <translation type="unfinished"></translation>
+        <translation>所有附加元件</translation>
     </message>
     <message>
         <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">無法抓取下載商店</translation>
+        <translation>無法抓取下載商店</translation>
     </message>
     <message>
         <source>No extras yet</source>
-        <translation type="unfinished"></translation>
+        <translation>尚無附加元件</translation>
     </message>
     <message>
         <source>Nothing matches your search</source>
-        <translation type="unfinished"></translation>
+        <translation>沒有符合搜尋條件的內容</translation>
     </message>
     <message>
         <source>Nothing here yet</source>
-        <translation type="unfinished"></translation>
+        <translation>這裡尚無內容</translation>
     </message>
     <message>
         <source>Check your connection and try again.</source>
-        <translation type="unfinished">請檢查您的連接並重試。</translation>
+        <translation>請檢查您的連接並重試。</translation>
     </message>
     <message>
         <source>Try a different word.</source>
-        <translation type="unfinished"></translation>
+        <translation>嘗試使用其他關鍵字。</translation>
     </message>
     <message>
         <source>Pick another section.</source>
-        <translation type="unfinished"></translation>
+        <translation>選取其他分類。</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">重試</translation>
+        <translation>重試</translation>
     </message>
 </context>
 <context>
     <name>ExtrasWindow</name>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">附加項</translation>
+        <translation>附加項</translation>
     </message>
 </context>
 <context>
@@ -9970,19 +9970,19 @@
     </message>
     <message>
         <source>Out animation curve</source>
-        <translation type="unfinished"></translation>
+        <translation>出場動畫曲線</translation>
     </message>
     <message>
         <source>In animation curve</source>
-        <translation type="unfinished"></translation>
+        <translation>入場動畫曲線</translation>
     </message>
     <message>
         <source>Fade out curve</source>
-        <translation type="unfinished"></translation>
+        <translation>淡出曲線</translation>
     </message>
     <message>
         <source>Fade in curve</source>
-        <translation type="unfinished"></translation>
+        <translation>淡入曲線</translation>
     </message>
     <message>
         <source>Progress curve — %1</source>
@@ -9994,15 +9994,15 @@
     </message>
     <message>
         <source>%1 — %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 — %2</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished"></translation>
+        <translation>入場</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished"></translation>
+        <translation>出場</translation>
     </message>
     <message>
         <source>Points</source>
@@ -10042,7 +10042,7 @@
     </message>
     <message>
         <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation type="unfinished"></translation>
+        <translation>拖曳中間控制點以調整漸變曲線形狀（端點固定）。連按兩下可新增控制點；按 Delete 鍵可移除所選項目。</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -10215,7 +10215,7 @@
     </message>
     <message>
         <source>Straighten</source>
-        <translation type="unfinished"></translation>
+        <translation>校正水平</translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -10235,15 +10235,15 @@
     </message>
     <message>
         <source>Loop</source>
-        <translation type="unfinished">循環</translation>
+        <translation>循環</translation>
     </message>
     <message>
         <source>A clip with a speed ramp can&apos;t loop</source>
-        <translation type="unfinished"></translation>
+        <translation>包含變速曲線的片段無法循環播放</translation>
     </message>
     <message>
         <source>Repeat the trimmed part for as long as the clip runs. Drag the clip&apos;s edges past the end to add repeats. Turn it off to change the trim.</source>
-        <translation type="unfinished"></translation>
+        <translation>在片段持續期間重複播放修剪後的部分。將片段邊緣向後拖曳可增加重複次數。關閉此功能可變更修剪。</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -10287,23 +10287,23 @@
     </message>
     <message>
         <source>Label</source>
-        <translation type="unfinished">標籤</translation>
+        <translation>標籤</translation>
     </message>
     <message>
         <source>Clip label</source>
-        <translation type="unfinished"></translation>
+        <translation>片段標籤</translation>
     </message>
     <message>
         <source>No label</source>
-        <translation type="unfinished"></translation>
+        <translation>無標籤</translation>
     </message>
     <message>
         <source>Edit label</source>
-        <translation type="unfinished"></translation>
+        <translation>編輯標籤</translation>
     </message>
     <message>
         <source>e.g. intro (empty clears it)</source>
-        <translation type="unfinished"></translation>
+        <translation>例如：片頭（留空以清除）</translation>
     </message>
 </context>
 <context>
@@ -10373,7 +10373,7 @@
     <name>GradeSlider</name>
     <message>
         <source>Double-click to reset. Hold Shift while dragging for fine control.</source>
-        <translation type="unfinished"></translation>
+        <translation>連按兩下重設。拖曳時按住 Shift 鍵可進行微調。</translation>
     </message>
     <message>
         <source>Animated. Editing sets keyframes (needs Auto keyframes on).</source>
@@ -10403,7 +10403,7 @@
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">收藏</translation>
+        <translation>收藏</translation>
     </message>
     <message>
         <source>Type</source>
@@ -10696,31 +10696,31 @@
     <name>HelpDialog</name>
     <message>
         <source>Help</source>
-        <translation type="unfinished">說明</translation>
+        <translation>說明</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">關閉</translation>
+        <translation>關閉</translation>
     </message>
     <message>
         <source>Open an issue on GitHub</source>
-        <translation type="unfinished"></translation>
+        <translation>在 GitHub 上提出 Issue</translation>
     </message>
     <message>
         <source>Join our Discord server</source>
-        <translation type="unfinished"></translation>
+        <translation>加入我們的 Discord 伺服器</translation>
     </message>
     <message>
         <source>Read the docs</source>
-        <translation type="unfinished"></translation>
+        <translation>閱讀說明文件</translation>
     </message>
     <message>
         <source>Contact us via email</source>
-        <translation type="unfinished"></translation>
+        <translation>透過電子郵件聯絡我們</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">開啟</translation>
+        <translation>開啟</translation>
     </message>
 </context>
 <context>
@@ -10783,66 +10783,66 @@
     <name>ImageViewer</name>
     <message>
         <source>Save image</source>
-        <translation type="unfinished"></translation>
+        <translation>儲存圖片</translation>
     </message>
     <message>
         <source>PNG image (*.png)</source>
-        <translation type="unfinished">PNG 圖像 (*.png)</translation>
+        <translation>PNG 圖像 (*.png)</translation>
     </message>
     <message>
         <source>JPEG image (*.jpg *.jpeg)</source>
-        <translation type="unfinished">JPEG 圖像 (*.jpg *.jpeg)</translation>
+        <translation>JPEG 圖像 (*.jpg *.jpeg)</translation>
     </message>
     <message>
         <source>Image saved.</source>
-        <translation type="unfinished"></translation>
+        <translation>圖片已儲存。</translation>
     </message>
     <message>
         <source>Couldn’t save that image.</source>
-        <translation type="unfinished"></translation>
+        <translation>無法儲存該圖片。</translation>
     </message>
     <message>
         <source>Go to</source>
-        <translation type="unfinished"></translation>
+        <translation>前往</translation>
     </message>
     <message>
         <source>Move the playhead to where this image starts</source>
-        <translation type="unfinished"></translation>
+        <translation>將播放磁頭移動到此圖片開始的位置</translation>
     </message>
     <message>
         <source>Fit</source>
-        <translation type="unfinished"></translation>
+        <translation>符合視窗</translation>
     </message>
     <message>
         <source>Actual size</source>
-        <translation type="unfinished"></translation>
+        <translation>實際大小</translation>
     </message>
     <message>
         <source>Open file location</source>
-        <translation type="unfinished"></translation>
+        <translation>開啟檔案位置</translation>
     </message>
     <message>
         <source>Copy path</source>
-        <translation type="unfinished"></translation>
+        <translation>複製路徑</translation>
     </message>
     <message>
         <source>Copied to clipboard</source>
-        <translation type="unfinished">已複製到剪貼板</translation>
+        <translation>已複製到剪貼板</translation>
     </message>
     <message>
         <source>Save as…</source>
-        <translation type="unfinished">另存為…</translation>
+        <translation>另存為…</translation>
     </message>
 </context>
 <context>
     <name>ImageViewerDialog</name>
     <message>
         <source>Agent image</source>
-        <translation type="unfinished"></translation>
+        <translation>智慧體圖片</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">關閉</translation>
+        <translation>關閉</translation>
     </message>
 </context>
 <context>
@@ -10896,67 +10896,67 @@
     </message>
     <message>
         <source>Rotation Z</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 Z</translation>
     </message>
     <message>
         <source>Rotation X</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 X</translation>
     </message>
     <message>
         <source>Rotation Y</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 Y</translation>
     </message>
     <message>
         <source>Position Z</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 Z</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation>攝影機</translation>
     </message>
     <message>
         <source>Position X</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 X</translation>
     </message>
     <message>
         <source>Position Y</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 Y</translation>
     </message>
     <message>
         <source>Point of Interest X</source>
-        <translation type="unfinished"></translation>
+        <translation>目標點 X</translation>
     </message>
     <message>
         <source>Point of Interest Y</source>
-        <translation type="unfinished"></translation>
+        <translation>目標點 Y</translation>
     </message>
     <message>
         <source>Point of Interest Z</source>
-        <translation type="unfinished"></translation>
+        <translation>目標點 Z</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished">縮放</translation>
+        <translation>縮放</translation>
     </message>
     <message>
         <source>Scale X</source>
-        <translation type="unfinished"></translation>
+        <translation>縮放 X</translation>
     </message>
     <message>
         <source>Scale Y</source>
-        <translation type="unfinished"></translation>
+        <translation>縮放 Y</translation>
     </message>
     <message>
         <source>Anchor X</source>
-        <translation type="unfinished"></translation>
+        <translation>錨點 X</translation>
     </message>
     <message>
         <source>Anchor Y</source>
-        <translation type="unfinished"></translation>
+        <translation>錨點 Y</translation>
     </message>
     <message>
         <source>Anchor Z</source>
-        <translation type="unfinished"></translation>
+        <translation>錨點 Z</translation>
     </message>
     <message>
         <source>Feather</source>
@@ -10964,7 +10964,7 @@
     </message>
     <message>
         <source>Roundness</source>
-        <translation type="unfinished"></translation>
+        <translation>圓角</translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11024,7 +11024,7 @@
     </message>
     <message>
         <source>Nudge keyframes</source>
-        <translation type="unfinished"></translation>
+        <translation>微調關鍵影格</translation>
     </message>
     <message>
         <source>Move keyframes</source>
@@ -11065,31 +11065,31 @@
     <name>KeyframeGraph</name>
     <message>
         <source>Position X</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 X</translation>
     </message>
     <message>
         <source>Position Y</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 Y</translation>
     </message>
     <message>
         <source>Rotation Z</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 Z</translation>
     </message>
     <message>
         <source>Point of Interest X</source>
-        <translation type="unfinished"></translation>
+        <translation>目標點 X</translation>
     </message>
     <message>
         <source>Point of Interest Y</source>
-        <translation type="unfinished"></translation>
+        <translation>目標點 Y</translation>
     </message>
     <message>
         <source>Point of Interest Z</source>
-        <translation type="unfinished"></translation>
+        <translation>目標點 Z</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished">縮放</translation>
+        <translation>縮放</translation>
     </message>
     <message>
         <source>X position</source>
@@ -11101,11 +11101,11 @@
     </message>
     <message>
         <source>Scale X</source>
-        <translation type="unfinished"></translation>
+        <translation>縮放 X</translation>
     </message>
     <message>
         <source>Scale Y</source>
-        <translation type="unfinished"></translation>
+        <translation>縮放 Y</translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -11113,27 +11113,27 @@
     </message>
     <message>
         <source>Rotation X</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 X</translation>
     </message>
     <message>
         <source>Rotation Y</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 Y</translation>
     </message>
     <message>
         <source>Position Z</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 Z</translation>
     </message>
     <message>
         <source>Anchor X</source>
-        <translation type="unfinished"></translation>
+        <translation>錨點 X</translation>
     </message>
     <message>
         <source>Anchor Y</source>
-        <translation type="unfinished"></translation>
+        <translation>錨點 Y</translation>
     </message>
     <message>
         <source>Anchor Z</source>
-        <translation type="unfinished"></translation>
+        <translation>錨點 Z</translation>
     </message>
     <message>
         <source>Perspective</source>
@@ -11173,7 +11173,7 @@
     </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation type="unfinished">編輯關鍵格曲線</translation>
+        <translation>編輯關鍵格曲線</translation>
     </message>
     <message>
         <source>%1 (keyframes off)</source>
@@ -11224,11 +11224,11 @@
     </message>
     <message>
         <source>Hide Bezier handles</source>
-        <translation type="unfinished"></translation>
+        <translation>隱藏貝茲手柄</translation>
     </message>
     <message>
         <source>Show Bezier handles. Without them, drag a curve to bend it</source>
-        <translation type="unfinished"></translation>
+        <translation>顯示貝茲手柄。若無手柄，可直接拖曳曲線進行彎曲</translation>
     </message>
     <message>
         <source>Analyzing…</source>
@@ -11252,7 +11252,7 @@
     </message>
     <message>
         <source>More keyframe tools</source>
-        <translation type="unfinished"></translation>
+        <translation>更多關鍵影格工具</translation>
     </message>
 </context>
 <context>
@@ -11337,7 +11337,7 @@
     </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation type="unfinished">編輯關鍵格曲線</translation>
+        <translation>編輯關鍵格曲線</translation>
     </message>
 </context>
 <context>
@@ -11348,8 +11348,8 @@
     </message>
     <message numerus="yes">
         <source>%n key(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 個關鍵影格</numerusform>
         </translation>
     </message>
 </context>
@@ -11357,7 +11357,7 @@
     <name>KeyframesPanel</name>
     <message>
         <source>Keyframe editor</source>
-        <translation type="unfinished">關鍵格編輯器</translation>
+        <translation>關鍵格編輯器</translation>
     </message>
     <message>
         <source>Scale</source>
@@ -11365,7 +11365,7 @@
     </message>
     <message>
         <source>Press K to add a keyframe at the playhead, or double-click a lane to add one there</source>
-        <translation type="unfinished"></translation>
+        <translation>按 K 鍵在播放磁頭處新增關鍵影格，或連按兩下軌道在該處新增</translation>
     </message>
     <message>
         <source>Select a clip to edit its keyframes</source>
@@ -11435,11 +11435,11 @@
     </message>
     <message>
         <source>Handles</source>
-        <translation type="unfinished"></translation>
+        <translation>手柄</translation>
     </message>
     <message>
         <source>Show bezier handles on the focused curve. Without them, drag a curve to bend it</source>
-        <translation type="unfinished"></translation>
+        <translation>在聚焦的曲線上顯示貝茲手柄。若無手柄，可直接拖曳曲線進行彎曲</translation>
     </message>
     <message>
         <source>Fit the clip in view</source>
@@ -11466,11 +11466,11 @@
     </message>
     <message>
         <source>Stop animating %1 (keys are kept)</source>
-        <translation type="unfinished"></translation>
+        <translation>停止為 %1 製作動畫（保留關鍵影格）</translation>
     </message>
     <message>
         <source>Animate %1</source>
-        <translation type="unfinished"></translation>
+        <translation>為 %1 製作動畫</translation>
     </message>
     <message>
         <source>Previous keyframe</source>
@@ -11555,7 +11555,7 @@
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">收藏</translation>
+        <translation>收藏</translation>
     </message>
     <message>
         <source>Template</source>
@@ -11705,59 +11705,59 @@
     </message>
     <message>
         <source>Color Grading LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>調色 LUT</translation>
     </message>
     <message>
         <source>Import LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>匯入 LUT</translation>
     </message>
     <message>
         <source>Search LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>搜尋 LUT</translation>
     </message>
     <message>
         <source>Import .cube LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>匯入 .cube LUT</translation>
     </message>
     <message>
         <source>My LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>我的 LUT</translation>
     </message>
     <message>
         <source>Missing LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>遺失 LUT</translation>
     </message>
     <message>
         <source>LUT Intensity</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT 強度</translation>
     </message>
     <message>
         <source>No LUTs match “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>沒有符合“%1”的 LUT。</translation>
     </message>
     <message>
         <source>No LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>無 LUT</translation>
     </message>
     <message>
         <source>Download a free pack of ready-made color grading LUTs, or import your own .cube files.</source>
-        <translation type="unfinished"></translation>
+        <translation>下載免費的現成調色 LUT 擴充包，或匯入您自己的 .cube 檔案。</translation>
     </message>
     <message>
         <source>Get free LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>取得免費 LUT</translation>
     </message>
     <message>
         <source>Select a clip to try LUTs on it</source>
-        <translation type="unfinished"></translation>
+        <translation>選取片段以嘗試套用 LUT</translation>
     </message>
     <message>
         <source>Remove this LUT?</source>
-        <translation type="unfinished"></translation>
+        <translation>移除此 LUT？</translation>
     </message>
     <message>
         <source>Rename LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>重新命名 LUT</translation>
     </message>
     <message numerus="yes">
         <source>“%1” is used by %n clip(s). They will show it as missing until it is imported again.</source>
@@ -12013,7 +12013,7 @@
     </message>
     <message>
         <source>Customize Layouts in Settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>在「設定」中自訂版面配置…</translation>
     </message>
     <message>
         <source>Landscape Workspace</source>
@@ -12029,7 +12029,7 @@
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished">素材市場</translation>
+        <translation>素材市場</translation>
     </message>
     <message>
         <source>Downloads</source>
@@ -12060,309 +12060,309 @@
     <name>MarketChipsSection</name>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation>全部</translation>
     </message>
 </context>
 <context>
     <name>MarketCustomEffectsSection</name>
     <message>
         <source>Effects</source>
-        <translation type="unfinished">效果</translation>
+        <translation>效果</translation>
     </message>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished">轉場</translation>
+        <translation>轉場</translation>
     </message>
     <message>
         <source>Audio effects</source>
-        <translation type="unfinished"></translation>
+        <translation>音訊效果</translation>
     </message>
     <message numerus="yes">
         <source>%n custom effect(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 個自訂效果</numerusform>
         </translation>
     </message>
     <message>
         <source>No custom effects</source>
-        <translation type="unfinished"></translation>
+        <translation>無自訂效果</translation>
     </message>
     <message>
         <source>Refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>重新整理</translation>
     </message>
     <message>
         <source>No custom effects yet</source>
-        <translation type="unfinished"></translation>
+        <translation>尚無自訂效果</translation>
     </message>
     <message>
         <source>Install a .driftfx or a zip made in Drift Forge, or copy its folder into the custom effects folder and refresh.</source>
-        <translation type="unfinished"></translation>
+        <translation>安裝來自 Drift Forge 製作的 .driftfx 或 zip，或將其資料夾複製到自訂效果資料夾中並重新整理。</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">從檔案安裝…</translation>
+        <translation>從檔案安裝…</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">移除</translation>
+        <translation>移除</translation>
     </message>
     <message>
         <source>Remove “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>移除“%1”？</translation>
     </message>
     <message>
         <source>Removed “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>已移除“%1”</translation>
     </message>
     <message>
         <source>Could not remove “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>無法移除“%1”</translation>
     </message>
     <message>
         <source>Its folder is deleted. Clips that use it will play without it.</source>
-        <translation type="unfinished"></translation>
+        <translation>其資料夾已刪除。使用它的片段在播放時將不包含該效果。</translation>
     </message>
 </context>
 <context>
     <name>MarketDownloadsSection</name>
     <message numerus="yes">
         <source>%n active</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個進行中</numerusform>
         </translation>
     </message>
     <message>
         <source>No downloads running</source>
-        <translation type="unfinished">沒有正在進行的下載</translation>
+        <translation>沒有正在進行的下載</translation>
     </message>
     <message>
         <source>%1 at a time</source>
-        <translation type="unfinished">每次最多 %1 個</translation>
+        <translation>每次最多 %1 個</translation>
     </message>
     <message>
         <source>Clear finished</source>
-        <translation type="unfinished">清除已完成</translation>
+        <translation>清除已完成</translation>
     </message>
     <message>
         <source>Nothing downloaded yet</source>
-        <translation type="unfinished">還沒有下載內容</translation>
+        <translation>還沒有下載內容</translation>
     </message>
     <message>
         <source>Downloads from the Marketplace show up here while they run.</source>
-        <translation type="unfinished"></translation>
+        <translation>市集下載在進行時會顯示於此。</translation>
     </message>
 </context>
 <context>
     <name>MarketGridSection</name>
     <message>
         <source>Top</source>
-        <translation type="unfinished">上</translation>
+        <translation>上</translation>
     </message>
     <message>
         <source>New</source>
-        <translation type="unfinished">新建</translation>
+        <translation>新建</translation>
     </message>
     <message>
         <source>Trending</source>
-        <translation type="unfinished"></translation>
+        <translation>趨勢熱門</translation>
     </message>
     <message>
         <source>Popular</source>
-        <translation type="unfinished"></translation>
+        <translation>熱門推薦</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation type="unfinished">搜索</translation>
+        <translation>搜索</translation>
     </message>
     <message>
         <source>Couldn’t load this</source>
-        <translation type="unfinished"></translation>
+        <translation>無法載入此內容</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished">重試</translation>
+        <translation>重試</translation>
     </message>
     <message>
         <source>No results for “%1”</source>
-        <translation type="unfinished">沒有「%1」的結果</translation>
+        <translation>沒有「%1」的結果</translation>
     </message>
     <message>
         <source>Nothing here yet</source>
-        <translation type="unfinished"></translation>
+        <translation>這裡尚無內容</translation>
     </message>
 </context>
 <context>
     <name>MarketItemCard</name>
     <message>
         <source>Install</source>
-        <translation type="unfinished">安裝</translation>
+        <translation>安裝</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation>新增</translation>
     </message>
 </context>
 <context>
     <name>MarketItemDetail</name>
     <message>
         <source>This needs a newer version of Drift. Update the app to install it.</source>
-        <translation type="unfinished"></translation>
+        <translation>此項目需要更新版本的 Drift。請更新應用程式以進行安裝。</translation>
     </message>
     <message>
         <source>The install didn’t finish.</source>
-        <translation type="unfinished"></translation>
+        <translation>安裝未完成。</translation>
     </message>
     <message>
         <source>Effect</source>
-        <translation type="unfinished">效果</translation>
+        <translation>效果</translation>
     </message>
     <message>
         <source>Transition</source>
-        <translation type="unfinished">轉場</translation>
+        <translation>轉場</translation>
     </message>
     <message>
         <source>Audio effect</source>
-        <translation type="unfinished"></translation>
+        <translation>音訊效果</translation>
     </message>
     <message>
         <source>Theme</source>
-        <translation type="unfinished">主題</translation>
+        <translation>主題</translation>
     </message>
     <message>
         <source>LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT</translation>
     </message>
     <message>
         <source>Effect template</source>
-        <translation type="unfinished"></translation>
+        <translation>效果範本</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished">動畫</translation>
+        <translation>動畫</translation>
     </message>
     <message>
         <source>3D object</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 物件</translation>
     </message>
     <message>
         <source>Face prop</source>
-        <translation type="unfinished"></translation>
+        <translation>臉部道具</translation>
     </message>
     <message>
         <source>Video</source>
-        <translation type="unfinished">視頻</translation>
+        <translation>視頻</translation>
     </message>
     <message>
         <source>Photo</source>
-        <translation type="unfinished"></translation>
+        <translation>相片</translation>
     </message>
     <message>
         <source>Audio</source>
-        <translation type="unfinished">音頻</translation>
+        <translation>音頻</translation>
     </message>
     <message>
         <source>Music</source>
-        <translation type="unfinished"></translation>
+        <translation>音樂</translation>
     </message>
     <message>
         <source>Save downloads to</source>
-        <translation type="unfinished">下載儲存至</translation>
+        <translation>下載儲存至</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">正在下載…</translation>
+        <translation>正在下載…</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">正在安裝中…</translation>
+        <translation>正在安裝中…</translation>
     </message>
     <message>
         <source>Download again</source>
-        <translation type="unfinished">重新下載</translation>
+        <translation>重新下載</translation>
     </message>
     <message>
         <source>Download</source>
-        <translation type="unfinished">下載</translation>
+        <translation>下載</translation>
     </message>
     <message>
         <source>Reinstall</source>
-        <translation type="unfinished"></translation>
+        <translation>重新安裝</translation>
     </message>
     <message>
         <source>Update</source>
-        <translation type="unfinished">更新</translation>
+        <translation>更新</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">安裝</translation>
+        <translation>安裝</translation>
     </message>
     <message>
         <source>Add to Face props</source>
-        <translation type="unfinished">添加到人臉道具</translation>
+        <translation>添加到人臉道具</translation>
     </message>
     <message>
         <source>Add to media bin</source>
-        <translation type="unfinished">添加到媒體庫</translation>
+        <translation>添加到媒體庫</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>返回</translation>
     </message>
     <message>
         <source>Pause</source>
-        <translation type="unfinished">暫停</translation>
+        <translation>暫停</translation>
     </message>
     <message>
         <source>Play preview</source>
-        <translation type="unfinished">播放預覽</translation>
+        <translation>播放預覽</translation>
     </message>
     <message>
         <source>Licence</source>
-        <translation type="unfinished"></translation>
+        <translation>授權條款</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished"></translation>
+        <translation>大小</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished">樣式</translation>
+        <translation>樣式</translation>
     </message>
     <message>
         <source>An update is available</source>
-        <translation type="unfinished"></translation>
+        <translation>有可用更新</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>已安裝</translation>
     </message>
     <message>
         <source>Add to timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>新增至時間軸</translation>
     </message>
     <message>
         <source>Open on cutwire.studio</source>
-        <translation type="unfinished"></translation>
+        <translation>在 cutwire.studio 上開啟</translation>
     </message>
     <message>
         <source>Saves to %1</source>
-        <translation type="unfinished">儲存至 %1</translation>
+        <translation>儲存至 %1</translation>
     </message>
     <message>
         <source>You’ll choose a folder the first time</source>
-        <translation type="unfinished">首次使用時將選擇資料夾</translation>
+        <translation>首次使用時將選擇資料夾</translation>
     </message>
     <message>
         <source>Change</source>
-        <translation type="unfinished">更改</translation>
+        <translation>更改</translation>
     </message>
 </context>
 <context>
     <name>MarketItemLoader</name>
     <message>
         <source>That item was not found.</source>
-        <translation type="unfinished"></translation>
+        <translation>未找到該項目。</translation>
     </message>
 </context>
 <context>
@@ -12380,220 +12380,220 @@
     <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation type="unfinished">搜索音效</translation>
+        <translation>搜索音效</translation>
     </message>
     <message>
         <source>Loading sound effects…</source>
-        <translation type="unfinished">正在載入音效…</translation>
+        <translation>正在載入音效…</translation>
     </message>
     <message>
         <source>Couldn’t load sound effects</source>
-        <translation type="unfinished">無法載入音效</translation>
+        <translation>無法載入音效</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished">重試</translation>
+        <translation>重試</translation>
     </message>
     <message>
         <source>No sound effects match “%1”.</source>
-        <translation type="unfinished">沒有符合“%1”的音效。</translation>
+        <translation>沒有符合“%1”的音效。</translation>
     </message>
     <message>
         <source>No sound effects here.</source>
-        <translation type="unfinished">這裡沒有音效。</translation>
+        <translation>這裡沒有音效。</translation>
     </message>
 </context>
 <context>
     <name>MarketShelfSection</name>
     <message>
         <source>See all</source>
-        <translation type="unfinished">查看全部</translation>
+        <translation>查看全部</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished">重試</translation>
+        <translation>重試</translation>
     </message>
 </context>
 <context>
     <name>MarketStockBrowserSection</name>
     <message>
         <source>%1 didn’t respond.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 沒有回應。</translation>
     </message>
     <message numerus="yes">
         <source>%n download(s) left today</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>今天還剩 %n 次下載</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n download(s) left</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>還剩 %n 次下載</numerusform>
         </translation>
     </message>
     <message>
         <source>Search, or paste a link</source>
-        <translation type="unfinished">搜索，或貼上鏈接</translation>
+        <translation>搜索，或貼上鏈接</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation type="unfinished">搜索</translation>
+        <translation>搜索</translation>
     </message>
     <message>
         <source>All sources</source>
-        <translation type="unfinished"></translation>
+        <translation>所有來源</translation>
     </message>
     <message>
         <source>%1 (%2 left)</source>
-        <translation type="unfinished">%1（剩餘 %2）</translation>
+        <translation>%1（剩餘 %2）</translation>
     </message>
     <message numerus="yes">
         <source>Filters — %n applied</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>篩選 — %n 個已應用</numerusform>
         </translation>
     </message>
     <message>
         <source>Filters</source>
-        <translation type="unfinished">篩選</translation>
+        <translation>篩選</translation>
     </message>
     <message>
         <source>Get from %1</source>
-        <translation type="unfinished">從 %1 獲取</translation>
+        <translation>從 %1 獲取</translation>
     </message>
     <message>
         <source>Get from this link</source>
-        <translation type="unfinished">從此鏈接獲取</translation>
+        <translation>從此鏈接獲取</translation>
     </message>
     <message>
         <source>Looking up that link…</source>
-        <translation type="unfinished">正在查找該鏈接…</translation>
+        <translation>正在查找該鏈接…</translation>
     </message>
     <message>
         <source>Couldn’t open that link</source>
-        <translation type="unfinished">無法開啟該鏈接</translation>
+        <translation>無法開啟該鏈接</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished">重試</translation>
+        <translation>重試</translation>
     </message>
     <message>
         <source>Search failed</source>
-        <translation type="unfinished">搜索失敗</translation>
+        <translation>搜索失敗</translation>
     </message>
     <message>
         <source>No results for “%1”</source>
-        <translation type="unfinished">沒有「%1」的結果</translation>
+        <translation>沒有「%1」的結果</translation>
     </message>
     <message>
         <source>Search this source</source>
-        <translation type="unfinished">搜索此素材源</translation>
+        <translation>搜索此素材源</translation>
     </message>
     <message>
         <source>Try different words, another source, or clear a filter.</source>
-        <translation type="unfinished">嘗試其他關鍵詞、切換素材源，或清除篩選條件。</translation>
+        <translation>嘗試其他關鍵詞、切換素材源，或清除篩選條件。</translation>
     </message>
     <message>
         <source>Type above and press Enter.</source>
-        <translation type="unfinished">在上方輸入並按回車。</translation>
+        <translation>在上方輸入並按回車。</translation>
     </message>
 </context>
 <context>
     <name>MarketTimelineAdd</name>
     <message>
         <source>Added to the media bin</source>
-        <translation type="unfinished">已添加到媒體庫</translation>
+        <translation>已添加到媒體庫</translation>
     </message>
 </context>
 <context>
     <name>MarketplaceView</name>
     <message>
         <source>Custom effects</source>
-        <translation type="unfinished"></translation>
+        <translation>自訂效果</translation>
     </message>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished">下載</translation>
+        <translation>下載</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">從檔案安裝…</translation>
+        <translation>從檔案安裝…</translation>
     </message>
     <message>
         <source>Install a .driftfx or a zip made in Drift Forge, or an addon</source>
-        <translation type="unfinished"></translation>
+        <translation>安裝來自 Drift Forge 製作的 .driftfx 或 zip，或附加元件</translation>
     </message>
     <message>
         <source>Open custom effects folder</source>
-        <translation type="unfinished"></translation>
+        <translation>開啟自訂效果資料夾</translation>
     </message>
     <message>
         <source>Copy an effect&apos;s folder here, then refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>將效果資料夾複製到此處，然後重新整理</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished">效果</translation>
+        <translation>效果</translation>
     </message>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished">轉場</translation>
+        <translation>轉場</translation>
     </message>
     <message>
         <source>Audio effects</source>
-        <translation type="unfinished"></translation>
+        <translation>音訊效果</translation>
     </message>
     <message>
         <source>Refresh custom effects</source>
-        <translation type="unfinished"></translation>
+        <translation>重新整理自訂效果</translation>
     </message>
     <message>
         <source>Custom effects refreshed</source>
-        <translation type="unfinished"></translation>
+        <translation>自訂效果已重新整理</translation>
     </message>
     <message>
         <source>Browse more online</source>
-        <translation type="unfinished"></translation>
+        <translation>線上瀏覽更多</translation>
     </message>
     <message>
         <source>You’re offline. Showing what was saved last time.</source>
-        <translation type="unfinished"></translation>
+        <translation>您目前處於離線狀態。正在顯示上次儲存的內容。</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">重試</translation>
+        <translation>重試</translation>
     </message>
     <message>
         <source>Loading the Marketplace…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在載入市集…</translation>
     </message>
     <message>
         <source>Marketplace unavailable</source>
-        <translation type="unfinished">素材市場不可用</translation>
+        <translation>素材市場不可用</translation>
     </message>
     <message>
         <source>There is nothing to show right now.</source>
-        <translation type="unfinished"></translation>
+        <translation>目前沒有可顯示的內容。</translation>
     </message>
     <message>
         <source>Open link</source>
-        <translation type="unfinished">開啟鏈接</translation>
+        <translation>開啟鏈接</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">開啟</translation>
+        <translation>開啟</translation>
     </message>
     <message>
         <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
-        <translation type="unfinished"></translation>
+        <translation>這將在您的瀏覽器中開啟 %1。該網站不在 cutwire.studio 上。</translation>
     </message>
 </context>
 <context>
     <name>MarketplaceWindow</name>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished">素材市場</translation>
+        <translation>素材市場</translation>
     </message>
 </context>
 <context>
@@ -12620,26 +12620,26 @@
     </message>
     <message>
         <source>Add points to refine · then press “Cut out through whole clip” in the Masking panel</source>
-        <translation type="unfinished"></translation>
+        <translation>新增控制點進行微調 · 然後在「遮罩」面板中點選「摳出整個片段」</translation>
     </message>
     <message>
         <source>Install a cutout model in the Masking panel first</source>
-        <translation type="unfinished"></translation>
+        <translation>請先在「遮罩」面板中安裝摳圖模型</translation>
     </message>
     <message>
         <source>People are found automatically · press “Cut out people” in the Masking panel</source>
-        <translation type="unfinished"></translation>
+        <translation>人物已自動辨識 · 請在「遮罩」面板中點選「摳出人物」</translation>
     </message>
 </context>
 <context>
     <name>MaskBrushOverlay</name>
     <message>
         <source>%1 %</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 %</translation>
     </message>
     <message>
         <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>繪製以新增 · 按住右鍵拖曳或 %1 以擦除 · [ ] 或按住 Shift 拖曳以調整大小 · Ctrl+滾輪以縮放</translation>
     </message>
     <message>
         <source>Move the playhead over the selected clip</source>
@@ -12670,44 +12670,44 @@
     </message>
     <message>
         <source>Drawing replaces this layer&apos;s mask</source>
-        <translation type="unfinished"></translation>
+        <translation>繪製將取代此圖層的遮罩</translation>
     </message>
     <message>
         <source>Drag to draw · Shift for square/circle · Alt from centre</source>
-        <translation type="unfinished"></translation>
+        <translation>拖曳以繪製 · 按住 Shift 繪製正方形/圓形 · 按住 Alt 從中心繪製</translation>
     </message>
 </context>
 <context>
     <name>MaskEditSession</name>
     <message>
         <source>Mask changed</source>
-        <translation type="unfinished">遮罩已更改</translation>
+        <translation>遮罩已更改</translation>
     </message>
 </context>
 <context>
     <name>MaskOverlay</name>
     <message>
         <source>Unlock aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>解除鎖定顯示比例</translation>
     </message>
     <message>
         <source>Lock aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>鎖定顯示比例</translation>
     </message>
     <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
-        <translation type="unfinished"></translation>
+        <translation>拖曳控制點以變更形狀 · 輕按邊緣上的 ○ 以新增控制點 · 長按控制點以刪除</translation>
     </message>
     <message>
         <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
-        <translation type="unfinished"></translation>
+        <translation>拖曳控制點以變更形狀 · 點選邊緣上的 ○ 以新增控制點 · 在控制點上按右鍵以刪除</translation>
     </message>
 </context>
 <context>
     <name>MaskOverlayEmptyHint</name>
     <message>
         <source>Pick a mask tool in the Masking panel and draw on the preview</source>
-        <translation type="unfinished"></translation>
+        <translation>在「遮罩」面板中選取遮罩工具並在預覽區繪製</translation>
     </message>
     <message>
         <source>Drag a mask from the Masks tab onto a clip to edit it here</source>
@@ -12722,22 +12722,22 @@
     <name>MaskOverlayFeatherHandle</name>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">編輯 %1</translation>
+        <translation>編輯 %1</translation>
     </message>
     <message>
         <source>Feather</source>
-        <translation type="unfinished">羽化</translation>
+        <translation>羽化</translation>
     </message>
 </context>
 <context>
     <name>MaskOverlayRoundnessHandle</name>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">編輯 %1</translation>
+        <translation>編輯 %1</translation>
     </message>
     <message>
         <source>Roundness</source>
-        <translation type="unfinished"></translation>
+        <translation>圓角</translation>
     </message>
 </context>
 <context>
@@ -12779,11 +12779,11 @@
     </message>
     <message>
         <source>Remove speed changes first</source>
-        <translation type="unfinished"></translation>
+        <translation>請先移除變速效果</translation>
     </message>
     <message>
         <source>Needs a video track below</source>
-        <translation type="unfinished"></translation>
+        <translation>下方需要有影片軌道</translation>
     </message>
     <message>
         <source>Convert to mask</source>
@@ -12795,27 +12795,27 @@
     </message>
     <message>
         <source>Clip</source>
-        <translation type="unfinished">片段</translation>
+        <translation>片段</translation>
     </message>
     <message>
         <source>%1 mask</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 遮罩</translation>
     </message>
     <message>
         <source>Clips used as mask</source>
-        <translation type="unfinished"></translation>
+        <translation>用作遮罩的片段</translation>
     </message>
     <message>
         <source>Cutouts can&apos;t be moved yet</source>
-        <translation type="unfinished"></translation>
+        <translation>摳圖目前無法移動</translation>
     </message>
     <message>
         <source>Blur area</source>
-        <translation type="unfinished"></translation>
+        <translation>模糊區域</translation>
     </message>
     <message>
         <source>Mask moved to an effect layer</source>
-        <translation type="unfinished"></translation>
+        <translation>遮罩已移動到效果圖層</translation>
     </message>
     <message>
         <source>Draw mask</source>
@@ -12835,23 +12835,23 @@
     </message>
     <message>
         <source>Clear cutout fix</source>
-        <translation type="unfinished"></translation>
+        <translation>清除摳圖修正</translation>
     </message>
     <message>
         <source>Cutout fix cleared</source>
-        <translation type="unfinished"></translation>
+        <translation>摳圖修正已清除</translation>
     </message>
     <message>
         <source>Could not save the cutout fix. The next stroke will try again</source>
-        <translation type="unfinished"></translation>
+        <translation>無法儲存摳圖修正。下一筆畫將再次重試</translation>
     </message>
     <message>
         <source>Fix cutout frame</source>
-        <translation type="unfinished"></translation>
+        <translation>修正摳圖影格</translation>
     </message>
     <message>
         <source>Cutout frame fixed</source>
-        <translation type="unfinished"></translation>
+        <translation>摳圖影格已修正</translation>
     </message>
     <message>
         <source>Could not save the brush mask. The next stroke will try again</source>
@@ -12947,7 +12947,7 @@
     </message>
     <message>
         <source>Split</source>
-        <translation type="unfinished">分割</translation>
+        <translation>分割</translation>
     </message>
     <message>
         <source>Matte</source>
@@ -12955,7 +12955,7 @@
     </message>
     <message>
         <source>Sequence matte</source>
-        <translation type="unfinished"></translation>
+        <translation>序列遮色片</translation>
     </message>
     <message>
         <source>Mask</source>
@@ -12963,27 +12963,27 @@
     </message>
     <message>
         <source>Set clip shape</source>
-        <translation type="unfinished"></translation>
+        <translation>設定片段形狀</translation>
     </message>
     <message>
         <source>Shape changed</source>
-        <translation type="unfinished"></translation>
+        <translation>形狀已變更</translation>
     </message>
     <message>
         <source>Reframe clip</source>
-        <translation type="unfinished"></translation>
+        <translation>重新構圖片段</translation>
     </message>
     <message>
         <source>Reframed</source>
-        <translation type="unfinished"></translation>
+        <translation>已重新構圖</translation>
     </message>
     <message>
         <source>Show whole video</source>
-        <translation type="unfinished"></translation>
+        <translation>顯示完整影片</translation>
     </message>
     <message>
         <source>Showing whole video</source>
-        <translation type="unfinished"></translation>
+        <translation>正在顯示完整影片</translation>
     </message>
 </context>
 <context>
@@ -13014,11 +13014,11 @@
     </message>
     <message>
         <source>Tracker</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤器</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Off</source>
@@ -13066,15 +13066,15 @@
     </message>
     <message>
         <source>Pressure changes size</source>
-        <translation type="unfinished"></translation>
+        <translation>筆壓改變大小</translation>
     </message>
     <message>
         <source>Clear fix on this frame</source>
-        <translation type="unfinished"></translation>
+        <translation>清除此影格上的修復</translation>
     </message>
     <message>
         <source>Remove the brush fix from the frame at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>從播放磁頭所在影格移除筆刷修復</translation>
     </message>
     <message>
         <source>Fill</source>
@@ -13086,7 +13086,7 @@
     </message>
     <message>
         <source>Start a new brush mask covering the whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>建立覆蓋整個片段的新筆刷遮罩</translation>
     </message>
     <message>
         <source>Clear</source>
@@ -13098,15 +13098,15 @@
     </message>
     <message>
         <source>No trackers on this clip yet. Start one with Point or Planar in the Tracking panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>此片段尚無追蹤器。在「追蹤」面板中點選「點」或「平面」開始一個追蹤器。</translation>
     </message>
     <message>
         <source>Add mask</source>
-        <translation type="unfinished">添加遮罩</translation>
+        <translation>添加遮罩</translation>
     </message>
     <message>
         <source>Draw a mask from this tracker and make it follow the track</source>
-        <translation type="unfinished"></translation>
+        <translation>從此追蹤器繪製遮罩並使其跟隨追蹤</translation>
     </message>
     <message>
         <source>Anything (click to pick)</source>
@@ -13166,23 +13166,23 @@
     </message>
     <message>
         <source>Invert</source>
-        <translation type="unfinished">反轉</translation>
+        <translation>反轉</translation>
     </message>
     <message>
         <source>Hide the inside instead of the outside</source>
-        <translation type="unfinished"></translation>
+        <translation>隱藏內部而非外部</translation>
     </message>
     <message>
         <source>Use</source>
-        <translation type="unfinished"></translation>
+        <translation>使用</translation>
     </message>
     <message>
         <source>Brightness</source>
-        <translation type="unfinished">亮度</translation>
+        <translation>亮度</translation>
     </message>
     <message>
         <source>Transparency</source>
-        <translation type="unfinished"></translation>
+        <translation>透明度</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -13218,67 +13218,67 @@
     </message>
     <message>
         <source>Masking &amp; Tracking</source>
-        <translation type="unfinished">遮罩與跟蹤</translation>
+        <translation>遮罩與跟蹤</translation>
     </message>
     <message>
         <source>Tint hidden</source>
-        <translation type="unfinished"></translation>
+        <translation>著色隱藏區域</translation>
     </message>
     <message>
         <source>Black &amp; white</source>
-        <translation type="unfinished"></translation>
+        <translation>黑白</translation>
     </message>
     <message>
         <source>Trackers need a video clip</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤器需要視訊片段</translation>
     </message>
     <message>
         <source>Blur added on an adjustment layer. Adjust the amount in the Effects tab.</source>
-        <translation type="unfinished"></translation>
+        <translation>已在調整圖層新增模糊。在「效果」分頁中調整程度。</translation>
     </message>
     <message>
         <source>Fixing this frame of “%1”. Brush fixes don&apos;t follow motion.</source>
-        <translation type="unfinished"></translation>
+        <translation>正在修復「%1」的此影格。筆刷修復不會跟隨運動。</translation>
     </message>
     <message>
         <source>Brush masks are a still image. For a moving subject use AI object, or track the mask afterwards.</source>
-        <translation type="unfinished"></translation>
+        <translation>筆刷遮罩是靜態圖像。對於移動的主體，請使用 AI 物件，或在之後追蹤遮罩。</translation>
     </message>
     <message>
         <source>This is a preview of this frame only. It becomes a mask when you cut out.</source>
-        <translation type="unfinished"></translation>
+        <translation>這僅是此影格的預覽。在摳像剪出時會變為遮罩。</translation>
     </message>
     <message>
         <source>Cut out through whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>摳出整個片段</translation>
     </message>
     <message>
         <source>◀ Up to here</source>
-        <translation type="unfinished"></translation>
+        <translation>◀ 截至此處</translation>
     </message>
     <message>
         <source>From here ▶</source>
-        <translation type="unfinished"></translation>
+        <translation>從此處開始 ▶</translation>
     </message>
     <message>
         <source>Use clip at playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>使用播放磁頭處的片段</translation>
     </message>
     <message>
         <source>This layer&apos;s effects apply only inside the mask.</source>
-        <translation type="unfinished"></translation>
+        <translation>此圖層的效果僅套用於遮罩內部。</translation>
     </message>
     <message>
         <source>Masks keep what is inside and hide the rest. Invert to hide the inside instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>遮罩會保留內部內容並隱藏其餘部分。反轉可改為隱藏內部。</translation>
     </message>
     <message>
         <source>Add a mask to preview it</source>
-        <translation type="unfinished"></translation>
+        <translation>新增遮罩以進行預覽</translation>
     </message>
     <message>
         <source>How this mask combines with the ones above</source>
-        <translation type="unfinished"></translation>
+        <translation>此遮罩與上方遮罩的組合方式</translation>
     </message>
     <message>
         <source>Add</source>
@@ -13314,83 +13314,83 @@
     </message>
     <message>
         <source>Position</source>
-        <translation type="unfinished">位置</translation>
+        <translation>位置</translation>
     </message>
     <message>
         <source>Position + rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 + 旋轉</translation>
     </message>
     <message>
         <source>Position, rotation + size</source>
-        <translation type="unfinished"></translation>
+        <translation>位置、旋轉 + 大小</translation>
     </message>
     <message>
         <source>Perspective</source>
-        <translation type="unfinished">透視</translation>
+        <translation>透視</translation>
     </message>
     <message>
         <source>Track ◀</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤 ◀</translation>
     </message>
     <message>
         <source>Follow the object backward from here</source>
-        <translation type="unfinished"></translation>
+        <translation>從此處向後追蹤物件</translation>
     </message>
     <message>
         <source>Track ⇄</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤 ⇄</translation>
     </message>
     <message>
         <source>Follow the object through the whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤貫穿整個片段的物件</translation>
     </message>
     <message>
         <source>Track ▶</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤 ▶</translation>
     </message>
     <message>
         <source>Follow the object forward from here</source>
-        <translation type="unfinished"></translation>
+        <translation>從此處向前追蹤物件</translation>
     </message>
     <message>
         <source>Stop</source>
-        <translation type="unfinished">停止</translation>
+        <translation>停止</translation>
     </message>
     <message>
         <source>Stop tracking (Esc)</source>
-        <translation type="unfinished"></translation>
+        <translation>停止追蹤 (Esc)</translation>
     </message>
     <message>
         <source>Follow</source>
-        <translation type="unfinished"></translation>
+        <translation>跟隨</translation>
     </message>
     <message>
         <source>What the mask copies from the tracked object</source>
-        <translation type="unfinished"></translation>
+        <translation>遮罩從被追蹤物件複製的屬性</translation>
     </message>
     <message>
         <source>Add more points to this tracker in the Tracking panel for rotation, scale and perspective</source>
-        <translation type="unfinished"></translation>
+        <translation>在「追蹤」面板中為此追蹤器新增更多點以獲得旋轉、縮放和透視</translation>
     </message>
     <message>
         <source>Drag the mask on the preview to correct it, then track again.</source>
-        <translation type="unfinished"></translation>
+        <translation>在預覽畫面上拖曳遮罩進行修正，然後再次追蹤。</translation>
     </message>
     <message>
         <source>Blur this area ▾</source>
-        <translation type="unfinished"></translation>
+        <translation>模糊此區域 ▾</translation>
     </message>
     <message>
         <source>Apply a blur or pixelate effect inside this shape</source>
-        <translation type="unfinished"></translation>
+        <translation>在此形狀內套用模糊或像素化效果</translation>
     </message>
     <message>
         <source>Blur</source>
-        <translation type="unfinished">模糊</translation>
+        <translation>模糊</translation>
     </message>
     <message>
         <source>Pixelate</source>
-        <translation type="unfinished"></translation>
+        <translation>像素化</translation>
     </message>
     <message>
         <source>Animate shape</source>
@@ -13424,7 +13424,7 @@
     </message>
     <message>
         <source>Edit mask timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>編輯遮罩時間軸</translation>
     </message>
 </context>
 <context>
@@ -13459,7 +13459,7 @@
     </message>
     <message>
         <source>Split</source>
-        <translation type="unfinished">分割</translation>
+        <translation>分割</translation>
     </message>
     <message>
         <source>Combine</source>
@@ -13487,7 +13487,7 @@
     </message>
     <message>
         <source>Roundness</source>
-        <translation type="unfinished"></translation>
+        <translation>圓角</translation>
     </message>
     <message>
         <source>Center X</source>
@@ -13515,39 +13515,39 @@
     </message>
     <message>
         <source>Polygon</source>
-        <translation type="unfinished">多邊形</translation>
+        <translation>多邊形</translation>
     </message>
     <message>
         <source>Lock aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>鎖定外觀比例</translation>
     </message>
     <message>
         <source>Matte channel</source>
-        <translation type="unfinished"></translation>
+        <translation>遮色片色版</translation>
     </message>
     <message>
         <source>Alpha (transparency)</source>
-        <translation type="unfinished">Alpha (透明度)</translation>
+        <translation>Alpha (透明度)</translation>
     </message>
     <message>
         <source>Luma (brightness)</source>
-        <translation type="unfinished">亮度 (Luma)</translation>
+        <translation>亮度 (Luma)</translation>
     </message>
     <message>
         <source>Fit</source>
-        <translation type="unfinished"></translation>
+        <translation>符合</translation>
     </message>
     <message>
         <source>Stretch</source>
-        <translation type="unfinished">拉伸</translation>
+        <translation>拉伸</translation>
     </message>
     <message>
         <source>Fill</source>
-        <translation type="unfinished">填充</translation>
+        <translation>填充</translation>
     </message>
     <message>
         <source>Edit mask timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>編輯遮罩時間軸</translation>
     </message>
     <message>
         <source>Invert</source>
@@ -13617,7 +13617,7 @@
     <name>McpController</name>
     <message>
         <source>Relink media</source>
-        <translation type="unfinished"></translation>
+        <translation>重新連結媒體</translation>
     </message>
 </context>
 <context>
@@ -13640,7 +13640,7 @@
     </message>
     <message>
         <source>Browse the Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>瀏覽市集</translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -14081,25 +14081,25 @@
     </message>
     <message>
         <source>The project was closed before the replace landed</source>
-        <translation type="unfinished"></translation>
+        <translation>專案在替換完成前已關閉</translation>
     </message>
     <message>
         <source>The project was closed before the edit landed</source>
-        <translation type="unfinished"></translation>
+        <translation>專案在編輯完成前已關閉</translation>
     </message>
     <message>
         <source>Relink media</source>
-        <translation type="unfinished"></translation>
+        <translation>重新連結媒體</translation>
     </message>
     <message numerus="yes">
         <source>Relinked %n file(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>已重新連結 %n 個檔案</numerusform>
         </translation>
     </message>
     <message>
         <source>Track is locked</source>
-        <translation type="unfinished"></translation>
+        <translation>軌道已鎖定</translation>
     </message>
     <message>
         <source>Sub-clip added</source>
@@ -14190,7 +14190,7 @@
     </message>
     <message numerus="yes">
         <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個片段可能播放緩慢。創建代理可讓預覽更流暢；導出仍使用原始檔案</numerusform>
         </translation>
     </message>
@@ -14256,11 +14256,11 @@
     </message>
     <message>
         <source>Straighten</source>
-        <translation type="unfinished"></translation>
+        <translation>水平校正</translation>
     </message>
     <message>
         <source>Level (0°)</source>
-        <translation type="unfinished"></translation>
+        <translation>水平 (0°)</translation>
     </message>
     <message>
         <source>Pause</source>
@@ -14292,15 +14292,15 @@
     </message>
     <message>
         <source>Flip H</source>
-        <translation type="unfinished">水平翻轉</translation>
+        <translation>水平翻轉</translation>
     </message>
     <message>
         <source>Flip V</source>
-        <translation type="unfinished">垂直翻轉</translation>
+        <translation>垂直翻轉</translation>
     </message>
     <message>
         <source>Original: %1×%2 • Crop: %3×%4</source>
-        <translation type="unfinished"></translation>
+        <translation>原始：%1×%2 • 裁剪：%3×%4</translation>
     </message>
     <message>
         <source>Unlock crop ratio</source>
@@ -14617,74 +14617,74 @@
     </message>
     <message>
         <source>Position, size, rotation, anchor point and depth occlusion are on the Transform tab.</source>
-        <translation type="unfinished"></translation>
+        <translation>位置、大小、旋轉、錨點和深度遮擋位於「變形」分頁。</translation>
     </message>
     <message>
         <source>Model scale</source>
-        <translation type="unfinished"></translation>
+        <translation>模型縮放</translation>
     </message>
     <message>
         <source>Scale</source>
-        <translation type="unfinished">縮放</translation>
+        <translation>縮放</translation>
     </message>
     <message>
         <source>Depth scale</source>
-        <translation type="unfinished"></translation>
+        <translation>深度縮放</translation>
     </message>
 </context>
 <context>
     <name>Model3DLighting</name>
     <message>
         <source>Lighting</source>
-        <translation type="unfinished">光照</translation>
+        <translation>光照</translation>
     </message>
     <message>
         <source>Drag the lights in the 3D view, or set them here. They move and scale with the clip; turning the model turns it under them.</source>
-        <translation type="unfinished">在 3D 視圖中拖動燈光，或在此處設置。燈光會隨片段移動和縮放；旋轉模型時，模型會在這些燈光下轉動。</translation>
+        <translation>在 3D 視圖中拖動燈光，或在此處設置。燈光會隨片段移動和縮放；旋轉模型時，模型會在這些燈光下轉動。</translation>
     </message>
     <message>
         <source>Ambient</source>
-        <translation type="unfinished">環境光</translation>
+        <translation>環境光</translation>
     </message>
     <message>
         <source>Light %1</source>
-        <translation type="unfinished">燈光 %1</translation>
+        <translation>燈光 %1</translation>
     </message>
     <message>
         <source>Light %1 colour</source>
-        <translation type="unfinished">燈光 %1 顏色</translation>
+        <translation>燈光 %1 顏色</translation>
     </message>
     <message>
         <source>Left / right</source>
-        <translation type="unfinished">左 / 右</translation>
+        <translation>左 / 右</translation>
     </message>
     <message>
         <source>Up / down</source>
-        <translation type="unfinished">上 / 下</translation>
+        <translation>上 / 下</translation>
     </message>
     <message>
         <source>Near / far</source>
-        <translation type="unfinished">近 / 遠</translation>
+        <translation>近 / 遠</translation>
     </message>
     <message>
         <source>Brightness</source>
-        <translation type="unfinished">亮度</translation>
+        <translation>亮度</translation>
     </message>
     <message>
         <source>Reach</source>
-        <translation type="unfinished">照射距離</translation>
+        <translation>照射距離</translation>
     </message>
     <message>
         <source>Spot angle</source>
-        <translation type="unfinished">聚光角度</translation>
+        <translation>聚光角度</translation>
     </message>
     <message>
         <source>Aim left / right</source>
-        <translation type="unfinished">左右朝向</translation>
+        <translation>左右朝向</translation>
     </message>
     <message>
         <source>Aim up / down</source>
-        <translation type="unfinished">上下朝向</translation>
+        <translation>上下朝向</translation>
     </message>
 </context>
 <context>
@@ -14695,11 +14695,11 @@
     </message>
     <message>
         <source>Model scale</source>
-        <translation type="unfinished"></translation>
+        <translation>模型縮放</translation>
     </message>
     <message>
         <source>Model depth scale</source>
-        <translation type="unfinished"></translation>
+        <translation>模型深度縮放</translation>
     </message>
     <message>
         <source>left / right</source>
@@ -14926,31 +14926,31 @@
     <name>Outliner3dPanel</name>
     <message>
         <source>3D Outliner</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 大綱視圖</translation>
     </message>
     <message>
         <source>Cameras</source>
-        <translation type="unfinished"></translation>
+        <translation>攝影機</translation>
     </message>
     <message>
         <source>Models</source>
-        <translation type="unfinished"></translation>
+        <translation>模型</translation>
     </message>
     <message>
         <source>Layers</source>
-        <translation type="unfinished">圖層</translation>
+        <translation>圖層</translation>
     </message>
     <message>
         <source>No cameras, models or 3D layers at the playhead.</source>
-        <translation type="unfinished"></translation>
+        <translation>播放磁頭處沒有攝影機、模型或 3D 圖層。</translation>
     </message>
     <message>
         <source>Show this clip&apos;s track</source>
-        <translation type="unfinished"></translation>
+        <translation>顯示此片段的軌道</translation>
     </message>
     <message>
         <source>Hide this clip&apos;s track</source>
-        <translation type="unfinished"></translation>
+        <translation>隱藏此片段的軌道</translation>
     </message>
 </context>
 <context>
@@ -15186,7 +15186,7 @@
     </message>
     <message>
         <source>PDF page</source>
-        <translation type="unfinished">PDF 頁</translation>
+        <translation>PDF 頁</translation>
     </message>
     <message numerus="yes">
         <source>%n page(s)</source>
@@ -15364,7 +15364,7 @@
     </message>
     <message>
         <source>The interface graphics API takes effect after you restart Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation>介面圖形 API 將在重新啟動 Drift 後生效。</translation>
     </message>
     <message>
         <source>System default</source>
@@ -15530,7 +15530,7 @@ If playback stutters, try another.</source>
     <name>PreviewOsdZoomChip</name>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished">縮小</translation>
+        <translation>縮小</translation>
     </message>
     <message>
         <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
@@ -15538,7 +15538,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation type="unfinished">放大</translation>
+        <translation>放大</translation>
     </message>
 </context>
 <context>
@@ -15556,11 +15556,11 @@ If playback stutters, try another.</source>
     <name>PreviewStatusLayer</name>
     <message>
         <source>Stale bake</source>
-        <translation type="unfinished"></translation>
+        <translation>過期的預渲染</translation>
     </message>
     <message>
         <source>Baked</source>
-        <translation type="unfinished"></translation>
+        <translation>已預渲染</translation>
     </message>
     <message>
         <source>Nothing to preview yet</source>
@@ -15687,287 +15687,287 @@ If playback stutters, try another.</source>
     <name>ProceduralConsolePanel</name>
     <message>
         <source>Procedural console</source>
-        <translation type="unfinished"></translation>
+        <translation>程序式主控台</translation>
     </message>
     <message>
         <source>Console</source>
-        <translation type="unfinished"></translation>
+        <translation>主控台</translation>
     </message>
     <message>
         <source>Clear the Apply output</source>
-        <translation type="unfinished"></translation>
+        <translation>清除套用輸出</translation>
     </message>
     <message>
         <source>Apply or Check a package to see its output here</source>
-        <translation type="unfinished"></translation>
+        <translation>套用或檢查套件以在此處檢視其輸出</translation>
     </message>
     <message>
         <source>Selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>選取的片段</translation>
     </message>
     <message>
         <source>No errors or output</source>
-        <translation type="unfinished"></translation>
+        <translation>無錯誤或輸出</translation>
     </message>
 </context>
 <context>
     <name>ProceduralEditorController</name>
     <message>
         <source>procedural.json is not valid JSON: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>procedural.json 不是有效的 JSON：%1</translation>
     </message>
     <message>
         <source>expected an object</source>
-        <translation type="unfinished"></translation>
+        <translation>預期為物件</translation>
     </message>
     <message>
         <source>%1: ok - %2 meshes, %3 vertices, %4 instances (%5 ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: 正常 - %2 個網格，%3 個頂點，%4 個執行個體 (%5 毫秒)</translation>
     </message>
     <message>
         <source>%1 failed: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 失敗：%2</translation>
     </message>
     <message>
         <source>shader %1 compiled</source>
-        <translation type="unfinished"></translation>
+        <translation>著色器 %1 編譯完成</translation>
     </message>
     <message>
         <source>Shaders were not compiled: no OpenGL context</source>
-        <translation type="unfinished"></translation>
+        <translation>著色器未編譯：無 OpenGL 上下文</translation>
     </message>
     <message>
         <source>%1 is read-only. Duplicate it to edit.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 為唯讀。建立複本以進行編輯。</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">應用</translation>
+        <translation>應用</translation>
     </message>
     <message>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation>檢查</translation>
     </message>
     <message>
         <source>%1 copy</source>
-        <translation type="unfinished">%1 副本</translation>
+        <translation>%1 副本</translation>
     </message>
     <message>
         <source>Duplicate</source>
-        <translation type="unfinished">複製副本</translation>
+        <translation>複製副本</translation>
     </message>
     <message>
         <source>Use 1-48 letters, digits or underscores for the name</source>
-        <translation type="unfinished"></translation>
+        <translation>名稱請使用 1-48 個字母、數字或底線</translation>
     </message>
     <message>
         <source>Radius</source>
-        <translation type="unfinished">半徑</translation>
+        <translation>半徑</translation>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished">速度</translation>
+        <translation>速度</translation>
     </message>
     <message>
         <source>Tint</source>
-        <translation type="unfinished">色調</translation>
+        <translation>色調</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">創建</translation>
+        <translation>創建</translation>
     </message>
     <message>
         <source>Use letters, digits or underscores for a new shader name, not an existing one</source>
-        <translation type="unfinished"></translation>
+        <translation>新著色器名稱請使用字母、數字或底線，且不得與現有名稱相同</translation>
     </message>
 </context>
 <context>
     <name>ProceduralEditorPanel</name>
     <message>
         <source>Procedural code editor</source>
-        <translation type="unfinished"></translation>
+        <translation>程序式程式碼編輯器</translation>
     </message>
     <message>
         <source>%1 (read-only)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (唯讀)</translation>
     </message>
     <message>
         <source>Pick a package</source>
-        <translation type="unfinished"></translation>
+        <translation>選擇套件</translation>
     </message>
     <message>
         <source>The package to edit. Selecting a procedural clip opens its package.</source>
-        <translation type="unfinished"></translation>
+        <translation>要編輯的套件。選取程序式片段會開啟其套件。</translation>
     </message>
     <message>
         <source>New</source>
-        <translation type="unfinished">新建</translation>
+        <translation>新建</translation>
     </message>
     <message>
         <source>Apply or revert your edits first</source>
-        <translation type="unfinished"></translation>
+        <translation>請先套用或還原您的編輯</translation>
     </message>
     <message>
         <source>Create a minimal procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>建立最精簡的程序式套件</translation>
     </message>
     <message>
         <source>New procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>新增程序式套件</translation>
     </message>
     <message>
         <source>Duplicate to edit</source>
-        <translation type="unfinished"></translation>
+        <translation>建立複本以編輯</translation>
     </message>
     <message>
         <source>Copy this package to your own procedurals and edit the copy</source>
-        <translation type="unfinished"></translation>
+        <translation>將此套件複製到您自己的程序式資源中並編輯該複本</translation>
     </message>
     <message>
         <source>Duplicate procedural to edit</source>
-        <translation type="unfinished"></translation>
+        <translation>建立程序式複本以編輯</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">應用</translation>
+        <translation>應用</translation>
     </message>
     <message>
         <source>Validate and install the package, then refresh the preview (Ctrl+S)</source>
-        <translation type="unfinished"></translation>
+        <translation>驗證並安裝套件，然後重新整理預覽 (Ctrl+S)</translation>
     </message>
     <message>
         <source>Apply procedural code</source>
-        <translation type="unfinished"></translation>
+        <translation>套用程序式程式碼</translation>
     </message>
     <message>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation>檢查</translation>
     </message>
     <message>
         <source>Validate the edits without installing them</source>
-        <translation type="unfinished"></translation>
+        <translation>驗證編輯而不安裝它們</translation>
     </message>
     <message>
         <source>Revert</source>
-        <translation type="unfinished">復原</translation>
+        <translation>復原</translation>
     </message>
     <message>
         <source>Discard edits and reload the package from disk</source>
-        <translation type="unfinished"></translation>
+        <translation>放棄編輯並從磁碟重新載入套件</translation>
     </message>
     <message>
         <source>Add clip</source>
-        <translation type="unfinished"></translation>
+        <translation>新增片段</translation>
     </message>
     <message>
         <source>Add a clip using this package at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>在播放磁頭處新增使用此套件的片段</translation>
     </message>
     <message>
         <source>Discard unapplied edits?</source>
-        <translation type="unfinished"></translation>
+        <translation>要放棄未套用的編輯嗎？</translation>
     </message>
     <message>
         <source>Discard</source>
-        <translation type="unfinished">放棄</translation>
+        <translation>放棄</translation>
     </message>
     <message>
         <source>Keep editing</source>
-        <translation type="unfinished">繼續編輯</translation>
+        <translation>繼續編輯</translation>
     </message>
     <message>
         <source>Package name</source>
-        <translation type="unfinished"></translation>
+        <translation>套件名稱</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">創建</translation>
+        <translation>創建</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">取消</translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>Add a shader pair</source>
-        <translation type="unfinished"></translation>
+        <translation>新增著色器組</translation>
     </message>
     <message>
         <source>Shader name</source>
-        <translation type="unfinished"></translation>
+        <translation>著色器名稱</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation>新增</translation>
     </message>
     <message>
         <source>%1 is read-only</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 為唯讀</translation>
     </message>
     <message>
         <source>%1 - unapplied edits</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 - 未套用的編輯</translation>
     </message>
     <message>
         <source>No package open</source>
-        <translation type="unfinished"></translation>
+        <translation>未開啟套件</translation>
     </message>
     <message>
         <source>Select a procedural clip, pick a package above, or create a new one.</source>
-        <translation type="unfinished"></translation>
+        <translation>選取程序式片段、在上方選擇套件，或建立新套件。</translation>
     </message>
 </context>
 <context>
     <name>ProceduralInspector</name>
     <message>
         <source>Package &quot;%1&quot; is not installed; the clip renders nothing until it returns.</source>
-        <translation type="unfinished"></translation>
+        <translation>套件「%1」未安裝；在套件恢復前該片段不會渲染任何內容。</translation>
     </message>
     <message>
         <source>Package</source>
-        <translation type="unfinished"></translation>
+        <translation>套件</translation>
     </message>
     <message>
         <source>Procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>程序式套件</translation>
     </message>
     <message>
         <source>The package that builds this clip&apos;s scene. Changing it resets the parameters.</source>
-        <translation type="unfinished"></translation>
+        <translation>建構此片段場景的套件。變更套件會重設參數。</translation>
     </message>
     <message>
         <source>Could not change the package</source>
-        <translation type="unfinished"></translation>
+        <translation>無法變更套件</translation>
     </message>
     <message>
         <source>Seed</source>
-        <translation type="unfinished">種子</translation>
+        <translation>種子</translation>
     </message>
     <message>
         <source>Procedural seed</source>
-        <translation type="unfinished"></translation>
+        <translation>程序式隨機種子</translation>
     </message>
     <message>
         <source>Parameters</source>
-        <translation type="unfinished"></translation>
+        <translation>參數</translation>
     </message>
     <message>
         <source>Procedural parameters</source>
-        <translation type="unfinished"></translation>
+        <translation>程序式參數</translation>
     </message>
 </context>
 <context>
     <name>ProceduralParamsPanel</name>
     <message>
         <source>Procedural parameters panel</source>
-        <translation type="unfinished"></translation>
+        <translation>程序式參數面板</translation>
     </message>
     <message>
         <source>Select a procedural clip</source>
-        <translation type="unfinished"></translation>
+        <translation>選取程序式片段</translation>
     </message>
     <message>
         <source>Pick a Procedural 3D clip on the timeline to edit its parameters here.</source>
-        <translation type="unfinished"></translation>
+        <translation>在時間軸上選取程序式 3D 片段以在此處編輯其參數。</translation>
     </message>
 </context>
 <context>
@@ -16053,7 +16053,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>compressed block is too large</source>
-        <translation type="unfinished"></translation>
+        <translation>壓縮區塊過大</translation>
     </message>
     <message>
         <source>cannot compress %1</source>
@@ -16473,7 +16473,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Procedural</source>
-        <translation type="unfinished"></translation>
+        <translation>程序式</translation>
     </message>
     <message>
         <source>Subtitles</source>
@@ -16910,412 +16910,412 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Compact</source>
-        <translation type="unfinished"></translation>
+        <translation>緊湊</translation>
     </message>
     <message>
         <source>High</source>
-        <translation type="unfinished">高</translation>
+        <translation>高</translation>
     </message>
     <message>
         <source>Balanced</source>
-        <translation type="unfinished"></translation>
+        <translation>平衡</translation>
     </message>
 </context>
 <context>
     <name>QuickSetup</name>
     <message>
         <source>Drift setup</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift 設定</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>上一步</translation>
     </message>
     <message>
         <source>Finish</source>
-        <translation type="unfinished"></translation>
+        <translation>完成</translation>
     </message>
     <message>
         <source>Next</source>
-        <translation type="unfinished">下一步</translation>
+        <translation>下一步</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupAddonRow</name>
     <message>
         <source>%1 · %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>已安裝</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">正在安裝中…</translation>
+        <translation>正在安裝中…</translation>
     </message>
     <message>
         <source>%1%</source>
-        <translation type="unfinished"></translation>
+        <translation>%1%</translation>
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished">失敗</translation>
+        <translation>失敗</translation>
     </message>
     <message>
         <source>Queued</source>
-        <translation type="unfinished">排隊中</translation>
+        <translation>排隊中</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupAddonsPage</name>
     <message>
         <source>Install the essentials</source>
-        <translation type="unfinished"></translation>
+        <translation>安裝必備元件</translation>
     </message>
     <message>
         <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift 的基本效果、轉場、音訊效果、字型和調色 LUT 均以附加元件形式提供。缺少它們編輯器將遺失大部分預期功能，因此現在進行安裝。</translation>
     </message>
     <message>
         <source>Needs a newer version of Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation>需要較新版本的 Drift。</translation>
     </message>
     <message>
         <source>Not available in the download store.</source>
-        <translation type="unfinished"></translation>
+        <translation>下載商店中未提供。</translation>
     </message>
     <message>
         <source>The download failed.</source>
-        <translation type="unfinished"></translation>
+        <translation>下載失敗。</translation>
     </message>
     <message>
         <source>%1 of %2 installed</source>
-        <translation type="unfinished"></translation>
+        <translation>已安裝 %2 個中的 %1 個</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach the download store. Until the essentials are installed the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation type="unfinished"></translation>
+        <translation>無法連線至下載商店。在安裝必備元件之前，編輯器將缺少基本效果、轉場和字型。您稍後可以從 Extras 安裝它們。</translation>
     </message>
     <message>
         <source>Some packs didn&apos;t install. Until they are, the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation type="unfinished"></translation>
+        <translation>部分套件未安裝。在安裝完成之前，編輯器將缺少基本效果、轉場和字型。您稍後可以從 Extras 安裝它們。</translation>
     </message>
     <message>
         <source>Optional</source>
-        <translation type="unfinished"></translation>
+        <translation>選用</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">重試</translation>
+        <translation>重試</translation>
     </message>
     <message>
         <source>Skip for now</source>
-        <translation type="unfinished"></translation>
+        <translation>暫時略過</translation>
     </message>
     <message>
         <source>Continue without the essentials?</source>
-        <translation type="unfinished"></translation>
+        <translation>不安裝必備元件繼續？</translation>
     </message>
     <message>
         <source>Continue</source>
-        <translation type="unfinished">繼續</translation>
+        <translation>繼續</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">取消</translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>You can find more effects, models and stickers later in Extras.</source>
-        <translation type="unfinished"></translation>
+        <translation>稍後您可以在 Extras 中找到更多效果、模型和貼圖。</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupCommunityPage</name>
     <message>
         <source>You&apos;re all set</source>
-        <translation type="unfinished"></translation>
+        <translation>一切就緒</translation>
     </message>
     <message>
         <source>Need help or have an idea? We&apos;d love to hear from you.</source>
-        <translation type="unfinished"></translation>
+        <translation>需要協助或有好點子？我們很樂意聽取您的意見。</translation>
     </message>
     <message>
         <source>Finish</source>
-        <translation type="unfinished"></translation>
+        <translation>完成</translation>
     </message>
     <message>
         <source>Join our Discord</source>
-        <translation type="unfinished"></translation>
+        <translation>加入我們的 Discord</translation>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation>已複製</translation>
     </message>
     <message>
         <source>Copy email address</source>
-        <translation type="unfinished"></translation>
+        <translation>複製電子郵件地址</translation>
     </message>
     <message>
         <source>If Drift crashes, it sends an error report to help fix it. No project files or media are included. You can turn this off in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>若 Drift 發生當機，將會傳送錯誤報告以協助修復問題。報告不包含任何專案檔案或媒體。您可以在「設定」中關閉此功能。</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupMockEditor</name>
     <message>
         <source>Drift</source>
-        <translation type="unfinished">Drift</translation>
+        <translation>Drift</translation>
     </message>
     <message>
         <source>Export</source>
-        <translation type="unfinished">導出</translation>
+        <translation>導出</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupScalePage</name>
     <message>
         <source>Interface size</source>
-        <translation type="unfinished">界面大小</translation>
+        <translation>界面大小</translation>
     </message>
     <message>
         <source>Make buttons, text and icons larger or smaller.</source>
-        <translation type="unfinished"></translation>
+        <translation>讓按鈕、文字與圖示變大或變小。</translation>
     </message>
     <message>
         <source>Windows</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows</translation>
     </message>
     <message>
         <source>Recommended</source>
-        <translation type="unfinished"></translation>
+        <translation>建議</translation>
     </message>
     <message>
         <source>Drift will restart when you finish setup to apply this size.</source>
-        <translation type="unfinished"></translation>
+        <translation>完成設定後 Drift 將重新啟動以套用此大小。</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupStepIndicator</name>
     <message>
         <source>Step %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>第 %1 步，共 %2 步</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupThemePage</name>
     <message>
         <source>Pick a look</source>
-        <translation type="unfinished"></translation>
+        <translation>選擇外觀風格</translation>
     </message>
     <message>
         <source>Choose how Drift looks. You can change this any time in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>選擇 Drift 的外觀風格。您隨時可以在「設定」中進行變更。</translation>
     </message>
     <message>
         <source>Match system</source>
-        <translation type="unfinished"></translation>
+        <translation>配合系統</translation>
     </message>
     <message>
         <source>Follows light and dark</source>
-        <translation type="unfinished">跟隨淺色和深色</translation>
+        <translation>跟隨淺色和深色</translation>
     </message>
     <message>
         <source>Dark and light</source>
-        <translation type="unfinished">深色和淺色</translation>
+        <translation>深色和淺色</translation>
     </message>
     <message>
         <source>Light</source>
-        <translation type="unfinished"></translation>
+        <translation>淺色</translation>
     </message>
     <message>
         <source>Dark</source>
-        <translation type="unfinished">深色</translation>
+        <translation>深色</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupTipArt</name>
     <message>
         <source>Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>編輯</translation>
     </message>
     <message>
         <source>Color</source>
-        <translation type="unfinished">顏色</translation>
+        <translation>顏色</translation>
     </message>
     <message>
         <source>Keyframes</source>
-        <translation type="unfinished">關鍵格</translation>
+        <translation>關鍵格</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>字幕</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished">效果</translation>
+        <translation>效果</translation>
     </message>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished">轉場</translation>
+        <translation>轉場</translation>
     </message>
     <message>
         <source>LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT</translation>
     </message>
     <message>
         <source>Fonts</source>
-        <translation type="unfinished">字體</translation>
+        <translation>字體</translation>
     </message>
     <message>
         <source>Stickers</source>
-        <translation type="unfinished"></translation>
+        <translation>貼圖</translation>
     </message>
     <message>
         <source>AI tools</source>
-        <translation type="unfinished">AI 工具</translation>
+        <translation>AI 工具</translation>
     </message>
     <message>
         <source>color</source>
-        <translation type="unfinished"></translation>
+        <translation>顏色</translation>
     </message>
     <message>
         <source>Color workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>顏色工作區</translation>
     </message>
     <message>
         <source>Color grade effect</source>
-        <translation type="unfinished"></translation>
+        <translation>調色效果</translation>
     </message>
     <message>
         <source>Appearance settings</source>
-        <translation type="unfinished"></translation>
+        <translation>外觀設定</translation>
     </message>
     <message>
         <source>Auto subtitles</source>
-        <translation type="unfinished">自動字幕</translation>
+        <translation>自動字幕</translation>
     </message>
     <message>
         <source>People cutout</source>
-        <translation type="unfinished"></translation>
+        <translation>人像去背</translation>
     </message>
     <message>
         <source>Find scenes</source>
-        <translation type="unfinished">查找場景</translation>
+        <translation>查找場景</translation>
     </message>
     <message>
         <source>Hello and welcome back</source>
-        <translation type="unfinished"></translation>
+        <translation>您好，歡迎回來</translation>
     </message>
     <message>
         <source>Select multiple</source>
-        <translation type="unfinished">多選</translation>
+        <translation>多選</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupTipsPage</name>
     <message>
         <source>Search anything</source>
-        <translation type="unfinished"></translation>
+        <translation>搜尋任何內容</translation>
     </message>
     <message>
         <source>Press %1 to search actions, workspaces, add-ons, themes and settings from anywhere, then jump straight to the result.</source>
-        <translation type="unfinished"></translation>
+        <translation>在任何位置按 %1 即可搜尋操作、工作區、附加元件、主題與設定，並直接跳轉至結果。</translation>
     </message>
     <message>
         <source>Use the search field in the header to find actions, workspaces, add-ons, themes and settings, then jump straight to the result.</source>
-        <translation type="unfinished"></translation>
+        <translation>使用頂部標題列中的搜尋欄尋找操作、工作區、附加元件、主題與設定，並直接跳轉至結果。</translation>
     </message>
     <message>
         <source>Switch workspaces</source>
-        <translation type="unfinished"></translation>
+        <translation>切換工作區</translation>
     </message>
     <message>
         <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header, or press %1 to %2 to jump to one.</source>
-        <translation type="unfinished"></translation>
+        <translation>每個工作區都針對特定工作排版面板，例如「編輯」、「顏色」、「關鍵影格」或「字幕」。開啟標題列中的「工作區」功能表，或按 %1 至 %2 即可快速切換。</translation>
     </message>
     <message>
         <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header to switch.</source>
-        <translation type="unfinished"></translation>
+        <translation>每個工作區都針對特定工作排版面板，例如「編輯」、「顏色」、「關鍵影格」或「字幕」。開啟標題列中的「工作區」功能表即可切換。</translation>
     </message>
     <message>
         <source>Get more from Extras</source>
-        <translation type="unfinished"></translation>
+        <translation>從 Extras 取得更多內容</translation>
     </message>
     <message>
         <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
-        <translation type="unfinished"></translation>
+        <translation>更多效果、轉場、調色 LUT、字型、貼圖和 AI 模型可從頂端列的 Extras 安裝。</translation>
     </message>
     <message>
         <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
-        <translation type="unfinished"></translation>
+        <translation>更多效果、轉場、調色 LUT、字型、貼圖和 AI 模型可從頂部標題列的 Extras 安裝。</translation>
     </message>
     <message>
         <source>Use your fingers</source>
-        <translation type="unfinished"></translation>
+        <translation>使用觸控手勢</translation>
     </message>
     <message>
         <source>Pinch the timeline to zoom it, and pinch the preview to zoom and pan the picture. Long-press a clip and choose Select multiple to pick several clips at once.</source>
-        <translation type="unfinished"></translation>
+        <translation>在時間軸上雙指捏合可進行縮放，在預覽畫面上雙指捏合可縮放並平移畫面。長按片段並選擇「多選」可一次選取多個片段。</translation>
     </message>
     <message>
         <source>Play/Pause</source>
-        <translation type="unfinished">播放/暫停</translation>
+        <translation>播放/暫停</translation>
     </message>
     <message>
         <source>Split at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>在目前時間分割</translation>
     </message>
     <message>
         <source>Delete selection</source>
-        <translation type="unfinished">刪除所選內容</translation>
+        <translation>刪除所選內容</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished">復原</translation>
+        <translation>復原</translation>
     </message>
     <message>
         <source>Edit from the keyboard</source>
-        <translation type="unfinished"></translation>
+        <translation>使用鍵盤進行編輯</translation>
     </message>
     <message>
         <source>A few shortcuts cover most of an edit. See and change every shortcut in Settings, under Keyboard shortcuts.</source>
-        <translation type="unfinished"></translation>
+        <translation>幾個快速鍵即可涵蓋大部分編輯操作。請在「設定」的「鍵盤快速鍵」中查看並變更所有快速鍵。</translation>
     </message>
     <message>
         <source>AI tools on your device</source>
-        <translation type="unfinished"></translation>
+        <translation>裝置端 AI 工具</translation>
     </message>
     <message>
         <source>Auto subtitles, people cutout and scene finding run locally. Install their add-ons from Extras, under AI tools.</source>
-        <translation type="unfinished"></translation>
+        <translation>自動字幕、人像去背與場景偵測均在本地端執行。請從 Extras 的「AI 工具」下安裝相應附加元件。</translation>
     </message>
     <message>
         <source>A few tips before you start</source>
-        <translation type="unfinished"></translation>
+        <translation>開始前的幾個提示</translation>
     </message>
     <message>
         <source>Quick pointers to the parts of Drift people tend to miss.</source>
-        <translation type="unfinished"></translation>
+        <translation>帶您快速了解容易被忽略的 Drift 功能。</translation>
     </message>
     <message>
         <source>Previous tip</source>
-        <translation type="unfinished"></translation>
+        <translation>上一個提示</translation>
     </message>
     <message>
         <source>Next tip</source>
-        <translation type="unfinished"></translation>
+        <translation>下一個提示</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupWelcomePage</name>
     <message>
         <source>Welcome to Drift</source>
-        <translation type="unfinished"></translation>
+        <translation>歡迎使用 Drift</translation>
     </message>
     <message>
         <source>Let&apos;s get you set up. First, pick your language.</source>
-        <translation type="unfinished"></translation>
+        <translation>讓我們為您完成設定。首先，請選擇您的語言。</translation>
     </message>
 </context>
 <context>
@@ -17888,7 +17888,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Histo</source>
-        <translation type="unfinished"></translation>
+        <translation>直方圖</translation>
     </message>
     <message>
         <source>Waveform</source>
@@ -17896,7 +17896,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Wave</source>
-        <translation type="unfinished"></translation>
+        <translation>波形圖</translation>
     </message>
     <message>
         <source>Parade</source>
@@ -17908,11 +17908,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Vector</source>
-        <translation type="unfinished">向量</translation>
+        <translation>向量</translation>
     </message>
     <message>
         <source>Scopes update from the preview. Play or move the playhead.</source>
-        <translation type="unfinished"></translation>
+        <translation>示波器根據預覽畫面即時更新。播放或移動播放磁頭。</translation>
     </message>
     <message>
         <source>Scopes</source>
@@ -17923,126 +17923,126 @@ If playback stutters, try another.</source>
     <name>SearchIndex</name>
     <message>
         <source>Not available now</source>
-        <translation type="unfinished">暫不可用</translation>
+        <translation>暫不可用</translation>
     </message>
     <message>
         <source>Export video</source>
-        <translation type="unfinished">導出視頻</translation>
+        <translation>導出視頻</translation>
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished">素材市場</translation>
+        <translation>素材市場</translation>
     </message>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished">下載</translation>
+        <translation>下載</translation>
     </message>
     <message>
         <source>Language…</source>
-        <translation type="unfinished">語言…</translation>
+        <translation>語言…</translation>
     </message>
     <message>
         <source>Video size and layout</source>
-        <translation type="unfinished">視頻尺寸與佈局</translation>
+        <translation>視頻尺寸與佈局</translation>
     </message>
     <message>
         <source>Bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染</translation>
     </message>
     <message>
         <source>Crop video</source>
-        <translation type="unfinished">裁剪視頻</translation>
+        <translation>裁剪視頻</translation>
     </message>
     <message>
         <source>Switch to mobile layout…</source>
-        <translation type="unfinished">切換到移動端佈局…</translation>
+        <translation>切換到移動端佈局…</translation>
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished">設置</translation>
+        <translation>設置</translation>
     </message>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">附加項</translation>
+        <translation>附加項</translation>
     </message>
     <message>
         <source>Add-on manager</source>
-        <translation type="unfinished">附加包管理器</translation>
+        <translation>附加包管理器</translation>
     </message>
     <message>
         <source>Debug info…</source>
-        <translation type="unfinished">調試信息…</translation>
+        <translation>調試信息…</translation>
     </message>
     <message>
         <source>Light theme</source>
-        <translation type="unfinished">淺色主題</translation>
+        <translation>淺色主題</translation>
     </message>
     <message>
         <source>Dark theme</source>
-        <translation type="unfinished">深色主題</translation>
+        <translation>深色主題</translation>
     </message>
     <message>
         <source>System theme</source>
-        <translation type="unfinished">系統主題</translation>
+        <translation>系統主題</translation>
     </message>
     <message>
         <source>Theme: %1</source>
-        <translation type="unfinished">主題：%1</translation>
+        <translation>主題：%1</translation>
     </message>
     <message>
         <source>Workspace: %1</source>
-        <translation type="unfinished">工作區：%1</translation>
+        <translation>工作區：%1</translation>
     </message>
     <message>
         <source>Current</source>
-        <translation type="unfinished"></translation>
+        <translation>目前</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
-        <translation type="unfinished">應用到所選片段</translation>
+        <translation>應用到所選片段</translation>
     </message>
     <message>
         <source>Select a clip first</source>
-        <translation type="unfinished">請先選擇一個片段</translation>
+        <translation>請先選擇一個片段</translation>
     </message>
     <message>
         <source>Add at playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>在播放磁頭處新增</translation>
     </message>
     <message>
         <source>Add as adjustment clip</source>
-        <translation type="unfinished">添加為調整片段</translation>
+        <translation>添加為調整片段</translation>
     </message>
     <message>
         <source>Add after selected clip</source>
-        <translation type="unfinished">添加到所選片段之後</translation>
+        <translation>添加到所選片段之後</translation>
     </message>
     <message>
         <source>Not available on this track</source>
-        <translation type="unfinished">此軌道不可用</translation>
+        <translation>此軌道不可用</translation>
     </message>
     <message>
         <source>Select the clip before a cut</source>
-        <translation type="unfinished">選擇剪下點前的片段</translation>
+        <translation>選擇剪下點前的片段</translation>
     </message>
     <message>
         <source>Select a video, image, text or shape clip</source>
-        <translation type="unfinished">請選擇視頻、圖像、文本或形狀片段</translation>
+        <translation>請選擇視頻、圖像、文本或形狀片段</translation>
     </message>
 </context>
 <context>
     <name>SectionedAssetGrid</name>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <translation>我的項目</translation>
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">收藏</translation>
+        <translation>收藏</translation>
     </message>
     <message>
         <source>Recent</source>
-        <translation type="unfinished"></translation>
+        <translation>最近項目</translation>
     </message>
 </context>
 <context>
@@ -18192,7 +18192,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Object mask refined. Frame fixes were kept</source>
-        <translation type="unfinished"></translation>
+        <translation>物件遮罩已最佳化。影格修復已保留</translation>
     </message>
     <message>
         <source>That clip no longer exists</source>
@@ -18289,15 +18289,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Save diagnostics</source>
-        <translation type="unfinished"></translation>
+        <translation>儲存診斷資訊</translation>
     </message>
     <message>
         <source>Saves an archive with your logs and system information to attach to a bug report.</source>
-        <translation type="unfinished"></translation>
+        <translation>儲存包含記錄檔與系統資訊的壓縮檔，以便隨附於錯誤回報中。</translation>
     </message>
     <message>
         <source>Save diagnostics…</source>
-        <translation type="unfinished"></translation>
+        <translation>儲存診斷資訊…</translation>
     </message>
     <message>
         <source>Help</source>
@@ -18305,15 +18305,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Quick Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>快速設定</translation>
     </message>
     <message>
         <source>Walk through language, theme, interface size and add-ons again.</source>
-        <translation type="unfinished"></translation>
+        <translation>再次逐步進行語言、主題、介面大小和附加元件的設定。</translation>
     </message>
     <message>
         <source>Run again</source>
-        <translation type="unfinished"></translation>
+        <translation>再次執行</translation>
     </message>
     <message>
         <source>About Drift</source>
@@ -18348,27 +18348,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>On this device</source>
-        <translation type="unfinished"></translation>
+        <translation>此裝置端</translation>
     </message>
     <message>
         <source>How AI runs</source>
-        <translation type="unfinished">AI 如何運行</translation>
+        <translation>AI 如何運行</translation>
     </message>
     <message>
         <source>Install an AI Engine from Extras to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished"></translation>
+        <translation>從 Extras 安裝 AI 引擎以解鎖自動字幕、主體去背、趣味臉部效果和降噪功能。</translation>
     </message>
     <message>
         <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">重啟 Drift 以生效。</translation>
+        <translation>重啟 Drift 以生效。</translation>
     </message>
     <message>
         <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">如果你的顯卡不起作用，就會在這台電腦自動以最快選項安裝。</translation>
+        <translation>如果你的顯卡不起作用，就會在這台電腦自動以最快選項安裝。</translation>
     </message>
     <message>
         <source>Agents</source>
-        <translation type="unfinished"></translation>
+        <translation>Agent 代理</translation>
     </message>
     <message>
         <source>Agent access</source>
@@ -18388,35 +18388,35 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Notifications for agent actions</source>
-        <translation type="unfinished"></translation>
+        <translation>Agent 代理操作通知</translation>
     </message>
     <message>
         <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
-        <translation type="unfinished"></translation>
+        <translation>選擇 Agent 代理自行編輯時向您顯示的彈出式視窗。錯誤一律會顯示。</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation>全部</translation>
     </message>
     <message>
         <source>Problems only</source>
-        <translation type="unfinished"></translation>
+        <translation>僅問題</translation>
     </message>
     <message>
         <source>None (errors still show)</source>
-        <translation type="unfinished"></translation>
+        <translation>無 (錯誤仍會顯示)</translation>
     </message>
     <message>
         <source>Cloud</source>
-        <translation type="unfinished">雲朵</translation>
+        <translation>雲朵</translation>
     </message>
     <message>
         <source>Use cloud services</source>
-        <translation type="unfinished"></translation>
+        <translation>使用雲端服務</translation>
     </message>
     <message>
         <source>Connect your own ElevenLabs or Fish Audio account for transcription, voiceover and sound effects.</source>
-        <translation type="unfinished"></translation>
+        <translation>連線您的 ElevenLabs 或 Fish Audio 帳戶，以用於轉錄、旁白配音和音效。</translation>
     </message>
     <message>
         <source>Cloud providers</source>
@@ -18582,15 +18582,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Follows your Windows display scale.</source>
-        <translation type="unfinished"></translation>
+        <translation>依照您的 Windows 顯示縮放比例。</translation>
     </message>
     <message>
         <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
-        <translation type="unfinished"></translation>
+        <translation>無論您的 Windows 顯示縮放比例為何，100% 均適合 1080p 螢幕。</translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger or smaller, on top of your display settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>在您的螢幕顯示設定基礎上，讓按鈕、文字和圖示變大或變小。</translation>
     </message>
     <message>
         <source>100% (system)</source>
@@ -18598,7 +18598,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Windows display scale</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows 顯示縮放比例</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -18853,47 +18853,47 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Undo history</source>
-        <translation type="unfinished"></translation>
+        <translation>復原歷程記錄</translation>
     </message>
     <message>
         <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
-        <translation type="unfinished"></translation>
+        <translation>保存復原步驟的位置。與專案一同儲存時，重新開啟專案會恢復這些步驟；但長時間作業無論如何都會消耗大量記憶體。</translation>
     </message>
     <message>
         <source>Saved with the project</source>
-        <translation type="unfinished"></translation>
+        <translation>與專案一同儲存</translation>
     </message>
     <message>
         <source>This session only</source>
-        <translation type="unfinished"></translation>
+        <translation>僅限本次工作階段</translation>
     </message>
     <message>
         <source>Undo steps kept</source>
-        <translation type="unfinished"></translation>
+        <translation>保留的復原步驟數</translation>
     </message>
     <message>
         <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
-        <translation type="unfinished"></translation>
+        <translation>較早的步驟將被捨棄，且僅有這些步驟使用到的媒體也不再保留。</translation>
     </message>
     <message>
         <source>Unlimited</source>
-        <translation type="unfinished">無限制</translation>
+        <translation>無限制</translation>
     </message>
     <message>
         <source>500 steps</source>
-        <translation type="unfinished"></translation>
+        <translation>500 步</translation>
     </message>
     <message>
         <source>200 steps</source>
-        <translation type="unfinished"></translation>
+        <translation>200 步</translation>
     </message>
     <message>
         <source>100 steps</source>
-        <translation type="unfinished"></translation>
+        <translation>100 步</translation>
     </message>
     <message>
         <source>50 steps</source>
-        <translation type="unfinished"></translation>
+        <translation>50 步</translation>
     </message>
     <message>
         <source>Extras</source>
@@ -18929,15 +18929,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Privacy</source>
-        <translation type="unfinished"></translation>
+        <translation>隱私權</translation>
     </message>
     <message>
         <source>Send crash reports automatically</source>
-        <translation type="unfinished"></translation>
+        <translation>自動傳送當機回報</translation>
     </message>
     <message>
         <source>After a crash, send the error details, a short scrubbed log and your system and graphics information to help fix it. No project files or media.</source>
-        <translation type="unfinished"></translation>
+        <translation>當機發生後，傳送錯誤詳細資訊、去識別化的簡短記錄檔以及您的系統與顯示卡資訊以協助修正問題。不包含任何專案檔案或媒體。</translation>
     </message>
     <message>
         <source>Storage</source>
@@ -18949,7 +18949,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 used</source>
-        <translation type="unfinished"></translation>
+        <translation>已使用 %1</translation>
     </message>
     <message>
         <source>Clear cache</source>
@@ -18957,19 +18957,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Cache location</source>
-        <translation type="unfinished"></translation>
+        <translation>快取位置</translation>
     </message>
     <message>
         <source>%1. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1。重新啟動後生效。</translation>
     </message>
     <message>
         <source>Reset</source>
-        <translation type="unfinished">重置</translation>
+        <translation>重置</translation>
     </message>
     <message>
         <source>Change…</source>
-        <translation type="unfinished"></translation>
+        <translation>變更…</translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -19169,31 +19169,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Interface</source>
-        <translation type="unfinished">界面</translation>
+        <translation>界面</translation>
     </message>
     <message>
         <source>Interface graphics API</source>
-        <translation type="unfinished"></translation>
+        <translation>介面圖形 API</translation>
     </message>
     <message>
         <source>What draws panels, the timeline and menus. OpenGL hands the preview over without a copy. The others can make the interface smoother but copy every preview frame through the CPU, so playback may get slower. If Drift does not start with your choice, it goes back to OpenGL. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation>用於繪製面板、時間軸和功能表的 API。OpenGL 能直接傳遞預覽而無需複製。其他選項可使介面更順暢，但會透過 CPU 複製每個預覽影格，因此播放可能變慢。若 Drift 無法以您選擇的項目啟動，將會自動還原為 OpenGL。重新啟動後生效。</translation>
     </message>
     <message>
         <source>The last choice did not start, so OpenGL is in use.</source>
-        <translation type="unfinished"></translation>
+        <translation>上次選擇的選項無法啟動，因此目前使用 OpenGL。</translation>
     </message>
     <message>
         <source>OpenGL (recommended)</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenGL (建議)</translation>
     </message>
     <message>
         <source>Direct3D 11 (Windows default)</source>
-        <translation type="unfinished"></translation>
+        <translation>Direct3D 11 (Windows 預設)</translation>
     </message>
     <message>
         <source>Metal (macOS default)</source>
-        <translation type="unfinished"></translation>
+        <translation>Metal (macOS 預設)</translation>
     </message>
     <message>
         <source>Playback</source>
@@ -19472,23 +19472,23 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Suggest proxies on import</source>
-        <translation type="unfinished"></translation>
+        <translation>匯入時建議建立代理</translation>
     </message>
     <message>
         <source>What to do when imported footage may preview slowly.</source>
-        <translation type="unfinished"></translation>
+        <translation>當匯入的素材預覽可能變慢時所採取的處理方式。</translation>
     </message>
     <message>
         <source>Ask</source>
-        <translation type="unfinished"></translation>
+        <translation>詢問</translation>
     </message>
     <message>
         <source>Always create proxies</source>
-        <translation type="unfinished"></translation>
+        <translation>一律建立代理</translation>
     </message>
     <message>
         <source>Never ask</source>
-        <translation type="unfinished"></translation>
+        <translation>永不詢問</translation>
     </message>
     <message>
         <source>Proxy resolution</source>
@@ -19718,11 +19718,11 @@ If playback stutters, try another.</source>
     <name>SfxLibrary</name>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished">啟動中…</translation>
+        <translation>啟動中…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">正在下載…</translation>
+        <translation>正在下載…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
@@ -19730,15 +19730,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Importing…</source>
-        <translation type="unfinished">正在導入…</translation>
+        <translation>正在導入…</translation>
     </message>
     <message>
         <source>In the media bin</source>
-        <translation type="unfinished">已在媒體庫中</translation>
+        <translation>已在媒體庫中</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished">已取消</translation>
+        <translation>已取消</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19867,15 +19867,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Miter</source>
-        <translation type="unfinished"></translation>
+        <translation>斜接</translation>
     </message>
     <message>
         <source>Round</source>
-        <translation type="unfinished"></translation>
+        <translation>圓角</translation>
     </message>
     <message>
         <source>Bevel</source>
-        <translation type="unfinished"></translation>
+        <translation>斜角</translation>
     </message>
     <message>
         <source>Opacity</source>
@@ -19907,15 +19907,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Join</source>
-        <translation type="unfinished"></translation>
+        <translation>連接點</translation>
     </message>
     <message>
         <source>How the stroke turns a corner: sharp, rounded or cut off</source>
-        <translation type="unfinished"></translation>
+        <translation>描邊轉角方式：尖銳、圓弧或平切</translation>
     </message>
     <message>
         <source>Miter limit</source>
-        <translation type="unfinished"></translation>
+        <translation>斜接限制</translation>
     </message>
     <message>
         <source>Trim start</source>
@@ -19990,111 +19990,111 @@ If playback stutters, try another.</source>
     <name>ShapeCropSection</name>
     <message>
         <source>Original</source>
-        <translation type="unfinished">原始</translation>
+        <translation>原始</translation>
     </message>
     <message>
         <source>Circle</source>
-        <translation type="unfinished">圓形</translation>
+        <translation>圓形</translation>
     </message>
     <message>
         <source>Ellipse</source>
-        <translation type="unfinished">橢圓</translation>
+        <translation>橢圓</translation>
     </message>
     <message>
         <source>Triangle</source>
-        <translation type="unfinished">三角形</translation>
+        <translation>三角形</translation>
     </message>
     <message>
         <source>Square</source>
-        <translation type="unfinished"></translation>
+        <translation>正方形</translation>
     </message>
     <message>
         <source>Diamond</source>
-        <translation type="unfinished">菱形</translation>
+        <translation>菱形</translation>
     </message>
     <message>
         <source>Pentagon</source>
-        <translation type="unfinished">五邊形</translation>
+        <translation>五邊形</translation>
     </message>
     <message>
         <source>Hexagon</source>
-        <translation type="unfinished">六邊形</translation>
+        <translation>六邊形</translation>
     </message>
     <message>
         <source>Octagon</source>
-        <translation type="unfinished">八邊形</translation>
+        <translation>八邊形</translation>
     </message>
     <message>
         <source>Star</source>
-        <translation type="unfinished">星形</translation>
+        <translation>星形</translation>
     </message>
     <message>
         <source>Heart</source>
-        <translation type="unfinished">心形</translation>
+        <translation>心形</translation>
     </message>
     <message>
         <source>Shape</source>
-        <translation type="unfinished">形狀</translation>
+        <translation>形狀</translation>
     </message>
     <message>
         <source>Content inside shape</source>
-        <translation type="unfinished"></translation>
+        <translation>形狀內部內容</translation>
     </message>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished">縮小</translation>
+        <translation>縮小</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished">縮放</translation>
+        <translation>縮放</translation>
     </message>
     <message>
         <source>Reframe clip</source>
-        <translation type="unfinished"></translation>
+        <translation>重新構圖片段</translation>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation type="unfinished">放大</translation>
+        <translation>放大</translation>
     </message>
     <message>
         <source>Horizontal</source>
-        <translation type="unfinished">水平</translation>
+        <translation>水平</translation>
     </message>
     <message>
         <source>Horizontal position</source>
-        <translation type="unfinished"></translation>
+        <translation>水平位置</translation>
     </message>
     <message>
         <source>Vertical</source>
-        <translation type="unfinished">垂直</translation>
+        <translation>垂直</translation>
     </message>
     <message>
         <source>Vertical position</source>
-        <translation type="unfinished"></translation>
+        <translation>垂直位置</translation>
     </message>
     <message>
         <source>Nudge content left</source>
-        <translation type="unfinished"></translation>
+        <translation>將內容向左微調</translation>
     </message>
     <message>
         <source>Nudge content up</source>
-        <translation type="unfinished"></translation>
+        <translation>將內容向上微調</translation>
     </message>
     <message>
         <source>Nudge content down</source>
-        <translation type="unfinished"></translation>
+        <translation>將內容向下微調</translation>
     </message>
     <message>
         <source>Nudge content right</source>
-        <translation type="unfinished"></translation>
+        <translation>將內容向右微調</translation>
     </message>
     <message>
         <source>Center</source>
-        <translation type="unfinished"></translation>
+        <translation>置中</translation>
     </message>
     <message>
         <source>Show whole video</source>
-        <translation type="unfinished"></translation>
+        <translation>顯示完整影片</translation>
     </message>
 </context>
 <context>
@@ -20121,7 +20121,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shape style</source>
-        <translation type="unfinished">形狀樣式</translation>
+        <translation>形狀樣式</translation>
     </message>
     <message>
         <source>Layers</source>
@@ -20381,7 +20381,7 @@ If playback stutters, try another.</source>
     <name>ShellBridge</name>
     <message>
         <source>Adjustment layer</source>
-        <translation type="unfinished">調整圖層</translation>
+        <translation>調整圖層</translation>
     </message>
 </context>
 <context>
@@ -20844,7 +20844,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Crop / reframe source</source>
-        <translation type="unfinished">裁剪 / 重新構圖源片段</translation>
+        <translation>裁剪 / 重新構圖源片段</translation>
     </message>
     <message>
         <source>Free</source>
@@ -20923,7 +20923,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Upscale source clip</source>
-        <translation type="unfinished">放大源片段</translation>
+        <translation>放大源片段</translation>
     </message>
     <message>
         <source>Output size: %1 x %2</source>
@@ -21025,7 +21025,7 @@ If playback stutters, try another.</source>
     <name>SourceLabOutputPanel</name>
     <message>
         <source>Export trimmed clip</source>
-        <translation type="unfinished">導出已修剪片段</translation>
+        <translation>導出已修剪片段</translation>
     </message>
     <message>
         <source>Output</source>
@@ -21125,7 +21125,7 @@ If playback stutters, try another.</source>
     <name>SourceLabProcessPanel</name>
     <message>
         <source>Denoise and stabilize source</source>
-        <translation type="unfinished">源片段降噪與防抖</translation>
+        <translation>源片段降噪與防抖</translation>
     </message>
     <message>
         <source>Process</source>
@@ -21290,7 +21290,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Speed and loudness</source>
-        <translation type="unfinished">速度和響度</translation>
+        <translation>速度和響度</translation>
     </message>
     <message>
         <source>Keep pitch</source>
@@ -21351,7 +21351,7 @@ If playback stutters, try another.</source>
     <name>SourceLabTrimPanel</name>
     <message>
         <source>Trim source clip</source>
-        <translation type="unfinished">修剪源片段</translation>
+        <translation>修剪源片段</translation>
     </message>
     <message>
         <source>Source Lab Trim</source>
@@ -21406,7 +21406,7 @@ If playback stutters, try another.</source>
     <name>SourceLabViewerPanel</name>
     <message>
         <source>Source Lab</source>
-        <translation type="unfinished">素材實驗室</translation>
+        <translation>素材實驗室</translation>
     </message>
     <message>
         <source>Source Lab Viewer</source>
@@ -22005,7 +22005,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stabilize</source>
-        <translation type="unfinished">防抖</translation>
+        <translation>防抖</translation>
     </message>
     <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
@@ -22125,39 +22125,39 @@ If playback stutters, try another.</source>
     <name>StartupSplash</name>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished">啟動中…</translation>
+        <translation>啟動中…</translation>
     </message>
     <message>
         <source>Checking the graphics driver…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在檢查顯示卡驅動程式…</translation>
     </message>
     <message>
         <source>Loading fonts…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在載入字型…</translation>
     </message>
     <message>
         <source>Starting the playback and audio engines…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在啟動播放與音訊引擎…</translation>
     </message>
     <message>
         <source>Loading add-ons and themes…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在載入附加元件與主題…</translation>
     </message>
     <message>
         <source>Building the interface…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在建構介面…</translation>
     </message>
     <message>
         <source>Opening setup…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在開啟設定…</translation>
     </message>
     <message>
         <source>Opening the editor…</source>
-        <translation type="unfinished"></translation>
+        <translation>正在開啟編輯器…</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation type="unfinished">版本 %1</translation>
+        <translation>版本 %1</translation>
     </message>
 </context>
 <context>
@@ -22225,35 +22225,35 @@ If playback stutters, try another.</source>
     <name>StockInstaller</name>
     <message>
         <source>Waiting…</source>
-        <translation type="unfinished">等待中…</translation>
+        <translation>等待中…</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished">啟動中…</translation>
+        <translation>啟動中…</translation>
     </message>
     <message>
         <source>Preparing…</source>
-        <translation type="unfinished">正在準備…</translation>
+        <translation>正在準備…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">正在下載…</translation>
+        <translation>正在下載…</translation>
     </message>
     <message>
         <source>Importing…</source>
-        <translation type="unfinished">正在導入…</translation>
+        <translation>正在導入…</translation>
     </message>
     <message>
         <source>Could not import that file.</source>
-        <translation type="unfinished">無法導入該檔案</translation>
+        <translation>無法導入該檔案</translation>
     </message>
     <message>
         <source>In the media bin</source>
-        <translation type="unfinished">已在媒體庫中</translation>
+        <translation>已在媒體庫中</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished">已取消</translation>
+        <translation>已取消</translation>
     </message>
 </context>
 <context>
@@ -22540,7 +22540,7 @@ If playback stutters, try another.</source>
     <name>SubtitleLanePanel</name>
     <message>
         <source>Subtitle lane</source>
-        <translation type="unfinished">字幕軌道</translation>
+        <translation>字幕軌道</translation>
     </message>
     <message>
         <source>Select a subtitle clip</source>
@@ -22618,7 +22618,7 @@ If playback stutters, try another.</source>
     <name>SubtitleTextPanel</name>
     <message>
         <source>Subtitle text editor</source>
-        <translation type="unfinished">字幕文本編輯器</translation>
+        <translation>字幕文本編輯器</translation>
     </message>
     <message>
         <source>Import Subtitles</source>
@@ -22753,7 +22753,7 @@ If playback stutters, try another.</source>
     <name>SubtitleTimingPanel</name>
     <message>
         <source>Subtitle timing</source>
-        <translation type="unfinished">字幕時間</translation>
+        <translation>字幕時間</translation>
     </message>
     <message>
         <source>Pick two existing cues</source>
@@ -22799,7 +22799,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shift times</source>
-        <translation type="unfinished">平移時間</translation>
+        <translation>平移時間</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -22903,7 +22903,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Frame rate conversion</source>
-        <translation type="unfinished">格率轉換</translation>
+        <translation>格率轉換</translation>
     </message>
     <message>
         <source>From fps</source>
@@ -22935,7 +22935,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Bridge gaps</source>
-        <translation type="unfinished">填補間隙</translation>
+        <translation>填補間隙</translation>
     </message>
     <message>
         <source>Shorter than (ms)</source>
@@ -23120,55 +23120,55 @@ If playback stutters, try another.</source>
     <name>TeleprompterPanel</name>
     <message>
         <source>Teleprompter</source>
-        <translation type="unfinished"></translation>
+        <translation>提詞機</translation>
     </message>
     <message>
         <source>Edit script</source>
-        <translation type="unfinished"></translation>
+        <translation>編輯腳本</translation>
     </message>
     <message>
         <source>Read mode</source>
-        <translation type="unfinished"></translation>
+        <translation>朗讀模式</translation>
     </message>
     <message>
         <source>Pause scrolling</source>
-        <translation type="unfinished"></translation>
+        <translation>暫停捲動</translation>
     </message>
     <message>
         <source>Start scrolling</source>
-        <translation type="unfinished"></translation>
+        <translation>開始捲動</translation>
     </message>
     <message>
         <source>Back to top</source>
-        <translation type="unfinished"></translation>
+        <translation>返回頂部</translation>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished">速度</translation>
+        <translation>速度</translation>
     </message>
     <message>
         <source>lines/s</source>
-        <translation type="unfinished"></translation>
+        <translation>行/秒</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished"></translation>
+        <translation>字型大小</translation>
     </message>
     <message>
         <source>Follow recording</source>
-        <translation type="unfinished"></translation>
+        <translation>跟隨錄製</translation>
     </message>
     <message>
         <source>Scrolling starts, pauses and stops with recording</source>
-        <translation type="unfinished"></translation>
+        <translation>捲動會隨錄製一同開始、暫停與停止</translation>
     </message>
     <message>
         <source>Show over preview</source>
-        <translation type="unfinished"></translation>
+        <translation>浮動顯示於預覽上方</translation>
     </message>
     <message>
         <source>Paste or type your script</source>
-        <translation type="unfinished"></translation>
+        <translation>貼上或鍵入您的腳本</translation>
     </message>
 </context>
 <context>
@@ -23275,23 +23275,23 @@ If playback stutters, try another.</source>
     <name>TextInspector</name>
     <message>
         <source>As typed</source>
-        <translation type="unfinished"></translation>
+        <translation>依鍵入格式</translation>
     </message>
     <message>
         <source>UPPERCASE</source>
-        <translation type="unfinished"></translation>
+        <translation>大寫</translation>
     </message>
     <message>
         <source>lowercase</source>
-        <translation type="unfinished"></translation>
+        <translation>小寫</translation>
     </message>
     <message>
         <source>Title Case</source>
-        <translation type="unfinished"></translation>
+        <translation>詞首大寫</translation>
     </message>
     <message>
         <source>Sentence case</source>
-        <translation type="unfinished"></translation>
+        <translation>句首大寫</translation>
     </message>
     <message>
         <source>Aa</source>
@@ -23424,7 +23424,7 @@ If playback stutters, try another.</source>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">收藏</translation>
+        <translation>收藏</translation>
     </message>
     <message>
         <source>All</source>
@@ -23614,7 +23614,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Alignment</source>
-        <translation type="unfinished"></translation>
+        <translation>對齊方式</translation>
     </message>
     <message>
         <source>Weight</source>
@@ -23630,7 +23630,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Text style</source>
-        <translation type="unfinished">文本樣式</translation>
+        <translation>文本樣式</translation>
     </message>
     <message>
         <source>Choose the gradient&apos;s first colour</source>
@@ -23674,15 +23674,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Strike</source>
-        <translation type="unfinished"></translation>
+        <translation>刪除線</translation>
     </message>
     <message>
         <source>Draw a line through the text</source>
-        <translation type="unfinished"></translation>
+        <translation>在文字中央劃線</translation>
     </message>
     <message>
         <source>Case</source>
-        <translation type="unfinished"></translation>
+        <translation>大小寫</translation>
     </message>
     <message>
         <source>Align left</source>
@@ -24190,42 +24190,42 @@ If playback stutters, try another.</source>
     <name>TimelineBakeContextMenu</name>
     <message>
         <source>Re-bake</source>
-        <translation type="unfinished"></translation>
+        <translation>重新預渲染</translation>
     </message>
     <message>
         <source>Set work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>設定要預渲染的工作區域</translation>
     </message>
     <message>
         <source>Delete bake</source>
-        <translation type="unfinished"></translation>
+        <translation>刪除預渲染</translation>
     </message>
     <message>
         <source>Manage bakes…</source>
-        <translation type="unfinished"></translation>
+        <translation>管理預渲染…</translation>
     </message>
 </context>
 <context>
     <name>TimelineBakeStrip</name>
     <message>
         <source>Baking %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>正在預渲染 %1%</translation>
     </message>
     <message>
         <source>Stale</source>
-        <translation type="unfinished"></translation>
+        <translation>已過期</translation>
     </message>
     <message>
         <source>Fresh</source>
-        <translation type="unfinished"></translation>
+        <translation>最新</translation>
     </message>
     <message>
         <source>%1 – %2 · %3 · %4%5</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 – %2 · %3 · %4%5</translation>
     </message>
     <message>
         <source>%1 · %2×%3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2×%3</translation>
     </message>
 </context>
 <context>
@@ -24247,7 +24247,7 @@ If playback stutters, try another.</source>
     <name>TimelineClipContextMenu</name>
     <message>
         <source>Move to track</source>
-        <translation type="unfinished"></translation>
+        <translation>移動至軌道</translation>
     </message>
     <message>
         <source>Properties</source>
@@ -24267,7 +24267,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Dissolve composite</source>
-        <translation type="unfinished"></translation>
+        <translation>解散複合</translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24311,31 +24311,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enable clip</source>
-        <translation type="unfinished"></translation>
+        <translation>啟用片段</translation>
     </message>
     <message>
         <source>Disable clip</source>
-        <translation type="unfinished"></translation>
+        <translation>停用片段</translation>
     </message>
     <message>
         <source>Stop looping</source>
-        <translation type="unfinished"></translation>
+        <translation>停止循環播放</translation>
     </message>
     <message>
         <source>Loop</source>
-        <translation type="unfinished">循環</translation>
+        <translation>循環</translation>
     </message>
     <message>
         <source>Remove silence</source>
-        <translation type="unfinished">移除靜音</translation>
+        <translation>移除靜音</translation>
     </message>
     <message>
         <source>Sync by audio</source>
-        <translation type="unfinished"></translation>
+        <translation>依音訊同步</translation>
     </message>
     <message>
         <source>Cancel audio analysis</source>
-        <translation type="unfinished"></translation>
+        <translation>取消音訊分析</translation>
     </message>
     <message>
         <source>Convert to mask</source>
@@ -24343,11 +24343,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Use as mask (nested timeline)</source>
-        <translation type="unfinished"></translation>
+        <translation>用作遮罩 (巢狀時間軸)</translation>
     </message>
     <message>
         <source>Open mask timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>開啟遮罩時間軸</translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -24407,7 +24407,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Replace with…</source>
-        <translation type="unfinished"></translation>
+        <translation>替換為…</translation>
     </message>
     <message>
         <source>Copy effects</source>
@@ -24427,7 +24427,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Blur area…</source>
-        <translation type="unfinished"></translation>
+        <translation>模糊區域…</translation>
     </message>
     <message>
         <source>Edit keyframes…</source>
@@ -24435,7 +24435,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Mask &amp; track…</source>
-        <translation type="unfinished"></translation>
+        <translation>遮罩與追蹤…</translation>
     </message>
     <message>
         <source>Unlink from clip</source>
@@ -24451,7 +24451,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Delete with effects</source>
-        <translation type="unfinished"></translation>
+        <translation>連同效果一併刪除</translation>
     </message>
 </context>
 <context>
@@ -24465,7 +24465,7 @@ If playback stutters, try another.</source>
     <name>TimelineCutButton</name>
     <message>
         <source>Add transition</source>
-        <translation type="unfinished">添加轉場</translation>
+        <translation>添加轉場</translation>
     </message>
 </context>
 <context>
@@ -24487,7 +24487,7 @@ If playback stutters, try another.</source>
     <name>TimelineFadeHandle</name>
     <message>
         <source>%1s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 秒</translation>
     </message>
     <message>
         <source>Adjust fade</source>
@@ -24513,19 +24513,19 @@ If playback stutters, try another.</source>
     <name>TimelineLaneRibbons</name>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished">音效</translation>
+        <translation>音效</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished">遮罩</translation>
+        <translation>遮罩</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished">效果</translation>
+        <translation>效果</translation>
     </message>
     <message>
         <source>%1 — click to expand</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 — 按一下以展開</translation>
     </message>
 </context>
 <context>
@@ -24586,63 +24586,63 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shrink all tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>縮小所有軌道</translation>
     </message>
     <message>
         <source>Grow all tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>放大所有軌道</translation>
     </message>
     <message>
         <source>Fit tracks to panel</source>
-        <translation type="unfinished"></translation>
+        <translation>讓軌道符合面板</translation>
     </message>
     <message>
         <source>Paste here</source>
-        <translation type="unfinished"></translation>
+        <translation>貼上至此處</translation>
     </message>
     <message>
         <source>Add bookmark here</source>
-        <translation type="unfinished"></translation>
+        <translation>在此處新增書籤</translation>
     </message>
     <message>
         <source>Select clips on track</source>
-        <translation type="unfinished"></translation>
+        <translation>選取軌道上的片段</translation>
     </message>
     <message>
         <source>Select clips after here on track</source>
-        <translation type="unfinished"></translation>
+        <translation>選取軌道上此處之後的片段</translation>
     </message>
     <message>
         <source>Select all clips</source>
-        <translation type="unfinished">全選片段</translation>
+        <translation>全選片段</translation>
     </message>
     <message>
         <source>Unmute track</source>
-        <translation type="unfinished">取消靜音軌道</translation>
+        <translation>取消靜音軌道</translation>
     </message>
     <message>
         <source>Mute track</source>
-        <translation type="unfinished">靜音軌道</translation>
+        <translation>靜音軌道</translation>
     </message>
     <message>
         <source>Show track</source>
-        <translation type="unfinished">顯示軌道</translation>
+        <translation>顯示軌道</translation>
     </message>
     <message>
         <source>Hide track</source>
-        <translation type="unfinished">隱藏軌道</translation>
+        <translation>隱藏軌道</translation>
     </message>
     <message>
         <source>Unlock track</source>
-        <translation type="unfinished"></translation>
+        <translation>解鎖軌道</translation>
     </message>
     <message>
         <source>Lock track</source>
-        <translation type="unfinished"></translation>
+        <translation>鎖定軌道</translation>
     </message>
     <message>
         <source>Remove empty tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>移除空白軌道</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -24701,19 +24701,19 @@ If playback stutters, try another.</source>
     <name>TimelineReplaceClipDialog</name>
     <message>
         <source>Replace with…</source>
-        <translation type="unfinished"></translation>
+        <translation>替換為…</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">取消</translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>Search media</source>
-        <translation type="unfinished">搜索媒體</translation>
+        <translation>搜索媒體</translation>
     </message>
     <message>
         <source>No matching media</source>
-        <translation type="unfinished"></translation>
+        <translation>無符合的媒體</translation>
     </message>
 </context>
 <context>
@@ -24727,11 +24727,11 @@ If playback stutters, try another.</source>
     <name>TimelineSequenceTabs</name>
     <message>
         <source>Main</source>
-        <translation type="unfinished">主</translation>
+        <translation>主</translation>
     </message>
     <message>
         <source>New timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>新增時間軸</translation>
     </message>
 </context>
 <context>
@@ -24783,7 +24783,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Toggle keyframe strip</source>
-        <translation type="unfinished"></translation>
+        <translation>切換關鍵影格條</translation>
     </message>
     <message>
         <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
@@ -25021,15 +25021,15 @@ If playback stutters, try another.</source>
     <name>TimelineTrackItem</name>
     <message>
         <source>Procedural package not found. The clip renders nothing until it is installed again.</source>
-        <translation type="unfinished"></translation>
+        <translation>找不到程序式套件。在重新安裝該套件之前，該片段不會渲染任何內容。</translation>
     </message>
     <message>
         <source>Effect</source>
-        <translation type="unfinished">效果</translation>
+        <translation>效果</translation>
     </message>
     <message>
         <source>%1 (off)</source>
-        <translation type="unfinished">%1（關閉）</translation>
+        <translation>%1（關閉）</translation>
     </message>
     <message>
         <source>Audio adjustment</source>
@@ -25060,7 +25060,7 @@ If playback stutters, try another.</source>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
-        <translation type="unfinished"></translation>
+        <translation>拖曳以重複此片段</translation>
     </message>
     <message>
         <source>Drag to trim the start</source>
@@ -25079,19 +25079,19 @@ If playback stutters, try another.</source>
     <name>TimelineWorkAreaBakeChip</name>
     <message>
         <source>Baking %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>正在預渲染 %1%</translation>
     </message>
     <message>
         <source>Bake</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染</translation>
     </message>
     <message>
         <source>Cancel baking</source>
-        <translation type="unfinished"></translation>
+        <translation>取消預渲染</translation>
     </message>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染工作區域以確保流暢播放與匯出</translation>
     </message>
 </context>
 <context>
@@ -25228,11 +25228,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Expand child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>展開子軌道</translation>
     </message>
     <message>
         <source>Collapse child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>折疊子軌道</translation>
     </message>
     <message>
         <source>Unmute track</source>
@@ -25244,27 +25244,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unsolo track</source>
-        <translation type="unfinished"></translation>
+        <translation>取消軌道獨奏</translation>
     </message>
     <message>
         <source>Solo track</source>
-        <translation type="unfinished"></translation>
+        <translation>獨奏軌道</translation>
     </message>
     <message>
         <source>Stop recording</source>
-        <translation type="unfinished">停止錄製</translation>
+        <translation>停止錄製</translation>
     </message>
     <message>
         <source>Record voiceover</source>
-        <translation type="unfinished">錄製配音</translation>
+        <translation>錄製配音</translation>
     </message>
     <message>
         <source>Show one combined waveform</source>
-        <translation type="unfinished">顯示單個合併波形</translation>
+        <translation>顯示單個合併波形</translation>
     </message>
     <message>
         <source>Show each channel separately</source>
-        <translation type="unfinished"></translation>
+        <translation>分開顯示各聲道</translation>
     </message>
     <message>
         <source>Show track</source>
@@ -25276,19 +25276,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unlock track</source>
-        <translation type="unfinished"></translation>
+        <translation>解鎖軌道</translation>
     </message>
     <message>
         <source>Lock track</source>
-        <translation type="unfinished"></translation>
+        <translation>鎖定軌道</translation>
     </message>
     <message>
         <source>Include in export</source>
-        <translation type="unfinished"></translation>
+        <translation>包含在匯出中</translation>
     </message>
     <message>
         <source>Exclude from export</source>
-        <translation type="unfinished"></translation>
+        <translation>從匯出中排除</translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -25324,7 +25324,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drag the bottom edge or scroll over the header to fine-tune</source>
-        <translation type="unfinished"></translation>
+        <translation>拖曳底部邊緣或在標題上方滾動以進行微調</translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -25340,7 +25340,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Remove empty tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>移除空白軌道</translation>
     </message>
 </context>
 <context>
@@ -25393,37 +25393,37 @@ If playback stutters, try another.</source>
     <name>TrackHeaderLaneRow</name>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished">音效</translation>
+        <translation>音效</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished">遮罩</translation>
+        <translation>遮罩</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished">效果</translation>
+        <translation>效果</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderLaneToggle</name>
     <message>
         <source>Expand child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>展開子軌道</translation>
     </message>
     <message>
         <source>Collapse child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>折疊子軌道</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderLockButton</name>
     <message>
         <source>Unlock track</source>
-        <translation type="unfinished"></translation>
+        <translation>解鎖軌道</translation>
     </message>
     <message>
         <source>Lock track</source>
-        <translation type="unfinished"></translation>
+        <translation>鎖定軌道</translation>
     </message>
 </context>
 <context>
@@ -25464,18 +25464,18 @@ If playback stutters, try another.</source>
     <name>TrackHeaderName</name>
     <message>
         <source>not exported</source>
-        <translation type="unfinished"></translation>
+        <translation>未匯出</translation>
     </message>
     <message>
         <source>Shown while editing, left out of every export</source>
-        <translation type="unfinished"></translation>
+        <translation>僅在編輯時顯示，不包含在任何匯出中</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderOverflowButton</name>
     <message>
         <source>More track actions</source>
-        <translation type="unfinished"></translation>
+        <translation>更多軌道操作</translation>
     </message>
 </context>
 <context>
@@ -25524,22 +25524,22 @@ If playback stutters, try another.</source>
     <name>TrackHeaderSoloButton</name>
     <message>
         <source>Unsolo track</source>
-        <translation type="unfinished"></translation>
+        <translation>取消軌道獨奏</translation>
     </message>
     <message>
         <source>Solo track</source>
-        <translation type="unfinished"></translation>
+        <translation>獨奏軌道</translation>
     </message>
     <message>
         <source>S</source>
-        <translation type="unfinished">S</translation>
+        <translation>S</translation>
     </message>
 </context>
 <context>
     <name>TrackerOverlay</name>
     <message>
         <source>Trackers need a video clip</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤器需要視訊片段</translation>
     </message>
     <message>
         <source>Select a clip on the timeline to track motion in it</source>
@@ -25559,7 +25559,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Click the object the clip should follow.</source>
-        <translation type="unfinished"></translation>
+        <translation>按一下片段應跟隨的物件。</translation>
     </message>
     <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
@@ -25575,7 +25575,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
-        <translation type="unfinished"></translation>
+        <translation>拖曳標記進行修正 · 在「追蹤」面板中點選 ◀ ▶ 進行追蹤</translation>
     </message>
     <message>
         <source>Tracking… %1%</source>
@@ -25583,7 +25583,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stop tracking (Esc)</source>
-        <translation type="unfinished"></translation>
+        <translation>停止追蹤 (Esc)</translation>
     </message>
 </context>
 <context>
@@ -25622,51 +25622,51 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>The camera can&apos;t match this surface exactly; some frames drift by up to %1 px</source>
-        <translation type="unfinished"></translation>
+        <translation>攝影機無法完全貼合此表面；部分影格偏移高達 %1 像素</translation>
     </message>
     <message>
         <source>Lost the feature at %1. Drag the marker back onto it and track again, or lower the stop threshold.</source>
-        <translation type="unfinished"></translation>
+        <translation>在 %1 處遺失特徵。將標記拖回特徵上並重新追蹤，或調低停止臨界值。</translation>
     </message>
     <message>
         <source>Not enough detail inside the outline. Outline a larger area with visible texture.</source>
-        <translation type="unfinished"></translation>
+        <translation>外框內部的細節不足。請圈選包含清晰紋理的較大區域。</translation>
     </message>
     <message>
         <source>Lost the surface at %1. Drag its corners back into place and track again.</source>
-        <translation type="unfinished"></translation>
+        <translation>在 %1 處遺失表面。將其角點拖回原位並重新追蹤。</translation>
     </message>
     <message>
         <source>Lock to screen</source>
-        <translation type="unfinished"></translation>
+        <translation>鎖定至螢幕</translation>
     </message>
     <message>
         <source>Change zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>變更縮放</translation>
     </message>
     <message>
         <source>Zoom to fill</source>
-        <translation type="unfinished"></translation>
+        <translation>縮放至填滿</translation>
     </message>
     <message>
         <source>Track mask</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤遮罩</translation>
     </message>
     <message>
         <source>Correct track</source>
-        <translation type="unfinished"></translation>
+        <translation>修正追蹤</translation>
     </message>
     <message>
         <source>Follow object</source>
-        <translation type="unfinished"></translation>
+        <translation>跟隨物件</translation>
     </message>
     <message>
         <source>Add mask</source>
-        <translation type="unfinished">添加遮罩</translation>
+        <translation>添加遮罩</translation>
     </message>
     <message>
         <source>Mask added</source>
-        <translation type="unfinished"></translation>
+        <translation>已新增遮罩</translation>
     </message>
     <message>
         <source>Planar %1</source>
@@ -25722,15 +25722,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drag the outline&apos;s corners onto the surface at this frame, then track again</source>
-        <translation type="unfinished"></translation>
+        <translation>在此影格中將外框角點拖至表面上，然後重新追蹤</translation>
     </message>
     <message>
         <source>Drag the marker onto the feature at this frame, then track again</source>
-        <translation type="unfinished"></translation>
+        <translation>在此影格中將標記拖至特徵上，然後重新追蹤</translation>
     </message>
     <message>
         <source>This clip is transformed; the adjustment mask may not line up</source>
-        <translation type="unfinished"></translation>
+        <translation>此片段已變形；調整遮罩可能無法對齊</translation>
     </message>
     <message>
         <source>Track</source>
@@ -25742,11 +25742,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 (adjustment)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (調整)</translation>
     </message>
     <message>
         <source>Lock to screen is not available for 3D clips</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 片段不支援「鎖定至螢幕」</translation>
     </message>
     <message>
         <source>Apply track</source>
@@ -25785,7 +25785,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Click the object the clip should follow.</source>
-        <translation type="unfinished"></translation>
+        <translation>按一下片段應跟隨的物件。</translation>
     </message>
     <message>
         <source>Position</source>
@@ -25797,7 +25797,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>No clip selected</source>
@@ -25805,11 +25805,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No video clip under this adjustment layer at the playhead.</source>
-        <translation type="unfinished"></translation>
+        <translation>播放磁頭處的此調整圖層下方沒有視訊片段。</translation>
     </message>
     <message>
         <source>No video under this clip at the playhead. Move the playhead over the video it should follow.</source>
-        <translation type="unfinished"></translation>
+        <translation>播放磁頭處的此片段下方沒有視訊。將播放磁頭移至其應跟隨的視訊上方。</translation>
     </message>
     <message>
         <source>Select a video clip to track motion in it.</source>
@@ -25817,31 +25817,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Follow an object in %1</source>
-        <translation type="unfinished"></translation>
+        <translation>跟隨 %1 中的物件</translation>
     </message>
     <message>
         <source>Follow an object</source>
-        <translation type="unfinished"></translation>
+        <translation>跟隨物件</translation>
     </message>
     <message>
         <source>Click an object on the video; this clip will follow it through the clip</source>
-        <translation type="unfinished"></translation>
+        <translation>在視訊上按一下物件；此片段將在整個片段期間跟隨該物件</translation>
     </message>
     <message>
         <source>Follows %1 on %2</source>
-        <translation type="unfinished"></translation>
+        <translation>跟隨 %2 上的 %1</translation>
     </message>
     <message>
         <source>Stop following</source>
-        <translation type="unfinished"></translation>
+        <translation>停止跟隨</translation>
     </message>
     <message>
         <source>Use clip at playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>使用播放磁頭處的片段</translation>
     </message>
     <message>
         <source>Tracking: %1 (under %2)</source>
-        <translation type="unfinished"></translation>
+        <translation>正在追蹤：%1 (%2 下方)</translation>
     </message>
     <message>
         <source>Point</source>
@@ -25861,11 +25861,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">取消</translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>Stop placing (Esc)</source>
-        <translation type="unfinished"></translation>
+        <translation>停止放置 (Esc)</translation>
     </message>
     <message>
         <source>Trackers</source>
@@ -25881,27 +25881,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Now track it: press Track whole clip, or ◀ ▶ to go one way.</source>
-        <translation type="unfinished"></translation>
+        <translation>現在開始追蹤：按一下「追蹤整個片段」，或按 ◀ ▶ 往單一方向追蹤。</translation>
     </message>
     <message>
         <source>Stop tracking (Esc)</source>
-        <translation type="unfinished"></translation>
+        <translation>停止追蹤 (Esc)</translation>
     </message>
     <message>
         <source>Track whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤整個片段</translation>
     </message>
     <message>
         <source>Follow the feature backward and forward through the whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>在整個片段中前後跟隨特徵</translation>
     </message>
     <message>
         <source>Corrected at this frame. Track ▶ to continue.</source>
-        <translation type="unfinished"></translation>
+        <translation>已在此影格完成修正。點選「追蹤 ▶」以繼續。</translation>
     </message>
     <message>
         <source>Track ▶</source>
-        <translation type="unfinished"></translation>
+        <translation>追蹤 ▶</translation>
     </message>
     <message>
         <source>Track back to the start</source>
@@ -25913,75 +25913,75 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Follow</source>
-        <translation type="unfinished"></translation>
+        <translation>跟隨</translation>
     </message>
     <message>
         <source>Stop if</source>
-        <translation type="unfinished"></translation>
+        <translation>停止條件：</translation>
     </message>
     <message>
         <source>Tracking stops when the match gets worse than this</source>
-        <translation type="unfinished"></translation>
+        <translation>當相符度低於此數值時停止追蹤</translation>
     </message>
     <message>
         <source>Stop if match is worse than</source>
-        <translation type="unfinished"></translation>
+        <translation>若相符度低於此值則停止：</translation>
     </message>
     <message>
         <source>match &lt; %1 %</source>
-        <translation type="unfinished"></translation>
+        <translation>相符度 &lt; %1 %</translation>
     </message>
     <message>
         <source>Box size</source>
-        <translation type="unfinished"></translation>
+        <translation>外框大小</translation>
     </message>
     <message>
         <source>Size of the area being followed. Bigger is steadier, smaller is more precise.</source>
-        <translation type="unfinished"></translation>
+        <translation>被跟隨區域的大小。範圍較大更穩定，範圍較小更精確。</translation>
     </message>
     <message>
         <source>Erase before</source>
-        <translation type="unfinished"></translation>
+        <translation>清除前方</translation>
     </message>
     <message>
         <source>Erase after</source>
-        <translation type="unfinished"></translation>
+        <translation>清除後方</translation>
     </message>
     <message>
         <source>Moves</source>
-        <translation type="unfinished"></translation>
+        <translation>移動方式</translation>
     </message>
     <message>
         <source>Locked to screen</source>
-        <translation type="unfinished"></translation>
+        <translation>已鎖定至螢幕</translation>
     </message>
     <message>
         <source>Move clip</source>
-        <translation type="unfinished">移動片段</translation>
+        <translation>移動片段</translation>
     </message>
     <message>
         <source>Move camera</source>
-        <translation type="unfinished">移動攝影機</translation>
+        <translation>移動攝影機</translation>
     </message>
     <message>
         <source>Center in frame</source>
-        <translation type="unfinished"></translation>
+        <translation>畫面置中</translation>
     </message>
     <message>
         <source>Stick to the point</source>
-        <translation type="unfinished"></translation>
+        <translation>黏附於該點</translation>
     </message>
     <message>
         <source>Keep where it is</source>
-        <translation type="unfinished"></translation>
+        <translation>保留在原位</translation>
     </message>
     <message>
         <source>Keep current position</source>
-        <translation type="unfinished"></translation>
+        <translation>保留目前位置</translation>
     </message>
     <message>
         <source>Move the tracked object to the middle of the frame, or keep it where it is at the reference frame</source>
-        <translation type="unfinished"></translation>
+        <translation>將追蹤的物件移至畫面中央，或將其保留在參考影格所在的位置</translation>
     </message>
     <message>
         <source>Stop tracking</source>
@@ -25989,11 +25989,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Position + rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>位置 + 旋轉</translation>
     </message>
     <message>
         <source>Position, rotation + size</source>
-        <translation type="unfinished"></translation>
+        <translation>位置、旋轉 + 大小</translation>
     </message>
     <message>
         <source>Track one frame forward</source>
@@ -26033,43 +26033,43 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished">縮放</translation>
+        <translation>縮放</translation>
     </message>
     <message>
         <source>Fill</source>
-        <translation type="unfinished">填充</translation>
+        <translation>填充</translation>
     </message>
     <message>
         <source>Zoom in just enough to hide the empty edges</source>
-        <translation type="unfinished"></translation>
+        <translation>適度放大以遮蓋空白邊緣</translation>
     </message>
     <message>
         <source>Lock to screen</source>
-        <translation type="unfinished"></translation>
+        <translation>鎖定至螢幕</translation>
     </message>
     <message>
         <source>Keep the tracked object still on screen by moving the clip or the camera</source>
-        <translation type="unfinished"></translation>
+        <translation>透過移動片段或攝影機使被追蹤物件在螢幕上保持靜止</translation>
     </message>
     <message>
         <source>Attach…</source>
-        <translation type="unfinished"></translation>
+        <translation>附加…</translation>
     </message>
     <message>
         <source>Make a mask or clip move with this tracker</source>
-        <translation type="unfinished"></translation>
+        <translation>使遮罩或片段隨此追蹤器移動</translation>
     </message>
     <message>
         <source>Add mask</source>
-        <translation type="unfinished">添加遮罩</translation>
+        <translation>添加遮罩</translation>
     </message>
     <message>
         <source>Draw a mask from this tracker and make it follow the track</source>
-        <translation type="unfinished"></translation>
+        <translation>從此追蹤器繪製遮罩並使其隨軌跡移動</translation>
     </message>
     <message>
         <source>Update the attached masks and clips from the current track</source>
-        <translation type="unfinished"></translation>
+        <translation>根據目前追蹤軌跡更新已附加的遮罩與片段</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -26110,154 +26110,154 @@ If playback stutters, try another.</source>
     <name>Transform3dInspector</name>
     <message>
         <source>Scale clip</source>
-        <translation type="unfinished">縮放片段</translation>
+        <translation>縮放片段</translation>
     </message>
     <message>
         <source>Remove the %1 keyframes at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>移除播放磁頭處的 %1 個關鍵影格</translation>
     </message>
     <message>
         <source>Add %1 keyframes at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>在播放磁頭處新增 %1 個關鍵影格</translation>
     </message>
     <message>
         <source>A camera has no transform of its own. Position, rotation and zoom are in the Camera panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>攝影機本身沒有變形屬性。位置、旋轉和縮放位於「攝影機」面板中。</translation>
     </message>
     <message>
         <source>This clip is flat. Make it a 3D layer to rotate it and move it in depth.</source>
-        <translation type="unfinished"></translation>
+        <translation>此片段為平面。將其設為 3D 圖層即可在深度方向進行旋轉與移動。</translation>
     </message>
     <message>
         <source>Select a 3D layer, a model or a splat.</source>
-        <translation type="unfinished"></translation>
+        <translation>選取 3D 圖層、模型或高斯潑濺 (splat)。</translation>
     </message>
     <message>
         <source>Make 3D layer</source>
-        <translation type="unfinished"></translation>
+        <translation>設為 3D 圖層</translation>
     </message>
     <message>
         <source>Move</source>
-        <translation type="unfinished">移動</translation>
+        <translation>移動</translation>
     </message>
     <message>
         <source>Rotate</source>
-        <translation type="unfinished">旋轉</translation>
+        <translation>旋轉</translation>
     </message>
     <message>
         <source>Scale</source>
-        <translation type="unfinished">縮放</translation>
+        <translation>縮放</translation>
     </message>
     <message>
         <source>World</source>
-        <translation type="unfinished"></translation>
+        <translation>全域 (World)</translation>
     </message>
     <message>
         <source>Gizmo axes follow the scene</source>
-        <translation type="unfinished"></translation>
+        <translation>控制軸跟隨場景</translation>
     </message>
     <message>
         <source>Local</source>
-        <translation type="unfinished">局部</translation>
+        <translation>局部</translation>
     </message>
     <message>
         <source>Gizmo axes follow the selected object (scale always follows the object&apos;s own edges)</source>
-        <translation type="unfinished"></translation>
+        <translation>控制軸跟隨選取的物件 (縮放一律跟隨物件本身的邊緣)</translation>
     </message>
     <message>
         <source>View</source>
-        <translation type="unfinished"></translation>
+        <translation>視圖 (View)</translation>
     </message>
     <message>
         <source>Gizmo axes follow the screen</source>
-        <translation type="unfinished"></translation>
+        <translation>控制軸跟隨螢幕</translation>
     </message>
     <message>
         <source>World and local position</source>
-        <translation type="unfinished"></translation>
+        <translation>全域與區域位置</translation>
     </message>
     <message>
         <source>%1  X %2  Y %3  Z %4</source>
-        <translation type="unfinished"></translation>
+        <translation>%1  X %2  Y %3  Z %4</translation>
     </message>
     <message>
         <source>Position (px)</source>
-        <translation type="unfinished">位置 (px)</translation>
+        <translation>位置 (px)</translation>
     </message>
     <message>
         <source>Reset position &amp; size</source>
-        <translation type="unfinished">重置位置與大小</translation>
+        <translation>重置位置與大小</translation>
     </message>
     <message>
         <source>3D position</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 位置</translation>
     </message>
     <message>
         <source>Anchor point (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>錨點 (像素)</translation>
     </message>
     <message>
         <source>Put the anchor point back at the centre of the clip</source>
-        <translation type="unfinished"></translation>
+        <translation>將錨點放回片段中央</translation>
     </message>
     <message>
         <source>3D anchor point</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 錨點</translation>
     </message>
     <message>
         <source>Reset anchor</source>
-        <translation type="unfinished"></translation>
+        <translation>重設錨點</translation>
     </message>
     <message>
         <source>Rotation (°)</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 (°)</translation>
     </message>
     <message>
         <source>Reset rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>重設旋轉</translation>
     </message>
     <message>
         <source>3D rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 旋轉</translation>
     </message>
     <message>
         <source>Scale / depth scale (%)</source>
-        <translation type="unfinished"></translation>
+        <translation>縮放 / 深度縮放 (%)</translation>
     </message>
     <message>
         <source>Scale (%)</source>
-        <translation type="unfinished"></translation>
+        <translation>縮放 (%)</translation>
     </message>
     <message>
         <source>Reset scale to 100%</source>
-        <translation type="unfinished"></translation>
+        <translation>重設縮放至 100%</translation>
     </message>
     <message>
         <source>3D scale</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 縮放</translation>
     </message>
     <message>
         <source>Occlude by depth</source>
-        <translation type="unfinished">按深度遮擋</translation>
+        <translation>按深度遮擋</translation>
     </message>
     <message>
         <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
-        <translation type="unfinished">由深度決定此片段被什麼取代，而非其軌道位置。僅開啟此項的片段之間相互排序；其餘仍按軌道順序繪製。</translation>
+        <translation>由深度決定此片段被什麼取代，而非其軌道位置。僅開啟此項的片段之間相互排序；其餘仍按軌道順序繪製。</translation>
     </message>
     <message>
         <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
-        <translation type="unfinished">需要正常混合模式——其他模式讀取片段後方的畫布內容，深度無法對其進行排序。</translation>
+        <translation>需要正常混合模式——其他模式讀取片段後方的畫布內容，深度無法對其進行排序。</translation>
     </message>
     <message>
         <source>Perspective</source>
-        <translation type="unfinished">透視</translation>
+        <translation>透視</translation>
     </message>
 </context>
 <context>
     <name>Transform3dPanel</name>
     <message>
         <source>3D Transform</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 變形</translation>
     </message>
 </context>
 <context>
@@ -26320,19 +26320,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rotation Z</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉 Z</translation>
     </message>
     <message>
         <source>Position</source>
-        <translation type="unfinished">位置</translation>
+        <translation>位置</translation>
     </message>
     <message>
         <source>Reset position</source>
-        <translation type="unfinished"></translation>
+        <translation>重設位置</translation>
     </message>
     <message>
         <source>Reset size</source>
-        <translation type="unfinished"></translation>
+        <translation>重設大小</translation>
     </message>
     <message>
         <source>Edit width and height separately</source>
@@ -26372,35 +26372,35 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reset opacity</source>
-        <translation type="unfinished"></translation>
+        <translation>重設不透明度</translation>
     </message>
     <message>
         <source>Reset rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>重設旋轉</translation>
     </message>
     <message>
         <source>Rotate the whole group as one flat card</source>
-        <translation type="unfinished"></translation>
+        <translation>將整個群組作為一張平面卡片旋轉</translation>
     </message>
     <message>
         <source>Rotate the clip in 3D and move it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
-        <translation type="unfinished"></translation>
+        <translation>在預覽畫面中使用 3D 控制點在 3D 空間中旋轉片段並在深度方向移動。關閉此選項會使片段重新變回平面。</translation>
     </message>
     <message>
         <source>Open 3D workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>開啟 3D 工作區</translation>
     </message>
     <message>
         <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
-        <translation type="unfinished"></translation>
+        <translation>位置、旋轉、錨點和深度遮擋位於 3D 工作區的「3D 變形」面板中</translation>
     </message>
     <message>
         <source>Reset all</source>
-        <translation type="unfinished"></translation>
+        <translation>全部重設</translation>
     </message>
     <message>
         <source>Rotation</source>
-        <translation type="unfinished">旋轉</translation>
+        <translation>旋轉</translation>
     </message>
     <message>
         <source>Rotate 90°</source>
@@ -26408,7 +26408,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Corrects the source&apos;s own rotation losslessly — unlike Rotation above, this changes decoding, not just the on-screen box.</source>
-        <translation type="unfinished"></translation>
+        <translation>無損校正來源本身的旋轉——與上方的「旋轉」不同，這會變更解碼過程，而不僅僅是螢幕方框。</translation>
     </message>
     <message>
         <source>Flip</source>
@@ -26580,7 +26580,7 @@ If playback stutters, try another.</source>
     <name>TransitionInspector</name>
     <message>
         <source>Hover the cut between two clips and click + to add a transition.</source>
-        <translation type="unfinished"></translation>
+        <translation>將游標懸停在兩個片段之間的剪輯點上，按一下 + 即可新增轉場。</translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -26592,7 +26592,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add transition…</source>
-        <translation type="unfinished"></translation>
+        <translation>新增轉場…</translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -26616,7 +26616,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transition duration</source>
-        <translation type="unfinished">轉場時長</translation>
+        <translation>轉場時長</translation>
     </message>
     <message>
         <source>Curve</source>
@@ -26624,7 +26624,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transition curve</source>
-        <translation type="unfinished">轉場曲線</translation>
+        <translation>轉場曲線</translation>
     </message>
     <message>
         <source>On</source>
@@ -26647,41 +26647,41 @@ If playback stutters, try another.</source>
     <name>TransitionPickerGrid</name>
     <message>
         <source>Search transitions</source>
-        <translation type="unfinished">搜索轉場</translation>
+        <translation>搜索轉場</translation>
     </message>
     <message>
         <source>My Transitions</source>
-        <translation type="unfinished">我的轉場</translation>
+        <translation>我的轉場</translation>
     </message>
     <message numerus="yes">
         <source>Apply to %n selected cuts</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>套用至 %n 個選取的剪輯點</numerusform>
         </translation>
     </message>
     <message>
         <source>Apply to all cuts on track</source>
-        <translation type="unfinished"></translation>
+        <translation>套用至軌道上的所有剪輯點</translation>
     </message>
     <message>
         <source>No transitions available</source>
-        <translation type="unfinished">無可用的轉場</translation>
+        <translation>無可用的轉場</translation>
     </message>
     <message>
         <source>Install a transitions pack to add more.</source>
-        <translation type="unfinished">安裝轉場包以添加更多。</translation>
+        <translation>安裝轉場包以添加更多。</translation>
     </message>
     <message>
         <source>Get extras</source>
-        <translation type="unfinished"></translation>
+        <translation>取得附加項目</translation>
     </message>
     <message>
         <source>No transitions match “%1”</source>
-        <translation type="unfinished">沒有與 &quot;%1&quot; 符合的轉場</translation>
+        <translation>沒有與 &quot;%1&quot; 符合的轉場</translation>
     </message>
     <message>
         <source>Try a different name.</source>
-        <translation type="unfinished"></translation>
+        <translation>請嘗試其他名稱。</translation>
     </message>
 </context>
 <context>
@@ -26703,7 +26703,7 @@ If playback stutters, try another.</source>
     <name>TransitionsTab</name>
     <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation>從 Drift Forge 製作的 .driftfx 或 zip 檔案安裝自訂轉場或效果</translation>
     </message>
 </context>
 <context>
@@ -26969,90 +26969,90 @@ If playback stutters, try another.</source>
     <name>UserPackageImporter</name>
     <message>
         <source>Install Addon</source>
-        <translation type="unfinished">安裝附加包</translation>
+        <translation>安裝附加包</translation>
     </message>
     <message>
         <source>Drift addons and effects (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift 附加元件與效果 (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Could not install this file</source>
-        <translation type="unfinished"></translation>
+        <translation>無法安裝此檔案</translation>
     </message>
     <message>
         <source>Could not install “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>無法安裝「%1」</translation>
     </message>
     <message>
         <source>Installed “%1”</source>
-        <translation type="unfinished">已安裝“%1”</translation>
+        <translation>已安裝“%1”</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation type="unfinished">安裝非官方附加包？</translation>
+        <translation>安裝非官方附加包？</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation type="unfinished">仍要安裝</translation>
+        <translation>仍要安裝</translation>
     </message>
     <message>
         <source>“%1” by %2</source>
-        <translation type="unfinished">“%1”（作者：%2）</translation>
+        <translation>“%1”（作者：%2）</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
+        <translation>“%1”</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 未由 Drift 團隊簽名。請只安裝你信任的檔案。</translation>
+        <translation>%1 未由 Drift 團隊簽名。請只安裝你信任的檔案。</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">其中包含會在你的電腦上運行的代碼。</translation>
+        <translation>其中包含會在你的電腦上運行的代碼。</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation type="unfinished">它將替換“%1”。</translation>
+        <translation>它將替換“%1”。</translation>
     </message>
     <message>
         <source>Install this transition?</source>
-        <translation type="unfinished">安裝此轉場？</translation>
+        <translation>安裝此轉場？</translation>
     </message>
     <message>
         <source>Install this audio effect?</source>
-        <translation type="unfinished">安裝此音效？</translation>
+        <translation>安裝此音效？</translation>
     </message>
     <message>
         <source>Install this effect?</source>
-        <translation type="unfinished">安裝此效果？</translation>
+        <translation>安裝此效果？</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">安裝</translation>
+        <translation>安裝</translation>
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 由用戶製作，並非來自 Drift 團隊，且未經任何檢查。請只安裝你信任的檔案。</translation>
+        <translation>%1 由用戶製作，並非來自 Drift 團隊，且未經任何檢查。請只安裝你信任的檔案。</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished">確定</translation>
+        <translation>確定</translation>
     </message>
 </context>
 <context>
     <name>Vec2Param</name>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">編輯 %1</translation>
+        <translation>編輯 %1</translation>
     </message>
     <message>
         <source>Reset %1</source>
-        <translation type="unfinished">重置 %1</translation>
+        <translation>重置 %1</translation>
     </message>
     <message>
         <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
-        <translation type="unfinished"></translation>
+        <translation>拖曳以套用色調。按住 Shift 可進行精細調整。連按兩下可重設顏色。</translation>
     </message>
 </context>
 <context>
@@ -27290,19 +27290,19 @@ If playback stutters, try another.</source>
     <name>VideoMenu</name>
     <message>
         <source>Bakes…</source>
-        <translation type="unfinished"></translation>
+        <translation>預渲染…</translation>
     </message>
     <message>
         <source>Cancel crop</source>
-        <translation type="unfinished">取消裁剪</translation>
+        <translation>取消裁剪</translation>
     </message>
     <message>
         <source>Crop video</source>
-        <translation type="unfinished">裁剪視頻</translation>
+        <translation>裁剪視頻</translation>
     </message>
     <message>
         <source>Adjust video layout…</source>
-        <translation type="unfinished"></translation>
+        <translation>調整視訊版面配置…</translation>
     </message>
 </context>
 <context>
@@ -27359,238 +27359,238 @@ If playback stutters, try another.</source>
     <name>View3dPanel</name>
     <message>
         <source>View &amp; Lights</source>
-        <translation type="unfinished"></translation>
+        <translation>視圖與光源</translation>
     </message>
     <message>
         <source>Grid</source>
-        <translation type="unfinished">網格</translation>
+        <translation>網格</translation>
     </message>
     <message>
         <source>3D grid</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 格線</translation>
     </message>
     <message>
         <source>Show grid</source>
-        <translation type="unfinished"></translation>
+        <translation>顯示格線</translation>
     </message>
     <message>
         <source>The floor grid drawn under the scene in the 3D viewport</source>
-        <translation type="unfinished"></translation>
+        <translation>在 3D 視埠中繪製在場景下方的地面格線</translation>
     </message>
     <message>
         <source>Grid size</source>
-        <translation type="unfinished"></translation>
+        <translation>格線大小</translation>
     </message>
     <message>
         <source>Spacing between lines. 0 picks one from the canvas size.</source>
-        <translation type="unfinished"></translation>
+        <translation>格線間距。設為 0 將根據畫布大小自動選取。</translation>
     </message>
     <message>
         <source>Snapping</source>
-        <translation type="unfinished">吸附</translation>
+        <translation>吸附</translation>
     </message>
     <message>
         <source>3D snapping</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 吸附</translation>
     </message>
     <message>
         <source>Move step</source>
-        <translation type="unfinished"></translation>
+        <translation>移動步長</translation>
     </message>
     <message>
         <source>Rotation step</source>
-        <translation type="unfinished"></translation>
+        <translation>旋轉步長</translation>
     </message>
     <message>
         <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
-        <translation type="unfinished"></translation>
+        <translation>拖曳控制器以此步長移動與旋轉；按住 Ctrl 可自由移動。設為 0 則關閉步長限制。</translation>
     </message>
     <message>
         <source>Navigation</source>
-        <translation type="unfinished"></translation>
+        <translation>導覽</translation>
     </message>
     <message>
         <source>3D navigation</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 導覽</translation>
     </message>
     <message>
         <source>Editor field of view</source>
-        <translation type="unfinished"></translation>
+        <translation>編輯器視野 (FOV)</translation>
     </message>
     <message>
         <source>Navigation scheme</source>
-        <translation type="unfinished"></translation>
+        <translation>導覽配置方案</translation>
     </message>
     <message>
         <source>Blender</source>
-        <translation type="unfinished"></translation>
+        <translation>Blender</translation>
     </message>
     <message>
         <source>Maya</source>
-        <translation type="unfinished"></translation>
+        <translation>Maya</translation>
     </message>
     <message>
         <source>Blender: middle-drag orbits, Shift pans, Ctrl dollies. Maya: Alt with the left, middle or right button orbits, pans or dollies.</source>
-        <translation type="unfinished"></translation>
+        <translation>Blender：滑鼠中鍵拖曳為環繞視圖，Shift 為平移，Ctrl 為推拉。Maya：Alt 搭配滑鼠左鍵、中鍵或右鍵分別為環繞、平移或推拉。</translation>
     </message>
     <message>
         <source>Orbit around selection</source>
-        <translation type="unfinished"></translation>
+        <translation>環繞選取物件旋轉</translation>
     </message>
     <message>
         <source>Orbit about the selected clip&apos;s centre instead of the view&apos;s target</source>
-        <translation type="unfinished"></translation>
+        <translation>圍繞所選片段的中心環繞旋轉，而非視圖的目標點</translation>
     </message>
     <message>
         <source>Orthographic</source>
-        <translation type="unfinished"></translation>
+        <translation>正交</translation>
     </message>
     <message>
         <source>Draw the viewport without perspective (Numpad 5)</source>
-        <translation type="unfinished"></translation>
+        <translation>無透視繪製視埠 (數字鍵 5)</translation>
     </message>
     <message>
         <source>Lights</source>
-        <translation type="unfinished"></translation>
+        <translation>光源</translation>
     </message>
     <message>
         <source>3D model lights</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 模型光源</translation>
     </message>
     <message>
         <source>Select a 3D model to edit its lights.</source>
-        <translation type="unfinished"></translation>
+        <translation>選取 3D 模型以編輯其光源。</translation>
     </message>
 </context>
 <context>
     <name>Viewport3dPanel</name>
     <message>
         <source>Perspective</source>
-        <translation type="unfinished">透視</translation>
+        <translation>透視</translation>
     </message>
     <message>
         <source>Front</source>
-        <translation type="unfinished"></translation>
+        <translation>正面</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>背面</translation>
     </message>
     <message>
         <source>Left</source>
-        <translation type="unfinished">左</translation>
+        <translation>左</translation>
     </message>
     <message>
         <source>Right</source>
-        <translation type="unfinished">右</translation>
+        <translation>右</translation>
     </message>
     <message>
         <source>Top</source>
-        <translation type="unfinished">上</translation>
+        <translation>上</translation>
     </message>
     <message>
         <source>Bottom</source>
-        <translation type="unfinished">下</translation>
+        <translation>下</translation>
     </message>
     <message>
         <source>Scene camera</source>
-        <translation type="unfinished"></translation>
+        <translation>場景攝影機</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>View</source>
-        <translation type="unfinished"></translation>
+        <translation>視圖</translation>
     </message>
     <message>
         <source>Look at the scene from a preset side, or through the scene camera</source>
-        <translation type="unfinished"></translation>
+        <translation>從預設視角檢視場景，或透過場景攝影機檢視</translation>
     </message>
     <message>
         <source>Ortho</source>
-        <translation type="unfinished"></translation>
+        <translation>正交</translation>
     </message>
     <message>
         <source>Orthographic projection</source>
-        <translation type="unfinished"></translation>
+        <translation>正交投影</translation>
     </message>
     <message>
         <source>Numpad 5</source>
-        <translation type="unfinished"></translation>
+        <translation>數字鍵 5</translation>
     </message>
     <message>
         <source>Move</source>
-        <translation type="unfinished">移動</translation>
+        <translation>移動</translation>
     </message>
     <message>
         <source>Rotate</source>
-        <translation type="unfinished">旋轉</translation>
+        <translation>旋轉</translation>
     </message>
     <message>
         <source>Scale</source>
-        <translation type="unfinished">縮放</translation>
+        <translation>縮放</translation>
     </message>
     <message>
         <source>World</source>
-        <translation type="unfinished"></translation>
+        <translation>全域 (World)</translation>
     </message>
     <message>
         <source>Local</source>
-        <translation type="unfinished">局部</translation>
+        <translation>局部</translation>
     </message>
     <message>
         <source>Which axes the gizmo follows: the scene&apos;s, the selected object&apos;s or the screen&apos;s</source>
-        <translation type="unfinished"></translation>
+        <translation>控制軸跟隨的座標軸：場景座標、所選物件座標或螢幕座標</translation>
     </message>
     <message>
         <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
-        <translation type="unfinished">飛行（WASD 移動，Q/E 下降/上升，朝指針方向轉向）</translation>
+        <translation>飛行（WASD 移動，Q/E 下降/上升，朝指針方向轉向）</translation>
     </message>
     <message>
         <source>Shift+F</source>
-        <translation type="unfinished"></translation>
+        <translation>Shift+F</translation>
     </message>
     <message>
         <source>Look through the scene camera</source>
-        <translation type="unfinished"></translation>
+        <translation>透過場景攝影機檢視</translation>
     </message>
     <message>
         <source>Numpad 0</source>
-        <translation type="unfinished">小鍵盤 0</translation>
+        <translation>小鍵盤 0</translation>
     </message>
     <message>
         <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
-        <translation type="unfinished"></translation>
+        <translation>將攝影機鎖定至視圖：在透過攝影機檢視時進行導覽將同時移動攝影機</translation>
     </message>
     <message>
         <source>Align the scene camera to this view</source>
-        <translation type="unfinished"></translation>
+        <translation>將場景攝影機對齊至此視圖</translation>
     </message>
     <message>
         <source>Frame the selection</source>
-        <translation type="unfinished">聚焦所選內容</translation>
+        <translation>聚焦所選內容</translation>
     </message>
     <message>
         <source>F</source>
-        <translation type="unfinished"></translation>
+        <translation>F</translation>
     </message>
     <message>
         <source>Frame everything</source>
-        <translation type="unfinished"></translation>
+        <translation>完整顯示全部內容</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation type="unfinished"></translation>
+        <translation>Home</translation>
     </message>
     <message>
         <source>Reset the view</source>
-        <translation type="unfinished">重置視圖</translation>
+        <translation>重置視圖</translation>
     </message>
     <message>
         <source>Shift+Home</source>
-        <translation type="unfinished"></translation>
+        <translation>Shift+Home</translation>
     </message>
 </context>
 <context>
@@ -27951,11 +27951,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Agent Views</source>
-        <translation type="unfinished"></translation>
+        <translation>Agent 視圖</translation>
     </message>
     <message>
         <source>Audio Sheet</source>
-        <translation type="unfinished"></translation>
+        <translation>音訊表</translation>
     </message>
     <message>
         <source>Recorder</source>
@@ -27963,7 +27963,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Teleprompter</source>
-        <translation type="unfinished"></translation>
+        <translation>提詞機</translation>
     </message>
     <message>
         <source>Noise Removal</source>
@@ -27991,31 +27991,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>3D Viewport</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 視埠</translation>
     </message>
     <message>
         <source>3D Outliner</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 大綱視圖</translation>
     </message>
     <message>
         <source>3D Transform</source>
-        <translation type="unfinished"></translation>
+        <translation>3D 變形</translation>
     </message>
     <message>
         <source>View &amp; Lights</source>
-        <translation type="unfinished"></translation>
+        <translation>視圖與光源</translation>
     </message>
     <message>
         <source>Procedural Code</source>
-        <translation type="unfinished"></translation>
+        <translation>程序式程式碼</translation>
     </message>
     <message>
         <source>Procedural Parameters</source>
-        <translation type="unfinished"></translation>
+        <translation>程序式參數</translation>
     </message>
     <message>
         <source>Procedural Console</source>
-        <translation type="unfinished"></translation>
+        <translation>程序式主控台</translation>
     </message>
     <message>
         <source>Media</source>
@@ -28091,7 +28091,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Color Grading LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>調色 LUT</translation>
     </message>
     <message>
         <source>Stabilization</source>
@@ -28240,84 +28240,84 @@ If playback stutters, try another.</source>
     <name>drift::crash</name>
     <message>
         <source>Drift ran out of memory. Close other programs, or work with smaller or lower-resolution media.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift 記憶體不足。請關閉其他程式，或使用較小或較低解析度的媒體。</translation>
     </message>
     <message>
         <source>A Windows component Drift depends on looks out of date. Update the Microsoft Visual C++ Redistributable.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift 所依賴的 Windows 元件版本似乎過舊。請更新 Microsoft Visual C++ 可轉散發套件 (Redistributable)。</translation>
     </message>
     <message>
         <source>Download the Visual C++ Redistributable</source>
-        <translation type="unfinished"></translation>
+        <translation>下載 Visual C++ 可轉散發套件</translation>
     </message>
     <message>
         <source>The graphics driver stopped responding. Update your graphics driver, or try another graphics backend in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>顯示卡驅動程式停止回應。請更新顯示卡驅動程式，或在「設定」中嘗試其他圖形後端。</translation>
     </message>
     <message>
         <source>An add-on crashed. Try disabling or reinstalling your add-ons.</source>
-        <translation type="unfinished"></translation>
+        <translation>某個附加元件發生當機。請嘗試停用或重新安裝您的附加元件。</translation>
     </message>
     <message>
         <source>The add-on &quot;%1&quot; crashed. Try updating or reinstalling it.</source>
-        <translation type="unfinished"></translation>
+        <translation>附加元件「%1」發生當機。請嘗試更新或重新安裝它。</translation>
     </message>
     <message>
         <source>Drift closed unexpectedly during your last session.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift 在上次作業階段中意外關閉。</translation>
     </message>
 </context>
 <context>
     <name>drift::market</name>
     <message>
         <source>This needs Drift %1 or newer. Update Drift to install it.</source>
-        <translation type="unfinished"></translation>
+        <translation>此項目需要 Drift %1 或更新版本。請更新 Drift 以安裝它。</translation>
     </message>
 </context>
 <context>
     <name>drift::market::FileFetch</name>
     <message>
         <source>Could not save that file.</source>
-        <translation type="unfinished">無法儲存該檔案。</translation>
+        <translation>無法儲存該檔案。</translation>
     </message>
     <message>
         <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation type="unfinished">下載的檔案與素材市場發送的內容不符</translation>
+        <translation>下載的檔案與素材市場發送的內容不符</translation>
     </message>
 </context>
 <context>
     <name>drift::market::MarketTransport</name>
     <message>
         <source>Daily limit reached for this source. Try again later.</source>
-        <translation type="unfinished">該來源已達到每日上限，請稍後重試</translation>
+        <translation>該來源已達到每日上限，請稍後重試</translation>
     </message>
     <message>
         <source>This source is temporarily unavailable.</source>
-        <translation type="unfinished">該來源暫時不可用</translation>
+        <translation>該來源暫時不可用</translation>
     </message>
     <message>
         <source>That item is no longer available.</source>
-        <translation type="unfinished">該條目已不可用</translation>
+        <translation>該條目已不可用</translation>
     </message>
     <message>
         <source>Could not reach the marketplace.</source>
-        <translation type="unfinished">無法連接素材市場</translation>
+        <translation>無法連接素材市場</translation>
     </message>
     <message>
         <source>Could not prepare that file.</source>
-        <translation type="unfinished">無法準備該檔案</translation>
+        <translation>無法準備該檔案</translation>
     </message>
     <message>
         <source>Could not complete that request.</source>
-        <translation type="unfinished">無法完成該請求</translation>
+        <translation>無法完成該請求</translation>
     </message>
     <message>
         <source>The marketplace took too long to answer. Try again.</source>
-        <translation type="unfinished">素材市場響應超時，請重試</translation>
+        <translation>素材市場響應超時，請重試</translation>
     </message>
     <message>
         <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation type="unfinished">無法連接素材市場，請檢查網絡連接後重試</translation>
+        <translation>無法連接素材市場，請檢查網絡連接後重試</translation>
     </message>
 </context>
 <context>

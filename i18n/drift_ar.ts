@@ -32,23 +32,23 @@
     <name>AccelerationFailedDialog</name>
     <message>
         <source>AI engine isn&apos;t working</source>
-        <translation type="unfinished"></translation>
+        <translation>محرك الذكاء الاصطناعي لا يعمل</translation>
     </message>
     <message>
         <source>Use this engine</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدام هذا المحرك</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">إلغاء</translation>
+        <translation>إلغاء</translation>
     </message>
     <message>
         <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine to continue.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; تعذر تشغيل هذه الميزة. اختر محرك ذكاء اصطناعي مختلف للمتابعة.</translation>
     </message>
     <message>
         <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine, then try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; تعذر تشغيل هذه الميزة. اختر محرك ذكاء اصطناعي مختلف، ثم حاول مرة أخرى.</translation>
     </message>
 </context>
 <context>
@@ -59,27 +59,27 @@
     </message>
     <message>
         <source>Processor (CPU)</source>
-        <translation type="unfinished"></translation>
+        <translation>المعالج (CPU)</translation>
     </message>
     <message>
         <source>NVIDIA CUDA</source>
-        <translation type="unfinished"></translation>
+        <translation>NVIDIA CUDA</translation>
     </message>
     <message>
         <source>AMD MIGraphX (Windows ML)</source>
-        <translation type="unfinished"></translation>
+        <translation>AMD MIGraphX (Windows ML)</translation>
     </message>
     <message>
         <source>AMD ROCm (MIGraphX)</source>
-        <translation type="unfinished"></translation>
+        <translation>AMD ROCm (MIGraphX)</translation>
     </message>
     <message>
         <source>Windows ML (DirectX 12)</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows ML (DirectX 12)</translation>
     </message>
     <message>
         <source>WebGPU (any graphics card)</source>
-        <translation type="unfinished"></translation>
+        <translation>WebGPU (أي بطاقة رسومات)</translation>
     </message>
     <message>
         <source>Could not open that file.</source>
@@ -99,11 +99,11 @@
     </message>
     <message>
         <source>This is not a Drift addon, a .driftfx or a Drift Forge zip.</source>
-        <translation type="unfinished"></translation>
+        <translation>هذا ليس ملحق Drift أو ملف .driftfx أو أرشيف zip من Drift Forge.</translation>
     </message>
     <message>
         <source>Drift cannot use this file: %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يمكن لـ Drift استخدام هذا الملف: %1.</translation>
     </message>
 </context>
 <context>
@@ -287,19 +287,19 @@
     <name>AgentViewsPanel</name>
     <message>
         <source>Agent Views</source>
-        <translation type="unfinished"></translation>
+        <translation>عروض الوكيل</translation>
     </message>
     <message>
         <source>%1 – %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 – %2</translation>
     </message>
     <message>
         <source>No images yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد صور بعد.</translation>
     </message>
     <message>
         <source>Images the AI requests, such as frames, audio sheets and captures, appear here during this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>تظهر الصور التي يطلبها الذكاء الاصطناعي، مثل الإطارات ومخططات الصوت واللقطات الملتقطة، هنا خلال هذه الجلسة.</translation>
     </message>
 </context>
 <context>
@@ -401,246 +401,246 @@
     <name>AndroidAddPage</name>
     <message>
         <source>Library</source>
-        <translation type="unfinished"></translation>
+        <translation>المكتبة</translation>
     </message>
     <message>
         <source>Properties</source>
-        <translation type="unfinished">الخصائص</translation>
+        <translation>الخصائص</translation>
     </message>
 </context>
 <context>
     <name>AndroidAdjustPage</name>
     <message>
         <source>Exposure</source>
-        <translation type="unfinished">التعريض</translation>
+        <translation>التعريض</translation>
     </message>
     <message>
         <source>Contrast</source>
-        <translation type="unfinished">التباين</translation>
+        <translation>التباين</translation>
     </message>
     <message>
         <source>Saturation</source>
-        <translation type="unfinished">التشبع</translation>
+        <translation>التشبع</translation>
     </message>
     <message>
         <source>Temperature</source>
-        <translation type="unfinished">درجة الحرارة</translation>
+        <translation>درجة الحرارة</translation>
     </message>
     <message>
         <source>Adjust %1</source>
-        <translation type="unfinished">ضبط %1</translation>
+        <translation>ضبط %1</translation>
     </message>
     <message>
         <source>Reset</source>
-        <translation type="unfinished">إعادة تعيين</translation>
+        <translation>إعادة تعيين</translation>
     </message>
     <message>
         <source>Reset %1</source>
-        <translation type="unfinished">إعادة تعيين %1</translation>
+        <translation>إعادة تعيين %1</translation>
     </message>
 </context>
 <context>
     <name>AndroidAnimationPage</name>
     <message>
         <source>None</source>
-        <translation type="unfinished">بلا</translation>
+        <translation>بلا</translation>
     </message>
     <message>
         <source>%1 s</source>
-        <translation type="unfinished">%1 s</translation>
+        <translation>%1 s</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished">دخول</translation>
+        <translation>دخول</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished">خروج</translation>
+        <translation>خروج</translation>
     </message>
     <message>
         <source>Fade also ramps the volume.</source>
-        <translation type="unfinished"></translation>
+        <translation>يُدرّج التلاشي مستوى الصوت أيضًا.</translation>
     </message>
     <message>
         <source>Fade ramps the volume.</source>
-        <translation type="unfinished"></translation>
+        <translation>يُدرّج التلاشي مستوى الصوت.</translation>
     </message>
     <message>
         <source>Fade in</source>
-        <translation type="unfinished">ظهور تدريجي</translation>
+        <translation>ظهور تدريجي</translation>
     </message>
     <message>
         <source>Fade out</source>
-        <translation type="unfinished">اختفاء تدريجي</translation>
+        <translation>اختفاء تدريجي</translation>
     </message>
     <message>
         <source>Fade curve</source>
-        <translation type="unfinished"></translation>
+        <translation>منحنى التلاشي</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished"></translation>
+        <translation>التحريك</translation>
     </message>
     <message>
         <source>Duration</source>
-        <translation type="unfinished">المدة</translation>
+        <translation>المدة</translation>
     </message>
     <message>
         <source>Animation curve</source>
-        <translation type="unfinished"></translation>
+        <translation>منحنى التحريك</translation>
     </message>
     <message>
         <source>Letter and word animations live in Text animation. This moves the whole clip.</source>
-        <translation type="unfinished"></translation>
+        <translation>توجد حركات الأحرف والكلمات في تحريك النص. هذا يحرك المقطع بأكمله.</translation>
     </message>
 </context>
 <context>
     <name>AndroidBackgroundPage</name>
     <message>
         <source>Choose background image</source>
-        <translation type="unfinished"></translation>
+        <translation>اختيار صورة الخلفية</translation>
     </message>
     <message>
         <source>Images (*.png *.jpg *.jpeg *.webp *.bmp)</source>
-        <translation type="unfinished"></translation>
+        <translation>الصور (*.png *.jpg *.jpeg *.webp *.bmp)</translation>
     </message>
     <message>
         <source>Fill canvas</source>
-        <translation type="unfinished"></translation>
+        <translation>ملء لوحة الرسم</translation>
     </message>
     <message>
         <source>Solid</source>
-        <translation type="unfinished">لون خالص</translation>
+        <translation>لون خالص</translation>
     </message>
     <message>
         <source>Blur</source>
-        <translation type="unfinished">التمويه</translation>
+        <translation>التمويه</translation>
     </message>
     <message>
         <source>Image</source>
-        <translation type="unfinished">صورة</translation>
+        <translation>صورة</translation>
     </message>
     <message>
         <source>Blur strength</source>
-        <translation type="unfinished">شدة التمويه</translation>
+        <translation>شدة التمويه</translation>
     </message>
     <message>
         <source>Choose image</source>
-        <translation type="unfinished"></translation>
+        <translation>اختيار صورة</translation>
     </message>
     <message>
         <source>Choose another image</source>
-        <translation type="unfinished"></translation>
+        <translation>اختيار صورة أخرى</translation>
     </message>
     <message>
         <source>The image is added on a new bottom track for the length of the video, scaled to fill the frame.</source>
-        <translation type="unfinished"></translation>
+        <translation>تُضاف الصورة على مسار سفلي جديد بطول الفيديو، مع تغيير حجمها لملء الإطار.</translation>
     </message>
 </context>
 <context>
     <name>AndroidBottomRail</name>
     <message>
         <source>Adjust</source>
-        <translation type="unfinished"></translation>
+        <translation>ضبط</translation>
     </message>
     <message>
         <source>Volume</source>
-        <translation type="unfinished">مستوى الصوت</translation>
+        <translation>مستوى الصوت</translation>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished">السرعة</translation>
+        <translation>السرعة</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished"></translation>
+        <translation>التحريك</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished">قناع</translation>
+        <translation>قناع</translation>
     </message>
     <message>
         <source>Blending</source>
-        <translation type="unfinished">المزج</translation>
+        <translation>المزج</translation>
     </message>
     <message>
         <source>Transition</source>
-        <translation type="unfinished"></translation>
+        <translation>انتقال</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished">كاميرا</translation>
+        <translation>كاميرا</translation>
     </message>
     <message>
         <source>Stabilize</source>
-        <translation type="unfinished">تثبيت الاهتزاز</translation>
+        <translation>تثبيت الاهتزاز</translation>
     </message>
     <message>
         <source>Fade</source>
-        <translation type="unfinished"></translation>
+        <translation>تلاشٍ</translation>
     </message>
     <message>
         <source>Edit text</source>
-        <translation type="unfinished">تعديل النص</translation>
+        <translation>تعديل النص</translation>
     </message>
     <message>
         <source>Text style</source>
-        <translation type="unfinished">نمط النص</translation>
+        <translation>نمط النص</translation>
     </message>
     <message>
         <source>Text settings</source>
-        <translation type="unfinished"></translation>
+        <translation>إعدادات النص</translation>
     </message>
     <message>
         <source>Text animation</source>
-        <translation type="unfinished"></translation>
+        <translation>تحريك النص</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished">الترجمة</translation>
+        <translation>الترجمة</translation>
     </message>
     <message>
         <source>Shape style</source>
-        <translation type="unfinished">نمط الشكل</translation>
+        <translation>نمط الشكل</translation>
     </message>
     <message>
         <source>Motion</source>
-        <translation type="unfinished">الحركة</translation>
+        <translation>الحركة</translation>
     </message>
     <message>
         <source>PDF</source>
-        <translation type="unfinished">PDF</translation>
+        <translation>PDF</translation>
     </message>
     <message>
         <source>3D Model</source>
-        <translation type="unfinished">نموذج ثلاثي الأبعاد</translation>
+        <translation>نموذج ثلاثي الأبعاد</translation>
     </message>
     <message numerus="yes">
         <source>%n clip(s) selected</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n مقطع محدد</numerusform>
+            <numerusform>%n مقطع محدد</numerusform>
+            <numerusform>%n مقطعان محددان</numerusform>
+            <numerusform>%n مقاطع محددة</numerusform>
+            <numerusform>%n مقطعًا محددًا</numerusform>
+            <numerusform>%n مقطع محدد</numerusform>
         </translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation type="unfinished"></translation>
+        <translation>تحويل</translation>
     </message>
     <message>
         <source>Details</source>
-        <translation type="unfinished"></translation>
+        <translation>التفاصيل</translation>
     </message>
     <message>
         <source>Crop</source>
-        <translation type="unfinished">اقتصاص</translation>
+        <translation>اقتصاص</translation>
     </message>
     <message>
         <source>Background</source>
-        <translation type="unfinished">خلفية</translation>
+        <translation>خلفية</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -659,15 +659,15 @@
     <name>AndroidClipRangeBar</name>
     <message>
         <source>Pause</source>
-        <translation type="unfinished">إيقاف مؤقت</translation>
+        <translation>إيقاف مؤقت</translation>
     </message>
     <message>
         <source>Play</source>
-        <translation type="unfinished">تشغيل</translation>
+        <translation>تشغيل</translation>
     </message>
     <message>
         <source>Seek</source>
-        <translation type="unfinished">تمرير</translation>
+        <translation>تمرير</translation>
     </message>
 </context>
 <context>
@@ -710,11 +710,11 @@
     </message>
     <message>
         <source>Enable</source>
-        <translation type="unfinished"></translation>
+        <translation>تمكين</translation>
     </message>
     <message>
         <source>Disable</source>
-        <translation type="unfinished"></translation>
+        <translation>تعطيل</translation>
     </message>
     <message>
         <source>Speed</source>
@@ -722,11 +722,11 @@
     </message>
     <message>
         <source>Editing %1</source>
-        <translation type="unfinished">تعديل %1</translation>
+        <translation>تعديل %1</translation>
     </message>
     <message>
         <source>Tap a clip to edit</source>
-        <translation type="unfinished">اضغط على مقطع لتعديله</translation>
+        <translation>اضغط على مقطع لتعديله</translation>
     </message>
     <message>
         <source>Duplicate</source>
@@ -738,7 +738,7 @@
     </message>
     <message>
         <source>Main</source>
-        <translation type="unfinished">الرئيسي</translation>
+        <translation>الرئيسي</translation>
     </message>
     <message>
         <source>Fit</source>
@@ -746,7 +746,7 @@
     </message>
     <message>
         <source>Composite</source>
-        <translation type="unfinished">مقطع مركب</translation>
+        <translation>مقطع مركب</translation>
     </message>
     <message>
         <source>Move the playhead over the clip to split it</source>
@@ -790,27 +790,27 @@
     <name>AndroidCropPage</name>
     <message>
         <source>Free</source>
-        <translation type="unfinished">حر</translation>
+        <translation>حر</translation>
     </message>
     <message>
         <source>Original</source>
-        <translation type="unfinished">الأصلي</translation>
+        <translation>الأصلي</translation>
     </message>
     <message>
         <source>Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>المقطع</translation>
     </message>
     <message>
         <source>Video</source>
-        <translation type="unfinished"></translation>
+        <translation>الفيديو</translation>
     </message>
     <message>
         <source>Rotate</source>
-        <translation type="unfinished">تدوير</translation>
+        <translation>تدوير</translation>
     </message>
     <message>
         <source>Reset</source>
-        <translation type="unfinished">إعادة تعيين</translation>
+        <translation>إعادة تعيين</translation>
     </message>
 </context>
 <context>
@@ -832,7 +832,7 @@
     </message>
     <message>
         <source>Curve</source>
-        <translation type="unfinished"></translation>
+        <translation>المنحنى</translation>
     </message>
     <message>
         <source>Done</source>
@@ -843,127 +843,127 @@
     <name>AndroidEditor</name>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>التأثيرات</translation>
     </message>
     <message>
         <source>Adjust</source>
-        <translation type="unfinished"></translation>
+        <translation>ضبط</translation>
     </message>
     <message>
         <source>Volume</source>
-        <translation type="unfinished">مستوى الصوت</translation>
+        <translation>مستوى الصوت</translation>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished">السرعة</translation>
+        <translation>السرعة</translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation type="unfinished"></translation>
+        <translation>تحويل</translation>
     </message>
     <message>
         <source>Crop</source>
-        <translation type="unfinished">اقتصاص</translation>
+        <translation>اقتصاص</translation>
     </message>
     <message>
         <source>Background</source>
-        <translation type="unfinished">خلفية</translation>
+        <translation>خلفية</translation>
     </message>
     <message>
         <source>Sticker</source>
-        <translation type="unfinished">ملصق</translation>
+        <translation>ملصق</translation>
     </message>
     <message>
         <source>Add sticker</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة ملصق</translation>
     </message>
     <message>
         <source>Shape</source>
-        <translation type="unfinished"></translation>
+        <translation>شكل</translation>
     </message>
     <message>
         <source>Add shape</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة شكل</translation>
     </message>
     <message>
         <source>Text</source>
-        <translation type="unfinished"></translation>
+        <translation>النص</translation>
     </message>
     <message>
         <source>Add text</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة نص</translation>
     </message>
     <message>
         <source>Text style</source>
-        <translation type="unfinished">نمط النص</translation>
+        <translation>نمط النص</translation>
     </message>
     <message>
         <source>Text settings</source>
-        <translation type="unfinished"></translation>
+        <translation>إعدادات النص</translation>
     </message>
     <message>
         <source>Text animation</source>
-        <translation type="unfinished"></translation>
+        <translation>تحريك النص</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished"></translation>
+        <translation>التحريك</translation>
     </message>
     <message>
         <source>Blending</source>
-        <translation type="unfinished">المزج</translation>
+        <translation>المزج</translation>
     </message>
     <message>
         <source>Shape style</source>
-        <translation type="unfinished">نمط الشكل</translation>
+        <translation>نمط الشكل</translation>
     </message>
     <message>
         <source>Stabilize</source>
-        <translation type="unfinished">تثبيت الاهتزاز</translation>
+        <translation>تثبيت الاهتزاز</translation>
     </message>
     <message>
         <source>Motion</source>
-        <translation type="unfinished">الحركة</translation>
+        <translation>الحركة</translation>
     </message>
     <message>
         <source>3D Model</source>
-        <translation type="unfinished">نموذج ثلاثي الأبعاد</translation>
+        <translation>نموذج ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>PDF</source>
-        <translation type="unfinished">PDF</translation>
+        <translation>PDF</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished">كاميرا</translation>
+        <translation>كاميرا</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished">قناع</translation>
+        <translation>قناع</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished">تأثيرات الصوت</translation>
+        <translation>تأثيرات الصوت</translation>
     </message>
     <message>
         <source>Transition</source>
-        <translation type="unfinished"></translation>
+        <translation>انتقال</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished">الترجمة</translation>
+        <translation>الترجمة</translation>
     </message>
     <message>
         <source>Details</source>
-        <translation type="unfinished"></translation>
+        <translation>التفاصيل</translation>
     </message>
     <message>
         <source>Add mask</source>
-        <translation type="unfinished">إضافة قناع</translation>
+        <translation>إضافة قناع</translation>
     </message>
     <message>
         <source>Tap a clip to edit it</source>
-        <translation type="unfinished">اضغط على مقطع لتعديله</translation>
+        <translation>اضغط على مقطع لتعديله</translation>
     </message>
     <message>
         <source>Drift project (*.drift)</source>
@@ -1002,49 +1002,49 @@
     <name>AndroidExtrasPage</name>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">الإضافات</translation>
+        <translation>الإضافات</translation>
     </message>
 </context>
 <context>
     <name>AndroidFiltersPage</name>
     <message>
         <source>Applied</source>
-        <translation type="unfinished"></translation>
+        <translation>المطبقة</translation>
     </message>
     <message>
         <source>Browse</source>
-        <translation type="unfinished"></translation>
+        <translation>استعراض</translation>
     </message>
 </context>
 <context>
     <name>AndroidHome</name>
     <message>
         <source>Update available</source>
-        <translation type="unfinished">تحديث متوفر</translation>
+        <translation>تحديث متوفر</translation>
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>المتجر</translation>
     </message>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">الإضافات</translation>
+        <translation>الإضافات</translation>
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished">الإعدادات</translation>
+        <translation>الإعدادات</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation type="unfinished"></translation>
+        <translation>الرئيسية</translation>
     </message>
     <message>
         <source>Projects</source>
-        <translation type="unfinished">المشاريع</translation>
+        <translation>المشاريع</translation>
     </message>
     <message>
         <source>My videos</source>
-        <translation type="unfinished"></translation>
+        <translation>مقاطع الفيديو الخاصة بي</translation>
     </message>
 </context>
 <context>
@@ -1070,55 +1070,55 @@
     <name>AndroidHomeTab</name>
     <message>
         <source>Quick edit</source>
-        <translation type="unfinished">تعديل سريع</translation>
+        <translation>تعديل سريع</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>التأثيرات</translation>
     </message>
     <message>
         <source>Adjust</source>
-        <translation type="unfinished"></translation>
+        <translation>ضبط</translation>
     </message>
     <message>
         <source>Sticker</source>
-        <translation type="unfinished">ملصق</translation>
+        <translation>ملصق</translation>
     </message>
     <message>
         <source>Text</source>
-        <translation type="unfinished"></translation>
+        <translation>النص</translation>
     </message>
     <message>
         <source>Crop</source>
-        <translation type="unfinished">اقتصاص</translation>
+        <translation>اقتصاص</translation>
     </message>
     <message>
         <source>Trim</source>
-        <translation type="unfinished">قص</translation>
+        <translation>قص</translation>
     </message>
     <message>
         <source>Video to audio</source>
-        <translation type="unfinished"></translation>
+        <translation>فيديو إلى صوت</translation>
     </message>
     <message>
         <source>Image to video</source>
-        <translation type="unfinished"></translation>
+        <translation>صورة إلى فيديو</translation>
     </message>
     <message>
         <source>New project</source>
-        <translation type="unfinished">مشروع جديد</translation>
+        <translation>مشروع جديد</translation>
     </message>
     <message>
         <source>Recent projects</source>
-        <translation type="unfinished">المشاريع الأخيرة</translation>
+        <translation>المشاريع الأخيرة</translation>
     </message>
     <message>
         <source>See all</source>
-        <translation type="unfinished">عرض الكل</translation>
+        <translation>عرض الكل</translation>
     </message>
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation type="unfinished">لا يوجد شيء هنا بعد — ستظهر المشاريع التي تحفظها في هذه القائمة.</translation>
+        <translation>لا يوجد شيء هنا بعد — ستظهر المشاريع التي تحفظها في هذه القائمة.</translation>
     </message>
 </context>
 <context>
@@ -1133,7 +1133,7 @@
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">المفضلة</translation>
+        <translation>المفضلة</translation>
     </message>
     <message>
         <source>Template</source>
@@ -1184,19 +1184,19 @@
     </message>
     <message>
         <source>The marketplace didn’t recognise this link.</source>
-        <translation type="unfinished"></translation>
+        <translation>لم يتعرف المتجر على هذا الرابط.</translation>
     </message>
     <message>
         <source>Save downloads to</source>
-        <translation type="unfinished">حفظ التنزيلات في</translation>
+        <translation>حفظ التنزيلات في</translation>
     </message>
     <message>
         <source>Download</source>
-        <translation type="unfinished">تنزيل</translation>
+        <translation>تنزيل</translation>
     </message>
     <message>
         <source>Looking up the link…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ البحث عن الرابط…</translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1235,23 +1235,23 @@
     </message>
     <message>
         <source>Pick a video or image to crop.</source>
-        <translation type="unfinished"></translation>
+        <translation>اختر فيديو أو صورة للاقتصاص.</translation>
     </message>
     <message>
         <source>Pick a video or audio file to trim.</source>
-        <translation type="unfinished"></translation>
+        <translation>اختر ملف فيديو أو ملف صوت للتقليم.</translation>
     </message>
     <message>
         <source>Video length</source>
-        <translation type="unfinished"></translation>
+        <translation>طول الفيديو</translation>
     </message>
     <message>
         <source>Export</source>
-        <translation type="unfinished">تصدير</translation>
+        <translation>تصدير</translation>
     </message>
     <message>
         <source>How long should the image play?</source>
-        <translation type="unfinished"></translation>
+        <translation>ما المدة التي يجب أن تظهر فيها الصورة؟</translation>
     </message>
     <message>
         <source>That share had no link in it.</source>
@@ -1291,7 +1291,7 @@
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished">الإعدادات</translation>
+        <translation>الإعدادات</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -1322,7 +1322,7 @@
     <name>AndroidMarketplacePage</name>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>المتجر</translation>
     </message>
 </context>
 <context>
@@ -1478,11 +1478,11 @@
     </message>
     <message>
         <source>Dissolve composite</source>
-        <translation type="unfinished"></translation>
+        <translation>فك المقطع المركب</translation>
     </message>
     <message>
         <source>Release the clips inside back onto the timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>إرجاع المقاطع الموجودة بداخله إلى المخطط الزمني</translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -1626,11 +1626,11 @@
     </message>
     <message>
         <source>Delete with effects</source>
-        <translation type="unfinished"></translation>
+        <translation>حذف مع التأثيرات</translation>
     </message>
     <message>
         <source>Remove the clip and its effects together</source>
-        <translation type="unfinished"></translation>
+        <translation>إزالة المقطع وتأثيراته معًا</translation>
     </message>
     <message>
         <source>Trim &amp; timing</source>
@@ -1797,23 +1797,23 @@
     <name>AndroidMyVideosTab</name>
     <message>
         <source>Video actions</source>
-        <translation type="unfinished"></translation>
+        <translation>إجراءات الفيديو</translation>
     </message>
     <message>
         <source>Share</source>
-        <translation type="unfinished">مشاركة</translation>
+        <translation>مشاركة</translation>
     </message>
     <message>
         <source>Remove from list</source>
-        <translation type="unfinished"></translation>
+        <translation>إزالة من القائمة</translation>
     </message>
     <message>
         <source>No exported videos yet</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد مقاطع فيديو مُصدّرة بعد</translation>
     </message>
     <message>
         <source>Exported videos appear here</source>
-        <translation type="unfinished"></translation>
+        <translation>تظهر مقاطع الفيديو المُصدّرة هنا</translation>
     </message>
 </context>
 <context>
@@ -2047,7 +2047,7 @@
     </message>
     <message>
         <source>Search projects</source>
-        <translation type="unfinished"></translation>
+        <translation>البحث في المشاريع</translation>
     </message>
     <message>
         <source>Open</source>
@@ -2059,19 +2059,19 @@
     </message>
     <message>
         <source>No projects yet</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد مشاريع بعد</translation>
     </message>
     <message>
         <source>No matches</source>
-        <translation type="unfinished">لا توجد نتائج مطابقة</translation>
+        <translation>لا توجد نتائج مطابقة</translation>
     </message>
     <message>
         <source>Projects you save will show up here.</source>
-        <translation type="unfinished"></translation>
+        <translation>المشاريع التي تحفظها ستظهر هنا.</translation>
     </message>
     <message>
         <source>Try a different name.</source>
-        <translation type="unfinished"></translation>
+        <translation>جرب اسمًا مختلفًا.</translation>
     </message>
 </context>
 <context>
@@ -2119,14 +2119,14 @@
     <name>AndroidSpeedPage</name>
     <message>
         <source>Speed curve</source>
-        <translation type="unfinished"></translation>
+        <translation>منحنى السرعة</translation>
     </message>
 </context>
 <context>
     <name>AndroidSubPage</name>
     <message>
         <source>Back</source>
-        <translation type="unfinished">رجوع</translation>
+        <translation>رجوع</translation>
     </message>
 </context>
 <context>
@@ -2187,7 +2187,7 @@
     <name>AndroidTextPage</name>
     <message>
         <source>Edit text</source>
-        <translation type="unfinished">تعديل النص</translation>
+        <translation>تعديل النص</translation>
     </message>
 </context>
 <context>
@@ -2345,22 +2345,22 @@
     <name>AndroidTimelineTrimNudge</name>
     <message>
         <source>In</source>
-        <translation type="unfinished">دخول</translation>
+        <translation>دخول</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished">خروج</translation>
+        <translation>خروج</translation>
     </message>
 </context>
 <context>
     <name>AndroidToolPage</name>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">إلغاء</translation>
+        <translation>إلغاء</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">تطبيق</translation>
+        <translation>تطبيق</translation>
     </message>
 </context>
 <context>
@@ -2445,7 +2445,7 @@
     <name>AndroidTransitionPickerSheet</name>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished"></translation>
+        <translation>الانتقالات</translation>
     </message>
 </context>
 <context>
@@ -2460,23 +2460,23 @@
     </message>
     <message>
         <source>Fade in</source>
-        <translation type="unfinished">ظهور تدريجي</translation>
+        <translation>ظهور تدريجي</translation>
     </message>
     <message>
         <source>Fade out</source>
-        <translation type="unfinished">اختفاء تدريجي</translation>
+        <translation>اختفاء تدريجي</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished"></translation>
+        <translation>التحريك</translation>
     </message>
     <message>
         <source>Fade and motion combine — fade also ramps the volume.</source>
-        <translation type="unfinished"></translation>
+        <translation>يجتمع التلاشي والحركة معًا — ويُدرّج التلاشي مستوى الصوت أيضًا.</translation>
     </message>
     <message>
         <source>Fade ramps the volume in and out.</source>
-        <translation type="unfinished"></translation>
+        <translation>يُدرّج التلاشي مستوى الصوت للداخل والخارج.</translation>
     </message>
     <message>
         <source>Slide up</source>
@@ -2484,11 +2484,11 @@
     </message>
     <message>
         <source>Fade and animation in</source>
-        <translation type="unfinished"></translation>
+        <translation>تلاشٍ وتحريك للداخل</translation>
     </message>
     <message>
         <source>Fade and animation out</source>
-        <translation type="unfinished"></translation>
+        <translation>تلاشٍ وتحريك للخارج</translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -2524,7 +2524,7 @@
     </message>
     <message>
         <source>Custom curve</source>
-        <translation type="unfinished">منحنى مخصص</translation>
+        <translation>منحنى مخصص</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -2575,7 +2575,7 @@
     </message>
     <message>
         <source>Delete selection with its effects</source>
-        <translation type="unfinished"></translation>
+        <translation>حذف التحديد مع تأثيراته</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -2607,11 +2607,11 @@
     </message>
     <message>
         <source>Split selected clip at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>تقسيم المقطع المحدد عند الوقت الحالي</translation>
     </message>
     <message>
         <source>Add transition at playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة انتقال عند مؤشر التشغيل</translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
@@ -2631,7 +2631,7 @@
     </message>
     <message>
         <source>Enable or disable selected clips</source>
-        <translation type="unfinished"></translation>
+        <translation>تمكين المقاطع المحددة أو تعطيلها</translation>
     </message>
     <message>
         <source>Clear selection</source>
@@ -2659,11 +2659,11 @@
     </message>
     <message>
         <source>Hide/show selected clip&apos;s track</source>
-        <translation type="unfinished"></translation>
+        <translation>إخفاء/إظهار مسار المقطع المحدد</translation>
     </message>
     <message>
         <source>3D gizmo: cycle world/local/view axes</source>
-        <translation type="unfinished"></translation>
+        <translation>أداة التحكّم ثلاثية الأبعاد: التبديل بين محاور العالم/المحلي/العرض</translation>
     </message>
     <message>
         <source>Add/remove bookmark at current time</source>
@@ -2787,19 +2787,19 @@
     </message>
     <message>
         <source>Track is locked</source>
-        <translation type="unfinished"></translation>
+        <translation>المسار مقفل</translation>
     </message>
     <message>
         <source>The gap stays open: a linked track is locked</source>
-        <translation type="unfinished"></translation>
+        <translation>تظل الفجوة مفتوحة: مسار مرتبط مقفل</translation>
     </message>
     <message>
         <source>The gap stays open: a clip is in the way of closing it</source>
-        <translation type="unfinished"></translation>
+        <translation>تظل الفجوة مفتوحة: يوجد مقطع يعيق إغلاقها</translation>
     </message>
     <message>
         <source>The gap stays open: &quot;%1&quot; is in the way of closing it</source>
-        <translation type="unfinished"></translation>
+        <translation>تظل الفجوة مفتوحة: &quot;%1&quot; يعيق إغلاقها</translation>
     </message>
     <message>
         <source>Clip added</source>
@@ -2811,7 +2811,7 @@
     </message>
     <message>
         <source>Clip inserted</source>
-        <translation type="unfinished"></translation>
+        <translation>تم إدراج المقطع</translation>
     </message>
     <message>
         <source>Clip deleted</source>
@@ -2819,7 +2819,7 @@
     </message>
     <message>
         <source>No space to place the clip there</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد مساحة لوضع المقطع هناك</translation>
     </message>
     <message>
         <source>A clip can&apos;t completely cover another</source>
@@ -2831,11 +2831,11 @@
     </message>
     <message>
         <source>Select a clip to split first</source>
-        <translation type="unfinished"></translation>
+        <translation>حدد مقطعًا لتقسيمه أولاً</translation>
     </message>
     <message>
         <source>The playhead isn&apos;t over a selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>مؤشر التشغيل ليس فوق مقطع محدد</translation>
     </message>
     <message>
         <source>Nothing to split here — move to a clip first</source>
@@ -2855,7 +2855,7 @@
     </message>
     <message>
         <source>Trim clip</source>
-        <translation type="unfinished">قص المقطع</translation>
+        <translation>قص المقطع</translation>
     </message>
     <message>
         <source>Trim updated</source>
@@ -2863,19 +2863,19 @@
     </message>
     <message>
         <source>Ripple trim</source>
-        <translation type="unfinished"></translation>
+        <translation>تقليم متتالٍ</translation>
     </message>
     <message>
         <source>Gaps closed</source>
-        <translation type="unfinished"></translation>
+        <translation>تم إغلاق الفجوات</translation>
     </message>
     <message>
         <source>Clips swapped</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تبديل المقاطع</translation>
     </message>
     <message>
         <source>Set sequence</source>
-        <translation type="unfinished"></translation>
+        <translation>تعيين التسلسل</translation>
     </message>
     <message>
         <source>Clip duplicated</source>
@@ -2883,7 +2883,7 @@
     </message>
     <message>
         <source>Replace clip</source>
-        <translation type="unfinished"></translation>
+        <translation>استبدال المقطع</translation>
     </message>
     <message>
         <source>Your text here</source>
@@ -3252,19 +3252,19 @@
     </message>
     <message>
         <source>Aim camera at target</source>
-        <translation type="unfinished"></translation>
+        <translation>توجيه الكاميرا نحو الهدف</translation>
     </message>
     <message>
         <source>Free camera</source>
-        <translation type="unfinished"></translation>
+        <translation>كاميرا حرة</translation>
     </message>
     <message>
         <source>Camera aims at its point of interest</source>
-        <translation type="unfinished"></translation>
+        <translation>الكاميرا موجهة نحو نقطة اهتمامها</translation>
     </message>
     <message>
         <source>Camera uses its own rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>تستخدم الكاميرا دورانها الخاص</translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -3480,23 +3480,23 @@
     </message>
     <message>
         <source>A clip with a speed ramp can&apos;t loop</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يمكن تكرار مقطع ذي تدرج في السرعة</translation>
     </message>
     <message>
         <source>Loop on</source>
-        <translation type="unfinished"></translation>
+        <translation>تشغيل التكرار</translation>
     </message>
     <message>
         <source>Loop off</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف التكرار</translation>
     </message>
     <message>
         <source>Clip looping</source>
-        <translation type="unfinished"></translation>
+        <translation>تكرار المقطع قيد التشغيل</translation>
     </message>
     <message>
         <source>Clip not looping</source>
-        <translation type="unfinished"></translation>
+        <translation>تكرار المقطع متوقف</translation>
     </message>
     <message>
         <source>A clip is already being reversed</source>
@@ -3520,19 +3520,19 @@
     </message>
     <message>
         <source>Enable clips</source>
-        <translation type="unfinished"></translation>
+        <translation>تمكين المقاطع</translation>
     </message>
     <message>
         <source>Disable clips</source>
-        <translation type="unfinished"></translation>
+        <translation>تعطيل المقاطع</translation>
     </message>
     <message>
         <source>Clips enabled</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تمكين المقاطع</translation>
     </message>
     <message>
         <source>Clips disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تعطيل المقاطع</translation>
     </message>
     <message>
         <source>Pan changed</source>
@@ -3560,27 +3560,27 @@
     </message>
     <message>
         <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يمكن فك المقاطع المركبة ذات السرعة المتدرجة أو المعكوسة أو غير العادية</translation>
     </message>
     <message>
         <source>Dissolve composite</source>
-        <translation type="unfinished"></translation>
+        <translation>فك المقطع المركب</translation>
     </message>
     <message>
         <source>Composite effects and transform were discarded</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تجاهل تأثيرات المقطع المركب وتحويلاته</translation>
     </message>
     <message>
         <source>Composite dissolved</source>
-        <translation type="unfinished"></translation>
+        <translation>تم فك المقطع المركب</translation>
     </message>
     <message>
         <source>Timeline %1</source>
-        <translation type="unfinished"></translation>
+        <translation>المخطط الزمني %1</translation>
     </message>
     <message>
         <source>Timeline created</source>
-        <translation type="unfinished"></translation>
+        <translation>تم إنشاء المخطط الزمني</translation>
     </message>
     <message>
         <source>All audio tracks separated</source>
@@ -3632,39 +3632,39 @@
     </message>
     <message>
         <source>unknown procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>حزمة إجرائية غير معروفة</translation>
     </message>
     <message>
         <source>unknown param &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>معلمة غير معروفة &quot;%1&quot;</translation>
     </message>
     <message>
         <source>Procedural clip added</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت إضافة مقطع إجرائي</translation>
     </message>
     <message>
         <source>Change procedural</source>
-        <translation type="unfinished"></translation>
+        <translation>تغيير الإجرائي</translation>
     </message>
     <message>
         <source>Procedural changed</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تغيير الإجرائي</translation>
     </message>
     <message>
         <source>Edit procedural</source>
-        <translation type="unfinished"></translation>
+        <translation>تعديل الإجرائي</translation>
     </message>
     <message>
         <source>Procedural updated</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تحديث الإجرائي</translation>
     </message>
     <message>
         <source>Change seed</source>
-        <translation type="unfinished"></translation>
+        <translation>تغيير القيمة العشوائية (Seed)</translation>
     </message>
     <message>
         <source>Seed changed</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تغيير القيمة العشوائية (Seed)</translation>
     </message>
     <message>
         <source>Animation</source>
@@ -3728,7 +3728,7 @@
     </message>
     <message>
         <source>Split</source>
-        <translation type="unfinished">تقسيم</translation>
+        <translation>تقسيم</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -3768,15 +3768,15 @@
     </message>
     <message>
         <source>Apply transition to cuts</source>
-        <translation type="unfinished"></translation>
+        <translation>تطبيق الانتقال على نقاط القطع</translation>
     </message>
     <message>
         <source>Transitions updated</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تحديث الانتقالات</translation>
     </message>
     <message>
         <source>No cut between two clips to add a transition to</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يوجد قطع بين مقطعين لإضافة انتقال إليه</translation>
     </message>
     <message>
         <source>Add transition</source>
@@ -3932,7 +3932,7 @@
     </message>
     <message>
         <source>Align camera to view</source>
-        <translation type="unfinished"></translation>
+        <translation>محاذاة الكاميرا مع العرض</translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
@@ -4079,7 +4079,7 @@
     </message>
     <message>
         <source>The interface graphics API you chose did not start, so Drift went back to OpenGL.</source>
-        <translation type="unfinished"></translation>
+        <translation>واجهة برمجة تطبيقات رسومات الواجهة التي اخترتها لم تبدأ، لذا عاد Drift إلى OpenGL.</translation>
     </message>
     <message>
         <source>-inf dB</source>
@@ -4091,43 +4091,43 @@
     </message>
     <message>
         <source>3D gizmo: move / Tracker tool</source>
-        <translation type="unfinished"></translation>
+        <translation>أداة التحكّم ثلاثية الأبعاد: تحريك / أداة التتبع</translation>
     </message>
     <message>
         <source>3D gizmo: rotate / Rectangle mask</source>
-        <translation type="unfinished"></translation>
+        <translation>أداة التحكّم ثلاثية الأبعاد: تدوير / قناع مستطيل</translation>
     </message>
     <message>
         <source>3D gizmo: scale / Ellipse mask</source>
-        <translation type="unfinished"></translation>
+        <translation>أداة التحكّم ثلاثية الأبعاد: تغيير الحجم / قناع بيضاوي</translation>
     </message>
     <message>
         <source>Cut tool / Brush mask</source>
-        <translation type="unfinished"></translation>
+        <translation>أداة القطع / قناع الفرشاة</translation>
     </message>
     <message>
         <source>Brush: switch paint / erase</source>
-        <translation type="unfinished"></translation>
+        <translation>الفرشاة: التبديل بين الرسم / الممحاة</translation>
     </message>
     <message>
         <source>Track forward</source>
-        <translation type="unfinished">تتبع للأمام</translation>
+        <translation>تتبع للأمام</translation>
     </message>
     <message>
         <source>Track backward</source>
-        <translation type="unfinished">تتبع للخلف</translation>
+        <translation>تتبع للخلف</translation>
     </message>
     <message>
         <source>Track one frame forward</source>
-        <translation type="unfinished">تتبع إطار واحد للأمام</translation>
+        <translation>تتبع إطار واحد للأمام</translation>
     </message>
     <message>
         <source>Track one frame backward</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع إطار واحد للخلف</translation>
     </message>
     <message>
         <source>Track whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع المقطع بأكمله</translation>
     </message>
     <message>
         <source>No audio in range</source>
@@ -4290,31 +4290,31 @@
     </message>
     <message>
         <source>Linear</source>
-        <translation type="unfinished">خطي</translation>
+        <translation>خطي</translation>
     </message>
     <message>
         <source>Smooth</source>
-        <translation type="unfinished">سلس</translation>
+        <translation>سلس</translation>
     </message>
     <message>
         <source>Natural</source>
-        <translation type="unfinished">طبيعي</translation>
+        <translation>طبيعي</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished">مخصص</translation>
+        <translation>مخصص</translation>
     </message>
     <message>
         <source>Snappy</source>
-        <translation type="unfinished">سريع</translation>
+        <translation>سريع</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">رجوع</translation>
+        <translation>رجوع</translation>
     </message>
     <message>
         <source>Bounce</source>
-        <translation type="unfinished">ارتداد</translation>
+        <translation>ارتداد</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -4338,11 +4338,11 @@
     </message>
     <message>
         <source>Add keyframes</source>
-        <translation type="unfinished">إضافة إطارات مفتاحية</translation>
+        <translation>إضافة إطارات مفتاحية</translation>
     </message>
     <message>
         <source>Keyframes set</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تعيين الإطارات المفتاحية</translation>
     </message>
     <message>
         <source>Reset camera</source>
@@ -4402,11 +4402,11 @@
     </message>
     <message>
         <source>Remove all effects</source>
-        <translation type="unfinished"></translation>
+        <translation>إزالة جميع التأثيرات</translation>
     </message>
     <message>
         <source>All effects removed</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت إزالة جميع التأثيرات</translation>
     </message>
     <message>
         <source>Enable effect</source>
@@ -4438,7 +4438,7 @@
     </message>
     <message>
         <source>Change LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>تغيير ملف LUT</translation>
     </message>
     <message>
         <source>Edit curve</source>
@@ -4695,15 +4695,15 @@
     </message>
     <message>
         <source>Exclude from export</source>
-        <translation type="unfinished"></translation>
+        <translation>استبعاد من التصدير</translation>
     </message>
     <message>
         <source>Track left out of export</source>
-        <translation type="unfinished"></translation>
+        <translation>تم استبعاد المسار من التصدير</translation>
     </message>
     <message>
         <source>Track included in export</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تضمين المسار في التصدير</translation>
     </message>
     <message>
         <source>Track solo</source>
@@ -4719,15 +4719,15 @@
     </message>
     <message>
         <source>Track lock</source>
-        <translation type="unfinished"></translation>
+        <translation>قفل المسار</translation>
     </message>
     <message>
         <source>Track locked</source>
-        <translation type="unfinished"></translation>
+        <translation>تم قفل المسار</translation>
     </message>
     <message>
         <source>Track unlocked</source>
-        <translation type="unfinished"></translation>
+        <translation>تم إلغاء قفل المسار</translation>
     </message>
     <message>
         <source>Track volume</source>
@@ -4763,11 +4763,11 @@
     </message>
     <message>
         <source>Delete empty tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>حذف المسارات الفارغة</translation>
     </message>
     <message>
         <source>Empty tracks deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>تم حذف المسارات الفارغة</translation>
     </message>
     <message>
         <source>Add track</source>
@@ -5084,30 +5084,30 @@
     </message>
     <message>
         <source>Clear clip label</source>
-        <translation type="unfinished"></translation>
+        <translation>مسح تسمية المقطع</translation>
     </message>
     <message>
         <source>Label clip</source>
-        <translation type="unfinished"></translation>
+        <translation>تسمية المقطع</translation>
     </message>
     <message>
         <source>Clip label cleared</source>
-        <translation type="unfinished"></translation>
+        <translation>تم مسح تسمية المقطع</translation>
     </message>
     <message>
         <source>Clip labelled</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت تسمية المقطع</translation>
     </message>
 </context>
 <context>
     <name>AppSettingsMenu</name>
     <message>
         <source>Help…</source>
-        <translation type="unfinished"></translation>
+        <translation>تعليمات…</translation>
     </message>
     <message>
         <source>Save diagnostics…</source>
-        <translation type="unfinished"></translation>
+        <translation>حفظ التشخيصات…</translation>
     </message>
     <message>
         <source>Settings…</source>
@@ -5144,7 +5144,7 @@
     </message>
     <message>
         <source>The proxy could not be made</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر إنشاء ملف الوكيل</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -5174,11 +5174,11 @@
     <name>AssetSearchBar</name>
     <message>
         <source>Clear search</source>
-        <translation type="unfinished"></translation>
+        <translation>مسح البحث</translation>
     </message>
     <message>
         <source>Remove from history</source>
-        <translation type="unfinished"></translation>
+        <translation>إزالة من السجل</translation>
     </message>
 </context>
 <context>
@@ -5308,21 +5308,21 @@
     </message>
     <message>
         <source>Relink other missing files?</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة ربط الملفات المفقودة الأخرى؟</translation>
     </message>
     <message>
         <source>Relink</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة الربط</translation>
     </message>
     <message numerus="yes">
         <source>%n other missing files from the same folder were found in “%1” with the same name and size. Relink them too?</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>تم العثور على %n ملف مفقود آخر من المجلد نفسه في “%1” بالاسم والحجم نفسهما. هل تريد إعادة ربطها أيضًا؟</numerusform>
+            <numerusform>تم العثور على %n ملف مفقود آخر من المجلد نفسه في “%1” بالاسم والحجم نفسهما. هل تريد إعادة ربطه أيضًا؟</numerusform>
+            <numerusform>تم العثور على %n ملفين مفقودين آخرين من المجلد نفسه في “%1” بالاسم والحجم نفسهما. هل تريد إعادة ربطهما أيضًا؟</numerusform>
+            <numerusform>تم العثور على %n ملفات مفقودة أخرى من المجلد نفسه في “%1” بالاسم والحجم نفسهما. هل تريد إعادة ربطها أيضًا؟</numerusform>
+            <numerusform>تم العثور على %n ملفًا مفقودًا آخر من المجلد نفسه في “%1” بالاسم والحجم نفسهما. هل تريد إعادة ربطها أيضًا؟</numerusform>
+            <numerusform>تم العثور على %n ملف مفقود آخر من المجلد نفسه في “%1” بالاسم والحجم نفسهما. هل تريد إعادة ربطها أيضًا؟</numerusform>
         </translation>
     </message>
     <message>
@@ -5534,11 +5534,11 @@
     </message>
     <message>
         <source>New timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>مخطط زمني جديد</translation>
     </message>
     <message>
         <source>Create an empty timeline and open it</source>
-        <translation type="unfinished"></translation>
+        <translation>إنشاء مخطط زمني فارغ وفتحه</translation>
     </message>
 </context>
 <context>
@@ -5553,7 +5553,7 @@
     </message>
     <message>
         <source>Browse Marketplace…</source>
-        <translation type="unfinished"></translation>
+        <translation>استعراض المتجر…</translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -5590,95 +5590,95 @@
     <name>AudioAlignController</name>
     <message>
         <source>Audio analysis already in progress</source>
-        <translation type="unfinished"></translation>
+        <translation>تحليل الصوت قيد التقدم بالفعل</translation>
     </message>
     <message>
         <source>Select a clip with audio</source>
-        <translation type="unfinished"></translation>
+        <translation>حدد مقطعًا يحتوي على صوت</translation>
     </message>
     <message>
         <source>Finding silence…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ البحث عن الصمت…</translation>
     </message>
     <message>
         <source>Silence removal cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>تم إلغاء إزالة الصمت</translation>
     </message>
     <message>
         <source>The clip changed while it was analysed</source>
-        <translation type="unfinished"></translation>
+        <translation>تغير المقطع أثناء تحليله</translation>
     </message>
     <message>
         <source>No silence found</source>
-        <translation type="unfinished"></translation>
+        <translation>لم يتم العثور على صمت</translation>
     </message>
     <message>
         <source>Could not remove the silence</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذرت إزالة الصمت</translation>
     </message>
     <message>
         <source>Remove silence</source>
-        <translation type="unfinished">إزالة الصمت</translation>
+        <translation>إزالة الصمت</translation>
     </message>
     <message>
         <source>Removed %1 s of silence</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت إزالة %1 ثانية من الصمت</translation>
     </message>
     <message>
         <source>Select exactly two clips with audio to sync</source>
-        <translation type="unfinished"></translation>
+        <translation>حدد مقطعين صوتيين بالضبط للمزامنة</translation>
     </message>
     <message>
         <source>Clips with changed speed or reversed playback can&apos;t be synced. Reset their speed and direction first.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يمكن مزامنة المقاطع ذات السرعة المعدلة أو التشغيل المعكوس. أعد تعيين سرعتها واتجاهها أولاً.</translation>
     </message>
     <message>
         <source>Matching audio…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ مطابقة الصوت…</translation>
     </message>
     <message>
         <source>Correlating…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ الربط التبادلي…</translation>
     </message>
     <message>
         <source>Audio sync cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>تم إلغاء مزامنة الصوت</translation>
     </message>
     <message>
         <source>One of the clips is silent, so there is nothing to match</source>
-        <translation type="unfinished"></translation>
+        <translation>أحد المقاطع صامت، لذا لا يوجد شيء لمطابقته</translation>
     </message>
     <message>
         <source>The clips are too short to match by audio</source>
-        <translation type="unfinished"></translation>
+        <translation>المقاطع قصيرة جدًا بحيث لا يمكن مطابقتها عبر الصوت</translation>
     </message>
     <message>
         <source>No clear match between the clips&apos; audio. Nothing was moved.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد مطابقة واضحة بين صوت المقاطع. لم يتم نقل أي شيء.</translation>
     </message>
     <message>
         <source>The clips changed while they were analysed</source>
-        <translation type="unfinished"></translation>
+        <translation>تغيرت المقاطع أثناء تحليلها</translation>
     </message>
     <message>
         <source>The clips are already in sync</source>
-        <translation type="unfinished"></translation>
+        <translation>المقاطع متزامنة بالفعل</translation>
     </message>
     <message>
         <source>Syncing would move the clip before the start of the timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>ستؤدي المزامنة إلى نقل المقطع قبل بداية المخطط الزمني</translation>
     </message>
     <message>
         <source>There is no room to move the clip there</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد مساحة لنقل المقطع إلى هناك</translation>
     </message>
     <message>
         <source>Sync by audio</source>
-        <translation type="unfinished"></translation>
+        <translation>مزامنة بالصوت</translation>
     </message>
     <message>
         <source>Moved the second clip %1 s to match the first</source>
-        <translation type="unfinished"></translation>
+        <translation>تم نقل المقطع الثاني %1 ثانية لمطابقة الأول</translation>
     </message>
 </context>
 <context>
@@ -5701,7 +5701,7 @@
     </message>
     <message>
         <source>Install a custom audio effect or effect from a .driftfx or zip made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation>تثبيت تأثير صوتي مخصص أو تأثير من ملف .driftfx أو أرشيف zip تم إنشاؤه في Drift Forge</translation>
     </message>
     <message>
         <source>My Audio Effects</source>
@@ -5829,7 +5829,7 @@
     </message>
     <message>
         <source>Audio effect settings</source>
-        <translation type="unfinished">إعدادات التأثير الصوتي</translation>
+        <translation>إعدادات التأثير الصوتي</translation>
     </message>
 </context>
 <context>
@@ -6084,376 +6084,376 @@
     <name>AudioSheetPanel</name>
     <message>
         <source>Audio Sheet</source>
-        <translation type="unfinished"></translation>
+        <translation>مخطط الصوت</translation>
     </message>
     <message>
         <source>Work area</source>
-        <translation type="unfinished"></translation>
+        <translation>منطقة العمل</translation>
     </message>
     <message>
         <source>Selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>المقطع المحدد</translation>
     </message>
     <message>
         <source>Whole timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>المخطط الزمني بأكمله</translation>
     </message>
     <message>
         <source>1000 px</source>
-        <translation type="unfinished"></translation>
+        <translation>1000 px</translation>
     </message>
     <message>
         <source>1600 px</source>
-        <translation type="unfinished"></translation>
+        <translation>1600 px</translation>
     </message>
     <message>
         <source>2000 px</source>
-        <translation type="unfinished"></translation>
+        <translation>2000 px</translation>
     </message>
     <message>
         <source>2400 px</source>
-        <translation type="unfinished"></translation>
+        <translation>2400 px</translation>
     </message>
     <message>
         <source>Not a sound Drift knows. Closest: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>ليس صوتًا يتعرف عليه Drift. الأقرب: %1</translation>
     </message>
     <message>
         <source>Integrated</source>
-        <translation type="unfinished"></translation>
+        <translation>مدمج</translation>
     </message>
     <message>
         <source>%1 LUFS</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 LUFS</translation>
     </message>
     <message>
         <source>Loudness range</source>
-        <translation type="unfinished"></translation>
+        <translation>نطاق جهارة الصوت</translation>
     </message>
     <message>
         <source>%1 LU</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 LU</translation>
     </message>
     <message>
         <source>True peak</source>
-        <translation type="unfinished"></translation>
+        <translation>الذروة الحقيقية</translation>
     </message>
     <message>
         <source>%1 dBTP</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 dBTP</translation>
     </message>
     <message>
         <source>Gaps</source>
-        <translation type="unfinished"></translation>
+        <translation>الفجوات</translation>
     </message>
     <message>
         <source>Clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>تشوه القص</translation>
     </message>
     <message>
         <source>Events</source>
-        <translation type="unfinished"></translation>
+        <translation>الأحداث</translation>
     </message>
     <message>
         <source>Cuts in sync</source>
-        <translation type="unfinished"></translation>
+        <translation>نقاط قطع متزامنة</translation>
     </message>
     <message>
         <source>%1 ok, %2 off</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 مضبوط، %2 غير مضبوط</translation>
     </message>
     <message>
         <source>Width of the sheet</source>
-        <translation type="unfinished"></translation>
+        <translation>عرض المخطط</translation>
     </message>
     <message>
         <source>Frame strip</source>
-        <translation type="unfinished"></translation>
+        <translation>شريط الإطارات</translation>
     </message>
     <message>
         <source>Sound tags</source>
-        <translation type="unfinished"></translation>
+        <translation>علامات الصوت</translation>
     </message>
     <message>
         <source>Generating…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ الإنشاء…</translation>
     </message>
     <message>
         <source>Generate</source>
-        <translation type="unfinished">توليد</translation>
+        <translation>توليد</translation>
     </message>
     <message>
         <source>Export PNG…</source>
-        <translation type="unfinished"></translation>
+        <translation>تصدير بتنسيق PNG…</translation>
     </message>
     <message>
         <source>Name the sounds, split the audio into sections and find a sound by description with the audio tagging add-ons.</source>
-        <translation type="unfinished"></translation>
+        <translation>قم بتسمية الأصوات وتقسيم الصوت إلى أقسام والعثور على صوت حسب الوصف باستخدام إضافات وضع علامات الصوت.</translation>
     </message>
     <message>
         <source>Naming sounds needs the AI engine and the audio tagging add-ons.</source>
-        <translation type="unfinished"></translation>
+        <translation>تسمية الأصوات تتطلب محرك الذكاء الاصطناعي وإضافات وضع علامات الصوت.</translation>
     </message>
     <message>
         <source>Get add-ons</source>
-        <translation type="unfinished"></translation>
+        <translation>الحصول على الإضافات</translation>
     </message>
     <message>
         <source>Sections</source>
-        <translation type="unfinished"></translation>
+        <translation>الأقسام</translation>
     </message>
     <message>
         <source>Sounds</source>
-        <translation type="unfinished"></translation>
+        <translation>الأصوات</translation>
     </message>
     <message>
         <source>Find</source>
-        <translation type="unfinished"></translation>
+        <translation>بحث</translation>
     </message>
     <message>
         <source>Speech %1  ·  Music %2</source>
-        <translation type="unfinished"></translation>
+        <translation>كلام %1  ·  موسيقى %2</translation>
     </message>
     <message>
         <source>Add speech &amp; music</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة كلام وموسيقى</translation>
     </message>
     <message>
         <source>Find a sound, e.g. heavy rain or a fast whoosh</source>
-        <translation type="unfinished"></translation>
+        <translation>ابحث عن صوت، مثل مطر غزير أو حفيف سريع</translation>
     </message>
     <message>
         <source>hit</source>
-        <translation type="unfinished"></translation>
+        <translation>ضربة</translation>
     </message>
     <message>
         <source>window</source>
-        <translation type="unfinished"></translation>
+        <translation>نافذة</translation>
     </message>
     <message>
         <source>%1  z %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1  z %2</translation>
     </message>
     <message>
         <source>Searching…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ البحث…</translation>
     </message>
     <message>
         <source>Type one of the %1 sounds Drift knows, or pick a suggestion.</source>
-        <translation type="unfinished"></translation>
+        <translation>اكتب أحد الأصوات الـ %1 التي يعرفها Drift، أو اختر اقتراحًا.</translation>
     </message>
     <message>
         <source>Analysing audio…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ تحليل الصوت…</translation>
     </message>
     <message>
         <source>Nothing to show: turn on Sound tags and generate again.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يوجد شيء لعرضه: شغّل علامات الصوت وأنشئ المخطط مجددًا.</translation>
     </message>
     <message>
         <source>Generate a sheet to name its sections and sounds.</source>
-        <translation type="unfinished"></translation>
+        <translation>أنشئ مخططًا لتسمية أقسامه وأصواته.</translation>
     </message>
     <message>
         <source>Couldn’t build the sheet.</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر إنشاء المخطط.</translation>
     </message>
     <message>
         <source>No sheet yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يوجد مخطط بعد.</translation>
     </message>
     <message>
         <source>Pick what to analyse and press Generate to see loudness, spectrogram and sound events laid out against your cuts.</source>
-        <translation type="unfinished"></translation>
+        <translation>اختر ما تريد تحليله واضغط على إنشاء لمشاهدة جهارة الصوت، والمخطط الطيفي، وأحداث الصوت معروضة أمام نقاط القطع.</translation>
     </message>
     <message>
         <source>%1 – %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 – %2</translation>
     </message>
 </context>
 <context>
     <name>BakeController</name>
     <message>
         <source>Set a work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>حدد منطقة عمل للمعالجة المسبقة</translation>
     </message>
     <message>
         <source>Could not open the bake cache</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر فتح ذاكرة التخزين المؤقت للمعالجة المسبقة</translation>
     </message>
     <message>
         <source>Baking…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ المعالجة المسبقة…</translation>
     </message>
     <message>
         <source>Bake cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>تم إلغاء المعالجة المسبقة</translation>
     </message>
     <message>
         <source>Bake failed</source>
-        <translation type="unfinished"></translation>
+        <translation>فشلت المعالجة المسبقة</translation>
     </message>
     <message>
         <source>Bake complete</source>
-        <translation type="unfinished"></translation>
+        <translation>اكتملت المعالجة المسبقة</translation>
     </message>
     <message>
         <source>Set work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>تعيين منطقة العمل للمعالجة المسبقة</translation>
     </message>
     <message>
         <source>Work area set</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تعيين منطقة العمل</translation>
     </message>
 </context>
 <context>
     <name>BakesDialog</name>
     <message>
         <source>Bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>المعالجات المسبقة</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">إغلاق</translation>
+        <translation>إغلاق</translation>
     </message>
     <message>
         <source>Compact</source>
-        <translation type="unfinished"></translation>
+        <translation>مضغوط</translation>
     </message>
     <message>
         <source>Balanced</source>
-        <translation type="unfinished"></translation>
+        <translation>متوازن</translation>
     </message>
     <message>
         <source>High</source>
-        <translation type="unfinished">عالية</translation>
+        <translation>عالية</translation>
     </message>
     <message>
         <source>%1m %2s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1m %2s</translation>
     </message>
     <message>
         <source>%1s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1s</translation>
     </message>
     <message>
         <source>Baking %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ المعالجة المسبقة %1%</translation>
     </message>
     <message>
         <source>Stale</source>
-        <translation type="unfinished"></translation>
+        <translation>قديم</translation>
     </message>
     <message>
         <source>Fresh</source>
-        <translation type="unfinished"></translation>
+        <translation>محدث</translation>
     </message>
     <message>
         <source>Delete all bakes?</source>
-        <translation type="unfinished"></translation>
+        <translation>حذف جميع المعالجات المسبقة؟</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">حذف</translation>
+        <translation>حذف</translation>
     </message>
     <message>
         <source>Playback and export will render these ranges live again. Your project is not changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>سيؤدي التشغيل والتصدير إلى عرض هذه النطاقات مباشرة مرة أخرى. لن يتم تغيير مشروعك.</translation>
     </message>
     <message>
         <source>Re-bake at current quality</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة المعالجة المسبقة بالجودة الحالية</translation>
     </message>
     <message>
         <source>Set work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>تعيين منطقة العمل للمعالجة المسبقة</translation>
     </message>
     <message>
         <source>Quality for new bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>جودة المعالجات المسبقة الجديدة</translation>
     </message>
     <message>
         <source>≈ %1 per minute</source>
-        <translation type="unfinished"></translation>
+        <translation>≈ %1 في الدقيقة</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">إلغاء</translation>
+        <translation>إلغاء</translation>
     </message>
     <message>
         <source>Bake work area</source>
-        <translation type="unfinished"></translation>
+        <translation>معالجة منطقة العمل مسبقًا</translation>
     </message>
     <message>
         <source>Set a work area on the timeline first</source>
-        <translation type="unfinished"></translation>
+        <translation>حدد منطقة عمل على المخطط الزمني أولاً</translation>
     </message>
     <message>
         <source>I</source>
-        <translation type="unfinished"></translation>
+        <translation>I</translation>
     </message>
     <message>
         <source>O</source>
-        <translation type="unfinished"></translation>
+        <translation>O</translation>
     </message>
     <message>
         <source>Bake a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Bake.</source>
-        <translation type="unfinished"></translation>
+        <translation>قم بمعالجة جزء مكتمل من المخطط الزمني مسبقًا لتشغيله وتصديره بسلاسة. حدد منطقة عمل باستخدام %1 و %2، ثم اضغط على معالجة مسبقة.</translation>
     </message>
     <message>
         <source>Range</source>
-        <translation type="unfinished">نطاق</translation>
+        <translation>نطاق</translation>
     </message>
     <message>
         <source>Duration</source>
-        <translation type="unfinished">المدة</translation>
+        <translation>المدة</translation>
     </message>
     <message>
         <source>Quality</source>
-        <translation type="unfinished">الجودة</translation>
+        <translation>الجودة</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished">الحجم</translation>
+        <translation>الحجم</translation>
     </message>
     <message>
         <source>State</source>
-        <translation type="unfinished"></translation>
+        <translation>الحالة</translation>
     </message>
     <message>
         <source>Re-bake</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة المعالجة المسبقة</translation>
     </message>
     <message>
         <source>More</source>
-        <translation type="unfinished">المزيد</translation>
+        <translation>المزيد</translation>
     </message>
     <message>
         <source>Delete bake</source>
-        <translation type="unfinished"></translation>
+        <translation>حذف المعالجة المسبقة</translation>
     </message>
     <message numerus="yes">
         <source>%n bake(s) · %1</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n معالجة مسبقة · %1</numerusform>
+            <numerusform>%n معالجة مسبقة · %1</numerusform>
+            <numerusform>%n معالجتان مسبقتان · %1</numerusform>
+            <numerusform>%n معالجات مسبقة · %1</numerusform>
+            <numerusform>%n معالجةً مسبقةً · %1</numerusform>
+            <numerusform>%n معالجة مسبقة · %1</numerusform>
         </translation>
     </message>
     <message>
         <source>0 B</source>
-        <translation type="unfinished"></translation>
+        <translation>0 ب</translation>
     </message>
     <message>
         <source>Re-bake all stale</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة المعالجة المسبقة لجميع النطاقات القديمة</translation>
     </message>
     <message>
         <source>Delete all bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>حذف جميع المعالجات المسبقة</translation>
     </message>
 </context>
 <context>
@@ -6467,119 +6467,119 @@
     <name>BlendModes</name>
     <message>
         <source>Normal</source>
-        <translation type="unfinished">عادي</translation>
+        <translation>عادي</translation>
     </message>
     <message>
         <source>Darken</source>
-        <translation type="unfinished">تعتيم</translation>
+        <translation>تعتيم</translation>
     </message>
     <message>
         <source>Multiply</source>
-        <translation type="unfinished"></translation>
+        <translation>ضرب</translation>
     </message>
     <message>
         <source>Color Burn</source>
-        <translation type="unfinished"></translation>
+        <translation>حرق اللون</translation>
     </message>
     <message>
         <source>Linear Burn</source>
-        <translation type="unfinished"></translation>
+        <translation>حرق خطي</translation>
     </message>
     <message>
         <source>Darker Color</source>
-        <translation type="unfinished"></translation>
+        <translation>لون أغمق</translation>
     </message>
     <message>
         <source>Lighten</source>
-        <translation type="unfinished">تفتيح</translation>
+        <translation>تفتيح</translation>
     </message>
     <message>
         <source>Screen</source>
-        <translation type="unfinished">شاشة</translation>
+        <translation>شاشة</translation>
     </message>
     <message>
         <source>Color Dodge</source>
-        <translation type="unfinished"></translation>
+        <translation>تفادي اللون</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished">إضافة</translation>
+        <translation>إضافة</translation>
     </message>
     <message>
         <source>Lighter Color</source>
-        <translation type="unfinished"></translation>
+        <translation>لون أفتح</translation>
     </message>
     <message>
         <source>Contrast</source>
-        <translation type="unfinished">التباين</translation>
+        <translation>التباين</translation>
     </message>
     <message>
         <source>Overlay</source>
-        <translation type="unfinished">تراكب</translation>
+        <translation>تراكب</translation>
     </message>
     <message>
         <source>Soft Light</source>
-        <translation type="unfinished"></translation>
+        <translation>ضوء خافت</translation>
     </message>
     <message>
         <source>Hard Light</source>
-        <translation type="unfinished"></translation>
+        <translation>ضوء ساطع</translation>
     </message>
     <message>
         <source>Vivid Light</source>
-        <translation type="unfinished"></translation>
+        <translation>ضوء حيوي</translation>
     </message>
     <message>
         <source>Linear Light</source>
-        <translation type="unfinished"></translation>
+        <translation>ضوء خطي</translation>
     </message>
     <message>
         <source>Pin Light</source>
-        <translation type="unfinished"></translation>
+        <translation>ضوء نقطي</translation>
     </message>
     <message>
         <source>Hard Mix</source>
-        <translation type="unfinished"></translation>
+        <translation>دمج قوي</translation>
     </message>
     <message>
         <source>Inversion</source>
-        <translation type="unfinished"></translation>
+        <translation>عكس</translation>
     </message>
     <message>
         <source>Difference</source>
-        <translation type="unfinished"></translation>
+        <translation>فرق</translation>
     </message>
     <message>
         <source>Exclusion</source>
-        <translation type="unfinished"></translation>
+        <translation>استبعاد</translation>
     </message>
     <message>
         <source>Subtract</source>
-        <translation type="unfinished">طرح</translation>
+        <translation>طرح</translation>
     </message>
     <message>
         <source>Divide</source>
-        <translation type="unfinished"></translation>
+        <translation>قسمة</translation>
     </message>
     <message>
         <source>Component</source>
-        <translation type="unfinished"></translation>
+        <translation>مكوّن</translation>
     </message>
     <message>
         <source>Hue</source>
-        <translation type="unfinished">درجة اللون</translation>
+        <translation>درجة اللون</translation>
     </message>
     <message>
         <source>Saturation</source>
-        <translation type="unfinished">التشبع</translation>
+        <translation>التشبع</translation>
     </message>
     <message>
         <source>Color</source>
-        <translation type="unfinished">اللون</translation>
+        <translation>اللون</translation>
     </message>
     <message>
         <source>Luminosity</source>
-        <translation type="unfinished"></translation>
+        <translation>السطوع</translation>
     </message>
 </context>
 <context>
@@ -6601,82 +6601,82 @@
     <name>Camera3dPanel</name>
     <message>
         <source>Camera</source>
-        <translation type="unfinished">كاميرا</translation>
+        <translation>كاميرا</translation>
     </message>
     <message>
         <source>Add camera</source>
-        <translation type="unfinished">إضافة كاميرا</translation>
+        <translation>إضافة كاميرا</translation>
     </message>
     <message>
         <source>Add a camera clip at the playhead, for a camera cut</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة مقطع كاميرا عند مؤشر التشغيل، لقطع الكاميرا</translation>
     </message>
     <message>
         <source>Add a camera track with a camera clip over the sequence</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة مسار كاميرا مع مقطع كاميرا فوق التسلسل</translation>
     </message>
     <message>
         <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
-        <translation type="unfinished"></translation>
+        <translation>قفل الكاميرا على العرض: يؤدي التنقل أثناء النظر من خلال الكاميرا إلى تحريك الكاميرا</translation>
     </message>
     <message>
         <source>Align the scene camera to the 3D viewport&apos;s view</source>
-        <translation type="unfinished"></translation>
+        <translation>محاذاة كاميرا المشهد مع عرض منفذ العرض ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>No camera yet. Without one every clip is seen through its own Perspective.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد كاميرا بعد. بدون كاميرا، يُرى كل مقطع من خلال منظوره الخاص.</translation>
     </message>
     <message>
         <source> (active)</source>
-        <translation type="unfinished"></translation>
+        <translation> (نشط)</translation>
     </message>
     <message>
         <source>Select this camera and look through it</source>
-        <translation type="unfinished"></translation>
+        <translation>حدد هذه الكاميرا وانظر من خلالها</translation>
     </message>
 </context>
 <context>
     <name>CameraInspector</name>
     <message>
         <source>Position X</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع X</translation>
     </message>
     <message>
         <source>Position Y</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع Y</translation>
     </message>
     <message>
         <source>Position Z</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع Z</translation>
     </message>
     <message>
         <source>Rotation X</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران X</translation>
     </message>
     <message>
         <source>Rotation Y</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران Y</translation>
     </message>
     <message>
         <source>Rotation Z</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران Z</translation>
     </message>
     <message>
         <source>Point of Interest X</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الاهتمام X</translation>
     </message>
     <message>
         <source>Point of Interest Y</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الاهتمام Y</translation>
     </message>
     <message>
         <source>Point of Interest Z</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الاهتمام Z</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished">تكبير</translation>
+        <translation>تكبير</translation>
     </message>
     <message>
         <source>Select a camera clip to frame the shot.</source>
@@ -6684,47 +6684,47 @@
     </message>
     <message>
         <source>Everything on the timeline is seen through this camera while the clip lasts. Position is the camera&apos;s eye in the same 3D space as the clips; a camera at rest looks exactly like no camera at all.</source>
-        <translation type="unfinished"></translation>
+        <translation>يُرى كل شيء على المخطط الزمني من خلال هذه الكاميرا طوال مدة المقطع. الموضع هو عين الكاميرا في نفس الفضاء ثلاثي الأبعاد للمقاطع؛ الكاميرا في وضع السكون تبدو تمامًا كما لو لم تكن هناك كاميرا على الإطلاق.</translation>
     </message>
     <message>
         <source>Camera rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>دوران الكاميرا</translation>
     </message>
     <message>
         <source>Aim at target</source>
-        <translation type="unfinished"></translation>
+        <translation>توجيه نحو الهدف</translation>
     </message>
     <message>
         <source>Keep the camera facing its point of interest. Rotation then turns the camera relative to that aim.</source>
-        <translation type="unfinished"></translation>
+        <translation>إبقاء الكاميرا موجهة نحو نقطة اهتمامها. يقوم الدوران بعد ذلك بتدوير الكاميرا بالنسبة لهذا التوجيه.</translation>
     </message>
     <message>
         <source>Camera zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>تكبير الكاميرا</translation>
     </message>
     <message>
         <source>Focal length</source>
-        <translation type="unfinished"></translation>
+        <translation>البعد البؤري</translation>
     </message>
     <message>
         <source>Field of view</source>
-        <translation type="unfinished"></translation>
+        <translation>مجال الرؤية</translation>
     </message>
     <message>
         <source>Zoom, focal length (36 × 24 mm film) and field of view are one setting in three units. Zooming does not move the camera. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
-        <translation type="unfinished"></translation>
+        <translation>التكبير والبعد البؤري (فيلم 36 × 24 مم) ومجال الرؤية هي إعداد واحد بثلاث وحدات. التكبير لا يحرك الكاميرا. أثناء تشغيل هذه الكاميرا، فإنها تحل محل قيمة المنظور الخاصة بكل مقطع، لأن المشهد له مشاهد واحد.</translation>
     </message>
     <message>
         <source>Reset camera</source>
-        <translation type="unfinished">إعادة تعيين الكاميرا</translation>
+        <translation>إعادة تعيين الكاميرا</translation>
     </message>
     <message>
         <source>Back to rest: the default position, no rotation, no target and the default zoom, framing the canvas head on.</source>
-        <translation type="unfinished"></translation>
+        <translation>العودة إلى وضع السكون: الموضع الافتراضي، بلا دوران، بلا هدف، والتكبير الافتراضي، مع تأطير لوحة الرسم مباشرة من الأمام.</translation>
     </message>
     <message>
         <source>Camera position</source>
-        <translation type="unfinished">موضع الكاميرا</translation>
+        <translation>موضع الكاميرا</translation>
     </message>
 </context>
 <context>
@@ -6742,43 +6742,43 @@
     <name>ClipAnimation</name>
     <message>
         <source>Slide up</source>
-        <translation type="unfinished">انزلاق للأعلى</translation>
+        <translation>انزلاق للأعلى</translation>
     </message>
     <message>
         <source>Slide down</source>
-        <translation type="unfinished">انزلاق للأسفل</translation>
+        <translation>انزلاق للأسفل</translation>
     </message>
     <message>
         <source>Slide left</source>
-        <translation type="unfinished">انزلاق لليسار</translation>
+        <translation>انزلاق لليسار</translation>
     </message>
     <message>
         <source>Slide right</source>
-        <translation type="unfinished">انزلاق لليمين</translation>
+        <translation>انزلاق لليمين</translation>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation type="unfinished">تكبير</translation>
+        <translation>تكبير</translation>
     </message>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished">تصغير</translation>
+        <translation>تصغير</translation>
     </message>
     <message>
         <source>Pop</source>
-        <translation type="unfinished">انبثاق</translation>
+        <translation>انبثاق</translation>
     </message>
     <message>
         <source>Spin CW</source>
-        <translation type="unfinished">دوران باتجاه عقارب الساعة</translation>
+        <translation>دوران باتجاه عقارب الساعة</translation>
     </message>
     <message>
         <source>Spin CCW</source>
-        <translation type="unfinished">دوران عكس عقارب الساعة</translation>
+        <translation>دوران عكس عقارب الساعة</translation>
     </message>
     <message>
         <source>Bounce</source>
-        <translation type="unfinished">ارتداد</translation>
+        <translation>ارتداد</translation>
     </message>
 </context>
 <context>
@@ -6847,53 +6847,53 @@
     </message>
     <message>
         <source>Missing LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>ملف LUT مفقود</translation>
     </message>
     <message>
         <source>Set LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>تعيين ملف LUT</translation>
     </message>
     <message numerus="yes">
         <source>Imported %n LUT(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>تم استيراد %n ملف LUT</numerusform>
+            <numerusform>تم استيراد %n ملف LUT</numerusform>
+            <numerusform>تم استيراد %n ملفي LUT</numerusform>
+            <numerusform>تم استيراد %n ملفات LUT</numerusform>
+            <numerusform>تم استيراد %n ملفًا من ملفات LUT</numerusform>
+            <numerusform>تم استيراد %n ملف LUT</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n LUT(s), %1 failed</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>تم استيراد %n ملف LUT، وفشل %1</numerusform>
+            <numerusform>تم استيراد %n ملف LUT، وفشل %1</numerusform>
+            <numerusform>تم استيراد %n ملفي LUT، وفشل %1</numerusform>
+            <numerusform>تم استيراد %n ملفات LUT، وفشل %1</numerusform>
+            <numerusform>تم استيراد %n ملفًا من ملفات LUT، وفشل %1</numerusform>
+            <numerusform>تم استيراد %n ملف LUT، وفشل %1</numerusform>
         </translation>
     </message>
     <message>
         <source>Could not import that LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر استيراد ملف LUT هذا</translation>
     </message>
     <message>
         <source>Could not remove the LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذرت إزالة ملف LUT</translation>
     </message>
     <message>
         <source>LUT removed</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت إزالة ملف LUT</translation>
     </message>
     <message>
         <source>Could not rename the LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذرت إعادة تسمية ملف LUT</translation>
     </message>
     <message>
         <source>LUT renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت إعادة تسمية ملف LUT</translation>
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
@@ -7086,31 +7086,31 @@
     </message>
     <message>
         <source>Color grade</source>
-        <translation type="unfinished">تدرج الألوان</translation>
+        <translation>تدرج الألوان</translation>
     </message>
     <message>
         <source>Adds film-like noise</source>
-        <translation type="unfinished"></translation>
+        <translation>يضيف تشويشًا شبيهًا بالأفلام</translation>
     </message>
     <message>
         <source>Soft glow around bright areas</source>
-        <translation type="unfinished"></translation>
+        <translation>توهج ناعم حول المناطق الساطعة</translation>
     </message>
     <message>
         <source>Color fringing at the edges</source>
-        <translation type="unfinished"></translation>
+        <translation>تشتت لوني عند الحواف</translation>
     </message>
     <message>
         <source>Darkens the corners</source>
-        <translation type="unfinished"></translation>
+        <translation>يغمق الزوايا</translation>
     </message>
     <message>
         <source>Red glow around highlights, like film</source>
-        <translation type="unfinished"></translation>
+        <translation>توهج أحمر حول الإضاءات الساطعة، مثل الأفلام</translation>
     </message>
     <message>
         <source>Color: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>اللون: %1</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -7130,11 +7130,11 @@
     </message>
     <message>
         <source>Showing the original. Your grade is hidden until you turn Compare off.</source>
-        <translation type="unfinished"></translation>
+        <translation>عرض الأصل. تم إخفاء تدريج الألوان حتى توقف تشغيل المقارنة.</translation>
     </message>
     <message>
         <source>Show grade</source>
-        <translation type="unfinished"></translation>
+        <translation>إظهار تدريج الألوان</translation>
     </message>
     <message>
         <source>The grade is turned off.</source>
@@ -7166,7 +7166,7 @@
     </message>
     <message>
         <source>Color wheels</source>
-        <translation type="unfinished">عجلات الألوان</translation>
+        <translation>عجلات الألوان</translation>
     </message>
     <message>
         <source>Adjust curves</source>
@@ -7178,7 +7178,7 @@
     </message>
     <message>
         <source>Hue curves</source>
-        <translation type="unfinished">منحنيات تدرج اللون</translation>
+        <translation>منحنيات تدرج اللون</translation>
     </message>
     <message>
         <source>Adjust hue curves</source>
@@ -7206,15 +7206,15 @@
     </message>
     <message>
         <source>LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT</translation>
     </message>
     <message>
         <source>None. Choose one in the Color Grading LUTs panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>بلا. اختر واحدًا من لوحة ملفات LUT لتدرج الألوان.</translation>
     </message>
     <message>
         <source>LUT Intensity</source>
-        <translation type="unfinished"></translation>
+        <translation>كثافة ملف LUT</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -7259,7 +7259,7 @@
     </message>
     <message>
         <source>Edit colour</source>
-        <translation type="unfinished"></translation>
+        <translation>تعديل اللون</translation>
     </message>
 </context>
 <context>
@@ -7274,7 +7274,7 @@
     </message>
     <message>
         <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب للتلوين. اضغط مع الاستمرار على Shift للتحكم الدقيق. انقر نقرًا مزدوجًا لإعادة تعيين اللون.</translation>
     </message>
     <message>
         <source>Brightness</source>
@@ -7285,73 +7285,73 @@
     <name>CommunityInstaller</name>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished">جارٍ البدء…</translation>
+        <translation>جارٍ البدء…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">جارٍ التنزيل…</translation>
+        <translation>جارٍ التنزيل…</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">جارٍ التثبيت…</translation>
+        <translation>جارٍ التثبيت…</translation>
     </message>
     <message>
         <source>This build cannot install that kind of item.</source>
-        <translation type="unfinished"></translation>
+        <translation>هذا الإصدار لا يمكنه تثبيت هذا النوع من العناصر.</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>مثبت</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished">تم الإلغاء</translation>
+        <translation>تم الإلغاء</translation>
     </message>
 </context>
 <context>
     <name>CrashReport</name>
     <message>
         <source>Drift crashed the last time it ran</source>
-        <translation type="unfinished"></translation>
+        <translation>تعطل Drift في آخر مرة تم تشغيله فيها</translation>
     </message>
     <message>
         <source>Drift did not close properly last time</source>
-        <translation type="unfinished"></translation>
+        <translation>لم يُغلق Drift بشكل صحيح في المرة الأخيرة</translation>
     </message>
     <message>
         <source>If it keeps happening, you can start in safe mode, which uses the default graphics backend and loads no add-ons for this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>إذا استمر حدوث ذلك، يمكنك البدء في الوضع الآمن، والذي يستخدم الواجهة الخلفية الافتراضية للرسومات ولا يقوم بتحميل أي إضافات لهذه الجلسة.</translation>
     </message>
     <message>
         <source>A report was sent to help fix this. You can turn this off in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>تم إرسال تقرير للمساعدة في إصلاح هذا. يمكنك إيقاف تشغيل هذا في الإعدادات.</translation>
     </message>
     <message>
         <source>Save crash file…</source>
-        <translation type="unfinished"></translation>
+        <translation>حفظ ملف التعطل…</translation>
     </message>
     <message>
         <source>Start in safe mode</source>
-        <translation type="unfinished"></translation>
+        <translation>البدء في الوضع الآمن</translation>
     </message>
     <message>
         <source>Continue</source>
-        <translation type="unfinished">متابعة</translation>
+        <translation>متابعة</translation>
     </message>
 </context>
 <context>
     <name>CrashReporter</name>
     <message>
         <source>Choose where to save the file</source>
-        <translation type="unfinished"></translation>
+        <translation>اختر مكان حفظ الملف</translation>
     </message>
     <message>
         <source>Saved to %1</source>
-        <translation type="unfinished">تم الحفظ في %1</translation>
+        <translation>تم الحفظ في %1</translation>
     </message>
     <message>
         <source>Could not save the file: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر حفظ الملف: %1</translation>
     </message>
 </context>
 <context>
@@ -7400,11 +7400,11 @@
     </message>
     <message>
         <source>Saturation</source>
-        <translation type="unfinished">التشبع</translation>
+        <translation>التشبع</translation>
     </message>
     <message>
         <source>Luminance</source>
-        <translation type="unfinished">الإضاءة</translation>
+        <translation>الإضاءة</translation>
     </message>
     <message>
         <source>Master</source>
@@ -7412,15 +7412,15 @@
     </message>
     <message>
         <source>Hue vs Hue: shift one color toward another</source>
-        <translation type="unfinished"></translation>
+        <translation>درجة اللون مقابل درجة اللون: إزاحة لون نحو لون آخر</translation>
     </message>
     <message>
         <source>Hue vs Saturation: make one color more or less vivid</source>
-        <translation type="unfinished"></translation>
+        <translation>درجة اللون مقابل التشبع: جعل لون معين أكثر أو أقل حيوية</translation>
     </message>
     <message>
         <source>Hue vs Luminance: brighten or darken one color</source>
-        <translation type="unfinished"></translation>
+        <translation>درجة اللون مقابل السطوع: تفتيح أو تغميق لون معين</translation>
     </message>
     <message>
         <source>Reset channel</source>
@@ -7428,15 +7428,15 @@
     </message>
     <message>
         <source>Hue %1° → %2</source>
-        <translation type="unfinished"></translation>
+        <translation>درجة اللون %1° ← %2</translation>
     </message>
     <message>
         <source>In %1 → Out %2</source>
-        <translation type="unfinished"></translation>
+        <translation>الدخل %1 ← الخرج %2</translation>
     </message>
     <message>
         <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation type="unfinished"></translation>
+        <translation>انقر لإضافة نقطة. اسحب لتحريكها. انقر نقرًا مزدوجًا أو اسحبها للخارج لإزالتها.</translation>
     </message>
 </context>
 <context>
@@ -7463,18 +7463,18 @@
     </message>
     <message>
         <source>Custom animation curve applied</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تطبيق منحنى تحريك مخصص</translation>
     </message>
 </context>
 <context>
     <name>CurveField</name>
     <message>
         <source>Custom</source>
-        <translation type="unfinished">مخصص</translation>
+        <translation>مخصص</translation>
     </message>
     <message>
         <source>Bezier</source>
-        <translation type="unfinished">بيزييه</translation>
+        <translation>بيزييه</translation>
     </message>
 </context>
 <context>
@@ -7961,23 +7961,23 @@
     <name>DownloadCenter</name>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">جارٍ التثبيت…</translation>
+        <translation>جارٍ التثبيت…</translation>
     </message>
     <message>
         <source>Waiting…</source>
-        <translation type="unfinished">جارٍ الانتظار…</translation>
+        <translation>جارٍ الانتظار…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">جارٍ التنزيل…</translation>
+        <translation>جارٍ التنزيل…</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>مثبت</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished">تم الإلغاء</translation>
+        <translation>تم الإلغاء</translation>
     </message>
 </context>
 <context>
@@ -8105,7 +8105,7 @@
     <name>DriftAssetStore</name>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished">جارٍ البدء…</translation>
+        <translation>جارٍ البدء…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -8117,15 +8117,15 @@
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">جارٍ التنزيل…</translation>
+        <translation>جارٍ التنزيل…</translation>
     </message>
     <message>
         <source>In the media bin</source>
-        <translation type="unfinished">في حاوية الوسائط</translation>
+        <translation>في حاوية الوسائط</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished">تم الإلغاء</translation>
+        <translation>تم الإلغاء</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
@@ -8133,11 +8133,11 @@
     </message>
     <message>
         <source>Added to face props</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت الإضافة إلى ملحقات الوجه</translation>
     </message>
     <message>
         <source>Importing…</source>
-        <translation type="unfinished">جارٍ الاستيراد…</translation>
+        <translation>جارٍ الاستيراد…</translation>
     </message>
     <message>
         <source>Could not add that asset to the media bin.</source>
@@ -8172,7 +8172,7 @@
     </message>
     <message>
         <source>Styles</source>
-        <translation type="unfinished"></translation>
+        <translation>الأنماط</translation>
     </message>
     <message>
         <source>In</source>
@@ -8188,11 +8188,11 @@
     </message>
     <message>
         <source>My curves</source>
-        <translation type="unfinished"></translation>
+        <translation>منحنياتي</translation>
     </message>
     <message>
         <source>+ New curve</source>
-        <translation type="unfinished"></translation>
+        <translation>+ منحنى جديد</translation>
     </message>
     <message>
         <source>My easing</source>
@@ -8449,18 +8449,18 @@
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
         <source>Marketplace — %n download(s) running</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>المتجر — %n تنزيل قيد التشغيل</numerusform>
+            <numerusform>المتجر — %n تنزيل قيد التشغيل</numerusform>
+            <numerusform>المتجر — %n تنزيلان قيد التشغيل</numerusform>
+            <numerusform>المتجر — %n تنزيلات قيد التشغيل</numerusform>
+            <numerusform>المتجر — %n تنزيلاً قيد التشغيل</numerusform>
+            <numerusform>المتجر — %n تنزيل قيد التشغيل</numerusform>
         </translation>
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>المتجر</translation>
     </message>
 </context>
 <context>
@@ -8534,19 +8534,19 @@
     <name>EditorHeaderSearchField</name>
     <message>
         <source>Workspace: %1</source>
-        <translation type="unfinished">مساحة العمل: %1</translation>
+        <translation>مساحة العمل: %1</translation>
     </message>
     <message>
         <source>Workspace:</source>
-        <translation type="unfinished"></translation>
+        <translation>مساحة العمل:</translation>
     </message>
     <message>
         <source>Switch workspace</source>
-        <translation type="unfinished">تبديل مساحة العمل</translation>
+        <translation>تبديل مساحة العمل</translation>
     </message>
     <message>
         <source>Customize layouts in Settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>تخصيص التخطيطات في الإعدادات…</translation>
     </message>
     <message>
         <source>Search  %1</source>
@@ -8568,11 +8568,11 @@
     <name>EditorHeaderVideoButton</name>
     <message>
         <source>Video</source>
-        <translation type="unfinished"></translation>
+        <translation>الفيديو</translation>
     </message>
     <message>
         <source>Bakes, crop and video layout</source>
-        <translation type="unfinished"></translation>
+        <translation>المعالجات المسبقة والاقتصاص وتخطيط الفيديو</translation>
     </message>
 </context>
 <context>
@@ -8599,7 +8599,7 @@
     </message>
     <message>
         <source>Install a custom effect or transition from a .driftfx or zip made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation>تثبيت تأثير أو انتقال مخصص من ملف .driftfx أو أرشيف zip تم إنشاؤه في Drift Forge</translation>
     </message>
     <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
@@ -9138,7 +9138,7 @@
     </message>
     <message>
         <source>Effect settings</source>
-        <translation type="unfinished">إعدادات التأثير</translation>
+        <translation>إعدادات التأثير</translation>
     </message>
 </context>
 <context>
@@ -9153,11 +9153,11 @@
     </message>
     <message>
         <source>Import LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>استيراد ملفات LUT</translation>
     </message>
     <message>
         <source>Missing LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>ملف LUT مفقود</translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
@@ -9168,15 +9168,15 @@
     <name>EffectsMaskSection</name>
     <message>
         <source>This effect needs a mask.</source>
-        <translation type="unfinished"></translation>
+        <translation>يحتاج هذا التأثير إلى قناع.</translation>
     </message>
     <message>
         <source>Add new mask</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة قناع جديد</translation>
     </message>
     <message>
         <source>Cutout subject</source>
-        <translation type="unfinished"></translation>
+        <translation>عزل العنصر</translation>
     </message>
 </context>
 <context>
@@ -9295,46 +9295,46 @@
     </message>
     <message>
         <source>Some bakes are out of date</source>
-        <translation type="unfinished"></translation>
+        <translation>بعض المعالجات المسبقة قديمة</translation>
     </message>
     <message numerus="yes">
         <source>%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>لم يعد %n نطاق معالج مسبقًا يطابق تعديلاتك. تصديرها كما هي يستخدم الصور القديمة.</numerusform>
+            <numerusform>لم يعد %n نطاق معالج مسبقًا يطابق تعديلاتك. تصديره كما هو يستخدم الصور القديمة.</numerusform>
+            <numerusform>لم يعد %n نطاقان معالجان مسبقًا يطابقان تعديلاتك. تصديرهما كما هما يستخدم الصور القديمة.</numerusform>
+            <numerusform>لم تعد %n نطاقات معالجة مسبقًا تطابق تعديلاتك. تصديرها كما هي يستخدم الصور القديمة.</numerusform>
+            <numerusform>لم يعد %n نطاقًا معالجًا مسبقًا يطابق تعديلاتك. تصديرها كما هي يستخدم الصور القديمة.</numerusform>
+            <numerusform>لم يعد %n نطاق معالج مسبقًا يطابق تعديلاتك. تصديرها كما هي يستخدم الصور القديمة.</numerusform>
         </translation>
     </message>
     <message>
         <source>Re-bake first</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة المعالجة المسبقة أولاً</translation>
     </message>
     <message>
         <source>Re-baking. Export again when it finishes.</source>
-        <translation type="unfinished"></translation>
+        <translation>تجري إعادة المعالجة المسبقة. أعد التصدير عند الانتهاء.</translation>
     </message>
     <message>
         <source>Render them live</source>
-        <translation type="unfinished"></translation>
+        <translation>معالجتها مباشرة</translation>
     </message>
     <message>
         <source>Export as is</source>
-        <translation type="unfinished"></translation>
+        <translation>التصدير كما هي</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">إلغاء</translation>
+        <translation>إلغاء</translation>
     </message>
     <message>
         <source>Use baked ranges</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدام النطاقات المعالجة مسبقًا</translation>
     </message>
     <message>
         <source>Read pre-rendered ranges instead of compositing them again</source>
-        <translation type="unfinished"></translation>
+        <translation>قراءة النطاقات المعالجة مسبقًا بدلاً من إعادة تركيبها</translation>
     </message>
 </context>
 <context>
@@ -9528,7 +9528,7 @@
     </message>
     <message>
         <source>Exporting audio</source>
-        <translation type="unfinished"></translation>
+        <translation>تصدير الصوت</translation>
     </message>
     <message>
         <source>Export</source>
@@ -9548,7 +9548,7 @@
     </message>
     <message>
         <source>Rendering your audio. Close to keep editing, or cancel to stop.</source>
-        <translation type="unfinished"></translation>
+        <translation>تجري معالجة الصوت الخاص بك. أغلق للاستمرار في التعديل، أو ألغِ للإيقاف.</translation>
     </message>
     <message>
         <source>Export finished.</source>
@@ -9567,338 +9567,338 @@
     <name>ExtrasCard</name>
     <message>
         <source>Select</source>
-        <translation type="unfinished">تحديد</translation>
+        <translation>تحديد</translation>
     </message>
     <message>
         <source>Waiting…</source>
-        <translation type="unfinished">جارٍ الانتظار…</translation>
+        <translation>جارٍ الانتظار…</translation>
     </message>
     <message>
         <source>%1 %2%</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 %2%</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">جارٍ التثبيت…</translation>
+        <translation>جارٍ التثبيت…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">جارٍ التنزيل…</translation>
+        <translation>جارٍ التنزيل…</translation>
     </message>
     <message>
         <source>Failed · open to retry</source>
-        <translation type="unfinished"></translation>
+        <translation>فشل · افتح لإعادة المحاولة</translation>
     </message>
     <message>
         <source>Needs Drift %1</source>
-        <translation type="unfinished"></translation>
+        <translation>يتطلب Drift %1</translation>
     </message>
     <message>
         <source>Installed from file</source>
-        <translation type="unfinished">تم التثبيت من ملف</translation>
+        <translation>تم التثبيت من ملف</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>مثبت</translation>
     </message>
     <message>
         <source>Update · %1</source>
-        <translation type="unfinished"></translation>
+        <translation>تحديث · %1</translation>
     </message>
 </context>
 <context>
     <name>ExtrasDetail</name>
     <message>
         <source>Back</source>
-        <translation type="unfinished">رجوع</translation>
+        <translation>رجوع</translation>
     </message>
     <message>
         <source>Unofficial</source>
-        <translation type="unfinished">غير رسمي</translation>
+        <translation>غير رسمي</translation>
     </message>
     <message>
         <source>%1 → %2</source>
-        <translation type="unfinished">%1 → %2</translation>
+        <translation>%1 → %2</translation>
     </message>
     <message>
         <source>Needs a newer Drift</source>
-        <translation type="unfinished"></translation>
+        <translation>يتطلب إصدارًا أحدث من Drift</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">إلغاء</translation>
+        <translation>إلغاء</translation>
     </message>
     <message>
         <source>Update</source>
-        <translation type="unfinished">تحديث</translation>
+        <translation>تحديث</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">إعادة المحاولة</translation>
+        <translation>إعادة المحاولة</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">تثبيت</translation>
+        <translation>تثبيت</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>مثبت</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">إزالة</translation>
+        <translation>إزالة</translation>
     </message>
     <message>
         <source>Delete this pack&apos;s downloaded data</source>
-        <translation type="unfinished">حذف البيانات المنزلة لهذه الحزمة</translation>
+        <translation>حذف البيانات المنزلة لهذه الحزمة</translation>
     </message>
     <message>
         <source>Waiting for other downloads to finish…</source>
-        <translation type="unfinished"></translation>
+        <translation>في انتظار انتهاء التنزيلات الأخرى…</translation>
     </message>
     <message>
         <source>%1… %2%</source>
-        <translation type="unfinished">%1… %2%</translation>
+        <translation>%1… %2%</translation>
     </message>
     <message>
         <source>Requires Drift %1 or newer</source>
-        <translation type="unfinished">يتطلب Drift %1 أو أحدث</translation>
+        <translation>يتطلب Drift %1 أو أحدث</translation>
     </message>
     <message>
         <source>Also installs: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>يثبت أيضًا: %1</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>About</source>
-        <translation type="unfinished">حول</translation>
+        <translation>حول</translation>
     </message>
     <message>
         <source>Images</source>
-        <translation type="unfinished">الصور</translation>
+        <translation>الصور</translation>
     </message>
     <message>
         <source>What it&apos;s for</source>
-        <translation type="unfinished"></translation>
+        <translation>الغرض منه</translation>
     </message>
     <message>
         <source>How to use</source>
-        <translation type="unfinished"></translation>
+        <translation>كيفية الاستخدام</translation>
     </message>
     <message>
         <source>Unlocks</source>
-        <translation type="unfinished"></translation>
+        <translation>يفتح الميزات</translation>
     </message>
     <message>
         <source>%1 — %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 — %2</translation>
     </message>
     <message>
         <source>How AI runs</source>
-        <translation type="unfinished">كيفية تشغيل الذكاء الاصطناعي</translation>
+        <translation>كيفية تشغيل الذكاء الاصطناعي</translation>
     </message>
     <message>
         <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">يختار الوضع التلقائي أسرع خيار قمت بتثبيته، ويستخدم هذا الكمبيوتر إذا لم تتمكن بطاقة الرسومات من المساعدة.</translation>
+        <translation>يختار الوضع التلقائي أسرع خيار قمت بتثبيته، ويستخدم هذا الكمبيوتر إذا لم تتمكن بطاقة الرسومات من المساعدة.</translation>
     </message>
     <message>
         <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished"></translation>
+        <translation>قم بتثبيت محرك ذكاء اصطناعي لإلغاء قفل التسميات التوضيحية التلقائية، وعزل العناصر، وتأثيرات الوجوه المضحكة، وإزالة الضوضاء.</translation>
     </message>
     <message>
         <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">أعد تشغيل Drift لتطبيق ذلك.</translation>
+        <translation>أعد تشغيل Drift لتطبيق ذلك.</translation>
     </message>
     <message>
         <source>Needs</source>
-        <translation type="unfinished"></translation>
+        <translation>يتطلب</translation>
     </message>
     <message>
         <source>%1 · Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · مثبت</translation>
     </message>
     <message>
         <source>%1 · Will be installed</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · سيتم تثبيته</translation>
     </message>
     <message>
         <source>Works well with</source>
-        <translation type="unfinished"></translation>
+        <translation>يعمل جيدًا مع</translation>
     </message>
     <message>
         <source>Technical details</source>
-        <translation type="unfinished">تفاصيل فنية</translation>
+        <translation>تفاصيل فنية</translation>
     </message>
 </context>
 <context>
     <name>ExtrasInstallBar</name>
     <message numerus="yes">
         <source>Install %n extra(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>تثبيت %n إضافة</numerusform>
+            <numerusform>تثبيت %n إضافة</numerusform>
+            <numerusform>تثبيت %n إضافتين</numerusform>
+            <numerusform>تثبيت %n إضافات</numerusform>
+            <numerusform>تثبيت %n إضافةً</numerusform>
+            <numerusform>تثبيت %n إضافة</numerusform>
         </translation>
     </message>
     <message>
         <source>%1 · %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Installing %1 of %2 · %3</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ تثبيت %1 من %2 · %3</translation>
     </message>
     <message>
         <source>Installing %1</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ تثبيت %1</translation>
     </message>
     <message>
         <source>Also installs: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>يثبت أيضًا: %1</translation>
     </message>
     <message>
         <source>%1 needs %2, which isn&apos;t available for this device</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 يتطلب %2، وهو غير متوفر لهذا الجهاز</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished">مسح</translation>
+        <translation>مسح</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">تثبيت</translation>
+        <translation>تثبيت</translation>
     </message>
 </context>
 <context>
     <name>ExtrasStore</name>
     <message>
         <source>Discover</source>
-        <translation type="unfinished"></translation>
+        <translation>اكتشف</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>مثبت</translation>
     </message>
     <message>
         <source>Updates</source>
-        <translation type="unfinished">التحديثات</translation>
+        <translation>التحديثات</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished">مخصص</translation>
+        <translation>مخصص</translation>
     </message>
     <message>
         <source>Results for “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>نتائج البحث عن “%1”</translation>
     </message>
     <message>
         <source>Add-ons that make Drift do more.</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافات تمنح Drift إمكانات أكثر.</translation>
     </message>
     <message>
         <source>Everything you have downloaded.</source>
-        <translation type="unfinished"></translation>
+        <translation>كل ما قمت بتنزيله.</translation>
     </message>
     <message>
         <source>Newer versions of what you have installed.</source>
-        <translation type="unfinished"></translation>
+        <translation>إصدارات أحدث لما قمت بتثبيته.</translation>
     </message>
     <message>
         <source>Packs you installed from a file.</source>
-        <translation type="unfinished"></translation>
+        <translation>الحزم التي قمت بتثبيتها من ملف.</translation>
     </message>
     <message>
         <source>Remove this pack?</source>
-        <translation type="unfinished">إزالة هذه الحزمة؟</translation>
+        <translation>إزالة هذه الحزمة؟</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">إزالة</translation>
+        <translation>إزالة</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">ستُحذف “%1” وبياناتها المنزلة. يمكنك تثبيتها مجددًا لاحقًا.</translation>
+        <translation>ستُحذف “%1” وبياناتها المنزلة. يمكنك تثبيتها مجددًا لاحقًا.</translation>
     </message>
     <message>
         <source>Search extras</source>
-        <translation type="unfinished"></translation>
+        <translation>البحث في الإضافات</translation>
     </message>
     <message>
         <source>Clear search</source>
-        <translation type="unfinished"></translation>
+        <translation>مسح البحث</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">تثبيت من ملف…</translation>
+        <translation>تثبيت من ملف…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation type="unfinished">فتح مجلد الإضافات</translation>
+        <translation>فتح مجلد الإضافات</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">ضع مجلدات الإضافات هنا، ثم أعد فتح الملحقات الإضافية</translation>
+        <translation>ضع مجلدات الإضافات هنا، ثم أعد فتح الملحقات الإضافية</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Select all</source>
-        <translation type="unfinished">تحديد الكل</translation>
+        <translation>تحديد الكل</translation>
     </message>
     <message>
         <source>Checking for extras…</source>
-        <translation type="unfinished">التحقق من وجود إضافات…</translation>
+        <translation>التحقق من وجود إضافات…</translation>
     </message>
     <message>
         <source>All extras</source>
-        <translation type="unfinished"></translation>
+        <translation>جميع الإضافات</translation>
     </message>
     <message>
         <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">تعذر الوصول إلى متجر التنزيل</translation>
+        <translation>تعذر الوصول إلى متجر التنزيل</translation>
     </message>
     <message>
         <source>No extras yet</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد إضافات بعد</translation>
     </message>
     <message>
         <source>Nothing matches your search</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يوجد شيء يطابق بحثك</translation>
     </message>
     <message>
         <source>Nothing here yet</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يوجد شيء هنا بعد</translation>
     </message>
     <message>
         <source>Check your connection and try again.</source>
-        <translation type="unfinished">تحقق من اتصالك وحاول مرة أخرى.</translation>
+        <translation>تحقق من اتصالك وحاول مرة أخرى.</translation>
     </message>
     <message>
         <source>Try a different word.</source>
-        <translation type="unfinished"></translation>
+        <translation>جرب كلمة مختلفة.</translation>
     </message>
     <message>
         <source>Pick another section.</source>
-        <translation type="unfinished"></translation>
+        <translation>اختر قسمًا آخر.</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">إعادة المحاولة</translation>
+        <translation>إعادة المحاولة</translation>
     </message>
 </context>
 <context>
     <name>ExtrasWindow</name>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">الإضافات</translation>
+        <translation>الإضافات</translation>
     </message>
 </context>
 <context>
@@ -10150,19 +10150,19 @@
     </message>
     <message>
         <source>Out animation curve</source>
-        <translation type="unfinished"></translation>
+        <translation>منحنى تحريك الخروج</translation>
     </message>
     <message>
         <source>In animation curve</source>
-        <translation type="unfinished"></translation>
+        <translation>منحنى تحريك الدخول</translation>
     </message>
     <message>
         <source>Fade out curve</source>
-        <translation type="unfinished"></translation>
+        <translation>منحنى التلاشي للخارج</translation>
     </message>
     <message>
         <source>Fade in curve</source>
-        <translation type="unfinished"></translation>
+        <translation>منحنى التلاشي للداخل</translation>
     </message>
     <message>
         <source>Progress curve — %1</source>
@@ -10174,15 +10174,15 @@
     </message>
     <message>
         <source>%1 — %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 — %2</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished">دخول</translation>
+        <translation>دخول</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished">خروج</translation>
+        <translation>خروج</translation>
     </message>
     <message>
         <source>Points</source>
@@ -10222,7 +10222,7 @@
     </message>
     <message>
         <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب النقاط الوسطى لتشكيل التدرج (تظل الأطراف مثبتة). انقر نقرًا مزدوجًا لإضافة نقطة؛ يزيل Delete التحديد.</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -10395,7 +10395,7 @@
     </message>
     <message>
         <source>Straighten</source>
-        <translation type="unfinished"></translation>
+        <translation>تسوية</translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -10415,15 +10415,15 @@
     </message>
     <message>
         <source>Loop</source>
-        <translation type="unfinished">تكرار</translation>
+        <translation>تكرار</translation>
     </message>
     <message>
         <source>A clip with a speed ramp can&apos;t loop</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يمكن تكرار مقطع ذي تدرج في السرعة</translation>
     </message>
     <message>
         <source>Repeat the trimmed part for as long as the clip runs. Drag the clip&apos;s edges past the end to add repeats. Turn it off to change the trim.</source>
-        <translation type="unfinished"></translation>
+        <translation>تكرار الجزء المقلم طوال مدة تشغيل المقطع. اسحب حواف المقطع بعد النهاية لإضافة تكرارات. أوقف تشغيله لتغيير التقليم.</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -10467,23 +10467,23 @@
     </message>
     <message>
         <source>Label</source>
-        <translation type="unfinished">التسمية</translation>
+        <translation>التسمية</translation>
     </message>
     <message>
         <source>Clip label</source>
-        <translation type="unfinished"></translation>
+        <translation>تسمية المقطع</translation>
     </message>
     <message>
         <source>No label</source>
-        <translation type="unfinished"></translation>
+        <translation>بلا تسمية</translation>
     </message>
     <message>
         <source>Edit label</source>
-        <translation type="unfinished"></translation>
+        <translation>تعديل التسمية</translation>
     </message>
     <message>
         <source>e.g. intro (empty clears it)</source>
-        <translation type="unfinished"></translation>
+        <translation>مثال: intro (تركه فارغًا يمسحه)</translation>
     </message>
 </context>
 <context>
@@ -10553,7 +10553,7 @@
     <name>GradeSlider</name>
     <message>
         <source>Double-click to reset. Hold Shift while dragging for fine control.</source>
-        <translation type="unfinished"></translation>
+        <translation>انقر نقرًا مزدوجًا لإعادة التعيين. اضغط مع الاستمرار على Shift أثناء السحب للتحكم الدقيق.</translation>
     </message>
     <message>
         <source>Animated. Editing sets keyframes (needs Auto keyframes on).</source>
@@ -10583,7 +10583,7 @@
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">المفضلة</translation>
+        <translation>المفضلة</translation>
     </message>
     <message>
         <source>Type</source>
@@ -10876,31 +10876,31 @@
     <name>HelpDialog</name>
     <message>
         <source>Help</source>
-        <translation type="unfinished">تعليمات</translation>
+        <translation>تعليمات</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">إغلاق</translation>
+        <translation>إغلاق</translation>
     </message>
     <message>
         <source>Open an issue on GitHub</source>
-        <translation type="unfinished"></translation>
+        <translation>فتح مشكلة على GitHub</translation>
     </message>
     <message>
         <source>Join our Discord server</source>
-        <translation type="unfinished"></translation>
+        <translation>الانضمام إلى خادمنا على Discord</translation>
     </message>
     <message>
         <source>Read the docs</source>
-        <translation type="unfinished"></translation>
+        <translation>قراءة الوثائق</translation>
     </message>
     <message>
         <source>Contact us via email</source>
-        <translation type="unfinished"></translation>
+        <translation>الاتصال بنا عبر البريد الإلكتروني</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">فتح</translation>
+        <translation>فتح</translation>
     </message>
 </context>
 <context>
@@ -10978,66 +10978,66 @@
     <name>ImageViewer</name>
     <message>
         <source>Save image</source>
-        <translation type="unfinished"></translation>
+        <translation>حفظ الصورة</translation>
     </message>
     <message>
         <source>PNG image (*.png)</source>
-        <translation type="unfinished">صورة PNG (*.png)</translation>
+        <translation>صورة PNG (*.png)</translation>
     </message>
     <message>
         <source>JPEG image (*.jpg *.jpeg)</source>
-        <translation type="unfinished">صورة JPEG (*.jpg *.jpeg)</translation>
+        <translation>صورة JPEG (*.jpg *.jpeg)</translation>
     </message>
     <message>
         <source>Image saved.</source>
-        <translation type="unfinished"></translation>
+        <translation>تم حفظ الصورة.</translation>
     </message>
     <message>
         <source>Couldn’t save that image.</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر حفظ تلك الصورة.</translation>
     </message>
     <message>
         <source>Go to</source>
-        <translation type="unfinished"></translation>
+        <translation>الانتقال إلى</translation>
     </message>
     <message>
         <source>Move the playhead to where this image starts</source>
-        <translation type="unfinished"></translation>
+        <translation>تحريك مؤشر التشغيل إلى مكان بدء هذه الصورة</translation>
     </message>
     <message>
         <source>Fit</source>
-        <translation type="unfinished">ملاءمة</translation>
+        <translation>ملاءمة</translation>
     </message>
     <message>
         <source>Actual size</source>
-        <translation type="unfinished"></translation>
+        <translation>الحجم الفعلي</translation>
     </message>
     <message>
         <source>Open file location</source>
-        <translation type="unfinished"></translation>
+        <translation>فتح موقع الملف</translation>
     </message>
     <message>
         <source>Copy path</source>
-        <translation type="unfinished"></translation>
+        <translation>نسخ المسار</translation>
     </message>
     <message>
         <source>Copied to clipboard</source>
-        <translation type="unfinished">تم النسخ إلى الحافظة</translation>
+        <translation>تم النسخ إلى الحافظة</translation>
     </message>
     <message>
         <source>Save as…</source>
-        <translation type="unfinished">حفظ باسم…</translation>
+        <translation>حفظ باسم…</translation>
     </message>
 </context>
 <context>
     <name>ImageViewerDialog</name>
     <message>
         <source>Agent image</source>
-        <translation type="unfinished"></translation>
+        <translation>صورة الوكيل</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">إغلاق</translation>
+        <translation>إغلاق</translation>
     </message>
 </context>
 <context>
@@ -11091,67 +11091,67 @@
     </message>
     <message>
         <source>Rotation Z</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران Z</translation>
     </message>
     <message>
         <source>Rotation X</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران X</translation>
     </message>
     <message>
         <source>Rotation Y</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران Y</translation>
     </message>
     <message>
         <source>Position Z</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع Z</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished">كاميرا</translation>
+        <translation>كاميرا</translation>
     </message>
     <message>
         <source>Position X</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع X</translation>
     </message>
     <message>
         <source>Position Y</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع Y</translation>
     </message>
     <message>
         <source>Point of Interest X</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الاهتمام X</translation>
     </message>
     <message>
         <source>Point of Interest Y</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الاهتمام Y</translation>
     </message>
     <message>
         <source>Point of Interest Z</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الاهتمام Z</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished">تكبير</translation>
+        <translation>تكبير</translation>
     </message>
     <message>
         <source>Scale X</source>
-        <translation type="unfinished"></translation>
+        <translation>الحجم X</translation>
     </message>
     <message>
         <source>Scale Y</source>
-        <translation type="unfinished"></translation>
+        <translation>الحجم Y</translation>
     </message>
     <message>
         <source>Anchor X</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الارتكاز X</translation>
     </message>
     <message>
         <source>Anchor Y</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الارتكاز Y</translation>
     </message>
     <message>
         <source>Anchor Z</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الارتكاز Z</translation>
     </message>
     <message>
         <source>Feather</source>
@@ -11159,7 +11159,7 @@
     </message>
     <message>
         <source>Roundness</source>
-        <translation type="unfinished"></translation>
+        <translation>الاستدارة</translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11219,7 +11219,7 @@
     </message>
     <message>
         <source>Nudge keyframes</source>
-        <translation type="unfinished"></translation>
+        <translation>تحريك الإطارات المفتاحية قليلاً</translation>
     </message>
     <message>
         <source>Move keyframes</source>
@@ -11265,31 +11265,31 @@
     <name>KeyframeGraph</name>
     <message>
         <source>Position X</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع X</translation>
     </message>
     <message>
         <source>Position Y</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع Y</translation>
     </message>
     <message>
         <source>Rotation Z</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران Z</translation>
     </message>
     <message>
         <source>Point of Interest X</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الاهتمام X</translation>
     </message>
     <message>
         <source>Point of Interest Y</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الاهتمام Y</translation>
     </message>
     <message>
         <source>Point of Interest Z</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الاهتمام Z</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished">تكبير</translation>
+        <translation>تكبير</translation>
     </message>
     <message>
         <source>X position</source>
@@ -11301,11 +11301,11 @@
     </message>
     <message>
         <source>Scale X</source>
-        <translation type="unfinished"></translation>
+        <translation>الحجم X</translation>
     </message>
     <message>
         <source>Scale Y</source>
-        <translation type="unfinished"></translation>
+        <translation>الحجم Y</translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -11313,27 +11313,27 @@
     </message>
     <message>
         <source>Rotation X</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران X</translation>
     </message>
     <message>
         <source>Rotation Y</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران Y</translation>
     </message>
     <message>
         <source>Position Z</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع Z</translation>
     </message>
     <message>
         <source>Anchor X</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الارتكاز X</translation>
     </message>
     <message>
         <source>Anchor Y</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الارتكاز Y</translation>
     </message>
     <message>
         <source>Anchor Z</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الارتكاز Z</translation>
     </message>
     <message>
         <source>Perspective</source>
@@ -11373,7 +11373,7 @@
     </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation type="unfinished">تعديل منحنى الإطار المفتاحي</translation>
+        <translation>تعديل منحنى الإطار المفتاحي</translation>
     </message>
     <message>
         <source>%1 (keyframes off)</source>
@@ -11424,11 +11424,11 @@
     </message>
     <message>
         <source>Hide Bezier handles</source>
-        <translation type="unfinished"></translation>
+        <translation>إخفاء مقابض بيزييه</translation>
     </message>
     <message>
         <source>Show Bezier handles. Without them, drag a curve to bend it</source>
-        <translation type="unfinished"></translation>
+        <translation>إظهار مقابض بيزييه. بدونها، اسحب المنحنى لثنيه</translation>
     </message>
     <message>
         <source>Analyzing…</source>
@@ -11452,7 +11452,7 @@
     </message>
     <message>
         <source>More keyframe tools</source>
-        <translation type="unfinished"></translation>
+        <translation>المزيد من أدوات الإطارات المفتاحية</translation>
     </message>
 </context>
 <context>
@@ -11542,7 +11542,7 @@
     </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation type="unfinished">تعديل منحنى الإطار المفتاحي</translation>
+        <translation>تعديل منحنى الإطار المفتاحي</translation>
     </message>
 </context>
 <context>
@@ -11553,13 +11553,13 @@
     </message>
     <message numerus="yes">
         <source>%n key(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n إطار مفتاحي</numerusform>
+            <numerusform>%n إطار مفتاحي</numerusform>
+            <numerusform>%n إطاران مفتاحيان</numerusform>
+            <numerusform>%n إطارات مفتاحية</numerusform>
+            <numerusform>%n إطارًا مفتاحيًا</numerusform>
+            <numerusform>%n إطار مفتاحي</numerusform>
         </translation>
     </message>
 </context>
@@ -11567,7 +11567,7 @@
     <name>KeyframesPanel</name>
     <message>
         <source>Keyframe editor</source>
-        <translation type="unfinished">محرر الإطارات المفتاحية</translation>
+        <translation>محرر الإطارات المفتاحية</translation>
     </message>
     <message>
         <source>Scale</source>
@@ -11575,7 +11575,7 @@
     </message>
     <message>
         <source>Press K to add a keyframe at the playhead, or double-click a lane to add one there</source>
-        <translation type="unfinished"></translation>
+        <translation>اضغط على K لإضافة إطار مفتاحي عند مؤشر التشغيل، أو انقر نقرًا مزدوجًا على مسار فرعي لإضافة واحد هناك</translation>
     </message>
     <message>
         <source>Select a clip to edit its keyframes</source>
@@ -11645,11 +11645,11 @@
     </message>
     <message>
         <source>Handles</source>
-        <translation type="unfinished"></translation>
+        <translation>المقابض</translation>
     </message>
     <message>
         <source>Show bezier handles on the focused curve. Without them, drag a curve to bend it</source>
-        <translation type="unfinished"></translation>
+        <translation>إظهار مقابض بيزييه على المنحنى المركز عليه. بدونها، اسحب المنحنى لثنيه</translation>
     </message>
     <message>
         <source>Fit the clip in view</source>
@@ -11676,11 +11676,11 @@
     </message>
     <message>
         <source>Stop animating %1 (keys are kept)</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف تحريك %1 (يتم الاحتفاظ بالمفاتيح)</translation>
     </message>
     <message>
         <source>Animate %1</source>
-        <translation type="unfinished"></translation>
+        <translation>تحريك %1</translation>
     </message>
     <message>
         <source>Previous keyframe</source>
@@ -11765,7 +11765,7 @@
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">المفضلة</translation>
+        <translation>المفضلة</translation>
     </message>
     <message>
         <source>Template</source>
@@ -11915,59 +11915,59 @@
     </message>
     <message>
         <source>Color Grading LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>ملفات LUT لتدرج الألوان</translation>
     </message>
     <message>
         <source>Import LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>استيراد ملفات LUT</translation>
     </message>
     <message>
         <source>Search LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>البحث في ملفات LUT</translation>
     </message>
     <message>
         <source>Import .cube LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>استيراد ملفات LUT بصيغة .cube</translation>
     </message>
     <message>
         <source>My LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>ملفات LUT الخاصة بي</translation>
     </message>
     <message>
         <source>Missing LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>ملف LUT مفقود</translation>
     </message>
     <message>
         <source>LUT Intensity</source>
-        <translation type="unfinished"></translation>
+        <translation>كثافة ملف LUT</translation>
     </message>
     <message>
         <source>No LUTs match “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد ملفات LUT تطابق “%1”.</translation>
     </message>
     <message>
         <source>No LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد ملفات LUT</translation>
     </message>
     <message>
         <source>Download a free pack of ready-made color grading LUTs, or import your own .cube files.</source>
-        <translation type="unfinished"></translation>
+        <translation>قم بتنزيل حزمة مجانية من ملفات LUT الجاهزة لتدرج الألوان، أو استورد ملفات .cube الخاصة بك.</translation>
     </message>
     <message>
         <source>Get free LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>الحصول على ملفات LUT مجانية</translation>
     </message>
     <message>
         <source>Select a clip to try LUTs on it</source>
-        <translation type="unfinished"></translation>
+        <translation>حدد مقطعًا لتجربة ملفات LUT عليه</translation>
     </message>
     <message>
         <source>Remove this LUT?</source>
-        <translation type="unfinished"></translation>
+        <translation>إزالة ملف LUT هذا؟</translation>
     </message>
     <message>
         <source>Rename LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة تسمية ملف LUT</translation>
     </message>
     <message numerus="yes">
         <source>“%1” is used by %n clip(s). They will show it as missing until it is imported again.</source>
@@ -12228,7 +12228,7 @@
     </message>
     <message>
         <source>Customize Layouts in Settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>تخصيص التخطيطات في الإعدادات…</translation>
     </message>
     <message>
         <source>Landscape Workspace</source>
@@ -12244,7 +12244,7 @@
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>المتجر</translation>
     </message>
     <message>
         <source>Downloads</source>
@@ -12275,80 +12275,80 @@
     <name>MarketChipsSection</name>
     <message>
         <source>All</source>
-        <translation type="unfinished">الكل</translation>
+        <translation>الكل</translation>
     </message>
 </context>
 <context>
     <name>MarketCustomEffectsSection</name>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>التأثيرات</translation>
     </message>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished"></translation>
+        <translation>الانتقالات</translation>
     </message>
     <message>
         <source>Audio effects</source>
-        <translation type="unfinished"></translation>
+        <translation>تأثيرات الصوت</translation>
     </message>
     <message numerus="yes">
         <source>%n custom effect(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n تأثير مخصص</numerusform>
+            <numerusform>%n تأثير مخصص</numerusform>
+            <numerusform>%n تأثيران مخصصان</numerusform>
+            <numerusform>%n تأثيرات مخصصة</numerusform>
+            <numerusform>%n تأثيرًا مخصصًا</numerusform>
+            <numerusform>%n تأثير مخصص</numerusform>
         </translation>
     </message>
     <message>
         <source>No custom effects</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد تأثيرات مخصصة</translation>
     </message>
     <message>
         <source>Refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>تحديث</translation>
     </message>
     <message>
         <source>No custom effects yet</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد تأثيرات مخصصة بعد</translation>
     </message>
     <message>
         <source>Install a .driftfx or a zip made in Drift Forge, or copy its folder into the custom effects folder and refresh.</source>
-        <translation type="unfinished"></translation>
+        <translation>قم بتثبيت ملف .driftfx أو أرشيف zip تم إنشاؤه في Drift Forge، أو انسخ مجلده إلى مجلد التأثيرات المخصصة وقم بالتحديث.</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">تثبيت من ملف…</translation>
+        <translation>تثبيت من ملف…</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">إزالة</translation>
+        <translation>إزالة</translation>
     </message>
     <message>
         <source>Remove “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>إزالة “%1”؟</translation>
     </message>
     <message>
         <source>Removed “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت إزالة “%1”</translation>
     </message>
     <message>
         <source>Could not remove “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذرت إزالة “%1”</translation>
     </message>
     <message>
         <source>Its folder is deleted. Clips that use it will play without it.</source>
-        <translation type="unfinished"></translation>
+        <translation>تم حذف مجلده. ستعمل المقاطع التي تستخدمه بدونه.</translation>
     </message>
 </context>
 <context>
     <name>MarketDownloadsSection</name>
     <message numerus="yes">
         <source>%n active</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n نشط</numerusform>
             <numerusform>%n نشط</numerusform>
             <numerusform>%n نشطان</numerusform>
@@ -12359,235 +12359,235 @@
     </message>
     <message>
         <source>No downloads running</source>
-        <translation type="unfinished">لا توجد تنزيلات قيد التشغيل</translation>
+        <translation>لا توجد تنزيلات قيد التشغيل</translation>
     </message>
     <message>
         <source>%1 at a time</source>
-        <translation type="unfinished">%1 في المرة الواحدة</translation>
+        <translation>%1 في المرة الواحدة</translation>
     </message>
     <message>
         <source>Clear finished</source>
-        <translation type="unfinished">مسح المكتملة</translation>
+        <translation>مسح المكتملة</translation>
     </message>
     <message>
         <source>Nothing downloaded yet</source>
-        <translation type="unfinished">لم يتم تنزيل أي شيء بعد</translation>
+        <translation>لم يتم تنزيل أي شيء بعد</translation>
     </message>
     <message>
         <source>Downloads from the Marketplace show up here while they run.</source>
-        <translation type="unfinished"></translation>
+        <translation>تظهر التنزيلات من المتجر هنا أثناء تشغيلها.</translation>
     </message>
 </context>
 <context>
     <name>MarketGridSection</name>
     <message>
         <source>Top</source>
-        <translation type="unfinished">الأعلى</translation>
+        <translation>الأعلى</translation>
     </message>
     <message>
         <source>New</source>
-        <translation type="unfinished">جديد</translation>
+        <translation>جديد</translation>
     </message>
     <message>
         <source>Trending</source>
-        <translation type="unfinished"></translation>
+        <translation>شائع</translation>
     </message>
     <message>
         <source>Popular</source>
-        <translation type="unfinished"></translation>
+        <translation>الأكثر شعبية</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation type="unfinished">بحث</translation>
+        <translation>بحث</translation>
     </message>
     <message>
         <source>Couldn’t load this</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر تحميل هذا</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished">إعادة المحاولة</translation>
+        <translation>إعادة المحاولة</translation>
     </message>
     <message>
         <source>No results for “%1”</source>
-        <translation type="unfinished">لا توجد نتائج لـ “%1”</translation>
+        <translation>لا توجد نتائج لـ “%1”</translation>
     </message>
     <message>
         <source>Nothing here yet</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يوجد شيء هنا بعد</translation>
     </message>
 </context>
 <context>
     <name>MarketItemCard</name>
     <message>
         <source>Install</source>
-        <translation type="unfinished">تثبيت</translation>
+        <translation>تثبيت</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished">إضافة</translation>
+        <translation>إضافة</translation>
     </message>
 </context>
 <context>
     <name>MarketItemDetail</name>
     <message>
         <source>This needs a newer version of Drift. Update the app to install it.</source>
-        <translation type="unfinished"></translation>
+        <translation>يتطلب هذا إصدارًا أحدث من Drift. قم بتحديث التطبيق لتثبيته.</translation>
     </message>
     <message>
         <source>The install didn’t finish.</source>
-        <translation type="unfinished"></translation>
+        <translation>لم يكتمل التثبيت.</translation>
     </message>
     <message>
         <source>Effect</source>
-        <translation type="unfinished">تأثير</translation>
+        <translation>تأثير</translation>
     </message>
     <message>
         <source>Transition</source>
-        <translation type="unfinished"></translation>
+        <translation>انتقال</translation>
     </message>
     <message>
         <source>Audio effect</source>
-        <translation type="unfinished"></translation>
+        <translation>تأثير صوتي</translation>
     </message>
     <message>
         <source>Theme</source>
-        <translation type="unfinished">المظهر</translation>
+        <translation>المظهر</translation>
     </message>
     <message>
         <source>LUT</source>
-        <translation type="unfinished"></translation>
+        <translation>LUT</translation>
     </message>
     <message>
         <source>Effect template</source>
-        <translation type="unfinished"></translation>
+        <translation>قالب تأثير</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished"></translation>
+        <translation>التحريك</translation>
     </message>
     <message>
         <source>3D object</source>
-        <translation type="unfinished"></translation>
+        <translation>عنصر ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>Face prop</source>
-        <translation type="unfinished"></translation>
+        <translation>ملحق للوجه</translation>
     </message>
     <message>
         <source>Video</source>
-        <translation type="unfinished"></translation>
+        <translation>فيديو</translation>
     </message>
     <message>
         <source>Photo</source>
-        <translation type="unfinished"></translation>
+        <translation>صورة</translation>
     </message>
     <message>
         <source>Audio</source>
-        <translation type="unfinished"></translation>
+        <translation>صوت</translation>
     </message>
     <message>
         <source>Music</source>
-        <translation type="unfinished"></translation>
+        <translation>موسيقى</translation>
     </message>
     <message>
         <source>Save downloads to</source>
-        <translation type="unfinished">حفظ التنزيلات في</translation>
+        <translation>حفظ التنزيلات في</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">جارٍ التنزيل…</translation>
+        <translation>جارٍ التنزيل…</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">جارٍ التثبيت…</translation>
+        <translation>جارٍ التثبيت…</translation>
     </message>
     <message>
         <source>Download again</source>
-        <translation type="unfinished">إعادة التنزيل</translation>
+        <translation>إعادة التنزيل</translation>
     </message>
     <message>
         <source>Download</source>
-        <translation type="unfinished">تنزيل</translation>
+        <translation>تنزيل</translation>
     </message>
     <message>
         <source>Reinstall</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة التثبيت</translation>
     </message>
     <message>
         <source>Update</source>
-        <translation type="unfinished">تحديث</translation>
+        <translation>تحديث</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">تثبيت</translation>
+        <translation>تثبيت</translation>
     </message>
     <message>
         <source>Add to Face props</source>
-        <translation type="unfinished">إضافة إلى إكسسوارات الوجه</translation>
+        <translation>إضافة إلى إكسسوارات الوجه</translation>
     </message>
     <message>
         <source>Add to media bin</source>
-        <translation type="unfinished">إضافة إلى حاوية الوسائط</translation>
+        <translation>إضافة إلى حاوية الوسائط</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">رجوع</translation>
+        <translation>رجوع</translation>
     </message>
     <message>
         <source>Pause</source>
-        <translation type="unfinished">إيقاف مؤقت</translation>
+        <translation>إيقاف مؤقت</translation>
     </message>
     <message>
         <source>Play preview</source>
-        <translation type="unfinished">تشغيل المعاينة</translation>
+        <translation>تشغيل المعاينة</translation>
     </message>
     <message>
         <source>Licence</source>
-        <translation type="unfinished"></translation>
+        <translation>الترخيص</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished">الحجم</translation>
+        <translation>الحجم</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished">النمط</translation>
+        <translation>النمط</translation>
     </message>
     <message>
         <source>An update is available</source>
-        <translation type="unfinished"></translation>
+        <translation>يتوفر تحديث</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>مثبت</translation>
     </message>
     <message>
         <source>Add to timeline</source>
-        <translation type="unfinished">إضافة إلى المخطط الزمني</translation>
+        <translation>إضافة إلى المخطط الزمني</translation>
     </message>
     <message>
         <source>Open on cutwire.studio</source>
-        <translation type="unfinished"></translation>
+        <translation>فتح على cutwire.studio</translation>
     </message>
     <message>
         <source>Saves to %1</source>
-        <translation type="unfinished">يُحفظ في %1</translation>
+        <translation>يُحفظ في %1</translation>
     </message>
     <message>
         <source>You’ll choose a folder the first time</source>
-        <translation type="unfinished">ستختار مجلدًا في المرة الأولى</translation>
+        <translation>ستختار مجلدًا في المرة الأولى</translation>
     </message>
     <message>
         <source>Change</source>
-        <translation type="unfinished">تغيير</translation>
+        <translation>تغيير</translation>
     </message>
 </context>
 <context>
     <name>MarketItemLoader</name>
     <message>
         <source>That item was not found.</source>
-        <translation type="unfinished"></translation>
+        <translation>لم يتم العثور على هذا العنصر.</translation>
     </message>
 </context>
 <context>
@@ -12605,87 +12605,87 @@
     <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation type="unfinished">البحث في التأثيرات الصوتية</translation>
+        <translation>البحث في التأثيرات الصوتية</translation>
     </message>
     <message>
         <source>Loading sound effects…</source>
-        <translation type="unfinished">جارٍ تحميل المؤثرات الصوتية…</translation>
+        <translation>جارٍ تحميل المؤثرات الصوتية…</translation>
     </message>
     <message>
         <source>Couldn’t load sound effects</source>
-        <translation type="unfinished">تعذر تحميل المؤثرات الصوتية</translation>
+        <translation>تعذر تحميل المؤثرات الصوتية</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished">إعادة المحاولة</translation>
+        <translation>إعادة المحاولة</translation>
     </message>
     <message>
         <source>No sound effects match “%1”.</source>
-        <translation type="unfinished">لا توجد مؤثرات صوتية تطابق ”%1“.</translation>
+        <translation>لا توجد مؤثرات صوتية تطابق ”%1“.</translation>
     </message>
     <message>
         <source>No sound effects here.</source>
-        <translation type="unfinished">لا توجد مؤثرات صوتية هنا.</translation>
+        <translation>لا توجد مؤثرات صوتية هنا.</translation>
     </message>
 </context>
 <context>
     <name>MarketShelfSection</name>
     <message>
         <source>See all</source>
-        <translation type="unfinished">عرض الكل</translation>
+        <translation>عرض الكل</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished">إعادة المحاولة</translation>
+        <translation>إعادة المحاولة</translation>
     </message>
 </context>
 <context>
     <name>MarketStockBrowserSection</name>
     <message>
         <source>%1 didn’t respond.</source>
-        <translation type="unfinished"></translation>
+        <translation>لم يستجب %1.</translation>
     </message>
     <message numerus="yes">
         <source>%n download(s) left today</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>بقي %n تنزيل اليوم</numerusform>
+            <numerusform>بقي %n تنزيل اليوم</numerusform>
+            <numerusform>بقي %n تنزيلان اليوم</numerusform>
+            <numerusform>بقيت %n تنزيلات اليوم</numerusform>
+            <numerusform>بقي %n تنزيلاً اليوم</numerusform>
+            <numerusform>بقي %n تنزيل اليوم</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n download(s) left</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>بقي %n تنزيل</numerusform>
+            <numerusform>بقي %n تنزيل</numerusform>
+            <numerusform>بقي %n تنزيلان</numerusform>
+            <numerusform>بقيت %n تنزيلات</numerusform>
+            <numerusform>بقي %n تنزيلاً</numerusform>
+            <numerusform>بقي %n تنزيل</numerusform>
         </translation>
     </message>
     <message>
         <source>Search, or paste a link</source>
-        <translation type="unfinished">ابحث، أو الصق رابطًا</translation>
+        <translation>ابحث، أو الصق رابطًا</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation type="unfinished">بحث</translation>
+        <translation>بحث</translation>
     </message>
     <message>
         <source>All sources</source>
-        <translation type="unfinished"></translation>
+        <translation>جميع المصادر</translation>
     </message>
     <message>
         <source>%1 (%2 left)</source>
-        <translation type="unfinished">%1 (متبقٍ %2)</translation>
+        <translation>%1 (متبقٍ %2)</translation>
     </message>
     <message numerus="yes">
         <source>Filters — %n applied</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>الفلاتر — %n مطبق</numerusform>
             <numerusform>الفلاتر — %n مطبق</numerusform>
             <numerusform>الفلاتر — %n مطبقان</numerusform>
@@ -12696,144 +12696,144 @@
     </message>
     <message>
         <source>Filters</source>
-        <translation type="unfinished">الفلاتر</translation>
+        <translation>الفلاتر</translation>
     </message>
     <message>
         <source>Get from %1</source>
-        <translation type="unfinished">الحصول من %1</translation>
+        <translation>الحصول من %1</translation>
     </message>
     <message>
         <source>Get from this link</source>
-        <translation type="unfinished">الحصول من هذا الرابط</translation>
+        <translation>الحصول من هذا الرابط</translation>
     </message>
     <message>
         <source>Looking up that link…</source>
-        <translation type="unfinished">جارٍ البحث عن هذا الرابط…</translation>
+        <translation>جارٍ البحث عن هذا الرابط…</translation>
     </message>
     <message>
         <source>Couldn’t open that link</source>
-        <translation type="unfinished">تعذر فتح هذا الرابط</translation>
+        <translation>تعذر فتح هذا الرابط</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished">إعادة المحاولة</translation>
+        <translation>إعادة المحاولة</translation>
     </message>
     <message>
         <source>Search failed</source>
-        <translation type="unfinished">فشل البحث</translation>
+        <translation>فشل البحث</translation>
     </message>
     <message>
         <source>No results for “%1”</source>
-        <translation type="unfinished">لا توجد نتائج لـ “%1”</translation>
+        <translation>لا توجد نتائج لـ “%1”</translation>
     </message>
     <message>
         <source>Search this source</source>
-        <translation type="unfinished">البحث في هذا المصدر</translation>
+        <translation>البحث في هذا المصدر</translation>
     </message>
     <message>
         <source>Try different words, another source, or clear a filter.</source>
-        <translation type="unfinished">جرب كلمات مختلفة، أو مصدرًا آخر، أو امسح أحد الفلاتر.</translation>
+        <translation>جرب كلمات مختلفة، أو مصدرًا آخر، أو امسح أحد الفلاتر.</translation>
     </message>
     <message>
         <source>Type above and press Enter.</source>
-        <translation type="unfinished">اكتب أعلاه واضغط على Enter.</translation>
+        <translation>اكتب أعلاه واضغط على Enter.</translation>
     </message>
 </context>
 <context>
     <name>MarketTimelineAdd</name>
     <message>
         <source>Added to the media bin</source>
-        <translation type="unfinished">تمت الإضافة إلى حاوية الوسائط</translation>
+        <translation>تمت الإضافة إلى حاوية الوسائط</translation>
     </message>
 </context>
 <context>
     <name>MarketplaceView</name>
     <message>
         <source>Custom effects</source>
-        <translation type="unfinished"></translation>
+        <translation>تأثيرات مخصصة</translation>
     </message>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished">التنزيلات</translation>
+        <translation>التنزيلات</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">تثبيت من ملف…</translation>
+        <translation>تثبيت من ملف…</translation>
     </message>
     <message>
         <source>Install a .driftfx or a zip made in Drift Forge, or an addon</source>
-        <translation type="unfinished"></translation>
+        <translation>قم بتثبيت ملف .driftfx أو أرشيف zip تم إنشاؤه في Drift Forge، أو إضافة</translation>
     </message>
     <message>
         <source>Open custom effects folder</source>
-        <translation type="unfinished"></translation>
+        <translation>فتح مجلد التأثيرات المخصصة</translation>
     </message>
     <message>
         <source>Copy an effect&apos;s folder here, then refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>انسخ مجلد التأثير هنا، ثم حدّث</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>التأثيرات</translation>
     </message>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished"></translation>
+        <translation>الانتقالات</translation>
     </message>
     <message>
         <source>Audio effects</source>
-        <translation type="unfinished"></translation>
+        <translation>تأثيرات الصوت</translation>
     </message>
     <message>
         <source>Refresh custom effects</source>
-        <translation type="unfinished"></translation>
+        <translation>تحديث التأثيرات المخصصة</translation>
     </message>
     <message>
         <source>Custom effects refreshed</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تحديث التأثيرات المخصصة</translation>
     </message>
     <message>
         <source>Browse more online</source>
-        <translation type="unfinished"></translation>
+        <translation>استعراض المزيد عبر الإنترنت</translation>
     </message>
     <message>
         <source>You’re offline. Showing what was saved last time.</source>
-        <translation type="unfinished"></translation>
+        <translation>أنت غير متصل بالإنترنت. يتم عرض ما تم حفظه في المرة الأخيرة.</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">إعادة المحاولة</translation>
+        <translation>إعادة المحاولة</translation>
     </message>
     <message>
         <source>Loading the Marketplace…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ تحميل المتجر…</translation>
     </message>
     <message>
         <source>Marketplace unavailable</source>
-        <translation type="unfinished">المتجر غير متوفر</translation>
+        <translation>المتجر غير متوفر</translation>
     </message>
     <message>
         <source>There is nothing to show right now.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يوجد شيء لعرضه الآن.</translation>
     </message>
     <message>
         <source>Open link</source>
-        <translation type="unfinished">فتح الرابط</translation>
+        <translation>فتح الرابط</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">فتح</translation>
+        <translation>فتح</translation>
     </message>
     <message>
         <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
-        <translation type="unfinished"></translation>
+        <translation>يؤدي هذا إلى فتح %1 في متصفحك. وهو ليس على cutwire.studio.</translation>
     </message>
 </context>
 <context>
     <name>MarketplaceWindow</name>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>المتجر</translation>
     </message>
 </context>
 <context>
@@ -12860,26 +12860,26 @@
     </message>
     <message>
         <source>Add points to refine · then press “Cut out through whole clip” in the Masking panel</source>
-        <translation type="unfinished"></translation>
+        <translation>أضف نقاطًا للتحسين · ثم اضغط على “عزل عبر المقطع بأكمله” في لوحة الأقنعة</translation>
     </message>
     <message>
         <source>Install a cutout model in the Masking panel first</source>
-        <translation type="unfinished"></translation>
+        <translation>قم بتثبيت نموذج العزل في لوحة الأقنعة أولاً</translation>
     </message>
     <message>
         <source>People are found automatically · press “Cut out people” in the Masking panel</source>
-        <translation type="unfinished"></translation>
+        <translation>يتم العثور على الأشخاص تلقائيًا · اضغط على “عزل الأشخاص” في لوحة الأقنعة</translation>
     </message>
 </context>
 <context>
     <name>MaskBrushOverlay</name>
     <message>
         <source>%1 %</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 %</translation>
     </message>
     <message>
         <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>ارسم للإضافة · اسحب بالزر الأيمن أو %1 للمسح · [ ] أو Shift+سحب لتغيير الحجم · Ctrl+تمرير للتكبير</translation>
     </message>
     <message>
         <source>Move the playhead over the selected clip</source>
@@ -12910,44 +12910,44 @@
     </message>
     <message>
         <source>Drawing replaces this layer&apos;s mask</source>
-        <translation type="unfinished"></translation>
+        <translation>الرسم يستبدل قناع هذه الطبقة</translation>
     </message>
     <message>
         <source>Drag to draw · Shift for square/circle · Alt from centre</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب للرسم · Shift للمربع/الدائرة · Alt من المركز</translation>
     </message>
 </context>
 <context>
     <name>MaskEditSession</name>
     <message>
         <source>Mask changed</source>
-        <translation type="unfinished">تم تغيير القناع</translation>
+        <translation>تم تغيير القناع</translation>
     </message>
 </context>
 <context>
     <name>MaskOverlay</name>
     <message>
         <source>Unlock aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>إلغاء قفل نسبة الارتفاع إلى العرض</translation>
     </message>
     <message>
         <source>Lock aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>قفل نسبة الارتفاع إلى العرض</translation>
     </message>
     <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب النقاط لتغيير الشكل · اضغط على ○ على الحافة لإضافة نقطة · اضغط مطولاً على نقطة لحذفها</translation>
     </message>
     <message>
         <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب النقاط لتغيير الشكل · انقر فوق ○ على الحافة لإضافة نقطة · انقر بزر الماوس الأيمن على نقطة لحذفها</translation>
     </message>
 </context>
 <context>
     <name>MaskOverlayEmptyHint</name>
     <message>
         <source>Pick a mask tool in the Masking panel and draw on the preview</source>
-        <translation type="unfinished"></translation>
+        <translation>اختر أداة قناع من لوحة الأقنعة وارسم على المعاينة</translation>
     </message>
     <message>
         <source>Drag a mask from the Masks tab onto a clip to edit it here</source>
@@ -12962,22 +12962,22 @@
     <name>MaskOverlayFeatherHandle</name>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">تعديل %1</translation>
+        <translation>تعديل %1</translation>
     </message>
     <message>
         <source>Feather</source>
-        <translation type="unfinished">تنعيم الحواف</translation>
+        <translation>تنعيم الحواف</translation>
     </message>
 </context>
 <context>
     <name>MaskOverlayRoundnessHandle</name>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">تعديل %1</translation>
+        <translation>تعديل %1</translation>
     </message>
     <message>
         <source>Roundness</source>
-        <translation type="unfinished"></translation>
+        <translation>الاستدارة</translation>
     </message>
 </context>
 <context>
@@ -13019,11 +13019,11 @@
     </message>
     <message>
         <source>Remove speed changes first</source>
-        <translation type="unfinished"></translation>
+        <translation>أزل تغييرات السرعة أولاً</translation>
     </message>
     <message>
         <source>Needs a video track below</source>
-        <translation type="unfinished"></translation>
+        <translation>يتطلب مسار فيديو بالأسفل</translation>
     </message>
     <message>
         <source>Convert to mask</source>
@@ -13035,27 +13035,27 @@
     </message>
     <message>
         <source>Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>مقطع</translation>
     </message>
     <message>
         <source>%1 mask</source>
-        <translation type="unfinished"></translation>
+        <translation>قناع %1</translation>
     </message>
     <message>
         <source>Clips used as mask</source>
-        <translation type="unfinished"></translation>
+        <translation>المقاطع المستخدمة كقناع</translation>
     </message>
     <message>
         <source>Cutouts can&apos;t be moved yet</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يمكن تحريك العناصر المعزولة بعد</translation>
     </message>
     <message>
         <source>Blur area</source>
-        <translation type="unfinished"></translation>
+        <translation>تمويه المنطقة</translation>
     </message>
     <message>
         <source>Mask moved to an effect layer</source>
-        <translation type="unfinished"></translation>
+        <translation>تم نقل القناع إلى طبقة تأثير</translation>
     </message>
     <message>
         <source>Draw mask</source>
@@ -13075,23 +13075,23 @@
     </message>
     <message>
         <source>Clear cutout fix</source>
-        <translation type="unfinished"></translation>
+        <translation>مسح تصحيح العزل</translation>
     </message>
     <message>
         <source>Cutout fix cleared</source>
-        <translation type="unfinished"></translation>
+        <translation>تم مسح تصحيح العزل</translation>
     </message>
     <message>
         <source>Could not save the cutout fix. The next stroke will try again</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر حفظ تصحيح العزل. ستحاول الضربة التالية مرة أخرى</translation>
     </message>
     <message>
         <source>Fix cutout frame</source>
-        <translation type="unfinished"></translation>
+        <translation>تصحيح إطار العزل</translation>
     </message>
     <message>
         <source>Cutout frame fixed</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تصحيح إطار العزل</translation>
     </message>
     <message>
         <source>Could not save the brush mask. The next stroke will try again</source>
@@ -13187,7 +13187,7 @@
     </message>
     <message>
         <source>Split</source>
-        <translation type="unfinished">تقسيم</translation>
+        <translation>تقسيم</translation>
     </message>
     <message>
         <source>Matte</source>
@@ -13195,7 +13195,7 @@
     </message>
     <message>
         <source>Sequence matte</source>
-        <translation type="unfinished"></translation>
+        <translation>مات التسلسل</translation>
     </message>
     <message>
         <source>Mask</source>
@@ -13203,27 +13203,27 @@
     </message>
     <message>
         <source>Set clip shape</source>
-        <translation type="unfinished"></translation>
+        <translation>تعيين شكل المقطع</translation>
     </message>
     <message>
         <source>Shape changed</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تغيير الشكل</translation>
     </message>
     <message>
         <source>Reframe clip</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة تأطير المقطع</translation>
     </message>
     <message>
         <source>Reframed</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت إعادة التأطير</translation>
     </message>
     <message>
         <source>Show whole video</source>
-        <translation type="unfinished"></translation>
+        <translation>إظهار الفيديو بالكامل</translation>
     </message>
     <message>
         <source>Showing whole video</source>
-        <translation type="unfinished"></translation>
+        <translation>يتم إظهار الفيديو بالكامل</translation>
     </message>
 </context>
 <context>
@@ -13254,11 +13254,11 @@
     </message>
     <message>
         <source>Tracker</source>
-        <translation type="unfinished"></translation>
+        <translation>المتتبع</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Off</source>
@@ -13306,15 +13306,15 @@
     </message>
     <message>
         <source>Pressure changes size</source>
-        <translation type="unfinished"></translation>
+        <translation>الضغط يغير الحجم</translation>
     </message>
     <message>
         <source>Clear fix on this frame</source>
-        <translation type="unfinished"></translation>
+        <translation>مسح التصحيح في هذا الإطار</translation>
     </message>
     <message>
         <source>Remove the brush fix from the frame at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>إزالة تصحيح الفرشاة من الإطار عند مؤشر التشغيل</translation>
     </message>
     <message>
         <source>Fill</source>
@@ -13326,7 +13326,7 @@
     </message>
     <message>
         <source>Start a new brush mask covering the whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>بدء قناع فرشاة جديد يغطي كامل المقطع</translation>
     </message>
     <message>
         <source>Clear</source>
@@ -13338,15 +13338,15 @@
     </message>
     <message>
         <source>No trackers on this clip yet. Start one with Point or Planar in the Tracking panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد متتبعات على هذا المقطع بعد. ابدأ واحدًا باستخدام نقطي أو مستوٍ في لوحة التتبع.</translation>
     </message>
     <message>
         <source>Add mask</source>
-        <translation type="unfinished">إضافة قناع</translation>
+        <translation>إضافة قناع</translation>
     </message>
     <message>
         <source>Draw a mask from this tracker and make it follow the track</source>
-        <translation type="unfinished"></translation>
+        <translation>رسم قناع من هذا المتتبع وجعله يتبع المسار</translation>
     </message>
     <message>
         <source>Anything (click to pick)</source>
@@ -13416,23 +13416,23 @@
     </message>
     <message>
         <source>Invert</source>
-        <translation type="unfinished">عكس</translation>
+        <translation>عكس</translation>
     </message>
     <message>
         <source>Hide the inside instead of the outside</source>
-        <translation type="unfinished"></translation>
+        <translation>إخفاء الجزء الداخلي بدلاً من الخارجي</translation>
     </message>
     <message>
         <source>Use</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدام</translation>
     </message>
     <message>
         <source>Brightness</source>
-        <translation type="unfinished">السطوع</translation>
+        <translation>السطوع</translation>
     </message>
     <message>
         <source>Transparency</source>
-        <translation type="unfinished"></translation>
+        <translation>الشفافية</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -13468,67 +13468,67 @@
     </message>
     <message>
         <source>Masking &amp; Tracking</source>
-        <translation type="unfinished">الأقنعة والتتبع</translation>
+        <translation>الأقنعة والتتبع</translation>
     </message>
     <message>
         <source>Tint hidden</source>
-        <translation type="unfinished"></translation>
+        <translation>تلوين المخفي</translation>
     </message>
     <message>
         <source>Black &amp; white</source>
-        <translation type="unfinished"></translation>
+        <translation>أبيض وأسود</translation>
     </message>
     <message>
         <source>Trackers need a video clip</source>
-        <translation type="unfinished"></translation>
+        <translation>تتطلب المتتبعات مقطع فيديو</translation>
     </message>
     <message>
         <source>Blur added on an adjustment layer. Adjust the amount in the Effects tab.</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت إضافة التمويه على طبقة ضبط. اضبط المقدار في علامة تبويب التأثيرات.</translation>
     </message>
     <message>
         <source>Fixing this frame of “%1”. Brush fixes don&apos;t follow motion.</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ تصحيح هذا الإطار من ”%1“. لا تتبع تصحيحات الفرشاة الحركة.</translation>
     </message>
     <message>
         <source>Brush masks are a still image. For a moving subject use AI object, or track the mask afterwards.</source>
-        <translation type="unfinished"></translation>
+        <translation>أقنعة الفرشاة عبارة عن صورة ثابتة. لعنصر متحرك استخدم عنصر الذكاء الاصطناعي، أو تتبع القناع بعد ذلك.</translation>
     </message>
     <message>
         <source>This is a preview of this frame only. It becomes a mask when you cut out.</source>
-        <translation type="unfinished"></translation>
+        <translation>هذه معاينة لهذا الإطار فقط. ستتحول إلى قناع عند الاقتطاع.</translation>
     </message>
     <message>
         <source>Cut out through whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>اقتطاع عبر كامل المقطع</translation>
     </message>
     <message>
         <source>◀ Up to here</source>
-        <translation type="unfinished"></translation>
+        <translation>◀ حتى هنا</translation>
     </message>
     <message>
         <source>From here ▶</source>
-        <translation type="unfinished"></translation>
+        <translation>من هنا ▶</translation>
     </message>
     <message>
         <source>Use clip at playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدام المقطع عند مؤشر التشغيل</translation>
     </message>
     <message>
         <source>This layer&apos;s effects apply only inside the mask.</source>
-        <translation type="unfinished"></translation>
+        <translation>تنطبق تأثيرات هذه الطبقة داخل القناع فقط.</translation>
     </message>
     <message>
         <source>Masks keep what is inside and hide the rest. Invert to hide the inside instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>تحتفظ الأقنعة بما بداخلها وتخفي الباقي. اعكس لإخفاء الجزء الداخلي بدلاً من ذلك.</translation>
     </message>
     <message>
         <source>Add a mask to preview it</source>
-        <translation type="unfinished"></translation>
+        <translation>أضف قناعًا لمعاينته</translation>
     </message>
     <message>
         <source>How this mask combines with the ones above</source>
-        <translation type="unfinished"></translation>
+        <translation>كيفية دمج هذا القناع مع الأقنعة أعلاه</translation>
     </message>
     <message>
         <source>Add</source>
@@ -13564,83 +13564,83 @@
     </message>
     <message>
         <source>Position</source>
-        <translation type="unfinished">الموضع</translation>
+        <translation>الموضع</translation>
     </message>
     <message>
         <source>Position + rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع + الدوران</translation>
     </message>
     <message>
         <source>Position, rotation + size</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع، والدوران + الحجم</translation>
     </message>
     <message>
         <source>Perspective</source>
-        <translation type="unfinished">المنظور</translation>
+        <translation>المنظور</translation>
     </message>
     <message>
         <source>Track ◀</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع ◀</translation>
     </message>
     <message>
         <source>Follow the object backward from here</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع العنصر إلى الخلف من هنا</translation>
     </message>
     <message>
         <source>Track ⇄</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع ⇄</translation>
     </message>
     <message>
         <source>Follow the object through the whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع العنصر عبر كامل المقطع</translation>
     </message>
     <message>
         <source>Track ▶</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع ▶</translation>
     </message>
     <message>
         <source>Follow the object forward from here</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع العنصر إلى الأمام من هنا</translation>
     </message>
     <message>
         <source>Stop</source>
-        <translation type="unfinished">إيقاف</translation>
+        <translation>إيقاف</translation>
     </message>
     <message>
         <source>Stop tracking (Esc)</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف التتبع (Esc)</translation>
     </message>
     <message>
         <source>Follow</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع</translation>
     </message>
     <message>
         <source>What the mask copies from the tracked object</source>
-        <translation type="unfinished"></translation>
+        <translation>ما ينسخه القناع من العنصر المتتبَّع</translation>
     </message>
     <message>
         <source>Add more points to this tracker in the Tracking panel for rotation, scale and perspective</source>
-        <translation type="unfinished"></translation>
+        <translation>أضف المزيد من النقاط إلى هذا المتتبع في لوحة التتبع للدوران، والمقياس، والمنظور</translation>
     </message>
     <message>
         <source>Drag the mask on the preview to correct it, then track again.</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب القناع على المعاينة لتصحيحه، ثم تتبّع مجددًا.</translation>
     </message>
     <message>
         <source>Blur this area ▾</source>
-        <translation type="unfinished"></translation>
+        <translation>تمويه هذه المنطقة ▾</translation>
     </message>
     <message>
         <source>Apply a blur or pixelate effect inside this shape</source>
-        <translation type="unfinished"></translation>
+        <translation>تطبيق تأثير تمويه أو بكسلة داخل هذا الشكل</translation>
     </message>
     <message>
         <source>Blur</source>
-        <translation type="unfinished">التمويه</translation>
+        <translation>التمويه</translation>
     </message>
     <message>
         <source>Pixelate</source>
-        <translation type="unfinished"></translation>
+        <translation>بكسلة</translation>
     </message>
     <message>
         <source>Animate shape</source>
@@ -13679,7 +13679,7 @@
     </message>
     <message>
         <source>Edit mask timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>تعديل المخطط الزمني للقناع</translation>
     </message>
 </context>
 <context>
@@ -13714,7 +13714,7 @@
     </message>
     <message>
         <source>Split</source>
-        <translation type="unfinished">تقسيم</translation>
+        <translation>تقسيم</translation>
     </message>
     <message>
         <source>Combine</source>
@@ -13742,7 +13742,7 @@
     </message>
     <message>
         <source>Roundness</source>
-        <translation type="unfinished"></translation>
+        <translation>الاستدارة</translation>
     </message>
     <message>
         <source>Center X</source>
@@ -13770,39 +13770,39 @@
     </message>
     <message>
         <source>Polygon</source>
-        <translation type="unfinished">مضلع</translation>
+        <translation>مضلع</translation>
     </message>
     <message>
         <source>Lock aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>قفل نسبة العرض إلى الارتفاع</translation>
     </message>
     <message>
         <source>Matte channel</source>
-        <translation type="unfinished"></translation>
+        <translation>قناة القناع غير الشفاف</translation>
     </message>
     <message>
         <source>Alpha (transparency)</source>
-        <translation type="unfinished">ألفا (الشفافية)</translation>
+        <translation>ألفا (الشفافية)</translation>
     </message>
     <message>
         <source>Luma (brightness)</source>
-        <translation type="unfinished">إضاءة (السطوع)</translation>
+        <translation>إضاءة (السطوع)</translation>
     </message>
     <message>
         <source>Fit</source>
-        <translation type="unfinished">ملاءمة</translation>
+        <translation>ملاءمة</translation>
     </message>
     <message>
         <source>Stretch</source>
-        <translation type="unfinished">تمديد</translation>
+        <translation>تمديد</translation>
     </message>
     <message>
         <source>Fill</source>
-        <translation type="unfinished">تعبئة</translation>
+        <translation>تعبئة</translation>
     </message>
     <message>
         <source>Edit mask timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>تعديل المخطط الزمني للقناع</translation>
     </message>
     <message>
         <source>Invert</source>
@@ -13872,7 +13872,7 @@
     <name>McpController</name>
     <message>
         <source>Relink media</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة ربط الوسائط</translation>
     </message>
 </context>
 <context>
@@ -13895,7 +13895,7 @@
     </message>
     <message>
         <source>Browse the Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>تصفح المتجر</translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -14366,30 +14366,30 @@
     </message>
     <message>
         <source>The project was closed before the replace landed</source>
-        <translation type="unfinished"></translation>
+        <translation>أُغلق المشروع قبل إتمام الاستبدال</translation>
     </message>
     <message>
         <source>The project was closed before the edit landed</source>
-        <translation type="unfinished"></translation>
+        <translation>أُغلق المشروع قبل إتمام التعديل</translation>
     </message>
     <message>
         <source>Relink media</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة ربط الوسائط</translation>
     </message>
     <message numerus="yes">
         <source>Relinked %n file(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>تمت إعادة ربط %n ملف</numerusform>
+            <numerusform>تمت إعادة ربط %n ملف</numerusform>
+            <numerusform>تمت إعادة ربط %n ملفين</numerusform>
+            <numerusform>تمت إعادة ربط %n ملفات</numerusform>
+            <numerusform>تمت إعادة ربط %n ملفًا</numerusform>
+            <numerusform>تمت إعادة ربط %n ملف</numerusform>
         </translation>
     </message>
     <message>
         <source>Track is locked</source>
-        <translation type="unfinished"></translation>
+        <translation>المسار مقفل</translation>
     </message>
     <message>
         <source>Sub-clip added</source>
@@ -14480,7 +14480,7 @@
     </message>
     <message numerus="yes">
         <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>قد يتم تشغيل %n مقطع ببطء. ملف الوكيل يجعل المعاينة أكثر سلاسة؛ لا يزال التصدير يستخدم الملف الأصلي.</numerusform>
             <numerusform>قد يتم تشغيل %n مقطع ببطء. ملف الوكيل يجعل المعاينة أكثر سلاسة؛ لا يزال التصدير يستخدم الملف الأصلي.</numerusform>
             <numerusform>قد يتم تشغيل %n مقطعان ببطء. ملف الوكيل يجعل المعاينة أكثر سلاسة؛ لا يزال التصدير يستخدم الملف الأصلي.</numerusform>
@@ -14566,11 +14566,11 @@
     </message>
     <message>
         <source>Straighten</source>
-        <translation type="unfinished"></translation>
+        <translation>تعديل الاستقامة</translation>
     </message>
     <message>
         <source>Level (0°)</source>
-        <translation type="unfinished"></translation>
+        <translation>مستوٍ (0°)</translation>
     </message>
     <message>
         <source>Pause</source>
@@ -14602,11 +14602,11 @@
     </message>
     <message>
         <source>Flip H</source>
-        <translation type="unfinished">انعكاس أفقي</translation>
+        <translation>انعكاس أفقي</translation>
     </message>
     <message>
         <source>Flip V</source>
-        <translation type="unfinished">انعكاس رأسي</translation>
+        <translation>انعكاس رأسي</translation>
     </message>
     <message>
         <source>Original: %1×%2 • Crop: %3×%4</source>
@@ -14932,74 +14932,74 @@
     </message>
     <message>
         <source>Position, size, rotation, anchor point and depth occlusion are on the Transform tab.</source>
-        <translation type="unfinished"></translation>
+        <translation>توجد إعدادات الموضع، والحجم، والدوران، ونقطة الارتكاز، وحجب العمق في علامة تبويب التحويل.</translation>
     </message>
     <message>
         <source>Model scale</source>
-        <translation type="unfinished"></translation>
+        <translation>مقياس النموذج</translation>
     </message>
     <message>
         <source>Scale</source>
-        <translation type="unfinished">الحجم</translation>
+        <translation>الحجم</translation>
     </message>
     <message>
         <source>Depth scale</source>
-        <translation type="unfinished"></translation>
+        <translation>مقياس العمق</translation>
     </message>
 </context>
 <context>
     <name>Model3DLighting</name>
     <message>
         <source>Lighting</source>
-        <translation type="unfinished">الإضاءة</translation>
+        <translation>الإضاءة</translation>
     </message>
     <message>
         <source>Drag the lights in the 3D view, or set them here. They move and scale with the clip; turning the model turns it under them.</source>
-        <translation type="unfinished">اسحب الأضواء في العرض ثلاثي الأبعاد، أو اضبطها هنا. إنها تتحرك وتتغير في الحجم مع المقطع؛ وتدوير النموذج يديره أسفلها.</translation>
+        <translation>اسحب الأضواء في العرض ثلاثي الأبعاد، أو اضبطها هنا. إنها تتحرك وتتغير في الحجم مع المقطع؛ وتدوير النموذج يديره أسفلها.</translation>
     </message>
     <message>
         <source>Ambient</source>
-        <translation type="unfinished">الإضاءة المحيطة</translation>
+        <translation>الإضاءة المحيطة</translation>
     </message>
     <message>
         <source>Light %1</source>
-        <translation type="unfinished">الضوء %1</translation>
+        <translation>الضوء %1</translation>
     </message>
     <message>
         <source>Light %1 colour</source>
-        <translation type="unfinished">لون الضوء %1</translation>
+        <translation>لون الضوء %1</translation>
     </message>
     <message>
         <source>Left / right</source>
-        <translation type="unfinished">يسار / يمين</translation>
+        <translation>يسار / يمين</translation>
     </message>
     <message>
         <source>Up / down</source>
-        <translation type="unfinished">أعلى / أسفل</translation>
+        <translation>أعلى / أسفل</translation>
     </message>
     <message>
         <source>Near / far</source>
-        <translation type="unfinished">قريب / بعيد</translation>
+        <translation>قريب / بعيد</translation>
     </message>
     <message>
         <source>Brightness</source>
-        <translation type="unfinished">السطوع</translation>
+        <translation>السطوع</translation>
     </message>
     <message>
         <source>Reach</source>
-        <translation type="unfinished">المدى</translation>
+        <translation>المدى</translation>
     </message>
     <message>
         <source>Spot angle</source>
-        <translation type="unfinished">زاوية البقعة</translation>
+        <translation>زاوية البقعة</translation>
     </message>
     <message>
         <source>Aim left / right</source>
-        <translation type="unfinished">توجيه يسار / يمين</translation>
+        <translation>توجيه يسار / يمين</translation>
     </message>
     <message>
         <source>Aim up / down</source>
-        <translation type="unfinished">توجيه أعلى / أسفل</translation>
+        <translation>توجيه أعلى / أسفل</translation>
     </message>
 </context>
 <context>
@@ -15010,11 +15010,11 @@
     </message>
     <message>
         <source>Model scale</source>
-        <translation type="unfinished"></translation>
+        <translation>مقياس النموذج</translation>
     </message>
     <message>
         <source>Model depth scale</source>
-        <translation type="unfinished"></translation>
+        <translation>مقياس عمق النموذج</translation>
     </message>
     <message>
         <source>left / right</source>
@@ -15241,31 +15241,31 @@
     <name>Outliner3dPanel</name>
     <message>
         <source>3D Outliner</source>
-        <translation type="unfinished"></translation>
+        <translation>المخطط الهيكلي ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>Cameras</source>
-        <translation type="unfinished"></translation>
+        <translation>الكاميرات</translation>
     </message>
     <message>
         <source>Models</source>
-        <translation type="unfinished"></translation>
+        <translation>النماذج</translation>
     </message>
     <message>
         <source>Layers</source>
-        <translation type="unfinished">الطبقات</translation>
+        <translation>الطبقات</translation>
     </message>
     <message>
         <source>No cameras, models or 3D layers at the playhead.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد كاميرات أو نماذج أو طبقات ثلاثية الأبعاد عند مؤشر التشغيل.</translation>
     </message>
     <message>
         <source>Show this clip&apos;s track</source>
-        <translation type="unfinished"></translation>
+        <translation>إظهار مسار هذا المقطع</translation>
     </message>
     <message>
         <source>Hide this clip&apos;s track</source>
-        <translation type="unfinished"></translation>
+        <translation>إخفاء مسار هذا المقطع</translation>
     </message>
 </context>
 <context>
@@ -15521,7 +15521,7 @@
     </message>
     <message>
         <source>PDF page</source>
-        <translation type="unfinished">صفحة PDF</translation>
+        <translation>صفحة PDF</translation>
     </message>
     <message numerus="yes">
         <source>%n page(s)</source>
@@ -15704,7 +15704,7 @@
     </message>
     <message>
         <source>The interface graphics API takes effect after you restart Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation>تسري واجهة برمجة تطبيقات رسومات الواجهة بعد إعادة تشغيل Drift.</translation>
     </message>
     <message>
         <source>System default</source>
@@ -15869,7 +15869,7 @@ If playback stutters, try another.</source>
     <name>PreviewOsdZoomChip</name>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished">تصغير</translation>
+        <translation>تصغير</translation>
     </message>
     <message>
         <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
@@ -15877,7 +15877,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation type="unfinished">تكبير</translation>
+        <translation>تكبير</translation>
     </message>
 </context>
 <context>
@@ -15895,11 +15895,11 @@ If playback stutters, try another.</source>
     <name>PreviewStatusLayer</name>
     <message>
         <source>Stale bake</source>
-        <translation type="unfinished"></translation>
+        <translation>معالجة مسبقة قديمة</translation>
     </message>
     <message>
         <source>Baked</source>
-        <translation type="unfinished"></translation>
+        <translation>تمت معالجته مسبقًا</translation>
     </message>
     <message>
         <source>Nothing to preview yet</source>
@@ -16026,287 +16026,287 @@ If playback stutters, try another.</source>
     <name>ProceduralConsolePanel</name>
     <message>
         <source>Procedural console</source>
-        <translation type="unfinished"></translation>
+        <translation>وحدة التحكم الإجرائية</translation>
     </message>
     <message>
         <source>Console</source>
-        <translation type="unfinished"></translation>
+        <translation>وحدة التحكم</translation>
     </message>
     <message>
         <source>Clear the Apply output</source>
-        <translation type="unfinished"></translation>
+        <translation>مسح مخرجات التطبيق</translation>
     </message>
     <message>
         <source>Apply or Check a package to see its output here</source>
-        <translation type="unfinished"></translation>
+        <translation>قم بتطبيق أو فحص حزمة لرؤية مخرجاتها هنا</translation>
     </message>
     <message>
         <source>Selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>المقطع المحدد</translation>
     </message>
     <message>
         <source>No errors or output</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد أخطاء أو مخرجات</translation>
     </message>
 </context>
 <context>
     <name>ProceduralEditorController</name>
     <message>
         <source>procedural.json is not valid JSON: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>الملف procedural.json ليس بتنسيق JSON صالح: %1</translation>
     </message>
     <message>
         <source>expected an object</source>
-        <translation type="unfinished"></translation>
+        <translation>يُتوقع كائن</translation>
     </message>
     <message>
         <source>%1: ok - %2 meshes, %3 vertices, %4 instances (%5 ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: تمام - %2 شبكة، و%3 رأس، و%4 نموذج (%5 مللي ثانية)</translation>
     </message>
     <message>
         <source>%1 failed: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>فشل %1: %2</translation>
     </message>
     <message>
         <source>shader %1 compiled</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تصريف المظلل %1</translation>
     </message>
     <message>
         <source>Shaders were not compiled: no OpenGL context</source>
-        <translation type="unfinished"></translation>
+        <translation>لم يتم تصريف المظللات: لا يوجد سياق OpenGL</translation>
     </message>
     <message>
         <source>%1 is read-only. Duplicate it to edit.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 للقراءة فقط. كرره لتعديله.</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">تطبيق</translation>
+        <translation>تطبيق</translation>
     </message>
     <message>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation>فحص</translation>
     </message>
     <message>
         <source>%1 copy</source>
-        <translation type="unfinished">نسخة من %1</translation>
+        <translation>نسخة من %1</translation>
     </message>
     <message>
         <source>Duplicate</source>
-        <translation type="unfinished">تكرار</translation>
+        <translation>تكرار</translation>
     </message>
     <message>
         <source>Use 1-48 letters, digits or underscores for the name</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدم من 1 إلى 48 حرفًا أو رقمًا أو شرطة سفلية للاسم</translation>
     </message>
     <message>
         <source>Radius</source>
-        <translation type="unfinished">نصف القطر</translation>
+        <translation>نصف القطر</translation>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished">السرعة</translation>
+        <translation>السرعة</translation>
     </message>
     <message>
         <source>Tint</source>
-        <translation type="unfinished">صبغة اللون</translation>
+        <translation>صبغة اللون</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">إنشاء</translation>
+        <translation>إنشاء</translation>
     </message>
     <message>
         <source>Use letters, digits or underscores for a new shader name, not an existing one</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدم أحرفًا أو أرقامًا أو شرطات سفلية لاسم المظلل الجديد، وليس اسمًا موجودًا بالفعل</translation>
     </message>
 </context>
 <context>
     <name>ProceduralEditorPanel</name>
     <message>
         <source>Procedural code editor</source>
-        <translation type="unfinished"></translation>
+        <translation>محرر الكود الإجرائي</translation>
     </message>
     <message>
         <source>%1 (read-only)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (للقراءة فقط)</translation>
     </message>
     <message>
         <source>Pick a package</source>
-        <translation type="unfinished"></translation>
+        <translation>اختر حزمة</translation>
     </message>
     <message>
         <source>The package to edit. Selecting a procedural clip opens its package.</source>
-        <translation type="unfinished"></translation>
+        <translation>الحزمة المراد تعديلها. يؤدي تحديد مقطع إجرائي إلى فتح حزمته.</translation>
     </message>
     <message>
         <source>New</source>
-        <translation type="unfinished">جديد</translation>
+        <translation>جديد</translation>
     </message>
     <message>
         <source>Apply or revert your edits first</source>
-        <translation type="unfinished"></translation>
+        <translation>طبّق تعديلاتك أو تراجع عنها أولاً</translation>
     </message>
     <message>
         <source>Create a minimal procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>إنشاء حزمة إجرائية مبسطة</translation>
     </message>
     <message>
         <source>New procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>حزمة إجرائية جديدة</translation>
     </message>
     <message>
         <source>Duplicate to edit</source>
-        <translation type="unfinished"></translation>
+        <translation>تكرار للتعديل</translation>
     </message>
     <message>
         <source>Copy this package to your own procedurals and edit the copy</source>
-        <translation type="unfinished"></translation>
+        <translation>انسخ هذه الحزمة إلى حزمك الإجرائية وعدّل النسخة</translation>
     </message>
     <message>
         <source>Duplicate procedural to edit</source>
-        <translation type="unfinished"></translation>
+        <translation>تكرار الإجرائي للتعديل</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">تطبيق</translation>
+        <translation>تطبيق</translation>
     </message>
     <message>
         <source>Validate and install the package, then refresh the preview (Ctrl+S)</source>
-        <translation type="unfinished"></translation>
+        <translation>التحقق من صحة الحزمة وتثبيتها، ثم تحديث المعاينة (Ctrl+S)</translation>
     </message>
     <message>
         <source>Apply procedural code</source>
-        <translation type="unfinished"></translation>
+        <translation>تطبيق الكود الإجرائي</translation>
     </message>
     <message>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation>فحص</translation>
     </message>
     <message>
         <source>Validate the edits without installing them</source>
-        <translation type="unfinished"></translation>
+        <translation>التحقق من صحة التعديلات دون تثبيتها</translation>
     </message>
     <message>
         <source>Revert</source>
-        <translation type="unfinished">تراجع</translation>
+        <translation>تراجع</translation>
     </message>
     <message>
         <source>Discard edits and reload the package from disk</source>
-        <translation type="unfinished"></translation>
+        <translation>تجاهل التعديلات وإعادة تحميل الحزمة من القرص</translation>
     </message>
     <message>
         <source>Add clip</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة مقطع</translation>
     </message>
     <message>
         <source>Add a clip using this package at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة مقطع باستخدام هذه الحزمة عند مؤشر التشغيل</translation>
     </message>
     <message>
         <source>Discard unapplied edits?</source>
-        <translation type="unfinished"></translation>
+        <translation>تجاهل التعديلات غير المطبقة؟</translation>
     </message>
     <message>
         <source>Discard</source>
-        <translation type="unfinished">تجاهل</translation>
+        <translation>تجاهل</translation>
     </message>
     <message>
         <source>Keep editing</source>
-        <translation type="unfinished">متابعة التعديل</translation>
+        <translation>متابعة التعديل</translation>
     </message>
     <message>
         <source>Package name</source>
-        <translation type="unfinished"></translation>
+        <translation>اسم الحزمة</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">إنشاء</translation>
+        <translation>إنشاء</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">إلغاء</translation>
+        <translation>إلغاء</translation>
     </message>
     <message>
         <source>Add a shader pair</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة زوج مظللات</translation>
     </message>
     <message>
         <source>Shader name</source>
-        <translation type="unfinished"></translation>
+        <translation>اسم المظلل</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished">إضافة</translation>
+        <translation>إضافة</translation>
     </message>
     <message>
         <source>%1 is read-only</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 للقراءة فقط</translation>
     </message>
     <message>
         <source>%1 - unapplied edits</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 - تعديلات غير مطبقة</translation>
     </message>
     <message>
         <source>No package open</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد حزمة مفتوحة</translation>
     </message>
     <message>
         <source>Select a procedural clip, pick a package above, or create a new one.</source>
-        <translation type="unfinished"></translation>
+        <translation>حدد مقطعًا إجرائيًا، أو اختر حزمة أعلاه، أو أنشئ حزمة جديدة.</translation>
     </message>
 </context>
 <context>
     <name>ProceduralInspector</name>
     <message>
         <source>Package &quot;%1&quot; is not installed; the clip renders nothing until it returns.</source>
-        <translation type="unfinished"></translation>
+        <translation>الحزمة ”%1“ غير مثبتة؛ لن يعالج المقطع أي شيء حتى تتوفر الحزمة مجددًا.</translation>
     </message>
     <message>
         <source>Package</source>
-        <translation type="unfinished"></translation>
+        <translation>الحزمة</translation>
     </message>
     <message>
         <source>Procedural package</source>
-        <translation type="unfinished"></translation>
+        <translation>حزمة إجرائية</translation>
     </message>
     <message>
         <source>The package that builds this clip&apos;s scene. Changing it resets the parameters.</source>
-        <translation type="unfinished"></translation>
+        <translation>الحزمة التي تبني مشهد هذا المقطع. يؤدي تغييرها إلى إعادة تعيين المعلمات.</translation>
     </message>
     <message>
         <source>Could not change the package</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر تغيير الحزمة</translation>
     </message>
     <message>
         <source>Seed</source>
-        <translation type="unfinished">البذرة</translation>
+        <translation>البذرة</translation>
     </message>
     <message>
         <source>Procedural seed</source>
-        <translation type="unfinished"></translation>
+        <translation>البذرة الإجرائية</translation>
     </message>
     <message>
         <source>Parameters</source>
-        <translation type="unfinished"></translation>
+        <translation>المعلمات</translation>
     </message>
     <message>
         <source>Procedural parameters</source>
-        <translation type="unfinished"></translation>
+        <translation>المعلمات الإجرائية</translation>
     </message>
 </context>
 <context>
     <name>ProceduralParamsPanel</name>
     <message>
         <source>Procedural parameters panel</source>
-        <translation type="unfinished"></translation>
+        <translation>لوحة المعلمات الإجرائية</translation>
     </message>
     <message>
         <source>Select a procedural clip</source>
-        <translation type="unfinished"></translation>
+        <translation>تحديد مقطع إجرائي</translation>
     </message>
     <message>
         <source>Pick a Procedural 3D clip on the timeline to edit its parameters here.</source>
-        <translation type="unfinished"></translation>
+        <translation>اختر مقطعًا إجرائيًا ثلاثي الأبعاد على المخطط الزمني لتعديل معاييره هنا.</translation>
     </message>
 </context>
 <context>
@@ -16392,7 +16392,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>compressed block is too large</source>
-        <translation type="unfinished"></translation>
+        <translation>الكتلة المضغوطة كبيرة جدًا</translation>
     </message>
     <message>
         <source>cannot compress %1</source>
@@ -16827,7 +16827,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Procedural</source>
-        <translation type="unfinished"></translation>
+        <translation>إجرائي</translation>
     </message>
     <message>
         <source>Subtitles</source>
@@ -17264,412 +17264,412 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Compact</source>
-        <translation type="unfinished"></translation>
+        <translation>مضغوط</translation>
     </message>
     <message>
         <source>High</source>
-        <translation type="unfinished">عالية</translation>
+        <translation>عالية</translation>
     </message>
     <message>
         <source>Balanced</source>
-        <translation type="unfinished"></translation>
+        <translation>متوازن</translation>
     </message>
 </context>
 <context>
     <name>QuickSetup</name>
     <message>
         <source>Drift setup</source>
-        <translation type="unfinished"></translation>
+        <translation>إعداد Drift</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">رجوع</translation>
+        <translation>رجوع</translation>
     </message>
     <message>
         <source>Finish</source>
-        <translation type="unfinished"></translation>
+        <translation>إنهاء</translation>
     </message>
     <message>
         <source>Next</source>
-        <translation type="unfinished">التالي</translation>
+        <translation>التالي</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupAddonRow</name>
     <message>
         <source>%1 · %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>مثبت</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">جارٍ التثبيت…</translation>
+        <translation>جارٍ التثبيت…</translation>
     </message>
     <message>
         <source>%1%</source>
-        <translation type="unfinished"></translation>
+        <translation>%1%</translation>
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished">فشل</translation>
+        <translation>فشل</translation>
     </message>
     <message>
         <source>Queued</source>
-        <translation type="unfinished">في قائمة الانتظار</translation>
+        <translation>في قائمة الانتظار</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupAddonsPage</name>
     <message>
         <source>Install the essentials</source>
-        <translation type="unfinished"></translation>
+        <translation>تثبيت الأساسيات</translation>
     </message>
     <message>
         <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
-        <translation type="unfinished"></translation>
+        <translation>تأتي تأثيرات Drift الأساسية، والانتقالات، والتأثيرات الصوتية، والخطوط، وجداول LUT لتدرج الألوان كإضافات. وبدونها سيفقد المحرر معظم ما تتوقعه، لذا يتم تثبيتها الآن.</translation>
     </message>
     <message>
         <source>Needs a newer version of Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation>يتطلب إصدارًا أحدث من Drift.</translation>
     </message>
     <message>
         <source>Not available in the download store.</source>
-        <translation type="unfinished"></translation>
+        <translation>غير متوفر في متجر التنزيل.</translation>
     </message>
     <message>
         <source>The download failed.</source>
-        <translation type="unfinished"></translation>
+        <translation>فشل التنزيل.</translation>
     </message>
     <message>
         <source>%1 of %2 installed</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تثبيت %1 من %2</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach the download store. Until the essentials are installed the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر الوصول إلى متجر التنزيل. حتى يتم تثبيت الأساسيات، سيفقد المحرر التأثيرات والانتقالات والخطوط الأساسية. يمكنك تثبيتها لاحقًا من الإضافات.</translation>
     </message>
     <message>
         <source>Some packs didn&apos;t install. Until they are, the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation type="unfinished"></translation>
+        <translation>لم يتم تثبيت بعض الحزم. وحتى يتم تثبيتها، سيفقد المحرر التأثيرات والانتقالات والخطوط الأساسية. يمكنك تثبيتها لاحقًا من الإضافات.</translation>
     </message>
     <message>
         <source>Optional</source>
-        <translation type="unfinished"></translation>
+        <translation>اختياري</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">إعادة المحاولة</translation>
+        <translation>إعادة المحاولة</translation>
     </message>
     <message>
         <source>Skip for now</source>
-        <translation type="unfinished"></translation>
+        <translation>تخطي الآن</translation>
     </message>
     <message>
         <source>Continue without the essentials?</source>
-        <translation type="unfinished"></translation>
+        <translation>المتابعة بدون الأساسيات؟</translation>
     </message>
     <message>
         <source>Continue</source>
-        <translation type="unfinished">متابعة</translation>
+        <translation>متابعة</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">إلغاء</translation>
+        <translation>إلغاء</translation>
     </message>
     <message>
         <source>You can find more effects, models and stickers later in Extras.</source>
-        <translation type="unfinished"></translation>
+        <translation>يمكنك العثور على مزيد من التأثيرات والنماذج والملصقات لاحقًا في الإضافات.</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupCommunityPage</name>
     <message>
         <source>You&apos;re all set</source>
-        <translation type="unfinished"></translation>
+        <translation>أنت جاهز تمامًا</translation>
     </message>
     <message>
         <source>Need help or have an idea? We&apos;d love to hear from you.</source>
-        <translation type="unfinished"></translation>
+        <translation>هل تحتاج إلى مساعدة أو لديك فكرة؟ يسعدنا التواصل معك.</translation>
     </message>
     <message>
         <source>Finish</source>
-        <translation type="unfinished"></translation>
+        <translation>إنهاء</translation>
     </message>
     <message>
         <source>Join our Discord</source>
-        <translation type="unfinished"></translation>
+        <translation>انضم إلى Discord الخاص بنا</translation>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation>تم النسخ</translation>
     </message>
     <message>
         <source>Copy email address</source>
-        <translation type="unfinished"></translation>
+        <translation>نسخ عنوان البريد الإلكتروني</translation>
     </message>
     <message>
         <source>If Drift crashes, it sends an error report to help fix it. No project files or media are included. You can turn this off in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>إذا تعطل Drift، فإنه يرسل تقرير خطأ للمساعدة في إصلاحه. لا يتم تضمين أي ملفات مشروع أو وسائط. يمكنك إيقاف هذا في الإعدادات.</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupMockEditor</name>
     <message>
         <source>Drift</source>
-        <translation type="unfinished">Drift</translation>
+        <translation>Drift</translation>
     </message>
     <message>
         <source>Export</source>
-        <translation type="unfinished">تصدير</translation>
+        <translation>تصدير</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupScalePage</name>
     <message>
         <source>Interface size</source>
-        <translation type="unfinished">حجم الواجهة</translation>
+        <translation>حجم الواجهة</translation>
     </message>
     <message>
         <source>Make buttons, text and icons larger or smaller.</source>
-        <translation type="unfinished"></translation>
+        <translation>تكبير أو تصغير الأزرار والنصوص والأيقونات.</translation>
     </message>
     <message>
         <source>Windows</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows</translation>
     </message>
     <message>
         <source>Recommended</source>
-        <translation type="unfinished"></translation>
+        <translation>موصى به</translation>
     </message>
     <message>
         <source>Drift will restart when you finish setup to apply this size.</source>
-        <translation type="unfinished"></translation>
+        <translation>سيُعاد تشغيل Drift عند الانتهاء من الإعداد لتطبيق هذا الحجم.</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupStepIndicator</name>
     <message>
         <source>Step %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>الخطوة %1 من %2</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupThemePage</name>
     <message>
         <source>Pick a look</source>
-        <translation type="unfinished"></translation>
+        <translation>اختر مظهرًا</translation>
     </message>
     <message>
         <source>Choose how Drift looks. You can change this any time in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>اختر مظهر Drift. يمكنك تغيير هذا في أي وقت من الإعدادات.</translation>
     </message>
     <message>
         <source>Match system</source>
-        <translation type="unfinished"></translation>
+        <translation>مطابقة النظام</translation>
     </message>
     <message>
         <source>Follows light and dark</source>
-        <translation type="unfinished">يتبع الفاتح والداكن</translation>
+        <translation>يتبع الفاتح والداكن</translation>
     </message>
     <message>
         <source>Dark and light</source>
-        <translation type="unfinished">داكن وفاتح</translation>
+        <translation>داكن وفاتح</translation>
     </message>
     <message>
         <source>Light</source>
-        <translation type="unfinished">إضاءة</translation>
+        <translation>إضاءة</translation>
     </message>
     <message>
         <source>Dark</source>
-        <translation type="unfinished">داكن</translation>
+        <translation>داكن</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupTipArt</name>
     <message>
         <source>Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>تحرير</translation>
     </message>
     <message>
         <source>Color</source>
-        <translation type="unfinished">اللون</translation>
+        <translation>اللون</translation>
     </message>
     <message>
         <source>Keyframes</source>
-        <translation type="unfinished">إطارات مفتاحية</translation>
+        <translation>إطارات مفتاحية</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished">الترجمة</translation>
+        <translation>الترجمة</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>التأثيرات</translation>
     </message>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished"></translation>
+        <translation>الانتقالات</translation>
     </message>
     <message>
         <source>LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>جداول LUT</translation>
     </message>
     <message>
         <source>Fonts</source>
-        <translation type="unfinished">الخطوط</translation>
+        <translation>الخطوط</translation>
     </message>
     <message>
         <source>Stickers</source>
-        <translation type="unfinished"></translation>
+        <translation>الملصقات</translation>
     </message>
     <message>
         <source>AI tools</source>
-        <translation type="unfinished">أدوات الذكاء الاصطناعي</translation>
+        <translation>أدوات الذكاء الاصطناعي</translation>
     </message>
     <message>
         <source>color</source>
-        <translation type="unfinished"></translation>
+        <translation>اللون</translation>
     </message>
     <message>
         <source>Color workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>مساحة عمل الألوان</translation>
     </message>
     <message>
         <source>Color grade effect</source>
-        <translation type="unfinished"></translation>
+        <translation>تأثير تدرج الألوان</translation>
     </message>
     <message>
         <source>Appearance settings</source>
-        <translation type="unfinished"></translation>
+        <translation>إعدادات المظهر</translation>
     </message>
     <message>
         <source>Auto subtitles</source>
-        <translation type="unfinished">ترجمة تلقائية</translation>
+        <translation>ترجمة تلقائية</translation>
     </message>
     <message>
         <source>People cutout</source>
-        <translation type="unfinished"></translation>
+        <translation>قص الأشخاص</translation>
     </message>
     <message>
         <source>Find scenes</source>
-        <translation type="unfinished">البحث عن المشاهد</translation>
+        <translation>البحث عن المشاهد</translation>
     </message>
     <message>
         <source>Hello and welcome back</source>
-        <translation type="unfinished"></translation>
+        <translation>مرحبًا بك مجددًا</translation>
     </message>
     <message>
         <source>Select multiple</source>
-        <translation type="unfinished">تحديد متعدد</translation>
+        <translation>تحديد متعدد</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupTipsPage</name>
     <message>
         <source>Search anything</source>
-        <translation type="unfinished"></translation>
+        <translation>البحث عن أي شيء</translation>
     </message>
     <message>
         <source>Press %1 to search actions, workspaces, add-ons, themes and settings from anywhere, then jump straight to the result.</source>
-        <translation type="unfinished"></translation>
+        <translation>اضغط على %1 للبحث عن الإجراءات ومساحات العمل والإضافات والسمات والإعدادات من أي مكان، ثم الانتقال مباشرةً إلى النتيجة.</translation>
     </message>
     <message>
         <source>Use the search field in the header to find actions, workspaces, add-ons, themes and settings, then jump straight to the result.</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدم حقل البحث في الشريط العلوي للعثور على الإجراءات ومساحات العمل والإضافات والسمات والإعدادات، ثم الانتقال مباشرةً إلى النتيجة.</translation>
     </message>
     <message>
         <source>Switch workspaces</source>
-        <translation type="unfinished"></translation>
+        <translation>تبديل مساحات العمل</translation>
     </message>
     <message>
         <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header, or press %1 to %2 to jump to one.</source>
-        <translation type="unfinished"></translation>
+        <translation>ترتب كل مساحة عمل اللوحات لمهمة معينة، مثل التحرير أو الألوان أو الإطارات المفتاحية أو الترجمة. افتح قائمة مساحة العمل في الشريط العلوي، أو اضغط من %1 إلى %2 للانتقال إلى إحداها.</translation>
     </message>
     <message>
         <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header to switch.</source>
-        <translation type="unfinished"></translation>
+        <translation>ترتب كل مساحة عمل اللوحات لمهمة معينة، مثل التحرير أو الألوان أو الإطارات المفتاحية أو الترجمة. افتح قائمة مساحة العمل في الشريط العلوي للتبديل.</translation>
     </message>
     <message>
         <source>Get more from Extras</source>
-        <translation type="unfinished"></translation>
+        <translation>الحصول على المزيد من الإضافات</translation>
     </message>
     <message>
         <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
-        <translation type="unfinished"></translation>
+        <translation>يتم تثبيت المزيد من التأثيرات والانتقالات وجداول LUT لتدرج الألوان والخطوط والملصقات ونماذج الذكاء الاصطناعي من الإضافات، في الشريط العلوي.</translation>
     </message>
     <message>
         <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
-        <translation type="unfinished"></translation>
+        <translation>يتم تثبيت المزيد من التأثيرات والانتقالات وجداول LUT لتدرج الألوان والخطوط والملصقات ونماذج الذكاء الاصطناعي من الإضافات، في الشريط العلوي.</translation>
     </message>
     <message>
         <source>Use your fingers</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدم أصابعك</translation>
     </message>
     <message>
         <source>Pinch the timeline to zoom it, and pinch the preview to zoom and pan the picture. Long-press a clip and choose Select multiple to pick several clips at once.</source>
-        <translation type="unfinished"></translation>
+        <translation>قم بضم أو مباعدة أصابعك على المخطط الزمني لتكبيره، وعلى المعاينة لتكبير الصورة وتحريكها. اضغط مطولاً على مقطع واختر تحديد متعدد لاختيار عدة مقاطع دفعة واحدة.</translation>
     </message>
     <message>
         <source>Play/Pause</source>
-        <translation type="unfinished">تشغيل/إيقاف مؤقت</translation>
+        <translation>تشغيل/إيقاف مؤقت</translation>
     </message>
     <message>
         <source>Split at current time</source>
-        <translation type="unfinished">تقسيم عند الوقت الحالي</translation>
+        <translation>تقسيم عند الوقت الحالي</translation>
     </message>
     <message>
         <source>Delete selection</source>
-        <translation type="unfinished">حذف التحديد</translation>
+        <translation>حذف التحديد</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished">تراجع</translation>
+        <translation>تراجع</translation>
     </message>
     <message>
         <source>Edit from the keyboard</source>
-        <translation type="unfinished"></translation>
+        <translation>التحرير من لوحة المفاتيح</translation>
     </message>
     <message>
         <source>A few shortcuts cover most of an edit. See and change every shortcut in Settings, under Keyboard shortcuts.</source>
-        <translation type="unfinished"></translation>
+        <translation>تغطي بعض الاختصارات معظم عمليات التحرير. اعرض وغيّر كل اختصار في الإعدادات، ضمن اختصارات لوحة المفاتيح.</translation>
     </message>
     <message>
         <source>AI tools on your device</source>
-        <translation type="unfinished"></translation>
+        <translation>أدوات الذكاء الاصطناعي على جهازك</translation>
     </message>
     <message>
         <source>Auto subtitles, people cutout and scene finding run locally. Install their add-ons from Extras, under AI tools.</source>
-        <translation type="unfinished"></translation>
+        <translation>تعمل الترجمة التلقائية وقص الأشخاص والعثور على المشاهد محليًا. ثبّت إضافاتها من الإضافات، ضمن أدوات الذكاء الاصطناعي.</translation>
     </message>
     <message>
         <source>A few tips before you start</source>
-        <translation type="unfinished"></translation>
+        <translation>بعض النصائح قبل أن تبدأ</translation>
     </message>
     <message>
         <source>Quick pointers to the parts of Drift people tend to miss.</source>
-        <translation type="unfinished"></translation>
+        <translation>إرشادات سريعة لأجزاء في Drift قد يغفل عنها المستخدمون.</translation>
     </message>
     <message>
         <source>Previous tip</source>
-        <translation type="unfinished"></translation>
+        <translation>النصيحة السابقة</translation>
     </message>
     <message>
         <source>Next tip</source>
-        <translation type="unfinished"></translation>
+        <translation>النصيحة التالية</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupWelcomePage</name>
     <message>
         <source>Welcome to Drift</source>
-        <translation type="unfinished"></translation>
+        <translation>مرحبًا بك في Drift</translation>
     </message>
     <message>
         <source>Let&apos;s get you set up. First, pick your language.</source>
-        <translation type="unfinished"></translation>
+        <translation>دعنا نساعدك في الإعداد. أولاً، اختر لغتك.</translation>
     </message>
 </context>
 <context>
@@ -18247,7 +18247,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Histo</source>
-        <translation type="unfinished"></translation>
+        <translation>المدرج التكراري</translation>
     </message>
     <message>
         <source>Waveform</source>
@@ -18255,7 +18255,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Wave</source>
-        <translation type="unfinished"></translation>
+        <translation>الموجة</translation>
     </message>
     <message>
         <source>Parade</source>
@@ -18267,11 +18267,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Vector</source>
-        <translation type="unfinished">رسوم متجهة</translation>
+        <translation>رسوم متجهة</translation>
     </message>
     <message>
         <source>Scopes update from the preview. Play or move the playhead.</source>
-        <translation type="unfinished"></translation>
+        <translation>تتحدث المخططات البيانية من المعاينة. ابدأ التشغيل أو حرّك مؤشر التشغيل.</translation>
     </message>
     <message>
         <source>Scopes</source>
@@ -18282,126 +18282,126 @@ If playback stutters, try another.</source>
     <name>SearchIndex</name>
     <message>
         <source>Not available now</source>
-        <translation type="unfinished">غير متاح الآن</translation>
+        <translation>غير متاح الآن</translation>
     </message>
     <message>
         <source>Export video</source>
-        <translation type="unfinished">تصدير الفيديو</translation>
+        <translation>تصدير الفيديو</translation>
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>المتجر</translation>
     </message>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished">التنزيلات</translation>
+        <translation>التنزيلات</translation>
     </message>
     <message>
         <source>Language…</source>
-        <translation type="unfinished">اللغة…</translation>
+        <translation>اللغة…</translation>
     </message>
     <message>
         <source>Video size and layout</source>
-        <translation type="unfinished">حجم الفيديو وتخطيطه</translation>
+        <translation>حجم الفيديو وتخطيطه</translation>
     </message>
     <message>
         <source>Bakes</source>
-        <translation type="unfinished"></translation>
+        <translation>المعالجات المسبقة</translation>
     </message>
     <message>
         <source>Crop video</source>
-        <translation type="unfinished">اقتصاص الفيديو</translation>
+        <translation>اقتصاص الفيديو</translation>
     </message>
     <message>
         <source>Switch to mobile layout…</source>
-        <translation type="unfinished">التبديل إلى تخطيط الهاتف المحمول…</translation>
+        <translation>التبديل إلى تخطيط الهاتف المحمول…</translation>
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished">الإعدادات</translation>
+        <translation>الإعدادات</translation>
     </message>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">الإضافات</translation>
+        <translation>الإضافات</translation>
     </message>
     <message>
         <source>Add-on manager</source>
-        <translation type="unfinished">مدير الإضافات</translation>
+        <translation>مدير الإضافات</translation>
     </message>
     <message>
         <source>Debug info…</source>
-        <translation type="unfinished">معلومات تصحيح الأخطاء…</translation>
+        <translation>معلومات تصحيح الأخطاء…</translation>
     </message>
     <message>
         <source>Light theme</source>
-        <translation type="unfinished">السمة الفاتحة</translation>
+        <translation>السمة الفاتحة</translation>
     </message>
     <message>
         <source>Dark theme</source>
-        <translation type="unfinished">السمة الداكنة</translation>
+        <translation>السمة الداكنة</translation>
     </message>
     <message>
         <source>System theme</source>
-        <translation type="unfinished">سمة النظام</translation>
+        <translation>سمة النظام</translation>
     </message>
     <message>
         <source>Theme: %1</source>
-        <translation type="unfinished">السمة: %1</translation>
+        <translation>السمة: %1</translation>
     </message>
     <message>
         <source>Workspace: %1</source>
-        <translation type="unfinished">مساحة العمل: %1</translation>
+        <translation>مساحة العمل: %1</translation>
     </message>
     <message>
         <source>Current</source>
-        <translation type="unfinished"></translation>
+        <translation>الحالي</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
-        <translation type="unfinished">تطبيق على المقطع المحدد</translation>
+        <translation>تطبيق على المقطع المحدد</translation>
     </message>
     <message>
         <source>Select a clip first</source>
-        <translation type="unfinished">حدد مقطعًا أولاً</translation>
+        <translation>حدد مقطعًا أولاً</translation>
     </message>
     <message>
         <source>Add at playhead</source>
-        <translation type="unfinished">إضافة عند مؤشر التشغيل</translation>
+        <translation>إضافة عند مؤشر التشغيل</translation>
     </message>
     <message>
         <source>Add as adjustment clip</source>
-        <translation type="unfinished">إضافة كمقطع ضبط</translation>
+        <translation>إضافة كمقطع ضبط</translation>
     </message>
     <message>
         <source>Add after selected clip</source>
-        <translation type="unfinished">إضافة بعد المقطع المحدد</translation>
+        <translation>إضافة بعد المقطع المحدد</translation>
     </message>
     <message>
         <source>Not available on this track</source>
-        <translation type="unfinished">غير متاح على هذا المسار</translation>
+        <translation>غير متاح على هذا المسار</translation>
     </message>
     <message>
         <source>Select the clip before a cut</source>
-        <translation type="unfinished">حدد المقطع قبل نقطة القطع</translation>
+        <translation>حدد المقطع قبل نقطة القطع</translation>
     </message>
     <message>
         <source>Select a video, image, text or shape clip</source>
-        <translation type="unfinished">حدد مقطع فيديو أو صورة أو نصًا أو شكلاً</translation>
+        <translation>حدد مقطع فيديو أو صورة أو نصًا أو شكلاً</translation>
     </message>
 </context>
 <context>
     <name>SectionedAssetGrid</name>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <translation>خاصتي</translation>
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">المفضلة</translation>
+        <translation>المفضلة</translation>
     </message>
     <message>
         <source>Recent</source>
-        <translation type="unfinished"></translation>
+        <translation>الأخيرة</translation>
     </message>
 </context>
 <context>
@@ -18551,7 +18551,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Object mask refined. Frame fixes were kept</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تحسين قناع العنصر. تم الاحتفاظ بتصحيحات الإطارات</translation>
     </message>
     <message>
         <source>That clip no longer exists</source>
@@ -18648,15 +18648,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Save diagnostics</source>
-        <translation type="unfinished"></translation>
+        <translation>حفظ بيانات التشخيص</translation>
     </message>
     <message>
         <source>Saves an archive with your logs and system information to attach to a bug report.</source>
-        <translation type="unfinished"></translation>
+        <translation>يحفظ أرشيفًا يحتوي على سجلاتك ومعلومات النظام لإرفاقه بتقرير الأخطاء.</translation>
     </message>
     <message>
         <source>Save diagnostics…</source>
-        <translation type="unfinished"></translation>
+        <translation>حفظ بيانات التشخيص…</translation>
     </message>
     <message>
         <source>Help</source>
@@ -18664,15 +18664,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Quick Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>الإعداد السريع</translation>
     </message>
     <message>
         <source>Walk through language, theme, interface size and add-ons again.</source>
-        <translation type="unfinished"></translation>
+        <translation>مراجعة خيارات اللغة والسمة وحجم الواجهة والإضافات مجددًا.</translation>
     </message>
     <message>
         <source>Run again</source>
-        <translation type="unfinished"></translation>
+        <translation>التشغيل مجددًا</translation>
     </message>
     <message>
         <source>About Drift</source>
@@ -18707,27 +18707,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>On this device</source>
-        <translation type="unfinished"></translation>
+        <translation>على هذا الجهاز</translation>
     </message>
     <message>
         <source>How AI runs</source>
-        <translation type="unfinished">كيفية تشغيل الذكاء الاصطناعي</translation>
+        <translation>كيفية تشغيل الذكاء الاصطناعي</translation>
     </message>
     <message>
         <source>Install an AI Engine from Extras to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished"></translation>
+        <translation>ثبّت محرك ذكاء اصطناعي من الإضافات للاستفادة من الترجمة التلقائية، وقص العناصر، وتأثيرات الوجوه المضحكة، وإزالة الضوضاء.</translation>
     </message>
     <message>
         <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">أعد تشغيل Drift لتطبيق ذلك.</translation>
+        <translation>أعد تشغيل Drift لتطبيق ذلك.</translation>
     </message>
     <message>
         <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">يختار الوضع التلقائي أسرع خيار قمت بتثبيته، ويستخدم هذا الكمبيوتر إذا لم تتمكن بطاقة الرسومات من المساعدة.</translation>
+        <translation>يختار الوضع التلقائي أسرع خيار قمت بتثبيته، ويستخدم هذا الكمبيوتر إذا لم تتمكن بطاقة الرسومات من المساعدة.</translation>
     </message>
     <message>
         <source>Agents</source>
-        <translation type="unfinished"></translation>
+        <translation>الوكلاء</translation>
     </message>
     <message>
         <source>Agent access</source>
@@ -18747,35 +18747,35 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Notifications for agent actions</source>
-        <translation type="unfinished"></translation>
+        <translation>إشعارات لإجراءات الوكيل</translation>
     </message>
     <message>
         <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
-        <translation type="unfinished"></translation>
+        <translation>النوافذ المنبثقة التي تظهر لك لتعديلات الوكيل. تظهر الأخطاء دائمًا.</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished">الكل</translation>
+        <translation>الكل</translation>
     </message>
     <message>
         <source>Problems only</source>
-        <translation type="unfinished"></translation>
+        <translation>المشاكل فقط</translation>
     </message>
     <message>
         <source>None (errors still show)</source>
-        <translation type="unfinished"></translation>
+        <translation>بلا (ستستمر الأخطاء في الظهور)</translation>
     </message>
     <message>
         <source>Cloud</source>
-        <translation type="unfinished">سحابة</translation>
+        <translation>سحابة</translation>
     </message>
     <message>
         <source>Use cloud services</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدام الخدمات السحابية</translation>
     </message>
     <message>
         <source>Connect your own ElevenLabs or Fish Audio account for transcription, voiceover and sound effects.</source>
-        <translation type="unfinished"></translation>
+        <translation>اربط حسابك الخاص على ElevenLabs أو Fish Audio للتفريغ الصوتي، والتعليق الصوتي، والمؤثرات الصوتية.</translation>
     </message>
     <message>
         <source>Cloud providers</source>
@@ -18941,15 +18941,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Follows your Windows display scale.</source>
-        <translation type="unfinished"></translation>
+        <translation>يتبع مقياس عرض Windows الخاص بك.</translation>
     </message>
     <message>
         <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
-        <translation type="unfinished"></translation>
+        <translation>يناسب 100% شاشة 1080p، بغض النظر عن مقياس عرض Windows لديك.</translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger or smaller, on top of your display settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>تكبير أو تصغير الأزرار والنصوص والأيقونات، بالإضافة إلى إعدادات الشاشة لديك.</translation>
     </message>
     <message>
         <source>100% (system)</source>
@@ -18957,7 +18957,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Windows display scale</source>
-        <translation type="unfinished"></translation>
+        <translation>مقياس عرض Windows</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -19212,47 +19212,47 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Undo history</source>
-        <translation type="unfinished"></translation>
+        <translation>سجل التراجع</translation>
     </message>
     <message>
         <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
-        <translation type="unfinished"></translation>
+        <translation>مكان الاحتفاظ بخطوات التراجع. عند حفظها مع المشروع، ستستعاد عند إعادة فتحه؛ وفي كلتا الحالتين تستهلك الجلسات الطويلة قدرًا كبيرًا من الذاكرة.</translation>
     </message>
     <message>
         <source>Saved with the project</source>
-        <translation type="unfinished"></translation>
+        <translation>محفوظة مع المشروع</translation>
     </message>
     <message>
         <source>This session only</source>
-        <translation type="unfinished"></translation>
+        <translation>لهذه الجلسة فقط</translation>
     </message>
     <message>
         <source>Undo steps kept</source>
-        <translation type="unfinished"></translation>
+        <translation>خطوات التراجع المحتفظ بها</translation>
     </message>
     <message>
         <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
-        <translation type="unfinished"></translation>
+        <translation>يتم إسقاط الخطوات الأقدم، ولم تعد الوسائط التي استخدمتها هي وحدها محفوظة لها.</translation>
     </message>
     <message>
         <source>Unlimited</source>
-        <translation type="unfinished">غير محدود</translation>
+        <translation>غير محدود</translation>
     </message>
     <message>
         <source>500 steps</source>
-        <translation type="unfinished"></translation>
+        <translation>500 خطوة</translation>
     </message>
     <message>
         <source>200 steps</source>
-        <translation type="unfinished"></translation>
+        <translation>200 خطوة</translation>
     </message>
     <message>
         <source>100 steps</source>
-        <translation type="unfinished"></translation>
+        <translation>100 خطوة</translation>
     </message>
     <message>
         <source>50 steps</source>
-        <translation type="unfinished"></translation>
+        <translation>50 خطوة</translation>
     </message>
     <message>
         <source>Extras</source>
@@ -19288,15 +19288,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Privacy</source>
-        <translation type="unfinished"></translation>
+        <translation>الخصوصية</translation>
     </message>
     <message>
         <source>Send crash reports automatically</source>
-        <translation type="unfinished"></translation>
+        <translation>إرسال تقارير الأعطال تلقائيًا</translation>
     </message>
     <message>
         <source>After a crash, send the error details, a short scrubbed log and your system and graphics information to help fix it. No project files or media.</source>
-        <translation type="unfinished"></translation>
+        <translation>بعد حدوث عطل، يتم إرسال تفاصيل الخطأ، وسجل موجز منقح، ومعلومات النظام والرسومات للمساعدة في الإصلاح. لا يتضمن ذلك أي ملفات مشروع أو وسائط.</translation>
     </message>
     <message>
         <source>Storage</source>
@@ -19308,7 +19308,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 used</source>
-        <translation type="unfinished"></translation>
+        <translation>تم استخدام %1</translation>
     </message>
     <message>
         <source>Clear cache</source>
@@ -19316,19 +19316,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Cache location</source>
-        <translation type="unfinished"></translation>
+        <translation>موقع ذاكرة التخزين المؤقت</translation>
     </message>
     <message>
         <source>%1. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1. يسري المفعول بعد إعادة التشغيل.</translation>
     </message>
     <message>
         <source>Reset</source>
-        <translation type="unfinished">إعادة تعيين</translation>
+        <translation>إعادة تعيين</translation>
     </message>
     <message>
         <source>Change…</source>
-        <translation type="unfinished"></translation>
+        <translation>تغيير…</translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -19528,31 +19528,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Interface</source>
-        <translation type="unfinished">الواجهة</translation>
+        <translation>الواجهة</translation>
     </message>
     <message>
         <source>Interface graphics API</source>
-        <translation type="unfinished"></translation>
+        <translation>واجهة برمجة تطبيقات رسومات الواجهة</translation>
     </message>
     <message>
         <source>What draws panels, the timeline and menus. OpenGL hands the preview over without a copy. The others can make the interface smoother but copy every preview frame through the CPU, so playback may get slower. If Drift does not start with your choice, it goes back to OpenGL. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation>المسؤول عن رسم اللوحات والمخطط الزمني والقوائم. يسلم OpenGL المعاينة دون نسخ. يمكن للخيارات الأخرى جعل الواجهة أكثر سلاسة لكنها تنسخ كل إطار معاينة عبر وحدة المعالجة المركزية، مما قد يؤدي إلى إبطاء التشغيل. إذا لم يبدأ Drift باختيارك، فسيعود إلى OpenGL. يسري المفعول بعد إعادة التشغيل.</translation>
     </message>
     <message>
         <source>The last choice did not start, so OpenGL is in use.</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر بدء التشغيل بالخيار الأخير، لذا يتم استخدام OpenGL.</translation>
     </message>
     <message>
         <source>OpenGL (recommended)</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenGL (موصى به)</translation>
     </message>
     <message>
         <source>Direct3D 11 (Windows default)</source>
-        <translation type="unfinished"></translation>
+        <translation>Direct3D 11 (الافتراضي لنظام Windows)</translation>
     </message>
     <message>
         <source>Metal (macOS default)</source>
-        <translation type="unfinished"></translation>
+        <translation>Metal (الافتراضي لنظام macOS)</translation>
     </message>
     <message>
         <source>Playback</source>
@@ -19831,23 +19831,23 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Suggest proxies on import</source>
-        <translation type="unfinished"></translation>
+        <translation>اقتراح ملفات بروكسي عند الاستيراد</translation>
     </message>
     <message>
         <source>What to do when imported footage may preview slowly.</source>
-        <translation type="unfinished"></translation>
+        <translation>ما يجب فعله عند احتمال بطء معاينة اللقطات المستوردة.</translation>
     </message>
     <message>
         <source>Ask</source>
-        <translation type="unfinished"></translation>
+        <translation>السؤال دائمًا</translation>
     </message>
     <message>
         <source>Always create proxies</source>
-        <translation type="unfinished"></translation>
+        <translation>إنشاء ملفات بروكسي دائمًا</translation>
     </message>
     <message>
         <source>Never ask</source>
-        <translation type="unfinished"></translation>
+        <translation>عدم السؤال أبدًا</translation>
     </message>
     <message>
         <source>Proxy resolution</source>
@@ -20077,11 +20077,11 @@ If playback stutters, try another.</source>
     <name>SfxLibrary</name>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished">جارٍ البدء…</translation>
+        <translation>جارٍ البدء…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">جارٍ التنزيل…</translation>
+        <translation>جارٍ التنزيل…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
@@ -20089,15 +20089,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Importing…</source>
-        <translation type="unfinished">جارٍ الاستيراد…</translation>
+        <translation>جارٍ الاستيراد…</translation>
     </message>
     <message>
         <source>In the media bin</source>
-        <translation type="unfinished">في حاوية الوسائط</translation>
+        <translation>في حاوية الوسائط</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished">تم الإلغاء</translation>
+        <translation>تم الإلغاء</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -20226,15 +20226,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Miter</source>
-        <translation type="unfinished"></translation>
+        <translation>زاوية حادة (Miter)</translation>
     </message>
     <message>
         <source>Round</source>
-        <translation type="unfinished"></translation>
+        <translation>مستدير</translation>
     </message>
     <message>
         <source>Bevel</source>
-        <translation type="unfinished"></translation>
+        <translation>مشطوب</translation>
     </message>
     <message>
         <source>Opacity</source>
@@ -20266,15 +20266,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Join</source>
-        <translation type="unfinished"></translation>
+        <translation>الوصلة</translation>
     </message>
     <message>
         <source>How the stroke turns a corner: sharp, rounded or cut off</source>
-        <translation type="unfinished"></translation>
+        <translation>كيفية التفاف الخط الخارجي عند الزاوية: حاد، أو مستدير، أو مقطوع</translation>
     </message>
     <message>
         <source>Miter limit</source>
-        <translation type="unfinished"></translation>
+        <translation>حد الزاوية الحادة</translation>
     </message>
     <message>
         <source>Trim start</source>
@@ -20349,111 +20349,111 @@ If playback stutters, try another.</source>
     <name>ShapeCropSection</name>
     <message>
         <source>Original</source>
-        <translation type="unfinished">الأصلي</translation>
+        <translation>الأصلي</translation>
     </message>
     <message>
         <source>Circle</source>
-        <translation type="unfinished">دائرة</translation>
+        <translation>دائرة</translation>
     </message>
     <message>
         <source>Ellipse</source>
-        <translation type="unfinished">شكل بيضاوي</translation>
+        <translation>شكل بيضاوي</translation>
     </message>
     <message>
         <source>Triangle</source>
-        <translation type="unfinished">مثلث</translation>
+        <translation>مثلث</translation>
     </message>
     <message>
         <source>Square</source>
-        <translation type="unfinished">مربع</translation>
+        <translation>مربع</translation>
     </message>
     <message>
         <source>Diamond</source>
-        <translation type="unfinished">معيّن</translation>
+        <translation>معيّن</translation>
     </message>
     <message>
         <source>Pentagon</source>
-        <translation type="unfinished">شكل خماسي</translation>
+        <translation>شكل خماسي</translation>
     </message>
     <message>
         <source>Hexagon</source>
-        <translation type="unfinished">شكل سداسي</translation>
+        <translation>شكل سداسي</translation>
     </message>
     <message>
         <source>Octagon</source>
-        <translation type="unfinished">شكل ثماني</translation>
+        <translation>شكل ثماني</translation>
     </message>
     <message>
         <source>Star</source>
-        <translation type="unfinished">نجمة</translation>
+        <translation>نجمة</translation>
     </message>
     <message>
         <source>Heart</source>
-        <translation type="unfinished">قلب</translation>
+        <translation>قلب</translation>
     </message>
     <message>
         <source>Shape</source>
-        <translation type="unfinished"></translation>
+        <translation>الشكل</translation>
     </message>
     <message>
         <source>Content inside shape</source>
-        <translation type="unfinished"></translation>
+        <translation>المحتوى داخل الشكل</translation>
     </message>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished">تصغير</translation>
+        <translation>تصغير</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished">تكبير</translation>
+        <translation>تكبير</translation>
     </message>
     <message>
         <source>Reframe clip</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة تأطير المقطع</translation>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation type="unfinished">تكبير</translation>
+        <translation>تكبير</translation>
     </message>
     <message>
         <source>Horizontal</source>
-        <translation type="unfinished">أفقي</translation>
+        <translation>أفقي</translation>
     </message>
     <message>
         <source>Horizontal position</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع الأفقي</translation>
     </message>
     <message>
         <source>Vertical</source>
-        <translation type="unfinished">عمودي</translation>
+        <translation>عمودي</translation>
     </message>
     <message>
         <source>Vertical position</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع الرأسي</translation>
     </message>
     <message>
         <source>Nudge content left</source>
-        <translation type="unfinished"></translation>
+        <translation>إزاحة المحتوى إلى اليسار</translation>
     </message>
     <message>
         <source>Nudge content up</source>
-        <translation type="unfinished"></translation>
+        <translation>إزاحة المحتوى إلى الأعلى</translation>
     </message>
     <message>
         <source>Nudge content down</source>
-        <translation type="unfinished"></translation>
+        <translation>إزاحة المحتوى إلى الأسفل</translation>
     </message>
     <message>
         <source>Nudge content right</source>
-        <translation type="unfinished"></translation>
+        <translation>إزاحة المحتوى إلى اليمين</translation>
     </message>
     <message>
         <source>Center</source>
-        <translation type="unfinished"></translation>
+        <translation>توسيط</translation>
     </message>
     <message>
         <source>Show whole video</source>
-        <translation type="unfinished"></translation>
+        <translation>إظهار الفيديو بالكامل</translation>
     </message>
 </context>
 <context>
@@ -20480,7 +20480,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shape style</source>
-        <translation type="unfinished">نمط الشكل</translation>
+        <translation>نمط الشكل</translation>
     </message>
     <message>
         <source>Layers</source>
@@ -20740,7 +20740,7 @@ If playback stutters, try another.</source>
     <name>ShellBridge</name>
     <message>
         <source>Adjustment layer</source>
-        <translation type="unfinished">طبقة ضبط</translation>
+        <translation>طبقة ضبط</translation>
     </message>
 </context>
 <context>
@@ -21203,7 +21203,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Crop / reframe source</source>
-        <translation type="unfinished">اقتصاص / إعادة تأطير المصدر</translation>
+        <translation>اقتصاص / إعادة تأطير المصدر</translation>
     </message>
     <message>
         <source>Free</source>
@@ -21282,7 +21282,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Upscale source clip</source>
-        <translation type="unfinished">ترقية دقة المقطع المصدري</translation>
+        <translation>ترقية دقة المقطع المصدري</translation>
     </message>
     <message>
         <source>Output size: %1 x %2</source>
@@ -21384,7 +21384,7 @@ If playback stutters, try another.</source>
     <name>SourceLabOutputPanel</name>
     <message>
         <source>Export trimmed clip</source>
-        <translation type="unfinished">تصدير المقطع المقلم</translation>
+        <translation>تصدير المقطع المقلم</translation>
     </message>
     <message>
         <source>Output</source>
@@ -21489,7 +21489,7 @@ If playback stutters, try another.</source>
     <name>SourceLabProcessPanel</name>
     <message>
         <source>Denoise and stabilize source</source>
-        <translation type="unfinished">إزالة الضوضاء وتثبيت اهتزاز المصدر</translation>
+        <translation>إزالة الضوضاء وتثبيت اهتزاز المصدر</translation>
     </message>
     <message>
         <source>Process</source>
@@ -21659,7 +21659,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Speed and loudness</source>
-        <translation type="unfinished">السرعة وارتفاع الصوت</translation>
+        <translation>السرعة وارتفاع الصوت</translation>
     </message>
     <message>
         <source>Keep pitch</source>
@@ -21720,7 +21720,7 @@ If playback stutters, try another.</source>
     <name>SourceLabTrimPanel</name>
     <message>
         <source>Trim source clip</source>
-        <translation type="unfinished">تقليم المقطع المصدري</translation>
+        <translation>تقليم المقطع المصدري</translation>
     </message>
     <message>
         <source>Source Lab Trim</source>
@@ -21775,7 +21775,7 @@ If playback stutters, try another.</source>
     <name>SourceLabViewerPanel</name>
     <message>
         <source>Source Lab</source>
-        <translation type="unfinished">مختبر المصدر</translation>
+        <translation>مختبر المصدر</translation>
     </message>
     <message>
         <source>Source Lab Viewer</source>
@@ -22374,7 +22374,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stabilize</source>
-        <translation type="unfinished">تثبيت الاهتزاز</translation>
+        <translation>تثبيت الاهتزاز</translation>
     </message>
     <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
@@ -22494,39 +22494,39 @@ If playback stutters, try another.</source>
     <name>StartupSplash</name>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished">جارٍ البدء…</translation>
+        <translation>جارٍ البدء…</translation>
     </message>
     <message>
         <source>Checking the graphics driver…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ فحص برنامج تشغيل الرسومات…</translation>
     </message>
     <message>
         <source>Loading fonts…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ تحميل الخطوط…</translation>
     </message>
     <message>
         <source>Starting the playback and audio engines…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ بدء محركات التشغيل والصوت…</translation>
     </message>
     <message>
         <source>Loading add-ons and themes…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ تحميل الإضافات والسمات…</translation>
     </message>
     <message>
         <source>Building the interface…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ بناء الواجهة…</translation>
     </message>
     <message>
         <source>Opening setup…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ فتح الإعداد…</translation>
     </message>
     <message>
         <source>Opening the editor…</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ فتح المحرر…</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation type="unfinished">الإصدار %1</translation>
+        <translation>الإصدار %1</translation>
     </message>
 </context>
 <context>
@@ -22594,35 +22594,35 @@ If playback stutters, try another.</source>
     <name>StockInstaller</name>
     <message>
         <source>Waiting…</source>
-        <translation type="unfinished">جارٍ الانتظار…</translation>
+        <translation>جارٍ الانتظار…</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished">جارٍ البدء…</translation>
+        <translation>جارٍ البدء…</translation>
     </message>
     <message>
         <source>Preparing…</source>
-        <translation type="unfinished">جارٍ الإعداد…</translation>
+        <translation>جارٍ الإعداد…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">جارٍ التنزيل…</translation>
+        <translation>جارٍ التنزيل…</translation>
     </message>
     <message>
         <source>Importing…</source>
-        <translation type="unfinished">جارٍ الاستيراد…</translation>
+        <translation>جارٍ الاستيراد…</translation>
     </message>
     <message>
         <source>Could not import that file.</source>
-        <translation type="unfinished">تعذر استيراد ذلك الملف.</translation>
+        <translation>تعذر استيراد ذلك الملف.</translation>
     </message>
     <message>
         <source>In the media bin</source>
-        <translation type="unfinished">في حاوية الوسائط</translation>
+        <translation>في حاوية الوسائط</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished">تم الإلغاء</translation>
+        <translation>تم الإلغاء</translation>
     </message>
 </context>
 <context>
@@ -22919,7 +22919,7 @@ If playback stutters, try another.</source>
     <name>SubtitleLanePanel</name>
     <message>
         <source>Subtitle lane</source>
-        <translation type="unfinished">مسار الترجمة</translation>
+        <translation>مسار الترجمة</translation>
     </message>
     <message>
         <source>Select a subtitle clip</source>
@@ -23002,7 +23002,7 @@ If playback stutters, try another.</source>
     <name>SubtitleTextPanel</name>
     <message>
         <source>Subtitle text editor</source>
-        <translation type="unfinished">محرر نصوص الترجمة</translation>
+        <translation>محرر نصوص الترجمة</translation>
     </message>
     <message>
         <source>Import Subtitles</source>
@@ -23147,7 +23147,7 @@ If playback stutters, try another.</source>
     <name>SubtitleTimingPanel</name>
     <message>
         <source>Subtitle timing</source>
-        <translation type="unfinished">توقيت الترجمة</translation>
+        <translation>توقيت الترجمة</translation>
     </message>
     <message>
         <source>Pick two existing cues</source>
@@ -23198,7 +23198,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shift times</source>
-        <translation type="unfinished">إزاحة الأوقات</translation>
+        <translation>إزاحة الأوقات</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -23302,7 +23302,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Frame rate conversion</source>
-        <translation type="unfinished">تحويل معدل الإطارات</translation>
+        <translation>تحويل معدل الإطارات</translation>
     </message>
     <message>
         <source>From fps</source>
@@ -23334,7 +23334,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Bridge gaps</source>
-        <translation type="unfinished">سد الفجوات</translation>
+        <translation>سد الفجوات</translation>
     </message>
     <message>
         <source>Shorter than (ms)</source>
@@ -23519,55 +23519,55 @@ If playback stutters, try another.</source>
     <name>TeleprompterPanel</name>
     <message>
         <source>Teleprompter</source>
-        <translation type="unfinished"></translation>
+        <translation>ملقن النصوص</translation>
     </message>
     <message>
         <source>Edit script</source>
-        <translation type="unfinished"></translation>
+        <translation>تعديل النص</translation>
     </message>
     <message>
         <source>Read mode</source>
-        <translation type="unfinished"></translation>
+        <translation>وضع القراءة</translation>
     </message>
     <message>
         <source>Pause scrolling</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف التمرير مؤقتًا</translation>
     </message>
     <message>
         <source>Start scrolling</source>
-        <translation type="unfinished"></translation>
+        <translation>بدء التمرير</translation>
     </message>
     <message>
         <source>Back to top</source>
-        <translation type="unfinished"></translation>
+        <translation>الرجوع إلى البداية</translation>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished">السرعة</translation>
+        <translation>السرعة</translation>
     </message>
     <message>
         <source>lines/s</source>
-        <translation type="unfinished"></translation>
+        <translation>سطر/ثانية</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished">الحجم</translation>
+        <translation>الحجم</translation>
     </message>
     <message>
         <source>Follow recording</source>
-        <translation type="unfinished"></translation>
+        <translation>متابعة التسجيل</translation>
     </message>
     <message>
         <source>Scrolling starts, pauses and stops with recording</source>
-        <translation type="unfinished"></translation>
+        <translation>يبدأ التمرير ويتوقف مؤقتًا ونهائيًا مع التسجيل</translation>
     </message>
     <message>
         <source>Show over preview</source>
-        <translation type="unfinished"></translation>
+        <translation>إظهار فوق المعاينة</translation>
     </message>
     <message>
         <source>Paste or type your script</source>
-        <translation type="unfinished"></translation>
+        <translation>الصق أو اكتب نصك</translation>
     </message>
 </context>
 <context>
@@ -23674,23 +23674,23 @@ If playback stutters, try another.</source>
     <name>TextInspector</name>
     <message>
         <source>As typed</source>
-        <translation type="unfinished"></translation>
+        <translation>كما كُتب</translation>
     </message>
     <message>
         <source>UPPERCASE</source>
-        <translation type="unfinished"></translation>
+        <translation>أحرف كبيرة</translation>
     </message>
     <message>
         <source>lowercase</source>
-        <translation type="unfinished"></translation>
+        <translation>أحرف صغيرة</translation>
     </message>
     <message>
         <source>Title Case</source>
-        <translation type="unfinished"></translation>
+        <translation>أحرف بداية الكلمات كبيرة</translation>
     </message>
     <message>
         <source>Sentence case</source>
-        <translation type="unfinished"></translation>
+        <translation>حرف بداية الجملة كبير</translation>
     </message>
     <message>
         <source>Aa</source>
@@ -23823,7 +23823,7 @@ If playback stutters, try another.</source>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">المفضلة</translation>
+        <translation>المفضلة</translation>
     </message>
     <message>
         <source>All</source>
@@ -24013,7 +24013,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Alignment</source>
-        <translation type="unfinished"></translation>
+        <translation>المحاذاة</translation>
     </message>
     <message>
         <source>Weight</source>
@@ -24029,7 +24029,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Text style</source>
-        <translation type="unfinished">نمط النص</translation>
+        <translation>نمط النص</translation>
     </message>
     <message>
         <source>Choose the gradient&apos;s first colour</source>
@@ -24073,15 +24073,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Strike</source>
-        <translation type="unfinished"></translation>
+        <translation>يتوسطه خط</translation>
     </message>
     <message>
         <source>Draw a line through the text</source>
-        <translation type="unfinished"></translation>
+        <translation>رسم خط يتوسط النص</translation>
     </message>
     <message>
         <source>Case</source>
-        <translation type="unfinished"></translation>
+        <translation>حالة الأحرف</translation>
     </message>
     <message>
         <source>Align left</source>
@@ -24589,42 +24589,42 @@ If playback stutters, try another.</source>
     <name>TimelineBakeContextMenu</name>
     <message>
         <source>Re-bake</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة المعالجة المسبقة</translation>
     </message>
     <message>
         <source>Set work area to bake</source>
-        <translation type="unfinished"></translation>
+        <translation>تعيين نطاق العمل للمعالجة المسبقة</translation>
     </message>
     <message>
         <source>Delete bake</source>
-        <translation type="unfinished"></translation>
+        <translation>حذف المعالجة المسبقة</translation>
     </message>
     <message>
         <source>Manage bakes…</source>
-        <translation type="unfinished"></translation>
+        <translation>إدارة المعالجات المسبقة…</translation>
     </message>
 </context>
 <context>
     <name>TimelineBakeStrip</name>
     <message>
         <source>Baking %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ المعالجة المسبقة %1%</translation>
     </message>
     <message>
         <source>Stale</source>
-        <translation type="unfinished"></translation>
+        <translation>قديم</translation>
     </message>
     <message>
         <source>Fresh</source>
-        <translation type="unfinished"></translation>
+        <translation>مُحدّث</translation>
     </message>
     <message>
         <source>%1 – %2 · %3 · %4%5</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 – %2 · %3 · %4%5</translation>
     </message>
     <message>
         <source>%1 · %2×%3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2×%3</translation>
     </message>
 </context>
 <context>
@@ -24646,7 +24646,7 @@ If playback stutters, try another.</source>
     <name>TimelineClipContextMenu</name>
     <message>
         <source>Move to track</source>
-        <translation type="unfinished"></translation>
+        <translation>نقل إلى المسار</translation>
     </message>
     <message>
         <source>Properties</source>
@@ -24666,7 +24666,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Dissolve composite</source>
-        <translation type="unfinished"></translation>
+        <translation>تفكيك المقطع المركب</translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24710,31 +24710,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enable clip</source>
-        <translation type="unfinished"></translation>
+        <translation>تمكين المقطع</translation>
     </message>
     <message>
         <source>Disable clip</source>
-        <translation type="unfinished"></translation>
+        <translation>تعطيل المقطع</translation>
     </message>
     <message>
         <source>Stop looping</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف التكرار الحلقي</translation>
     </message>
     <message>
         <source>Loop</source>
-        <translation type="unfinished">تكرار</translation>
+        <translation>تكرار</translation>
     </message>
     <message>
         <source>Remove silence</source>
-        <translation type="unfinished">إزالة الصمت</translation>
+        <translation>إزالة الصمت</translation>
     </message>
     <message>
         <source>Sync by audio</source>
-        <translation type="unfinished"></translation>
+        <translation>مزامنة بالصوت</translation>
     </message>
     <message>
         <source>Cancel audio analysis</source>
-        <translation type="unfinished"></translation>
+        <translation>إلغاء تحليل الصوت</translation>
     </message>
     <message>
         <source>Convert to mask</source>
@@ -24742,11 +24742,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Use as mask (nested timeline)</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدام كقناع (مخطط زمني متداخل)</translation>
     </message>
     <message>
         <source>Open mask timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>فتح المخطط الزمني للقناع</translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -24806,7 +24806,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Replace with…</source>
-        <translation type="unfinished"></translation>
+        <translation>استبدال بـ…</translation>
     </message>
     <message>
         <source>Copy effects</source>
@@ -24826,7 +24826,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Blur area…</source>
-        <translation type="unfinished"></translation>
+        <translation>تمويه المنطقة…</translation>
     </message>
     <message>
         <source>Edit keyframes…</source>
@@ -24834,7 +24834,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Mask &amp; track…</source>
-        <translation type="unfinished"></translation>
+        <translation>قناع وتتبع…</translation>
     </message>
     <message>
         <source>Unlink from clip</source>
@@ -24850,7 +24850,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Delete with effects</source>
-        <translation type="unfinished"></translation>
+        <translation>حذف مع التأثيرات</translation>
     </message>
 </context>
 <context>
@@ -24864,7 +24864,7 @@ If playback stutters, try another.</source>
     <name>TimelineCutButton</name>
     <message>
         <source>Add transition</source>
-        <translation type="unfinished">إضافة انتقال</translation>
+        <translation>إضافة انتقال</translation>
     </message>
 </context>
 <context>
@@ -24886,7 +24886,7 @@ If playback stutters, try another.</source>
     <name>TimelineFadeHandle</name>
     <message>
         <source>%1s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1s</translation>
     </message>
     <message>
         <source>Adjust fade</source>
@@ -24912,19 +24912,19 @@ If playback stutters, try another.</source>
     <name>TimelineLaneRibbons</name>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished">تأثيرات الصوت</translation>
+        <translation>تأثيرات الصوت</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished">قناع</translation>
+        <translation>قناع</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>التأثيرات</translation>
     </message>
     <message>
         <source>%1 — click to expand</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 — انقر للتوسيع</translation>
     </message>
 </context>
 <context>
@@ -24985,63 +24985,63 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shrink all tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>تصغير كل المسارات</translation>
     </message>
     <message>
         <source>Grow all tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>تكبير كل المسارات</translation>
     </message>
     <message>
         <source>Fit tracks to panel</source>
-        <translation type="unfinished"></translation>
+        <translation>ملاءمة المسارات للوحة</translation>
     </message>
     <message>
         <source>Paste here</source>
-        <translation type="unfinished"></translation>
+        <translation>لصق هنا</translation>
     </message>
     <message>
         <source>Add bookmark here</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة إشارة مرجعية هنا</translation>
     </message>
     <message>
         <source>Select clips on track</source>
-        <translation type="unfinished"></translation>
+        <translation>تحديد المقاطع على المسار</translation>
     </message>
     <message>
         <source>Select clips after here on track</source>
-        <translation type="unfinished"></translation>
+        <translation>تحديد المقاطع بعد هذا الموضع على المسار</translation>
     </message>
     <message>
         <source>Select all clips</source>
-        <translation type="unfinished">تحديد جميع المقاطع</translation>
+        <translation>تحديد جميع المقاطع</translation>
     </message>
     <message>
         <source>Unmute track</source>
-        <translation type="unfinished">إلغاء كتم المسار</translation>
+        <translation>إلغاء كتم المسار</translation>
     </message>
     <message>
         <source>Mute track</source>
-        <translation type="unfinished">كتم المسار</translation>
+        <translation>كتم المسار</translation>
     </message>
     <message>
         <source>Show track</source>
-        <translation type="unfinished">إظهار المسار</translation>
+        <translation>إظهار المسار</translation>
     </message>
     <message>
         <source>Hide track</source>
-        <translation type="unfinished">إخفاء المسار</translation>
+        <translation>إخفاء المسار</translation>
     </message>
     <message>
         <source>Unlock track</source>
-        <translation type="unfinished"></translation>
+        <translation>إلغاء قفل المسار</translation>
     </message>
     <message>
         <source>Lock track</source>
-        <translation type="unfinished"></translation>
+        <translation>قفل المسار</translation>
     </message>
     <message>
         <source>Remove empty tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>إزالة المسارات الفارغة</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -25100,19 +25100,19 @@ If playback stutters, try another.</source>
     <name>TimelineReplaceClipDialog</name>
     <message>
         <source>Replace with…</source>
-        <translation type="unfinished"></translation>
+        <translation>استبدال بـ…</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">إلغاء</translation>
+        <translation>إلغاء</translation>
     </message>
     <message>
         <source>Search media</source>
-        <translation type="unfinished">البحث في الوسائط</translation>
+        <translation>البحث في الوسائط</translation>
     </message>
     <message>
         <source>No matching media</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد وسائط مطابقة</translation>
     </message>
 </context>
 <context>
@@ -25126,11 +25126,11 @@ If playback stutters, try another.</source>
     <name>TimelineSequenceTabs</name>
     <message>
         <source>Main</source>
-        <translation type="unfinished">الرئيسي</translation>
+        <translation>الرئيسي</translation>
     </message>
     <message>
         <source>New timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>مخطط زمني جديد</translation>
     </message>
 </context>
 <context>
@@ -25187,7 +25187,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Toggle keyframe strip</source>
-        <translation type="unfinished"></translation>
+        <translation>تبديل شريط الإطارات المفتاحية</translation>
     </message>
     <message>
         <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
@@ -25425,15 +25425,15 @@ If playback stutters, try another.</source>
     <name>TimelineTrackItem</name>
     <message>
         <source>Procedural package not found. The clip renders nothing until it is installed again.</source>
-        <translation type="unfinished"></translation>
+        <translation>لم يتم العثور على الحزمة الإجرائية. لن يعالج المقطع أي شيء حتى يتم تثبيتها مجددًا.</translation>
     </message>
     <message>
         <source>Effect</source>
-        <translation type="unfinished">تأثير</translation>
+        <translation>تأثير</translation>
     </message>
     <message>
         <source>%1 (off)</source>
-        <translation type="unfinished">%1 (متوقف)</translation>
+        <translation>%1 (متوقف)</translation>
     </message>
     <message>
         <source>Audio adjustment</source>
@@ -25464,7 +25464,7 @@ If playback stutters, try another.</source>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب لتكرار المقطع</translation>
     </message>
     <message>
         <source>Drag to trim the start</source>
@@ -25483,19 +25483,19 @@ If playback stutters, try another.</source>
     <name>TimelineWorkAreaBakeChip</name>
     <message>
         <source>Baking %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>جارٍ المعالجة المسبقة %1%</translation>
     </message>
     <message>
         <source>Bake</source>
-        <translation type="unfinished"></translation>
+        <translation>معالجة مسبقة</translation>
     </message>
     <message>
         <source>Cancel baking</source>
-        <translation type="unfinished"></translation>
+        <translation>إلغاء المعالجة المسبقة</translation>
     </message>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
-        <translation type="unfinished"></translation>
+        <translation>معالجة نطاق العمل مسبقًا لتشغيل وتصدير سلسين</translation>
     </message>
 </context>
 <context>
@@ -25637,11 +25637,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Expand child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>توسيع المسارات الفرعية</translation>
     </message>
     <message>
         <source>Collapse child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>طي المسارات الفرعية</translation>
     </message>
     <message>
         <source>Unmute track</source>
@@ -25653,27 +25653,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unsolo track</source>
-        <translation type="unfinished"></translation>
+        <translation>إلغاء عزل المسار</translation>
     </message>
     <message>
         <source>Solo track</source>
-        <translation type="unfinished"></translation>
+        <translation>عزل المسار</translation>
     </message>
     <message>
         <source>Stop recording</source>
-        <translation type="unfinished">إيقاف التسجيل</translation>
+        <translation>إيقاف التسجيل</translation>
     </message>
     <message>
         <source>Record voiceover</source>
-        <translation type="unfinished">تسجيل تعليق صوتي</translation>
+        <translation>تسجيل تعليق صوتي</translation>
     </message>
     <message>
         <source>Show one combined waveform</source>
-        <translation type="unfinished">إظهار شكل موجي مدمج واحد</translation>
+        <translation>إظهار شكل موجي مدمج واحد</translation>
     </message>
     <message>
         <source>Show each channel separately</source>
-        <translation type="unfinished"></translation>
+        <translation>إظهار كل قناة على حدة</translation>
     </message>
     <message>
         <source>Show track</source>
@@ -25685,19 +25685,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unlock track</source>
-        <translation type="unfinished"></translation>
+        <translation>إلغاء قفل المسار</translation>
     </message>
     <message>
         <source>Lock track</source>
-        <translation type="unfinished"></translation>
+        <translation>قفل المسار</translation>
     </message>
     <message>
         <source>Include in export</source>
-        <translation type="unfinished"></translation>
+        <translation>تضمين في التصدير</translation>
     </message>
     <message>
         <source>Exclude from export</source>
-        <translation type="unfinished"></translation>
+        <translation>استبعاد من التصدير</translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -25733,7 +25733,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drag the bottom edge or scroll over the header to fine-tune</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب الحافة السفلية أو قم بالتمرير فوق رأس المسار للضبط الدقيق</translation>
     </message>
     <message>
         <source>Taller row</source>
@@ -25749,7 +25749,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Remove empty tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>إزالة المسارات الفارغة</translation>
     </message>
 </context>
 <context>
@@ -25807,37 +25807,37 @@ If playback stutters, try another.</source>
     <name>TrackHeaderLaneRow</name>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished">تأثيرات الصوت</translation>
+        <translation>تأثيرات الصوت</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished">قناع</translation>
+        <translation>قناع</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>التأثيرات</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderLaneToggle</name>
     <message>
         <source>Expand child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>توسيع المسارات الفرعية</translation>
     </message>
     <message>
         <source>Collapse child lanes</source>
-        <translation type="unfinished"></translation>
+        <translation>طي المسارات الفرعية</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderLockButton</name>
     <message>
         <source>Unlock track</source>
-        <translation type="unfinished"></translation>
+        <translation>إلغاء قفل المسار</translation>
     </message>
     <message>
         <source>Lock track</source>
-        <translation type="unfinished"></translation>
+        <translation>قفل المسار</translation>
     </message>
 </context>
 <context>
@@ -25878,18 +25878,18 @@ If playback stutters, try another.</source>
     <name>TrackHeaderName</name>
     <message>
         <source>not exported</source>
-        <translation type="unfinished"></translation>
+        <translation>غير مُصدَّر</translation>
     </message>
     <message>
         <source>Shown while editing, left out of every export</source>
-        <translation type="unfinished"></translation>
+        <translation>يظهر أثناء التحرير، ويُستبعد من كل تصدير</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderOverflowButton</name>
     <message>
         <source>More track actions</source>
-        <translation type="unfinished"></translation>
+        <translation>مزيد من إجراءات المسار</translation>
     </message>
 </context>
 <context>
@@ -25938,22 +25938,22 @@ If playback stutters, try another.</source>
     <name>TrackHeaderSoloButton</name>
     <message>
         <source>Unsolo track</source>
-        <translation type="unfinished"></translation>
+        <translation>إلغاء عزل المسار</translation>
     </message>
     <message>
         <source>Solo track</source>
-        <translation type="unfinished"></translation>
+        <translation>عزل المسار</translation>
     </message>
     <message>
         <source>S</source>
-        <translation type="unfinished">S</translation>
+        <translation>S</translation>
     </message>
 </context>
 <context>
     <name>TrackerOverlay</name>
     <message>
         <source>Trackers need a video clip</source>
-        <translation type="unfinished"></translation>
+        <translation>تتطلب المتتبعات مقطع فيديو</translation>
     </message>
     <message>
         <source>Select a clip on the timeline to track motion in it</source>
@@ -25973,7 +25973,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Click the object the clip should follow.</source>
-        <translation type="unfinished"></translation>
+        <translation>انقر على العنصر الذي يجب أن يتبعه المقطع.</translation>
     </message>
     <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
@@ -25989,7 +25989,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب علامة لتصحيحها · ◀ ▶ في لوحة التتبع للتتبع</translation>
     </message>
     <message>
         <source>Tracking… %1%</source>
@@ -25997,7 +25997,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stop tracking (Esc)</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف التتبع (Esc)</translation>
     </message>
 </context>
 <context>
@@ -26036,51 +26036,51 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>The camera can&apos;t match this surface exactly; some frames drift by up to %1 px</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يمكن للكاميرا مطابقة هذا السطح بدقة؛ تنحرف بعض الإطارات بما يصل إلى %1 بكسل</translation>
     </message>
     <message>
         <source>Lost the feature at %1. Drag the marker back onto it and track again, or lower the stop threshold.</source>
-        <translation type="unfinished"></translation>
+        <translation>فُقدت السمة عند %1. اسحب العلامة إليها وتتبّع مجددًا، أو اخفض حد التوقف.</translation>
     </message>
     <message>
         <source>Not enough detail inside the outline. Outline a larger area with visible texture.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا توجد تفاصيل كافية داخل المخطط التفصيلي. حدد مساحة أكبر بنسيج مرئي.</translation>
     </message>
     <message>
         <source>Lost the surface at %1. Drag its corners back into place and track again.</source>
-        <translation type="unfinished"></translation>
+        <translation>فُقد السطح عند %1. اسحب زواياه إلى مكانها وتتبّع مجددًا.</translation>
     </message>
     <message>
         <source>Lock to screen</source>
-        <translation type="unfinished"></translation>
+        <translation>تثبيت على الشاشة</translation>
     </message>
     <message>
         <source>Change zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>تغيير التقريب</translation>
     </message>
     <message>
         <source>Zoom to fill</source>
-        <translation type="unfinished"></translation>
+        <translation>تقريب للملء</translation>
     </message>
     <message>
         <source>Track mask</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع القناع</translation>
     </message>
     <message>
         <source>Correct track</source>
-        <translation type="unfinished"></translation>
+        <translation>تصحيح المسار</translation>
     </message>
     <message>
         <source>Follow object</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع العنصر</translation>
     </message>
     <message>
         <source>Add mask</source>
-        <translation type="unfinished">إضافة قناع</translation>
+        <translation>إضافة قناع</translation>
     </message>
     <message>
         <source>Mask added</source>
-        <translation type="unfinished">تمت إضافة القناع</translation>
+        <translation>تمت إضافة القناع</translation>
     </message>
     <message>
         <source>Planar %1</source>
@@ -26136,15 +26136,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drag the outline&apos;s corners onto the surface at this frame, then track again</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب زوايا المخطط التفصيلي إلى السطح في هذا الإطار، ثم تتبّع مجددًا</translation>
     </message>
     <message>
         <source>Drag the marker onto the feature at this frame, then track again</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب العلامة إلى السمة في هذا الإطار، ثم تتبّع مجددًا</translation>
     </message>
     <message>
         <source>This clip is transformed; the adjustment mask may not line up</source>
-        <translation type="unfinished"></translation>
+        <translation>تم تحويل هذا المقطع؛ قد لا يحاذي قناع الضبط بشكل صحيح</translation>
     </message>
     <message>
         <source>Track</source>
@@ -26156,11 +26156,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 (adjustment)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (ضبط)</translation>
     </message>
     <message>
         <source>Lock to screen is not available for 3D clips</source>
-        <translation type="unfinished"></translation>
+        <translation>التثبيت على الشاشة غير متوفر للمقاطع ثلاثية الأبعاد</translation>
     </message>
     <message>
         <source>Apply track</source>
@@ -26199,7 +26199,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Click the object the clip should follow.</source>
-        <translation type="unfinished"></translation>
+        <translation>انقر على العنصر الذي يجب أن يتبعه المقطع.</translation>
     </message>
     <message>
         <source>Position</source>
@@ -26211,7 +26211,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>No clip selected</source>
@@ -26219,11 +26219,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No video clip under this adjustment layer at the playhead.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يوجد مقطع فيديو أسفل طبقة الضبط هذه عند مؤشر التشغيل.</translation>
     </message>
     <message>
         <source>No video under this clip at the playhead. Move the playhead over the video it should follow.</source>
-        <translation type="unfinished"></translation>
+        <translation>لا يوجد فيديو أسفل هذا المقطع عند مؤشر التشغيل. حرّك مؤشر التشغيل فوق الفيديو الذي يجب تتبعه.</translation>
     </message>
     <message>
         <source>Select a video clip to track motion in it.</source>
@@ -26231,31 +26231,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Follow an object in %1</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع عنصر في %1</translation>
     </message>
     <message>
         <source>Follow an object</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع عنصر</translation>
     </message>
     <message>
         <source>Click an object on the video; this clip will follow it through the clip</source>
-        <translation type="unfinished"></translation>
+        <translation>انقر على عنصر في الفيديو؛ سيتبعه هذا المقطع عبر المقطع بالكامل</translation>
     </message>
     <message>
         <source>Follows %1 on %2</source>
-        <translation type="unfinished"></translation>
+        <translation>يتبع %1 على %2</translation>
     </message>
     <message>
         <source>Stop following</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف المتابعة</translation>
     </message>
     <message>
         <source>Use clip at playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>استخدام المقطع عند مؤشر التشغيل</translation>
     </message>
     <message>
         <source>Tracking: %1 (under %2)</source>
-        <translation type="unfinished"></translation>
+        <translation>التتبع: %1 (أسفل %2)</translation>
     </message>
     <message>
         <source>Point</source>
@@ -26275,11 +26275,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">إلغاء</translation>
+        <translation>إلغاء</translation>
     </message>
     <message>
         <source>Stop placing (Esc)</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف الوضع (Esc)</translation>
     </message>
     <message>
         <source>Trackers</source>
@@ -26295,27 +26295,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Now track it: press Track whole clip, or ◀ ▶ to go one way.</source>
-        <translation type="unfinished"></translation>
+        <translation>الآن تتبّعه: اضغط على تتبع كامل المقطع، أو ◀ ▶ للذهاب في اتجاه واحد.</translation>
     </message>
     <message>
         <source>Stop tracking (Esc)</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف التتبع (Esc)</translation>
     </message>
     <message>
         <source>Track whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع كامل المقطع</translation>
     </message>
     <message>
         <source>Follow the feature backward and forward through the whole clip</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع السمة للخلف وللأمام عبر كامل المقطع</translation>
     </message>
     <message>
         <source>Corrected at this frame. Track ▶ to continue.</source>
-        <translation type="unfinished"></translation>
+        <translation>تم التصحيح في هذا الإطار. تتبّع ▶ للمتابعة.</translation>
     </message>
     <message>
         <source>Track ▶</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع ▶</translation>
     </message>
     <message>
         <source>Track back to the start</source>
@@ -26327,75 +26327,75 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Follow</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع</translation>
     </message>
     <message>
         <source>Stop if</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف إذا</translation>
     </message>
     <message>
         <source>Tracking stops when the match gets worse than this</source>
-        <translation type="unfinished"></translation>
+        <translation>يتوقف التتبع عندما تصبح المطابقة أسوأ من هذه القيمة</translation>
     </message>
     <message>
         <source>Stop if match is worse than</source>
-        <translation type="unfinished"></translation>
+        <translation>إيقاف إذا كانت المطابقة أسوأ من</translation>
     </message>
     <message>
         <source>match &lt; %1 %</source>
-        <translation type="unfinished"></translation>
+        <translation>المطابقة &lt; %1 %</translation>
     </message>
     <message>
         <source>Box size</source>
-        <translation type="unfinished"></translation>
+        <translation>حجم المربع</translation>
     </message>
     <message>
         <source>Size of the area being followed. Bigger is steadier, smaller is more precise.</source>
-        <translation type="unfinished"></translation>
+        <translation>حجم المنطقة التي يتم تتبعها. الحجم الأكبر أكثر ثباتًا، والأصغر أكثر دقة.</translation>
     </message>
     <message>
         <source>Erase before</source>
-        <translation type="unfinished"></translation>
+        <translation>مسح ما قبل</translation>
     </message>
     <message>
         <source>Erase after</source>
-        <translation type="unfinished"></translation>
+        <translation>مسح ما بعد</translation>
     </message>
     <message>
         <source>Moves</source>
-        <translation type="unfinished"></translation>
+        <translation>التحركات</translation>
     </message>
     <message>
         <source>Locked to screen</source>
-        <translation type="unfinished"></translation>
+        <translation>مثبت على الشاشة</translation>
     </message>
     <message>
         <source>Move clip</source>
-        <translation type="unfinished">تحريك المقطع</translation>
+        <translation>تحريك المقطع</translation>
     </message>
     <message>
         <source>Move camera</source>
-        <translation type="unfinished">تحريك الكاميرا</translation>
+        <translation>تحريك الكاميرا</translation>
     </message>
     <message>
         <source>Center in frame</source>
-        <translation type="unfinished"></translation>
+        <translation>توسيط في الإطار</translation>
     </message>
     <message>
         <source>Stick to the point</source>
-        <translation type="unfinished"></translation>
+        <translation>الالتصاق بالنقطة</translation>
     </message>
     <message>
         <source>Keep where it is</source>
-        <translation type="unfinished"></translation>
+        <translation>الإبقاء في مكانه</translation>
     </message>
     <message>
         <source>Keep current position</source>
-        <translation type="unfinished"></translation>
+        <translation>الإبقاء على الموضع الحالي</translation>
     </message>
     <message>
         <source>Move the tracked object to the middle of the frame, or keep it where it is at the reference frame</source>
-        <translation type="unfinished"></translation>
+        <translation>تحريك العنصر المتتبَّع إلى منتصف الإطار، أو الإبقاء عليه في مكانه عند الإطار المرجعي</translation>
     </message>
     <message>
         <source>Stop tracking</source>
@@ -26403,11 +26403,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Position + rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع + الدوران</translation>
     </message>
     <message>
         <source>Position, rotation + size</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع، والدوران + الحجم</translation>
     </message>
     <message>
         <source>Track one frame forward</source>
@@ -26447,43 +26447,43 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished">تكبير</translation>
+        <translation>تكبير</translation>
     </message>
     <message>
         <source>Fill</source>
-        <translation type="unfinished">تعبئة</translation>
+        <translation>تعبئة</translation>
     </message>
     <message>
         <source>Zoom in just enough to hide the empty edges</source>
-        <translation type="unfinished"></translation>
+        <translation>التقريب بما يكفي لإخفاء الحواف الفارغة</translation>
     </message>
     <message>
         <source>Lock to screen</source>
-        <translation type="unfinished"></translation>
+        <translation>تثبيت على الشاشة</translation>
     </message>
     <message>
         <source>Keep the tracked object still on screen by moving the clip or the camera</source>
-        <translation type="unfinished"></translation>
+        <translation>الحفاظ على ثبات العنصر المتتبَّع على الشاشة عن طريق تحريك المقطع أو الكاميرا</translation>
     </message>
     <message>
         <source>Attach…</source>
-        <translation type="unfinished"></translation>
+        <translation>إرفاق…</translation>
     </message>
     <message>
         <source>Make a mask or clip move with this tracker</source>
-        <translation type="unfinished"></translation>
+        <translation>جعل القناع أو المقطع يتحرك مع هذا المتتبع</translation>
     </message>
     <message>
         <source>Add mask</source>
-        <translation type="unfinished">إضافة قناع</translation>
+        <translation>إضافة قناع</translation>
     </message>
     <message>
         <source>Draw a mask from this tracker and make it follow the track</source>
-        <translation type="unfinished"></translation>
+        <translation>رسم قناع من هذا المتتبع وجعله يتبع المسار</translation>
     </message>
     <message>
         <source>Update the attached masks and clips from the current track</source>
-        <translation type="unfinished"></translation>
+        <translation>تحديث الأقنعة والمقاطع المرفقة من المسار الحالي</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -26529,154 +26529,154 @@ If playback stutters, try another.</source>
     <name>Transform3dInspector</name>
     <message>
         <source>Scale clip</source>
-        <translation type="unfinished">تغيير حجم المقطع</translation>
+        <translation>تغيير حجم المقطع</translation>
     </message>
     <message>
         <source>Remove the %1 keyframes at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>إزالة الإطارات المفتاحية %1 عند مؤشر التشغيل</translation>
     </message>
     <message>
         <source>Add %1 keyframes at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة إطارات مفتاحية %1 عند مؤشر التشغيل</translation>
     </message>
     <message>
         <source>A camera has no transform of its own. Position, rotation and zoom are in the Camera panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>ليس للكاميرا تحويل خاص بها. يوجد الموضع والدوران والتقريب في لوحة الكاميرا.</translation>
     </message>
     <message>
         <source>This clip is flat. Make it a 3D layer to rotate it and move it in depth.</source>
-        <translation type="unfinished"></translation>
+        <translation>هذا المقطع مسطح. اجعله طبقة ثلاثية الأبعاد لتدويره وتحريكه في العمق.</translation>
     </message>
     <message>
         <source>Select a 3D layer, a model or a splat.</source>
-        <translation type="unfinished"></translation>
+        <translation>حدد طبقة ثلاثية الأبعاد أو نموذجًا أو تناثرًا ثلاثي الأبعاد (splat).</translation>
     </message>
     <message>
         <source>Make 3D layer</source>
-        <translation type="unfinished"></translation>
+        <translation>إنشاء طبقة ثلاثية الأبعاد</translation>
     </message>
     <message>
         <source>Move</source>
-        <translation type="unfinished">نقل</translation>
+        <translation>نقل</translation>
     </message>
     <message>
         <source>Rotate</source>
-        <translation type="unfinished">تدوير</translation>
+        <translation>تدوير</translation>
     </message>
     <message>
         <source>Scale</source>
-        <translation type="unfinished">الحجم</translation>
+        <translation>الحجم</translation>
     </message>
     <message>
         <source>World</source>
-        <translation type="unfinished"></translation>
+        <translation>العالم</translation>
     </message>
     <message>
         <source>Gizmo axes follow the scene</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع محاور أداة التحكم (Gizmo) المشهد</translation>
     </message>
     <message>
         <source>Local</source>
-        <translation type="unfinished">محلي</translation>
+        <translation>محلي</translation>
     </message>
     <message>
         <source>Gizmo axes follow the selected object (scale always follows the object&apos;s own edges)</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع محاور أداة التحكم (Gizmo) العنصر المحدد (يتبع المقياس دائمًا حواف العنصر نفسه)</translation>
     </message>
     <message>
         <source>View</source>
-        <translation type="unfinished"></translation>
+        <translation>العرض</translation>
     </message>
     <message>
         <source>Gizmo axes follow the screen</source>
-        <translation type="unfinished"></translation>
+        <translation>تتبع محاور أداة التحكم (Gizmo) الشاشة</translation>
     </message>
     <message>
         <source>World and local position</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع في العالم والموضع المحلي</translation>
     </message>
     <message>
         <source>%1  X %2  Y %3  Z %4</source>
-        <translation type="unfinished"></translation>
+        <translation>%1  X %2  Y %3  Z %4</translation>
     </message>
     <message>
         <source>Position (px)</source>
-        <translation type="unfinished">الموضع (px)</translation>
+        <translation>الموضع (px)</translation>
     </message>
     <message>
         <source>Reset position &amp; size</source>
-        <translation type="unfinished">إعادة تعيين الموضع والحجم</translation>
+        <translation>إعادة تعيين الموضع والحجم</translation>
     </message>
     <message>
         <source>3D position</source>
-        <translation type="unfinished"></translation>
+        <translation>الموضع ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>Anchor point (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة الارتكاز (px)</translation>
     </message>
     <message>
         <source>Put the anchor point back at the centre of the clip</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة نقطة الارتكاز إلى مركز المقطع</translation>
     </message>
     <message>
         <source>3D anchor point</source>
-        <translation type="unfinished"></translation>
+        <translation>نقطة ارتكاز ثلاثية الأبعاد</translation>
     </message>
     <message>
         <source>Reset anchor</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة تعيين نقطة الارتكاز</translation>
     </message>
     <message>
         <source>Rotation (°)</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران (°)</translation>
     </message>
     <message>
         <source>Reset rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة تعيين الدوران</translation>
     </message>
     <message>
         <source>3D rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>Scale / depth scale (%)</source>
-        <translation type="unfinished"></translation>
+        <translation>المقياس / مقياس العمق (%)</translation>
     </message>
     <message>
         <source>Scale (%)</source>
-        <translation type="unfinished"></translation>
+        <translation>المقياس (%)</translation>
     </message>
     <message>
         <source>Reset scale to 100%</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة تعيين المقياس إلى 100%</translation>
     </message>
     <message>
         <source>3D scale</source>
-        <translation type="unfinished"></translation>
+        <translation>المقياس ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>Occlude by depth</source>
-        <translation type="unfinished">حجب بالعمق</translation>
+        <translation>حجب بالعمق</translation>
     </message>
     <message>
         <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
-        <translation type="unfinished">السماح للعمق بتحديد ما يغطي هذا المقطع بدلاً من موضعه في المسار. المقاطع التي تم تمكين هذا الخيار لها فقط يتم فرزها مقابل بعضها؛ وكل شيء آخر يُرسم بترتيب المسارات.</translation>
+        <translation>السماح للعمق بتحديد ما يغطي هذا المقطع بدلاً من موضعه في المسار. المقاطع التي تم تمكين هذا الخيار لها فقط يتم فرزها مقابل بعضها؛ وكل شيء آخر يُرسم بترتيب المسارات.</translation>
     </message>
     <message>
         <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
-        <translation type="unfinished">يتطلب وضع المزج العادي (Normal) — تقرأ الأوضاع الأخرى لوحة العمل خلف المقطع، وهو ما لا يستطيع العمق فرزه.</translation>
+        <translation>يتطلب وضع المزج العادي (Normal) — تقرأ الأوضاع الأخرى لوحة العمل خلف المقطع، وهو ما لا يستطيع العمق فرزه.</translation>
     </message>
     <message>
         <source>Perspective</source>
-        <translation type="unfinished">المنظور</translation>
+        <translation>المنظور</translation>
     </message>
 </context>
 <context>
     <name>Transform3dPanel</name>
     <message>
         <source>3D Transform</source>
-        <translation type="unfinished"></translation>
+        <translation>تحويل ثلاثي الأبعاد</translation>
     </message>
 </context>
 <context>
@@ -26739,19 +26739,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rotation Z</source>
-        <translation type="unfinished"></translation>
+        <translation>الدوران Z</translation>
     </message>
     <message>
         <source>Position</source>
-        <translation type="unfinished">الموضع</translation>
+        <translation>الموضع</translation>
     </message>
     <message>
         <source>Reset position</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة تعيين الموضع</translation>
     </message>
     <message>
         <source>Reset size</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة تعيين الحجم</translation>
     </message>
     <message>
         <source>Edit width and height separately</source>
@@ -26791,35 +26791,35 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reset opacity</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة تعيين التعتيم</translation>
     </message>
     <message>
         <source>Reset rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>إعادة تعيين الدوران</translation>
     </message>
     <message>
         <source>Rotate the whole group as one flat card</source>
-        <translation type="unfinished"></translation>
+        <translation>تدوير المجموعة بأكملها كبطاقة مسطحة واحدة</translation>
     </message>
     <message>
         <source>Rotate the clip in 3D and move it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
-        <translation type="unfinished"></translation>
+        <translation>تدوير المقطع بشكل ثلاثي الأبعاد وتحريكه في العمق، مع مقابض ثلاثية الأبعاد على المعاينة. يؤدي إيقاف تشغيله إلى تسطيح المقطع مجددًا.</translation>
     </message>
     <message>
         <source>Open 3D workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>فتح مساحة العمل ثلاثية الأبعاد</translation>
     </message>
     <message>
         <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
-        <translation type="unfinished"></translation>
+        <translation>توجد إعدادات الموضع، والدوران، ونقطة الارتكاز، وحجب العمق في لوحة التحويل ثلاثي الأبعاد في مساحة العمل ثلاثية الأبعاد</translation>
     </message>
     <message>
         <source>Reset all</source>
-        <translation type="unfinished">إعادة تعيين الكل</translation>
+        <translation>إعادة تعيين الكل</translation>
     </message>
     <message>
         <source>Rotation</source>
-        <translation type="unfinished">الدوران</translation>
+        <translation>الدوران</translation>
     </message>
     <message>
         <source>Rotate 90°</source>
@@ -26827,7 +26827,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Corrects the source&apos;s own rotation losslessly — unlike Rotation above, this changes decoding, not just the on-screen box.</source>
-        <translation type="unfinished"></translation>
+        <translation>يصحح دوران المصدر نفسه بدون فقدان للجودة — على عكس الدوران أعلاه، يغير هذا فك الترميز، وليس المربع الذي على الشاشة فقط.</translation>
     </message>
     <message>
         <source>Flip</source>
@@ -27014,7 +27014,7 @@ If playback stutters, try another.</source>
     <name>TransitionInspector</name>
     <message>
         <source>Hover the cut between two clips and click + to add a transition.</source>
-        <translation type="unfinished"></translation>
+        <translation>مرر فوق موضع القطع بين مقطعين وانقر فوق + لإضافة انتقال.</translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
@@ -27026,7 +27026,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add transition…</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافة انتقال…</translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -27050,7 +27050,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transition duration</source>
-        <translation type="unfinished">مدة الانتقال</translation>
+        <translation>مدة الانتقال</translation>
     </message>
     <message>
         <source>Curve</source>
@@ -27058,7 +27058,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transition curve</source>
-        <translation type="unfinished">منحنى الانتقال</translation>
+        <translation>منحنى الانتقال</translation>
     </message>
     <message>
         <source>On</source>
@@ -27081,46 +27081,46 @@ If playback stutters, try another.</source>
     <name>TransitionPickerGrid</name>
     <message>
         <source>Search transitions</source>
-        <translation type="unfinished">البحث في الانتقالات</translation>
+        <translation>البحث في الانتقالات</translation>
     </message>
     <message>
         <source>My Transitions</source>
-        <translation type="unfinished">انتقالاتي</translation>
+        <translation>انتقالاتي</translation>
     </message>
     <message numerus="yes">
         <source>Apply to %n selected cuts</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>تطبيق على %n موضع قطع محدد</numerusform>
+            <numerusform>تطبيق على %n موضع قطع محدد</numerusform>
+            <numerusform>تطبيق على موضعي قطع محددين</numerusform>
+            <numerusform>تطبيق على %n مواضع قطع محددة</numerusform>
+            <numerusform>تطبيق على %n موضع قطع محددًا</numerusform>
+            <numerusform>تطبيق على %n موضع قطع محدد</numerusform>
         </translation>
     </message>
     <message>
         <source>Apply to all cuts on track</source>
-        <translation type="unfinished"></translation>
+        <translation>تطبيق على جميع مواضع القطع في المسار</translation>
     </message>
     <message>
         <source>No transitions available</source>
-        <translation type="unfinished">لا توجد انتقالات متاحة</translation>
+        <translation>لا توجد انتقالات متاحة</translation>
     </message>
     <message>
         <source>Install a transitions pack to add more.</source>
-        <translation type="unfinished">ثبت حزمة انتقالات لإضافة المزيد.</translation>
+        <translation>ثبت حزمة انتقالات لإضافة المزيد.</translation>
     </message>
     <message>
         <source>Get extras</source>
-        <translation type="unfinished"></translation>
+        <translation>الحصول على إضافات</translation>
     </message>
     <message>
         <source>No transitions match “%1”</source>
-        <translation type="unfinished">لا توجد انتقالات تطابق “%1”</translation>
+        <translation>لا توجد انتقالات تطابق “%1”</translation>
     </message>
     <message>
         <source>Try a different name.</source>
-        <translation type="unfinished"></translation>
+        <translation>جرّب اسمًا مختلفًا.</translation>
     </message>
 </context>
 <context>
@@ -27142,7 +27142,7 @@ If playback stutters, try another.</source>
     <name>TransitionsTab</name>
     <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation>تثبيت انتقال أو تأثير مخصص من ملف .driftfx أو zip تم إنشاؤه في Drift Forge</translation>
     </message>
 </context>
 <context>
@@ -27418,90 +27418,90 @@ If playback stutters, try another.</source>
     <name>UserPackageImporter</name>
     <message>
         <source>Install Addon</source>
-        <translation type="unfinished">تثبيت إضافة</translation>
+        <translation>تثبيت إضافة</translation>
     </message>
     <message>
         <source>Drift addons and effects (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished"></translation>
+        <translation>إضافات وتأثيرات Drift (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Could not install this file</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر تثبيت هذا الملف</translation>
     </message>
     <message>
         <source>Could not install “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>تعذر تثبيت ”%1“</translation>
     </message>
     <message>
         <source>Installed “%1”</source>
-        <translation type="unfinished">تم تثبيت ”%1“</translation>
+        <translation>تم تثبيت ”%1“</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation type="unfinished">هل تريد تثبيت إضافة غير رسمية؟</translation>
+        <translation>هل تريد تثبيت إضافة غير رسمية؟</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation type="unfinished">التثبيت على أي حال</translation>
+        <translation>التثبيت على أي حال</translation>
     </message>
     <message>
         <source>“%1” by %2</source>
-        <translation type="unfinished">”%1“ بواسطة %2</translation>
+        <translation>”%1“ بواسطة %2</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation type="unfinished">”%1“</translation>
+        <translation>”%1“</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 غير موقع من قِبل فريق Drift. ثبّت الملفات الموثوقة فقط.</translation>
+        <translation>%1 غير موقع من قِبل فريق Drift. ثبّت الملفات الموثوقة فقط.</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">يحتوي على كود برمجي يعمل على حاسوبك.</translation>
+        <translation>يحتوي على كود برمجي يعمل على حاسوبك.</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation type="unfinished">سيستبدل ”%1“.</translation>
+        <translation>سيستبدل ”%1“.</translation>
     </message>
     <message>
         <source>Install this transition?</source>
-        <translation type="unfinished">هل تريد تثبيت هذا الانتقال؟</translation>
+        <translation>هل تريد تثبيت هذا الانتقال؟</translation>
     </message>
     <message>
         <source>Install this audio effect?</source>
-        <translation type="unfinished">هل تريد تثبيت هذا التأثير الصوتي؟</translation>
+        <translation>هل تريد تثبيت هذا التأثير الصوتي؟</translation>
     </message>
     <message>
         <source>Install this effect?</source>
-        <translation type="unfinished">هل تريد تثبيت هذا التأثير؟</translation>
+        <translation>هل تريد تثبيت هذا التأثير؟</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">تثبيت</translation>
+        <translation>تثبيت</translation>
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">تم إنشاء %1 بواسطة مستخدم وليس فريق Drift، ولم يتم فحصه. ثبّت الملفات الموثوقة فقط.</translation>
+        <translation>تم إنشاء %1 بواسطة مستخدم وليس فريق Drift، ولم يتم فحصه. ثبّت الملفات الموثوقة فقط.</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished">موافق</translation>
+        <translation>موافق</translation>
     </message>
 </context>
 <context>
     <name>Vec2Param</name>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">تعديل %1</translation>
+        <translation>تعديل %1</translation>
     </message>
     <message>
         <source>Reset %1</source>
-        <translation type="unfinished">إعادة تعيين %1</translation>
+        <translation>إعادة تعيين %1</translation>
     </message>
     <message>
         <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
-        <translation type="unfinished"></translation>
+        <translation>اسحب للتلوين. اضغط مع Shift للتحكم الدقيق. انقر نقرًا مزدوجًا لإعادة تعيين اللون.</translation>
     </message>
 </context>
 <context>
@@ -27739,19 +27739,19 @@ If playback stutters, try another.</source>
     <name>VideoMenu</name>
     <message>
         <source>Bakes…</source>
-        <translation type="unfinished"></translation>
+        <translation>المعالجات المسبقة…</translation>
     </message>
     <message>
         <source>Cancel crop</source>
-        <translation type="unfinished">إلغاء الاقتصاص</translation>
+        <translation>إلغاء الاقتصاص</translation>
     </message>
     <message>
         <source>Crop video</source>
-        <translation type="unfinished">اقتصاص الفيديو</translation>
+        <translation>اقتصاص الفيديو</translation>
     </message>
     <message>
         <source>Adjust video layout…</source>
-        <translation type="unfinished"></translation>
+        <translation>ضبط تخطيط الفيديو…</translation>
     </message>
 </context>
 <context>
@@ -27808,238 +27808,238 @@ If playback stutters, try another.</source>
     <name>View3dPanel</name>
     <message>
         <source>View &amp; Lights</source>
-        <translation type="unfinished"></translation>
+        <translation>العرض والإضاءة</translation>
     </message>
     <message>
         <source>Grid</source>
-        <translation type="unfinished">شبكة</translation>
+        <translation>شبكة</translation>
     </message>
     <message>
         <source>3D grid</source>
-        <translation type="unfinished"></translation>
+        <translation>شبكة ثلاثية الأبعاد</translation>
     </message>
     <message>
         <source>Show grid</source>
-        <translation type="unfinished"></translation>
+        <translation>إظهار الشبكة</translation>
     </message>
     <message>
         <source>The floor grid drawn under the scene in the 3D viewport</source>
-        <translation type="unfinished"></translation>
+        <translation>الشبكة الأرضية المرسومة أسفل المشهد في منفذ العرض ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>Grid size</source>
-        <translation type="unfinished"></translation>
+        <translation>حجم الشبكة</translation>
     </message>
     <message>
         <source>Spacing between lines. 0 picks one from the canvas size.</source>
-        <translation type="unfinished"></translation>
+        <translation>التباعد بين الخطوط. القيمة 0 تحدد تباعدًا تلقائيًا من حجم لوحة الرسم.</translation>
     </message>
     <message>
         <source>Snapping</source>
-        <translation type="unfinished">محاذاة تلقائية</translation>
+        <translation>محاذاة تلقائية</translation>
     </message>
     <message>
         <source>3D snapping</source>
-        <translation type="unfinished"></translation>
+        <translation>محاذاة تلقائية ثلاثية الأبعاد</translation>
     </message>
     <message>
         <source>Move step</source>
-        <translation type="unfinished"></translation>
+        <translation>خطوة التحريك</translation>
     </message>
     <message>
         <source>Rotation step</source>
-        <translation type="unfinished"></translation>
+        <translation>خطوة الدوران</translation>
     </message>
     <message>
         <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
-        <translation type="unfinished"></translation>
+        <translation>يتحرك سحب أداة التحكم (Gizmo) ويدور بهذه الخطوات؛ اضغط باستمرار على Ctrl للحركة الحرة. القيمة 0 تعطل الخطوة.</translation>
     </message>
     <message>
         <source>Navigation</source>
-        <translation type="unfinished"></translation>
+        <translation>التنقل</translation>
     </message>
     <message>
         <source>3D navigation</source>
-        <translation type="unfinished"></translation>
+        <translation>التنقل ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>Editor field of view</source>
-        <translation type="unfinished"></translation>
+        <translation>مجال رؤية المحرر</translation>
     </message>
     <message>
         <source>Navigation scheme</source>
-        <translation type="unfinished"></translation>
+        <translation>نظام التنقل</translation>
     </message>
     <message>
         <source>Blender</source>
-        <translation type="unfinished"></translation>
+        <translation>Blender</translation>
     </message>
     <message>
         <source>Maya</source>
-        <translation type="unfinished"></translation>
+        <translation>Maya</translation>
     </message>
     <message>
         <source>Blender: middle-drag orbits, Shift pans, Ctrl dollies. Maya: Alt with the left, middle or right button orbits, pans or dollies.</source>
-        <translation type="unfinished"></translation>
+        <translation>Blender: السحب بالزر الأوسط يدور مداريًا، وShift يحرّك، وCtrl يقرّب. Maya: زر Alt مع الزر الأيسر أو الأوسط أو الأيمن يدور مداريًا، أو يحرّك، أو يقرّب.</translation>
     </message>
     <message>
         <source>Orbit around selection</source>
-        <translation type="unfinished"></translation>
+        <translation>دوران مداري حول التحديد</translation>
     </message>
     <message>
         <source>Orbit about the selected clip&apos;s centre instead of the view&apos;s target</source>
-        <translation type="unfinished"></translation>
+        <translation>دوران مداري حول مركز المقطع المحدد بدلاً من هدف العرض</translation>
     </message>
     <message>
         <source>Orthographic</source>
-        <translation type="unfinished"></translation>
+        <translation>إسقاط متعامد</translation>
     </message>
     <message>
         <source>Draw the viewport without perspective (Numpad 5)</source>
-        <translation type="unfinished"></translation>
+        <translation>رسم منفذ العرض بدون منظور (Numpad 5)</translation>
     </message>
     <message>
         <source>Lights</source>
-        <translation type="unfinished"></translation>
+        <translation>الأضواء</translation>
     </message>
     <message>
         <source>3D model lights</source>
-        <translation type="unfinished"></translation>
+        <translation>أضواء النموذج ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>Select a 3D model to edit its lights.</source>
-        <translation type="unfinished"></translation>
+        <translation>حدد نموذجًا ثلاثي الأبعاد لتعديل إضاءته.</translation>
     </message>
 </context>
 <context>
     <name>Viewport3dPanel</name>
     <message>
         <source>Perspective</source>
-        <translation type="unfinished">المنظور</translation>
+        <translation>المنظور</translation>
     </message>
     <message>
         <source>Front</source>
-        <translation type="unfinished"></translation>
+        <translation>الأمام</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">رجوع</translation>
+        <translation>رجوع</translation>
     </message>
     <message>
         <source>Left</source>
-        <translation type="unfinished">اليسار</translation>
+        <translation>اليسار</translation>
     </message>
     <message>
         <source>Right</source>
-        <translation type="unfinished">اليمين</translation>
+        <translation>اليمين</translation>
     </message>
     <message>
         <source>Top</source>
-        <translation type="unfinished">الأعلى</translation>
+        <translation>الأعلى</translation>
     </message>
     <message>
         <source>Bottom</source>
-        <translation type="unfinished">الأسفل</translation>
+        <translation>الأسفل</translation>
     </message>
     <message>
         <source>Scene camera</source>
-        <translation type="unfinished"></translation>
+        <translation>كاميرا المشهد</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>View</source>
-        <translation type="unfinished"></translation>
+        <translation>العرض</translation>
     </message>
     <message>
         <source>Look at the scene from a preset side, or through the scene camera</source>
-        <translation type="unfinished"></translation>
+        <translation>النظر إلى المشهد من جانب محدد مسبقًا، أو من خلال كاميرا المشهد</translation>
     </message>
     <message>
         <source>Ortho</source>
-        <translation type="unfinished"></translation>
+        <translation>متعامد</translation>
     </message>
     <message>
         <source>Orthographic projection</source>
-        <translation type="unfinished"></translation>
+        <translation>إسقاط متعامد</translation>
     </message>
     <message>
         <source>Numpad 5</source>
-        <translation type="unfinished"></translation>
+        <translation>Numpad 5</translation>
     </message>
     <message>
         <source>Move</source>
-        <translation type="unfinished">نقل</translation>
+        <translation>نقل</translation>
     </message>
     <message>
         <source>Rotate</source>
-        <translation type="unfinished">تدوير</translation>
+        <translation>تدوير</translation>
     </message>
     <message>
         <source>Scale</source>
-        <translation type="unfinished">الحجم</translation>
+        <translation>الحجم</translation>
     </message>
     <message>
         <source>World</source>
-        <translation type="unfinished"></translation>
+        <translation>العالم</translation>
     </message>
     <message>
         <source>Local</source>
-        <translation type="unfinished">محلي</translation>
+        <translation>محلي</translation>
     </message>
     <message>
         <source>Which axes the gizmo follows: the scene&apos;s, the selected object&apos;s or the screen&apos;s</source>
-        <translation type="unfinished"></translation>
+        <translation>المحاور التي تتبعها أداة التحكم (Gizmo): محاور المشهد، أو العنصر المحدد، أو الشاشة</translation>
     </message>
     <message>
         <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
-        <translation type="unfinished">طيران حر (WASD للتحرك، Q/E للأسفل/للأعلى، وجه باتجاه المؤشر)</translation>
+        <translation>طيران حر (WASD للتحرك، Q/E للأسفل/للأعلى، وجه باتجاه المؤشر)</translation>
     </message>
     <message>
         <source>Shift+F</source>
-        <translation type="unfinished"></translation>
+        <translation>Shift+F</translation>
     </message>
     <message>
         <source>Look through the scene camera</source>
-        <translation type="unfinished"></translation>
+        <translation>النظر عبر كاميرا المشهد</translation>
     </message>
     <message>
         <source>Numpad 0</source>
-        <translation type="unfinished">لوحة الأرقام 0</translation>
+        <translation>لوحة الأرقام 0</translation>
     </message>
     <message>
         <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
-        <translation type="unfinished"></translation>
+        <translation>قفل الكاميرا على العرض: يؤدي التنقل أثناء النظر عبر الكاميرا إلى تحريك الكاميرا</translation>
     </message>
     <message>
         <source>Align the scene camera to this view</source>
-        <translation type="unfinished"></translation>
+        <translation>محاذاة كاميرا المشهد مع هذا العرض</translation>
     </message>
     <message>
         <source>Frame the selection</source>
-        <translation type="unfinished">تأطير التحديد</translation>
+        <translation>تأطير التحديد</translation>
     </message>
     <message>
         <source>F</source>
-        <translation type="unfinished"></translation>
+        <translation>F</translation>
     </message>
     <message>
         <source>Frame everything</source>
-        <translation type="unfinished"></translation>
+        <translation>تأطير كل شيء</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation type="unfinished"></translation>
+        <translation>Home</translation>
     </message>
     <message>
         <source>Reset the view</source>
-        <translation type="unfinished">إعادة تعيين العرض</translation>
+        <translation>إعادة تعيين العرض</translation>
     </message>
     <message>
         <source>Shift+Home</source>
-        <translation type="unfinished"></translation>
+        <translation>Shift+Home</translation>
     </message>
 </context>
 <context>
@@ -28400,11 +28400,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Agent Views</source>
-        <translation type="unfinished"></translation>
+        <translation>عروض الوكيل</translation>
     </message>
     <message>
         <source>Audio Sheet</source>
-        <translation type="unfinished"></translation>
+        <translation>ورقة الصوت</translation>
     </message>
     <message>
         <source>Recorder</source>
@@ -28412,7 +28412,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Teleprompter</source>
-        <translation type="unfinished"></translation>
+        <translation>ملقن النصوص</translation>
     </message>
     <message>
         <source>Noise Removal</source>
@@ -28440,31 +28440,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>3D Viewport</source>
-        <translation type="unfinished"></translation>
+        <translation>منفذ العرض ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>3D Outliner</source>
-        <translation type="unfinished"></translation>
+        <translation>المخطط الهيكلي ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>3D Transform</source>
-        <translation type="unfinished"></translation>
+        <translation>التحويل ثلاثي الأبعاد</translation>
     </message>
     <message>
         <source>View &amp; Lights</source>
-        <translation type="unfinished"></translation>
+        <translation>العرض والإضاءة</translation>
     </message>
     <message>
         <source>Procedural Code</source>
-        <translation type="unfinished"></translation>
+        <translation>الكود الإجرائي</translation>
     </message>
     <message>
         <source>Procedural Parameters</source>
-        <translation type="unfinished"></translation>
+        <translation>المعلمات الإجرائية</translation>
     </message>
     <message>
         <source>Procedural Console</source>
-        <translation type="unfinished"></translation>
+        <translation>وحدة التحكم الإجرائية</translation>
     </message>
     <message>
         <source>Media</source>
@@ -28540,7 +28540,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Color Grading LUTs</source>
-        <translation type="unfinished"></translation>
+        <translation>جداول LUT لتدرج الألوان</translation>
     </message>
     <message>
         <source>Stabilization</source>
@@ -28689,84 +28689,84 @@ If playback stutters, try another.</source>
     <name>drift::crash</name>
     <message>
         <source>Drift ran out of memory. Close other programs, or work with smaller or lower-resolution media.</source>
-        <translation type="unfinished"></translation>
+        <translation>نفدت ذاكرة Drift. أغلق البرامج الأخرى، أو اعمل باستخدام وسائط أصغر أو أقل دقة.</translation>
     </message>
     <message>
         <source>A Windows component Drift depends on looks out of date. Update the Microsoft Visual C++ Redistributable.</source>
-        <translation type="unfinished"></translation>
+        <translation>يبدو أن أحد مكونات Windows التي يعتمد عليها Drift قديم. حدّث حزمة Microsoft Visual C++ Redistributable.</translation>
     </message>
     <message>
         <source>Download the Visual C++ Redistributable</source>
-        <translation type="unfinished"></translation>
+        <translation>تنزيل حزمة Visual C++ Redistributable</translation>
     </message>
     <message>
         <source>The graphics driver stopped responding. Update your graphics driver, or try another graphics backend in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>توقف برنامج تشغيل الرسومات عن الاستجابة. حدّث برنامج تشغيل الرسومات، أو جرب خلفية رسومات أخرى في الإعدادات.</translation>
     </message>
     <message>
         <source>An add-on crashed. Try disabling or reinstalling your add-ons.</source>
-        <translation type="unfinished"></translation>
+        <translation>تعطلت إحدى الإضافات. حاول تعطيل إضافاتك أو إعادة تثبيتها.</translation>
     </message>
     <message>
         <source>The add-on &quot;%1&quot; crashed. Try updating or reinstalling it.</source>
-        <translation type="unfinished"></translation>
+        <translation>تعطلت الإضافة ”%1“. حاول تحديثها أو إعادة تثبيتها.</translation>
     </message>
     <message>
         <source>Drift closed unexpectedly during your last session.</source>
-        <translation type="unfinished"></translation>
+        <translation>أُغلق Drift بشكل غير متوقع خلال جلستك الأخيرة.</translation>
     </message>
 </context>
 <context>
     <name>drift::market</name>
     <message>
         <source>This needs Drift %1 or newer. Update Drift to install it.</source>
-        <translation type="unfinished"></translation>
+        <translation>يتطلب هذا الإصدار %1 أو أحدث من Drift. حدّث Drift لتثبيته.</translation>
     </message>
 </context>
 <context>
     <name>drift::market::FileFetch</name>
     <message>
         <source>Could not save that file.</source>
-        <translation type="unfinished">تعذر حفظ ذلك الملف.</translation>
+        <translation>تعذر حفظ ذلك الملف.</translation>
     </message>
     <message>
         <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation type="unfinished">لم يتطابق الملف المنزّل مع ما أرسله المتجر.</translation>
+        <translation>لم يتطابق الملف المنزّل مع ما أرسله المتجر.</translation>
     </message>
 </context>
 <context>
     <name>drift::market::MarketTransport</name>
     <message>
         <source>Daily limit reached for this source. Try again later.</source>
-        <translation type="unfinished">تم الوصول إلى الحد اليومي لهذا المصدر. حاول مرة أخرى لاحقًا.</translation>
+        <translation>تم الوصول إلى الحد اليومي لهذا المصدر. حاول مرة أخرى لاحقًا.</translation>
     </message>
     <message>
         <source>This source is temporarily unavailable.</source>
-        <translation type="unfinished">هذا المصدر غير متوفر مؤقتًا.</translation>
+        <translation>هذا المصدر غير متوفر مؤقتًا.</translation>
     </message>
     <message>
         <source>That item is no longer available.</source>
-        <translation type="unfinished">ذلك العنصر لم يعد متوفرًا.</translation>
+        <translation>ذلك العنصر لم يعد متوفرًا.</translation>
     </message>
     <message>
         <source>Could not reach the marketplace.</source>
-        <translation type="unfinished">تعذر الوصول إلى المتجر.</translation>
+        <translation>تعذر الوصول إلى المتجر.</translation>
     </message>
     <message>
         <source>Could not prepare that file.</source>
-        <translation type="unfinished">تعذر إعداد ذلك الملف.</translation>
+        <translation>تعذر إعداد ذلك الملف.</translation>
     </message>
     <message>
         <source>Could not complete that request.</source>
-        <translation type="unfinished">تعذر إكمال ذلك الطلب.</translation>
+        <translation>تعذر إكمال ذلك الطلب.</translation>
     </message>
     <message>
         <source>The marketplace took too long to answer. Try again.</source>
-        <translation type="unfinished">استغرق المتجر وقتًا أطول من اللازم للاستجابة. حاول مرة أخرى.</translation>
+        <translation>استغرق المتجر وقتًا أطول من اللازم للاستجابة. حاول مرة أخرى.</translation>
     </message>
     <message>
         <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation type="unfinished">تعذر الوصول إلى المتجر. تحقق من اتصالك وحاول مرة أخرى.</translation>
+        <translation>تعذر الوصول إلى المتجر. تحقق من اتصالك وحاول مرة أخرى.</translation>
     </message>
 </context>
 <context>

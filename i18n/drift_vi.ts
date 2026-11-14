@@ -443,55 +443,55 @@
     <name>AndroidAnimationPage</name>
     <message>
         <source>None</source>
-        <translation type="unfinished">Không</translation>
+        <translation>Không</translation>
     </message>
     <message>
         <source>%1 s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 s</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished">Vào</translation>
+        <translation>Vào</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished">Ra</translation>
+        <translation>Ra</translation>
     </message>
     <message>
         <source>Fade also ramps the volume.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiệu ứng mờ cũng tăng/giảm dần âm lượng.</translation>
     </message>
     <message>
         <source>Fade ramps the volume.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiệu ứng mờ tăng/giảm dần âm lượng.</translation>
     </message>
     <message>
         <source>Fade in</source>
-        <translation type="unfinished">Mờ dần</translation>
+        <translation>Mờ dần</translation>
     </message>
     <message>
         <source>Fade out</source>
-        <translation type="unfinished">Rõ dần</translation>
+        <translation>Rõ dần</translation>
     </message>
     <message>
         <source>Fade curve</source>
-        <translation type="unfinished"></translation>
+        <translation>Đường cong làm mờ</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished">Hoạt ảnh</translation>
+        <translation>Hoạt ảnh</translation>
     </message>
     <message>
         <source>Duration</source>
-        <translation type="unfinished">Thời lượng</translation>
+        <translation>Thời lượng</translation>
     </message>
     <message>
         <source>Animation curve</source>
-        <translation type="unfinished"></translation>
+        <translation>Đường cong hoạt ảnh</translation>
     </message>
     <message>
         <source>Letter and word animations live in Text animation. This moves the whole clip.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hoạt ảnh chữ và từ nằm trong Hoạt ảnh văn bản. Thao tác này di chuyển toàn bộ clip.</translation>
     </message>
 </context>
 <context>
@@ -577,7 +577,7 @@
     </message>
     <message>
         <source>Fade</source>
-        <translation type="unfinished">Mờ</translation>
+        <translation>Mờ</translation>
     </message>
     <message>
         <source>Edit text</source>
@@ -705,11 +705,11 @@
     </message>
     <message>
         <source>Enable</source>
-        <translation type="unfinished"></translation>
+        <translation>Bật</translation>
     </message>
     <message>
         <source>Disable</source>
-        <translation type="unfinished"></translation>
+        <translation>Tắt</translation>
     </message>
     <message>
         <source>Speed</source>
@@ -2335,11 +2335,11 @@
     <name>AndroidTimelineTrimNudge</name>
     <message>
         <source>In</source>
-        <translation type="unfinished">Vào</translation>
+        <translation>Vào</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished">Ra</translation>
+        <translation>Ra</translation>
     </message>
 </context>
 <context>
@@ -2445,23 +2445,23 @@
     </message>
     <message>
         <source>Fade in</source>
-        <translation type="unfinished">Mờ dần</translation>
+        <translation>Mờ dần</translation>
     </message>
     <message>
         <source>Fade out</source>
-        <translation type="unfinished">Rõ dần</translation>
+        <translation>Rõ dần</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished">Hoạt ảnh</translation>
+        <translation>Hoạt ảnh</translation>
     </message>
     <message>
         <source>Fade and motion combine — fade also ramps the volume.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiệu ứng mờ và chuyển động kết hợp — hiệu ứng mờ cũng tăng/giảm dần âm lượng.</translation>
     </message>
     <message>
         <source>Fade ramps the volume in and out.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiệu ứng mờ tăng dần và giảm dần âm lượng.</translation>
     </message>
     <message>
         <source>Slide up</source>
@@ -2469,11 +2469,11 @@
     </message>
     <message>
         <source>Fade and animation in</source>
-        <translation type="unfinished"></translation>
+        <translation>Làm mờ và hoạt ảnh vào</translation>
     </message>
     <message>
         <source>Fade and animation out</source>
-        <translation type="unfinished"></translation>
+        <translation>Làm mờ và hoạt ảnh ra</translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -2616,7 +2616,7 @@
     </message>
     <message>
         <source>Enable or disable selected clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Bật hoặc tắt các clip đã chọn</translation>
     </message>
     <message>
         <source>Clear selection</source>
@@ -2768,7 +2768,7 @@
     </message>
     <message>
         <source>No space to place the clip there</source>
-        <translation type="unfinished"></translation>
+        <translation>Không có khoảng trống để đặt clip ở đó</translation>
     </message>
     <message>
         <source>A clip can&apos;t completely cover another</source>
@@ -2804,7 +2804,7 @@
     </message>
     <message>
         <source>Trim clip</source>
-        <translation type="unfinished">Cắt clip</translation>
+        <translation>Cắt clip</translation>
     </message>
     <message>
         <source>Trim updated</source>
@@ -3626,23 +3626,23 @@
     </message>
     <message>
         <source>A clip with a speed ramp can&apos;t loop</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip có biến đổi tốc độ không thể lặp lại</translation>
     </message>
     <message>
         <source>Loop on</source>
-        <translation type="unfinished"></translation>
+        <translation>Bật lặp lại</translation>
     </message>
     <message>
         <source>Loop off</source>
-        <translation type="unfinished"></translation>
+        <translation>Tắt lặp lại</translation>
     </message>
     <message>
         <source>Clip looping</source>
-        <translation type="unfinished"></translation>
+        <translation>Lặp lại clip</translation>
     </message>
     <message>
         <source>Clip not looping</source>
-        <translation type="unfinished"></translation>
+        <translation>Không lặp lại clip</translation>
     </message>
     <message>
         <source>A clip is already being reversed</source>
@@ -3666,19 +3666,19 @@
     </message>
     <message>
         <source>Enable clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Bật các clip</translation>
     </message>
     <message>
         <source>Disable clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Tắt các clip</translation>
     </message>
     <message>
         <source>Clips enabled</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã bật các clip</translation>
     </message>
     <message>
         <source>Clips disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã tắt các clip</translation>
     </message>
     <message>
         <source>Pan changed</source>
@@ -3746,11 +3746,11 @@
     </message>
     <message>
         <source>Timeline %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Dòng thời gian %1</translation>
     </message>
     <message>
         <source>Timeline created</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã tạo dòng thời gian</translation>
     </message>
     <message>
         <source>Flattening composite…</source>
@@ -5037,7 +5037,7 @@
     </message>
     <message>
         <source>Save diagnostics…</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu chẩn đoán…</translation>
     </message>
     <message>
         <source>Settings…</source>
@@ -5108,7 +5108,7 @@
     </message>
     <message>
         <source>Remove from history</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa khỏi lịch sử</translation>
     </message>
 </context>
 <context>
@@ -5419,11 +5419,11 @@
     </message>
     <message>
         <source>New timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Dòng thời gian mới</translation>
     </message>
     <message>
         <source>Create an empty timeline and open it</source>
-        <translation type="unfinished"></translation>
+        <translation>Tạo một dòng thời gian trống và mở nó</translation>
     </message>
 </context>
 <context>
@@ -6622,43 +6622,43 @@
     <name>ClipAnimation</name>
     <message>
         <source>Slide up</source>
-        <translation type="unfinished">Trượt lên</translation>
+        <translation>Trượt lên</translation>
     </message>
     <message>
         <source>Slide down</source>
-        <translation type="unfinished">Trượt xuống</translation>
+        <translation>Trượt xuống</translation>
     </message>
     <message>
         <source>Slide left</source>
-        <translation type="unfinished">Trượt sang trái</translation>
+        <translation>Trượt sang trái</translation>
     </message>
     <message>
         <source>Slide right</source>
-        <translation type="unfinished">Trượt sang phải</translation>
+        <translation>Trượt sang phải</translation>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation type="unfinished">Phóng to</translation>
+        <translation>Phóng to</translation>
     </message>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished">Thu nhỏ</translation>
+        <translation>Thu nhỏ</translation>
     </message>
     <message>
         <source>Pop</source>
-        <translation type="unfinished">Bật lên</translation>
+        <translation>Bật lên</translation>
     </message>
     <message>
         <source>Spin CW</source>
-        <translation type="unfinished">Xoay theo chiều kim đồng hồ</translation>
+        <translation>Xoay theo chiều kim đồng hồ</translation>
     </message>
     <message>
         <source>Spin CCW</source>
-        <translation type="unfinished">Xoay ngược chiều kim đồng hồ</translation>
+        <translation>Xoay ngược chiều kim đồng hồ</translation>
     </message>
     <message>
         <source>Bounce</source>
-        <translation type="unfinished">Nảy</translation>
+        <translation>Nảy</translation>
     </message>
 </context>
 <context>
@@ -7172,46 +7172,46 @@
     <name>CrashReport</name>
     <message>
         <source>Drift crashed the last time it ran</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift đã gặp sự cố trong lần chạy trước</translation>
     </message>
     <message>
         <source>Drift did not close properly last time</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift đã không đóng đúng cách trong lần chạy trước</translation>
     </message>
     <message>
         <source>If it keeps happening, you can start in safe mode, which uses the default graphics backend and loads no add-ons for this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nếu tình trạng này tiếp tục xảy ra, bạn có thể khởi động ở chế độ an toàn; chế độ này sử dụng backend đồ họa mặc định và không tải add-on nào trong phiên này.</translation>
     </message>
     <message>
         <source>A report was sent to help fix this. You can turn this off in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>Một báo cáo đã được gửi để giúp khắc phục sự cố này. Bạn có thể tắt tính năng này trong Cài đặt.</translation>
     </message>
     <message>
         <source>Save crash file…</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu tệp sự cố…</translation>
     </message>
     <message>
         <source>Start in safe mode</source>
-        <translation type="unfinished"></translation>
+        <translation>Khởi động ở chế độ an toàn</translation>
     </message>
     <message>
         <source>Continue</source>
-        <translation type="unfinished">Tiếp tục</translation>
+        <translation>Tiếp tục</translation>
     </message>
 </context>
 <context>
     <name>CrashReporter</name>
     <message>
         <source>Choose where to save the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn nơi lưu tệp</translation>
     </message>
     <message>
         <source>Saved to %1</source>
-        <translation type="unfinished">Đã lưu vào %1</translation>
+        <translation>Đã lưu vào %1</translation>
     </message>
     <message>
         <source>Could not save the file: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể lưu tệp: %1</translation>
     </message>
 </context>
 <context>
@@ -7323,7 +7323,7 @@
     </message>
     <message>
         <source>Custom animation curve applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã áp dụng đường cong hoạt ảnh tùy chỉnh</translation>
     </message>
 </context>
 <context>
@@ -8998,15 +8998,15 @@
     <name>EffectsMaskSection</name>
     <message>
         <source>This effect needs a mask.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiệu ứng này cần mặt nạ.</translation>
     </message>
     <message>
         <source>Add new mask</source>
-        <translation type="unfinished"></translation>
+        <translation>Thêm mặt nạ mới</translation>
     </message>
     <message>
         <source>Cutout subject</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách chủ thể</translation>
     </message>
 </context>
 <context>
@@ -9970,19 +9970,19 @@
     </message>
     <message>
         <source>Out animation curve</source>
-        <translation type="unfinished"></translation>
+        <translation>Đường cong hoạt ảnh ra</translation>
     </message>
     <message>
         <source>In animation curve</source>
-        <translation type="unfinished"></translation>
+        <translation>Đường cong hoạt ảnh vào</translation>
     </message>
     <message>
         <source>Fade out curve</source>
-        <translation type="unfinished"></translation>
+        <translation>Đường cong làm mờ ra</translation>
     </message>
     <message>
         <source>Fade in curve</source>
-        <translation type="unfinished"></translation>
+        <translation>Đường cong làm mờ vào</translation>
     </message>
     <message>
         <source>Progress curve — %1</source>
@@ -9994,15 +9994,15 @@
     </message>
     <message>
         <source>%1 — %2</source>
-        <translation type="unfinished">%1 — %2</translation>
+        <translation>%1 — %2</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished">Vào</translation>
+        <translation>Vào</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished">Ra</translation>
+        <translation>Ra</translation>
     </message>
     <message>
         <source>Points</source>
@@ -10042,7 +10042,7 @@
     </message>
     <message>
         <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kéo các điểm ở giữa để định hình đường dốc (hai đầu được giữ cố định). Nhấp đúp để thêm điểm; Delete để xóa vùng chọn.</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -10239,11 +10239,11 @@
     </message>
     <message>
         <source>A clip with a speed ramp can&apos;t loop</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip có biến đổi tốc độ không thể lặp lại</translation>
     </message>
     <message>
         <source>Repeat the trimmed part for as long as the clip runs. Drag the clip&apos;s edges past the end to add repeats. Turn it off to change the trim.</source>
-        <translation type="unfinished"></translation>
+        <translation>Lặp lại phần đã cắt trong suốt thời lượng của clip. Kéo mép clip vượt quá điểm cuối để thêm các lần lặp lại. Tắt tính năng này để thay đổi phần cắt.</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -10940,11 +10940,11 @@
     </message>
     <message>
         <source>Scale X</source>
-        <translation type="unfinished"></translation>
+        <translation>Tỷ lệ X</translation>
     </message>
     <message>
         <source>Scale Y</source>
-        <translation type="unfinished"></translation>
+        <translation>Tỷ lệ Y</translation>
     </message>
     <message>
         <source>Anchor X</source>
@@ -10964,7 +10964,7 @@
     </message>
     <message>
         <source>Roundness</source>
-        <translation type="unfinished"></translation>
+        <translation>Độ bo tròn</translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11101,11 +11101,11 @@
     </message>
     <message>
         <source>Scale X</source>
-        <translation type="unfinished"></translation>
+        <translation>Tỷ lệ X</translation>
     </message>
     <message>
         <source>Scale Y</source>
-        <translation type="unfinished"></translation>
+        <translation>Tỷ lệ Y</translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -12688,11 +12688,11 @@
     <name>MaskOverlay</name>
     <message>
         <source>Unlock aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở khóa tỷ lệ khung hình</translation>
     </message>
     <message>
         <source>Lock aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Khóa tỷ lệ khung hình</translation>
     </message>
     <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
@@ -12726,7 +12726,7 @@
     </message>
     <message>
         <source>Feather</source>
-        <translation type="unfinished"></translation>
+        <translation>Độ mềm viền</translation>
     </message>
 </context>
 <context>
@@ -12737,7 +12737,7 @@
     </message>
     <message>
         <source>Roundness</source>
-        <translation type="unfinished"></translation>
+        <translation>Độ bo tròn</translation>
     </message>
 </context>
 <context>
@@ -12799,11 +12799,11 @@
     </message>
     <message>
         <source>%1 mask</source>
-        <translation type="unfinished"></translation>
+        <translation>Mặt nạ %1</translation>
     </message>
     <message>
         <source>Clips used as mask</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã dùng các clip làm mặt nạ</translation>
     </message>
     <message>
         <source>Cutouts can&apos;t be moved yet</source>
@@ -12955,7 +12955,7 @@
     </message>
     <message>
         <source>Sequence matte</source>
-        <translation type="unfinished"></translation>
+        <translation>Matte chuỗi</translation>
     </message>
     <message>
         <source>Mask</source>
@@ -13424,7 +13424,7 @@
     </message>
     <message>
         <source>Edit mask timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉnh sửa dòng thời gian mặt nạ</translation>
     </message>
 </context>
 <context>
@@ -13487,7 +13487,7 @@
     </message>
     <message>
         <source>Roundness</source>
-        <translation type="unfinished"></translation>
+        <translation>Độ bo tròn</translation>
     </message>
     <message>
         <source>Center X</source>
@@ -13519,11 +13519,11 @@
     </message>
     <message>
         <source>Lock aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Khóa tỷ lệ khung hình</translation>
     </message>
     <message>
         <source>Matte channel</source>
-        <translation type="unfinished"></translation>
+        <translation>Kênh matte</translation>
     </message>
     <message>
         <source>Alpha (transparency)</source>
@@ -13547,7 +13547,7 @@
     </message>
     <message>
         <source>Edit mask timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉnh sửa dòng thời gian mặt nạ</translation>
     </message>
     <message>
         <source>Invert</source>
@@ -17058,7 +17058,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>If Drift crashes, it sends an error report to help fix it. No project files or media are included. You can turn this off in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nếu Drift gặp sự cố, ứng dụng sẽ gửi báo cáo lỗi để giúp khắc phục. Không bao gồm tệp dự án hoặc phương tiện. Bạn có thể tắt tính năng này trong Cài đặt.</translation>
     </message>
 </context>
 <context>
@@ -18034,15 +18034,15 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <name>SectionedAssetGrid</name>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <translation>Của tôi</translation>
     </message>
     <message>
         <source>Favorites</source>
-        <translation type="unfinished">Yêu thích</translation>
+        <translation>Yêu thích</translation>
     </message>
     <message>
         <source>Recent</source>
-        <translation type="unfinished">Gần đây</translation>
+        <translation>Gần đây</translation>
     </message>
 </context>
 <context>
@@ -18289,15 +18289,15 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Save diagnostics</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu chẩn đoán</translation>
     </message>
     <message>
         <source>Saves an archive with your logs and system information to attach to a bug report.</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu một tệp lưu trữ chứa nhật ký và thông tin hệ thống của bạn để đính kèm vào báo cáo lỗi.</translation>
     </message>
     <message>
         <source>Save diagnostics…</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu chẩn đoán…</translation>
     </message>
     <message>
         <source>Help</source>
@@ -18929,15 +18929,15 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Privacy</source>
-        <translation type="unfinished"></translation>
+        <translation>Quyền riêng tư</translation>
     </message>
     <message>
         <source>Send crash reports automatically</source>
-        <translation type="unfinished"></translation>
+        <translation>Tự động gửi báo cáo sự cố</translation>
     </message>
     <message>
         <source>After a crash, send the error details, a short scrubbed log and your system and graphics information to help fix it. No project files or media.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sau khi gặp sự cố, gửi chi tiết lỗi, một đoạn nhật ký ngắn đã lọc thông tin nhạy cảm cùng thông tin hệ thống và đồ họa của bạn để giúp khắc phục. Không bao gồm tệp dự án hoặc phương tiện.</translation>
     </message>
     <message>
         <source>Storage</source>
@@ -24311,15 +24311,15 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Enable clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Bật clip</translation>
     </message>
     <message>
         <source>Disable clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Tắt clip</translation>
     </message>
     <message>
         <source>Stop looping</source>
-        <translation type="unfinished"></translation>
+        <translation>Dừng lặp lại</translation>
     </message>
     <message>
         <source>Loop</source>
@@ -24343,11 +24343,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Use as mask (nested timeline)</source>
-        <translation type="unfinished"></translation>
+        <translation>Dùng làm mặt nạ (dòng thời gian lồng nhau)</translation>
     </message>
     <message>
         <source>Open mask timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở dòng thời gian mặt nạ</translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -24487,7 +24487,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <name>TimelineFadeHandle</name>
     <message>
         <source>%1s</source>
-        <translation type="unfinished">%1 giây</translation>
+        <translation>%1 giây</translation>
     </message>
     <message>
         <source>Adjust fade</source>
@@ -24731,7 +24731,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>New timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Dòng thời gian mới</translation>
     </message>
 </context>
 <context>
@@ -25025,11 +25025,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Effect</source>
-        <translation type="unfinished">Hiệu ứng</translation>
+        <translation>Hiệu ứng</translation>
     </message>
     <message>
         <source>%1 (off)</source>
-        <translation type="unfinished">%1 (tắt)</translation>
+        <translation>%1 (tắt)</translation>
     </message>
     <message>
         <source>Audio adjustment</source>
@@ -25060,7 +25060,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Kéo để lặp lại clip</translation>
     </message>
     <message>
         <source>Drag to trim the start</source>
@@ -26332,11 +26332,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Reset position</source>
-        <translation type="unfinished"></translation>
+        <translation>Đặt lại vị trí</translation>
     </message>
     <message>
         <source>Reset size</source>
-        <translation type="unfinished"></translation>
+        <translation>Đặt lại kích thước</translation>
     </message>
     <message>
         <source>Edit width and height separately</source>
@@ -26376,7 +26376,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Reset opacity</source>
-        <translation type="unfinished"></translation>
+        <translation>Đặt lại độ mờ</translation>
     </message>
     <message>
         <source>Reset rotation</source>
@@ -28240,31 +28240,31 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <name>drift::crash</name>
     <message>
         <source>Drift ran out of memory. Close other programs, or work with smaller or lower-resolution media.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift đã hết bộ nhớ. Hãy đóng các chương trình khác, hoặc làm việc với phương tiện nhỏ hơn hoặc có độ phân giải thấp hơn.</translation>
     </message>
     <message>
         <source>A Windows component Drift depends on looks out of date. Update the Microsoft Visual C++ Redistributable.</source>
-        <translation type="unfinished"></translation>
+        <translation>Một thành phần Windows mà Drift phụ thuộc có vẻ đã lỗi thời. Hãy cập nhật Microsoft Visual C++ Redistributable.</translation>
     </message>
     <message>
         <source>Download the Visual C++ Redistributable</source>
-        <translation type="unfinished"></translation>
+        <translation>Tải xuống Visual C++ Redistributable</translation>
     </message>
     <message>
         <source>The graphics driver stopped responding. Update your graphics driver, or try another graphics backend in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>Driver đồ họa đã ngừng phản hồi. Hãy cập nhật driver đồ họa của bạn, hoặc thử một backend đồ họa khác trong Cài đặt.</translation>
     </message>
     <message>
         <source>An add-on crashed. Try disabling or reinstalling your add-ons.</source>
-        <translation type="unfinished"></translation>
+        <translation>Một add-on đã gặp sự cố. Hãy thử tắt hoặc cài đặt lại các add-on của bạn.</translation>
     </message>
     <message>
         <source>The add-on &quot;%1&quot; crashed. Try updating or reinstalling it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Add-on &quot;%1&quot; đã gặp sự cố. Hãy thử cập nhật hoặc cài đặt lại add-on này.</translation>
     </message>
     <message>
         <source>Drift closed unexpectedly during your last session.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift đã bị đóng đột ngột trong phiên làm việc trước của bạn.</translation>
     </message>
 </context>
 <context>
