@@ -2442,40 +2442,44 @@
         <translation>تلاشٍ</translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished">ظهور تدريجي</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">اختفاء تدريجي</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation>انزلاق للأعلى</translation>
     </message>
     <message>
-        <source>Slide down</source>
-        <translation>انزلاق للأسفل</translation>
+        <source>Fade and animation in</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation>انزلاق لليسار</translation>
-    </message>
-    <message>
-        <source>Slide right</source>
-        <translation>انزلاق لليمين</translation>
+        <source>Fade and animation out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
         <translation>تكبير</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>تصغير</translation>
-    </message>
-    <message>
         <source>Pop</source>
         <translation>انبثاق</translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation>دوران باتجاه عقارب الساعة</translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
-        <translation>دوران عكس عقارب الساعة</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -2490,18 +2494,6 @@
         <translation>تنطبق الحركة على الفيديو والصورة والشكل والنص والصوت.</translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation>ظهور تدريجي / اختفاء تدريجي (مستوى الصوت)</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>النمط</translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>اختر كيفية دخول المقطع وخروجه. التلاشي هو أحد الخيارات — تتوفر نفس عناصر التحكم بالنمط مثل الانزلاق أو التكبير والتصغير.</translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation>مسح</translation>
     </message>
@@ -2510,24 +2502,12 @@
         <translation>دخول</translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation type="unfinished">حركة الدخول</translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation>خروج</translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation type="unfinished">حركة الخروج</translation>
-    </message>
-    <message>
         <source>Custom curve</source>
         <translation type="unfinished">منحنى مخصص</translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
-        <translation>تعديل المنحنى المخصص…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -6742,6 +6722,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished">انزلاق للأعلى</translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished">انزلاق للأسفل</translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished">انزلاق لليسار</translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished">انزلاق لليمين</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">تكبير</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">تصغير</translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished">انبثاق</translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished">دوران باتجاه عقارب الساعة</translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished">دوران عكس عقارب الساعة</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">ارتداد</translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7420,6 +7443,10 @@
     <message>
         <source>Custom fade applied</source>
         <translation>تم تطبيق التلاشي المخصص</translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10105,6 +10132,22 @@
         <translation>منحنى مخصص</translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation>منحنى التقدم — %1</translation>
     </message>
@@ -10113,12 +10156,16 @@
         <translation>منحنى التقدم</translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
-        <translation>شكل التلاشي — %1</translation>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade shape</source>
-        <translation>شكل التلاشي</translation>
+        <source>In</source>
+        <translation type="unfinished">دخول</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">خروج</translation>
     </message>
     <message>
         <source>Points</source>
@@ -10157,8 +10204,8 @@
         <translation>اسحب المقبضين لتشكيل المنحنى التكعيبي. تبقى الأطراف مثبتة، وتُحفظ المقابض داخل المربع حتى لا يلتف المنحنى على نفسه.</translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>اسحب النقاط الوسطى لتشكيل التدرج (تبقى الأطراف صامت→كامل). انقر نقرًا مزدوجًا لإضافة نقطة؛ ويزيل Delete التحديد.</translation>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>

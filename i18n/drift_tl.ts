@@ -2430,40 +2430,44 @@
         <translation>Pagkupas</translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Unti-unting paglitaw</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Unti-unting paglaho</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animasyon</translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation>Mag-slide pataas</translation>
     </message>
     <message>
-        <source>Slide down</source>
-        <translation>Mag-slide pababa</translation>
+        <source>Fade and animation in</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation>Mag-slide pakaliwa</translation>
-    </message>
-    <message>
-        <source>Slide right</source>
-        <translation>Mag-slide pakanan</translation>
+        <source>Fade and animation out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
         <translation>Mag-zoom in</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>Mag-zoom out</translation>
-    </message>
-    <message>
         <source>Pop</source>
         <translation>Pop</translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation>Uminog CW</translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
-        <translation>Uminog CCW</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -2478,18 +2482,6 @@
         <translation>Nalalapat ang animasyon sa video, imahe, hugis, teksto, at audio.</translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation>Fade in / out (volume)</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Estilo</translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>Piliin kung paano pumapasok at lumalabas ang clip. Ang fade ay isang opsyon — parehong mga kontrol sa estilo tulad ng slide o zoom.</translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation>I-clear</translation>
     </message>
@@ -2498,24 +2490,12 @@
         <translation>In</translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation type="unfinished">In animasyon</translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation>Out</translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation type="unfinished">Out animasyon</translation>
-    </message>
-    <message>
         <source>Custom curve</source>
         <translation type="unfinished">Custom na curve</translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
-        <translation>I-edit ang custom na curve…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -6646,6 +6626,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished">Mag-slide pataas</translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished">Mag-slide pababa</translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished">Mag-slide pakaliwa</translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished">Mag-slide pakanan</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">Mag-zoom in</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">Mag-zoom out</translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished">Pop</translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished">Uminog CW</translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished">Uminog CCW</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Bounce</translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7308,6 +7331,10 @@
     <message>
         <source>Custom fade applied</source>
         <translation>Nailapat ang custom na fade</translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9961,6 +9988,22 @@
         <translation>Custom na curve</translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation>Curve ng progreso — %1</translation>
     </message>
@@ -9969,12 +10012,16 @@
         <translation>Curve ng progreso</translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
-        <translation>Hugis ng fade — %1</translation>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade shape</source>
-        <translation>Hugis ng fade</translation>
+        <source>In</source>
+        <translation type="unfinished">In</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">Out</translation>
     </message>
     <message>
         <source>Points</source>
@@ -10013,8 +10060,8 @@
         <translation>I-drag ang dalawang handle upang hubugin ang cubic. Nananatiling naka-pin ang mga dulo, at hinahawakan ang mga handle sa loob ng kahon upang hindi mabaluktot ang curve sa sarili nito.</translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>I-drag ang mga gitnang punto upang hubugin ang ramp (ang mga dulo ay nananatiling tahimik→puno). I-double click upang magdagdag ng punto; Tinatanggal ng Delete ang napili.</translation>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>

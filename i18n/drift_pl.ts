@@ -2433,40 +2433,44 @@
         <translation>Zanikanie</translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Zanikanie wejścia</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Zanikanie</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animacja</translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation>Przeciągnij w górę</translation>
     </message>
     <message>
-        <source>Slide down</source>
-        <translation>Przeciągnij w dół</translation>
+        <source>Fade and animation in</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation>Przeciągnij w lewo</translation>
-    </message>
-    <message>
-        <source>Slide right</source>
-        <translation>Przeciągnij w prawo</translation>
+        <source>Fade and animation out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
         <translation>Przybliż</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>Oddal</translation>
-    </message>
-    <message>
         <source>Pop</source>
         <translation>Nagłe pojawienie się</translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation>Obrót zgodnie ze wskazówkami zegara</translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
-        <translation>Obrót przeciwnie do wskazówek zegara</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -2481,18 +2485,6 @@
         <translation>Animacja dotyczy wideo, obrazów, kształtów, tekstu i dźwięku.</translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation>Stopniowe zwiększanie/zmniejszanie głośności</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Styl</translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>Wybierz sposób, w jaki klip ma się pojawiać i znikać. Jedną z opcji jest zanikanie – te same elementy sterujące stylem, co w przypadku slajdu lub powiększenia.</translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation>Wyczyść</translation>
     </message>
@@ -2501,24 +2493,12 @@
         <translation>Wejście</translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation type="unfinished">Animacja wejściowa</translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation>Wyjście</translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation type="unfinished">Animacja wyjściowa</translation>
-    </message>
-    <message>
         <source>Custom curve</source>
         <translation type="unfinished">Niestandardowa krzywa</translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
-        <translation>Edytuj niestandardową krzywą…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -6670,6 +6650,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished">Przeciągnij w górę</translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished">Przeciągnij w dół</translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished">Przeciągnij w lewo</translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished">Przeciągnij w prawo</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">Przybliż</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">Oddal</translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished">Nagłe pojawienie się</translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished">Obrót zgodnie ze wskazówkami zegara</translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished">Obrót przeciwnie do wskazówek zegara</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Odbicie</translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7336,6 +7359,10 @@
     <message>
         <source>Custom fade applied</source>
         <translation>Zastosowano niestandardowe zanikanie</translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9997,6 +10024,22 @@
         <translation>Niestandardowa krzywa</translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation>Krzywa postępu — %1</translation>
     </message>
@@ -10005,12 +10048,16 @@
         <translation>Krzywa postępu</translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
-        <translation>Kształt zanikania — %1</translation>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade shape</source>
-        <translation>Kształt zanikania</translation>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Points</source>
@@ -10049,8 +10096,8 @@
         <translation>Przeciągnij dwa uchwyty, aby ukształtować krzywą sześcienną. Końce pozostają przypięte, a uchwyty są utrzymywane wewnątrz ramki, aby krzywa nie mogła się złożyć.</translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>Przeciągnij środkowe punkty, aby ukształtować rampę (końce pozostają cisza→pełnia). Kliknij dwukrotnie, aby dodać punkt; Delete usuwa zaznaczenie.</translation>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>

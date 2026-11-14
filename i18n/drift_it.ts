@@ -2430,40 +2430,44 @@
         <translation>Dissolvenza</translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Dissolvenza in entrata</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Dissolvenza in uscita</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animazione</translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation>Scorri verso l&apos;alto</translation>
     </message>
     <message>
-        <source>Slide down</source>
-        <translation>Scorri verso il basso</translation>
+        <source>Fade and animation in</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation>Scorri a sinistra</translation>
-    </message>
-    <message>
-        <source>Slide right</source>
-        <translation>Scorri a destra</translation>
+        <source>Fade and animation out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
         <translation>Ingrandisci</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>Riduci</translation>
-    </message>
-    <message>
         <source>Pop</source>
         <translation>Pop</translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation>Ruota orario</translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
-        <translation>Ruota antiorario</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -2478,18 +2482,6 @@
         <translation>L&apos;animazione si applica a video, immagini, forme, testo e audio.</translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation>Dissolvenza in entrata / uscita (volume)</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Stile</translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>Scegli la modalità di entrata e uscita della clip. La dissolvenza è un&apos;opzione: offre gli stessi controlli di stile di scorrimento o zoom.</translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation>Cancella</translation>
     </message>
@@ -2498,24 +2490,12 @@
         <translation>In entrata</translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation type="unfinished">Animazione di ingresso</translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation>In uscita</translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation type="unfinished">Animazione di uscita</translation>
-    </message>
-    <message>
         <source>Custom curve</source>
         <translation type="unfinished">Curva personalizzata</translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
-        <translation>Modifica curva personalizzata…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -6646,6 +6626,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished">Scorri verso l&apos;alto</translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished">Scorri verso il basso</translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished">Scorri a sinistra</translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished">Scorri a destra</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">Ingrandisci</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">Riduci</translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished">Pop</translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished">Ruota orario</translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished">Ruota antiorario</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Rimbalzo</translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7308,6 +7331,10 @@
     <message>
         <source>Custom fade applied</source>
         <translation>Dissolvenza personalizzata applicata</translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9961,6 +9988,22 @@
         <translation>Curva personalizzata</translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation>Curva di avanzamento — %1</translation>
     </message>
@@ -9969,12 +10012,16 @@
         <translation>Curva di avanzamento</translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
-        <translation>Forma dissolvenza — %1</translation>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade shape</source>
-        <translation>Forma dissolvenza</translation>
+        <source>In</source>
+        <translation type="unfinished">In entrata</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">In uscita</translation>
     </message>
     <message>
         <source>Points</source>
@@ -10013,8 +10060,8 @@
         <translation>Trascina le due maniglie per modellare la curva cubica. Le estremità rimangono fisse e le maniglie vengono mantenute all&apos;interno del riquadro in modo che la curva non possa ripiegarsi su se stessa.</translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>Trascina i punti intermedi per modellare la rampa (le estremità restano silenzio→pieno). Fai doppio clic per aggiungere un punto; Canc elimina la selezione.</translation>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>

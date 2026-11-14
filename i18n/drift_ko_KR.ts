@@ -2427,40 +2427,44 @@
         <translation>페이드</translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished">페이드 인</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">페이드 아웃</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">애니메이션</translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation>위로 슬라이드</translation>
     </message>
     <message>
-        <source>Slide down</source>
-        <translation>아래로 슬라이드</translation>
+        <source>Fade and animation in</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation>왼쪽으로 슬라이드</translation>
-    </message>
-    <message>
-        <source>Slide right</source>
-        <translation>오른쪽으로 슬라이드</translation>
+        <source>Fade and animation out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
         <translation>확대</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>축소</translation>
-    </message>
-    <message>
         <source>Pop</source>
         <translation>팝</translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation>시계 방향 회전</translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
-        <translation>시계 반대 방향 회전</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -2475,18 +2479,6 @@
         <translation>애니메이션은 동영상, 이미지, 도형, 텍스트 및 오디오에 적용됩니다.</translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation>페이드 인/아웃(볼륨)</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>스타일</translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>클립이 시작되고 끝나는 방식을 선택하세요. 페이드는 한 가지 옵션이며, 슬라이드나 확대/축소와 동일한 스타일 컨트롤을 사용합니다.</translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation>지우기</translation>
     </message>
@@ -2495,24 +2487,12 @@
         <translation>시작</translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation type="unfinished">인(In) 애니메이션</translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation>끝</translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation type="unfinished">아웃(Out) 애니메이션</translation>
-    </message>
-    <message>
         <source>Custom curve</source>
         <translation type="unfinished">사용자 지정 곡선</translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
-        <translation>사용자 지정 곡선 편집…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -6622,6 +6602,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished">위로 슬라이드</translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished">아래로 슬라이드</translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished">왼쪽으로 슬라이드</translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished">오른쪽으로 슬라이드</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">확대</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">축소</translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished">팝</translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished">시계 방향 회전</translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished">시계 반대 방향 회전</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">바운스</translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7280,6 +7303,10 @@
     <message>
         <source>Custom fade applied</source>
         <translation>사용자 지정 페이드가 적용됨</translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9925,6 +9952,22 @@
         <translation>사용자 지정 곡선</translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation>진행 곡선 — %1</translation>
     </message>
@@ -9933,12 +9976,16 @@
         <translation>진행 곡선</translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
-        <translation>페이드 모양 — %1</translation>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade shape</source>
-        <translation>페이드 모양</translation>
+        <source>In</source>
+        <translation type="unfinished">시작</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">끝</translation>
     </message>
     <message>
         <source>Points</source>
@@ -9977,8 +10024,8 @@
         <translation>두 핸들을 드래그하여 3차 곡선의 모양을 만드세요. 양 끝은 고정되며 핸들은 상자 안에만 있을 수 있어 곡선이 스스로 접히지 않습니다.</translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>가운데 점을 드래그하여 램프의 모양을 만드세요(끝점은 무음→전체로 유지). 두 번 클릭하여 점을 추가하고 Delete 키로 선택 항목을 삭제합니다.</translation>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>

@@ -2427,40 +2427,44 @@
         <translation>Mờ</translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Mờ dần</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Rõ dần</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Hoạt ảnh</translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation>Trượt lên</translation>
     </message>
     <message>
-        <source>Slide down</source>
-        <translation>Trượt xuống</translation>
+        <source>Fade and animation in</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation>Trượt sang trái</translation>
-    </message>
-    <message>
-        <source>Slide right</source>
-        <translation>Trượt sang phải</translation>
+        <source>Fade and animation out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
         <translation>Phóng to</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>Thu nhỏ</translation>
-    </message>
-    <message>
         <source>Pop</source>
         <translation>Bật lên</translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation>Xoay theo chiều kim đồng hồ</translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
-        <translation>Xoay ngược chiều kim đồng hồ</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -2475,18 +2479,6 @@
         <translation>Hiệu ứng áp dụng cho video, hình ảnh, hình dạng, văn bản và âm thanh.</translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation>Tăng dần vào / ra (âm lượng)</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Kiểu</translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>Chọn cách clip đi vào và rời đi. Làm mờ là một tùy chọn — các điều khiển kiểu tương tự như trượt hoặc thu phóng.</translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation>Xóa</translation>
     </message>
@@ -2495,24 +2487,12 @@
         <translation>Vào</translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation>Hoạt ảnh vào</translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation>Ra</translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation>Hoạt ảnh ra</translation>
-    </message>
-    <message>
         <source>Custom curve</source>
         <translation>Tùy chỉnh đường cong</translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
-        <translation>Chỉnh sửa đường cong tùy chỉnh…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -6622,6 +6602,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished">Trượt lên</translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished">Trượt xuống</translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished">Trượt sang trái</translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished">Trượt sang phải</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">Phóng to</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">Thu nhỏ</translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished">Bật lên</translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished">Xoay theo chiều kim đồng hồ</translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished">Xoay ngược chiều kim đồng hồ</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Nảy</translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7280,6 +7303,10 @@
     <message>
         <source>Custom fade applied</source>
         <translation>Đã áp dụng độ mờ tùy chỉnh</translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9925,6 +9952,22 @@
         <translation>Tùy chỉnh đường cong</translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation>Tiến độ đường cong — %1</translation>
     </message>
@@ -9933,12 +9976,16 @@
         <translation>Tiến độ đường cong</translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
-        <translation>Kiểu làm mờ — %1</translation>
+        <source>%1 — %2</source>
+        <translation type="unfinished">%1 — %2</translation>
     </message>
     <message>
-        <source>Fade shape</source>
-        <translation>Kiểu làm mờ</translation>
+        <source>In</source>
+        <translation type="unfinished">Vào</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">Ra</translation>
     </message>
     <message>
         <source>Points</source>
@@ -9977,8 +10024,8 @@
         <translation>Kéo hai tay cầm để tạo hình dạng. Hai điểm đầu cuối được giữ cố định, và các tay cầm chỉ di chuyển trong hộp giới hạn để đường cong không bị gập ngược lại.</translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>Kéo các điểm ở giữa để định hình đoạn đường nối (các điểm cuối giữ im lặng→đầy đủ). Nhấp đúp để thêm điểm; Xóa sẽ loại bỏ lựa chọn.</translation>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>

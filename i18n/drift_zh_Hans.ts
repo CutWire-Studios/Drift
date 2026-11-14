@@ -2427,40 +2427,44 @@
         <translation>淡入淡出</translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished">淡入</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">淡出</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">动画</translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation>上滑</translation>
     </message>
     <message>
-        <source>Slide down</source>
-        <translation>下滑</translation>
+        <source>Fade and animation in</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation>左滑</translation>
-    </message>
-    <message>
-        <source>Slide right</source>
-        <translation>右滑</translation>
+        <source>Fade and animation out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
         <translation>放大</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>缩小</translation>
-    </message>
-    <message>
         <source>Pop</source>
         <translation>弹出</translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation>顺时针旋转</translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
-        <translation>逆时针旋转</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -2475,18 +2479,6 @@
         <translation>动画适用于视频、图像、形状、文字和音频。</translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation>淡入/淡出（音量）</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>样式</translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>选择片段的进入和离开方式。淡入淡出是其中一种——与滑动、缩放使用相同的样式控件。</translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation>清除</translation>
     </message>
@@ -2495,24 +2487,12 @@
         <translation>入场</translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation type="unfinished">入场动画</translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation>出场</translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation type="unfinished">出场动画</translation>
-    </message>
-    <message>
         <source>Custom curve</source>
         <translation type="unfinished">自定义曲线</translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
-        <translation>编辑自定义曲线…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -6622,6 +6602,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished">上滑</translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished">下滑</translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished">左滑</translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished">右滑</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">放大</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">缩小</translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished">弹出</translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished">顺时针旋转</translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished">逆时针旋转</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">弹跳</translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7280,6 +7303,10 @@
     <message>
         <source>Custom fade applied</source>
         <translation>已应用自定义淡入淡出</translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9925,6 +9952,22 @@
         <translation>自定义曲线</translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation>进度曲线 — %1</translation>
     </message>
@@ -9933,12 +9976,16 @@
         <translation>进度曲线</translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
-        <translation>淡入淡出形状 — %1</translation>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade shape</source>
-        <translation>淡入淡出形状</translation>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Points</source>
@@ -9977,8 +10024,8 @@
         <translation>拖动两个手柄调整三次曲线形状。端点保持固定，手柄被限制在方框内，因此曲线不会回折自交。</translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>拖动中间的点调整斜坡形状（两端保持静音→满音量）。双击可添加点；按 Delete 删除选中的点。</translation>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>

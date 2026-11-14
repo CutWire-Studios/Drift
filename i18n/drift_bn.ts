@@ -2430,40 +2430,44 @@
         <translation>ফেড</translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished">ফেড ইন</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">ফেড আউট</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">অ্যানিমেশন</translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation>উপরে স্লাইড করুন</translation>
     </message>
     <message>
-        <source>Slide down</source>
-        <translation>নিচে স্লাইড করুন</translation>
+        <source>Fade and animation in</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation>বাম দিকে স্লাইড করুন</translation>
-    </message>
-    <message>
-        <source>Slide right</source>
-        <translation>ডানদিকে স্লাইড করুন</translation>
+        <source>Fade and animation out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
         <translation>জুম বাড়ান</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>জুম কমান</translation>
-    </message>
-    <message>
         <source>Pop</source>
         <translation>পপ</translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation>স্পিন CW</translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
-        <translation>স্পিন CCW</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -2478,18 +2482,6 @@
         <translation>অ্যানিমেশন ভিডিও, ছবি, আকৃতি, টেক্সট এবং অডিওতে প্রযোজ্য.</translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation>ফেড ইন/আউট (ভলিউম)</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>স্টাইল</translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>ক্লিপটি কীভাবে প্রবেশ করে এবং ছেড়ে যায় তা বেছে নিন। ফেইড হল একটি বিকল্প — স্লাইড বা জুমের মতো একই শৈলী নিয়ন্ত্রণ.</translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation>মুছুন</translation>
     </message>
@@ -2498,24 +2490,12 @@
         <translation>ইন</translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation type="unfinished">ইন অ্যানিমেশন</translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation>আউট</translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation type="unfinished">আউট অ্যানিমেশন</translation>
-    </message>
-    <message>
         <source>Custom curve</source>
         <translation type="unfinished">কাস্টম কার্ভ</translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
-        <translation>কাস্টম বক্ররেখা সম্পাদনা করুন…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -6646,6 +6626,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished">উপরে স্লাইড করুন</translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished">নিচে স্লাইড করুন</translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished">বাম দিকে স্লাইড করুন</translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished">ডানদিকে স্লাইড করুন</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">জুম বাড়ান</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">জুম কমান</translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished">পপ</translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished">স্পিন CW</translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished">স্পিন CCW</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">বাউন্স</translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7308,6 +7331,10 @@
     <message>
         <source>Custom fade applied</source>
         <translation>কাস্টম ফেইড প্রয়োগ করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9961,6 +9988,22 @@
         <translation>কাস্টম কার্ভ</translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation>অগ্রগতি বক্ররেখা — %1</translation>
     </message>
@@ -9969,12 +10012,16 @@
         <translation>অগ্রগতি বক্ররেখা</translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
-        <translation>ফেড আকৃতি — %1</translation>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade shape</source>
-        <translation>ফেড আকৃতি</translation>
+        <source>In</source>
+        <translation type="unfinished">ইন</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">আউট</translation>
     </message>
     <message>
         <source>Points</source>
@@ -10013,8 +10060,8 @@
         <translation>কিউবিক আকার দিতে দুটি হ্যান্ডেল টেনে আনুন। প্রান্তগুলি পিনযুক্ত থাকে, এবং হ্যান্ডলগুলি বাক্সের ভিতরে রাখা হয় যাতে বক্ররেখাটি নিজের উপর আবার ভাঁজ করতে না পারে.</translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>র‌্যাম্পের আকার দিতে মাঝের পয়েন্টগুলি টেনে আনুন (শেষগুলি নীরব থাকে→ পূর্ণ)। একটি পয়েন্ট যোগ করতে ডাবল-ক্লিক করুন; মুছুন নির্বাচনটি সরিয়ে দেয়.</translation>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>

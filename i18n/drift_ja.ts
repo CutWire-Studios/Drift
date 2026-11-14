@@ -2427,40 +2427,44 @@
         <translation>フェード</translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished">フェードイン</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">フェードアウト</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">アニメーション</translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation>スライドアップ</translation>
     </message>
     <message>
-        <source>Slide down</source>
-        <translation>スライドダウン</translation>
+        <source>Fade and animation in</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation>左スライド</translation>
-    </message>
-    <message>
-        <source>Slide right</source>
-        <translation>右スライド</translation>
+        <source>Fade and animation out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
         <translation>ズームイン</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>ズームアウト</translation>
-    </message>
-    <message>
         <source>Pop</source>
         <translation>ポップ</translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation>時計回り回転</translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
-        <translation>反時計回り回転</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -2475,18 +2479,6 @@
         <translation>アニメーションはビデオ、画像、シェイプ、テキスト、オーディオに適用されます。</translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation>フェードイン / フェードアウト (音量)</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>スタイル</translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>クリップの入り方と出方を選択します。フェードは選択肢の1つで、スライドやズームと同じスタイルコントロールが適用されます。</translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation>クリア</translation>
     </message>
@@ -2495,24 +2487,12 @@
         <translation>イン</translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation>インアニメーション</translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation>アウト</translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation>アウトアニメーション</translation>
-    </message>
-    <message>
         <source>Custom curve</source>
         <translation>カスタムカーブ</translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
-        <translation>カスタムカーブを編集…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -6622,6 +6602,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished">スライドアップ</translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished">スライドダウン</translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished">左スライド</translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished">右スライド</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">ズームイン</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">ズームアウト</translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished">ポップ</translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished">時計回り回転</translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished">反時計回り回転</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">バウンス</translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7280,6 +7303,10 @@
     <message>
         <source>Custom fade applied</source>
         <translation>カスタムフェードを適用しました</translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9925,6 +9952,22 @@
         <translation>カスタムカーブ</translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation>進捗曲線 — %1</translation>
     </message>
@@ -9933,12 +9976,16 @@
         <translation>進捗曲線</translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
-        <translation>フェード形状 — %1</translation>
+        <source>%1 — %2</source>
+        <translation type="unfinished">%1 — %2</translation>
     </message>
     <message>
-        <source>Fade shape</source>
-        <translation>フェード形状</translation>
+        <source>In</source>
+        <translation type="unfinished">イン</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">アウト</translation>
     </message>
     <message>
         <source>Points</source>
@@ -9977,8 +10024,8 @@
         <translation>2 つのハンドルをドラッグして立方体の形を整えます。端はピンで固定されたままで、ハンドルはボックスの内側に保持されているため、カーブが折り返されることはありません。</translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>中間点をドラッグしてランプの形状を調整します (両端は無音から最大音量のままです)。ダブルクリックで点を追加します。Deleteキーで選択範囲を削除します。</translation>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>

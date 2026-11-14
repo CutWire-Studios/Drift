@@ -2430,19 +2430,35 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide down</source>
+        <source>Fade and animation in</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Slide right</source>
+        <source>Fade and animation out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2450,19 +2466,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Pop</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2478,18 +2482,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2498,23 +2490,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Custom curve</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6646,6 +6626,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7307,6 +7330,10 @@
     </message>
     <message>
         <source>Custom fade applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9961,6 +9988,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9969,11 +10012,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
+        <source>%1 — %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade shape</source>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10013,7 +10060,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

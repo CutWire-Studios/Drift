@@ -2433,40 +2433,44 @@
         <translation>Плавный переход</translation>
     </message>
     <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Появление</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Затухание</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Анимация</translation>
+    </message>
+    <message>
+        <source>Fade and motion combine — fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume in and out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slide up</source>
         <translation>Сдвиг вверх</translation>
     </message>
     <message>
-        <source>Slide down</source>
-        <translation>Сдвиг вниз</translation>
+        <source>Fade and animation in</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slide left</source>
-        <translation>Сдвиг влево</translation>
-    </message>
-    <message>
-        <source>Slide right</source>
-        <translation>Сдвиг вправо</translation>
+        <source>Fade and animation out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
         <translation>Увеличение</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>Уменьшение</translation>
-    </message>
-    <message>
         <source>Pop</source>
         <translation>Резкое появление</translation>
-    </message>
-    <message>
-        <source>Spin CW</source>
-        <translation>Вращение по часовой стрелке</translation>
-    </message>
-    <message>
-        <source>Spin CCW</source>
-        <translation>Вращение против часовой стрелки</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -2481,18 +2485,6 @@
         <translation>Анимацию можно применять к видео, изображениям, фигурам, тексту и аудио.</translation>
     </message>
     <message>
-        <source>Fade in / out (volume)</source>
-        <translation>Появление и затухание (громкость)</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Стиль</translation>
-    </message>
-    <message>
-        <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>Выберите, как клип появляется и исчезает. Плавный переход — один из вариантов; сдвиг и масштабирование настраиваются так же.</translation>
-    </message>
-    <message>
         <source>Clear</source>
         <translation>Очистить</translation>
     </message>
@@ -2501,24 +2493,12 @@
         <translation>Начало</translation>
     </message>
     <message>
-        <source>In animation</source>
-        <translation type="unfinished">Анимация появления</translation>
-    </message>
-    <message>
         <source>Out</source>
         <translation>Конец</translation>
     </message>
     <message>
-        <source>Out animation</source>
-        <translation type="unfinished">Анимация исчезновения</translation>
-    </message>
-    <message>
         <source>Custom curve</source>
         <translation type="unfinished">Своя кривая</translation>
-    </message>
-    <message>
-        <source>Edit custom curve…</source>
-        <translation>Изменить кривую…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
@@ -6670,6 +6650,49 @@
     </message>
 </context>
 <context>
+    <name>ClipAnimation</name>
+    <message>
+        <source>Slide up</source>
+        <translation type="unfinished">Сдвиг вверх</translation>
+    </message>
+    <message>
+        <source>Slide down</source>
+        <translation type="unfinished">Сдвиг вниз</translation>
+    </message>
+    <message>
+        <source>Slide left</source>
+        <translation type="unfinished">Сдвиг влево</translation>
+    </message>
+    <message>
+        <source>Slide right</source>
+        <translation type="unfinished">Сдвиг вправо</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pop</source>
+        <translation type="unfinished">Резкое появление</translation>
+    </message>
+    <message>
+        <source>Spin CW</source>
+        <translation type="unfinished">Вращение по часовой стрелке</translation>
+    </message>
+    <message>
+        <source>Spin CCW</source>
+        <translation type="unfinished">Вращение против часовой стрелки</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Отскок</translation>
+    </message>
+</context>
+<context>
     <name>CloudProviders</name>
     <message>
         <source>No key set</source>
@@ -7336,6 +7359,10 @@
     <message>
         <source>Custom fade applied</source>
         <translation>Настраиваемый плавный переход применён</translation>
+    </message>
+    <message>
+        <source>Custom animation curve applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9997,6 +10024,22 @@
         <translation>Своя кривая</translation>
     </message>
     <message>
+        <source>Out animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Progress curve — %1</source>
         <translation>Кривая прогресса — %1</translation>
     </message>
@@ -10005,12 +10048,16 @@
         <translation>Кривая прогресса</translation>
     </message>
     <message>
-        <source>Fade shape — %1</source>
-        <translation>Форма затухания — %1</translation>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade shape</source>
-        <translation>Форма затухания</translation>
+        <source>In</source>
+        <translation type="unfinished">Начало</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">Конец</translation>
     </message>
     <message>
         <source>Points</source>
@@ -10049,8 +10096,8 @@
         <translation>Перетаскивайте два маркера, чтобы изменить кубическую кривую. Концы закреплены, а маркеры остаются внутри области, чтобы кривая не загибалась назад.</translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>Перетаскивайте средние точки, чтобы изменить переход от тишины к полной громкости. Двойное нажатие добавляет точку, Delete удаляет выделенное.</translation>
+        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply</source>
