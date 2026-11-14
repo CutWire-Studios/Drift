@@ -265,10 +265,10 @@ Item {
         return true
     }
 
-    // Fade wedges, pointer only (see timelineFadeHandles): standing on the clip's top edge, clear
+    // Fade dots, pointer only (see timelineFadeHandles): just inside the clip's top edge, clear
     // of the trim column.
-    readonly property real fadeHandleWidth: 9
-    readonly property real fadeHandleHeight: 15
+    readonly property real fadeHandleWidth: 11
+    readonly property real fadeHandleHeight: 11
     readonly property real fadeHandleInset: Theme.clipTrimHandleWidth + 2
 
     // Floored so short clips stay visible and
