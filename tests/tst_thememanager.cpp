@@ -244,7 +244,7 @@ void ThemeManagerTest::resolvesReferences()
     QCOMPARE(tokenColor(manager, "semantic.focusRing"), tokenColor(manager, "semantic.primary"));
     QCOMPARE(tokenColor(manager, "semantic.clip.adjustment.video"), tokenColor(manager, "semantic.clip.effect"));
     QCOMPARE(tokenColor(manager, "semantic.clip.effect"), QColor(QStringLiteral("#5d93ba")));
-    QCOMPARE(tokenColor(manager, "semantic.keyframe.curves.x"), QColor(QStringLiteral("#16a9f3")));
+    QCOMPARE(tokenColor(manager, "semantic.keyframe.curves.positionX"), QColor(QStringLiteral("#16a9f3")));
     QCOMPARE(tokenColor(manager, "semantic.keyframe.curves.volume"), QColor(QStringLiteral("#2dd4bf")));
     QCOMPARE(tokenColor(manager, "semantic.accentOnPanel"), tokenColor(manager, "semantic.primary"));
 
