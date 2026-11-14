@@ -826,12 +826,14 @@ public:
     Q_INVOKABLE int transitionJunctionAt(int trackIndex, double seconds) const;
     Q_INVOKABLE void beginPreviewDrag(const QString &undoText = {});
     Q_INVOKABLE void previewSetClipPosition(int trackIndex, int clipIndex, double xPixels, double yPixels);
-    Q_INVOKABLE void previewSetClipSize(int trackIndex, int clipIndex, double widthPixels, double heightPixels);
-    Q_INVOKABLE void previewSetClipRect(int trackIndex, int clipIndex, double xPixels, double yPixels,
-                                        double widthPixels, double heightPixels);
-    // Text resizes scale the glyphs along with the box, so the size rides with the rect.
-    Q_INVOKABLE void previewSetTextRect(int trackIndex, int clipIndex, double xPixels, double yPixels,
-                                        double widthPixels, double heightPixels, int pixelSize);
+    // scaleX/scaleY are factors (1 = the clip's frame size); position is where the anchor lands.
+    Q_INVOKABLE void previewSetClipScale(int trackIndex, int clipIndex, double scaleX, double scaleY);
+    Q_INVOKABLE void previewSetClipPlacement(int trackIndex, int clipIndex, double posX, double posY,
+                                             double scaleX, double scaleY);
+    // Text box edits change the wrap frame (frameW/frameH, project px) and the position, never the
+    // glyph size.
+    Q_INVOKABLE void previewSetTextRect(int trackIndex, int clipIndex, double posX, double posY,
+                                        double frameW, double frameH);
     Q_INVOKABLE void previewSetClipRotation(int trackIndex, int clipIndex, double degrees);
     Q_INVOKABLE void previewSetClipKeyframe(int trackIndex, int clipIndex, const QString &prop,
                                             double atSeconds, double value);

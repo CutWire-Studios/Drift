@@ -365,10 +365,12 @@ void parseTrackClips(const QDomElement &trackElem,
 
         // If visual, assign default layout
         if (clipType != ClipType::Audio) {
-            clip.transformX = {};
-            clip.transformY = {};
-            clip.transformW = {};
-            clip.transformH = {};
+            clip.positionX = {};
+            clip.positionY = {};
+            clip.scaleX = {};
+            clip.scaleY = {};
+            clip.frameW = 0.0;
+            clip.frameH = 0.0;
             clip.rotation = {};
             clip.opacity = {};
         }

@@ -3734,6 +3734,7 @@ bool AppController::rebindClipMedia(int trackIndex, int clipIndex, int assetInde
         if (type != drift::ClipType::Audio) {
             clip.sourceFrame = info.value(QStringLiteral("sourceFrame"), QRectF(0, 0, 1, 1)).toRectF();
             clip.rotationCorrection = info.value(QStringLiteral("rotationCorrection")).toInt();
+            refreshClipFrame(m_project, clip);
         }
         // The landmarks and depth maps were made from the old pixels.
         clip.faceTrackPath.clear();

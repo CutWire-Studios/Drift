@@ -294,10 +294,10 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | gizmo.z | $palette.gizmoZ | $palette.gizmoZ |
 | gizmo.uniform | $palette.gizmoUniform | $palette.gizmoUniform |
 | gizmo.hot | $palette.gizmoHot | $palette.gizmoHot |
-| keyframe.curves.x | $palette.curveX | $palette.curveX |
-| keyframe.curves.y | $palette.curveY | $palette.curveY |
-| keyframe.curves.width | $palette.curveWidth | $palette.curveWidth |
-| keyframe.curves.height | $palette.curveHeight | $palette.curveHeight |
+| keyframe.curves.positionX | $palette.curveX | $palette.curveX |
+| keyframe.curves.positionY | $palette.curveY | $palette.curveY |
+| keyframe.curves.scaleX | $palette.curveWidth | $palette.curveWidth |
+| keyframe.curves.scaleY | $palette.curveHeight | $palette.curveHeight |
 | keyframe.curves.rotation | $palette.curveRotation | $palette.curveRotation |
 | keyframe.curves.rotationX | $palette.curveRotationX | $palette.curveRotationX |
 | keyframe.curves.rotationY | $palette.curveRotationY | $palette.curveRotationY |

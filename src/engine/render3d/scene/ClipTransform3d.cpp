@@ -5,6 +5,7 @@
 #include <QVector4D>
 
 #include <algorithm>
+#include <cmath>
 
 namespace drift {
 
@@ -48,6 +49,23 @@ QMatrix4x4 placeQuad(const QRectF &rect, double rotation, const ClipPose3d &pose
 
 } // namespace
 
+ClipPlacement clipPlacementAt(const Clip &clip, TimeUs relativeUs, double renderScale, const QSizeF &projectSize)
+{
+    const ClipLayout layout = clipLayoutAt(clip, relativeUs, projectSize);
+    const double w = std::abs(layout.frameW * layout.scaleX);
+    const double h = std::abs(layout.frameH * layout.scaleY);
+    const QPointF centre(layout.posX + (layout.frameW * 0.5 - layout.anchorX) * layout.scaleX,
+                         layout.posY + (layout.frameH * 0.5 - layout.anchorY) * layout.scaleY);
+    ClipPlacement out;
+    out.rect = QRectF((centre.x() - w * 0.5) * renderScale, (centre.y() - h * 0.5) * renderScale, w * renderScale,
+                      h * renderScale);
+    out.rotation = layout.rotation;
+    out.flipH = clip.flipH != (layout.scaleX < 0.0);
+    out.flipV = clip.flipV != (layout.scaleY < 0.0);
+    out.pivot = layout.pivot() * renderScale;
+    return out;
+}
+
 ClipPose3d clipPoseAt(const Clip &clip, TimeUs relativeUs, double renderScale, double projectHeight)
 {
     const auto value = [relativeUs](const KeyframeTrack<double> &track, double fallback) {
@@ -60,8 +78,8 @@ ClipPose3d clipPoseAt(const Clip &clip, TimeUs relativeUs, double renderScale, d
     pose.perspective = value(clip.perspective, defaultClipPerspective(projectHeight)) * renderScale;
     pose.hasAnchorX = !clip.anchorX.isEmpty();
     pose.hasAnchorY = !clip.anchorY.isEmpty();
-    pose.anchorX = value(clip.anchorX, 0.0) * renderScale;
-    pose.anchorY = value(clip.anchorY, 0.0) * renderScale;
+    pose.anchorX = value(clip.anchorX, 0.0) * std::abs(value(clip.scaleX, 1.0)) * renderScale;
+    pose.anchorY = value(clip.anchorY, 0.0) * std::abs(value(clip.scaleY, 1.0)) * renderScale;
     pose.anchorZ = value(clip.anchorZ, 0.0) * renderScale;
     return pose;
 }

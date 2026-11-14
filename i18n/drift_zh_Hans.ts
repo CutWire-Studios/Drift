@@ -440,6 +440,61 @@
     </message>
 </context>
 <context>
+    <name>AndroidAnimationPage</name>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">无</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 秒</translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">淡入</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">淡出</translation>
+    </message>
+    <message>
+        <source>Fade curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">动画</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">时长</translation>
+    </message>
+    <message>
+        <source>Animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter and word animations live in Text animation. This moves the whole clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBackgroundPage</name>
     <message>
         <source>Choose background image</source>
@@ -519,6 +574,10 @@
     <message>
         <source>Stabilize</source>
         <translation type="unfinished">防抖</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished">淡入淡出</translation>
     </message>
     <message>
         <source>Edit text</source>
@@ -939,33 +998,6 @@
     <message>
         <source>Extras</source>
         <translation type="unfinished">附加项</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidFadeSheet</name>
-    <message>
-        <source>Fade</source>
-        <translation>淡入淡出</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>完成</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 秒</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation>淡入</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation>淡出</translation>
-    </message>
-    <message>
-        <source>Curve</source>
-        <translation>曲线</translation>
     </message>
 </context>
 <context>
@@ -2399,21 +2431,6 @@
     <message>
         <source>Transitions</source>
         <translation type="unfinished">转场</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidVolumePage</name>
-    <message>
-        <source>%1 s</source>
-        <translation type="unfinished">%1 秒</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation type="unfinished">淡入</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation type="unfinished">淡出</translation>
     </message>
 </context>
 <context>
@@ -10922,6 +10939,14 @@
         <translation type="unfinished">缩放</translation>
     </message>
     <message>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Anchor X</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11075,12 +11100,12 @@
         <translation>Y 位置</translation>
     </message>
     <message>
-        <source>Width</source>
-        <translation>宽度</translation>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Height</source>
-        <translation>高度</translation>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26340,10 +26365,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Add scale keyframe</source>
         <translation>添加缩放关键帧</translation>
-    </message>
-    <message>
-        <source>Scale origin</source>
-        <translation>缩放原点</translation>
     </message>
     <message>
         <source>Opacity &amp; rotation</source>

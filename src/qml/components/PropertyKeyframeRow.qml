@@ -30,6 +30,8 @@ Column {
     // stay locked: the write lands at the moving playhead, dropping a key per move.
     property bool editableWhilePlaying: false
     property bool percent: false
+    // Stored value times this is what the row shows and accepts (a scale factor edited as pixels).
+    property real displayFactor: 1
     property string unit: "" // e.g. "°" — appended to the numeric readout
     // Show the slider readout in decibels with the percentage after it, for gain properties
     // where dB is the scale the value is actually read on. Only meaningful with `percent`,
@@ -101,20 +103,20 @@ Column {
     function formatValue(v) {
         if (percent)
             return Math.round(v * 100).toString()
-        return Number(v).toFixed(propDef.decimals)
+        return Number(v * displayFactor).toFixed(propDef.decimals)
     }
 
     function parseInput(text) {
         const v = parseFloat(text)
         if (isNaN(v))
             return NaN
-        return percent ? v / 100 : v
+        return percent ? v / 100 : v / displayFactor
     }
 
     function displayReadout(v) {
         if (percent)
             return Math.round(v * 100) + "%"
-        const body = Number(v).toFixed(propDef.decimals)
+        const body = Number(v * displayFactor).toFixed(propDef.decimals)
         return unit.length > 0 ? body + unit : body
     }
 
@@ -167,7 +169,7 @@ Column {
     // Value per pixel of scrub and per arrow/wheel nudge. A continuous slider crosses its range
     // in about 200 px; a typed field moves by its last displayed digit.
     readonly property real scrubStep: {
-        const precision = percent ? 0.01 : Math.pow(10, -propDef.decimals)
+        const precision = percent ? 0.01 : Math.pow(10, -propDef.decimals) / displayFactor
         if (!useSlider)
             return precision
         return sliderStep > 0 ? sliderStep : Math.max(precision, (sliderTo - sliderFrom) / 200)
@@ -182,6 +184,8 @@ Column {
             if (sliderStep > 0)
                 v = sliderFrom + Math.round((v - sliderFrom) / sliderStep) * sliderStep
         }
+        if (displayFactor !== 1)
+            return Number((v * displayFactor).toFixed(propDef.decimals)) / displayFactor
         return Number(v.toFixed(percent ? 2 : propDef.decimals))
     }
 

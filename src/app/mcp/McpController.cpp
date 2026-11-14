@@ -1186,10 +1186,31 @@ QVariantMap McpController::compactClip(int trackIndex, int clipIndex, bool inclu
         return out;
 
     const double at = m_app->playheadSeconds();
-    out.insert(QStringLiteral("x"), m_app->propertyValueAt(trackIndex, clipIndex, QStringLiteral("x"), at, 0));
-    out.insert(QStringLiteral("y"), m_app->propertyValueAt(trackIndex, clipIndex, QStringLiteral("y"), at, 0));
-    out.insert(QStringLiteral("w"), m_app->propertyValueAt(trackIndex, clipIndex, QStringLiteral("width"), at, 0));
-    out.insert(QStringLiteral("h"), m_app->propertyValueAt(trackIndex, clipIndex, QStringLiteral("height"), at, 0));
+    for (const char *key : {"positionX", "positionY"}) {
+        const QString k = QLatin1String(key);
+        out.insert(k, m_app->propertyValueAt(trackIndex, clipIndex, k, at, 0));
+    }
+    if (!drift::isCameraClip(clip)) {
+        for (const char *key : {"scaleX", "scaleY"}) {
+            const QString k = QLatin1String(key);
+            out.insert(k, m_app->propertyValueAt(trackIndex, clipIndex, k, at, 1));
+        }
+        const drift::TimeUs relative = qBound<drift::TimeUs>(0, drift::secondsToUs(at) - clip.timelineStart,
+                                                             clip.timelineDuration);
+        const drift::ClipLayout layout = drift::clipLayoutAt(
+            clip, relative, QSizeF(m_app->m_project.width(), m_app->m_project.height()));
+        out.insert(QStringLiteral("frameW"), layout.frameW);
+        out.insert(QStringLiteral("frameH"), layout.frameH);
+        const QRectF box = layout.box();
+        out.insert(QStringLiteral("box"), QVariantMap{{QStringLiteral("x"), box.x()},
+                                                      {QStringLiteral("y"), box.y()},
+                                                      {QStringLiteral("w"), box.width()},
+                                                      {QStringLiteral("h"), box.height()}});
+        if (!clip.anchorX.isEmpty())
+            out.insert(QStringLiteral("anchorX"), layout.anchorX);
+        if (!clip.anchorY.isEmpty())
+            out.insert(QStringLiteral("anchorY"), layout.anchorY);
+    }
     out.insert(QStringLiteral("rotation"),
                m_app->propertyValueAt(trackIndex, clipIndex, QStringLiteral("rotation"), at, 0));
     out.insert(QStringLiteral("opacity"),
@@ -1202,15 +1223,8 @@ QVariantMap McpController::compactClip(int trackIndex, int clipIndex, bool inclu
             const QString k = QLatin1String(key);
             out.insert(k, m_app->propertyValueAt(trackIndex, clipIndex, k, at, 0));
         }
-        // Absent while the anchor sits at the layer's centre.
-        const drift::KeyframeTrack<double> *const anchors[] = {&clip.anchorX, &clip.anchorY, &clip.anchorZ};
-        const char *const anchorKeys[] = {"anchorX", "anchorY", "anchorZ"};
-        for (int i = 0; i < 3; ++i) {
-            if (!anchors[i]->isEmpty()) {
-                const QString k = QLatin1String(anchorKeys[i]);
-                out.insert(k, m_app->propertyValueAt(trackIndex, clipIndex, k, at, 0));
-            }
-        }
+        if (!clip.anchorZ.isEmpty())
+            out.insert(QStringLiteral("anchorZ"), m_app->propertyValueAt(trackIndex, clipIndex, QStringLiteral("anchorZ"), at, 0));
     }
     return out;
 }
@@ -1363,9 +1377,10 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
                     if (!fullClip.isEmpty()) {
                         const QVariantMap canvas = compactClip(t, c, true);
                         QVariantMap transform;
-                        for (const char *key : {"x", "y", "w", "h", "rotation", "opacity", "layer3d",
-                                                "rotationX", "rotationY", "z", "perspective",
-                                                "anchorX", "anchorY", "anchorZ"}) {
+                        for (const char *key : {"positionX", "positionY", "scaleX", "scaleY", "frameW", "frameH", "box",
+                                                "rotation", "opacity", "layer3d", "rotationX",
+                                                "rotationY", "z", "perspective", "anchorX", "anchorY",
+                                                "anchorZ"}) {
                             if (canvas.contains(QLatin1String(key)))
                                 transform.insert(QLatin1String(key), canvas.value(QLatin1String(key)));
                         }
@@ -1590,9 +1605,18 @@ QVariantMap McpController::lastExportSettings() const
     return out;
 }
 
-bool McpController::setClipCanvas(int trackIndex, int clipIndex, const QVariantMap &patch, double atSeconds,
+bool McpController::setClipCanvas(int trackIndex, int clipIndex, const QVariantMap &requested, double atSeconds,
                                   QString *error)
 {
+    // `scale` is the uniform shorthand; an explicit scaleX/scaleY wins over it.
+    QVariantMap patch = requested;
+    if (patch.contains(QStringLiteral("scale"))) {
+        const QVariant uniform = patch.take(QStringLiteral("scale"));
+        if (!patch.contains(QStringLiteral("scaleX")))
+            patch.insert(QStringLiteral("scaleX"), uniform);
+        if (!patch.contains(QStringLiteral("scaleY")))
+            patch.insert(QStringLiteral("scaleY"), uniform);
+    }
     if (!m_app->isValidClipIndex(trackIndex, clipIndex))
         return false;
 
@@ -1602,10 +1626,10 @@ bool McpController::setClipCanvas(int trackIndex, int clipIndex, const QVariantM
         return false;
 
     static const QList<QPair<QString, QString>> kProps{
-        {QStringLiteral("x"), QStringLiteral("x")},
-        {QStringLiteral("y"), QStringLiteral("y")},
-        {QStringLiteral("w"), QStringLiteral("width")},
-        {QStringLiteral("h"), QStringLiteral("height")},
+        {QStringLiteral("positionX"), QStringLiteral("positionX")},
+        {QStringLiteral("positionY"), QStringLiteral("positionY")},
+        {QStringLiteral("scaleX"), QStringLiteral("scaleX")},
+        {QStringLiteral("scaleY"), QStringLiteral("scaleY")},
         {QStringLiteral("rotation"), QStringLiteral("rotation")},
         {QStringLiteral("rotationX"), QStringLiteral("rotationX")},
         {QStringLiteral("rotationY"), QStringLiteral("rotationY")},
@@ -6273,6 +6297,7 @@ QJsonObject McpController::autoReframe(int trackIndex, int clipIndex, double asp
     const double frameX = (canvasW - frameW) * 0.5;
     const double frameY = (canvasH - frameH) * 0.5;
 
+    const drift::ClipLayout restLayout = drift::clipLayoutAt(clip, 0, QSizeF(canvasW, canvasH));
     beginBatch();
     int keys = 0;
     for (const Sample &s : smoothed) {
@@ -6286,7 +6311,8 @@ QJsonObject McpController::autoReframe(int trackIndex, int clipIndex, double asp
         double cropX = qBound(0.0, s.cx - cropW * 0.5, 1.0 - cropW);
         double cropY = qBound(0.0, s.cy - cropH * 0.5, 1.0 - cropH);
         // The whole source, scaled so that its crop window covers exactly the framed area. w/h
-        // comes out at the source's own aspect, so nothing is stretched.
+        // comes out at the source's own aspect, so nothing is stretched. x/y/w/h is the box on
+        // the canvas; it becomes position and scale about the clip's anchor below.
         const double w = frameW / cropW;
         const double h = frameH / cropH;
         const double x = frameX - cropX * w;
@@ -6296,10 +6322,14 @@ QJsonObject McpController::autoReframe(int trackIndex, int clipIndex, double asp
                 tightestScale = qMax(tightestScale, frameW / (cropW * asset->width));
         }
         const double at = drift::usToSeconds(clip.timelineStart) + s.t;
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("x"), at, x);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("y"), at, y);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("width"), at, w);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("height"), at, h);
+        const double scaleX = w / restLayout.frameW;
+        const double scaleY = h / restLayout.frameH;
+        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("positionX"), at,
+                               x + restLayout.anchorX * scaleX);
+        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("positionY"), at,
+                               y + restLayout.anchorY * scaleY);
+        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("scaleX"), at, scaleX);
+        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("scaleY"), at, scaleY);
         keys += 4;
     }
     endBatch(QStringLiteral("Auto-reframe"), keys > 0);

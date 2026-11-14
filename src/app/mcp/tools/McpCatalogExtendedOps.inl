@@ -259,7 +259,7 @@
           "displayed (rotation-corrected) source, angle (straighten, degrees clockwise), cropped "
           "false for the full, unturned frame, and, when the "
           "source size is known, sourceWidth/sourceHeight and the same window in source pixels. The "
-          "top-level x/y/w/h are the clip's canvas box, not the crop.",
+          "top-level positionX/positionY/scaleX/scaleY/frameW/frameH/box are the clip's canvas placement, not the crop.",
           objectSchema(clipRefProps()),
           true, false, true },
         { "set_clip_crop", "canvas", "Crop a clip to part of its source",
@@ -270,8 +270,8 @@
           "many degrees about its centre (negative = anticlockwise) and the window is cut from the "
           "turned picture, so a tilted horizon can be levelled; corners the turned picture does not "
           "reach are transparent, so shrink w/h to hide them. Omit angle to keep the current one. "
-          "The window is clamped inside the source. The clip's on-canvas "
-          "size is rescaled to the new crop's aspect, the way the inspector does it. Does not crop "
+          "The window is clamped inside the source. The clip's frame "
+          "(its fit size) follows the new crop's aspect, the way the inspector does it. Does not crop "
           "the project canvas (apply_canvas_crop). Returns crop as get_clip_crop does.",
           objectSchema(mergeProps({{QStringLiteral("x"), numberProp(QStringLiteral("Left edge"))},
                                    {QStringLiteral("y"), numberProp(QStringLiteral("Top edge"))},
@@ -764,7 +764,7 @@
           "Add a clip of an installed package on a graphic track, creating one when needed. It is a 3D layer "
           "the size of the canvas; the whole scene is built by main.lua each frame, in project pixels (origin "
           "top-left, y down, +z away); frame it with a Camera clip (add_camera, set_keyframes with "
-          "interpolation \"smooth\" on x/y/z and anchorX/Y/Z, camera_look_at aimAtTarget) rather than "
+          "interpolation \"smooth\" on positionX/positionY/z and anchorX/Y/Z, camera_look_at aimAtTarget) rather than "
           "scene:camera in the script. Params start at the manifest defaults; params sets "
           "starting values, and set_keyframe on proc.<key> animates them later (one key holds a constant). "
           "Returns {id, track, index}.",
@@ -798,7 +798,7 @@
 
         { "add_model3d", "model3d", "Place a 3D model (.glb) or Gaussian splat",
           "Add a glTF binary, or a Gaussian splat scene (.sog, a 3DGS .ply, a .zip or folder bundle holding meta.json/lod-meta.json, or that meta.json), as a model clip on a graphic track, creating one when needed. A model "
-          "clip is a 3D layer like any other: its rect (x, y, w, h) is the front face of the "
+          "clip is a 3D layer like any other: its box (positionX/positionY and scaleX/scaleY on its frame) is the front face of the "
           "model's bounding box, z pushes it in depth (+ away from the viewer), rotationX/rotationY/rotation "
           "turn it about the clip's anchor (intrinsic, X then Y then the in-plane spin, the same as a "
           "tilted clip; the world is right-handed, y down, z away), and "
@@ -827,7 +827,7 @@
                         {QStringLiteral("loop"), enumProp(QStringLiteral("Past the animation's end: hold the last frame, loop, ping-pong, or hide (default loop)"),
                                                            {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
                         {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start (default 0)"))},
-                        {QStringLiteral("scale"), numberProp(QStringLiteral("Shorthand: largest extent as a fraction of canvas height (default 0.5); writes w/h"), 0.01, 10.0)},
+                        {QStringLiteral("scale"), numberProp(QStringLiteral("Shorthand: largest extent as a fraction of canvas height (default 0.5); writes scaleX/scaleY"), 0.01, 10.0)},
                         {QStringLiteral("depth"), numberProp(QStringLiteral("Shorthand: perspective strength 0 (flat) .. 1 (strong); writes perspective"), 0.0, 1.0)},
                         {QStringLiteral("rotX"), numberProp(QStringLiteral("Shorthand: degrees about the model's X axis; writes rotationX = rotX"))},
                         {QStringLiteral("rotY"), numberProp(QStringLiteral("Shorthand: degrees about the model's up axis; writes rotationY = -rotY"))},
@@ -862,7 +862,7 @@
                                    {QStringLiteral("loop"), enumProp(QStringLiteral("hold | loop | pingpong | hide"),
                                                                       {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
                                    {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start"))},
-                                   {QStringLiteral("scale"), numberProp(QStringLiteral("Shorthand: largest extent as a fraction of canvas height; writes w/h"), 0.01, 10.0)},
+                                   {QStringLiteral("scale"), numberProp(QStringLiteral("Shorthand: largest extent as a fraction of canvas height; writes scaleX/scaleY"), 0.01, 10.0)},
                                    {QStringLiteral("depth"), numberProp(QStringLiteral("Shorthand: perspective strength 0..1; writes perspective"), 0.0, 1.0)},
                                    {QStringLiteral("rotX"), numberProp(QStringLiteral("Shorthand: writes rotationX = rotX"))},
                                    {QStringLiteral("rotY"), numberProp(QStringLiteral("Shorthand: writes rotationY = -rotY"))},
@@ -1922,7 +1922,7 @@
           "faces:[{cx, cy, rx, ry, valid}]}]}. t is source seconds. Long tracks are subsampled.",
           objectSchema(clipRefProps()), true, false, true },
         { "auto_reframe", "canvas", "Keep a face in frame",
-          "Write x/y/w/h transform keyframes so the subject stays in frame at the requested aspect. "
+          "Write positionX/positionY/scaleX/scaleY transform keyframes so the subject stays in frame at the requested aspect. "
           "Does not crop the project canvas, so a 16:9 timeline can still export a 9:16 deliverable. "
           "mode face follows list_face_track (run detect_faces first); center is a static centre crop; "
           "motion is face with heavier smoothing. Returns scale — how much of the source ends up "

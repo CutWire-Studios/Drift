@@ -440,6 +440,61 @@
     </message>
 </context>
 <context>
+    <name>AndroidAnimationPage</name>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">Nessuno</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 s</translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished">In entrata</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">In uscita</translation>
+    </message>
+    <message>
+        <source>Fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Dissolvenza in entrata</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Dissolvenza in uscita</translation>
+    </message>
+    <message>
+        <source>Fade curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animazione</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">Durata</translation>
+    </message>
+    <message>
+        <source>Animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter and word animations live in Text animation. This moves the whole clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBackgroundPage</name>
     <message>
         <source>Choose background image</source>
@@ -519,6 +574,10 @@
     <message>
         <source>Stabilize</source>
         <translation type="unfinished">Stabilizza</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished">Dissolvenza</translation>
     </message>
     <message>
         <source>Edit text</source>
@@ -940,33 +999,6 @@
     <message>
         <source>Extras</source>
         <translation type="unfinished">Extra</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidFadeSheet</name>
-    <message>
-        <source>Fade</source>
-        <translation>Dissolvenza</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>Fatto</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 s</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation>Dissolvenza in entrata</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation>Dissolvenza in uscita</translation>
-    </message>
-    <message>
-        <source>Curve</source>
-        <translation>Curva</translation>
     </message>
 </context>
 <context>
@@ -2402,21 +2434,6 @@
     <message>
         <source>Transitions</source>
         <translation type="unfinished">Transizioni</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidVolumePage</name>
-    <message>
-        <source>%1 s</source>
-        <translation type="unfinished">%1 s</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation type="unfinished">Dissolvenza in entrata</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation type="unfinished">Dissolvenza in uscita</translation>
     </message>
 </context>
 <context>
@@ -10961,6 +10978,14 @@
         <translation type="unfinished">Zoom</translation>
     </message>
     <message>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Anchor X</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11115,12 +11140,12 @@
         <translation>Posizione Y</translation>
     </message>
     <message>
-        <source>Width</source>
-        <translation>Larghezza</translation>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Height</source>
-        <translation>Altezza</translation>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26423,10 +26448,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Add scale keyframe</source>
         <translation>Aggiungi fotogramma chiave scala</translation>
-    </message>
-    <message>
-        <source>Scale origin</source>
-        <translation>Origine scala</translation>
     </message>
     <message>
         <source>Opacity &amp; rotation</source>

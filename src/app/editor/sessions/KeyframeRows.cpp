@@ -147,12 +147,12 @@ QList<Row> build(const QVariantList &entries, const Options &opts)
         const bool isCollapsed = opts.collapsed.contains(grp.group);
         QList<Row> items;
         bool scaleInserted = false;
-        const QVariantMap *w = findProp(grp.items, QStringLiteral("width"));
-        const QVariantMap *h = findProp(grp.items, QStringLiteral("height"));
+        const QVariantMap *w = findProp(grp.items, QStringLiteral("scaleX"));
+        const QVariantMap *h = findProp(grp.items, QStringLiteral("scaleY"));
         const bool hasSize = opts.sizeLinked && grp.group == QLatin1String("transform") && w && h;
         for (const QVariantMap &e : grp.items) {
             const QString prop = e.value(QStringLiteral("prop")).toString();
-            if (hasSize && (prop == QLatin1String("width") || prop == QLatin1String("height"))) {
+            if (hasSize && (prop == QLatin1String("scaleX") || prop == QLatin1String("scaleY"))) {
                 if (scaleInserted)
                     continue;
                 scaleInserted = true;
@@ -166,8 +166,8 @@ QList<Row> build(const QVariantList &entries, const Options &opts)
                 r.group = grp.group;
                 r.kind = QStringLiteral("scalar");
                 r.prop = QStringLiteral("scale");
-                r.tracks = {QStringLiteral("width"), QStringLiteral("height")};
-                r.keyProp = QStringLiteral("width");
+                r.tracks = {QStringLiteral("scaleX"), QStringLiteral("scaleY")};
+                r.keyProp = QStringLiteral("scaleX");
                 r.animated = animated;
                 r.enabled = w->value(QStringLiteral("enabled")).toBool()
                             && h->value(QStringLiteral("enabled")).toBool();

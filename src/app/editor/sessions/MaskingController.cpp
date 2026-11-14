@@ -1165,11 +1165,10 @@ QSize MaskingController::brushMatteSize(int trackIndex, int clipIndex) const
     // The matte is stretched over the clip's frame, not its media, so its aspect has to be the
     // frame's or round dabs come out oval. Same resolution as PreviewController::maskEditorState.
     const drift::TimeUs relative = m_app->m_playheadUs - clip.timelineStart;
-    const auto value = [&](const drift::KeyframeTrack<double> &kt, double fallback) {
-        return kt.isEmpty() ? fallback : kt.evaluateAt(relative);
-    };
-    double frameW = value(clip.transformW, project.width());
-    double frameH = value(clip.transformH, project.height());
+    const drift::ClipLayout layout =
+        drift::clipLayoutAt(clip, relative, QSizeF(project.width(), project.height()));
+    double frameW = std::abs(layout.frameW * layout.scaleX);
+    double frameH = std::abs(layout.frameH * layout.scaleY);
     if (frameW <= 0.0 || frameH <= 0.0) {
         frameW = project.width();
         frameH = project.height();

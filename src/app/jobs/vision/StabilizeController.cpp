@@ -300,14 +300,12 @@ void StabilizeController::run(int trackIndex, int clipIndex)
             sourceW = asset->width;
             sourceH = asset->height;
         }
-        const double layoutW = clipCopy.stabilizeHasRestPose
-                                   ? clipCopy.stabilizeRestW
-                                   : (clipCopy.transformW.isEmpty() ? sourceW
-                                                                    : clipCopy.transformW.evaluateAt(0));
-        const double layoutH = clipCopy.stabilizeHasRestPose
-                                   ? clipCopy.stabilizeRestH
-                                   : (clipCopy.transformH.isEmpty() ? sourceH
-                                                                    : clipCopy.transformH.evaluateAt(0));
+        const drift::ClipLayout layout = drift::clipLayoutAt(
+            clipCopy, 0, QSizeF(m_app->m_project.width(), m_app->m_project.height()));
+        const double layoutW = layout.frameW * std::abs(clipCopy.stabilizeHasRestPose ? clipCopy.stabilizeRestW
+                                                                                       : layout.scaleX);
+        const double layoutH = layout.frameH * std::abs(clipCopy.stabilizeHasRestPose ? clipCopy.stabilizeRestH
+                                                                                       : layout.scaleY);
         const double scaleX = (sourceW > 0 && layoutW > 0.0) ? layoutW / sourceW : 1.0;
         const double scaleY = (sourceH > 0 && layoutH > 0.0) ? layoutH / sourceH : 1.0;
         const int smoothing = clipCopy.stabilizeSmoothing;
@@ -370,7 +368,8 @@ void StabilizeController::run(int trackIndex, int clipIndex)
                         findClipById(m_app->m_project, clipId, &foundTrack2, &foundClip2);
                     }
                     drift::Clip &applied = m_app->m_project.tracks()[foundTrack2].clips[foundClip2];
-                    drift::applyStabilizePlan(applied, plan);
+                    drift::applyStabilizePlan(applied, plan,
+                                              QSizeF(m_app->m_project.width(), m_app->m_project.height()));
                     applied.stabilizeAppliedSmoothing = applied.stabilizeSmoothing;
                     applied.stabilizeAppliedTripod = applied.stabilizeTripod;
                     applied.stabilizeAppliedMode = drift::StabilizeMode::Keyframes;
@@ -560,18 +559,14 @@ void StabilizeController::run(int trackIndex, int clipIndex)
                     outClip.depthPath.clear();
 
                     drift::restoreStabilizeRestPose(outClip);
-                    if (outClip.transformX.keyframes().size() > 1
-                        || outClip.transformY.keyframes().size() > 1) {
-                        const double x = outClip.transformX.isEmpty()
-                                             ? 0.0
-                                             : outClip.transformX.evaluateAt(0);
-                        const double y = outClip.transformY.isEmpty()
-                                             ? 0.0
-                                             : outClip.transformY.evaluateAt(0);
-                        outClip.transformX = {};
-                        outClip.transformY = {};
-                        outClip.transformX.setKeyframe(0, x);
-                        outClip.transformY.setKeyframe(0, y);
+                    if (outClip.positionX.keyframes().size() > 1
+                        || outClip.positionY.keyframes().size() > 1) {
+                        const QPointF centre = drift::clipLayoutAt(
+                            outClip, 0, QSizeF(m_app->m_project.width(), m_app->m_project.height())).pivot();
+                        outClip.positionX = {};
+                        outClip.positionY = {};
+                        outClip.positionX.setKeyframe(0, centre.x());
+                        outClip.positionY.setKeyframe(0, centre.y());
                     }
                     outClip.stabilizeAppliedSmoothing = outClip.stabilizeSmoothing;
                     outClip.stabilizeAppliedTripod = outClip.stabilizeTripod;

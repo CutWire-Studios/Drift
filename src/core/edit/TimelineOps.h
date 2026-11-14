@@ -403,12 +403,17 @@ void syncLinkedTiming(Clip &dst, const Clip &src);
 // Returns the link id assigned to `tail` (empty when `head` was not linked).
 QString assignSplitLinkIds(Clip &head, Clip &tail);
 
+// The 100% size of a clip's frame (what scale 1 means), in project px. Media is its own shape fitted
+// inside the canvas (rotation and source crop applied), a model its default face size, text,
+// subtitles and shapes the box already stored in frameW/frameH, and everything else the canvas.
+QSizeF clipFitFrameSize(const Project &project, const Clip &clip);
+
 // Prepares every clip for a canvas resize from `oldWidth`x`oldHeight`.
 //
-// Clips with no transformW/transformH keyframes fall back to the project size at
-// composite time, so they would silently rescale themselves to the new canvas.
-// This freezes that implicit size into explicit values first, then shifts stored
-// positions by (-originX, -originY) so the region the user framed stays put.
+// Clips with no frameW/frameH fall back to the project size at composite time, and an empty
+// position means the canvas centre, so they would silently move and rescale themselves to the
+// new canvas. This freezes that implicit size and position into explicit values first, then
+// shifts stored positions by (-originX, -originY) so the region the user framed stays put.
 // Clips are left visually stationary; whatever falls outside the new canvas is
 // simply clipped away by the compositor. Every timeline is rebased, and boxes that show a whole
 // canvas (clipBoxIsCanvasReferenced) scale with it instead, so nested content holds still too.

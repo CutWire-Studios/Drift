@@ -136,8 +136,8 @@ Item {
         function onTracksChanged() { root.refreshOverlay() }
         function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
             for (const k of keys) {
-                if (k.startsWith("mask.") || k === "x" || k === "y" || k === "width"
-                        || k === "height" || k === "rotation" || k === "rotationX"
+                if (k.startsWith("mask.") || k === "positionX" || k === "positionY" || k === "scaleX"
+                        || k === "scaleY" || k === "rotation" || k === "rotationX"
                         || k === "rotationY" || k === "z" || k === "perspective") {
                     root.refreshOverlay()
                     return

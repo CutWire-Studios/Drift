@@ -84,7 +84,7 @@ struct Clip;
 // The viewpoint a Camera clip describes at `timelineUs`, reading the clip's ordinary tracks with
 // camera meanings:
 //
-//   transformX/Y, positionZ       the eye (default: the canvas centre, one default zoom back)
+//   positionX/Y, positionZ        the eye (default: the canvas centre, one default zoom back)
 //   rotationX, rotationY, rotation  pitch, yaw, roll
 //   perspective                   zoom (default: defaultClipPerspective of the project height)
 //   anchorX/Y/Z, Clip::aimAtTarget  the point of interest (default: the canvas centre) and whether

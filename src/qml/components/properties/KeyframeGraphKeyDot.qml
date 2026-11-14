@@ -16,7 +16,7 @@ Rectangle {
     opacity: (host.curveEditing && !host.isFocused(modelData.seriesIndex))
              ? Theme.c.keyframeGraphKeyDot.opacityUnfocused : 1.0
     readonly property bool isLinkedPartnerKey: EditorState.positionLinked
-        && ((host.dragProp === "x" && modelData.prop === "y") || (host.dragProp === "y" && modelData.prop === "x"))
+        && ((host.dragProp === "positionX" && modelData.prop === "positionY") || (host.dragProp === "positionY" && modelData.prop === "positionX"))
         && host.dragIndex >= 0 && host.focusedIndex >= 0 && host.focusedIndex < host.series.length
         && Math.abs((host.series[host.focusedIndex].points[host.dragIndex] ? host.series[host.focusedIndex].points[host.dragIndex].seconds : -999) - modelData.seconds) < (1 / 30)
     x: host.xForSeconds(modelData.seconds) - width / 2 + (isLinkedPartnerKey ? (host.xForSeconds(host.dragSeconds) - host.xForSeconds(modelData.seconds)) : dragDx)

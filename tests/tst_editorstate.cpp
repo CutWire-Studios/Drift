@@ -53,6 +53,7 @@
 
 #include <filesystem>
 
+#include "TestClipLayout.h"
 #include "playback/preview/CompositorService.h"
 #include "app/jobs/vision/SegmentationPlan.h"
 #include "engine/decode/hw/HwAccel.h"
@@ -293,7 +294,7 @@ private slots:
     void exportAudioOnlyIsExposedWhileExporting();
     void lastExportSettingsNormalisesStringTypedValues();
     void textStyleBlendModeKeyframesAndEffects();
-    void previewSetTextRectScalesPixelSize();
+    void previewSetTextRectResizesTheFrame();
     void previewDragUndoEdges();
     void fontCatalogIsExposedToQml();
     void effectBrowserCategoriesAndApply();
@@ -360,7 +361,7 @@ private slots:
     void keyframeRowsListEffectParamsAndChannels();
     void keyframeStaticChannelsReadTheStoredValue();
     void keyframeBatchOpsAreOneUndoStep();
-    void keyframeAddMirrorsPositionAndPinsScale();
+    void keyframeAddMirrorsPositionAndKeysScaleAlone();
     void keyframeClearRestoresStaticHome();
     void keyframeMoveKeepsTangentsAndHold();
     void keyframePreviewMoveRoundTripKeepsKeys();
@@ -370,7 +371,7 @@ private slots:
     void keyframeRowsModelDiffsRebuildsAndNavigates();
     void keyframeMoveReportsCollisions();
     void keyframeNudgesFoldIntoOneUndoStep();
-    void keyframeScaleMoveCarriesItsPins();
+    void keyframeScaleMoveLeavesPositionKeysAlone();
     void keyframeCurvesModelHitTestsMarqueesAndFits();
     void keyframeScaleMathMatchesTheCanvasBox();
     void depthEffectEditorStateResolvesHandles();
@@ -893,7 +894,7 @@ void EditorStateTest::cameraMovesThePreviewOverlayWithThePicture()
     QVERIFY(imageTrack >= 0);
 
     // A small card dead centre, with room to move before it reaches an edge.
-    state.previewSetClipRect(imageTrack, 0, 180, 180, 40, 40);
+    state.previewSetClipPlacement(imageTrack, 0, 200, 200, 0.1, 0.1);
     state.setPlayheadSeconds(0.0);
 
     // The white pixels' centre of mass in a composited frame.
@@ -1099,8 +1100,8 @@ void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
                                                           now.x(), now.y(), false, 1.0, 1);
     state.commitPreviewDrag();
     const drift::Clip &camera = state.project()->tracks().at(track).clips.at(clip);
-    QVERIFY2(std::abs(camera.transformX.evaluateAt(0) - 650.0) < 0.5,
-             qPrintable(QString::number(camera.transformX.evaluateAt(0))));
+    QVERIFY2(std::abs(camera.positionX.evaluateAt(0) - 650.0) < 0.5,
+             qPrintable(QString::number(camera.positionX.evaluateAt(0))));
     QVERIFY(std::abs((camera.positionZ.isEmpty() ? -zoom : camera.positionZ.evaluateAt(0)) + zoom) < 0.5);
     QVERIFY(std::abs(moved.value(QStringLiteral("x")).toDouble() + 0.5 - 650.0) < 0.5);
 
@@ -1236,15 +1237,16 @@ void EditorStateTest::importedMediaIsCentredAndResetsToItsFit()
 
     const auto check = [&state]() {
         const drift::Clip &clip = state.project()->tracks().at(0).clips.at(0);
-        QCOMPARE(clip.transformX.evaluateAt(0), 420.0);
-        QCOMPARE(clip.transformY.evaluateAt(0), 0.0);
-        QCOMPARE(clip.transformW.evaluateAt(0), 1080.0);
-        QCOMPARE(clip.transformH.evaluateAt(0), 1080.0);
+        const QRectF box = drift::clipLayoutAt(clip, 0, QSizeF(1920, 1080)).box();
+        QCOMPARE(box.x(), 420.0);
+        QCOMPARE(box.y(), 0.0);
+        QCOMPARE(box.width(), 1080.0);
+        QCOMPARE(box.height(), 1080.0);
     };
     check();
 
-    state.project()->tracks()[0].clips[0].transformX.setKeyframe(0, 5.0);
-    state.project()->tracks()[0].clips[0].transformW.setKeyframe(0, 300.0);
+    state.project()->tracks()[0].clips[0].positionX.setKeyframe(0, 5.0);
+    state.project()->tracks()[0].clips[0].scaleX.setKeyframe(0, 0.3);
     state.resetClipTransform(0, 0);
     check();
 
@@ -1252,8 +1254,9 @@ void EditorStateTest::importedMediaIsCentredAndResetsToItsFit()
     const int textTrack = state.selectedTrack();
     state.resetClipTransform(textTrack, 0);
     const drift::Clip &text = state.project()->tracks().at(textTrack).clips.at(0);
-    QCOMPARE(text.transformX.evaluateAt(0), 0.0);
-    QCOMPARE(text.transformW.evaluateAt(0), 1920.0);
+    const QRectF textBox = drift::clipLayoutAt(text, 0, QSizeF(1920, 1080)).box();
+    QCOMPARE(textBox.x(), 0.0);
+    QCOMPARE(textBox.width(), 1920.0);
 }
 
 namespace {
@@ -1267,10 +1270,7 @@ drift::Clip boxShape(const QString &id, const QRectF &rect)
     clip.timelineDuration = drift::secondsToUs(5.0);
     clip.srcOut = clip.timelineDuration;
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.transformX.setKeyframe(0, rect.x());
-    clip.transformY.setKeyframe(0, rect.y());
-    clip.transformW.setKeyframe(0, rect.width());
-    clip.transformH.setKeyframe(0, rect.height());
+    setTestRect(clip, rect.x(), rect.y(), rect.width(), rect.height());
     return clip;
 }
 
@@ -1344,8 +1344,8 @@ void EditorStateTest::transformLayerParentsPreviewBoxes()
     setUpTransformTracks(state);
     state.addTransformLayerAbove(0);
     drift::Clip &layer = state.project()->tracks()[0].clips[0];
-    layer.transformX.setKeyframe(0, 50.0);
-    layer.transformY.setKeyframe(0, 20.0);
+    layer.positionX.setKeyframe(0, state.project()->width() / 2.0 + 50.0);
+    layer.positionY.setKeyframe(0, state.project()->height() / 2.0 + 20.0);
 
     const QVariantMap child = previewBoxFor(state, QStringLiteral("a"));
     QVERIFY(child.value(QStringLiteral("parentActive")).toBool());
@@ -1872,11 +1872,11 @@ void EditorStateTest::sourceFramingPreservesOriginalAndUndoes()
     QVERIFY(!state.setClipSourceFrame(QStringLiteral("deleted"), 0, 0, 1, 1));
 
     auto &unlaid = state.project()->tracks()[0].clips[0];
-    unlaid.transformW = {};
-    unlaid.transformH = {};
+    unlaid.scaleX = {};
+    unlaid.scaleY = {};
     QVERIFY(state.setClipSourceFrame(clip.id, 0.25, 0.25, 0.5, 0.5));
-    QVERIFY(state.project()->tracks().at(0).clips.at(0).transformW.isEmpty());
-    QVERIFY(state.project()->tracks().at(0).clips.at(0).transformH.isEmpty());
+    QVERIFY(state.project()->tracks().at(0).clips.at(0).scaleX.isEmpty());
+    QVERIFY(state.project()->tracks().at(0).clips.at(0).scaleY.isEmpty());
 }
 
 void EditorStateTest::undoLibraryClipDropOntoExistingTrack()
@@ -5440,22 +5440,23 @@ void EditorStateTest::textStyleBlendModeKeyframesAndEffects()
     state.previewSetClipPosition(track, clip, 100.0, 200.0);
     QCOMPARE(clipDataSpy.count(), 0);
     QCOMPARE(previewedSpy.count(), 1);
-    QCOMPARE(previewedSpy.first().at(2).toStringList(), QStringList({QStringLiteral("x"), QStringLiteral("y")}));
+    QCOMPARE(previewedSpy.first().at(2).toStringList(),
+             QStringList({QStringLiteral("positionX"), QStringLiteral("positionY")}));
     const QVariantMap keys = state.selectedClipData().value(QStringLiteral("keyframes")).toMap();
-    const QVariantList xKeys = keys.value(QStringLiteral("x")).toMap().value(QStringLiteral("points")).toList();
+    const QVariantList xKeys = keys.value(QStringLiteral("positionX")).toMap().value(QStringLiteral("points")).toList();
     QVERIFY(!xKeys.isEmpty());
     QCOMPARE(xKeys.first().toMap().value(QStringLiteral("value")).toDouble(), 100.0);
     state.commitPreviewDrag();
     QVERIFY(clipDataSpy.count() >= 1);
 
     state.beginPreviewDrag(QStringLiteral("Resize clip"));
-    state.previewSetClipSize(track, clip, 640.0, 360.0);
+    state.previewSetClipScale(track, clip, 0.5, 0.5);
     state.commitPreviewDrag();
     state.resetClipTransform(track, clip);
     QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("opacity")).size(), 0);
-    // Reset writes a full-canvas layout keyframe at t=0 for each layout track.
-    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("x")).size(), 1);
-    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("width")).size(), 1);
+    // Reset leaves position and scale empty: centred at 100%.
+    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("positionX")).size(), 0);
+    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("scaleX")).size(), 0);
 
     state.removeClipKeyframe(track, clip, QStringLiteral("opacity"), 0.0);
     QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("opacity")).size(), 0);
@@ -5590,7 +5591,7 @@ void EditorStateTest::keyframeRowsListEffectParamsAndChannels()
 
     // A fresh clip offers the transform group, unanimated.
     const QVariantList fresh = state.keyframes()->animatableProperties(track, clip);
-    const QVariantMap x = findRow(fresh, QStringLiteral("x"));
+    const QVariantMap x = findRow(fresh, QStringLiteral("positionX"));
     QCOMPARE(x.value(QStringLiteral("group")).toString(), QStringLiteral("transform"));
     QCOMPARE(x.value(QStringLiteral("animated")).toBool(), false);
     QVERIFY(state.keyframes()->animatableProperties(track, 99).isEmpty());
@@ -5657,7 +5658,7 @@ void EditorStateTest::keyframeBatchOpsAreOneUndoStep()
     state.addTextClip(QStringLiteral("Batch"), 0.0);
     const int track = state.selectedTrack();
     const int clip = state.selectedClip();
-    const QString x = QStringLiteral("x");
+    const QString x = QStringLiteral("positionX");
     const QString rotation = QStringLiteral("rotation");
     state.setPositionLinked(false);
     state.setClipKeyframe(track, clip, x, 1.0, 10.0);
@@ -5677,17 +5678,17 @@ void EditorStateTest::keyframeBatchOpsAreOneUndoStep()
     QCOMPARE(state.clipKeyframes(track, clip, rotation).size(), rotationCount);
 }
 
-void EditorStateTest::keyframeAddMirrorsPositionAndPinsScale()
+void EditorStateTest::keyframeAddMirrorsPositionAndKeysScaleAlone()
 {
     AssetLibrary library;
     AppController state(&library);
     state.addTextClip(QStringLiteral("Linked keys"), 0.0);
     const int track = state.selectedTrack();
     const int clip = state.selectedClip();
-    const QString x = QStringLiteral("x");
-    const QString y = QStringLiteral("y");
-    const QString width = QStringLiteral("width");
-    const QString height = QStringLiteral("height");
+    const QString x = QStringLiteral("positionX");
+    const QString y = QStringLiteral("positionY");
+    const QString scaleX = QStringLiteral("scaleX");
+    const QString scaleY = QStringLiteral("scaleY");
 
     const auto keyAt = [](const QVariantList &keys, double seconds) {
         for (const QVariant &key : keys) {
@@ -5702,18 +5703,15 @@ void EditorStateTest::keyframeAddMirrorsPositionAndPinsScale()
     QVERIFY(!keyAt(state.clipKeyframes(track, clip, x), 1.0).isEmpty());
     QVERIFY(!keyAt(state.clipKeyframes(track, clip, y), 1.0).isEmpty());
 
-    const double xNow = state.propertyValueAt(track, clip, x, 2.0, 0.0);
-    state.keyframes()->addKeysAt(track, clip, {width, height}, 2.0);
-    QVERIFY(!keyAt(state.clipKeyframes(track, clip, width), 2.0).isEmpty());
-    QVERIFY(!keyAt(state.clipKeyframes(track, clip, height), 2.0).isEmpty());
-    const QVariantMap pinnedX = keyAt(state.clipKeyframes(track, clip, x), 2.0);
-    QVERIFY(!pinnedX.isEmpty());
-    QVERIFY(qAbs(pinnedX.value(QStringLiteral("value")).toDouble() - xNow) < 1e-6);
-    QVERIFY(!keyAt(state.clipKeyframes(track, clip, y), 2.0).isEmpty());
+    state.keyframes()->addKeysAt(track, clip, {scaleX, scaleY}, 2.0);
+    QVERIFY(!keyAt(state.clipKeyframes(track, clip, scaleX), 2.0).isEmpty());
+    QVERIFY(!keyAt(state.clipKeyframes(track, clip, scaleY), 2.0).isEmpty());
+    QVERIFY(keyAt(state.clipKeyframes(track, clip, x), 2.0).isEmpty());
+    QVERIFY(keyAt(state.clipKeyframes(track, clip, y), 2.0).isEmpty());
 
-    state.keyframes()->removeKeysAt(track, clip, {width, height}, 2.0);
-    QVERIFY(keyAt(state.clipKeyframes(track, clip, width), 2.0).isEmpty());
-    QVERIFY(!keyAt(state.clipKeyframes(track, clip, x), 2.0).isEmpty());
+    state.keyframes()->removeKeysAt(track, clip, {scaleX, scaleY}, 2.0);
+    QVERIFY(keyAt(state.clipKeyframes(track, clip, scaleX), 2.0).isEmpty());
+    QVERIFY(!keyAt(state.clipKeyframes(track, clip, x), 1.0).isEmpty());
 }
 
 void EditorStateTest::keyframeClearRestoresStaticHome()
@@ -5723,7 +5721,7 @@ void EditorStateTest::keyframeClearRestoresStaticHome()
     state.addTextClip(QStringLiteral("Clear"), 0.0);
     const int track = state.selectedTrack();
     const int clip = state.selectedClip();
-    const QString x = QStringLiteral("x");
+    const QString x = QStringLiteral("positionX");
     const QString contrast = QStringLiteral("fx.0.contrast");
 
     state.setPositionLinked(false);
@@ -6033,21 +6031,20 @@ void EditorStateTest::keyframeNudgesFoldIntoOneUndoStep()
     QVERIFY(qAbs(keys.first().toMap().value(QStringLiteral("seconds")).toDouble() - 1.0) < 1e-6);
 }
 
-void EditorStateTest::keyframeScaleMoveCarriesItsPins()
+void EditorStateTest::keyframeScaleMoveLeavesPositionKeysAlone()
 {
     AssetLibrary library;
     AppController state(&library);
-    state.addTextClip(QStringLiteral("Pins"), 0.0);
+    state.addTextClip(QStringLiteral("Scale keys"), 0.0);
     const int track = state.selectedTrack();
     const int clip = state.selectedClip();
     state.setPositionLinked(false);
-    const QString x = QStringLiteral("x");
-    const QString y = QStringLiteral("y");
-    const QString width = QStringLiteral("width");
-    const QString height = QStringLiteral("height");
+    const QString x = QStringLiteral("positionX");
+    const QString scaleX = QStringLiteral("scaleX");
+    const QString scaleY = QStringLiteral("scaleY");
 
-    state.keyframes()->addKeysAt(track, clip, {width, height}, 1.0);
-    state.setClipKeyframe(track, clip, x, 1.01, 5.0);
+    state.keyframes()->addKeysAt(track, clip, {scaleX, scaleY}, 1.0);
+    state.setClipKeyframe(track, clip, x, 1.0, 5.0);
     state.setClipKeyframe(track, clip, x, 2.0, 7.0);
     const auto has = [&](const QString &prop, double seconds) {
         for (const QVariant &k : state.clipKeyframes(track, clip, prop)) {
@@ -6056,29 +6053,23 @@ void EditorStateTest::keyframeScaleMoveCarriesItsPins()
         }
         return false;
     };
-    const auto count = [&](const QString &prop) { return state.clipKeyframes(track, clip, prop).size(); };
-    const int xCount = count(x);
-    const int yCount = count(y);
-    QVERIFY(has(x, 1.0) && has(x, 1.01) && has(x, 2.0) && has(y, 1.0) && has(width, 1.0));
+    const int xCount = state.clipKeyframes(track, clip, x).size();
+    QVERIFY(has(x, 1.0) && has(x, 2.0) && has(scaleX, 1.0) && has(scaleY, 1.0));
 
     const auto ref = [](const QString &prop, double seconds) {
         return QVariantMap{{QStringLiteral("prop"), prop}, {QStringLiteral("seconds"), seconds}};
     };
-    const QVariantList scale{ref(width, 1.0), ref(height, 1.0)};
+    const QVariantList scale{ref(scaleX, 1.0), ref(scaleY, 1.0)};
     state.keyframes()->previewMoveKeys(track, clip, scale, 0.5);
     state.keyframes()->previewMoveKeys(track, clip, scale, 0.75);
-    QVERIFY(has(width, 1.75) && has(height, 1.75));
-    QVERIFY(has(y, 1.75) && !has(y, 1.0));
-    QVERIFY(has(x, 1.75) && !has(x, 1.0));
-    QVERIFY(has(x, 1.01) && has(x, 2.0));
-    QCOMPARE(count(x), xCount);
-    QCOMPARE(count(y), yCount);
+    QVERIFY(has(scaleX, 1.75) && has(scaleY, 1.75));
+    QVERIFY(has(x, 1.0) && has(x, 2.0) && !has(x, 1.75));
+    QCOMPARE(state.clipKeyframes(track, clip, x).size(), xCount);
 
     state.commitPreviewDrag();
     state.undo();
-    QVERIFY(has(width, 1.0) && has(height, 1.0));
-    QVERIFY(has(x, 1.0) && has(y, 1.0) && has(x, 1.01) && has(x, 2.0));
-    QVERIFY(!has(x, 1.75) && !has(y, 1.75));
+    QVERIFY(has(scaleX, 1.0) && has(scaleY, 1.0));
+    QVERIFY(has(x, 1.0) && has(x, 2.0) && !has(x, 1.75));
 }
 
 void EditorStateTest::keyframeCurvesModelHitTestsMarqueesAndFits()
@@ -6156,18 +6147,18 @@ void EditorStateTest::keyframeCurvesModelHitTestsMarqueesAndFits()
 
 void EditorStateTest::keyframeScaleMathMatchesTheCanvasBox()
 {
-    QCOMPARE(KeyframeController::scaleOf(960, 540, 1920, 1080), 0.5);
-    QCOMPARE(KeyframeController::scaleOf(1920, 400, 1920, 1080), 1.0);
-    const QVariantMap start{{QStringLiteral("x"), 100.0}, {QStringLiteral("y"), 50.0}, {QStringLiteral("w"), 200.0},
-                            {QStringLiteral("h"), 100.0}, {QStringLiteral("scale"), 0.5}, {QStringLiteral("rot"), 0.0}};
-    const QVariantMap centred = KeyframeController::scaledRect(start, 1.0, QPointF(0.5, 0.5));
-    QCOMPARE(centred.value(QStringLiteral("k")).toDouble(), 2.0);
-    QCOMPARE(centred.value(QStringLiteral("w")).toDouble(), 400.0);
-    QCOMPARE(centred.value(QStringLiteral("x")).toDouble(), 0.0);
-    QCOMPARE(centred.value(QStringLiteral("y")).toDouble(), 0.0);
-    const QVariantMap corner = KeyframeController::scaledRect(start, 1.0, QPointF(0.0, 0.0));
-    QCOMPARE(corner.value(QStringLiteral("x")).toDouble(), 100.0);
-    QCOMPARE(corner.value(QStringLiteral("y")).toDouble(), 50.0);
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Scale me"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    state.beginPreviewDrag(QStringLiteral("Scale"));
+    state.keyframes()->previewScale(track, clip, QVariantMap{{QStringLiteral("scaleX"), 1.0}, {QStringLiteral("scaleY"), 0.5}}, 2.0);
+    state.commitPreviewDrag();
+    const drift::Clip &scaled = state.project()->tracks().at(track).clips.at(clip);
+    QCOMPARE(scaled.scaleX.evaluateAt(0), 2.0);
+    QCOMPARE(scaled.scaleY.evaluateAt(0), 1.0);
+    QVERIFY(scaled.positionX.keyframes().size() <= 1);
 }
 
 void EditorStateTest::keyframeCopyPasteRemapsEffectsAndSkipsOutOfRange()
@@ -6179,7 +6170,7 @@ void EditorStateTest::keyframeCopyPasteRemapsEffectsAndSkipsOutOfRange()
     const int track = state.selectedTrack();
     const int source = state.selectedClip();
     state.addEffect(track, source, QStringLiteral("adjust.contrast"));
-    const QString x = QStringLiteral("x");
+    const QString x = QStringLiteral("positionX");
     const QString contrast = QStringLiteral("fx.0.contrast");
     state.setClipKeyframe(track, source, x, 1.0, 10.0);
     state.setClipKeyframe(track, source, contrast, 1.5, 0.7);
@@ -6360,18 +6351,18 @@ void EditorStateTest::effectRemovalRemapsGraphSelection()
     state.addEffect(track, clip, QStringLiteral("adjust.contrast"));
     state.addEffect(track, clip, QStringLiteral("adjust.brightness"));
 
-    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("x"));
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("positionX"));
     state.toggleKeyframeGraphPropertyVisible(QStringLiteral("fx.0.contrast"));
     state.toggleKeyframeGraphPropertyVisible(QStringLiteral("fx.1.brightness"));
     QCOMPARE(state.keyframeGraphHiddenProperties(),
-             (QStringList { QStringLiteral("x"), QStringLiteral("fx.0.contrast"),
+             (QStringList { QStringLiteral("positionX"), QStringLiteral("fx.0.contrast"),
                             QStringLiteral("fx.1.brightness") }));
 
     // Dropping effect 0 must retire its entry and renumber the one above it, or brightness would
     // inherit contrast's folded-away state.
     state.removeEffect(track, clip, 0);
     QCOMPARE(state.keyframeGraphHiddenProperties(),
-             (QStringList { QStringLiteral("x"), QStringLiteral("fx.0.brightness") }));
+             (QStringList { QStringLiteral("positionX"), QStringLiteral("fx.0.brightness") }));
 }
 
 void EditorStateTest::previewDragUndoEdges()
@@ -6381,7 +6372,7 @@ void EditorStateTest::previewDragUndoEdges()
     state.addTextClip(QStringLiteral("Nudge me"), 0.0);
     const int track = state.selectedTrack();
     const int clip = state.selectedClip();
-    const double x0 = state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0);
+    const double x0 = state.propertyValueAt(track, clip, QStringLiteral("positionX"), 0.0, 0.0);
 
     // A press and release with no movement leaves no undo step: the next undo is the add.
     state.beginPreviewDrag(QStringLiteral("Move clip"));
@@ -6394,15 +6385,15 @@ void EditorStateTest::previewDragUndoEdges()
     state.previewSetClipPosition(track, clip, x0 + 20.0, 0.0);
     QVERIFY(state.previewDragActive());
     QTRY_VERIFY_WITH_TIMEOUT(!state.previewDragActive(), 2000);
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0), x0 + 20.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("positionX"), 0.0, 0.0), x0 + 20.0);
     state.undo();
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0), x0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("positionX"), 0.0, 0.0), x0);
 
     state.undo();
     QVERIFY(state.clipAt(track, clip).isEmpty());
 }
 
-void EditorStateTest::previewSetTextRectScalesPixelSize()
+void EditorStateTest::previewSetTextRectResizesTheFrame()
 {
     AssetLibrary library;
     AppController state(&library);
@@ -6415,22 +6406,23 @@ void EditorStateTest::previewSetTextRectScalesPixelSize()
     const int basePixelSize = before.value(QStringLiteral("pixelSize")).toInt();
     QVERIFY(basePixelSize > 0);
 
-    // Dragging a corner handle scales the glyphs with the box, not just the wrap container.
+    // A box edit changes the wrap frame and the position, never the glyph size.
     state.beginPreviewDrag(QStringLiteral("Resize text"));
-    state.previewSetTextRect(track, clip, 10.0, 20.0, 800.0, 600.0, basePixelSize * 2);
+    state.previewSetTextRect(track, clip, 410.0, 320.0, 800.0, 600.0);
     state.commitPreviewDrag();
 
-    QVariantMap after = state.selectedClipData().value(QStringLiteral("textStyle")).toMap();
-    QCOMPARE(after.value(QStringLiteral("pixelSize")).toInt(), basePixelSize * 2);
-    const QVariantMap keys = state.selectedClipData().value(QStringLiteral("keyframes")).toMap();
-    const QVariantList widthKeys =
-        keys.value(QStringLiteral("width")).toMap().value(QStringLiteral("points")).toList();
-    QCOMPARE(widthKeys.first().toMap().value(QStringLiteral("value")).toDouble(), 800.0);
+    const drift::Clip &after = state.project()->tracks().at(track).clips.at(clip);
+    QCOMPARE(after.frameW, 800.0);
+    QCOMPARE(after.frameH, 600.0);
+    QCOMPARE(after.positionX.evaluateAt(0), 410.0);
+    QCOMPARE(after.textStyle.pixelSize, basePixelSize);
+    const QVariantMap data = state.selectedClipData();
+    QCOMPARE(data.value(QStringLiteral("frameW")).toDouble(), 800.0);
 
-    // The size and the rect land in one undo entry, so a single undo restores both.
+    // The frame and the position land in one undo entry, so a single undo restores both.
     state.undo();
-    after = state.selectedClipData().value(QStringLiteral("textStyle")).toMap();
-    QCOMPARE(after.value(QStringLiteral("pixelSize")).toInt(), basePixelSize);
+    const drift::Clip &undone = state.project()->tracks().at(track).clips.at(clip);
+    QVERIFY(undone.frameW != 800.0);
 }
 
 void EditorStateTest::fontCatalogIsExposedToQml()
@@ -8236,10 +8228,8 @@ void EditorStateTest::previewDropCentresOverlayInOneUndo()
     QCOMPARE(state.m_undoStack.count(), undoBefore + 1);
 
     const drift::Clip &added = state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip());
-    const double w = added.transformW.evaluateAt(0);
-    const double h = added.transformH.evaluateAt(0);
-    QVERIFY(qAbs(added.transformX.evaluateAt(0) + w / 2.0 - 500.0) < 0.5);
-    QVERIFY(qAbs(added.transformY.evaluateAt(0) + h / 2.0 - 400.0) < 0.5);
+    QVERIFY(qAbs(added.positionX.evaluateAt(0) - 500.0) < 0.5);
+    QVERIFY(qAbs(added.positionY.evaluateAt(0) - 400.0) < 0.5);
 
     state.undo();
     QCOMPARE(state.project()->tracks().size(), tracksBefore);
@@ -8664,20 +8654,20 @@ void EditorStateTest::keyframeGraphPropertySelection()
     QVERIFY(state.keyframeGraphHiddenProperties().isEmpty());
 
     // A chip click hides that one curve and leaves the rest alone.
-    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("y"));
-    QCOMPARE(state.keyframeGraphHiddenProperties(), QStringList { QStringLiteral("y") });
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("positionY"));
+    QCOMPARE(state.keyframeGraphHiddenProperties(), QStringList { QStringLiteral("positionY") });
     state.toggleKeyframeGraphPropertyVisible(QStringLiteral("opacity"));
     QCOMPARE(state.keyframeGraphHiddenProperties(),
-             (QStringList { QStringLiteral("y"), QStringLiteral("opacity") }));
+             (QStringList { QStringLiteral("positionY"), QStringLiteral("opacity") }));
 
     // Clicking the same chip again brings the curve back.
-    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("y"));
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("positionY"));
     QCOMPARE(state.keyframeGraphHiddenProperties(), QStringList { QStringLiteral("opacity") });
 
     // Editing a property un-hides it, and is a no-op for one that was never hidden.
     state.showKeyframeGraphProperty(QStringLiteral("opacity"));
     QVERIFY(state.keyframeGraphHiddenProperties().isEmpty());
-    state.showKeyframeGraphProperty(QStringLiteral("width"));
+    state.showKeyframeGraphProperty(QStringLiteral("scaleX"));
     QVERIFY(state.keyframeGraphHiddenProperties().isEmpty());
 
     // Effect param keys are verbatim manifest identifiers and are often camelCase, so they must
@@ -8685,16 +8675,16 @@ void EditorStateTest::keyframeGraphPropertySelection()
     state.toggleKeyframeGraphPropertyVisible(QStringLiteral("fx.0.u_blurRadius"));
     QCOMPARE(state.keyframeGraphHiddenProperties(),
              QStringList { QStringLiteral("fx.0.u_blurRadius") });
-    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("X"));
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("POSITIONX"));
     QCOMPARE(state.keyframeGraphHiddenProperties(),
-             (QStringList { QStringLiteral("fx.0.u_blurRadius"), QStringLiteral("x") }));
+             (QStringList { QStringLiteral("fx.0.u_blurRadius"), QStringLiteral("positionX") }));
 
     // Unknown and malformed keys never reach the strip.
     state.toggleKeyframeGraphPropertyVisible(QStringLiteral("bogus"));
     state.toggleKeyframeGraphPropertyVisible(QStringLiteral("fx."));
     state.toggleKeyframeGraphPropertyVisible(QStringLiteral("fx.a.b"));
     QCOMPARE(state.keyframeGraphHiddenProperties(),
-             (QStringList { QStringLiteral("fx.0.u_blurRadius"), QStringLiteral("x") }));
+             (QStringList { QStringLiteral("fx.0.u_blurRadius"), QStringLiteral("positionX") }));
 }
 
 // The inspector row's label switches a property's animation off without discarding its keys: the
@@ -8755,8 +8745,8 @@ void EditorStateTest::linkedScaleKeyframesUndoTogether()
     QVERIFY(track >= 0);
     QVERIFY(clip >= 0);
 
-    const auto widthBefore = state.clipKeyframes(track, clip, QStringLiteral("width"));
-    const auto heightBefore = state.clipKeyframes(track, clip, QStringLiteral("height"));
+    const auto widthBefore = state.clipKeyframes(track, clip, QStringLiteral("scaleX"));
+    const auto heightBefore = state.clipKeyframes(track, clip, QStringLiteral("scaleY"));
 
     auto keyAt = [&](const QString &prop, double seconds) -> QVariantMap {
         for (const QVariant &v : state.clipKeyframes(track, clip, prop)) {
@@ -8767,33 +8757,33 @@ void EditorStateTest::linkedScaleKeyframesUndoTogether()
         return {};
     };
 
-    const QStringList scaleProps{QStringLiteral("width"), QStringLiteral("height")};
-    const auto xBefore = state.clipKeyframes(track, clip, QStringLiteral("x"));
+    const QStringList scaleProps{QStringLiteral("scaleX"), QStringLiteral("scaleY")};
+    const auto xBefore = state.clipKeyframes(track, clip, QStringLiteral("positionX"));
     state.keyframes()->addKeysAt(track, clip, scaleProps, 1.0);
-    QVERIFY(!keyAt(QStringLiteral("width"), 1.0).isEmpty());
-    QVERIFY(!keyAt(QStringLiteral("height"), 1.0).isEmpty());
-    QVERIFY(!keyAt(QStringLiteral("x"), 1.0).isEmpty());
+    QVERIFY(!keyAt(QStringLiteral("scaleX"), 1.0).isEmpty());
+    QVERIFY(!keyAt(QStringLiteral("scaleY"), 1.0).isEmpty());
+    QVERIFY(keyAt(QStringLiteral("positionX"), 1.0).isEmpty());
 
     state.undo();
-    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("width")), widthBefore);
-    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("height")), heightBefore);
-    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("x")), xBefore);
+    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("scaleX")), widthBefore);
+    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("scaleY")), heightBefore);
+    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("positionX")), xBefore);
 
     state.redo();
-    QVERIFY(!keyAt(QStringLiteral("width"), 1.0).isEmpty());
-    QVERIFY(!keyAt(QStringLiteral("height"), 1.0).isEmpty());
+    QVERIFY(!keyAt(QStringLiteral("scaleX"), 1.0).isEmpty());
+    QVERIFY(!keyAt(QStringLiteral("scaleY"), 1.0).isEmpty());
 
     state.keyframes()->removeKeysAt(track, clip, scaleProps, 1.0);
-    QVERIFY(keyAt(QStringLiteral("width"), 1.0).isEmpty());
-    QVERIFY(keyAt(QStringLiteral("height"), 1.0).isEmpty());
+    QVERIFY(keyAt(QStringLiteral("scaleX"), 1.0).isEmpty());
+    QVERIFY(keyAt(QStringLiteral("scaleY"), 1.0).isEmpty());
 
     state.undo();
-    QVERIFY(!keyAt(QStringLiteral("width"), 1.0).isEmpty());
-    QVERIFY(!keyAt(QStringLiteral("height"), 1.0).isEmpty());
+    QVERIFY(!keyAt(QStringLiteral("scaleX"), 1.0).isEmpty());
+    QVERIFY(!keyAt(QStringLiteral("scaleY"), 1.0).isEmpty());
 
     state.redo();
-    QVERIFY(keyAt(QStringLiteral("width"), 1.0).isEmpty());
-    QVERIFY(keyAt(QStringLiteral("height"), 1.0).isEmpty());
+    QVERIFY(keyAt(QStringLiteral("scaleX"), 1.0).isEmpty());
+    QVERIFY(keyAt(QStringLiteral("scaleY"), 1.0).isEmpty());
 
     // Clearing animation leaves the values seen at the playhead as static defaults
     // and is also a single undoable change for both dimensions.
@@ -8801,16 +8791,16 @@ void EditorStateTest::linkedScaleKeyframesUndoTogether()
     state.keyframes()->addKeysAt(track, clip, scaleProps, 2.0);
     state.setPlayheadSeconds(1.0);
     state.keyframes()->clearProperties(track, clip, scaleProps);
-    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("width")).size(), 1);
-    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("height")).size(), 1);
-    QVERIFY(!keyAt(QStringLiteral("width"), 0.0).isEmpty());
-    QVERIFY(!keyAt(QStringLiteral("height"), 0.0).isEmpty());
+    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("scaleX")).size(), 1);
+    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("scaleY")).size(), 1);
+    QVERIFY(!keyAt(QStringLiteral("scaleX"), 0.0).isEmpty());
+    QVERIFY(!keyAt(QStringLiteral("scaleY"), 0.0).isEmpty());
     state.undo();
-    QVERIFY(!keyAt(QStringLiteral("width"), 2.0).isEmpty());
-    QVERIFY(!keyAt(QStringLiteral("height"), 2.0).isEmpty());
+    QVERIFY(!keyAt(QStringLiteral("scaleX"), 2.0).isEmpty());
+    QVERIFY(!keyAt(QStringLiteral("scaleY"), 2.0).isEmpty());
     state.redo();
-    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("width")).size(), 1);
-    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("height")).size(), 1);
+    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("scaleX")).size(), 1);
+    QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("scaleY")).size(), 1);
 }
 
 void EditorStateTest::linkedPositionKeyframesAndTangents()
@@ -8825,14 +8815,14 @@ void EditorStateTest::linkedPositionKeyframesAndTangents()
     QVERIFY(state.positionLinked());
 
     // Initially position keyframes on x and y
-    state.setClipKeyframe(track, clip, QStringLiteral("x"), 0.0, 100.0);
-    state.setClipKeyframe(track, clip, QStringLiteral("y"), 0.0, 200.0);
-    state.setClipKeyframe(track, clip, QStringLiteral("x"), 2.0, 500.0); // +400 span
-    state.setClipKeyframe(track, clip, QStringLiteral("y"), 2.0, 400.0); // +200 span
+    state.setClipKeyframe(track, clip, QStringLiteral("positionX"), 0.0, 100.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("positionY"), 0.0, 200.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("positionX"), 2.0, 500.0); // +400 span
+    state.setClipKeyframe(track, clip, QStringLiteral("positionY"), 2.0, 400.0); // +200 span
 
     // 1. Setting keyframe at 1.0 on x automatically generates keyframe on y
-    state.setClipKeyframe(track, clip, QStringLiteral("x"), 1.0, 300.0);
-    const QVariantList yKeys = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    state.setClipKeyframe(track, clip, QStringLiteral("positionX"), 1.0, 300.0);
+    const QVariantList yKeys = state.clipKeyframes(track, clip, QStringLiteral("positionY"));
     bool foundYAt1 = false;
     for (const auto &item : yKeys) {
         if (qAbs(item.toMap().value(QStringLiteral("seconds")).toDouble() - 1.0) < 0.05)
@@ -8842,24 +8832,24 @@ void EditorStateTest::linkedPositionKeyframesAndTangents()
 
     // 2. Setting easing to Ease at playhead syncs both x and y
     state.setPlayheadSeconds(0.0);
-    state.setKeyframeInterpolation(track, clip, QStringLiteral("x"), QStringLiteral("ease"));
-    const QVariantList xKeysAt0 = state.clipKeyframes(track, clip, QStringLiteral("x"));
-    const QVariantList yKeysAt0 = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    state.setKeyframeInterpolation(track, clip, QStringLiteral("positionX"), QStringLiteral("ease"));
+    const QVariantList xKeysAt0 = state.clipKeyframes(track, clip, QStringLiteral("positionX"));
+    const QVariantList yKeysAt0 = state.clipKeyframes(track, clip, QStringLiteral("positionY"));
     QCOMPARE(xKeysAt0.first().toMap().value(QStringLiteral("easing")).toString(), QStringLiteral("ease"));
     QCOMPARE(yKeysAt0.first().toMap().value(QStringLiteral("easing")).toString(), QStringLiteral("ease"));
 
     // 3. Tangents synchronization: setting tangents on x scales dy on y proportionally to deltaY / deltaX (200 / 400 = 0.5)
     // outDx = 0.5s, outDy = 50.0 on x -> on y: outDx = 0.5s, outDy = 25.0
-    state.setKeyframeTangents(track, clip, QStringLiteral("x"), 0.0, 0.0, 0.0, 0.5, 50.0, false);
-    const QVariantList xTangents = state.clipKeyframes(track, clip, QStringLiteral("x"));
-    const QVariantList yTangents = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    state.setKeyframeTangents(track, clip, QStringLiteral("positionX"), 0.0, 0.0, 0.0, 0.5, 50.0, false);
+    const QVariantList xTangents = state.clipKeyframes(track, clip, QStringLiteral("positionX"));
+    const QVariantList yTangents = state.clipKeyframes(track, clip, QStringLiteral("positionY"));
     QCOMPARE(xTangents.first().toMap().value(QStringLiteral("outDy")).toDouble(), 50.0);
     QCOMPARE(yTangents.first().toMap().value(QStringLiteral("outDy")).toDouble(), 25.0);
 
     // 4. Moving keyframe at 1.0s to 1.2s moves both
-    state.previewMoveClipKeyframe(track, clip, QStringLiteral("x"), 1.0, 1.2, 320.0);
+    state.previewMoveClipKeyframe(track, clip, QStringLiteral("positionX"), 1.0, 1.2, 320.0);
     state.commitPreviewDrag();
-    const QVariantList movedYKeys = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    const QVariantList movedYKeys = state.clipKeyframes(track, clip, QStringLiteral("positionY"));
     bool foundYAt1_2 = false;
     for (const auto &item : movedYKeys) {
         if (qAbs(item.toMap().value(QStringLiteral("seconds")).toDouble() - 1.2) < 0.05)
@@ -8868,9 +8858,9 @@ void EditorStateTest::linkedPositionKeyframesAndTangents()
     QVERIFY(foundYAt1_2);
 
     // 5. Removing keyframe at 1.2s on x removes both
-    state.removeClipKeyframe(track, clip, QStringLiteral("x"), 1.2);
-    const QVariantList afterRemoveX = state.clipKeyframes(track, clip, QStringLiteral("x"));
-    const QVariantList afterRemoveY = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    state.removeClipKeyframe(track, clip, QStringLiteral("positionX"), 1.2);
+    const QVariantList afterRemoveX = state.clipKeyframes(track, clip, QStringLiteral("positionX"));
+    const QVariantList afterRemoveY = state.clipKeyframes(track, clip, QStringLiteral("positionY"));
     for (const auto &item : afterRemoveX)
         QVERIFY(qAbs(item.toMap().value(QStringLiteral("seconds")).toDouble() - 1.2) > 0.05);
     for (const auto &item : afterRemoveY)
@@ -8879,8 +8869,8 @@ void EditorStateTest::linkedPositionKeyframesAndTangents()
     // 6. Unlinking decoupling
     state.setPositionLinked(false);
     QVERIFY(!state.positionLinked());
-    state.setClipKeyframe(track, clip, QStringLiteral("x"), 0.5, 150.0);
-    const QVariantList unlinkedYKeys = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    state.setClipKeyframe(track, clip, QStringLiteral("positionX"), 0.5, 150.0);
+    const QVariantList unlinkedYKeys = state.clipKeyframes(track, clip, QStringLiteral("positionY"));
     bool foundYAt0_5 = false;
     for (const auto &item : unlinkedYKeys) {
         if (qAbs(item.toMap().value(QStringLiteral("seconds")).toDouble() - 0.5) < 0.05)
@@ -8899,7 +8889,7 @@ void EditorStateTest::segmentEasingAppliesAndUndoes()
     const int track = state.selectedTrack();
     const int clip = state.selectedClip();
     state.setPositionLinked(false);
-    const QString prop = QStringLiteral("x");
+    const QString prop = QStringLiteral("positionX");
     state.setClipKeyframe(track, clip, prop, 0.0, 0.0);
     state.setClipKeyframe(track, clip, prop, 2.0, 100.0);
 
@@ -8926,7 +8916,7 @@ void EditorStateTest::segmentEasingFunctionRoundTrip()
     const int track = state.selectedTrack();
     const int clip = state.selectedClip();
     state.setPositionLinked(false);
-    const QString prop = QStringLiteral("x");
+    const QString prop = QStringLiteral("positionX");
     state.setClipKeyframe(track, clip, prop, 0.0, 0.0);
     state.setClipKeyframe(track, clip, prop, 2.0, 100.0);
 
@@ -8948,14 +8938,14 @@ void EditorStateTest::segmentEasingMirrorsLinkedPosition()
     const int track = state.selectedTrack();
     const int clip = state.selectedClip();
     state.setPositionLinked(true);
-    state.setClipKeyframe(track, clip, QStringLiteral("x"), 0.0, 0.0);
-    state.setClipKeyframe(track, clip, QStringLiteral("x"), 2.0, 100.0);
-    state.setClipKeyframe(track, clip, QStringLiteral("y"), 0.0, 0.0);
-    state.setClipKeyframe(track, clip, QStringLiteral("y"), 2.0, 50.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("positionX"), 0.0, 0.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("positionX"), 2.0, 100.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("positionY"), 0.0, 0.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("positionY"), 2.0, 50.0);
 
     const QVariantMap cubicOut = drift::findBuiltinEasingPreset(QStringLiteral("cubicOut"))->spec.toJson().toVariantMap();
-    state.setKeyframeSegmentEasing(track, clip, QStringLiteral("x"), 0.0, cubicOut);
-    QCOMPARE(state.keyframeSegmentEasing(track, clip, QStringLiteral("y"), 0.0).value(QStringLiteral("presetId")).toString(),
+    state.setKeyframeSegmentEasing(track, clip, QStringLiteral("positionX"), 0.0, cubicOut);
+    QCOMPARE(state.keyframeSegmentEasing(track, clip, QStringLiteral("positionY"), 0.0).value(QStringLiteral("presetId")).toString(),
              QStringLiteral("cubicOut"));
 }
 
@@ -11540,7 +11530,7 @@ void EditorStateTest::deletingWithEffectsAlsoHandlesASelectedAdjustment()
     state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
     QCOMPARE(state.project()->tracks().size(), 2);
 
-    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("x"));
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("positionX"));
     state.toggleKeyframeGraphPropertyVisible(QStringLiteral("fx.0.contrast"));
     QCOMPARE(state.keyframeGraphHiddenProperties().size(), 2);
 
@@ -11551,7 +11541,7 @@ void EditorStateTest::deletingWithEffectsAlsoHandlesASelectedAdjustment()
     QCOMPARE(state.project()->tracks().size(), 1);
     QVERIFY(state.project()->tracks().at(0).clips.isEmpty());
     // Hidden graph entries address effects by stack index; the deleted stacks take theirs along.
-    QCOMPARE(state.keyframeGraphHiddenProperties(), QStringList{QStringLiteral("x")});
+    QCOMPARE(state.keyframeGraphHiddenProperties(), QStringList{QStringLiteral("positionX")});
 }
 
 // With ripple on, the host's track closes up, but a selected pinned adjustment is not a free clip:
@@ -11809,14 +11799,14 @@ void EditorStateTest::removeAllEffectsStripsTheClipAndKeepsMasks()
     QCOMPARE(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 2);
     QVERIFY(adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::Mask));
     const int tracksBefore = state.project()->tracks().size();
-    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("x"));
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("positionX"));
     state.toggleKeyframeGraphPropertyVisible(QStringLiteral("fx.1.contrast"));
     state.toggleKeyframeGraphPropertyVisible(QStringLiteral("afx.0.amount"));
     QCOMPARE(state.keyframeGraphHiddenProperties().size(), 3);
 
     QCOMPARE(state.removeAllEffects(0, 1), 2);
     // Hidden graph entries address effects by stack index; with both stacks gone they go too.
-    QCOMPARE(state.keyframeGraphHiddenProperties(), QStringList{QStringLiteral("x")});
+    QCOMPARE(state.keyframeGraphHiddenProperties(), QStringList{QStringLiteral("positionX")});
     QVERIFY(!adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::VideoEffects));
     QVERIFY(!adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::AudioEffects));
     QVERIFY(adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::Mask));
@@ -12622,8 +12612,7 @@ void EditorStateTest::maskingFrameFollowsTheSelectedClip()
     AssetLibrary library;
     AppController state(&library);
     appendTwoVideoClips(*state.project());
-    state.project()->tracks()[0].clips[0].transformW.setKeyframe(0, 300.0);
-    state.project()->tracks()[0].clips[0].transformH.setKeyframe(0, 200.0);
+    setTestRect(state.project()->tracks()[0].clips[0], 0.0, 0.0, 300.0, 200.0);
 
     state.selectClip(0, 0);
 
@@ -14428,8 +14417,8 @@ void EditorStateTest::pasteAttributesToMultipleClips()
     sourceClip.opacity.setKeyframe(0, 0.75);
     sourceClip.flipH = true;
     sourceClip.blendMode = drift::BlendMode::Screen;
-    sourceClip.transformX.setKeyframe(0, 100.0);
-    sourceClip.transformX.setKeyframe(sourceClip.timelineDuration, 200.0);
+    sourceClip.positionX.setKeyframe(0, 100.0);
+    sourceClip.positionX.setKeyframe(sourceClip.timelineDuration, 200.0);
 
     // Copy clip 0
     state.selectClip(track, 0);
@@ -14470,8 +14459,8 @@ void EditorStateTest::pasteAttributesToMultipleClips()
     QCOMPARE(t2After.flipH, true);
     QCOMPARE(t1After.blendMode, drift::BlendMode::Screen);
     QCOMPARE(t2After.blendMode, drift::BlendMode::Screen);
-    QCOMPARE(t1After.transformX.keyframes().size(), 2);
-    QCOMPARE(t2After.transformX.keyframes().size(), 2);
+    QCOMPARE(t1After.positionX.keyframes().size(), 2);
+    QCOMPARE(t2After.positionX.keyframes().size(), 2);
 
     // Verify single undo step restores BOTH targets at once!
     QVERIFY(state.undoAvailable());
@@ -14483,8 +14472,8 @@ void EditorStateTest::pasteAttributesToMultipleClips()
     QCOMPARE(t2Undone.flipH, false);
     QCOMPARE(t1Undone.blendMode, drift::BlendMode::Normal);
     QCOMPARE(t2Undone.blendMode, drift::BlendMode::Normal);
-    QCOMPARE(t1Undone.transformX.keyframes().size(), t1Before.transformX.keyframes().size());
-    QCOMPARE(t2Undone.transformX.keyframes().size(), t2Before.transformX.keyframes().size());
+    QCOMPARE(t1Undone.positionX.keyframes().size(), t1Before.positionX.keyframes().size());
+    QCOMPARE(t2Undone.positionX.keyframes().size(), t2Before.positionX.keyframes().size());
 
     // Redo restores them both
     QVERIFY(state.redoAvailable());
@@ -15766,8 +15755,8 @@ void EditorStateTest::trackingDrivesStandaloneAdjustmentMaskInCanvasSpace()
     TrackingFixture fx(&state);
 
     const double canvasW = state.project()->width();
-    state.project()->tracks()[0].clips[0].transformX.setKeyframe(0, 100.0);
-    state.project()->tracks()[0].clips[0].transformW.setKeyframe(0, canvasW / 2.0);
+    state.project()->tracks()[0].clips[0].positionX.setKeyframe(0, 100.0 + canvasW / 4.0);
+    state.project()->tracks()[0].clips[0].scaleX.setKeyframe(0, 0.5);
 
     drift::Track layer;
     layer.type = drift::TrackType::Adjustment;
@@ -16143,10 +16132,7 @@ void EditorStateTest::trackingFollowClipOffsetsTransformKeys()
     follower.timelineStart = 0;
     follower.timelineDuration = drift::secondsToUs(2.0);
     follower.srcOut = follower.timelineDuration;
-    follower.transformX.setKeyframe(0, 100.0);
-    follower.transformY.setKeyframe(0, 50.0);
-    follower.transformW.setKeyframe(0, 200.0);
-    follower.transformH.setKeyframe(0, 100.0);
+    setTestRect(follower, 100.0, 50.0, 200.0, 100.0);
     state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
     state.project()->tracks()[1].clips.append(follower);
 
@@ -16158,28 +16144,28 @@ void EditorStateTest::trackingFollowClipOffsetsTransformKeys()
     state.tracking()->setTarget(0, 0, id, QStringLiteral("follower"), QStringLiteral("followClip"));
     // New followers centre on the tracked point (0.5, 0.5 of a full-canvas host) at the reference.
     const drift::Clip *centred = fx.clipById(QStringLiteral("follower"));
-    QVERIFY(qAbs(centred->transformX.keyframes().first().value - (state.project()->width() / 2.0 - 100.0)) < 1e-6);
-    QVERIFY(qAbs(centred->transformY.keyframes().first().value - (state.project()->height() / 2.0 - 50.0)) < 1e-6);
+    QVERIFY(qAbs(centred->positionX.keyframes().first().value - state.project()->width() / 2.0) < 1e-6);
+    QVERIFY(qAbs(centred->positionY.keyframes().first().value - state.project()->height() / 2.0) < 1e-6);
 
     // Keep offset starts from the pose stored when the target was added, not the centred keys.
     state.tracking()->setTargetCenter(0, 0, id, QStringLiteral("follower"), false);
     const drift::Clip *moved = fx.clipById(QStringLiteral("follower"));
-    const auto &x = moved->transformX.keyframes();
-    const auto &y = moved->transformY.keyframes();
+    const auto &x = moved->positionX.keyframes();
+    const auto &y = moved->positionY.keyframes();
     QCOMPARE(x.size(), 2);
     QCOMPARE(y.size(), 2);
-    QVERIFY(qAbs(x.first().value - 100.0) < 1e-6);
-    QVERIFY(qAbs(x.last().value - (100.0 + 0.29 * state.project()->width())) < 1e-3);
-    QVERIFY(qAbs(y.last().value - (50.0 + 0.145 * state.project()->height())) < 1e-3);
-    QVERIFY(moved->transformW.keyframes().size() == 1);
+    QVERIFY(qAbs(x.first().value - 200.0) < 1e-6);
+    QVERIFY(qAbs(x.last().value - (200.0 + 0.29 * state.project()->width())) < 1e-3);
+    QVERIFY(qAbs(y.last().value - (100.0 + 0.145 * state.project()->height())) < 1e-3);
+    QVERIFY(moved->scaleX.keyframes().size() <= 1);
 
     // Removing the target takes the baked motion with it, leaving the follower at its own pose.
     state.tracking()->removeTarget(0, 0, id, QStringLiteral("follower"));
     const drift::Clip *restored = fx.clipById(QStringLiteral("follower"));
-    QCOMPARE(restored->transformX.keyframes().size(), 1);
-    QCOMPARE(restored->transformY.keyframes().size(), 1);
-    QVERIFY(qAbs(restored->transformX.keyframes().first().value - 100.0) < 1e-6);
-    QVERIFY(qAbs(restored->transformY.keyframes().first().value - 50.0) < 1e-6);
+    QCOMPARE(restored->positionX.keyframes().size(), 1);
+    QCOMPARE(restored->positionY.keyframes().size(), 1);
+    QVERIFY(qAbs(restored->positionX.keyframes().first().value - 200.0) < 1e-6);
+    QVERIFY(qAbs(restored->positionY.keyframes().first().value - 100.0) < 1e-6);
 }
 
 namespace {
@@ -16218,8 +16204,8 @@ void EditorStateTest::trackingStabilizeClipHoldsTheAnchor()
     QCOMPARE(host->motionTrackers.first().targets.size(), 1);
     QVERIFY(host->motionTrackers.first().targets.first().mode == drift::TrackerTarget::Mode::Stabilize);
     // The tracked clip moved against the track: two end keys, scale and rotation untouched.
-    QCOMPARE(host->transformX.keyframes().size(), 2);
-    QVERIFY(host->transformW.isEmpty());
+    QCOMPARE(host->positionX.keyframes().size(), 2);
+    QVERIFY(host->scaleX.isEmpty());
     for (int k = 0; k < 30; ++k) {
         const QPointF sample = k == 0 ? QPointF(0.5, 0.5) : QPointF(0.5 + 0.01 * k, 0.5 + 0.005 * k);
         QVERIFY2(distance(canvasPixels(state, *host, k * fx.frame, sample), reference) < 0.6, qPrintable(QString::number(k)));
@@ -16236,15 +16222,15 @@ void EditorStateTest::trackingStabilizeClipHoldsTheAnchor()
     // Removing the target puts the clip back on its rest pose.
     state.tracking()->removeTarget(QStringLiteral("clip-0"), id, QStringLiteral("clip-0"));
     host = fx.clipById(QStringLiteral("clip-0"));
-    QCOMPARE(host->transformX.keyframes().size(), 1);
-    QCOMPARE(host->transformY.keyframes().size(), 1);
-    QVERIFY(qAbs(host->transformX.evaluateAt(10 * fx.frame)) < 1e-6);
-    QVERIFY(qAbs(host->transformY.evaluateAt(10 * fx.frame)) < 1e-6);
+    QCOMPARE(host->positionX.keyframes().size(), 1);
+    QCOMPARE(host->positionY.keyframes().size(), 1);
+    QVERIFY(qAbs(host->positionX.evaluateAt(10 * fx.frame) - W / 2.0) < 1e-6);
+    QVERIFY(qAbs(host->positionY.evaluateAt(10 * fx.frame) - H / 2.0) < 1e-6);
     QVERIFY(host->motionTrackers.first().targets.isEmpty());
 
     // Applying and removing are each one undo step.
     state.tracking()->setStabilize(QStringLiteral("clip-0"), id, QStringLiteral("clip"));
-    QVERIFY(fx.clipById(QStringLiteral("clip-0"))->transformX.keyframes().size() == 2);
+    QVERIFY(fx.clipById(QStringLiteral("clip-0"))->positionX.keyframes().size() == 2);
     state.undo();
     QVERIFY(fx.clipById(QStringLiteral("clip-0"))->motionTrackers.first().targets.isEmpty());
 }
@@ -16292,8 +16278,8 @@ void EditorStateTest::trackingStabilizeClipFollowsRotationAndZoom()
     // The 0.05 degree rotation tolerance of the keys, seen from twice as far, allows a couple of pixels.
     state.tracking()->setTargetZoom(QStringLiteral("clip-0"), id, QStringLiteral("clip-0"), 2.0);
     host = fx.clipById(QStringLiteral("clip-0"));
-    QVERIFY(qAbs(host->transformW.evaluateAt(10 * fx.frame) - 2.0 * W) < 1.0);
-    QVERIFY(qAbs(host->transformH.evaluateAt(10 * fx.frame) - 2.0 * H) < 1.0);
+    QVERIFY(qAbs(host->scaleX.evaluateAt(10 * fx.frame) - 2.0) < 2.0 / W);
+    QVERIFY(qAbs(host->scaleY.evaluateAt(10 * fx.frame) - 2.0) < 2.0 / H);
     for (int k = 0; k < 30; ++k) {
         const QPointF anchor = k == 0 ? QPointF(0.5, 0.5) : (moved(QPointF(0.4, 0.5), k) + moved(QPointF(0.6, 0.5), k)) / 2.0;
         QVERIFY2(distance(canvasPixels(state, *host, k * fx.frame, anchor), QPointF(W / 2, H / 2)) < 1.0,
@@ -16305,7 +16291,7 @@ void EditorStateTest::trackingStabilizeClipFollowsRotationAndZoom()
     QCOMPARE(fx.clipById(QStringLiteral("clip-0"))->motionTrackers.first().targets.first().zoom, 4.0);
     state.tracking()->removeTarget(QStringLiteral("clip-0"), id, QStringLiteral("clip-0"));
     host = fx.clipById(QStringLiteral("clip-0"));
-    QVERIFY(qAbs(host->transformW.evaluateAt(10 * fx.frame) - W) < 1e-6);
+    QVERIFY(qAbs(host->scaleX.evaluateAt(10 * fx.frame) - 1.0) < 1e-6);
     QVERIFY(qAbs(host->rotation.evaluateAt(10 * fx.frame)) < 1e-6);
 }
 
@@ -16334,11 +16320,9 @@ void EditorStateTest::trackingStabilizeFillZoomCoversTheCanvas()
     QCOMPARE(host->motionTrackers.first().targets.first().zoom, fill);
     for (int k = 0; k < 30; ++k) {
         const drift::TimeUs t = k * fx.frame;
-        const double x = host->transformX.evaluateAt(t);
-        const double y = host->transformY.evaluateAt(t);
-        QVERIFY2(x <= 0.5 && y <= 0.5, qPrintable(QString::number(k)));
-        QVERIFY2(x + host->transformW.evaluateAt(t) >= W - 0.5 && y + host->transformH.evaluateAt(t) >= H - 0.5,
-                 qPrintable(QString::number(k)));
+        const QRectF box = drift::clipLayoutAt(*host, t, QSizeF(W, H)).box();
+        QVERIFY2(box.x() <= 0.5 && box.y() <= 0.5, qPrintable(QString::number(k)));
+        QVERIFY2(box.right() >= W - 0.5 && box.bottom() >= H - 0.5, qPrintable(QString::number(k)));
     }
 }
 
@@ -16455,7 +16439,7 @@ void EditorStateTest::trackingStabilizeCameraHoldsAPointTrack()
     QVERIFY(camera);
     QCOMPARE(camera->timelineStart, host->timelineStart);
     QCOMPARE(camera->timelineEnd(), host->timelineEnd());
-    QVERIFY(host->transformX.isEmpty() && host->transformW.isEmpty() && host->rotation.isEmpty());
+    QVERIFY(host->positionX.isEmpty() && host->scaleX.isEmpty() && host->rotation.isEmpty());
     QCOMPARE(host->motionTrackers.first().targets.size(), 1);
     QCOMPARE(host->motionTrackers.first().targets.first().clipId, camera->id);
     for (const drift::TimeUs t : {drift::TimeUs(0), 10 * fx.frame, 29 * fx.frame}) {
@@ -16946,8 +16930,8 @@ void EditorStateTest::maskingBlurAreaMovesMaskToEffectLayerInOneUndoStep()
     const QString host = QStringLiteral("clip-0");
     const double canvasW = state.project()->width();
     const double canvasH = state.project()->height();
-    state.project()->tracks()[0].clips[0].transformX.setKeyframe(0, 100.0);
-    state.project()->tracks()[0].clips[0].transformW.setKeyframe(0, canvasW / 2.0);
+    state.project()->tracks()[0].clips[0].positionX.setKeyframe(0, 100.0 + canvasW / 4.0);
+    state.project()->tracks()[0].clips[0].scaleX.setKeyframe(0, 0.5);
 
     const QString maskId = fx.addMask(host);
     {

@@ -678,7 +678,7 @@ struct CameraProp
     double drift::SceneCamera3d::*field;
 };
 constexpr CameraProp kCameraProps[] = {
-    {"x", &drift::SceneCamera3d::positionX},       {"y", &drift::SceneCamera3d::positionY},
+    {"positionX", &drift::SceneCamera3d::positionX}, {"positionY", &drift::SceneCamera3d::positionY},
     {"z", &drift::SceneCamera3d::positionZ},       {"rotationX", &drift::SceneCamera3d::rotationX},
     {"rotationY", &drift::SceneCamera3d::rotationY}, {"rotation", &drift::SceneCamera3d::rotationZ},
     {"perspective", &drift::SceneCamera3d::zoom},
@@ -779,8 +779,8 @@ QJsonObject McpDispatcher::opCameraLookAt(const QJsonObject &args)
     QVariantMap plain;
     m_controller->mcp()->beginBatch();
     const QStringList written = aimed.aimAtTarget
-        ? QStringList{"x", "y", "z", "anchorX", "anchorY", "anchorZ", "rotation"}
-        : QStringList{"x", "y", "z", "rotationX", "rotationY", "rotation"};
+        ? QStringList{"positionX", "positionY", "z", "anchorX", "anchorY", "anchorZ", "rotation"}
+        : QStringList{"positionX", "positionY", "z", "rotationX", "rotationY", "rotation"};
     QList<QPair<QString, double>> keyed;
     for (const QString &prop : written) {
         double value = 0.0;

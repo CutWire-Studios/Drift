@@ -119,7 +119,8 @@ public:
                                                drift::TimeUs timelineUs);
 
     // How a text clip is laid out at `timelineUs`, as the compositor will draw it: the layout rect
-    // (canvas px at renderScale, before any rotation about its centre) and the shaped block for
+    // (the clip's scaled box in canvas px at renderScale, before any rotation about its centre, which
+    // is the clip's position unless an anchor is set) and the shaped block for
     // `renderedText`. The inline editor maps its caret and selection geometry through this, so
     // the two cannot disagree.
     struct TextEditGeometry
@@ -127,6 +128,8 @@ public:
         std::shared_ptr<const drift::text::FragmentSet> set;
         QRectF layoutRect;
         double rotation = 0.0; // degrees clockwise about layoutRect.center()
+        // The render scale the text is painted at: renderScale times the clip's scale.
+        double contentScale = 1.0;
     };
     static TextEditGeometry textEditGeometry(const drift::Clip &clip, const QString &renderedText,
                                              drift::TimeUs timelineUs, int projectWidth, int projectHeight,

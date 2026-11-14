@@ -440,6 +440,61 @@
     </message>
 </context>
 <context>
+    <name>AndroidAnimationPage</name>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">Wala</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 s</translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished">In</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">Out</translation>
+    </message>
+    <message>
+        <source>Fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Unti-unting paglitaw</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Unti-unting paglaho</translation>
+    </message>
+    <message>
+        <source>Fade curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animasyon</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">Tagal</translation>
+    </message>
+    <message>
+        <source>Animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter and word animations live in Text animation. This moves the whole clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBackgroundPage</name>
     <message>
         <source>Choose background image</source>
@@ -519,6 +574,10 @@
     <message>
         <source>Stabilize</source>
         <translation type="unfinished">Patatagin</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished">Pagkupas</translation>
     </message>
     <message>
         <source>Edit text</source>
@@ -940,33 +999,6 @@
     <message>
         <source>Extras</source>
         <translation type="unfinished">Dagdag</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidFadeSheet</name>
-    <message>
-        <source>Fade</source>
-        <translation>Pagkupas</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>Tapos na</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 s</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation>Unti-unting paglitaw</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation>Unti-unting paglaho</translation>
-    </message>
-    <message>
-        <source>Curve</source>
-        <translation>Kurba</translation>
     </message>
 </context>
 <context>
@@ -2402,21 +2434,6 @@
     <message>
         <source>Transitions</source>
         <translation type="unfinished">Pagbabagong-kalagayan</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidVolumePage</name>
-    <message>
-        <source>%1 s</source>
-        <translation type="unfinished">%1 s</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation type="unfinished">Unti-unting paglitaw</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation type="unfinished">Unti-unting paglaho</translation>
     </message>
 </context>
 <context>
@@ -10961,6 +10978,14 @@
         <translation type="unfinished">Mag-zoom</translation>
     </message>
     <message>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Anchor X</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11115,12 +11140,12 @@
         <translation>Posisyon ng Y</translation>
     </message>
     <message>
-        <source>Width</source>
-        <translation>Lapad</translation>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Height</source>
-        <translation>Taas</translation>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26424,10 +26449,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Add scale keyframe</source>
         <translation>Magdagdag ng scale keyframe</translation>
-    </message>
-    <message>
-        <source>Scale origin</source>
-        <translation>Pinagmulan ng scale</translation>
     </message>
     <message>
         <source>Opacity &amp; rotation</source>

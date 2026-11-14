@@ -171,20 +171,20 @@ void KeyframeViewTest::buildGroupsRowsAndHidesStaticTransformKey()
 
 void KeyframeViewTest::buildMergesLinkedSizeIntoScale()
 {
-    const QVariantList entries{entry(QStringLiteral("width"), QStringLiteral("transform"), true),
-                               entry(QStringLiteral("height"), QStringLiteral("transform"), false)};
-    Options o = optionsFor({{QStringLiteral("width"), {key(1.0)}}, {QStringLiteral("height"), {key(1.0), key(2.0)}}});
+    const QVariantList entries{entry(QStringLiteral("scaleX"), QStringLiteral("transform"), true),
+                               entry(QStringLiteral("scaleY"), QStringLiteral("transform"), false)};
+    Options o = optionsFor({{QStringLiteral("scaleX"), {key(1.0)}}, {QStringLiteral("scaleY"), {key(1.0), key(2.0)}}});
     o.sizeLinked = true;
     o.scaleLabel = QStringLiteral("Scale");
     const QList<Row> rows = build(entries, o);
     QCOMPARE(rows.size(), 2);
     const Row &scale = rows.at(1);
     QCOMPARE(scale.type, QStringLiteral("scale"));
-    QCOMPARE(scale.tracks, (QStringList{QStringLiteral("width"), QStringLiteral("height")}));
+    QCOMPARE(scale.tracks, (QStringList{QStringLiteral("scaleX"), QStringLiteral("scaleY")}));
     QVERIFY(scale.animated);
     QCOMPARE(scale.keys.size(), 2);
     const QVariantMap map = scale.toMap();
-    QCOMPARE(map.value(QStringLiteral("keyProp")).toString(), QStringLiteral("width"));
+    QCOMPARE(map.value(QStringLiteral("keyProp")).toString(), QStringLiteral("scaleX"));
     QCOMPARE(map.value(QStringLiteral("entries")).toList().size(), 2);
 }
 

@@ -151,6 +151,7 @@
 #include "engine/decode/probe/MediaProbe.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "core/project/Transition.h"
+#include "TestClipLayout.h"
 #include "TestZip.h"
 
 extern "C" {
@@ -472,6 +473,8 @@ private slots:
     void standaloneAdjustmentKeepsSeeThroughCanvasAlpha();
     void pinnedLaneAdjustmentsStayOnTheirOwnClip();
     void transformLayerMatrixMapsTheBox();
+    void scalingAboutTheCentreKeepsTheCentre();
+    void anchorStaysFixedWhileScalingAndRotating();
     void parentedQuadKeepsDepthAndNearPlanes();
     void identityTransformLayerRendersUnchanged();
     void translatingTransformLayerMovesItsTracks();
@@ -1817,10 +1820,7 @@ void EngineTest::sceneCameraClipDrivesTheWholeTimeline()
     card.path = whitePath;
     card.timelineDuration = drift::secondsToUs(4.0);
     card.srcOut = card.timelineDuration;
-    card.transformX.setKeyframe(0, {60.0});
-    card.transformY.setKeyframe(0, {60.0});
-    card.transformW.setKeyframe(0, {40.0});
-    card.transformH.setKeyframe(0, {40.0});
+    setTestRect(card, {60.0}, {60.0}, {40.0}, {40.0});
     project.tracks()[0].clips.append(card);
 
     FrameCompositor compositor;
@@ -1855,8 +1855,8 @@ void EngineTest::sceneCameraClipDrivesTheWholeTimeline()
     const int cameraTrack = drift::insertCameraTrack(project.tracks());
     project.ensureTrackIds();
     drift::Clip camera = drift::makeCameraClip(0, drift::secondsToUs(4.0));
-    camera.transformX.setKeyframe(0, {canvas.width() / 2.0});
-    camera.transformX.setKeyframe(drift::secondsToUs(2.0), {canvas.width() / 2.0 + 40.0});
+    camera.positionX.setKeyframe(0, {canvas.width() / 2.0});
+    camera.positionX.setKeyframe(drift::secondsToUs(2.0), {canvas.width() / 2.0 + 40.0});
     project.tracks()[cameraTrack].clips.append(camera);
     drift::normalizeCameraLayers(project.tracks());
     QCOMPARE(drift::cameraTrackIndex(project.tracks()), 0);
@@ -3935,10 +3935,7 @@ void EngineTest::compositorRendersProceduralClip()
     clip.timelineDuration = drift::secondsToUs(4.0);
     clip.srcIn = 0;
     clip.srcOut = drift::secondsToUs(4.0);
-    clip.transformX.setKeyframe(0, 0.0);
-    clip.transformY.setKeyframe(0, 0.0);
-    clip.transformW.setKeyframe(0, 200.0);
-    clip.transformH.setKeyframe(0, 100.0);
+    setTestRect(clip, 0.0, 0.0, 200.0, 100.0);
     project.tracks()[0].clips.append(clip);
 
     const auto meanX = [](const QImage &image) {
@@ -4124,10 +4121,7 @@ void EngineTest::compositorRendersModelClip()
     clip.srcIn = 0;
     clip.srcOut = drift::secondsToUs(4.0);
     // Off-centre: the box is a 40 px face centred at x = 50.
-    clip.transformX.setKeyframe(0, 30.0);
-    clip.transformY.setKeyframe(0, 30.0);
-    clip.transformW.setKeyframe(0, 40.0);
-    clip.transformH.setKeyframe(0, 40.0);
+    setTestRect(clip, 30.0, 30.0, 40.0, 40.0);
     // A rotationY key turns it like any 3D layer.
     clip.rotationY.setKeyframe(0, 0.0);
     clip.rotationY.setKeyframe(drift::secondsToUs(2.0), 90.0);
@@ -9261,10 +9255,7 @@ void EngineTest::compositorPreviewScaleMapsProjectPixelLayout()
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
     clip.shapeStyle.setSolidFill(Qt::red);
     clip.shapeStyle.setStroke(0.0);
-    clip.transformX.setKeyframe(0, 40.0);
-    clip.transformY.setKeyframe(0, 20.0);
-    clip.transformW.setKeyframe(0, 80.0);
-    clip.transformH.setKeyframe(0, 40.0);
+    setTestRect(clip, 40.0, 20.0, 80.0, 40.0);
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -9579,10 +9570,7 @@ void EngineTest::compositorRendersCompositeClip()
     outer.timelineDuration = drift::secondsToUs(1.0);
     outer.srcIn = drift::secondsToUs(1.0);
     outer.srcOut = drift::secondsToUs(2.0);
-    outer.transformX.setKeyframe(0, 0.0);
-    outer.transformY.setKeyframe(0, 0.0);
-    outer.transformW.setKeyframe(0, 64.0);
-    outer.transformH.setKeyframe(0, 64.0);
+    setTestRect(outer, 0.0, 0.0, 64.0, 64.0);
     project.tracks()[0].clips.append(outer);
 
     FrameCompositor compositor;
@@ -9668,10 +9656,7 @@ void EngineTest::compositorRendersShapeClip()
     clip.shapeStyle.kind = drift::ShapeKind::Triangle;
     clip.shapeStyle.setSolidFill(QColor(255, 0, 0));
     clip.shapeStyle.setStroke(2.0, Qt::white);
-    clip.transformX.setKeyframe(0, 32.0);
-    clip.transformY.setKeyframe(0, 32.0);
-    clip.transformW.setKeyframe(0, 64.0);
-    clip.transformH.setKeyframe(0, 64.0);
+    setTestRect(clip, 32.0, 32.0, 64.0, 64.0);
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -11930,10 +11915,7 @@ drift::Clip makeTextClip(const QString &text, const QRectF &rect)
     clip.textContent = text;
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(4.0);
-    clip.transformX.setKeyframe(0, rect.x());
-    clip.transformY.setKeyframe(0, rect.y());
-    clip.transformW.setKeyframe(0, rect.width());
-    clip.transformH.setKeyframe(0, rect.height());
+    setTestRect(clip, rect.x(), rect.y(), rect.width(), rect.height());
     return clip;
 }
 
@@ -12426,10 +12408,7 @@ void EngineTest::vectorLayerRasterFollowsItsDrawnScale()
     clip.type = drift::ClipType::Shape;
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(2.0);
-    clip.transformX.setKeyframe(0, 150.0);
-    clip.transformY.setKeyframe(0, 150.0);
-    clip.transformW.setKeyframe(0, 100.0);
-    clip.transformH.setKeyframe(0, 100.0);
+    setTestRect(clip, 150.0, 150.0, 100.0, 100.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
     clip.shapeStyle.setSolidFill(Qt::white);
     project.tracks()[0].clips.append(clip);
@@ -12451,8 +12430,8 @@ void EngineTest::vectorLayerRasterFollowsItsDrawnScale()
     QVERIFY(std::abs(double(layer.vector->size().width()) / restSize.width() - std::sqrt(2.0)) < 0.05);
 
     // Past the canvas's own resolution there is nothing to gain.
-    project.tracks()[0].clips[0].transformW.setKeyframe(0, 380.0);
-    project.tracks()[0].clips[0].transformH.setKeyframe(0, 380.0);
+    project.tracks()[0].clips[0].scaleX.setKeyframe(0, 3.8);
+    project.tracks()[0].clips[0].scaleY.setKeyframe(0, 3.8);
     GpuScene capped;
     QVERIFY(compositor.buildSceneAt(0, {}, &capped));
     QVERIFY(capped.items.at(0).layer.vector->size().width() <= 400);
@@ -12503,10 +12482,7 @@ drift::Clip sequenceMaskTestShape(const QString &id, const QColor &color, double
     clip.timelineDuration = drift::secondsToUs(2.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
     clip.shapeStyle.setSolidFill(color);
-    clip.transformX.setKeyframe(0, x);
-    clip.transformY.setKeyframe(0, 0.0);
-    clip.transformW.setKeyframe(0, w);
-    clip.transformH.setKeyframe(0, 128.0);
+    setTestRect(clip, x, 0.0, w, 128.0);
     return clip;
 }
 
@@ -13424,10 +13400,7 @@ drift::Clip solidShape(const QString &id, const QRectF &rect, const QColor &colo
     clip.srcOut = clip.timelineDuration;
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
     clip.shapeStyle.setSolidFill(colour);
-    clip.transformX.setKeyframe(0, rect.x());
-    clip.transformY.setKeyframe(0, rect.y());
-    clip.transformW.setKeyframe(0, rect.width());
-    clip.transformH.setKeyframe(0, rect.height());
+    setTestRect(clip, rect.x(), rect.y(), rect.width(), rect.height());
     return clip;
 }
 
@@ -13483,10 +13456,10 @@ void EngineTest::transformLayerMatrixMapsTheBox()
     QVERIFY(drift::transformLayerMatrix(clip, 0, canvas, 1.0).isIdentity());
 
     // A quarter box in the bottom-right corner: the canvas shrinks onto it.
-    clip.transformX.setKeyframe(0, 100.0);
-    clip.transformY.setKeyframe(0, 50.0);
-    clip.transformW.setKeyframe(0, 100.0);
-    clip.transformH.setKeyframe(0, 50.0);
+    clip.positionX.setKeyframe(0, 150.0);
+    clip.positionY.setKeyframe(0, 75.0);
+    clip.scaleX.setKeyframe(0, 0.5);
+    clip.scaleY.setKeyframe(0, 0.5);
     QTransform quarter = drift::transformLayerMatrix(clip, 0, canvas, 1.0);
     QCOMPARE(quarter.map(QPointF(0, 0)), QPointF(100, 50));
     QCOMPARE(quarter.map(QPointF(200, 100)), QPointF(200, 100));
@@ -13510,6 +13483,66 @@ void EngineTest::transformLayerMatrixMapsTheBox()
         QVERIFY2(QLineF(got, expected.at(i)).length() < 1e-3,
                  qPrintable(QStringLiteral("corner %1").arg(i)));
     }
+}
+
+void EngineTest::scalingAboutTheCentreKeepsTheCentre()
+{
+    drift::Project project;
+    project.setResolution(200, 100);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip = solidShape(QStringLiteral("c"), QRectF(), Qt::red);
+    clip.positionX = {};
+    clip.positionY = {};
+    clip.frameW = 40.0;
+    clip.frameH = 20.0;
+    clip.scaleX.setKeyframe(0, 2.0);
+    clip.scaleY.setKeyframe(0, 3.0);
+    project.tracks()[0].clips.append(clip);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    GpuScene scene;
+    QVERIFY(compositor.buildSceneAt(0, FrameCompositor::RenderOptions{}, &scene));
+    QCOMPARE(scene.items.size(), 1);
+    const GpuLayer &layer = scene.items.at(0).layer;
+    QVERIFY(std::abs(layer.rect.center().x() - 100.0) < 1e-6);
+    QVERIFY(std::abs(layer.rect.center().y() - 50.0) < 1e-6);
+    const drift::ClipPlacement placed = drift::clipPlacementAt(project.tracks()[0].clips[0], 0, 1.0, QSizeF(200, 100));
+    QCOMPARE(placed.rect, QRectF(60, 20, 80, 60));
+}
+
+void EngineTest::anchorStaysFixedWhileScalingAndRotating()
+{
+    const QSize canvas(200, 100);
+    drift::Clip clip = drift::makeTransformClip(0, drift::secondsToUs(2.0));
+    clip.anchorX.setKeyframe(0, 40.0);
+    clip.anchorY.setKeyframe(0, 20.0);
+    clip.positionX.setKeyframe(0, 120.0);
+    clip.positionY.setKeyframe(0, 30.0);
+    clip.scaleX.setKeyframe(0, 0.5);
+    clip.scaleY.setKeyframe(0, 0.5);
+    clip.rotation.setKeyframe(0, 30.0);
+
+    const QTransform m = drift::transformLayerMatrix(clip, 0, canvas, 1.0);
+    const auto close = [](QPointF a, QPointF b) { return QLineF(a, b).length() < 1e-6; };
+    QVERIFY(close(m.map(QPointF(40, 20)), QPointF(120, 30)));
+    // Half size and turned 30 degrees clockwise about the anchor: 20 px right of it lands at 10 px along the rotated x axis.
+    const double a = qDegreesToRadians(30.0);
+    QVERIFY(close(m.map(QPointF(60, 20)), QPointF(120 + 10.0 * std::cos(a), 30 + 10.0 * std::sin(a))));
+
+    clip.scaleX.setKeyframe(0, 2.0);
+    clip.scaleY.setKeyframe(0, 2.0);
+    const QTransform big = drift::transformLayerMatrix(clip, 0, canvas, 1.0);
+    QVERIFY(close(big.map(QPointF(40, 20)), QPointF(120, 30)));
+    QVERIFY(close(big.map(QPointF(60, 20)), QPointF(120 + 40.0 * std::cos(a), 30 + 40.0 * std::sin(a))));
+
+    drift::Clip centred = drift::makeTransformClip(0, drift::secondsToUs(2.0));
+    centred.positionX.setKeyframe(0, 120.0);
+    centred.positionY.setKeyframe(0, 30.0);
+    centred.scaleX.setKeyframe(0, 0.5);
+    centred.scaleY.setKeyframe(0, 0.5);
+    QVERIFY(close(drift::transformLayerMatrix(centred, 0, canvas, 1.0).map(QPointF(100, 50)), QPointF(120, 30)));
 }
 
 void EngineTest::parentedQuadKeepsDepthAndNearPlanes()
@@ -13566,8 +13599,8 @@ void EngineTest::translatingTransformLayerMovesItsTracks()
     if (!GpuCompositor::isAvailable())
         QSKIP("No GPU compositor available");
     drift::Clip layer = drift::makeTransformClip(0, drift::secondsToUs(4.0));
-    layer.transformX.setKeyframe(0, 10.0);
-    layer.transformY.setKeyframe(0, 6.0);
+    layer.positionX.setKeyframe(0, 32.0 + 10.0);
+    layer.positionY.setKeyframe(0, 32.0 + 6.0);
     const QImage moved = renderAt(
         transformLayerProject(solidShape(QStringLiteral("c"), QRectF(8, 8, 20, 12), Qt::red), &layer), 1.0);
     const QImage expected = renderAt(
@@ -13626,10 +13659,10 @@ void EngineTest::nestedTransformLayersCompose()
     drift::insertTransformTrack(tracks, 0, QStringLiteral("shapes"));
     drift::insertTransformTrack(tracks, 0, QStringLiteral("shapes"));
     drift::Clip outer = drift::makeTransformClip(0, drift::secondsToUs(4.0));
-    outer.transformX.setKeyframe(0, 10.0);
+    outer.positionX.setKeyframe(0, 32.0 + 10.0);
     outer.opacity.setKeyframe(0, 0.5);
     drift::Clip inner = outer;
-    inner.transformX.setKeyframe(0, 5.0);
+    inner.positionX.setKeyframe(0, 32.0 + 5.0);
     tracks[0].clips.append(outer);
     tracks[1].clips.append(inner);
 
@@ -13704,7 +13737,7 @@ void EngineTest::transformParentReachesEveryCoveredLayer()
     project.tracks() = {standalone, models, composites, video};
     drift::insertTransformTrack(project.tracks(), 0, QStringLiteral("v"));
     drift::Clip layer = drift::makeTransformClip(0, drift::secondsToUs(4.0));
-    layer.transformX.setKeyframe(0, 10.0);
+    layer.positionX.setKeyframe(0, 32.0 + 10.0);
     project.tracks()[0].clips.append(layer);
 
     FrameCompositor compositor;
@@ -13758,10 +13791,7 @@ void EngineTest::exporterProducesPlayableFileWithBackground()
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
     clip.shapeStyle.setSolidFill(Qt::red);
     clip.shapeStyle.setStroke(0.0);
-    clip.transformX.setKeyframe(0, 70.0);
-    clip.transformY.setKeyframe(0, 35.0);
-    clip.transformW.setKeyframe(0, 20.0);
-    clip.transformH.setKeyframe(0, 20.0);
+    setTestRect(clip, 70.0, 35.0, 20.0, 20.0);
     project.tracks()[0].clips.append(clip);
 
     // Non-default background must be baked into the exported frames.
@@ -14146,10 +14176,7 @@ void EngineTest::exporterHardwareEncodeProducesPlayableFile()
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
     clip.shapeStyle.setSolidFill(Qt::red);
     clip.shapeStyle.setStroke(0.0);
-    clip.transformX.setKeyframe(0, 70.0);
-    clip.transformY.setKeyframe(0, 35.0);
-    clip.transformW.setKeyframe(0, 20.0);
-    clip.transformH.setKeyframe(0, 20.0);
+    setTestRect(clip, 70.0, 35.0, 20.0, 20.0);
     project.tracks()[0].clips.append(clip);
 
     ExportSettings settings = Exporter::defaultSettings();
@@ -14196,10 +14223,7 @@ drift::Project frameRateTestProject(int projectFps)
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
     clip.shapeStyle.setSolidFill(Qt::red);
     clip.shapeStyle.setStroke(0.0);
-    clip.transformX.setKeyframe(0, 70.0);
-    clip.transformY.setKeyframe(0, 35.0);
-    clip.transformW.setKeyframe(0, 20.0);
-    clip.transformH.setKeyframe(0, 20.0);
+    setTestRect(clip, 70.0, 35.0, 20.0, 20.0);
     project.tracks()[0].clips.append(clip);
     return project;
 }
@@ -19533,10 +19557,7 @@ void EngineTest::bakeWriterStoresClosedGopsAndReplacesOverlap()
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
     clip.shapeStyle.setSolidFill(Qt::red);
     clip.shapeStyle.setStroke(0.0);
-    clip.transformX.setKeyframe(0, 10.0);
-    clip.transformY.setKeyframe(0, 10.0);
-    clip.transformW.setKeyframe(0, 30.0);
-    clip.transformH.setKeyframe(0, 30.0);
+    setTestRect(clip, 10.0, 10.0, 30.0, 30.0);
     project.tracks()[0].clips.append(clip);
 
     QTemporaryDir dir;
@@ -19634,11 +19655,11 @@ drift::Project movingShapeProject()
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
     clip.shapeStyle.setSolidFill(Qt::red);
     clip.shapeStyle.setStroke(0.0);
-    clip.transformX.setKeyframe(0, 4.0);
-    clip.transformX.setKeyframe(drift::secondsToUs(2.0), 30.0);
-    clip.transformY.setKeyframe(0, 10.0);
-    clip.transformW.setKeyframe(0, 30.0);
-    clip.transformH.setKeyframe(0, 30.0);
+    clip.frameW = 30.0;
+    clip.frameH = 30.0;
+    clip.positionX.setKeyframe(0, 4.0 + 15.0);
+    clip.positionX.setKeyframe(drift::secondsToUs(2.0), 30.0 + 15.0);
+    clip.positionY.setKeyframe(0, 10.0 + 15.0);
     project.tracks()[0].clips.append(clip);
     return project;
 }

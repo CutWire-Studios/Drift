@@ -9,14 +9,16 @@ namespace drift {
 HostFrame hostFrameAt(const Project &project, const Clip &host, TimeUs timelineUs)
 {
     const TimeUs relative = qMax<TimeUs>(0, timelineUs - host.timelineStart);
-    const auto value = [&](const KeyframeTrack<double> &track, double fallback) {
-        return track.isEmpty() ? fallback : track.evaluateAt(relative);
-    };
+    const ClipLayout layout = clipLayoutAt(host, relative, QSizeF(project.width(), project.height()));
+    const QRectF box = layout.box();
     HostFrame f;
-    f.w = qMax(1.0, value(host.transformW, project.width()));
-    f.h = qMax(1.0, value(host.transformH, project.height()));
-    f.centre = QPointF(value(host.transformX, 0.0) + f.w / 2.0, value(host.transformY, 0.0) + f.h / 2.0);
-    f.rotation = value(host.rotation, 0.0);
+    f.w = qMax(1.0, qAbs(box.width()));
+    f.h = qMax(1.0, qAbs(box.height()));
+    f.rotation = layout.rotation;
+    const double a = qDegreesToRadians(layout.rotation);
+    const QPointF offset = box.center() - layout.pivot();
+    f.centre = layout.pivot() + QPointF(offset.x() * std::cos(a) - offset.y() * std::sin(a),
+                                        offset.x() * std::sin(a) + offset.y() * std::cos(a));
     return f;
 }
 

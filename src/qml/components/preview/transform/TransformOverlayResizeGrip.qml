@@ -24,6 +24,7 @@ Item {
     readonly property bool lockByDefault: grip.target.box.kind === "video"
                                           || grip.target.box.kind === "image"
                                           || grip.target.box.kind === "composite"
+                                          || grip.target.isText
 
     width: hs
     height: hs
@@ -65,16 +66,24 @@ Item {
     property var toLocal: null
     property point startLocal: Qt.point(0, 0)
     property var startBox: null
+    // The clip's position (where its anchor lands), scale and frame at the grab.
+    property real startPosX: 0
+    property real startPosY: 0
+    property real startScaleX: 1
+    property real startScaleY: 1
+    property real startFrameW: 1
+    property real startFrameH: 1
 
-    // Resize about the fixed anchor. The maths runs in the box's
-    // own axes, so a rotated clip grows along the direction the
-    // grip points; the resulting centre shift is rotated back to
-    // canvas axes at the end. At rotation 0 it reduces to a plain
-    // "opposite corner stays put".
+    // Resize with the opposite edge or corner held still. The maths runs in the box's
+    // own axes, so a rotated clip grows along the direction the grip points; the
+    // position shift that keeps the held point still is rotated back to canvas axes at
+    // the end. The clip rotates and scales about its position, which sits at a fixed
+    // fraction of the box. Alt scales about the position instead.
     function resizeTo(px, py, modifiers) {
         const dxSign = grip.modelData.dx
         const dySign = grip.modelData.dy
         const a = grip.target.layoutRotation * Math.PI / 180
+        const aboutPosition = (modifiers & Qt.AltModifier) !== 0
         let lx = 0
         let ly = 0
         if (grip.toLocal) {
@@ -83,12 +92,13 @@ Item {
             // holding an edge still would drag it through depth. Doubling the
             // pointer's travel in the box plane keeps the grip under the pointer.
             const l = grip.toLocal(px, py)
-            const k = grip.target.is3d ? 2 : 1
+            const k = grip.target.is3d || aboutPosition ? 2 : 1
             lx = k * (l.x - grip.startLocal.x) / grip.target.sx
             ly = k * (l.y - grip.startLocal.y) / grip.target.sy
         } else {
-            const ddx = (px - grip.startPx) / grip.target.sx
-            const ddy = (py - grip.startPy) / grip.target.sy
+            const k = aboutPosition ? 2 : 1
+            const ddx = k * (px - grip.startPx) / grip.target.sx
+            const ddy = k * (py - grip.startPy) / grip.target.sy
             // Canvas axes -> box axes: the inverse of the rotation the
             // body drag applies to its translation.
             lx = ddx * Math.cos(a) + ddy * Math.sin(a)
@@ -151,35 +161,41 @@ Item {
         }
         grip.target.publishGuides(guideX, guideY)
 
-        // Keeping the anchor still means the centre moves by half
-        // the size change, toward the grip, in box axes.
-        const shiftX = grip.target.is3d ? 0 : (w - grip.target.dragStartW) / 2 * dxSign
-        const shiftY = grip.target.is3d ? 0 : (h - grip.target.dragStartH) / 2 * dySign
-        const cx = grip.target.dragStartX + grip.target.dragStartW / 2
-                   + shiftX * Math.cos(a) - shiftY * Math.sin(a)
-        const cy = grip.target.dragStartY + grip.target.dragStartH / 2
-                   + shiftX * Math.sin(a) + shiftY * Math.cos(a)
-        const x = cx - w / 2
-        const y = cy - h / 2
+        const kw = w / grip.target.dragStartW
+        const kh = h / grip.target.dragStartH
+        const offX = grip.startPosX - grip.target.dragStartX
+        const offY = grip.startPosY - grip.target.dragStartY
+        // Scaling about the position leaves it where it is; otherwise the position moves so
+        // the edge or corner opposite the grip stays put.
+        let posX = grip.startPosX
+        let posY = grip.startPosY
+        if (!grip.target.is3d && !aboutPosition) {
+            const oppX = dxSign > 0 ? 0 : dxSign < 0 ? grip.target.dragStartW : 0
+            const oppY = dySign > 0 ? 0 : dySign < 0 ? grip.target.dragStartH : 0
+            const newOppX = dxSign > 0 ? 0 : dxSign < 0 ? w : 0
+            const newOppY = dySign > 0 ? 0 : dySign < 0 ? h : 0
+            const ddx = (oppX - offX) - (newOppX - offX * kw)
+            const ddy = (oppY - offY) - (newOppY - offY * kh)
+            posX += ddx * Math.cos(a) - ddy * Math.sin(a)
+            posY += ddx * Math.sin(a) + ddy * Math.cos(a)
+        }
 
-        grip.target.liveX = x
-        grip.target.liveY = y
+        grip.target.liveX = posX - offX * kw
+        grip.target.liveY = posY - offY * kh
         grip.target.liveW = w
         grip.target.liveH = h
-        if (grip.target.isText && grip.isCorner) {
-            // Height drives the glyph scale; an edge drag just
-            // re-wraps, since the box is the wrap width.
-            const size = Math.round(grip.target.dragStartPixelSize
-                                    * h / Math.max(1, grip.target.dragStartH))
+        if (grip.target.isText && !grip.isCorner) {
+            // An edge drag re-wraps the text: the box is the wrap width, so the frame changes
+            // and the scale stays.
             EditorState.previewSetTextRect(
                 grip.target.box.track,
                 grip.target.box.clip,
-                x, y, w, h, size)
+                posX, posY, grip.startFrameW * kw, grip.startFrameH * kh)
         } else {
-            EditorState.previewSetClipRect(
+            EditorState.previewSetClipPlacement(
                 grip.target.box.track,
                 grip.target.box.clip,
-                x, y, w, h)
+                posX, posY, grip.startScaleX * kw, grip.startScaleY * kh)
         }
     }
 
@@ -214,7 +230,12 @@ Item {
             grip.target.dragStartY = grip.target.layoutY
             grip.target.dragStartW = grip.target.layoutW
             grip.target.dragStartH = grip.target.layoutH
-            grip.target.dragStartPixelSize = grip.target.box.pixelSize || 64
+            grip.startPosX = grip.target.box.positionX
+            grip.startPosY = grip.target.box.positionY
+            grip.startScaleX = grip.target.box.scaleX
+            grip.startScaleY = grip.target.box.scaleY
+            grip.startFrameW = grip.target.box.frameW
+            grip.startFrameH = grip.target.box.frameH
             grip.startBox = grip.target.grabBox()
             grip.target.liveX = grip.target.dragStartX
             grip.target.liveY = grip.target.dragStartY

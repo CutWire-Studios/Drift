@@ -397,6 +397,14 @@ QString normalizeKeyframeProp(const QString &prop)
     // are camelCase members ("text.pixelSize", "shape.cornerRadius") and SVG element ids are
     // case-sensitive, so they pass through like effect params.
     const QString trimmed = prop.trimmed();
+    static const QStringList camelCase = {
+        QStringLiteral("positionX"), QStringLiteral("positionY"), QStringLiteral("scaleX"),
+        QStringLiteral("scaleY"),    QStringLiteral("rotationX"), QStringLiteral("rotationY"),
+        QStringLiteral("anchorX"),   QStringLiteral("anchorY"),   QStringLiteral("anchorZ")};
+    for (const QString &name : camelCase) {
+        if (trimmed.compare(name, Qt::CaseInsensitive) == 0)
+            return name;
+    }
     return trimmed.startsWith(QLatin1String("fx.")) || trimmed.startsWith(QLatin1String("afx."))
                    || trimmed.startsWith(QLatin1String("text."))
                    || trimmed.startsWith(QLatin1String("shape.")) || trimmed.startsWith(QLatin1String("vector."))
@@ -644,10 +652,10 @@ QVariantMap keyframesToMap(const drift::Clip &clip)
 {
     return {
         {QStringLiteral("opacity"), keyframeTrackToMap(clip.opacity, clip.timelineStart)},
-        {QStringLiteral("x"), keyframeTrackToMap(clip.transformX, clip.timelineStart)},
-        {QStringLiteral("y"), keyframeTrackToMap(clip.transformY, clip.timelineStart)},
-        {QStringLiteral("width"), keyframeTrackToMap(clip.transformW, clip.timelineStart)},
-        {QStringLiteral("height"), keyframeTrackToMap(clip.transformH, clip.timelineStart)},
+        {QStringLiteral("positionX"), keyframeTrackToMap(clip.positionX, clip.timelineStart)},
+        {QStringLiteral("positionY"), keyframeTrackToMap(clip.positionY, clip.timelineStart)},
+        {QStringLiteral("scaleX"), keyframeTrackToMap(clip.scaleX, clip.timelineStart)},
+        {QStringLiteral("scaleY"), keyframeTrackToMap(clip.scaleY, clip.timelineStart)},
         {QStringLiteral("rotation"), keyframeTrackToMap(clip.rotation, clip.timelineStart)},
         {QStringLiteral("rotationX"), keyframeTrackToMap(clip.rotationX, clip.timelineStart)},
         {QStringLiteral("rotationY"), keyframeTrackToMap(clip.rotationY, clip.timelineStart)},
@@ -756,10 +764,10 @@ void remapKeyframeTrack(drift::KeyframeTrack<T> &dst, const drift::KeyframeTrack
 void remapKeyframesForRetime(drift::Clip &dst, const drift::Clip &src)
 {
     remapKeyframeTrack(dst.opacity, src.opacity, src, dst);
-    remapKeyframeTrack(dst.transformX, src.transformX, src, dst);
-    remapKeyframeTrack(dst.transformY, src.transformY, src, dst);
-    remapKeyframeTrack(dst.transformW, src.transformW, src, dst);
-    remapKeyframeTrack(dst.transformH, src.transformH, src, dst);
+    remapKeyframeTrack(dst.positionX, src.positionX, src, dst);
+    remapKeyframeTrack(dst.positionY, src.positionY, src, dst);
+    remapKeyframeTrack(dst.scaleX, src.scaleX, src, dst);
+    remapKeyframeTrack(dst.scaleY, src.scaleY, src, dst);
     remapKeyframeTrack(dst.rotation, src.rotation, src, dst);
     remapKeyframeTrack(dst.rotationX, src.rotationX, src, dst);
     remapKeyframeTrack(dst.rotationY, src.rotationY, src, dst);
@@ -829,16 +837,33 @@ void AppController::clearPose3d(drift::Clip &clip)
 namespace drift::appdetail {
 
 
-void setClipLayoutPixels(drift::Clip &clip, double x, double y, double w, double h)
+void clearClipLayout(drift::Clip &clip)
 {
-    clip.transformX = {};
-    clip.transformY = {};
-    clip.transformW = {};
-    clip.transformH = {};
-    clip.transformX.setKeyframe(0, x);
-    clip.transformY.setKeyframe(0, y);
-    clip.transformW.setKeyframe(0, qMax(1.0, w));
-    clip.transformH.setKeyframe(0, qMax(1.0, h));
+    clip.positionX = {};
+    clip.positionY = {};
+    clip.scaleX = {};
+    clip.scaleY = {};
+    clip.frameW = 0.0;
+    clip.frameH = 0.0;
+}
+
+void refreshClipFrame(const drift::Project &project, drift::Clip &clip)
+{
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image
+        && clip.type != drift::ClipType::Pdf && clip.type != drift::ClipType::Vector)
+        return;
+    const QSizeF fit = drift::clipFitFrameSize(project, clip);
+    clip.frameW = fit.width();
+    clip.frameH = fit.height();
+}
+
+void setClipFrameBox(drift::Clip &clip, double x, double y, double w, double h)
+{
+    clearClipLayout(clip);
+    clip.frameW = qMax(1.0, w);
+    clip.frameH = qMax(1.0, h);
+    clip.positionX.setKeyframe(0, x + clip.frameW / 2.0);
+    clip.positionY.setKeyframe(0, y + clip.frameH / 2.0);
 }
 
 } // namespace drift::appdetail
@@ -941,6 +966,8 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("enabled"), clip.enabled},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("layer3d"), clip.layer3d},
+        {QStringLiteral("frameW"), clip.frameW > 0.0 ? clip.frameW : double(m_project.width())},
+        {QStringLiteral("frameH"), clip.frameH > 0.0 ? clip.frameH : double(m_project.height())},
         {QStringLiteral("depthOcclude"), clip.depthOcclude},
         {QStringLiteral("aimAtTarget"), clip.aimAtTarget},
         {QStringLiteral("flipV"), clip.flipV},
@@ -1551,36 +1578,10 @@ bool AppController::setAssetRotation(int assetIndex, int degrees)
 
 void AppController::writeClipSourceFrame(int t, int c, const QRectF &frame, double turn)
 {
-    const QRectF previousFrame = m_project.tracks().at(t).clips.at(c).sourceFrame;
     auto &clip = m_project.tracks()[t].clips[c];
     clip.sourceFrame = frame;
     clip.sourceFrameAngle = turn;
-    if (const auto *asset = m_project.asset(clip.assetId)) {
-        // Displayed orientation: the file's own tag plus this clip's correction, as decoded.
-        int sw = asset->width, sh = asset->height;
-        if (qAbs(asset->rotationDegrees + clip.rotationCorrection) % 180 == 90)
-            std::swap(sw, sh);
-        if (sw > 0 && sh > 0) {
-            const auto fittedSize = [&](const QRectF &r) {
-                QSizeF size(sw * r.width(), sh * r.height());
-                size.scale(QSizeF(m_project.width(), m_project.height()), Qt::KeepAspectRatio);
-                return size;
-            };
-            const QSizeF previous = fittedSize(previousFrame), next = fittedSize(frame);
-            const auto scaleTrack = [](drift::KeyframeTrack<double> &track, double ratio) {
-                const auto keys = track.keyframes();
-                for (auto it = keys.cbegin(); it != keys.cend(); ++it) {
-                    auto key = it.value();
-                    key.value *= ratio;
-                    key.inDy *= ratio;
-                    key.outDy *= ratio;
-                    track.setKeyframe(it.key(), key);
-                }
-            };
-            scaleTrack(clip.transformW, next.width() / previous.width());
-            scaleTrack(clip.transformH, next.height() / previous.height());
-        }
-    }
+    refreshClipFrame(m_project, clip);
 }
 
 bool AppController::setClipSourceFrame(const QString &clipId, double x, double y, double w, double h,

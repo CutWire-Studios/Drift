@@ -142,6 +142,28 @@ drift::SceneCamera3d cameraFromLegacy(const QSizeF &canvas, const double p[3], c
     return camera;
 }
 
+// A project's JSON as a format <= 30 file wrote it: the layout rect under x / y / width / height.
+QJsonObject asLegacyRectJson(QJsonObject json)
+{
+    QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
+    for (qsizetype ti = 0; ti < tracks.size(); ++ti) {
+        QJsonObject track = tracks.at(ti).toObject();
+        QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+        for (qsizetype ci = 0; ci < clips.size(); ++ci) {
+            QJsonObject clip = clips.at(ci).toObject();
+            for (const auto &[from, to] : {std::pair{"positionX", "x"}, {"positionY", "y"}, {"scaleX", "width"}, {"scaleY", "height"}}) {
+                if (clip.contains(QLatin1String(from)))
+                    clip.insert(QLatin1String(to), clip.take(QLatin1String(from)));
+            }
+            clips.replace(ci, clip);
+        }
+        track.insert(QStringLiteral("clips"), clips);
+        tracks.replace(ti, track);
+    }
+    json.insert(QStringLiteral("tracks"), tracks);
+    return json;
+}
+
 } // namespace
 
 class Transform3dTest : public QObject
@@ -183,16 +205,17 @@ void Transform3dTest::migrationKeepsClipWorldMatrices()
     clip.rotation = randomTrack(rng, -180, 180);
     clip.positionZ = randomTrack(rng, -900, 900);
     clip.perspective = randomTrack(rng, 600, 4000);
-    clip.transformX = randomTrack(rng, 0, 1200);
-    clip.transformY = randomTrack(rng, 0, 600);
-    clip.transformW = randomTrack(rng, 100, 900);
-    clip.transformH = randomTrack(rng, 100, 700);
+    const QRectF oldRect(uniform(rng, 0, 1200), uniform(rng, 0, 600), uniform(rng, 100, 900), uniform(rng, 100, 700));
+    clip.positionX.setKeyframe(0, oldRect.x());
+    clip.positionY.setKeyframe(0, oldRect.y());
+    clip.scaleX.setKeyframe(0, oldRect.width());
+    clip.scaleY.setKeyframe(0, oldRect.height());
     old.tracks().clear();
     old.tracks().append(drift::Track{.type = drift::TrackType::Shape});
     old.tracks()[0].clips.append(clip);
 
     // The file as format 21 wrote it: same JSON, the old version number.
-    QJsonObject json = old.toJson();
+    QJsonObject json = asLegacyRectJson(old.toJson());
     json.insert(QStringLiteral("version"), 21);
     QString error;
     const drift::Project migrated = drift::Project::fromJson(json, &error);
@@ -207,8 +230,10 @@ void Transform3dTest::migrationKeepsClipWorldMatrices()
         before.rotationY = clip.rotationY.evaluateAt(t);
         before.positionZ = clip.positionZ.evaluateAt(t);
         before.perspective = clip.perspective.evaluateAt(t);
-        const QRectF rect(clip.transformX.evaluateAt(t), clip.transformY.evaluateAt(t), clip.transformW.evaluateAt(t),
-                          clip.transformH.evaluateAt(t));
+        const QRectF rect = oldRect;
+        const drift::ClipPlacement placed = drift::clipPlacementAt(now, t, 1.0, canvas);
+        QVERIFY(QLineF(placed.rect.center(), rect.center()).length() < 1e-6);
+        QVERIFY(std::abs(placed.rect.width() - rect.width()) < 1e-6 && std::abs(placed.rect.height() - rect.height()) < 1e-6);
         const double spin = clip.rotation.evaluateAt(t);
         const bool flipH = (t / 53'000) % 2 == 0;
 
@@ -336,7 +361,7 @@ void Transform3dTest::migrationKeepsPerspectiveAndConvertsCameras()
     camera.rotationY.setKeyframe(0, -7.0);
     old.tracks()[cameraTrack].clips.append(camera);
 
-    QJsonObject json = old.toJson();
+    QJsonObject json = asLegacyRectJson(old.toJson());
     json.insert(QStringLiteral("version"), 21);
     const drift::Project migrated = drift::Project::fromJson(json);
 
@@ -450,7 +475,7 @@ void Transform3dTest::anchorIsTheRotationPivot()
     // The layer's own size is untouched: the opposite corner is still a diagonal away.
     QVERIFY(std::abs((world.map(QVector3D(1.f, 1.f, 0.f)) - world.map(QVector3D(-1.f, -1.f, 0.f))).length() - 500.f) < 1e-2f);
 
-    // Unturned, the anchor changes nothing at all: transformX/Y still name the top-left corner.
+    // Unturned, the anchor changes nothing at all: the rect still names the top-left corner.
     drift::ClipPose3d still = anchored;
     still.rotationX = still.rotationY = 0.0;
     const QMatrix4x4 flat = drift::clipQuadToWorld(rect, 0.0, false, false, still, canvas);
@@ -562,8 +587,8 @@ void Transform3dTest::migrationKeepsTheCameraViewAtEveryKey()
     };
     drift::Clip camera = drift::makeCameraClip(0, length);
     camera.id = QStringLiteral("cam");
-    camera.transformX = keyedAt({0.0, 1.0, 2.5}, -400, 400);
-    camera.transformY = keyedAt({0.5, 2.5}, -300, 300);
+    camera.positionX = keyedAt({0.0, 1.0, 2.5}, -400, 400);
+    camera.positionY = keyedAt({0.5, 2.5}, -300, 300);
     camera.positionZ = keyedAt({0.0, 3.0}, -300, 600);
     camera.rotationX = keyedAt({0.0, 1.0, 2.0, 4.0}, -85, 85);
     camera.rotationY = keyedAt({1.5, 4.0, 5.0}, -170, 170);
@@ -575,7 +600,7 @@ void Transform3dTest::migrationKeepsTheCameraViewAtEveryKey()
     untouched.id = QStringLiteral("untouched");
     old.tracks()[cameraTrack].clips.append(untouched);
 
-    QJsonObject json = old.toJson();
+    QJsonObject json = asLegacyRectJson(old.toJson());
     json.insert(QStringLiteral("version"), 21);
     QString error;
     const drift::Project migrated = drift::Project::fromJson(json, &error);
@@ -599,7 +624,7 @@ void Transform3dTest::migrationKeepsTheCameraViewAtEveryKey()
     const auto legacyView = [&](const drift::Clip &c, drift::TimeUs time) {
         const double d = std::max(1.0, value(c.perspective, time, 2000.0));
         QMatrix4x4 view = legacyEye(d, canvas);
-        view.translate(float(-value(c.transformX, time, 0)), float(-value(c.transformY, time, 0)),
+        view.translate(float(-value(c.positionX, time, 0)), float(-value(c.positionY, time, 0)),
                        float(-value(c.positionZ, time, 0)));
         view.rotate(float(-value(c.rotation, time, 0)), 0.f, 0.f, 1.f);
         view.rotate(float(-value(c.rotationY, time, 0)), 0.f, 1.f, 0.f);
@@ -628,7 +653,7 @@ void Transform3dTest::migrationKeepsTheCameraViewAtEveryKey()
 
     const drift::Clip &before = old.tracks()[cameraTrack].clips[0];
     QList<drift::TimeUs> times{0};
-    for (const drift::KeyframeTrack<double> *t : {&before.transformX, &before.transformY, &before.positionZ,
+    for (const drift::KeyframeTrack<double> *t : {&before.positionX, &before.positionY, &before.positionZ,
                                                   &before.rotationX, &before.rotationY, &before.rotation,
                                                   &before.perspective}) {
         times.append(t->keyframes().keys());
@@ -704,8 +729,8 @@ void Transform3dTest::keysDifferingOnlyInRotationKeepTheEye()
     const QSizeF canvas(1920, 1080);
     drift::Clip camera = drift::makeCameraClip(0, drift::secondsToUs(4.0));
     for (const drift::TimeUs time : {drift::TimeUs(0), drift::secondsToUs(2.0)}) {
-        camera.transformX.setKeyframe(time, 1200.0);
-        camera.transformY.setKeyframe(time, 300.0);
+        camera.positionX.setKeyframe(time, 1200.0);
+        camera.positionY.setKeyframe(time, 300.0);
         camera.positionZ.setKeyframe(time, -1500.0);
     }
     camera.rotationY.setKeyframe(0, 0.0);
@@ -782,8 +807,8 @@ void Transform3dTest::pointOfInterestAimsTheCamera()
 {
     const QSizeF canvas(1920, 1080);
     drift::Clip clip = drift::makeCameraClip(0, drift::secondsToUs(4.0));
-    clip.transformX.setKeyframe(0, 300.0);
-    clip.transformY.setKeyframe(0, 900.0);
+    clip.positionX.setKeyframe(0, 300.0);
+    clip.positionY.setKeyframe(0, 900.0);
     clip.positionZ.setKeyframe(0, -1800.0);
     clip.anchorX.setKeyframe(0, 1500.0);
     clip.anchorY.setKeyframe(0, 200.0);

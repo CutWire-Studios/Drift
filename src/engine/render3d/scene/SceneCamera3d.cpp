@@ -167,8 +167,8 @@ SceneCamera3d sceneCameraFromClip(const Clip &clip, TimeUs timelineUs, double re
     const TimeUs relative = timelineUs - clip.timelineStart;
     const double defaultZoom = defaultClipPerspective(projectSize.height());
     SceneCamera3d camera;
-    camera.positionX = trackValue(clip.transformX, relative, projectSize.width() * 0.5) * renderScale;
-    camera.positionY = trackValue(clip.transformY, relative, projectSize.height() * 0.5) * renderScale;
+    camera.positionX = trackValue(clip.positionX, relative, projectSize.width() * 0.5) * renderScale;
+    camera.positionY = trackValue(clip.positionY, relative, projectSize.height() * 0.5) * renderScale;
     camera.positionZ = trackValue(clip.positionZ, relative, -defaultZoom) * renderScale;
     camera.rotationX = trackValue(clip.rotationX, relative, 0.0);
     camera.rotationY = trackValue(clip.rotationY, relative, 0.0);

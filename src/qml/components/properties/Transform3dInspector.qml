@@ -5,8 +5,7 @@ import Drift
 // The selected 3D layer or model placed in 3D: Position (where its anchor point sits, in canvas
 // px), Anchor, Rotation and Scale as X/Y/Z fields. Everything writes the clip's ordinary tracks,
 // so the keyframes, graph, easing and undo are the ones the Transform tab uses. Position is the
-// anchor's place in the scene; the clip stores the rect's top-left corner, so a Position edit moves
-// the rect by the difference.
+// anchor's place in the scene; the anchor is in frame px (the clip's unscaled size).
 Item {
     id: root
 
@@ -45,18 +44,18 @@ Item {
                                            EditorState.inspectorPlayheadSeconds, def)
     }
 
-    readonly property real rectW: valueAt("width", canvasW)
-    readonly property real rectH: valueAt("height", canvasH)
-    // Anchor and position as the clip stores them: the anchor in px from the rect's top-left corner
-    // (the rect's centre until it is set), the rect's corner and depth for position.
-    readonly property var anchorNow: [valueAt("anchorX", rectW / 2), valueAt("anchorY", rectH / 2), valueAt("anchorZ", 0)]
-    readonly property var cornerNow: [valueAt("x", 0), valueAt("y", 0), valueAt("z", 0)]
-    readonly property var positionNow: [cornerNow[0] + anchorNow[0], cornerNow[1] + anchorNow[1], cornerNow[2] + anchorNow[2]]
+    readonly property real frameW: hasSelection && clipData.frameW > 0 ? clipData.frameW : canvasW
+    readonly property real frameH: hasSelection && clipData.frameH > 0 ? clipData.frameH : canvasH
+    // Anchor in px from the frame's top-left corner (the frame's centre until it is set); position
+    // is where the anchor lands on the canvas, with depth added to the anchor's Z.
+    readonly property var anchorNow: [valueAt("anchorX", frameW / 2), valueAt("anchorY", frameH / 2), valueAt("anchorZ", 0)]
+    readonly property var positionNow: [valueAt("positionX", canvasW / 2), valueAt("positionY", canvasH / 2),
+                                        valueAt("z", 0) + anchorNow[2]]
     readonly property var rotationNow: [valueAt("rotationX", 0), valueAt("rotationY", 0), valueAt("rotation", 0)]
     readonly property real scaleNow: {
         void clipDataRevision
         void liveRevision
-        return EditorState.keyframes.scaleOf(rectW, rectH, canvasW, canvasH)
+        return valueAt("scaleX", 1)
     }
     readonly property real depthScaleNow: valueAt("model3d.modelScaleZ", Number((clipData.model3d || {}).modelScaleZ) || 1)
     readonly property var positions: {
@@ -101,21 +100,13 @@ Item {
         EditorState.commitPreviewDrag()
     }
     function setScale(percent) {
-        const s = {
-            "x": valueAt("x", 0), "y": valueAt("y", 0), "w": rectW, "h": rectH, "scale": scaleNow,
-            "rot": valueAt("rotation", 0) * Math.PI / 180,
-            "pixelSize": (clipData.textStyle && clipData.textStyle.pixelSize) || 64
-        }
-        if (s.scale <= 0)
+        const sx = valueAt("scaleX", 1)
+        if (sx === 0)
             return
-        const r = EditorState.keyframes.scaledRect(s, percent / 100, Qt.point(0.5, 0.5))
+        const k = percent / 100
         EditorState.beginPreviewDrag(qsTr("Scale clip"))
-        if (isText)
-            EditorState.previewSetTextRect(EditorState.selectedTrack, EditorState.selectedClip,
-                                           r.x, r.y, r.w, r.h, Math.round(s.pixelSize * r.k))
-        else
-            EditorState.previewSetClipRect(EditorState.selectedTrack, EditorState.selectedClip,
-                                           r.x, r.y, r.w, r.h)
+        EditorState.previewSetClipScale(EditorState.selectedTrack, EditorState.selectedClip,
+                                        k, k * valueAt("scaleY", 1) / sx)
         EditorState.commitPreviewDrag()
     }
 
@@ -333,7 +324,7 @@ Item {
                 width: parent.width
                 title: qsTr("Position (px)")
                 values: root.positionNow
-                keyNames: ["x", "y", "z"]
+                keyNames: ["positionX", "positionY", "z"]
                 decimals: 0
                 resetTip: qsTr("Reset position & size")
                 SearchAnchor {
@@ -341,7 +332,7 @@ Item {
                     title: qsTr("3D position")
                     keywords: "move x y z depth"
                 }
-                onEdited: (axis, v) => root.setKey(keyNames[axis], v - root.anchorNow[axis])
+                onEdited: (axis, v) => root.setKey(keyNames[axis], axis === 2 ? v - root.anchorNow[2] : v)
                 onReset: EditorState.resetClipTransform(EditorState.selectedTrack, EditorState.selectedClip)
             }
 
@@ -358,7 +349,7 @@ Item {
                     keywords: "pivot origin center rotate around"
                 }
                 onEdited: (axis, v) => root.setKey(keyNames[axis], v)
-                onReset: root.setValues(qsTr("Reset anchor"), keyNames, [root.rectW / 2, root.rectH / 2, 0])
+                onReset: root.setValues(qsTr("Reset anchor"), keyNames, [root.frameW / 2, root.frameH / 2, 0])
             }
 
             FieldGroup {
@@ -386,7 +377,7 @@ Item {
                 labels: ["", "Z"]
                 values: root.isModel3d ? [Math.round(root.scaleNow * 100), Math.round(root.depthScaleNow * 100)]
                                        : [Math.round(root.scaleNow * 100)]
-                keyNames: root.isModel3d ? ["width", "height", "model3d.modelScaleZ"] : ["width", "height"]
+                keyNames: root.isModel3d ? ["scaleX", "scaleY", "model3d.modelScaleZ"] : ["scaleX", "scaleY"]
                 decimals: 0
                 from: 1
                 to: 1000

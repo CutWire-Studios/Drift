@@ -179,9 +179,10 @@ TimeUs matchTolerance(const drift::Project &project, const Clip &host)
 QSizeF frameSizeAt(const drift::Project &project, const Clip &clip, TimeUs timelineUs)
 {
     const TimeUs relative = qMax<TimeUs>(0, timelineUs - clip.timelineStart);
-    const double w = clip.transformW.isEmpty() ? project.width() : clip.transformW.evaluateAt(relative);
-    const double h = clip.transformH.isEmpty() ? project.height() : clip.transformH.evaluateAt(relative);
-    return QSizeF(qMax(1.0, w), qMax(1.0, h));
+    const drift::ClipLayout layout =
+        drift::clipLayoutAt(clip, relative, QSizeF(project.width(), project.height()));
+    return QSizeF(qMax(1.0, std::abs(layout.frameW * layout.scaleX)),
+                  qMax(1.0, std::abs(layout.frameH * layout.scaleY)));
 }
 
 TimeUs referenceTimelineUs(const Clip &host, const MotionTracker &tracker)
@@ -548,6 +549,57 @@ QPointF rotated(QPointF p, double degrees)
     return QPointF(p.x() * std::cos(a) - p.y() * std::sin(a), p.x() * std::sin(a) + p.y() * std::cos(a));
 }
 
+// The tracker maths places a layer as a rect turned about its own centre. A clip turns about its
+// position instead, so these two convert between the drawn rect (centre = the box centre swung about
+// the pivot) and the position and scale keys that draw it.
+QRectF drawnRect(const Clip &clip, TimeUs relative, QSizeF canvas, double *rotation)
+{
+    const drift::ClipLayout layout = drift::clipLayoutAt(clip, relative, canvas);
+    const QPointF centre = layout.pivot() + rotated(layout.box().center() - layout.pivot(), layout.rotation);
+    const QSizeF size(std::abs(layout.frameW * layout.scaleX), std::abs(layout.frameH * layout.scaleY));
+    if (rotation)
+        *rotation = layout.rotation;
+    return QRectF(centre - QPointF(size.width() / 2.0, size.height() / 2.0), size);
+}
+
+struct LayoutKeys
+{
+    double posX = 0;
+    double posY = 0;
+    double scaleX = 1;
+    double scaleY = 1;
+};
+
+LayoutKeys layoutKeysFor(const Clip &clip, TimeUs relative, QSizeF canvas, const QRectF &rect, double rotation)
+{
+    const drift::ClipLayout layout = drift::clipLayoutAt(clip, relative, canvas);
+    const double frameW = qMax(1.0, layout.frameW);
+    const double frameH = qMax(1.0, layout.frameH);
+    LayoutKeys keys;
+    keys.scaleX = rect.width() / frameW;
+    keys.scaleY = rect.height() / frameH;
+    const QPointF offset((frameW / 2.0 - layout.anchorX) * keys.scaleX, (frameH / 2.0 - layout.anchorY) * keys.scaleY);
+    const QPointF position = rect.center() - rotated(offset, rotation);
+    keys.posX = position.x();
+    keys.posY = position.y();
+    return keys;
+}
+
+// Pose runs are built as drawn rects; this turns them into position and scale keys in place.
+void poseRunsToLayout(QVector<PoseRun> *runs, const Clip &owner, QSizeF canvas)
+{
+    for (PoseRun &run : *runs) {
+        for (Pose &pose : run) {
+            const LayoutKeys keys = layoutKeysFor(owner, pose.t, canvas, QRectF(pose.x, pose.y, pose.w, pose.h),
+                                                  pose.rotation);
+            pose.x = keys.posX;
+            pose.y = keys.posY;
+            pose.w = keys.scaleX;
+            pose.h = keys.scaleY;
+        }
+    }
+}
+
 // A canvas-space point carried by the tracker: into the host's frame at the reference time, through
 // the tracker's transform, and back out to the canvas through the host's placement at `now`. The
 // host's own motion and rotation between the two are part of the result.
@@ -584,16 +636,15 @@ StabilizeSetup stabilizeSetup(const drift::Project &project, const Clip &host, c
                               const drift::TrackerTarget &target, TimeUs refTimeline)
 {
     const TimeUs rel = qMax<TimeUs>(0, refTimeline - host.timelineStart);
-    const auto own = [&](const drift::KeyframeTrack<double> &track, double fallback) {
-        return track.isEmpty() ? fallback : track.evaluateAt(rel);
-    };
     StabilizeSetup s;
-    s.w0 = qMax(1.0, target.hasRest ? target.restRect.width() : own(host.transformW, project.width()));
-    s.h0 = qMax(1.0, target.hasRest ? target.restRect.height() : own(host.transformH, project.height()));
+    double drawnRotation = 0;
+    const QRectF rect = target.hasRest ? target.restRect
+                                       : drawnRect(host, rel, QSizeF(project.width(), project.height()), &drawnRotation);
+    s.w0 = qMax(1.0, rect.width());
+    s.h0 = qMax(1.0, rect.height());
     s.px = QSizeF(s.w0, s.h0);
-    s.centre0 = QPointF((target.hasRest ? target.restRect.x() : own(host.transformX, 0.0)) + s.w0 / 2.0,
-                        (target.hasRest ? target.restRect.y() : own(host.transformY, 0.0)) + s.h0 / 2.0);
-    s.rotation0 = target.hasRest ? target.restRotation : own(host.rotation, 0.0);
+    s.centre0 = rect.center();
+    s.rotation0 = target.hasRest ? target.restRotation : drawnRotation;
     const std::optional<QPointF> anchor = trackAnchor(tracker, s.px);
     s.anchorOnScreen = s.toCanvas(anchor.value_or(QPointF(s.px.width() / 2.0, s.px.height() / 2.0)));
     s.lockPoint = target.centerOnTrack ? QPointF(project.width() / 2.0, project.height() / 2.0) : s.anchorOnScreen;
@@ -1121,8 +1172,8 @@ QString writeCameraKeys(const drift::Project &project, const Clip &host, const M
     const double radius = std::hypot(project.width(), project.height()) / 2.0;
     // The eye and three angles all move the picture together, so each gets a quarter of the budget.
     constexpr double kCameraTolerancePx = kScalarTolerancePx / 4.0;
-    writeChannel(camera.transformX, solution.runs, &Pose::x, kCameraTolerancePx);
-    writeChannel(camera.transformY, solution.runs, &Pose::y, kCameraTolerancePx);
+    writeChannel(camera.positionX, solution.runs, &Pose::x, kCameraTolerancePx);
+    writeChannel(camera.positionY, solution.runs, &Pose::y, kCameraTolerancePx);
     writeChannel(camera.positionZ, solution.runs, &Pose::z, kCameraTolerancePx);
     if (channels.roll || channels.tilt) {
         const double tolerance = qRadiansToDegrees(kCameraTolerancePx / std::min(d, radius));
@@ -2915,14 +2966,9 @@ bool TrackingController::addTarget(Clip &host, MotionTracker &tracker, const QSt
         target.centerOnTrack = center;
         if (via == drift::TrackerTarget::Via::Clip) {
             const TimeUs rel = qMax<TimeUs>(0, referenceTimelineUs(host, tracker) - host.timelineStart);
-            const auto own = [&](const drift::KeyframeTrack<double> &track, double fallback) {
-                return track.isEmpty() ? fallback : track.evaluateAt(rel);
-            };
             target.hasRest = true;
-            target.restRect = QRectF(own(host.transformX, 0.0), own(host.transformY, 0.0),
-                                     own(host.transformW, m_app->m_project.width()),
-                                     own(host.transformH, m_app->m_project.height()));
-            target.restRotation = own(host.rotation, 0.0);
+            target.restRect = drawnRect(host, rel, QSizeF(m_app->m_project.width(), m_app->m_project.height()),
+                                        &target.restRotation);
             tracker.targets.append(target);
             *error = applyTargets(host.id, tracker.id, targetClipId);
             return true;
@@ -3007,14 +3053,9 @@ bool TrackingController::addTarget(Clip &host, MotionTracker &tracker, const QSt
             target.centerOnTrack = true;
             const Clip &owner = m_app->m_project.tracks().at(t).clips.at(c);
             const TimeUs rel = qMax<TimeUs>(0, referenceTimelineUs(host, tracker) - owner.timelineStart);
-            const auto own = [&](const drift::KeyframeTrack<double> &track, double fallback) {
-                return track.isEmpty() ? fallback : track.evaluateAt(rel);
-            };
             target.hasRest = true;
-            target.restRect = QRectF(own(owner.transformX, 0.0), own(owner.transformY, 0.0),
-                                     own(owner.transformW, m_app->m_project.width()),
-                                     own(owner.transformH, m_app->m_project.height()));
-            target.restRotation = own(owner.rotation, 0.0);
+            target.restRect = drawnRect(owner, rel, QSizeF(m_app->m_project.width(), m_app->m_project.height()),
+                                        &target.restRotation);
         }
         tracker.targets.append(target);
     }
@@ -3140,8 +3181,8 @@ void TrackingController::unapplyTarget(const Clip &host, const MotionTracker &tr
             if (!stripChannel(track, lo, hi, restT, &rest))
                 track.setKeyframe(0, target.restCamera.at(index));
         };
-        stripCamera(owner.transformX, 0);
-        stripCamera(owner.transformY, 1);
+        stripCamera(owner.positionX, 0);
+        stripCamera(owner.positionY, 1);
         stripCamera(owner.positionZ, 2);
         if (channels.tilt || channels.roll) {
             stripCamera(owner.rotationX, 3);
@@ -3186,13 +3227,15 @@ void TrackingController::unapplyTarget(const Clip &host, const MotionTracker &tr
         if (!stripChannel(track, lo, hi, restT, &rest))
             track.setKeyframe(0, target.hasRest ? stored : rest);
     };
-    strip(owner.transformX, target.restRect.x());
-    strip(owner.transformY, target.restRect.y());
+    const LayoutKeys restKeys = layoutKeysFor(owner, restT, QSizeF(project.width(), project.height()),
+                                              target.restRect, target.restRotation);
+    strip(owner.positionX, restKeys.posX);
+    strip(owner.positionY, restKeys.posY);
     if (writesRotation)
         strip(owner.rotation, target.restRotation);
     if (writesScale || (stabilize && target.zoom != 1.0)) {
-        strip(owner.transformW, target.restRect.width());
-        strip(owner.transformH, target.restRect.height());
+        strip(owner.scaleX, restKeys.scaleX);
+        strip(owner.scaleY, restKeys.scaleY);
     }
 }
 
@@ -3319,20 +3362,23 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
             unwrapRotation(&poses);
             poseRuns.append(poses);
         }
-        writeChannel(owner.transformX, poseRuns, &Pose::x, kScalarTolerancePx);
-        writeChannel(owner.transformY, poseRuns, &Pose::y, kScalarTolerancePx);
+        double radius = 1.0;
+        for (const PoseRun &poses : poseRuns) {
+            for (const Pose &pose : poses)
+                radius = qMax(radius, std::hypot(pose.w, pose.h) / 2.0);
+        }
+        const QSizeF canvas(project.width(), project.height());
+        poseRunsToLayout(&poseRuns, owner, canvas);
+        const drift::ClipLayout frame = drift::clipLayoutAt(owner, 0, canvas);
+        writeChannel(owner.positionX, poseRuns, &Pose::x, kScalarTolerancePx);
+        writeChannel(owner.positionY, poseRuns, &Pose::y, kScalarTolerancePx);
         if (writesRotation) {
             // A locked shot shows rotation error as drift at the frame's edge, so bound it in pixels there.
-            double radius = 1.0;
-            for (const PoseRun &poses : poseRuns) {
-                for (const Pose &pose : poses)
-                    radius = qMax(radius, std::hypot(pose.w, pose.h) / 2.0);
-            }
             writeChannel(owner.rotation, poseRuns, &Pose::rotation, qRadiansToDegrees(kScalarTolerancePx / radius));
         }
         if (writesScale || target.zoom != 1.0) {
-            writeChannel(owner.transformW, poseRuns, &Pose::w, kScalarTolerancePx);
-            writeChannel(owner.transformH, poseRuns, &Pose::h, kScalarTolerancePx);
+            writeChannel(owner.scaleX, poseRuns, &Pose::w, kScalarTolerancePx / qMax(1.0, frame.frameW));
+            writeChannel(owner.scaleY, poseRuns, &Pose::h, kScalarTolerancePx / qMax(1.0, frame.frameH));
         }
         movedHost = true;
     }
@@ -3471,15 +3517,14 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
         // contribute their similarity part only.
         const HostFrame hostRef = hostFrameAt(project, host, refTimeline);
         const TimeUs followerRel = qMax<TimeUs>(0, refTimeline - owner.timelineStart);
-        const auto ownValue = [&](const drift::KeyframeTrack<double> &track, double fallback) {
-            return track.isEmpty() ? fallback : track.evaluateAt(followerRel);
-        };
-        const double x0 = target.hasRest ? target.restRect.x() : ownValue(owner.transformX, 0.0);
-        const double y0 = target.hasRest ? target.restRect.y() : ownValue(owner.transformY, 0.0);
-        const double w0 = qMax(1.0, target.hasRest ? target.restRect.width() : ownValue(owner.transformW, project.width()));
-        const double h0 = qMax(1.0, target.hasRest ? target.restRect.height() : ownValue(owner.transformH, project.height()));
-        const double rotation0 = target.hasRest ? target.restRotation : ownValue(owner.rotation, 0.0);
-        QPointF centre0(x0 + w0 / 2.0, y0 + h0 / 2.0);
+        double drawnRotation = 0;
+        const QRectF rest = target.hasRest
+                                ? target.restRect
+                                : drawnRect(owner, followerRel, QSizeF(project.width(), project.height()), &drawnRotation);
+        const double w0 = qMax(1.0, rest.width());
+        const double h0 = qMax(1.0, rest.height());
+        const double rotation0 = target.hasRest ? target.restRotation : drawnRotation;
+        QPointF centre0 = rest.center();
         if (target.centerOnTrack) {
             if (const std::optional<QPointF> anchor = trackAnchor(*tracker, px)) {
                 const QPointF local((anchor->x() / px.width() - 0.5) * hostRef.w,
@@ -3515,13 +3560,16 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
             unwrapRotation(&poses);
             poseRuns.append(poses);
         }
-        writeChannel(owner.transformX, poseRuns, &Pose::x, kScalarTolerancePx);
-        writeChannel(owner.transformY, poseRuns, &Pose::y, kScalarTolerancePx);
+        const QSizeF canvas(project.width(), project.height());
+        poseRunsToLayout(&poseRuns, owner, canvas);
+        const drift::ClipLayout frame = drift::clipLayoutAt(owner, 0, canvas);
+        writeChannel(owner.positionX, poseRuns, &Pose::x, kScalarTolerancePx);
+        writeChannel(owner.positionY, poseRuns, &Pose::y, kScalarTolerancePx);
         if (writesRotation)
             writeChannel(owner.rotation, poseRuns, &Pose::rotation, kRotationToleranceDeg);
         if (writesScale) {
-            writeChannel(owner.transformW, poseRuns, &Pose::w, kScalarTolerancePx);
-            writeChannel(owner.transformH, poseRuns, &Pose::h, kScalarTolerancePx);
+            writeChannel(owner.scaleX, poseRuns, &Pose::w, kScalarTolerancePx / qMax(1.0, frame.frameW));
+            writeChannel(owner.scaleY, poseRuns, &Pose::h, kScalarTolerancePx / qMax(1.0, frame.frameH));
         }
     }
     if (movedHost)

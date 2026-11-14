@@ -217,6 +217,12 @@ private slots:
     void clipAnimationSerializationAndSample();
     void clipAnimationUnknownKindAndParametersRoundTrip();
     void projectV29FadeMigration();
+    void layoutMigrationV30Static();
+    void layoutMigrationV30LinearKeys();
+    void layoutMigrationV30EmptyLayoutMediaAspect();
+    void layoutMigrationV30ExplicitAnchor();
+    void layoutMigrationV30Text();
+    void layoutV31RoundTrip();
     void rebaseClipLayoutFreezesImplicitSize();
     void rebaseClipLayoutShiftsKeyframedPosition();
     void rebaseClipLayoutHoldsNestedContentStill();
@@ -305,7 +311,7 @@ void CoreTest::disabledKeyframesFreezeAtFirstKey()
     QVERIFY(!loadedTrack.enabled());
     QCOMPARE(loadedTrack.keyframes().size(), 2);
     // A project written before the switch existed loads with its animations on.
-    QVERIFY(loaded.tracks().at(0).clips.at(0).transformX.enabled());
+    QVERIFY(loaded.tracks().at(0).clips.at(0).positionX.enabled());
 }
 
 void CoreTest::keyframeSmoothTangents()
@@ -1128,10 +1134,10 @@ void CoreTest::clipTransformSerialization()
     clip.textContent = QStringLiteral("Hello");
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(3.0);
-    clip.transformX.setKeyframe(0, 100.0);
-    clip.transformY.setKeyframe(0, 200.0);
-    clip.transformW.setKeyframe(0, 640.0);
-    clip.transformH.setKeyframe(0, 360.0);
+    clip.positionX.setKeyframe(0, 100.0);
+    clip.positionY.setKeyframe(0, 200.0);
+    clip.scaleX.setKeyframe(0, 640.0);
+    clip.scaleY.setKeyframe(0, 360.0);
     clip.rotation.setKeyframe(0, 45.0);
     project.tracks()[0].clips.append(clip);
 
@@ -1141,10 +1147,10 @@ void CoreTest::clipTransformSerialization()
 
     QVERIFY(error.isEmpty());
     const drift::Clip &loadedClip = loaded.tracks()[0].clips[0];
-    QCOMPARE(loadedClip.transformX.evaluateAt(0), 100.0);
-    QCOMPARE(loadedClip.transformY.evaluateAt(0), 200.0);
-    QCOMPARE(loadedClip.transformW.evaluateAt(0), 640.0);
-    QCOMPARE(loadedClip.transformH.evaluateAt(0), 360.0);
+    QCOMPARE(loadedClip.positionX.evaluateAt(0), 100.0);
+    QCOMPARE(loadedClip.positionY.evaluateAt(0), 200.0);
+    QCOMPARE(loadedClip.scaleX.evaluateAt(0), 640.0);
+    QCOMPARE(loadedClip.scaleY.evaluateAt(0), 360.0);
     QCOMPARE(loadedClip.rotation.evaluateAt(0), 45.0);
 }
 
@@ -1195,10 +1201,7 @@ void CoreTest::legacyFractionalTransformMigration()
     QVERIFY(!loaded.tracks().isEmpty());
     QVERIFY(!loaded.tracks()[0].clips.isEmpty());
     const drift::Clip &clip = loaded.tracks()[0].clips[0];
-    QCOMPARE(clip.transformW.evaluateAt(0), 1920.0);
-    QCOMPARE(clip.transformH.evaluateAt(0), 1080.0);
-    QCOMPARE(clip.transformX.evaluateAt(0), 0.0);
-    QCOMPARE(clip.transformY.evaluateAt(0), 0.0);
+    QCOMPARE(drift::clipLayoutAt(clip, 0, QSizeF(1920, 1080)).box(), QRectF(0.0, 0.0, 1920.0, 1080.0));
 }
 
 void CoreTest::volumeKeyframeSerialization()
@@ -2169,8 +2172,8 @@ void CoreTest::shapeStyleSerialization()
     clip.shapeStyle.keyframes[QStringLiteral("cornerRadius")].setKeyframe(drift::kUsPerSecond, 40.0);
     clip.shapeStyle.keyframes[QStringLiteral("layer.stroke.width")].setKeyframe(0, 2.0);
     clip.shapeStyle.keyframes[QStringLiteral("layer.stroke.width")].setKeyframe(drift::kUsPerSecond, 12.0);
-    clip.transformX.setKeyframe(0, 100.0);
-    clip.transformY.setKeyframe(0, 200.0);
+    clip.positionX.setKeyframe(0, 100.0);
+    clip.positionY.setKeyframe(0, 200.0);
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
@@ -2217,8 +2220,8 @@ void CoreTest::shapeStyleSerialization()
     const drift::ShapeStyle mid = style.resolvedAt(drift::kUsPerSecond / 2);
     QVERIFY(mid.cornerRadius > 10.0 && mid.cornerRadius < 30.0);
     QVERIFY(mid.layers[1].width > 4.0 && mid.layers[1].width < 10.0);
-    QCOMPARE(loadedClip.transformX.evaluateAt(0), 100.0);
-    QCOMPARE(loadedClip.transformY.evaluateAt(0), 200.0);
+    QCOMPARE(loadedClip.positionX.evaluateAt(0), 100.0);
+    QCOMPARE(loadedClip.positionY.evaluateAt(0), 200.0);
     QCOMPARE(json.value(QStringLiteral("version")).toInt(),
              drift::Project::kCurrentVersion);
 }
@@ -2241,7 +2244,7 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 30);
+    QCOMPARE(drift::Project::kCurrentVersion, 31);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
@@ -2281,7 +2284,7 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 30);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 31);
     const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                    .value(QStringLiteral("clips")).toArray().at(0).toObject()
                                    .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();
@@ -3046,9 +3049,11 @@ void CoreTest::model3dPoseMigratesToTransform()
     clip.type = drift::ClipType::Model3d;
     clip.path = QStringLiteral("/media/robot.glb");
     clip.timelineDuration = drift::secondsToUs(3.0);
-    clip.transformX.setKeyframe(0, -200.0);
-    clip.transformY.setKeyframe(0, 100.0);
     legacy.tracks()[0].clips.append(clip);
+    drift::KeyframeTrack<double> offsetX;
+    offsetX.setKeyframe(0, -200.0);
+    drift::KeyframeTrack<double> offsetY;
+    offsetY.setKeyframe(0, 100.0);
     QJsonObject json = legacy.toJson();
     json.insert(QStringLiteral("version"), 12);
     QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
@@ -3056,6 +3061,8 @@ void CoreTest::model3dPoseMigratesToTransform()
     QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
     QJsonObject clipJson = clips.at(0).toObject();
     clipJson.insert(QStringLiteral("model3d"), model);
+    clipJson.insert(QStringLiteral("x"), drift::keyframesToJson(offsetX));
+    clipJson.insert(QStringLiteral("y"), drift::keyframesToJson(offsetY));
     clips[0] = clipJson;
     track.insert(QStringLiteral("clips"), clips);
     tracks[0] = track;
@@ -3067,10 +3074,10 @@ void CoreTest::model3dPoseMigratesToTransform()
     const drift::Clip &c = loaded.tracks().at(0).clips.at(0);
     // Largest extent (x, 2 units) spanned half the height: a 540 x 270 front face, centred where
     // the old offset put the model (960 - 200, 540 + 100).
-    QCOMPARE(c.transformW.evaluateAt(0), 540.0);
-    QCOMPARE(c.transformH.evaluateAt(0), 270.0);
-    QCOMPARE(c.transformX.evaluateAt(0) + 270.0, 760.0);
-    QCOMPARE(c.transformY.evaluateAt(0) + 135.0, 640.0);
+    const drift::ClipLayout layout = drift::clipLayoutAt(c, 0, QSizeF(1920, 1080));
+    QCOMPARE(layout.box(), QRectF(490.0, 505.0, 540.0, 270.0));
+    QCOMPARE(layout.posX, 760.0);
+    QCOMPARE(layout.posY, 640.0);
     // glTF's up is the canvas's down: X and Z flipped at format 13, and the format 22 world (z away
     // from the viewer) flips X and Y again — so, from glTF, X keeps its sign and Y and Z turn.
     QCOMPARE(c.rotationX.evaluateAt(0), 10.0);
@@ -3603,10 +3610,8 @@ void CoreTest::stabilizePlanDoesNotKeyEveryFrame()
     clip.srcOut = drift::secondsToUs(2.0);
     clip.timelineDuration = clip.srcOut;
     clip.speed = 1.0;
-    clip.transformX.setKeyframe(0, 0.0);
-    clip.transformY.setKeyframe(0, 0.0);
-    clip.transformW.setKeyframe(0, 1280.0);
-    clip.transformH.setKeyframe(0, 720.0);
+    clip.frameW = 1280.0;
+    clip.frameH = 720.0;
 
     const drift::StabilizePlan pan = drift::planStabilizeKeyframes(
         path, 0, clip, 30.0, 1.0, 1.0, /*smoothing=*/15, /*tripod=*/true, /*epsilon=*/1.0);
@@ -3637,27 +3642,25 @@ void CoreTest::stabilizePlanDoesNotKeyEveryFrame()
 void CoreTest::stabilizeApplyPlanScalesOffsetsByZoom()
 {
     drift::Clip clip;
-    clip.transformX.setKeyframe(0, 100.0);
-    clip.transformY.setKeyframe(0, 200.0);
-    clip.transformW.setKeyframe(0, 400.0);
-    clip.transformH.setKeyframe(0, 400.0);
+    clip.positionX.setKeyframe(0, 300.0);
+    clip.positionY.setKeyframe(0, 400.0);
+    clip.frameW = 400.0;
+    clip.frameH = 400.0;
 
     drift::StabilizePlan plan;
     plan.keys.append({0, 0.0, 0.0});
     plan.keys.append({1'000'000, 20.0, -10.0});
-    drift::applyStabilizePlan(clip, plan);
+    drift::applyStabilizePlan(clip, plan, QSizeF(1920, 1080));
 
-    // maxAbs=20 → zoom = 1 + 2*20/400 = 1.1. W/H grow around the rest center,
-    // and X/Y offsets are in that zoomed pixel grid.
+    // maxAbs=20 → zoom = 1 + 2*20/400 = 1.1. The scale grows about the anchor, so the position
+    // stays on the rest centre, and X/Y offsets are in that zoomed pixel grid.
     const double zoom = 1.1;
-    const double originX = 100.0 + 200.0 - 400.0 * zoom * 0.5;
-    const double originY = 200.0 + 200.0 - 400.0 * zoom * 0.5;
-    QCOMPARE(clip.transformX.evaluateAt(0), originX);
-    QCOMPARE(clip.transformY.evaluateAt(0), originY);
-    QCOMPARE(clip.transformX.evaluateAt(1'000'000), originX + 20.0 * zoom);
-    QCOMPARE(clip.transformY.evaluateAt(1'000'000), originY - 10.0 * zoom);
-    QCOMPARE(clip.transformW.evaluateAt(0), 400.0 * zoom);
-    QCOMPARE(clip.transformH.evaluateAt(0), 400.0 * zoom);
+    QCOMPARE(clip.positionX.evaluateAt(0), 300.0);
+    QCOMPARE(clip.positionY.evaluateAt(0), 400.0);
+    QCOMPARE(clip.positionX.evaluateAt(1'000'000), 300.0 + 20.0 * zoom);
+    QCOMPARE(clip.positionY.evaluateAt(1'000'000), 400.0 - 10.0 * zoom);
+    QCOMPARE(clip.scaleX.evaluateAt(0), zoom);
+    QCOMPARE(clip.scaleY.evaluateAt(0), zoom);
 }
 
 void CoreTest::stabilizeTrfAsciiAndBinaryParse()
@@ -3727,8 +3730,8 @@ void CoreTest::stabilizeModeSerialization()
     clip.stabilizeHasRestPose = true;
     clip.stabilizeRestX = 12.0;
     clip.stabilizeRestY = 34.0;
-    clip.stabilizeRestW = 640.0;
-    clip.stabilizeRestH = 360.0;
+    clip.stabilizeRestW = 0.5;
+    clip.stabilizeRestH = 0.75;
     clip.stabilizeRestRot = 5.0;
     project.tracks()[0].clips.append(clip);
 
@@ -3744,8 +3747,8 @@ void CoreTest::stabilizeModeSerialization()
     QCOMPARE(loadedClip.stabilizeHasRestPose, true);
     QCOMPARE(loadedClip.stabilizeRestX, 12.0);
     QCOMPARE(loadedClip.stabilizeRestY, 34.0);
-    QCOMPARE(loadedClip.stabilizeRestW, 640.0);
-    QCOMPARE(loadedClip.stabilizeRestH, 360.0);
+    QCOMPARE(loadedClip.stabilizeRestW, 0.5);
+    QCOMPARE(loadedClip.stabilizeRestH, 0.75);
     QCOMPARE(loadedClip.stabilizeRestRot, 5.0);
 }
 
@@ -4009,23 +4012,23 @@ void CoreTest::splitCarriesTheAnimationOntoBothHalves()
     head.timelineDuration = drift::secondsToUs(8.0);
     head.srcIn = 0;
     head.srcOut = drift::secondsToUs(8.0);
-    head.transformX.setKeyframe(0, 0.0);
-    head.transformX.setKeyframe(drift::secondsToUs(8.0), 800.0);
+    head.positionX.setKeyframe(0, 0.0);
+    head.positionX.setKeyframe(drift::secondsToUs(8.0), 800.0);
 
     drift::Clip tail;
     QVERIFY(drift::splitClipAtOffset(head, tail, drift::secondsToUs(4.0)));
 
     // The head keeps its keys, including the one past the cut: it still shapes the curve inside
     // the range the head now covers.
-    QCOMPARE(head.transformX.keyframes().size(), 2);
-    QCOMPARE(head.transformX.evaluateAt(drift::secondsToUs(4.0)), 400.0);
+    QCOMPARE(head.positionX.keyframes().size(), 2);
+    QCOMPARE(head.positionX.evaluateAt(drift::secondsToUs(4.0)), 400.0);
 
     // The tail starts where the head left off and ends where the original did.
-    QCOMPARE(tail.transformX.evaluateAt(0), 400.0);
-    QCOMPARE(tail.transformX.evaluateAt(drift::secondsToUs(4.0)), 800.0);
+    QCOMPARE(tail.positionX.evaluateAt(0), 400.0);
+    QCOMPARE(tail.positionX.evaluateAt(drift::secondsToUs(4.0)), 800.0);
 
     // Same value either side of the cut, which is what makes the split invisible.
-    QCOMPARE(head.transformX.evaluateAt(head.timelineDuration), tail.transformX.evaluateAt(0));
+    QCOMPARE(head.positionX.evaluateAt(head.timelineDuration), tail.positionX.evaluateAt(0));
 
     // Effect parameter curves ride along the same way.
     drift::Clip graded;
@@ -4115,7 +4118,7 @@ void CoreTest::subtitleClipsMergeWithGaps()
 
     drift::Clip a = subtitleClip(QStringLiteral("a"), 10.0, 2.0, {cue(0.0, 1.0, QStringLiteral("one"))});
     a.textStyle.pixelSize = 80;
-    a.transformX.setKeyframe(0, 123.0);
+    a.positionX.setKeyframe(0, 123.0);
     drift::Clip b = subtitleClip(QStringLiteral("b"), 15.0, 3.0, {cue(0.5, 2.0, QStringLiteral("three"))});
     b.textStyle.pixelSize = 30;
     b.fadeOutUs = drift::secondsToUs(0.25);
@@ -4134,7 +4137,7 @@ void CoreTest::subtitleClipsMergeWithGaps()
     QCOMPARE(merged.srcIn, drift::TimeUs{0});
     QCOMPARE(merged.srcOut, drift::secondsToUs(8.0));
     QCOMPARE(merged.textStyle.pixelSize, 80);
-    QCOMPARE(merged.transformX.keyframes().size(), 1);
+    QCOMPARE(merged.positionX.keyframes().size(), 1);
     QCOMPARE(merged.fadeOutUs, drift::secondsToUs(0.25));
     QCOMPARE(merged.subtitleCues.size(), 3);
     QCOMPARE(merged.subtitleCues.at(0).text, QStringLiteral("one"));
@@ -5023,7 +5026,7 @@ void CoreTest::fadeSerializationAndMultiplier()
     QCOMPARE(cc.fadeInCurve, drift::FadeCurve::Custom);
     QVERIFY(!cc.fadeInShape.isEmpty());
     QCOMPARE(cc.fadeOutCurve, drift::FadeCurve::EqualPower);
-    QCOMPARE(customLoaded.toJson().value(QStringLiteral("version")).toInt(), 30);
+    QCOMPARE(customLoaded.toJson().value(QStringLiteral("version")).toInt(), 31);
     const drift::TimeUs midIn = c.timelineStart + drift::secondsToUs(0.5);
     QVERIFY(qAbs(cc.fadeMultiplier(midIn) - 0.25) < 1e-6);
 
@@ -5216,6 +5219,246 @@ void CoreTest::projectV29FadeMigration()
     }
 }
 
+namespace {
+
+struct OldLayout
+{
+    drift::KeyframeTrack<double> x;
+    drift::KeyframeTrack<double> y;
+    drift::KeyframeTrack<double> w;
+    drift::KeyframeTrack<double> h;
+    drift::KeyframeTrack<double> anchorX;
+    drift::KeyframeTrack<double> anchorY;
+};
+
+drift::KeyframeTrack<double> linearKeys(std::initializer_list<std::pair<drift::TimeUs, double>> keys)
+{
+    drift::KeyframeTrack<double> track;
+    for (const auto &key : keys)
+        track.setKeyframe(key.first, key.second);
+    return track;
+}
+
+// A version 30 document: a one-clip project whose layout keys are rewritten to the old rect names.
+QJsonObject makeV30Project(drift::ClipType type, const drift::MediaAsset *asset, const OldLayout &old)
+{
+    drift::Project project;
+    project.setResolution(1920, 1080);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = type;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    if (asset)
+        clip.assetId = project.addAsset(*asset);
+    if (type == drift::ClipType::Text)
+        clip.textContent = QStringLiteral("hello");
+    project.tracks()[0].clips.append(clip);
+
+    QJsonObject json = project.toJson();
+    json.insert(QStringLiteral("version"), 30);
+    QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
+    QJsonObject track = tracks.at(0).toObject();
+    QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+    QJsonObject clipJson = clips.at(0).toObject();
+    for (const char *key : {"positionX", "positionY", "scaleX", "scaleY", "frameW", "frameH"})
+        clipJson.remove(QLatin1String(key));
+    const auto put = [&clipJson](const char *key, const drift::KeyframeTrack<double> &track) {
+        clipJson.insert(QLatin1String(key), drift::keyframesToJson(track));
+    };
+    put("x", old.x);
+    put("y", old.y);
+    put("width", old.w);
+    put("height", old.h);
+    if (!old.anchorX.isEmpty())
+        put("anchorX", old.anchorX);
+    if (!old.anchorY.isEmpty())
+        put("anchorY", old.anchorY);
+    clips[0] = clipJson;
+    track.insert(QStringLiteral("clips"), clips);
+    tracks[0] = track;
+    json.insert(QStringLiteral("tracks"), tracks);
+    return json;
+}
+
+// Old box and 2D pivot (the box centre, or the anchor's px from the top-left when it is set) against
+// the migrated clip's layout, at several clip-relative times.
+void verifyV30Layout(const QJsonObject &json, const OldLayout &old, const QList<drift::TimeUs> &times)
+{
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const drift::Clip &clip = loaded.tracks().at(0).clips.at(0);
+    const auto at = [](const drift::KeyframeTrack<double> &track, drift::TimeUs t, double fallback) {
+        return track.isEmpty() ? fallback : track.evaluateAt(t);
+    };
+    for (const drift::TimeUs t : times) {
+        const double w = at(old.w, t, 1920.0);
+        const double h = at(old.h, t, 1080.0);
+        const QRectF box(at(old.x, t, 0.0), at(old.y, t, 0.0), w, h);
+        const QPointF pivot(box.x() + at(old.anchorX, t, w / 2.0), box.y() + at(old.anchorY, t, h / 2.0));
+        const drift::ClipLayout layout = drift::clipLayoutAt(clip, t, QSizeF(1920, 1080));
+        QVERIFY(qAbs(layout.box().x() - box.x()) < 1e-6);
+        QVERIFY(qAbs(layout.box().y() - box.y()) < 1e-6);
+        QVERIFY(qAbs(layout.box().width() - box.width()) < 1e-6);
+        QVERIFY(qAbs(layout.box().height() - box.height()) < 1e-6);
+        QVERIFY(qAbs(layout.pivot().x() - pivot.x()) < 1e-6);
+        QVERIFY(qAbs(layout.pivot().y() - pivot.y()) < 1e-6);
+    }
+}
+
+drift::MediaAsset videoAsset(int width, int height)
+{
+    drift::MediaAsset asset;
+    asset.name = QStringLiteral("m.mp4");
+    asset.kind = drift::MediaKind::Video;
+    asset.path = QStringLiteral("/tmp/m.mp4");
+    asset.width = width;
+    asset.height = height;
+    asset.durationUs = drift::secondsToUs(10.0);
+    return asset;
+}
+
+} // namespace
+
+void CoreTest::layoutMigrationV30Static()
+{
+    OldLayout old;
+    old.x = linearKeys({{0, 100.0}});
+    old.y = linearKeys({{0, 50.0}});
+    old.w = linearKeys({{0, 400.0}});
+    old.h = linearKeys({{0, 300.0}});
+    const drift::MediaAsset asset = videoAsset(1000, 1000);
+    verifyV30Layout(makeV30Project(drift::ClipType::Video, &asset, old), old, {0, drift::secondsToUs(1.0)});
+    const drift::Project loaded = drift::Project::fromJson(makeV30Project(drift::ClipType::Video, &asset, old));
+    const drift::Clip &clip = loaded.tracks().at(0).clips.at(0);
+    QCOMPARE(clip.frameW, 1080.0);
+    QCOMPARE(clip.frameH, 1080.0);
+    QVERIFY(clip.anchorX.isEmpty());
+}
+
+void CoreTest::layoutMigrationV30LinearKeys()
+{
+    const drift::TimeUs end = drift::secondsToUs(2.0);
+    OldLayout old;
+    old.x = linearKeys({{0, 0.0}, {end, 800.0}});
+    old.y = linearKeys({{0, 100.0}, {end, 300.0}});
+    old.w = linearKeys({{0, 400.0}, {end, 800.0}});
+    old.h = linearKeys({{0, 300.0}, {end, 600.0}});
+    const drift::MediaAsset asset = videoAsset(1920, 1080);
+    verifyV30Layout(makeV30Project(drift::ClipType::Video, &asset, old), old,
+                    {0, drift::secondsToUs(0.5), drift::secondsToUs(1.0), end, drift::secondsToUs(3.0)});
+}
+
+void CoreTest::layoutMigrationV30EmptyLayoutMediaAspect()
+{
+    const OldLayout old;
+    const drift::MediaAsset asset = videoAsset(1000, 500);
+    const QJsonObject json = makeV30Project(drift::ClipType::Video, &asset, old);
+    verifyV30Layout(json, old, {0, drift::secondsToUs(2.0)});
+    const drift::Project loaded = drift::Project::fromJson(json);
+    const drift::Clip &clip = loaded.tracks().at(0).clips.at(0);
+    QCOMPARE(clip.frameW, 1920.0);
+    QCOMPARE(clip.frameH, 960.0);
+    QVERIFY(clip.positionX.isEmpty());
+    QVERIFY(clip.scaleX.isEmpty());
+    QCOMPARE(clip.scaleY.evaluateAt(0), 1080.0 / 960.0);
+}
+
+void CoreTest::layoutMigrationV30ExplicitAnchor()
+{
+    const drift::TimeUs end = drift::secondsToUs(2.0);
+    const drift::MediaAsset asset = videoAsset(1920, 1080);
+    const auto with3d = [](QJsonObject json) {
+        QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
+        QJsonObject track = tracks.at(0).toObject();
+        QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+        QJsonObject clipJson = clips.at(0).toObject();
+        clipJson.insert(QStringLiteral("layer3d"), true);
+        clips[0] = clipJson;
+        track.insert(QStringLiteral("clips"), clips);
+        tracks[0] = track;
+        json.insert(QStringLiteral("tracks"), tracks);
+        return json;
+    };
+
+    OldLayout fixed;
+    fixed.x = linearKeys({{0, 100.0}, {end, 500.0}});
+    fixed.y = linearKeys({{0, 200.0}});
+    fixed.w = linearKeys({{0, 400.0}});
+    fixed.h = linearKeys({{0, 300.0}});
+    fixed.anchorX = linearKeys({{0, 100.0}});
+    fixed.anchorY = linearKeys({{0, 50.0}});
+    verifyV30Layout(with3d(makeV30Project(drift::ClipType::Video, &asset, fixed)), fixed,
+                    {0, drift::secondsToUs(0.5), drift::secondsToUs(1.0), end});
+
+    OldLayout resized = fixed;
+    resized.x = linearKeys({{0, 100.0}});
+    resized.w = linearKeys({{0, 400.0}, {end, 800.0}});
+    resized.h = linearKeys({{0, 300.0}, {end, 600.0}});
+    verifyV30Layout(with3d(makeV30Project(drift::ClipType::Video, &asset, resized)), resized, {0, end});
+}
+
+void CoreTest::layoutMigrationV30Text()
+{
+    OldLayout old;
+    old.x = linearKeys({{0, 0.0}});
+    old.y = linearKeys({{0, 378.0}});
+    old.w = linearKeys({{0, 1920.0}});
+    old.h = linearKeys({{0, 324.0}});
+    const QJsonObject json = makeV30Project(drift::ClipType::Text, nullptr, old);
+    verifyV30Layout(json, old, {0, drift::secondsToUs(2.0)});
+    const drift::Project loaded = drift::Project::fromJson(json);
+    const drift::Clip &clip = loaded.tracks().at(0).clips.at(0);
+    QCOMPARE(clip.frameW, 0.0);
+    QCOMPARE(clip.frameH, 324.0);
+    QCOMPARE(clip.scaleX.evaluateAt(0), 1.0);
+    QCOMPARE(clip.positionY.evaluateAt(0), 540.0);
+}
+
+void CoreTest::layoutV31RoundTrip()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.frameW = 800.0;
+    clip.frameH = 450.0;
+    clip.positionX.setKeyframe(0, 100.0);
+    clip.positionX.setKeyframe(drift::secondsToUs(1.0), 300.0);
+    clip.positionY.setKeyframe(0, 200.0);
+    clip.scaleX.setKeyframe(0, 1.5);
+    clip.scaleY.setKeyframe(0, 0.5);
+    clip.anchorX.setKeyframe(0, 10.0);
+    project.tracks()[0].clips.append(clip);
+
+    const QJsonObject json = project.toJson();
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 31);
+    const QJsonObject clipJson = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                     .value(QStringLiteral("clips")).toArray().at(0).toObject();
+    QVERIFY(!clipJson.contains(QStringLiteral("x")));
+    QVERIFY(!clipJson.contains(QStringLiteral("width")));
+    QCOMPARE(clipJson.value(QStringLiteral("frameW")).toDouble(), 800.0);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const drift::Clip &back = loaded.tracks().at(0).clips.at(0);
+    QCOMPARE(back.frameW, 800.0);
+    QCOMPARE(back.frameH, 450.0);
+    QCOMPARE(back.positionX.keyframes().size(), 2);
+    QCOMPARE(back.positionX.evaluateAt(drift::secondsToUs(1.0)), 300.0);
+    QCOMPARE(back.positionY.evaluateAt(0), 200.0);
+    QCOMPARE(back.scaleX.evaluateAt(0), 1.5);
+    QCOMPARE(back.scaleY.evaluateAt(0), 0.5);
+    QCOMPARE(back.anchorX.evaluateAt(0), 10.0);
+    QVERIFY(back.anchorY.isEmpty());
+}
+
 // A canvas resize must not move or rescale anything: clips that relied on the
 // implicit full-canvas size get that size frozen, so they overflow the smaller
 // frame instead of shrinking with it.
@@ -5233,10 +5476,10 @@ void CoreTest::rebaseClipLayoutFreezesImplicitSize()
 
     drift::Clip explicitSize;
     explicitSize.type = drift::ClipType::Image;
-    explicitSize.transformW.setKeyframe(0, 640.0);
-    explicitSize.transformH.setKeyframe(0, 360.0);
-    explicitSize.transformX.setKeyframe(0, 100.0);
-    explicitSize.transformY.setKeyframe(0, 50.0);
+    explicitSize.frameW = 640.0;
+    explicitSize.frameH = 360.0;
+    explicitSize.positionX.setKeyframe(0, 420.0);
+    explicitSize.positionY.setKeyframe(0, 230.0);
     track.clips.append(explicitSize);
 
     drift::Clip audio; // audio carries no layout; must be left alone
@@ -5254,19 +5497,20 @@ void CoreTest::rebaseClipLayoutFreezesImplicitSize()
 
     // The implicit clip keeps its original 1920x1080 footprint and is pushed
     // left by the crop origin, so it now overflows both sides of the frame.
-    QCOMPARE(out.clips.at(0).transformW.evaluateAt(0), 1920.0);
-    QCOMPARE(out.clips.at(0).transformH.evaluateAt(0), 1080.0);
-    QCOMPARE(out.clips.at(0).transformX.evaluateAt(0), -400.0);
-    QCOMPARE(out.clips.at(0).transformY.evaluateAt(0), 0.0);
+    QCOMPARE(out.clips.at(0).frameW, 1920.0);
+    QCOMPARE(out.clips.at(0).frameH, 1080.0);
+    QCOMPARE(drift::clipLayoutAt(out.clips.at(0), 0, QSizeF(1520, 1080)).box(),
+             QRectF(-400.0, 0.0, 1920.0, 1080.0));
+    QVERIFY(out.clips.at(0).positionY.isEmpty());
 
     // Explicit sizes are untouched; only the position shifts.
-    QCOMPARE(out.clips.at(1).transformW.evaluateAt(0), 640.0);
-    QCOMPARE(out.clips.at(1).transformH.evaluateAt(0), 360.0);
-    QCOMPARE(out.clips.at(1).transformX.evaluateAt(0), -300.0);
-    QCOMPARE(out.clips.at(1).transformY.evaluateAt(0), 50.0);
+    QCOMPARE(out.clips.at(1).frameW, 640.0);
+    QCOMPARE(out.clips.at(1).frameH, 360.0);
+    QCOMPARE(drift::clipLayoutAt(out.clips.at(1), 0, QSizeF(1520, 1080)).box(),
+             QRectF(-300.0, 50.0, 640.0, 360.0));
 
-    QVERIFY(out.clips.at(2).transformW.isEmpty());
-    QVERIFY(out.clips.at(2).transformX.isEmpty());
+    QCOMPARE(out.clips.at(2).frameW, 0.0);
+    QVERIFY(out.clips.at(2).positionX.isEmpty());
 }
 
 // Animated positions must shift wholesale, so the motion path is preserved
@@ -5281,9 +5525,9 @@ void CoreTest::rebaseClipLayoutShiftsKeyframedPosition()
 
     drift::Clip clip;
     clip.type = drift::ClipType::Video;
-    clip.transformX.setKeyframe(0, 0.0);
-    clip.transformX.setKeyframe(drift::secondsToUs(2.0), 800.0);
-    clip.transformY.setKeyframe(0, 200.0);
+    clip.positionX.setKeyframe(0, 0.0);
+    clip.positionX.setKeyframe(drift::secondsToUs(2.0), 800.0);
+    clip.positionY.setKeyframe(0, 200.0);
     track.clips.append(clip);
 
     project.tracks().clear(); // drop the default timeline; this test owns the document
@@ -5292,15 +5536,15 @@ void CoreTest::rebaseClipLayoutShiftsKeyframedPosition()
     drift::rebaseClipLayout(project, 1920, 1080, 1920, 1080, 120.0, 60.0);
 
     const drift::Clip &out = project.tracks().at(0).clips.at(0);
-    QCOMPARE(out.transformX.keyframes().size(), 2);
-    QCOMPARE(out.transformX.evaluateAt(0), -120.0);
-    QCOMPARE(out.transformX.evaluateAt(drift::secondsToUs(2.0)), 680.0);
-    QCOMPARE(out.transformY.evaluateAt(0), 140.0);
+    QCOMPARE(out.positionX.keyframes().size(), 2);
+    QCOMPARE(out.positionX.evaluateAt(0), -120.0);
+    QCOMPARE(out.positionX.evaluateAt(drift::secondsToUs(2.0)), 680.0);
+    QCOMPARE(out.positionY.evaluateAt(0), 140.0);
 
     // A muted animation stays muted after the shift.
-    project.tracks()[0].clips[0].transformX.setEnabled(false);
+    project.tracks()[0].clips[0].positionX.setEnabled(false);
     drift::rebaseClipLayout(project, 1920, 1080, 1920, 1080, 10.0, 0.0);
-    QVERIFY(!project.tracks().at(0).clips.at(0).transformX.enabled());
+    QVERIFY(!project.tracks().at(0).clips.at(0).positionX.enabled());
 }
 
 void CoreTest::transformLayerRoundTrips()
@@ -5316,7 +5560,7 @@ void CoreTest::transformLayerRoundTrips()
     transform.type = drift::ClipType::Adjustment;
     transform.adjustmentKind = drift::AdjustmentKind::Transform;
     transform.timelineDuration = drift::secondsToUs(5.0);
-    transform.transformW.setKeyframe(0, 960.0);
+    transform.scaleX.setKeyframe(0, 0.5);
     transform.rotation.setKeyframe(0, 15.0);
     layer.clips.append(transform);
     QVERIFY(layer.acceptsClip(transform));
@@ -5343,7 +5587,7 @@ void CoreTest::transformLayerRoundTrips()
     QCOMPARE(loadedLayer.spanEndTrackId, QStringLiteral("v2"));
     const drift::Clip &loadedClip = loadedLayer.clips.at(0);
     QCOMPARE(loadedClip.adjustmentKind, drift::AdjustmentKind::Transform);
-    QCOMPARE(loadedClip.transformW.evaluateAt(0), 960.0);
+    QCOMPARE(loadedClip.scaleX.evaluateAt(0), 0.5);
     QCOMPARE(loadedClip.rotation.evaluateAt(0), 15.0);
     QVERIFY(!json.value(QStringLiteral("tracks")).toArray().at(1).toObject().contains(QStringLiteral("spanEndTrackId")));
 }
@@ -5431,8 +5675,8 @@ void CoreTest::cameraLayerRoundTripsAndNormalizes()
 
     drift::Clip camera = drift::makeCameraClip(0, drift::secondsToUs(5.0));
     QVERIFY(drift::isCameraClip(camera));
-    camera.transformX.setKeyframe(0, 0.0);
-    camera.transformX.setKeyframe(drift::secondsToUs(2.0), 120.0);
+    camera.positionX.setKeyframe(0, 0.0);
+    camera.positionX.setKeyframe(drift::secondsToUs(2.0), 120.0);
     camera.rotationY.setKeyframe(0, 15.0);
     camera.perspective.setKeyframe(0, 900.0);
     QVERIFY(project.tracks().at(0).acceptsClip(camera));
@@ -5461,7 +5705,7 @@ void CoreTest::cameraLayerRoundTripsAndNormalizes()
     QCOMPARE(loaded.tracks().at(loadedTrack).clips.size(), 1);
     const drift::Clip &back = loaded.tracks().at(loadedTrack).clips.constFirst();
     QVERIFY(drift::isCameraClip(back));
-    QCOMPARE(back.transformX.evaluateAt(drift::secondsToUs(2.0)), 120.0);
+    QCOMPARE(back.positionX.evaluateAt(drift::secondsToUs(2.0)), 120.0);
     QCOMPARE(back.rotationY.evaluateAt(0), 15.0);
     QCOMPARE(back.perspective.evaluateAt(0), 900.0);
 
@@ -5722,8 +5966,8 @@ void CoreTest::rebaseClipLayoutHoldsNestedContentStill()
     inner.type = drift::TrackType::Video;
     drift::Clip nested;
     nested.type = drift::ClipType::Image;
-    nested.transformX.setKeyframe(0, 300.0);
-    nested.transformW.setKeyframe(0, 400.0);
+    nested.positionX.setKeyframe(0, 500.0);
+    nested.frameW = 400.0;
     inner.clips.append(nested);
     const QString sequenceId = project.addSequence({inner});
 
@@ -5734,10 +5978,10 @@ void CoreTest::rebaseClipLayoutHoldsNestedContentStill()
     identity.sequenceId = sequenceId;
     outer.clips.append(identity);
     drift::Clip placed = identity;
-    placed.transformX.setKeyframe(0, 150.0);
-    placed.transformY.setKeyframe(0, 90.0);
-    placed.transformW.setKeyframe(0, 960.0);
-    placed.transformH.setKeyframe(0, 720.0);
+    placed.positionX.setKeyframe(0, 630.0);
+    placed.positionY.setKeyframe(0, 450.0);
+    placed.scaleX.setKeyframe(0, 0.5);
+    placed.scaleY.setKeyframe(0, 720.0 / 1080.0);
     placed.rotation.setKeyframe(0, 30.0);
     placed.flipH = true;
     outer.clips.append(placed);
@@ -5745,15 +5989,12 @@ void CoreTest::rebaseClipLayoutHoldsNestedContentStill()
     project.tracks().append(outer);
 
     const auto toMain = [](const drift::Clip &clip, double W, double H, QPointF q) {
-        const double w = clip.transformW.isEmpty() ? W : clip.transformW.evaluateAt(0);
-        const double h = clip.transformH.isEmpty() ? H : clip.transformH.evaluateAt(0);
-        const double x = clip.transformX.isEmpty() ? 0.0 : clip.transformX.evaluateAt(0);
-        const double y = clip.transformY.isEmpty() ? 0.0 : clip.transformY.evaluateAt(0);
-        const double a = qDegreesToRadians(clip.rotation.isEmpty() ? 0.0 : clip.rotation.evaluateAt(0));
-        const double lx = (clip.flipH ? -1.0 : 1.0) * w / W * (q.x() - W / 2);
-        const double ly = (clip.flipV ? -1.0 : 1.0) * h / H * (q.y() - H / 2);
-        return QPointF(x + w / 2 + std::cos(a) * lx - std::sin(a) * ly,
-                       y + h / 2 + std::sin(a) * lx + std::cos(a) * ly);
+        const drift::ClipLayout l = drift::clipLayoutAt(clip, 0, QSizeF(W, H));
+        const double a = qDegreesToRadians(l.rotation);
+        const double lx = l.scaleX * ((clip.flipH ? -1.0 : 1.0) * (q.x() - W / 2) + W / 2 - l.anchorX);
+        const double ly = l.scaleY * ((clip.flipV ? -1.0 : 1.0) * (q.y() - H / 2) + H / 2 - l.anchorY);
+        return QPointF(l.posX + std::cos(a) * lx - std::sin(a) * ly,
+                       l.posY + std::sin(a) * lx + std::cos(a) * ly);
     };
     const QPointF q(700.0, 250.0);
     const QPointF origin(200.0, 100.0);
@@ -5764,12 +6005,13 @@ void CoreTest::rebaseClipLayoutHoldsNestedContentStill()
     project.setResolution(1000, 800);
 
     const drift::Clip &movedNested = project.sequenceTracks(sequenceId).at(0).clips.at(0);
-    QCOMPARE(movedNested.transformX.evaluateAt(0), 100.0);
-    QCOMPARE(movedNested.transformW.evaluateAt(0), 400.0);
+    QCOMPARE(movedNested.positionX.evaluateAt(0), 300.0);
+    QCOMPARE(movedNested.frameW, 400.0);
 
     const drift::Clip &identityAfter = project.tracks().at(0).clips.at(0);
-    QVERIFY(identityAfter.transformW.isEmpty());
-    QVERIFY(identityAfter.transformH.isEmpty());
+    QVERIFY(identityAfter.scaleX.isEmpty());
+    QVERIFY(identityAfter.scaleY.isEmpty());
+    QVERIFY(identityAfter.positionX.isEmpty());
     const QPointF afterIdentity = toMain(identityAfter, 1000, 800, q - origin);
     QVERIFY(qAbs(afterIdentity.x() - (beforeIdentity.x() - origin.x())) < 1e-6);
     QVERIFY(qAbs(afterIdentity.y() - (beforeIdentity.y() - origin.y())) < 1e-6);

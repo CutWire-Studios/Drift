@@ -61,15 +61,12 @@ Item {
         root.imageClipId = clip.id
         if (duration > 0)
             EditorState.setClipDuration(t, c, duration)
-        const asset = AssetLibrary.assetAt(assetIndex)
         const cw = EditorState.projectFile.projectWidth()
         const ch = EditorState.projectFile.projectHeight()
-        if (asset.width > 0 && asset.height > 0) {
-            const s = Math.max(cw / asset.width, ch / asset.height)
-            const w = asset.width * s
-            const h = asset.height * s
+        if (clip.frameW > 0 && clip.frameH > 0) {
+            const k = Math.max(cw / clip.frameW, ch / clip.frameH)
             EditorState.beginPreviewDrag(qsTr("Fill canvas"))
-            EditorState.previewSetClipRect(t, c, (cw - w) / 2, (ch - h) / 2, w, h)
+            EditorState.previewSetClipPlacement(t, c, cw / 2, ch / 2, k, k)
             EditorState.commitPreviewDrag()
         }
     }

@@ -32,8 +32,8 @@ Item {
     readonly property real defaultZoom: canvasH * 0.5 / 0.24
     readonly property bool aiming: hasSelection && !!clipData.aimAtTarget
 
-    readonly property var propPosX: { "key": "x", "label": qsTr("Position X"), "def": root.canvasW / 2, "decimals": 0 }
-    readonly property var propPosY: { "key": "y", "label": qsTr("Position Y"), "def": root.canvasH / 2, "decimals": 0 }
+    readonly property var propPosX: { "key": "positionX", "label": qsTr("Position X"), "def": root.canvasW / 2, "decimals": 0 }
+    readonly property var propPosY: { "key": "positionY", "label": qsTr("Position Y"), "def": root.canvasH / 2, "decimals": 0 }
     readonly property var propPosZ: { "key": "z", "label": qsTr("Position Z"), "def": -root.defaultZoom, "decimals": 0 }
     readonly property var propRotX: { "key": "rotationX", "label": qsTr("Rotation X"), "def": 0.0, "decimals": 1 }
     readonly property var propRotY: { "key": "rotationY", "label": qsTr("Rotation Y"), "def": 0.0, "decimals": 1 }
@@ -105,7 +105,7 @@ Item {
             PropertyKeyframeRow {
                 width: parent.width
                 propDef: root.propPosX
-                keyframeList: root.keysFor("x")
+                keyframeList: root.keysFor("positionX")
                 useSlider: true
                 sliderFrom: -root.canvasW * 2
                 sliderTo: root.canvasW * 3
@@ -114,7 +114,7 @@ Item {
             PropertyKeyframeRow {
                 width: parent.width
                 propDef: root.propPosY
-                keyframeList: root.keysFor("y")
+                keyframeList: root.keysFor("positionY")
                 useSlider: true
                 sliderFrom: -root.canvasH * 2
                 sliderTo: root.canvasH * 3

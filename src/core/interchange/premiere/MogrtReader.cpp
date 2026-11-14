@@ -491,11 +491,6 @@ bool applyTemplateToProject(const MogrtTemplate &tmpl,
             clip.srcIn = 0;
             clip.srcOut = tmpl.durationUs;
 
-            clip.transformX.setKeyframe(0, 0);
-            clip.transformY.setKeyframe(0, 0);
-            clip.transformW.setKeyframe(0, project.width());
-            clip.transformH.setKeyframe(0, project.height());
-
             project.tracks()[visualTrackIdx].clips.append(clip);
         }
     }
@@ -542,10 +537,8 @@ bool applyTemplateToProject(const MogrtTemplate &tmpl,
         const double yPos = (textCount <= 1)
             ? (project.height() * 0.38)
             : (project.height() * 0.35 + textIndex * 70);
-        textClip.transformX.setKeyframe(0, 0);
-        textClip.transformY.setKeyframe(0, yPos);
-        textClip.transformW.setKeyframe(0, project.width());
-        textClip.transformH.setKeyframe(0, project.height() * 0.25);
+        textClip.frameH = project.height() * 0.25;
+        textClip.positionY.setKeyframe(0, yPos + textClip.frameH / 2.0);
 
         project.tracks()[textTrackIdx].clips.append(textClip);
         textIndex++;

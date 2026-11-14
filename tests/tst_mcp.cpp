@@ -170,6 +170,7 @@ private slots:
     void validateEnumAndRange();
     void effectParamWritesRejectUnknownKeys();
     void setTransformKeysOnlyAnimatedOrAutoKeyed();
+    void setTransformScaleKeepsPosition();
     void transformLayerTools();
     void faceAndDepthEffectsStayOffAdjustmentLayers();
     void unknownOpSuggests();
@@ -2591,14 +2592,14 @@ void McpTest::setTransformKeysOnlyInsideTheClip()
     state.project()->tracks()[0].clips.append(clip);
     drift::mcp::McpDispatcher dispatcher(&state);
     const auto xKeys = [&]() {
-        return state.project()->tracks().at(0).clips.at(0).transformX.keyframes();
+        return state.project()->tracks().at(0).clips.at(0).positionX.keyframes();
     };
 
     // A constant write doesn't care where the playhead is.
     state.setAutoKeyEnabled(false);
     state.setPlayheadSeconds(1.0); // before the clip (2-6 s)
     QJsonObject result = dispatcher.applyOne(QStringLiteral("set_transform"),
-                                             {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 10.0}});
+                                             {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("positionX"), 10.0}});
     QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
     QVERIFY(xKeys().size() <= 1);
 
@@ -2606,7 +2607,7 @@ void McpTest::setTransformKeysOnlyInsideTheClip()
     state.setAutoKeyEnabled(true);
     const auto keysBefore = xKeys();
     result = dispatcher.applyOne(QStringLiteral("set_transform"),
-                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 50.0}});
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("positionX"), 50.0}});
     QCOMPARE(result.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     QVERIFY2(result.value(QStringLiteral("detail")).toString().contains(QStringLiteral("outside the clip")),
              qPrintable(QJsonDocument(result).toJson()));
@@ -2614,26 +2615,26 @@ void McpTest::setTransformKeysOnlyInsideTheClip()
 
     // at names the time: the key lands 1 s into the clip.
     result = dispatcher.applyOne(QStringLiteral("set_transform"),
-                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 50.0},
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("positionX"), 50.0},
                                   {QStringLiteral("at"), 3.0}});
     QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
     QVERIFY(xKeys().contains(drift::secondsToUs(1.0)));
     QCOMPARE(xKeys().value(drift::secondsToUs(1.0)).value, 50.0);
     // A switched-off animation takes the value on its first key whatever the time, so it isn't
     // refused even with auto-key on and the playhead outside the clip.
-    state.setClipKeyframe(0, 0, QStringLiteral("x"), 4.0, 70.0); // a second key: animated
-    state.setClipPropertyKeyframesEnabled(0, 0, QStringLiteral("x"), false);
+    state.setClipKeyframe(0, 0, QStringLiteral("positionX"), 4.0, 70.0); // a second key: animated
+    state.setClipPropertyKeyframesEnabled(0, 0, QStringLiteral("positionX"), false);
     state.setPlayheadSeconds(1.0);
     result = dispatcher.applyOne(QStringLiteral("set_transform"),
-                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 80.0}});
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("positionX"), 80.0}});
     QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
     QCOMPARE(xKeys().first().value, 80.0);
-    state.setClipPropertyKeyframesEnabled(0, 0, QStringLiteral("x"), true);
+    state.setClipPropertyKeyframesEnabled(0, 0, QStringLiteral("positionX"), true);
 
     // and at outside the clip is refused too.
     const auto keysBeforeAt = xKeys();
     QCOMPARE(dispatcher.applyOne(QStringLiteral("set_transform"),
-                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 60.0},
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("positionX"), 60.0},
                                   {QStringLiteral("at"), 7.0}})
                  .value(QStringLiteral("error")).toString(),
              QStringLiteral("bad_args"));
@@ -4629,7 +4630,7 @@ void McpTest::inspectDetailRowIsCompact()
     QVERIFY(!text.contains(QStringLiteral("fadeInShape")));
     QVERIFY(!text.contains(QStringLiteral("fadeOutShape")));
     const QJsonObject transform = text.value(QStringLiteral("transform")).toObject();
-    for (const char *key : {"x", "y", "w", "h", "rotation", "opacity"})
+    for (const char *key : {"positionX", "positionY", "scaleX", "scaleY", "frameW", "frameH", "rotation", "opacity"})
         QVERIFY2(transform.contains(QLatin1String(key)), key);
 
     const QJsonObject plain = firstItemOfKind(inspect, QStringLiteral("video"));
@@ -6088,90 +6089,90 @@ void McpTest::bulkSmoothKeyframesAndUnlinkedTangents()
     const int undoBefore = state.undoIndex();
     QJsonObject r = call("set_keyframes",
                          {{QStringLiteral("keys"),
-                           QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}, QJsonArray{2.0, 50.0}}},
-                                       {QStringLiteral("y"), QJsonArray{QJsonObject{{QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 0.0}},
+                           QJsonObject{{QStringLiteral("positionX"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}, QJsonArray{2.0, 50.0}}},
+                                       {QStringLiteral("positionY"), QJsonArray{QJsonObject{{QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 0.0}},
                                                                         QJsonObject{{QStringLiteral("at"), 2.0}, {QStringLiteral("value"), 20.0}}}}}},
                           {QStringLiteral("interpolation"), QStringLiteral("smooth")}});
     QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
-    QCOMPARE(r.value(QStringLiteral("written")).toObject().value(QStringLiteral("x")).toInt(), 3);
+    QCOMPARE(r.value(QStringLiteral("written")).toObject().value(QStringLiteral("positionX")).toInt(), 3);
     QCOMPARE(state.undoIndex(), undoBefore + 1);
-    QCOMPARE(keysOf("x").size(), 3);
-    QCOMPARE(keysOf("y").size(), 2);
-    const QJsonObject mid = keysOf("x").at(1).toObject();
+    QCOMPARE(keysOf("positionX").size(), 3);
+    QCOMPARE(keysOf("positionY").size(), 2);
+    const QJsonObject mid = keysOf("positionX").at(1).toObject();
     // slope = (50 - 0) / 2 s = 25/s; handles are a third of a 1 s segment.
     QVERIFY(qAbs(mid.value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
     QVERIFY(qAbs(mid.value(QStringLiteral("outDy")).toDouble() - 25.0 / 3.0) < 1e-3);
     QVERIFY(qAbs(mid.value(QStringLiteral("inDy")).toDouble() + 25.0 / 3.0) < 1e-3);
 
-    r = call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 5.0}, QJsonArray{1.5, 6.0}}}}},
+    r = call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("positionX"), QJsonArray{QJsonArray{0.0, 5.0}, QJsonArray{1.5, 6.0}}}}},
                                {QStringLiteral("replace"), true}});
     QVERIFY(r.value(QStringLiteral("ok")).toBool());
-    QCOMPARE(keysOf("x").size(), 2);
-    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 0.0);
+    QCOMPARE(keysOf("positionX").size(), 2);
+    QCOMPARE(keysOf("positionX").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 0.0);
 
-    r = call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 9.0}}},
+    r = call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("positionX"), QJsonArray{QJsonArray{0.0, 9.0}}},
                                                                     {QStringLiteral("nope.prop"), QJsonArray{QJsonArray{0.0, 1.0}}}}},
                                {QStringLiteral("replace"), true}});
     QVERIFY(!r.value(QStringLiteral("ok")).toBool());
     QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
-    QCOMPARE(keysOf("x").size(), 2);
-    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("value")).toDouble(), 5.0);
+    QCOMPARE(keysOf("positionX").size(), 2);
+    QCOMPARE(keysOf("positionX").at(0).toObject().value(QStringLiteral("value")).toDouble(), 5.0);
 
-    QVERIFY(!call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0}}}}}})
+    QVERIFY(!call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("positionX"), QJsonArray{QJsonArray{0.0}}}}}})
                  .value(QStringLiteral("ok")).toBool());
-    QVERIFY(!call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 1.0}}}}},
+    QVERIFY(!call("set_keyframes", {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("positionX"), QJsonArray{QJsonArray{0.0, 1.0}}}}},
                                     {QStringLiteral("interpolation"), QStringLiteral("wobbly")}})
                  .value(QStringLiteral("ok")).toBool());
 
     // x and y tangents are independent over MCP although the editor's link toggle is on.
     call("set_keyframes", {{QStringLiteral("keys"),
-                            QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}}},
-                                        {QStringLiteral("y"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}}}}},
+                            QJsonObject{{QStringLiteral("positionX"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}}},
+                                        {QStringLiteral("positionY"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 100.0}}}}},
                            {QStringLiteral("replace"), true}});
     auto tangents = [&](const char *prop, double outDy) {
         return call("set_keyframe_tangents", {{QStringLiteral("prop"), QString::fromLatin1(prop)}, {QStringLiteral("at"), 0.0},
                                               {QStringLiteral("outDx"), 0.2}, {QStringLiteral("outDy"), outDy}});
     };
-    QVERIFY(tangents("x", 30.0).value(QStringLiteral("ok")).toBool());
-    QVERIFY(tangents("y", 70.0).value(QStringLiteral("ok")).toBool());
-    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 30.0);
-    QCOMPARE(keysOf("y").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 70.0);
+    QVERIFY(tangents("positionX", 30.0).value(QStringLiteral("ok")).toBool());
+    QVERIFY(tangents("positionY", 70.0).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(keysOf("positionX").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 30.0);
+    QCOMPARE(keysOf("positionY").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 70.0);
     QVERIFY(state.positionLinked());
 
-    QVERIFY(call("set_keyframe_tangents", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 0.0},
+    QVERIFY(call("set_keyframe_tangents", {{QStringLiteral("prop"), QStringLiteral("positionX")}, {QStringLiteral("at"), 0.0},
                                            {QStringLiteral("outDx"), 0.2}, {QStringLiteral("outDy"), 10.0},
                                            {QStringLiteral("linked"), true}})
                 .value(QStringLiteral("ok")).toBool());
-    QCOMPARE(keysOf("y").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 10.0);
+    QCOMPARE(keysOf("positionY").at(0).toObject().value(QStringLiteral("outDy")).toDouble(), 10.0);
 
     // Per-key and whole-property smooth.
     call("set_keyframes", {{QStringLiteral("keys"),
-                            QJsonObject{{QStringLiteral("x"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 10.0}, QJsonArray{2.0, 0.0}}}}},
+                            QJsonObject{{QStringLiteral("positionX"), QJsonArray{QJsonArray{0.0, 0.0}, QJsonArray{1.0, 10.0}, QJsonArray{2.0, 0.0}}}}},
                            {QStringLiteral("replace"), true}});
     state.setPlayheadSeconds(0.25);
     for (const char *mode : {"ease", "linear", "hold"}) {
-        QVERIFY(call("set_keyframe_interpolation", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0},
+        QVERIFY(call("set_keyframe_interpolation", {{QStringLiteral("prop"), QStringLiteral("positionX")}, {QStringLiteral("at"), 1.0},
                                                     {QStringLiteral("mode"), QString::fromLatin1(mode)}})
                     .value(QStringLiteral("ok")).toBool());
         QCOMPARE(state.playheadSeconds(), 0.25);
     }
-    QCOMPARE(keysOf("x").at(1).toObject().value(QStringLiteral("hold")).toBool(), true);
-    QVERIFY(call("set_keyframe", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0}, {QStringLiteral("value"), 10.0}})
+    QCOMPARE(keysOf("positionX").at(1).toObject().value(QStringLiteral("hold")).toBool(), true);
+    QVERIFY(call("set_keyframe", {{QStringLiteral("prop"), QStringLiteral("positionX")}, {QStringLiteral("at"), 1.0}, {QStringLiteral("value"), 10.0}})
                 .value(QStringLiteral("ok")).toBool());
     const QJsonObject unknownProp = call("set_keyframe", {{QStringLiteral("prop"), QStringLiteral("text.nope")}, {QStringLiteral("at"), 1.0},
                                                           {QStringLiteral("value"), 1.0}});
     QVERIFY(!unknownProp.value(QStringLiteral("ok")).toBool());
     QCOMPARE(unknownProp.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     QVERIFY(!state.setClipKeyframe(0, 0, QStringLiteral("nope"), 1.0, 1.0));
-    QVERIFY(call("set_keyframe_interpolation", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("at"), 1.0},
+    QVERIFY(call("set_keyframe_interpolation", {{QStringLiteral("prop"), QStringLiteral("positionX")}, {QStringLiteral("at"), 1.0},
                                                 {QStringLiteral("mode"), QStringLiteral("smooth")}})
                 .value(QStringLiteral("ok")).toBool());
-    QVERIFY(qAbs(keysOf("x").at(1).toObject().value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
-    QCOMPARE(keysOf("x").at(0).toObject().value(QStringLiteral("outDx")).toDouble(), 0.0);
-    QVERIFY(call("set_keyframe_easing", {{QStringLiteral("prop"), QStringLiteral("x")}, {QStringLiteral("all"), true},
+    QVERIFY(qAbs(keysOf("positionX").at(1).toObject().value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+    QCOMPARE(keysOf("positionX").at(0).toObject().value(QStringLiteral("outDx")).toDouble(), 0.0);
+    QVERIFY(call("set_keyframe_easing", {{QStringLiteral("prop"), QStringLiteral("positionX")}, {QStringLiteral("all"), true},
                                          {QStringLiteral("smooth"), true}})
                 .value(QStringLiteral("ok")).toBool());
-    QVERIFY(qAbs(keysOf("x").at(0).toObject().value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
+    QVERIFY(qAbs(keysOf("positionX").at(0).toObject().value(QStringLiteral("outDx")).toDouble() - 1.0 / 3.0) < 1e-3);
 }
 
 void McpTest::setVolumeRoundTrips()
@@ -7989,8 +7990,11 @@ void McpTest::model3dKeyframesAndOptions()
     QCOMPARE(model.value(QStringLiteral("loop")).toString(), QStringLiteral("hold"));
     QCOMPARE(state.clipAt(track, clip).value(QStringLiteral("duration")).toDouble(), 4.0);
     const auto boxSpan = [&]() {
-        return std::max(state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0),
-                        state.propertyValueAt(track, clip, QStringLiteral("height"), 0.0, 0.0));
+        const QVariantMap data = state.clipAt(track, clip);
+        return std::max(data.value(QStringLiteral("frameW")).toDouble()
+                            * state.propertyValueAt(track, clip, QStringLiteral("scaleX"), 0.0, 1.0),
+                        data.value(QStringLiteral("frameH")).toDouble()
+                            * state.propertyValueAt(track, clip, QStringLiteral("scaleY"), 0.0, 1.0));
     };
     // Its largest extent starts at half the canvas height.
     QCOMPARE(boxSpan(), state.projectFile()->projectHeight() * 0.5);
@@ -8027,15 +8031,12 @@ void McpTest::model3dKeyframesAndOptions()
     QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     // The scale shorthand resizes the box about its centre, and the animation index clamps on a
     // static file.
-    const double centreX = state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0)
-                           + state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0) / 2.0;
+    const double centreX = state.propertyValueAt(track, clip, QStringLiteral("positionX"), 0.0, 0.0);
     r = dispatcher.applyOne(QStringLiteral("set_model3d_options"),
                             {{QStringLiteral("clip"), id}, {QStringLiteral("scale"), 0.8}, {QStringLiteral("animation"), 5}});
     QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
     QCOMPARE(boxSpan(), state.projectFile()->projectHeight() * 0.8);
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0)
-                 + state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0) / 2.0,
-             centreX);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("positionX"), 0.0, 0.0), centreX);
     model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
     QCOMPARE(model.value(QStringLiteral("animation")).toInt(), 0);
     // modelScale / modelScaleZ are plain options too, default 1, and clamp.
@@ -8059,13 +8060,16 @@ void McpTest::model3dKeyframesAndOptions()
     QCOMPARE(boxSpan(), state.projectFile()->projectHeight() * 0.5);
 
     // The canvas grips size and spin a model like any clip.
-    state.previewSetClipRect(track, clip, 10.0, 20.0, 300.0, 200.0);
+    const QVariantMap frame = state.clipAt(track, clip);
+    const double frameW = frame.value(QStringLiteral("frameW")).toDouble();
+    const double frameH = frame.value(QStringLiteral("frameH")).toDouble();
+    state.previewSetClipPlacement(track, clip, 160.0, 120.0, 300.0 / frameW, 200.0 / frameH);
     state.previewSetClipRotation(track, clip, 45.0);
     state.commitPreviewDrag();
     QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("rotation"), 0.0, 0.0), 45.0);
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0), 300.0);
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("height"), 0.0, 0.0), 200.0);
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0), 10.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("scaleX"), 0.0, 1.0) * frameW, 300.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("scaleY"), 0.0, 1.0) * frameH, 200.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("positionX"), 0.0, 0.0), 160.0);
 
     // The overlay box is the clip's rect, as for any 3D layer.
     bool found = false;
@@ -9397,17 +9401,17 @@ void McpTest::clipCropRoundTrip()
     QCOMPARE(turned.value(QStringLiteral("sourceWidth")).toInt(), 1080);
     QCOMPARE(turned.value(QStringLiteral("sourceHeight")).toInt(), 1920);
 
-    // The canvas box follows that orientation too: a portrait 1080x1920 view fitted to a 1920x1080
+    // The clip's frame follows that orientation too: a portrait 1080x1920 view fitted to a 1920x1080
     // canvas is 607.5x1080; cropping it to half height makes it twice as wide, not half as tall.
     state.project()->setResolution(1920, 1080);
     drift::Clip &turnedClip = state.project()->tracks()[0].clips[0];
-    turnedClip.transformW.setKeyframe(0, 607.5);
-    turnedClip.transformH.setKeyframe(0, 1080.0);
+    turnedClip.frameW = 607.5;
+    turnedClip.frameH = 1080.0;
     QJsonObject halfHeight = clipRef;
     halfHeight.insert(QStringLiteral("h"), 0.5);
     QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_crop"), halfHeight).value(QStringLiteral("ok")).toBool());
-    QCOMPARE(state.propertyValueAt(0, 0, QStringLiteral("width"), 0.0, 0.0), 1215.0);
-    QCOMPARE(state.propertyValueAt(0, 0, QStringLiteral("height"), 0.0, 0.0), 1080.0);
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("frameW")).toDouble(), 1215.0);
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("frameH")).toDouble(), 1080.0);
     QVERIFY(drift::mcp::isReadOnlyOp(QStringLiteral("get_clip_crop")));
     QVERIFY(!drift::mcp::isReadOnlyOp(QStringLiteral("set_clip_crop")));
 
@@ -9545,17 +9549,17 @@ void McpTest::validateRejectsWrongType()
     QVERIFY(!clip.isEmpty());
 
     const QJsonObject wrong = dispatcher.applyOne(
-        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("x"), QStringLiteral("abc")}});
+        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("positionX"), QStringLiteral("abc")}});
     QCOMPARE(wrong.value(QStringLiteral("error")).toString(), QStringLiteral("type_mismatch"));
     QCOMPARE(wrong.value(QStringLiteral("detail")).toString(),
-             QStringLiteral("x: expected number, got string \"abc\""));
+             QStringLiteral("positionX: expected number, got string \"abc\""));
 
     // Numeric strings are what existing agents send, so they still pass.
     const QJsonObject lenient = dispatcher.applyOne(
-        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("x"), QStringLiteral("10")}});
+        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("positionX"), QStringLiteral("10")}});
     QVERIFY2(lenient.value(QStringLiteral("ok")).toBool(),
              qPrintable(QJsonDocument(lenient).toJson(QJsonDocument::Compact)));
-    QCOMPARE(lenient.value(QStringLiteral("x")).toDouble(), 10.0);
+    QCOMPARE(lenient.value(QStringLiteral("positionX")).toDouble(), 10.0);
 
     const QJsonObject missing = dispatcher.applyOne(
         QStringLiteral("set_volume"), {{QStringLiteral("clip"), clip}, {QStringLiteral("volume"), 0.5}});
@@ -9646,26 +9650,71 @@ void McpTest::setTransformKeysOnlyAnimatedOrAutoKeyed()
     const auto setX = [&](double x) {
         const QJsonObject r = dispatcher.applyOne(
             QStringLiteral("set_transform"),
-            {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0}, {QStringLiteral("x"), x}});
+            {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0}, {QStringLiteral("positionX"), x}});
         QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
     };
 
     state.setAutoKeyEnabled(false);
     state.setPlayheadSeconds(2.0);
     setX(100.0);
-    QCOMPARE(clip().transformX.keyframes().size(), 1);
-    QCOMPARE(clip().transformX.evaluateAt(0), 100.0);
+    QCOMPARE(clip().positionX.keyframes().size(), 1);
+    QCOMPARE(clip().positionX.evaluateAt(0), 100.0);
 
     state.setAutoKeyEnabled(true);
     state.setPlayheadSeconds(3.0);
     setX(200.0);
-    QCOMPARE(clip().transformX.keyframes().size(), 2);
+    QCOMPARE(clip().positionX.keyframes().size(), 2);
 
     state.setAutoKeyEnabled(false);
     state.setPlayheadSeconds(1.0);
     setX(50.0);
-    QCOMPARE(clip().transformX.keyframes().size(), 3);
-    QCOMPARE(clip().transformX.evaluateAt(drift::secondsToUs(1.0) - clip().timelineStart), 50.0);
+    QCOMPARE(clip().positionX.keyframes().size(), 3);
+    QCOMPARE(clip().positionX.evaluateAt(drift::secondsToUs(1.0) - clip().timelineStart), 50.0);
+}
+
+// The anchor model: scaling resizes about the anchor, so position stays and only the derived box moves.
+void McpTest::setTransformScaleKeepsPosition()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setAutoKeyEnabled(false);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto set = [&](QJsonObject args) -> QJsonObject {
+        args.insert(QStringLiteral("track"), 0);
+        args.insert(QStringLiteral("index"), 0);
+        const QJsonObject r = dispatcher.applyOne(QStringLiteral("set_transform"), args);
+        if (!r.value(QStringLiteral("ok")).toBool())
+            qWarning() << QJsonDocument(r).toJson(QJsonDocument::Compact);
+        return r;
+    };
+
+    QJsonObject r = set({{QStringLiteral("positionX"), 300.0}, {QStringLiteral("positionY"), 200.0}});
+    QCOMPARE(r.value(QStringLiteral("positionX")).toDouble(), 300.0);
+    QCOMPARE(r.value(QStringLiteral("positionY")).toDouble(), 200.0);
+    const double frameW = r.value(QStringLiteral("frameW")).toDouble();
+    QVERIFY(frameW > 0.0);
+
+    r = set({{QStringLiteral("scale"), 2.0}});
+    QCOMPARE(r.value(QStringLiteral("positionX")).toDouble(), 300.0);
+    QCOMPARE(r.value(QStringLiteral("positionY")).toDouble(), 200.0);
+    QCOMPARE(r.value(QStringLiteral("scaleX")).toDouble(), 2.0);
+    QCOMPARE(r.value(QStringLiteral("scaleY")).toDouble(), 2.0);
+    QCOMPARE(r.value(QStringLiteral("frameW")).toDouble(), frameW);
+    const QJsonObject box = r.value(QStringLiteral("box")).toObject();
+    QCOMPARE(box.value(QStringLiteral("w")).toDouble(), frameW * 2.0);
+    QCOMPARE(box.value(QStringLiteral("x")).toDouble() + box.value(QStringLiteral("w")).toDouble() / 2.0, 300.0);
+
+    r = set({{QStringLiteral("scaleX"), 0.5}});
+    QCOMPARE(r.value(QStringLiteral("scaleX")).toDouble(), 0.5);
+    QCOMPARE(r.value(QStringLiteral("scaleY")).toDouble(), 2.0);
+    QCOMPARE(r.value(QStringLiteral("positionX")).toDouble(), 300.0);
+    QCOMPARE(r.value(QStringLiteral("positionY")).toDouble(), 200.0);
+
+    const QJsonObject legacy = dispatcher.applyOne(QStringLiteral("set_transform"),
+                                                   {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0},
+                                                    {QStringLiteral("x"), 10.0}});
+    QCOMPARE(legacy.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
 }
 
 void McpTest::transformLayerTools()
@@ -9700,15 +9749,16 @@ void McpTest::transformLayerTools()
              (QJsonArray{1, 2}));
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("Group"));
     const QString layerClip = r.value(QStringLiteral("clip")).toString();
-    // A fresh transform clip has no size keys; it reports the canvas it fills, not 0x0.
+    // A fresh transform clip has no scale keys; its box is the canvas it fills, not 0x0.
     const QVariantMap compact = state.mcp()->compactClip(0, 0, true);
-    QCOMPARE(compact.value(QStringLiteral("w")).toDouble(), double(state.project()->width()));
-    QCOMPARE(compact.value(QStringLiteral("h")).toDouble(), double(state.project()->height()));
+    const QVariantMap compactBox = compact.value(QStringLiteral("box")).toMap();
+    QCOMPARE(compactBox.value(QStringLiteral("w")).toDouble(), double(state.project()->width()));
+    QCOMPARE(compactBox.value(QStringLiteral("h")).toDouble(), double(state.project()->height()));
 
     // Moving the layer reports what it parents; a child's own set_transform says it is parented.
     r = dispatcher.applyOne(QStringLiteral("set_transform"),
-                            {{QStringLiteral("clip"), layerClip}, {QStringLiteral("x"), 100.0},
-                             {QStringLiteral("w"), 960.0}, {QStringLiteral("h"), 540.0}});
+                            {{QStringLiteral("clip"), layerClip}, {QStringLiteral("positionX"), 100.0},
+                             {QStringLiteral("scaleX"), 0.5}, {QStringLiteral("scaleY"), 0.5}});
     QVERIFY2(r.value(QStringLiteral("ok")).toBool(), dump(r).constData());
     r = dispatcher.applyOne(QStringLiteral("set_transform"),
                             {{QStringLiteral("clip"), top}, {QStringLiteral("opacity"), 0.5}});
@@ -10716,10 +10766,10 @@ void McpTest::autoReframeKeepsTheSourceAspectAndReportsItsScale()
 
     const QJsonObject keys = dispatcher.applyOne(
         QStringLiteral("list_keyframes"),
-        {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("width")}});
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("scaleX")}});
     const QJsonObject heights = dispatcher.applyOne(
         QStringLiteral("list_keyframes"),
-        {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("height")}});
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("scaleY")}});
     QVERIFY(keys.value(QStringLiteral("ok")).toBool() && heights.value(QStringLiteral("ok")).toBool());
     const QJsonArray ws = keys.value(QStringLiteral("keys")).toArray();
     const QJsonArray hs = heights.value(QStringLiteral("keys")).toArray();
@@ -10729,10 +10779,9 @@ void McpTest::autoReframeKeepsTheSourceAspectAndReportsItsScale()
         const double w = ws.at(i).toObject().value(QStringLiteral("value")).toDouble();
         const double h = hs.at(i).toObject().value(QStringLiteral("value")).toDouble();
         QVERIFY(w > 0.0 && h > 0.0);
-        // The source is 16:9; anything else means the picture is being stretched.
-        QVERIFY2(qAbs(w / h - 16.0 / 9.0) < 0.02,
-                 qPrintable(QStringLiteral("box %1x%2 has aspect %3, not the source's 1.778")
-                                .arg(w).arg(h).arg(w / h)));
+        // The frame is the source's 16:9; unequal scales mean the picture is being stretched.
+        QVERIFY2(qAbs(w / h - 1.0) < 0.02,
+                 qPrintable(QStringLiteral("scale %1x%2 stretches the picture").arg(w).arg(h)));
     }
 }
 

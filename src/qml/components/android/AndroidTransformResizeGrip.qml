@@ -23,7 +23,8 @@ Item {
     readonly property bool lockRatio: isCorner
             && (frameItem.box.kind === "video"
                 || frameItem.box.kind === "image"
-                || frameItem.box.kind === "composite")
+                || frameItem.box.kind === "composite"
+                || frameItem.isText)
 
     x: (modelData.dx === 0 ? frameItem.width / 2
                            : (modelData.dx < 0 ? 0 : frameItem.width)) - width / 2
@@ -55,12 +56,19 @@ Item {
     property var toLocal: null
     property point startLocal: Qt.point(0, 0)
     property var startBox: null
+    // The clip's position (where its anchor lands), scale and frame at the grab.
+    property real startPosX: 0
+    property real startPosY: 0
+    property real startScaleX: 1
+    property real startScaleY: 1
+    property real startFrameW: 1
+    property real startFrameH: 1
 
-    // Resize about the fixed anchor. The maths runs in the box's own
-    // axes, so a rotated clip grows along the direction the grip
-    // points; the resulting centre shift is rotated back to canvas
-    // axes at the end. At rotation 0 it reduces to a plain "opposite
-    // corner stays put".
+    // Resize with the opposite edge or corner held still. The maths runs in the box's
+    // own axes, so a rotated clip grows along the direction the grip points; the
+    // position shift that keeps the held point still is rotated back to canvas axes at
+    // the end. The clip rotates and scales about its position, which sits at a fixed
+    // fraction of the box.
     function resizeTo(px, py) {
         const dxSign = grip.modelData.dx
         const dySign = grip.modelData.dy
@@ -140,35 +148,39 @@ Item {
         }
         frameItem.publishGuides(guideX, guideY)
 
-        // Keeping the anchor still means the centre moves by half the
-        // size change, toward the grip, in box axes.
-        const shiftX = frameItem.is3d ? 0 : (w - frameItem.dragStartW) / 2 * dxSign
-        const shiftY = frameItem.is3d ? 0 : (h - frameItem.dragStartH) / 2 * dySign
-        const cx = frameItem.dragStartX + frameItem.dragStartW / 2
-                   + shiftX * Math.cos(a) - shiftY * Math.sin(a)
-        const cy = frameItem.dragStartY + frameItem.dragStartH / 2
-                   + shiftX * Math.sin(a) + shiftY * Math.cos(a)
-        const x = cx - w / 2
-        const y = cy - h / 2
+        const kw = w / frameItem.dragStartW
+        const kh = h / frameItem.dragStartH
+        const offX = grip.startPosX - frameItem.dragStartX
+        const offY = grip.startPosY - frameItem.dragStartY
+        let posX = grip.startPosX
+        let posY = grip.startPosY
+        if (!frameItem.is3d) {
+            const oppX = dxSign > 0 ? 0 : dxSign < 0 ? frameItem.dragStartW : 0
+            const oppY = dySign > 0 ? 0 : dySign < 0 ? frameItem.dragStartH : 0
+            const newOppX = dxSign > 0 ? 0 : dxSign < 0 ? w : 0
+            const newOppY = dySign > 0 ? 0 : dySign < 0 ? h : 0
+            const ddx = (oppX - offX) - (newOppX - offX * kw)
+            const ddy = (oppY - offY) - (newOppY - offY * kh)
+            posX += ddx * Math.cos(a) - ddy * Math.sin(a)
+            posY += ddx * Math.sin(a) + ddy * Math.cos(a)
+        }
 
-        frameItem.liveX = x
-        frameItem.liveY = y
+        frameItem.liveX = posX - offX * kw
+        frameItem.liveY = posY - offY * kh
         frameItem.liveW = w
         frameItem.liveH = h
-        if (frameItem.isText && grip.isCorner) {
-            // Height drives the glyph scale; an edge drag just
-            // re-wraps, since the box is the wrap width.
-            const size = Math.round(frameItem.dragStartPixelSize
-                                    * h / Math.max(1, frameItem.dragStartH))
+        if (frameItem.isText && !grip.isCorner) {
+            // An edge drag re-wraps the text: the box is the wrap width, so the frame changes
+            // and the scale stays.
             EditorState.previewSetTextRect(
                 frameItem.box.track,
                 frameItem.box.clip,
-                x, y, w, h, size)
+                posX, posY, grip.startFrameW * kw, grip.startFrameH * kh)
         } else {
-            EditorState.previewSetClipRect(
+            EditorState.previewSetClipPlacement(
                 frameItem.box.track,
                 frameItem.box.clip,
-                x, y, w, h)
+                posX, posY, grip.startScaleX * kw, grip.startScaleY * kh)
         }
     }
 
@@ -195,7 +207,12 @@ Item {
             frameItem.dragStartY = frameItem.layoutY
             frameItem.dragStartW = frameItem.layoutW
             frameItem.dragStartH = frameItem.layoutH
-            frameItem.dragStartPixelSize = frameItem.box.pixelSize || 64
+            grip.startPosX = frameItem.box.positionX
+            grip.startPosY = frameItem.box.positionY
+            grip.startScaleX = frameItem.box.scaleX
+            grip.startScaleY = frameItem.box.scaleY
+            grip.startFrameW = frameItem.box.frameW
+            grip.startFrameH = frameItem.box.frameH
             grip.startBox = frameItem.grabBox()
             frameItem.liveX = frameItem.dragStartX
             frameItem.liveY = frameItem.dragStartY

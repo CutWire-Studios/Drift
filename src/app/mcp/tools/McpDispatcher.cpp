@@ -659,14 +659,14 @@ QJsonObject McpDispatcher::clipFeedback(const ClipRef &ref, const QJsonObject &e
     copyNum("duration", "dur");
     copyNum("inPoint", "in");
     copyNum("outPoint", "out");
-    if (clip.contains(QStringLiteral("x")))
-        out.insert(QStringLiteral("x"), clip.value(QStringLiteral("x")).toDouble());
-    if (clip.contains(QStringLiteral("y")))
-        out.insert(QStringLiteral("y"), clip.value(QStringLiteral("y")).toDouble());
-    if (clip.contains(QStringLiteral("w")))
-        out.insert(QStringLiteral("w"), clip.value(QStringLiteral("w")).toDouble());
-    if (clip.contains(QStringLiteral("h")))
-        out.insert(QStringLiteral("h"), clip.value(QStringLiteral("h")).toDouble());
+    copyNum("positionX", "positionX");
+    copyNum("positionY", "positionY");
+    copyNum("scaleX", "scaleX");
+    copyNum("scaleY", "scaleY");
+    copyNum("frameW", "frameW");
+    copyNum("frameH", "frameH");
+    if (clip.contains(QStringLiteral("box")))
+        out.insert(QStringLiteral("box"), QJsonObject::fromVariantMap(clip.value(QStringLiteral("box")).toMap()));
     if (clip.value(QStringLiteral("layer3d")).toBool())
         out.insert(QStringLiteral("layer3d"), true);
     if (clip.value(QStringLiteral("depthOcclude")).toBool())
@@ -2348,8 +2348,8 @@ QJsonObject McpDispatcher::opSetTransform(const QJsonObject &args)
         return clipRefError(args);
     QVariantMap patch;
     for (const char *key :
-         {"x", "y", "w", "h", "rotation", "rotationX", "rotationY", "z", "perspective", "anchorX", "anchorY",
-          "anchorZ", "opacity"}) {
+         {"positionX", "positionY", "scaleX", "scaleY", "scale", "rotation", "rotationX", "rotationY", "z",
+          "perspective", "anchorX", "anchorY", "anchorZ", "opacity"}) {
         const QString k = QString::fromUtf8(key);
         if (args.contains(k))
             patch.insert(k, jsonNumber(args.value(k), 0));

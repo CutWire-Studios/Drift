@@ -19,6 +19,9 @@
 #include "core/project/sources/VectorSource.h"
 
 #include <QList>
+#include <QPointF>
+#include <QRectF>
+#include <QSizeF>
 #include <QString>
 
 namespace drift {
@@ -158,7 +161,7 @@ struct Clip
 
     // Stabilize settings, and the ones the last run used. Bake mode renders a new
     // "(stabilized)" bin asset and points the clip at it; keyframe mode writes sparse
-    // transformX/Y keys instead. `stabilizing` is transient UI state and is not saved.
+    // positionX/Y keys instead. `stabilizing` is transient UI state and is not saved.
     //
     // legacyStabilizePath is only ever read: projects from before stabilized videos were bin
     // assets kept a whole-source render here, and StabilizeController::migrateLegacyClips
@@ -172,7 +175,8 @@ struct Clip
     bool stabilizeAppliedTripod = false;
     StabilizeMode stabilizeAppliedMode = StabilizeMode::Bake;
     // Layout snapshot taken before keyframe stabilize, so Update/Remove can
-    // rebuild or restore without stacking offsets on an already-shifted pose.
+    // rebuild or restore without stacking offsets on an already-shifted pose. X/Y are the
+    // position and W/H the scale (not px) at clip start.
     bool stabilizeHasRestPose = false;
     double stabilizeRestX = 0.0;
     double stabilizeRestY = 0.0;
@@ -198,26 +202,33 @@ struct Clip
     ClipAnimation animIn;
     ClipAnimation animOut;
 
-    // Layout on the project canvas in pixels: top-left origin, size in px.
-    // Empty tracks use defaults (0,0,projectW,projectH) at evaluate time.
+    // Layout on the project canvas, in project pixels with the canvas top-left as origin and y down.
+    // A clip is a frame (frameW x frameH, its 100% size) placed by its anchor: positionX/Y is where
+    // the anchor lands on the canvas and scaleX/Y resizes the frame about it. Empty positionX/Y
+    // means the canvas centre and empty scaleX/Y means 1. frameW/frameH of 0 means the canvas size;
+    // media gets its fitted size, text and shapes their box, so animating scale never changes the
+    // box a text clip wraps in. The unrotated box on the canvas is
+    // (frameW * scaleX, frameH * scaleY) with its top-left at position - anchor * scale.
     KeyframeTrack<double> opacity;
-    KeyframeTrack<double> transformX;
-    KeyframeTrack<double> transformY;
-    KeyframeTrack<double> transformW;
-    KeyframeTrack<double> transformH;
+    KeyframeTrack<double> positionX;
+    KeyframeTrack<double> positionY;
+    KeyframeTrack<double> scaleX;
+    KeyframeTrack<double> scaleY;
+    double frameW = 0.0;
+    double frameH = 0.0;
     KeyframeTrack<double> rotation;
     // 3D pose on top of the layout (see engine/render3d/scene/ClipTransform3d.h for the world:
     // After Effects style, origin at the canvas top-left, y down, +z away from the viewer).
     // layer3d is the inspector's "3D layer" switch: on whenever any of the pose tracks has data, and
     // switching it off clears them, so a flat clip never carries a pose. It can also be on with all
     // of them empty. Empty tracks mean 0 for the rotations and depth, and the default for the
-    // project height (defaultClipPerspective) for the eye distance. transformX/Y stay the layout
-    // rect's top-left corner; positionZ is the layer's depth, + away from the viewer.
+    // project height (defaultClipPerspective) for the eye distance. positionZ is the layer's depth,
+    // + away from the viewer.
     //
-    // The anchor point is where rotations pivot, in px from the layout rect's top-left corner
-    // (anchorZ out of its plane, + away). An empty anchorX/anchorY means that axis sits at the rect
-    // centre, so the default pivot follows width/height changes; setting a key pins it to a fixed
-    // offset from the corner.
+    // The anchor point is the pivot of scale and of every rotation, in 2D and 3D, in frame pixels
+    // from the frame's top-left corner (unscaled; anchorZ out of its plane, + away). An empty
+    // anchorX/anchorY means that axis sits at the frame centre, so the default pivot follows the
+    // frame size; setting a key pins it to a fixed offset from the corner.
     bool layer3d = false;
     KeyframeTrack<double> rotationX;
     KeyframeTrack<double> rotationY;
@@ -410,5 +421,30 @@ struct Clip
         return gain;
     }
 };
+
+// A clip's 2D layout at one instant (see the layout comment in Clip). Anchor is in frame pixels;
+// box() is the unrotated rect on the canvas and pivot() the point rotation and scale turn about.
+struct ClipLayout
+{
+    double frameW = 0.0;
+    double frameH = 0.0;
+    double posX = 0.0;
+    double posY = 0.0;
+    double scaleX = 1.0;
+    double scaleY = 1.0;
+    double anchorX = 0.0;
+    double anchorY = 0.0;
+    double rotation = 0.0;
+
+    QRectF box() const
+    {
+        return QRectF(posX - anchorX * scaleX, posY - anchorY * scaleY, frameW * scaleX, frameH * scaleY);
+    }
+    QPointF pivot() const { return QPointF(posX, posY); }
+};
+
+// Resolves the empty-track defaults: position = canvas centre, scale = 1, frame = canvas, anchor =
+// frame centre. `relative` is clip-relative time, as for the tracks themselves.
+ClipLayout clipLayoutAt(const Clip &clip, TimeUs relative, QSizeF canvas);
 
 } // namespace drift

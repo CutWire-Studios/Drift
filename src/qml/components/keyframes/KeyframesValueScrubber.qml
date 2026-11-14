@@ -52,8 +52,7 @@ Item {
 
     function valueAt() {
         if (isScale)
-            return EditorState.keyframes.scaleOf(trackValue("width", canvasW), trackValue("height", canvasH),
-                                                 canvasW, canvasH)
+            return trackValue("scaleX", 1)
         return trackValue(row.keyProp, row.base)
     }
 
@@ -104,15 +103,9 @@ Item {
     }
 
     function beginScale() {
-        const cd = EditorState.selectedClipData
         scaleStart = {
-            "x": trackValue("x", 0),
-            "y": trackValue("y", 0),
-            "w": trackValue("width", canvasW),
-            "h": trackValue("height", canvasH),
-            "scale": currentValue,
-            "rot": trackValue("rotation", 0) * Math.PI / 180,
-            "pixelSize": (cd.textStyle && cd.textStyle.pixelSize) || 64
+            "scaleX": trackValue("scaleX", 1),
+            "scaleY": trackValue("scaleY", 1)
         }
     }
 

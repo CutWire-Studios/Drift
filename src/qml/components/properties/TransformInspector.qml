@@ -29,10 +29,12 @@ Item {
     }
 
     readonly property var propOpacity: { "key": "opacity", "label": qsTr("Opacity"), "def": 1.0, "decimals": 2 }
-    readonly property var propX: { "key": "x", "label": "X", "def": 0.0, "decimals": 0 }
-    readonly property var propY: { "key": "y", "label": "Y", "def": 0.0, "decimals": 0 }
-    readonly property var propWidth: { "key": "width", "label": qsTr("Width"), "def": root.canvasW, "decimals": 0 }
-    readonly property var propHeight: { "key": "height", "label": qsTr("Height"), "def": root.canvasH, "decimals": 0 }
+    readonly property real frameW: hasSelection && clipData.frameW > 0 ? clipData.frameW : canvasW
+    readonly property real frameH: hasSelection && clipData.frameH > 0 ? clipData.frameH : canvasH
+    readonly property var propX: { "key": "positionX", "label": "X", "def": root.canvasW / 2, "decimals": 0 }
+    readonly property var propY: { "key": "positionY", "label": "Y", "def": root.canvasH / 2, "decimals": 0 }
+    readonly property var propWidth: { "key": "scaleX", "label": qsTr("Width"), "def": 1.0, "decimals": 0 }
+    readonly property var propHeight: { "key": "scaleY", "label": qsTr("Height"), "def": 1.0, "decimals": 0 }
     readonly property var propRotation: ({ "key": "rotation",
                                            "label": (clipData && clipData.layer3d) ? qsTr("Rotation Z") : qsTr("Rotation"),
                                            "def": 0.0, "decimals": 1 })
@@ -49,26 +51,24 @@ Item {
     property bool sizeLinked: EditorState.sizeLinked
     readonly property bool isText: clipKind === "text" || clipKind === "subtitle"
 
-    // 100% is the box that fills the canvas on its tighter axis — what Reset and a fitted
-    // import both produce — whatever the clip's own aspect ratio.
+    // 100% is the clip's fit size. With a squished clip the slider shows the X scale and a drag
+    // multiplies both axes by the same factor.
     property int liveRevision: 0
     readonly property real scaleAtPlayhead: {
         void clipDataRevision
         void liveRevision
         if (!hasSelection)
             return 1
-        const w = transformAt("width", canvasW)
-        const h = transformAt("height", canvasH)
-        return EditorState.keyframes.scaleOf(w, h, canvasW, canvasH)
+        return transformAt("scaleX", 1)
     }
 
     // Scale is presented as a single control, but the project stores its animation as two
-    // independent width/height curves. Keep the navigation and add/remove button in sync
+    // independent scaleX/scaleY curves. Keep the navigation and add/remove button in sync
     // with either curve, including clips that were keyed while the dimensions were unlinked.
-    readonly property var scaleWidthKeys: (clipData && clipData.keyframes && clipData.keyframes.width
-                                           && clipData.keyframes.width.points) || []
-    readonly property var scaleHeightKeys: (clipData && clipData.keyframes && clipData.keyframes.height
-                                            && clipData.keyframes.height.points) || []
+    readonly property var scaleWidthKeys: (clipData && clipData.keyframes && clipData.keyframes.scaleX
+                                           && clipData.keyframes.scaleX.points) || []
+    readonly property var scaleHeightKeys: (clipData && clipData.keyframes && clipData.keyframes.scaleY
+                                            && clipData.keyframes.scaleY.points) || []
     readonly property var scaleKeyTimes: {
         const times = scaleWidthKeys.concat(scaleHeightKeys).map(k => Number(k.seconds)).filter(t => isFinite(t))
         times.sort((a, b) => a - b)
@@ -88,13 +88,10 @@ Item {
         const candidates = scaleKeyTimes.filter(k => previous ? k < t - 1 / 30 : k > t + 1 / 30)
         if (candidates.length > 0)
             EditorState.playheadSeconds = previous ? candidates[candidates.length - 1] : candidates[0]
-        EditorState.showKeyframeGraphProperty("width")
+        EditorState.showKeyframeGraphProperty("scaleX")
     }
 
     property var scaleDragStart: null
-    // Fractions of the box (0, 0.5, 1 per axis) the scale keeps fixed on the canvas. Not saved.
-    property point scaleAnchor: Qt.point(0.5, 0.5)
-
     function transformAt(key, def) {
         return EditorState.propertyValueAt(EditorState.selectedTrack, EditorState.selectedClip,
                                            key, EditorState.inspectorPlayheadSeconds, def)
@@ -106,38 +103,22 @@ Item {
         return points.some(p => Math.abs(p.seconds - t) <= 1 / 30)
     }
 
-    readonly property bool widthKeyed: keyedAtPlayhead("width")
-    readonly property bool heightKeyed: keyedAtPlayhead("height")
+    readonly property bool widthKeyed: keyedAtPlayhead("scaleX")
+    readonly property bool heightKeyed: keyedAtPlayhead("scaleY")
 
     function beginScaleDrag() {
         scaleDragStart = {
-            "x": transformAt("x", 0),
-            "y": transformAt("y", 0),
-            "w": transformAt("width", canvasW),
-            "h": transformAt("height", canvasH),
-            "scale": scaleAtPlayhead,
-            "rot": transformAt("rotation", 0) * Math.PI / 180,
-            "pixelSize": (clipData.textStyle && clipData.textStyle.pixelSize) || 64
+            "scaleX": transformAt("scaleX", 1),
+            "scaleY": transformAt("scaleY", 1)
         }
     }
 
     function applyScale(scale) {
         const s = scaleDragStart
-        if (!s || s.scale <= 0)
+        if (!s || s.scaleX === 0)
             return
-        const r = EditorState.keyframes.scaledRect(s, scale, scaleAnchor)
-        const k = r.k
-        const x = r.x
-        const y = r.y
-        const w = r.w
-        const h = r.h
-        if (isText) {
-            EditorState.previewSetTextRect(EditorState.selectedTrack, EditorState.selectedClip,
-                                           x, y, w, h, Math.round(s.pixelSize * k))
-        } else {
-            EditorState.previewSetClipRect(EditorState.selectedTrack, EditorState.selectedClip,
-                                           x, y, w, h)
-        }
+        EditorState.previewSetClipScale(EditorState.selectedTrack, EditorState.selectedClip,
+                                        scale, scale * s.scaleY / s.scaleX)
     }
 
     height: contentCol.height
@@ -151,7 +132,7 @@ Item {
         function onSelectedClipDataChanged() { root.clipDataRevision++ }
         function onTracksChanged() { root.clipDataRevision++ }
         function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
-            if (!scaleSlider.pressed && (keys.indexOf("width") >= 0 || keys.indexOf("height") >= 0))
+            if (!scaleSlider.pressed && (keys.indexOf("scaleX") >= 0 || keys.indexOf("scaleY") >= 0))
                 root.liveRevision++
         }
     }
@@ -266,8 +247,8 @@ Item {
             PropertyKeyframeRow {
                 width: parent.width
                 propDef: root.propX
-                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.x && root.clipData.keyframes.x.points) || []
-                linkedPropKey: root.positionLinked ? "y" : ""
+                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.positionX && root.clipData.keyframes.positionX.points) || []
+                linkedPropKey: root.positionLinked ? "positionY" : ""
                 useSlider: true
                 sliderFrom: -root.canvasW
                 sliderTo: root.canvasW * 2
@@ -276,8 +257,8 @@ Item {
             PropertyKeyframeRow {
                 width: parent.width
                 propDef: root.propY
-                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.y && root.clipData.keyframes.y.points) || []
-                linkedPropKey: root.positionLinked ? "x" : ""
+                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.positionY && root.clipData.keyframes.positionY.points) || []
+                linkedPropKey: root.positionLinked ? "positionX" : ""
                 useSlider: true
                 sliderFrom: -root.canvasH
                 sliderTo: root.canvasH * 2
@@ -364,7 +345,7 @@ Item {
                     tooltip: qsTr("Clear all scale keyframes, keeping the current scale")
                     onClicked: EditorState.keyframes.clearProperties(
                                    EditorState.selectedTrack, EditorState.selectedClip,
-                                   ["width", "height"])
+                                   ["scaleX", "scaleY"])
                 }
 
                 ThemedSlider {
@@ -415,44 +396,12 @@ Item {
                     onClicked: {
                         if (active) {
                             EditorState.keyframes.removeKeysAt(EditorState.selectedTrack, EditorState.selectedClip,
-                                                               ["width", "height"], EditorState.inspectorPlayheadSeconds)
+                                                               ["scaleX", "scaleY"], EditorState.inspectorPlayheadSeconds)
                         } else {
                             EditorState.keyframes.addKeysAt(EditorState.selectedTrack, EditorState.selectedClip,
-                                                            ["width", "height"], EditorState.inspectorPlayheadSeconds)
+                                                            ["scaleX", "scaleY"], EditorState.inspectorPlayheadSeconds)
                         }
                     }
-                }
-            }
-
-            Grid {
-                visible: root.sizeLinked
-                columns: 3
-                spacing: 3
-
-                Repeater {
-                    model: 9
-                    delegate: Rectangle {
-                        readonly property real fx: (index % 3) * 0.5
-                        readonly property real fy: Math.floor(index / 3) * 0.5
-                        width: 12
-                        height: 12
-                        radius: 2
-                        color: root.scaleAnchor.x === fx && root.scaleAnchor.y === fy
-                               ? Theme.c.transformInspector.accent : Theme.c.transformInspector.foregroundMuted
-                        opacity: root.scaleAnchor.x === fx && root.scaleAnchor.y === fy ? 1 : 0.35
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.scaleAnchor = Qt.point(parent.fx, parent.fy)
-                        }
-                    }
-                }
-
-                HoverHandler { id: anchorHover }
-                ThemedToolTip {
-                    visible: anchorHover.hovered
-                    text: qsTr("Scale origin")
                 }
             }
 
@@ -460,20 +409,22 @@ Item {
                 visible: !root.sizeLinked
                 width: parent.width
                 propDef: root.propWidth
-                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.width && root.clipData.keyframes.width.points) || []
+                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.scaleX && root.clipData.keyframes.scaleX.points) || []
                 useSlider: true
-                sliderFrom: 1
-                sliderTo: Math.max(root.canvasW * 2, 2)
+                displayFactor: root.frameW
+                sliderFrom: 1 / root.frameW
+                sliderTo: Math.max(root.canvasW * 2, 2) / root.frameW
                 unit: "px"
             }
             PropertyKeyframeRow {
                 visible: !root.sizeLinked
                 width: parent.width
                 propDef: root.propHeight
-                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.height && root.clipData.keyframes.height.points) || []
+                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.scaleY && root.clipData.keyframes.scaleY.points) || []
                 useSlider: true
-                sliderFrom: 1
-                sliderTo: Math.max(root.canvasH * 2, 2)
+                displayFactor: root.frameH
+                sliderFrom: 1 / root.frameH
+                sliderTo: Math.max(root.canvasH * 2, 2) / root.frameH
                 unit: "px"
             }
 

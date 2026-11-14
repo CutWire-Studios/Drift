@@ -71,10 +71,10 @@ int main(int argc, char *argv[])
     top.type = drift::TrackType::Video;
 
     drift::Clip a = makeVideoClip(QStringLiteral("clipA"), pathA, 0, 5'000'000);
-    a.transformW.setKeyframe(0, 1920.0);
-    a.transformW.setKeyframe(5'000'000, 2400.0);
-    a.transformH.setKeyframe(0, 1080.0);
-    a.transformH.setKeyframe(5'000'000, 1350.0);
+    a.scaleX.setKeyframe(0, 1.0);
+    a.scaleX.setKeyframe(5'000'000, 1.25);
+    a.scaleY.setKeyframe(0, 1.0);
+    a.scaleY.setKeyframe(5'000'000, 1.25);
     a.effects.append(makeEffect(QStringLiteral("adjust.contrast")));
     a.effects.append(makeEffect(QStringLiteral("stylize.vignette")));
     a.effects.append(makeEffect(QStringLiteral("rgb_split")));

@@ -24,7 +24,13 @@ double clipTransformValue(const drift::KeyframeTrack<double> &track, drift::Time
 bool writeKeyframeValue(drift::KeyframeTrack<double> &track, drift::TimeUs relative, double value,
                         bool autoKey, bool force);
 bool clipAcceptsPreviewTransform(const drift::Clip &clip);
-void setClipLayoutPixels(drift::Clip &clip, double x, double y, double w, double h);
+// Drops position and scale (back to the canvas centre at 100%) and the frame (back to the canvas).
+void clearClipLayout(drift::Clip &clip);
+// Re-derives the frame of a media clip after its source orientation or crop changed; scale and
+// position stay, so the clip keeps its percentage.
+void refreshClipFrame(const drift::Project &project, drift::Clip &clip);
+// A text, shape or sticker box: the frame is the box and the position its centre.
+void setClipFrameBox(drift::Clip &clip, double x, double y, double w, double h);
 QVariantMap maskToMap(const drift::Mask &m, drift::TimeUs timelineStart = 0);
 QVariantList transformToList(const QTransform &t);
 // A 2D homography as a 4x4 on (x, y, z, w) that leaves z alone: what a QtQuick Matrix4x4 needs.

@@ -310,10 +310,10 @@
     },
     "keyframe": {
       "curves": {
-        "x": "$palette.curveX",
-        "y": "$palette.curveY",
-        "width": "$palette.curveWidth",
-        "height": "$palette.curveHeight",
+        "positionX": "$palette.curveX",
+        "positionY": "$palette.curveY",
+        "scaleX": "$palette.curveWidth",
+        "scaleY": "$palette.curveHeight",
         "rotation": "$palette.curveRotation",
         "rotationX": "$palette.curveRotationX",
         "rotationY": "$palette.curveRotationY",

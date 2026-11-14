@@ -333,15 +333,16 @@ StabilizePlan planStabilizeKeyframes(const QString &trfPath, TimeUs trfStartUs, 
     return plan;
 }
 
-void captureStabilizeRestPose(Clip &clip)
+void captureStabilizeRestPose(Clip &clip, QSizeF canvas)
 {
     if (clip.stabilizeHasRestPose)
         return;
-    clip.stabilizeRestX = clip.transformX.isEmpty() ? 0.0 : clip.transformX.evaluateAt(0);
-    clip.stabilizeRestY = clip.transformY.isEmpty() ? 0.0 : clip.transformY.evaluateAt(0);
-    clip.stabilizeRestW = clip.transformW.isEmpty() ? 0.0 : clip.transformW.evaluateAt(0);
-    clip.stabilizeRestH = clip.transformH.isEmpty() ? 0.0 : clip.transformH.evaluateAt(0);
-    clip.stabilizeRestRot = clip.rotation.isEmpty() ? 0.0 : clip.rotation.evaluateAt(0);
+    const ClipLayout layout = clipLayoutAt(clip, 0, canvas);
+    clip.stabilizeRestX = layout.posX;
+    clip.stabilizeRestY = layout.posY;
+    clip.stabilizeRestW = layout.scaleX;
+    clip.stabilizeRestH = layout.scaleY;
+    clip.stabilizeRestRot = layout.rotation;
     clip.stabilizeHasRestPose = true;
 }
 
@@ -349,58 +350,55 @@ void restoreStabilizeRestPose(Clip &clip)
 {
     if (!clip.stabilizeHasRestPose)
         return;
-    clip.transformX = {};
-    clip.transformY = {};
-    clip.transformX.setKeyframe(0, clip.stabilizeRestX);
-    clip.transformY.setKeyframe(0, clip.stabilizeRestY);
-    if (clip.transformW.keyframes().size() <= 1)
-        clip.transformW.setKeyframe(0, qMax(1.0, clip.stabilizeRestW));
-    if (clip.transformH.keyframes().size() <= 1)
-        clip.transformH.setKeyframe(0, qMax(1.0, clip.stabilizeRestH));
+    clip.positionX = {};
+    clip.positionY = {};
+    clip.positionX.setKeyframe(0, clip.stabilizeRestX);
+    clip.positionY.setKeyframe(0, clip.stabilizeRestY);
+    if (clip.scaleX.keyframes().size() <= 1)
+        clip.scaleX.setKeyframe(0, clip.stabilizeRestW);
+    if (clip.scaleY.keyframes().size() <= 1)
+        clip.scaleY.setKeyframe(0, clip.stabilizeRestH);
     if (clip.rotation.keyframes().size() <= 1)
         clip.rotation.setKeyframe(0, clip.stabilizeRestRot);
     clip.stabilizeHasRestPose = false;
 }
 
-void applyStabilizePlan(Clip &clip, const StabilizePlan &plan)
+void applyStabilizePlan(Clip &clip, const StabilizePlan &plan, QSizeF canvas)
 {
-    captureStabilizeRestPose(clip);
+    captureStabilizeRestPose(clip, canvas);
 
     double maxAbs = 0.0;
     for (const StabilizeKeyframe &key : plan.keys)
         maxAbs = qMax(maxAbs, qMax(std::abs(key.dx), std::abs(key.dy)));
 
-    const double restW = qMax(1.0, clip.stabilizeRestW);
-    const double restH = qMax(1.0, clip.stabilizeRestH);
+    const double restScaleX = clip.stabilizeRestW;
+    const double restScaleY = clip.stabilizeRestH;
+    const ClipLayout frame = clipLayoutAt(clip, 0, canvas);
+    const double restW = qMax(1.0, frame.frameW * restScaleX);
+    const double restH = qMax(1.0, frame.frameH * restScaleY);
     double zoom = 1.0;
-    if (clip.transformW.keyframes().size() <= 1 && clip.transformH.keyframes().size() <= 1
-        && maxAbs > 0.5) {
+    if (clip.scaleX.keyframes().size() <= 1 && clip.scaleY.keyframes().size() <= 1 && maxAbs > 0.5)
         zoom = qBound(1.0, 1.0 + 2.0 * maxAbs / qMin(restW, restH), 1.25);
-    }
-    const double newW = restW * zoom;
-    const double newH = restH * zoom;
-    const double originX = clip.stabilizeRestX + restW * 0.5 - newW * 0.5;
-    const double originY = clip.stabilizeRestY + restH * 0.5 - newH * 0.5;
 
     KeyframeTrack<double> x;
     KeyframeTrack<double> y;
     if (plan.keys.isEmpty()) {
-        x.setKeyframe(0, originX);
-        y.setKeyframe(0, originY);
+        x.setKeyframe(0, clip.stabilizeRestX);
+        y.setKeyframe(0, clip.stabilizeRestY);
     } else {
         for (const StabilizeKeyframe &key : plan.keys) {
-            // path dx/dy is in unzoomed layout pixels; after we enlarge W/H
-            // around the rest center, one source pixel is `zoom` times larger.
-            x.setKeyframe(key.timeUs, originX + key.dx * zoom);
-            y.setKeyframe(key.timeUs, originY + key.dy * zoom);
+            // path dx/dy is in unzoomed layout pixels; after we enlarge the frame
+            // about its anchor, one source pixel is `zoom` times larger.
+            x.setKeyframe(key.timeUs, clip.stabilizeRestX + key.dx * zoom);
+            y.setKeyframe(key.timeUs, clip.stabilizeRestY + key.dy * zoom);
         }
     }
-    clip.transformX = x;
-    clip.transformY = y;
-    if (clip.transformW.keyframes().size() <= 1)
-        clip.transformW.setKeyframe(0, newW);
-    if (clip.transformH.keyframes().size() <= 1)
-        clip.transformH.setKeyframe(0, newH);
+    clip.positionX = x;
+    clip.positionY = y;
+    if (clip.scaleX.keyframes().size() <= 1)
+        clip.scaleX.setKeyframe(0, restScaleX * zoom);
+    if (clip.scaleY.keyframes().size() <= 1)
+        clip.scaleY.setKeyframe(0, restScaleY * zoom);
 }
 
 } // namespace drift

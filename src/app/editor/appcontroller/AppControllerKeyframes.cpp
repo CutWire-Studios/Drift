@@ -89,8 +89,8 @@ bool AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
         return false;
     }
 
-    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
-        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    if (m_positionLinked && (prop == QLatin1String("positionX") || prop == QLatin1String("positionY"))) {
+        const QString otherProp = (prop == QLatin1String("positionX")) ? QStringLiteral("positionY") : QStringLiteral("positionX");
         drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, /*createIfMissing=*/true);
         if (otherKt) {
             const drift::TimeUs otherNearest = otherKt->nearestKeyframe(rel, kKeyframeToleranceUs);
@@ -203,8 +203,8 @@ void AppController::removeClipKeyframe(int trackIndex, int clipIndex, const QStr
     if (nearest < 0)
         return;
     kt->removeKeyframe(nearest);
-    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
-        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    if (m_positionLinked && (prop == QLatin1String("positionX") || prop == QLatin1String("positionY"))) {
+        const QString otherProp = (prop == QLatin1String("positionX")) ? QStringLiteral("positionY") : QStringLiteral("positionX");
         drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, false);
         if (otherKt) {
             const drift::TimeUs otherNearest = otherKt->nearestKeyframe(rel, kKeyframeToleranceUs);
@@ -244,8 +244,8 @@ void AppController::previewMoveClipKeyframe(int trackIndex, int clipIndex, const
         kt->removeKeyframe(nearest);
     kt->setKeyframe(toRel, value);
 
-    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
-        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    if (m_positionLinked && (prop == QLatin1String("positionX") || prop == QLatin1String("positionY"))) {
+        const QString otherProp = (prop == QLatin1String("positionX")) ? QStringLiteral("positionY") : QStringLiteral("positionX");
         drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, false);
         if (otherKt && !otherKt->isEmpty()) {
             const drift::TimeUs otherNearest = otherKt->nearestKeyframe(fromRel, kKeyframeToleranceUs);
@@ -334,22 +334,22 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
         const drift::Track &owner = m_project.tracks().at(trackIndex);
         if (clipIndex >= 0 && clipIndex < owner.clips.size() && drift::isCameraClip(owner.clips.at(clipIndex))) {
             // A camera at rest: the eye one default zoom in front of the canvas centre, aimed at it.
-            if (prop == QLatin1String("x") || prop == QLatin1String("anchorX"))
+            if (prop == QLatin1String("positionX") || prop == QLatin1String("anchorX"))
                 return m_project.width() / 2.0;
-            if (prop == QLatin1String("y") || prop == QLatin1String("anchorY"))
+            if (prop == QLatin1String("positionY") || prop == QLatin1String("anchorY"))
                 return m_project.height() / 2.0;
             if (prop == QLatin1String("z"))
                 return -drift::defaultClipPerspective(m_project.height());
         }
     }
-    if (prop == QLatin1String("width"))
-        return m_project.width();
-    if (prop == QLatin1String("height"))
-        return m_project.height();
-    if (prop == QLatin1String("opacity") || prop == QLatin1String("volume"))
+    if (prop == QLatin1String("positionX"))
+        return m_project.width() / 2.0;
+    if (prop == QLatin1String("positionY"))
+        return m_project.height() / 2.0;
+    if (prop == QLatin1String("scaleX") || prop == QLatin1String("scaleY")
+        || prop == QLatin1String("opacity") || prop == QLatin1String("volume"))
         return 1.0;
-    if (prop == QLatin1String("x") || prop == QLatin1String("y")
-        || prop == QLatin1String("rotation") || prop == QLatin1String("rotationX")
+    if (prop == QLatin1String("rotation") || prop == QLatin1String("rotationX")
         || prop == QLatin1String("rotationY") || prop == QLatin1String("z")) {
         return 0.0;
     }
@@ -363,10 +363,9 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
         if (trackIndex >= 0 && trackIndex < m_project.tracks().size()) {
             const drift::Track &track = m_project.tracks().at(trackIndex);
             if (clipIndex >= 0 && clipIndex < track.clips.size()) {
-                const drift::KeyframeTrack<double> &extent =
-                    horizontal ? track.clips.at(clipIndex).transformW : track.clips.at(clipIndex).transformH;
-                if (!extent.isEmpty())
-                    size = extent.evaluateAt(0);
+                const double frame = horizontal ? track.clips.at(clipIndex).frameW : track.clips.at(clipIndex).frameH;
+                if (frame > 0.0)
+                    size = frame;
             }
         }
         return size / 2.0;
@@ -467,7 +466,7 @@ QVariantList AppController::clipKeyframes(int trackIndex, int clipIndex, const Q
         const QList<QPair<QString, double>> writes =
             legacyModel3dPoseWrites(track.clips.at(clipIndex), prop.mid(8), 1.0, 0, 1.0);
         return clipKeyframes(trackIndex, clipIndex, writes.size() == 1 ? writes.first().first
-                                                                       : QStringLiteral("width"));
+                                                                       : QStringLiteral("scaleX"));
     }
 
     const drift::Clip &clip = track.clips.at(clipIndex);
@@ -525,8 +524,8 @@ void AppController::setClipPropertyKeyframesEnabled(int trackIndex, int clipInde
     drift::KeyframeTrack<double> *kt = keyframeTrackForProp(clip, prop, /*createIfMissing=*/false);
     if (kt)
         kt->setEnabled(enabled);
-    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
-        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    if (m_positionLinked && (prop == QLatin1String("positionX") || prop == QLatin1String("positionY"))) {
+        const QString otherProp = (prop == QLatin1String("positionX")) ? QStringLiteral("positionY") : QStringLiteral("positionX");
         drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, /*createIfMissing=*/false);
         if (otherKt)
             otherKt->setEnabled(enabled);
@@ -546,7 +545,7 @@ void AppController::toggleClipPropertyKeyframesEnabled(int trackIndex, int clipI
 // Every property of the clip that carries an animation — the keyframe strip's series list.
 //
 // A lone key at the clip's start is how a *static* transform value is stored (every clip gets one
-// for x/y/w/h when it is added), so that alone is not an animation. Effect params keep their static
+// for position and scale when it is added), so that alone is not an animation. Effect params keep their static
 // value in Effect::parameters, so for those any key at all means animated.
 QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex) const
 {
@@ -561,8 +560,8 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
     const drift::Clip &clip = track.clips.at(clipIndex);
 
     static const QStringList transformProps = {
-        QStringLiteral("x"),       QStringLiteral("y"),       QStringLiteral("width"),
-        QStringLiteral("height"),  QStringLiteral("rotation"), QStringLiteral("rotationX"),
+        QStringLiteral("positionX"), QStringLiteral("positionY"), QStringLiteral("scaleX"),
+        QStringLiteral("scaleY"),  QStringLiteral("rotation"), QStringLiteral("rotationX"),
         QStringLiteral("rotationY"), QStringLiteral("z"),     QStringLiteral("perspective"),
         QStringLiteral("anchorX"), QStringLiteral("anchorY"), QStringLiteral("anchorZ"),
         QStringLiteral("opacity"), QStringLiteral("volume"),
@@ -686,8 +685,8 @@ void AppController::setKeyframeInterpolation(int trackIndex, int clipIndex, cons
     const drift::Project before = m_project;
     kt->setEasing(at, drift::interpolationFromString(mode));
 
-    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
-        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    if (m_positionLinked && (prop == QLatin1String("positionX") || prop == QLatin1String("positionY"))) {
+        const QString otherProp = (prop == QLatin1String("positionX")) ? QStringLiteral("positionY") : QStringLiteral("positionX");
         drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, /*createIfMissing=*/false);
         if (otherKt && !otherKt->isEmpty()) {
             const drift::TimeUs otherAt = otherKt->nearestKeyframe(local, drift::kUsPerSecond / 30);
@@ -724,8 +723,8 @@ void AppController::setKeyframeEasingAt(int trackIndex, int clipIndex, const QSt
     const drift::Project before = m_project;
     kt->setEasing(at, drift::interpolationFromString(mode));
 
-    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
-        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    if (m_positionLinked && (prop == QLatin1String("positionX") || prop == QLatin1String("positionY"))) {
+        const QString otherProp = (prop == QLatin1String("positionX")) ? QStringLiteral("positionY") : QStringLiteral("positionX");
         drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, /*createIfMissing=*/false);
         if (otherKt && !otherKt->isEmpty()) {
             const drift::TimeUs otherAt = otherKt->nearestKeyframe(local, drift::kUsPerSecond / 60);
@@ -883,8 +882,8 @@ bool AppController::shapeKeyframeSegments(int trackIndex, int clipIndex, const Q
     };
     shape(kt);
 
-    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
-        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    if (m_positionLinked && (prop == QLatin1String("positionX") || prop == QLatin1String("positionY"))) {
+        const QString otherProp = (prop == QLatin1String("positionX")) ? QStringLiteral("positionY") : QStringLiteral("positionX");
         drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, /*createIfMissing=*/false);
         if (otherKt && !otherKt->isEmpty()) {
             if (allSegments) {
@@ -972,10 +971,10 @@ void AppController::syncLinkedTangents(int trackIndex, int clipIndex, const QStr
                                        double atSeconds, double inDx, double inDy,
                                        double outDx, double outDy, bool corner)
 {
-    if (!m_positionLinked || (prop != QLatin1String("x") && prop != QLatin1String("y")))
+    if (!m_positionLinked || (prop != QLatin1String("positionX") && prop != QLatin1String("positionY")))
         return;
 
-    const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    const QString otherProp = (prop == QLatin1String("positionX")) ? QStringLiteral("positionY") : QStringLiteral("positionX");
     drift::Keyframe<double> *otherKey = keyframeAt(trackIndex, clipIndex, otherProp, atSeconds);
     if (!otherKey)
         return;
@@ -1078,8 +1077,8 @@ void AppController::setKeyframeHold(int trackIndex, int clipIndex, const QString
         return;
 
     key->hold = hold;
-    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
-        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    if (m_positionLinked && (prop == QLatin1String("positionX") || prop == QLatin1String("positionY"))) {
+        const QString otherProp = (prop == QLatin1String("positionX")) ? QStringLiteral("positionY") : QStringLiteral("positionX");
         drift::Keyframe<double> *otherKey = keyframeAt(trackIndex, clipIndex, otherProp, atSeconds);
         if (otherKey)
             otherKey->hold = hold;
@@ -1174,32 +1173,31 @@ QString AppController::setClipKeyframes(int trackIndex, int clipIndex,
 
 static void applyDefaultClipLayout(const drift::Project &project, drift::Clip &clip)
 {
-    // Media resets to how it first landed: its own shape, fitted and centred. Everything else
-    // (text, shapes, composites, transform layers) resets to the full canvas.
-    int mediaW = 0;
-    int mediaH = 0;
-    if (clip.type == drift::ClipType::Vector) {
-        mediaW = clip.vector.width;
-        mediaH = clip.vector.height;
-    } else if (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Image
-               || clip.type == drift::ClipType::Pdf) {
-        if (const drift::MediaAsset *asset = project.asset(clip.assetId)) {
-            mediaW = asset->width;
-            mediaH = asset->height;
-            if ((asset->rotationDegrees + clip.rotationCorrection) % 180 == 90)
-                std::swap(mediaW, mediaH);
-            if (clip.type == drift::ClipType::Video && mediaW > 0 && mediaH > 0) {
-                mediaW = qMax(1, qRound(mediaW * clip.sourceFrame.width()));
-                mediaH = qMax(1, qRound(mediaH * clip.sourceFrame.height()));
-            }
-        }
+    // Media resets to how it first landed: its own shape, fitted and centred. Text and shapes keep
+    // their box and go back to the canvas centre; everything else follows the canvas.
+    clip.positionX = {};
+    clip.positionY = {};
+    clip.scaleX = {};
+    clip.scaleY = {};
+    switch (clip.type) {
+    case drift::ClipType::Video:
+    case drift::ClipType::Image:
+    case drift::ClipType::Pdf:
+    case drift::ClipType::Vector:
+    case drift::ClipType::Model3d:
+    case drift::ClipType::Text:
+    case drift::ClipType::Subtitle:
+    case drift::ClipType::Shape: {
+        const QSizeF fit = drift::clipFitFrameSize(project, clip);
+        clip.frameW = fit.width();
+        clip.frameH = fit.height();
+        break;
     }
-    if (clip.type == drift::ClipType::Model3d)
-        placeModelClipLayout(clip, project.width(), project.height());
-    else if (mediaW > 0 && mediaH > 0)
-        fitClipLayoutToCanvas(clip, mediaW, mediaH, project.width(), project.height());
-    else
-        setClipLayoutPixels(clip, 0, 0, project.width(), project.height());
+    default:
+        clip.frameW = 0.0;
+        clip.frameH = 0.0;
+        break;
+    }
 }
 
 void AppController::resetClipTransform(int trackIndex, int clipIndex)
@@ -1217,10 +1215,6 @@ void AppController::resetClipTransform(int trackIndex, int clipIndex)
 
     const drift::Project before = m_project;
     clip.opacity = {};
-    clip.transformX = {};
-    clip.transformY = {};
-    clip.transformW = {};
-    clip.transformH = {};
     clip.rotation = {};
     clearClipPose3d(clip);
     clip.flipH = false;
@@ -1248,20 +1242,12 @@ void AppController::resetClipTransformGroup(int trackIndex, int clipIndex, const
         clip.opacity = {};
     } else if (group == QLatin1String("rotation")) {
         clip.rotation = {};
-    } else if (group == QLatin1String("position") || group == QLatin1String("size")) {
-        drift::Clip layout = clip;
-        layout.transformX = {};
-        layout.transformY = {};
-        layout.transformW = {};
-        layout.transformH = {};
-        applyDefaultClipLayout(m_project, layout);
-        if (group == QLatin1String("position")) {
-            clip.transformX = layout.transformX;
-            clip.transformY = layout.transformY;
-        } else {
-            clip.transformW = layout.transformW;
-            clip.transformH = layout.transformH;
-        }
+    } else if (group == QLatin1String("position")) {
+        clip.positionX = {};
+        clip.positionY = {};
+    } else if (group == QLatin1String("size")) {
+        clip.scaleX = {};
+        clip.scaleY = {};
     } else {
         return;
     }

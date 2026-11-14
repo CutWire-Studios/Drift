@@ -36,8 +36,9 @@ StabilizePlan planStabilizeKeyframes(const QString &trfPath, TimeUs trfStartUs, 
                                      double fps, double scaleX, double scaleY, int smoothing,
                                      bool tripod, double epsilonCanvasPx = 1.0);
 
-void captureStabilizeRestPose(Clip &clip);
+// The rest pose is position (stabilizeRestX/Y) and scale (stabilizeRestW/H) at clip start.
+void captureStabilizeRestPose(Clip &clip, QSizeF canvas);
 void restoreStabilizeRestPose(Clip &clip);
-void applyStabilizePlan(Clip &clip, const StabilizePlan &plan);
+void applyStabilizePlan(Clip &clip, const StabilizePlan &plan, QSizeF canvas);
 
 } // namespace drift

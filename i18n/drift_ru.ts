@@ -440,6 +440,61 @@
     </message>
 </context>
 <context>
+    <name>AndroidAnimationPage</name>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">Нет</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 с</translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished">Начало</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">Конец</translation>
+    </message>
+    <message>
+        <source>Fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Появление</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Затухание</translation>
+    </message>
+    <message>
+        <source>Fade curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Анимация</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">Длительность</translation>
+    </message>
+    <message>
+        <source>Animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter and word animations live in Text animation. This moves the whole clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBackgroundPage</name>
     <message>
         <source>Choose background image</source>
@@ -519,6 +574,10 @@
     <message>
         <source>Stabilize</source>
         <translation type="unfinished">Стабилизировать</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished">Плавный переход</translation>
     </message>
     <message>
         <source>Edit text</source>
@@ -941,33 +1000,6 @@
     <message>
         <source>Extras</source>
         <translation type="unfinished">Дополнения</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidFadeSheet</name>
-    <message>
-        <source>Fade</source>
-        <translation>Плавный переход</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>Готово</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 с</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation>Появление</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation>Затухание</translation>
-    </message>
-    <message>
-        <source>Curve</source>
-        <translation>Кривая</translation>
     </message>
 </context>
 <context>
@@ -2405,21 +2437,6 @@
     <message>
         <source>Transitions</source>
         <translation type="unfinished">Переходы</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidVolumePage</name>
-    <message>
-        <source>%1 s</source>
-        <translation type="unfinished">%1 с</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation type="unfinished">Появление</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation type="unfinished">Затухание</translation>
     </message>
 </context>
 <context>
@@ -11000,6 +11017,14 @@
         <translation type="unfinished">Масштаб</translation>
     </message>
     <message>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Anchor X</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11155,12 +11180,12 @@
         <translation>Положение Y</translation>
     </message>
     <message>
-        <source>Width</source>
-        <translation>Ширина</translation>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Height</source>
-        <translation>Высота</translation>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26507,10 +26532,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Add scale keyframe</source>
         <translation>Добавить ключевой кадр масштаба</translation>
-    </message>
-    <message>
-        <source>Scale origin</source>
-        <translation>Точка масштабирования</translation>
     </message>
     <message>
         <source>Opacity &amp; rotation</source>

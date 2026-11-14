@@ -1,4 +1,5 @@
 #include <QtTest>
+#include "TestClipLayout.h"
 
 #include <QFile>
 #include <QThread>
@@ -677,10 +678,7 @@ Project vectorProject(VectorSource source, double speed, bool reverse)
     clip.speed = speed;
     clip.reverse = reverse;
     clip.vector = std::move(source);
-    clip.transformX.setKeyframe(0, 0.0);
-    clip.transformY.setKeyframe(0, 0.0);
-    clip.transformW.setKeyframe(0, 200.0);
-    clip.transformH.setKeyframe(0, 100.0);
+    setTestRect(clip, 0.0, 0.0, 200.0, 100.0);
     project.tracks()[0].clips.append(clip);
     return project;
 }

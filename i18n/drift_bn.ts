@@ -440,6 +440,61 @@
     </message>
 </context>
 <context>
+    <name>AndroidAnimationPage</name>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">কোনোটিই নয়</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 সেকেন্ড</translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished">ইন</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">আউট</translation>
+    </message>
+    <message>
+        <source>Fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">ফেড ইন</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">ফেড আউট</translation>
+    </message>
+    <message>
+        <source>Fade curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">অ্যানিমেশন</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">সময়কাল</translation>
+    </message>
+    <message>
+        <source>Animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter and word animations live in Text animation. This moves the whole clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBackgroundPage</name>
     <message>
         <source>Choose background image</source>
@@ -519,6 +574,10 @@
     <message>
         <source>Stabilize</source>
         <translation type="unfinished">স্ট্যাবিলাইজ করুন</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished">ফেড</translation>
     </message>
     <message>
         <source>Edit text</source>
@@ -940,33 +999,6 @@
     <message>
         <source>Extras</source>
         <translation type="unfinished">অতিরিক্ত প্যাক</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidFadeSheet</name>
-    <message>
-        <source>Fade</source>
-        <translation>ফেড</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>সম্পন্ন</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 সেকেন্ড</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation>ফেড ইন</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation>ফেড আউট</translation>
-    </message>
-    <message>
-        <source>Curve</source>
-        <translation>কার্ভ</translation>
     </message>
 </context>
 <context>
@@ -2402,21 +2434,6 @@
     <message>
         <source>Transitions</source>
         <translation type="unfinished">ট্রানজিশন</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidVolumePage</name>
-    <message>
-        <source>%1 s</source>
-        <translation type="unfinished">%1 সেকেন্ড</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation type="unfinished">ফেড ইন</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation type="unfinished">ফেড আউট</translation>
     </message>
 </context>
 <context>
@@ -10961,6 +10978,14 @@
         <translation type="unfinished">জুম</translation>
     </message>
     <message>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Anchor X</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11115,12 +11140,12 @@
         <translation>Y অবস্থান</translation>
     </message>
     <message>
-        <source>Width</source>
-        <translation>প্রস্থ</translation>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Height</source>
-        <translation>উচ্চতা</translation>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26423,10 +26448,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Add scale keyframe</source>
         <translation>স্কেল কীফ্রেম যোগ করুন</translation>
-    </message>
-    <message>
-        <source>Scale origin</source>
-        <translation>স্কেল অরিজিন</translation>
     </message>
     <message>
         <source>Opacity &amp; rotation</source>

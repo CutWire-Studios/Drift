@@ -322,10 +322,10 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("volume"), keyframesToJson(clip.volume)},
         {QStringLiteral("pan"), clip.pan},
         {QStringLiteral("opacity"), keyframesToJson(clip.opacity)},
-        {QStringLiteral("x"), keyframesToJson(clip.transformX)},
-        {QStringLiteral("y"), keyframesToJson(clip.transformY)},
-        {QStringLiteral("width"), keyframesToJson(clip.transformW)},
-        {QStringLiteral("height"), keyframesToJson(clip.transformH)},
+        {QStringLiteral("positionX"), keyframesToJson(clip.positionX)},
+        {QStringLiteral("positionY"), keyframesToJson(clip.positionY)},
+        {QStringLiteral("scaleX"), keyframesToJson(clip.scaleX)},
+        {QStringLiteral("scaleY"), keyframesToJson(clip.scaleY)},
         {QStringLiteral("rotation"), keyframesToJson(clip.rotation)},
         {QStringLiteral("rotationCorrection"), clip.rotationCorrection},
         {QStringLiteral("effects"), effectsToJson(clip.effects)},
@@ -374,6 +374,10 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("z"), keyframesToJson(clip.positionZ));
     if (!clip.perspective.isEmpty())
         json.insert(QStringLiteral("perspective"), keyframesToJson(clip.perspective));
+    if (clip.frameW > 0.0)
+        json.insert(QStringLiteral("frameW"), clip.frameW);
+    if (clip.frameH > 0.0)
+        json.insert(QStringLiteral("frameH"), clip.frameH);
     if (!clip.anchorX.isEmpty())
         json.insert(QStringLiteral("anchorX"), keyframesToJson(clip.anchorX));
     if (!clip.anchorY.isEmpty())
@@ -392,6 +396,9 @@ KeyframeTrack<double> singleKeyframe(double value)
     return track;
 }
 
+// Until migrateClipLayoutTo31 runs, a clip read from a version <= 30 file holds its old top-left rect
+// in positionX/positionY/scaleX/scaleY, as x/y/width/height, so the earlier migrations that work
+// in that model can run unchanged.
 void applyLegacyFractionalLayout(Clip &clip, const KeyframeTrack<double> &posX,
                                  const KeyframeTrack<double> &posY, const KeyframeTrack<double> &scale,
                                  int canvasW, int canvasH)
@@ -401,10 +408,10 @@ void applyLegacyFractionalLayout(Clip &clip, const KeyframeTrack<double> &posX,
     const double s = scale.isEmpty() ? 1.0 : scale.evaluateAt(0);
     const double w = qMax(1.0, canvasW * s);
     const double h = qMax(1.0, canvasH * s);
-    clip.transformX = singleKeyframe(cx - w * 0.5);
-    clip.transformY = singleKeyframe(cy - h * 0.5);
-    clip.transformW = singleKeyframe(w);
-    clip.transformH = singleKeyframe(h);
+    clip.positionX = singleKeyframe(cx - w * 0.5);
+    clip.positionY = singleKeyframe(cy - h * 0.5);
+    clip.scaleX = singleKeyframe(w);
+    clip.scaleY = singleKeyframe(h);
 
     // Preserve the shape of the primary legacy track. Only Hold actually survives the collapse
     // to a single key — with nothing to interpolate towards, Linear and Ease are the same
@@ -412,7 +419,7 @@ void applyLegacyFractionalLayout(Clip &clip, const KeyframeTrack<double> &posX,
     if (!posX.isEmpty()) {
         const Interpolation mode = posX.easingAt(posX.keyframes().firstKey());
         for (KeyframeTrack<double> *kt :
-             {&clip.transformX, &clip.transformY, &clip.transformW, &clip.transformH}) {
+             {&clip.positionX, &clip.positionY, &clip.scaleX, &clip.scaleY}) {
             if (!kt->isEmpty())
                 kt->setEasing(kt->keyframes().firstKey(), mode);
         }
@@ -569,11 +576,18 @@ Clip clipFromJsonV2(const QJsonObject &object, int version, int canvasW = 1920, 
 
     const bool hasPixelLayout = object.value(QStringLiteral("x")).isObject()
                                 || object.value(QStringLiteral("width")).isObject();
-    if (hasPixelLayout) {
-        clip.transformX = keyframesFromJson(object.value(QStringLiteral("x")).toObject());
-        clip.transformY = keyframesFromJson(object.value(QStringLiteral("y")).toObject());
-        clip.transformW = keyframesFromJson(object.value(QStringLiteral("width")).toObject());
-        clip.transformH = keyframesFromJson(object.value(QStringLiteral("height")).toObject());
+    if (version >= 31) {
+        clip.positionX = keyframesFromJson(object.value(QStringLiteral("positionX")).toObject());
+        clip.positionY = keyframesFromJson(object.value(QStringLiteral("positionY")).toObject());
+        clip.scaleX = keyframesFromJson(object.value(QStringLiteral("scaleX")).toObject());
+        clip.scaleY = keyframesFromJson(object.value(QStringLiteral("scaleY")).toObject());
+        clip.frameW = object.value(QStringLiteral("frameW")).toDouble(0.0);
+        clip.frameH = object.value(QStringLiteral("frameH")).toDouble(0.0);
+    } else if (hasPixelLayout) {
+        clip.positionX = keyframesFromJson(object.value(QStringLiteral("x")).toObject());
+        clip.positionY = keyframesFromJson(object.value(QStringLiteral("y")).toObject());
+        clip.scaleX = keyframesFromJson(object.value(QStringLiteral("width")).toObject());
+        clip.scaleY = keyframesFromJson(object.value(QStringLiteral("height")).toObject());
     } else {
         applyLegacyFractionalLayout(clip,
                                     keyframesFromJson(object.value(QStringLiteral("posX")).toObject()),
@@ -944,10 +958,10 @@ void detachEffect(Effect &effect)
 void detachClip(Clip &clip)
 {
     clip.opacity.detachSharedData();
-    clip.transformX.detachSharedData();
-    clip.transformY.detachSharedData();
-    clip.transformW.detachSharedData();
-    clip.transformH.detachSharedData();
+    clip.positionX.detachSharedData();
+    clip.positionY.detachSharedData();
+    clip.scaleX.detachSharedData();
+    clip.scaleY.detachSharedData();
     clip.rotation.detachSharedData();
     clip.rotationX.detachSharedData();
     clip.rotationY.detachSharedData();
@@ -1138,7 +1152,7 @@ KeyframeTrack<double> scaledTrack(const KeyframeTrack<double> &source, double si
 // Version 22 moved the 3D world from "origin at the canvas centre, +z toward the viewer" (left-
 // handed) to "origin at the canvas top-left, +z away" (right-handed), After Effects style. In
 // stored terms that is a conjugation by F = diag(1, 1, -1) plus the origin shift, which the
-// layout does not see (transformX/Y were already the rect's top-left corner):
+// layout does not see (the layout was already the rect's top-left corner):
 //  - positionZ changes sign;
 //  - F Rx(a) F = Rx(-a) and F Ry(b) F = Ry(-b), F Rz(c) F = Rz(c): rotationX and rotationY change
 //    sign (tangents too) and the in-plane rotation stays, in the unchanged X, Y, Z order;
@@ -1178,7 +1192,7 @@ void migrateCameraTo22(QList<Track> &tracks, double width, double height)
         for (Clip &clip : track.clips) {
             if (!isCameraClip(clip))
                 continue;
-            const KeyframeTrack<double> *sources[] = {&clip.transformX, &clip.transformY, &clip.positionZ,
+            const KeyframeTrack<double> *sources[] = {&clip.positionX, &clip.positionY, &clip.positionZ,
                                                       &clip.rotationX,  &clip.rotationY,  &clip.rotation,
                                                       &clip.perspective};
             lensAtStart.insert(clip.id, std::max(1.0, clip.perspective.isEmpty()
@@ -1197,7 +1211,7 @@ void migrateCameraTo22(QList<Track> &tracks, double width, double height)
             double previous[3] = {0.0, 0.0, 0.0};
             for (const TimeUs time : times) {
                 const double d = std::max(1.0, at(clip.perspective, time, kDefaultClipPerspectiveLegacy));
-                const double p[3] = {at(clip.transformX, time, 0.0), at(clip.transformY, time, 0.0),
+                const double p[3] = {at(clip.positionX, time, 0.0), at(clip.positionY, time, 0.0),
                                      at(clip.positionZ, time, 0.0)};
                 const double rot[3] = {at(clip.rotationX, time, 0.0), at(clip.rotationY, time, 0.0),
                                        at(clip.rotation, time, 0.0)};
@@ -1216,8 +1230,8 @@ void migrateCameraTo22(QList<Track> &tracks, double width, double height)
                 rz.setKeyframe(time, angles[2]);
                 zoom.setKeyframe(time, d);
             }
-            clip.transformX = x;
-            clip.transformY = y;
+            clip.positionX = x;
+            clip.positionY = y;
             clip.positionZ = z;
             clip.rotationX = rx;
             clip.rotationY = ry;
@@ -1256,7 +1270,7 @@ void migrateCameraTo22(QList<Track> &tracks, double width, double height)
 
 // Version 13 made a model clip a 3D layer like any other. Its pose used to live on the model: a
 // size as a fraction of the project height, a "depth" lens, and rotations about glTF's y-up axes,
-// with transformX/Y the model centre's offset from the canvas centre. Now the clip's rect is the
+// with x/y the model centre's offset from the canvas centre. Now the clip's rect is the
 // model's bounding-box front face, its rotations are the clip's, and the lens is its perspective.
 void migrateModelPoseToTransform(QList<Track> &tracks, double width, double height)
 {
@@ -1282,7 +1296,7 @@ void migrateModelPoseToTransform(QList<Track> &tracks, double width, double heig
             const KeyframeTrack<double> *scale = legacyTrack("scale");
             QList<TimeUs> times;
             for (const KeyframeTrack<double> *t :
-                 std::initializer_list<const KeyframeTrack<double> *>{scale, &clip.transformX, &clip.transformY}) {
+                 std::initializer_list<const KeyframeTrack<double> *>{scale, &clip.positionX, &clip.positionY}) {
                 if (t)
                     times.append(t->keyframes().keys());
             }
@@ -1298,17 +1312,17 @@ void migrateModelPoseToTransform(QList<Track> &tracks, double width, double heig
                 const double span = std::max(0.01, scale ? scale->evaluateAt(t) : old.scale) * height;
                 const double faceW = faceX * span;
                 const double faceH = faceY * span;
-                const double offsetX = clip.transformX.isEmpty() ? 0.0 : clip.transformX.evaluateAt(t);
-                const double offsetY = clip.transformY.isEmpty() ? 0.0 : clip.transformY.evaluateAt(t);
+                const double offsetX = clip.positionX.isEmpty() ? 0.0 : clip.positionX.evaluateAt(t);
+                const double offsetY = clip.positionY.isEmpty() ? 0.0 : clip.positionY.evaluateAt(t);
                 x.setKeyframe(t, offsetX + (width - faceW) / 2.0);
                 y.setKeyframe(t, offsetY + (height - faceH) / 2.0);
                 w.setKeyframe(t, faceW);
                 h.setKeyframe(t, faceH);
             }
-            clip.transformX = x;
-            clip.transformY = y;
-            clip.transformW = w;
-            clip.transformH = h;
+            clip.positionX = x;
+            clip.positionY = y;
+            clip.scaleX = w;
+            clip.scaleY = h;
 
             // glTF's y is up and the canvas's is down: X and Z turn the other way round.
             const auto rotationTrack = [&](const char *key, double value, double sign) {
@@ -1336,6 +1350,128 @@ void migrateModelPoseToTransform(QList<Track> &tracks, double width, double heig
             clip.positionZ = {};
             clip.layer3d = true;
         }
+    }
+}
+
+// Version 31 moved the layout from a top-left rect (x, y, width, height) to a frame placed by its
+// anchor (position, scale, frame size). Reading a version <= 30 file leaves the old rect in
+// positionX/positionY/scaleX/scaleY, and the old anchor in anchorX/anchorY in px from the rect's
+// top-left (empty = rect centre). One axis of it converts like this: the frame is the clip's new
+// 100% size, the scale is the old size over it, the anchor is divided by that scale into frame
+// pixels, and the position is the old anchor's place on the canvas. Position keys land wherever
+// the top-left, the size or the anchor had one, with the easing of the first of those that does.
+void migrateLayoutAxis(KeyframeTrack<double> &position, KeyframeTrack<double> &size,
+                       KeyframeTrack<double> &anchor, double frame, double canvas)
+{
+    const KeyframeTrack<double> oldX = position;
+    const KeyframeTrack<double> oldSize = size;
+    const KeyframeTrack<double> oldAnchor = anchor;
+    const auto valueAt = [](const KeyframeTrack<double> &track, TimeUs t, double fallback) {
+        return track.isEmpty() ? fallback : track.evaluateAt(t);
+    };
+
+    KeyframeTrack<double> scale;
+    if (oldSize.isEmpty()) {
+        if (!qFuzzyCompare(canvas / frame + 1.0, 2.0))
+            scale.setKeyframe(0, canvas / frame);
+    } else {
+        scale = scaledTrack(oldSize, 1.0 / frame);
+    }
+
+    QList<TimeUs> times = oldX.keyframes().keys() + oldSize.keyframes().keys() + oldAnchor.keyframes().keys();
+    std::sort(times.begin(), times.end());
+    times.erase(std::unique(times.begin(), times.end()), times.end());
+
+    // The old anchor sat a fixed number of px from the corner however big the box was; the new one
+    // is in frame px, so it is keyed wherever the size is as well to hold the same point.
+    KeyframeTrack<double> newAnchor;
+    if (!oldAnchor.isEmpty()) {
+        newAnchor.setEnabled(oldAnchor.enabled());
+        for (const TimeUs t : times) {
+            const double factor = valueAt(oldSize, t, canvas) / frame;
+            const double divisor = std::abs(factor) > 1e-9 ? factor : 1.0;
+            Keyframe<double> key;
+            bool own = false;
+            if (oldAnchor.keyframes().contains(t)) {
+                key = oldAnchor.keyframes().value(t);
+                own = true;
+            } else if (oldSize.keyframes().contains(t)) {
+                key = oldSize.keyframes().value(t);
+            } else {
+                key = oldX.keyframes().value(t);
+            }
+            key.value = oldAnchor.evaluateAt(t) / divisor;
+            key.inDy = own ? key.inDy / divisor : 0.0;
+            key.outDy = own ? key.outDy / divisor : 0.0;
+            newAnchor.setKeyframe(t, key);
+        }
+    }
+    KeyframeTrack<double> newPosition;
+    for (const TimeUs t : times) {
+        const double extent = valueAt(oldSize, t, canvas);
+        Keyframe<double> key;
+        double tangentScale = 1.0;
+        if (oldX.keyframes().contains(t)) {
+            key = oldX.keyframes().value(t);
+        } else if (oldSize.keyframes().contains(t)) {
+            key = oldSize.keyframes().value(t);
+            tangentScale = oldAnchor.isEmpty() ? 0.5 : 0.0;
+        } else {
+            key = oldAnchor.keyframes().value(t);
+        }
+        key.value = valueAt(oldX, t, 0.0) + (oldAnchor.isEmpty() ? extent / 2.0 : oldAnchor.evaluateAt(t));
+        key.inDy *= tangentScale;
+        key.outDy *= tangentScale;
+        newPosition.setKeyframe(t, key);
+    }
+    newPosition.setEnabled(!(
+        (oldX.isEmpty() || !oldX.enabled()) && (oldSize.isEmpty() || !oldSize.enabled())
+        && (oldAnchor.isEmpty() || !oldAnchor.enabled())));
+
+    position = newPosition;
+    size = scale;
+    anchor = newAnchor;
+}
+
+void migrateClipLayoutTo31(const Project &project, Clip &clip)
+{
+    if (clip.type == ClipType::Audio)
+        return;
+    if (isCameraClip(clip)) {
+        clip.scaleX = {};
+        clip.scaleY = {};
+        return;
+    }
+
+    const double canvasW = qMax(1, project.width());
+    const double canvasH = qMax(1, project.height());
+    const bool textual = clip.type == ClipType::Text || clip.type == ClipType::Subtitle
+                         || clip.type == ClipType::Shape;
+    const bool media = clip.type == ClipType::Video || clip.type == ClipType::Image
+                       || clip.type == ClipType::Pdf || clip.type == ClipType::Vector
+                       || clip.type == ClipType::Model3d;
+    // A text or shape box was its own size and stays at what it was when the clip starts.
+    QSizeF frame = textual ? QSizeF(clip.scaleX.isEmpty() ? canvasW : clip.scaleX.evaluateAt(0),
+                                    clip.scaleY.isEmpty() ? canvasH : clip.scaleY.evaluateAt(0))
+                           : clipFitFrameSize(project, clip);
+    frame = QSizeF(qMax(1.0, frame.width()), qMax(1.0, frame.height()));
+
+    if (clip.stabilizeHasRestPose) {
+        const double restW = clip.stabilizeRestW > 0.0 ? clip.stabilizeRestW : canvasW;
+        const double restH = clip.stabilizeRestH > 0.0 ? clip.stabilizeRestH : canvasH;
+        clip.stabilizeRestX += restW / 2.0;
+        clip.stabilizeRestY += restH / 2.0;
+        clip.stabilizeRestW = restW / frame.width();
+        clip.stabilizeRestH = restH / frame.height();
+    }
+
+    migrateLayoutAxis(clip.positionX, clip.scaleX, clip.anchorX, frame.width(), canvasW);
+    migrateLayoutAxis(clip.positionY, clip.scaleY, clip.anchorY, frame.height(), canvasH);
+    if (media || (textual && !qFuzzyCompare(frame.width() + 1.0, canvasW + 1.0))) {
+        clip.frameW = frame.width();
+    }
+    if (media || (textual && !qFuzzyCompare(frame.height() + 1.0, canvasH + 1.0))) {
+        clip.frameH = frame.height();
     }
 }
 
@@ -1512,6 +1648,15 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             migrateCameraTo22(tracks, width, height);
         });
     }
+    if (version < 31) {
+        const Project &loaded = project;
+        project.forEachTrackList([&loaded](QList<Track> &tracks) {
+            for (Track &track : tracks) {
+                for (Clip &clip : track.clips)
+                    migrateClipLayoutTo31(loaded, clip);
+            }
+        });
+    }
     // A dangling span end has no earlier state to recover from here, so it is cleared.
     project.forEachTrackList([](QList<Track> &tracks) {
         normalizeTransformLayers(tracks);
@@ -1560,6 +1705,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
     // Version 28 added the Sequence mask shape. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
+    // Version 31 replaced the top-left layout rect with a frame placed by its anchor
+    // (migrateClipLayoutTo31 above). An older build would read every clip as sitting at the canvas
+    // centre at full size.
     // Version 30 split edge fades from clip animations: fade is per-edge curve and owns opacity and
     // volume, animations are transform-only with a string kind id. Old files migrate on read, so
     // an older build would drop the per-edge curves and read the moved fades as one shared curve.

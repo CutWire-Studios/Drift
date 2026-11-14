@@ -1,4 +1,5 @@
 #include <QtTest>
+#include "TestClipLayout.h"
 
 #include <functional>
 
@@ -271,10 +272,7 @@ Project shapeProject(const ShapeStyle &style)
     clip.timelineStart = 0;
     clip.timelineDuration = secondsToUs(1.0);
     clip.shapeStyle = style;
-    clip.transformX.setKeyframe(0, 20.0);
-    clip.transformY.setKeyframe(0, 10.0);
-    clip.transformW.setKeyframe(0, 120.0);
-    clip.transformH.setKeyframe(0, 100.0);
+    setTestRect(clip, 20.0, 10.0, 120.0, 100.0);
     project.tracks()[0].clips.append(clip);
     return project;
 }
@@ -1012,10 +1010,7 @@ void SkiaTest::keyframedTextGrowsOverTime()
     clip.id = QStringLiteral("g");
     clip.timelineStart = 0;
     clip.timelineDuration = secondsToUs(3.0);
-    clip.transformX.setKeyframe(0, 0.0);
-    clip.transformY.setKeyframe(0, 0.0);
-    clip.transformW.setKeyframe(0, 400.0);
-    clip.transformH.setKeyframe(0, 160.0);
+    setTestRect(clip, 0.0, 0.0, 400.0, 160.0);
     project.tracks()[0].clips.append(clip);
     FrameCompositor compositor;
     compositor.setProject(&project);
@@ -2008,10 +2003,7 @@ void SkiaTest::inlineDecorRendersAndExportNeverCarriesIt()
     clip.textStyle = style;
     clip.timelineStart = 0;
     clip.timelineDuration = secondsToUs(3.0);
-    clip.transformX.setKeyframe(0, 0.0);
-    clip.transformY.setKeyframe(0, 0.0);
-    clip.transformW.setKeyframe(0, 400.0);
-    clip.transformH.setKeyframe(0, 160.0);
+    setTestRect(clip, 0.0, 0.0, 400.0, 160.0);
     project.tracks()[0].clips.append(clip);
     FrameCompositor compositor;
     compositor.setProject(&project);

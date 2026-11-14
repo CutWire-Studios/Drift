@@ -19,10 +19,11 @@ namespace drift {
 // so every clip is seen by one virtual camera; a shared scene camera can replace the per-clip
 // distance.
 //
-// transformX/Y stay the layout rect's top-left corner, so the unrotated layer sits where the 2D
+// The rect is the clip's scaled box (see clipPlacementAt), so the unrotated layer sits where the 2D
 // layout puts it at depth `positionZ`. Rotations pivot on the anchor point: a point in the layer's
-// own pixels measured from the rect's top-left corner (`anchorZ` out of its plane). Unanchored, the
-// pivot is the rect centre and follows width/height changes.
+// own pixels measured from the rect's top-left corner (`anchorZ` out of its plane). That is the clip's
+// anchor times its scale, which puts the pivot on the clip's position. Unanchored, the pivot is the
+// rect centre, which is the position too.
 struct ClipPose3d
 {
     double rotationX = 0.0; // degrees; + tips the top edge toward the viewer
@@ -60,8 +61,23 @@ struct ClipPose3d
 
 struct Clip;
 
+// The clip's unrotated box on the canvas at `relativeUs`, as the engine draws it: size (always
+// positive) is frame * |scale|, and the box is placed so that `rect` turned about the pivot (the
+// clip's position) matches the 2D clip matrix. A negative scale is a mirror about the pivot, reported
+// in the flips. Lengths are scaled by `renderScale`. Not for camera clips.
+struct ClipPlacement
+{
+    QRectF rect;
+    double rotation = 0.0;
+    bool flipH = false;
+    bool flipV = false;
+    QPointF pivot;
+};
+ClipPlacement clipPlacementAt(const Clip &clip, TimeUs relativeUs, double renderScale, const QSizeF &projectSize);
+
 // The pose a clip's tracks give at `relativeUs` (clip-local time), lengths scaled by `renderScale`.
-// Empty perspective falls back to the default for `projectHeight`.
+// Empty perspective falls back to the default for `projectHeight`. The anchor comes back in the
+// px of the scaled rect (frame px * |scale|), see ClipPlacement.
 ClipPose3d clipPoseAt(const Clip &clip, TimeUs relativeUs, double renderScale, double projectHeight);
 
 // The perspective that frames like a 50 mm lens on a 36 mm-wide film back: a vertical field of

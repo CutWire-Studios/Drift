@@ -218,4 +218,22 @@ StabilizeMode stabilizeModeFromString(const QString &mode)
     return StabilizeMode::Bake;
 }
 
+ClipLayout clipLayoutAt(const Clip &clip, TimeUs relative, QSizeF canvas)
+{
+    const auto at = [relative](const KeyframeTrack<double> &track, double fallback) {
+        return track.isEmpty() ? fallback : track.evaluateAt(relative);
+    };
+    ClipLayout layout;
+    layout.frameW = clip.frameW > 0.0 ? clip.frameW : canvas.width();
+    layout.frameH = clip.frameH > 0.0 ? clip.frameH : canvas.height();
+    layout.posX = at(clip.positionX, canvas.width() / 2.0);
+    layout.posY = at(clip.positionY, canvas.height() / 2.0);
+    layout.scaleX = at(clip.scaleX, 1.0);
+    layout.scaleY = at(clip.scaleY, 1.0);
+    layout.anchorX = at(clip.anchorX, layout.frameW / 2.0);
+    layout.anchorY = at(clip.anchorY, layout.frameH / 2.0);
+    layout.rotation = at(clip.rotation, 0.0);
+    return layout;
+}
+
 } // namespace drift

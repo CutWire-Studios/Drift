@@ -663,10 +663,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     clip.textStyle.fontWeight = prod.titleInfo.fontWeight;
                     drift::setSolidFill(clip.textStyle, prod.titleInfo.color);
 
-                    clip.transformX.setKeyframe(0, 0);
-                    clip.transformY.setKeyframe(0, height * 0.35);
-                    clip.transformW.setKeyframe(0, width);
-                    clip.transformH.setKeyframe(0, height * 0.30);
+                    clip.frameH = height * 0.30;
                     hasVideoClips = true;
                 } else if (prod.isAudioOnly) {
                     clip.type = ClipType::Audio;
@@ -676,11 +673,6 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     clip.type = prod.isImage ? ClipType::Image : ClipType::Video;
                     clip.assetId = prod.assetId;
                     clip.path = prod.resource;
-
-                    clip.transformX.setKeyframe(0, 0);
-                    clip.transformY.setKeyframe(0, 0);
-                    clip.transformW.setKeyframe(0, width);
-                    clip.transformH.setKeyframe(0, height);
                     hasVideoClips = true;
                 }
 

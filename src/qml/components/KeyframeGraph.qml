@@ -65,8 +65,8 @@ Item {
     function propertyLabel(id) {
         if (cameraClip) {
             switch (id) {
-            case "x": return qsTr("Position X")
-            case "y": return qsTr("Position Y")
+            case "positionX": return qsTr("Position X")
+            case "positionY": return qsTr("Position Y")
             case "rotation": return qsTr("Rotation Z")
             case "anchorX": return qsTr("Point of Interest X")
             case "anchorY": return qsTr("Point of Interest Y")
@@ -75,10 +75,10 @@ Item {
             }
         }
         switch (id) {
-        case "x": return qsTr("X position")
-        case "y": return qsTr("Y position")
-        case "width": return qsTr("Width")
-        case "height": return qsTr("Height")
+        case "positionX": return qsTr("X position")
+        case "positionY": return qsTr("Y position")
+        case "scaleX": return qsTr("Scale X")
+        case "scaleY": return qsTr("Scale Y")
         case "rotation": return qsTr("Rotation")
         case "rotationX": return qsTr("Rotation X")
         case "rotationY": return qsTr("Rotation Y")
@@ -113,10 +113,10 @@ Item {
         if (cameraClip && id === "perspective")
             return "Zm"
         switch (id) {
-        case "x": return "X"
-        case "y": return "Y"
-        case "width": return "W"
-        case "height": return "H"
+        case "positionX": return "X"
+        case "positionY": return "Y"
+        case "scaleX": return "SX"
+        case "scaleY": return "SY"
         case "rotation": return "°"
         case "rotationX": return "X°"
         case "rotationY": return "Y°"
@@ -143,7 +143,7 @@ Item {
     function supportsProperty(id) {
         if (!clipData)
             return false
-        if (cameraClip && (id === "width" || id === "height"))
+        if (cameraClip && (id === "scaleX" || id === "scaleY"))
             return false
         if (id === "volume")
             return clipData.kind === "audio" || clipData.kind === "video"

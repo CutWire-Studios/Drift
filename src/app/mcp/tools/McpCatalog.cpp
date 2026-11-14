@@ -71,7 +71,7 @@ QJsonObject effectKindProp()
 QJsonObject animPropProp()
 {
     return stringProp(QStringLiteral(
-        "Animated property: x, y, width, height, rotation, rotationX, rotationY, z, anchorX, anchorY, anchorZ, perspective, "
+        "Animated property: positionX, positionY, scaleX, scaleY, rotation, rotationX, rotationY, z, anchorX, anchorY, anchorZ, perspective, "
         "opacity, volume, fx.<effectIndex>.<paramKey>, afx.<audioEffectIndex>.<paramKey> "
         "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather|roundness>, or on a text/subtitle clip text.<key> with "
         "key one of pixelSize, letterSpacing, lineHeight, boxPadding, pathBend, or a shading layer field "
@@ -85,12 +85,12 @@ QJsonObject animPropProp()
         "an SVG vector clip the svg.* overrides: vector.svg.<strokeWidth|opacity>, "
         "vector.svg.<fill|stroke>.<r|g|b|a>, or the same under vector.svg.<elementId>. On a 3D "
         "model clip model3d.<ambient|modelScale|modelScaleZ|light<n>_<x|y|z|intensity|radius|cone|aimX|aimY>> (n 1..4); a model is placed by its "
-        "transform like any 3D layer (x, y, width, height, z, rotationX, rotationY, rotation, "
+        "transform like any 3D layer (positionX, positionY, scaleX, scaleY, z, rotationX, rotationY, rotation, "
         "perspective), and the older model3d.<scale|depth|rotX|rotY|rotZ> are still accepted as "
         "shorthands that write those; model3d.modelScale and modelScaleZ resize the model about the clip's anchor "
         "(modelScaleZ only its depth). On a procedural clip proc.<paramKey> for any numeric, switch, enum or colour-channel param of its package (proc.tint.r, proc.origin.x for vec2). On a PDF clip pdf.scrollX and pdf.scrollY (page units: 1 moves "
         "one page, or one grid row/column) and pdf.zoom (0.1..10). "
-        "Note width/height here vs w/h in set_transform. Spellings live in this "
+        "positionX/Y is the clip anchor on the canvas (px), scaleX/Y a factor on the clip's frame (1 = fit size). Spellings live in this "
 "schema — list_animated_properties returns only properties that already have keys (empty on a "
         "fresh clip), so do not use it to learn names."));
 }
@@ -710,7 +710,7 @@ const QList<Op> &ops()
           "starting there, so two in a row read as a camera cut. A camera at rest looks exactly like "
           "no camera, so adding one changes nothing until you move it. Frame it with set_keyframe on "
           "the returned clip (for a path of several keys, write them with set_keyframes and "
-          "interpolation \"smooth\" in one call) using x/y/z (the eye, world px: canvas top-left origin, y down, +z away "
+          "interpolation \"smooth\" in one call) using positionX/positionY/z (the eye, world px: canvas top-left origin, y down, +z away "
           "from the viewer; at rest [w/2, h/2, -zoom]), rotationX/rotationY/rotation (pitch, yaw, "
           "roll, degrees; yaw is applied first, so the horizon stays level with zero roll), "
           "anchorX/anchorY/anchorZ (the point of interest, used when camera_look_at is given "
@@ -998,7 +998,11 @@ const QList<Op> &ops()
                        {QStringLiteral("enabled")}) },
 
         { "set_transform", "canvas", "Position, size, rotate, fade a clip",
-          "Set canvas transform in project-canvas pixels (0,0 = canvas top-left). 3D follows After Effects: "
+          "Set canvas transform. Anchor model: positionX/positionY is where the clip's anchor lands on the canvas "
+          "(project px, 0,0 = top-left; default the canvas centre, which is the clip's centre while the anchor is unset); "
+          "scaleX/scaleY (or `scale` for both) resize the clip about its anchor, 1 = its fit size (frameW x frameH, "
+          "read-only in the reply), so scaling never moves positionX/Y; rotation turns about the anchor. "
+          "The reply's `box` {x,y,w,h} is the derived, unrotated on-canvas rect and cannot be written. 3D follows After Effects: "
           "x right, y down, z AWAY from the viewer (right-handed), and rotations pivot on the anchor point. Omitted fields are "
           "left unchanged. IMPORTANT: if the property is already animated (2+ keys), or autoKey is "
           "on, the write creates/updates a keyframe at the CURRENT PLAYHEAD (or at `at`, timeline "
@@ -1007,24 +1011,25 @@ const QList<Op> &ops()
           "remove the keys for an unconditional value. Fails bad_args on audio clips and when no "
           "transform field is supplied.",
           objectSchema(mergeProps({{QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds for the keyframe when the write keys (default: playhead); must be inside the clip"))},
-                                   {QStringLiteral("x"), numberProp(QStringLiteral("Left edge, canvas pixels"))},
-                                   {QStringLiteral("y"), numberProp(QStringLiteral("Top edge, canvas pixels"))},
-                                   {QStringLiteral("w"), numberProp(QStringLiteral("On-canvas width in pixels (not source resolution)"))},
-                                   {QStringLiteral("h"), numberProp(QStringLiteral("On-canvas height in pixels"))},
+                                   {QStringLiteral("positionX"), numberProp(QStringLiteral("Canvas x in pixels where the clip's anchor lands (default: canvas centre)"))},
+                                   {QStringLiteral("positionY"), numberProp(QStringLiteral("Canvas y in pixels where the clip's anchor lands (default: canvas centre)"))},
+                                   {QStringLiteral("scaleX"), numberProp(QStringLiteral("Horizontal scale factor, 1 = fit size (not source resolution); scales about the anchor"))},
+                                   {QStringLiteral("scaleY"), numberProp(QStringLiteral("Vertical scale factor, 1 = fit size; scales about the anchor"))},
+                                   {QStringLiteral("scale"), numberProp(QStringLiteral("Uniform scale: sets scaleX and scaleY to this value; an explicit scaleX/scaleY wins"))},
                                    {QStringLiteral("rotation"), numberProp(QStringLiteral("Degrees clockwise"))},
                                    {QStringLiteral("layer3d"), boolProp(QStringLiteral("Make the clip a 3D layer (true) or flat (false). Writing any of the 3D fields below turns it on; false resets them to 0 and the default perspective"))},
                                    {QStringLiteral("depth_occlude"), boolProp(QStringLiteral("Occlude by depth: this 3D layer hides and is hidden by other depth-occluding 3D layers (model and procedural clips) by z instead of track order. Needs a 3D layer with blend mode Normal; set it on every clip that should sort"))},
                                    {QStringLiteral("rotationX"), numberProp(QStringLiteral("Rotation about X in degrees (right-handed; + tips the top edge toward the viewer)"))},
                                    {QStringLiteral("rotationY"), numberProp(QStringLiteral("Rotation about Y in degrees (right-handed; + swings the right edge toward the viewer)"))},
                                    {QStringLiteral("z"), numberProp(QStringLiteral("Position Z in pixels; + away from the viewer, - toward it (After Effects' convention)"))},
-                                   {QStringLiteral("anchorX"), numberProp(QStringLiteral("Anchor point X in pixels from the clip's left edge: the pivot for rotation. Unset = the clip centre; setting it pins the anchor"))},
-                                   {QStringLiteral("anchorY"), numberProp(QStringLiteral("Anchor point Y in pixels from the clip's top edge. Unset = the clip centre"))},
+                                   {QStringLiteral("anchorX"), numberProp(QStringLiteral("Anchor X in frame pixels (unscaled, from the frame's left edge): the pivot for scale and rotation, and the point positionX/Y places. Unset = the frame centre"))},
+                                   {QStringLiteral("anchorY"), numberProp(QStringLiteral("Anchor Y in frame pixels from the frame's top edge. Unset = the frame centre"))},
                                    {QStringLiteral("anchorZ"), numberProp(QStringLiteral("Anchor point Z in pixels out of the clip's plane (+ away from the viewer; default 0)"))},
                                    {QStringLiteral("perspective"), numberProp(QStringLiteral("Eye distance from the canvas centre in pixels; smaller = stronger perspective. The default follows the project height (a 50 mm lens on a 36 mm film back: 2250 for a 1080 px canvas)"))},
                                    {QStringLiteral("opacity"), numberProp(QStringLiteral("Opacity"), 0, 1)}},
                                   clipRefProps())) },
         { "reset_transform", "canvas", "Reset a clip's position, size and rotation",
-          "Reset position, size, rotation, 3D rotation/position Z/anchor/perspective (and the 3D layer switch), opacity, and flips to defaults. "
+          "Reset position (canvas centre), scale (1), rotation, 3D rotation/position Z/anchor/perspective (and the 3D layer switch), opacity, and flips to defaults. "
           "Video, image and vector clips return to their own shape fitted and centred on the canvas; other clips fill the canvas.",
           objectSchema(clipRefProps()) },
 
@@ -1334,7 +1339,7 @@ const QList<Op> &ops()
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
           "on a fresh clip. Property spellings live in the `prop` schema of the other keyframes ops "
-          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, afx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>, model3d.<key>, pdf.<key>, proc.<key>), not here.",
+          "(positionX, positionY, scaleX, scaleY, rotation, opacity, volume, fx.<i>.<key>, afx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>, model3d.<key>, pdf.<key>, proc.<key>), not here.",
           objectSchema(clipRefProps()), true, false, true },
         { "list_keyframes", "keyframes", "Read keys for one property",
           "Returns {prop, enabled, keys:[{seconds, value, inDx, inDy, outDx, outDy, corner, hold, "
@@ -1363,10 +1368,10 @@ const QList<Op> &ops()
           "tangents from neighbouring keys, written as bezier handles, so velocity is continuous "
           "across keys; dense linear keys look jerky, ease stops at every key). Omit it to leave the "
           "tangents alone. Props are validated like set_keyframe; one bad prop fails bad_args and "
-          "nothing is written. Never writes the other axis of x/y. Returns {written:{prop:count}}.",
+          "nothing is written. Never writes the other axis of positionX/positionY. Returns {written:{prop:count}}.",
           objectSchema(mergeProps(
               {{QStringLiteral("keys"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
-                                                    {QStringLiteral("description"), QStringLiteral("{prop: [[seconds, value], ...]} e.g. {\"x\": [[0, 100], [2, 400]], \"z\": [[0, -800], [2, -500]]}")}}},
+                                                    {QStringLiteral("description"), QStringLiteral("{prop: [[seconds, value], ...]} e.g. {\"positionX\": [[0, 100], [2, 400]], \"z\": [[0, -800], [2, -500]]}")}}},
                {QStringLiteral("replace"), boolProp(QStringLiteral("Clear each listed prop's existing keys first (default false)"))},
                {QStringLiteral("interpolation"), enumProp(QStringLiteral("Applied to every key of each listed prop after writing"),
                                                           {QStringLiteral("linear"), QStringLiteral("hold"),
@@ -1436,7 +1441,7 @@ const QList<Op> &ops()
                {QStringLiteral("outDx"), numberProp(QStringLiteral("Outgoing handle dx in seconds (defaults to 0)"))},
                {QStringLiteral("outDy"), numberProp(QStringLiteral("Outgoing handle dy in property units (defaults to 0)"))},
                {QStringLiteral("corner"), boolProp(QStringLiteral("Break tangent collinearity"))},
-               {QStringLiteral("linked"), boolProp(QStringLiteral("x/y only: also copy the shape onto the other axis, scaled by segment delta, like the editor's link toggle (default false)"))}},
+               {QStringLiteral("linked"), boolProp(QStringLiteral("positionX/positionY only: also copy the shape onto the other axis, scaled by segment delta, like the editor's link toggle (default false)"))}},
               clipRefProps()),
                        {QStringLiteral("prop"), QStringLiteral("at")}) },
         { "set_keyframe_hold", "keyframes", "Step-hold a key",
@@ -2064,7 +2069,7 @@ QJsonArray homepageTools()
                        "cues=true adds subtitleCues to them. detail=true expands rows to the full clip map "
                        "(effects, mask, fade, speed, keyframes, stabilize*, ...) minus what the kind cannot "
                        "use or still sits at its default: an absent boolean is false; transform "
-                       "{x,y,w,h,rotation,opacity} is always present (values at the playhead) and "
+                       "{positionX,positionY,scaleX,scaleY,frameW,frameH,box:{x,y,w,h derived},rotation,opacity} is always present (values at the playhead) and "
                        "animated lists the keyframed properties. verbose=true returns every field. "
                        "clip=<uuid> returns just that clip (detail on); track=<n> just that track, tracks=[n,...] just those; "
                        "fields=[...] trims clip rows to those keys plus id. "

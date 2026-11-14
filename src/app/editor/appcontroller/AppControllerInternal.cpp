@@ -719,16 +719,12 @@ QList<QPair<QString, double>> legacyModel3dPoseWrites(const drift::Clip &clip, c
     if (key == QLatin1String("depth"))
         return {{QStringLiteral("perspective"), projectHeight / (2.0 * qBound(0.01, value, 1.0))}};
     if (key == QLatin1String("scale")) {
-        const double w = clipTransformValue(clip.transformW, relative, projectHeight);
-        const double h = clipTransformValue(clip.transformH, relative, projectHeight);
-        const double cx = clipTransformValue(clip.transformX, relative, 0.0) + w / 2.0;
-        const double cy = clipTransformValue(clip.transformY, relative, 0.0) + h / 2.0;
         const QSizeF face = drift::modelClipFaceSize(clip.model3d.aabbMin, clip.model3d.aabbMax,
                                                      qMax(0.01, value) * projectHeight);
-        return {{QStringLiteral("x"), cx - face.width() / 2.0},
-                {QStringLiteral("y"), cy - face.height() / 2.0},
-                {QStringLiteral("width"), face.width()},
-                {QStringLiteral("height"), face.height()}};
+        const double frameW = clip.frameW > 0.0 ? clip.frameW : face.width();
+        const double frameH = clip.frameH > 0.0 ? clip.frameH : face.height();
+        return {{QStringLiteral("scaleX"), face.width() / qMax(1.0, frameW)},
+                {QStringLiteral("scaleY"), face.height() / qMax(1.0, frameH)}};
     }
     return {};
 }
@@ -1011,14 +1007,14 @@ drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QSt
 {
     if (prop == QStringLiteral("opacity"))
         return &clip.opacity;
-    if (prop == QStringLiteral("x") || prop == QStringLiteral("posX"))
-        return &clip.transformX;
-    if (prop == QStringLiteral("y") || prop == QStringLiteral("posY"))
-        return &clip.transformY;
-    if (prop == QStringLiteral("width") || prop == QStringLiteral("scale"))
-        return &clip.transformW;
-    if (prop == QStringLiteral("height"))
-        return &clip.transformH;
+    if (prop == QStringLiteral("positionX"))
+        return &clip.positionX;
+    if (prop == QStringLiteral("positionY"))
+        return &clip.positionY;
+    if (prop == QStringLiteral("scaleX"))
+        return &clip.scaleX;
+    if (prop == QStringLiteral("scaleY"))
+        return &clip.scaleY;
     if (prop == QStringLiteral("rotation"))
         return &clip.rotation;
     if (prop == QStringLiteral("rotationX"))
@@ -1294,8 +1290,7 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
             return false;
         // A 3D value written to a flat clip would do nothing, so writing one makes it a 3D layer.
         if (kt == &clip.rotationX || kt == &clip.rotationY || kt == &clip.positionZ
-            || kt == &clip.perspective || kt == &clip.anchorX || kt == &clip.anchorY
-            || kt == &clip.anchorZ) {
+            || kt == &clip.perspective || kt == &clip.anchorZ) {
             clip.layer3d = true;
         }
         return true;
@@ -1361,22 +1356,21 @@ void fitClipLayoutToCanvas(drift::Clip &clip, int mediaW, int mediaH, int canvas
 {
     canvasW = qMax(1, canvasW);
     canvasH = qMax(1, canvasH);
-    if (mediaW <= 0 || mediaH <= 0) {
-        setClipLayoutPixels(clip, 0, 0, canvasW, canvasH);
+    clearClipLayout(clip);
+    if (mediaW <= 0 || mediaH <= 0)
         return;
-    }
     const double scale = qMin(static_cast<double>(canvasW) / mediaW, static_cast<double>(canvasH) / mediaH);
-    const double w = mediaW * scale;
-    const double h = mediaH * scale;
-    setClipLayoutPixels(clip, (canvasW - w) / 2.0, (canvasH - h) / 2.0, w, h);
+    clip.frameW = mediaW * scale;
+    clip.frameH = mediaH * scale;
 }
 
 void placeModelClipLayout(drift::Clip &clip, int canvasW, int canvasH)
 {
     const QSizeF face =
         drift::modelClipFaceSize(clip.model3d.aabbMin, clip.model3d.aabbMax, 0.5 * canvasH);
-    setClipLayoutPixels(clip, (canvasW - face.width()) / 2.0, (canvasH - face.height()) / 2.0,
-                        face.width(), face.height());
+    clearClipLayout(clip);
+    clip.frameW = face.width();
+    clip.frameH = face.height();
     clip.layer3d = true;
 }
 
@@ -1471,20 +1465,20 @@ void applyDefaultVisualLayout(drift::Clip &clip, int canvasW, int canvasH, doubl
             w = canvasW * 0.6;
             h = w / aspect;
         }
-        setClipLayoutPixels(clip, 0, 0, w, h);
+        setClipFrameBox(clip, 0, 0, w, h);
         return;
     }
     if (clip.type == drift::ClipType::Text) {
-        setClipLayoutPixels(clip, 0, canvasH * 0.35, canvasW, canvasH * 0.30);
+        setClipFrameBox(clip, 0, canvasH * 0.35, canvasW, canvasH * 0.30);
         return;
     }
     if (clip.type == drift::ClipType::Subtitle) {
-        setClipLayoutPixels(clip, 0, canvasH * 0.78, canvasW, canvasH * 0.18);
+        setClipFrameBox(clip, 0, canvasH * 0.78, canvasW, canvasH * 0.18);
         return;
     }
     // Stickers / generic images without metadata: modest top-left box.
     const double side = qMin(canvasW, canvasH) * 0.25;
-    setClipLayoutPixels(clip, 0, 0, side, side);
+    setClipFrameBox(clip, 0, 0, side, side);
 }
 
 bool assetHasAudioStreams(const drift::Project &project, AssetLibrary *library, const QString &assetId)

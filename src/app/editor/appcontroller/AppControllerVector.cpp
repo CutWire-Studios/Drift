@@ -544,7 +544,7 @@ QVariantMap AppController::addProceduralClip(const QString &packageId, int track
     clip.timelineDuration = duration;
     clip.srcIn = 0;
     clip.srcOut = duration;
-    setClipLayoutPixels(clip, 0, 0, m_project.width(), m_project.height());
+    clearClipLayout(clip);
     clip.layer3d = true;
 
     track.clips.append(clip);

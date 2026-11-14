@@ -60,12 +60,8 @@ public:
                                       double dtSeconds);
     Q_INVOKABLE QVariantList previewStretchKeys(int track, int clip, const QVariantList &keys,
                                                 double pivotSeconds, double factor);
-    // 100% scale is the box that fills the canvas on its tighter axis.
-    Q_INVOKABLE static double scaleOf(double w, double h, double canvasW, double canvasH);
-    // Scales a box about `anchor` (fractions of the box). `start` holds x, y, w, h, scale and rot
-    // (radians) as they were when the drag began; the anchor's offset from the centre turns with
-    // the clip. Returns x, y, w, h and the factor k.
-    Q_INVOKABLE static QVariantMap scaledRect(const QVariantMap &start, double scale, const QPointF &anchor);
+    // Scales the clip about its anchor: `start` holds scaleX and scaleY as they were when the drag
+    // began, and `scale` is the new scaleX; scaleY keeps the start ratio. Writes scaleX/scaleY only.
     Q_INVOKABLE void previewScale(int track, int clip, const QVariantMap &start, double scale);
     Q_INVOKABLE void setSegmentsEasing(int track, int clip, const QVariantList &keys,
                                        const QVariantMap &spec);
@@ -107,9 +103,7 @@ private:
     bool resolveKey(int track, int clip, const QString &prop, double seconds, KeyTarget *out) const;
     QList<KeyTarget> resolveKeys(int track, int clip, const QVariantList &keys) const;
     QList<KeyTarget> expandLinked(const QList<KeyTarget> &keys) const;
-    QList<KeyTarget> withPins(const QList<KeyTarget> &keys) const;
     QStringList mirrorLinkedProps(const QStringList &props) const;
-    QStringList movedProps(const QStringList &props) const;
     double shownValue(int track, int clip, const QString &prop, double seconds) const;
     bool eraseKeys(const QList<KeyTarget> &keys);
     QVariantMap keyRef(const KeyTarget &key, drift::TimeUs rel) const;

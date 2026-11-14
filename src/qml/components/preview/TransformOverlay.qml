@@ -319,7 +319,7 @@ Item {
         function onTracksChanged() { root.refreshOverlay() }
         function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
             for (const k of keys) {
-                if (k === "x" || k === "y" || k === "width" || k === "height" || k === "rotation"
+                if (k === "positionX" || k === "positionY" || k === "scaleX" || k === "scaleY" || k === "rotation"
                         || k === "rotationX" || k === "rotationY" || k === "z" || k === "perspective") {
                     root.refreshOverlay()
                     return
@@ -530,7 +530,6 @@ Item {
                 property real dragStartY: 0
                 property real dragStartW: 1
                 property real dragStartH: 1
-                property int dragStartPixelSize: 64
                 // True while a resize grip is held, for the size readout.
                 property bool resizing: false
                 // True while the rotate grip is held, for the angle readout.
@@ -587,8 +586,8 @@ Item {
                         EditorState.previewSetClipPosition(
                             handle.box.track,
                             handle.box.clip,
-                            handle.box.x + dx,
-                            handle.box.y + dy)
+                            handle.box.positionX + dx,
+                            handle.box.positionY + dy)
                     }
                     EditorState.commitPreviewDrag()
                     event.accepted = true
@@ -708,8 +707,8 @@ Item {
                         EditorState.previewSetClipPosition(
                             handle.box.track,
                             handle.box.clip,
-                            xPx,
-                            yPx)
+                            xPx + handle.box.positionX - handle.box.x,
+                            yPx + handle.box.positionY - handle.box.y)
                     }
                 }
 

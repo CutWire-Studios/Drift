@@ -105,8 +105,8 @@ Item {
         // A slider in the inspector dragging a light, or the clip being moved under them.
         function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
             for (const k of keys) {
-                if (k.startsWith("fx.") || k === "x" || k === "y" || k === "width"
-                        || k === "height" || k === "rotation" || k === "rotationX"
+                if (k.startsWith("fx.") || k === "positionX" || k === "positionY" || k === "scaleX"
+                        || k === "scaleY" || k === "rotation" || k === "rotationX"
                         || k === "rotationY" || k === "z" || k === "perspective") {
                     root.refreshOverlay()
                     return

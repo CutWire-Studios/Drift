@@ -796,8 +796,8 @@ void AppController::dissolveComposite(int trackIndex, int clipIndex)
         !composite.effects.isEmpty() || !composite.audioEffects.isEmpty() || composite.fadeInUs > 0
         || composite.fadeOutUs > 0 || !composite.animIn.isNone()
         || !composite.animOut.isNone() || !composite.opacity.isEmpty()
-        || !composite.transformX.isEmpty() || !composite.transformY.isEmpty()
-        || !composite.transformW.isEmpty() || !composite.transformH.isEmpty()
+        || !composite.positionX.isEmpty() || !composite.positionY.isEmpty()
+        || !composite.scaleX.isEmpty() || !composite.scaleY.isEmpty()
         || !composite.rotation.isEmpty() || !composite.volume.isEmpty() || composite.flipH
         || composite.flipV || composite.layer3d;
 

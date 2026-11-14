@@ -2239,14 +2239,6 @@ QString assignSplitLinkIds(Clip &head, Clip &tail)
 
 namespace {
 
-// Writes `value` as the sole keyframe of an empty track, leaving tracks that
-// already carry explicit values (including animation) untouched.
-void bakeIfImplicit(KeyframeTrack<double> &track, double value)
-{
-    if (track.isEmpty())
-        track.setKeyframe(0, value);
-}
-
 void shiftTrackValues(KeyframeTrack<double> &track, double delta, double implicitValue)
 {
     if (qFuzzyIsNull(delta))
@@ -2372,10 +2364,10 @@ template<typename Fn>
 void forEachKeyframeTrack(Clip &clip, Fn &&fn)
 {
     fn(clip.opacity);
-    fn(clip.transformX);
-    fn(clip.transformY);
-    fn(clip.transformW);
-    fn(clip.transformH);
+    fn(clip.positionX);
+    fn(clip.positionY);
+    fn(clip.scaleX);
+    fn(clip.scaleY);
     fn(clip.rotation);
     fn(clip.rotationX);
     fn(clip.rotationY);
@@ -2467,9 +2459,10 @@ void scaleTrackValues(KeyframeTrack<double> &track, double factor)
 
 namespace {
 
-// A composite's box shows a whole canvas, so resizing the canvas resizes what it shows. Holding
-// its content still means scaling the box with the canvas and moving its centre by the
-// nested canvas's own centre shift `d`, carried through the box's scale, flip and rotation.
+// A composite's box shows a whole canvas, so resizing the canvas resizes what it shows. Its frame
+// is the canvas, so the scale already follows; what is left is holding its content still, which
+// moves its position by the nested canvas's own centre shift `d`, carried through the box's
+// scale, flip and rotation.
 void rebaseCanvasBox(Clip &clip, int oldWidth, int oldHeight, int newWidth, int newHeight,
                      double originX, double originY)
 {
@@ -2477,24 +2470,37 @@ void rebaseCanvasBox(Clip &clip, int oldWidth, int oldHeight, int newWidth, int 
     const double sy = double(newHeight) / oldHeight;
     const double dx = originX + newWidth / 2.0 - oldWidth / 2.0;
     const double dy = originY + newHeight / 2.0 - oldHeight / 2.0;
+    const auto at = [](const KeyframeTrack<double> &track, TimeUs t, double fallback) {
+        return track.isEmpty() ? fallback : track.evaluateAt(t);
+    };
     const auto delta = [&](TimeUs t) {
-        const double w = clip.transformW.isEmpty() ? oldWidth : clip.transformW.evaluateAt(t);
-        const double h = clip.transformH.isEmpty() ? oldHeight : clip.transformH.evaluateAt(t);
-        const double a = qDegreesToRadians(clip.rotation.isEmpty() ? 0.0 : clip.rotation.evaluateAt(t));
-        const double lx = (clip.flipH ? -1.0 : 1.0) * w / oldWidth * dx;
-        const double ly = (clip.flipV ? -1.0 : 1.0) * h / oldHeight * dy;
-        const double cx = std::cos(a) * lx - std::sin(a) * ly - originX;
-        const double cy = std::sin(a) * lx + std::cos(a) * ly - originY;
-        return QPointF(w / 2.0 * (1.0 - sx) + cx, h / 2.0 * (1.0 - sy) + cy);
+        const double kx = at(clip.scaleX, t, 1.0);
+        const double ky = at(clip.scaleY, t, 1.0);
+        const double a = qDegreesToRadians(at(clip.rotation, t, 0.0));
+        const double ca = std::cos(a);
+        const double sa = std::sin(a);
+        const double lx = (clip.flipH ? -1.0 : 1.0) * kx * dx;
+        const double ly = (clip.flipV ? -1.0 : 1.0) * ky * dy;
+        const double ax = at(clip.anchorX, t, oldWidth / 2.0);
+        const double ay = at(clip.anchorY, t, oldHeight / 2.0);
+        const double oldOffX = kx * (oldWidth / 2.0 - ax);
+        const double oldOffY = ky * (oldHeight / 2.0 - ay);
+        const double newOffX = kx * (newWidth / 2.0 - ax * sx);
+        const double newOffY = ky * (newHeight / 2.0 - ay * sy);
+        return QPointF(ca * (oldOffX - newOffX) - sa * (oldOffY - newOffY) + ca * lx - sa * ly - originX,
+                       sa * (oldOffX - newOffX) + ca * (oldOffY - newOffY) + sa * lx + ca * ly - originY);
     };
 
     QList<TimeUs> times;
-    for (const KeyframeTrack<double> *track : {&clip.transformW, &clip.transformH, &clip.rotation}) {
+    for (const KeyframeTrack<double> *track :
+         {&clip.scaleX, &clip.scaleY, &clip.rotation, &clip.anchorX, &clip.anchorY}) {
         if (track->keyframes().size() > 1)
             times += track->keyframes().keys();
     }
     const auto rebase = [&](KeyframeTrack<double> &track, bool isX) {
         const auto pick = [isX](QPointF p) { return isX ? p.x() : p.y(); };
+        const double implicitCentre = isX ? oldWidth / 2.0 : oldHeight / 2.0;
+        const double newCentre = isX ? newWidth / 2.0 : newHeight / 2.0;
         KeyframeTrack<double> out;
         out.setEnabled(track.enabled());
         const QMap<TimeUs, Keyframe<double>> &values = track.keyframes();
@@ -2505,22 +2511,78 @@ void rebaseCanvasBox(Clip &clip, int oldWidth, int oldHeight, int newWidth, int 
         }
         for (TimeUs t : times) {
             if (!values.contains(t))
-                out.setKeyframe(t, (values.isEmpty() ? 0.0 : track.evaluateAt(t)) + pick(delta(t)));
+                out.setKeyframe(t, (values.isEmpty() ? implicitCentre : track.evaluateAt(t)) + pick(delta(t)));
         }
         if (values.isEmpty() && times.isEmpty()) {
-            const double v = pick(delta(0));
-            if (!qFuzzyIsNull(v))
+            const double v = implicitCentre + pick(delta(0));
+            if (!qFuzzyCompare(v + 1.0, newCentre + 1.0))
                 out.setKeyframe(0, v);
         }
         track = out;
     };
-    rebase(clip.transformX, true);
-    rebase(clip.transformY, false);
-    scaleTrackValues(clip.transformW, sx);
-    scaleTrackValues(clip.transformH, sy);
+    rebase(clip.positionX, true);
+    rebase(clip.positionY, false);
+    scaleTrackValues(clip.anchorX, sx);
+    scaleTrackValues(clip.anchorY, sy);
+}
+
+// Holds a clip still when its canvas is cropped: an empty position was the old canvas centre, so
+// it is written down unless the shifted centre is the new one.
+void shiftPosition(KeyframeTrack<double> &track, double delta, double oldCentre, double newCentre)
+{
+    if (track.isEmpty()) {
+        if (!qFuzzyCompare(oldCentre - delta + 1.0, newCentre + 1.0))
+            track.setKeyframe(0, oldCentre - delta);
+        return;
+    }
+    shiftTrackValues(track, delta, 0.0);
 }
 
 } // namespace
+
+QSizeF clipFitFrameSize(const Project &project, const Clip &clip)
+{
+    const double canvasW = qMax(1, project.width());
+    const double canvasH = qMax(1, project.height());
+    if (clip.type == ClipType::Model3d) {
+        QVector3D extent = clip.model3d.aabbMax - clip.model3d.aabbMin;
+        const float largest = std::max({extent.x(), extent.y(), extent.z()});
+        if (largest <= 1e-6f) {
+            extent = QVector3D(1.f, 1.f, 1.f);
+        } else {
+            const float floor = largest * 1e-3f;
+            extent = QVector3D(std::max(extent.x(), floor), std::max(extent.y(), floor),
+                               std::max(extent.z(), floor));
+        }
+        const double span = 0.5 * canvasH;
+        const double biggest = std::max({double(extent.x()), double(extent.y()), double(extent.z())});
+        return QSizeF(span * extent.x() / biggest, span * extent.y() / biggest);
+    }
+    if (clip.type == ClipType::Text || clip.type == ClipType::Subtitle || clip.type == ClipType::Shape)
+        return QSizeF(clip.frameW > 0.0 ? clip.frameW : canvasW, clip.frameH > 0.0 ? clip.frameH : canvasH);
+
+    int mediaW = 0;
+    int mediaH = 0;
+    if (clip.type == ClipType::Vector) {
+        mediaW = clip.vector.width;
+        mediaH = clip.vector.height;
+    } else if (clip.type == ClipType::Video || clip.type == ClipType::Image || clip.type == ClipType::Pdf) {
+        if (const MediaAsset *asset = project.asset(clip.assetId)) {
+            mediaW = asset->width;
+            mediaH = asset->height;
+            if ((asset->rotationDegrees + clip.rotationCorrection) % 180 == 90)
+                std::swap(mediaW, mediaH);
+            if ((clip.type == ClipType::Video || clip.type == ClipType::Image) && mediaW > 0 && mediaH > 0) {
+                mediaW = qMax(1, qRound(mediaW * clip.sourceFrame.width()));
+                mediaH = qMax(1, qRound(mediaH * clip.sourceFrame.height()));
+            }
+        }
+    }
+    if (mediaW <= 0 || mediaH <= 0)
+        return QSizeF(canvasW, canvasH);
+    const double scale = qMin(canvasW / mediaW, canvasH / mediaH);
+    return QSizeF(mediaW * scale, mediaH * scale);
+}
 
 bool clipBoxIsCanvasReferenced(const Clip &clip)
 {
@@ -2542,10 +2604,17 @@ void rebaseClipLayout(Project &project, int oldWidth, int oldHeight, int newWidt
                     rebaseCanvasBox(clip, oldWidth, oldHeight, newWidth, newHeight, originX, originY);
                     continue;
                 }
-                bakeIfImplicit(clip.transformW, oldWidth);
-                bakeIfImplicit(clip.transformH, oldHeight);
-                shiftTrackValues(clip.transformX, originX, 0.0);
-                shiftTrackValues(clip.transformY, originY, 0.0);
+                if (isCameraClip(clip)) {
+                    shiftTrackValues(clip.positionX, originX, 0.0);
+                    shiftTrackValues(clip.positionY, originY, 0.0);
+                    continue;
+                }
+                if (clip.frameW <= 0.0)
+                    clip.frameW = oldWidth;
+                if (clip.frameH <= 0.0)
+                    clip.frameH = oldHeight;
+                shiftPosition(clip.positionX, originX, oldWidth / 2.0, newWidth / 2.0);
+                shiftPosition(clip.positionY, originY, oldHeight / 2.0, newHeight / 2.0);
             }
         }
     });

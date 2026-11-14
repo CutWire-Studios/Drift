@@ -440,6 +440,61 @@
     </message>
 </context>
 <context>
+    <name>AndroidAnimationPage</name>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">없음</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1초</translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished">시작</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">끝</translation>
+    </message>
+    <message>
+        <source>Fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">페이드 인</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">페이드 아웃</translation>
+    </message>
+    <message>
+        <source>Fade curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">애니메이션</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">재생 시간</translation>
+    </message>
+    <message>
+        <source>Animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter and word animations live in Text animation. This moves the whole clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBackgroundPage</name>
     <message>
         <source>Choose background image</source>
@@ -519,6 +574,10 @@
     <message>
         <source>Stabilize</source>
         <translation type="unfinished">흔들림 보정</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished">페이드</translation>
     </message>
     <message>
         <source>Edit text</source>
@@ -939,33 +998,6 @@
     <message>
         <source>Extras</source>
         <translation type="unfinished">추가 기능</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidFadeSheet</name>
-    <message>
-        <source>Fade</source>
-        <translation>페이드</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>완료</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1초</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation>페이드 인</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation>페이드 아웃</translation>
-    </message>
-    <message>
-        <source>Curve</source>
-        <translation>곡선</translation>
     </message>
 </context>
 <context>
@@ -2399,21 +2431,6 @@
     <message>
         <source>Transitions</source>
         <translation type="unfinished">전환</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidVolumePage</name>
-    <message>
-        <source>%1 s</source>
-        <translation type="unfinished">%1초</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation type="unfinished">페이드 인</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation type="unfinished">페이드 아웃</translation>
     </message>
 </context>
 <context>
@@ -10922,6 +10939,14 @@
         <translation type="unfinished">확대/축소</translation>
     </message>
     <message>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Anchor X</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11075,12 +11100,12 @@
         <translation>Y 위치</translation>
     </message>
     <message>
-        <source>Width</source>
-        <translation>너비</translation>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Height</source>
-        <translation>높이</translation>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26331,10 +26356,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Add scale keyframe</source>
         <translation>배율 키프레임 추가</translation>
-    </message>
-    <message>
-        <source>Scale origin</source>
-        <translation>배율 기준점</translation>
     </message>
     <message>
         <source>Opacity &amp; rotation</source>

@@ -92,7 +92,7 @@ Item {
         function onTracksChanged() { root.refresh() }
         function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
             for (const k of keys) {
-                if (k === "x" || k === "y" || k === "width" || k === "height" || k === "rotation"
+                if (k === "positionX" || k === "positionY" || k === "scaleX" || k === "scaleY" || k === "rotation"
                         || k === "rotationX" || k === "rotationY" || k === "z" || k === "perspective") {
                     root.refresh()
                     return

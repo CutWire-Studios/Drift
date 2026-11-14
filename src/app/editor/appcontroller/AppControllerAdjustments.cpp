@@ -1268,13 +1268,10 @@ QVariantList AppController::clipWorldCentreAt(int trackIndex, int clipIndex, dou
     const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
     const drift::TimeUs relative = qBound<drift::TimeUs>(0, drift::secondsToUs(seconds) - clip.timelineStart,
                                                           clip.timelineDuration);
-    const auto value = [&](const drift::KeyframeTrack<double> &kt, double fallback) {
-        return kt.isEmpty() ? fallback : kt.evaluateAt(relative);
-    };
-    const double w = value(clip.transformW, m_project.width());
-    const double h = value(clip.transformH, m_project.height());
-    return QVariantList{value(clip.transformX, 0.0) + w / 2.0, value(clip.transformY, 0.0) + h / 2.0,
-                        value(clip.positionZ, 0.0)};
+    const QPointF centre =
+        drift::clipLayoutAt(clip, relative, QSizeF(m_project.width(), m_project.height())).box().center();
+    return QVariantList{centre.x(), centre.y(),
+                        clip.positionZ.isEmpty() ? 0.0 : clip.positionZ.evaluateAt(relative)};
 }
 
 // Crop rect is given in current-canvas pixels; it may extend outside the canvas

@@ -40,11 +40,10 @@ QTransform transformLayerMatrix(const Clip &clip, TimeUs timelineUs, const QSize
     const TimeUs relative = timelineUs - clip.timelineStart;
     const double rw = projectSize.width() * renderScale;
     const double rh = projectSize.height() * renderScale;
-    QRectF box(valueAt(clip.transformX, relative, 0.0) * renderScale,
-               valueAt(clip.transformY, relative, 0.0) * renderScale,
-               valueAt(clip.transformW, relative, projectSize.width()) * renderScale,
-               valueAt(clip.transformH, relative, projectSize.height()) * renderScale);
-    double rotation = valueAt(clip.rotation, relative, 0.0);
+    const ClipPlacement placement = clipPlacementAt(clip, relative, renderScale, QSizeF(projectSize));
+    QRectF box = placement.rect;
+    QPointF pivot = placement.pivot;
+    double rotation = placement.rotation;
     double alpha = qBound(0.0, valueAt(clip.opacity, relative, 1.0), 1.0)
                    * clip.fadeMultiplier(timelineUs);
 
@@ -53,6 +52,7 @@ QTransform transformLayerMatrix(const Clip &clip, TimeUs timelineUs, const QSize
             evaluateClipAnimation(clip.timelineStart, clip.timelineDuration, clip.animIn,
                                   clip.animOut, timelineUs, box.width(), box.height());
         box.translate(body.dx, body.dy);
+        pivot += QPointF(body.dx, body.dy);
         if (!qFuzzyCompare(body.scale, 1.0)) {
             const QPointF centre = box.center();
             box.setSize(box.size() * body.scale);
@@ -65,16 +65,17 @@ QTransform transformLayerMatrix(const Clip &clip, TimeUs timelineUs, const QSize
     if (rw <= 0.0 || rh <= 0.0)
         return {};
 
-    const double fx = clip.flipH ? -1.0 : 1.0;
-    const double fy = clip.flipV ? -1.0 : 1.0;
+    const double fx = placement.flipH ? -1.0 : 1.0;
+    const double fy = placement.flipV ? -1.0 : 1.0;
 
     ClipPose3d pose;
     if (clip.layer3d)
         pose = clipPoseAt(clip, relative, renderScale, projectSize.height());
     if (!pose.isActive()) {
         QTransform t;
-        t.translate(box.center().x(), box.center().y());
+        t.translate(pivot.x(), pivot.y());
         t.rotate(rotation);
+        t.translate(box.center().x() - pivot.x(), box.center().y() - pivot.y());
         t.scale(fx * box.width() / rw, fy * box.height() / rh);
         t.translate(-rw / 2.0, -rh / 2.0);
         return t;
@@ -91,8 +92,8 @@ QTransform transformLayerMatrix(const Clip &clip, TimeUs timelineUs, const QSize
     // Canvas → card-local: flip about the canvas centre, then shrink the canvas onto the box.
     const double sx = box.width() / rw;
     const double sy = box.height() / rh;
-    const double toLocal[3][3] = {{fx * sx, 0.0, clip.flipH ? rw * sx : 0.0},
-                                  {0.0, fy * sy, clip.flipV ? rh * sy : 0.0},
+    const double toLocal[3][3] = {{fx * sx, 0.0, placement.flipH ? rw * sx : 0.0},
+                                  {0.0, fy * sy, placement.flipV ? rh * sy : 0.0},
                                   {0.0, 0.0, 1.0}};
     double m[3][3];
     for (int r = 0; r < 3; ++r) {

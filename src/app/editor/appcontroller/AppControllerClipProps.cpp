@@ -197,17 +197,17 @@ void AppController::previewSetClipPosition(int trackIndex, int clipIndex, double
     drift::Clip &clip = track.clips[clipIndex];
     beginImplicitPreviewDrag(tr("Move clip"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
-    const bool wroteX = writeKeyframeValue(clip.transformX, relative, xPixels, m_autoKeyEnabled, false);
-    const bool wroteY = writeKeyframeValue(clip.transformY, relative, yPixels, m_autoKeyEnabled, false);
+    const bool wroteX = writeKeyframeValue(clip.positionX, relative, xPixels, m_autoKeyEnabled, false);
+    const bool wroteY = writeKeyframeValue(clip.positionY, relative, yPixels, m_autoKeyEnabled, false);
     if (!wroteX && !wroteY) {
         emit transformBlocked(tr("Turn on Auto keyframes to move this"));
         return;
     }
 
-    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("x"), QStringLiteral("y")});
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("positionX"), QStringLiteral("positionY")});
 }
 
-void AppController::previewSetClipSize(int trackIndex, int clipIndex, double widthPixels, double heightPixels)
+void AppController::previewSetClipScale(int trackIndex, int clipIndex, double scaleX, double scaleY)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
@@ -219,20 +219,18 @@ void AppController::previewSetClipSize(int trackIndex, int clipIndex, double wid
     drift::Clip &clip = track.clips[clipIndex];
     beginImplicitPreviewDrag(tr("Resize clip"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
-    const bool wroteW =
-        writeKeyframeValue(clip.transformW, relative, qMax(1.0, widthPixels), m_autoKeyEnabled, false);
-    const bool wroteH =
-        writeKeyframeValue(clip.transformH, relative, qMax(1.0, heightPixels), m_autoKeyEnabled, false);
-    if (!wroteW && !wroteH) {
+    const bool wroteX = writeKeyframeValue(clip.scaleX, relative, scaleX, m_autoKeyEnabled, false);
+    const bool wroteY = writeKeyframeValue(clip.scaleY, relative, scaleY, m_autoKeyEnabled, false);
+    if (!wroteX && !wroteY) {
         emit transformBlocked(tr("Turn on Auto keyframes to resize this"));
         return;
     }
 
-    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("width"), QStringLiteral("height")});
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("scaleX"), QStringLiteral("scaleY")});
 }
 
-void AppController::previewSetClipRect(int trackIndex, int clipIndex, double xPixels, double yPixels,
-                                       double widthPixels, double heightPixels)
+void AppController::previewSetClipPlacement(int trackIndex, int clipIndex, double posX, double posY,
+                                            double scaleX, double scaleY)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
@@ -245,20 +243,18 @@ void AppController::previewSetClipRect(int trackIndex, int clipIndex, double xPi
     beginImplicitPreviewDrag(tr("Transform clip"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     bool wrote = false;
-    wrote = writeKeyframeValue(clip.transformX, relative, xPixels, m_autoKeyEnabled, false) || wrote;
-    wrote = writeKeyframeValue(clip.transformY, relative, yPixels, m_autoKeyEnabled, false) || wrote;
-    wrote = writeKeyframeValue(clip.transformW, relative, qMax(1.0, widthPixels), m_autoKeyEnabled, false)
-            || wrote;
-    wrote = writeKeyframeValue(clip.transformH, relative, qMax(1.0, heightPixels), m_autoKeyEnabled, false)
-            || wrote;
+    wrote = writeKeyframeValue(clip.positionX, relative, posX, m_autoKeyEnabled, false) || wrote;
+    wrote = writeKeyframeValue(clip.positionY, relative, posY, m_autoKeyEnabled, false) || wrote;
+    wrote = writeKeyframeValue(clip.scaleX, relative, scaleX, m_autoKeyEnabled, false) || wrote;
+    wrote = writeKeyframeValue(clip.scaleY, relative, scaleY, m_autoKeyEnabled, false) || wrote;
     if (!wrote) {
         emit transformBlocked(tr("Turn on Auto keyframes to change this"));
         return;
     }
 
     emitPreviewEdit(trackIndex, clipIndex,
-                    {QStringLiteral("x"), QStringLiteral("y"), QStringLiteral("width"),
-                     QStringLiteral("height")});
+                    {QStringLiteral("positionX"), QStringLiteral("positionY"), QStringLiteral("scaleX"),
+                     QStringLiteral("scaleY")});
 }
 
 void AppController::previewSetClipRotation(int trackIndex, int clipIndex, double degrees)
@@ -307,8 +303,8 @@ void AppController::previewSetClipKeyframe(int trackIndex, int clipIndex, const 
     }
 
     QStringList affected = {prop};
-    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
-        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    if (m_positionLinked && (prop == QLatin1String("positionX") || prop == QLatin1String("positionY"))) {
+        const QString otherProp = (prop == QLatin1String("positionX")) ? QStringLiteral("positionY") : QStringLiteral("positionX");
         drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, false);
         if (otherKt && !otherKt->isEmpty()) {
             const drift::TimeUs otherNearest = otherKt->nearestKeyframe(rel, kKeyframeToleranceUs);
@@ -1555,8 +1551,8 @@ bool AppController::removeUserFont(const QString &family)
     return true;
 }
 
-void AppController::previewSetTextRect(int trackIndex, int clipIndex, double xPixels, double yPixels,
-                                       double widthPixels, double heightPixels, int pixelSize)
+void AppController::previewSetTextRect(int trackIndex, int clipIndex, double posX, double posY,
+                                       double frameW, double frameH)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
@@ -1569,31 +1565,27 @@ void AppController::previewSetTextRect(int trackIndex, int clipIndex, double xPi
     if (clip.type != drift::ClipType::Text && clip.type != drift::ClipType::Subtitle)
         return;
 
-    // The rect follows the same auto-key rules as previewSetClipRect. The glyph size is a plain
-    // style field rather than a keyframed track, so it is always applied — the two move together
-    // under one undo entry, because resizing a text clip should scale what you see, not just the
-    // invisible wrap container.
+    // The frame is the wrap box and is not keyframed, so it is always applied; the position
+    // follows the same auto-key rules as previewSetClipPlacement. Glyph size is not touched.
     beginImplicitPreviewDrag(tr("Resize text"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     bool wrote = false;
-    wrote = writeKeyframeValue(clip.transformX, relative, xPixels, m_autoKeyEnabled, false) || wrote;
-    wrote = writeKeyframeValue(clip.transformY, relative, yPixels, m_autoKeyEnabled, false) || wrote;
-    wrote = writeKeyframeValue(clip.transformW, relative, qMax(1.0, widthPixels), m_autoKeyEnabled, false)
-            || wrote;
-    wrote = writeKeyframeValue(clip.transformH, relative, qMax(1.0, heightPixels), m_autoKeyEnabled, false)
-            || wrote;
+    wrote = writeKeyframeValue(clip.positionX, relative, posX, m_autoKeyEnabled, false) || wrote;
+    wrote = writeKeyframeValue(clip.positionY, relative, posY, m_autoKeyEnabled, false) || wrote;
 
-    const int clamped = qBound(8, pixelSize, 800);
-    if (clip.textStyle.pixelSize != clamped) {
-        clip.textStyle.pixelSize = clamped;
+    const double nextW = qMax(1.0, frameW);
+    const double nextH = qMax(1.0, frameH);
+    if (clip.frameW != nextW || clip.frameH != nextH) {
+        clip.frameW = nextW;
+        clip.frameH = nextH;
         wrote = true;
     }
     if (!wrote)
         return;
 
     emitPreviewEdit(trackIndex, clipIndex,
-                    {QStringLiteral("x"), QStringLiteral("y"), QStringLiteral("width"),
-                     QStringLiteral("height"), QStringLiteral("text.pixelSize")});
+                    {QStringLiteral("positionX"), QStringLiteral("positionY"), QStringLiteral("frameW"),
+                     QStringLiteral("frameH")});
 }
 
 void AppController::setClipBlendMode(int trackIndex, int clipIndex, const QString &mode)
@@ -2061,6 +2053,7 @@ void AppController::setClipOrientationTo(drift::Clip &clip, int degrees)
     if (correction != clip.rotationCorrection)
         clip.depthPath.clear();
     clip.rotationCorrection = correction;
+    refreshClipFrame(m_project, clip);
 }
 
 void AppController::setClipOrientation(int trackIndex, int clipIndex, int degrees)
@@ -2086,52 +2079,6 @@ void AppController::setClipOrientation(int trackIndex, int clipIndex, int degree
         return;
 
     const drift::Project before = m_project;
-
-    // Only the aspect category (portrait-swapped vs not) needs the box to change — going from,
-    // say, 90 to 270 spins the same content inside the same box. Transposing whatever box the
-    // clip currently has (not re-deriving one from the source media) preserves any manual
-    // resize/reposition the user already made, and needs no canvas or media-size lookup at all.
-    const bool oldSwapped = (oldRotation == 90 || oldRotation == 270);
-    const bool newSwapped = (normalized == 90 || normalized == 270);
-    if (oldSwapped != newSwapped) {
-        // setClipLayoutPixels would collapse every track to one key sampled at time 0, destroying
-        // any existing position/size animation. Width and height instead trade places outright —
-        // new width is exactly the old height track and vice versa, so swapping the two
-        // KeyframeTrack objects wholesale carries every keyframe across untouched.
-        const drift::KeyframeTrack<double> oldW = clip.transformW;
-        const drift::KeyframeTrack<double> oldH = clip.transformH;
-        std::swap(clip.transformW, clip.transformH);
-
-        // X/Y shift so the box's centre stays put under the transposed size: by (w - h)/2 for X,
-        // the mirror for Y. Each existing key moves by the offset at its own time, which keeps
-        // its tangents, hold flag and the track's enabled state exactly as they were. When the
-        // size itself animates the offset is a curve, so keys are also added at width/height's
-        // key times to pin it there; between keys it is only approximated, which is the trade
-        // for not resampling the user's curve into something they no longer recognise.
-        const bool sizeIsAnimated = oldW.keyframes().size() > 1 || oldH.keyframes().size() > 1;
-        auto offsetAt = [&](drift::TimeUs t, bool axisIsX) {
-            const double w = oldW.isEmpty() ? double(m_project.width()) : oldW.evaluateAt(t);
-            const double h = oldH.isEmpty() ? double(m_project.height()) : oldH.evaluateAt(t);
-            return axisIsX ? (w - h) * 0.5 : (h - w) * 0.5;
-        };
-        auto shiftAxis = [&](drift::KeyframeTrack<double> &axis, bool axisIsX) {
-            if (axis.isEmpty())
-                return;
-            const drift::KeyframeTrack<double> original = axis;
-            if (sizeIsAnimated && axis.enabled()) {
-                for (auto it = oldW.keyframes().constBegin(); it != oldW.keyframes().constEnd(); ++it)
-                    if (!original.keyframes().contains(it.key()))
-                        axis.setKeyframe(it.key(), original.evaluateAt(it.key()));
-                for (auto it = oldH.keyframes().constBegin(); it != oldH.keyframes().constEnd(); ++it)
-                    if (!original.keyframes().contains(it.key()))
-                        axis.setKeyframe(it.key(), original.evaluateAt(it.key()));
-            }
-            for (const drift::TimeUs t : axis.keyframes().keys())
-                axis.keyframeRef(t)->value += offsetAt(t, axisIsX);
-        };
-        shiftAxis(clip.transformX, true);
-        shiftAxis(clip.transformY, false);
-    }
 
     setClipOrientationTo(clip, normalized);
     pushProjectEdit(before, tr("Orientation changed"));

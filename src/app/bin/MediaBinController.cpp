@@ -1224,6 +1224,7 @@ int MediaBinController::rebindClipsToAsset(const QString &assetId, const drift::
                 // has to drop that same amount or it turns already-upright pixels a second time.
                 clip.rotationCorrection =
                     ((clip.rotationCorrection - oldBinCorrection + newBinCorrection) % 360 + 360) % 360;
+                drift::appdetail::refreshClipFrame(m_app->m_project, clip);
                 // Landmarks are baked against the old pixels. Left in place they would keep the face
                 // warps tracking a face the new footage never had, and render without erroring.
                 if (mediaChanged) {

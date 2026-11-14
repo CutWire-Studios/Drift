@@ -440,6 +440,61 @@
     </message>
 </context>
 <context>
+    <name>AndroidAnimationPage</name>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">කිසිවක් නැත</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">තත් %1</translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished">පිවිසුම (In)</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">පිටවීම (Out)</translation>
+    </message>
+    <message>
+        <source>Fade also ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade ramps the volume.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Fade in (ක්‍රමිකව මතුවීම)</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Fade out (ක්‍රමිකව මැකී යාම)</translation>
+    </message>
+    <message>
+        <source>Fade curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">සජීවිකරණය</translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">කාලසීමාව</translation>
+    </message>
+    <message>
+        <source>Animation curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter and word animations live in Text animation. This moves the whole clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBackgroundPage</name>
     <message>
         <source>Choose background image</source>
@@ -519,6 +574,10 @@
     <message>
         <source>Stabilize</source>
         <translation type="unfinished">ස්ථාවර කරන්න</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished">Fade (ක්‍රමිකව මැකීම)</translation>
     </message>
     <message>
         <source>Edit text</source>
@@ -940,33 +999,6 @@
     <message>
         <source>Extras</source>
         <translation type="unfinished">අමතර අංග</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidFadeSheet</name>
-    <message>
-        <source>Fade</source>
-        <translation>Fade (ක්‍රමිකව මැකීම)</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>අවසන්</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>තත් %1</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation>Fade in (ක්‍රමිකව මතුවීම)</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation>Fade out (ක්‍රමිකව මැකී යාම)</translation>
-    </message>
-    <message>
-        <source>Curve</source>
-        <translation>වක්‍රය</translation>
     </message>
 </context>
 <context>
@@ -2402,21 +2434,6 @@
     <message>
         <source>Transitions</source>
         <translation type="unfinished">සංක්‍රාන්ති</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidVolumePage</name>
-    <message>
-        <source>%1 s</source>
-        <translation type="unfinished">තත් %1</translation>
-    </message>
-    <message>
-        <source>Fade in</source>
-        <translation type="unfinished">Fade in (ක්‍රමිකව මතුවීම)</translation>
-    </message>
-    <message>
-        <source>Fade out</source>
-        <translation type="unfinished">Fade out (ක්‍රමිකව මැකී යාම)</translation>
     </message>
 </context>
 <context>
@@ -10961,6 +10978,14 @@
         <translation type="unfinished">විශාලනය</translation>
     </message>
     <message>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Anchor X</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11115,12 +11140,12 @@
         <translation>Y පිහිටීම</translation>
     </message>
     <message>
-        <source>Width</source>
-        <translation>පළල</translation>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Height</source>
-        <translation>උස</translation>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rotation</source>
@@ -26423,10 +26448,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Add scale keyframe</source>
         <translation>පරිමාණ කීෆ්‍රේමයක් එක් කරන්න</translation>
-    </message>
-    <message>
-        <source>Scale origin</source>
-        <translation>පරිමාණ සම්භවය</translation>
     </message>
     <message>
         <source>Opacity &amp; rotation</source>

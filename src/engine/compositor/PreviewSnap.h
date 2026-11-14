@@ -18,8 +18,8 @@ namespace drift::snap {
 struct PlacedClip
 {
     QMatrix4x4 local; // layout px of the rect -> homogeneous canvas px
-    QVector4D ex;     // homogeneous change per +1 px of transformX
-    QVector4D ey;     // homogeneous change per +1 px of transformY
+    QVector4D ex;     // homogeneous change per +1 px of the rect moving along x
+    QVector4D ey;     // homogeneous change per +1 px of the rect moving along y
     QSizeF size;      // the rect's width and height
 };
 
