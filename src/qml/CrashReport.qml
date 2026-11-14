@@ -10,16 +10,19 @@ ApplicationWindow {
 
     readonly property bool crashed: CrashReports.startupKind === "crash"
 
-    width: 560
-    height: content.implicitHeight + Theme.spacing3xl * 2
-    minimumWidth: width
-    maximumWidth: width
-    minimumHeight: height
-    maximumHeight: height
+    readonly property int fixedWidth: 560
+    readonly property int fixedHeight: Math.ceil(content.implicitHeight + Theme.spacing3xl * 2)
+
+    width: fixedWidth
+    height: fixedHeight
+    minimumWidth: fixedWidth
+    maximumWidth: fixedWidth
+    minimumHeight: fixedHeight
+    maximumHeight: fixedHeight
     x: Screen.width / 2 - width / 2
     y: Screen.height / 2 - height / 2
     visible: true
-    title: crashed ? qsTr("Drift closed unexpectedly") : qsTr("Drift did not close properly")
+    title: crashed ? qsTr("Drift crashed the last time it ran") : qsTr("Drift did not close properly last time")
     color: Theme.c.quickSetup.background
 
     ColumnLayout {
@@ -46,7 +49,7 @@ ApplicationWindow {
             wrapMode: Text.WordWrap
             text: window.crashed
                   ? CrashReports.reasonText
-                  : qsTr("Drift did not close properly last time. If it keeps happening, you can start in safe mode, which uses the default graphics backend and loads no add-ons for this session.")
+                  : qsTr("If it keeps happening, you can start in safe mode, which uses the default graphics backend and loads no add-ons for this session.")
             color: Theme.c.quickSetup.foreground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeBase

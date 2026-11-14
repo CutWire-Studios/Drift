@@ -87,6 +87,7 @@
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
+#include <QPointer>
 #include <QProcess>
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
@@ -831,7 +832,9 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    StartupSplash *splash = nullptr;
+    // Guarded: the crash dialog can be the first window, and the splash deletes itself on its first
+    // frame, before the editor's startup steps run.
+    QPointer<StartupSplash> splash;
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
     if (previewNames.isEmpty()) {
         splash = new StartupSplash;
@@ -1084,7 +1087,7 @@ int main(int argc, char *argv[])
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
         if (window)
             new FirstFrameWatchdog(window);
-        if (first)
+        if (first && splash)
             splash->finishOn(window);
 #ifdef Q_OS_WIN
         // Tells "no window" apart from "a window nobody can see" when the screen stays empty.
