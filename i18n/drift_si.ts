@@ -646,6 +646,14 @@
         <translation>Fade (ක්‍රමිකව මැකීම)</translation>
     </message>
     <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Speed</source>
         <translation>වේගය</translation>
     </message>
@@ -2294,6 +2302,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidTimelineTrimNudge</name>
+    <message>
+        <source>In</source>
+        <translation type="unfinished">පිවිසුම (In)</translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished">පිටවීම (Out)</translation>
+    </message>
+</context>
+<context>
     <name>AndroidToolPage</name>
     <message>
         <source>Cancel</source>
@@ -2602,6 +2621,10 @@
         <translation>ක්ලිප් සම්බන්ධ කරන්න</translation>
     </message>
     <message>
+        <source>Enable or disable selected clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>තේරීම ඉවත් කරන්න</translation>
     </message>
@@ -2750,6 +2773,10 @@
         <translation>ක්ලිපය මකා දමන ලදී</translation>
     </message>
     <message>
+        <source>No space to place the clip there</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A clip can&apos;t completely cover another</source>
         <translation>ක්ලිප් එකකට තවත් ක්ලිප් එකක් සම්පූර්ණයෙන්ම ආවරණය කළ නොහැක</translation>
     </message>
@@ -2780,6 +2807,10 @@
     <message>
         <source>Split right</source>
         <translation>දකුණ වෙන් කරන්න</translation>
+    </message>
+    <message>
+        <source>Trim clip</source>
+        <translation type="unfinished">ක්ලිපය කප්පාදු කරන්න</translation>
     </message>
     <message>
         <source>Trim updated</source>
@@ -3641,6 +3672,22 @@
     <message>
         <source>Clip flip updated</source>
         <translation>ක්ලිප් පෙරළීම යාවත්කාලීන විය</translation>
+    </message>
+    <message>
+        <source>Enable clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips enabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips disabled</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pan changed</source>
@@ -7112,15 +7159,15 @@
 <context>
     <name>CrashReport</name>
     <message>
-        <source>Drift closed unexpectedly</source>
+        <source>Drift crashed the last time it ran</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift did not close properly</source>
+        <source>Drift did not close properly last time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift did not close properly last time. If it keeps happening, you can start in safe mode, which uses the default graphics backend and loads no add-ons for this session.</source>
+        <source>If it keeps happening, you can start in safe mode, which uses the default graphics backend and loads no add-ons for this session.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24270,6 +24317,14 @@ If playback stutters, try another.</source>
         <translation>සියලු ශ්‍රව්‍ය ට්‍රැක් වෙන් කරන්න</translation>
     </message>
     <message>
+        <source>Enable clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop looping</source>
         <translation type="unfinished"></translation>
     </message>
@@ -24437,6 +24492,10 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>TimelineFadeHandle</name>
+    <message>
+        <source>%1s</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Adjust fade</source>
         <translation>Fade සකසන්න</translation>
@@ -28225,7 +28284,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift closed unexpectedly.</source>
+        <source>Drift closed unexpectedly during your last session.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
