@@ -16,7 +16,9 @@ public final class PointerDevices {
     public static boolean hasMouse(Context context) {
         for (int id : InputDevice.getDeviceIds()) {
             InputDevice device = InputDevice.getDevice(id);
-            if (device == null || device.isVirtual())
+            // Samsung phones carry a built-in sec_touchpad (DeX "phone as touchpad") that reports
+            // SOURCE_MOUSE while disabled.
+            if (device == null || device.isVirtual() || !device.isEnabled())
                 continue;
             if ((device.getSources() & InputDevice.SOURCE_MOUSE) == InputDevice.SOURCE_MOUSE)
                 return true;
