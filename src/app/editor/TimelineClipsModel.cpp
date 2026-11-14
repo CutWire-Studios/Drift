@@ -40,9 +40,12 @@ QList<int> changedRoles(const TimelineClipsModel::Row &a, const TimelineClipsMod
     diff(a.hasEmbeddedAudio != b.hasEmbeddedAudio, TimelineClipsModel::HasEmbeddedAudioRole);
     diff(a.fadeIn != b.fadeIn, TimelineClipsModel::FadeInRole);
     diff(a.fadeOut != b.fadeOut, TimelineClipsModel::FadeOutRole);
-    diff(a.fadeCurve != b.fadeCurve, TimelineClipsModel::FadeCurveRole);
-    diff(a.fadeShape != b.fadeShape, TimelineClipsModel::FadeShapeRole);
-    diff(a.fadeHandles != b.fadeHandles, TimelineClipsModel::FadeHandlesRole);
+    diff(a.fadeInCurve != b.fadeInCurve, TimelineClipsModel::FadeInCurveRole);
+    diff(a.fadeInShape != b.fadeInShape, TimelineClipsModel::FadeInShapeRole);
+    diff(a.fadeInHandles != b.fadeInHandles, TimelineClipsModel::FadeInHandlesRole);
+    diff(a.fadeOutCurve != b.fadeOutCurve, TimelineClipsModel::FadeOutCurveRole);
+    diff(a.fadeOutShape != b.fadeOutShape, TimelineClipsModel::FadeOutShapeRole);
+    diff(a.fadeOutHandles != b.fadeOutHandles, TimelineClipsModel::FadeOutHandlesRole);
     diff(a.effects != b.effects, TimelineClipsModel::EffectsRole);
     diff(a.audioEffects != b.audioEffects, TimelineClipsModel::AudioEffectsRole);
     diff(a.volumeKeys != b.volumeKeys, TimelineClipsModel::VolumeKeysRole);
@@ -212,9 +215,12 @@ QVariant TimelineClipsModel::data(const QModelIndex &index, int role) const
     case HasEmbeddedAudioRole: return row.hasEmbeddedAudio;
     case FadeInRole: return row.fadeIn;
     case FadeOutRole: return row.fadeOut;
-    case FadeCurveRole: return row.fadeCurve;
-    case FadeShapeRole: return row.fadeShape;
-    case FadeHandlesRole: return row.fadeHandles;
+    case FadeInCurveRole: return row.fadeInCurve;
+    case FadeInShapeRole: return row.fadeInShape;
+    case FadeInHandlesRole: return row.fadeInHandles;
+    case FadeOutCurveRole: return row.fadeOutCurve;
+    case FadeOutShapeRole: return row.fadeOutShape;
+    case FadeOutHandlesRole: return row.fadeOutHandles;
     case EffectsRole: return row.effects;
     case AudioEffectsRole: return row.audioEffects;
     case VolumeKeysRole: return row.volumeKeys;
@@ -249,9 +255,12 @@ QHash<int, QByteArray> TimelineClipsModel::roleNames() const
         {HasEmbeddedAudioRole, "hasEmbeddedAudio"},
         {FadeInRole, "fadeIn"},
         {FadeOutRole, "fadeOut"},
-        {FadeCurveRole, "fadeCurve"},
-        {FadeShapeRole, "fadeShape"},
-        {FadeHandlesRole, "fadeHandles"},
+        {FadeInCurveRole, "fadeInCurve"},
+        {FadeInShapeRole, "fadeInShape"},
+        {FadeInHandlesRole, "fadeInHandles"},
+        {FadeOutCurveRole, "fadeOutCurve"},
+        {FadeOutShapeRole, "fadeOutShape"},
+        {FadeOutHandlesRole, "fadeOutHandles"},
         {EffectsRole, "effects"},
         {AudioEffectsRole, "audioEffects"},
         {VolumeKeysRole, "volumeKeys"},

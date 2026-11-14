@@ -3976,6 +3976,17 @@
       "borderWidth": "$metrics.borderWidth",
       "radius": "$metrics.radius.xs"
     },
+    "androidAnimationPage": {
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "tileBackground": "$semantic.panel.secondary.background",
+      "tileBackgroundSelected": "$semantic.panel.accent",
+      "tileBorder": "$semantic.panel.border",
+      "tileBorderSelected": "$semantic.primary",
+      "tileForegroundSelected": "$semantic.primary",
+      "tileRadius": "$metrics.radius.md",
+      "tileBorderWidth": "$metrics.borderWidth"
+    },
     "androidFadeSliderRow": {
       "foregroundMuted": "$semantic.mutedForeground"
     },

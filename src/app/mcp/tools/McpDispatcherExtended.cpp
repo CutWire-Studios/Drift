@@ -1945,24 +1945,30 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
+        const QString edge = args.value(QStringLiteral("edge")).toString(QStringLiteral("both"));
+        if (edge != QLatin1String("in") && edge != QLatin1String("out") && edge != QLatin1String("both"))
+            return err("bad_args", QStringLiteral("edge must be in, out or both"));
         if (args.contains(QStringLiteral("points"))) {
             const QJsonArray pointArray = args.value(QStringLiteral("points")).toArray();
             if (pointArray.size() < 2)
                 return err("bad_args", QStringLiteral("points needs at least two entries"));
             if (m_controller->curves()->fadeActive())
                 m_controller->curves()->endFade();
-            m_controller->curves()->beginFade(ref.track, ref.clip);
-            if (!m_controller->curves()->fadeActive())
-                return err("bad_args", QStringLiteral("Clip cannot use a custom fade curve"));
-            m_controller->curves()->setFadePoints(fadeCurvePointsFromJson(pointArray));
-            m_controller->curves()->applyFade();
-            m_controller->curves()->endFade();
+            for (const QString &one : edge == QLatin1String("both") ? QStringList{QStringLiteral("in"), QStringLiteral("out")}
+                                                                   : QStringList{edge}) {
+                m_controller->curves()->beginFade(ref.track, ref.clip, one);
+                if (!m_controller->curves()->fadeActive())
+                    return err("bad_args", QStringLiteral("Clip cannot use a custom fade curve"));
+                m_controller->curves()->setFadePoints(fadeCurvePointsFromJson(pointArray));
+                m_controller->curves()->applyFade();
+                m_controller->curves()->endFade();
+            }
             return ok(clipFeedback(ref));
         }
         const QString curve = args.value(QStringLiteral("curve")).toString().trimmed();
         if (curve.isEmpty())
             return err("bad_args", QStringLiteral("curve or points required"));
-        m_controller->setClipFadeCurve(ref.track, ref.clip, curve);
+        m_controller->setClipFadeCurve(ref.track, ref.clip, edge, curve);
         return ok(clipFeedback(ref, {{QStringLiteral("curve"), curve}}));
     }
 
@@ -2037,6 +2043,23 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             patch.insert(QStringLiteral("curve"), args.value(QStringLiteral("curve")).toString());
         if (patch.isEmpty())
             return err("bad_args", QStringLiteral("At least one animation field required"));
+        if (patch.value(QStringLiteral("kind")).toString() == QLatin1String("fade")) {
+            m_controller->applyClipAnimationPreset(ref.track, ref.clip, which, QStringLiteral("fade"));
+            if (patch.contains(QStringLiteral("duration"))) {
+                const QVariantMap clip = m_controller->clipAt(ref.track, ref.clip);
+                const double seconds = patch.value(QStringLiteral("duration")).toDouble();
+                const bool isIn = which == QLatin1String("animIn");
+                m_controller->setClipFade(ref.track, ref.clip,
+                                          isIn ? seconds : clip.value(QStringLiteral("fadeIn")).toDouble(),
+                                          isIn ? clip.value(QStringLiteral("fadeOut")).toDouble() : seconds);
+            }
+            if (patch.contains(QStringLiteral("curve")))
+                m_controller->setClipFadeCurve(ref.track, ref.clip,
+                                               which == QLatin1String("animIn") ? QStringLiteral("in")
+                                                                                : QStringLiteral("out"),
+                                               patch.value(QStringLiteral("curve")).toString());
+            return ok(clipFeedback(ref, {{QStringLiteral("which"), which}}));
+        }
         m_controller->setClipAnimation(ref.track, ref.clip, which, patch);
         return ok(clipFeedback(ref, {{QStringLiteral("which"), which}}));
     }
@@ -3093,7 +3116,10 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             return clipRefError(args);
         if (m_controller->curves()->fadeActive())
             m_controller->curves()->endFade();
-        m_controller->curves()->beginFade(ref.track, ref.clip);
+        const QString edge = args.value(QStringLiteral("edge")).toString(QStringLiteral("in"));
+        if (edge != QLatin1String("in") && edge != QLatin1String("out"))
+            return err("bad_args", QStringLiteral("edge must be in or out"));
+        m_controller->curves()->beginFade(ref.track, ref.clip, edge);
         if (!m_controller->curves()->fadeActive())
             return err("bad_args", QStringLiteral("Clip cannot use a custom fade curve"));
         const QJsonArray points = fadeCurvePointsToJson(m_controller->curves()->fadePoints());

@@ -103,15 +103,15 @@ AndroidBottomSheet {
                 CurveField {
                     width: parent.width
                     domain: "fade"
-                    curve: root.clipData.fadeCurve || "smooth"
-                    handles: root.clipData.fadeHandles || []
+                    curve: root.clipData.fadeInCurve || "smooth"
+                    handles: root.clipData.fadeInHandles || []
                     onCurveChosen: (curve, handles) => {
                         Haptics.select()
                         EditorState.setClipFadeCurve(EditorState.selectedTrack,
-                                                     EditorState.selectedClip, curve, handles)
+                                                     EditorState.selectedClip, "both", curve, handles)
                         if (curve === "custom")
                             root.hostWindow.openFadeCurve(EditorState.selectedTrack,
-                                                          EditorState.selectedClip)
+                                                          EditorState.selectedClip, "in")
                     }
                 }
             }

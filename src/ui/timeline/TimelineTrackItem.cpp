@@ -1354,8 +1354,9 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     }
 
     // --- fades -------------------------------------------------------------------------------
-    const auto gain = [&row](double t) {
-        return drift::shapedProgress(t, row.fadeCurveTyped, row.fadeShapeTyped);
+    const auto gain = [&row](double t, bool out) {
+        return out ? drift::shapedProgress(t, row.fadeOutCurveTyped, row.fadeOutShapeTyped)
+                   : drift::shapedProgress(t, row.fadeInCurveTyped, row.fadeInShapeTyped);
     };
     const QColor fadeFill(0, 0, 0, 97);
     const QColor fadeStroke(255, 255, 255, 230);
@@ -1375,7 +1376,7 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
         curve.reserve(steps + 1);
         for (int i = 0; i <= steps; ++i) {
             const double t = double(i) / steps;
-            const double g = gain(out ? 1.0 - t : t);
+            const double g = gain(out ? 1.0 - t : t, out);
             const double x = left + t * w;
             const double y = rect.top() + rect.height() * (1.0 - g);
             curve.append({x, std::clamp(y, rect.top() + inset(x), rect.bottom() - inset(x))});

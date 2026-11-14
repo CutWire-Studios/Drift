@@ -886,13 +886,25 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
     for (int i = 0; i < audioHost.audioEffects.size(); ++i)
         audioEffects.append(audioEffectToMap(audioHost.audioEffects.at(i), i, clip.timelineStart));
 
-    QVariantList fadeShape;
-    for (const QPointF &pt : clip.fadeShape.points()) {
-        fadeShape.append(QVariantMap{
-            {QStringLiteral("t"), pt.x()},
-            {QStringLiteral("g"), pt.y()},
-        });
-    }
+    const auto fadeShapePoints = [](const drift::FadeShape &shape) {
+        QVariantList points;
+        for (const QPointF &pt : shape.points()) {
+            points.append(QVariantMap{
+                {QStringLiteral("t"), pt.x()},
+                {QStringLiteral("g"), pt.y()},
+            });
+        }
+        return points;
+    };
+    const auto animToMap = [](const drift::ClipAnimation &anim) {
+        return QVariantMap{
+            {QStringLiteral("kind"), anim.kindId.isEmpty() ? QStringLiteral("none") : anim.kindId},
+            {QStringLiteral("parameters"), QVariant::fromValue(anim.parameters)},
+            {QStringLiteral("duration"), drift::usToSeconds(anim.durationUs)},
+            {QStringLiteral("curve"), drift::fadeCurveToString(anim.curve)},
+            {QStringLiteral("handles"), handlesToVariant(anim.shape)},
+        };
+    };
 
     // Full source length backs the filmstrip's timestamp mapping (the strip is sampled across
     // the whole source, so tiles need the total to place srcIn/srcOut within it).
@@ -981,27 +993,16 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("audioStreamIndex"), clip.audioStreamIndex},
         {QStringLiteral("pan"), clip.pan},
         {QStringLiteral("volume"), clip.volume.isEmpty() ? 1.0 : clip.volume.evaluateAt(0)},
-        {QStringLiteral("fadeIn"), drift::usToSeconds(edgeHandleUs(clip, true))},
-        {QStringLiteral("fadeOut"), drift::usToSeconds(edgeHandleUs(clip, false))},
-        {QStringLiteral("fadeCurve"), drift::fadeCurveToString(clip.fadeCurve)},
-        {QStringLiteral("fadeShape"), fadeShape},
-        {QStringLiteral("fadeHandles"),
-         QVariantList{clip.fadeShape.handle1().x(), clip.fadeShape.handle1().y(),
-                      clip.fadeShape.handle2().x(), clip.fadeShape.handle2().y()}},
-        {QStringLiteral("animIn"), QVariantMap{
-             {QStringLiteral("kind"), drift::clipAnimKindToString(clip.animIn.kind)},
-             {QStringLiteral("duration"), drift::usToSeconds(clip.animIn.durationUs)},
-             {QStringLiteral("ease"), drift::clipAnimEaseToString(clip.animIn.ease)},
-             {QStringLiteral("curve"), drift::fadeCurveToString(clip.animIn.curve)},
-             {QStringLiteral("handles"), handlesToVariant(clip.animIn.shape)},
-         }},
-        {QStringLiteral("animOut"), QVariantMap{
-             {QStringLiteral("kind"), drift::clipAnimKindToString(clip.animOut.kind)},
-             {QStringLiteral("duration"), drift::usToSeconds(clip.animOut.durationUs)},
-             {QStringLiteral("ease"), drift::clipAnimEaseToString(clip.animOut.ease)},
-             {QStringLiteral("curve"), drift::fadeCurveToString(clip.animOut.curve)},
-             {QStringLiteral("handles"), handlesToVariant(clip.animOut.shape)},
-         }},
+        {QStringLiteral("fadeIn"), drift::usToSeconds(clip.fadeInUs)},
+        {QStringLiteral("fadeOut"), drift::usToSeconds(clip.fadeOutUs)},
+        {QStringLiteral("fadeInCurve"), drift::fadeCurveToString(clip.fadeInCurve)},
+        {QStringLiteral("fadeInShape"), fadeShapePoints(clip.fadeInShape)},
+        {QStringLiteral("fadeInHandles"), handlesToVariant(clip.fadeInShape)},
+        {QStringLiteral("fadeOutCurve"), drift::fadeCurveToString(clip.fadeOutCurve)},
+        {QStringLiteral("fadeOutShape"), fadeShapePoints(clip.fadeOutShape)},
+        {QStringLiteral("fadeOutHandles"), handlesToVariant(clip.fadeOutShape)},
+        {QStringLiteral("animIn"), animToMap(clip.animIn)},
+        {QStringLiteral("animOut"), animToMap(clip.animOut)},
         {QStringLiteral("effects"), effects},
         {QStringLiteral("audioEffects"), audioEffects},
         {QStringLiteral("keyframes"), keyframesToMap(clip)},
@@ -1075,27 +1076,36 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
     // audio stream. An unprobed source gets the benefit of the doubt; its waveform stays empty.
     row.hasEmbeddedAudio = clip.type == drift::ClipType::Video && !clip.suppressEmbeddedAudio
         && (!sourceAsset || !sourceAsset->hasAudioKnown || sourceAsset->hasAudio);
-    row.fadeIn = drift::usToSeconds(edgeHandleUs(clip, true));
-    row.fadeOut = drift::usToSeconds(edgeHandleUs(clip, false));
-    row.fadeCurve = drift::fadeCurveToString(clip.fadeCurve);
+    row.fadeIn = drift::usToSeconds(clip.fadeInUs);
+    row.fadeOut = drift::usToSeconds(clip.fadeOutUs);
+    row.fadeInCurve = drift::fadeCurveToString(clip.fadeInCurve);
+    row.fadeOutCurve = drift::fadeCurveToString(clip.fadeOutCurve);
     // Only a Custom curve is drawn from these points, and the strip keys its fade canvases on
     // the list — so it has to be present, not populated.
-    if (clip.fadeCurve == drift::FadeCurve::Custom) {
-        for (const QPointF &pt : clip.fadeShape.points()) {
-            row.fadeShape.append(QVariantMap{
-                {QStringLiteral("t"), pt.x()},
-                {QStringLiteral("g"), pt.y()},
-            });
+    const auto customPoints = [](drift::FadeCurve curve, const drift::FadeShape &shape) {
+        QVariantList points;
+        if (curve == drift::FadeCurve::Custom) {
+            for (const QPointF &pt : shape.points()) {
+                points.append(QVariantMap{
+                    {QStringLiteral("t"), pt.x()},
+                    {QStringLiteral("g"), pt.y()},
+                });
+            }
         }
-    }
-    row.fadeHandles = QVariantList{clip.fadeShape.handle1().x(), clip.fadeShape.handle1().y(),
-                                   clip.fadeShape.handle2().x(), clip.fadeShape.handle2().y()};
+        return points;
+    };
+    row.fadeInShape = customPoints(clip.fadeInCurve, clip.fadeInShape);
+    row.fadeOutShape = customPoints(clip.fadeOutCurve, clip.fadeOutShape);
+    row.fadeInHandles = handlesToVariant(clip.fadeInShape);
+    row.fadeOutHandles = handlesToVariant(clip.fadeOutShape);
     for (const drift::Effect &effect : videoHost.effects)
         row.effects.append(effectBadgeToMap(effect));
     for (const drift::Effect &effect : audioHost.audioEffects)
         row.audioEffects.append(audioEffectBadgeToMap(effect));
-    row.fadeCurveTyped = clip.fadeCurve;
-    row.fadeShapeTyped = clip.fadeShape;
+    row.fadeInCurveTyped = clip.fadeInCurve;
+    row.fadeInShapeTyped = clip.fadeInShape;
+    row.fadeOutCurveTyped = clip.fadeOutCurve;
+    row.fadeOutShapeTyped = clip.fadeOutShape;
     QStringList effectNames;
     for (const QVariantList *list : {&row.effects, &row.audioEffects}) {
         for (const QVariant &value : *list) {

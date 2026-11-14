@@ -767,8 +767,8 @@ ApplicationWindow {
         speedCurveWindowLoader.ensure().openFor(track, clip)
     }
 
-    function openFadeCurve(track, clip) {
-        fadeCurveWindowLoader.ensure().openFor(track, clip)
+    function openFadeCurve(track, clip, edge, target) {
+        fadeCurveWindowLoader.ensure().openFor(track, clip, edge || "in", target || "fade")
     }
 
     function openTransitionCurve(track, transitionId) {

@@ -21,12 +21,16 @@ class CurveEditorController : public QObject
     // Cubic handles for FadeCurve::Bezier, as {c1x, c1y, c2x, c2y}. Separate from the point list
     // because the two modes edit different shapes, not two views of one.
     Q_PROPERTY(QVariantList fadeHandles READ fadeHandles NOTIFY fadeChanged)
+    // What the session edits: target "fade" (the edge's opacity/volume ramp) or "animation" (the
+    // edge's motion slot), on edge "in" or "out". Empty-session values are the defaults.
+    Q_PROPERTY(QString fadeTarget READ fadeTarget NOTIFY fadeSessionChanged)
+    Q_PROPERTY(QString fadeEdge READ fadeEdge NOTIFY fadeSessionChanged)
     // "points" (polyline) or "bezier" (cubic). The editor opens on whichever the clip already
     // uses, so reopening Custom does not silently convert a bezier fade into a polyline.
     Q_PROPERTY(QString fadeMode READ fadeMode NOTIFY fadeChanged)
 
     // The same editor, scoped to a transition's progress curve rather than a clip's fade. Kept
-    // separate from the clip session above because that one also drives animIn/animOut and the
+    // separate from the clip session above because that one also drives the
     // linked-partner sync, none of which a transition has.
     Q_PROPERTY(bool transitionActive READ transitionActive NOTIFY transitionSessionChanged)
     Q_PROPERTY(QVariantList transitionPoints READ transitionPoints NOTIFY transitionChanged)
@@ -42,7 +46,11 @@ public:
     QString fadeClipName() const { return m_fadeClipName; }
     QVariantList fadeHandles() const;
     QString fadeMode() const;
-    Q_INVOKABLE void beginFade(int trackIndex, int clipIndex);
+    QString fadeTarget() const;
+    QString fadeEdge() const;
+    // edge: "in" | "out". target: "fade" | "animation" (visual clips only).
+    Q_INVOKABLE void beginFade(int trackIndex, int clipIndex, const QString &edge,
+                               const QString &target = QStringLiteral("fade"));
     Q_INVOKABLE void endFade();
     Q_INVOKABLE void setFadePoints(const QVariantList &points);
     Q_INVOKABLE void setFadeHandles(double c1x, double c1y, double c2x, double c2y);
@@ -73,6 +81,8 @@ private:
     AppController *m_app = nullptr;
 
     bool m_fadeActive = false;
+    bool m_fadeIn = true;
+    bool m_fadeAnim = false;
     int m_fadeTrack = -1;
     int m_fadeClipIndex = -1;
     QString m_fadeClipId;

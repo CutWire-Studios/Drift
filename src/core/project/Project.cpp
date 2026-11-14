@@ -309,8 +309,10 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("stabilizeRestRot"), clip.stabilizeRestRot},
         {QStringLiteral("fadeInUs"), static_cast<double>(clip.fadeInUs)},
         {QStringLiteral("fadeOutUs"), static_cast<double>(clip.fadeOutUs)},
-        {QStringLiteral("fadeCurve"), fadeCurveToString(clip.fadeCurve)},
-        {QStringLiteral("fadeShape"), clip.fadeShape.toJson()},
+        {QStringLiteral("fadeInCurve"), fadeCurveToString(clip.fadeInCurve)},
+        {QStringLiteral("fadeInShape"), clip.fadeInShape.toJson()},
+        {QStringLiteral("fadeOutCurve"), fadeCurveToString(clip.fadeOutCurve)},
+        {QStringLiteral("fadeOutShape"), clip.fadeOutShape.toJson()},
         {QStringLiteral("animIn"), clipAnimationToJson(clip.animIn)},
         {QStringLiteral("animOut"), clipAnimationToJson(clip.animOut)},
         {QStringLiteral("timelineStartUs"), static_cast<double>(clip.timelineStart)},
@@ -417,7 +419,32 @@ void applyLegacyFractionalLayout(Clip &clip, const KeyframeTrack<double> &posX,
     }
 }
 
-Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH = 1080)
+// Before version 30 an animation of kind "fade" owned the edge's opacity ramp and every motion
+// kind also faded opacity in while it ran. Opacity and volume now belong to the fade layer alone,
+// so those ramps move there and the animation slot keeps only transform motion.
+void migrateClipFadeLayers(Clip &clip, int version)
+{
+    const bool visual = clip.type != ClipType::Audio && clip.type != ClipType::Subtitle;
+    const auto edge = [&](ClipAnimation &anim, TimeUs &fadeUs, FadeCurve &curve, FadeShape &shape) {
+        if (anim.kindId == QLatin1String("fade")) {
+            if (anim.durationUs > 0) {
+                fadeUs = anim.durationUs;
+                curve = anim.curve;
+                shape = anim.shape;
+            }
+            anim = ClipAnimation{};
+        } else if (version < 30 && visual && isBuiltinClipAnimation(anim.kindId)
+                   && anim.durationUs > 0 && fadeUs == 0) {
+            fadeUs = anim.kindId == QLatin1String("bounce") ? anim.durationUs / 4 : anim.durationUs;
+            curve = anim.curve;
+            shape = anim.shape;
+        }
+    };
+    edge(clip.animIn, clip.fadeInUs, clip.fadeInCurve, clip.fadeInShape);
+    edge(clip.animOut, clip.fadeOutUs, clip.fadeOutCurve, clip.fadeOutShape);
+}
+
+Clip clipFromJsonV2(const QJsonObject &object, int version, int canvasW = 1920, int canvasH = 1080)
 {
     Clip clip;
     clip.id = object.value(QStringLiteral("id")).toString(QUuid::createUuid().toString(QUuid::WithoutBraces));
@@ -491,10 +518,23 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.fadeOutUs = static_cast<TimeUs>(object.value(QStringLiteral("fadeOutUs")).toDouble());
     clip.audioFadeInUs = static_cast<TimeUs>(object.value(QStringLiteral("audioFadeInUs")).toDouble());
     clip.audioFadeOutUs = static_cast<TimeUs>(object.value(QStringLiteral("audioFadeOutUs")).toDouble());
-    clip.fadeCurve = fadeCurveFromString(object.value(QStringLiteral("fadeCurve")).toString());
-    clip.fadeShape = FadeShape::fromJson(object.value(QStringLiteral("fadeShape")));
+    const FadeCurve legacyCurve = fadeCurveFromString(object.value(QStringLiteral("fadeCurve")).toString());
+    const FadeShape legacyShape = FadeShape::fromJson(object.value(QStringLiteral("fadeShape")));
+    clip.fadeInCurve = object.contains(QStringLiteral("fadeInCurve"))
+        ? fadeCurveFromString(object.value(QStringLiteral("fadeInCurve")).toString())
+        : legacyCurve;
+    clip.fadeInShape = object.contains(QStringLiteral("fadeInShape"))
+        ? FadeShape::fromJson(object.value(QStringLiteral("fadeInShape")))
+        : legacyShape;
+    clip.fadeOutCurve = object.contains(QStringLiteral("fadeOutCurve"))
+        ? fadeCurveFromString(object.value(QStringLiteral("fadeOutCurve")).toString())
+        : legacyCurve;
+    clip.fadeOutShape = object.contains(QStringLiteral("fadeOutShape"))
+        ? FadeShape::fromJson(object.value(QStringLiteral("fadeOutShape")))
+        : legacyShape;
     clip.animIn = clipAnimationFromJson(object.value(QStringLiteral("animIn")).toObject());
     clip.animOut = clipAnimationFromJson(object.value(QStringLiteral("animOut")).toObject());
+    migrateClipFadeLayers(clip, version);
     clip.timelineStart = static_cast<TimeUs>(object.value(QStringLiteral("timelineStartUs")).toDouble());
     clip.timelineDuration = static_cast<TimeUs>(object.value(QStringLiteral("timelineDurationUs")).toDouble());
     clip.srcIn = static_cast<TimeUs>(object.value(QStringLiteral("srcInUs")).toDouble());
@@ -1402,7 +1442,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             for (const QJsonValue &clipValue : clipsArray) {
                 const QJsonObject clipObject = clipValue.toObject();
                 if (version >= 2)
-                    track.clips.append(clipFromJsonV2(clipObject, project.width(), project.height()));
+                    track.clips.append(clipFromJsonV2(clipObject, version, project.width(), project.height()));
                 else
                     track.clips.append(clipFromJsonV1(clipObject, project.m_assetOrder));
             }
@@ -1520,6 +1560,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
     // Version 28 added the Sequence mask shape. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
+    // Version 30 split edge fades from clip animations: fade is per-edge curve and owns opacity and
+    // volume, animations are transform-only with a string kind id. Old files migrate on read, so
+    // an older build would drop the per-edge curves and read the moved fades as one shared curve.
     // Version 29 added disabled clips. Nothing to migrate; the bump is a gate, as for versions 6
     // and 9. An older build would play a disabled clip and could export it.
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for

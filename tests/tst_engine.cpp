@@ -12398,8 +12398,8 @@ void EngineTest::clipBodyAnimationFadeRampsOpacity()
     clip.timelineDuration = drift::secondsToUs(2.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
     clip.shapeStyle.setSolidFill(Qt::white);
-    clip.animIn = {drift::ClipAnimKind::Fade, drift::secondsToUs(1.0), drift::ClipAnimEase::Linear,
-                   drift::FadeCurve::Linear};
+    clip.fadeInUs = drift::secondsToUs(1.0);
+    clip.fadeInCurve = drift::FadeCurve::Linear;
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -12442,8 +12442,8 @@ void EngineTest::vectorLayerRasterFollowsItsDrawnScale()
     const QSize restSize = rest.items.at(0).layer.vector->size();
 
     // ZoomOut enters at 1.4x, drawn by stretching the layout-sized raster; the raster follows.
-    project.tracks()[0].clips[0].animIn = {drift::ClipAnimKind::ZoomOut, drift::secondsToUs(1.0),
-                                           drift::ClipAnimEase::Linear, drift::FadeCurve::Linear};
+    project.tracks()[0].clips[0].animIn = {QStringLiteral("zoomOut"), {}, drift::secondsToUs(1.0),
+                                           drift::FadeCurve::Linear, {}};
     GpuScene zoomed;
     QVERIFY(compositor.buildSceneAt(0, {}, &zoomed));
     const GpuLayer &layer = zoomed.items.at(0).layer;

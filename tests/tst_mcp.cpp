@@ -300,6 +300,7 @@ private slots:
     void sceneCameraTools();
     void lottieBatchUndoesAsOneStep();
     void setTextStyleAcceptsAnimation();
+    void setFadeCurveTakesAnEdge();
     void textKeyframesThroughSetKeyframe();
     void importMediaTakesLottieBundles();
     void reviewTrackIsLeftOutOfExport();
@@ -4625,7 +4626,8 @@ void McpTest::inspectDetailRowIsCompact()
     QVERIFY(!text.contains(QStringLiteral("keyframes")));
     QVERIFY(!text.contains(QStringLiteral("animated")));
     QVERIFY(!text.contains(QStringLiteral("reverse")));
-    QVERIFY(!text.contains(QStringLiteral("fadeShape")));
+    QVERIFY(!text.contains(QStringLiteral("fadeInShape")));
+    QVERIFY(!text.contains(QStringLiteral("fadeOutShape")));
     const QJsonObject transform = text.value(QStringLiteral("transform")).toObject();
     for (const char *key : {"x", "y", "w", "h", "rotation", "opacity"})
         QVERIFY2(transform.contains(QLatin1String(key)), key);
@@ -8224,6 +8226,44 @@ void McpTest::lottieBatchUndoesAsOneStep()
 
 // The style schema now spells out every key setTextStyle accepts, so an animation patch is
 // applied rather than listed under ignored.
+void McpTest::setFadeCurveTakesAnEdge()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    const QString id = state.mcp()->compactClip(track, clip).value(QStringLiteral("id")).toString();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto clipRef = [&](QJsonObject o) {
+        o.insert(QStringLiteral("clip"), id);
+        return o;
+    };
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_fade"), clipRef({{QStringLiteral("in"), 0.5}, {QStringLiteral("out"), 0.5}}))
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_fade_curve"),
+                                clipRef({{QStringLiteral("curve"), QStringLiteral("linear")}, {QStringLiteral("edge"), QStringLiteral("out")}}))
+                .value(QStringLiteral("ok")).toBool());
+    const drift::Clip &c = state.project()->tracks().at(track).clips.at(clip);
+    QCOMPARE(c.fadeOutCurve, drift::FadeCurve::Linear);
+    QCOMPARE(c.fadeInCurve, drift::FadeCurve::Smooth);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_fade_curve"), clipRef({{QStringLiteral("curve"), QStringLiteral("equalPower")}}))
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.project()->tracks().at(track).clips.at(clip).fadeInCurve, drift::FadeCurve::EqualPower);
+    QCOMPARE(state.project()->tracks().at(track).clips.at(clip).fadeOutCurve, drift::FadeCurve::EqualPower);
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("set_fade_curve"),
+                                 clipRef({{QStringLiteral("curve"), QStringLiteral("linear")}, {QStringLiteral("edge"), QStringLiteral("sideways")}}))
+                 .value(QStringLiteral("ok")).toBool());
+
+    // kind "fade" on set_animation lands on the fade layer, not the animation slot.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_animation"),
+                                clipRef({{QStringLiteral("which"), QStringLiteral("animIn")}, {QStringLiteral("kind"), QStringLiteral("fade")},
+                                         {QStringLiteral("duration"), 1.0}}))
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.project()->tracks().at(track).clips.at(clip).animIn.isNone());
+    QCOMPARE(state.project()->tracks().at(track).clips.at(clip).fadeInUs, drift::secondsToUs(1.0));
+}
+
 void McpTest::setTextStyleAcceptsAnimation()
 {
     AssetLibrary library;

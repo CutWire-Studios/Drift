@@ -48,11 +48,10 @@ QTransform transformLayerMatrix(const Clip &clip, TimeUs timelineUs, const QSize
     double alpha = qBound(0.0, valueAt(clip.opacity, relative, 1.0), 1.0)
                    * clip.fadeMultiplier(timelineUs);
 
-    if (clip.animIn.kind != ClipAnimKind::None || clip.animOut.kind != ClipAnimKind::None) {
+    if (!clip.animIn.isNone() || !clip.animOut.isNone()) {
         const ClipAnimSample body =
             evaluateClipAnimation(clip.timelineStart, clip.timelineDuration, clip.animIn,
                                   clip.animOut, timelineUs, box.width(), box.height());
-        alpha *= body.opacity;
         box.translate(body.dx, body.dy);
         if (!qFuzzyCompare(body.scale, 1.0)) {
             const QPointF centre = box.center();

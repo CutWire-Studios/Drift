@@ -10,7 +10,26 @@ CurveEditorController::CurveEditorController(AppController *app, QObject *parent
 {
 }
 
-void CurveEditorController::beginFade(int trackIndex, int clipIndex)
+namespace {
+
+drift::ClipAnimation &edgeAnim(drift::Clip &clip, bool in) { return in ? clip.animIn : clip.animOut; }
+// anim selects the edge's animation slot instead of its fade; both carry a curve and a shape.
+drift::FadeCurve &edgeCurve(drift::Clip &clip, bool in, bool anim)
+{
+    if (anim)
+        return edgeAnim(clip, in).curve;
+    return in ? clip.fadeInCurve : clip.fadeOutCurve;
+}
+drift::FadeShape &edgeShape(drift::Clip &clip, bool in, bool anim)
+{
+    if (anim)
+        return edgeAnim(clip, in).shape;
+    return in ? clip.fadeInShape : clip.fadeOutShape;
+}
+
+} // namespace
+
+void CurveEditorController::beginFade(int trackIndex, int clipIndex, const QString &edge, const QString &target)
 {
     if (trackIndex < 0 || trackIndex >= m_app->m_project.tracks().size())
         return;
@@ -18,34 +37,43 @@ void CurveEditorController::beginFade(int trackIndex, int clipIndex)
     if (clipIndex < 0 || clipIndex >= track.clips.size())
         return;
 
+    const bool anim = target == QLatin1String("animation");
+    if (anim && (track.clips.at(clipIndex).type == drift::ClipType::Audio
+                 || track.clips.at(clipIndex).type == drift::ClipType::Subtitle))
+        return;
+
     if (m_fadeActive)
         endFade();
 
     drift::Clip &clip = m_app->m_project.tracks()[trackIndex].clips[clipIndex];
+    m_fadeIn = edge != QLatin1String("out");
+    m_fadeAnim = anim;
+    const drift::FadeCurve current = edgeCurve(clip, m_fadeIn, m_fadeAnim);
+    const drift::FadeShape currentShape = edgeShape(clip, m_fadeIn, m_fadeAnim);
     m_fadeTrack = trackIndex;
     m_fadeClipIndex = clipIndex;
     m_fadeClipId = clip.id;
     m_fadeClipName = clip.name;
-    m_fadeBefore = clip.fadeCurve;
-    m_fadeShapeBefore = clip.fadeShape;
+    m_fadeBefore = current;
+    m_fadeShapeBefore = currentShape;
     m_fadeApplied = false;
 
-    m_fadeMode = clip.fadeCurve == drift::FadeCurve::Bezier ? drift::FadeCurve::Bezier
-                                                                 : drift::FadeCurve::Custom;
-    if (clip.fadeCurve == drift::FadeCurve::Bezier)
-        m_fadeShape = clip.fadeShape.hasHandles() ? clip.fadeShape
-                                                  : drift::FadeShape::bezierPreset(QString());
-    else if (clip.fadeCurve == drift::FadeCurve::Custom && !clip.fadeShape.isEmpty())
-        m_fadeShape = clip.fadeShape;
-    else if (clip.fadeCurve == drift::FadeCurve::Linear)
+    m_fadeMode = current == drift::FadeCurve::Bezier ? drift::FadeCurve::Bezier
+                                                     : drift::FadeCurve::Custom;
+    if (current == drift::FadeCurve::Bezier)
+        m_fadeShape = currentShape.hasHandles() ? currentShape
+                                                : drift::FadeShape::bezierPreset(QString());
+    else if (current == drift::FadeCurve::Custom && !currentShape.isEmpty())
+        m_fadeShape = currentShape;
+    else if (current == drift::FadeCurve::Linear)
         m_fadeShape = drift::FadeShape::linearPreset();
-    else if (clip.fadeCurve == drift::FadeCurve::EqualPower)
+    else if (current == drift::FadeCurve::EqualPower)
         m_fadeShape = drift::FadeShape::equalPowerPreset();
     else
         m_fadeShape = drift::FadeShape::smoothPreset();
 
-    clip.fadeCurve = m_fadeMode;
-    clip.fadeShape = m_fadeShape;
+    edgeCurve(clip, m_fadeIn, m_fadeAnim) = m_fadeMode;
+    edgeShape(clip, m_fadeIn, m_fadeAnim) = m_fadeShape;
     drift::appdetail::syncLinkedPartnersFrom(m_app->m_project, clip);
     m_fadeActive = true;
     emit fadeSessionChanged();
@@ -64,14 +92,15 @@ void CurveEditorController::endFade()
         if (m_fadeClipIndex >= 0 && m_fadeClipIndex < track.clips.size()
             && track.clips.at(m_fadeClipIndex).id == m_fadeClipId) {
             drift::Clip &clip = track.clips[m_fadeClipIndex];
-            clip.fadeCurve = m_fadeBefore;
-            clip.fadeShape = m_fadeShapeBefore;
+            edgeCurve(clip, m_fadeIn, m_fadeAnim) = m_fadeBefore;
+            edgeShape(clip, m_fadeIn, m_fadeAnim) = m_fadeShapeBefore;
             drift::appdetail::syncLinkedPartnersFrom(m_app->m_project, clip);
             m_app->emitPreviewFrame();
         }
     }
 
     m_fadeActive = false;
+    m_fadeAnim = false;
     m_fadeTrack = -1;
     m_fadeClipIndex = -1;
     m_fadeClipId.clear();
@@ -117,16 +146,8 @@ void CurveEditorController::setFadePoints(const QVariantList &points)
     }
     m_fadeShape.setPoints(parsed);
     m_fadeMode = drift::FadeCurve::Custom;
-    clip.fadeCurve = drift::FadeCurve::Custom;
-    clip.fadeShape = m_fadeShape;
-    if (clip.animIn.kind == drift::ClipAnimKind::Fade || clip.animIn.curve == drift::FadeCurve::Custom) {
-        clip.animIn.curve = drift::FadeCurve::Custom;
-        clip.animIn.shape = m_fadeShape;
-    }
-    if (clip.animOut.kind == drift::ClipAnimKind::Fade || clip.animOut.curve == drift::FadeCurve::Custom) {
-        clip.animOut.curve = drift::FadeCurve::Custom;
-        clip.animOut.shape = m_fadeShape;
-    }
+    edgeCurve(clip, m_fadeIn, m_fadeAnim) = drift::FadeCurve::Custom;
+    edgeShape(clip, m_fadeIn, m_fadeAnim) = m_fadeShape;
     drift::appdetail::syncLinkedPartnersFrom(m_app->m_project, clip);
     emit fadeChanged();
     m_app->emitPreviewFrame();
@@ -342,6 +363,16 @@ void CurveEditorController::applyTransition()
     endTransition();
 }
 
+QString CurveEditorController::fadeTarget() const
+{
+    return m_fadeAnim ? QStringLiteral("animation") : QStringLiteral("fade");
+}
+
+QString CurveEditorController::fadeEdge() const
+{
+    return m_fadeIn ? QStringLiteral("in") : QStringLiteral("out");
+}
+
 QString CurveEditorController::fadeMode() const
 {
     return m_fadeMode == drift::FadeCurve::Bezier ? QStringLiteral("bezier")
@@ -369,18 +400,8 @@ void CurveEditorController::setFadeHandles(double c1x, double c1y, double c2x, d
 
     m_fadeShape.setHandles(QPointF(c1x, c1y), QPointF(c2x, c2y));
     m_fadeMode = drift::FadeCurve::Bezier;
-    clip.fadeCurve = drift::FadeCurve::Bezier;
-    clip.fadeShape = m_fadeShape;
-    if (clip.animIn.kind == drift::ClipAnimKind::Fade
-        || clip.animIn.curve == drift::FadeCurve::Bezier) {
-        clip.animIn.curve = drift::FadeCurve::Bezier;
-        clip.animIn.shape = m_fadeShape;
-    }
-    if (clip.animOut.kind == drift::ClipAnimKind::Fade
-        || clip.animOut.curve == drift::FadeCurve::Bezier) {
-        clip.animOut.curve = drift::FadeCurve::Bezier;
-        clip.animOut.shape = m_fadeShape;
-    }
+    edgeCurve(clip, m_fadeIn, m_fadeAnim) = drift::FadeCurve::Bezier;
+    edgeShape(clip, m_fadeIn, m_fadeAnim) = m_fadeShape;
     drift::appdetail::syncLinkedPartnersFrom(m_app->m_project, clip);
     emit fadeChanged();
     m_app->emitPreviewFrame();
@@ -433,32 +454,18 @@ void CurveEditorController::applyFade()
     if (m_fadeTrack < before.tracks().size()
         && m_fadeClipIndex < before.tracks().at(m_fadeTrack).clips.size()) {
         drift::Clip &beforeClip = before.tracks()[m_fadeTrack].clips[m_fadeClipIndex];
-        beforeClip.fadeCurve = m_fadeBefore;
-        beforeClip.fadeShape = m_fadeShapeBefore;
+        edgeCurve(beforeClip, m_fadeIn, m_fadeAnim) = m_fadeBefore;
+        edgeShape(beforeClip, m_fadeIn, m_fadeAnim) = m_fadeShapeBefore;
         drift::appdetail::syncLinkedPartnersFrom(before, beforeClip);
     }
 
-    clip.fadeCurve = m_fadeMode;
-    clip.fadeShape = m_fadeShape;
-    if (clip.animIn.kind == drift::ClipAnimKind::Fade) {
-        clip.animIn.curve = m_fadeMode;
-        clip.animIn.shape = m_fadeShape;
-        clip.animIn.ease = drift::clipAnimCurveToEase(m_fadeMode);
-    }
-    if (clip.animOut.kind == drift::ClipAnimKind::Fade) {
-        clip.animOut.curve = m_fadeMode;
-        clip.animOut.shape = m_fadeShape;
-        clip.animOut.ease = drift::clipAnimCurveToEase(m_fadeMode);
-    }
-    // Motion styles that share this editor session track whichever shape it is editing.
-    if (clip.animIn.curve == drift::FadeCurve::Custom || clip.animIn.curve == drift::FadeCurve::Bezier)
-        clip.animIn.shape = m_fadeShape;
-    if (clip.animOut.curve == drift::FadeCurve::Custom || clip.animOut.curve == drift::FadeCurve::Bezier)
-        clip.animOut.shape = m_fadeShape;
+    edgeCurve(clip, m_fadeIn, m_fadeAnim) = m_fadeMode;
+    edgeShape(clip, m_fadeIn, m_fadeAnim) = m_fadeShape;
     drift::appdetail::syncLinkedPartnersFrom(m_app->m_project, clip);
-    m_app->pushProjectEdit(before, tr("Custom fade applied"));
+    const QString label = m_fadeAnim ? tr("Custom animation curve applied") : tr("Custom fade applied");
+    m_app->pushProjectEdit(before, label);
     m_fadeApplied = true;
-    m_app->finishEdit(tr("Custom fade applied"));
+    m_app->finishEdit(label);
     emit fadeApplied();
     endFade();
 }

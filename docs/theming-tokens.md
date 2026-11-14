@@ -2857,6 +2857,15 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTransformResizeGrip | borderPressed | $semantic.primary | $semantic.primary |
 | androidTransformResizeGrip | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | androidTransformResizeGrip | radius | $metrics.radius.xs | $metrics.radius.xs |
+| androidAnimationPage | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| androidAnimationPage | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| androidAnimationPage | tileBackground | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
+| androidAnimationPage | tileBackgroundSelected | $semantic.panel.accent | $semantic.panel.accent |
+| androidAnimationPage | tileBorder | $semantic.panel.border | $semantic.panel.border |
+| androidAnimationPage | tileBorderSelected | $semantic.primary | $semantic.primary |
+| androidAnimationPage | tileForegroundSelected | $semantic.primary | $semantic.primary |
+| androidAnimationPage | tileRadius | $metrics.radius.md | $metrics.radius.md |
+| androidAnimationPage | tileBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | androidFadeSliderRow | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | androidPreviewTransport | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | androidTimelineSnapGuide | background | $semantic.timeline.snapGuide | $semantic.timeline.snapGuide |

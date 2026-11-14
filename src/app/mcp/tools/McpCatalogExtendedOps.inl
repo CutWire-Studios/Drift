@@ -323,8 +323,8 @@
           "Set the shape of this clip's fades, either by preset (`curve`) or by explicit control "
           "points (`points`, which selects the custom curve). Exactly one of the two is required; when "
           "both are sent, points wins. Passing points opens and closes a transient curve session and "
-          "closes any fade-curve session already open. A clip whose fade animation is set to Fade "
-          "inherits this curve.",
+          "closes any fade-curve session already open. `edge` picks the fade-in, the fade-out or both "
+          "(default both); each edge keeps its own curve.",
           objectSchema(mergeProps(
               {{QStringLiteral("curve"),
                 enumProp(QStringLiteral("Fade curve preset. Unknown values fall back to smooth."),
@@ -333,7 +333,10 @@
                {QStringLiteral("points"),
                 arrayProp(objectSchema({{QStringLiteral("t"), numberProp(QStringLiteral("Time 0..1 across the fade"))},
                                         {QStringLiteral("g"), numberProp(QStringLiteral("Gain 0..1"))}}),
-                          QStringLiteral("Custom curve points, at least two. Selects the custom curve."))}},
+                          QStringLiteral("Custom curve points, at least two. Selects the custom curve."))},
+               {QStringLiteral("edge"),
+                enumProp(QStringLiteral("Which fade to shape (default both)"),
+                         {QStringLiteral("in"), QStringLiteral("out"), QStringLiteral("both")})}},
               clipRefProps())) },
         { "set_clip_speed", "canvas", "Play a whole clip faster or slower (ramps: set_speed_curve)",
           "Set a single playback rate for the whole clip (1.0 = normal, 2.0 = double speed), 0.25..4. "
@@ -375,12 +378,13 @@
           objectSchema({}) },
         { "set_animation", "canvas", "Slide/zoom/pop a clip on entrance or exit",
           "Set the clip's entrance (animIn) or exit (animOut) animation. Only the supplied fields "
-          "change. Setting kind to fade makes the animation follow the clip's fade curve.",
+          "change. Animations only move the clip; opacity is the fade (set_fade). Setting kind to fade "
+          "clears the animation and turns on that edge's fade instead.",
           objectSchema(mergeProps({{QStringLiteral("which"), enumProp(QStringLiteral("Which end of the clip to animate"),
                                                                        {QStringLiteral("animIn"),
                                                                         QStringLiteral("animOut")})},
                                    {QStringLiteral("kind"),
-                                    enumProp(QStringLiteral("Animation kind; unknown values fall back to none"),
+                                    enumProp(QStringLiteral("Animation kind; fade turns on the edge fade instead"),
                                              {QStringLiteral("none"), QStringLiteral("fade"),
                                               QStringLiteral("slideUp"), QStringLiteral("slideDown"),
                                               QStringLiteral("slideLeft"), QStringLiteral("slideRight"),
@@ -1141,10 +1145,13 @@
                        {QStringLiteral("prop"), QStringLiteral("from"), QStringLiteral("to")}) },
 
         { "list_fade_curve", "speed", "Read custom fade shape",
-          "Returns {points:[{t,g}]} for the clip's custom fade curve. Despite being a read, this opens "
+          "Returns {points:[{t,g}]} for the clip's custom fade curve; `edge` (in|out, default in) picks the fade. Despite being a read, this opens "
           "and closes a transient session and will CLOSE any fade-curve session already open. Fails "
           "bad_args on clips that cannot carry a custom fade. Write with set_fade_curve (canvas).",
-          objectSchema(clipRefProps()), false, false, true },
+          objectSchema(mergeProps({{QStringLiteral("edge"),
+                                    enumProp(QStringLiteral("Which fade to read (default in)"),
+                                             {QStringLiteral("in"), QStringLiteral("out")})}},
+                                  clipRefProps())), false, false, true },
 
         { "segmentation_status", "segmentation", "Check the cutout models are installed before segmenting",
           "Returns {available, model, backends}. Check available is true before any other segmentation "

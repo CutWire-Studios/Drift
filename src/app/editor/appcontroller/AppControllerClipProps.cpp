@@ -443,10 +443,6 @@ void AppController::previewSetClipFade(int trackIndex, int clipIndex, double fad
     fout = qMin(fout, clip.timelineDuration - fin);
     clip.fadeInUs = fin;
     clip.fadeOutUs = fout;
-    if (clip.type != drift::ClipType::Audio && clip.type != drift::ClipType::Subtitle) {
-        setEdgeAnimationDuration(clip, true, fin);
-        setEdgeAnimationDuration(clip, false, fout);
-    }
     syncLinkedPartnersFrom(m_project, clip);
     emitPreviewFrame();
 }

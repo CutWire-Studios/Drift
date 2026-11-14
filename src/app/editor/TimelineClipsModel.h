@@ -51,9 +51,12 @@ public:
         HasEmbeddedAudioRole,
         FadeInRole,
         FadeOutRole,
-        FadeCurveRole,
-        FadeShapeRole,
-        FadeHandlesRole,
+        FadeInCurveRole,
+        FadeInShapeRole,
+        FadeInHandlesRole,
+        FadeOutCurveRole,
+        FadeOutShapeRole,
+        FadeOutHandlesRole,
         EffectsRole,
         AudioEffectsRole,
         VolumeKeysRole,
@@ -86,9 +89,12 @@ public:
         bool hasEmbeddedAudio = false;
         double fadeIn = 0.0;
         double fadeOut = 0.0;
-        QString fadeCurve;
-        QVariantList fadeShape;
-        QVariantList fadeHandles;
+        QString fadeInCurve;
+        QVariantList fadeInShape;
+        QVariantList fadeInHandles;
+        QString fadeOutCurve;
+        QVariantList fadeOutShape;
+        QVariantList fadeOutHandles;
         QVariantList effects;
         QVariantList audioEffects;
         QVariantList volumeKeys;
@@ -101,8 +107,10 @@ public:
 
         // Not roles: typed copies for the scene-graph renderer, derived from the fields above so
         // any change to them already arrives as a changed row.
-        drift::FadeCurve fadeCurveTyped = drift::FadeCurve::Smooth;
-        drift::FadeShape fadeShapeTyped;
+        drift::FadeCurve fadeInCurveTyped = drift::FadeCurve::Smooth;
+        drift::FadeShape fadeInShapeTyped;
+        drift::FadeCurve fadeOutCurveTyped = drift::FadeCurve::Smooth;
+        drift::FadeShape fadeOutShapeTyped;
         drift::KeyframeTrack<double> volumeTyped;
         // The effect stack as one line, "(off)" marks included; empty when there are none.
         QString effectsLabel;

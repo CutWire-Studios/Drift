@@ -2,8 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Window
 import Drift
-// CapCut-style Animation: In / Out only.
-// Fade is one kind among slide/zoom/pop — same duration + style (Linear/Smooth/Natural/Custom).
+// Per-edge In / Out: a fade (opacity and volume, any clip) and a motion animation (visual clips).
 Item {
     id: root
 
@@ -17,16 +16,13 @@ Item {
     readonly property bool supportsBodyAnim: clipKind === "video" || clipKind === "image"
                                              || clipKind === "shape" || clipKind === "text"
     readonly property bool supportsFade: supportsBodyAnim || clipKind === "audio"
+    readonly property real clipDuration: hasSelection ? (clipData.duration || 0) : 0
+    readonly property real fadeIn: hasSelection ? (clipData.fadeIn || 0) : 0
+    readonly property real fadeOut: hasSelection ? (clipData.fadeOut || 0) : 0
+    readonly property real maxFade: Math.max(0.05, Math.min(10, clipDuration))
 
-    readonly property var animKinds: [
-        "none", "fade", "slideUp", "slideDown", "slideLeft", "slideRight",
-        "zoomIn", "zoomOut", "pop", "spinCW", "spinCCW", "bounce"
-    ]
-    readonly property var animKindLabels: [
-        qsTr("None"), qsTr("Fade"), qsTr("Slide up"), qsTr("Slide down"),
-        qsTr("Slide left"), qsTr("Slide right"), qsTr("Zoom in"), qsTr("Zoom out"),
-        qsTr("Pop"), qsTr("Spin CW"), qsTr("Spin CCW"), qsTr("Bounce")
-    ]
+    readonly property var animKindList: [{ id: "none", label: qsTr("None") }]
+                                        .concat(EditorState.clipAnimationKinds())
     readonly property var animIn: {
         void clipDataRevision
         return (clipData && clipData.animIn)
@@ -43,16 +39,10 @@ Item {
     height: column.height
     implicitHeight: column.height
 
-    function setAnim(which, patch) {
-        EditorState.setClipAnimation(EditorState.selectedTrack, EditorState.selectedClip, which, patch)
-    }
-
     function applyBoth(kind) {
-        const curve = kind === "none" ? "smooth" : (root.animIn.curve || "smooth")
-        const duration = 0.5
-        root.setAnim("animIn", { kind: kind, duration: duration, curve: curve })
-        root.setAnim("animOut", { kind: kind, duration: duration, curve: curve })
-        root.previewAnimation("animIn", kind, duration)
+        EditorState.applyClipAnimationPreset(EditorState.selectedTrack, EditorState.selectedClip,
+                                             "both", kind)
+        root.previewAnimation("animIn", kind, 0.5)
     }
 
     property bool previewActive: false
@@ -97,35 +87,11 @@ Item {
         onTriggered: root.endPreview()
     }
 
-    function setStyle(which, curve, handles) {
-        const patch = { curve: curve }
-        if (handles.length === 4)
-            patch.handles = handles
-        root.setAnim(which, patch)
-        if (curve === "custom")
-            ShellBridge.main.openFadeCurve(EditorState.selectedTrack, EditorState.selectedClip)
-    }
-
-    function refreshFields() {
-        if (root.supportsBodyAnim) {
-            if (animInDurationField && !animInDurationField.activeFocus)
-                animInDurationField.value = root.animIn.duration || 0.5
-            if (animOutDurationField && !animOutDurationField.activeFocus)
-                animOutDurationField.value = root.animOut.duration || 0.5
-        }
-        if (root.clipKind === "audio") {
-            if (audioFadeInField && !audioFadeInField.activeFocus)
-                audioFadeInField.value = root.clipData.fadeIn || 0
-            if (audioFadeOutField && !audioFadeOutField.activeFocus)
-                audioFadeOutField.value = root.clipData.fadeOut || 0
-        }
-    }
-
     Connections {
         target: EditorState
-        function onSelectionChanged() { root.clipDataRevision++; root.refreshFields() }
-        function onSelectedClipDataChanged() { root.clipDataRevision++; root.refreshFields() }
-        function onTracksChanged() { root.clipDataRevision++; root.refreshFields() }
+        function onSelectionChanged() { root.clipDataRevision++ }
+        function onSelectedClipDataChanged() { root.clipDataRevision++ }
+        function onTracksChanged() { root.clipDataRevision++ }
         // Playback ticks move the playhead forward in small steps; a seek jumps it.
         function onPlayheadSecondsChanged() {
             if (!root.previewActive)
@@ -142,7 +108,180 @@ Item {
         }
     }
 
-    Component.onCompleted: refreshFields()
+    function setFades(fadeInSeconds, fadeOutSeconds, preview) {
+        const inClamped = Math.max(0, Math.min(fadeInSeconds, root.clipDuration - fadeOutSeconds))
+        const outClamped = Math.max(0, Math.min(fadeOutSeconds, root.clipDuration - inClamped))
+        if (preview)
+            EditorState.previewSetClipFade(EditorState.selectedTrack, EditorState.selectedClip,
+                                           inClamped, outClamped)
+        else
+            EditorState.setClipFade(EditorState.selectedTrack, EditorState.selectedClip,
+                                    inClamped, outClamped)
+    }
+
+    component EdgeSection: Column {
+        id: sec
+
+        required property Item inspector
+        required property string edge
+
+        readonly property bool isIn: sec.edge === "in"
+        readonly property string animKey: sec.isIn ? "animIn" : "animOut"
+        readonly property var anim: sec.isIn ? sec.inspector.animIn : sec.inspector.animOut
+        readonly property real fadeSec: sec.isIn ? sec.inspector.fadeIn : sec.inspector.fadeOut
+        readonly property string fadeCurve: (sec.isIn ? sec.inspector.clipData.fadeInCurve
+                                                      : sec.inspector.clipData.fadeOutCurve) || "smooth"
+        readonly property var fadeHandles: (sec.isIn ? sec.inspector.clipData.fadeInHandles
+                                                      : sec.inspector.clipData.fadeOutHandles) || []
+        readonly property string animKind: sec.anim.kind || "none"
+        readonly property var kindModel: {
+            const base = sec.inspector.animKindList
+            return base.some(e => e.id === sec.animKind)
+                   ? base : base.concat([{ id: sec.animKind, label: sec.animKind }])
+        }
+        readonly property real curveWidth: Math.max(40, sec.width * 0.3)
+
+        width: parent ? parent.width : 0
+        spacing: Theme.spacingSm
+
+        function setFade(seconds, preview) {
+            if (sec.isIn)
+                sec.inspector.setFades(seconds, sec.inspector.fadeOut, preview)
+            else
+                sec.inspector.setFades(sec.inspector.fadeIn, seconds, preview)
+        }
+
+        Text {
+            text: qsTr("Fade")
+            color: Theme.c.animationInspector.foregroundMuted
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+        }
+
+        Row {
+            width: parent.width
+            spacing: 6
+
+            ThemedSlider {
+                id: fadeSlider
+                lockWhilePlaying: true
+                label: sec.isIn ? qsTr("Fade in") : qsTr("Fade out")
+                width: Math.max(40, parent.width - fadeField.width - sec.curveWidth - parent.spacing * 2)
+                anchors.verticalCenter: parent.verticalCenter
+                from: 0
+                to: sec.inspector.maxFade
+                stepSize: 0.05
+                valueFormatter: function (v) { return Number(v).toFixed(2) + " s" }
+                Binding on value {
+                    when: !fadeSlider.pressed
+                    value: sec.fadeSec
+                }
+                onMoved: sec.setFade(value, true)
+                onPressedChanged: {
+                    if (pressed)
+                        EditorState.beginPreviewDrag(sec.isIn ? qsTr("Fade in") : qsTr("Fade out"))
+                    else
+                        EditorState.commitPreviewDrag()
+                }
+            }
+            ThemedNumberField {
+                id: fadeField
+                width: 56
+                anchors.verticalCenter: parent.verticalCenter
+                from: 0
+                to: sec.inspector.maxFade
+                unit: "s"
+                decimals: 2
+                step: 0.05
+                Binding on value {
+                    when: !fadeField.activeFocus
+                    value: sec.fadeSec
+                }
+                onEdited: v => {
+                    sec.setFade(v, false)
+                    sec.inspector.previewAnimation(sec.animKey, "fade", v)
+                }
+            }
+            CurveField {
+                width: sec.curveWidth
+                anchors.verticalCenter: parent.verticalCenter
+                domain: "fade"
+                curve: sec.fadeCurve
+                handles: sec.fadeHandles
+                onCurveChosen: (curve, handles) => {
+                    EditorState.setClipFadeCurve(EditorState.selectedTrack, EditorState.selectedClip,
+                                                 sec.edge, curve, handles)
+                    if (curve === "custom")
+                        ShellBridge.main.openFadeCurve(EditorState.selectedTrack,
+                                                       EditorState.selectedClip, sec.edge, "fade")
+                }
+            }
+        }
+
+        Text {
+            visible: sec.inspector.supportsBodyAnim
+            text: qsTr("Animation")
+            color: Theme.c.animationInspector.foregroundMuted
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+        }
+
+        Row {
+            visible: sec.inspector.supportsBodyAnim
+            width: parent.width
+            spacing: 6
+
+            ThemedComboBox {
+                width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
+                textRole: "label"
+                model: sec.kindModel
+                currentIndex: Math.max(0, sec.kindModel.findIndex(e => e.id === sec.animKind))
+                onActivated: {
+                    const kind = sec.kindModel[currentIndex].id
+                    EditorState.setClipAnimation(EditorState.selectedTrack, EditorState.selectedClip,
+                                                 sec.animKey, { kind: kind })
+                    sec.inspector.previewAnimation(sec.animKey, kind, sec.anim.duration || 0.5)
+                }
+            }
+            CurveField {
+                width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
+                anchors.verticalCenter: parent.verticalCenter
+                enabled: sec.animKind !== "none"
+                opacity: enabled ? 1 : 0.5
+                domain: "fade"
+                curve: sec.anim.curve || "smooth"
+                handles: sec.anim.handles || []
+                onCurveChosen: (curve, handles) => {
+                    const patch = { curve: curve }
+                    if (handles.length === 4)
+                        patch.handles = handles
+                    EditorState.setClipAnimation(EditorState.selectedTrack, EditorState.selectedClip,
+                                                 sec.animKey, patch)
+                    if (curve === "custom")
+                        ShellBridge.main.openFadeCurve(EditorState.selectedTrack,
+                                                       EditorState.selectedClip, sec.edge, "animation")
+                }
+            }
+            ThemedNumberField {
+                id: animDurationField
+                width: 56
+                enabled: sec.animKind !== "none"
+                opacity: enabled ? 1 : 0.5
+                from: 0
+                to: 10
+                unit: "s"
+                decimals: 2
+                step: 0.05
+                Binding on value {
+                    when: !animDurationField.activeFocus
+                    value: sec.anim.duration || 0.5
+                }
+                onEdited: v => EditorState.setClipAnimation(EditorState.selectedTrack,
+                                                            EditorState.selectedClip, sec.animKey,
+                                                            { duration: v })
+            }
+        }
+    }
 
     Column {
         id: column
@@ -158,217 +297,95 @@ Item {
             hint: qsTr("Animation applies to video, image, shape, text, and audio.")
         }
 
-        // ----- Audio: volume fades only ----------------------------------------------------
         Text {
-            visible: root.clipKind === "audio"
-            text: qsTr("Fade in / out (volume)")
-            color: Theme.c.animationInspector.foregroundMuted
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
-        }
-
-        Row {
-            visible: root.clipKind === "audio"
-            width: parent.width
-            spacing: 6
-
-            ThemedNumberField {
-                id: audioFadeInField
-                to: Math.max(0.1, root.clipData.duration || 1)
-                unit: "s"
-                width: (parent.width - parent.spacing) / 2
-                decimals: 2
-                step: 0.05
-                from: 0
-                onEdited: v => EditorState.setClipFade(
-                               EditorState.selectedTrack, EditorState.selectedClip,
-                               v, root.clipData.fadeOut || 0)
-            }
-            ThemedNumberField {
-                id: audioFadeOutField
-                to: Math.max(0.1, root.clipData.duration || 1)
-                unit: "s"
-                width: (parent.width - parent.spacing) / 2
-                decimals: 2
-                step: 0.05
-                from: 0
-                onEdited: v => EditorState.setClipFade(
-                               EditorState.selectedTrack, EditorState.selectedClip,
-                               root.clipData.fadeIn || 0, v)
-            }
-        }
-
-        Text {
-            visible: root.clipKind === "audio"
-            text: qsTr("Style")
-            color: Theme.c.animationInspector.foregroundMuted
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
-        }
-
-        CurveField {
-            visible: root.clipKind === "audio"
-            width: parent.width
-            domain: "fade"
-            curve: root.clipData.fadeCurve || "smooth"
-            handles: root.clipData.fadeHandles || []
-            onCurveChosen: (curve, handles) => {
-                EditorState.setClipFadeCurve(EditorState.selectedTrack, EditorState.selectedClip,
-                                             curve, handles)
-                if (curve === "custom")
-                    ShellBridge.main.openFadeCurve(EditorState.selectedTrack, EditorState.selectedClip)
-            }
-        }
-
-        // ----- Visual: CapCut In / Out -----------------------------------------------------
-        Text {
-            visible: root.supportsBodyAnim
+            visible: root.supportsFade
             width: parent.width
             wrapMode: Text.WordWrap
-            text: qsTr("Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.")
+            text: root.supportsBodyAnim
+                  ? qsTr("Fade and motion combine — fade also ramps the volume.")
+                  : qsTr("Fade ramps the volume in and out.")
             color: Theme.c.animationInspector.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
         }
 
         Flow {
-            visible: root.supportsBodyAnim
+            visible: root.supportsFade
             width: parent.width
             spacing: 6
 
             Repeater {
-                model: [
-                    { label: qsTr("Fade"), kind: "fade" },
-                    { label: qsTr("Slide up"), kind: "slideUp" },
-                    { label: qsTr("Pop"), kind: "pop" },
-                    { label: qsTr("Zoom in"), kind: "zoomIn" },
-                    { label: qsTr("Bounce"), kind: "bounce" },
-                    { label: qsTr("Clear"), kind: "none" }
-                ]
+                model: root.supportsBodyAnim
+                       ? [
+                           { label: qsTr("Fade"), kind: "fade" },
+                           { label: qsTr("Slide up"), kind: "slideUp" },
+                           { label: qsTr("Pop"), kind: "pop" },
+                           { label: qsTr("Zoom in"), kind: "zoomIn" },
+                           { label: qsTr("Bounce"), kind: "bounce" },
+                           { label: qsTr("Clear"), kind: "none" }
+                       ]
+                       : [
+                           { label: qsTr("Fade"), kind: "fade" },
+                           { label: qsTr("Clear"), kind: "none" }
+                       ]
                 delegate: ThemedChip {
                     required property var modelData
                     text: modelData.label
-                    selected: modelData.kind !== "none"
-                              && root.animIn.kind === modelData.kind
-                              && root.animOut.kind === modelData.kind
+                    selected: {
+                        if (modelData.kind === "none")
+                            return false
+                        if (modelData.kind === "fade")
+                            return root.fadeIn > 0 && root.fadeOut > 0
+                                   && root.animIn.kind === "none" && root.animOut.kind === "none"
+                        return root.animIn.kind === modelData.kind
+                               && root.animOut.kind === modelData.kind
+                    }
                     onClicked: root.applyBoth(modelData.kind)
                 }
             }
         }
 
         Text {
-            visible: root.supportsBodyAnim
+            visible: root.supportsFade
             text: qsTr("In")
             SearchAnchor {
                 searchId: "animation-in"
-                title: qsTr("In animation")
-                keywords: "intro enter fade slide pop zoom bounce"
+                title: qsTr("Fade and animation in")
+                keywords: "intro enter fade slide pop zoom bounce volume curve duration"
+            }
+            SearchAnchor {
+                searchId: "animation-custom-curve"
+                title: qsTr("Custom curve")
+                keywords: "easing fade animation curve bezier"
             }
             color: Theme.c.animationInspector.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
         }
 
-        Row {
-            visible: root.supportsBodyAnim
-            width: parent.width
-            spacing: 6
-
-            ThemedComboBox {
-                width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
-                model: root.animKindLabels
-                currentIndex: Math.max(0, root.animKinds.indexOf(root.animIn.kind || "none"))
-                onActivated: {
-                    const kind = root.animKinds[currentIndex]
-                    root.setAnim("animIn", { kind: kind })
-                    root.previewAnimation("animIn", kind, root.animIn.duration || 0.5)
-                }
-            }
-            CurveField {
-                width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
-                anchors.verticalCenter: parent.verticalCenter
-                domain: "fade"
-                curve: root.animIn.curve || root.clipData.fadeCurve || "smooth"
-                handles: root.animIn.handles || []
-                onCurveChosen: (curve, handles) => root.setStyle("animIn", curve, handles)
-            }
-            ThemedNumberField {
-                id: animInDurationField
-                to: 10
-                unit: "s"
-                width: 56
-                decimals: 2
-                step: 0.05
-                from: 0
-                onEdited: v => root.setAnim("animIn", { duration: v })
-            }
+        EdgeSection {
+            visible: root.supportsFade
+            inspector: root
+            edge: "in"
         }
 
         Text {
-            visible: root.supportsBodyAnim
+            visible: root.supportsFade
             text: qsTr("Out")
             SearchAnchor {
                 searchId: "animation-out"
-                title: qsTr("Out animation")
-                keywords: "outro exit fade slide pop zoom"
+                title: qsTr("Fade and animation out")
+                keywords: "outro exit fade slide pop zoom volume curve duration"
             }
             color: Theme.c.animationInspector.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
         }
 
-        Row {
-            visible: root.supportsBodyAnim
-            width: parent.width
-            spacing: 6
-
-            ThemedComboBox {
-                width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
-                model: root.animKindLabels
-                currentIndex: Math.max(0, root.animKinds.indexOf(root.animOut.kind || "none"))
-                onActivated: {
-                    const kind = root.animKinds[currentIndex]
-                    root.setAnim("animOut", { kind: kind })
-                    root.previewAnimation("animOut", kind, root.animOut.duration || 0.5)
-                }
-            }
-            CurveField {
-                width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
-                anchors.verticalCenter: parent.verticalCenter
-                domain: "fade"
-                curve: root.animOut.curve || root.clipData.fadeCurve || "smooth"
-                handles: root.animOut.handles || []
-                onCurveChosen: (curve, handles) => root.setStyle("animOut", curve, handles)
-            }
-            ThemedNumberField {
-                id: animOutDurationField
-                to: 10
-                unit: "s"
-                width: 56
-                decimals: 2
-                step: 0.05
-                from: 0
-                onEdited: v => root.setAnim("animOut", { duration: v })
-            }
-        }
-
-        SearchAnchor {
-            searchId: "animation-custom-curve"
-            title: qsTr("Custom curve")
-            keywords: "easing"
-            target: animationCustomCurveButton
-        }
-        ThemedButton {
-            id: animationCustomCurveButton
-            visible: root.supportsBodyAnim
-                     && ((root.animIn.curve || "") === "custom"
-                         || (root.animOut.curve || "") === "custom"
-                         || (root.clipData.fadeCurve || "") === "custom")
-            width: parent.width
-            text: qsTr("Edit custom curve…")
-            variant: "secondary"
-            onClicked: ShellBridge.main.openFadeCurve(
-                           EditorState.selectedTrack, EditorState.selectedClip)
+        EdgeSection {
+            visible: root.supportsFade
+            inspector: root
+            edge: "out"
         }
 
         Text {

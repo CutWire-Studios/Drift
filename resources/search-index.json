@@ -452,18 +452,8 @@
       "id": "animation-in",
       "target": "panel:properties.animation#animation-in",
       "context": "AnimationInspector",
-      "source": "In animation",
-      "keywords": "intro enter fade slide pop zoom bounce",
-      "needs": [
-        "animatable"
-      ]
-    },
-    {
-      "id": "animation-out",
-      "target": "panel:properties.animation#animation-out",
-      "context": "AnimationInspector",
-      "source": "Out animation",
-      "keywords": "outro exit fade slide pop zoom",
+      "source": "Fade and animation in",
+      "keywords": "intro enter fade slide pop zoom bounce volume curve duration",
       "needs": [
         "animatable"
       ]
@@ -473,7 +463,17 @@
       "target": "panel:properties.animation#animation-custom-curve",
       "context": "AnimationInspector",
       "source": "Custom curve",
-      "keywords": "easing",
+      "keywords": "easing fade animation curve bezier",
+      "needs": [
+        "animatable"
+      ]
+    },
+    {
+      "id": "animation-out",
+      "target": "panel:properties.animation#animation-out",
+      "context": "AnimationInspector",
+      "source": "Fade and animation out",
+      "keywords": "outro exit fade slide pop zoom volume curve duration",
       "needs": [
         "animatable"
       ]

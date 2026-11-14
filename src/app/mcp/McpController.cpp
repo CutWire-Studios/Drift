@@ -1103,9 +1103,11 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
         m.remove(QStringLiteral("faceTrackHasMesh"));
         m.remove(QStringLiteral("faceTrackFaceCount"));
     }
-    if (m.value(QStringLiteral("fadeCurve")).toString() != QLatin1String("custom")) {
-        m.remove(QStringLiteral("fadeShape"));
-        m.remove(QStringLiteral("fadeHandles"));
+    for (const char *edge : {"fadeIn", "fadeOut"}) {
+        if (m.value(QStringLiteral("%1Curve").arg(QLatin1String(edge))).toString() != QLatin1String("custom")) {
+            m.remove(QStringLiteral("%1Shape").arg(QLatin1String(edge)));
+            m.remove(QStringLiteral("%1Handles").arg(QLatin1String(edge)));
+        }
     }
     // A QRectF has no JSON form; spell a real crop out as [x, y, w, h] (see get_clip_crop).
     const QRectF sourceFrame = m.take(QStringLiteral("sourceFrame")).toRectF();
@@ -1126,7 +1128,8 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
         && m.value(QStringLiteral("fadeOut")).toDouble() == 0.0) {
         m.remove(QStringLiteral("fadeIn"));
         m.remove(QStringLiteral("fadeOut"));
-        m.remove(QStringLiteral("fadeCurve"));
+        m.remove(QStringLiteral("fadeInCurve"));
+        m.remove(QStringLiteral("fadeOutCurve"));
     }
 
     for (auto it = m.begin(); it != m.end();) {

@@ -1575,8 +1575,10 @@ drift::Clip makeAudioCompanionFromVideo(const drift::Clip &videoClip, const QStr
     audio.reverse = videoClip.reverse;
     audio.fadeInUs = videoClip.fadeInUs;
     audio.fadeOutUs = videoClip.fadeOutUs;
-    audio.fadeCurve = videoClip.fadeCurve;
-    audio.fadeShape = videoClip.fadeShape;
+    audio.fadeInCurve = videoClip.fadeInCurve;
+    audio.fadeInShape = videoClip.fadeInShape;
+    audio.fadeOutCurve = videoClip.fadeOutCurve;
+    audio.fadeOutShape = videoClip.fadeOutShape;
     audio.volume = videoClip.volume;
     audio.pan = videoClip.pan;
     return audio;

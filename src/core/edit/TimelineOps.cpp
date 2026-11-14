@@ -2217,8 +2217,10 @@ void syncLinkedTiming(Clip &dst, const Clip &src)
     dst.loopOffsetUs = src.loopOffsetUs;
     dst.fadeInUs = src.fadeInUs;
     dst.fadeOutUs = src.fadeOutUs;
-    dst.fadeCurve = src.fadeCurve;
-    dst.fadeShape = src.fadeShape;
+    dst.fadeInCurve = src.fadeInCurve;
+    dst.fadeInShape = src.fadeInShape;
+    dst.fadeOutCurve = src.fadeOutCurve;
+    dst.fadeOutShape = src.fadeOutShape;
     dst.audioFadeInUs = src.audioFadeInUs;
     dst.audioFadeOutUs = src.audioFadeOutUs;
 }

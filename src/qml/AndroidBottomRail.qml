@@ -95,7 +95,7 @@ Item {
         case "image":
             return [effects, adjust, transform, crop, animation, mask, blending, details]
         case "audio":
-            return [volume, speed, { id: "sounds", kind: "tab", label: qsTr("Audio FX"), icon: Theme.icons.audioLines }, details]
+            return [volume, tool("animation", qsTr("Fade"), Theme.icons.blend), speed, { id: "sounds", kind: "tab", label: qsTr("Audio FX"), icon: Theme.icons.audioLines }, details]
         case "text":
             return [{ id: "editText", kind: "text", label: qsTr("Edit text"), icon: Theme.icons.pencil },
                     tool("textStyle", qsTr("Text style"), Theme.icons.brush),

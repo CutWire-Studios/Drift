@@ -1098,21 +1098,20 @@ int karaokeWordIndex(const drift::Clip &clip, const drift::SubtitleCue &cue, dri
     return drift::activeWordIndexAt(cue.text, cue.startUs, cue.endUs, localUs);
 }
 
-// CapCut-style body intro/outro: opacity/offset/scale/rotation on top of fades and text anims.
+// Body intro/outro: offset/scale/rotation on top of text anims.
 void applyClipBodyAnimation(const drift::Clip &clip, drift::TimeUs timelineUs, double layoutW,
-                            double layoutH, QRectF *destRect, double *opacity, double *rotation)
+                            double layoutH, QRectF *destRect, double *rotation)
 {
-    if (!destRect || !opacity || !rotation)
+    if (!destRect || !rotation)
         return;
     if (clip.type == drift::ClipType::Audio || clip.type == drift::ClipType::Subtitle)
         return;
-    if (clip.animIn.kind == drift::ClipAnimKind::None && clip.animOut.kind == drift::ClipAnimKind::None)
+    if (clip.animIn.isNone() && clip.animOut.isNone())
         return;
 
     const drift::ClipAnimSample body =
         drift::evaluateClipAnimation(clip.timelineStart, clip.timelineDuration, clip.animIn,
                                      clip.animOut, timelineUs, layoutW, layoutH);
-    *opacity *= body.opacity;
     destRect->translate(body.dx, body.dy);
     if (!qFuzzyCompare(body.scale, 1.0)) {
         const QPointF centre = destRect->center();
@@ -1505,7 +1504,7 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         return layer;
 
     if (!editingText)
-        applyClipBodyAnimation(clip, timelineUs, w, h, &destRect, &opacity, &rotation);
+        applyClipBodyAnimation(clip, timelineUs, w, h, &destRect, &rotation);
 
     fillGpuLayerMasks(project, layer, clip, laneMasks, timelineUs, canvasWidth, canvasHeight, renderScale,
                       projectFps);

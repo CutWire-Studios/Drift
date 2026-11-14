@@ -137,7 +137,7 @@ quint64 audioFingerprint(const drift::Project &project, const QString &trackId)
                               clip.timelineDuration, clip.srcIn, clip.srcOut, clip.speed, int(clip.reverse),
                               clip.audioStreamIndex, int(clip.suppressEmbeddedAudio), clip.pan,
                               clip.fadeInUs, clip.fadeOutUs, clip.audioFadeInUs, clip.audioFadeOutUs,
-                              int(clip.fadeCurve), int(clip.enabled));
+                              int(clip.fadeInCurve), int(clip.fadeOutCurve), int(clip.enabled));
             const auto &volumeKeys = clip.volume.keyframes();
             for (auto it = volumeKeys.cbegin(); it != volumeKeys.cend(); ++it)
                 hash = qHashMulti(hash, it.key(), it.value().value);

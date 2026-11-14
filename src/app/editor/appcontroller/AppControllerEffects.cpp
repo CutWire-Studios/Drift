@@ -2076,8 +2076,8 @@ QVariantMap AppController::clipboardAttributes() const
                                            || c.blendMode != drift::BlendMode::Normal
                                            || c.flipH || c.flipV
                                            || !item.masks.isEmpty()
-                                           || c.animIn.kind != drift::ClipAnimKind::None
-                                           || c.animOut.kind != drift::ClipAnimKind::None);
+                                           || !c.animIn.isNone()
+                                           || !c.animOut.isNone());
     out.insert(QStringLiteral("hasTransform"), hasTransform);
 
     const bool isAudioOrVideo = (c.type == drift::ClipType::Video || c.type == drift::ClipType::Audio);
@@ -2231,8 +2231,10 @@ void AppController::pasteAttributes(const QVariantMap &options)
             targetClip.volume = rescaleKeyframeTrackTimes(sourceClip.volume, srcDurationUs, targetDurationUs);
             targetClip.fadeInUs = qMin(sourceClip.fadeInUs, targetDurationUs);
             targetClip.fadeOutUs = qMin(sourceClip.fadeOutUs, targetDurationUs);
-            targetClip.fadeCurve = sourceClip.fadeCurve;
-            targetClip.fadeShape = sourceClip.fadeShape;
+            targetClip.fadeInCurve = sourceClip.fadeInCurve;
+            targetClip.fadeInShape = sourceClip.fadeInShape;
+            targetClip.fadeOutCurve = sourceClip.fadeOutCurve;
+            targetClip.fadeOutShape = sourceClip.fadeOutShape;
             clipModified = true;
         }
 

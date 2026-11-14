@@ -1,68 +1,68 @@
 #include "core/animation/ClipAnimation.h"
 
+#include <QCoreApplication>
 #include <QEasingCurve>
+#include <QHash>
 
 #include <algorithm>
 #include <cmath>
 
 namespace drift {
 
-QString clipAnimKindToString(ClipAnimKind kind)
+namespace {
+
+enum class Builtin {
+    None,
+    SlideUp,
+    SlideDown,
+    SlideLeft,
+    SlideRight,
+    ZoomIn,
+    ZoomOut,
+    Pop,
+    SpinCW,
+    SpinCCW,
+    Bounce
+};
+
+Builtin builtinFor(const QString &id)
 {
-    switch (kind) {
-    case ClipAnimKind::None:
-        return QStringLiteral("none");
-    case ClipAnimKind::Fade:
-        return QStringLiteral("fade");
-    case ClipAnimKind::SlideUp:
-        return QStringLiteral("slideUp");
-    case ClipAnimKind::SlideDown:
-        return QStringLiteral("slideDown");
-    case ClipAnimKind::SlideLeft:
-        return QStringLiteral("slideLeft");
-    case ClipAnimKind::SlideRight:
-        return QStringLiteral("slideRight");
-    case ClipAnimKind::ZoomIn:
-        return QStringLiteral("zoomIn");
-    case ClipAnimKind::ZoomOut:
-        return QStringLiteral("zoomOut");
-    case ClipAnimKind::Pop:
-        return QStringLiteral("pop");
-    case ClipAnimKind::SpinCW:
-        return QStringLiteral("spinCW");
-    case ClipAnimKind::SpinCCW:
-        return QStringLiteral("spinCCW");
-    case ClipAnimKind::Bounce:
-        return QStringLiteral("bounce");
-    }
-    return QStringLiteral("none");
+    static const QHash<QString, Builtin> table{
+        {QStringLiteral("slideUp"), Builtin::SlideUp},
+        {QStringLiteral("slideDown"), Builtin::SlideDown},
+        {QStringLiteral("slideLeft"), Builtin::SlideLeft},
+        {QStringLiteral("slideRight"), Builtin::SlideRight},
+        {QStringLiteral("zoomIn"), Builtin::ZoomIn},
+        {QStringLiteral("zoomOut"), Builtin::ZoomOut},
+        {QStringLiteral("pop"), Builtin::Pop},
+        {QStringLiteral("spinCW"), Builtin::SpinCW},
+        {QStringLiteral("spinCCW"), Builtin::SpinCCW},
+        {QStringLiteral("bounce"), Builtin::Bounce},
+    };
+    return table.value(id, Builtin::None);
 }
 
-ClipAnimKind clipAnimKindFromString(const QString &kind)
+} // namespace
+
+bool isBuiltinClipAnimation(const QString &kindId)
 {
-    if (kind == QStringLiteral("fade"))
-        return ClipAnimKind::Fade;
-    if (kind == QStringLiteral("slideUp"))
-        return ClipAnimKind::SlideUp;
-    if (kind == QStringLiteral("slideDown"))
-        return ClipAnimKind::SlideDown;
-    if (kind == QStringLiteral("slideLeft"))
-        return ClipAnimKind::SlideLeft;
-    if (kind == QStringLiteral("slideRight"))
-        return ClipAnimKind::SlideRight;
-    if (kind == QStringLiteral("zoomIn"))
-        return ClipAnimKind::ZoomIn;
-    if (kind == QStringLiteral("zoomOut"))
-        return ClipAnimKind::ZoomOut;
-    if (kind == QStringLiteral("pop"))
-        return ClipAnimKind::Pop;
-    if (kind == QStringLiteral("spinCW"))
-        return ClipAnimKind::SpinCW;
-    if (kind == QStringLiteral("spinCCW"))
-        return ClipAnimKind::SpinCCW;
-    if (kind == QStringLiteral("bounce"))
-        return ClipAnimKind::Bounce;
-    return ClipAnimKind::None;
+    return builtinFor(kindId) != Builtin::None;
+}
+
+QList<ClipAnimationKindInfo> clipAnimationKinds()
+{
+    return {
+        {QStringLiteral("slideUp"), QT_TRANSLATE_NOOP("ClipAnimation", "Slide up")},
+        {QStringLiteral("slideDown"), QT_TRANSLATE_NOOP("ClipAnimation", "Slide down")},
+        {QStringLiteral("slideLeft"), QT_TRANSLATE_NOOP("ClipAnimation", "Slide left")},
+        {QStringLiteral("slideRight"), QT_TRANSLATE_NOOP("ClipAnimation", "Slide right")},
+        {QStringLiteral("zoomIn"), QT_TRANSLATE_NOOP("ClipAnimation", "Zoom in")},
+        {QStringLiteral("zoomOut"), QT_TRANSLATE_NOOP("ClipAnimation", "Zoom out")},
+        {QStringLiteral("pop"), QT_TRANSLATE_NOOP("ClipAnimation", "Pop")},
+        {QStringLiteral("spinCW"), QT_TRANSLATE_NOOP("ClipAnimation", "Spin CW")},
+        {QStringLiteral("spinCCW"), QT_TRANSLATE_NOOP("ClipAnimation", "Spin CCW")},
+        {QStringLiteral("bounce"), QT_TRANSLATE_NOOP("ClipAnimation", "Bounce")},
+    };
 }
 
 QString clipAnimEaseToString(ClipAnimEase ease)
@@ -106,32 +106,15 @@ FadeCurve clipAnimEaseToCurve(ClipAnimEase ease)
     return FadeCurve::Smooth;
 }
 
-ClipAnimEase clipAnimCurveToEase(FadeCurve curve)
-{
-    switch (curve) {
-    case FadeCurve::Linear:
-        return ClipAnimEase::Linear;
-    case FadeCurve::Smooth:
-        return ClipAnimEase::EaseInOut;
-    case FadeCurve::EqualPower:
-        return ClipAnimEase::EaseOut;
-    case FadeCurve::Custom:
-        return ClipAnimEase::EaseInOut;
-    case FadeCurve::Bezier:
-        // The legacy ease enum predates both hand-drawn modes and has no member for either.
-        return ClipAnimEase::EaseInOut;
-    }
-    return ClipAnimEase::EaseOut;
-}
-
 QJsonObject clipAnimationToJson(const ClipAnimation &anim)
 {
     QJsonObject object{
-        {QStringLiteral("kind"), clipAnimKindToString(anim.kind)},
+        {QStringLiteral("kind"), anim.kindId.isEmpty() ? QStringLiteral("none") : anim.kindId},
         {QStringLiteral("durationUs"), static_cast<double>(anim.durationUs)},
-        {QStringLiteral("ease"), clipAnimEaseToString(anim.ease)},
         {QStringLiteral("curve"), fadeCurveToString(anim.curve)},
     };
+    if (!anim.parameters.isEmpty())
+        object.insert(QStringLiteral("parameters"), QJsonObject::fromVariantMap(anim.parameters));
     if ((anim.curve == FadeCurve::Custom && !anim.shape.isEmpty())
         || (anim.curve == FadeCurve::Bezier && anim.shape.hasHandles()))
         object.insert(QStringLiteral("shape"), anim.shape.toJson());
@@ -141,29 +124,27 @@ QJsonObject clipAnimationToJson(const ClipAnimation &anim)
 ClipAnimation clipAnimationFromJson(const QJsonObject &object)
 {
     ClipAnimation anim;
-    anim.kind = clipAnimKindFromString(object.value(QStringLiteral("kind")).toString());
+    const QString kind = object.value(QStringLiteral("kind")).toString();
+    anim.kindId = kind == QLatin1String("none") ? QString() : kind;
     if (object.contains(QStringLiteral("durationUs")))
         anim.durationUs = static_cast<TimeUs>(object.value(QStringLiteral("durationUs")).toDouble());
     else if (object.contains(QStringLiteral("duration")))
         anim.durationUs = secondsToUs(object.value(QStringLiteral("duration")).toDouble(0.5));
-    anim.ease = clipAnimEaseFromString(object.value(QStringLiteral("ease")).toString());
-    if (object.contains(QStringLiteral("curve"))) {
+    if (object.contains(QStringLiteral("curve")))
         anim.curve = fadeCurveFromString(object.value(QStringLiteral("curve")).toString());
-    } else {
-        // Older projects only stored ease — map into the shared style system.
-        anim.curve = clipAnimEaseToCurve(anim.ease);
-    }
+    else
+        anim.curve = clipAnimEaseToCurve(clipAnimEaseFromString(object.value(QStringLiteral("ease")).toString()));
     if (object.contains(QStringLiteral("shape")))
         anim.shape = FadeShape::fromJson(object.value(QStringLiteral("shape")));
-    anim.ease = clipAnimCurveToEase(anim.curve);
+    anim.parameters = object.value(QStringLiteral("parameters")).toObject().toVariantMap();
     return anim;
 }
 
 // settled: 0 = fully away, 1 = in place. entering flips slide/spin departure direction.
-void applyKind(ClipAnimKind kind, double settled, bool entering, double layoutW, double layoutH,
+static void applyKind(Builtin kind, double settled, bool entering, double layoutW, double layoutH,
                FadeCurve curve, const FadeShape &shape, ClipAnimSample *out)
 {
-    if (kind == ClipAnimKind::None || kind == ClipAnimKind::Fade || !out)
+    if (kind == Builtin::None || !out)
         return;
 
     const double a = shapedProgress(qBound(0.0, settled, 1.0), curve, shape);
@@ -173,49 +154,38 @@ void applyKind(ClipAnimKind kind, double settled, bool entering, double layoutW,
     const double sign = entering ? 1.0 : -1.0;
 
     switch (kind) {
-    case ClipAnimKind::None:
-    case ClipAnimKind::Fade:
+    case Builtin::None:
         break;
-    case ClipAnimKind::SlideUp:
+    case Builtin::SlideUp:
         out->dy += sign * away * travelY;
-        out->opacity *= a;
         break;
-    case ClipAnimKind::SlideDown:
+    case Builtin::SlideDown:
         out->dy -= sign * away * travelY;
-        out->opacity *= a;
         break;
-    case ClipAnimKind::SlideLeft:
+    case Builtin::SlideLeft:
         out->dx += sign * away * travelX;
-        out->opacity *= a;
         break;
-    case ClipAnimKind::SlideRight:
+    case Builtin::SlideRight:
         out->dx -= sign * away * travelX;
-        out->opacity *= a;
         break;
-    case ClipAnimKind::ZoomIn:
+    case Builtin::ZoomIn:
         out->scale *= 0.6 + 0.4 * a;
-        out->opacity *= a;
         break;
-    case ClipAnimKind::ZoomOut:
+    case Builtin::ZoomOut:
         out->scale *= entering ? (1.4 - 0.4 * a) : (1.0 + 0.4 * away);
-        out->opacity *= a;
         break;
-    case ClipAnimKind::Pop:
+    case Builtin::Pop:
         out->scale *= 0.6 + 0.4 * a;
-        out->opacity *= qBound(0.0, a, 1.0);
         break;
-    case ClipAnimKind::SpinCW:
+    case Builtin::SpinCW:
         out->rotationDeg += sign * away * -90.0;
-        out->opacity *= a;
         break;
-    case ClipAnimKind::SpinCCW:
+    case Builtin::SpinCCW:
         out->rotationDeg += sign * away * 90.0;
-        out->opacity *= a;
         break;
-    case ClipAnimKind::Bounce: {
+    case Builtin::Bounce: {
         const double b = QEasingCurve(QEasingCurve::OutBounce).valueForProgress(a);
         out->dy += sign * (1.0 - b) * travelY;
-        out->opacity *= qBound(0.0, a * 4.0, 1.0);
         break;
     }
     }
@@ -231,19 +201,17 @@ ClipAnimSample evaluateClipAnimation(TimeUs timelineStart, TimeUs timelineDurati
 
     const TimeUs rel = qBound(TimeUs{0}, timelineUs - timelineStart, timelineDuration);
 
-    if (animIn.kind != ClipAnimKind::None && animIn.kind != ClipAnimKind::Fade
-        && animIn.durationUs > 0 && rel < animIn.durationUs) {
+    if (animIn.durationUs > 0 && rel < animIn.durationUs) {
         const double settled = static_cast<double>(rel) / static_cast<double>(animIn.durationUs);
-        applyKind(animIn.kind, settled, true, layoutW, layoutH, animIn.curve, animIn.shape, &sample);
+        applyKind(builtinFor(animIn.kindId), settled, true, layoutW, layoutH, animIn.curve, animIn.shape, &sample);
     }
 
-    if (animOut.kind != ClipAnimKind::None && animOut.kind != ClipAnimKind::Fade
-        && animOut.durationUs > 0) {
+    if (animOut.durationUs > 0) {
         const TimeUs fromEnd = timelineDuration - rel;
         if (fromEnd < animOut.durationUs) {
             const double settled =
                 static_cast<double>(fromEnd) / static_cast<double>(animOut.durationUs);
-            applyKind(animOut.kind, settled, false, layoutW, layoutH, animOut.curve, animOut.shape,
+            applyKind(builtinFor(animOut.kindId), settled, false, layoutW, layoutH, animOut.curve, animOut.shape,
                       &sample);
         }
     }

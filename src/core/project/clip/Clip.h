@@ -184,16 +184,17 @@ struct Clip
     // (visual clips) or volume (audio). They auto-follow trims and speed changes.
     TimeUs fadeInUs = 0;
     TimeUs fadeOutUs = 0;
-    FadeCurve fadeCurve = FadeCurve::Smooth;
-    // Used when fadeCurve == Custom; shared by fade-in and fade-out.
-    FadeShape fadeShape;
+    FadeCurve fadeInCurve = FadeCurve::Smooth;
+    FadeShape fadeInShape; // read when fadeInCurve is Custom or Bezier
+    FadeCurve fadeOutCurve = FadeCurve::Smooth;
+    FadeShape fadeOutShape; // read when fadeOutCurve is Custom or Bezier
     // Audio-only edge ramps: the de-click at cut points made by remove_silence, cut_words and
     // keep_ranges. Unlike fadeInUs/fadeOutUs they never touch opacity, so a cut in a talking-head
     // clip doesn't flash the picture.
     TimeUs audioFadeInUs = 0;
     TimeUs audioFadeOutUs = 0;
 
-    // CapCut-style body intro/outro (whole-clip opacity/transform motion).
+    // Body intro/outro (whole-clip transform motion). Independent of the fades above.
     ClipAnimation animIn;
     ClipAnimation animOut;
 
@@ -365,37 +366,27 @@ struct Clip
     // Whether preview, playback and export draw or play the clip at `time`.
     bool activeAt(TimeUs time) const { return enabled && containsTime(time); }
 
-    // Fade gain in [0,1] at a timeline time. CapCut Fade In/Out animations own
-    // the ramp when set; otherwise edge fadeInUs/Out + clip fadeCurve apply
-    // (audio, timeline handles, legacy projects).
+    // Fade gain in [0,1] at a timeline time, from fadeInUs/fadeOutUs and their per-edge curves.
     // skipIn/skipOut drop that edge's ramp, for an edge an audio transition already shapes.
     double fadeMultiplier(TimeUs timelineUs, bool skipIn = false, bool skipOut = false) const
     {
-        const bool animFadeIn = !skipIn && animIn.kind == ClipAnimKind::Fade && animIn.durationUs > 0;
-        const bool animFadeOut = !skipOut && animOut.kind == ClipAnimKind::Fade && animOut.durationUs > 0;
-        if (!animFadeIn && !animFadeOut && fadeInUs <= 0 && fadeOutUs <= 0)
+        const bool useIn = !skipIn && fadeInUs > 0;
+        const bool useOut = !skipOut && fadeOutUs > 0;
+        if (!useIn && !useOut)
             return 1.0;
 
         const TimeUs rel = qBound(TimeUs{0}, timelineUs - timelineStart, timelineDuration);
         const TimeUs fromEnd = timelineDuration - rel;
 
         double in = 1.0;
-        if (animFadeIn && rel < animIn.durationUs) {
-            const double t = static_cast<double>(rel) / static_cast<double>(animIn.durationUs);
-            in = shapedProgress(t, animIn.curve, animIn.shape);
-        } else if (!skipIn && fadeInUs > 0 && rel < fadeInUs) {
+        if (useIn && rel < fadeInUs)
             in = shapedProgress(static_cast<double>(rel) / static_cast<double>(fadeInUs),
-                                fadeCurve, fadeShape);
-        }
+                                fadeInCurve, fadeInShape);
 
         double out = 1.0;
-        if (animFadeOut && fromEnd < animOut.durationUs) {
-            const double t = static_cast<double>(fromEnd) / static_cast<double>(animOut.durationUs);
-            out = shapedProgress(t, animOut.curve, animOut.shape);
-        } else if (!skipOut && fadeOutUs > 0 && fromEnd < fadeOutUs) {
+        if (useOut && fromEnd < fadeOutUs)
             out = shapedProgress(static_cast<double>(fromEnd) / static_cast<double>(fadeOutUs),
-                                 fadeCurve, fadeShape);
-        }
+                                 fadeOutCurve, fadeOutShape);
 
         return in * out;
     }

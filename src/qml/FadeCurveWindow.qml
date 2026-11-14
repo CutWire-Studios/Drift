@@ -27,7 +27,7 @@ ToolWindow {
     height: 420
     minimumWidth: 420
     minimumHeight: 340
-    title: qsTr("Custom curve")
+    title: root.isTransition ? qsTr("Custom curve") : root.sessionHeading
     color: Theme.c.fadeCurveWindow.background
 
     // Which session the editor is driving. Everything below goes through these four.
@@ -125,13 +125,20 @@ ToolWindow {
         root.selectedHandle = -1
     }
 
-    function openFor(track, clip) {
+    // Edge and target of the open clip session, "in"|"out" and "fade"|"animation".
+    readonly property string sessionEdge: EditorState.curves.fadeEdge
+    readonly property bool isAnimationTarget: !root.isTransition && EditorState.curves.fadeTarget === "animation"
+    readonly property string sessionHeading: root.isAnimationTarget
+        ? (root.sessionEdge === "out" ? qsTr("Out animation curve") : qsTr("In animation curve"))
+        : (root.sessionEdge === "out" ? qsTr("Fade out curve") : qsTr("Fade in curve"))
+
+    function openFor(track, clip, edge, target) {
         root.mode = "fade"
         root.transitionId = ""
         root.trackIndex = track
         root.clipIndex = clip
         root.closingAfterApply = false
-        EditorState.curves.beginFade(track, clip)
+        EditorState.curves.beginFade(track, clip, edge || "in", target || "fade")
         root.syncFromSession()
         root.ensureEditable()
         root.show()
@@ -274,51 +281,70 @@ ToolWindow {
                          ? qsTr("Progress curve — %1").arg(EditorState.curves.transitionName)
                          : qsTr("Progress curve"))
                       : (EditorState.curves.fadeClipName.length
-                         ? qsTr("Fade shape — %1").arg(EditorState.curves.fadeClipName)
-                         : qsTr("Fade shape"))
+                         ? qsTr("%1 — %2").arg(root.sessionHeading).arg(EditorState.curves.fadeClipName)
+                         : root.sessionHeading)
                 color: Theme.c.fadeCurveWindow.foreground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeBase
                 font.weight: Font.Medium
                 elide: Text.ElideRight
-                width: Math.max(80, parent.width - presetRow.width - parent.spacing)
+                width: Math.max(80, parent.width - (edgeRow.visible ? edgeRow.width + parent.spacing : 0))
             }
 
             Row {
-                id: presetRow
+                id: edgeRow
+                visible: !root.isTransition
                 spacing: 6
                 anchors.verticalCenter: parent.verticalCenter
 
                 ThemedChip {
-                    text: qsTr("Points")
-                    selected: !root.isBezier
-                    onClicked: root.setShapeMode("points")
+                    text: qsTr("In")
+                    selected: root.sessionEdge !== "out"
+                    onClicked: root.openFor(root.trackIndex, root.clipIndex, "in",
+                                            EditorState.curves.fadeTarget)
                 }
                 ThemedChip {
-                    text: qsTr("Bezier")
-                    selected: root.isBezier
-                    onClicked: root.setShapeMode("bezier")
+                    text: qsTr("Out")
+                    selected: root.sessionEdge === "out"
+                    onClicked: root.openFor(root.trackIndex, root.clipIndex, "out",
+                                            EditorState.curves.fadeTarget)
                 }
+            }
+        }
 
-                FadeCurveToolbarRule { }
+        Row {
+            id: presetRow
+            spacing: 6
 
-                ThemedChip {
-                    text: qsTr("Linear")
-                    onClicked: root.applyPreset("linear")
-                }
-                ThemedChip {
-                    text: root.isBezier ? qsTr("Ease") : qsTr("Smooth")
-                    onClicked: root.applyPreset(root.isBezier ? "ease" : "smooth")
-                }
-                ThemedChip {
-                    text: root.isBezier ? qsTr("Ease In") : qsTr("Natural")
-                    onClicked: root.applyPreset(root.isBezier ? "easeIn" : "equalPower")
-                }
-                ThemedChip {
-                    visible: root.isBezier
-                    text: qsTr("Ease Out")
-                    onClicked: root.applyPreset("easeOut")
-                }
+            ThemedChip {
+                text: qsTr("Points")
+                selected: !root.isBezier
+                onClicked: root.setShapeMode("points")
+            }
+            ThemedChip {
+                text: qsTr("Bezier")
+                selected: root.isBezier
+                onClicked: root.setShapeMode("bezier")
+            }
+
+            FadeCurveToolbarRule { }
+
+            ThemedChip {
+                text: qsTr("Linear")
+                onClicked: root.applyPreset("linear")
+            }
+            ThemedChip {
+                text: root.isBezier ? qsTr("Ease") : qsTr("Smooth")
+                onClicked: root.applyPreset(root.isBezier ? "ease" : "smooth")
+            }
+            ThemedChip {
+                text: root.isBezier ? qsTr("Ease In") : qsTr("Natural")
+                onClicked: root.applyPreset(root.isBezier ? "easeIn" : "equalPower")
+            }
+            ThemedChip {
+                visible: root.isBezier
+                text: qsTr("Ease Out")
+                onClicked: root.applyPreset("easeOut")
             }
         }
 
@@ -326,7 +352,7 @@ ToolWindow {
             width: parent.width
             text: root.isBezier
                   ? qsTr("Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.")
-                  : qsTr("Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.")
+                  : qsTr("Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.")
             color: Theme.c.fadeCurveWindow.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -336,7 +362,7 @@ ToolWindow {
         Item {
             id: plot
             width: parent.width
-            height: Math.max(180, root.height - 200)
+            height: Math.max(180, root.height - 232)
 
             readonly property real inset: 16
             readonly property real plotW: Math.max(1, width - inset * 2)

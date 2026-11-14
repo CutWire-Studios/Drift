@@ -215,6 +215,8 @@ private slots:
     void backgroundSerialization();
     void fadeSerializationAndMultiplier();
     void clipAnimationSerializationAndSample();
+    void clipAnimationUnknownKindAndParametersRoundTrip();
+    void projectV29FadeMigration();
     void rebaseClipLayoutFreezesImplicitSize();
     void rebaseClipLayoutShiftsKeyframedPosition();
     void rebaseClipLayoutHoldsNestedContentStill();
@@ -2239,7 +2241,7 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 29);
+    QCOMPARE(drift::Project::kCurrentVersion, 30);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
@@ -2279,7 +2281,7 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 29);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 30);
     const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                    .value(QStringLiteral("clips")).toArray().at(0).toObject()
                                    .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();
@@ -4669,7 +4671,7 @@ void CoreTest::bezierCurveShapesProgress()
 void CoreTest::clipAnimationBezierHandlesRoundTrip()
 {
     drift::ClipAnimation anim;
-    anim.kind = drift::ClipAnimKind::SlideUp;
+    anim.kindId = QStringLiteral("slideUp");
     anim.curve = drift::FadeCurve::Bezier;
     anim.shape.setHandles(QPointF(0.17, 0.67), QPointF(0.83, 0.2));
 
@@ -4975,7 +4977,8 @@ void CoreTest::fadeSerializationAndMultiplier()
     clip.timelineDuration = drift::secondsToUs(4.0);
     clip.fadeInUs = drift::secondsToUs(1.0);
     clip.fadeOutUs = drift::secondsToUs(2.0);
-    clip.fadeCurve = drift::FadeCurve::Linear;
+    clip.fadeInCurve = drift::FadeCurve::Linear;
+    clip.fadeOutCurve = drift::FadeCurve::EqualPower;
     project.tracks()[0].clips.append(clip);
 
     QString error;
@@ -4984,21 +4987,24 @@ void CoreTest::fadeSerializationAndMultiplier()
     const drift::Clip &c = loaded.tracks()[0].clips[0];
     QCOMPARE(c.fadeInUs, drift::secondsToUs(1.0));
     QCOMPARE(c.fadeOutUs, drift::secondsToUs(2.0));
-    QCOMPARE(c.fadeCurve, drift::FadeCurve::Linear);
+    QCOMPARE(c.fadeInCurve, drift::FadeCurve::Linear);
+    QCOMPARE(c.fadeOutCurve, drift::FadeCurve::EqualPower);
 
-    // Linear ramp: at the very edges gain is 0, at the fade midpoints 0.5, and
-    // fully present between the fades.
+    // Linear ramp in: at the very edge gain is 0, at the fade midpoint 0.5, and
+    // fully present between the fades. Fade-out has its own curve.
     QCOMPARE(c.fadeMultiplier(c.timelineStart), 0.0);
     QVERIFY(qAbs(c.fadeMultiplier(c.timelineStart + drift::secondsToUs(0.5)) - 0.5) < 1e-6);
     QVERIFY(qAbs(c.fadeMultiplier(c.timelineStart + drift::secondsToUs(1.5)) - 1.0) < 1e-6);
-    QVERIFY(qAbs(c.fadeMultiplier(c.timelineEnd() - drift::secondsToUs(1.0)) - 0.5) < 1e-6);
+    QVERIFY(qAbs(c.fadeMultiplier(c.timelineEnd() - drift::secondsToUs(1.0)) - 0.5) > 1e-3);
+    QVERIFY(qAbs(c.fadeMultiplier(c.timelineEnd() - drift::secondsToUs(1.0))
+                 - drift::shapedProgress(0.5, drift::FadeCurve::EqualPower, {})) < 1e-6);
 
     // Presets must diverge early in the fade so Smooth / Natural are audible and visible.
     // (Smoothstep equals Linear at t=0.5, so sample at quarter-fade.)
     drift::Clip smooth = c;
-    smooth.fadeCurve = drift::FadeCurve::Smooth;
+    smooth.fadeInCurve = drift::FadeCurve::Smooth;
     drift::Clip natural = c;
-    natural.fadeCurve = drift::FadeCurve::EqualPower;
+    natural.fadeInCurve = drift::FadeCurve::EqualPower;
     const drift::TimeUs earlyIn = c.timelineStart + drift::secondsToUs(0.25);
     const double linearEarly = c.fadeMultiplier(earlyIn);
     const double smoothEarly = smooth.fadeMultiplier(earlyIn);
@@ -5008,14 +5014,16 @@ void CoreTest::fadeSerializationAndMultiplier()
 
     // Custom shape round-trips and drives the multiplier.
     drift::Clip custom = c;
-    custom.fadeCurve = drift::FadeCurve::Custom;
-    custom.fadeShape.setPoints({QPointF(0.0, 0.0), QPointF(0.5, 0.25), QPointF(1.0, 1.0)});
+    custom.fadeInCurve = drift::FadeCurve::Custom;
+    custom.fadeInShape.setPoints({QPointF(0.0, 0.0), QPointF(0.5, 0.25), QPointF(1.0, 1.0)});
     project.tracks()[0].clips[0] = custom;
     const drift::Project customLoaded = drift::Project::fromJson(project.toJson(), &error);
     QVERIFY2(error.isEmpty(), qPrintable(error));
     const drift::Clip &cc = customLoaded.tracks()[0].clips[0];
-    QCOMPARE(cc.fadeCurve, drift::FadeCurve::Custom);
-    QVERIFY(!cc.fadeShape.isEmpty());
+    QCOMPARE(cc.fadeInCurve, drift::FadeCurve::Custom);
+    QVERIFY(!cc.fadeInShape.isEmpty());
+    QCOMPARE(cc.fadeOutCurve, drift::FadeCurve::EqualPower);
+    QCOMPARE(customLoaded.toJson().value(QStringLiteral("version")).toInt(), 30);
     const drift::TimeUs midIn = c.timelineStart + drift::secondsToUs(0.5);
     QVERIFY(qAbs(cc.fadeMultiplier(midIn) - 0.25) < 1e-6);
 
@@ -5037,34 +5045,31 @@ void CoreTest::clipAnimationSerializationAndSample()
     clip.type = drift::ClipType::Shape;
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(2.0);
-    clip.animIn = {drift::ClipAnimKind::Fade, drift::secondsToUs(1.0), drift::ClipAnimEase::Linear,
-                   drift::FadeCurve::Linear};
-    clip.animOut = {drift::ClipAnimKind::ZoomIn, drift::secondsToUs(0.5), drift::ClipAnimEase::EaseOut,
-                    drift::FadeCurve::EqualPower};
+    clip.animIn = {QStringLiteral("slideUp"), {}, drift::secondsToUs(1.0), drift::FadeCurve::Linear, {}};
+    clip.animOut = {QStringLiteral("zoomIn"), {}, drift::secondsToUs(0.5), drift::FadeCurve::EqualPower, {}};
     project.tracks()[0].clips.append(clip);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
     QVERIFY2(error.isEmpty(), qPrintable(error));
     const drift::Clip &c = loaded.tracks()[0].clips[0];
-    QCOMPARE(c.animIn.kind, drift::ClipAnimKind::Fade);
+    QCOMPARE(c.animIn.kindId, QStringLiteral("slideUp"));
     QCOMPARE(c.animIn.durationUs, drift::secondsToUs(1.0));
     QCOMPARE(c.animIn.curve, drift::FadeCurve::Linear);
-    QCOMPARE(c.animOut.kind, drift::ClipAnimKind::ZoomIn);
+    QCOMPARE(c.animOut.kindId, QStringLiteral("zoomIn"));
     QCOMPARE(c.animOut.curve, drift::FadeCurve::EqualPower);
 
-    // Fade kind owns opacity via fadeMultiplier (not body-anim sample).
-    QVERIFY(qAbs(c.fadeMultiplier(drift::secondsToUs(0.5)) - 0.5) < 1e-6);
+    // Motion no longer touches opacity: with no fade set the gain stays 1 through the animation.
+    QCOMPARE(c.fadeMultiplier(drift::secondsToUs(0.5)), 1.0);
     const drift::ClipAnimSample midIn =
         drift::evaluateClipAnimation(c.timelineStart, c.timelineDuration, c.animIn, {},
                                      drift::secondsToUs(0.5), 100.0, 100.0);
-    QVERIFY(qAbs(midIn.opacity - 1.0) < 1e-6);
+    QVERIFY(midIn.dy > 0.0);
 
     drift::Clip zoom;
     zoom.timelineStart = 0;
     zoom.timelineDuration = drift::secondsToUs(2.0);
-    zoom.animIn = {drift::ClipAnimKind::ZoomIn, drift::secondsToUs(1.0), drift::ClipAnimEase::Linear,
-                   drift::FadeCurve::Linear};
+    zoom.animIn = {QStringLiteral("zoomIn"), {}, drift::secondsToUs(1.0), drift::FadeCurve::Linear, {}};
     const drift::ClipAnimSample zoomMid =
         drift::evaluateClipAnimation(zoom.timelineStart, zoom.timelineDuration, zoom.animIn, {},
                                      drift::secondsToUs(0.5), 100.0, 100.0);
@@ -5081,6 +5086,134 @@ void CoreTest::clipAnimationSerializationAndSample()
         drift::evaluateClipAnimation(zoom.timelineStart, zoom.timelineDuration, zoom.animIn, {},
                                      drift::secondsToUs(0.25), 100.0, 100.0);
     QVERIFY(smoothMid.scale < linearQuarter.scale - 0.01);
+}
+
+void CoreTest::clipAnimationUnknownKindAndParametersRoundTrip()
+{
+    drift::ClipAnimation anim;
+    anim.kindId = QStringLiteral("shader.ripple");
+    anim.parameters.insert(QStringLiteral("strength"), 0.75);
+    anim.parameters.insert(QStringLiteral("label"), QStringLiteral("x"));
+    anim.durationUs = drift::secondsToUs(0.8);
+
+    const QJsonObject json = drift::clipAnimationToJson(anim);
+    QCOMPARE(json.value(QStringLiteral("kind")).toString(), QStringLiteral("shader.ripple"));
+    QVERIFY(json.contains(QStringLiteral("parameters")));
+    const drift::ClipAnimation back = drift::clipAnimationFromJson(json);
+    QCOMPARE(back.kindId, QStringLiteral("shader.ripple"));
+    QCOMPARE(back.parameters.value(QStringLiteral("strength")).toDouble(), 0.75);
+    QCOMPARE(back.parameters.value(QStringLiteral("label")).toString(), QStringLiteral("x"));
+    QCOMPARE(back.durationUs, drift::secondsToUs(0.8));
+
+    QVERIFY(!drift::clipAnimationToJson(drift::ClipAnimation{}).contains(QStringLiteral("parameters")));
+    QVERIFY(drift::clipAnimationFromJson(drift::clipAnimationToJson(drift::ClipAnimation{})).isNone());
+
+    // evaluate ignores an id it does not know.
+    const drift::ClipAnimSample sample =
+        drift::evaluateClipAnimation(0, drift::secondsToUs(2.0), anim, anim, drift::secondsToUs(0.1), 100.0, 100.0);
+    QCOMPARE(sample.dx, 0.0);
+    QCOMPARE(sample.dy, 0.0);
+    QCOMPARE(sample.scale, 1.0);
+
+    // And it survives a whole-project save and load unchanged.
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Shape;
+    clip.timelineDuration = drift::secondsToUs(3.0);
+    clip.animIn = anim;
+    project.tracks()[0].clips.append(clip);
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QCOMPARE(loaded.tracks()[0].clips[0].animIn.kindId, QStringLiteral("shader.ripple"));
+    QCOMPARE(loaded.tracks()[0].clips[0].animIn.parameters.value(QStringLiteral("strength")).toDouble(), 0.75);
+    QCOMPARE(loaded.tracks()[0].clips[0].fadeInUs, drift::TimeUs{0});
+}
+
+void CoreTest::projectV29FadeMigration()
+{
+    const auto animJson = [](const QString &kind, double seconds, const QString &curve) {
+        return QJsonObject{{QStringLiteral("kind"), kind},
+                           {QStringLiteral("durationUs"), seconds * 1000000.0},
+                           {QStringLiteral("curve"), curve}};
+    };
+    const auto clipJson = [&](const QString &id, const QString &type, const QJsonObject &fields) {
+        QJsonObject o{{QStringLiteral("id"), id},
+                      {QStringLiteral("type"), type},
+                      {QStringLiteral("timelineStartUs"), 0},
+                      {QStringLiteral("timelineDurationUs"), 10000000.0},
+                      {QStringLiteral("srcInUs"), 0},
+                      {QStringLiteral("srcOutUs"), 10000000.0}};
+        for (auto it = fields.begin(); it != fields.end(); ++it)
+            o.insert(it.key(), it.value());
+        return o;
+    };
+    const auto load = [](int version, const QJsonArray &clips, drift::TrackType) {
+        QJsonObject root{{QStringLiteral("version"), version},
+                         {QStringLiteral("tracks"),
+                          QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("video")},
+                                                 {QStringLiteral("clips"), clips}}}}};
+        QString error;
+        const drift::Project project = drift::Project::fromJson(root, &error);
+        return project;
+    };
+
+    // Rule 1: legacy shared curve applies to both edges.
+    {
+        const drift::Project p = load(29, QJsonArray{clipJson(QStringLiteral("a"), QStringLiteral("shape"),
+                                  {{QStringLiteral("fadeInUs"), 1000000}, {QStringLiteral("fadeOutUs"), 2000000},
+                                   {QStringLiteral("fadeCurve"), QStringLiteral("linear")}})}, drift::TrackType::Video);
+        const drift::Clip &c = p.tracks()[0].clips[0];
+        QCOMPARE(c.fadeInCurve, drift::FadeCurve::Linear);
+        QCOMPARE(c.fadeOutCurve, drift::FadeCurve::Linear);
+        QCOMPARE(c.fadeInUs, drift::secondsToUs(1.0));
+        QCOMPARE(c.fadeOutUs, drift::secondsToUs(2.0));
+    }
+    // Rule 2: a fade animation overrides the edge fade and empties the slot.
+    {
+        const drift::Project p = load(29, QJsonArray{clipJson(QStringLiteral("a"), QStringLiteral("shape"),
+                                  {{QStringLiteral("fadeInUs"), 500000},
+                                   {QStringLiteral("fadeCurve"), QStringLiteral("smooth")},
+                                   {QStringLiteral("animIn"), animJson(QStringLiteral("fade"), 1.5, QStringLiteral("equalPower"))}})}, drift::TrackType::Video);
+        const drift::Clip &c = p.tracks()[0].clips[0];
+        QCOMPARE(c.fadeInUs, drift::secondsToUs(1.5));
+        QCOMPARE(c.fadeInCurve, drift::FadeCurve::EqualPower);
+        QCOMPARE(c.fadeOutCurve, drift::FadeCurve::Smooth);
+        QVERIFY(c.animIn.isNone());
+    }
+    // Rule 3: motion on a visual clip becomes a matching fade where the edge had none.
+    {
+        const drift::Project p = load(29, QJsonArray{
+            clipJson(QStringLiteral("a"), QStringLiteral("shape"),
+                     {{QStringLiteral("animIn"), animJson(QStringLiteral("slideUp"), 0.8, QStringLiteral("linear"))},
+                      {QStringLiteral("animOut"), animJson(QStringLiteral("bounce"), 0.8, QStringLiteral("smooth"))}}),
+            clipJson(QStringLiteral("b"), QStringLiteral("shape"),
+                     {{QStringLiteral("fadeInUs"), 300000},
+                      {QStringLiteral("animIn"), animJson(QStringLiteral("pop"), 0.8, QStringLiteral("linear"))}})}, drift::TrackType::Video);
+        const drift::Clip &a = p.tracks()[0].clips[0];
+        QCOMPARE(a.animIn.kindId, QStringLiteral("slideUp"));
+        QCOMPARE(a.fadeInUs, drift::secondsToUs(0.8));
+        QCOMPARE(a.fadeInCurve, drift::FadeCurve::Linear);
+        QCOMPARE(a.animOut.kindId, QStringLiteral("bounce"));
+        QCOMPARE(a.fadeOutUs, drift::secondsToUs(0.2));
+        const drift::Clip &b = p.tracks()[0].clips[1];
+        QCOMPARE(b.fadeInUs, drift::secondsToUs(0.3));
+        QCOMPARE(b.animIn.kindId, QStringLiteral("pop"));
+    }
+    // Version 30 files get no motion -> fade conversion, but a stray fade kind still moves.
+    {
+        const drift::Project p = load(30, QJsonArray{clipJson(QStringLiteral("a"), QStringLiteral("shape"),
+                                  {{QStringLiteral("animIn"), animJson(QStringLiteral("slideUp"), 0.8, QStringLiteral("linear"))},
+                                   {QStringLiteral("animOut"), animJson(QStringLiteral("fade"), 0.4, QStringLiteral("linear"))}})}, drift::TrackType::Video);
+        const drift::Clip &c = p.tracks()[0].clips[0];
+        QCOMPARE(c.fadeInUs, drift::TimeUs{0});
+        QCOMPARE(c.animIn.kindId, QStringLiteral("slideUp"));
+        QCOMPARE(c.fadeOutUs, drift::secondsToUs(0.4));
+        QVERIFY(c.animOut.isNone());
+    }
 }
 
 // A canvas resize must not move or rescale anything: clips that relied on the
@@ -7517,9 +7650,9 @@ void CoreTest::splitClipClearsInnerFades()
     clip.fadeOutUs = drift::secondsToUs(2);
     clip.audioFadeInUs = drift::secondsToUs(0.03);
     clip.audioFadeOutUs = drift::secondsToUs(0.03);
-    clip.animIn.kind = drift::ClipAnimKind::Fade;
+    clip.animIn.kindId = QStringLiteral("slideUp");
     clip.animIn.durationUs = drift::secondsToUs(1);
-    clip.animOut.kind = drift::ClipAnimKind::Fade;
+    clip.animOut.kindId = QStringLiteral("slideUp");
     clip.animOut.durationUs = drift::secondsToUs(1);
 
     drift::Clip head = clip;
@@ -7528,10 +7661,10 @@ void CoreTest::splitClipClearsInnerFades()
     QCOMPARE(head.fadeInUs, drift::secondsToUs(1));
     QCOMPARE(head.fadeOutUs, 0);
     QCOMPARE(head.audioFadeOutUs, 0);
-    QCOMPARE(head.animOut.kind, drift::ClipAnimation{}.kind);
+    QVERIFY(head.animOut.isNone());
     QCOMPARE(tail.fadeInUs, 0);
     QCOMPARE(tail.audioFadeInUs, 0);
-    QCOMPARE(tail.animIn.kind, drift::ClipAnimation{}.kind);
+    QVERIFY(tail.animIn.isNone());
     QCOMPARE(tail.fadeOutUs, drift::secondsToUs(2));
     QCOMPARE(head.fadeMultiplier(drift::secondsToUs(3.99)), 1.0);
 

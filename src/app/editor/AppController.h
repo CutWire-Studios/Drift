@@ -1401,12 +1401,20 @@ public:
     Q_INVOKABLE QVariantMap inspectPdf(const QString &path) const;
     Q_INVOKABLE QVariantMap inspectPdfClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
-    Q_INVOKABLE void setClipFadeCurve(int trackIndex, int clipIndex, const QString &curve,
-                                      const QVariantList &handles = {});
-    // which: "animIn" | "animOut". Partial patch: kind / duration / curve (or legacy ease) /
-    // handles ([x1, y1, x2, y2] for the bezier curve).
+    // edge: "in" | "out" | "both".
+    Q_INVOKABLE void setClipFadeCurve(int trackIndex, int clipIndex, const QString &edge,
+                                      const QString &curve, const QVariantList &handles = {});
+    // which: "animIn" | "animOut". Partial patch: kind (any id, "none" clears) / duration / curve
+    // (or legacy ease) / handles ([x1, y1, x2, y2] for the bezier curve). Never touches the fade.
     Q_INVOKABLE void setClipAnimation(int trackIndex, int clipIndex, const QString &which,
                                       const QVariantMap &patch);
+    // [{id, label}] for every animation kind the pickers offer, in menu order. "none" is not in it.
+    Q_INVOKABLE QVariantList clipAnimationKinds() const;
+    // which: "animIn" | "animOut" | "both". kind: "none" (clears animation and fade), "fade"
+    // (animation cleared, fade kept or 0.5 s) or an animation id (fade follows it when the edge
+    // had none). One undo step.
+    Q_INVOKABLE void applyClipAnimationPreset(int trackIndex, int clipIndex, const QString &which,
+                                              const QString &kind);
     // linkedAudio: also add the same transition between the two clips' linked audio, when they sit
     // next to each other on one audio track.
     Q_INVOKABLE void addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds,
