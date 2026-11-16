@@ -359,6 +359,24 @@ void main() {
 }
 )";
 
+constexpr const char *kFeatherFragShader = R"(#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform sampler2D u_currentTexture;
+uniform vec2 u_step;     // direction * tap spacing / size; zero turns this into a plain resample
+void main() {
+    vec4 sum = vec4(0.0);
+    float total = 0.0;
+    for (float i = -8.0; i <= 8.0; i += 1.0) {
+        float t = i / 2.667;
+        float w = exp(-0.5 * t * t);
+        sum += texture(u_currentTexture, v_texCoord + u_step * i) * w;
+        total += w;
+    }
+    fragColor = sum / total;
+}
+)";
+
 int blendModeCode(drift::BlendMode mode)
 {
     switch (mode) {
@@ -1132,40 +1150,73 @@ QRectF maskMediaRect(const drift::Mask &mask, const QSize &mediaSize, const QSiz
     return QRectF(cx - fw * 0.5, cy - fh * 0.5, fw, fh);
 }
 
-// Separable feather over a coverage target, using the same 17-tap kernel as the background blur.
-// Doing it here rather than in maskAlphaMap is what keeps a large feather affordable: the CPU
-// rasterizer blurs a full-canvas map with a box filter per pass.
+// Gaussian feather (sigma = half the px radius) over a coverage target. The work is bounded
+// whatever the radius: the map is halved until sigma is a handful of pixels, blurred there with
+// a fixed 17-tap kernel, and resampled back up, so a feather spanning half the frame costs about
+// what a small one does.
 void featherCoverage(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &coverage, double feather,
                      const QSize &size)
 {
     QOpenGLShaderProgram *blur =
-        rt.builtinProgram(QStringLiteral("__mask_blur__"), kQuadVertexShader, kBlurFragShader);
+        rt.builtinProgram(QStringLiteral("__mask_feather__"), kQuadVertexShader, kFeatherFragShader);
     if (!blur)
         return;
 
-    GlTarget scratch = rt.acquireTarget(size.width(), size.height());
-    if (!scratch.isValid())
-        return;
+    const double sigma = qMax(0.5, feather * 0.5);
+    int levels = 0;
+    while (levels < 8 && sigma / double(1 << levels) > 6.0)
+        ++levels;
 
-    const float radius = float(qBound(1.0, feather, 64.0));
     const auto pass = [&](GlTarget &in, GlTarget &out, float dx, float dy) {
         out.fbo->bind();
         gl->glViewport(0, 0, out.width, out.height);
         gl->glDisable(GL_BLEND);
         blur->bind();
         blur->setUniformValue("u_currentTexture", 0);
-        blur->setUniformValue("u_radius", radius);
-        blur->setUniformValue("u_texel", QVector2D(dx / size.width(), dy / size.height()));
+        blur->setUniformValue("u_step", QVector2D(dx / in.width, dy / in.height));
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, in.texture());
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         bindQuad(rt, gl);
         blur->release();
         out.fbo->release();
     };
 
-    pass(coverage, scratch, 1.f, 0.f);
-    pass(scratch, coverage, 0.f, 1.f);
+    std::vector<GlTarget> chain;
+    chain.reserve(size_t(levels));
+    const auto cleanup = [&]() {
+        for (GlTarget &t : chain)
+            rt.releaseTarget(std::move(t));
+    };
+
+    GlTarget *low = &coverage;
+    for (int i = 1; i <= levels; ++i) {
+        chain.push_back(rt.acquireTarget(qMax(1, size.width() >> i), qMax(1, size.height() >> i)));
+        if (!chain.back().isValid()) {
+            chain.pop_back();
+            cleanup();
+            return;
+        }
+        pass(*low, chain.back(), 0.f, 0.f);
+        low = &chain.back();
+    }
+
+    GlTarget scratch = rt.acquireTarget(low->width, low->height);
+    if (!scratch.isValid()) {
+        cleanup();
+        return;
+    }
+    const float tap = float(sigma / double(1 << levels) / 2.667);
+    pass(*low, scratch, tap, 0.f);
+    pass(scratch, *low, 0.f, tap);
     rt.releaseTarget(std::move(scratch));
+
+    if (levels > 0)
+        pass(*low, coverage, 0.f, 0.f);
+    cleanup();
 }
 
 // Folds the whole stack into one coverage target on the GPU. Returns an invalid target when

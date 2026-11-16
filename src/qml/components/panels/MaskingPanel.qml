@@ -1039,7 +1039,7 @@ PanelFrame {
                                     Layout.alignment: Qt.AlignVCenter
                                     label: qsTr("Feather")
                                     from: 0
-                                    to: 64
+                                    to: EditorState.masking.featherLimit(maskEntry.model.track, maskEntry.model.clip)
                                     valueFormatter: function (v) { return Math.round(v) + " px" }
                                     Binding on value {
                                         when: !featherSlider.pressed

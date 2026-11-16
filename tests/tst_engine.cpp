@@ -466,6 +466,7 @@ private slots:
     void maskShapesUseBothSizeAxes();
     void maskRoundnessRoundsRectangleCorners();
     void splitMaskRevealsOneSideOfASeam();
+    void largeFeatherSpreadsAcrossTheFrame();
     void starMaskRotatesOnceNotTwice();
     void maskAdjustmentLaneMasksItsParentsClips();
     void maskLaneOpsCombineAcrossLanes();
@@ -12801,6 +12802,24 @@ void EngineTest::maskRoundnessRoundsRectangleCorners()
     const drift::Mask &back = loaded.tracks()[0].clips[0].mask;
     QCOMPARE(back.roundness, 0.4);
     QVERIFY(!back.keyframes.value(QStringLiteral("roundness")).isEmpty());
+}
+
+void EngineTest::largeFeatherSpreadsAcrossTheFrame()
+{
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Split;
+    mask.feather = 512.0;
+    QElapsedTimer timer;
+    timer.start();
+    const QImage alpha = drift::maskAlphaMap(mask, 1024, 1024);
+    QVERIFY2(timer.elapsed() < 2000, "large feather must not scale with radius");
+    QCOMPARE(alpha.size(), QSize(1024, 1024));
+    const int left = qGray(alpha.pixel(100, 512));
+    const int mid = qGray(alpha.pixel(512, 512));
+    const int right = qGray(alpha.pixel(900, 512));
+    QVERIFY(left > mid && mid > right);
+    QVERIFY(left < 255 && right > 0);
+    QVERIFY(qAbs(mid - 128) < 20);
 }
 
 void EngineTest::splitMaskRevealsOneSideOfASeam()

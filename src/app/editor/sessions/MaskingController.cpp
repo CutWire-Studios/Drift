@@ -1158,6 +1158,27 @@ void MaskingController::finishPatchSave(bool ok, const QString &path, const QStr
     m_app->finishEdit(tr("Cutout frame fixed"));
 }
 
+double MaskingController::featherLimit(int trackIndex, int clipIndex) const
+{
+    const drift::Project &project = m_app->m_project;
+    double frameW = project.width();
+    double frameH = project.height();
+    if (m_app->isValidClipIndex(trackIndex, clipIndex)) {
+        const drift::Clip &clip = project.tracks().at(trackIndex).clips.at(clipIndex);
+        if (clip.type != drift::ClipType::Adjustment) {
+            const drift::ClipLayout layout = drift::clipLayoutAt(
+                clip, m_app->m_playheadUs - clip.timelineStart, QSizeF(project.width(), project.height()));
+            const double w = std::abs(layout.frameW * layout.scaleX);
+            const double h = std::abs(layout.frameH * layout.scaleY);
+            if (w > 0.0 && h > 0.0) {
+                frameW = w;
+                frameH = h;
+            }
+        }
+    }
+    return std::max(1.0, std::round(std::max(frameW, frameH) * 0.5));
+}
+
 QSize MaskingController::brushMatteSize(int trackIndex, int clipIndex) const
 {
     const drift::Project &project = m_app->m_project;

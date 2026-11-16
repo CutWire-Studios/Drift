@@ -90,6 +90,9 @@ public:
     MaskEditSession *editSession() const { return m_editSession; }
     MaskStackModel *stackModel() const { return m_stackModel; }
 
+    // Largest useful feather in px for a clip: half its frame's longer side (the canvas for an
+    // adjustment, whose mask spans it).
+    Q_INVOKABLE double featherLimit(int trackIndex, int clipIndex) const;
     Q_INVOKABLE QString assetMaskRole(int assetIndex) const;
     Q_INVOKABLE void setAssetMaskRole(int assetIndex, const QString &role);
 
