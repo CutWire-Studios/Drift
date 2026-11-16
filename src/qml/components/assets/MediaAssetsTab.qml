@@ -506,6 +506,34 @@ Item {
         visible: AssetLibrary.count > 0 || BinFolderModel.count > 0
         placeholderText: qsTr("Search media")
         font.family: Theme.fontFamily
+        // Room for the clear button inside the field, so a long query does not run under it.
+        rightPadding: clearSearch.visible ? clearSearch.width + Theme.spacingSm * 2 : Theme.spacingLg
+
+        Keys.onEscapePressed: (event) => {
+            if (search.text.length > 0)
+                search.text = ""
+            else
+                event.accepted = false
+        }
+    }
+
+    // The catalog tabs get this from AssetSearchBar; the media tab has its own field, which left
+    // it as the one search in the panel you had to clear by hand.
+    IconButton {
+        id: clearSearch
+        anchors.right: search.right
+        anchors.rightMargin: Theme.spacingSm
+        anchors.verticalCenter: search.verticalCenter
+        visible: search.visible && search.text.length > 0
+        glyph: Theme.icons.x
+        variant: "ghost"
+        buttonSize: Theme.controlHeightSm
+        iconSize: Theme.iconSizeSm
+        tooltip: qsTr("Clear search")
+        onClicked: {
+            search.text = ""
+            search.forceActiveFocus()
+        }
     }
 
     MediaAssetsViewToolbar {
