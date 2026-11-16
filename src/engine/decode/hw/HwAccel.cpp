@@ -30,10 +30,23 @@ namespace {
 // libva-x11 is not on that path, so its absence is fine. The handles are deliberately
 // never closed: FFmpeg dlopens the same sonames moments later, and unloading underneath
 // it would undo the check.
+//
+// The stubs resolve each symbol on first call, through the same assert(0) on failure. FFmpeg
+// built against libva >= 2.21 maps surfaces with vaMapBuffer2 (every av_hwframe_transfer_data
+// download, and the VAAPI encoders), so an older host libva decodes fine and then aborts on the
+// first download. Without it VAAPI is reported unavailable rather than half-usable.
 bool vaapiLoadable()
 {
-    static const bool ok = dlopen("libva.so.2", RTLD_LAZY | RTLD_LOCAL) != nullptr
-        && dlopen("libva-drm.so.2", RTLD_LAZY | RTLD_LOCAL) != nullptr;
+    static const bool ok = [] {
+        void *va = dlopen("libva.so.2", RTLD_LAZY | RTLD_LOCAL);
+        if (!va || !dlopen("libva-drm.so.2", RTLD_LAZY | RTLD_LOCAL))
+            return false;
+        if (!dlsym(va, "vaMapBuffer2")) {
+            qWarning("HwAccel: VAAPI disabled: libva.so.2 predates 2.21 (no vaMapBuffer2)");
+            return false;
+        }
+        return true;
+    }();
     return ok;
 }
 #endif
