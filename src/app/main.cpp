@@ -114,6 +114,8 @@
 #include <QTime>
 #include <memory>
 #include <mutex>
+#include <atomic>
+#include <chrono>
 #include <thread>
 
 #ifdef Q_OS_WIN
@@ -784,6 +786,20 @@ int main(int argc, char *argv[])
     // still exists: the GL thread's offscreen surface has to die on the GUI thread, and the
     // post routine that would otherwise do it runs inside ~QCoreApplication.
     const auto glShutdown = qScopeGuard([] { drift::gl::runtime().shutdown(); });
+    // Joined before glShutdown: a warm-up past ensureReady() would otherwise post into a GL
+    // thread that is already gone. It may be waiting on this thread to create the offscreen
+    // surface, so keep delivering events while waiting.
+    std::thread glWarmup;
+    std::atomic_bool glWarmupDone{false};
+    const auto joinGlWarmup = qScopeGuard([&glWarmup, &glWarmupDone] {
+        if (!glWarmup.joinable())
+            return;
+        while (!glWarmupDone.load()) {
+            QCoreApplication::processEvents();
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        glWarmup.join();
+    });
     // A missing image plugin is silent everywhere else: the reader just returns a null QImage,
     // so the bin card is blank and the clip renders as nothing with no hint why. On a released
     // APK this line is the only way to tell that from a corrupt file, over adb logcat.
@@ -1087,7 +1103,7 @@ int main(int argc, char *argv[])
     };
     // Per-window startup hooks. `first` is the window the splash waits on; `editor` is the shell
     // window, the only one worth warming the compositor for.
-    [[maybe_unused]] const auto hookWindow = [&app, splash, graphicsApiGuarded](QQuickWindow *window, bool first,
+    [[maybe_unused]] const auto hookWindow = [&app, &glWarmup, &glWarmupDone, splash, graphicsApiGuarded](QQuickWindow *window, bool first,
                                                                               bool editor) {
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
         if (window)
@@ -1133,15 +1149,18 @@ int main(int argc, char *argv[])
             // The compositor's GL context and Skia otherwise come up on the first preview frame,
             // blocking the GUI thread as a project opens. Bring them up off the GUI thread once the
             // window is on screen, so the start screen is not held back and the first open is quick.
-            QObject::connect(window, &QQuickWindow::frameSwapped, &app, [] {
-                std::thread([] {
+            QObject::connect(window, &QQuickWindow::frameSwapped, &app, [&glWarmup, &glWarmupDone] {
+                if (glWarmup.joinable())
+                    return;
+                glWarmup = std::thread([&glWarmupDone] {
                     drift::gl::GlRuntime &rt = drift::gl::runtime();
 #ifdef DRIFT_WITH_SKIA
                     rt.exec([&rt] { drift::skia::SkiaRuntime::acquire(rt); });
 #else
                     rt.available();
 #endif
-                }).detach();
+                    glWarmupDone.store(true);
+                });
             }, static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
         }
 #else
