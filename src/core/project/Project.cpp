@@ -1727,6 +1727,11 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             bookmark.timeUs = secondsToUs(bookmarkObject.value(QStringLiteral("seconds")).toDouble());
         }
         bookmark.label = bookmarkObject.value(QStringLiteral("label")).toString();
+        // Optional and additive: a project written before bookmarks had colours, or by a build
+        // without them, simply leaves every flag on the theme colour.
+        const QString color = bookmarkObject.value(QStringLiteral("color")).toString();
+        if (!color.isEmpty() && QColor::isValidColorName(color))
+            bookmark.color = QColor(color);
         project.m_bookmarks.append(bookmark);
     }
 
@@ -1842,10 +1847,15 @@ QJsonObject Project::toJson(bool includeTranscripts) const
 
     QJsonArray bookmarksArray;
     for (const Bookmark &bookmark : m_bookmarks) {
-        bookmarksArray.append(QJsonObject{
+        QJsonObject bookmarkObject{
             {QStringLiteral("timeUs"), static_cast<double>(bookmark.timeUs)},
             {QStringLiteral("label"), bookmark.label},
-        });
+        };
+        // Written only when set, so a project with no coloured flags is byte-for-byte what an
+        // older build wrote and keeps opening in one.
+        if (bookmark.color.isValid())
+            bookmarkObject.insert(QStringLiteral("color"), bookmark.color.name());
+        bookmarksArray.append(bookmarkObject);
     }
 
     QJsonObject root{

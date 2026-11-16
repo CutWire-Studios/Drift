@@ -22,6 +22,9 @@ struct Bookmark
 {
     TimeUs timeUs = 0;
     QString label;
+    // Empty/invalid means the theme's own marker colour. Set, it tints this one flag, so a
+    // timeline can be read in sections at a glance rather than as one undifferentiated row.
+    QColor color;
 };
 
 // How the canvas area behind/around clips is filled.

@@ -13,6 +13,12 @@ Item {
     // ThemedContextMenu owned by the timeline. The flag fills its index and label.
     required property var menu
 
+    // Set on desktop, where the colour picker lives; honoured here so a project marked up in
+    // sections reads the same on the phone.
+    readonly property color markerColor: modelData.color && modelData.color.length > 0
+                                         ? modelData.color
+                                         : Theme.c.androidTimelineBookmarkFlag.background
+
     x: modelData.seconds * bookmarkFlag.pxPerSecond - width / 2
     width: 10
     height: parent ? parent.height : 0
@@ -22,7 +28,8 @@ Item {
         y: -6
         width: Theme.c.androidTimelineBookmarkFlag.stemWidth
         height: parent.height + 6
-        color: Theme.c.androidTimelineBookmarkFlag.stem
+        color: modelData.color && modelData.color.length > 0
+               ? bookmarkFlag.markerColor : Theme.c.androidTimelineBookmarkFlag.stem
         opacity: 0.7
     }
 
@@ -33,7 +40,7 @@ Item {
         height: 8
         rotation: 45
         radius: Theme.c.androidTimelineBookmarkFlag.radius
-        color: Theme.c.androidTimelineBookmarkFlag.background
+        color: bookmarkFlag.markerColor
     }
 
     // A project marked up on desktop arrived as a row of

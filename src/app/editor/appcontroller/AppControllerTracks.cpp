@@ -803,6 +803,9 @@ QVariantList AppController::bookmarks() const
         result.append(QVariantMap{
             {QStringLiteral("seconds"), drift::usToSeconds(bookmark.timeUs)},
             {QStringLiteral("label"), bookmark.label},
+            // Empty when unset: the marker falls back to the theme colour rather than carrying
+            // a resolved one, so a theme change recolours every uncoloured flag with it.
+            {QStringLiteral("color"), bookmark.color.isValid() ? bookmark.color.name() : QString()},
         });
     }
     return result;
@@ -926,6 +929,25 @@ void AppController::updateBookmark(int index, double seconds, const QString &lab
     bookmark.label = resolvedLabel;
     pushProjectEdit(before, tr("Edit bookmark"));
     finishEdit(tr("Bookmark updated"));
+}
+
+void AppController::setBookmarkColor(int index, const QString &color)
+{
+    if (index < 0 || index >= m_project.bookmarks().size())
+        return;
+
+    const QColor resolved = color.isEmpty() || !QColor::isValidColorName(color) ? QColor()
+                                                                               : QColor(color);
+    // Snapshot before binding the reference: bookmarks are a plain QList, so a later copy would
+    // share the buffer the reference writes into.
+    const drift::Project before = m_project;
+    drift::Bookmark &bookmark = m_project.bookmarks()[index];
+    if (bookmark.color == resolved)
+        return;
+
+    bookmark.color = resolved;
+    pushProjectEdit(before, tr("Colour bookmark"));
+    finishEdit(tr("Bookmark colour changed"));
 }
 
 void AppController::goToBookmark(int index)

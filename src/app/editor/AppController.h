@@ -1710,6 +1710,8 @@ public:
     Q_INVOKABLE void addBookmark(double seconds, const QString &label);
     Q_INVOKABLE void removeBookmark(int index);
     Q_INVOKABLE void updateBookmark(int index, double seconds, const QString &label);
+    // Tints one flag. An empty or invalid colour puts it back on the theme's marker colour.
+    Q_INVOKABLE void setBookmarkColor(int index, const QString &color);
     Q_INVOKABLE void goToBookmark(int index);
     // Seek to the next/previous bookmark by time (wraps). No-op when empty.
     Q_INVOKABLE void goToNextBookmark();
