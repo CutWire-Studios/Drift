@@ -925,6 +925,9 @@ public:
     Q_INVOKABLE void splitAtPlayhead();
     // Only the selected clips under the playhead (and their linked partners), not every track's.
     Q_INVOKABLE void splitSelectionAtPlayhead();
+    // What the Split shortcut runs: the selection when there is one, every track when there is
+    // not. Cutting every track while one clip is selected is never what picking that clip meant.
+    Q_INVOKABLE void splitAtPlayheadForSelection();
     Q_INVOKABLE void splitClipAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipLeftAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipRightAt(int trackIndex, int clipIndex, double seconds);

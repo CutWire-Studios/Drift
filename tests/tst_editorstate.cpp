@@ -380,6 +380,7 @@ private slots:
     void denoiseAddsCleanedClipOnTrackAbove();
     void audioRecordingVoiceoverWorkflow();
     void lockedTrackRejectsEdits();
+    void splitShortcutFollowsSelection();
     void audioMixerTrackControlsAndMetering();
     void speedCurveOnAudioClipRetimesAndReplaces();
     void waveformPeaksForSourceRangeSlicesToTheTrimmedWindow();
@@ -9305,6 +9306,48 @@ void EditorStateTest::lockedTrackRejectsEdits()
     QCOMPARE(state.trackLocked(0), false);
     state.moveClip(0, 0, 3.0);
     QCOMPARE(start(), drift::secondsToUs(3.0));
+}
+
+// S used to cut every track under the playhead even with one clip picked, so editing a stack of
+// layers meant clearing the selection before every cut (#556).
+void EditorStateTest::splitShortcutFollowsSelection()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+
+    // Two video tracks, one 0-4s clip on each, so a cut at 2s could land on either.
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    for (int track = 0; track < 2; ++track) {
+        project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(track);
+        clip.type = drift::ClipType::Video;
+        clip.name = QStringLiteral("Shot %1").arg(track);
+        clip.timelineStart = 0;
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.srcIn = 0;
+        clip.srcOut = clip.timelineDuration;
+        project.tracks()[track].clips.append(clip);
+    }
+    state.setPlayheadSeconds(2.0);
+
+    // Nothing selected: the scope is the whole timeline, as it always was.
+    state.clearSelection();
+    state.splitAtPlayheadForSelection();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+
+    // One clip selected: only that track is cut.
+    state.selectClip(1, 0);
+    state.splitAtPlayheadForSelection();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
 }
 
 void EditorStateTest::audioMixerTrackControlsAndMetering()

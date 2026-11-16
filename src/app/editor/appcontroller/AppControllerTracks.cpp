@@ -80,8 +80,13 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("pasteEffects"), QStringLiteral("Ctrl+Shift+V")},
         {QStringLiteral("pasteAttributes"), QStringLiteral("Ctrl+Alt+V")},
         {QStringLiteral("addTransitionAtPlayhead"), QStringLiteral("Ctrl+Shift+D")},
+        // S splits the selection when there is one and every track when there is not, so the
+        // common case needs no modifier either way. Shift+S is the explicit selection-only cut,
+        // and splitAllTracks is the explicit all-tracks one — unbound, since S already is it
+        // whenever nothing is selected.
         {QStringLiteral("split"), QStringLiteral("S")},
         {QStringLiteral("splitSelection"), QStringLiteral("Shift+S")},
+        {QStringLiteral("splitAllTracks"), QString()},
         {QStringLiteral("merge"), QStringLiteral("Ctrl+M")},
         {QStringLiteral("unlink"), QStringLiteral("Ctrl+Shift+U")},
         {QStringLiteral("link"), QStringLiteral("Ctrl+Shift+L")},
@@ -1762,6 +1767,8 @@ void AppController::triggerAction(const QString &actionId)
     else if (actionId == QStringLiteral("pasteAttributes"))
         requestPasteAttributes();
     else if (actionId == QStringLiteral("split"))
+        splitAtPlayheadForSelection();
+    else if (actionId == QStringLiteral("splitAllTracks"))
         splitAtPlayhead();
     else if (actionId == QStringLiteral("toggleClipEnabled"))
         toggleSelectedClipsEnabled();
