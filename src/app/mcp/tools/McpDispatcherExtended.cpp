@@ -10,6 +10,7 @@
 #include "app/jobs/vision/StabilizeController.h"
 #include "app/editor/sessions/CurveEditorController.h"
 #include "app/editor/sessions/TeleprompterController.h"
+#include "app/editor/sessions/MaskingController.h"
 #include "app/jobs/vision/SegmentationController.h"
 #include "app/mcp/McpController.h"
 #include "app/mcp/tools/McpDispatcher.h"
@@ -130,6 +131,17 @@ QString argString(const QJsonObject &args, const QString &a, const QString &b = 
     if (!b.isEmpty() && args.contains(b) && args.value(b).isString())
         return args.value(b).toString().trimmed();
     return {};
+}
+
+// Ids of every clip in the project, lane tracks included (AppController::tracks() lists lanes as rows,
+// but the project's own track list is what the masking controller edits).
+QSet<QString> maskClipIds(const drift::Project &p)
+{
+    QSet<QString> ids;
+    for (const drift::Track &track : p.tracks())
+        for (const drift::Clip &clip : track.clips)
+            ids.insert(clip.id);
+    return ids;
 }
 
 // Same pair as in McpDispatcher.cpp: several ops mint clips through void controller methods and
@@ -1942,8 +1954,81 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
-        m_controller->setClipMask(ref.track, ref.clip, args.value(QStringLiteral("mask")).toObject().toVariantMap());
+        QVariantMap mask = args.value(QStringLiteral("mask")).toObject().toVariantMap();
+        // lockAspect is the user's editing preference, not part of the look: an agent that builds a
+        // mask from scratch must not clear it (jmn8718/Drift#78).
+        if (!mask.contains(QStringLiteral("lockAspect")))
+            mask.insert(QStringLiteral("lockAspect"),
+                        m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("mask")).toMap()
+                            .value(QStringLiteral("lockAspect")).toBool());
+        m_controller->setClipMask(ref.track, ref.clip, mask);
         return ok(clipFeedback(ref));
+    }
+
+    if (tool == QLatin1String("use_as_mask")) {
+        const drift::Project *project = m_controller->project();
+        if (!project->activeSequenceId().isEmpty())
+            return err("bad_args", QStringLiteral("use_as_mask works on the main timeline only; call open_composite({main:true}) first"));
+        QVariantList refs;
+        QStringList seen;
+        for (const QJsonValue &v : args.value(QStringLiteral("clips")).toArray()) {
+            const QString id = v.toString().trimmed();
+            if (id.isEmpty() || seen.contains(id))
+                continue;
+            const QPair<int, int> at = m_controller->mcp()->locateClip(id);
+            if (at.first < 0)
+                return err("not_found", QStringLiteral("Unknown clip %1").arg(id));
+            const drift::Clip &clip = project->tracks().at(at.first).clips.at(at.second);
+            // The kinds MaskingController's canBecomeSequenceMask takes, less composites (one level of nesting).
+            const bool kindOk = clip.sequenceId.isEmpty()
+                && (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Image
+                    || clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Shape
+                    || clip.type == drift::ClipType::Vector || clip.type == drift::ClipType::Pdf);
+            if (!kindOk)
+                return err("type_mismatch", QStringLiteral("%1 is a %2 clip; only video, image, text, shape, vector and PDF clips can become a mask")
+                                                .arg(id, drift::clipTypeToString(clip.type)));
+            seen.append(id);
+            refs.append(QVariantMap{{QStringLiteral("track"), at.first}, {QStringLiteral("clip"), at.second}});
+        }
+        if (refs.isEmpty())
+            return err("bad_args", QStringLiteral("clips must name at least one clip"));
+        if (!m_controller->masking()->canConvertClipsToSequenceMask(refs))
+            return err("bad_args", QStringLiteral("Needs a video track below the lowest of the clips"));
+        const QSet<QString> before = maskClipIds(*project);
+        m_controller->masking()->convertClipsToSequenceMask(refs);
+        // A locked track refuses the edit after the fact and puts the project back, so check what landed.
+        for (const drift::Track &track : m_controller->project()->tracks())
+            for (const drift::Clip &clip : track.clips)
+                if (clip.adjustmentKind == drift::AdjustmentKind::Mask && clip.mask.isSequence()
+                    && !before.contains(clip.id) && m_controller->project()->hasSequence(clip.mask.sequenceId)) {
+                    QString assetId;
+                    for (const drift::MediaAsset &asset : m_controller->project()->assets())
+                        if (asset.kind == drift::MediaKind::Composite && asset.sequenceId == clip.mask.sequenceId)
+                            assetId = asset.id;
+                    return ok({{QStringLiteral("sequence"), clip.mask.sequenceId},
+                               {QStringLiteral("asset"), assetId},
+                               {QStringLiteral("mask_clip"), clip.id}});
+                }
+        return err("apply_failed", QStringLiteral("The edit was refused (a locked track, or nothing to convert)"));
+    }
+
+    if (tool == QLatin1String("convert_clip_to_mask")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const drift::ClipType type = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).type;
+        if (type != drift::ClipType::Video && type != drift::ClipType::Image)
+            return err("type_mismatch", QStringLiteral("Only video and image clips convert to a matte; use_as_mask takes titles, shapes and the rest"));
+        const QString blocker = m_controller->masking()->convertClipToMaskBlocker(ref.track, ref.clip);
+        if (!blocker.isEmpty())
+            return err("bad_args", blocker);
+        const QSet<QString> before = maskClipIds(*m_controller->project());
+        m_controller->masking()->convertClipToMask(ref.track, ref.clip);
+        for (const drift::Track &track : m_controller->project()->tracks())
+            for (const drift::Clip &clip : track.clips)
+                if (clip.adjustmentKind == drift::AdjustmentKind::Mask && clip.mask.shape == drift::MaskShape::Media && !before.contains(clip.id))
+                    return ok({{QStringLiteral("mask_clip"), clip.id}});
+        return err("apply_failed", QStringLiteral("The edit was refused (a locked track, or nothing to convert)"));
     }
 
     if (tool == QLatin1String("set_fade")) {

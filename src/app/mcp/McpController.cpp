@@ -576,6 +576,15 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
         }
         if (!mask.value(QStringLiteral("animated")).toBool())
             mask.remove(QStringLiteral("keyframes"));
+        if (!mask.value(QStringLiteral("lockAspect")).toBool())
+            mask.remove(QStringLiteral("lockAspect"));
+        // The timeline a "Use as mask" clip renders: open_composite({sequence}) edits it. Adjustments
+        // only: on a media clip the row shows its pinned mask, and a top-level sequenceId would read
+        // as "this clip is a composite".
+        if (kind == QLatin1String("adjustment") && m.value(QStringLiteral("adjustmentKind")).toString() == QLatin1String("mask")
+            && mask.value(QStringLiteral("shape")).toString() == QLatin1String("sequence")
+            && m.value(QStringLiteral("sequenceId")).toString().isEmpty())
+            m.insert(QStringLiteral("sequenceId"), mask.value(QStringLiteral("sequenceId")));
         m.insert(QStringLiteral("mask"), mask);
     }
 
@@ -684,6 +693,10 @@ QVariantMap McpController::compactClip(int trackIndex, int clipIndex, bool inclu
         out.insert(QStringLiteral("label"), clip.label);
     if (!clip.sequenceId.isEmpty())
         out.insert(QStringLiteral("sequenceId"), clip.sequenceId);
+    else if (clip.type == drift::ClipType::Adjustment && clip.adjustmentKind == drift::AdjustmentKind::Mask
+             && clip.mask.isSequence())
+        // The timeline a "Use as mask" clip renders: open_composite({sequence}) edits it.
+        out.insert(QStringLiteral("sequenceId"), clip.mask.sequenceId);
     if (clip.type == drift::ClipType::Adjustment)
         out.insert(QStringLiteral("adjustmentKind"), drift::adjustmentKindToString(clip.adjustmentKind));
     // inPoint..outPoint repeats across the whole duration.

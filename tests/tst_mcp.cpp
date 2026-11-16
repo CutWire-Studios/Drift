@@ -2,6 +2,7 @@
 #include "app/jobs/vision/SceneDetectController.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/ProjectFileController.h"
+#include "app/editor/sessions/MaskingController.h"
 #include "app/mcp/McpController.h"
 #include "app/editor/sessions/TeleprompterController.h"
 #include "app/jobs/JobRegistry.h"
@@ -331,6 +332,10 @@ private slots:
     void linearHistoryDropsRedo();
     void updateBookmarkKeepsTimeWhenAtOmitted();
     void setMaskRoundTripsFreeformPoints();
+    void useAsMaskMovesClipsIntoALiveMask();
+    void useAsMaskInApplyAtomicAndDryRun();
+    void convertClipToMaskMakesALaneMatte();
+    void setMaskKeepsTheAspectLock();
     void setTransitionKindRejectsUnknownId();
     void textOpsRejectWrongClipKindAndUnknownPreset();
     void shapeOpsRejectUnknownKindAndWrongClip();
@@ -445,11 +450,11 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
     const qsizetype compactSize = QJsonDocument(compact).toJson(QJsonDocument::Compact).size();
-    // Raise for the bake ops, new_timeline/close_timeline and get/set_teleprompter.
-    QVERIFY2(compactSize < 25966, qPrintable(QString::number(compactSize)));
+    // Raise for the bake ops, new_timeline/close_timeline, get/set_teleprompter and use_as_mask/convert_clip_to_mask.
+    QVERIFY2(compactSize < 26101, qPrintable(QString::number(compactSize)));
     const qsizetype briefSize = QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
                                     .toJson(QJsonDocument::Compact).size();
-    QVERIFY2(briefSize < 12958, qPrintable(QString::number(briefSize))); // raise for the bake, animation, timeline and teleprompter ops
+    QVERIFY2(briefSize < 12995, qPrintable(QString::number(briefSize))); // raise for the bake, animation, timeline, teleprompter and mask ops
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -12216,6 +12221,294 @@ void McpTest::setMaskRoundTripsFreeformPoints()
     QVERIFY(after.value(QStringLiteral("invert")).toBool());
     QCOMPARE(after.value(QStringLiteral("points")).toList().size(), 3);
     QCOMPARE(after.value(QStringLiteral("shape")).toString(), QStringLiteral("freeform"));
+}
+
+// Two video tracks: a 3 s title at 1 s on top, a 6 s video under it.
+static void addTitleOverVideo(AppController &state)
+{
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip text;
+    text.id = QStringLiteral("title"); text.type = drift::ClipType::Text; text.name = QStringLiteral("Big Title");
+    text.timelineStart = drift::secondsToUs(1.0); text.timelineDuration = drift::secondsToUs(3.0); text.srcOut = text.timelineDuration;
+    state.project()->tracks()[0].clips.append(text);
+    drift::Clip under;
+    under.id = QStringLiteral("under"); under.type = drift::ClipType::Video;
+    under.timelineDuration = drift::secondsToUs(6.0); under.srcOut = under.timelineDuration;
+    state.project()->tracks()[1].clips.append(under);
+    state.project()->ensureTrackIds();
+}
+
+static QJsonObject compactRow(drift::mcp::McpDispatcher &dispatcher, const QString &clip)
+{
+    const QJsonArray tracks = dispatcher.inspect({{QStringLiteral("clips"), true}}).value(QStringLiteral("tracks")).toArray();
+    for (const QJsonValue &t : tracks)
+        for (const QJsonValue &row : t.toObject().value(QStringLiteral("items")).toArray())
+            if (row.toObject().value(QStringLiteral("id")).toString() == clip)
+                return row.toObject();
+    return {};
+}
+
+static const drift::Clip *findClip(const drift::Project &p, const QString &id)
+{
+    for (const drift::Track &track : p.tracks())
+        for (const drift::Clip &clip : track.clips)
+            if (clip.id == id)
+                return &clip;
+    return nullptr;
+}
+
+static bool hasCompositeAsset(const drift::Project &p)
+{
+    for (const drift::MediaAsset &asset : p.assets())
+        if (asset.kind == drift::MediaKind::Composite)
+            return true;
+    return false;
+}
+
+void McpTest::useAsMaskMovesClipsIntoALiveMask()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    addTitleOverVideo(state);
+    // An unlinked audio clip on its own track, for the type_mismatch refusal below.
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    drift::Clip aud;
+    aud.id = QStringLiteral("aud"); aud.type = drift::ClipType::Audio;
+    aud.timelineDuration = drift::secondsToUs(2.0); aud.srcOut = aud.timelineDuration;
+    state.project()->tracks().last().clips.append(aud);
+    // A linked audio partner of the title: it moves into the composite with it.
+    drift::Clip partner = aud;
+    partner.id = QStringLiteral("partner");
+    partner.linkedClipId = QStringLiteral("title");
+    partner.timelineStart = drift::secondsToUs(1.0);
+    partner.timelineDuration = drift::secondsToUs(3.0); partner.srcOut = partner.timelineDuration;
+    state.project()->tracks().last().clips.append(partner);
+    state.project()->tracks()[0].clips[0].linkedClipId = QStringLiteral("partner");
+    state.project()->ensureTrackIds();
+
+    const QJsonObject r = dispatcher.applyOne(QStringLiteral("use_as_mask"), {{QStringLiteral("clips"), QJsonArray{QStringLiteral("title")}}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    const QString sequence = r.value(QStringLiteral("sequence")).toString();
+    const QString assetId = r.value(QStringLiteral("asset")).toString();
+    const QString maskId = r.value(QStringLiteral("mask_clip")).toString();
+    QVERIFY(!sequence.isEmpty());
+    QVERIFY(!assetId.isEmpty());
+    QVERIFY(!maskId.isEmpty());
+    QVERIFY(state.project()->hasSequence(sequence));
+    const drift::MediaAsset *asset = state.project()->asset(assetId);
+    QVERIFY(asset);
+    QCOMPARE(asset->kind, drift::MediaKind::Composite);
+    QCOMPARE(asset->sequenceId, sequence);
+    QCOMPARE(asset->name, QStringLiteral("Big Title mask"));
+
+    const drift::Clip *mask = findClip(*state.project(), maskId);
+    QVERIFY(mask);
+    QCOMPARE(mask->adjustmentKind, drift::AdjustmentKind::Mask);
+    QCOMPARE(mask->mask.shape, drift::MaskShape::Sequence);
+    QCOMPARE(mask->mask.sequenceId, sequence);
+    QCOMPARE(mask->mask.mediaChannel, drift::MaskMediaChannel::Alpha);
+    QCOMPARE(mask->timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(mask->timelineDuration, drift::secondsToUs(3.0));
+    QVERIFY(!findClip(*state.project(), QStringLiteral("title")));
+    QVERIFY(r.value(QStringLiteral("removed_clips")).toArray().contains(QStringLiteral("title")));
+    QVERIFY(!findClip(*state.project(), QStringLiteral("partner")));
+    QVERIFY(r.value(QStringLiteral("removed_clips")).toArray().contains(QStringLiteral("partner")));
+
+    // set_mask round trip on the mask clip: the whole mask back, one field changed, stays live.
+    QJsonObject whole = inspectRow(dispatcher, maskId).value(QStringLiteral("mask")).toObject();
+    whole.remove(QStringLiteral("animated"));
+    whole.remove(QStringLiteral("pathKeyCount"));
+    whole.remove(QStringLiteral("keyframes"));
+    whole.insert(QStringLiteral("mediaChannel"), QStringLiteral("luma"));
+    const QJsonObject set = dispatcher.applyOne(QStringLiteral("set_mask"), {{QStringLiteral("clip"), maskId}, {QStringLiteral("mask"), whole}});
+    QVERIFY2(set.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(set).toJson(QJsonDocument::Compact)));
+    QVERIFY2(!set.contains(QStringLiteral("ignored")), qPrintable(QJsonDocument(set).toJson(QJsonDocument::Compact)));
+    mask = findClip(*state.project(), maskId);
+    QCOMPARE(mask->mask.shape, drift::MaskShape::Sequence);
+    QCOMPARE(mask->mask.sequenceId, sequence);
+    QCOMPARE(mask->mask.mediaChannel, drift::MaskMediaChannel::Luma);
+
+    QCOMPARE(compactRow(dispatcher, maskId).value(QStringLiteral("sequenceId")).toString(), sequence);
+    const QJsonObject detail = inspectRow(dispatcher, maskId);
+    QCOMPARE(detail.value(QStringLiteral("sequenceId")).toString(), sequence);
+    QCOMPARE(detail.value(QStringLiteral("mask")).toObject().value(QStringLiteral("sequenceId")).toString(), sequence);
+
+    const QJsonArray composites = dispatcher.applyOne(QStringLiteral("list_composites"), {}).value(QStringLiteral("composites")).toArray();
+    QCOMPARE(composites.size(), 1);
+    QCOMPARE(composites.at(0).toObject().value(QStringLiteral("sequence")).toString(), sequence);
+
+    // The new timeline holds the title; main comes back.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("open_composite"), {{QStringLiteral("sequence"), sequence}}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(!compactRow(dispatcher, QStringLiteral("title")).isEmpty());
+    QVERIFY(!compactRow(dispatcher, QStringLiteral("partner")).isEmpty());
+    // Off the main timeline the op refuses.
+    QJsonObject nested = dispatcher.applyOne(QStringLiteral("use_as_mask"), {{QStringLiteral("clips"), QJsonArray{QStringLiteral("title")}}});
+    QCOMPARE(nested.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY(nested.value(QStringLiteral("detail")).toString().contains(QStringLiteral("main timeline")));
+    QVERIFY(dispatcher.applyOne(QStringLiteral("open_composite"), {{QStringLiteral("main"), true}}).value(QStringLiteral("ok")).toBool());
+
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());   // set_mask
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());   // use_as_mask
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, QStringLiteral("title"));
+    QVERIFY(findClip(*state.project(), QStringLiteral("partner")));
+    QVERIFY(state.project()->sequenceIds().isEmpty());
+    QVERIFY(!hasCompositeAsset(*state.project()));
+
+    auto refusal = [&](const QJsonArray &clips) {
+        return dispatcher.applyOne(QStringLiteral("use_as_mask"), {{QStringLiteral("clips"), clips}}).value(QStringLiteral("error")).toString();
+    };
+    QCOMPARE(refusal({QStringLiteral("under")}), QStringLiteral("bad_args"));
+    QCOMPARE(refusal({QStringLiteral("nope")}), QStringLiteral("not_found"));
+    QCOMPARE(refusal({}), QStringLiteral("bad_args"));
+    QCOMPARE(refusal({QStringLiteral("aud")}), QStringLiteral("type_mismatch"));
+    state.project()->tracks()[0].clips[0].sequenceId = QStringLiteral("nested");
+    QCOMPARE(refusal({QStringLiteral("title")}), QStringLiteral("type_mismatch"));
+    state.project()->tracks()[0].clips[0].sequenceId.clear();
+}
+
+void McpTest::useAsMaskInApplyAtomicAndDryRun()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    addTitleOverVideo(state);
+    const int steps = int(state.undoHistory().size());
+
+    QJsonObject reply = dispatcher.apply(
+        {{QStringLiteral("atomic"), true},
+         {QStringLiteral("ops"), QJsonArray{op(QStringLiteral("use_as_mask"), {{QStringLiteral("clips"), QJsonArray{QStringLiteral("title")}}}),
+                                            op(QStringLiteral("set_duration"), {{QStringLiteral("clip"), QStringLiteral("nope")}, {QStringLiteral("duration"), 1.0}})}}});
+    QCOMPARE(reply.value(QStringLiteral("ok")).toBool(), false);
+    QCOMPARE(reply.value(QStringLiteral("rolled_back")).toBool(), true);
+    QVERIFY(findClip(*state.project(), QStringLiteral("title")));
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QVERIFY(state.project()->sequenceIds().isEmpty());
+    QVERIFY(!hasCompositeAsset(*state.project()));
+    QCOMPARE(int(state.undoHistory().size()), steps);
+
+    reply = dispatcher.apply({{QStringLiteral("dry_run"), true},
+                              {QStringLiteral("ops"), QJsonArray{op(QStringLiteral("use_as_mask"), {{QStringLiteral("clips"), QJsonArray{QStringLiteral("nope")}}})}}});
+    QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("dry_run_failed"));
+    QCOMPARE(reply.value(QStringLiteral("problems")).toArray().at(0).toObject().value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+
+    // A locked track refuses the edit after the controller call: apply_failed, nothing changed.
+    state.project()->tracks()[0].locked = true;
+    const QJsonObject refused = dispatcher.applyOne(QStringLiteral("use_as_mask"), {{QStringLiteral("clips"), QJsonArray{QStringLiteral("title")}}});
+    QCOMPARE(refused.value(QStringLiteral("error")).toString(), QStringLiteral("apply_failed"));
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, QStringLiteral("title"));
+    QVERIFY(state.project()->sequenceIds().isEmpty());
+    QVERIFY(!hasCompositeAsset(*state.project()));
+    QCOMPARE(int(state.undoHistory().size()), steps);
+    state.project()->tracks()[0].locked = false;
+
+    reply = dispatcher.apply({{QStringLiteral("ops"), QJsonArray{op(QStringLiteral("use_as_mask"), {{QStringLiteral("clips"), QJsonArray{QStringLiteral("title")}}})}}});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson(QJsonDocument::Compact)));
+    QCOMPARE(int(state.undoHistory().size()), steps + 1);
+}
+
+void McpTest::convertClipToMaskMakesALaneMatte()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    addTitleOverVideo(state);
+    drift::Clip &top = state.project()->tracks()[0].clips[0];
+    top.id = QStringLiteral("top"); top.type = drift::ClipType::Video; top.name = QStringLiteral("shot");
+    top.path = QStringLiteral("/nonexistent/shot.mp4");
+    top.timelineStart = drift::secondsToUs(1.0); top.timelineDuration = drift::secondsToUs(2.0);
+    top.srcIn = drift::secondsToUs(1.5); top.srcOut = top.srcIn + top.timelineDuration;
+
+    const QJsonObject r = dispatcher.applyOne(QStringLiteral("convert_clip_to_mask"), {{QStringLiteral("clip"), QStringLiteral("top")}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    const drift::Clip *mask = findClip(*state.project(), r.value(QStringLiteral("mask_clip")).toString());
+    QVERIFY(mask);
+    QCOMPARE(mask->adjustmentKind, drift::AdjustmentKind::Mask);
+    QCOMPARE(mask->mask.shape, drift::MaskShape::Media);
+    QCOMPARE(mask->mask.mediaChannel, drift::MaskMediaChannel::Luma);
+    QCOMPARE(mask->mask.mediaPath, QStringLiteral("/nonexistent/shot.mp4"));
+    QCOMPARE(mask->timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(mask->timelineDuration, drift::secondsToUs(2.0));
+    QVERIFY(!findClip(*state.project(), QStringLiteral("top")));
+    QVERIFY(r.value(QStringLiteral("removed_clips")).toArray().contains(QStringLiteral("top")));
+
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(findClip(*state.project(), QStringLiteral("top")));
+
+    // Locked track: refused after the fact, project and history unchanged.
+    const int steps = int(state.undoHistory().size());
+    state.project()->tracks()[0].locked = true;
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("convert_clip_to_mask"), {{QStringLiteral("clip"), QStringLiteral("top")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("apply_failed"));
+    QVERIFY(findClip(*state.project(), QStringLiteral("top")));
+    QCOMPARE(int(state.undoHistory().size()), steps);
+    state.project()->tracks()[0].locked = false;
+
+    QJsonObject bad = dispatcher.applyOne(QStringLiteral("convert_clip_to_mask"), {{QStringLiteral("clip"), QStringLiteral("under")}});
+    QCOMPARE(bad.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY(!bad.value(QStringLiteral("detail")).toString().isEmpty());   // the blocker text is translated
+    state.project()->tracks()[0].clips[0].speed = 2.0;
+    bad = dispatcher.applyOne(QStringLiteral("convert_clip_to_mask"), {{QStringLiteral("clip"), QStringLiteral("top")}});
+    QCOMPARE(bad.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY(!bad.value(QStringLiteral("detail")).toString().isEmpty());
+    state.project()->tracks()[0].clips[0].speed = 1.0;
+    state.project()->tracks()[0].clips[0].type = drift::ClipType::Text;
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("convert_clip_to_mask"), {{QStringLiteral("clip"), QStringLiteral("top")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("type_mismatch"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("convert_clip_to_mask"), {{QStringLiteral("clip"), QStringLiteral("nope")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+}
+
+void McpTest::setMaskKeepsTheAspectLock()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString id = dispatcher.applyOne(QStringLiteral("add_text"), {{QStringLiteral("text"), QStringLiteral("m")}, {QStringLiteral("at"), 0.0}})
+                           .value(QStringLiteral("id")).toString();
+    QVERIFY(!id.isEmpty());
+    auto setMask = [&](const QJsonObject &mask) {
+        return dispatcher.applyOne(QStringLiteral("set_mask"), {{QStringLiteral("clip"), id}, {QStringLiteral("mask"), mask}});
+    };
+    QVERIFY(setMask({{QStringLiteral("shape"), QStringLiteral("rectangle")}, {QStringLiteral("w"), 0.3}, {QStringLiteral("h"), 0.2}}).value(QStringLiteral("ok")).toBool());
+    const QPair<int, int> at = state.mcp()->locateClip(id);
+    const drift::ClipRef r = drift::linkedMaskAdjustments(*state.project(), at.first, at.second).constFirst();
+    auto locked = [&] { return state.project()->tracks().at(r.trackIndex).clips.at(r.clipIndex).mask.lockAspect; };
+    state.masking()->setMaskProperty(r.trackIndex, r.clipIndex, QStringLiteral("lockAspect"), true);
+    QVERIFY(locked());
+
+    // Omitted: kept.
+    QVERIFY(setMask({{QStringLiteral("shape"), QStringLiteral("ellipse")}}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(locked());
+    QCOMPARE(state.project()->tracks().at(r.trackIndex).clips.at(r.clipIndex).mask.shape, drift::MaskShape::Ellipse);
+    QJsonObject mask = inspectRow(dispatcher, id).value(QStringLiteral("mask")).toObject();
+    QVERIFY(mask.value(QStringLiteral("lockAspect")).toBool());
+
+    // The inspect mask sent back as is: accepted, lock unchanged.
+    mask.remove(QStringLiteral("animated"));
+    mask.remove(QStringLiteral("pathKeyCount"));
+    mask.remove(QStringLiteral("keyframes"));
+    const QJsonObject back = setMask(mask);
+    QVERIFY2(back.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(back).toJson(QJsonDocument::Compact)));
+    QVERIFY2(!back.contains(QStringLiteral("ignored")), qPrintable(QJsonDocument(back).toJson(QJsonDocument::Compact)));
+    QVERIFY(locked());
+
+    // Explicit false clears it, and detail rows then omit the key.
+    QVERIFY(setMask({{QStringLiteral("shape"), QStringLiteral("ellipse")}, {QStringLiteral("lockAspect"), false}}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(!locked());
+    QVERIFY(!inspectRow(dispatcher, id).value(QStringLiteral("mask")).toObject().contains(QStringLiteral("lockAspect")));
+
+    // The inspector path (clipAt's map back through setClipMask) keeps it too.
+    state.masking()->setMaskProperty(r.trackIndex, r.clipIndex, QStringLiteral("lockAspect"), true);
+    QVariantMap m = state.clipAt(at.first, at.second).value(QStringLiteral("mask")).toMap();
+    QVERIFY(m.value(QStringLiteral("lockAspect")).toBool());
+    m.insert(QStringLiteral("invert"), true);
+    state.setClipMask(at.first, at.second, m);
+    QVERIFY(locked());
 }
 
 void McpTest::setTransitionKindRejectsUnknownId()

@@ -126,6 +126,7 @@ QJsonObject maskSchema()
         {QStringLiteral("roundness"),
          numberProp(QStringLiteral("rectangle only: corner rounding, 0 sharp to 1 pill (default 0)"), 0, 1)},
         {QStringLiteral("invert"), boolProp(QStringLiteral("Invert coverage (default false)"))},
+        {QStringLiteral("lockAspect"), boolProp(QStringLiteral("Editing only: the corner handles and the inspector keep w:h; rendering ignores it. Omitted: the clip's current lock is kept"))},
         {QStringLiteral("points"),
          arrayProp({{QStringLiteral("type"), QJsonArray{QStringLiteral("array"), QStringLiteral("object")}}},
                    QStringLiteral("freeform only: [{x,y}, …] as inspect emits it, or [[x,y], …]; normalised 0..1"))},
@@ -146,7 +147,7 @@ QJsonObject maskSchema()
                                                    {QStringLiteral("host"), QStringLiteral("adjustment")})},
     });
     s.insert(QStringLiteral("description"),
-             QStringLiteral("The whole mask; every omitted key reverts to its default and omitting shape turns the mask off"));
+             QStringLiteral("The whole mask; every omitted key reverts to its default (lockAspect excepted: it is kept) and omitting shape turns the mask off"));
     return s;
 }
 
@@ -1959,6 +1960,11 @@ QString agentGuideText()
         "list_shapes → add_shape({shape}) → set_shape_style({style:{kind, layers|layer, cornerRadius,\n"
         "points, …}}); the same *_shape_layer ops as text edit its stack; keyframe shape.<key> and\n"
         "shape.layer.<id>.<field>. A fresh shape has layers \"fill\" and \"stroke\".\n"
+        "\n"
+        "Masks (canvas toolbox): set_mask replaces a clip's whole mask (lockAspect is kept when left out).\n"
+        "use_as_mask({clips}) turns titles, shapes or footage into a live mask over the video track\n"
+        "below, in one step: it returns {sequence, asset, mask_clip}, and open_composite({sequence}) edits what\n"
+        "the mask shows. convert_clip_to_mask({clip}) turns one video or image clip into a luma matte.\n"
         "\n"
         "Long sessions and scripted rounds:\n"
         "- Every undo step holds full project snapshots, so a long round of batches fills memory and,\n"

@@ -344,10 +344,33 @@
           "Set the clip's mask. This REPLACES the whole mask — it is not a patch. Every omitted key "
           "reverts to its default, and omitting `shape` turns the mask off entirely, so read the "
           "current mask from inspect({clips:true,detail:true}) and send it back with your changes "
-          "merged in.",
+          "merged in. lockAspect is the exception: omitted, the clip's current aspect lock is kept. "
+          "To turn clips themselves into a mask, see use_as_mask and convert_clip_to_mask.",
           objectSchema(mergeProps({{QStringLiteral("mask"), maskSchema()}},
                                   clipRefProps()),
                        {QStringLiteral("mask")}) },
+        { "use_as_mask", "canvas", "Make clips a live mask over the track below",
+          "Use clips as a live mask, as the timeline's Use as mask (nested timeline) does: the clips move "
+          "(with their linked partners) into a new composite timeline, and a mask clip over the same span "
+          "on the first video track below the lowest of them renders that timeline live (its alpha), so "
+          "it masks that track: a title or shape becomes a window onto the footage below. Main timeline "
+          "only. Video, image, text, shape, vector and PDF clips; composites, audio, subtitles, adjustments, 3D "
+          "and procedural clips are refused (type_mismatch), and so are clips with no video track below "
+          "(bad_args). One undo step. Returns {sequence, asset, mask_clip}. open_composite({sequence}) "
+          "edits what the mask shows. To change the mask (mediaChannel alpha|luma, fit, invert), read the "
+          "whole mask from inspect, change the field and send it all back to set_mask: a partial mask "
+          "turns it off. inspect shows sequence on the mask clip's row as sequenceId.",
+          objectSchema({{QStringLiteral("clips"),
+                         arrayProp(stringProp(QStringLiteral("Clip UUID")),
+                                   QStringLiteral("The clips that become the mask, on the main timeline"))}},
+                       {QStringLiteral("clips")}) },
+        { "convert_clip_to_mask", "canvas", "Turn a video or image clip into a matte below",
+          "Replace a video or image clip (and its linked audio) with a luma matte over the same span on "
+          "the first video track below it, as the timeline's Convert to mask does: bright areas of the "
+          "picture let the track below show. Refused for a retimed or reversed clip and with no video "
+          "track below (bad_args with the reason), and for other clip kinds (type_mismatch; use_as_mask "
+          "takes titles and shapes). One undo step. Returns {mask_clip}.",
+          objectSchema(clipRefProps()), false, true },
         { "set_fade", "canvas", "Fade a clip's audio/video in or out over N seconds",
           "Set fade-in and fade-out lengths in seconds. Omitted ends keep their current value. A fade "
           "reveals the canvas background (the project background colour or blur), not black. Use "
