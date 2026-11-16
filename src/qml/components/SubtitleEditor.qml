@@ -115,6 +115,37 @@ Item {
         EditorState.selectedSubtitleCue = index + 1
     }
 
+    // Ends cue `index` at the cursor and starts a new one with whatever followed it. The time
+    // range is divided where the text was, not down the middle, so both halves still sit under
+    // the words they caption. `text` is what is in the editor, which may not have been applied
+    // to the cue yet; the halves are trimmed so the break does not leave a leading space behind.
+    function splitCueAtCursor(index, offset, text) {
+        if (index < 0 || index >= root.cues.length)
+            return
+
+        const list = cloneCues()
+        const cur = list[index]
+        const full = text === undefined ? cur.text : text
+        const at = Math.max(0, Math.min(full.length, offset))
+        const head = full.slice(0, at).replace(/\s+$/, "")
+        const tail = full.slice(at).replace(/^\s+/, "")
+
+        const cueEnd = cur.end
+        const span = cueEnd - cur.start
+        // Both halves keep a tenth of a second where the cue is long enough to give it; a cue
+        // too short to divide that way is simply halved.
+        const minHalf = Math.min(span / 2, 0.1)
+        const ratio = full.length > 0 ? at / full.length : 0.5
+        const mid = Math.min(cueEnd - minHalf,
+                             Math.max(cur.start + minHalf, cur.start + span * ratio))
+
+        cur.text = head
+        cur.end = mid
+        list.splice(index + 1, 0, { start: mid, end: cueEnd, text: tail, source: cur.source })
+        replaceCues(list)
+        EditorState.selectedSubtitleCue = index + 1
+    }
+
     function selectCue(index) {
         EditorState.selectedSubtitleCue = index
         EditorState.seekToSubtitleCue(root.trackIndex, root.clipIndex, index)
