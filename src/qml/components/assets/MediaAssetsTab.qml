@@ -670,6 +670,15 @@ Item {
         onCancelRequested: EditorState.bin.cancelEdit()
     }
 
+    MouseArea {
+        anchors.top: conversionStatusRow.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        enabled: !Theme.touchUi
+        onDoubleClicked: root.importRequested()
+    }
+
     GridView {
         id: grid
         // As many columns as fit at the nominal card size, rounded, with the cards stretched or
