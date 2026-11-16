@@ -1589,13 +1589,15 @@ PanelFrame {
                         }
                     }
 
-                    // Horizontal scroll / zoom wheel over track rows (below the drop overlay).
+                    // Wheel (scroll / zoom) and middle-drag pan over the track rows and the empty
+                    // space below the last track (below the drop overlay).
                     MouseArea {
                         id: tracksWheelArea
                         x: 0
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: parent.width
-                        height: Math.max(root.totalTracksHeightCached, Theme.trackHeightVideo)
+                        height: Math.max(root.totalTracksHeightCached,
+                                         flick.contentHeight - flick.headerHeight)
                         z: 150
                         acceptedButtons: Qt.MiddleButton
                         preventStealing: true
