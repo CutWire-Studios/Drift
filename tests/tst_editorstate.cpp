@@ -137,6 +137,7 @@ class EditorStateTest : public QObject
 private slots:
     void bakeFingerprintTracksRangeEdits();
     void snapTimeEnabled();
+    void addingAPositionKeyframeKeepsTheClipWhereItIs();
     void compositeFromSelectionUndoRedo();
     void compositeClipGetsAPreviewBox();
     void cameraMovesThePreviewOverlayWithThePicture();
@@ -630,6 +631,40 @@ void EditorStateTest::importFileNameStaysStorable()
     QVERIFY(cutEmoji.toUtf8().size() <= 120);
     QVERIFY(cutEmoji.endsWith(QStringLiteral(".mov")));
     QCOMPARE(cutEmoji, QString::fromUtf8(cutEmoji.toUtf8()));
+}
+
+void EditorStateTest::addingAPositionKeyframeKeepsTheClipWhereItIs()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-0");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    clip.positionX.setKeyframe(0, 700.0);
+    state.project()->tracks()[0].clips.append(clip);
+    state.project()->ensureTrackIds();
+
+    const QSizeF canvas(state.project()->width(), state.project()->height());
+    const drift::TimeUs at = drift::secondsToUs(1.0);
+    const auto layout = [&] { return drift::clipLayoutAt(state.project()->tracks()[0].clips[0], at, canvas); };
+    const drift::ClipLayout before = layout();
+    QCOMPARE(before.posX, 700.0);
+    QCOMPARE(before.posY, canvas.height() / 2.0);
+
+    for (const bool linked : {true, false}) {
+        state.setPositionLinked(linked);
+        state.project()->tracks()[0].clips[0].positionY = {};
+        QVERIFY(state.setClipKeyframe(0, 0, QStringLiteral("positionX"), 1.0, before.posX));
+        QCOMPARE(layout().posX, before.posX);
+        QCOMPARE(layout().posY, before.posY);
+        QVERIFY(state.setClipKeyframe(0, 0, QStringLiteral("positionY"), 1.0, before.posY));
+        QCOMPARE(layout().posX, before.posX);
+        QCOMPARE(layout().posY, before.posY);
+    }
 }
 
 void EditorStateTest::snapTimeEnabled()
