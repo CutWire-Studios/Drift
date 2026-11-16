@@ -2172,6 +2172,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineSeekStripFill.qml
         src/qml/components/timeline/TimelineSeekStripEdge.qml
         src/qml/components/timeline/TimelineSeekStrip.qml
+        src/qml/components/timeline/TimelineWheel.js
         src/qml/components/timeline/TimelineRulerTick.qml
         src/qml/components/timeline/TimelineRuler.qml
         src/qml/components/timeline/TimelinePlayheadTip.qml
