@@ -19668,8 +19668,8 @@ Se a reprodução engasgar, experimente outro.</translation>
         <translation>O que a roda do rato move na linha do tempo. Mantenha Shift para a outra direção; arrastar com o botão do meio também desloca.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>Faixas (cima e baixo)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

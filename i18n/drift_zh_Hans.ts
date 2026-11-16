@@ -19596,8 +19596,8 @@ If playback stutters, try another.</source>
         <translation>鼠标滚轮在时间线上移动的内容。按住 Shift 可朝另一方向滚动；中键拖动也可平移。</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>轨道（上下）</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

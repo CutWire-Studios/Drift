@@ -19668,8 +19668,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Ce que la molette de la souris déplace sur la ligne du temps. Maintenez Maj pour l’autre direction; glisser avec un clic central effectue aussi un panoramique.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>Pistes (haut et bas)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

@@ -19740,8 +19740,8 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Co przewija kółko myszy na osi czasu. Przytrzymaj Shift, aby przewijać w drugim kierunku; przeciąganie środkowym przyciskiem myszy również przesuwa widok.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>Ścieżki (w górę i w dół)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

@@ -19660,7 +19660,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
+        <source>Tracks, or time when they fit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

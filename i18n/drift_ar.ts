@@ -19955,8 +19955,8 @@ If playback stutters, try another.</source>
         <translation>ما تحركه عجلة الفأرة على المخطط الزمني. اضغط مع الاستمرار على Shift للاتجاه الآخر؛ السحب بالنقر الأوسط يحرك أيضًا.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>المسارات (لأعلى ولأسفل)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

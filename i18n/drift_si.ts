@@ -19667,8 +19667,8 @@ If playback stutters, try another.</source>
         <translation>මවුස් රෝදය මඟින් කාලරේඛාවේ ගෙනයන දේ. අනෙක් දිශාව සඳහා Shift ඔබාගෙන සිටින්න; මැද-ක්ලික් කර ඇදීමෙන්ද පෑන් වේ.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>ට්‍රැක් (ඉහළ සහ පහළ)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

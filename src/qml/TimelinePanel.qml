@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Window
 import Drift
+import "components/timeline/TimelineWheel.js" as TimelineWheel
 PanelFrame {
     id: root
 
@@ -1060,63 +1061,28 @@ PanelFrame {
     }
 
     function handleTimelineWheel(wheel) {
-        const pixelScroll = wheel.pixelDelta.x !== 0 || wheel.pixelDelta.y !== 0
-        if (pixelScroll && !(wheel.modifiers & Qt.ControlModifier)) {
-            // The OS has already applied natural-scrolling direction to pixelDelta.
-            const maxY = Math.max(0, flick.contentHeight - flick.height)
-            panTimelineBy(wheel.pixelDelta.x, maxY > 0 ? wheel.pixelDelta.y : 0)
-            return
-        }
-        if (wheel.modifiers & Qt.ControlModifier) {
+        // Touchpads are told apart by scroll phase on Wayland and macOS. On X11 there are no
+        // phases, so the device type is used; it depends on the X stack (XI 2.4 gesture class,
+        // xorg >= 21.1 with libinput >= 1.2), and without it the touchpad is treated as a
+        // wheel. The device type is not used elsewhere: Qt's cocoa plugin retypes the shared
+        // pointing device to TouchPad after the first trackpad scroll, so a later USB wheel
+        // would look like a touchpad.
+        const touchpad = wheel.phase !== Qt.NoScrollPhase
+                         || (Qt.platform.pluginName === "xcb" && wheel.device !== null
+                             && wheel.device.type === PointerDevice.TouchPad)
+        const r = TimelineWheel.route({
+            "touchpad": touchpad,
+            "ctrl": (wheel.modifiers & Qt.ControlModifier) !== 0,
+            "shift": (wheel.modifiers & Qt.ShiftModifier) !== 0,
+            "pixelX": wheel.pixelDelta.x, "pixelY": wheel.pixelDelta.y,
+            "angleX": wheel.angleDelta.x, "angleY": wheel.angleDelta.y
+        }, EditorState.preferences.invertTimelineScroll, flick.contentHeight > flick.height)
+        if (r.zoom !== 1) {
             // Wheel MouseAreas live in content space, so wheel.x is already a
             // content X — keep that time fixed under the cursor.
-            const anchorSeconds = Math.max(0, wheel.x / pxPerSecond)
-            const viewportX = wheel.x - flick.contentX
-            const factor = pixelScroll ? Math.pow(1.0015, wheel.pixelDelta.y)
-                                       : (wheel.angleDelta.y > 0 ? 1.15 : 1.0 / 1.15)
-            setZoomAround(zoom * factor, anchorSeconds, viewportX)
-            return
-        }
-
-        const dy = wheel.angleDelta.y
-        const dx = wheel.angleDelta.x
-        const invert = EditorState.preferences.invertTimelineScroll
-
-        // Invert (Kdenlive-style): wheel pans along time, Shift+wheel moves
-        // between tracks. Trackpad horizontal motion always pans time.
-        if (invert) {
-            if (wheel.modifiers & Qt.ShiftModifier) {
-                const delta = dy !== 0 ? dy : dx
-                panTimelineBy(0, delta)
-                return
-            }
-            if (dx !== 0)
-                panTimelineBy(dx, 0)
-            if (dy !== 0)
-                panTimelineBy(dy, 0)
-            return
-        }
-
-        // Shift forces horizontal scrolling regardless of overflow.
-        if (wheel.modifiers & Qt.ShiftModifier) {
-            const delta = dy !== 0 ? dy : dx
-            panTimelineBy(delta, 0)
-            return
-        }
-
-        // Trackpad horizontal component always scrolls horizontally.
-        if (dx !== 0)
-            panTimelineBy(dx, 0)
-
-        // Vertical wheel scrolls the tracks when they overflow the viewport;
-        // otherwise it falls back to horizontal so short timelines keep the
-        // previous wheel-to-pan behaviour.
-        if (dy !== 0) {
-            const maxY = Math.max(0, flick.contentHeight - flick.height)
-            if (maxY > 0)
-                panTimelineBy(0, dy)
-            else
-                panTimelineBy(dy, 0)
+            setZoomAround(zoom * r.zoom, Math.max(0, wheel.x / pxPerSecond), wheel.x - flick.contentX)
+        } else if (r.x !== 0 || r.y !== 0) {
+            panTimelineBy(r.x, r.y)
         }
     }
 
@@ -1623,13 +1589,15 @@ PanelFrame {
                         }
                     }
 
-                    // Horizontal scroll / zoom wheel over track rows (below the drop overlay).
+                    // Wheel (scroll / zoom) and middle-drag pan over the track rows and the empty
+                    // space below the last track (below the drop overlay).
                     MouseArea {
                         id: tracksWheelArea
                         x: 0
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: parent.width
-                        height: Math.max(root.totalTracksHeightCached, Theme.trackHeightVideo)
+                        height: Math.max(root.totalTracksHeightCached,
+                                         flick.contentHeight - flick.headerHeight)
                         z: 150
                         acceptedButtons: Qt.MiddleButton
                         preventStealing: true

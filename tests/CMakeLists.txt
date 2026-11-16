@@ -29,6 +29,12 @@ target_include_directories(tst_polylinedraft PRIVATE ../src)
 target_link_libraries(tst_polylinedraft PRIVATE Qt6::Test Qt6::Core)
 add_test(NAME PolylineDraft COMMAND tst_polylinedraft)
 
+qt_add_executable(tst_timelinewheel tst_timelinewheel.cpp)
+target_compile_definitions(tst_timelinewheel PRIVATE
+    "DRIFT_TIMELINE_WHEEL_JS=\"${CMAKE_SOURCE_DIR}/src/qml/components/timeline/TimelineWheel.js\"")
+target_link_libraries(tst_timelinewheel PRIVATE Qt6::Test Qt6::Qml)
+add_test(NAME TimelineWheel COMMAND tst_timelinewheel)
+
 qt_add_executable(tst_trackeroverlay tst_trackeroverlay.cpp)
 target_include_directories(tst_trackeroverlay PRIVATE ../src)
 target_link_libraries(tst_trackeroverlay PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
