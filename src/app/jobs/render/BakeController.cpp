@@ -31,9 +31,16 @@ constexpr qint64 kCompactMinBytes = 256ll * 1024 * 1024;
 constexpr auto kProgressInterval = std::chrono::milliseconds(250);
 constexpr int kStaleDebounceMs = 300;
 
+// Named by projectPathKey, never the raw id, and checked to stay in the bakes folder: the id comes
+// from the project file. Empty when there's no safe name.
 QString bakePath(const QString &projectId)
 {
-    return QDir(drift::cacheRoot()).filePath(QStringLiteral("bakes/%1.driftbake").arg(projectId));
+    const QString key = drift::projectPathKey(projectId);
+    if (key.isEmpty())
+        return {};
+    const QString dir = QDir(QDir(drift::cacheRoot()).filePath(QStringLiteral("bakes"))).absolutePath();
+    const QString path = QDir::cleanPath(dir + QLatin1Char('/') + key + QStringLiteral(".driftbake"));
+    return QFileInfo(path).absolutePath() == dir ? path : QString();
 }
 
 qint64 usForFrame(qint64 frame, int fps)
@@ -175,7 +182,7 @@ void BakeController::syncProject()
         return;
     // Opening creates the file, so a project that never bakes leaves nothing behind.
     const QString path = bakePath(id);
-    if (QFile::exists(path))
+    if (!path.isEmpty() && QFile::exists(path))
         m_file = drift::BakeFile::open(path);
     publish();
     scheduleStaleCheck();
@@ -188,6 +195,8 @@ bool BakeController::ensureFile()
     if (m_boundId.isEmpty())
         return false;
     const QString path = bakePath(m_boundId);
+    if (path.isEmpty())
+        return false;
     QDir().mkpath(QFileInfo(path).absolutePath());
     m_file = drift::BakeFile::open(path);
     if (!m_file)

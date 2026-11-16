@@ -27,7 +27,7 @@ class Project;
 class AppController;
 
 // Range bakes for the open project, reached from QML as EditorState.bakes. Owns the project's
-// BakeFile (cacheRoot()/bakes/<projectId>.driftbake), runs bake jobs one at a time on the render
+// BakeFile (cacheRoot()/bakes/<projectPathKey(id)>.driftbake), runs bake jobs one at a time on the render
 // lane, publishes the committed index to preview, and tells fresh bakes from stale ones by
 // comparing each bake's stored fingerprint with the project as it is now.
 class BakeController : public QObject

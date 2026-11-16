@@ -1113,9 +1113,10 @@ void AppController::removeBookmarkNearPlayhead()
 QString AppController::projectMediaDir(const QString &projectId)
 {
     const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    if (base.isEmpty())
+    const QString key = drift::projectPathKey(projectId);
+    if (base.isEmpty() || key.isEmpty())
         return {};
-    const QString dir = QDir(base).filePath(QStringLiteral("projects/%1/media").arg(projectId));
+    const QString dir = QDir(base).filePath(QStringLiteral("projects/%1/media").arg(key));
     return QDir().mkpath(dir) ? dir : QString();
 }
 
