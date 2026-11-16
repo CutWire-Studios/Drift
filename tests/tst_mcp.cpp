@@ -337,6 +337,7 @@ private slots:
     void proxyOpsCreateCheckAndRemove();
     void bakeOpsListDeleteAndRefuse();
     void bakeRangeBakesAndGoesStale();
+    void exportVideoRendersStaleBakesLive();
     void rebakeAllStaleSeesAnEditAtOnce();
     void bakeStaleBadgeFollowsSourcesAndSetup();
     void splitBakeCountsSharedGopsOnce();
@@ -13417,6 +13418,154 @@ void McpTest::rebakeAllStaleQueuesNothingWhileBusy()
     QTRY_VERIFY_WITH_TIMEOUT(!state.bakes()->busy(), 120000);
     state.bakes()->deleteAllBakes();
     QTRY_VERIFY(!state.bakes()->busy());
+}
+
+void McpTest::exportVideoRendersStaleBakesLive()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpTest"));
+    // cacheRoot() is fixed once per process: always remove the file.
+    const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString bakePath = QDir(drift::cacheRoot()).filePath(QStringLiteral("bakes/%1.driftbake").arg(uuid));
+    const auto cleanup = qScopeGuard([&] {
+        QFile::remove(bakePath);
+        QSettings().remove(QStringLiteral("export-agent"));
+        QSettings().remove(QStringLiteral("export"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+    QSettings().remove(QStringLiteral("export-agent"));
+    QSettings().remove(QStringLiteral("export"));
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *tool, const QJsonObject &args = {}) {
+        return dispatcher.applyOne(QLatin1String(tool), args);
+    };
+    const auto okOf = [](const QJsonObject &r) { return r.value(QStringLiteral("ok")).toBool(); };
+    const auto codeOf = [](const QJsonObject &r) { return r.value(QStringLiteral("error")).toString(); };
+
+    QVERIFY(okOf(call("set_project_setup", {{QStringLiteral("width"), 320}, {QStringLiteral("height"), 180},
+                                            {QStringLiteral("fps"), 30}})));
+    const QJsonObject added = call("add_text", {{QStringLiteral("text"), QStringLiteral("Hello")}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(okOf(added), qPrintable(dump(added)));
+    QString clip = added.value(QStringLiteral("clip")).toString();
+    if (clip.isEmpty())
+        clip = added.value(QStringLiteral("id")).toString();
+    QVERIFY(!clip.isEmpty());
+
+    state.project()->setId(uuid);
+    const int fps = state.project()->fps();
+    QVERIFY(QDir().mkpath(QFileInfo(bakePath).absolutePath()));
+    {
+        auto file = drift::BakeFile::open(bakePath);
+        QVERIFY(file);
+        const QString id = file->beginBake(0, fps, state.project()->width(), state.project()->height(), 1, QByteArrayLiteral("x"),
+                                           bakeFingerprint(*state.project(), 0, fps));
+        QVERIFY(!id.isEmpty());
+        QVERIFY(file->appendGop(id, 0, QByteArray(fps, 'x'), QVector<quint32>(fps, 1)));
+        QVERIFY(file->commit());
+    }
+
+    QJsonObject r = call("list_bakes");
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("n")).toInt(), 1);
+    QCOMPARE(r.value(QStringLiteral("stale")).toInt(), 0);
+
+    // Counts for a fresh bake, and for a range that misses it.
+    state.bakes()->refreshStale();
+    auto use = state.bakes()->exportBakeUse(false, {}, 0, 0);
+    QCOMPARE(use.reused, 1);
+    QCOMPARE(use.stale, 0);
+    QCOMPARE(use.staleSkipped, 0);
+    QCOMPARE(state.bakes()->exportBakeUse(true, {}, drift::secondsToUs(2.0), 0).reused, 0);
+
+    // An edit under it makes it stale.
+    QVERIFY(okOf(call("set_text", {{QStringLiteral("clip"), clip}, {QStringLiteral("text"), QStringLiteral("Bye")}})));
+    r = call("list_bakes");
+    QCOMPARE(r.value(QStringLiteral("stale")).toInt(), 1);
+
+    // The default skips it and encodes live (the junk GOP is never decoded). Exported at the
+    // project's own height: above it no bake is read in any mode.
+    const QJsonObject exported = call("export_video", {{QStringLiteral("path"), dir.filePath(QStringLiteral("a.mp4"))},
+                                                       {QStringLiteral("video"), QStringLiteral("h264")},
+                                                       {QStringLiteral("crf"), 35},
+                                                       {QStringLiteral("height"), 180}});
+    QVERIFY2(okOf(exported), qPrintable(dump(exported)));
+    QCOMPARE(exported.value(QStringLiteral("bakes")).toString(), QStringLiteral("fresh"));
+    const QJsonObject reused = exported.value(QStringLiteral("bakes_reused")).toObject();
+    QCOMPARE(reused.value(QStringLiteral("n")).toInt(), 0);
+    QCOMPARE(reused.value(QStringLiteral("stale_skipped")).toInt(), 1);
+    QCOMPARE(reused.value(QStringLiteral("stale")).toInt(), 0);
+    QTRY_VERIFY_WITH_TIMEOUT(!state.exportInProgress(), 180000);
+    // The mode reached the exporter: its pool had no stale bake (it would hold the one bake if
+    // the dispatcher had left the mode out and exportWithSettings had defaulted to "all").
+    QCOMPARE(state.bakes()->lastExportPoolBakes(), 0);
+    QVERIFY2(QFileInfo::exists(exported.value(QStringLiteral("path")).toString()), qPrintable(state.lastMessage()));
+
+    // The mode isn't remembered.
+    const QVariantMap last = state.mcp()->lastExportSettings();
+    QVERIFY(!last.contains(QStringLiteral("bakes")));
+    QVERIFY(!last.contains(QStringLiteral("useBakes")));
+
+    // The other modes, counted without encoding.
+    use = state.bakes()->exportBakeUse(true, {}, 0, 0);
+    QCOMPARE(use.reused, 1);
+    QCOMPARE(use.stale, 1);
+    QCOMPARE(use.staleSkipped, 0);
+    QCOMPARE(state.bakes()->exportBakeUse(true, {{0, drift::secondsToUs(1.0)}}, 0, 0).reused, 0);
+    // Not read at all: an upscale (only where the GPU can render at the larger size).
+    QCOMPARE(state.bakes()->exportBakeUse(true, {}, 0, 0, 180).reused, 1);
+    if (GpuCompositor::isAvailable() && GpuCompositor::maxCanvasDimension() >= 640) {
+        QCOMPARE(state.bakes()->exportBakeUse(true, {}, 0, 0, 360).reused, 0);
+        r = call("export_video", {{QStringLiteral("path"), dir.filePath(QStringLiteral("up.mp4"))},
+                                  {QStringLiteral("bakes"), QStringLiteral("all")},
+                                  {QStringLiteral("height"), 360}});
+        QVERIFY2(okOf(r), qPrintable(dump(r)));
+        QCOMPARE(r.value(QStringLiteral("bakes_reused")).toObject().value(QStringLiteral("n")).toInt(), 0);
+        state.cancelExport();
+        QTRY_VERIFY_WITH_TIMEOUT(!state.exportInProgress(), 180000);
+    }
+
+    // Bad values.
+    const QString out = dir.filePath(QStringLiteral("bad.mp4"));
+    r = call("export_video", {{QStringLiteral("path"), out}, {QStringLiteral("bakes"), QStringLiteral("stale")}});
+    QVERIFY2(!okOf(r) && codeOf(r) == QLatin1String("bad_args"), qPrintable(dump(r)));
+
+    r = call("list_export_presets");
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+    const QString preset = r.value(QStringLiteral("presets")).toArray().at(0).toObject().value(QStringLiteral("id")).toString();
+    QVERIFY(!preset.isEmpty());
+    r = call("export_with_preset", {{QStringLiteral("path"), out}, {QStringLiteral("preset"), preset},
+                                    {QStringLiteral("bakes"), 1}});
+    // The schema refuses a non-string before the handler sees it.
+    QVERIFY2(!okOf(r) && codeOf(r) == QLatin1String("type_mismatch"), qPrintable(dump(r)));
+
+    // export_with_preset defaults to fresh too.
+    r = call("export_with_preset", {{QStringLiteral("path"), dir.filePath(QStringLiteral("b.mp4"))},
+                                    {QStringLiteral("preset"), preset}});
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("bakes")).toString(), QStringLiteral("fresh"));
+    // The preset is a different size from the project, so the reply only has the mode's shape.
+    QVERIFY(r.value(QStringLiteral("bakes_reused")).isObject());
+    state.cancelExport();
+    QTRY_VERIFY_WITH_TIMEOUT(!state.exportInProgress(), 180000);
+
+    // Audio-only reads no bakes.
+    r = call("export_video", {{QStringLiteral("path"), dir.filePath(QStringLiteral("c.m4a"))},
+                              {QStringLiteral("audio_only"), true}});
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("bakes")).toString(), QStringLiteral("fresh"));
+    QVERIFY(!r.contains(QStringLiteral("bakes_reused")));
+    state.cancelExport();
+    QTRY_VERIFY_WITH_TIMEOUT(!state.exportInProgress(), 180000);
 }
 
 void McpTest::performanceSettingsRoundTrip()

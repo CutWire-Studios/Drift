@@ -97,6 +97,9 @@ public:
 
     static const QList<ExportScalePreset> &scalePresets();
     static const ExportScalePreset *scalePresetById(const QString &id);
+    // Whether an export at `targetHeight` (0: project height) renders above project size, which
+    // is where range bakes are not read. False past the driver's texture limit: sws upscales there.
+    static bool rendersAboveProjectSize(int projW, int projH, int targetHeight);
 
     // HandBrake-like catalogs; `available` is libav encoder presence, and for hardware
     // entries also a successful device probe. Hardware backends that cannot exist on

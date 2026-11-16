@@ -17,6 +17,7 @@
 #include "core/animation/Easing.h"
 #include "core/animation/EasingPresetStore.h"
 #include "app/editor/AppController.h"
+#include "app/jobs/render/BakeController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/bin/MediaBinController.h"
@@ -318,7 +319,9 @@ QVariantMap mergedExportSettings(AppController *c)
         // Carrying a codec or a bitrate over is a convenience. Carrying a *mode* over is a trap:
         // one build asked for a video export, left audio_only out of the args, inherited the true
         // from an earlier audio-only mix check, and got an audio file back with no warning.
-        if (it.key() == QLatin1String("audioOnly") || it.key() == QLatin1String("gifExport"))
+        // The bake mode is one too: a stale "all" must not come back.
+        if (it.key() == QLatin1String("audioOnly") || it.key() == QLatin1String("gifExport")
+            || it.key() == QLatin1String("bakes") || it.key() == QLatin1String("useBakes"))
             continue;
         merged.insert(it.key(), it.value());
     }
@@ -2935,6 +2938,27 @@ QJsonObject McpDispatcher::opListExportOptions() const
     });
 }
 
+// export_video / export_with_preset: the bake mode (default fresh) and what it reuses in the range.
+// GIF and audio-only exports never read bakes, so they get no bakes_reused.
+QJsonObject McpDispatcher::bakeReuseReply(const QString &mode, const QVariantMap &map) const
+{
+    if (map.value(QStringLiteral("audioOnly")).toBool() || map.value(QStringLiteral("gifExport")).toBool())
+        return {{QStringLiteral("bakes"), mode}};
+    BakeController::ExportBakeUse use;
+    if (mode != QLatin1String("none")) {
+        m_controller->bakes()->refreshStale();
+        use = m_controller->bakes()->exportBakeUse(
+            mode == QLatin1String("all"), m_controller->exportReviewSpans(),
+            drift::TimeUs(map.value(QStringLiteral("startUs"), 0.0).toDouble()),
+            drift::TimeUs(map.value(QStringLiteral("endUs"), 0.0).toDouble()),
+            map.value(QStringLiteral("targetHeight")).toInt());
+    }
+    return {{QStringLiteral("bakes"), mode},
+            {QStringLiteral("bakes_reused"), QJsonObject{{QStringLiteral("n"), use.reused},
+                                                         {QStringLiteral("stale"), use.stale},
+                                                         {QStringLiteral("stale_skipped"), use.staleSkipped}}}};
+}
+
 QJsonObject McpDispatcher::opExportVideo(const QJsonObject &args)
 {
     QJsonObject patched = args;
@@ -2955,6 +2979,8 @@ QJsonObject McpDispatcher::opExport(const QJsonObject &args)
     QString error;
     if (!applyExportPatch(m_controller, map, args, &error))
         return err("bad_args", error);
+    // The schema's enum has already refused anything but fresh, all or none.
+    const QString bakeMode = args.value(QStringLiteral("bakes")).toString(QStringLiteral("fresh"));
 
     const QJsonObject compact = compactExportSettings(m_controller, map);
     const QString suffix = compact.value(QStringLiteral("suffix")).toString();
@@ -2990,8 +3016,12 @@ QJsonObject McpDispatcher::opExport(const QJsonObject &args)
     // Remember what the agent chose in the agent's own store, so the export dialog still
     // offers the user what they last picked themselves.
     m_controller->mcp()->rememberExportSettings(map);
+    QVariantMap run = map;
+    run.insert(QStringLiteral("bakes"), bakeMode);
+    // Counted before the export starts, while the project is still the one it will render.
+    const QJsonObject reuse = bakeReuseReply(bakeMode, run);
     m_controller->setExportRequestedByAgent(true);
-    m_controller->exportWithSettings(QUrl::fromLocalFile(info.absoluteFilePath()), map,
+    m_controller->exportWithSettings(QUrl::fromLocalFile(info.absoluteFilePath()), run,
                                      /*rememberChoice=*/false);
     m_controller->setExportRequestedByAgent(false);
 
@@ -2999,9 +3029,12 @@ QJsonObject McpDispatcher::opExport(const QJsonObject &args)
         QObject::disconnect(conn);
         if (finished && !success)
             return err("export_failed", m_controller->lastMessage());
-        return ok({{QStringLiteral("started"), true},
-                   {QStringLiteral("path"), info.absoluteFilePath()},
-                   {QStringLiteral("busy"), m_controller->exportInProgress()}});
+        QJsonObject started{{QStringLiteral("started"), true},
+                            {QStringLiteral("path"), info.absoluteFilePath()},
+                            {QStringLiteral("busy"), m_controller->exportInProgress()}};
+        for (auto it = reuse.begin(); it != reuse.end(); ++it)
+            started.insert(it.key(), it.value());
+        return ok(started);
     }
 
     if (!finished) {
@@ -3021,6 +3054,8 @@ QJsonObject McpDispatcher::opExport(const QJsonObject &args)
         return err("export_failed", m_controller->lastMessage());
 
     QJsonObject extra = compact;
+    for (auto it = reuse.begin(); it != reuse.end(); ++it)
+        extra.insert(it.key(), it.value());
     extra.insert(QStringLiteral("path"), info.absoluteFilePath());
     extra.insert(QStringLiteral("bytes"), QFile(info.absoluteFilePath()).size());
     return ok(extra);

@@ -150,6 +150,8 @@ private:
     QJsonObject opProxies(const QString &tool, const QJsonObject &args);
     // list_bakes, bake_range, rebake, delete_bake, cancel_bake.
     QJsonObject opBakes(const QString &tool, const QJsonObject &args);
+    // export_video / export_with_preset: {bakes: mode, bakes_reused: {n, stale, stale_skipped}}.
+    QJsonObject bakeReuseReply(const QString &mode, const QVariantMap &map) const;
     // The camera clip a camera tool acts on: the named one, else the one covering `at`. Fills
     // `state` (cameraStateAt) and returns an error object, or {} on success.
     QJsonObject resolveCamera(const QJsonObject &args, double at, QVariantMap *state);

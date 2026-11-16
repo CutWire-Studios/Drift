@@ -546,7 +546,7 @@ void AppController::exportProject(const QUrl &outputUrl)
     exportWithSettings(outputUrl, exportDefaultSettings());
 }
 
-void AppController::exportWithPreset(const QUrl &outputUrl, const QString &presetId)
+void AppController::exportWithPreset(const QUrl &outputUrl, const QString &presetId, const QString &bakes)
 {
     QVariantMap map = exportDefaultSettings();
     if (const ExportScalePreset *preset = Exporter::scalePresetById(presetId)) {
@@ -554,7 +554,36 @@ void AppController::exportWithPreset(const QUrl &outputUrl, const QString &prese
         map.insert(QStringLiteral("targetHeight"), preset->targetHeight);
         map.insert(QStringLiteral("videoBitrateKbps"), preset->videoBitrateKbps);
     }
+    if (!bakes.isEmpty())
+        map.insert(QStringLiteral("bakes"), bakes);
     exportWithSettings(outputUrl, map);
+}
+
+QList<QPair<drift::TimeUs, drift::TimeUs>> AppController::exportReviewSpans() const
+{
+    // A bake there has a review track burnt in.
+    QList<QPair<drift::TimeUs, drift::TimeUs>> reviewSpans;
+    if (m_project.hasExportExcludedTracks()) {
+        for (const drift::Track &track : m_project.rootTracks()) {
+            for (const drift::Clip &clip : track.clips) {
+                bool review = track.excludeFromExport;
+                if (!review && clip.type == drift::ClipType::Composite) {
+                    for (const drift::Track &inner : m_project.sequenceTracks(clip.sequenceId))
+                        review = review || inner.excludeFromExport;
+                }
+                if (!review)
+                    continue;
+                // A transition draws the clip up to its duration past its own edges.
+                drift::TimeUs pad = 0;
+                for (const drift::Transition &transition : track.transitions) {
+                    if (transition.fromClipId == clip.id || transition.toClipId == clip.id)
+                        pad = qMax(pad, transition.durationUs);
+                }
+                reviewSpans.append({clip.timelineStart - pad, clip.timelineEnd() + pad});
+            }
+        }
+    }
+    return reviewSpans;
 }
 
 void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings,
@@ -567,30 +596,7 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
         : QStringLiteral("none");
     exportSettings.useBakes = bakeMode != QLatin1String("none");
     if (exportSettings.useBakes) {
-        // Where a review track (excludeFromExport) shows on the main timeline, directly or inside
-        // a composite clip: a bake there has it burnt in.
-        QList<QPair<drift::TimeUs, drift::TimeUs>> reviewSpans;
-        if (m_project.hasExportExcludedTracks()) {
-            for (const drift::Track &track : m_project.rootTracks()) {
-                for (const drift::Clip &clip : track.clips) {
-                    bool review = track.excludeFromExport;
-                    if (!review && clip.type == drift::ClipType::Composite) {
-                        for (const drift::Track &inner : m_project.sequenceTracks(clip.sequenceId))
-                            review = review || inner.excludeFromExport;
-                    }
-                    if (!review)
-                        continue;
-                    // A transition draws the clip up to its duration past its own edges.
-                    drift::TimeUs pad = 0;
-                    for (const drift::Transition &transition : track.transitions) {
-                        if (transition.fromClipId == clip.id || transition.toClipId == clip.id)
-                            pad = qMax(pad, transition.durationUs);
-                    }
-                    reviewSpans.append({clip.timelineStart - pad, clip.timelineEnd() + pad});
-                }
-            }
-        }
-        exportSettings.bakes = m_bakes->exportPool(bakeMode != QLatin1String("fresh"), reviewSpans);
+        exportSettings.bakes = m_bakes->exportPool(bakeMode != QLatin1String("fresh"), exportReviewSpans());
     }
 
     // The muxer is chosen from the output file's extension, and a created document's URI has

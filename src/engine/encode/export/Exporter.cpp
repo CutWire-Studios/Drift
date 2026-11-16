@@ -1702,6 +1702,14 @@ const QList<ExportScalePreset> &Exporter::scalePresets()
     return kPresets;
 }
 
+bool Exporter::rendersAboveProjectSize(int projW, int projH, int targetHeight)
+{
+    int outW = 0;
+    int outH = 0;
+    scaleSize(projW, projH, targetHeight, outW, outH);
+    return outH > projH && GpuCompositor::maxCanvasDimension() >= qMax(outW, outH);
+}
+
 const ExportScalePreset *Exporter::scalePresetById(const QString &id)
 {
     for (const ExportScalePreset &preset : scalePresets()) {
@@ -2085,7 +2093,7 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
     scaleSize(projW, projH, settings.targetHeight, outW, outH);
 
     // Past the driver's texture limit the canvas stays at project size and sws upscales.
-    const bool renderAtOutput = outH > projH && GpuCompositor::maxCanvasDimension() >= qMax(outW, outH);
+    const bool renderAtOutput = Exporter::rendersAboveProjectSize(projW, projH, settings.targetHeight);
     const int canvasW = renderAtOutput ? outW : projW;
     const int canvasH = renderAtOutput ? outH : projH;
 

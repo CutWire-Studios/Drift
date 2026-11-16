@@ -9,6 +9,7 @@
 #include "engine/encode/bake/BakeFile.h"
 #include "engine/encode/bake/BakeReader.h"
 #include "engine/encode/bake/BakeWriter.h"
+#include "engine/encode/export/Exporter.h"
 
 #include <QDir>
 #include <QFile>
@@ -22,6 +23,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <limits>
 
 namespace {
 
@@ -55,6 +57,21 @@ QHash<QString, quint64> bakeBytes(const drift::BakeIndex &index)
         }
     }
     return out;
+}
+
+// The bake's span in microseconds, rounded outward to whole microseconds.
+QPair<drift::TimeUs, drift::TimeUs> bakeSpanUs(const drift::Bake &bake)
+{
+    return {bake.startFrame * 1000000 / bake.fps, (bake.endFrame * 1000000 + bake.fps - 1) / bake.fps};
+}
+
+bool overlapsAny(const drift::Bake &bake, const QList<QPair<drift::TimeUs, drift::TimeUs>> &spans)
+{
+    if (bake.fps <= 0)
+        return !spans.isEmpty();
+    const auto [start, end] = bakeSpanUs(bake);
+    return std::any_of(spans.begin(), spans.end(),
+                       [&](const auto &span) { return span.first < end && start < span.second; });
 }
 
 QString qualityLabel(int preset)
@@ -678,29 +695,59 @@ void BakeController::setWorkAreaToBake(const QString &id)
 std::shared_ptr<drift::BakeReaderPool> BakeController::exportPool(bool includeStale,
                                                                   const QList<QPair<drift::TimeUs, drift::TimeUs>> &skip)
 {
+    m_lastExportPoolBakes = 0;
     if (m_detached || !m_file || !m_index || m_index->bakes.empty())
         return nullptr;
-    if (includeStale && skip.isEmpty())
+    if (includeStale && skip.isEmpty()) {
+        m_lastExportPoolBakes = int(m_index->bakes.size());
         return m_app->playback()->bakeReaderPool();
+    }
     if (!includeStale && m_staleTimer.isActive())
         recomputeStale();
-    const auto overlapsSkip = [&skip](const drift::Bake &bake) {
-        if (bake.fps <= 0)
-            return !skip.isEmpty();
-        const drift::TimeUs start = bake.startFrame * 1000000 / bake.fps;
-        const drift::TimeUs end = (bake.endFrame * 1000000 + bake.fps - 1) / bake.fps;
-        return std::any_of(skip.begin(), skip.end(),
-                           [&](const auto &span) { return span.first < end && start < span.second; });
-    };
     auto filtered = std::make_shared<drift::BakeIndex>(*m_index);
     std::erase_if(filtered->bakes, [&](const drift::Bake &bake) {
-        return (!includeStale && m_staleIds.contains(bake.id)) || overlapsSkip(bake);
+        return (!includeStale && m_staleIds.contains(bake.id)) || overlapsAny(bake, skip);
     });
     if (filtered->bakes.empty())
         return nullptr;
+    m_lastExportPoolBakes = int(filtered->bakes.size());
     auto pool = std::make_shared<drift::BakeReaderPool>();
     pool->setSource(m_file->path(), std::move(filtered));
     return pool;
+}
+
+BakeController::ExportBakeUse BakeController::exportBakeUse(bool includeStale,
+                                                            const QList<QPair<drift::TimeUs, drift::TimeUs>> &skip,
+                                                            drift::TimeUs startUs, drift::TimeUs endUs, int targetHeight)
+{
+    ExportBakeUse use;
+    if (m_detached || !m_index)
+        return use;
+    const drift::Project &project = m_app->m_project;
+    // FrameCompositor::prepareFromBake reads no bake above project size or on a transparent
+    // background; BakeReaderPool::read only serves a bake of the project's size and fps.
+    if (project.background().kind == drift::BackgroundKind::Transparent
+        || Exporter::rendersAboveProjectSize(project.width(), project.height(), targetHeight))
+        return use;
+    if (m_staleTimer.isActive())
+        recomputeStale();
+    const drift::TimeUs end = endUs > 0 ? endUs : std::numeric_limits<drift::TimeUs>::max();
+    for (const drift::Bake &bake : m_index->bakes) {
+        if (bake.fps <= 0 || bake.width != project.width() || bake.height != project.height()
+            || bake.fps != project.fps())
+            continue;
+        const auto [bs, be] = bakeSpanUs(bake);
+        if (be <= startUs || bs >= end || overlapsAny(bake, skip))
+            continue;
+        const bool stale = m_staleIds.contains(bake.id);
+        if (stale && !includeStale) {
+            ++use.staleSkipped;
+            continue;
+        }
+        ++use.reused;
+        use.stale += stale ? 1 : 0;
+    }
+    return use;
 }
 
 #include "moc_BakeController.cpp"
