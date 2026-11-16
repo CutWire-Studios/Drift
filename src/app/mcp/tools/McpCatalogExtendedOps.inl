@@ -2072,6 +2072,28 @@
                         {QStringLiteral("language"), stringProp(QStringLiteral("Chatterbox language code (local_tts_status); omitted = the last used"))},
                         {QStringLiteral("exaggeration"), numberProp(QStringLiteral("Expressiveness; omitted = the last used"), 0.25, 2)}}),
                        {}) },
+        { "get_teleprompter", "voice", "Read the teleprompter script and its settings",
+          "Read the Teleprompter panel: {script, lines, chars, speed, font_size, overlay, "
+          "follow_recording, playing, position}. script is saved with the project. speed (lines per "
+          "second), font_size, overlay (the script shown over the preview) and follow_recording "
+          "(scrolling starts, pauses and stops with audio recording) are the user's global settings. "
+          "playing and position (lines scrolled) are the live scroll.",
+          objectSchema({}), true, false, true },
+        { "set_teleprompter", "voice", "Put a script in the teleprompter for the user to read",
+          "Put a script in the Teleprompter panel for the user to read while recording a voice-over "
+          "themselves, and set how it scrolls. Only supplied keys change. The script is saved with the "
+          "project and, as in the panel, is not undoable: replacing a non-empty script that differs "
+          "fails conflict unless replace:true, so read it with get_teleprompter first. A new script "
+          "stops the scroll and starts from the top. speed, font_size, overlay and follow_recording are "
+          "the user's global settings, kept across sessions. Returns the settings plus lines and chars "
+          "(not the script).",
+          objectSchema({{QStringLiteral("script"), stringProp(QStringLiteral("The whole script; \"\" clears it. Line breaks are kept (\\r\\n becomes \\n)"))},
+                        {QStringLiteral("replace"), boolProp(QStringLiteral("Allow replacing a different, non-empty script (default false)"))},
+                        {QStringLiteral("speed"), numberProp(QStringLiteral("Scroll speed in lines per second (panel default 0.6)"), 0.1, 5)},
+                        {QStringLiteral("font_size"), integerProp(QStringLiteral("Text size in pixels (panel default 32)"), 12, 96)},
+                        {QStringLiteral("overlay"), boolProp(QStringLiteral("Show the script over the preview"))},
+                        {QStringLiteral("follow_recording"), boolProp(QStringLiteral("Scrolling starts, pauses and stops with audio recording"))}}),
+          false, true },
         { "get_job", "ai", "Progress of a background job",
           "State of a job started by transcribe, diarize, tts_generate, sfx_generate, add_voice or voiceover_from_subtitles: {id, kind, "
           "target, active, progress, status}; once active is false, ok plus result or error. "

@@ -1756,6 +1756,8 @@ QStringList undoExemptOps()
         QStringLiteral("sfx_generate"),        QStringLiteral("local_tts_status"),
         QStringLiteral("add_voice"),           QStringLiteral("rename_voice"),
         QStringLiteral("remove_voice"),        QStringLiteral("voiceover_from_subtitles"),
+        // Saved with the project but kept out of undo, as the panel keeps it.
+        QStringLiteral("set_teleprompter"),
         // Preset stores live on disk, outside the project and its history.
         QStringLiteral("rename_user_text_preset"),      QStringLiteral("delete_user_text_preset"),
         QStringLiteral("export_user_text_preset"),      QStringLiteral("import_user_text_preset"),
@@ -1874,6 +1876,10 @@ QString agentGuideText()
         "3. Cut with cut_words (fillers, retakes, slips), keep_ranges (one clip's EDL) or\n"
         "   assemble (best takes across sources). Cuts land between words with a de-click.\n"
         "4. Check each cut with get_waveform({image:true}) — it draws the words — and frames.\n"
+        "\n"
+        "Voice-overs the user records: set_teleprompter({script}) puts your script in the Teleprompter\n"
+        "panel (saved with the project, not undoable). get_teleprompter first: replacing the user's own\n"
+        "script needs replace:true, so ask before you do.\n"
         "\n"
         "Working to the music (audio toolbox):\n"
         "1. detect_beats({start, duration}) blocks and returns bpm plus exact beat and onset times.\n"
@@ -2004,7 +2010,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"market", "The Cutwire marketplace: stock media, Drift assets, sound effects and community add-ons. Browse sources, preview, install (optionally onto the timeline), and manage Downloads. Stock installs spend a per-machine quota."},
         {"transcript", "Transcript-first editing: transcribe once, read phrases/words with times, cut by words or by source ranges, assemble takes, label speakers."},
         {"procedural", "Procedural 3D clips: Lua-built scenes with your own GLSL shaders. Read the guide, write packages into My Procedurals, try them with evaluate_procedural, place them as clips and animate their params with proc.<key> keyframes."},
-        {"voice", "Voices: ElevenLabs / Fish Audio text-to-speech and ElevenLabs sound effects (billable, need the user's API key), plus local Chatterbox TTS with a cloneable voice library and subtitle voiceovers (free, needs the tts-model addon)."},
+        {"voice", "Voices: ElevenLabs / Fish Audio text-to-speech and ElevenLabs sound effects (billable, need the user's API key), plus local Chatterbox TTS with a cloneable voice library and subtitle voiceovers (free, needs the tts-model addon). Teleprompter script for a self-recorded voice-over."},
     };
 
     const bool brief = args.value(QStringLiteral("brief")).toBool();

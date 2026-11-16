@@ -3,6 +3,7 @@
 #include "app/editor/PreferencesController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/mcp/McpController.h"
+#include "app/editor/sessions/TeleprompterController.h"
 #include "app/jobs/JobRegistry.h"
 #include "app/jobs/render/BakeController.h"
 #include "app/jobs/render/BakeFingerprint.h"
@@ -111,6 +112,8 @@ private slots:
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
     void agentNotificationsPreferenceOverMcp();
+    void teleprompterOpsReadAndWrite();
+    void teleprompterInApplyBatches();
     void deleteClipWithEffectsRemovesPinnedAdjustments();
     void copyEffectsGradesSeveralClipsInOneStep();
     void removeAllEffectsOp();
@@ -442,11 +445,11 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
     const qsizetype compactSize = QJsonDocument(compact).toJson(QJsonDocument::Compact).size();
-    // Raise for the bake ops and new_timeline/close_timeline.
-    QVERIFY2(compactSize < 25750, qPrintable(QString::number(compactSize)));
+    // Raise for the bake ops, new_timeline/close_timeline and get/set_teleprompter.
+    QVERIFY2(compactSize < 25966, qPrintable(QString::number(compactSize)));
     const qsizetype briefSize = QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
                                     .toJson(QJsonDocument::Compact).size();
-    QVERIFY2(briefSize < 12850, qPrintable(QString::number(briefSize))); // raise for the bake, animation and timeline ops
+    QVERIFY2(briefSize < 12958, qPrintable(QString::number(briefSize))); // raise for the bake, animation, timeline and teleprompter ops
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -558,6 +561,207 @@ void McpTest::agentNotificationsPreferenceOverMcp()
     QCOMPARE(payload.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     QVERIFY2(!payload.value(QStringLiteral("detail")).toString().isEmpty(), qPrintable(QJsonDocument(payload).toJson()));
     QVERIFY(!state.mcp()->inAgentCall());
+}
+
+// get_teleprompter / set_teleprompter: the script is saved with the project but not undoable; the
+// settings are the user's global ones.
+void McpTest::teleprompterOpsReadAndWrite()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TeleprompterController *prompter = state.teleprompter();
+    const double speed = prompter->speed();
+    const int size = prompter->fontSize();
+    const bool overlay = prompter->overlayEnabled();
+    const bool follow = prompter->followRecording();
+    const auto restore = qScopeGuard([&] {
+        prompter->setSpeed(speed);
+        prompter->setFontSize(size);
+        prompter->setOverlayEnabled(overlay);
+        prompter->setFollowRecording(follow);
+    });
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto script = [&] { return dispatcher.applyOne(QStringLiteral("get_teleprompter"), {}).value(QStringLiteral("script")).toString(); };
+
+    QVERIFY(drift::mcp::isReadOnlyOp(QStringLiteral("get_teleprompter")));
+    QVERIFY(drift::mcp::undoExemptOps().contains(QStringLiteral("set_teleprompter")));
+    prompter->setScript(QString());
+    const QJsonObject empty = dispatcher.applyOne(QStringLiteral("get_teleprompter"), {});
+    QVERIFY2(empty.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(empty).toJson()));
+    QCOMPARE(empty.value(QStringLiteral("script")).toString(), QString());
+    QCOMPARE(empty.value(QStringLiteral("lines")).toInt(), 0);
+
+    const qsizetype depth = state.undoHistory().size();
+    const QJsonObject set = dispatcher.applyOne(
+        QStringLiteral("set_teleprompter"),
+        {{QStringLiteral("script"), QStringLiteral("Line one\r\nLine two")},
+         {QStringLiteral("speed"), 1.5},
+         {QStringLiteral("font_size"), 48},
+         {QStringLiteral("overlay"), true},
+         {QStringLiteral("follow_recording"), false}});
+    QVERIFY2(set.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(set).toJson()));
+    QCOMPARE(set.value(QStringLiteral("lines")).toInt(), 2);
+    QCOMPARE(set.value(QStringLiteral("chars")).toInt(), 17);
+    QCOMPARE(set.value(QStringLiteral("speed")).toDouble(), 1.5);
+    QCOMPARE(set.value(QStringLiteral("font_size")).toInt(), 48);
+    QVERIFY(set.value(QStringLiteral("overlay")).toBool());
+    QVERIFY(!set.value(QStringLiteral("follow_recording")).toBool());
+    QVERIFY(!set.contains(QStringLiteral("script")));
+    QCOMPARE(prompter->script(), QStringLiteral("Line one\nLine two"));
+    QCOMPARE(state.project()->teleprompterScript(), QStringLiteral("Line one\nLine two"));
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    QCOMPARE(state.undoHistory().size(), depth);
+    QCOMPARE(script(), QStringLiteral("Line one\nLine two"));
+
+    const QJsonObject detail = dispatcher.inspect({{QStringLiteral("dirty_detail"), true}})
+                                   .value(QStringLiteral("dirty_detail")).toObject();
+    QVERIFY2(detail.value(QStringLiteral("other")).toArray().contains(QStringLiteral("teleprompter_script")),
+             qPrintable(QJsonDocument(detail).toJson()));
+    QVERIFY(!detail.value(QStringLiteral("timeline")).toBool());
+
+    const QJsonObject conflict = dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("script"), QStringLiteral("Other")}});
+    QCOMPARE(conflict.value(QStringLiteral("error")).toString(), QStringLiteral("conflict"));
+    QCOMPARE(script(), QStringLiteral("Line one\nLine two"));
+
+    // Settings sent alongside a conflicting script stay unchanged.
+    const QJsonObject conflictWithSettings = dispatcher.applyOne(
+        QStringLiteral("set_teleprompter"),
+        {{QStringLiteral("script"), QStringLiteral("Other")}, {QStringLiteral("speed"), 4.0}, {QStringLiteral("font_size"), 80},
+         {QStringLiteral("overlay"), false}, {QStringLiteral("follow_recording"), true}});
+    QCOMPARE(conflictWithSettings.value(QStringLiteral("error")).toString(), QStringLiteral("conflict"));
+    QCOMPARE(prompter->speed(), 1.5);
+    QCOMPARE(prompter->fontSize(), 48);
+    QVERIFY(prompter->overlayEnabled());
+    QVERIFY(!prompter->followRecording());
+
+    // Echoing back exactly what get_teleprompter returned never conflicts, even with CRLF stored.
+    const QJsonObject echoed = dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("script"), script()}});
+    QVERIFY2(echoed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(echoed).toJson()));
+    prompter->setScript(QStringLiteral("Line one\r\nLine two"));
+    prompter->setPosition(4.0);
+    const QJsonObject crlfEcho = dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("script"), QStringLiteral("Line one\r\nLine two")}});
+    QVERIFY2(crlfEcho.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(crlfEcho).toJson()));
+    QCOMPARE(script(), QStringLiteral("Line one\nLine two")); // stored with LF from then on
+    QCOMPARE(prompter->position(), 0.0);                       // the stored text changed, so it starts from the top
+    prompter->setScript(QStringLiteral("Line one\nLine two"));
+
+    prompter->setPosition(5.0);
+    const QJsonObject replaced = dispatcher.applyOne(QStringLiteral("set_teleprompter"),
+                                                     {{QStringLiteral("script"), QStringLiteral("Other")}, {QStringLiteral("replace"), true}});
+    QVERIFY2(replaced.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(replaced).toJson()));
+    QCOMPARE(script(), QStringLiteral("Other"));
+    QCOMPARE(prompter->position(), 0.0);
+
+    prompter->setPosition(3.0);
+    const QJsonObject same = dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("script"), QStringLiteral("Other")}});
+    QVERIFY2(same.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(same).toJson()));
+    QCOMPARE(prompter->position(), 3.0);   // an identical script is not a new one: no reset
+
+    // An empty script over a non-empty one conflicts without replace and clears with it; reset stops playback.
+    const QJsonObject clearConflict = dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("script"), QString()}});
+    QCOMPARE(clearConflict.value(QStringLiteral("error")).toString(), QStringLiteral("conflict"));
+    QCOMPARE(script(), QStringLiteral("Other"));
+    prompter->setPlaying(true);
+    const QJsonObject cleared = dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("script"), QString()}, {QStringLiteral("replace"), true}});
+    QVERIFY2(cleared.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(cleared).toJson()));
+    QCOMPARE(script(), QString());
+    QVERIFY(!prompter->playing());
+    QVERIFY(!cleared.value(QStringLiteral("playing")).toBool());
+    QCOMPARE(prompter->position(), 0.0);
+    prompter->setScript(QStringLiteral("Other"));
+
+    // Null values are absent: the script and every setting stay as they were.
+    const QJsonObject nulls = dispatcher.applyOne(QStringLiteral("set_teleprompter"),
+                                                  {{QStringLiteral("script"), QJsonValue(QJsonValue::Null)},
+                                                   {QStringLiteral("speed"), QJsonValue(QJsonValue::Null)},
+                                                   {QStringLiteral("font_size"), QJsonValue(QJsonValue::Null)},
+                                                   {QStringLiteral("overlay"), QJsonValue(QJsonValue::Null)},
+                                                   {QStringLiteral("follow_recording"), QJsonValue(QJsonValue::Null)}});
+    QVERIFY2(nulls.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(nulls).toJson()));
+    QCOMPARE(script(), QStringLiteral("Other"));
+    QCOMPARE(prompter->speed(), 1.5);
+    QCOMPARE(prompter->fontSize(), 48);
+    QVERIFY(prompter->overlayEnabled());
+    QVERIFY(!prompter->followRecording());
+
+    // Values that validateArgs accepts through coercion (numeric strings, 0/1 and "true"/"false") apply.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("overlay"), QStringLiteral("0")}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(!prompter->overlayEnabled());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("overlay"), QStringLiteral("true")}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(prompter->overlayEnabled());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("follow_recording"), 1}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(prompter->followRecording());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("speed"), QStringLiteral("2")}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(prompter->speed(), 2.0);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("font_size"), QStringLiteral("40")}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(prompter->fontSize(), 40);
+    // Numeric spellings the integer validator accepts must land too, not silently keep the old size.
+    for (const char *spelling : {"60.0", "5e1", "70"}) {
+        prompter->setFontSize(48);
+        const QString text = QString::fromLatin1(spelling);
+        QVERIFY2(dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("font_size"), text}})
+                     .value(QStringLiteral("ok")).toBool(), spelling);
+        QCOMPARE(prompter->fontSize(), int(text.toDouble()));
+    }
+    prompter->setSpeed(1.5);
+    prompter->setFontSize(48);
+    prompter->setFollowRecording(false);
+
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("speed"), 9}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_teleprompter"), {{QStringLiteral("font_size"), 8}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(prompter->speed(), 1.5);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_teleprompter"), {}).value(QStringLiteral("ok")).toBool());
+}
+
+void McpTest::teleprompterInApplyBatches()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TeleprompterController *prompter = state.teleprompter();
+    prompter->setScript(QString());
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [](const QString &tool, const QJsonObject &args) {
+        return QJsonObject{{QStringLiteral("tool"), tool}, {QStringLiteral("args"), args}};
+    };
+
+    qsizetype depth = state.undoHistory().size();
+    QJsonObject reply = dispatcher.apply({{QStringLiteral("ops"), QJsonArray{call(QStringLiteral("set_teleprompter"), {{QStringLiteral("script"), QStringLiteral("Read me")}})}}});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    QCOMPARE(state.undoHistory().size(), depth);
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+
+    reply = dispatcher.apply({{QStringLiteral("ops"),
+                               QJsonArray{call(QStringLiteral("set_teleprompter"), {{QStringLiteral("script"), QStringLiteral("Second")}, {QStringLiteral("replace"), true}}),
+                                          call(QStringLiteral("add_text"), {{QStringLiteral("text"), QStringLiteral("T")}, {QStringLiteral("at"), 0}})}}});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    QCOMPARE(state.undoHistory().size(), depth + 1);
+    const QString hashWithText = state.project()->contentHash();
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.project()->contentHash() != hashWithText);
+    QCOMPARE(prompter->script(), QStringLiteral("Second"));
+
+    reply = dispatcher.apply({{QStringLiteral("atomic"), true},
+                              {QStringLiteral("ops"), QJsonArray{call(QStringLiteral("set_teleprompter"), {{QStringLiteral("script"), QStringLiteral("x")}, {QStringLiteral("replace"), true}})}}});
+    QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY2(reply.value(QStringLiteral("detail")).toString().contains(QStringLiteral("atomic")), qPrintable(QJsonDocument(reply).toJson()));
+    QCOMPARE(prompter->script(), QStringLiteral("Second"));
+
+    reply = dispatcher.apply({{QStringLiteral("atomic"), true},
+                              {QStringLiteral("ops"), QJsonArray{call(QStringLiteral("get_teleprompter"), {})}}});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+
+    reply = dispatcher.apply({{QStringLiteral("dry_run"), true},
+                              {QStringLiteral("ops"), QJsonArray{call(QStringLiteral("set_teleprompter"), {{QStringLiteral("font_size"), 500}})}}});
+    QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("dry_run_failed"));
+    QCOMPARE(reply.value(QStringLiteral("problems")).toArray().first().toObject().value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
 }
 
 // delete_clip leaves a graded clip's adjustments behind by default (unlinked, still grading
