@@ -1,5 +1,6 @@
 import QtQuick
 import Drift
+import "TimelineWheel.js" as TimelineWheel
 
 // One track header: reorder drag, chrome, toggles, name, and the context menu.
 Item {
@@ -439,31 +440,37 @@ Item {
         }
     }
 
-    // Wheel over track headers should scroll the same track list as the
-    // timeline. Alt+wheel retains DAW-style per-lane height adjustment.
+    // Wheel over track headers scrolls the same track list as the timeline. Ctrl/Shift wheel and
+    // mostly-sideways motion go to the timeline's zoom and pan (the headers sit outside its
+    // Flickable). Alt+wheel keeps DAW-style per-lane height adjustment, one step per notch.
     // NoButton keeps clicks, reorder drag and the context menu available.
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         z: 40
+        property real altWheelAccum: 0
         onWheel: (wheel) => {
-            // Ctrl/Shift wheel belongs to the timeline's zoom/pan gestures.
-            if (wheel.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) {
-                wheel.accepted = false
+            const e = TimelineWheel.input(wheel, PointerDevice.TouchPad)
+            if (e.ctrl || e.shift) {
+                column.timelineWheel(wheel)
                 return
             }
-            const touchpad = wheel.pixelDelta.x !== 0 || wheel.pixelDelta.y !== 0
-            if (touchpad && Math.abs(wheel.pixelDelta.x) > Math.abs(wheel.pixelDelta.y)) {
-                wheel.accepted = false
+            // Qt turns the wheel horizontal while Alt is held (X11, Windows), so take
+            // whichever axis moved, before the horizontal check below.
+            if (e.alt) {
+                const n = TimelineWheel.notches(altWheelAccum, TimelineWheel.oneAxis(e.angleX, e.angleY))
+                altWheelAccum = n.rest
+                EditorState.nudgeTrackHeightScale(index, n.steps)   // 0 steps is a no-op in C++
                 return
             }
-            const dy = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y
-            if (dy === 0)
+            const d = TimelineWheel.delta(e, 1)
+            // Mostly sideways (touchpad swipe, tilt wheel): pan the timeline.
+            if (Math.abs(d.x) > Math.abs(d.y)) {
+                column.timelineWheel(wheel)
                 return
-            if (wheel.modifiers & Qt.AltModifier)
-                EditorState.nudgeTrackHeightScale(index, dy > 0 ? 1 : -1)
-            else
-                column.scrollRequested(-dy)
+            }
+            if (d.y !== 0)
+                column.scrollRequested(-d.y)
         }
     }
 }

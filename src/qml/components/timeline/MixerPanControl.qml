@@ -1,5 +1,6 @@
 import QtQuick
 import Drift
+import "TimelineWheel.js" as TimelineWheel
 
 // Pan knob: 270° sweep centred at 12 o'clock, drag or scroll to move, double-click to centre.
 Item {
@@ -80,6 +81,7 @@ Item {
 
             property point last
             property real dragPan: 0
+            property real wheelAccum: 0
 
             onPressed: (mouse) => {
                 last = Qt.point(mouse.x, mouse.y)
@@ -97,7 +99,12 @@ Item {
             }
             onReleased: panArea.channel.panCommitted()
             onDoubleClicked: panArea.channel.panSet(0.0)
-            onWheel: (wheel) => panArea.channel.nudgePan(wheel.angleDelta.y > 0 ? 0.05 : -0.05)
+            onWheel: (wheel) => {
+                const n = TimelineWheel.notches(wheelAccum, TimelineWheel.oneAxis(wheel.angleDelta.x, wheel.angleDelta.y))
+                wheelAccum = n.rest
+                if (n.steps !== 0)
+                    panArea.channel.nudgePan(0.05 * n.steps)
+            }
         }
 
         ThemedToolTip {

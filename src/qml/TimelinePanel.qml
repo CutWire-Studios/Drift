@@ -1060,27 +1060,15 @@ PanelFrame {
         placeAt(0, atSeconds, target)
     }
 
-    function handleTimelineWheel(wheel) {
-        // Touchpads are told apart by scroll phase on Wayland and macOS. On X11 there are no
-        // phases, so the device type is used; it depends on the X stack (XI 2.4 gesture class,
-        // xorg >= 21.1 with libinput >= 1.2), and without it the touchpad is treated as a
-        // wheel. The device type is not used elsewhere: Qt's cocoa plugin retypes the shared
-        // pointing device to TouchPad after the first trackpad scroll, so a later USB wheel
-        // would look like a touchpad.
-        const touchpad = wheel.phase !== Qt.NoScrollPhase
-                         || (Qt.platform.pluginName === "xcb" && wheel.device !== null
-                             && wheel.device.type === PointerDevice.TouchPad)
-        const r = TimelineWheel.route({
-            "touchpad": touchpad,
-            "ctrl": (wheel.modifiers & Qt.ControlModifier) !== 0,
-            "shift": (wheel.modifiers & Qt.ShiftModifier) !== 0,
-            "pixelX": wheel.pixelDelta.x, "pixelY": wheel.pixelDelta.y,
-            "angleX": wheel.angleDelta.x, "angleY": wheel.angleDelta.y
-        }, EditorState.preferences.invertTimelineScroll, flick.contentHeight > flick.height)
+    function handleTimelineWheel(wheel, zoomAtPlayhead) {
+        const r = TimelineWheel.route(TimelineWheel.input(wheel, PointerDevice.TouchPad),
+                                      EditorState.preferences.invertTimelineScroll,
+                                      flick.contentHeight > flick.height)
         if (r.zoom !== 1) {
-            // Wheel MouseAreas live in content space, so wheel.x is already a
-            // content X — keep that time fixed under the cursor.
-            setZoomAround(zoom * r.zoom, Math.max(0, wheel.x / pxPerSecond), wheel.x - flick.contentX)
+            if (zoomAtPlayhead)          // from the track headers: no time under the pointer
+                setZoom(zoom * r.zoom)
+            else                         // wheel MouseAreas are in content space: keep wheel.x's time fixed
+                setZoomAround(zoom * r.zoom, Math.max(0, wheel.x / pxPerSecond), wheel.x - flick.contentX)
         } else if (r.x !== 0 || r.y !== 0) {
             panTimelineBy(r.x, r.y)
         }
@@ -1489,6 +1477,7 @@ PanelFrame {
                     resizable: true
                     tracks: root.tracks
                     contentY: flick.contentY
+                    onTimelineWheel: (wheel) => root.handleTimelineWheel(wheel, true)
                     onScrollRequested: (dy) => {
                         flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height,
                                                               flick.contentY + dy))
