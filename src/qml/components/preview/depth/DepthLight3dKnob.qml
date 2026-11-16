@@ -1,5 +1,6 @@
 import QtQuick
 import Drift
+import "../../timeline/TimelineWheel.js" as TimelineWheel
 
 // Light knob in the 3D view: drag slides it at its current distance, the wheel steps depth.
 Rectangle {
@@ -35,6 +36,7 @@ Rectangle {
         hoverEnabled: true
         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
         preventStealing: true
+        property real wheelAccum: 0
 
         onPressed: (mouse) => {
             const p = lightArea.mapToItem(knob.overlay, mouse.x, mouse.y)
@@ -64,13 +66,17 @@ Rectangle {
 
         // Scrolling up brings the light towards the viewer; Shift for fine steps.
         onWheel: (wheel) => {
+            const n = TimelineWheel.notches(wheelAccum, TimelineWheel.oneAxis(wheel.angleDelta.x, wheel.angleDelta.y))
+            wheelAccum = n.rest
+            wheel.accepted = true
+            if (n.steps === 0)
+                return
             const step = (wheel.modifiers & Qt.ShiftModifier) !== 0 ? 0.01 : 0.05
             const z = Math.max(knob.source.values.zMin, Math.min(knob.source.values.zMax,
-                               (knob.source.values.z || 0) - Math.sign(wheel.angleDelta.y) * step))
+                               (knob.source.values.z || 0) - n.steps * step))
             EditorState.beginPreviewDrag(qsTr("Move light"))
             knob.overlay.writeParam(knob.source.prefix + "z", z)
             EditorState.commitPreviewDrag()
-            wheel.accepted = true
         }
     }
 }

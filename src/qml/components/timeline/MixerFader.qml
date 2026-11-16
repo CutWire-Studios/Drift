@@ -1,5 +1,6 @@
 import QtQuick
 import Drift
+import "TimelineWheel.js" as TimelineWheel
 
 // Vertical channel fader. Shift-drag is fine; double-click or the unity notch is 0 dB.
 Item {
@@ -79,6 +80,7 @@ Item {
 
         property real lastY: 0
         property real dragRatio: 0
+        property real wheelAccum: 0
 
         function emitRatio() {
             fader.channel.volumePreviewed(fader.channel.mixer.dbToLinear(fader.channel.mixer.snapDb(fader.channel.mixer.ratioToDb(dragRatio))))
@@ -105,7 +107,12 @@ Item {
         }
         onReleased: fader.channel.volumeCommitted()
         onDoubleClicked: fader.channel.volumeSet(1.0)
-        onWheel: (wheel) => fader.channel.nudgeDb(wheel.angleDelta.y > 0 ? 0.5 : -0.5)
+        onWheel: (wheel) => {
+            const n = TimelineWheel.notches(wheelAccum, TimelineWheel.oneAxis(wheel.angleDelta.x, wheel.angleDelta.y))
+            wheelAccum = n.rest
+            if (n.steps !== 0)
+                fader.channel.nudgeDb(0.5 * n.steps)
+        }
     }
 
     ThemedToolTip {

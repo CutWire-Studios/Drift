@@ -45,6 +45,8 @@ Item {
     property int spanPreviewLayer: -1
     property int spanPreviewEnd: -1
     signal scrollRequested(real dy)
+    // A wheel event the headers don't use (Ctrl/Shift, horizontal motion), for the timeline's zoom and pan.
+    signal timelineWheel(var wheel)
 
     // Track-header reorder: source index and live drop target while dragging,
     // plus the insertion boundary the indicator line is drawn at.

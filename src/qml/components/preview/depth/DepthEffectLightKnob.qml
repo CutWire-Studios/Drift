@@ -1,5 +1,6 @@
 import QtQuick
 import Drift
+import "../../timeline/TimelineWheel.js" as TimelineWheel
 
 // Light knob: drag to move across the frame, scroll to move nearer or farther.
 Rectangle {
@@ -37,6 +38,7 @@ Rectangle {
         hoverEnabled: true
         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
         preventStealing: true
+        property real wheelAccum: 0
 
         onPressed: {
             knob.overlay.interacting = true
@@ -57,12 +59,16 @@ Rectangle {
 
         // Scrolling up brings the light towards the camera; Shift for fine steps.
         onWheel: (wheel) => {
+            const n = TimelineWheel.notches(wheelAccum, TimelineWheel.oneAxis(wheel.angleDelta.x, wheel.angleDelta.y))
+            wheelAccum = n.rest
+            wheel.accepted = true
+            if (n.steps === 0)
+                return
             const step = (wheel.modifiers & Qt.ShiftModifier) !== 0 ? 0.01 : 0.05
-            const z = Math.max(-1, Math.min(1, knob.source.hz - Math.sign(wheel.angleDelta.y) * step))
+            const z = Math.max(-1, Math.min(1, knob.source.hz - n.steps * step))
             EditorState.beginPreviewDrag(qsTr("Move light"))
             knob.overlay.writeParam(knob.source.modelData.effect, knob.source.prefix + "z", z)
             EditorState.commitPreviewDrag()
-            wheel.accepted = true
         }
     }
 }

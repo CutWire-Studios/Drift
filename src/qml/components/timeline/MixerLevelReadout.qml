@@ -1,5 +1,6 @@
 import QtQuick
 import Drift
+import "TimelineWheel.js" as TimelineWheel
 
 // dB readout under the fader. Scroll nudges the level; double-click returns to 0 dB.
 Rectangle {
@@ -28,8 +29,14 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.SizeVerCursor
+        property real wheelAccum: 0
         onDoubleClicked: readout.channel.volumeSet(1.0)
-        onWheel: (wheel) => readout.channel.nudgeDb(wheel.angleDelta.y > 0 ? 0.5 : -0.5)
+        onWheel: (wheel) => {
+            const n = TimelineWheel.notches(wheelAccum, TimelineWheel.oneAxis(wheel.angleDelta.x, wheel.angleDelta.y))
+            wheelAccum = n.rest
+            if (n.steps !== 0)
+                readout.channel.nudgeDb(0.5 * n.steps)
+        }
     }
 
     ThemedToolTip {

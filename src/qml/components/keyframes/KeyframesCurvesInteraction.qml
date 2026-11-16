@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Drift
+import "../timeline/TimelineWheel.js" as TimelineWheel
 
 Item {
     id: root
@@ -432,8 +433,9 @@ Item {
 
         onWheel: (wheel) => {
             const mods = wheel.modifiers
-            const dx = wheel.pixelDelta.x !== 0 ? wheel.pixelDelta.x : wheel.angleDelta.x / 2
-            const dy = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y / 2
+            const d = TimelineWheel.delta(TimelineWheel.input(wheel, PointerDevice.TouchPad), 0.5)
+            const dx = d.x
+            const dy = d.y
             const sharedRange = !root.panel.normalize
             if (mods & Qt.ControlModifier) {
                 if (mods & Qt.ShiftModifier) {
