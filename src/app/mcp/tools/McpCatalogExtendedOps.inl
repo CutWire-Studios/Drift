@@ -1889,9 +1889,11 @@
           objectSchema({}), true, false, true },
         { "export_with_preset", "project", "Export using a named size",
           "Start an async encode with a scale preset from list_export_presets. Same polling as "
-          "export_video.",
+          "export_video, and the same bakes argument and bakes / bakes_reused reply.",
           objectSchema({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute output path"))},
-                        {QStringLiteral("preset"), stringProp(QStringLiteral("Scale preset id from list_export_presets"))}},
+                        {QStringLiteral("preset"), stringProp(QStringLiteral("Scale preset id from list_export_presets"))},
+                        {QStringLiteral("bakes"), enumProp(QStringLiteral("As export_video: fresh (default), all or none"),
+                                                           {QStringLiteral("fresh"), QStringLiteral("all"), QStringLiteral("none")})}},
                        {QStringLiteral("path"), QStringLiteral("preset")}) },
         { "stabilize_clip", "canvas", "Stabilise shaky footage",
           "Start a two-pass stabilise on a video clip's source range. bake renders a '<name> (stabilized)' "

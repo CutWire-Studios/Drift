@@ -87,6 +87,21 @@ public:
     std::shared_ptr<drift::BakeReaderPool> exportPool(bool includeStale,
                                                       const QList<QPair<drift::TimeUs, drift::TimeUs>> &skip = {});
 
+    // What an export over main-timeline [startUs, endUs) (endUs <= 0: to the end) reads from bakes,
+    // by the same rules as exportPool: bakes overlapping `skip` are left out and not counted.
+    struct ExportBakeUse
+    {
+        int reused = 0;       // bakes the export reads from (stale ones too when includeStale)
+        int stale = 0;        // of those, stale ones (only with includeStale)
+        int staleSkipped = 0; // stale bakes in range rendered live instead (only without includeStale)
+    };
+    // Only bakes the exporter would actually read count: those at the project's size and fps, and
+    // none at all for an export above project size (`targetHeight`) or a transparent background.
+    ExportBakeUse exportBakeUse(bool includeStale, const QList<QPair<drift::TimeUs, drift::TimeUs>> &skip,
+                                drift::TimeUs startUs, drift::TimeUs endUs, int targetHeight = 0);
+    // How many bakes the pool handed to the last export held (0 when none): test seam.
+    int lastExportPoolBakes() const { return m_lastExportPoolBakes; }
+
 signals:
     void bakesChanged();
     void busyChanged();
@@ -121,6 +136,7 @@ private:
     QString m_boundId;
     std::shared_ptr<const drift::BakeIndex> m_index;
     QSet<QString> m_staleIds;
+    int m_lastExportPoolBakes = 0;
     QTimer m_staleTimer;
 
     QList<Request> m_queue;

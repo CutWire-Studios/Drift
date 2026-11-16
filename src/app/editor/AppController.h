@@ -1948,7 +1948,11 @@ public:
     Q_INVOKABLE QStringList exportSaveFilters(const QString &container, bool audioOnly = false) const;
     Q_INVOKABLE QString exportDefaultSuffix(const QString &container, bool audioOnly = false) const;
     Q_INVOKABLE void exportProject(const QUrl &outputUrl);
-    Q_INVOKABLE void exportWithPreset(const QUrl &outputUrl, const QString &presetId);
+    // `bakes`: "" keeps exportWithSettings' default ("all"); else "all" | "fresh" | "none".
+    Q_INVOKABLE void exportWithPreset(const QUrl &outputUrl, const QString &presetId, const QString &bakes = QString());
+    // Main-timeline spans where a review track (excludeFromExport) shows, directly or inside a
+    // composite clip, padded by transitions: an export must not reuse a bake there.
+    QList<QPair<drift::TimeUs, drift::TimeUs>> exportReviewSpans() const;
     // `rememberChoice` is what keeps an agent export out of the export dialog's memory: the GUI
     // stores what the user picked, an MCP export keeps its own (see McpController::rememberExportSettings), and
     // neither reaches into the other's.

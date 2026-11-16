@@ -490,6 +490,8 @@ QJsonObject model3dLightsProp()
 QJsonObject exportSettingsProps()
 {
     return {
+        {QStringLiteral("bakes"), enumProp(QStringLiteral("Range bakes the export may reuse: fresh (default) skips stale ones and renders their range live; all reuses stale ones too (the old picture, faster); none renders everything live"),
+                                           {QStringLiteral("fresh"), QStringLiteral("all"), QStringLiteral("none")})},
         {QStringLiteral("scale"), stringProp(QStringLiteral("Scale id from list_export_options"))},
         {QStringLiteral("height"), integerProp(QStringLiteral("Target height in pixels; 0 = project height"))},
         {QStringLiteral("fps"), QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("number"), QStringLiteral("string")}},
@@ -1077,7 +1079,7 @@ const QList<Op> &ops()
           "a source file; undoing the edit makes it fresh again) or baking; the running bake is the "
           "row id \"pending\" until its first frames land. bytes counts the GOPs a bake is first to "
           "hold, so a split piece can read 0. Staleness is re-checked on every call. A "
-          "stale bake still plays in the preview (unless the canvas size or fps changed), and export_video reuses bakes, stale ones included; "
+          "stale bake still plays in the preview (unless the canvas size or fps changed); export_video renders its range live unless bakes:\"all\"; "
           "capture and frames always render live. quality is the preset new bakes get (compact, "
           "balanced, high; the user picks it in the Bakes dialog). Bakes aren't part of the project: "
           "not saved with it, not undoable, never dirty it.",
@@ -1366,7 +1368,11 @@ const QList<Op> &ops()
           "inspect().export.{active,progress} or export_status until active is false. Fails export_busy "
           "when an encode is already running — cancel_export first. The output path is normalised: a "
           "directory gets <project name>.<ext> appended and a suffix-less path gets the container "
-          "extension added, so use the path echoed in the reply, not the one you sent. Omitted settings "
+          "extension added, so use the path echoed in the reply, not the one you sent. "
+          "Range bakes (list_bakes) are reused where fresh; a stale one is rendered live unless bakes:\"all\". "
+          "The reply adds bakes (the mode) and bakes_reused:{n, stale, stale_skipped} (bakes read, stale ones "
+          "among them, stale ones rendered live); GIF and audio-only exports read no bakes and get no "
+          "bakes_reused. bakes is never inherited from an earlier export. Omitted settings "
           "inherit from the last export in this app profile, then defaults — pass every setting you "
           "care about rather than relying on them.",
           objectSchema(mergeProps({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute output path, or a directory to auto-name inside"))}},
@@ -1955,8 +1961,8 @@ QString agentGuideText()
         "  it with clear_history({keep_last}) between rounds; history_stats and memory_stats show the cost.\n"
         "- With a step limit set, each new step can renumber list_history: keep hashes, not indices.\n"
         "- Decoded frames: clear_cache frees them; the frame cache cap is in Settings › Performance.\n"
-        "- A stale bake still plays in the preview and export_video reuses it: list_bakes, then\n"
-        "  rebake({stale:true}) or delete_bake before exporting. capture and frames always render live.\n"
+        "- A stale bake still plays in the preview. export_video renders it live (bakes:\"fresh\", the default);\n"
+        "  rebake({stale:true}) first if you want the speed. capture and frames always render live.\n"
         "- Replaced media stays in the bin. list_assets({usage:true}) counts each asset's clips;\n"
         "  remove_unused_assets({dry_run:true}) lists the unused ones; without dry_run it removes them\n"
         "  in one undo step.\n"

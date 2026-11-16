@@ -1,3 +1,4 @@
+#include "engine/encode/export/Exporter.h"
 #include "app/mcp/tools/McpCatalog.h"
 #include "app/mcp/McpDetail.h"
 #include "app/jobs/vision/SceneDetectController.h"
@@ -3838,12 +3839,19 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const QString preset = argString(args, QStringLiteral("preset"));
         if (path.isEmpty() || preset.isEmpty())
             return err("bad_args", QStringLiteral("path and preset required"));
+        // The schema's enum has already refused anything but fresh, all or none.
+        const QString bakeMode = args.value(QStringLiteral("bakes")).toString(QStringLiteral("fresh"));
+        // The preset carries no range (the whole timeline) but does set the output height.
+        const ExportScalePreset *scale = Exporter::scalePresetById(preset);
+        QJsonObject reply = bakeReuseReply(bakeMode, QVariantMap{{QStringLiteral("bakes"), bakeMode},
+                                                                 {QStringLiteral("targetHeight"), scale ? scale->targetHeight : 0}});
         m_controller->setExportRequestedByAgent(true);
-        m_controller->exportWithPreset(QUrl::fromLocalFile(path), preset);
+        m_controller->exportWithPreset(QUrl::fromLocalFile(path), preset, bakeMode);
         m_controller->setExportRequestedByAgent(false);
-        return ok({{QStringLiteral("started"), true},
-                   {QStringLiteral("path"), path},
-                   {QStringLiteral("preset"), preset}});
+        reply.insert(QStringLiteral("started"), true);
+        reply.insert(QStringLiteral("path"), path);
+        reply.insert(QStringLiteral("preset"), preset);
+        return ok(reply);
     }
 
     if (tool == QLatin1String("stabilize_clip")) {
