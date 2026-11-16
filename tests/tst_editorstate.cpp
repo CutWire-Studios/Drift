@@ -6,6 +6,7 @@
 #include "app/jobs/render/BakeFingerprint.h"
 #include "core/base/CacheRoot.h"
 #include "engine/encode/MediaEditor.h"
+#include "engine/encode/bake/BakeFile.h"
 #include "app/jobs/audio/AudioAlignController.h"
 #include "app/jobs/vision/DepthController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
@@ -38,6 +39,7 @@
 #include <QTemporaryDir>
 #include <QTemporaryFile>
 #include <QUrl>
+#include <QUuid>
 #include <QByteArray>
 #include <QCryptographicHash>
 #include <QBuffer>
@@ -141,6 +143,9 @@ private slots:
     void bakeFingerprintTracksTransitionPartner();
     void unsafeProjectIdStaysInItsFolders();
     void bakeFingerprintTracksRangeEdits();
+    void bakeFingerprintIgnoresMixAndExportFlags();
+    void bakeStaysFreshAfterMuteSoloAndExclude();
+    void bakeFingerprintTracksTransformSpanEndMoves();
     void snapTimeEnabled();
     void addingAPositionKeyframeKeepsTheClipWhereItIs();
     void compositeFromSelectionUndoRedo();
@@ -17865,6 +17870,157 @@ void EditorStateTest::unsafeProjectIdStaysInItsFolders()
     const QString edited = drift::newEditedMediaPath(QStringLiteral("../evil"), QStringLiteral("video"));
     QVERIFY(QDir::cleanPath(QFileInfo(edited).absolutePath()).startsWith(projects + QLatin1Char('/')));
     QVERIFY(!QFileInfo::exists(QDir(appData).filePath(QStringLiteral("evil"))));
+}
+
+void EditorStateTest::bakeFingerprintIgnoresMixAndExportFlags()
+{
+    drift::Project project;
+    project.setResolution(1280, 720);
+    project.setFps(30);
+    project.tracks().clear();
+    for (const QString &id : {QStringLiteral("t1"), QStringLiteral("t2")}) {
+        drift::Track track{.type = drift::TrackType::Shape};
+        track.id = id;
+        project.tracks().append(track);
+    }
+    drift::Clip outside = boxShape(QStringLiteral("out"), QRectF(0, 0, 100, 100));
+    outside.timelineStart = drift::secondsToUs(10.0);
+    project.tracks()[0].clips.append(boxShape(QStringLiteral("in"), QRectF(0, 0, 100, 100)));
+    project.tracks()[1].clips.append(outside);
+
+    const QByteArray original = drift::bakeFingerprint(project, 0, 60);
+    const QByteArray later = drift::bakeFingerprint(project, 300, 360);
+    // Heard, not seen: mute, solo and exclude from export keep the bake fresh.
+    project.tracks()[0].muted = true;
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+    project.tracks()[0].solo = true;
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+    project.tracks()[0].excludeFromExport = true;
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+    project.tracks()[1].muted = true;
+    project.tracks()[1].solo = true;
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+    // Hiding the track drawn in the range does stale it.
+    project.tracks()[0].hidden = true;
+    QVERIFY(drift::bakeFingerprint(project, 0, 60) != original);
+    project.tracks()[0].hidden = false;
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+    // A track with nothing in the range: hiding it or adding an empty one changes nothing there...
+    project.tracks()[1].hidden = true;
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+    drift::Track empty{.type = drift::TrackType::Video};
+    empty.id = QStringLiteral("t3");
+    project.tracks().insert(0, empty);
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
+    // ...but it does over its own clip's range.
+    QVERIFY(drift::bakeFingerprint(project, 300, 360) != later);
+    // Muting an Audio or Video track changes the Timeline mix audio-reactive visuals read, so it
+    // does stale a bake whose range holds a clip on it.
+    drift::Track audio{.type = drift::TrackType::Audio};
+    audio.id = QStringLiteral("a1");
+    audio.clips.append(boxShape(QStringLiteral("snd"), QRectF(0, 0, 100, 100)));
+    project.tracks().append(audio);
+    const QByteArray withAudio = drift::bakeFingerprint(project, 0, 60);
+    project.tracks().last().muted = true;
+    QVERIFY(drift::bakeFingerprint(project, 0, 60) != withAudio);
+    project.tracks().last().muted = false;
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), withAudio);
+}
+
+void EditorStateTest::bakeStaysFreshAfterMuteSoloAndExclude()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftEditorStateTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftEditorStateTest"));
+    // cacheRoot() is fixed once per process: always remove the file.
+    const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString path = QDir(drift::cacheRoot()).filePath(QStringLiteral("bakes/%1.driftbake").arg(uuid));
+    const auto cleanup = qScopeGuard([&] {
+        QFile::remove(path);
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    AssetLibrary library;
+    TestController state(&library);
+    state.project()->tracks().clear();
+    for (const QString &id : {QStringLiteral("t1"), QStringLiteral("t2")}) {
+        drift::Track track{.type = drift::TrackType::Shape};
+        track.id = id;
+        state.project()->tracks().append(track);
+    }
+    state.project()->tracks()[0].clips.append(boxShape(QStringLiteral("in"), QRectF(0, 0, 100, 100)));
+    state.project()->setId(uuid);
+    const int fps = state.project()->fps();
+    QVERIFY(QDir().mkpath(QFileInfo(path).absolutePath()));
+    {
+        auto file = drift::BakeFile::open(path);
+        QVERIFY(file);
+        const QString id = file->beginBake(0, fps, 2, 2, 1, QByteArrayLiteral("x"),
+                                           drift::bakeFingerprint(*state.project(), 0, fps));
+        QVERIFY(!id.isEmpty());
+        QVERIFY(file->appendGop(id, 0, QByteArray(fps, 'x'), QVector<quint32>(fps, 1)));
+        QVERIFY(file->commit());
+    }
+    state.notifyTracksChanged();
+    QCOMPARE(state.bakes()->bakes().size(), 1);
+    QVERIFY(state.bakes()->staleBakesIn(0, 1e9).isEmpty());
+
+    state.setTrackMuted(0, true);
+    QVERIFY(state.bakes()->staleBakesIn(0, 1e9).isEmpty());
+    state.setTrackSolo(0, true);
+    QVERIFY(state.bakes()->staleBakesIn(0, 1e9).isEmpty());
+    state.setTrackExcludedFromExport(0, true);
+    QVERIFY(state.bakes()->staleBakesIn(0, 1e9).isEmpty());
+    state.setTrackMuted(1, true);
+    state.setTrackSolo(1, true);
+    state.setTrackExcludedFromExport(1, true);
+    QVERIFY(state.bakes()->staleBakesIn(0, 1e9).isEmpty());
+
+    // Hiding the track with nothing in the bake's range leaves it fresh too.
+    state.setTrackHidden(1, true);
+    QVERIFY(state.bakes()->staleBakesIn(0, 1e9).isEmpty());
+    state.undo();
+
+    state.setTrackHidden(0, true);
+    QCOMPARE(state.bakes()->staleBakesIn(0, 1e9).size(), 1);
+    state.undo();
+    QVERIFY(state.bakes()->staleBakesIn(0, 1e9).isEmpty());
+}
+
+// A transform layer covers tracks by position down to its span-end track, so moving that track
+// (which has nothing in the range) past an in-range track changes what the layer moves.
+void EditorStateTest::bakeFingerprintTracksTransformSpanEndMoves()
+{
+    drift::Project project;
+    project.setResolution(1280, 720);
+    project.setFps(30);
+    project.tracks().clear();
+    drift::Track layer{.type = drift::TrackType::Adjustment};
+    layer.id = QStringLiteral("L");
+    layer.adjustmentScope = drift::AdjustmentScope::Range;
+    layer.spanEndTrackId = QStringLiteral("E");
+    drift::Track a{.type = drift::TrackType::Shape};
+    a.id = QStringLiteral("A");
+    drift::Track e{.type = drift::TrackType::Shape};
+    e.id = QStringLiteral("E");
+    drift::Track b{.type = drift::TrackType::Shape};
+    b.id = QStringLiteral("B");
+    layer.clips.append(boxShape(QStringLiteral("l"), QRectF(0, 0, 100, 100)));
+    a.clips.append(boxShape(QStringLiteral("a"), QRectF(0, 0, 100, 100)));
+    b.clips.append(boxShape(QStringLiteral("b"), QRectF(0, 0, 100, 100)));
+    drift::Clip far = boxShape(QStringLiteral("e"), QRectF(0, 0, 100, 100));
+    far.timelineStart = drift::secondsToUs(10.0);
+    e.clips.append(far);
+    project.tracks() = {layer, a, e, b};
+    QVERIFY(project.tracks()[0].isTransformLayer());
+
+    const QByteArray before = drift::bakeFingerprint(project, 0, 60);
+    project.tracks().move(2, 3);
+    QVERIFY(drift::bakeFingerprint(project, 0, 60) != before);
 }
 
 QTEST_MAIN(EditorStateTest)
