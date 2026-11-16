@@ -167,6 +167,7 @@ private slots:
     void depthToolsSampleAndClear();
     void catalogDispatcherParity();
     void authoredEffectLifecycle();
+    void authoredEffectTimeHistory();
     void proceduralAuthoringLifecycle();
     void effectPresetHousekeeping();
     void textResultRoundsNumbers();
@@ -8980,6 +8981,120 @@ void McpTest::authoredEffectLifecycle()
                                                                    {QStringLiteral("id"), QStringLiteral("user.test_pop")}});
     QVERIFY2(removedAnim.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(removedAnim).toJson()));
     QVERIFY(!animationDefForId(QStringLiteral("user.test_pop")));
+}
+
+void McpTest::authoredEffectTimeHistory()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const auto restore = qScopeGuard([&] {
+        QDir(QDir(appData).filePath(QStringLiteral("effects"))).removeRecursively();
+        reloadEffectCatalog();
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    AssetLibrary library;
+    AddonManager addons;
+    AppController state(&library);
+    state.setAddonManager(&addons);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *op, const QJsonObject &args) {
+        return dispatcher.applyOne(QString::fromLatin1(op), args);
+    };
+    const auto dump = [](const QJsonObject &o) { return qPrintable(QString::fromUtf8(QJsonDocument(o).toJson())); };
+
+    // 1. The guide.
+    const QString guide = call("effect_authoring_guide", {{QStringLiteral("kind"), QStringLiteral("effect")}})
+                              .value(QStringLiteral("guide")).toString();
+    for (const char *needle : {"## Time effects", "historyFrame(float age, vec2 uv)", "historyCount()", "u_prevOutput",
+                               "history:source", "history:previous-output", "u_history*"})
+        QVERIFY2(guide.contains(QString::fromLatin1(needle)), needle);
+    const QString tguide = call("effect_authoring_guide", {{QStringLiteral("kind"), QStringLiteral("transition")}})
+                               .value(QStringLiteral("guide")).toString();
+    QVERIFY(tguide.contains(QStringLiteral("u_history*")));
+    QVERIFY(!tguide.contains(QStringLiteral("## Time effects")));
+    const QString aguide = call("effect_authoring_guide", {{QStringLiteral("kind"), QStringLiteral("audio_effect")}})
+                               .value(QStringLiteral("guide")).toString();
+    QVERIFY(!aguide.contains(QStringLiteral("## Time effects")));
+
+    // 2. The guide's example installs and compiles.
+    const int start = guide.indexOf(QStringLiteral("{\"displayName\": \"Echo Trail\""));
+    const int mid = guide.indexOf(QStringLiteral("\n\nfiles: "), start);
+    const int end = guide.indexOf(QLatin1Char('\n'), mid + 9);
+    QVERIFY(start > 0 && mid > start && end > mid);
+    const QJsonObject manifest = QJsonDocument::fromJson(guide.mid(start, mid - start).toUtf8()).object();
+    const QJsonObject files = QJsonDocument::fromJson(guide.mid(mid + 9, end - mid - 9).toUtf8()).object();
+    QVERIFY(!manifest.isEmpty() && files.contains(QStringLiteral("main.frag")));
+    const bool haveGl = drift::gl::runtime().available();
+    QDir(QDir(appData).filePath(QStringLiteral("effects/test_echo_trail"))).removeRecursively();
+    reloadEffectCatalog();
+    const auto effectArgs = [&](const QString &slug, const QJsonObject &m, const QJsonObject &f) {
+        return QJsonObject{{QStringLiteral("kind"), QStringLiteral("effect")},
+                           {QStringLiteral("slug"), slug},
+                           {QStringLiteral("manifest"), m},
+                           {QStringLiteral("files"), f}};
+    };
+    const QJsonObject created = call("create_effect", effectArgs(QStringLiteral("test_echo_trail"), manifest, files));
+    QVERIFY2(created.value(QStringLiteral("ok")).toBool(), dump(created));
+    if (haveGl) {
+        QCOMPARE(created.value(QStringLiteral("shaderCheck")).toString(), QStringLiteral("ok"));
+    } else {
+        QCOMPARE(created.value(QStringLiteral("shaderCheck")).toString(), QStringLiteral("skipped"));
+        qInfo("no GL: the example's shader compile is not verified here; manifest acceptance is");
+    }
+    const EffectPresetEntry *def = effectDefForId(QStringLiteral("user.test_echo_trail"));
+    QVERIFY(def);
+    QCOMPARE(def->gpu.historyFrames, 8);
+    QVERIFY(def->gpu.needsPrevOutput);
+
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("v");
+    clip.type = drift::ClipType::Video;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.srcIn = 0;
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks()[0].clips.append(clip);
+    state.project()->ensureTrackIds();
+    const QJsonObject added = call("add_effect", {{QStringLiteral("clip"), QStringLiteral("v")},
+                                                  {QStringLiteral("effect"), QStringLiteral("user.test_echo_trail")}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(), dump(added));
+
+    // 3. Manifest refusals.
+    const auto refused = [&](const QString &slug, const QString &field, const QJsonValue &value, const char *text) {
+        QJsonObject m = manifest;
+        m.insert(field, value);
+        const QJsonObject r = call("create_effect", effectArgs(slug, m, files));
+        QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_manifest"));
+        QVERIFY2(QString::fromUtf8(QJsonDocument(r).toJson()).contains(QString::fromLatin1(text)), dump(r));
+        QVERIFY(!QFileInfo::exists(QDir(appData).filePath(QStringLiteral("effects/") + slug)));
+    };
+    const char *historyText = "history must be a whole number from 1 to 32";
+    refused(QStringLiteral("test_hist_0"), QStringLiteral("history"), 0, historyText);
+    refused(QStringLiteral("test_hist_33"), QStringLiteral("history"), 33, historyText);
+    refused(QStringLiteral("test_hist_frac"), QStringLiteral("history"), 2.5, historyText);
+    refused(QStringLiteral("test_hist_future"), QStringLiteral("nextFeatures"),
+            QJsonArray{QStringLiteral("history:future")}, "needs a newer Drift");
+
+    // 4. Name clashes (GL only).
+    if (haveGl) {
+        QJsonObject bare = manifest;
+        bare.remove(QStringLiteral("history"));
+        bare.remove(QStringLiteral("previousOutput"));
+        bare.remove(QStringLiteral("nextFeatures"));
+        QCOMPARE(call("create_effect", effectArgs(QStringLiteral("test_hist_bare"), bare, files))
+                     .value(QStringLiteral("error")).toString(),
+                 QStringLiteral("shader_compile_failed"));
+        QString frag = files.value(QStringLiteral("main.frag")).toString();
+        frag.replace(QStringLiteral("uniform sampler2D u_currentTexture;"),
+                     QStringLiteral("uniform sampler2D u_prevOutput; uniform sampler2D u_currentTexture;"));
+        QCOMPARE(call("create_effect", effectArgs(QStringLiteral("test_hist_redecl"), manifest,
+                                                  QJsonObject{{QStringLiteral("main.frag"), frag}}))
+                     .value(QStringLiteral("error")).toString(),
+                 QStringLiteral("shader_compile_failed"));
+    }
 }
 
 // The worked example in docs/procedural.md: each "### <file>" heading under "## Worked example" is
