@@ -5,6 +5,7 @@
 #include "engine/decode/readers/ClipReaderPool.h"
 #include "engine/encode/writers/AudioFileWriter.h"
 #include "core/base/Time.h"
+#include "core/project/Project.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -2108,10 +2109,11 @@ QString stabilizationCacheDir()
 QString newEditedMediaPath(const QString &projectId, const QString &kind)
 {
     const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    if (base.isEmpty())
+    const QString key = drift::projectPathKey(projectId);
+    if (base.isEmpty() || key.isEmpty())
         return {};
 
-    const QString dir = QDir(base).filePath(QStringLiteral("projects/%1/media").arg(projectId));
+    const QString dir = QDir(base).filePath(QStringLiteral("projects/%1/media").arg(key));
     if (!QDir().mkpath(dir))
         return {};
 

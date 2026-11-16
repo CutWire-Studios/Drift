@@ -147,7 +147,7 @@ void collectJsonStrings(const QJsonValue &value, QSet<QString> *out)
 }
 } // namespace
 
-// Every packaged project ever opened leaves its media unpacked under <AppData>/projects/<id>. Drop
+// Every packaged project ever opened leaves its media unpacked under <AppData>/projects/<projectPathKey(id)>. Drop
 // the ones no project in the recents list can still be pointing at, old stabilized renders nothing
 // points at, and on Android the derived artifacts nothing points at either.
 void ProjectFileController::sweepExtractionDirs()
@@ -199,6 +199,7 @@ void ProjectFileController::sweepExtractionDirs()
             continue;
         }
         live.insert(info->projectId);
+        live.insert(drift::bundleMediaKey(info->projectId, path));
         for (const drift::bundle::MediaEntry &media : info->media) {
             // Only referencing entries name a path on this machine; an embedded one records where
             // the file was on whatever machine packed it, and keepOwnerOf simply will not match.
@@ -220,9 +221,12 @@ void ProjectFileController::sweepExtractionDirs()
     liveFiles.unite(m_app->historyMediaPaths());
 #ifdef Q_OS_ANDROID
     const QString recoveryId = recovery.value(QStringLiteral("id")).toString();
-    if (!recoveryId.isEmpty())
+    if (!recoveryId.isEmpty()) {
         live.insert(recoveryId);
+        live.insert(drift::projectPathKey(recoveryId));
+    }
     live.insert(m_app->m_project.id());
+    live.insert(drift::projectPathKey(m_app->m_project.id()));
 #endif
 
     // A recent project whose manifest can't be read right now (a Flatpak document-portal path
@@ -1485,8 +1489,8 @@ void ProjectFileController::loadProject(const QUrl &url)
             };
             // Named by the project's own id, which survives the round-trip, so reopening the same
             // bundle lands on the files it already unpacked.
-            const QString destDir =
-                QDir(base).filePath(QStringLiteral("projects/%1/media").arg(info->projectId));
+            const QString destDir = QDir(base).filePath(
+                QStringLiteral("projects/%1/media").arg(drift::bundleMediaKey(info->projectId, path)));
             if (!drift::bundle::extract(path, destDir, progress, &result->remap, &result->error)) {
                 deliver();
                 return;
@@ -1837,7 +1841,7 @@ QVariantList ProjectFileController::recentProjects() const
                 idsChanged = true;
             }
         }
-        const QString thumbPath = id.isEmpty() ? QString() : QDir(thumbDir).filePath(id + QStringLiteral(".jpg"));
+        const QString thumbPath = id.isEmpty() ? QString() : QDir(thumbDir).filePath(drift::projectPathKey(id) + QStringLiteral(".jpg"));
         const QString thumbnail =
             !thumbPath.isEmpty() && QFileInfo::exists(thumbPath) ? QUrl::fromLocalFile(thumbPath).toString()
                                                                  : QString();
@@ -1879,7 +1883,10 @@ void ProjectFileController::queueSaveThumbnail(const QString &location)
     if (base.isEmpty())
         return;
     const QString projectId = m_app->m_project.id();
-    const QString outPath = QDir(base).filePath(QStringLiteral("thumbs/%1.jpg").arg(projectId));
+    const QString key = drift::projectPathKey(projectId);
+    if (key.isEmpty())
+        return;
+    const QString outPath = QDir(base).filePath(QStringLiteral("thumbs/%1.jpg").arg(key));
     {
         QSettings settings;
         QVariantMap ids = settings.value(QStringLiteral("recentProjectIds")).toMap();

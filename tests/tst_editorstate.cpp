@@ -2,7 +2,10 @@
 #include "app/bin/AssetPreviewController.h"
 #include "app/color/ColorController.h"
 #include "app/jobs/audio/DenoiseController.h"
+#include "app/jobs/render/BakeController.h"
 #include "app/jobs/render/BakeFingerprint.h"
+#include "core/base/CacheRoot.h"
+#include "engine/encode/MediaEditor.h"
 #include "app/jobs/audio/AudioAlignController.h"
 #include "app/jobs/vision/DepthController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
@@ -136,6 +139,7 @@ class EditorStateTest : public QObject
 
 private slots:
     void bakeFingerprintTracksTransitionPartner();
+    void unsafeProjectIdStaysInItsFolders();
     void bakeFingerprintTracksRangeEdits();
     void snapTimeEnabled();
     void addingAPositionKeyframeKeepsTheClipWhereItIs();
@@ -17808,6 +17812,59 @@ void EditorStateTest::bakeFingerprintTracksRangeEdits()
     QVERIFY(drift::bakeFingerprint(project, 0, 60) != drift::bakeFingerprint(project, 300, 360));
     project.setResolution(1920, 1080);
     QVERIFY(drift::bakeFingerprint(project, 0, 60) != original);
+}
+
+void EditorStateTest::unsafeProjectIdStaysInItsFolders()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const QString evilKey = drift::projectPathKey(QStringLiteral("../x"));
+    const QString outside = QDir(drift::cacheRoot()).filePath(QStringLiteral("x.driftbake"));
+    const QString bakeFile =
+        QDir(drift::cacheRoot()).filePath(QStringLiteral("bakes/") + evilKey + QStringLiteral(".driftbake"));
+    const auto cleanup = qScopeGuard([&] {
+        QFile::remove(outside);
+        QFile::remove(bakeFile);
+        QDir(QDir(appData).filePath(QStringLiteral("projects/") + evilKey)).removeRecursively();
+        QDir(QDir(appData).filePath(QStringLiteral("projects/") + drift::projectPathKey(QStringLiteral("../evil"))))
+            .removeRecursively();
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    // Where the unsanitised id "../x" would have pointed the bake file: a file that isn't one.
+    QVERIFY(QDir().mkpath(QFileInfo(outside).absolutePath()));
+    {
+        QFile planted(outside);
+        QVERIFY(planted.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        planted.write("not a bake");
+    }
+
+    AssetLibrary library;
+    TestController state(&library);
+    drift::Project &project = *state.project();
+    drift::Track track{.type = drift::TrackType::Shape};
+    track.id = QStringLiteral("s1");
+    track.clips.append(boxShape(QStringLiteral("in"), QRectF(0, 0, 100, 100)));
+    project.tracks().append(track);
+    project.setId(QStringLiteral("../x"));
+    state.notifyTracksChanged();
+    QCOMPARE(readFile(outside), QByteArray("not a bake"));
+
+    project.setWorkAreaInUs(0);
+    project.setWorkAreaOutUs(drift::secondsToUs(1.0));
+    state.bakes()->bakeWorkArea();
+    state.bakes()->cancelBake();
+    QTRY_VERIFY_WITH_TIMEOUT(!state.bakes()->busy(), 120000);
+    QCOMPARE(readFile(outside), QByteArray("not a bake"));
+    QVERIFY(QFile::exists(bakeFile));
+    state.bakes()->deleteAllBakes();
+
+    const QString projects = QDir::cleanPath(appData + QStringLiteral("/projects"));
+    const QString media = AppController::projectMediaDir(QStringLiteral("../evil"));
+    QVERIFY(QDir::cleanPath(media).startsWith(projects + QLatin1Char('/')));
+    const QString edited = drift::newEditedMediaPath(QStringLiteral("../evil"), QStringLiteral("video"));
+    QVERIFY(QDir::cleanPath(QFileInfo(edited).absolutePath()).startsWith(projects + QLatin1Char('/')));
+    QVERIFY(!QFileInfo::exists(QDir(appData).filePath(QStringLiteral("evil"))));
 }
 
 QTEST_MAIN(EditorStateTest)
