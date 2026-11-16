@@ -19668,8 +19668,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Kung ano ang iginagalaw ng wheel ng mouse sa timeline. Pindutin nang matagal ang Shift para sa kabilang direksyon; nagpa-pan din ang gitnang-click na pag-drag.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>Mga Track (itaas at ibaba)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

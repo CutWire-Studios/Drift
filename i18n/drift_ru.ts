@@ -19739,8 +19739,8 @@ If playback stutters, try another.</source>
         <translation>Что перемещает колесо мыши на таймлайне. Удерживайте Shift для другого направления; перетаскивание средней кнопкой мыши также панорамирует.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>Дорожки (вверх и вниз)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

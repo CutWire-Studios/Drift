@@ -19667,8 +19667,8 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Lo que mueve la rueda del ratón en la línea de tiempo. Mantén Mayús para la otra dirección; arrastrar con clic central también desplaza.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>Pistas (arriba y abajo)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

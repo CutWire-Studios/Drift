@@ -19667,8 +19667,8 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>O que a roda do mouse desloca na linha do tempo. Segure Shift para a outra direção; arrastar com o botão do meio também move a visualização.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>Faixas (para cima e para baixo)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

@@ -25,7 +25,7 @@ SettingsPage {
             width: Theme.c.settingsRow.controlWidth
             textRole: "label"
             model: [
-                { id: false, label: qsTr("Tracks (up and down)") },
+                { id: false, label: qsTr("Tracks, or time when they fit") },
                 { id: true,  label: qsTr("Time (left and right)") }
             ]
             currentIndex: EditorState.preferences.invertTimelineScroll ? 1 : 0

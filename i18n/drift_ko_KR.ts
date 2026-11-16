@@ -19588,8 +19588,8 @@ If playback stutters, try another.</source>
         <translation>마우스 휠로 타임라인에서 이동할 축입니다. 다른 방향으로 이동하려면 Shift 키를 누르세요. 가운데 버튼 드래그로도 팬할 수 있습니다.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>트랙 (상하)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

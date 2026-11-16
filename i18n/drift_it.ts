@@ -19667,8 +19667,8 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Cosa muove la rotellina del mouse sulla timeline. Tieni premuto Shift per l&apos;altra direzione; trascinare con il pulsante centrale esegue una panoramica.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>Tracce (su e giù)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

@@ -19596,8 +19596,8 @@ If playback stutters, try another.</source>
         <translation>タイムライン上でマウスホイールが移動させる対象。Shift を押しながらで反対方向、中央クリックドラッグでもパンできます。</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>トラック (上下)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

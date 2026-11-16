@@ -19667,8 +19667,8 @@ If playback stutters, try another.</source>
         <translation>টাইমলাইনে মাউসের চাকা যা সরায়। বিপরীত দিকের জন্য Shift চেপে ধরুন; মিডল-ক্লিক টেনেও প্যান করা যায়।</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>ট্র্যাক (উপরে ও নিচে)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>

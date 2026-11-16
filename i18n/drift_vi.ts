@@ -19596,8 +19596,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Con lăn chuột di chuyển phần nào trên dòng thời gian. Giữ Shift cho hướng ngược lại; kéo nhấp chuột giữa cũng di chuyển khung nhìn.</translation>
     </message>
     <message>
-        <source>Tracks (up and down)</source>
-        <translation>Các track (lên và xuống)</translation>
+        <source>Tracks, or time when they fit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Time (left and right)</source>
