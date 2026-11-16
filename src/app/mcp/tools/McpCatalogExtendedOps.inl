@@ -1,7 +1,9 @@
         ,
         { "remove_asset", "media", "Delete a bin row",
-          "Remove an asset from the media bin. Clips already placed on the timeline keep playing and "
-          "are NOT deleted.",
+          "Remove an asset from the media bin. Refused (bad_args) while any clip uses it, on any "
+          "timeline; list_assets({usage:true}) counts them. A composite asset is a whole timeline: "
+          "removing it deletes that timeline and everything in it and closes its tab (editing falls "
+          "back to the main timeline). One undo step.",
           objectSchema({{QStringLiteral("asset"), assetRefProp()}},
                        {QStringLiteral("asset")}),
           false, true },
@@ -151,7 +153,8 @@
         { "make_composite", "timeline", "Collapse clips into one composite clip",
           "Move the selected clips (with their linked audio and pinned adjustments) into a new nested "
           "timeline and put one composite clip in their place, plus a composite item in the bin. "
-          "Acts on the current selection — call select_clips first. Only on the main timeline, and "
+          "Acts on the current selection — call select_clips first. Only on the main timeline (one "
+          "level of nesting: not inside a composite or a new_timeline timeline), and "
           "the selection must not already contain a composite. Returns {clip, sequence, asset}.",
           objectSchema({}) },
         { "dissolve_composite", "timeline", "Turn a composite back into its clips",
@@ -162,16 +165,41 @@
           objectSchema({}) },
         { "open_composite", "timeline", "Edit inside a composite",
           "Open a composite's timeline in its own tab and make it the timeline every other op edits "
-          "(tracks, clips, inspect). Name it by a composite clip (clip or track+index), by sequence "
-          "id, or pass main:true to return to the main timeline. Export always renders the main "
-          "timeline. Not an undo step.",
+          "(tracks, clips, inspect). Composites are the project's other timelines: the ones "
+          "make_composite collapses clips into and the ones new_timeline starts. Name it by a "
+          "composite clip (clip or track+index), by sequence id, or pass main:true to return to the "
+          "main timeline; close_timeline closes a tab. Export always renders the main timeline. "
+          "Not an undo step.",
           objectSchema(mergeProps({{QStringLiteral("sequence"), stringProp(QStringLiteral("Sequence id from list_composites"))},
                                    {QStringLiteral("main"), boolProp(QStringLiteral("Switch back to the main timeline"))}},
                                   clipRefProps())) },
         { "list_composites", "timeline", "Composites, their tabs and which is open",
-          "List every composite: {sequence, asset, name, duration, open, active}. active marks the "
-          "timeline being edited; activeSequence is empty on the main timeline.",
+          "List every composite, which means every timeline besides the main one (from make_composite "
+          "or new_timeline, empty ones included): {sequence, asset, name, duration, open, active}. "
+          "open: its tab is open; active marks the timeline being edited; activeSequence is empty on "
+          "the main timeline. rename_asset({asset, name}) renames one; remove_asset deletes one no "
+          "clip uses.",
           objectSchema({}), true },
+        { "new_timeline", "timeline", "Start an empty timeline (a Short, alt cut)",
+          "Create an empty timeline, as Assets panel \u2192 New timeline does: a composite with one video "
+          "track at the project's canvas size and fps, plus its composite item in the bin. name "
+          "defaults to the first free \"Timeline N\"; names need not be unique, and rename_asset "
+          "renames it later. open (default true) opens its tab and makes it the timeline every other "
+          "op edits (tracks, clips, inspect), as open_composite does; open:false leaves the edited "
+          "timeline as it was. One undo step; redo recreates it without reopening it. It uses the project's canvas, fps and export settings, "
+          "and export_video still renders only the main timeline. Returns {sequence, asset, name, "
+          "activeSequence}.",
+          objectSchema({{QStringLiteral("name"), stringProp(QStringLiteral("Timeline name (default: the first free \"Timeline N\")"))},
+                        {QStringLiteral("open"), boolProp(QStringLiteral("Open its tab and edit it (default true)"))},
+                        {QStringLiteral("folder"), stringProp(QStringLiteral("Bin folder id (or unique name) for its bin item; \"\" for the bin root. Default: the folder the user is viewing"))}}) },
+        { "close_timeline", "timeline", "Close a timeline's tab",
+          "Close a composite timeline's tab (sequence from list_composites or new_timeline). When it "
+          "is the timeline being edited, every op goes back to the main timeline. The timeline, its "
+          "clips and its bin item stay; open_composite({sequence}) reopens it. The main timeline has "
+          "no tab. A sequence whose tab isn't open is a no-op (closed:false). Not an undo step, and "
+          "never makes the project unsaved on its own. Returns {closed, activeSequence}.",
+          objectSchema({{QStringLiteral("sequence"), stringProp(QStringLiteral("Sequence id from list_composites"))}},
+                       {QStringLiteral("sequence")}) },
         { "flatten_composite", "timeline", "Render a composite clip to a video file",
           "Render the composite clip's range to a new video file, add it to the bin and swap the "
           "clip (and audio separated from it) over to it. Async: returns {started:true}; poll "

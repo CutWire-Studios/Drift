@@ -96,6 +96,12 @@ private slots:
     void audioTagToolsNeedTheirAddons();
     void audioTagToolsAnalyseImportedAudio();
     void catalogOpsIncludeWhen();
+    void newTimelineOpensAndInspectFollows();
+    void newTimelineOpenFalseLeavesEditedTimeline();
+    void newTimelineNamesAndUndo();
+    void newTimelineInApplyAtomicAndDryRun();
+    void closeTimelineFallsBackToMain();
+    void removeAssetDeletesUnplacedTimeline();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
     void agentNotificationsPreferenceOverMcp();
@@ -417,9 +423,10 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
     const qsizetype compactSize = QJsonDocument(compact).toJson(QJsonDocument::Compact).size();
-    QVERIFY2(compactSize < 25200, qPrintable(QString::number(compactSize)));
-    QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
-                .toJson(QJsonDocument::Compact).size() < 12500);
+    QVERIFY2(compactSize < 25250, qPrintable(QString::number(compactSize)));
+    const qsizetype briefSize = QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
+                                    .toJson(QJsonDocument::Compact).size();
+    QVERIFY2(briefSize < 12550, qPrintable(QString::number(briefSize)));
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -13102,6 +13109,311 @@ void McpTest::reviewTrackIsLeftOutOfExport()
     QVERIFY(state.bakes()->exportPool(false, {{s1, 2 * s1}}) == nullptr);
     QVERIFY(state.bakes()->exportPool(true, {{3 * s1, 4 * s1}}) != nullptr);
     state.bakes()->deleteAllBakes();
+}
+
+
+namespace {
+QJsonArray compositeRows(drift::mcp::McpDispatcher &dispatcher)
+{
+    return dispatcher.applyOne(QStringLiteral("list_composites"), {}).value(QStringLiteral("composites")).toArray();
+}
+
+QJsonObject compositeRow(drift::mcp::McpDispatcher &dispatcher, const QString &sequence)
+{
+    for (const QJsonValue &row : compositeRows(dispatcher))
+        if (row.toObject().value(QStringLiteral("sequence")).toString() == sequence)
+            return row.toObject();
+    return {};
+}
+
+QJsonObject newTimelineCall(drift::mcp::McpDispatcher &dispatcher, const QJsonObject &args = {})
+{
+    return dispatcher.applyOne(QStringLiteral("new_timeline"), args);
+}
+
+bool addTextTo(drift::mcp::McpDispatcher &dispatcher, const QString &text, double at = 0.0)
+{
+    return dispatcher.applyOne(QStringLiteral("add_text"), {{QStringLiteral("text"), text}, {QStringLiteral("at"), at}})
+        .value(QStringLiteral("ok")).toBool();
+}
+} // namespace
+
+// #75: new_timeline makes an empty composite timeline and opens it; every op follows.
+void McpTest::newTimelineOpensAndInspectFollows()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject made = newTimelineCall(dispatcher);
+    QVERIFY2(made.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(made).toJson()));
+    const QString sequence = made.value(QStringLiteral("sequence")).toString();
+    const QString assetId = made.value(QStringLiteral("asset")).toString();
+    QVERIFY(!sequence.isEmpty());
+    QCOMPARE(made.value(QStringLiteral("name")).toString(), QStringLiteral("Timeline 1"));
+    QCOMPARE(made.value(QStringLiteral("activeSequence")).toString(), sequence);
+    const drift::MediaAsset *asset = state.project()->asset(assetId);
+    QVERIFY(asset);
+    QCOMPARE(asset->kind, drift::MediaKind::Composite);
+    QCOMPARE(asset->sequenceId, sequence);
+    QCOMPARE(asset->width, state.project()->width());
+    QCOMPARE(asset->height, state.project()->height());
+    QCOMPARE(asset->fps, state.project()->fps());
+    QCOMPARE(state.activeSequenceId(), sequence);
+    QCOMPARE(state.sequenceTabs().size(), 1);
+
+    const QJsonObject row = compositeRow(dispatcher, sequence);
+    QCOMPARE(row.value(QStringLiteral("duration")).toDouble(), 0.0);
+    QVERIFY(row.value(QStringLiteral("open")).toBool());
+    QVERIFY(row.value(QStringLiteral("active")).toBool());
+
+    QVERIFY(addTextTo(dispatcher, QStringLiteral("Inside")));
+    QJsonObject inspected = dispatcher.inspect({});
+    QCOMPARE(inspected.value(QStringLiteral("clips")).toInt(), 1);
+    QCOMPARE(inspected.value(QStringLiteral("open_sequence")).toString(), sequence);
+
+    QVERIFY(dispatcher.applyOne(QStringLiteral("open_composite"), {{QStringLiteral("main"), true}})
+                .value(QStringLiteral("ok")).toBool());
+    inspected = dispatcher.inspect({});
+    QCOMPARE(inspected.value(QStringLiteral("clips")).toInt(), 0);
+    QVERIFY(!inspected.contains(QStringLiteral("open_sequence")));
+    QVERIFY(compositeRow(dispatcher, sequence).value(QStringLiteral("duration")).toDouble() > 0.0);
+}
+
+void McpTest::newTimelineOpenFalseLeavesEditedTimeline()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QVERIFY(addTextTo(dispatcher, QStringLiteral("Main")));
+
+    const QJsonObject made = newTimelineCall(dispatcher, {{QStringLiteral("name"), QStringLiteral("Short")},
+                                                          {QStringLiteral("open"), false}});
+    QVERIFY2(made.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(made).toJson()));
+    const QString sequence = made.value(QStringLiteral("sequence")).toString();
+    QCOMPARE(made.value(QStringLiteral("name")).toString(), QStringLiteral("Short"));
+    QCOMPARE(made.value(QStringLiteral("activeSequence")).toString(), QString());
+    QVERIFY(state.activeSequenceId().isEmpty());
+    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), 1);
+    QVERIFY(state.sequenceTabs().isEmpty());
+    const QJsonObject row = compositeRow(dispatcher, sequence);
+    QCOMPARE(row.value(QStringLiteral("open")).toBool(), false);
+    QCOMPARE(row.value(QStringLiteral("active")).toBool(), false);
+
+    QVERIFY(dispatcher.applyOne(QStringLiteral("open_composite"), {{QStringLiteral("sequence"), sequence}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject other = newTimelineCall(dispatcher, {{QStringLiteral("open"), false}});
+    QVERIFY(other.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(other.value(QStringLiteral("activeSequence")).toString(), sequence);
+    QCOMPARE(state.activeSequenceId(), sequence);
+}
+
+void McpTest::newTimelineNamesAndUndo()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject first = newTimelineCall(dispatcher);
+    QCOMPARE(first.value(QStringLiteral("name")).toString(), QStringLiteral("Timeline 1"));
+    QCOMPARE(newTimelineCall(dispatcher).value(QStringLiteral("name")).toString(), QStringLiteral("Timeline 2"));
+    // The first free number, not the highest plus one.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("rename_asset"), {{QStringLiteral("asset"), first.value(QStringLiteral("asset")).toString()},
+                                                                 {QStringLiteral("name"), QStringLiteral("Clip")}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(newTimelineCall(dispatcher).value(QStringLiteral("name")).toString(), QStringLiteral("Timeline 1"));
+    // A name held by any asset, not only a timeline, is skipped.
+    drift::MediaAsset media;
+    media.name = QStringLiteral("Timeline 3");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(1.0);
+    state.project()->addAsset(media);
+    QCOMPARE(newTimelineCall(dispatcher).value(QStringLiteral("name")).toString(), QStringLiteral("Timeline 4"));
+
+    // A duplicate name is accepted as given.
+    const QJsonObject dup = newTimelineCall(dispatcher, {{QStringLiteral("name"), QStringLiteral("Timeline 1")}});
+    QVERIFY(dup.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(dup.value(QStringLiteral("name")).toString(), QStringLiteral("Timeline 1"));
+
+    const int assets = state.project()->assets().size();
+    const int sequences = int(state.project()->sequenceIds().size());
+    const QJsonObject blank = newTimelineCall(dispatcher, {{QStringLiteral("name"), QStringLiteral("  ")}});
+    QCOMPARE(blank.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(state.project()->assets().size(), assets);
+    QCOMPARE(int(state.project()->sequenceIds().size()), sequences);
+
+    const int steps = int(state.undoHistory().size());
+    const QJsonObject made = newTimelineCall(dispatcher, {{QStringLiteral("name"), QStringLiteral("Cut")}});
+    const QString assetId = made.value(QStringLiteral("asset")).toString();
+    const QString sequence = made.value(QStringLiteral("sequence")).toString();
+    QCOMPARE(int(state.undoHistory().size()), steps + 1);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(!state.project()->asset(assetId));
+    QVERIFY(!state.project()->hasSequence(sequence));
+    QVERIFY(state.activeSequenceId() != sequence);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("redo"), {}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.project()->asset(assetId));
+    QCOMPARE(state.project()->asset(assetId)->name, QStringLiteral("Cut"));
+    // Redo recreates it without reopening it.
+    QVERIFY(state.activeSequenceId() != sequence);
+    QVERIFY(!state.project()->openSequenceTabs().contains(sequence));
+    QVERIFY(dispatcher.applyOne(QStringLiteral("open_composite"), {{QStringLiteral("sequence"), sequence}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.activeSequenceId(), sequence);
+}
+
+void McpTest::newTimelineInApplyAtomicAndDryRun()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject text = {{QStringLiteral("text"), QStringLiteral("In")}, {QStringLiteral("at"), 0.0}};
+    int steps = int(state.undoHistory().size());
+    QJsonObject reply = dispatcher.apply({{QStringLiteral("ops"), QJsonArray{op(QStringLiteral("new_timeline"), {}),
+                                                                         op(QStringLiteral("add_text"), text)}}});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    QCOMPARE(int(state.undoHistory().size()), steps + 1);
+    QVERIFY(!state.activeSequenceId().isEmpty());
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(compositeRows(dispatcher).size(), 1);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(compositeRows(dispatcher).size(), 0);
+    QVERIFY(state.activeSequenceId().isEmpty());
+    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), 0);
+
+    // Atomic: a failing op takes the new timeline with it.
+    steps = int(state.undoHistory().size());
+    reply = dispatcher.apply({{QStringLiteral("atomic"), true},
+                              {QStringLiteral("ops"), QJsonArray{op(QStringLiteral("new_timeline"), {}),
+                                                               op(QStringLiteral("move_clip"), {{QStringLiteral("clip"), QStringLiteral("gone")}, {QStringLiteral("at"), 1.0}})}}});
+    QCOMPARE(reply.value(QStringLiteral("rolled_back")).toBool(), true);
+    QCOMPARE(compositeRows(dispatcher).size(), 0);
+    QVERIFY(state.activeSequenceId().isEmpty());
+    QVERIFY(state.sequenceTabs().isEmpty());
+    QCOMPARE(int(state.undoHistory().size()), steps);
+
+    // close_timeline is undo-exempt, so an atomic batch refuses it.
+    reply = dispatcher.apply({{QStringLiteral("atomic"), true},
+                              {QStringLiteral("ops"), QJsonArray{op(QStringLiteral("close_timeline"), {{QStringLiteral("sequence"), QStringLiteral("x")}})}}});
+    QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY(reply.value(QStringLiteral("detail")).toString().contains(QStringLiteral("close_timeline")));
+
+    // dry_run checks the sequence id.
+    reply = dispatcher.apply({{QStringLiteral("dry_run"), true},
+                              {QStringLiteral("ops"), QJsonArray{op(QStringLiteral("new_timeline"), {}),
+                                                               op(QStringLiteral("close_timeline"), {{QStringLiteral("sequence"), QStringLiteral("nope")}})}}});
+    QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("dry_run_failed"));
+    const QJsonArray problems = reply.value(QStringLiteral("problems")).toArray();
+    QCOMPARE(problems.size(), 1);
+    QCOMPARE(problems.first().toObject().value(QStringLiteral("i")).toInt(), 1);
+    QCOMPARE(problems.first().toObject().value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QCOMPARE(compositeRows(dispatcher).size(), 0);
+
+    // The ops' own rules: main:true names no sequence; a composite clip is found by reference;
+    // an empty sequence is refused by close_timeline.
+    QVERIFY(addTextTo(dispatcher, QStringLiteral("Clip")));
+    reply = dispatcher.apply({{QStringLiteral("dry_run"), true},
+                              {QStringLiteral("ops"), QJsonArray{
+                                  op(QStringLiteral("open_composite"), {{QStringLiteral("main"), true}, {QStringLiteral("sequence"), QStringLiteral("stale")}}),
+                                  op(QStringLiteral("open_composite"), {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0}})}}});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    reply = dispatcher.apply({{QStringLiteral("dry_run"), true},
+                              {QStringLiteral("ops"), QJsonArray{op(QStringLiteral("close_timeline"), {{QStringLiteral("sequence"), QString()}}),
+                                                               op(QStringLiteral("open_composite"), {{QStringLiteral("sequence"), QString()}})}}});
+    QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("dry_run_failed"));
+    const QJsonArray empties = reply.value(QStringLiteral("problems")).toArray();
+    QCOMPARE(empties.size(), 2);
+    QCOMPARE(empties.at(0).toObject().value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(empties.at(1).toObject().value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+}
+
+void McpTest::closeTimelineFallsBackToMain()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString a = newTimelineCall(dispatcher, {{QStringLiteral("name"), QStringLiteral("A")}}).value(QStringLiteral("sequence")).toString();
+    const QString b = newTimelineCall(dispatcher, {{QStringLiteral("name"), QStringLiteral("B")}}).value(QStringLiteral("sequence")).toString();
+    QCOMPARE(state.activeSequenceId(), b);
+    state.projectFile()->setDirty(false);
+    const int steps = int(state.undoHistory().size());
+
+    QJsonObject reply = dispatcher.applyOne(QStringLiteral("close_timeline"), {{QStringLiteral("sequence"), a}});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    QCOMPARE(reply.value(QStringLiteral("closed")).toBool(), true);
+    QCOMPARE(reply.value(QStringLiteral("activeSequence")).toString(), b);
+    QCOMPARE(state.activeSequenceId(), b);
+
+    reply = dispatcher.applyOne(QStringLiteral("close_timeline"), {{QStringLiteral("sequence"), b}});
+    QCOMPARE(reply.value(QStringLiteral("closed")).toBool(), true);
+    QCOMPARE(reply.value(QStringLiteral("activeSequence")).toString(), QString());
+    QVERIFY(state.activeSequenceId().isEmpty());
+    QVERIFY(state.project()->hasSequence(b));
+    QCOMPARE(compositeRow(dispatcher, b).value(QStringLiteral("open")).toBool(), false);
+    QCOMPARE(int(state.undoHistory().size()), steps);
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+
+    reply = dispatcher.applyOne(QStringLiteral("close_timeline"), {{QStringLiteral("sequence"), b}});
+    QVERIFY(reply.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(reply.value(QStringLiteral("closed")).toBool(), false);
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("close_timeline"), {{QStringLiteral("sequence"), QStringLiteral("nope")}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("close_timeline"), {{QStringLiteral("sequence"), QString()}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("close_timeline"), {})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+}
+
+void McpTest::removeAssetDeletesUnplacedTimeline()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    // An unplaced timeline with content: remove_asset deletes it, undo restores it.
+    QJsonObject made = newTimelineCall(dispatcher, {{QStringLiteral("name"), QStringLiteral("Gone")}});
+    const QString sequence = made.value(QStringLiteral("sequence")).toString();
+    const QString assetId = made.value(QStringLiteral("asset")).toString();
+    QVERIFY(addTextTo(dispatcher, QStringLiteral("Inside")));
+    QJsonObject reply = dispatcher.applyOne(QStringLiteral("remove_asset"), {{QStringLiteral("asset"), assetId}});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    QVERIFY(!state.project()->hasSequence(sequence));
+    QVERIFY(!state.project()->asset(assetId));
+    QVERIFY(state.activeSequenceId().isEmpty());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.project()->hasSequence(sequence));
+    QVERIFY(state.project()->asset(assetId));
+    QCOMPARE(state.project()->sequenceTracks(sequence).first().clips.size(), 1);
+
+    // An empty timeline can't be placed; neither can a filled one from inside another timeline.
+    state.openSequence(QString());
+    made = newTimelineCall(dispatcher, {{QStringLiteral("name"), QStringLiteral("Empty")}, {QStringLiteral("open"), false}});
+    const QString emptyAsset = made.value(QStringLiteral("asset")).toString();
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("place_clip"), {{QStringLiteral("asset"), emptyAsset}, {QStringLiteral("at"), 0.0}})
+                 .value(QStringLiteral("ok")).toBool());
+    made = newTimelineCall(dispatcher, {{QStringLiteral("name"), QStringLiteral("Host")}});
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("place_clip"), {{QStringLiteral("asset"), assetId}, {QStringLiteral("at"), 0.0}})
+                 .value(QStringLiteral("ok")).toBool());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("open_composite"), {{QStringLiteral("main"), true}}).value(QStringLiteral("ok")).toBool());
+
+    // Placed on main: remove_asset is refused and the sequence survives.
+    reply = dispatcher.applyOne(QStringLiteral("place_clip"), {{QStringLiteral("asset"), assetId}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    reply = dispatcher.applyOne(QStringLiteral("remove_asset"), {{QStringLiteral("asset"), assetId}});
+    QVERIFY(!reply.value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.project()->hasSequence(sequence));
+    QVERIFY(state.project()->asset(assetId));
+
+    // Removing the active one switches to main.
+    const QString hostSeq = made.value(QStringLiteral("sequence")).toString();
+    const QString hostAsset = made.value(QStringLiteral("asset")).toString();
+    QVERIFY(dispatcher.applyOne(QStringLiteral("open_composite"), {{QStringLiteral("sequence"), hostSeq}}).value(QStringLiteral("ok")).toBool());
+    reply = dispatcher.applyOne(QStringLiteral("remove_asset"), {{QStringLiteral("asset"), hostAsset}});
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(reply).toJson()));
+    QVERIFY(state.activeSequenceId().isEmpty());
+    QVERIFY(!state.project()->hasSequence(hostSeq));
 }
 
 QTEST_MAIN(McpTest)

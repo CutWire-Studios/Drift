@@ -647,7 +647,8 @@ const QList<Op> &ops()
           "{cancelled, queue, useProxies, proxySize}.",
           objectSchema({}) },
         { "rename_asset", "media", "Rename a bin row",
-          "Rename an asset in the bin. Does not rename the file on disk.",
+          "Rename an asset in the bin. Does not rename the file on disk. On a composite asset it renames "
+          "that timeline, tab included.",
           objectSchema({{QStringLiteral("asset"), assetRefProp()},
                         {QStringLiteral("name"), stringProp(QStringLiteral("New display name"))}},
                        {QStringLiteral("asset"), QStringLiteral("name")}) },
@@ -754,7 +755,8 @@ const QList<Op> &ops()
           "reason:\"gap\" when they differ. Note `track` means two different things: with "
           "new_track:true it is the insert position of the new track, otherwise it is the destination "
           "track and a type mismatch fails type_mismatch. With `track` omitted, the first track "
-          "accepting this asset is used, and a new track is created if none does.",
+          "accepting this asset is used, and a new track is created if none does. A composite asset "
+          "(a timeline) goes on the main timeline only, and only once it has content.",
           objectSchema(mergeProps({{QStringLiteral("asset"), assetRefProp()},
                                    {QStringLiteral("at"), numberProp(QStringLiteral("Timeline start seconds (default: playhead)"))},
                                    {QStringLiteral("track"), integerProp(QStringLiteral("Destination track, or insert position when new_track is true"))},
@@ -1648,7 +1650,8 @@ QStringList undoExemptOps()
         QStringLiteral("market_cancel_download"), QStringLiteral("market_retry_download"),
         QStringLiteral("market_open"),
         QStringLiteral("seek"),                QStringLiteral("play"),
-        QStringLiteral("open_composite"),      QStringLiteral("flatten_composite"),
+        QStringLiteral("open_composite"),      QStringLiteral("close_timeline"),
+        QStringLiteral("flatten_composite"),
         QStringLiteral("pause"),               QStringLiteral("undo"),
         QStringLiteral("redo"),                QStringLiteral("undo_to"),
         QStringLiteral("take_snapshot"),       QStringLiteral("restore_snapshot"),
@@ -1767,6 +1770,10 @@ QString agentGuideText()
         "undo_to({index}) jumps; the next edit discards redo. take_snapshot writes <hash>.json whose\n"
         "bytes hash to the same value; restore_snapshot loads a disk copy only if it has fallen off\n"
         "the stack (and resets Origin).\n"
+        "\n"
+        "Timelines: the main one plus one per composite (list_composites). new_timeline({name}) starts\n"
+        "an empty one and opens it; every op, inspect included, then edits it until\n"
+        "open_composite({main:true}) or close_timeline({sequence}). export_video renders only the main one.\n"
         "\n"
         "wait_idle({timeout, kinds?}) waits for all background work (probes, thumbnails, proxies,\n"
         "filmstrips, waveforms and every job below) and returns {idle, waited, busy?, suspended?}.\n"
@@ -1899,7 +1906,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
     static const Box boxes[] = {
         {"media", "Import (absolute paths only — resolve fuzzy names with your own filesystem tools), "
                    "read the media bin before placing clips, fix a sideways asset."},
-        {"timeline", "Tracks, place/move/trim/split/delete clips, ripple/gap, overlap, selection, undo."},
+        {"timeline", "Tracks, place/move/trim/split/delete clips, ripple/gap, overlap, selection, undo, timelines."},
         {"canvas", "Transform, flip, blend, mask, fade, constant speed, reverse, animation, stabilisation, orientation, shape styling (layers, geometry)."},
         {"playback", "Seek, play, pause, In/Out work area."},
         {"text", "Title/caption clips: style packs, shading layers, looks, gradients/effects, in/out/loop animation presets, fonts."},
@@ -2064,7 +2071,8 @@ QJsonArray homepageTools()
         QStringLiteral("inspect"),
         QStringLiteral("When: Read state. Summary: revision, name, w, h, fps, dur, playhead, playing, overlap, "
                        "clips (count), tracks, assets, path, dirty, background, export {active, progress}, "
-                       "selection (absent when none), undo {can, canRedo, depth, index, hash (12-char)}, "
+                       "selection (absent when none), open_sequence (the composite timeline being edited; absent on the main timeline), "
+                       "undo {can, canRedo, depth, index, hash (12-char)}, "
                        "work_in/work_out when set. clips=true adds compact rows under tracks[].items; "
                        "cues=true adds subtitleCues to them. detail=true expands rows to the full clip map "
                        "(effects, mask, fade, speed, keyframes, stabilize*, ...) minus what the kind cannot "

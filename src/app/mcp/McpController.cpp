@@ -1446,6 +1446,8 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
     };
     if (m_app->preview()->viewport3dOpen())
         extra.insert(QStringLiteral("look_through"), m_app->preview()->lookThrough());
+    if (!m_app->activeSequenceId().isEmpty())
+        extra.insert(QStringLiteral("open_sequence"), m_app->activeSequenceId());
     if (options.dirtyDetail)
         extra.insert(QStringLiteral("dirty_detail"), dirtyDetail());
     if (detail) {
