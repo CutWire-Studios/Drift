@@ -1544,8 +1544,8 @@ bool AppController::flattenComposite(int trackIndex, int clipIndex)
     const drift::TimeUs srcInUs = clip.srcIn;
     const drift::TimeUs durationUs = clip.srcOut - clip.srcIn;
 
-    (void)QtConcurrent::run([this, source, settings, outputPath, clipId, sequenceId, name, srcInUs,
-                             durationUs]() {
+    m_exportFuture = QtConcurrent::run([this, source, settings, outputPath, clipId, sequenceId, name,
+                                        srcInUs, durationUs]() {
         Exporter::BackgroundHold hold(QStringLiteral("Flattening composite"), /*cancellable=*/true);
         QString error;
         const auto report = [this](double fraction) {

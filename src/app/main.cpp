@@ -94,6 +94,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQmlNetworkAccessManagerFactory>
+#include <QScopeGuard>
 #include <QStandardPaths>
 #include <QStringList>
 #include <QQmlEngine>
@@ -779,6 +780,10 @@ int main(int argc, char *argv[])
 #endif
 
     QApplication app(argc, argv);
+    // Declared right after app so it runs once every other local is gone but while QApplication
+    // still exists: the GL thread's offscreen surface has to die on the GUI thread, and the
+    // post routine that would otherwise do it runs inside ~QCoreApplication.
+    const auto glShutdown = qScopeGuard([] { drift::gl::runtime().shutdown(); });
     // A missing image plugin is silent everywhere else: the reader just returns a null QImage,
     // so the bin card is blank and the clip renders as nothing with no hint why. On a released
     // APK this line is the only way to tell that from a corrupt file, over adb logcat.
@@ -975,7 +980,7 @@ int main(int argc, char *argv[])
     if (const QString themeOverride = qEnvironmentVariable("DRIFT_THEME"); !themeOverride.isEmpty())
         ThemeManager::shared()->applySessionOverride(themeOverride);
 
-    app.installEventFilter(new FileOpenFilter(&editorState, &app));
+    app.installEventFilter(new FileOpenFilter(&editorState, &editorState));
     {
         // Hoisted deliberately: QCoreApplication::arguments() rebuilds and returns a QStringList
         // BY VALUE on every call, so `const QString &arg = app.arguments().at(i)` bound a

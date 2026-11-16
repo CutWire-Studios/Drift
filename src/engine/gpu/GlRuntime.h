@@ -29,6 +29,7 @@
 #include <QStringList>
 #include <QVariant>
 #include <QVector>
+#include <QWaitCondition>
 
 #include <QThread>
 
@@ -462,9 +463,12 @@ private:
     AVFrame *ensureSoftwareNv12(const AVFrame *src);
 
     QMutex m_initMutex;
+    QWaitCondition m_surfaceCreated;
+    bool m_surfaceRequested = false;
     // Only a driver's own verdict is final. A missing share context just means Qt
     // Quick has not built one yet, so that attempt is retried rather than latched.
     bool m_failedPermanently = false;
+    bool m_shutDown = false;
     QElapsedTimer m_lastAttempt;
     bool m_ok = false;
     bool m_sharesWithGui = false;
