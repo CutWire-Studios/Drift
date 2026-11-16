@@ -116,6 +116,17 @@ struct TrackList : QList<Track>
 // Mints missing/duplicate track ids and repairs orphaned lanes; see Project::ensureTrackIds.
 void ensureTrackIds(QList<Track> &tracks);
 
+// A file or folder name for project `id`, for the per-project paths (bake cache, project media,
+// thumbnails). The id comes from the project file, so it is never used as is unless it is a
+// canonical UUID (what Drift mints): anything else is "x" + 32 hex digits of its SHA-256, so a
+// crafted id can't reach outside the folder. Empty stays empty.
+QString projectPathKey(const QString &id);
+
+// The folder name for a bundle's unpacked media: projectPathKey(id), or, when the manifest has no
+// id, "b" + 32 hex digits of the SHA-256 of the bundle's absolute path, so bundles without an id
+// don't share a folder.
+QString bundleMediaKey(const QString &id, const QString &bundlePath);
+
 // A nested timeline played by Composite clips. Canvas size, fps and sample rate are the project's.
 struct Sequence
 {

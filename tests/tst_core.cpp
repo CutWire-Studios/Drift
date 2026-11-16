@@ -8,7 +8,9 @@
 #include <QJsonObject>
 #include <QPointF>
 #include <QSet>
+#include <QRegularExpression>
 #include <QStandardPaths>
+#include <QUuid>
 
 #include "core/project/ProjectDiff.h"
 #include "core/animation/ClipAnimation.h"
@@ -50,6 +52,7 @@ private slots:
     void trackAudibleFollowsMixerRule_data();
     void trackAudibleFollowsMixerRule();
     void muteAllButClipClearsSolo();
+    void projectPathKeyKeepsUuidsAndHashesTheRest();
     void imageSequencePathRoundTrip();
     void imageSequenceFpsRationals();
     void imageSequenceDisplayName();
@@ -8729,6 +8732,32 @@ void CoreTest::muteAllButClipClearsSolo()
     QVERIFY(!drift::anyTrackSoloed(project.tracks()));
     QVERIFY(!project.tracks().at(0).muted);
     QVERIFY(project.tracks().at(1).muted);
+}
+
+void CoreTest::projectPathKeyKeepsUuidsAndHashesTheRest()
+{
+    const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    QCOMPARE(drift::projectPathKey(uuid), uuid);
+    QCOMPARE(drift::projectPathKey(QString()), QString());
+    const QRegularExpression hashed(QStringLiteral("^x[0-9a-f]{32}$"));
+    for (const QString &id : {QStringLiteral("../x"), QStringLiteral("a/b"), QStringLiteral(".."),
+                              QStringLiteral("C:\\x"), QStringLiteral("CON"),
+                              QStringLiteral("{") + uuid + QStringLiteral("}"), uuid.toUpper()}) {
+        const QString key = drift::projectPathKey(id);
+        QVERIFY2(hashed.match(key).hasMatch(), qPrintable(id + QStringLiteral(" -> ") + key));
+        QCOMPARE(drift::projectPathKey(id), key); // stable
+    }
+    QVERIFY(drift::projectPathKey(QStringLiteral("../x")) != drift::projectPathKey(QStringLiteral("../y")));
+    const QList<QString> extra{QString::fromLatin1("a\0b", 3), QString(10000, QLatin1Char('a')),
+                               QStringLiteral("00000000-0000-0000-0000-000000000000")};
+    for (const QString &id : extra) // the nil UUID is not one Drift mints, so it is hashed too
+        QVERIFY(hashed.match(drift::projectPathKey(id)).hasMatch());
+    // A bundle with no id gets a folder of its own, named by where it is.
+    const QString a = drift::bundleMediaKey(QString(), QStringLiteral("/tmp/a.drift"));
+    QVERIFY(QRegularExpression(QStringLiteral("^b[0-9a-f]{32}$")).match(a).hasMatch());
+    QCOMPARE(drift::bundleMediaKey(QString(), QStringLiteral("/tmp/a.drift")), a);
+    QVERIFY(a != drift::bundleMediaKey(QString(), QStringLiteral("/tmp/b.drift")));
+    QCOMPARE(drift::bundleMediaKey(uuid, QStringLiteral("/tmp/a.drift")), uuid);
 }
 
 QTEST_MAIN(CoreTest)

@@ -7,6 +7,7 @@
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QSet>
@@ -782,6 +783,27 @@ void Project::resetToDefaultTimeline()
 void Project::ensureTrackIds()
 {
     drift::ensureTrackIds(m_tracks);
+}
+
+QString projectPathKey(const QString &id)
+{
+    if (id.isEmpty())
+        return {};
+    const QUuid uuid = QUuid::fromString(id);
+    if (!uuid.isNull() && uuid.toString(QUuid::WithoutBraces) == id)
+        return id;
+    return QLatin1Char('x')
+        + QString::fromLatin1(QCryptographicHash::hash(id.toUtf8(), QCryptographicHash::Sha256).toHex().left(32));
+}
+
+QString bundleMediaKey(const QString &id, const QString &bundlePath)
+{
+    const QString key = projectPathKey(id);
+    if (!key.isEmpty())
+        return key;
+    const QByteArray path = QFileInfo(bundlePath).absoluteFilePath().toUtf8();
+    return QLatin1Char('b')
+        + QString::fromLatin1(QCryptographicHash::hash(path, QCryptographicHash::Sha256).toHex().left(32));
 }
 
 void ensureTrackIds(QList<Track> &tracks)
