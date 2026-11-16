@@ -748,6 +748,7 @@ drift::Mask maskFromMap(const QVariantMap &m)
     mask.feather = m.value(QStringLiteral("feather"), mask.feather).toDouble();
     mask.roundness = m.value(QStringLiteral("roundness"), mask.roundness).toDouble();
     mask.invert = m.value(QStringLiteral("invert"), mask.invert).toBool();
+    mask.lockAspect = m.value(QStringLiteral("lockAspect"), mask.lockAspect).toBool();
     mask.op = drift::maskOpFromString(m.value(QStringLiteral("op")).toString());
     mask.enabled = m.value(QStringLiteral("enabled"), mask.enabled).toBool();
     mask.name = m.value(QStringLiteral("name"), mask.name).toString();

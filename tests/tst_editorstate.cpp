@@ -13998,6 +13998,18 @@ void EditorStateTest::maskLockAspectPersistsAndGatesCornerResize()
     state.undo();
     QVERIFY(!pinnedMaskClip(state).mask.lockAspect);
 
+    // The inspector edits a copy of clipAt's mask map and writes it back: the lock survives.
+    state.masking()->setMaskProperty(ref.trackIndex, ref.clipIndex, QStringLiteral("lockAspect"), true);
+    QVariantMap mapped = state.clipAt(0, 0).value(QStringLiteral("mask")).toMap();
+    QVERIFY(mapped.value(QStringLiteral("lockAspect")).toBool());
+    mapped.insert(QStringLiteral("invert"), true);
+    state.setClipMask(0, 0, mapped);
+    QVERIFY(pinnedMaskClip(state).mask.lockAspect);
+    QVERIFY(pinnedMaskClip(state).mask.invert);
+    state.undo();
+    state.undo();
+    QVERIFY(!pinnedMaskClip(state).mask.lockAspect);
+
     // The overlay passes lockAspect XOR Shift: a corner keeps the ratio only when that is true.
     MaskEditSession *session = state.masking()->editSession();
     const QString id = pinnedMaskClip(state).id;

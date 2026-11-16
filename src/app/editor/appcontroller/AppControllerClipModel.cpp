@@ -279,6 +279,7 @@ QVariantMap maskToMap(const drift::Mask &m, drift::TimeUs timelineStart)
         {QStringLiteral("feather"), m.feather},
         {QStringLiteral("roundness"), m.roundness},
         {QStringLiteral("invert"), m.invert},
+        {QStringLiteral("lockAspect"), m.lockAspect},
         {QStringLiteral("points"), points},
         {QStringLiteral("mediaPath"), m.mediaPath},
         {QStringLiteral("mediaFgrPath"), m.mediaFgrPath},
