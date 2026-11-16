@@ -35,6 +35,13 @@ target_compile_definitions(tst_timelinewheel PRIVATE
 target_link_libraries(tst_timelinewheel PRIVATE Qt6::Test Qt6::Qml)
 add_test(NAME TimelineWheel COMMAND tst_timelinewheel)
 
+qt_add_executable(tst_maskselect
+    tst_maskselect.cpp
+    ../src/app/editor/sessions/MaskSelection.cpp)
+target_include_directories(tst_maskselect PRIVATE ../src)
+target_link_libraries(tst_maskselect PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
+add_test(NAME MaskSelect COMMAND tst_maskselect)
+
 qt_add_executable(tst_trackeroverlay tst_trackeroverlay.cpp)
 target_include_directories(tst_trackeroverlay PRIVATE ../src)
 target_link_libraries(tst_trackeroverlay PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
@@ -277,6 +284,7 @@ qt_add_executable(tst_mcp
     ../src/app/editor/sessions/KeyframeTimeView.cpp
     ../src/app/editor/sessions/MaskEditSession.cpp
     ../src/app/editor/sessions/MaskStackModel.cpp
+    ../src/app/editor/sessions/MaskSelection.cpp
     ../src/app/editor/sessions/MaskingController.cpp
     ../src/app/editor/sessions/SubtitleController.cpp
     ../src/app/editor/sessions/TeleprompterController.cpp

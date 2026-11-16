@@ -221,7 +221,7 @@
       "target": "panel:masking#masking-tracking",
       "context": "MaskingPanel",
       "source": "Masking & Tracking",
-      "keywords": "mask matte rotoscope roto brush polygon tracking tracker motion track planar object follow",
+      "keywords": "mask matte rotoscope roto brush lasso scissors magic wand select polygon tracking tracker motion track planar object follow",
       "needs": []
     },
     {

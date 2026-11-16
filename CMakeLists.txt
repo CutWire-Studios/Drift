@@ -1308,6 +1308,8 @@ target_sources(driftapp PRIVATE
     src/app/editor/sessions/MaskStackModel.h
     src/app/editor/sessions/MaskStackModel.cpp
     src/app/editor/sessions/MaskingController.h
+    src/app/editor/sessions/MaskSelection.h
+    src/app/editor/sessions/MaskSelection.cpp
     src/app/editor/sessions/MaskingController.cpp
     src/app/editor/sessions/SubtitleController.h
     src/app/editor/sessions/SubtitleController.cpp

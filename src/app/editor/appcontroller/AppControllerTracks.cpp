@@ -147,6 +147,9 @@ QHash<QString, QString> defaultShortcuts()
         // preview or it has focus or hover (never in 3D mode), so they stay free on the timeline.
         {QStringLiteral("maskingPolygonTool"), QStringLiteral("P")},
         {QStringLiteral("maskingAiTool"), QStringLiteral("A")},
+        {QStringLiteral("maskingLassoTool"), QStringLiteral("F")},
+        {QStringLiteral("maskingScissorsTool"), QStringLiteral("C")},
+        {QStringLiteral("maskingWandTool"), QStringLiteral("U")},
         {QStringLiteral("maskingBrushSmaller"), QStringLiteral("[")},
         {QStringLiteral("maskingBrushLarger"), QStringLiteral("]")},
         {QStringLiteral("maskingBrushToggleErase"), QStringLiteral("X")},
