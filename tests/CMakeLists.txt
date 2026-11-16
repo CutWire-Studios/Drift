@@ -503,3 +503,14 @@ if(UNIX AND NOT ANDROID AND NOT EMSCRIPTEN)
     target_link_libraries(tst_crashhandler_posix PRIVATE Qt6::Test Qt6::Core)
     add_test(NAME CrashHandlerPosix COMMAND tst_crashhandler_posix)
 endif()
+
+# MSVC caps an object file at 65,535 sections and the big test translation units reach it: every
+# QStringLiteral is its own COMDAT, and the MCP tests hold thousands. Over the cap the compiler
+# stops with "fatal error C1128: number of sections exceeded object file format limit", so no
+# further test can be added to these files without /bigobj. The flag only widens a field in the
+# object header — the linker output is unchanged — and GCC and Clang have no such limit.
+if(MSVC)
+    foreach(target tst_mcp tst_engine tst_editorstate tst_core)
+        target_compile_options(${target} PRIVATE /bigobj)
+    endforeach()
+endif()
