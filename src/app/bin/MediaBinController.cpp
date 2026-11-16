@@ -274,12 +274,69 @@ bool MediaBinController::importFolder(const QUrl &folderUrl)
         return false;
 
     const QString path = folderUrl.isLocalFile() ? folderUrl.toLocalFile() : folderUrl.toString();
-    const QDir dir(path);
-    if (path.isEmpty() || !dir.exists())
+    if (path.isEmpty() || !QDir(path).exists())
         return false;
 
     m_importingFolder = true;
     emit importingFolderChanged();
+    m_folderBatchFolders = 0;
+    m_folderBatchFiles = 0;
+    m_folderBatchSkipped = 0;
+    m_folderBatchTruncated = false;
+    beginFolderWalk(path);
+    return true;
+}
+
+QList<QUrl> MediaBinController::importFoldersFrom(const QList<QUrl> &urls)
+{
+    QList<QUrl> files;
+    QList<QUrl> folders;
+    for (const QUrl &url : urls) {
+        // Only a local path can be a directory: an Android content:// pick is always a document,
+        // and QFileInfo would reject it anyway, so it stays on the ordinary media path.
+        const QString path = url.isLocalFile() ? url.toLocalFile() : QString();
+        if (!path.isEmpty() && QFileInfo(path).isDir())
+            folders.append(url);
+        else
+            files.append(url);
+    }
+
+    if (!folders.isEmpty()) {
+        const bool idle = !m_importingFolder;
+        m_folderQueue.append(folders);
+        if (idle) {
+            m_importingFolder = true;
+            emit importingFolderChanged();
+            m_folderBatchFolders = 0;
+            m_folderBatchFiles = 0;
+            m_folderBatchSkipped = 0;
+            m_folderBatchTruncated = false;
+            startNextFolderImport();
+        }
+    }
+    return files;
+}
+
+void MediaBinController::startNextFolderImport()
+{
+    while (!m_folderQueue.isEmpty()) {
+        const QUrl url = m_folderQueue.takeFirst();
+        const QString path = url.isLocalFile() ? url.toLocalFile() : url.toString();
+        if (path.isEmpty() || !QDir(path).exists())
+            continue;
+        beginFolderWalk(path);
+        return;
+    }
+
+    m_importingFolder = false;
+    emit importingFolderChanged();
+    emit folderImportFinished(m_folderBatchFolders, m_folderBatchFiles, m_folderBatchSkipped,
+                              m_folderBatchTruncated);
+}
+
+void MediaBinController::beginFolderWalk(const QString &path)
+{
+    const QDir dir(path);
 
     // Only the walk is off-thread. Creating the bin folders and the asset rows stays on the GUI
     // thread, because both are model mutations — but with the file limit above, that half is
@@ -338,19 +395,23 @@ bool MediaBinController::importFolder(const QUrl &folderUrl)
         if (folderCount > 0)
             m_app->m_projectFile->setDirty(true);
 
-        m_importingFolder = false;
-        emit importingFolderChanged();
-        emit folderImportFinished(folderCount, fileCount, plan.skipped, plan.truncated);
+        m_folderBatchFolders += folderCount;
+        m_folderBatchFiles += fileCount;
+        m_folderBatchSkipped += plan.skipped;
+        m_folderBatchTruncated = m_folderBatchTruncated || plan.truncated;
+        startNextFolderImport();
     });
 
-    watcher->setFuture(QtConcurrent::run([dir]() {
+    // Seeded with the batch's running count so a drop of several folders stops at the same file
+    // limit one folder would, rather than at the limit times the number of folders.
+    const int taken = m_folderBatchFiles;
+    watcher->setFuture(QtConcurrent::run([dir, taken]() {
         FolderImportPlan plan;
-        int fileCount = 0;
+        int fileCount = taken;
         QSet<QString> visitedDirs;
         planDirectory(dir, -1, plan, fileCount, visitedDirs);
         return plan;
     }));
-    return true;
 }
 
 bool MediaBinController::replaceSource(int assetIndex, const QUrl &url)
