@@ -599,11 +599,12 @@ PanelFrame {
                 ThemedButton {
                     width: parent.width
                     variant: "primary"
-                    text: qsTr("Cut out through whole clip")
+                    text: EditorState.segmentation.sessionStill ? qsTr("Cut out") : qsTr("Cut out through whole clip")
                     onClicked: root.propagateAi("both")
                 }
 
                 RowLayout {
+                    visible: !EditorState.segmentation.sessionStill
                     width: parent.width
                     spacing: Theme.spacingXs
 

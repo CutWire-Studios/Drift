@@ -29,6 +29,8 @@ class SegmentationController : public QObject
     Q_PROPERTY(bool sessionActive READ sessionActive NOTIFY sessionChanged)
     Q_PROPERTY(bool forTemplate READ forTemplate NOTIFY sessionChanged)
     Q_PROPERTY(bool encoding READ encoding NOTIFY sessionChanged)
+    // The session clip is an image: one frame, so the cutout applies to the whole clip.
+    Q_PROPERTY(bool sessionStill READ sessionStill NOTIFY sessionChanged)
     Q_PROPERTY(int revision READ revision NOTIFY sessionChanged)
     Q_PROPERTY(QVariantList points READ points NOTIFY sessionChanged)
     Q_PROPERTY(QString backend READ backend NOTIFY sessionChanged)
@@ -53,6 +55,7 @@ public:
     bool sessionActive() const { return m_segSessionActive; }
     bool forTemplate() const { return m_segForTemplate; }
     bool encoding() const { return m_segEncoding; }
+    bool sessionStill() const { return m_segStill; }
     int revision() const { return m_segRevision; }
     QVariantList points() const { return m_segPoints; }
     QString backend() const { return m_segBackend; }
@@ -156,6 +159,7 @@ private:
     bool m_segSessionActive = false;
     bool m_segForTemplate = false;
     bool m_segEncoding = false;
+    bool m_segStill = false;
     QString m_segClipId;
     int m_segTrack = -1;
     int m_segClip = -1;

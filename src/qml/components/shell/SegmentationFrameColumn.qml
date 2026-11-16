@@ -13,7 +13,7 @@ Column {
     Item {
         id: stage
         width: parent.width
-        height: parent.height - scrubRow.height - Theme.spacingMd
+        height: parent.height - (scrubRow.visible ? scrubRow.height + Theme.spacingMd : 0)
 
         readonly property real frameW: EditorState.segmentation.frameSize.width
         readonly property real frameH: EditorState.segmentation.frameSize.height
@@ -139,6 +139,7 @@ Column {
 
     Row {
         id: scrubRow
+        visible: !EditorState.segmentation.sessionStill
         width: parent.width
         spacing: Theme.spacingMd
 
