@@ -109,7 +109,7 @@ GLSL: write `#version 330 core` (translated to GLSL ES on mobile), `in vec2 v_te
 its identifier. Engine uniforms: u_resolution (vec2, pixels), u_time (float seconds),
 u_frameIndex (int, at the project frame rate), u_frameRate (float), u_timeUs (float). Do not declare parameters with reserved names: u_currentTexture,
 u_textureN, u_resolution, u_time, u_timeUs, u_frameIndex, u_frameRate, u_progress, u_direction, u_fromTexture, u_toTexture,
-u_depth*, u_hasDepth, u_clipMask, u_hasClipMask, u_templateBounds, u_meshAspect, u_face*.
+u_depth*, u_hasDepth, u_clipMask, u_hasClipMask, u_history*, u_prevOutput, u_templateBounds, u_meshAspect, u_face*.
 Shaders are test-compiled on create/update; compile errors come back as shader_compile_failed with
 the driver log per pass. A shader that fails at render time shows the frame unchanged.
 )";
@@ -136,6 +136,49 @@ float driftMask(vec2 uv) (1 inside the mask stack, 0 outside) and u_hasClipMask 
 mask, driftMask is 0 everywhere). Pair it with Cut out subject for a person matte.
 )";
 
+const char *const kGuideTime = R"(
+## Time effects (kind: "effect")
+
+Two optional top-level manifest fields let an effect look back in time; a package may set both.
+List their nextFeatures names as well, so an older Drift refuses the package ("needs a newer
+Drift") instead of failing to compile it:
+  "history": N (whole number 1-32)  ->  "nextFeatures": [..., "history:source"]
+  "previousOutput": true            ->  "nextFeatures": [..., "history:previous-output"]
+
+history keeps the clip's last N source frames (the picture before the clip's effect chain, one per
+project frame). Every pass then has, declared for you:
+  vec4 historyFrame(float age, vec2 uv)  the source frame `age` project frames ago (1 = the previous
+                                         one) at uv, same uv convention as the source. Ages round
+                                         and clamp to what is recorded; with nothing recorded it
+                                         reads the effect's own input.
+  float historyCount()                   frames recorded so far: 0 on the first frame and after a
+                                         seek, up to N.
+previousOutput gives sampler2D u_prevOutput, also declared for you: this effect's own final output
+for the previous project frame, same size and uv. It is transparent on the first frame and after a
+seek. Feed it back (scale or rotate it a little, fade it by a decay) for trails, tunnels and echoes.
+
+previousOutput must be a JSON boolean (true); any other value counts as false.
+
+Those names are reserved: never declare historyFrame, historyCount, u_history* or u_prevOutput
+yourself (the engine already declares them, and redeclaring may fail to compile), and don't use them
+without the matching field.
+A seek, scrub, loop or trim clears the history, so an effect must look right while historyCount()
+is 0: pass the picture through. Export composes frame after frame and is deterministic; effect
+thumbnails and the CPU compositor always see an empty history. Long rings on large canvases are
+stored downscaled, so historyFrame can be softer than the live frame.
+
+{"displayName": "Echo Trail", "category": "stylize", "order": 900, "backend": "gpu",
+ "history": 8, "previousOutput": true, "nextFeatures": ["history:source", "history:previous-output"],
+ "parameters": [{"identifier": "echoes", "displayName": "Echoes", "type": "int",
+                 "minValue": 1, "maxValue": 8, "defaultValue": 4},
+                {"identifier": "decay", "displayName": "Decay", "type": "float",
+                 "minValue": 0, "maxValue": 0.95, "defaultValue": 0.6}],
+ "pipeline": {"intermediateBuffers": [], "passes": [{"passIndex": 0, "fragmentShader": "main.frag",
+   "inputs": [{"type": "source_texture"}], "output": {"type": "canvas"}}]}}
+
+files: {"main.frag": "#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\nuniform sampler2D u_currentTexture; uniform float echoes; uniform float decay;\nvoid main() { vec4 now = texture(u_currentTexture, v_texCoord); vec3 sum = now.rgb; float w = 1.0; float n = min(echoes, historyCount()); for (int i = 1; i <= 8; ++i) { if (float(i) > n) break; float k = pow(decay, float(i)); sum += historyFrame(float(i), v_texCoord).rgb * k; w += k; } vec4 prev = texture(u_prevOutput, v_texCoord); fragColor = vec4(max(sum / w, prev.rgb * decay), now.a); }"}
+)";
+
 const char *const kGuideTransition = R"(
 ## Transition — transition.json (kind: "transition")
 
@@ -146,7 +189,8 @@ proper "over", don't assume opaque. Optional "audioCurve": "crossfade" (default)
 
 Determinism rule: output must be a pure function of (from, to, u_progress, parameters). Never use
 u_time or u_frameIndex; derive noise from v_texCoord and u_progress (quantise progress to hold a
-glitch). Intermediate buffers do not persist between frames.
+glitch). Intermediate buffers do not persist between frames. Transitions have no frame history:
+history and previousOutput are for effects only.
 
 {"displayName": "Soft Wipe", "category": "basic", "order": 900,
  "parameters": [{"identifier": "softness", "displayName": "Softness", "type": "float",
@@ -258,8 +302,10 @@ QJsonObject guide(const QString &kind)
     QString text = QString::fromUtf8(kGuideCommon);
     if (kind.isEmpty() || kind != QLatin1String("audio_effect"))
         text += QString::fromUtf8(kGuideGpu);
-    if (kind.isEmpty() || kind == QLatin1String("effect"))
+    if (kind.isEmpty() || kind == QLatin1String("effect")) {
         text += QString::fromUtf8(kGuideEffect);
+        text += QString::fromUtf8(kGuideTime);
+    }
     if (kind.isEmpty() || kind == QLatin1String("transition"))
         text += QString::fromUtf8(kGuideTransition);
     if (kind.isEmpty() || kind == QLatin1String("animation"))

@@ -1818,8 +1818,9 @@
                        {QStringLiteral("path")}) },
         { "effect_authoring_guide", "effects", "How to write a custom effect",
           "Read before create_effect. Returns {guide} — manifest grammar for effects, transitions and "
-          "audio effects, every parameter type and the inspector control it becomes, GLSL rules and "
-          "a working example — plus {processors:[{processor, examples, params}]} for audio effects.",
+          "audio effects, every parameter type and the inspector control it becomes, GLSL rules, "
+          "time effects (history: earlier source frames; previousOutput: the effect's last output) and "
+          "working examples — plus {processors:[{processor, examples, params}]} for audio effects.",
           objectSchema({{QStringLiteral("kind"), effectKindProp()}}), true, false, true },
         { "create_effect", "effects", "Write a new effect into My Effects",
           "Create a GPU video effect, transition or audio effect from a manifest and shader sources. "

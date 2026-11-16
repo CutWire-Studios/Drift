@@ -749,6 +749,10 @@ and `add_audio_effect` as soon as it is created. The format is in
 
 1. `effect_authoring_guide({kind})` returns the manifest grammar, the parameter types and their
    inspector controls, and a working example (for audio, also the processors and their params).
+   For effects it also covers time effects: `history` (up to 32 earlier source frames, read with
+   `historyFrame(age, uv)`) and `previousOutput` (the effect's own last frame as `u_prevOutput`),
+   their `nextFeatures` names and the reserved `u_history*` / `u_prevOutput` uniforms; see
+   [gpu-effects.md](gpu-effects.md#time-effects-history-previousoutput).
 2. `get_effect_source({kind, id})` reads any package, bundled ones included, to fork.
 3. `create_effect({kind, slug, manifest, files})` parses the package and compiles its shaders on
    the GL thread before installing anything. It fails with `bad_manifest` or
