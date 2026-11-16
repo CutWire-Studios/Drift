@@ -2598,6 +2598,10 @@
         <translation>Dividir o clipe selecionado no tempo atual</translation>
     </message>
     <message>
+        <source>Split every track at current time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add transition at playhead</source>
         <translation>Adicionar transição no cursor de reprodução</translation>
     </message>
@@ -2692,6 +2696,18 @@
     <message>
         <source>Select tool</source>
         <translation>Ferramenta de seleção</translation>
+    </message>
+    <message>
+        <source>Lasso mask tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Intelligent scissors mask tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magic wand mask tool</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search…</source>
@@ -3103,6 +3119,10 @@
         <translation>Colar atributos…</translation>
     </message>
     <message>
+        <source>Split selection, or every track, at current time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to previous cut point</source>
         <translation>Ir para o ponto de corte anterior</translation>
     </message>
@@ -3337,6 +3357,17 @@
     <message>
         <source>Transition curve updated</source>
         <translation>Curva de transição atualizada</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported “%1” (%n sticker(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Sticker pack removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Shape added</source>
@@ -4780,6 +4811,14 @@
     <message>
         <source>Bookmark updated</source>
         <translation>Marcador atualizado</translation>
+    </message>
+    <message>
+        <source>Colour bookmark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bookmark colour changed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No video at the current time</source>
@@ -12686,6 +12725,22 @@
         <translation>%1 %</translation>
     </message>
     <message>
+        <source>Drag to draw an outline, release to fill it · Right-drag or Alt to subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click along an edge to place points · Right-click or Alt to subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 points · Click the first point or Enter to close · Backspace to undo · Esc to cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to select a region of similar colour · Shift adds, Alt or right-click subtracts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
         <translation>Pinte para adicionar · Arraste com botão direito ou %1 para apagar · [ ] ou Shift+arraste para redimensionar · Ctrl+rolagem para zoom</translation>
     </message>
@@ -12902,6 +12957,26 @@
         <translation>Quadro do recorte corrigido</translation>
     </message>
     <message>
+        <source>Lasso selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scissors selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip has no picture to follow edges on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip has no picture to select from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magic wand</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not save the brush mask. The next stroke will try again</source>
         <translation>Não foi possível salvar a máscara do pincel. O próximo traço tentará novamente</translation>
     </message>
@@ -13057,6 +13132,18 @@
         <translation>Pincel</translation>
     </message>
     <message>
+        <source>Lasso</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scissors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magic wand</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>AI object</source>
         <translation>Objeto por IA</translation>
     </message>
@@ -13071,6 +13158,38 @@
     <message>
         <source>Off</source>
         <translation>Desativado</translation>
+    </message>
+    <message>
+        <source>Click to select the region of similar colour. It is added to the same still mask the Brush paints.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag around an area to fill it into the same still mask the Brush paints.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click along an object&apos;s edge; the outline snaps to it. Close the outline to fill it into the same still mask the Brush paints.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wand tolerance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Contiguous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click adds to the mask. Shift also adds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click removes from the mask. Alt or right-click also subtracts</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Size</source>
@@ -13111,6 +13230,10 @@
     <message>
         <source>Left-drag erases</source>
         <translation>Arrastar com botão esquerdo apaga</translation>
+    </message>
+    <message>
+        <source>Fill closed loops</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pressure changes size</source>
@@ -13628,8 +13751,8 @@
         <translation>Trace o assunto e fixe o resultado como uma camada de máscara</translation>
     </message>
     <message>
-        <source>Select a video clip first</source>
-        <translation>Selecione um clipe de vídeo primeiro</translation>
+        <source>Select a video or image clip first</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Download people cutout (about 20 MB)</source>
@@ -13978,6 +14101,10 @@
     <message>
         <source>Search media</source>
         <translation>Pesquisar mídia</translation>
+    </message>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished">Limpar pesquisa</translation>
     </message>
     <message>
         <source>Expand all</source>
@@ -18186,10 +18313,6 @@ Se a reprodução travar, experimente outro.</translation>
 <context>
     <name>SegmentationController</name>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>Selecione um clipe de vídeo para recortar o assunto</translation>
-    </message>
-    <message>
         <source>Wait for the frame to finish loading</source>
         <translation>Aguarde o quadro terminar de carregar</translation>
     </message>
@@ -18252,6 +18375,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Cutout complete</source>
         <translation>Recorte concluído</translation>
+    </message>
+    <message>
+        <source>Select a video or image clip to cut out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>That object mask changed while it was being refined</source>
@@ -22234,6 +22361,57 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
 </context>
 <context>
+    <name>StickerPackImport</name>
+    <message>
+        <source>The pack has too many images</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No .png or .webp images found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create the sticker folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The pack is too large</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write the sticker files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install the sticker pack</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom stickers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open %1</source>
+        <translation type="unfinished">Não foi possível abrir %1</translation>
+    </message>
+    <message>
+        <source>%1 is not a .zip archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 has too many files</source>
+        <translation type="unfinished">%1 contém arquivos demais</translation>
+    </message>
+    <message>
+        <source>“%1” is not an imported sticker pack</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not delete “%1”</source>
+        <translation type="unfinished">Não foi possível excluir “%1”</translation>
+    </message>
+</context>
+<context>
     <name>StickerPresetCard</name>
     <message>
         <source>%1 — click to add, or drag to the timeline or preview</source>
@@ -22255,12 +22433,36 @@ Se a reprodução travar, experimente outro.</translation>
 <context>
     <name>StickersTab</name>
     <message>
+        <source>Import sticker pack</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zip archives (*.zip)</source>
+        <translation type="unfinished">Arquivos zip (*.zip)</translation>
+    </message>
+    <message>
         <source>Search stickers</source>
         <translation>Buscar adesivos</translation>
     </message>
     <message>
         <source>More emoji</source>
         <translation>Mais emojis</translation>
+    </message>
+    <message>
+        <source>Import or manage sticker packs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import sticker pack (.zip)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import sticker folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove “%1”</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No sticker packs installed</source>
@@ -24316,6 +24518,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Rename…</source>
         <translation>Renomear…</translation>
+    </message>
+    <message>
+        <source>Default colour</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
