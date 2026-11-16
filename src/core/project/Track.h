@@ -105,4 +105,15 @@ QString trackNumberKind(const Track &track);
 // nested lane's "Effects" / "Audio FX" / "Mask"), as the timeline shows it. For replies to agents; the UI builds the same label translated.
 QString trackDefaultLabel(const Track &track);
 
+// True when any track in the list is soloed. While one is, the mixer plays only soloed tracks.
+bool anyTrackSoloed(const QList<Track> &tracks);
+
+// Whether the mixer plays this track's own audio: not muted, not hidden, and either nothing is
+// soloed or this track is. Every place that decides what is heard uses this, so the flags can't
+// drift apart again. Adjustment tracks are not subject to it: they carry no audio of their own.
+inline bool trackAudible(const Track &track, bool anySolo)
+{
+    return !track.muted && !track.hidden && (!anySolo || track.solo);
+}
+
 } // namespace drift

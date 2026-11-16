@@ -718,13 +718,18 @@ QVariantMap AppController::activeVideoClipAtPlayhead() const
 QVariantMap AppController::activeAudioClipAtPlayhead() const
 {
     QVariantMap result;
+    const bool anySolo = drift::anyTrackSoloed(m_project.tracks());
     for (const drift::Track &track : m_project.tracks()) {
-        if (track.type != drift::TrackType::Audio || track.muted || track.hidden)
+        const bool isVideo = track.type == drift::TrackType::Video;
+        if ((track.type != drift::TrackType::Audio && !isVideo) || !drift::trackAudible(track, anySolo))
             continue;
 
         for (const drift::Clip &clip : track.clips) {
-            if (clip.containsTime(m_playheadUs))
-                result = clipToMap(clip);
+            if (!clip.enabled || !clip.containsTime(m_playheadUs))
+                continue;
+            if (isVideo && (clip.type != drift::ClipType::Video || clip.suppressEmbeddedAudio))
+                continue;
+            result = clipToMap(clip);
         }
     }
     return result;

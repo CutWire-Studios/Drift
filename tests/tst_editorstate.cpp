@@ -384,6 +384,8 @@ private slots:
     void lockedTrackRejectsEdits();
     void splitShortcutFollowsSelection();
     void audioMixerTrackControlsAndMetering();
+    void activeAudioClipFollowsSolo();
+    void beatGridStaleOnSolo();
     void speedCurveOnAudioClipRetimesAndReplaces();
     void waveformPeaksForSourceRangeSlicesToTheTrimmedWindow();
     void speedCurveSessionExposesTrimmedSourceWindow();
@@ -9504,6 +9506,91 @@ void EditorStateTest::audioMixerTrackControlsAndMetering()
     QVariantMap masterLevels = state.masterAudioLevels();
     QVERIFY(masterLevels.contains(QStringLiteral("left")));
     QVERIFY(masterLevels.contains(QStringLiteral("right")));
+}
+
+namespace {
+
+void addSoloTestAudioTrack(drift::Project &project, const QString &clipId)
+{
+    drift::Track track{.type = drift::TrackType::Audio};
+    drift::Clip clip;
+    clip.id = clipId;
+    clip.type = drift::ClipType::Audio;
+    clip.path = QStringLiteral("/tmp/%1.wav").arg(clipId);
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(5.0);
+    clip.srcOut = clip.timelineDuration;
+    track.clips.append(clip);
+    project.tracks().append(track);
+}
+
+} // namespace
+
+// The preview's "Audio only" message names the clip the mixer plays: solo, mute and a video
+// clip's embedded audio all count.
+void EditorStateTest::activeAudioClipFollowsSolo()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    addSoloTestAudioTrack(project, QStringLiteral("a0"));
+    addSoloTestAudioTrack(project, QStringLiteral("a1"));
+    project.ensureTrackIds();
+    state.setPlayheadSeconds(1.0);
+
+    const auto activeId = [&] { return state.activeAudioClipAtPlayhead().value(QStringLiteral("id")).toString(); };
+    QCOMPARE(activeId(), QStringLiteral("a1"));
+    state.setTrackSolo(0, true);
+    QCOMPARE(activeId(), QStringLiteral("a0"));
+    project.tracks()[0].muted = true;
+    QVERIFY(state.activeAudioClipAtPlayhead().isEmpty());
+    project.tracks()[0].muted = false;
+    state.setTrackSolo(0, false);
+
+    drift::Track video{.type = drift::TrackType::Video};
+    drift::Clip clip;
+    clip.id = QStringLiteral("v0");
+    clip.type = drift::ClipType::Video;
+    clip.path = QStringLiteral("/tmp/v0.mp4");
+    clip.timelineDuration = drift::secondsToUs(5.0);
+    clip.srcOut = clip.timelineDuration;
+    video.clips.append(clip);
+    project.tracks().append(video);
+    project.ensureTrackIds();
+    state.setTrackSolo(2, true);
+    QCOMPARE(activeId(), QStringLiteral("v0"));
+    project.tracks()[2].clips[0].suppressEmbeddedAudio = true;
+    QVERIFY(state.activeAudioClipAtPlayhead().isEmpty());
+}
+
+void EditorStateTest::beatGridStaleOnSolo()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    addSoloTestAudioTrack(project, QStringLiteral("a0"));
+    addSoloTestAudioTrack(project, QStringLiteral("a1"));
+    project.ensureTrackIds();
+
+    const QByteArray base = state.audioLayoutFingerprint();
+    state.setTrackSolo(1, true);
+    QVERIFY(state.audioLayoutFingerprint() != base);
+    state.setTrackSolo(1, false);
+    QCOMPARE(state.audioLayoutFingerprint(), base);
+
+    // Hiding a track silences it too.
+    project.tracks()[1].hidden = true;
+    QVERIFY(state.audioLayoutFingerprint() != base);
+    project.tracks()[1].hidden = false;
+    QCOMPARE(state.audioLayoutFingerprint(), base);
+
+    // Soloing the only audible track leaves what is heard as it was.
+    project.tracks()[0].muted = true;
+    const QByteArray onlyOne = state.audioLayoutFingerprint();
+    state.setTrackSolo(1, true);
+    QCOMPARE(state.audioLayoutFingerprint(), onlyOne);
 }
 
 void EditorStateTest::shapeStylePartialUpdateAndUndo()

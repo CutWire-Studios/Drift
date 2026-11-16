@@ -47,6 +47,9 @@ class CoreTest : public QObject
     Q_OBJECT
 
 private slots:
+    void trackAudibleFollowsMixerRule_data();
+    void trackAudibleFollowsMixerRule();
+    void muteAllButClipClearsSolo();
     void imageSequencePathRoundTrip();
     void imageSequenceFpsRationals();
     void imageSequenceDisplayName();
@@ -8656,6 +8659,67 @@ void CoreTest::diffProjectsReportsClipChanges()
     drift::Project rotated = withAsset;
     rotated.assets()[asset.id].rotationDegrees = 90;
     QCOMPARE(drift::diffProjects(withAsset, rotated).assets.size(), 1);
+}
+
+void CoreTest::trackAudibleFollowsMixerRule_data()
+{
+    QTest::addColumn<bool>("muted");
+    QTest::addColumn<bool>("hidden");
+    QTest::addColumn<bool>("solo");
+    QTest::addColumn<bool>("anySolo");
+    QTest::addColumn<bool>("expected");
+
+    QTest::newRow("plain") << false << false << false << false << true;
+    QTest::newRow("muted") << true << false << false << false << false;
+    QTest::newRow("hidden") << false << true << false << false << false;
+    QTest::newRow("silenced by another's solo") << false << false << false << true << false;
+    QTest::newRow("soloed and muted") << true << false << true << true << false;
+    QTest::newRow("soloed") << false << false << true << true << true;
+    QTest::newRow("soloed and hidden") << false << true << true << true << false;
+}
+
+void CoreTest::trackAudibleFollowsMixerRule()
+{
+    QFETCH(bool, muted);
+    QFETCH(bool, hidden);
+    QFETCH(bool, solo);
+    QFETCH(bool, anySolo);
+    QFETCH(bool, expected);
+
+    drift::Track track;
+    track.muted = muted;
+    track.hidden = hidden;
+    track.solo = solo;
+    QCOMPARE(drift::trackAudible(track, anySolo), expected);
+
+    QList<drift::Track> tracks;
+    QVERIFY(!drift::anyTrackSoloed(tracks));
+    tracks.append(drift::Track{});
+    QVERIFY(!drift::anyTrackSoloed(tracks));
+    tracks.append(track);
+    QCOMPARE(drift::anyTrackSoloed(tracks), solo);
+}
+
+void CoreTest::muteAllButClipClearsSolo()
+{
+    drift::Project project;
+    project.tracks().clear();
+    for (int i = 0; i < 2; ++i) {
+        drift::Track track{.type = drift::TrackType::Audio};
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip%1").arg(i);
+        clip.type = drift::ClipType::Audio;
+        clip.timelineDuration = drift::secondsToUs(1.0);
+        clip.srcOut = clip.timelineDuration;
+        track.clips.append(clip);
+        project.tracks().append(track);
+    }
+    project.tracks()[1].solo = true;
+
+    drift::muteAllButClip(project, QStringLiteral("clip0"));
+    QVERIFY(!drift::anyTrackSoloed(project.tracks()));
+    QVERIFY(!project.tracks().at(0).muted);
+    QVERIFY(project.tracks().at(1).muted);
 }
 
 QTEST_MAIN(CoreTest)

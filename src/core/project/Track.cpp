@@ -133,4 +133,13 @@ QString trackDefaultLabel(const Track &track)
     return track.number > 0 ? QStringLiteral("%1 %2").arg(type).arg(track.number) : type;
 }
 
+bool anyTrackSoloed(const QList<Track> &tracks)
+{
+    for (const Track &track : tracks) {
+        if (track.solo)
+            return true;
+    }
+    return false;
+}
+
 } // namespace drift

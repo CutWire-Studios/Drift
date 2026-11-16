@@ -2260,14 +2260,16 @@ QVariantList AppController::subtitleWaveformPeaks(double startSeconds, double du
 }
 
 // Everything the AudioMixer reads, and nothing else — so a transform keyframe edit does not
-// invalidate a beat grid while moving, trimming, retiming or muting the music does.
+// invalidate a beat grid while moving, trimming, retiming, or muting, hiding or soloing the music
+// does.
 QByteArray AppController::audioLayoutFingerprint() const
 {
     QCryptographicHash hash(QCryptographicHash::Sha1);
+    const bool anySolo = drift::anyTrackSoloed(m_project.tracks());
     for (const drift::Track &track : m_project.tracks()) {
         if (track.type != drift::TrackType::Audio && track.type != drift::TrackType::Video)
             continue;
-        hash.addData(track.muted ? "m" : "-");
+        hash.addData(drift::trackAudible(track, anySolo) ? "a" : "-");
         for (const drift::Clip &clip : track.clips) {
             const QString row = QStringLiteral("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10")
                                     .arg(clip.assetId)
