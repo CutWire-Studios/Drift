@@ -919,21 +919,21 @@ int main(int argc, char *argv[])
     TimelineTrackItem::installAccessibility();
 
     step(StartupSplash::tr("Starting the playback and audio engines…"), 0.12);
-    static AssetLibrary assetLibrary;
-    static EditorState editorState(&assetLibrary);
+    AssetLibrary assetLibrary;
+    EditorState editorState(&assetLibrary);
     step(StartupSplash::tr("Loading add-ons and themes…"), 0.36);
-    static FileDialogs fileDialogs;
-    static AddonManager addonManager;
-    static UpdateChecker updateChecker;
-    static LayoutStore layoutStore;
-    static WorkspaceStore workspaceStore;
-    static SearchIndex searchIndex;
-    static ProceduralEditorController proceduralEditor(&editorState);
-    static drift::Haptics haptics;
-    static drift::PointerDevices pointerDevices;
-    static CrashReporter crashReporter;
+    FileDialogs fileDialogs;
+    AddonManager addonManager;
+    UpdateChecker updateChecker;
+    LayoutStore layoutStore;
+    WorkspaceStore workspaceStore;
+    SearchIndex searchIndex;
+    ProceduralEditorController proceduralEditor(&editorState);
+    drift::Haptics haptics;
+    drift::PointerDevices pointerDevices;
+    CrashReporter crashReporter;
     editorState.setAddonManager(&addonManager);
-    static MarketServices market(assetLibrary, editorState, addonManager);
+    MarketServices market(assetLibrary, editorState, addonManager);
     editorState.setMarketplace(market.context());
     DownloadCenter *downloads = DownloadCenter::instance();
     bridgeUpdates(downloads, &updateChecker);
@@ -1000,8 +1000,8 @@ int main(int argc, char *argv[])
             editorState.mcp()->setEnabled(true);
     }
 
+    CachedNetworkAccessManagerFactory networkFactory;
     QQmlApplicationEngine engine;
-    static CachedNetworkAccessManagerFactory networkFactory;
     engine.setNetworkAccessManagerFactory(&networkFactory);
     QObject::connect(editorState.preferences(), &PreferencesController::uiLanguageChanged,
                      &engine, &QQmlEngine::retranslate);
@@ -1161,7 +1161,7 @@ int main(int argc, char *argv[])
             step(StartupSplash::tr("Opening setup…"), 1.0);
             hookWindow(windowOf(setupRoot), first, false);
             QObject::connect(editorState.preferences(), &PreferencesController::quickSetupCompleted, &app,
-                             [loadShell, setupRoot] {
+                             [loadShell, setupRoot, &editorState] {
                 PreferencesController *prefs = editorState.preferences();
                 if (prefs->uiScaleNeedsRestart() && prefs->canRestart()) {
                     prefs->restartApp();
