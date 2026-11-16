@@ -1582,6 +1582,8 @@ QJsonObject McpController::dirtyDetail() const
     }
     if (m_app->projectFile()->savedProject().openSequenceTabs() != m_app->m_project.openSequenceTabs())
         other.append(QStringLiteral("sequence_tabs"));
+    if (m_app->projectFile()->savedProject().teleprompterScript() != m_app->m_project.teleprompterScript())
+        other.append(QStringLiteral("teleprompter_script"));
     QJsonObject out = drift::projectDiffToJson(diff);
     const bool dirty = m_app->projectFile()->hasUnsavedChanges();
     out.insert(QStringLiteral("dirty"), dirty);

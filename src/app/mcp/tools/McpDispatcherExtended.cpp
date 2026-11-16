@@ -9,6 +9,7 @@
 #include "app/jobs/vision/FaceTrackingController.h"
 #include "app/jobs/vision/StabilizeController.h"
 #include "app/editor/sessions/CurveEditorController.h"
+#include "app/editor/sessions/TeleprompterController.h"
 #include "app/jobs/vision/SegmentationController.h"
 #include "app/mcp/McpController.h"
 #include "app/mcp/tools/McpDispatcher.h"
@@ -2925,6 +2926,60 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (!ref.valid())
             return clipRefError(args);
         return m_controller->mcp()->voiceoverFromSubtitles(ref.track, ref.clip, args);
+    }
+    if (tool == QLatin1String("get_teleprompter") || tool == QLatin1String("set_teleprompter")) {
+        TeleprompterController *prompter = m_controller->teleprompter();
+        const auto state = [&](bool withScript) {
+            const QString script = prompter->script();
+            QJsonObject out{{QStringLiteral("lines"), script.isEmpty() ? 0 : int(script.count(QLatin1Char('\n'))) + 1},
+                            {QStringLiteral("chars"), int(script.size())},
+                            {QStringLiteral("speed"), prompter->speed()},
+                            {QStringLiteral("font_size"), prompter->fontSize()},
+                            {QStringLiteral("overlay"), prompter->overlayEnabled()},
+                            {QStringLiteral("follow_recording"), prompter->followRecording()},
+                            {QStringLiteral("playing"), prompter->playing()},
+                            {QStringLiteral("position"), prompter->position()}};
+            if (withScript)
+                out.insert(QStringLiteral("script"), script);
+            return ok(out);
+        };
+        if (tool == QLatin1String("get_teleprompter"))
+            return state(true);
+        // Checked before anything changes, so a refusal changes nothing.
+        QString script;
+        // Only null counts as absent and leaves that setting unchanged. A wrongly typed value fails
+        // type_mismatch in checkOp before it gets here; numeric strings and 0/1 booleans pass it and
+        // are coerced by jsonNumber/jsonInt/jsonBool.
+        const auto given = [&](const char *key) {
+            const QJsonValue v = args.value(QLatin1String(key));
+            return !v.isNull() && !v.isUndefined();
+        };
+        const bool hasScript = args.value(QStringLiteral("script")).isString();
+        if (hasScript) {
+            script = args.value(QStringLiteral("script")).toString();
+            script.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
+            QString current = prompter->script();
+            current.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));   // echoing back what get returned never conflicts
+            if (!current.isEmpty() && current != script && !jsonBool(args.value(QStringLiteral("replace")), false))
+                return err("conflict", QStringLiteral("The teleprompter holds a different script (%1 characters), and it can't be undone; "
+                                                      "read it with get_teleprompter and pass replace:true to overwrite it")
+                                           .arg(prompter->script().size()));
+        }
+        if (given("speed"))
+            prompter->setSpeed(jsonNumber(args.value(QStringLiteral("speed")), prompter->speed()));
+        if (given("font_size"))
+            // Through jsonNumber, not jsonInt: "40.0" and "4e1" pass the integer validator but
+            // QString::toInt rejects them, which would leave the old size and still answer ok.
+            prompter->setFontSize(int(jsonNumber(args.value(QStringLiteral("font_size")), prompter->fontSize())));
+        if (given("overlay"))
+            prompter->setOverlayEnabled(jsonBool(args.value(QStringLiteral("overlay"))));
+        if (given("follow_recording"))
+            prompter->setFollowRecording(jsonBool(args.value(QStringLiteral("follow_recording"))));
+        if (hasScript && script != prompter->script()) {
+            prompter->setScript(script);   // marks the project unsaved; not an undo step
+            prompter->reset();             // a new script is read from the top
+        }
+        return state(false);
     }
 
     if (tool == QLatin1String("get_job"))
