@@ -245,6 +245,10 @@ public:
     double transitionDurationSeconds() const { return m_transitionDurationSeconds; }
     QStringList recentTransitions() const { return m_recentTransitions; }
     void pushRecentTransition(const QString &kind);
+    // Recent queries of one asset search bar, newest first. Stored as a JSON string under
+    // "assetSearchHistory/<key>/json", the layout QtCore's QML Settings used before.
+    Q_INVOKABLE QStringList assetSearchHistory(const QString &key) const;
+    Q_INVOKABLE void setAssetSearchHistory(const QString &key, const QStringList &entries);
     void setTransitionDurationSeconds(double seconds);
     // Performance tunables (see the properties above).
     int staleFrameLagMs() const;

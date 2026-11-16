@@ -1145,8 +1145,11 @@ int main(int argc, char *argv[])
     };
     const auto loadShell = [&engine, resolvedShell, windowOf, hookWindow](bool first) {
         engine.setInitialProperties({{QStringLiteral("shellPreference"), resolvedShell}});
+        const qsizetype rootsBefore = engine.rootObjects().size();
         engine.loadFromModule("Drift", "Shell");
-        hookWindow(windowOf(engine.rootObjects().constLast()), first, true);
+        // A Shell.qml that fails to load adds no root; objectCreationFailed then exits.
+        const QList<QObject *> roots = engine.rootObjects();
+        hookWindow(windowOf(roots.size() > rootsBefore ? roots.constLast() : nullptr), first, true);
     };
 
     const auto startEditor = [&](bool first) {
