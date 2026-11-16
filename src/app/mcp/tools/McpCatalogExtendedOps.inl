@@ -1299,13 +1299,13 @@
           "embedded audio is not suppressed — with per-clip volume keyframe count, audio effect "
           "count, fades, and the asset's sampleRate/channels/hasAudio. Cheaper and far smaller than "
           "inspect({clips:true,detail:true}) when all you need is a range worth analysing. Also "
-          "returns beats.{analysed, bpm, stale, gridVisible, onsetsVisible}.",
+          "returns beats.{analysed, bpm, stale, gridVisible, onsetsVisible}, and soloed:[tracks] when any is soloed.",
           objectSchema({}), true, false, true },
         { "get_waveform", "audio", "See the amplitude",
           "Amplitude peaks as an array of numbers in 0..1, one per bucket, evenly spaced across the "
           "range. Three modes: pass clip (or track+index) for that clip's trimmed source window, "
           "asset for a media file, or neither (with start and duration) for the MIXED TIMELINE — "
-          "every track summed with volume, fades and mutes applied. WARNING: clip and asset mode "
+          "every track summed with volume, fades, mutes and solo applied. WARNING: clip and asset mode "
           "read the source file, so clip speed, reverse and volume are NOT applied; only timeline "
           "mode is what you would actually hear. Silence reads as a true 0, so this is usable for "
           "finding dead air. Blocks while decoding, so the data is there on the first call. "
@@ -1393,7 +1393,7 @@
           "TIMELINE second, which is how you ramp or duck. WARNING: once a clip has more than one "
           "volume keyframe, a call without `at` retargets the key nearest the playhead rather than "
           "flattening the animation — read the keys back with list_keyframes({prop:\"volume\"}). "
-          "Track-level volume does not exist; mute a whole lane with set_track instead.",
+          "Track-level volume does not exist; mute a whole lane with set_track, or hear one alone with its solo.",
           objectSchema(mergeProps(
               {{QStringLiteral("value"), numberProp(QStringLiteral("Volume (1 = unity, 2 = mixer maximum)"), 0, 2)},
                {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds for a keyframe; omit to set the constant level"))}},

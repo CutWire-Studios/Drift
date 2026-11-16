@@ -1849,18 +1849,26 @@ QJsonObject McpDispatcher::opSetTrack(const QJsonObject &args)
         if (t.isTransformLayer() || t.isCameraLayer())
             return err("bad_args", QStringLiteral("A transform or camera layer can't be left out of export: everything under it would export reframed"));
     }
+    if (args.contains(QStringLiteral("solo")) && jsonBool(args.value(QStringLiteral("solo")))) {
+        const drift::Track &t = m_controller->project()->tracks().at(track);
+        if (t.type != drift::TrackType::Audio && t.type != drift::TrackType::Video)
+            return err("bad_args", QStringLiteral("Only an audio or video track carries sound: soloing this one would silence the whole mix"));
+    }
     if (args.contains(QStringLiteral("muted")))
         m_controller->setTrackMuted(track, jsonBool(args.value(QStringLiteral("muted"))));
     if (args.contains(QStringLiteral("hidden")))
         m_controller->setTrackHidden(track, jsonBool(args.value(QStringLiteral("hidden"))));
     if (args.contains(QStringLiteral("locked")))
         m_controller->setTrackLocked(track, jsonBool(args.value(QStringLiteral("locked"))));
+    if (args.contains(QStringLiteral("solo")))
+        m_controller->setTrackSolo(track, jsonBool(args.value(QStringLiteral("solo"))));
     if (args.contains(QStringLiteral("exclude_from_export")))
         m_controller->setTrackExcludedFromExport(track, jsonBool(args.value(QStringLiteral("exclude_from_export"))));
     return ok({{QStringLiteral("track"), track},
                {QStringLiteral("muted"), m_controller->trackMuted(track)},
                {QStringLiteral("hidden"), m_controller->trackHidden(track)},
                {QStringLiteral("locked"), m_controller->trackLocked(track)},
+               {QStringLiteral("solo"), m_controller->trackSolo(track)},
                {QStringLiteral("exclude_from_export"), m_controller->trackExcludedFromExport(track)}});
 }
 

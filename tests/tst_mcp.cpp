@@ -305,6 +305,7 @@ private slots:
     void textKeyframesThroughSetKeyframe();
     void importMediaTakesLottieBundles();
     void reviewTrackIsLeftOutOfExport();
+    void setTrackSolo();
     void historyEntriesHaveHashes();
     void undoToByHash();
     void snapshotFileHashMatchesHistory();
@@ -13102,6 +13103,176 @@ void McpTest::reviewTrackIsLeftOutOfExport()
     QVERIFY(state.bakes()->exportPool(false, {{s1, 2 * s1}}) == nullptr);
     QVERIFY(state.bakes()->exportPool(true, {{3 * s1, 4 * s1}}) != nullptr);
     state.bakes()->deleteAllBakes();
+}
+
+// #77: set_track({solo}) hears only soloed tracks; inspect marks the soloed row.
+void McpTest::setTrackSolo()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto S = [](const char *k) { return QString::fromLatin1(k); };
+
+    for (const char *type : {"audio", "audio", "text"})
+        QVERIFY(dispatcher.applyOne(S("add_track"), {{S("type"), S(type)}}).value(S("ok")).toBool());
+    QList<int> audio;
+    int text = -1;
+    const auto rows = [&] { return dispatcher.inspect({}).value(S("tracks")).toArray(); };
+    for (const QJsonValue &v : rows()) {
+        const QJsonObject row = v.toObject();
+        QVERIFY(!row.contains(S("solo")));
+        if (row.value(S("type")).toString() == QLatin1String("text"))
+            text = row.value(S("i")).toInt();
+        else if (row.value(S("type")).toString() == QLatin1String("audio"))
+            audio.append(row.value(S("i")).toInt());
+    }
+    QVERIFY(text >= 0);
+    QVERIFY(audio.size() >= 2);
+    // New tracks go on top, so the two audio tracks added above are the first two rows.
+    const int a = audio.at(0);
+    const int b = audio.at(1);
+    const auto onlySoloed = [&](const QList<int> &expected) {
+        QList<int> got;
+        for (const QJsonValue &v : rows()) {
+            const QJsonObject row = v.toObject();
+            if (row.contains(S("solo"))) {
+                QVERIFY(row.value(S("solo")).toBool());
+                got.append(row.value(S("i")).toInt());
+            }
+        }
+        QCOMPARE(got, expected);
+    };
+
+    int undo = state.undoIndex();
+    state.projectFile()->setDirty(false); // add_track dirtied it already
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    QJsonObject batch = dispatcher.apply({{S("ops"), QJsonArray{op(S("set_track"), {{S("track"), a}, {S("solo"), true}})}}});
+    QVERIFY2(batch.value(S("ok")).toBool(), qPrintable(dump(batch)));
+    const QJsonObject result = batch.value(S("done")).toArray().at(0).toObject().value(S("result")).toObject();
+    QVERIFY(result.value(S("solo")).toBool());
+    for (const char *k : {"muted", "hidden", "locked", "exclude_from_export"})
+        QVERIFY2(result.contains(S(k)), k);
+    QCOMPARE(state.undoIndex(), undo + 1);
+    QVERIFY(state.trackSolo(a));
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    onlySoloed({a});
+
+    // Unchanged: no new undo step.
+    batch = dispatcher.apply({{S("ops"), QJsonArray{op(S("set_track"), {{S("track"), a}, {S("solo"), true}})}}});
+    QVERIFY(batch.value(S("ok")).toBool());
+    QCOMPARE(state.undoIndex(), undo + 1);
+
+    // solo + muted in one apply is one step.
+    batch = dispatcher.apply({{S("ops"), QJsonArray{op(S("set_track"), {{S("track"), b}, {S("solo"), true}, {S("muted"), true}})}}});
+    QVERIFY2(batch.value(S("ok")).toBool(), qPrintable(dump(batch)));
+    QCOMPARE(state.undoIndex(), undo + 2);
+    QVERIFY(state.trackSolo(b) && state.trackMuted(b));
+    QVERIFY(dispatcher.apply({{S("ops"), QJsonArray{op(S("set_track"), {{S("track"), b}, {S("solo"), false}, {S("muted"), false}})}}})
+                .value(S("ok")).toBool());
+
+    // dry_run: ok, and a bogus key is listed as ignored.
+    batch = dispatcher.apply({{S("dry_run"), true}, {S("ops"), QJsonArray{op(S("set_track"), {{S("track"), a}, {S("solo"), false}})}}});
+    QVERIFY2(batch.value(S("ok")).toBool(), qPrintable(dump(batch)));
+    QVERIFY(!batch.contains(S("ignored")));
+    batch = dispatcher.apply({{S("dry_run"), true}, {S("ops"), QJsonArray{op(S("set_track"), {{S("track"), a}, {S("soloo"), true}})}}});
+    QVERIFY(batch.contains(S("ignored")));
+    QCOMPARE(batch.value(S("ignored")).toArray().at(0).toObject().value(S("keys")).toArray(), QJsonArray{S("soloo")});
+    QVERIFY(state.trackSolo(a));
+
+    // A text track can't be soloed, and the refusal changes nothing.
+    undo = state.undoIndex();
+    batch = dispatcher.apply({{S("ops"), QJsonArray{op(S("set_track"), {{S("track"), text}, {S("solo"), true}, {S("muted"), true}})}}});
+    QVERIFY(!batch.value(S("ok")).toBool());
+    QCOMPARE(batch.value(S("error")).toString(), QStringLiteral("apply_failed"));
+    QCOMPARE(batch.value(S("failed")).toObject().value(S("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY(!state.trackMuted(text));
+    QVERIFY(!state.trackSolo(text));
+    QCOMPARE(state.undoIndex(), undo);
+    // Clearing is allowed on any track.
+    QVERIFY(dispatcher.apply({{S("ops"), QJsonArray{op(S("set_track"), {{S("track"), text}, {S("solo"), false}})}}}).value(S("ok")).toBool());
+
+    // The change feed names the field.
+    const int rev = dispatcher.applyOne(S("changes"), {}).value(S("revision")).toInt();
+    QVERIFY(dispatcher.apply({{S("ops"), QJsonArray{op(S("set_track"), {{S("track"), a}, {S("solo"), false}})}}}).value(S("ok")).toBool());
+    const QJsonObject feed = dispatcher.applyOne(S("changes"), {{S("since"), rev}});
+    QVERIFY2(feed.value(S("ok")).toBool(), qPrintable(dump(feed)));
+    bool fieldSeen = false;
+    for (const QJsonValue &c : feed.value(S("changes")).toArray())
+        for (const QJsonValue &t : c.toObject().value(S("tracks")).toArray())
+            if (t.toObject().value(S("fields")).toArray().contains(S("solo")))
+                fieldSeen = true;
+    QVERIFY2(fieldSeen, qPrintable(dump(feed)));
+    QVERIFY(!state.trackSolo(a));
+
+    // Undo reverts the last solo.
+    state.undo();
+    QVERIFY(state.trackSolo(a));
+
+    // Atomic: a refused solo rolls the whole batch back.
+    undo = state.undoIndex();
+    const QString hash = state.project()->contentHash();
+    batch = dispatcher.apply({{S("atomic"), true},
+                              {S("ops"), QJsonArray{op(S("set_track"), {{S("track"), b}, {S("solo"), true}}),
+                                                    op(S("set_track"), {{S("track"), text}, {S("solo"), true}})}}});
+    QVERIFY(!batch.value(S("ok")).toBool());
+    QVERIFY(batch.value(S("rolled_back")).toBool());
+    QCOMPARE(state.project()->contentHash(), hash);
+    QCOMPARE(state.undoIndex(), undo);
+    QVERIFY(!state.trackSolo(b));
+
+    // audio_summary: a row's solo, and soloed:[...] even for a track with no sound on it.
+    drift::MediaAsset media;
+    media.name = QStringLiteral("tone.wav");
+    media.kind = drift::MediaKind::Audio;
+    media.path = QStringLiteral("/nonexistent/tone.wav");
+    media.durationUs = drift::secondsToUs(5.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    const int assetIndex = state.project()->assets().size() - 1;
+    QVERIFY(dispatcher.applyOne(S("place_clip"), {{S("asset"), assetIndex}, {S("track"), a}, {S("at"), 0.0}}).value(S("ok")).toBool());
+    const auto soloedOf = [&](const QJsonObject &sum) {
+        QList<int> out;
+        for (const QJsonValue &v : sum.value(S("soloed")).toArray())
+            out.append(v.toInt());
+        return out;
+    };
+    const auto soloRowOn = [&](const QJsonObject &sum, int track) {
+        for (const QJsonValue &v : sum.value(S("tracks")).toArray())
+            if (v.toObject().value(S("i")).toInt() == track)
+                return v.toObject().value(S("solo")).toBool();
+        return false;
+    };
+    const auto set = [&](int track, bool on) {
+        QVERIFY(dispatcher.apply({{S("ops"), QJsonArray{op(S("set_track"), {{S("track"), track}, {S("solo"), on}})}}}).value(S("ok")).toBool());
+    };
+    const auto summary = [&] { return dispatcher.applyOne(S("audio_summary"), {}); };
+    set(a, false); // from the undo above
+    QJsonObject sum = summary();
+    QVERIFY2(sum.value(S("ok")).toBool(), qPrintable(dump(sum)));
+    QVERIFY(!sum.contains(S("soloed")));
+    QVERIFY(!soloRowOn(sum, a));
+    set(a, true);
+    sum = summary();
+    QVERIFY(soloRowOn(sum, a));
+    QCOMPARE(soloedOf(sum), (QList<int>{a}));
+    set(a, false);
+    set(b, true); // an empty track: no row, yet it silences the rest
+    sum = summary();
+    QVERIFY(!soloRowOn(sum, a));
+    QCOMPARE(soloedOf(sum), (QList<int>{b}));
+    set(b, false);
+    sum = summary();
+    QVERIFY(!sum.contains(S("soloed")));
+    QVERIFY(!soloRowOn(sum, a));
+
+    // A transform layer carries no sound either (last: it moves the track indices).
+    const QString t1 = dispatcher.applyOne(S("add_text"), {{S("text"), S("One")}, {S("at"), 0.0}}).value(S("id")).toString();
+    const QString t2 = dispatcher.applyOne(S("add_text"), {{S("text"), S("Two")}, {S("at"), 0.0}}).value(S("id")).toString();
+    const QJsonObject layer = dispatcher.applyOne(S("make_transform_layer"), {{S("clips"), QJsonArray{t1, t2}}});
+    QVERIFY2(layer.value(S("ok")).toBool(), qPrintable(dump(layer)));
+    batch = dispatcher.apply({{S("ops"), QJsonArray{op(S("set_track"), {{S("track"), layer.value(S("track")).toInt()}, {S("solo"), true}})}}});
+    QVERIFY(!batch.value(S("ok")).toBool());
+    QCOMPARE(batch.value(S("failed")).toObject().value(S("error")).toString(), QStringLiteral("bad_args"));
 }
 
 QTEST_MAIN(McpTest)

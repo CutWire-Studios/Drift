@@ -1329,6 +1329,9 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
             {QStringLiteral("hidden"), track.hidden},
             {QStringLiteral("locked"), track.locked},
         };
+        // Only when set: while any track is soloed, the others are silent whatever their muted says.
+        if (track.solo)
+            row.insert(QStringLiteral("solo"), true);
         // Only when set: a review track that export leaves out.
         if (track.excludeFromExport)
             row.insert(QStringLiteral("exclude_from_export"), true);
@@ -4120,8 +4123,12 @@ QJsonObject McpController::audioSummary() const
     int audioClips = 0;
 
     const QList<drift::Track> &tracks = m_app->m_project.tracks();
+    QJsonArray soloed;
     for (int t = 0; t < tracks.size(); ++t) {
         const drift::Track &track = tracks.at(t);
+        // Whatever its clips: a soloed track with nothing on it still silences the others.
+        if (track.solo)
+            soloed.append(t);
         // Same rule the mixer applies: audio clips always, video clips unless their embedded
         // audio is suppressed. Anything else on the timeline is silent by construction.
         if (track.type != drift::TrackType::Audio && track.type != drift::TrackType::Video)
@@ -4165,12 +4172,16 @@ QJsonObject McpController::audioSummary() const
 
         if (clipRows.isEmpty())
             continue;
-        trackRows.append(QJsonObject{
+        QJsonObject trackRow{
             {QStringLiteral("i"), t},
             {QStringLiteral("type"), drift::trackTypeToString(track.type)},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("items"), clipRows},
-        });
+        };
+        // Only when set: while any track is soloed, the others are silent whatever their muted says.
+        if (track.solo)
+            trackRow.insert(QStringLiteral("solo"), true);
+        trackRows.append(trackRow);
     }
 
     QJsonObject beats{
@@ -4183,13 +4194,16 @@ QJsonObject McpController::audioSummary() const
         beats.insert(QStringLiteral("stale"), m_app->m_beatAudioFingerprint != m_app->audioLayoutFingerprint());
     }
 
-    return ok({
+    QJsonObject reply{
         {QStringLiteral("sampleRate"), m_app->m_project.sampleRate()},
         {QStringLiteral("dur"), round3(drift::usToSeconds(m_app->m_project.durationUs()))},
         {QStringLiteral("audioClips"), audioClips},
         {QStringLiteral("tracks"), trackRows},
         {QStringLiteral("beats"), beats},
-    });
+    };
+    if (!soloed.isEmpty())
+        reply.insert(QStringLiteral("soloed"), soloed);
+    return ok(reply);
 }
 
 namespace {

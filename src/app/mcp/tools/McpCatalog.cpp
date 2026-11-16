@@ -736,15 +736,21 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))}},
                        {QStringLiteral("track")}),
           false, true },
-        { "set_track", "timeline", "Mute, hide, lock or keep a lane out of export",
-          "Set track muted/hidden/locked. exclude_from_export:true makes it a review track: still "
+        { "set_track", "timeline", "Mute, solo, hide, lock or keep a lane out of export",
+          "Set track muted/hidden/locked/solo. solo:true makes only soloed tracks heard (mute and hide "
+          "still apply to a soloed track), in every timeline mix: playback, get_waveform, loudness and "
+          "range measurements, export_video; solo:false clears it. The picture is unaffected, it is "
+          "saved with the project, and inspect marks the track solo:true. Only an audio or video track "
+          "can be soloed; solo:false works on any track. "
+          "exclude_from_export:true makes it a review track: still "
           "shown and heard while editing, but left out of export_video and flatten_composite (e.g. a "
-          "subtitle lane with the VO script to read along); bakes overlapping it aren't reused. Refused "
-          "on a transform or camera layer. Undoable.",
+          "subtitle lane with the VO script to read along); bakes overlapping it aren't reused. A "
+          "transform or camera layer can't be excluded. Undoable.",
           objectSchema(mergeProps({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                                    {QStringLiteral("muted"), boolProp(QStringLiteral("Mute"))},
                                    {QStringLiteral("hidden"), boolProp(QStringLiteral("Hide from composite"))},
                                    {QStringLiteral("locked"), boolProp(QStringLiteral("Lock against edits"))},
+                                   {QStringLiteral("solo"), boolProp(QStringLiteral("Hear only soloed tracks (audio; the picture is unaffected)"))},
                                    {QStringLiteral("exclude_from_export"), boolProp(QStringLiteral("Keep this track out of export (a review track)"))}},
                                   {}),
                        {QStringLiteral("track")}) },
