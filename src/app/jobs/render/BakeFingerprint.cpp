@@ -39,6 +39,9 @@ struct TransitionEntry
 struct TrackEntry
 {
     QByteArray head;
+    QString id;
+    QString parentId;
+    QString spanEndId;
     std::vector<ClipEntry> clips;
     std::vector<TransitionEntry> transitions;
 };
@@ -66,12 +69,22 @@ QByteArray sourceStamp(const QString &path, QHash<QString, QByteArray> &cache)
 
 Timeline prepare(const QJsonArray &tracks, QHash<QString, QByteArray> &stamps)
 {
+    // Left out of a track's head: labels, view state, and what only the mix or the export reads.
+    // solo changes what is heard; excludeFromExport only what export renders, and export already
+    // skips bakes over such a track (BakeController::exportPool's skip spans). muted is NOT left
+    // out on Audio and Video tracks: the Timeline audio mix that audio-reactive procedural clips
+    // and effects read (AudioFrameAnalysis, forEachSourceClip) skips muted tracks, so it can change
+    // the picture. Dropping it only when no such consumer is in range would need package and effect
+    // lookups here, so it stays hashed there. If audio-reactive visuals ever follow solo, solo needs
+    // the same treatment.
     static const QStringList trackUiKeys{
         QStringLiteral("name"),         QStringLiteral("number"),
         QStringLiteral("locked"),       QStringLiteral("volume"),
         QStringLiteral("pan"),          QStringLiteral("clipDisplay"),
         QStringLiteral("showChannelWaveforms"),
         QStringLiteral("heightScale"),  QStringLiteral("lanesCollapsed"),
+        QStringLiteral("muted"),        QStringLiteral("solo"),
+        QStringLiteral("excludeFromExport"),
         QStringLiteral("clips"),        QStringLiteral("transitions"),
     };
     static const QStringList clipUiKeys{
@@ -90,7 +103,13 @@ Timeline prepare(const QJsonArray &tracks, QHash<QString, QByteArray> &stamps)
         QJsonObject head = track;
         for (const QString &key : trackUiKeys)
             head.remove(key);
+        const QString type = track.value(QStringLiteral("type")).toString();
+        if (type == QLatin1String("audio") || type == QLatin1String("video"))
+            head.insert(QStringLiteral("muted"), track.value(QStringLiteral("muted")));
         entry.head = compact(head);
+        entry.id = track.value(QStringLiteral("id")).toString();
+        entry.parentId = track.value(QStringLiteral("parentTrackId")).toString();
+        entry.spanEndId = track.value(QStringLiteral("spanEndTrackId")).toString();
 
         for (const QJsonValue &clipValue : track.value(QStringLiteral("clips")).toArray()) {
             QJsonObject clip = clipValue.toObject();
@@ -156,7 +175,39 @@ void hashTimeline(QCryptographicHash &hash, const Prepared &p, const Timeline &t
                   double endUs, QSet<QString> &visiting)
 {
     const bool all = std::isinf(endUs);
+    const auto inRange = [&](const TrackEntry &track) {
+        if (all)
+            return true;
+        for (const ClipEntry &clip : track.clips) {
+            if (!(clip.start >= endUs || clip.end <= startUs))
+                return true;
+        }
+        return false;
+    };
+    // A transform layer covers the tracks from below it down to its span-end track, found by
+    // position. A skipped track can still be that end (or the parent of a lane that is), so its id
+    // stays in the sequence: moving it past a track in the range changes what the layer covers.
+    QSet<QString> anchors;
+    if (!all) {
+        for (const TrackEntry &track : timeline) {
+            if (!track.spanEndId.isEmpty() && inRange(track))
+                anchors.insert(track.spanEndId);
+        }
+        for (const TrackEntry &track : timeline) {
+            if (anchors.contains(track.id) && !track.parentId.isEmpty())
+                anchors.insert(track.parentId);
+        }
+    }
     for (const TrackEntry &track : timeline) {
+        // A track with nothing in the range draws nothing there, whatever its own properties: its
+        // head (hidden, its kind, its span) is hashed only with a clip it applies to.
+        if (!inRange(track)) {
+            if (anchors.contains(track.id)) {
+                hash.addData(track.id.toUtf8());
+                hash.addData("#", 1);
+            }
+            continue;
+        }
         hash.addData(track.head);
         QSet<QString> included;
         const auto include = [&](const ClipEntry &clip) {
