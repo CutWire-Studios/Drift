@@ -327,6 +327,10 @@ private slots:
     void proxyOpsCreateCheckAndRemove();
     void bakeOpsListDeleteAndRefuse();
     void bakeRangeBakesAndGoesStale();
+    void rebakeAllStaleSeesAnEditAtOnce();
+    void bakeStaleBadgeFollowsSourcesAndSetup();
+    void splitBakeCountsSharedGopsOnce();
+    void rebakeAllStaleQueuesNothingWhileBusy();
     void performanceSettingsRoundTrip();
     void binFolderOps();
 };
@@ -12985,6 +12989,208 @@ void McpTest::bakeRangeBakesAndGoesStale()
     QVERIFY2(okOf(r), qPrintable(dump(r)));
     waitBake();
     QCOMPARE(call("list_bakes").value(QStringLiteral("n")).toInt(), 0);
+}
+
+namespace {
+
+// Test mode + a throwaway org/app so cacheRoot() lands in a test location; restored on scope exit.
+struct BakeTestEnv
+{
+    QString org = QCoreApplication::organizationName();
+    QString app = QCoreApplication::applicationName();
+    QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    QString path;
+    BakeTestEnv()
+    {
+        QStandardPaths::setTestModeEnabled(true);
+        QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpTest"));
+        QCoreApplication::setApplicationName(QStringLiteral("DriftMcpTest"));
+        path = QDir(drift::cacheRoot()).filePath(QStringLiteral("bakes/%1.driftbake").arg(uuid));
+    }
+    ~BakeTestEnv()
+    {
+        QFile::remove(path);
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    }
+};
+
+// Writes a one-GOP bake over [start, end) of `project` and returns its id.
+QString writeBake(const QString &path, const drift::Project &project, int start, int end)
+{
+    if (!QDir().mkpath(QFileInfo(path).absolutePath()))
+        return {};
+    auto file = drift::BakeFile::open(path);
+    if (!file)
+        return {};
+    const int n = end - start;
+    const QString id = file->beginBake(start, end, 2, 2, 1, QByteArrayLiteral("x"), bakeFingerprint(project, start, end));
+    if (id.isEmpty() || !file->appendGop(id, start, QByteArray(n, 'x'), QVector<quint32>(n, 1)) || !file->commit())
+        return {};
+    return id;
+}
+
+} // namespace
+
+void McpTest::rebakeAllStaleSeesAnEditAtOnce()
+{
+    BakeTestEnv env;
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *tool, const QJsonObject &args = {}) {
+        return dispatcher.applyOne(QLatin1String(tool), args);
+    };
+    const auto okOf = [](const QJsonObject &r) { return r.value(QStringLiteral("ok")).toBool(); };
+
+    const QJsonObject added = call("add_text", {{QStringLiteral("text"), QStringLiteral("Hello")}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(okOf(added), qPrintable(dump(added)));
+    QString clip = added.value(QStringLiteral("clip")).toString();
+    if (clip.isEmpty())
+        clip = added.value(QStringLiteral("id")).toString();
+    QVERIFY(!clip.isEmpty());
+    state.project()->setId(env.uuid);
+    const int fps = state.project()->fps();
+    QVERIFY(!writeBake(env.path, *state.project(), 0, fps).isEmpty());
+
+    // The first list_bakes binds the file.
+    QCOMPARE(call("list_bakes").value(QStringLiteral("stale")).toInt(), 0);
+    QVERIFY(okOf(call("set_text", {{QStringLiteral("clip"), clip}, {QStringLiteral("text"), QStringLiteral("Bye")}})));
+    // No event loop spin: the 300 ms re-check is still pending.
+    QCOMPARE(state.bakes()->rebakeAllStale(), 1);
+
+    state.bakes()->cancelBake();
+    QTRY_VERIFY_WITH_TIMEOUT(!state.bakes()->busy(), 120000);
+    state.bakes()->deleteAllBakes();
+    QTRY_VERIFY(!state.bakes()->busy());
+}
+
+void McpTest::bakeStaleBadgeFollowsSourcesAndSetup()
+{
+    BakeTestEnv env;
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *tool, const QJsonObject &args = {}) {
+        return dispatcher.applyOne(QLatin1String(tool), args);
+    };
+    const auto okOf = [](const QJsonObject &r) { return r.value(QStringLiteral("ok")).toBool(); };
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString png = dir.filePath(QStringLiteral("a.png"));
+    QImage red(64, 64, QImage::Format_RGB32);
+    red.fill(Qt::red);
+    QVERIFY(red.save(png, "PNG"));
+    const QJsonObject imported = call("import_media", {{QStringLiteral("paths"), QJsonArray{png}}});
+    QVERIFY2(okOf(imported), qPrintable(dump(imported)));
+    QVERIFY(imported.value(QStringLiteral("missing")).toArray().isEmpty());
+    QVERIFY(!state.project()->assets().isEmpty());
+    const drift::MediaAsset asset = state.project()->assets().begin().value();
+    const QJsonObject placed = call("place_clip", {{QStringLiteral("asset"), asset.id}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(okOf(placed), qPrintable(dump(placed)));
+
+    state.project()->setId(env.uuid);
+    const int fps = state.project()->fps();
+    QVERIFY(!writeBake(env.path, *state.project(), 0, fps).isEmpty());
+    QCOMPARE(call("list_bakes").value(QStringLiteral("stale")).toInt(), 0);
+
+    // Rewrite the source behind the controller's back: size and mtime both change.
+    QImage blue(128, 128, QImage::Format_RGB32);
+    blue.fill(Qt::blue);
+    QVERIFY(blue.save(asset.path, "PNG"));
+    {
+        QFile f(asset.path);
+        QVERIFY(f.open(QIODevice::ReadWrite));
+        QVERIFY(f.setFileTime(QDateTime::currentDateTime().addSecs(5), QFileDevice::FileModificationTime));
+    }
+    QTest::qWait(500);
+    QCOMPARE(state.bakes()->staleCount(), 0);
+    emit qGuiApp->applicationStateChanged(Qt::ApplicationActive);
+    QTRY_COMPARE_WITH_TIMEOUT(state.bakes()->staleCount(), 1, 3000);
+
+    // Project setup and background go through the edit path and re-check by themselves.
+    // A second project id binds a fresh bake file (the first one is still bound to the old id).
+    const QString secondId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString secondPath = QDir(drift::cacheRoot()).filePath(QStringLiteral("bakes/%1.driftbake").arg(secondId));
+    const auto removeSecond = qScopeGuard([&] { QFile::remove(secondPath); });
+    state.project()->setId(secondId);
+    QVERIFY(!writeBake(secondPath, *state.project(), 0, fps).isEmpty());
+    QCOMPARE(call("list_bakes").value(QStringLiteral("stale")).toInt(), 0);
+    QVERIFY(okOf(call("set_background", {{QStringLiteral("color"), QStringLiteral("#ffff00ff")}})));
+    QTRY_COMPARE_WITH_TIMEOUT(state.bakes()->staleCount(), 1, 3000);
+    state.undo();
+    QTRY_COMPARE_WITH_TIMEOUT(state.bakes()->staleCount(), 0, 3000);
+    QVERIFY(okOf(call("set_project_setup", {{QStringLiteral("width"), state.project()->width()},
+                                            {QStringLiteral("height"), state.project()->height()},
+                                            {QStringLiteral("fps"), 25}})));
+    QTRY_COMPARE_WITH_TIMEOUT(state.bakes()->staleCount(), 1, 3000);
+}
+
+void McpTest::splitBakeCountsSharedGopsOnce()
+{
+    BakeTestEnv env;
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto okOf = [](const QJsonObject &r) { return r.value(QStringLiteral("ok")).toBool(); };
+    const QJsonObject added = dispatcher.applyOne(QStringLiteral("add_text"),
+                                                  {{QStringLiteral("text"), QStringLiteral("Hello")}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(okOf(added), qPrintable(dump(added)));
+    state.project()->setId(env.uuid);
+    const int fps = state.project()->fps();
+    QVERIFY(QDir().mkpath(QFileInfo(env.path).absolutePath()));
+    {
+        auto file = drift::BakeFile::open(env.path);
+        QVERIFY(file);
+        const QString id = file->beginBake(0, fps, 2, 2, 1, QByteArrayLiteral("x"), bakeFingerprint(*state.project(), 0, fps));
+        QVERIFY(!id.isEmpty());
+        QVERIFY(file->appendGop(id, 0, QByteArray(fps, 'x'), QVector<quint32>(fps, 1)));
+        QVERIFY(file->commit());
+        // The one GOP now straddles the cut and stays in both pieces.
+        QVERIFY(file->removeRange(10, 20));
+        QVERIFY(file->commit());
+    }
+
+    const QJsonObject r = dispatcher.applyOne(QStringLiteral("list_bakes"), {});
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("n")).toInt(), 2);
+    double sum = 0;
+    for (const QJsonValue &v : r.value(QStringLiteral("bakes")).toArray()) {
+        const QJsonObject row = v.toObject();
+        const double bytes = row.value(QStringLiteral("bytes")).toDouble();
+        sum += bytes;
+        QCOMPARE(bytes, row.value(QStringLiteral("start")).toDouble() == 0.0 ? double(fps) : 0.0);
+    }
+    QCOMPARE(sum, double(fps));
+    double modelSum = 0;
+    for (const QVariant &v : state.bakes()->bakes())
+        modelSum += v.toMap().value(QStringLiteral("bytes")).toDouble();
+    QCOMPARE(modelSum, double(fps));
+}
+
+void McpTest::rebakeAllStaleQueuesNothingWhileBusy()
+{
+    BakeTestEnv env;
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QJsonObject added = dispatcher.applyOne(QStringLiteral("add_text"),
+                                                  {{QStringLiteral("text"), QStringLiteral("Hello")}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(), qPrintable(dump(added)));
+    state.project()->setId(env.uuid);
+    const int fps = state.project()->fps();
+    QVERIFY(!writeBake(env.path, *state.project(), 0, fps).isEmpty());
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("list_bakes"), {}).value(QStringLiteral("stale")).toInt(), 0);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("bake_range"), {{QStringLiteral("from"), 0.0}, {QStringLiteral("to"), 1.0}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.bakes()->busy());
+    QCOMPARE(state.bakes()->rebakeAllStale(), 0);
+    state.bakes()->cancelBake();
+    QTRY_VERIFY_WITH_TIMEOUT(!state.bakes()->busy(), 120000);
+    state.bakes()->deleteAllBakes();
+    QTRY_VERIFY(!state.bakes()->busy());
 }
 
 void McpTest::performanceSettingsRoundTrip()

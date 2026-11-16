@@ -1,5 +1,6 @@
 #include "app/jobs/render/BakeController.h"
 
+#include "app/bin/AssetLibrary.h"
 #include "app/editor/AppController.h"
 #include "app/jobs/JobRegistry.h"
 #include "app/jobs/render/BakeFingerprint.h"
@@ -12,8 +13,10 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QGuiApplication>
 #include <QJsonObject>
 #include <QPointer>
+#include <QSet>
 #include <QSettings>
 
 #include <algorithm>
@@ -34,6 +37,24 @@ QString bakePath(const QString &projectId)
 qint64 usForFrame(qint64 frame, int fps)
 {
     return std::llround(double(frame) * 1e6 / qMax(1, fps));
+}
+
+// Each bake's size, counting a GOP once per file: a split leaves the GOPs across the cut in both
+// pieces (they're needed to decode), and they go on the earlier piece.
+QHash<QString, quint64> bakeBytes(const drift::BakeIndex &index)
+{
+    QHash<QString, quint64> out;
+    QSet<quint64> seen;
+    for (const drift::Bake &bake : index.bakes) {
+        quint64 &bytes = out[bake.id];
+        for (const drift::BakeGop &gop : bake.gops) {
+            if (!seen.contains(gop.offset)) {
+                seen.insert(gop.offset);
+                bytes += gop.size;
+            }
+        }
+    }
+    return out;
 }
 
 QString qualityLabel(int preset)
@@ -79,6 +100,22 @@ BakeController::BakeController(AppController *app, QObject *parent)
         syncProject();
         scheduleStaleCheck();
     });
+    // Sources are stamped by size and mtime, and nothing watches them: re-check when the user comes
+    // back to the app (a file re-rendered elsewhere) and when a source is re-probed.
+    if (qGuiApp) {
+        connect(qGuiApp, &QGuiApplication::applicationStateChanged, this, [this](Qt::ApplicationState state) {
+            // Not mid-bake (older bakes are already trimmed but keep their old fingerprints until the
+            // job ends, so they'd read as stale; onJobDone re-checks), and at most once per 5 s.
+            if (state != Qt::ApplicationActive || m_busy)
+                return;
+            if (m_focusCheck.isValid() && !m_focusCheck.hasExpired(5000))
+                return;
+            m_focusCheck.start();
+            scheduleStaleCheck();
+        });
+    }
+    if (AssetLibrary *library = m_app->assetLibrary())
+        connect(library, &AssetLibrary::sourceContentChanging, this, [this]() { scheduleStaleCheck(); });
     connect(m_app, &AppController::projectReset, this, [this]() {
         m_queue.clear();
         m_afterJob.clear();
@@ -196,11 +233,8 @@ void BakeController::recomputeStale()
 
 // --- QML model --------------------------------------------------------------
 
-QVariantMap BakeController::bakeMap(const drift::Bake &bake, const QString &state) const
+QVariantMap BakeController::bakeMap(const drift::Bake &bake, const QString &state, quint64 bytes) const
 {
-    quint64 bytes = 0;
-    for (const drift::BakeGop &gop : bake.gops)
-        bytes += gop.size;
     const double fps = qMax(1, bake.fps);
     return {
         {QStringLiteral("id"), bake.id},
@@ -224,13 +258,15 @@ QVariantList BakeController::bakes() const
         return {};
     QList<QVariantMap> rows;
     bool sawActive = false;
+    const auto bytes = bakeBytes(*m_index);
     for (const drift::Bake &bake : m_index->bakes) {
         const bool baking = m_busy && !m_activePreIds.contains(bake.id) && bake.startFrame >= m_activeStart
             && bake.endFrame <= m_activeEnd;
         sawActive = sawActive || baking;
         rows.append(bakeMap(bake, baking                           ? QStringLiteral("baking")
                                   : m_staleIds.contains(bake.id) ? QStringLiteral("stale")
-                                                                 : QStringLiteral("fresh")));
+                                                                 : QStringLiteral("fresh"),
+                              bytes.value(bake.id)));
     }
     if (m_busy && !sawActive) {
         drift::Bake pending;
@@ -241,7 +277,7 @@ QVariantList BakeController::bakes() const
         pending.width = m_app->m_project.width();
         pending.height = m_app->m_project.height();
         pending.preset = bakeQuality();
-        rows.append(bakeMap(pending, QStringLiteral("baking")));
+        rows.append(bakeMap(pending, QStringLiteral("baking"), 0));
     }
     std::stable_sort(rows.begin(), rows.end(), [](const QVariantMap &a, const QVariantMap &b) {
         return a.value(QStringLiteral("start")).toDouble() < b.value(QStringLiteral("start")).toDouble();
@@ -260,12 +296,13 @@ QVariantList BakeController::staleBakesIn(double startSeconds, double endSeconds
     QVariantList out;
     if (m_detached || !m_index)
         return out;
+    const auto bytes = bakeBytes(*m_index);
     for (const drift::Bake &bake : m_index->bakes) {
         if (!m_staleIds.contains(bake.id))
             continue;
         const double fps = qMax(1, bake.fps);
         if (double(bake.startFrame) / fps < endSeconds && double(bake.endFrame) / fps > startSeconds)
-            out.append(bakeMap(bake, QStringLiteral("stale")));
+            out.append(bakeMap(bake, QStringLiteral("stale"), bytes.value(bake.id)));
     }
     return out;
 }
@@ -354,6 +391,12 @@ QPair<qint64, qint64> BakeController::rebakeRange(const QString &id)
 
 int BakeController::rebakeAllStale()
 {
+    // While a bake runs, older bakes are already trimmed but keep their old fingerprints until
+    // onJobDone (which re-checks), so they'd read as stale: queue nothing now.
+    if (m_busy)
+        return 0;
+    // The re-check after an edit waits 300 ms: run it now, or a bake that just went stale is missed.
+    refreshStale();
     if (m_detached || !m_index)
         return 0;
     QList<QPair<qint64, qint64>> spans;
