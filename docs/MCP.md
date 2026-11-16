@@ -209,7 +209,7 @@ To wait for all of it instead of polling, call **`wait_idle({timeout?, kinds?})`
 |---------|-------------|
 | `media` | Import (paths/bytes, optionally into a bin `folder`), list, rename, remove, replace, export still, bin folders (`list_folders`, `create_folder`, `move_asset_to_folder`, `rename_folder`, `delete_folder`), `set_asset_rotation` (lossless orientation override for a sideways video), PDF clips (`inspect_pdf`, `set_pdf_options`) — see [PDF documents](#pdf-documents) |
 | `timeline` | Tracks, clips, selection, ripple/gap, bookmarks, copy/paste, A/V link, timelines (`new_timeline`, `open_composite`, `close_timeline`, `list_composites`) |
-| `canvas` | Transform (including 3D rotation, position Z, anchor point and perspective), flip, `set_clip_crop` (crop and straighten; a bare `angle` refits the window inside the turned picture, `fit:false` keeps it), blend, mask, fade, speed, reverse, animation, stabilisation, `set_clip_orientation` (lossless 0/90/180/270 for a video clip), shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) — see [Shapes](#shapes) |
+| `canvas` | Transform (including 3D rotation, position Z, anchor point and perspective), flip, `set_clip_crop` (crop and straighten; a bare `angle` refits the window inside the turned picture, `fit:false` keeps it), blend, mask (`set_mask`; `use_as_mask` and `convert_clip_to_mask` turn clips into masks — see [Masks](#masks)), fade, speed, reverse, animation, stabilisation, `set_clip_orientation` (lossless 0/90/180/270 for a video clip), shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) — see [Shapes](#shapes) |
 | `playback` | Seek, play, pause, In/Out work area, range bakes (`list_bakes`, `bake_range`, `rebake`, `delete_bake`, `cancel_bake`) |
 | `text` | Title and caption clips, style packs (`list_text_presets`, user presets), fonts, shading layers (fill/stroke/shadow/glow/extrude), gradient presets and shader effects, looks, In/Out/Loop animation presets, Lottie preset import |
 | `shapes` | Builtin shapes, stickers, emoji |
@@ -575,6 +575,32 @@ group fade still needs a composite); standalone effect adjustments inside the sp
 masks, are not moved; a transition mixes after both of its sides have been moved; and content a clip
 places off-canvas becomes visible when the group is scaled down.
 
+### Masks
+
+`set_mask({clip, mask})` sets a clip's mask (it replaces the whole mask; see [Traps](#traps)). Two
+ops turn clips into masks instead, as the timeline's context menu does:
+
+- **`use_as_mask({clips})`** (Use as mask (nested timeline)) moves the clips, with their linked
+  partners, into a new composite timeline, and puts a mask clip over the same span on the first
+  video track below the lowest of them. The mask renders that timeline live (its alpha), so it
+  masks the track it sits on: a title becomes a window onto the footage below. Main timeline only.
+  Video, image, text, shape, vector and PDF clips; composites, audio, subtitles, adjustments, 3D and
+  procedural clips fail `type_mismatch`, and clips with no video track below fail `bad_args`.
+  One undo step. Returns `{sequence, asset, mask_clip}`. `open_composite({sequence})` edits what
+  the mask shows (`open_composite({main:true})` returns); to change the mask
+  (`mediaChannel` `alpha`/`luma`, fit, `invert`), read `mask_clip`'s whole mask from `inspect`,
+  change the field and send all of it back to `set_mask` (a partial mask turns it off). In `inspect` the mask clip's row
+  carries `sequenceId`, and `list_composites` lists the timeline (its bin item is named
+  "<clip> mask").
+- **`convert_clip_to_mask({clip})`** (Convert to mask) replaces a video or image clip, and its
+  linked audio, with a luma matte over the same span on the first video track below. A retimed or
+  reversed clip, or one with no video track below, fails `bad_args` with the reason. One undo
+  step. Returns `{mask_clip}`.
+
+`lockAspect` (the inspector's and the canvas's aspect lock: corner handles keep the mask's w:h) is
+an editing preference: `set_mask` keeps the clip's current lock when the key is left out. `inspect`
+omits it when it is off, so to unlock, send `lockAspect:false` explicitly.
+
 ### 3D models
 
 The `model3d` toolbox puts a glTF binary (`.glb` only — a `.gltf` with sidecar files would not
@@ -899,7 +925,7 @@ local fake) without rebuilding.
 - **`export_video` inherits the settings you leave out** from the last export made through MCP (agent exports keep their own memory, separate from the export dialog's). Mode switches are the exception — `audio_only`, `gif` and `bakes` never carry over — but a codec, a bitrate or a scale does. Pass every setting you care about.
 - **A single key is moved, not added to.** Visual clips are born with one key at their start on x/y/width/height; with auto-key off `set_transform` moves that key, so the value holds for the whole clip. Only a property that already has two or more keys (or any property with `autoKey` on) gets a key at the playhead, or at `at` (timeline seconds). That time must be inside the clip: a keyed write outside it fails `bad_args` and writes nothing.
 - **`auto_reframe` cannot make a crop sharper than the canvas.** The decode is bounded by the canvas, not by the layout rect, so a crop achieved with an oversized transform resolves at canvas resolution at best. The reply's `scale` says how far the source is being pushed; `upscaled:true` means it is past its own resolution.
-- **`set_mask` replaces the whole mask.** Omitted keys revert to defaults and omitting `shape` turns the mask off. Read the current mask from `inspect({clips:true, detail:true}).tracks[].items[].mask` and send it back merged (its `points` come as `[{x,y}]`, which the schema accepts alongside `[[x,y]]`; drop the read-only `animated`/`keyframes`).
+- **`set_mask` replaces the whole mask.** Omitted keys revert to defaults, except `lockAspect`, which keeps the clip's current aspect lock, and omitting `shape` turns the mask off. Read the current mask from `inspect({clips:true, detail:true}).tracks[].items[].mask` and send it back merged (its `points` come as `[{x,y}]`, which the schema accepts alongside `[[x,y]]`; drop the read-only `animated`/`pathKeyCount`/`keyframes`).
 - **`remove_all_effects` clears one clip.** It deletes the clip's video and audio effect stacks in one undo step (`masks:true` also its masks), but a linked audio partner keeps its own effects; call it again with the partner's id. `removed:0` means there was nothing to remove and no undo step.
 - **`set_subtitle_cues` replaces every cue.** Read `inspect({clips:true, cues:true})` (or a detail row's `subtitleCues`), merge, send.
 - **`set_effect_param`, `set_audio_effect_param` and `set_transition_param` fail `not_found`** on a key the effect does not declare or a stack index that is not there. They used to accept anything and store it silently; a batch that relied on that now stops at the bad op.
