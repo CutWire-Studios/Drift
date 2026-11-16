@@ -854,6 +854,8 @@ add_library(driftengine STATIC
     src/engine/packages/assets/FontCatalog.cpp
     src/engine/packages/assets/StickerCatalog.h
     src/engine/packages/assets/StickerCatalog.cpp
+    src/engine/packages/assets/StickerPackImport.h
+    src/engine/packages/assets/StickerPackImport.cpp
     src/engine/packages/assets/EmojiCatalog.h
     src/engine/packages/assets/EmojiCatalog.cpp
     src/engine/packages/assets/EmojiTable.h
@@ -2841,6 +2843,7 @@ if(Qt6LinguistTools_FOUND)
             src/engine/encode/MediaEditor.cpp
             src/engine/project/ProjectBundle.cpp
             src/engine/face/props/FacePropImport.cpp
+            src/engine/packages/assets/StickerPackImport.cpp
             src/core/project/Project.cpp
             src/core/project/Transcript.cpp
             src/core/project/GuideSet.cpp

@@ -780,7 +780,14 @@ public:
     Q_INVOKABLE void addStickerClip(const QString &stickerId, double atSeconds,
                                     int trackIndex = -1);
     Q_INVOKABLE QVariantList builtinStickers() const;
+    // [{id, label, packId, custom}]; custom marks categories from packs the user imported.
     Q_INVOKABLE QVariantList builtinStickerCategories() const;
+    // The user's imported packs: [{id, name, count}].
+    Q_INVOKABLE QVariantList customStickerPacks() const;
+    // A .zip or a folder of .png/.webp images, with an optional manifest.json. Reports in the
+    // toast; returns {installed: packId, count} or {} on failure.
+    Q_INVOKABLE QVariantMap importStickerPack(const QUrl &url);
+    Q_INVOKABLE bool removeStickerPack(const QString &packId);
     // The full emoji set behind the sticker packs; empty until the pack carrying the font is
     // installed.
     Q_INVOKABLE QVariantList emojiCatalog() const;
@@ -2003,6 +2010,7 @@ signals:
     void userFontsChanged();
     void userEffectPresetsChanged();
     void facePropsChanged();
+    void stickersChanged();
     void projectLayoutChosenChanged();
     // The document has been swapped wholesale (New Project, or opening another one). The
     // auxiliary windows edit one clip each, so they have nothing left to act on and close.

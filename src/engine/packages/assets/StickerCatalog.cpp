@@ -33,6 +33,7 @@ bool loadPackage(const QString &dir, StickerPack *out)
     pack.name = root.value(QStringLiteral("name")).toString();
     pack.license = root.value(QStringLiteral("license")).toString();
     pack.order = root.value(QStringLiteral("order")).toInt();
+    pack.custom = root.value(QStringLiteral("custom")).toBool();
     pack.packageDir = dir;
     if (pack.id.isEmpty())
         return false;
@@ -42,6 +43,8 @@ bool loadPackage(const QString &dir, StickerPack *out)
         StickerCategory category;
         category.id = object.value(QStringLiteral("id")).toString();
         category.label = object.value(QStringLiteral("label")).toString();
+        category.packId = pack.id;
+        category.custom = pack.custom;
         if (!category.id.isEmpty())
             pack.categories.append(category);
     }
