@@ -26,6 +26,7 @@
 
 #include "app/editor/AppController.h"
 #include "app/bin/AssetLibrary.h"
+#include "app/jobs/render/BakeController.h"
 #include "app/bin/MediaBinController.h"
 #include "playback/PlaybackEngine.h"
 #include "app/editor/ProjectFileController.h"
@@ -1140,11 +1141,146 @@ QJsonObject McpDispatcher::opProxies(const QString &tool, const QJsonObject &arg
     return reply(out);
 }
 
+QJsonObject McpDispatcher::opBakes(const QString &tool, const QJsonObject &args)
+{
+    BakeController *bakes = m_controller->bakes();
+    static const QStringList qualityNames = {QStringLiteral("compact"), QStringLiteral("balanced"),
+                                             QStringLiteral("high")};
+    const auto qualityName = [](int preset) { return qualityNames.at(qBound(0, preset, 2)); };
+    // Every reply ends with the queue state, as list_bakes gives it.
+    const auto tail = [bakes](QJsonObject out) {
+        out.insert(QStringLiteral("busy"), bakes->busy());
+        out.insert(QStringLiteral("queued"), bakes->queuedCount());
+        return ok(out);
+    };
+    const auto cacheError = [this, bakes]() {
+        return !bakes->busy() && bakes->queuedCount() == 0
+            ? err("io_error", m_controller->lastMessage())
+            : QJsonObject();
+    };
+    const int fps = qMax(1, m_controller->project()->fps());
+    const auto bakeIds = [bakes]() {
+        QStringList ids;
+        for (const QVariant &row : bakes->bakes())
+            ids.append(row.toMap().value(QStringLiteral("id")).toString());
+        return ids;
+    };
+
+    if (tool == QLatin1String("list_bakes")) {
+        bakes->refreshStale();
+        QJsonArray rows;
+        for (const QVariant &v : bakes->bakes()) {
+            const QVariantMap m = v.toMap();
+            const QString state = m.value(QStringLiteral("state")).toString();
+            QJsonObject row{{QStringLiteral("id"), m.value(QStringLiteral("id")).toString()},
+                            {QStringLiteral("start"), m.value(QStringLiteral("start")).toDouble()},
+                            {QStringLiteral("end"), m.value(QStringLiteral("end")).toDouble()},
+                            {QStringLiteral("state"), state},
+                            {QStringLiteral("bytes"), m.value(QStringLiteral("bytes")).toDouble()},
+                            {QStringLiteral("quality"), qualityName(m.value(QStringLiteral("quality")).toInt())},
+                            {QStringLiteral("width"), m.value(QStringLiteral("width")).toInt()},
+                            {QStringLiteral("height"), m.value(QStringLiteral("height")).toInt()}};
+            if (state == QLatin1String("baking"))
+                row.insert(QStringLiteral("progress"), m.value(QStringLiteral("progress")).toDouble());
+            rows.append(row);
+        }
+        QJsonObject out{{QStringLiteral("bakes"), rows},
+                        {QStringLiteral("n"), rows.size()},
+                        {QStringLiteral("stale"), bakes->staleCount()},
+                        {QStringLiteral("file_bytes"), bakes->totalBytes()},
+                        {QStringLiteral("quality"), qualityName(bakes->bakeQuality())}};
+        if (bakes->busy())
+            out.insert(QStringLiteral("progress"), bakes->progress());
+        return tail(out);
+    }
+
+    if (tool == QLatin1String("cancel_bake")) {
+        const bool had = bakes->busy() || bakes->queuedCount() > 0;
+        bakes->cancelBake();
+        return tail({{QStringLiteral("cancelled"), had}});
+    }
+
+    if (tool == QLatin1String("bake_range")) {
+        if (!m_controller->activeSequenceId().isEmpty())
+            return err("bad_args", QStringLiteral("Bakes are of the main timeline: open_composite({main:true}) first"));
+        const double from = jsonNumber(args.value(QStringLiteral("from")), -1.0);
+        const double to = jsonNumber(args.value(QStringLiteral("to")), -1.0);
+        if (from < 0 || to <= from)
+            return err("bad_args", QStringLiteral("from must be >= 0 and to greater than from"));
+        // Clamped first, so a huge value can't overflow the microsecond conversion.
+        const double end = drift::usToSeconds(m_controller->project()->sequenceDurationUs({}));
+        const auto f = bakes->bakeRange(drift::secondsToUs(qMin(from, end)), drift::secondsToUs(qMin(to, end)));
+        if (f.second <= f.first)
+            return err("bad_args", QStringLiteral("Nothing to bake: the range holds no frame of the main timeline "
+                                                  "(it ends at %1 s)").arg(end));
+        if (const QJsonObject e = cacheError(); !e.isEmpty())
+            return e;
+        return tail({{QStringLiteral("start"), double(f.first) / fps}, {QStringLiteral("end"), double(f.second) / fps}});
+    }
+
+    if (tool == QLatin1String("rebake")) {
+        const bool hasId = args.contains(QStringLiteral("id"));
+        const bool stale = jsonBool(args.value(QStringLiteral("stale")));
+        if (hasId == stale)
+            return err("bad_args", QStringLiteral("Pass exactly one of id or stale:true"));
+        if (bakes->busy() || bakes->queuedCount() > 0)
+            return err("conflict", QStringLiteral("A bake is running: wait_idle({kinds:[\"bake\"]}) or cancel_bake first"));
+        bakes->refreshStale();
+        if (stale) {
+            const int n = bakes->rebakeAllStale();
+            if (n > 0)
+                if (const QJsonObject e = cacheError(); !e.isEmpty())
+                    return e;
+            return tail({{QStringLiteral("n"), n}});
+        }
+        const QString id = args.value(QStringLiteral("id")).toString();
+        if (id == QLatin1String("pending") || !bakeIds().contains(id))
+            return err("not_found", QStringLiteral("No bake %1; read ids from list_bakes (\"pending\" is the running "
+                                                   "bake, which has no id yet)").arg(id));
+        const auto f = bakes->rebakeRange(id);
+        if (f.second <= f.first)
+            return err("bad_args", QStringLiteral("Bake %1 now lies past the end of the main timeline; delete_bake it").arg(id));
+        if (const QJsonObject e = cacheError(); !e.isEmpty())
+            return e;
+        return tail({{QStringLiteral("start"), double(f.first) / fps}, {QStringLiteral("end"), double(f.second) / fps}});
+    }
+
+    // delete_bake
+    bakes->refreshStale();
+    const bool hasId = args.contains(QStringLiteral("id"));
+    const bool all = jsonBool(args.value(QStringLiteral("all")));
+    if (hasId == all)
+        return err("bad_args", QStringLiteral("Pass exactly one of id or all:true"));
+    if (all) {
+        QJsonArray deleted;
+        for (const QString &id : bakeIds()) {
+            if (id != QLatin1String("pending"))
+                deleted.append(id);
+        }
+        const bool wasBusy = bakes->busy();
+        bakes->deleteAllBakes();
+        QJsonObject out{{QStringLiteral("deleted"), deleted}};
+        if (wasBusy)
+            out.insert(QStringLiteral("pending"), true);
+        return tail(out);
+    }
+    if (bakes->busy())
+        return err("conflict", QStringLiteral("A bake is running: cancel_bake or wait_idle({kinds:[\"bake\"]}) first"));
+    const QString id = args.value(QStringLiteral("id")).toString();
+    if (!bakeIds().contains(id))
+        return err("not_found", QStringLiteral("No bake %1; read ids from list_bakes").arg(id));
+    bakes->deleteBake(id);
+    return tail({{QStringLiteral("deleted"), QJsonArray{id}}});
+}
+
 QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObject &args)
 {
     if (tool == QLatin1String("create_proxies") || tool == QLatin1String("proxy_status")
         || tool == QLatin1String("remove_proxies") || tool == QLatin1String("cancel_proxies"))
         return opProxies(tool, args);
+    if (tool == QLatin1String("list_bakes") || tool == QLatin1String("bake_range") || tool == QLatin1String("rebake")
+        || tool == QLatin1String("delete_bake") || tool == QLatin1String("cancel_bake"))
+        return opBakes(tool, args);
 
     // --- media ---
     if (tool == QLatin1String("remove_asset")) {
