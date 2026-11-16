@@ -22,8 +22,10 @@ ListView {
 
     x: Qt.application.layoutDirection === Qt.RightToLeft ? parent.width - ltrX - width : ltrX
     anchors.verticalCenter: parent.verticalCenter
-    visible: gapEnd - gapStart >= 96
-    width: Math.min(contentWidth, Math.max(0, gapEnd - gapStart))
+    // Inside another timeline the strip is the only way back to Main, so a tight toolbar keeps it.
+    readonly property real minWidth: EditorState.activeSequenceId !== "" ? 96 : 0
+    visible: gapEnd - gapStart >= 96 || minWidth > 0
+    width: Math.min(contentWidth, Math.max(minWidth, gapEnd - gapStart))
     height: Math.min(Theme.controlHeightSm, parent.height - Theme.spacingXs * 2)
     orientation: ListView.Horizontal
     layoutDirection: Qt.application.layoutDirection

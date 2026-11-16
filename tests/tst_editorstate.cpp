@@ -156,6 +156,7 @@ private slots:
     void removeEmptyTracksKeepsPopulatedAndUndoes();
     void compositeSeparateAudioAndRemoval();
     void newTimelineCreatesEmptyComposite();
+    void newTimelineKeepsPreviousTimeline();
     void dissolveCompositeRoundTrip();
     void dissolveCompositeKeepsTrackNumbers();
     void replaceInterruptedByNewProjectClearsBusyRow();
@@ -1640,6 +1641,43 @@ void EditorStateTest::newTimelineCreatesEmptyComposite()
 
     state.undo();
     QCOMPARE(state.project()->sequenceIds().size(), 1);
+}
+
+void EditorStateTest::newTimelineKeepsPreviousTimeline()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    setUpTwoClipSelection(library, state);
+
+    state.newTimeline();
+    const QString sequenceId = state.activeSequenceId();
+    QVERIFY(!sequenceId.isEmpty());
+    QVERIFY(state.project()->tracks().at(0).clips.isEmpty());
+    QCOMPARE(state.project()->rootTracks().at(0).clips.size(), 2);
+
+    state.openSequence(QString());
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(10.0));
+    state.openSequence(sequenceId);
+    QVERIFY(state.project()->tracks().at(0).clips.isEmpty());
+    state.addClipFromAssetAt(0, 0, 2.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    state.openSequence(QString());
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    state.undo();
+    QCOMPARE(state.activeSequenceId(), sequenceId);
+    QVERIFY(state.project()->tracks().at(0).clips.isEmpty());
+    state.openSequence(QString());
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+
+    const drift::Project loaded = drift::Project::fromJson(state.project()->toJson());
+    QCOMPARE(loaded.rootTracks().at(0).clips.size(), 2);
+    QVERIFY(loaded.hasSequence(sequenceId));
+
+    state.undo();
+    QVERIFY(state.activeSequenceId().isEmpty());
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QVERIFY(state.project()->sequenceIds().isEmpty());
 }
 
 void EditorStateTest::dissolveCompositeRoundTrip()
