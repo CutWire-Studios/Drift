@@ -4,6 +4,11 @@
 #include "app/editor/ProjectFileController.h"
 #include "app/mcp/McpController.h"
 #include "app/jobs/JobRegistry.h"
+#include "app/jobs/render/BakeController.h"
+#include "app/jobs/render/BakeFingerprint.h"
+#include "core/base/CacheRoot.h"
+#include "engine/encode/bake/BakeFile.h"
+#include <QUuid>
 #include "core/project/Transcript.h"
 #include "app/online/CloudProviders.h"
 
@@ -319,6 +324,8 @@ private slots:
     void duplicateLayerAndUserPresetLifecycle();
     void rotationOpsRoundTripThroughInspect();
     void proxyOpsCreateCheckAndRemove();
+    void bakeOpsListDeleteAndRefuse();
+    void bakeRangeBakesAndGoesStale();
     void performanceSettingsRoundTrip();
     void binFolderOps();
 };
@@ -417,9 +424,10 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
     const qsizetype compactSize = QJsonDocument(compact).toJson(QJsonDocument::Compact).size();
-    QVERIFY2(compactSize < 25200, qPrintable(QString::number(compactSize)));
+    // Raise for the bake ops.
+    QVERIFY2(compactSize < 25600, qPrintable(QString::number(compactSize)));
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
-                .toJson(QJsonDocument::Compact).size() < 12500);
+                .toJson(QJsonDocument::Compact).size() < 12600); // raise for the bake ops
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -12718,6 +12726,221 @@ void McpTest::proxyOpsCreateCheckAndRemove()
     QCOMPARE(stateOf(asset), QStringLiteral("ready"));
     QVERIFY(dispatcher.applyOne(QStringLiteral("remove_proxies"), {{QStringLiteral("all"), true}}).value(QStringLiteral("ok")).toBool());
     QCOMPARE(stateOf(asset), QStringLiteral("none"));
+}
+
+// The bake ops over a hand-made bake file: list, staleness, refusals and deletes, with no encoder.
+void McpTest::bakeOpsListDeleteAndRefuse()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpTest"));
+    // cacheRoot() is fixed once per process: always remove the file.
+    const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString path = QDir(drift::cacheRoot()).filePath(QStringLiteral("bakes/%1.driftbake").arg(uuid));
+    const auto cleanup = qScopeGuard([&] {
+        QFile::remove(path);
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *tool, const QJsonObject &args = {}) {
+        return dispatcher.applyOne(QLatin1String(tool), args);
+    };
+    const auto okOf = [](const QJsonObject &r) { return r.value(QStringLiteral("ok")).toBool(); };
+    const auto codeOf = [](const QJsonObject &r) { return r.value(QStringLiteral("error")).toString(); };
+
+    const QJsonObject added = call("add_text", {{QStringLiteral("text"), QStringLiteral("Hello")}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(okOf(added), qPrintable(dump(added)));
+    QString clip = added.value(QStringLiteral("clip")).toString();
+    if (clip.isEmpty())
+        clip = added.value(QStringLiteral("id")).toString();
+    QVERIFY(!clip.isEmpty());
+
+    state.project()->setId(uuid);
+    const int fps = state.project()->fps();
+    QVERIFY(QDir().mkpath(QFileInfo(path).absolutePath()));
+    {
+        auto file = drift::BakeFile::open(path);
+        QVERIFY(file);
+        const QString id = file->beginBake(0, fps, 2, 2, 1, QByteArrayLiteral("x"),
+                                           bakeFingerprint(*state.project(), 0, fps));
+        QVERIFY(!id.isEmpty());
+        QVERIFY(file->appendGop(id, 0, QByteArray(fps, 'x'), QVector<quint32>(fps, 1)));
+        QVERIFY(file->commit());
+    }
+
+    // No tracksChanged: the first list_bakes binds the file itself.
+    QJsonObject r = call("list_bakes");
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("n")).toInt(), 1);
+    QCOMPARE(r.value(QStringLiteral("stale")).toInt(), 0);
+    QCOMPARE(r.value(QStringLiteral("quality")).toString(), QStringLiteral("balanced"));
+    QJsonObject row = r.value(QStringLiteral("bakes")).toArray().at(0).toObject();
+    QCOMPARE(row.value(QStringLiteral("state")).toString(), QStringLiteral("fresh"));
+    QCOMPARE(row.value(QStringLiteral("start")).toDouble(), 0.0);
+    QCOMPARE(row.value(QStringLiteral("end")).toDouble(), 1.0);
+    const QString id = row.value(QStringLiteral("id")).toString();
+    QVERIFY(!id.isEmpty());
+
+    // An edit under it makes it stale; undo makes it fresh again.
+    QVERIFY(okOf(call("set_text", {{QStringLiteral("clip"), clip}, {QStringLiteral("text"), QStringLiteral("Bye")}})));
+    r = call("list_bakes");
+    QCOMPARE(r.value(QStringLiteral("stale")).toInt(), 1);
+    QCOMPARE(r.value(QStringLiteral("bakes")).toArray().at(0).toObject().value(QStringLiteral("state")).toString(),
+             QStringLiteral("stale"));
+    state.undo();
+    r = call("list_bakes");
+    QCOMPARE(r.value(QStringLiteral("stale")).toInt(), 0);
+
+    // Refusals.
+    const auto expect = [&](const QJsonObject &reply, const char *code) {
+        QVERIFY2(!okOf(reply) && codeOf(reply) == QLatin1String(code), qPrintable(dump(reply)));
+    };
+    expect(call("rebake"), "bad_args");
+    expect(call("rebake", {{QStringLiteral("id"), id}, {QStringLiteral("stale"), true}}), "bad_args");
+    expect(call("delete_bake"), "bad_args");
+    expect(call("bake_range", {{QStringLiteral("from"), 2.0}, {QStringLiteral("to"), 1.0}}), "bad_args");
+    expect(call("bake_range", {{QStringLiteral("from"), -1.0}, {QStringLiteral("to"), 1.0}}), "bad_args");
+    expect(call("bake_range", {{QStringLiteral("from"), 1000.0}, {QStringLiteral("to"), 1001.0}}), "bad_args");
+    expect(call("rebake", {{QStringLiteral("id"), QStringLiteral("nope")}}), "not_found");
+    expect(call("rebake", {{QStringLiteral("id"), QStringLiteral("pending")}}), "not_found");
+    expect(call("delete_bake", {{QStringLiteral("id"), QStringLiteral("nope")}}), "not_found");
+    r = call("cancel_bake");
+    QVERIFY(okOf(r));
+    QCOMPARE(r.value(QStringLiteral("cancelled")).toBool(), false);
+
+    const auto opOf = [](const char *tool) {
+        return QJsonObject{{QStringLiteral("tool"), QLatin1String(tool)}};
+    };
+    r = dispatcher.apply({{QStringLiteral("atomic"), true}, {QStringLiteral("ops"), QJsonArray{opOf("bake_range")}}});
+    QVERIFY(!okOf(r));
+    QVERIFY2(dump(r).contains(QStringLiteral("bake_range")), qPrintable(dump(r)));
+    r = dispatcher.apply({{QStringLiteral("atomic"), true}, {QStringLiteral("ops"), QJsonArray{opOf("list_bakes")}}});
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+
+    // Delete: only the index; the project and its history are untouched.
+    const int steps = int(state.undoHistory().size());
+    const bool dirty = state.projectFile()->hasUnsavedChanges();
+    r = call("delete_bake", {{QStringLiteral("id"), id}});
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("deleted")).toArray().at(0).toString(), id);
+    QCOMPARE(call("list_bakes").value(QStringLiteral("n")).toInt(), 0);
+    QVERIFY(QFile::exists(path));
+    QCOMPARE(int(state.undoHistory().size()), steps);
+    QCOMPARE(state.projectFile()->hasUnsavedChanges(), dirty);
+    r = call("wait_idle", {{QStringLiteral("kinds"), QJsonArray{QStringLiteral("bake")}}});
+    QCOMPARE(r.value(QStringLiteral("idle")).toBool(), true);
+
+    // A composite open: bakes are of the main timeline.
+    QVERIFY(okOf(call("select_clip", {{QStringLiteral("clip"), clip}})));
+    QVERIFY(okOf(call("make_composite")));
+    const QJsonObject comp = call("list_composites");
+    const QString sequence = comp.value(QStringLiteral("composites")).toArray().at(0).toObject()
+                                 .value(QStringLiteral("sequence")).toString();
+    QVERIFY2(!sequence.isEmpty(), qPrintable(dump(comp)));
+    QVERIFY(okOf(call("open_composite", {{QStringLiteral("sequence"), sequence}})));
+    expect(call("bake_range", {{QStringLiteral("from"), 0.0}, {QStringLiteral("to"), 1.0}}), "bad_args");
+    QVERIFY(okOf(call("open_composite", {{QStringLiteral("main"), true}})));
+
+    QCOMPARE(drift::mcp::toolboxForOp(QStringLiteral("bake_range")), QStringLiteral("playback"));
+    QVERIFY(drift::mcp::isReadOnlyOp(QStringLiteral("list_bakes")));
+    QVERIFY(!drift::mcp::isReadOnlyOp(QStringLiteral("bake_range")));
+}
+
+// A real bake through the encoder: queued, finished, stale after an edit, rebaked and deleted.
+void McpTest::bakeRangeBakesAndGoesStale()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpTest"));
+    const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString path = QDir(drift::cacheRoot()).filePath(QStringLiteral("bakes/%1.driftbake").arg(uuid));
+    const auto cleanup = qScopeGuard([&] {
+        QFile::remove(path);
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *tool, const QJsonObject &args = {}) {
+        return dispatcher.applyOne(QLatin1String(tool), args);
+    };
+    const auto okOf = [](const QJsonObject &r) { return r.value(QStringLiteral("ok")).toBool(); };
+    const auto waitBake = [&] {
+        const QJsonObject w = call("wait_idle", {{QStringLiteral("kinds"), QJsonArray{QStringLiteral("bake")}},
+                                                 {QStringLiteral("timeout"), 120}});
+        QVERIFY2(okOf(w) && w.value(QStringLiteral("idle")).toBool(), qPrintable(dump(w)));
+    };
+
+    QVERIFY(okOf(call("set_project_setup", {{QStringLiteral("width"), 320}, {QStringLiteral("height"), 180},
+                                            {QStringLiteral("fps"), 30}})));
+    state.project()->setId(uuid);
+    const QJsonObject added = call("add_text", {{QStringLiteral("text"), QStringLiteral("Hello")}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(okOf(added), qPrintable(dump(added)));
+    QString clip = added.value(QStringLiteral("clip")).toString();
+    if (clip.isEmpty())
+        clip = added.value(QStringLiteral("id")).toString();
+
+    QJsonObject r = call("bake_range", {{QStringLiteral("from"), 0.0}, {QStringLiteral("to"), 1.0}});
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("start")).toDouble(), 0.0);
+    QCOMPARE(r.value(QStringLiteral("end")).toDouble(), 1.0);
+    // The job is running now: rebake and delete_bake by id are refused, and nothing is queued.
+    QCOMPARE(call("list_bakes").value(QStringLiteral("busy")).toBool(), true);
+    r = call("rebake", {{QStringLiteral("stale"), true}});
+    QVERIFY2(r.value(QStringLiteral("error")).toString() == QLatin1String("conflict"), qPrintable(dump(r)));
+    r = call("rebake", {{QStringLiteral("id"), QStringLiteral("pending")}});
+    QVERIFY2(r.value(QStringLiteral("error")).toString() == QLatin1String("conflict"), qPrintable(dump(r)));
+    r = call("delete_bake", {{QStringLiteral("id"), QStringLiteral("x")}});
+    QVERIFY2(r.value(QStringLiteral("error")).toString() == QLatin1String("conflict"), qPrintable(dump(r)));
+    QCOMPARE(call("list_bakes").value(QStringLiteral("queued")).toInt(), 0);
+    waitBake();
+    if (QTest::currentTestFailed())
+        return;
+    r = call("list_bakes");
+    if (r.value(QStringLiteral("n")).toInt() == 0) {
+        const QString message = state.lastMessage();
+        if (message.contains(QStringLiteral("encoder"), Qt::CaseInsensitive)
+            || message.contains(QStringLiteral("GPU"), Qt::CaseInsensitive))
+            QSKIP(qPrintable(QStringLiteral("No encoder or GPU: %1").arg(message)));
+        QFAIL(qPrintable(QStringLiteral("No bake produced: %1").arg(message)));
+    }
+    QCOMPARE(r.value(QStringLiteral("bakes")).toArray().at(0).toObject().value(QStringLiteral("state")).toString(),
+             QStringLiteral("fresh"));
+    const QString first = r.value(QStringLiteral("bakes")).toArray().at(0).toObject().value(QStringLiteral("id")).toString();
+    QVERIFY(!call("inspect").contains(QStringLiteral("work_in")));
+
+    QVERIFY(okOf(call("set_text", {{QStringLiteral("clip"), clip}, {QStringLiteral("text"), QStringLiteral("Bye")}})));
+    r = call("list_bakes");
+    QCOMPARE(r.value(QStringLiteral("stale")).toInt(), 1);
+    r = call("rebake", {{QStringLiteral("stale"), true}});
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("n")).toInt(), 1);
+    waitBake();
+    if (QTest::currentTestFailed())
+        return;
+    r = call("list_bakes");
+    QCOMPARE(r.value(QStringLiteral("n")).toInt(), 1);
+    QCOMPARE(r.value(QStringLiteral("stale")).toInt(), 0);
+    const QJsonObject row = r.value(QStringLiteral("bakes")).toArray().at(0).toObject();
+    QCOMPARE(row.value(QStringLiteral("state")).toString(), QStringLiteral("fresh"));
+    QVERIFY(row.value(QStringLiteral("id")).toString() != first);
+
+    r = call("delete_bake", {{QStringLiteral("all"), true}});
+    QVERIFY2(okOf(r), qPrintable(dump(r)));
+    waitBake();
+    QCOMPARE(call("list_bakes").value(QStringLiteral("n")).toInt(), 0);
 }
 
 void McpTest::performanceSettingsRoundTrip()

@@ -739,7 +739,7 @@ const QList<Op> &ops()
         { "set_track", "timeline", "Mute, hide, lock or keep a lane out of export",
           "Set track muted/hidden/locked. exclude_from_export:true makes it a review track: still "
           "shown and heard while editing, but left out of export_video and flatten_composite (e.g. a "
-          "subtitle lane with the VO script to read along); bakes overlapping it aren't reused. Refused "
+          "subtitle lane with the VO script to read along); export_video doesn't reuse a bake where its clips show (the preview still plays it). Refused "
           "on a transform or camera layer. Undoable.",
           objectSchema(mergeProps({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                                    {QStringLiteral("muted"), boolProp(QStringLiteral("Mute"))},
@@ -1058,6 +1058,55 @@ const QList<Op> &ops()
         { "clear_work_area", "playback", "Clear the In/Out range",
           "Remove the In/Out work area. Afterwards export_video with work_area:true fails bad_args, "
           "and inspect stops reporting work_in/work_out.",
+          objectSchema({}) },
+        { "list_bakes", "playback", "See pre-rendered ranges and which went stale",
+          "List the range bakes: stretches of the main timeline rendered once into the app's cache so "
+          "the preview plays them smoothly (Video menu > Bakes in the app). Returns {bakes:[{id, start, "
+          "end, state, bytes, quality, width, height, progress?}], n, stale, busy, progress?, queued, "
+          "file_bytes, quality} by start. A bake is the whole picture, every track. state is fresh, "
+          "stale (something drawn under it changed since: a clip, transition or track, the canvas, or "
+          "a source file; undoing the edit makes it fresh again) or baking; the running bake is the "
+          "row id \"pending\" until its first frames land. Staleness is re-checked on every call. A "
+          "stale bake still plays in the preview (unless the canvas size or fps changed), and export_video reuses bakes, stale ones included; "
+          "capture and frames always render live. quality is the preset new bakes get (compact, "
+          "balanced, high; the user picks it in the Bakes dialog). Bakes aren't part of the project: "
+          "not saved with it, not undoable, never dirty it.",
+          objectSchema({}), true },
+        { "bake_range", "playback", "Pre-render a heavy stretch so playback stays smooth",
+          "Queue a bake of main-timeline seconds [from, to), widened to whole frames and cut at the "
+          "timeline's end, at the user's bake quality. The work area is left alone. Async: returns "
+          "{start, end, busy, queued} at once; wait_idle({kinds:[\"bake\"]}) or poll list_bakes. Bakes "
+          "run one at a time, and starting one pauses playback; the same range twice is queued once. "
+          "A new bake replaces what older bakes hold under it (they are trimmed, or split into a piece "
+          "with a new id). bad_args when the range holds no frame, and while a composite is open "
+          "(bakes are of the main timeline: open_composite({main:true}) first); io_error when the "
+          "cache file can't be opened. Not undoable; the project is not changed.",
+          objectSchema({{QStringLiteral("from"), numberProp(QStringLiteral("Start, main-timeline seconds (>= 0)"))},
+                        {QStringLiteral("to"), numberProp(QStringLiteral("End seconds; must be greater than from"))}},
+                       {QStringLiteral("from"), QStringLiteral("to")}) },
+        { "rebake", "playback", "Re-render a stale bake, or every stale one",
+          "Bake bake id's range again (any state), or every stale bake with stale:true, at the user's "
+          "bake quality. Pass one of id or stale. The new bake gets a new id: read list_bakes once it's "
+          "done. Async like bake_range: returns {start, end} for id or {n} (stale bakes queued, or already queued) for "
+          "stale, plus {busy, queued}. conflict while a bake runs or waits (wait_idle or cancel_bake "
+          "first). not_found for an unknown id, \"pending\" included; bad_args when the bake now lies "
+          "past the timeline's end; io_error when the cache can't be opened. Not undoable.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Bake id from list_bakes"))},
+                        {QStringLiteral("stale"), boolProp(QStringLiteral("Every stale bake instead of one id"))}}) },
+        { "delete_bake", "playback", "Drop a bake, or all of them, to free cache space",
+          "Delete bake id, or every bake with all:true; playback and export render that range live "
+          "again. The project is not changed and only the bake cache is touched (its space is reused by "
+          "later bakes). With id: conflict while a bake runs (cancel_bake or "
+          "wait_idle({kinds:[\"bake\"]}) first). all:true also stops the running bake and empties the "
+          "queue; then pending:true, and the bakes go once it has stopped. Returns {deleted:[ids as of the call], "
+          "pending?, busy, queued}. Not undoable.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Bake id from list_bakes"))},
+                        {QStringLiteral("all"), boolProp(QStringLiteral("Every bake"))}}),
+          false, true },
+        { "cancel_bake", "playback", "Stop the running bake and empty the queue",
+          "Stop the running bake and empty the queue. The frames it baked so far stay, as a shorter "
+          "bake. Returns {cancelled, busy, queued}: cancelled is false when nothing ran or waited. The "
+          "bake stops shortly after; wait_idle({kinds:[\"bake\"]}) to be sure.",
           objectSchema({}) },
 
         { "add_text", "text", "Put a title or caption on the timeline",
@@ -1660,6 +1709,8 @@ QStringList undoExemptOps()
         QStringLiteral("clear_cache"),         QStringLiteral("set_performance"),
         QStringLiteral("create_proxies"),      QStringLiteral("remove_proxies"),
         QStringLiteral("cancel_proxies"),
+        // Range bakes: a cache outside the project.
+        QStringLiteral("bake_range"), QStringLiteral("rebake"), QStringLiteral("delete_bake"), QStringLiteral("cancel_bake"),
         QStringLiteral("set_theme"),        QStringLiteral("set_preview_view"),
         QStringLiteral("set_shortcut"),        QStringLiteral("reset_shortcuts"),
         QStringLiteral("export_theme"),        QStringLiteral("import_theme"),
@@ -1779,6 +1830,7 @@ QString agentGuideText()
         "- detect_scenes     -> jobs.sceneDetect.{active,progress,status}\n"
         "- set_clip_reverse  -> jobs.reverseRender.{active,progress,status}\n"
         "- create_proxies    -> proxy_status (queue and per-asset state; not under jobs)\n"
+        "- bake_range, rebake -> list_bakes (busy, queued; progress on the baking row) or wait_idle({kinds:[\"bake\"]})\n"
         "- market_install    -> jobs.downloads.{active,byKind} (every download, addons and updates included),\n"
         "  or market_downloads for per-job status\n"
         "- transcribe, diarize, tts_generate, sfx_generate, add_voice, voiceover_from_subtitles return {job_id}: poll get_job({id});\n"
@@ -1880,6 +1932,8 @@ QString agentGuideText()
         "  it with clear_history({keep_last}) between rounds; history_stats and memory_stats show the cost.\n"
         "- With a step limit set, each new step can renumber list_history: keep hashes, not indices.\n"
         "- Decoded frames: clear_cache frees them; the frame cache cap is in Settings › Performance.\n"
+        "- A stale bake still plays in the preview and export_video reuses it: list_bakes, then\n"
+        "  rebake({stale:true}) or delete_bake before exporting. capture and frames always render live.\n"
         "- Replaced media stays in the bin. list_assets({usage:true}) counts each asset's clips;\n"
         "  remove_unused_assets({dry_run:true}) lists the unused ones; without dry_run it removes them\n"
         "  in one undo step.\n"
@@ -1901,7 +1955,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
                    "read the media bin before placing clips, fix a sideways asset."},
         {"timeline", "Tracks, place/move/trim/split/delete clips, ripple/gap, overlap, selection, undo."},
         {"canvas", "Transform, flip, blend, mask, fade, constant speed, reverse, animation, stabilisation, orientation, shape styling (layers, geometry)."},
-        {"playback", "Seek, play, pause, In/Out work area."},
+        {"playback", "Seek, play, pause, In/Out work area, range bakes for smooth playback."},
         {"text", "Title/caption clips: style packs, shading layers, looks, gradients/effects, in/out/loop animation presets, fonts."},
         {"effects", "Video/audio effects and transitions."},
         {"project", "Canvas size, background, metadata, save, and export."},

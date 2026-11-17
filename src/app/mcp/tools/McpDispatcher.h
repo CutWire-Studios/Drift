@@ -147,6 +147,8 @@ private:
     QJsonObject opCameraMove(const QJsonObject &args);
     // create_proxies, proxy_status, remove_proxies, cancel_proxies.
     QJsonObject opProxies(const QString &tool, const QJsonObject &args);
+    // list_bakes, bake_range, rebake, delete_bake, cancel_bake.
+    QJsonObject opBakes(const QString &tool, const QJsonObject &args);
     // The camera clip a camera tool acts on: the named one, else the one covering `at`. Fills
     // `state` (cameraStateAt) and returns an error object, or {} on success.
     QJsonObject resolveCamera(const QJsonObject &args, double at, QVariantMap *state);
