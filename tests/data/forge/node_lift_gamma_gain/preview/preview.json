@@ -1,0 +1,71 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "lift",
+      "name": "k_n2_lift",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        0.45,
+        0.5,
+        0.56,
+        1
+      ]
+    },
+    {
+      "input": "gain",
+      "name": "k_n2_gain",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        0.56,
+        0.52,
+        0.46,
+        1
+      ]
+    },
+    {
+      "input": "gamma",
+      "name": "k_n2_gamma",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        0.5,
+        0.5,
+        0.5,
+        1
+      ]
+    },
+    {
+      "input": "amount",
+      "name": "k_n2_amount",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"lift_gamma_gain\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

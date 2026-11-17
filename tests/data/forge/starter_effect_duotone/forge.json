@@ -1,0 +1,121 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "color",
+    "description": "Two-colour poster look.",
+    "displayName": "Duotone",
+    "id": "starter_effect_duotone",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "brightness": 0,
+        "contrast": 1.2,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "brightness_contrast",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "amount": 1,
+        "highlight": {
+          "param": "highlightColor"
+        },
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "shadow": {
+          "param": "shadowColor"
+        }
+      },
+      "type": "gradient_map",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 840,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": "#1b1446",
+      "displayName": "Shadows",
+      "identifier": "shadowColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": "#ffc107",
+      "displayName": "Highlights",
+      "identifier": "highlightColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

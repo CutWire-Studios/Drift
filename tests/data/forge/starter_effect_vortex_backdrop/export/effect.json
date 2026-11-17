@@ -1,0 +1,70 @@
+{
+  "backend": "gpu",
+  "category": "dreamy",
+  "description": "The background twists into a whirlpool around the person. The Jacobian's curl lights up where it spins hardest.",
+  "displayName": "Vortex backdrop",
+  "id": "starter_effect_vortex_backdrop",
+  "nextFeatures": [
+    "node:clip_mask",
+    "requires:mask"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.45,
+      "displayName": "Size",
+      "identifier": "vortexSize",
+      "maxValue": 1.5,
+      "minValue": 0.1,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.2,
+      "displayName": "Speed",
+      "identifier": "vortexSpeed",
+      "maxValue": 2,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 240,
+      "displayName": "Twist (°)",
+      "identifier": "twist",
+      "maxValue": 720,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": "#8a6bff",
+      "displayName": "Swirl light",
+      "identifier": "swirlColor",
+      "type": "color"
+    },
+    {
+      "defaultValue": 0.6,
+      "displayName": "Swirl glow",
+      "identifier": "swirlGlow",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  },
+  "requires": "mask"
+}

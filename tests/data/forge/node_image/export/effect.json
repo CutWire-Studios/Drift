@@ -1,0 +1,32 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "displayName": "My effect",
+  "id": "node_image",
+  "order": 1000,
+  "parameters": [],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "id": "tex0",
+            "type": "texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ],
+    "textures": [
+      {
+        "file": "tex0.png",
+        "id": "tex0"
+      }
+    ]
+  }
+}

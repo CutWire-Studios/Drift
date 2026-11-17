@@ -1,0 +1,49 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "displayName": "My effect",
+  "id": "params_tracks",
+  "nextFeatures": [
+    "node:audio_track",
+    "node:other_clip",
+    "node:track_mask",
+    "param:audio",
+    "param:track",
+    "param:trackMask"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "displayName": "Other track",
+      "identifier": "other",
+      "type": "track"
+    },
+    {
+      "displayName": "Track mask",
+      "identifier": "matte",
+      "type": "trackMask"
+    },
+    {
+      "displayName": "Audio",
+      "identifier": "music",
+      "type": "audio"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

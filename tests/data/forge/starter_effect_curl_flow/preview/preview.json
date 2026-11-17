@@ -1,0 +1,76 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "spacing",
+      "name": "k_n3_spacing",
+      "node": "n3",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "seed",
+      "name": "k_n2_seed",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "b",
+      "name": "k_n4_b",
+      "node": "n4",
+      "type": "vec2",
+      "value": [
+        0,
+        0
+      ]
+    },
+    {
+      "input": "s",
+      "name": "k_n4_s",
+      "node": "n4",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "b",
+      "name": "k_n5_b",
+      "node": "n5",
+      "type": "vec2",
+      "value": [
+        0,
+        0
+      ]
+    },
+    {
+      "input": "s",
+      "name": "k_n7_s",
+      "node": "n7",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"noise\",{\"style\":\"smooth\"},[[\"scale\",{\"param\":\"swirlSize\"}],[\"speed\",{\"param\":\"flowSpeed\"}]]],[\"n3\",\"derivative\",{},[]],[\"n4\",\"vector_math\",{\"op\":\"perp\"},[]],[\"n5\",\"vector_math\",{\"op\":\"scale\"},[[\"s\",{\"param\":\"flow\"}]]],[\"n6\",\"uv\",{},[]],[\"n7\",\"vector_math\",{\"op\":\"add\"},[]],[\"n8\",\"sample_at\",{\"edge\":\"mirror\"},[]],[\"n9\",\"effect_output\",{},[]]],[[\"n2\",\"value\",\"n3\",\"x\"],[\"n3\",\"grad\",\"n4\",\"a\"],[\"n4\",\"p\",\"n5\",\"a\"],[\"n6\",\"uv\",\"n7\",\"a\"],[\"n5\",\"p\",\"n7\",\"b\"],[\"n1\",\"image\",\"n8\",\"image\"],[\"n7\",\"p\",\"n8\",\"p\"],[\"n8\",\"image\",\"n9\",\"image\"]],[[\"swirlSize\",\"float\",false],[\"flowSpeed\",\"float\",false],[\"flow\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

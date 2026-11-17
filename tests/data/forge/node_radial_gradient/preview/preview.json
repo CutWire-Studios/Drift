@@ -1,0 +1,57 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "center",
+      "name": "k_n2_center",
+      "node": "n2",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "input": "radius",
+      "name": "k_n2_radius",
+      "node": "n2",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "input": "b",
+      "name": "k_n2_b",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"radial_gradient\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"a\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

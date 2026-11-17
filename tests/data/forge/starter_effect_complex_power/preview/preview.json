@@ -1,0 +1,38 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "w",
+      "name": "k_n2_w",
+      "node": "n2",
+      "type": "vec2",
+      "value": [
+        1,
+        0
+      ]
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"complex_math\",{\"op\":\"pow\"},[[\"n\",{\"param\":\"power\"}],[\"zoom\",{\"param\":\"zoom\"}]]],[\"n3\",\"sample_at\",{\"edge\":\"mirror\"},[]],[\"n4\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n3\",\"image\"],[\"n2\",\"p\",\"n3\",\"p\"],[\"n3\",\"image\",\"n4\",\"image\"]],[[\"power\",\"float\",false],[\"zoom\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

@@ -1,0 +1,63 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "black",
+      "name": "k_n2_black",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "white",
+      "name": "k_n2_white",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "gamma",
+      "name": "k_n2_gamma",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "outBlack",
+      "name": "k_n2_outBlack",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "outWhite",
+      "name": "k_n2_outWhite",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"levels\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

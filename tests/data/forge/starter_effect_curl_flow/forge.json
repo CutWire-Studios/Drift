@@ -1,0 +1,246 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n2",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "x"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "grad",
+      "id": "e2",
+      "to": "n4",
+      "toSocket": "a"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "p",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "uv",
+      "id": "e4",
+      "to": "n7",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "p",
+      "id": "e5",
+      "to": "n7",
+      "toSocket": "b"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e6",
+      "to": "n8",
+      "toSocket": "image"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "p",
+      "id": "e7",
+      "to": "n8",
+      "toSocket": "p"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "image",
+      "id": "e8",
+      "to": "n9",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "dreamy",
+    "description": "The picture drifts along swirling currents that never bunch up or thin out.",
+    "displayName": "Curl flow",
+    "id": "starter_effect_curl_flow",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "style": "smooth"
+      },
+      "id": "n2",
+      "inputs": {
+        "scale": {
+          "param": "swirlSize"
+        },
+        "seed": 0,
+        "speed": {
+          "param": "flowSpeed"
+        },
+        "t": 0
+      },
+      "type": "noise",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "spacing": 2,
+        "x": 0
+      },
+      "type": "derivative",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "perp"
+      },
+      "id": "n4",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": 1
+      },
+      "type": "vector_math",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "scale"
+      },
+      "id": "n5",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": {
+          "param": "flow"
+        }
+      },
+      "type": "vector_math",
+      "x": 840,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n6",
+      "inputs": {},
+      "type": "uv",
+      "x": 840,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "add"
+      },
+      "id": "n7",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": 1
+      },
+      "type": "vector_math",
+      "x": 1120,
+      "y": 220
+    },
+    {
+      "data": {
+        "edge": "mirror"
+      },
+      "id": "n8",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 1400,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n9",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 1680,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 3,
+      "displayName": "Swirl size",
+      "identifier": "swirlSize",
+      "max": 10,
+      "min": 1,
+      "type": "float"
+    },
+    {
+      "default": 0.15,
+      "displayName": "Flow speed",
+      "identifier": "flowSpeed",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 0.01,
+      "displayName": "Strength",
+      "identifier": "flow",
+      "max": 0.05,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

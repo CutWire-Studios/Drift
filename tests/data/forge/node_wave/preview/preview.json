@@ -1,0 +1,49 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "speed",
+      "name": "k_n2_speed",
+      "node": "n2",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "frequency",
+      "name": "k_n2_frequency",
+      "node": "n2",
+      "type": "float",
+      "value": 10
+    },
+    {
+      "input": "amplitude",
+      "name": "k_n2_amplitude",
+      "node": "n2",
+      "type": "float",
+      "value": 0.02
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"wave\",{\"direction\":\"x\",\"edge\":\"clamp\",\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

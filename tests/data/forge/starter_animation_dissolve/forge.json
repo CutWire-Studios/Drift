@@ -1,0 +1,138 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n2",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "pattern"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n4",
+      "toSocket": "image"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "mask",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "mask"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "image",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "animation",
+  "meta": {
+    "author": "",
+    "category": "reveal",
+    "description": "The clip emerges from, or melts into, drifting noise.",
+    "displayName": "Dissolve",
+    "id": "starter_animation_dissolve",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "style": "cloud"
+      },
+      "id": "n2",
+      "inputs": {
+        "scale": {
+          "param": "scale"
+        },
+        "seed": 0,
+        "speed": 0,
+        "t": 0
+      },
+      "type": "noise",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {
+        "invert": false
+      },
+      "id": "n3",
+      "inputs": {
+        "p": 0,
+        "pattern": 0.5,
+        "softness": {
+          "param": "softness"
+        }
+      },
+      "type": "reveal",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "mask": 1
+      },
+      "type": "set_alpha",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "type": "animation_output",
+      "x": 840,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 5,
+      "displayName": "Patch size",
+      "identifier": "scale",
+      "max": 40,
+      "min": 0.5,
+      "type": "float"
+    },
+    {
+      "default": 0.1,
+      "displayName": "Softness",
+      "identifier": "softness",
+      "max": 0.5,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

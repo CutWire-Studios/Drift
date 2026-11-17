@@ -1,0 +1,35 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "displayName": "My effect",
+  "id": "node_audio_track",
+  "nextFeatures": [
+    "node:audio_track",
+    "param:audio"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "displayName": "Audio",
+      "identifier": "src",
+      "type": "audio"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

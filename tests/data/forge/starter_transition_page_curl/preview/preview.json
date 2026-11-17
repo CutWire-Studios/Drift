@@ -1,0 +1,54 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "angle",
+      "name": "k_n3_angle",
+      "node": "n3",
+      "type": "float",
+      "value": 200
+    },
+    {
+      "input": "radius",
+      "name": "k_n3_radius",
+      "node": "n3",
+      "type": "float",
+      "value": 0.12
+    },
+    {
+      "input": "shadow",
+      "name": "k_n3_shadow",
+      "node": "n3",
+      "type": "float",
+      "value": 0.5
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        },
+        {
+          "index": 1,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"transition\",[[\"n1\",\"from\",{},[]],[\"n2\",\"to\",{},[]],[\"n3\",\"page_curl\",{},[]],[\"n4\",\"transition_output\",{},[]]],[[\"n1\",\"image\",\"n3\",\"from\"],[\"n2\",\"image\",\"n3\",\"to\"],[\"n3\",\"image\",\"n4\",\"image\"]],[],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

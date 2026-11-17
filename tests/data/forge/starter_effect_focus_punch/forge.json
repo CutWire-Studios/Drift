@@ -1,0 +1,360 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n4",
+      "toSocket": "x"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e3",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n7",
+      "toSocket": "x"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e5",
+      "to": "n8",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e6",
+      "to": "n9",
+      "toSocket": "image"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e7",
+      "to": "n9",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "image",
+      "id": "e8",
+      "to": "n10",
+      "toSocket": "image"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e9",
+      "to": "n10",
+      "toSocket": "strength"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "image",
+      "id": "e10",
+      "to": "n11",
+      "toSocket": "image"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "value",
+      "id": "e11",
+      "to": "n11",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "image",
+      "id": "e12",
+      "to": "n12",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e13",
+      "to": "n12",
+      "toSocket": "b"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e14",
+      "to": "n12",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "image",
+      "id": "e15",
+      "to": "n13",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "impact",
+    "description": "On every beat the background zooms, smears and splits into RGB while the person stays sharp.",
+    "displayName": "Focus punch",
+    "id": "starter_effect_focus_punch",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "clip_mask",
+      "x": 0,
+      "y": 660
+    },
+    {
+      "data": {
+        "shape": "saw"
+      },
+      "id": "n3",
+      "inputs": {
+        "max": 1,
+        "min": 0,
+        "phase": 0,
+        "rate": {
+          "param": "bps"
+        },
+        "seed": 0,
+        "t": 0
+      },
+      "type": "lfo",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {
+        "fn": "oneminus"
+      },
+      "id": "n4",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "pow"
+      },
+      "id": "n5",
+      "inputs": {
+        "a": 0,
+        "b": 3
+      },
+      "type": "math",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "punch"
+        }
+      },
+      "type": "math",
+      "x": 840,
+      "y": 220
+    },
+    {
+      "data": {
+        "clamp": true
+      },
+      "id": "n7",
+      "inputs": {
+        "inMax": 1,
+        "inMin": 0,
+        "outMax": 1.08,
+        "outMin": 1,
+        "x": 0.5
+      },
+      "type": "remap",
+      "x": 840,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n8",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "split"
+        }
+      },
+      "type": "math",
+      "x": 840,
+      "y": 660
+    },
+    {
+      "data": {
+        "edge": "clamp"
+      },
+      "id": "n9",
+      "inputs": {
+        "amount": 1.5,
+        "center": [
+          0.5,
+          0.5
+        ],
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "zoom",
+      "x": 1120,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n10",
+      "inputs": {
+        "center": [
+          0.5,
+          0.5
+        ],
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "strength": 0.15
+      },
+      "type": "zoom_blur",
+      "x": 1400,
+      "y": 0
+    },
+    {
+      "data": {
+        "mode": "linear"
+      },
+      "id": "n11",
+      "inputs": {
+        "amount": 8,
+        "angle": 0,
+        "center": [
+          0.5,
+          0.5
+        ],
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "chromatic",
+      "x": 1680,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n12",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 1960,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n13",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 2240,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 2,
+      "displayName": "Beats per second",
+      "identifier": "bps",
+      "max": 8,
+      "min": 0.25,
+      "type": "float"
+    },
+    {
+      "default": 0.3,
+      "displayName": "Punch",
+      "identifier": "punch",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 14,
+      "displayName": "Colour split (px)",
+      "identifier": "split",
+      "max": 40,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "clip": "dancer",
+    "thumbTime": 0.5
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n4",
+      "toSocket": "a"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n4",
+      "toSocket": "b"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "mask",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "mask",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "mask"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n6",
+      "toSocket": "base"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "image",
+      "id": "e6",
+      "to": "n6",
+      "toSocket": "layer"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "image",
+      "id": "e7",
+      "to": "n7",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "liquid",
+    "description": "The old clip burns away in fiery patches.",
+    "displayName": "Burn away",
+    "id": "starter_transition_burn_away",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "to",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "p": 0,
+        "scale": {
+          "param": "patchSize"
+        },
+        "seed": 0,
+        "softness": 0.04
+      },
+      "type": "dissolve_mask",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "color": {
+          "param": "fireColor"
+        },
+        "intensity": 2.5,
+        "mask": 0,
+        "sharpness": 3
+      },
+      "type": "edge_glow",
+      "x": 280,
+      "y": 440
+    },
+    {
+      "data": {
+        "mode": "add"
+      },
+      "id": "n6",
+      "inputs": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "layer": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "opacity": 1
+      },
+      "type": "blend",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n7",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 840,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 5,
+      "displayName": "Patch size",
+      "identifier": "patchSize",
+      "max": 20,
+      "min": 1,
+      "type": "float"
+    },
+    {
+      "default": "#ff6a00",
+      "displayName": "Fire colour",
+      "identifier": "fireColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

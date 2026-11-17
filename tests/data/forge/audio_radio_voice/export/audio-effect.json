@@ -1,0 +1,63 @@
+{
+  "backend": "juce",
+  "category": "transmission",
+  "description": "A voice squeezed through a small, overdriven speaker.",
+  "displayName": "Radio voice",
+  "graph": {
+    "chain": [
+      {
+        "id": "a1",
+        "knobs": {
+          "high_cut": {
+            "param": "lowPass"
+          },
+          "low_cut": 450
+        },
+        "type": "classic.bandlimit"
+      },
+      {
+        "id": "a2",
+        "knobs": {
+          "drive": 14,
+          "mix": 0.6,
+          "output": -8,
+          "shape": 0
+        },
+        "type": "drive"
+      },
+      {
+        "id": "a3",
+        "knobs": {
+          "attack": 20,
+          "makeup": 2,
+          "ratio": 6,
+          "release": 250,
+          "threshold": -24
+        },
+        "type": "classic.compressor"
+      }
+    ],
+    "version": 1
+  },
+  "icon": "phone",
+  "id": "audio_radio_voice",
+  "nextFeatures": [
+    "audio:graph"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 3200,
+      "displayName": "Tone",
+      "identifier": "lowPass",
+      "maxValue": 6000,
+      "minValue": 2000,
+      "type": "float",
+      "ui": {
+        "unit": "Hz"
+      }
+    }
+  ],
+  "prerollMs": 0,
+  "processor": "graph"
+}

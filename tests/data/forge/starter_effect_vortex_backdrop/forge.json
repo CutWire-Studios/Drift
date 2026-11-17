@@ -1,0 +1,575 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n3",
+      "fromSocket": "uv",
+      "id": "e1",
+      "to": "n4",
+      "toSocket": "a"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "p",
+      "id": "e2",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "length",
+      "id": "e3",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n7",
+      "toSocket": "x"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e5",
+      "to": "n8",
+      "toSocket": "x"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "value",
+      "id": "e6",
+      "to": "n9",
+      "toSocket": "x"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "value",
+      "id": "e7",
+      "to": "n11",
+      "toSocket": "a"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "value",
+      "id": "e8",
+      "to": "n12",
+      "toSocket": "a"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "value",
+      "id": "e9",
+      "to": "n12",
+      "toSocket": "b"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "p",
+      "id": "e10",
+      "to": "n13",
+      "toSocket": "a"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "value",
+      "id": "e11",
+      "to": "n13",
+      "toSocket": "s"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "p",
+      "id": "e12",
+      "to": "n14",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e13",
+      "to": "n15",
+      "toSocket": "image"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "p",
+      "id": "e14",
+      "to": "n15",
+      "toSocket": "p"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "p",
+      "id": "e15",
+      "to": "n16",
+      "toSocket": "p"
+    },
+    {
+      "from": "n16",
+      "fromSocket": "curl",
+      "id": "e16",
+      "to": "n17",
+      "toSocket": "x"
+    },
+    {
+      "from": "n17",
+      "fromSocket": "value",
+      "id": "e17",
+      "to": "n18",
+      "toSocket": "x"
+    },
+    {
+      "from": "n18",
+      "fromSocket": "value",
+      "id": "e18",
+      "to": "n19",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n15",
+      "fromSocket": "image",
+      "id": "e19",
+      "to": "n20",
+      "toSocket": "base"
+    },
+    {
+      "from": "n19",
+      "fromSocket": "image",
+      "id": "e20",
+      "to": "n20",
+      "toSocket": "layer"
+    },
+    {
+      "from": "n20",
+      "fromSocket": "image",
+      "id": "e21",
+      "to": "n21",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e22",
+      "to": "n21",
+      "toSocket": "b"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e23",
+      "to": "n21",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n21",
+      "fromSocket": "image",
+      "id": "e24",
+      "to": "n22",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "dreamy",
+    "description": "The background twists into a whirlpool around the person. The Jacobian's curl lights up where it spins hardest.",
+    "displayName": "Vortex backdrop",
+    "id": "starter_effect_vortex_backdrop",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "clip_mask",
+      "x": 0,
+      "y": 1100
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {},
+      "type": "uv",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "sub"
+      },
+      "id": "n4",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0.5,
+          0.5
+        ],
+        "s": 1
+      },
+      "type": "vector_math",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "a": [
+          1,
+          0
+        ],
+        "b": [
+          0,
+          1
+        ]
+      },
+      "type": "vector_measure",
+      "x": 560,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "div"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "vortexSize"
+        }
+      },
+      "type": "math",
+      "x": 840,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "square"
+      },
+      "id": "n7",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1120,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "neg"
+      },
+      "id": "n8",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1400,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "exp"
+      },
+      "id": "n9",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1680,
+      "y": 440
+    },
+    {
+      "data": {
+        "shape": "sine"
+      },
+      "id": "n10",
+      "inputs": {
+        "max": 1,
+        "min": -1,
+        "phase": 0,
+        "rate": {
+          "param": "vortexSpeed"
+        },
+        "seed": 0,
+        "t": 0
+      },
+      "type": "lfo",
+      "x": 1400,
+      "y": 660
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n11",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "twist"
+        }
+      },
+      "type": "math",
+      "x": 1680,
+      "y": 660
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n12",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1960,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "rotate"
+      },
+      "id": "n13",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": 1
+      },
+      "type": "vector_math",
+      "x": 2240,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "add"
+      },
+      "id": "n14",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0.5,
+          0.5
+        ],
+        "s": 1
+      },
+      "type": "vector_math",
+      "x": 2520,
+      "y": 220
+    },
+    {
+      "data": {
+        "edge": "mirror"
+      },
+      "id": "n15",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 2800,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n16",
+      "inputs": {
+        "p": [
+          0.5,
+          0.5
+        ],
+        "spacing": 2
+      },
+      "type": "jacobian",
+      "x": 2800,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "abs"
+      },
+      "id": "n17",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 3080,
+      "y": 440
+    },
+    {
+      "data": {
+        "clamp": true
+      },
+      "id": "n18",
+      "inputs": {
+        "inMax": 4,
+        "inMin": 0,
+        "outMax": 1,
+        "outMin": 0,
+        "x": 0.5
+      },
+      "type": "remap",
+      "x": 3360,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n19",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": {
+          "param": "swirlColor"
+        }
+      },
+      "type": "mix",
+      "x": 3640,
+      "y": 440
+    },
+    {
+      "data": {
+        "mode": "screen"
+      },
+      "id": "n20",
+      "inputs": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "layer": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "opacity": {
+          "param": "swirlGlow"
+        }
+      },
+      "type": "blend",
+      "x": 3080,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n21",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 3360,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n22",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 3920,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.45,
+      "displayName": "Size",
+      "identifier": "vortexSize",
+      "max": 1.5,
+      "min": 0.1,
+      "type": "float"
+    },
+    {
+      "default": 0.2,
+      "displayName": "Speed",
+      "identifier": "vortexSpeed",
+      "max": 2,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 240,
+      "displayName": "Twist (°)",
+      "identifier": "twist",
+      "max": 720,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": "#8a6bff",
+      "displayName": "Swirl light",
+      "identifier": "swirlColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": 0.6,
+      "displayName": "Swirl glow",
+      "identifier": "swirlGlow",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "clip": "dancer",
+    "thumbTime": 0.5
+  }
+}

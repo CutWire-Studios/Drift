@@ -1,0 +1,52 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "hold",
+      "name": "k_n2_hold",
+      "node": "n2",
+      "type": "float",
+      "value": 0.1
+    },
+    {
+      "input": "color",
+      "name": "k_n2_color",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        },
+        {
+          "index": 1,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"transition\",[[\"n1\",\"from\",{},[]],[\"n2\",\"dip\",{\"asset\":\"a1\"},[]],[\"n3\",\"transition_output\",{},[]],[\"n4\",\"to\",{},[]]],[[\"n1\",\"image\",\"n2\",\"from\"],[\"n4\",\"image\",\"n2\",\"to\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

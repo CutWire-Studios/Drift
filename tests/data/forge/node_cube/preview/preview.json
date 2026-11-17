@@ -1,0 +1,47 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "perspective",
+      "name": "k_n2_perspective",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "unzoom",
+      "name": "k_n2_unzoom",
+      "node": "n2",
+      "type": "float",
+      "value": 0.5
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        },
+        {
+          "index": 1,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"transition\",[[\"n1\",\"from\",{},[]],[\"n2\",\"cube\",{\"direction\":\"left\",\"asset\":\"a1\"},[]],[\"n3\",\"transition_output\",{},[]],[\"n4\",\"to\",{},[]]],[[\"n1\",\"image\",\"n2\",\"from\"],[\"n4\",\"image\",\"n2\",\"to\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

@@ -1,0 +1,112 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "rotation",
+      "name": "k_n2_rotation",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "length",
+      "name": "k_n6_length",
+      "node": "n6",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "min",
+      "name": "k_n6_min",
+      "node": "n6",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "max",
+      "name": "k_n6_max",
+      "node": "n6",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "size",
+      "name": "k_n8_size",
+      "node": "n8",
+      "type": "float",
+      "value": 1.5
+    },
+    {
+      "input": "amount",
+      "name": "k_n8_amount",
+      "node": "n8",
+      "type": "float",
+      "value": 0.12
+    },
+    {
+      "input": "scale",
+      "name": "k_n4_scale",
+      "node": "n4",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "c",
+      "name": "k_n9_c",
+      "node": "n9",
+      "type": "color",
+      "value": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "input": "d",
+      "name": "k_n9_d",
+      "node": "n9",
+      "type": "color",
+      "value": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "input": "softness",
+      "name": "k_n7_softness",
+      "node": "n7",
+      "type": "float",
+      "value": 0.02
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": [
+        "picture",
+        "ramp",
+        "motion"
+      ]
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"kaleidoscope\",{},[[\"segments\",{\"param\":\"slices\"}],[\"center\",{\"param\":\"centre\"}]]],[\"n3\",\"tint\",{},[[\"color\",{\"param\":\"tint\"}],[\"amount\",{\"param\":\"amount\"}]]],[\"n4\",\"image\",{\"asset\":{\"param\":\"picture\"}},[]],[\"n5\",\"gradient_ramp\",{\"stops\":{\"param\":\"ramp\"}},[]],[\"n6\",\"curve\",{\"points\":{\"param\":\"motion\"},\"loop\":true},[]],[\"n7\",\"region\",{\"rect\":{\"param\":\"area\"},\"shape\":\"ellipse\",\"invert\":false},[]],[\"n8\",\"grain\",{},[[\"seed\",{\"param\":\"shuffle\"}]]],[\"n9\",\"pick\",{},[[\"which\",{\"param\":\"style\"}]]],[\"n10\",\"color_value\",{},[[\"color\",{\"param\":\"plain\"}]]],[\"n11\",\"switch_value\",{},[[\"on\",{\"param\":\"flip\"}]]],[\"n12\",\"mix\",{},[]],[\"n13\",\"mix\",{},[]],[\"n14\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"],[\"n3\",\"image\",\"n5\",\"image\"],[\"n6\",\"value\",\"n5\",\"amount\"],[\"n5\",\"image\",\"n8\",\"image\"],[\"n8\",\"image\",\"n9\",\"a\"],[\"n4\",\"image\",\"n9\",\"b\"],[\"n9\",\"image\",\"n12\",\"a\"],[\"n10\",\"color\",\"n12\",\"b\"],[\"n7\",\"mask\",\"n12\",\"amount\"],[\"n12\",\"image\",\"n13\",\"a\"],[\"n1\",\"image\",\"n13\",\"b\"],[\"n11\",\"value\",\"n13\",\"amount\"],[\"n13\",\"image\",\"n14\",\"image\"]],[[\"amount\",\"float\",false],[\"flip\",\"bool\",false],[\"centre\",\"point\",false],[\"slices\",\"int\",false],[\"shuffle\",\"seed\",false],[\"tint\",\"color\",true],[\"plain\",\"color\",false],[\"area\",\"region\",false],[\"picture\",\"image\",false],[\"ramp\",\"gradient\",false],[\"motion\",\"curve\",false],[\"style\",\"choice\",false]],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

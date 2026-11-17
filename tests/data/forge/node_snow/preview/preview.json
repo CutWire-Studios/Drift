@@ -1,0 +1,56 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "speed",
+      "name": "k_n2_speed",
+      "node": "n2",
+      "type": "float",
+      "value": 0.3
+    },
+    {
+      "input": "seed",
+      "name": "k_n2_seed",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "amount",
+      "name": "k_n2_amount",
+      "node": "n2",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "input": "size",
+      "name": "k_n2_size",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"snow\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n2\",\"mask\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

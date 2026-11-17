@@ -1,0 +1,49 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "length",
+      "name": "k_n2_length",
+      "node": "n2",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "min",
+      "name": "k_n2_min",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "max",
+      "name": "k_n2_max",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"curve\",{\"points\":[{\"x\":0,\"y\":0,\"ease\":\"smooth\"},{\"x\":1,\"y\":1,\"ease\":\"linear\"}],\"loop\":true,\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n2\",\"value\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

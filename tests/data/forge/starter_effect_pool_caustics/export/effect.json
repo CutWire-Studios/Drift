@@ -1,0 +1,65 @@
+{
+  "backend": "gpu",
+  "category": "dreamy",
+  "description": "Rippling bright lines like sunlight through a swimming pool, focused where the water's surface bends light together.",
+  "displayName": "Pool caustics",
+  "id": "starter_effect_pool_caustics",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 5,
+      "displayName": "Wave size",
+      "identifier": "waveSize",
+      "maxValue": 12,
+      "minValue": 2,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.3,
+      "displayName": "Wave speed",
+      "identifier": "waveSpeed",
+      "maxValue": 1.5,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.012,
+      "displayName": "Refraction",
+      "identifier": "refraction",
+      "maxValue": 0.04,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": "#d8fbff",
+      "displayName": "Light colour",
+      "identifier": "lightColor",
+      "type": "color"
+    },
+    {
+      "defaultValue": 0.6,
+      "displayName": "Caustics",
+      "identifier": "caustics",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

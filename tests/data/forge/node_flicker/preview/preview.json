@@ -1,0 +1,49 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "amount",
+      "name": "k_n2_amount",
+      "node": "n2",
+      "type": "float",
+      "value": 0.4
+    },
+    {
+      "input": "rate",
+      "name": "k_n2_rate",
+      "node": "n2",
+      "type": "float",
+      "value": 12
+    },
+    {
+      "input": "seed",
+      "name": "k_n2_seed",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"flicker\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n2\",\"value\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

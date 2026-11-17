@@ -1,0 +1,40 @@
+{
+  "audioCurve": "crossfade",
+  "category": "liquid",
+  "description": "Both clips ripple like liquid as they swap.",
+  "displayName": "Liquid melt",
+  "id": "starter_transition_liquid_melt",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.25,
+      "displayName": "Melt",
+      "identifier": "melt",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          },
+          {
+            "index": 1,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

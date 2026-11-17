@@ -1,0 +1,61 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "radius",
+      "name": "k_n2_radius",
+      "node": "n2",
+      "type": "float",
+      "value": 0.75
+    },
+    {
+      "input": "softness",
+      "name": "k_n2_softness",
+      "node": "n2",
+      "type": "float",
+      "value": 0.45
+    },
+    {
+      "input": "color",
+      "name": "k_n2_color",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "input": "amount",
+      "name": "k_n2_amount",
+      "node": "n2",
+      "type": "float",
+      "value": 0.6
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"vignette\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

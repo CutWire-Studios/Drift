@@ -1,0 +1,401 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "color"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "l",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "a"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "x"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e5",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e6",
+      "to": "n7",
+      "toSocket": "x"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e7",
+      "to": "n8",
+      "toSocket": "b"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e8",
+      "to": "n9",
+      "toSocket": "x"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "size",
+      "id": "e9",
+      "to": "n11",
+      "toSocket": "p"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "slope",
+      "id": "e10",
+      "to": "n12",
+      "toSocket": "a"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "y",
+      "id": "e11",
+      "to": "n12",
+      "toSocket": "b"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "value",
+      "id": "e12",
+      "to": "n13",
+      "toSocket": "a"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "value",
+      "id": "e13",
+      "to": "n13",
+      "toSocket": "b"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "value",
+      "id": "e14",
+      "to": "n14",
+      "toSocket": "x"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e15",
+      "to": "n16",
+      "toSocket": "a"
+    },
+    {
+      "from": "n15",
+      "fromSocket": "color",
+      "id": "e16",
+      "to": "n16",
+      "toSocket": "b"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "value",
+      "id": "e17",
+      "to": "n16",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n16",
+      "fromSocket": "image",
+      "id": "e18",
+      "to": "n17",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "Contour lines traced through the brightness like a hiking map, the same width on steep and gentle slopes.",
+    "displayName": "Topographic",
+    "id": "starter_effect_topographic",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": 3
+      },
+      "type": "blur",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n4",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "contours"
+        }
+      },
+      "type": "math",
+      "x": 840,
+      "y": 220
+    },
+    {
+      "data": {
+        "fn": "fract"
+      },
+      "id": "n5",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1120,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "sub"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": 0,
+        "b": 0.5
+      },
+      "type": "math",
+      "x": 1400,
+      "y": 220
+    },
+    {
+      "data": {
+        "fn": "abs"
+      },
+      "id": "n7",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1680,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "sub"
+      },
+      "id": "n8",
+      "inputs": {
+        "a": 0.5,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1960,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n9",
+      "inputs": {
+        "spacing": 1,
+        "x": 0
+      },
+      "type": "derivative",
+      "x": 1120,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n10",
+      "inputs": {},
+      "type": "resolution",
+      "x": 1120,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n11",
+      "inputs": {
+        "p": [
+          0,
+          0
+        ]
+      },
+      "type": "split_point",
+      "x": 1400,
+      "y": 660
+    },
+    {
+      "data": {
+        "op": "div"
+      },
+      "id": "n12",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1680,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "div"
+      },
+      "id": "n13",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 2240,
+      "y": 220
+    },
+    {
+      "data": {
+        "clamp": true
+      },
+      "id": "n14",
+      "inputs": {
+        "inMax": {
+          "param": "lineWidth"
+        },
+        "inMin": 0.4,
+        "outMax": 0,
+        "outMin": 1,
+        "x": 0.5
+      },
+      "type": "remap",
+      "x": 2520,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n15",
+      "inputs": {
+        "color": {
+          "param": "lineColor"
+        }
+      },
+      "type": "color_value",
+      "x": 2520,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n16",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 2800,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n17",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 3080,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 12,
+      "displayName": "Lines",
+      "identifier": "contours",
+      "max": 40,
+      "min": 2,
+      "type": "float"
+    },
+    {
+      "default": 1.4,
+      "displayName": "Line width (px)",
+      "identifier": "lineWidth",
+      "max": 4,
+      "min": 0.6,
+      "type": "float"
+    },
+    {
+      "default": "#fff3d6",
+      "displayName": "Line colour",
+      "identifier": "lineColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "audioCurve": "crossfade",
+  "category": "geometric",
+  "description": "A circle opens from the middle.",
+  "displayName": "Iris",
+  "id": "starter_transition_iris",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.03,
+      "displayName": "Softness",
+      "identifier": "softness",
+      "maxValue": 0.5,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          },
+          {
+            "index": 1,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

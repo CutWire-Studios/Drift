@@ -1,0 +1,57 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "center",
+      "name": "k_n3_center",
+      "node": "n3",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "input": "start",
+      "name": "k_n3_start",
+      "node": "n3",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "softness",
+      "name": "k_n3_softness",
+      "node": "n3",
+      "type": "float",
+      "value": 0.01
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        },
+        {
+          "index": 1,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"transition\",[[\"n1\",\"from\",{},[]],[\"n2\",\"to\",{},[]],[\"n3\",\"clock_wipe\",{\"ccw\":false},[]],[\"n4\",\"mix\",{},[]],[\"n5\",\"transition_output\",{},[]]],[[\"n1\",\"image\",\"n4\",\"a\"],[\"n2\",\"image\",\"n4\",\"b\"],[\"n3\",\"mask\",\"n4\",\"amount\"],[\"n4\",\"image\",\"n5\",\"image\"]],[],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

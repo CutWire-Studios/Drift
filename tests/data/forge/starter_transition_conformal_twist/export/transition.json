@@ -1,0 +1,40 @@
+{
+  "audioCurve": "crossfade",
+  "category": "distortion",
+  "description": "Both clips fold through a complex power that peaks mid-way, then unfold as the new clip.",
+  "displayName": "Conformal twist",
+  "id": "starter_transition_conformal_twist",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 2,
+      "displayName": "Twist",
+      "identifier": "twist",
+      "maxValue": 5,
+      "minValue": 0.5,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          },
+          {
+            "index": 1,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

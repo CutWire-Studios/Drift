@@ -1,0 +1,51 @@
+{
+  "backend": "gpu",
+  "category": "dreamy",
+  "description": "The picture drifts along swirling currents that never bunch up or thin out.",
+  "displayName": "Curl flow",
+  "id": "starter_effect_curl_flow",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 3,
+      "displayName": "Swirl size",
+      "identifier": "swirlSize",
+      "maxValue": 10,
+      "minValue": 1,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.15,
+      "displayName": "Flow speed",
+      "identifier": "flowSpeed",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.01,
+      "displayName": "Strength",
+      "identifier": "flow",
+      "maxValue": 0.05,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

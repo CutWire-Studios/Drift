@@ -1,0 +1,46 @@
+{
+  "audioCurve": "crossfade",
+  "category": "liquid",
+  "description": "The old clip burns away in fiery patches.",
+  "displayName": "Burn away",
+  "id": "starter_transition_burn_away",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 5,
+      "displayName": "Patch size",
+      "identifier": "patchSize",
+      "maxValue": 20,
+      "minValue": 1,
+      "type": "float"
+    },
+    {
+      "defaultValue": "#ff6a00",
+      "displayName": "Fire colour",
+      "identifier": "fireColor",
+      "type": "color"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          },
+          {
+            "index": 1,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

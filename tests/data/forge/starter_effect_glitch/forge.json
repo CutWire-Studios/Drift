@@ -1,0 +1,155 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "image"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "image",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "glitch",
+    "description": "Jumping slices and split colour, like a broken signal.",
+    "displayName": "Glitch",
+    "id": "starter_effect_glitch",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "amount": {
+          "param": "glitch"
+        },
+        "blocks": 24,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "rate": 12,
+        "seed": 0,
+        "t": 0
+      },
+      "type": "glitch_blocks",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {
+        "mode": "linear"
+      },
+      "id": "n3",
+      "inputs": {
+        "amount": {
+          "param": "split"
+        },
+        "angle": 0,
+        "center": [
+          0.5,
+          0.5
+        ],
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "chromatic",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "amount": 0.15,
+        "count": 240,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "speed": 0,
+        "t": 0
+      },
+      "type": "scanlines",
+      "x": 840,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 1120,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.5,
+      "displayName": "Glitch",
+      "identifier": "glitch",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 6,
+      "displayName": "Colour split",
+      "identifier": "split",
+      "max": 40,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "key",
+      "name": "k_n2_key",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        0.1,
+        0.8,
+        0.2,
+        1
+      ]
+    },
+    {
+      "input": "softness",
+      "name": "k_n2_softness",
+      "node": "n2",
+      "type": "float",
+      "value": 0.08
+    },
+    {
+      "input": "spill",
+      "name": "k_n2_spill",
+      "node": "n2",
+      "type": "float",
+      "value": 0.5
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"chroma_key\",{},[[\"tolerance\",{\"param\":\"tolerance\"}]]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[[\"tolerance\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

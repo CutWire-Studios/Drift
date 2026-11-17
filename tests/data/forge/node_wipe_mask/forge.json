@@ -1,0 +1,74 @@
+{
+  "assets": [
+    {
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "height": 1,
+      "id": "a1",
+      "mime": "image/png",
+      "name": "px.png",
+      "width": 1
+    }
+  ],
+  "edges": [
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "basic",
+    "description": "",
+    "displayName": "My transition",
+    "id": "node_wipe_mask",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "asset": "a1"
+      },
+      "id": "n2",
+      "inputs": {
+        "angle": 0,
+        "p": 0,
+        "softness": 0.05
+      },
+      "type": "wipe_mask",
+      "x": 200,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 400,
+      "y": 0
+    }
+  ],
+  "params": [],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

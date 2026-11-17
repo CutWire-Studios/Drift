@@ -1,0 +1,62 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "spacing",
+      "name": "k_n3_spacing",
+      "node": "n3",
+      "type": "float",
+      "value": 1.5
+    },
+    {
+      "input": "a",
+      "name": "k_n4_a",
+      "node": "n4",
+      "type": "vec2",
+      "value": [
+        1,
+        0
+      ]
+    },
+    {
+      "input": "b",
+      "name": "k_n4_b",
+      "node": "n4",
+      "type": "vec2",
+      "value": [
+        0,
+        0
+      ]
+    },
+    {
+      "input": "b",
+      "name": "k_n7_b",
+      "node": "n7",
+      "type": "float",
+      "value": 0.5
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"split_color\",{},[]],[\"n3\",\"derivative\",{},[]],[\"n4\",\"vector_math\",{\"op\":\"rotate\"},[[\"s\",{\"param\":\"lightAngle\"}]]],[\"n5\",\"vector_measure\",{},[]],[\"n6\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"depth\"}]]],[\"n7\",\"math\",{\"op\":\"add\"},[]],[\"n8\",\"blend\",{\"mode\":\"overlay\"},[[\"opacity\",{\"param\":\"relief\"}]]],[\"n9\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"color\"],[\"n2\",\"l\",\"n3\",\"x\"],[\"n3\",\"grad\",\"n5\",\"a\"],[\"n4\",\"p\",\"n5\",\"b\"],[\"n5\",\"dot\",\"n6\",\"a\"],[\"n6\",\"value\",\"n7\",\"a\"],[\"n1\",\"image\",\"n8\",\"base\"],[\"n7\",\"value\",\"n8\",\"layer\"],[\"n8\",\"image\",\"n9\",\"image\"]],[[\"lightAngle\",\"float\",false],[\"depth\",\"float\",false],[\"relief\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

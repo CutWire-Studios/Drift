@@ -1,0 +1,35 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "displayName": "My effect",
+  "id": "node_other_clip",
+  "nextFeatures": [
+    "node:other_clip",
+    "param:track"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "displayName": "Other track",
+      "identifier": "src",
+      "type": "track"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

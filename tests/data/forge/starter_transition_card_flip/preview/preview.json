@@ -1,0 +1,47 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "perspective",
+      "name": "k_n5_perspective",
+      "node": "n5",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "lift",
+      "name": "k_n5_lift",
+      "node": "n5",
+      "type": "float",
+      "value": 0.4
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        },
+        {
+          "index": 1,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"transition\",[[\"n1\",\"from\",{},[]],[\"n2\",\"to\",{},[]],[\"n3\",\"progress\",{},[]],[\"n4\",\"ease\",{\"curve\":\"inout\"},[]],[\"n5\",\"card_flip\",{\"axis\":\"y\"},[]],[\"n6\",\"transition_output\",{},[]]],[[\"n3\",\"value\",\"n4\",\"t\"],[\"n1\",\"image\",\"n5\",\"from\"],[\"n2\",\"image\",\"n5\",\"to\"],[\"n4\",\"value\",\"n5\",\"p\"],[\"n5\",\"image\",\"n6\",\"image\"]],[],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

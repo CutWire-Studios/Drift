@@ -1,0 +1,38 @@
+{
+  "audioCurve": "crossfade",
+  "category": "basic",
+  "description": "Fade out to black, then into the new clip.",
+  "displayName": "Dip to black",
+  "id": "starter_transition_dip_to_black",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": "#000000",
+      "displayName": "Colour",
+      "identifier": "dipColor",
+      "type": "color"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          },
+          {
+            "index": 1,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

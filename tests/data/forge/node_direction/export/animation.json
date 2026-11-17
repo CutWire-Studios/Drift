@@ -1,0 +1,33 @@
+{
+  "category": "basic",
+  "defaultDurationMs": 500,
+  "directions": [
+    "in",
+    "out"
+  ],
+  "displayName": "My animation",
+  "id": "node_direction",
+  "nextFeatures": [
+    "kind:animation"
+  ],
+  "order": 1000,
+  "parameters": [],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

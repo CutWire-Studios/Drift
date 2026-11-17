@@ -1,0 +1,31 @@
+{
+  "audioCurve": "crossfade",
+  "category": "geometric",
+  "description": "The new clip appears tile by tile in random order.",
+  "displayName": "Random squares",
+  "id": "starter_transition_random_squares",
+  "order": 1000,
+  "parameters": [],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          },
+          {
+            "index": 1,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

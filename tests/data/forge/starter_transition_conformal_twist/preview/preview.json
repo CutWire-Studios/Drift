@@ -1,0 +1,57 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "zoom",
+      "name": "k_n7_zoom",
+      "node": "n7",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "w",
+      "name": "k_n7_w",
+      "node": "n7",
+      "type": "vec2",
+      "value": [
+        1,
+        0
+      ]
+    },
+    {
+      "input": "b",
+      "name": "k_n6_b",
+      "node": "n6",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        },
+        {
+          "index": 1,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"transition\",[[\"n1\",\"from\",{},[]],[\"n2\",\"to\",{},[]],[\"n3\",\"progress\",{},[]],[\"n4\",\"ease\",{\"curve\":\"peaksmooth\"},[]],[\"n5\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"twist\"}]]],[\"n6\",\"math\",{\"op\":\"add\"},[]],[\"n7\",\"complex_math\",{\"op\":\"pow\"},[]],[\"n8\",\"sample_at\",{\"edge\":\"mirror\"},[]],[\"n9\",\"sample_at\",{\"edge\":\"mirror\"},[]],[\"n10\",\"ease\",{\"curve\":\"inout\"},[]],[\"n11\",\"mix\",{},[]],[\"n12\",\"transition_output\",{},[]]],[[\"n3\",\"value\",\"n4\",\"t\"],[\"n4\",\"value\",\"n5\",\"a\"],[\"n5\",\"value\",\"n6\",\"a\"],[\"n6\",\"value\",\"n7\",\"n\"],[\"n1\",\"image\",\"n8\",\"image\"],[\"n2\",\"image\",\"n9\",\"image\"],[\"n7\",\"p\",\"n8\",\"p\"],[\"n7\",\"p\",\"n9\",\"p\"],[\"n3\",\"value\",\"n10\",\"t\"],[\"n8\",\"image\",\"n11\",\"a\"],[\"n9\",\"image\",\"n11\",\"b\"],[\"n10\",\"value\",\"n11\",\"amount\"],[\"n11\",\"image\",\"n12\",\"image\"]],[[\"twist\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

@@ -1,0 +1,166 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "image"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "image",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "image"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n6",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "retro",
+    "description": "Wobble, bleed, grain and faded colour.",
+    "displayName": "VHS tape",
+    "id": "starter_effect_vhs_tape",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "amount": {
+          "param": "wear"
+        },
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "t": 0
+      },
+      "type": "vhs",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "amount": 0.75,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "saturation",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "amount": 0.1,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "seed": 0,
+        "size": 1.5,
+        "t": 0
+      },
+      "type": "grain",
+      "x": 840,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "amount": 0.5,
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": 0.75,
+        "softness": 0.45
+      },
+      "type": "vignette",
+      "x": 1120,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n6",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 1400,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.6,
+      "displayName": "Tape wear",
+      "identifier": "wear",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "description": "Slowly turning mirrored slices.",
+  "displayName": "Kaleidoscope",
+  "id": "starter_effect_kaleidoscope",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 20,
+      "displayName": "Spin speed",
+      "identifier": "spin",
+      "maxValue": 120,
+      "minValue": -120,
+      "type": "float"
+    },
+    {
+      "defaultValue": 6,
+      "displayName": "Slices",
+      "identifier": "slices",
+      "maxValue": 16,
+      "minValue": 2,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}
