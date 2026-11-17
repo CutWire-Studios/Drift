@@ -29,7 +29,11 @@ void registerStylizeNodes();
 void registerGenerateNodes();
 void registerKitOverlayNodes();
 void registerMixNodes();
+void registerTransitionNodes();
+void registerKitTransitionNodes();
+void registerAnimateNodes();
 void registerMathNodes();
+void registerAdvancedNodes();
 void registerOutputNodes();
 
 }

@@ -37,7 +37,11 @@ void ensureRegistered()
         registerGenerateNodes();
         registerKitOverlayNodes();
         registerMixNodes();
+        registerTransitionNodes();
+        registerKitTransitionNodes();
+        registerAnimateNodes();
         registerMathNodes();
+        registerAdvancedNodes();
         registerOutputNodes();
         return true;
     }();

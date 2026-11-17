@@ -141,6 +141,7 @@ private slots:
             ++checked;
         }
         qInfo() << "validated" << checked << "fixtures; skipped" << skippedDocs << "with unregistered node types:" << skipped;
+        QCOMPARE(skippedDocs, 0);
         QVERIFY(checked > 0);
     }
 

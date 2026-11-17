@@ -85,10 +85,161 @@ void compareSources(const QString &where, const QString &dir, const CompileResul
 
 }
 
+// Ordered NODE_DEFS of web/packages/forge-core; regenerate when the web registry changes.
+static const char *const kWebNodeTypes[] = {
+    "video",
+    "from",
+    "to",
+    "progress",
+    "direction",
+    "time",
+    "uv",
+    "resolution",
+    "number",
+    "switch_value",
+    "color_value",
+    "point_value",
+    "image",
+    "choice",
+    "pick",
+    "region",
+    "seed",
+    "other_clip",
+    "track_mask",
+    "audio_track",
+    "depth",
+    "face",
+    "clip_mask",
+    "audio",
+    "brightness_contrast",
+    "saturation",
+    "hue_shift",
+    "levels",
+    "temperature",
+    "tint",
+    "gradient_map",
+    "invert",
+    "posterize",
+    "threshold",
+    "lut",
+    "exposure",
+    "tone",
+    "selective_color",
+    "channel_mixer",
+    "lift_gamma_gain",
+    "vibrance",
+    "color_replace",
+    "chroma_key",
+    "gradient_ramp",
+    "transform",
+    "zoom",
+    "twirl",
+    "wave",
+    "ripple",
+    "pixelate",
+    "mirror",
+    "kaleidoscope",
+    "lens",
+    "displace",
+    "shake",
+    "tile",
+    "corner_pin",
+    "polar",
+    "hex_pixelate",
+    "rotate_3d",
+    "sphere",
+    "card_flip",
+    "cube",
+    "doors",
+    "page_curl",
+    "blur",
+    "glow",
+    "directional_blur",
+    "zoom_blur",
+    "chromatic",
+    "vignette",
+    "sharpen",
+    "edges",
+    "spin_blur",
+    "lens_blur",
+    "streaks",
+    "emboss",
+    "oil_paint",
+    "grain",
+    "scanlines",
+    "halftone",
+    "glitch_blocks",
+    "vhs",
+    "noise",
+    "linear_gradient",
+    "radial_gradient",
+    "shape",
+    "stripes",
+    "checker",
+    "rain",
+    "snow",
+    "film_damage",
+    "grid_cells",
+    "mix",
+    "blend",
+    "over",
+    "luma_mask",
+    "set_alpha",
+    "mask_ops",
+    "switch_image",
+    "wipe_mask",
+    "iris_mask",
+    "dissolve_mask",
+    "blinds_mask",
+    "edge_glow",
+    "push",
+    "reveal",
+    "clock_wipe",
+    "dip",
+    "lfo",
+    "curve",
+    "ease",
+    "flicker",
+    "steps",
+    "math",
+    "func",
+    "remap",
+    "smoothstep",
+    "split_color",
+    "combine_color",
+    "split_point",
+    "combine_point",
+    "mix_value",
+    "vector_math",
+    "vector_measure",
+    "linear_transform",
+    "matrix_warp",
+    "sample_at",
+    "complex_math",
+    "derivative",
+    "jacobian",
+    "custom",
+    "effect_output",
+    "transition_output",
+    "animation_output",
+};
+
+
 class TstForgeCompiler : public QObject
 {
     Q_OBJECT
 private slots:
+    void registryMatchesWeb()
+    {
+        QStringList expected;
+        for (const char *t : kWebNodeTypes)
+            expected << QLatin1String(t);
+        QStringList actual;
+        for (const NodeDef *d : allNodeDefs())
+            actual << d->type;
+        QCOMPARE(actual, expected);
+    }
+
     void goldenFixtures()
     {
         const QStringList dirs = QDir(kRoot).entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
@@ -159,6 +310,7 @@ private slots:
         for (const QString &p : problems)
             qWarning().noquote() << p;
         QVERIFY2(problems.isEmpty(), qPrintable(QStringLiteral("%1 mismatches, first: %2").arg(problems.size()).arg(problems.value(0))));
+        QVERIFY2(skippedNames.isEmpty(), qPrintable(skippedNames.join(", ")));
         QVERIFY(checked > 0);
     }
 };
