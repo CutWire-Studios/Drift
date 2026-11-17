@@ -10,6 +10,8 @@
 
 // Still photo the effect thumbnails are drawn over when the caller has none.
 QImage defaultEffectBase(int side);
+// The built-in bases at an arbitrary size: 0 the effect photo, 1 and 2 the warm and cool transition pair.
+QImage defaultSampleImage(int which, QSize size);
 
 // The cacheKey is passed to GpuEffectExecutor unchanged, so callers add kTransitionCacheKeyPrefix or
 // kAnimationCacheKeyPrefix themselves. Every function returns a null image when the GPU pass fails.

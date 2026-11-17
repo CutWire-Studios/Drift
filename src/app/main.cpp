@@ -2,6 +2,7 @@
 #include "core/base/CacheRoot.h"
 #include "app/bin/MediaBinController.h"
 #include "app/editor/PreferencesController.h"
+#include "app/forge/ForgeController.h"
 #include "app/procedural/ProceduralEditorController.h"
 #include "app/procedural/ProceduralHighlighter.h"
 #include "app/editor/ProjectFileController.h"
@@ -950,6 +951,7 @@ int main(int argc, char *argv[])
     WorkspaceStore workspaceStore;
     SearchIndex searchIndex;
     ProceduralEditorController proceduralEditor(&editorState);
+    ForgeController forge(&editorState, &workspaceStore);
     drift::Haptics haptics;
     drift::PointerDevices pointerDevices;
     CrashReporter crashReporter;
@@ -962,6 +964,7 @@ int main(int argc, char *argv[])
     qmlRegisterSingletonInstance("Drift", 1, 0, "BinFolderModel", editorState.bin()->folderModel());
     qmlRegisterSingletonInstance("Drift", 1, 0, "EditorState", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "ProceduralEditor", &proceduralEditor);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Forge", &forge);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AppController", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "FileDialogs", &fileDialogs);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Addons", &addonManager);

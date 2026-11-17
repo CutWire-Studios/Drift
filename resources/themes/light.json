@@ -4427,6 +4427,19 @@
       "controlsBackground": "$semantic.surface.panel",
       "controlsBorder": "$semantic.panel.border",
       "foreground": "$semantic.mutedForeground"
+    },
+    "forgePanel": {
+      "background": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "headerBackground": "$semantic.panel.accent",
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "rowBackground": "$semantic.panel.accent",
+      "selection": "$semantic.primary",
+      "error": "$semantic.destructive",
+      "success": "$semantic.constructive",
+      "codeBackground": "$semantic.surface.app"
     }
   },
   "metrics": {

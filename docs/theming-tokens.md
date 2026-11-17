@@ -3165,6 +3165,17 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | nodeGraphEditor | controlsBackground | $semantic.surface.panel | $semantic.surface.panel |
 | nodeGraphEditor | controlsBorder | $semantic.panel.border | $semantic.panel.border |
 | nodeGraphEditor | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
+| forgePanel | background | $semantic.surface.panel | $semantic.surface.panel |
+| forgePanel | border | $semantic.panel.border | $semantic.panel.border |
+| forgePanel | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| forgePanel | headerBackground | $semantic.panel.accent | $semantic.panel.accent |
+| forgePanel | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| forgePanel | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| forgePanel | rowBackground | $semantic.panel.accent | $semantic.panel.accent |
+| forgePanel | selection | $semantic.primary | $semantic.primary |
+| forgePanel | error | $semantic.destructive | $semantic.destructive |
+| forgePanel | success | $semantic.constructive | $semantic.constructive |
+| forgePanel | codeBackground | $semantic.surface.app | $semantic.surface.app |
 
 ## metrics
 

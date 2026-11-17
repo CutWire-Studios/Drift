@@ -525,6 +525,15 @@ target_compile_definitions(tst_forgecompiler PRIVATE
     DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME ForgeCompiler COMMAND tst_forgecompiler)
 
+qt_add_executable(tst_forgegraphmapping tst_forgegraphmapping.cpp
+    ../src/app/forge/ForgeGraphMapping.cpp
+    ../src/ui/nodes/NodeListModel.cpp
+    ../src/ui/nodes/EdgeListModel.cpp
+    ../src/ui/nodes/NodeGraphController.cpp)
+target_include_directories(tst_forgegraphmapping PRIVATE ../src)
+target_link_libraries(tst_forgegraphmapping PRIVATE Qt6::Test Qt6::Gui Qt6::Qml driftforge)
+add_test(NAME ForgeGraphMapping COMMAND tst_forgegraphmapping)
+
 qt_add_executable(tst_transform3d tst_transform3d.cpp)
 target_include_directories(tst_transform3d PRIVATE ../src)
 target_link_libraries(tst_transform3d PRIVATE Qt6::Test Qt6::Gui driftengine driftcore)

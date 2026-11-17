@@ -135,6 +135,11 @@ QImage defaultEffectBase(int side)
     return makeFallbackBase(side);
 }
 
+QImage defaultSampleImage(int which, QSize size)
+{
+    return defaultBase(which == 1 ? makeBaseA : which == 2 ? makeBaseB : makeFallbackBase, size);
+}
+
 QImage renderEffectThumbnail(const QString &cacheKey, const drift::GpuEffectDefinition &gpu,
                              const QMap<QString, QVariant> &params, QSize size, const QImage &source)
 {

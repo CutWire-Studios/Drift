@@ -318,6 +318,19 @@ FocusScope {
         quickAddRequested(at, toWorld(at.x, at.y), null)
     }
 
+    // The app-wide Ctrl+Z / Delete / Space shortcuts fire before key events reach an item; claiming
+    // them here is what keeps a graph's undo and delete off the project while the canvas has focus.
+    Keys.onShortcutOverride: (event) => {
+        if (!controller)
+            return
+        const ctrl = (event.modifiers & Qt.ControlModifier) !== 0
+        const ctrlKeys = [Qt.Key_Z, Qt.Key_Y, Qt.Key_A, Qt.Key_C, Qt.Key_V, Qt.Key_D, Qt.Key_0, Qt.Key_Plus,
+                          Qt.Key_Equal, Qt.Key_Minus]
+        const plainKeys = [Qt.Key_Delete, Qt.Key_Backspace, Qt.Key_Space, Qt.Key_F, Qt.Key_Escape]
+        if (ctrl ? ctrlKeys.includes(event.key) : plainKeys.includes(event.key))
+            event.accepted = true
+    }
+
     Keys.onPressed: (event) => {
         if (!controller)
             return

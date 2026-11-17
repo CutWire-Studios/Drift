@@ -1680,6 +1680,7 @@ qt_add_resources(drift "drift_workspaces"
         resources/workspaces/masking-tracking.json
         resources/workspaces/3d.json
         resources/workspaces/procedural.json
+        resources/workspaces/forge.json
 )
 
 qt_add_resources(drift "drift_marketplace"
@@ -1775,6 +1776,10 @@ qt_add_qml_module(drift
         src/ui/nodes/EdgeListModel.cpp
         src/ui/nodes/NodeGraphController.h
         src/ui/nodes/NodeGraphController.cpp
+        src/app/forge/ForgeGraphMapping.h
+        src/app/forge/ForgeGraphMapping.cpp
+        src/app/forge/ForgeController.h
+        src/app/forge/ForgeController.cpp
         src/app/online/marketplace/MarketSourceBrowser.h
         src/app/online/marketplace/MarketSourceBrowser.cpp
         src/app/online/marketplace/MarketItemLoader.h
@@ -2084,6 +2089,14 @@ qt_add_qml_module(drift
         src/qml/components/panels/ProceduralEditorPanel.qml
         src/qml/components/panels/ProceduralParamsPanel.qml
         src/qml/components/panels/ProceduralConsolePanel.qml
+        src/qml/components/panels/ForgeGraphPanel.qml
+        src/qml/components/panels/ForgePalettePanel.qml
+        src/qml/components/panels/ForgeInspectorPanel.qml
+        src/qml/components/panels/ForgePreviewBar.qml
+        src/qml/components/panels/ForgeNodeTab.qml
+        src/qml/components/panels/ForgeSlidersTab.qml
+        src/qml/components/panels/ForgeDetailsTab.qml
+        src/qml/components/panels/ForgeCodeTab.qml
         src/qml/components/panels/SubtitleLanePanel.qml
         src/qml/components/panels/SubtitleTextPanel.qml
         src/qml/components/subtitles/SubtitleLaneToolbar.qml

@@ -64,6 +64,9 @@ const PanelType kPanelTypes[] = {
     {"proceduralEditor", QT_TRANSLATE_NOOP("WorkspaceStore", "Procedural Code")},
     {"proceduralParams", QT_TRANSLATE_NOOP("WorkspaceStore", "Procedural Parameters")},
     {"proceduralConsole", QT_TRANSLATE_NOOP("WorkspaceStore", "Procedural Console")},
+    {"forgeGraph", QT_TRANSLATE_NOOP("WorkspaceStore", "Forge Graph")},
+    {"forgePalette", QT_TRANSLATE_NOOP("WorkspaceStore", "Forge Nodes")},
+    {"forgeInspector", QT_TRANSLATE_NOOP("WorkspaceStore", "Forge Inspector")},
 };
 
 // Tab ids and labels mirror AssetsPanel.qml / PropertiesPanel.qml.
