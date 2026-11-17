@@ -1,9 +1,9 @@
         ,
         { "remove_asset", "media", "Delete a bin row",
-          "Remove an asset from the media bin. Refused (bad_args) while any clip uses it, on any "
+          "Remove an asset from the media bin. Refused with in_use while any clip uses it, on any "
           "timeline; list_assets({usage:true}) counts them. A composite asset is a whole timeline: "
           "removing it deletes that timeline and everything in it and closes its tab (editing falls "
-          "back to the main timeline). One undo step.",
+          "back to the main timeline); refused with locked when that timeline has a locked track. One undo step.",
           objectSchema({{QStringLiteral("asset"), assetRefProp()}},
                        {QStringLiteral("asset")}),
           false, true },
@@ -161,7 +161,8 @@
           "Release the selected composite clip's inner clips onto the main timeline at their original "
           "times, cut to the composite's trim, and remove the composite. The composite's own effects, "
           "transform, fades and keyframes are discarded. Fails when the composite is ramped, reversed "
-          "or not at 1x. Acts on the current selection — call select_clip first.",
+          "or not at 1x, and with locked when a locked track would be changed or deleted (a main-timeline "
+          "track the clips land on, or the composite's own timeline when this is its last instance). Acts on the current selection — call select_clip first.",
           objectSchema({}) },
         { "open_composite", "timeline", "Edit inside a composite",
           "Open a composite's timeline in its own tab and make it the timeline every other op edits "

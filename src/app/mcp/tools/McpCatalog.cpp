@@ -679,7 +679,8 @@ const QList<Op> &ops()
           "Delete a media-bin folder. By default its assets and subfolders move up to its parent, "
           "as in the app. recursive:true instead removes every subfolder and every asset under it "
           "from the bin; it fails in_use (changing nothing) if any of those assets has clips on the "
-          "timeline. One undo step. Returns {deleted:[folder ids], removedAssets}.",
+          "timeline, and locked if one of them is a timeline with a locked track. One undo step. Returns "
+          "{deleted:[folder ids], removedAssets}.",
           objectSchema({{QStringLiteral("folder"), stringProp(QStringLiteral("Folder id (or unique name)"))},
                         {QStringLiteral("recursive"), boolProp(QStringLiteral("Also remove subfolders and their assets (default false)"))}},
                        {QStringLiteral("folder")}),

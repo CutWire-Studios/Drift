@@ -805,6 +805,13 @@ void AppController::dissolveComposite(int trackIndex, int clipIndex)
     setPlaying(false);
     const drift::Project before = m_project.detachedCopy();
     m_project.ensureTrackIds();
+    // The selection is rewritten below with post-dissolve indices; a lock refusal puts the project
+    // back, so it has to put the selection back too.
+    const auto savedSelection = m_selection;
+    const int savedSelectedTrack = m_selectedTrack;
+    const int savedSelectedClip = m_selectedClip;
+    const int savedTransitionTrack = m_selectedTransitionTrack;
+    const int savedTransitionLeftClip = m_selectedTransitionLeftClip;
 
     const drift::TimeUs shift = composite.timelineStart - composite.srcIn;
     QHash<QString, QString> newClipIds;
@@ -998,6 +1005,15 @@ void AppController::dissolveComposite(int trackIndex, int clipIndex)
     m_selectedTransitionLeftClip = -1;
 
     pushProjectEdit(before, tr("Dissolve composite"));
+    if (m_editRefusedByLock) {
+        m_selection = savedSelection;
+        m_selectedTrack = savedSelectedTrack;
+        m_selectedClip = savedSelectedClip;
+        m_selectedTransitionTrack = savedTransitionTrack;
+        m_selectedTransitionLeftClip = savedTransitionLeftClip;
+        resyncAfterLockRefusal(tr("A locked track would be changed or deleted. Unlock it first"));
+        return;
+    }
     if (discarding) {
         setLastMessage(tr("Composite effects and transform were discarded"), QStringLiteral("warning"));
         // No finishEdit on this path: the revision (and the change feed) moves here.
@@ -1697,7 +1713,8 @@ void AppController::pruneOrphanSequences()
         if (id == active) {
             clearSelection();
             m_project.activateSequence(QString());
-            m_mcpController->bumpEditRevision();
+            // No revision bump here: every caller bumps it (or finishEdit does) once pushProjectEdit
+            // has accepted the edit, and a refused removal must not move it.
             notifyTracksChanged();
         }
         m_project.removeSequence(id);
@@ -1705,6 +1722,23 @@ void AppController::pruneOrphanSequences()
     }
     if (changed)
         emit sequenceTabsChanged();
+}
+
+// pushProjectEdit put m_project back after a lock refusal, but a bin removal had already told
+// the bin model and the timeline tabs that rows and sequences went away. Resync them from the
+// restored project. Not syncAfterProjectSwap: that marks the project dirty and restores the
+// selection from an undo snapshot, and nothing changed here.
+void AppController::resyncAfterLockRefusal(const QString &message)
+{
+    m_editRefusedByLock = false;
+    if (m_assetLibrary)
+        m_assetLibrary->syncToProject();
+    m_bin->folderModel()->syncToProject();
+    normalizeSelection();
+    notifyTracksChanged();
+    notifySelectionChanged();
+    emit sequenceTabsChanged();
+    setLastMessage(message, QStringLiteral("warning"));
 }
 
 void AppController::syncCompositeAssetDurations()

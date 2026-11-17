@@ -344,6 +344,7 @@ private slots:
     void rebakeAllStaleQueuesNothingWhileBusy();
     void performanceSettingsRoundTrip();
     void binFolderOps();
+    void removeAssetRefusesLockedTimeline();
 };
 
 static QJsonObject rpc(const QString &method, const QJsonObject &params = {}, int id = 1)
@@ -12199,6 +12200,84 @@ void McpTest::binFolderOps()
     QCOMPARE(dispatcher.applyOne(QStringLiteral("delete_folder"), {{QStringLiteral("folder"), voice}, {QStringLiteral("recursive"), true}})
                  .value(QStringLiteral("error")).toString(), QStringLiteral("in_use"));
     QCOMPARE(state.bin()->folderModel()->count(), 2);
+}
+
+// A timeline holding a locked track can't be deleted from the bin, by remove_asset, a recursive
+// delete_folder or dissolving its last instance: all reply locked and change nothing.
+void McpTest::removeAssetRefusesLockedTimeline()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *tool, const QJsonObject &args) { return dispatcher.applyOne(QLatin1String(tool), args); };
+    const auto errorOf = [](const QJsonObject &r) { return r.value(QStringLiteral("error")).toString(); };
+
+    state.newTimeline();
+    const QString seq = state.activeSequenceId();
+    state.addTextClip(QStringLiteral("Inside"), 0.0);
+    state.setTrackLocked(0, true);
+    state.openSequence(QString());
+    QString timeline;
+    for (const drift::MediaAsset &asset : state.project()->assets()) {
+        if (asset.sequenceId == seq)
+            timeline = asset.id;
+    }
+    QVERIFY(!timeline.isEmpty());
+    const int count = library.count();
+    const qsizetype depth = state.undoHistory().size();
+
+    QCOMPARE(errorOf(call("remove_asset", {{QStringLiteral("asset"), timeline}})), QStringLiteral("locked"));
+    QCOMPARE(state.undoHistory().size(), depth);
+    QCOMPARE(library.count(), count);
+    QVERIFY(library.indexOfId(timeline) >= 0);
+    QVERIFY(state.project()->hasSequence(seq));
+
+    // An asset a clip uses is in_use, not locked.
+    drift::MediaAsset video;
+    video.id = QStringLiteral("used-video");
+    video.name = QStringLiteral("clip.mp4");
+    video.kind = drift::MediaKind::Video;
+    video.path = QStringLiteral("/nonexistent/clip.mp4");
+    video.durationUs = drift::secondsToUs(5.0);
+    state.project()->addAsset(video);
+    library.syncToProject();
+    state.addClipFromAssetAt(library.indexOfId(video.id), 0, 0.0);
+    QCOMPARE(errorOf(call("remove_asset", {{QStringLiteral("asset"), video.id}})), QStringLiteral("in_use"));
+
+    // A recursive folder delete over the timeline changes nothing, folders included.
+    const QString folder = call("create_folder", {{QStringLiteral("name"), QStringLiteral("Cuts")}}).value(QStringLiteral("id")).toString();
+    QVERIFY(!folder.isEmpty());
+    QVERIFY(call("move_asset_to_folder", {{QStringLiteral("asset"), timeline}, {QStringLiteral("folder"), folder}}).value(QStringLiteral("ok")).toBool());
+    const qsizetype depthBefore = state.undoHistory().size();
+    const auto revisionBefore = state.mcp()->revision();
+    QCOMPARE(errorOf(call("delete_folder", {{QStringLiteral("folder"), folder}, {QStringLiteral("recursive"), true}})),
+             QStringLiteral("locked"));
+    QCOMPARE(state.bin()->folderModel()->count(), 1);
+    QVERIFY(library.indexOfId(timeline) >= 0);
+    QVERIFY(state.project()->hasSequence(seq));
+    QCOMPARE(state.undoHistory().size(), depthBefore);
+    QCOMPARE(state.mcp()->revision(), revisionBefore);
+
+    // Dissolving the last instance of a locked composite is refused; a retimed one keeps apply_failed.
+    state.selectClip(0, 0);
+    QCOMPARE(state.selectedClip(), 0);
+    state.setSelection({QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 0}}});
+    QVERIFY(state.canMakeCompositeFromSelection());
+    state.makeCompositeFromSelection();
+    const drift::Clip composite = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(composite.type, drift::ClipType::Composite);
+    state.openCompositeClip(0, 0);
+    state.setTrackLocked(0, true);
+    state.openSequence(QString());
+    state.selectClip(0, 0);
+    QCOMPARE(errorOf(call("dissolve_composite", {})), QStringLiteral("locked"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, composite.id);
+    QVERIFY(state.project()->hasSequence(composite.sequenceId));
+
+    state.project()->tracks()[0].clips[0].reverse = true;
+    state.selectClip(0, 0);
+    QCOMPARE(errorOf(call("dissolve_composite", {})), QStringLiteral("apply_failed"));
 }
 
 void McpTest::removeSilenceCutsMiddleGapWithDeclick()
