@@ -69,6 +69,17 @@ enum class MaskViewMode : quint8 { Off, Overlay, Matte };
 // GPU until the importer); then `vector`, drawn by Skia straight into the layer
 // target; otherwise `source` is CPU RGBA (still image, or a QPainter raster of a
 // text/shape clip). The GPU does the scaling, rotation, masking and blending.
+// A shader-based clip in/out animation to run over the layer's isolated result. `params` already
+// holds the fixed and instance values plus u_direction.
+struct GpuShaderAnim
+{
+    QString cacheKey;
+    const drift::GpuEffectDefinition *gpu = nullptr;
+    QMap<QString, QVariant> params;
+    double progress = 0.0;
+    drift::TimeUs timeUs = 0;
+};
+
 struct GpuLayer
 {
     QImage source; // null => fully transparent layer (unless video or vector is set)
@@ -88,6 +99,9 @@ struct GpuLayer
     // A composite clip's nested timeline, composed into a canvas-sized layer target.
     std::shared_ptr<const struct GpuScene> nested;
     QList<drift::Effect> effects;
+    // The clip's shader intro and outro, in that order, active at this frame. Run on the isolated
+    // layer, after its transform, effects, masks, opacity and camera.
+    QList<GpuShaderAnim> shaderAnims;
     QList<drift::Mask> masks;
     // Index-parallel with `masks`: this frame's decoded coverage map for each Media entry, null
     // for parametric ones. Decoded by FrameCompositor, which is the only place that knows the time.

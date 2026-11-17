@@ -17,6 +17,7 @@
 #include "engine/render2d/pdf/PdfClipRenderer.h"
 #include "engine/render2d/pdf/PdfiumRuntime.h"
 #include "engine/packages/assets/StickerCatalog.h"
+#include "engine/packages/animations/AnimationCatalog.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "engine/packages/transitions/TransitionPackageLoader.h"
 #include "core/base/ZipArchive.h"
@@ -1345,6 +1346,8 @@ void AddonManager::reloadForKinds(const QStringList &kinds)
             reloadEffectCatalog();
         else if (kind == QLatin1String("transitions"))
             reloadTransitionCatalog();
+        else if (kind == QLatin1String("animations"))
+            reloadAnimationCatalog();
         else if (kind == QLatin1String("audio-effects"))
             reloadAudioEffectCatalog();
         else if (kind == QLatin1String("effect-templates"))

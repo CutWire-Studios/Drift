@@ -33,7 +33,8 @@ Item {
     }
     readonly property string animKind: anim.kind || "none"
     readonly property var kindModel: {
-        const base = [{ id: "none", label: qsTr("None") }].concat(EditorState.clipAnimationKinds())
+        const base = [{ id: "none", label: qsTr("None") }].concat(
+            EditorState.clipAnimationKinds().filter(e => !e.directions || e.directions.indexOf(root.edge) >= 0))
         return base.some(e => e.id === root.animKind)
                ? base : base.concat([{ id: root.animKind, label: root.animKind }])
     }

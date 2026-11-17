@@ -208,6 +208,7 @@ target_compile_definitions(tst_engine PRIVATE
     DRIFT_TEST_ADDON_EFFECTS_DIR="${CMAKE_SOURCE_DIR}/../drift-addons/staging/effects-core/effects"
     DRIFT_TEST_TRENDING_EFFECTS_DIR="${CMAKE_SOURCE_DIR}/../drift-addons/staging/effects-trending/effects"
     DRIFT_TEST_TRANSITIONS_DIR="${CMAKE_SOURCE_DIR}/transitions"
+    DRIFT_TEST_ANIMATIONS_DIR="${CMAKE_SOURCE_DIR}/animations"
     DRIFT_TEST_FONTS_DIR="${CMAKE_SOURCE_DIR}/fonts"
     DRIFT_TEST_EMOJI_FONT_DIR="${CMAKE_SOURCE_DIR}/emoji-fonts"
     DRIFT_TEST_AUDIO_EFFECTS_DIR="${CMAKE_SOURCE_DIR}/audio-effects"
@@ -486,6 +487,13 @@ qt_add_executable(tst_proceduralpackages tst_proceduralpackages.cpp)
 target_include_directories(tst_proceduralpackages PRIVATE ../src)
 target_link_libraries(tst_proceduralpackages PRIVATE Qt6::Test driftengine driftcore)
 add_test(NAME ProceduralPackages COMMAND tst_proceduralpackages)
+
+qt_add_executable(tst_animationpackage tst_animationpackage.cpp)
+target_include_directories(tst_animationpackage PRIVATE ../src)
+target_link_libraries(tst_animationpackage PRIVATE Qt6::Test driftengine driftcore)
+target_compile_definitions(tst_animationpackage PRIVATE
+    DRIFT_TEST_ANIMATIONS_DIR="${CMAKE_SOURCE_DIR}/animations")
+add_test(NAME AnimationPackage COMMAND tst_animationpackage)
 
 qt_add_executable(tst_transform3d tst_transform3d.cpp)
 target_include_directories(tst_transform3d PRIVATE ../src)

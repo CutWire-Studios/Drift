@@ -349,6 +349,7 @@ set(DRIFT_CORE_EFFECTS
     color_grade film_grain chromatic_aberration adjust_brightness adjust_contrast adjust_gamma
     adjust_hue adjust_saturation adjust_temperature gaussian_blur bloom_glow halation stylize_vignette)
 set(DRIFT_CORE_TRANSITIONS crossfade dip dip_white)
+set(DRIFT_CORE_ANIMATIONS "")
 set(DRIFT_CORE_AUDIO_EFFECTS "")
 set(DRIFT_CORE_EFFECT_TEMPLATES "")
 find_package(OnnxRuntime QUIET)
@@ -872,6 +873,10 @@ add_library(driftengine STATIC
     src/engine/packages/procedurals/ProceduralPackageLoader.cpp
     src/engine/packages/procedurals/ProceduralCatalog.h
     src/engine/packages/procedurals/ProceduralCatalog.cpp
+    src/engine/packages/animations/AnimationCatalog.h
+    src/engine/packages/animations/AnimationCatalog.cpp
+    src/engine/packages/animations/AnimationPackageLoader.h
+    src/engine/packages/animations/AnimationPackageLoader.cpp
     src/engine/packages/transitions/TransitionCatalog.h
     src/engine/packages/transitions/TransitionCatalog.cpp
     src/engine/packages/transitions/TransitionPackageLoader.h
@@ -2777,6 +2782,10 @@ if(ANDROID OR EMSCRIPTEN)
          "transitions/*/*.frag"
          "transitions/*/*.png"
          "transitions/*/*.webp"
+         "animations/*/*.json"
+         "animations/*/*.frag"
+         "animations/*/*.png"
+         "animations/*/*.webp"
          "audio-effects/*/audio-effect.json"
          "audio-effects/*/thumbnail.png"
          "audio-effects/*/thumbnail.webp"
@@ -2785,7 +2794,7 @@ if(ANDROID OR EMSCRIPTEN)
     list(REMOVE_DUPLICATES DRIFT_PACKAGE_FILES)
     if(DRIFT_BUNDLE_CORE_PACKAGES_ONLY)
         set(_drift_keep "")
-        foreach(_kind effects transitions audio-effects effect-templates)
+        foreach(_kind effects transitions animations audio-effects effect-templates)
             string(TOUPPER "${_kind}" _upper)
             string(REPLACE "-" "_" _upper "${_upper}")
             foreach(_id ${DRIFT_CORE_${_upper}})
@@ -3030,6 +3039,10 @@ function(drift_copy_transitions target)
     drift_stage_packages(${target} transitions)
 endfunction()
 
+function(drift_copy_animations target)
+    drift_stage_packages(${target} animations)
+endfunction()
+
 # Audio effects ship as the "audio-effects" addon, so this only makes the build tree
 # self-contained — <appDir>/audio-effects is already a search root.
 function(drift_copy_audio_effects target)
@@ -3069,11 +3082,13 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
         drift_stage_packages(drift effects ONLY ${DRIFT_CORE_EFFECTS})
         drift_stage_packages(drift effect-templates ONLY ${DRIFT_CORE_EFFECT_TEMPLATES})
         drift_stage_packages(drift transitions ONLY ${DRIFT_CORE_TRANSITIONS})
+        drift_stage_packages(drift animations ONLY ${DRIFT_CORE_ANIMATIONS})
         drift_stage_packages(drift audio-effects ONLY ${DRIFT_CORE_AUDIO_EFFECTS})
     else()
         drift_copy_effects(drift)
         drift_copy_effect_templates(drift)
         drift_copy_transitions(drift)
+        drift_copy_animations(drift)
         drift_copy_audio_effects(drift)
     endif()
     drift_bundle_onnxruntime(drift)
@@ -3118,7 +3133,7 @@ else()
     # the app searches <appDir>/<subdir> (PackageSearchPaths::defaultSearchPaths). Installing
     # them here (rather than via the DRIFT_*_DIR env vars) keeps installed addons able to
     # supersede the bundled copies.
-    foreach(_assetdir effects transitions effect-templates audio-effects)
+    foreach(_assetdir effects transitions animations effect-templates audio-effects)
         if(DRIFT_BUNDLE_CORE_PACKAGES_ONLY)
             string(TOUPPER "${_assetdir}" _upper)
             string(REPLACE "-" "_" _upper "${_upper}")

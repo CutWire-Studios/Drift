@@ -1764,6 +1764,20 @@ GlTarget renderIsolatedLayer(GlRuntime &rt, QOpenGLExtraFunctions *gl, const Gpu
     if (!straight.isValid())
         return isolated;
     rt.releaseTarget(std::move(isolated));
+
+    for (const GpuShaderAnim &anim : layer.shaderAnims) {
+        if (!anim.gpu || !anim.gpu->valid)
+            continue;
+        const std::vector<const GlTarget *> sources{&straight};
+        PipelineAux aux;
+        aux.frameRate = layer.frameRate;
+        GlTarget next = runPipeline(rt, gl, anim.cacheKey, *anim.gpu, sources, anim.params,
+                                    anim.timeUs, anim.progress, canvasSize, &aux);
+        if (!next.isValid())
+            continue;
+        rt.releaseTarget(std::move(straight));
+        straight = std::move(next);
+    }
     return straight;
 }
 
@@ -2086,6 +2100,24 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &outCanvas
                 drawLayerOnCanvas(rt, gl, canvas, target, item.layer, item.blend, canvasSize);
             }
             rt.releaseTarget(std::move(target));
+            continue;
+        }
+
+        if (!item.isTransition && !item.layer.shaderAnims.isEmpty() && !scene.editorView
+            && !item.layer.depthOcclude && !item.layer.emitDepthCanvas
+            && !showsMaskView(item.layer) && itemIndex != matteItem) {
+            GlTarget animated = renderIsolatedLayer(rt, gl, item.layer, canvasSize);
+            if (!animated.isValid()) {
+                if (lostVideo && item.layer.valid && item.layer.video.isValid())
+                    *lostVideo = true;
+                continue;
+            }
+            // The isolated render already applied this layer's opacity and camera.
+            GpuLayer full;
+            full.valid = true;
+            full.rect = QRectF(0, 0, canvasSize.width(), canvasSize.height());
+            drawLayerOnCanvas(rt, gl, canvas, animated, full, item.blend, canvasSize);
+            rt.releaseTarget(std::move(animated));
             continue;
         }
 

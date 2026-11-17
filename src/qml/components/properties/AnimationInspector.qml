@@ -135,7 +135,8 @@ Item {
                                                       : sec.inspector.clipData.fadeOutHandles) || []
         readonly property string animKind: sec.anim.kind || "none"
         readonly property var kindModel: {
-            const base = sec.inspector.animKindList
+            const dir = sec.edge
+            const base = sec.inspector.animKindList.filter(e => !e.directions || e.directions.indexOf(dir) >= 0)
             return base.some(e => e.id === sec.animKind)
                    ? base : base.concat([{ id: sec.animKind, label: sec.animKind }])
         }

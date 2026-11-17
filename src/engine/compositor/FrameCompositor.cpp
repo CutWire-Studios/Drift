@@ -19,6 +19,7 @@
 #include "engine/compositor/layers/TransformLayer.h"
 #include "engine/compositor/SourceFrameCrop.h"
 #include "core/text/animation/TextAnimationPreset.h"
+#include "engine/packages/animations/AnimationCatalog.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "engine/render3d/models/ModelAsset.h"
 #include "engine/render3d/models/ModelClipRenderer.h"
@@ -1534,6 +1535,24 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
     layer.effects.append(laneEffects);
     layer.faceSlots = faceSlotsForClip(clip, layer.effects, timelineUs);
     layer.depth = depthFrameForClip(clip, layer.effects, timelineUs);
+    for (const bool isIn : {true, false}) {
+        const drift::ClipAnimation &anim = isIn ? clip.animIn : clip.animOut;
+        const AnimationPresetEntry *def = animationDefForId(anim.kindId);
+        if (!def || !def->gpu.valid)
+            continue;
+        const std::optional<double> progress = drift::clipAnimationProgress(
+            clip.timelineStart, clip.timelineDuration, anim, isIn, timelineUs);
+        if (!progress)
+            continue;
+        GpuShaderAnim shader;
+        shader.cacheKey = QLatin1String(kAnimationCacheKeyPrefix) + def->meta.id;
+        shader.gpu = &def->gpu;
+        shader.params = resolvedAnimationParameters(anim.parameters, *def);
+        shader.params.insert(QStringLiteral("u_direction"), isIn ? 0.0 : 1.0);
+        shader.progress = *progress;
+        shader.timeUs = clipTimeUs;
+        layer.shaderAnims.append(shader);
+    }
     layer.valid = true;
     return layer;
 }

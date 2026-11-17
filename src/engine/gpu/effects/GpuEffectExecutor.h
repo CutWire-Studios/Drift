@@ -66,3 +66,4 @@ private:
 
 // Transition ids share a namespace with effect ids in the program cache.
 constexpr const char *kTransitionCacheKeyPrefix = "transition:";
+constexpr const char *kAnimationCacheKeyPrefix = "animation:";
