@@ -3393,6 +3393,10 @@
         <translation>간격 닫힘</translation>
     </message>
     <message>
+        <source>Slip clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips swapped</source>
         <translation>클립 맞바꿈</translation>
     </message>

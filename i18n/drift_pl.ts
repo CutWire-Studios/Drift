@@ -3413,6 +3413,10 @@
         <translation>Zamknięto przerwy</translation>
     </message>
     <message>
+        <source>Slip clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips swapped</source>
         <translation>Zamieniono klipy miejscami</translation>
     </message>

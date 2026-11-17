@@ -246,6 +246,9 @@ private slots:
     void cameraLayerRoundTripsAndNormalizes();
     void retargetClipToSourceKeepsPlacementAndSyncsSource();
     void retargetClipToSourceClearsPerSourceState();
+    void slipClipSourceKeepsPlacement();
+    void slipClipSourceLoopsShiftThePhase();
+    void slipClipSourceKeepsTheRamp();
     void retargetClipToSourceKeepsAGeometricMask();
     void addLinkedMaskStacksRatherThanReplacing();
     void laneMaskIsUnpinnedAndSurvivesTheLiftPass();
@@ -6173,6 +6176,96 @@ void CoreTest::retargetClipToSourceClearsPerSourceState()
     QVERIFY(program.faceTrackPath.isEmpty());
     QCOMPARE(program.faceTrackSrcOffsetUs, drift::TimeUs{0});
     QVERIFY(!program.hasSpeedCurve());
+}
+
+void CoreTest::slipClipSourceKeepsPlacement()
+{
+    using drift::secondsToUs;
+    drift::Clip clip;
+    clip.type = drift::ClipType::Video;
+    clip.srcIn = secondsToUs(3.0);
+    clip.srcOut = secondsToUs(11.0);
+    clip.timelineStart = secondsToUs(5.0);
+    clip.timelineDuration = secondsToUs(8.0);
+    clip.opacity.setKeyframe(secondsToUs(1.0), 0.5);
+
+    const drift::SlipLimits limits = drift::slipLimits(clip, secondsToUs(20.0));
+    QCOMPARE(limits.minUs, -secondsToUs(3.0));
+    QCOMPARE(limits.maxUs, secondsToUs(9.0));
+
+    drift::slipClipSource(clip, secondsToUs(2.0));
+    QCOMPARE(clip.srcIn, secondsToUs(5.0));
+    QCOMPARE(clip.srcOut, secondsToUs(13.0));
+    QCOMPARE(clip.timelineStart, secondsToUs(5.0));
+    QCOMPARE(clip.timelineDuration, secondsToUs(8.0));
+    QVERIFY(clip.opacity.keyframes().contains(secondsToUs(1.0)));
+
+    // At 2x the length stays too.
+    drift::Clip fast = clip;
+    fast.speed = 2.0;
+    fast.timelineDuration = secondsToUs(4.0);
+    drift::slipClipSource(fast, secondsToUs(-1.0));
+    QCOMPARE(fast.srcIn, secondsToUs(4.0));
+    QCOMPARE(fast.timelineDuration, secondsToUs(4.0));
+
+    // Reversed, the clip still plays its window backward: it starts at srcOut.
+    drift::Clip back = clip;
+    back.reverse = true;
+    QCOMPARE(back.timelineToSourceUs(back.timelineStart), back.srcOut);
+    drift::slipClipSource(back, secondsToUs(2.0));
+    QCOMPARE(back.timelineToSourceUs(back.timelineStart), secondsToUs(15.0));
+}
+
+void CoreTest::slipClipSourceLoopsShiftThePhase()
+{
+    using drift::secondsToUs;
+    drift::Clip clip;
+    clip.type = drift::ClipType::Video;
+    clip.loop = true;
+    clip.srcIn = 0;
+    clip.srcOut = secondsToUs(2.0);
+    clip.timelineStart = secondsToUs(1.0);
+    clip.timelineDuration = secondsToUs(10.0);
+    QVERIFY(clip.loops());
+
+    const drift::SlipLimits limits = drift::slipLimits(clip, secondsToUs(2.0));
+    QVERIFY(limits.minUs < -secondsToUs(1000.0));
+    QVERIFY(limits.maxUs > secondsToUs(1000.0));
+
+    drift::slipClipSource(clip, secondsToUs(0.5));
+    QCOMPARE(clip.loopOffsetUs, secondsToUs(0.5));
+    QCOMPARE(clip.timelineToSourceUs(clip.timelineStart), secondsToUs(0.5));
+    drift::slipClipSource(clip, secondsToUs(1.75));
+    QCOMPARE(clip.loopOffsetUs, secondsToUs(0.25));
+    QCOMPARE(clip.srcIn, drift::TimeUs{0});
+    QCOMPARE(clip.srcOut, secondsToUs(2.0));
+    QCOMPARE(clip.timelineDuration, secondsToUs(10.0));
+
+    drift::Clip back = clip;
+    back.reverse = true;
+    back.loopOffsetUs = 0;
+    drift::slipClipSource(back, secondsToUs(0.5));
+    QCOMPARE(back.loopOffsetUs, secondsToUs(1.5));
+}
+
+void CoreTest::slipClipSourceKeepsTheRamp()
+{
+    using drift::secondsToUs;
+    drift::Clip clip;
+    clip.type = drift::ClipType::Video;
+    clip.srcIn = secondsToUs(1.0);
+    clip.srcOut = secondsToUs(5.0);
+    clip.speedCurve.setPoints({{0.0, 1.0}, {1.0, 2.0}});
+    QVERIFY(clip.hasSpeedCurve());
+    clip.syncDurationFromSpeedCurve();
+    const drift::TimeUs duration = clip.timelineDuration;
+    QCOMPARE(duration, clip.speedCurve.retimedDurationUs(clip.srcOut - clip.srcIn));
+
+    drift::slipClipSource(clip, secondsToUs(2.0));
+    QCOMPARE(clip.srcIn, secondsToUs(3.0));
+    QCOMPARE(clip.srcOut, secondsToUs(7.0));
+    clip.syncDurationFromSpeedCurve();
+    QCOMPARE(clip.timelineDuration, duration);
 }
 
 // Masks are not reachable from retargetClipToSource — they live on the adjustments pinned to the

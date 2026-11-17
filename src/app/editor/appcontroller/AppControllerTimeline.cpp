@@ -106,6 +106,32 @@ static QMap<QString, QPair<QJsonValue, bool>> trackContentById(const drift::Proj
     return result;
 }
 
+// The id of the first locked track whose clips or transitions differ between two project states,
+// empty when none does. pushProjectEdit refuses an edit on this basis; callers that must report the
+// refusal instead of replying ok ask the same question first.
+static std::optional<QString> firstLockedTrackChange(const drift::Project &before, const drift::Project &now)
+{
+    bool anyLocked = false;
+    // Every timeline, not just the open one: trackContentById walks them all, and a bin
+    // removal can delete a composite's sequence whatever is open (#83).
+    before.forEachTrackList([&anyLocked](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks)
+            anyLocked = anyLocked || track.locked;
+    });
+    if (!anyLocked)
+        return std::nullopt;
+    const auto was = trackContentById(before);
+    const auto cur = trackContentById(now);
+    for (auto it = was.constBegin(); it != was.constEnd(); ++it) {
+        if (!it.value().second)
+            continue;
+        const auto found = cur.constFind(it.key());
+        if (found == cur.constEnd() || found->first != it.value().first)
+            return it.key();
+    }
+    return std::nullopt;
+}
+
 // Ripple by time rather than by index, over several tracks at once: every clip on those tracks
 // starting at or after fromUs moves by delta, and linked partners on other tracks follow. Index
 // ripple (applyRippleShift) only ever reached one track, which is how a trim of a linked clip used
@@ -776,28 +802,12 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     // parent by it, and the dozen places that append a track all leave it empty.
     normalizeProjectStructure(&before);
     m_editRefusedByLock = false;
-    bool anyLocked = false;
-    // Every timeline, not just the open one: trackContentById below walks them all, and a bin
-    // removal can delete a composite's sequence whatever is open (#83).
-    before.forEachTrackList([&anyLocked](const QList<drift::Track> &tracks) {
-        for (const drift::Track &track : tracks)
-            anyLocked = anyLocked || track.locked;
-    });
-    if (anyLocked) {
-        const auto was = trackContentById(before);
-        const auto now = trackContentById(m_project);
-        for (auto it = was.constBegin(); it != was.constEnd(); ++it) {
-            if (!it.value().second)
-                continue;
-            const auto cur = now.constFind(it.key());
-            if (cur == now.constEnd() || cur->first != it.value().first) {
-                m_project = before;
-                m_editRefusedByLock = true;
-                m_tracksCacheValid = false;
-                m_durationCacheValid = false;
-                return;
-            }
-        }
+    if (firstLockedTrackChange(before, m_project)) {
+        m_project = before;
+        m_editRefusedByLock = true;
+        m_tracksCacheValid = false;
+        m_durationCacheValid = false;
+        return;
     }
     // A split or duplicate copies the clip's label; the copy takes the next number. A batch's
     // closing push skips it: each op numbered its own copies, and a label set on a copy since
@@ -2987,6 +2997,217 @@ void AppController::applyClipTrim(drift::Clip &clip, double inPoint, double outP
     clip.timelineDuration = qMax(clip.timelineDuration, drift::minClipDurationUs(m_project.fps()));
     // A ramp re-derives the duration from the range that survived the trim.
     clip.syncDurationFromSpeedCurve();
+}
+
+AppController::SlipResult AppController::slipClip(int trackIndex, int clipIndex, drift::TimeUs deltaUs)
+{
+    SlipResult out;
+    if (!isValidClipIndex(trackIndex, clipIndex)) {
+        out.errorCode = QStringLiteral("not_found");
+        out.error = QStringLiteral("No such clip");
+        return out;
+    }
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const bool hasSource = clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Audio
+                           || clip.type == drift::ClipType::Composite;
+    if (!hasSource) {
+        out.errorCode = QStringLiteral("bad_args");
+        out.error = QStringLiteral("A %1 clip has no media to slip").arg(drift::clipTypeToString(clip.type));
+        return out;
+    }
+    // Strict partners only: the ones syncLinkedPartnersFrom mirrors.
+    QList<drift::ClipRef> partners;
+    if (!clip.linkLoose) {
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip))
+        {
+            // Only partners with media (video, audio, composite) slip; others would clamp via the image fallback.
+            const drift::Clip &p = m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+            if (!p.linkLoose
+                && (p.type == drift::ClipType::Video || p.type == drift::ClipType::Audio
+                    || p.type == drift::ClipType::Composite))
+                partners.append(ref);
+        }
+    }
+    QSet<int> tracks{trackIndex};
+    for (const drift::ClipRef &ref : partners)
+        tracks.insert(ref.trackIndex);
+    for (const int t : std::as_const(tracks)) {
+        if (m_project.tracks().at(t).locked) {
+            out.errorCode = QStringLiteral("bad_args");
+            out.error = QStringLiteral("Track %1 is locked").arg(t);
+            return out;
+        }
+    }
+    drift::SlipLimits limits = drift::slipLimits(clip, sourceDurationForClip(clip));
+    for (const drift::ClipRef &ref : partners) {
+        const drift::Clip &p = m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+        const drift::SlipLimits l = drift::slipLimits(p, sourceDurationForClip(p));
+        limits.minUs = qMax(limits.minUs, l.minUs);
+        limits.maxUs = qMin(limits.maxUs, l.maxUs);
+    }
+    const drift::TimeUs applied = qBound(limits.minUs, deltaUs, limits.maxUs);
+    out.limit = applied < deltaUs ? 1 : applied > deltaUs ? -1 : 0;
+
+    // What the clip carries that depends on the source range, for the reply.
+    if (!clip.faceTrackPath.isEmpty())
+        out.sourceData.append(QStringLiteral("face_track"));
+    if (!clip.depthPath.isEmpty())
+        out.sourceData.append(QStringLiteral("depth"));
+    if (!clip.motionTrackers.isEmpty())
+        out.sourceData.append(QStringLiteral("trackers"));
+    for (const drift::ClipRef &ref : drift::linkedMaskAdjustments(m_project, trackIndex, clipIndex)) {
+        const drift::Mask &mask = m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).mask;
+        if (mask.isMedia() && mask.mediaTimeBase == drift::MaskMediaTimeBase::HostSource) {
+            out.sourceData.append(QStringLiteral("matte"));
+            break;
+        }
+    }
+    bool targeted = false;
+    for (const drift::MotionTracker &tracker : clip.motionTrackers)
+        targeted = targeted || !tracker.targets.isEmpty();
+    for (const drift::Track &track : m_project.tracks()) {
+        for (const drift::Clip &other : track.clips) {
+            for (const drift::MotionTracker &tracker : other.motionTrackers) {
+                for (const drift::TrackerTarget &target : tracker.targets)
+                    targeted = targeted || target.clipId == clip.id;
+            }
+        }
+    }
+    if (targeted)
+        out.bakedKeys.append(QStringLiteral("tracker_targets"));
+    if (clip.stabilizeAppliedSmoothing >= 0 && clip.stabilizeAppliedMode == drift::StabilizeMode::Keyframes)
+        out.bakedKeys.append(QStringLiteral("stabilize"));
+
+    if (applied == 0)
+        return out; // nothing moved: no undo step, no edit
+    if (clip.loops()) {
+        // A whole number of repeats lands where it started: nothing to change.
+        const drift::TimeUs range = clip.srcOut - clip.srcIn;
+        if (range > 0 && applied % range == 0) {
+            out.appliedUs = applied;
+            return out;
+        }
+    }
+
+    // Locks are compared by track id; make sure every track has one before the snapshot.
+    m_project.ensureTrackIds();
+    const drift::Project before = m_project;
+    drift::Clip &target = m_project.tracks()[trackIndex].clips[clipIndex];
+    drift::slipClipSource(target, applied);
+    drift::appdetail::syncLinkedPartnersFrom(m_project, target);
+    // Generated captions follow their words; cues whose words slipped out are dropped.
+    // Removing an emptied caption clip shifts the clip indices behind it: keep the selection on the
+    // same clips (one that was removed just leaves it).
+    captureSelectionClipIds();
+    drift::retimeLinkedSubtitles(before, m_project, {}, true);
+    bool dropGraphVideo = false;
+    bool dropGraphAudio = false;
+    bool dropGraphProps = false; // applied after the lock check, so a refused slip leaves graph state alone
+    {
+        // Effects and masks pinned to a removed caption clip go with it, with the same cleanup
+        // delete_clips does: transitions naming it, an adjustment lane it emptied, and the keyframe
+        // graph's hidden effect entries.
+        QSet<QString> removedIds;
+        for (const drift::Track &oldTrack : before.tracks()) {
+            for (const drift::Clip &old : oldTrack.clips) {
+                if (old.type == drift::ClipType::Subtitle && !findClipById(m_project, old.id, nullptr, nullptr))
+                    removedIds.insert(old.id);
+            }
+        }
+        if (!removedIds.isEmpty()) {
+            const QSet<QString> goneIds = removedIds;
+            QSet<QString> touchedLaneIds;
+            bool removedVideo = false;
+            bool removedAudio = false;
+            for (drift::Track &track : m_project.tracks()) {
+                if (!track.isAdjustment())
+                    continue;
+                for (int i = track.clips.size() - 1; i >= 0; --i) {
+                    const drift::Clip &pinned = track.clips.at(i);
+                    if (pinned.linkedClipId.isEmpty() || !goneIds.contains(pinned.linkedClipId))
+                        continue;
+                    touchedLaneIds.insert(track.id);
+                    removedVideo = removedVideo || pinned.adjustmentKind == drift::AdjustmentKind::VideoEffects;
+                    removedAudio = removedAudio || pinned.adjustmentKind == drift::AdjustmentKind::AudioEffects;
+                    removedIds.insert(pinned.id);
+                    track.clips.removeAt(i);
+                }
+            }
+            for (drift::Track &track : m_project.tracks()) {
+                for (int i = track.transitions.size() - 1; i >= 0; --i) {
+                    const drift::Transition &transition = track.transitions.at(i);
+                    if (removedIds.contains(transition.fromClipId) || removedIds.contains(transition.toClipId))
+                        track.transitions.removeAt(i);
+                }
+            }
+            if (!touchedLaneIds.isEmpty()) {
+                dropGraphProps = true;
+                dropGraphVideo = removedVideo;
+                dropGraphAudio = removedAudio;
+                for (int t = m_project.tracks().size() - 1; t >= 0; --t) {
+                    const drift::Track &track = m_project.tracks().at(t);
+                    if (track.isAdjustmentLane() && track.clips.isEmpty() && !track.id.isEmpty()
+                        && touchedLaneIds.contains(track.id))
+                        m_project.tracks().removeAt(t);
+                }
+            }
+        }
+    }
+    // The captions and the effects pinned to them live on other tracks: a lock on any of them
+    // refuses the whole slip, the same test pushProjectEdit applies. Nothing has been pushed yet.
+    if (const std::optional<QString> lockedId = firstLockedTrackChange(before, m_project)) {
+        const int lockedIndex = before.trackIndexById(*lockedId);
+        m_project = before;
+        m_tracksCacheValid = false;
+        m_durationCacheValid = false;
+        m_mcpController->bumpEditRevision(); // drop id lookups made against the mutated project
+        restoreSelectionClipIds();
+        m_undoSelectionCaptured = false;
+        out.errorCode = QStringLiteral("bad_args");
+        out.error = lockedIndex >= 0 ? QStringLiteral("Track %1 is locked").arg(lockedIndex)
+                                     : QStringLiteral("A track the slip would change is locked");
+        out.retimedSubtitles.clear();
+        return out;
+    }
+    if (dropGraphProps)
+        dropKeyframeGraphEffectProperties(dropGraphVideo, dropGraphAudio);
+    restoreSelectionClipIds(); // the captured ids stay until the push: a lock refusal remaps them again
+    // Report the caption clips that changed, or were removed because none of their words are left.
+    QHash<QString, const drift::Clip *> nowById;
+    for (const drift::Track &track : m_project.tracks())
+        for (const drift::Clip &c : track.clips)
+            if (c.type == drift::ClipType::Subtitle)
+                nowById.insert(c.id, &c);
+    for (const drift::Track &oldTrack : before.tracks()) {
+        for (const drift::Clip &old : oldTrack.clips) {
+            if (old.type != drift::ClipType::Subtitle)
+                continue;
+            const drift::Clip *sub = nowById.value(old.id, nullptr);
+            if (!sub
+                || old.timelineStart != sub->timelineStart || old.timelineDuration != sub->timelineDuration
+                || old.subtitleCues.size() != sub->subtitleCues.size()
+                || !std::equal(old.subtitleCues.cbegin(), old.subtitleCues.cend(), sub->subtitleCues.cbegin(),
+                               sub->subtitleCues.cend(),
+                               [](const drift::SubtitleCue &a, const drift::SubtitleCue &b) {
+                                   return a.startUs == b.startUs && a.endUs == b.endUs;
+                               }))
+                out.retimedSubtitles.append(old.id);
+        }
+    }
+    pushProjectEdit(before, tr("Slip clip"));
+    const bool refusedByLock = m_editRefusedByLock; // finishEdit clears it
+    if (refusedByLock)
+        restoreSelectionClipIds(); // safety net: the project is back to `before`
+    m_undoSelectionCaptured = false;
+    finishEdit(tr("Slip clip"));
+    if (refusedByLock) {
+        out.errorCode = QStringLiteral("bad_args");
+        out.error = QStringLiteral("A track the slip would change is locked");
+        out.retimedSubtitles.clear();
+        return out;
+    }
+    out.appliedUs = applied;
+    return out;
 }
 
 QStringList AppController::setClipTrimRippled(int trackIndex, int clipIndex, double inPoint, double outPoint,

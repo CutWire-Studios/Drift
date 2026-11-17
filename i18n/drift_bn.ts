@@ -3403,6 +3403,10 @@
         <translation>ফাঁকা অংশগুলো বন্ধ করা হয়েছে</translation>
     </message>
     <message>
+        <source>Slip clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips swapped</source>
         <translation>ক্লিপগুলো অদলবদল করা হয়েছে</translation>
     </message>

@@ -127,6 +127,8 @@ private slots:
     void deleteClipsClosesTheSpace();
     void mutatingOpsReturnFinalGeometry();
     void rippleTrimMovesTheRest();
+    void slipClipKeepsPlacement();
+    void slipClipEdgeCases();
     void closeGapsClosesEveryHole();
     void closeGapsHonoursDecimalBounds();
     void reorderClipsKeepsTheSpacing();
@@ -456,8 +458,8 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
     const qsizetype compactSize = QJsonDocument(compact).toJson(QJsonDocument::Compact).size();
-    // Raise for the bake ops, new_timeline/close_timeline, get/set_teleprompter and use_as_mask/convert_clip_to_mask.
-    QVERIFY2(compactSize < 26101, qPrintable(QString::number(compactSize)));
+    // Raise for the bake ops, new_timeline/close_timeline, get/set_teleprompter, use_as_mask/convert_clip_to_mask and slip_clip.
+    QVERIFY2(compactSize < 26201, qPrintable(QString::number(compactSize)));
     const qsizetype briefSize = QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
                                     .toJson(QJsonDocument::Compact).size();
     QVERIFY2(briefSize < 12995, qPrintable(QString::number(briefSize))); // raise for the bake, animation, timeline, teleprompter and mask ops
@@ -1642,6 +1644,570 @@ void McpTest::mutatingOpsReturnFinalGeometry()
     QVERIFY2(loadedCopy.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(loadedCopy).toJson()));
     QVERIFY(!loadedCopy.contains(QStringLiteral("geometry")));
     QVERIFY(!loadedCopy.contains(QStringLiteral("removed_clips")));
+}
+
+void McpTest::slipClipKeepsPlacement()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.id = QStringLiteral("slip-media");
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    drift::MediaAsset shortMedia = media;
+    shortMedia.id = QStringLiteral("slip-short");
+    shortMedia.name = QStringLiteral("short.wav");
+    shortMedia.kind = drift::MediaKind::Audio;
+    shortMedia.path = QStringLiteral("/nonexistent/short.wav");
+    shortMedia.durationUs = drift::secondsToUs(8.0);
+    state.project()->addAsset(shortMedia);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QString id = dispatcher.applyOne(QStringLiteral("insert_clip"),
+                                           {{QStringLiteral("asset"), 0}, {QStringLiteral("in"), 3.0},
+                                            {QStringLiteral("out"), 6.0}, {QStringLiteral("at"), 2.0}})
+                           .value(QStringLiteral("id")).toString();
+    QVERIFY(!id.isEmpty());
+    const auto clipOf = [&](const QString &clipId) -> const drift::Clip & {
+        const QPair<int, int> loc = state.mcp()->locateClip(clipId);
+        return state.project()->tracks().at(loc.first).clips.at(loc.second);
+    };
+    const auto slip = [&](const QJsonObject &args) {
+        QJsonObject full = args;
+        full.insert(QStringLiteral("clip"), id);
+        return dispatcher.applyOne(QStringLiteral("slip_clip"), full);
+    };
+    const auto errorOf = [](const QJsonObject &r) { return r.value(QStringLiteral("error")).toString(); };
+    const auto sec = [](drift::TimeUs us) { return drift::usToSeconds(us); };
+
+    // 1. by.
+    int steps = state.undoHistory().size();
+    QJsonObject r = slip({{QStringLiteral("by"), 2.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+    QCOMPARE(sec(clipOf(id).srcIn), 5.0);
+    QCOMPARE(sec(clipOf(id).srcOut), 8.0);
+    QCOMPARE(sec(clipOf(id).timelineStart), 2.0);
+    QCOMPARE(sec(clipOf(id).timelineDuration), 3.0);
+    QCOMPARE(r.value(QStringLiteral("slipped")).toDouble(), 2.0);
+    QCOMPARE(r.value(QStringLiteral("requested")).toDouble(), 2.0);
+    QVERIFY(!r.contains(QStringLiteral("reason")));
+    QCOMPARE(state.undoHistory().size(), steps + 1);
+    bool inGeometry = false;
+    for (const QJsonValue &g : r.value(QStringLiteral("geometry")).toArray()) {
+        if (g.toObject().value(QStringLiteral("id")).toString() == id)
+            inGeometry = g.toObject().value(QStringLiteral("in")).toDouble() == 5.0;
+    }
+    QVERIFY(inGeometry);
+
+    // 2. in.
+    r = slip({{QStringLiteral("in"), 1.0}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(sec(clipOf(id).srcIn), 1.0);
+    QCOMPARE(sec(clipOf(id).srcOut), 4.0);
+
+    // 3. Clamped at the media's ends.
+    r = slip({{QStringLiteral("by"), 100.0}});
+    QCOMPARE(sec(clipOf(id).srcIn), 7.0);
+    QCOMPARE(sec(clipOf(id).srcOut), 10.0);
+    QCOMPARE(r.value(QStringLiteral("reason")).toString(), QStringLiteral("media_end"));
+    QCOMPARE(r.value(QStringLiteral("slipped")).toDouble(), 6.0);
+    r = slip({{QStringLiteral("by"), -100.0}});
+    QCOMPARE(sec(clipOf(id).srcIn), 0.0);
+    QCOMPARE(r.value(QStringLiteral("reason")).toString(), QStringLiteral("media_start"));
+
+    // 4. A no-op, and a slip stopped dead at a limit, add no undo step.
+    steps = state.undoHistory().size();
+    r = slip({{QStringLiteral("by"), 0.0}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(r.value(QStringLiteral("slipped")).toDouble(), 0.0);
+    r = slip({{QStringLiteral("by"), -1.0}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(r.value(QStringLiteral("slipped")).toDouble(), 0.0);
+    QCOMPARE(state.undoHistory().size(), steps);
+
+    // 5. Argument errors.
+    QCOMPARE(errorOf(slip({{QStringLiteral("by"), 1.0}, {QStringLiteral("in"), 1.0}})), QStringLiteral("bad_args"));
+    QCOMPARE(errorOf(slip({})), QStringLiteral("bad_args"));
+    QCOMPARE(errorOf(slip({{QStringLiteral("by"), QStringLiteral("2")}})), QStringLiteral("bad_args"));
+    const QString text = dispatcher.applyOne(QStringLiteral("add_text"),
+                                             {{QStringLiteral("text"), QStringLiteral("t")}, {QStringLiteral("at"), 0.0}})
+                             .value(QStringLiteral("id")).toString();
+    QCOMPARE(errorOf(dispatcher.applyOne(QStringLiteral("slip_clip"),
+                                         {{QStringLiteral("clip"), text}, {QStringLiteral("by"), 1.0}})),
+             QStringLiteral("bad_args"));
+    const int videoTrack = state.mcp()->locateClip(id).first;
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_track"), {{QStringLiteral("track"), videoTrack}, {QStringLiteral("locked"), true}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(errorOf(slip({{QStringLiteral("by"), 1.0}})), QStringLiteral("bad_args"));
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_track"), {{QStringLiteral("track"), videoTrack}, {QStringLiteral("locked"), false}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(sec(clipOf(id).srcIn), 0.0);
+    QVERIFY(slip({{QStringLiteral("in"), 3.0}}).value(QStringLiteral("ok")).toBool());
+
+    // 6. Linked audio slips with the clip; a loose link keeps its own range.
+    drift::Track audioTrack{.type = drift::TrackType::Audio};
+    {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        drift::Clip &video = state.project()->tracks()[loc.first].clips[loc.second];
+        video.linkId = QStringLiteral("slip-link");
+        drift::Clip audio = video;
+        audio.id = QStringLiteral("slip-audio");
+        audio.type = drift::ClipType::Audio;
+        audioTrack.clips.append(audio);
+    }
+    state.project()->tracks().append(audioTrack);
+    r = slip({{QStringLiteral("by"), 1.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+    QCOMPARE(sec(clipOf(id).srcIn), 4.0);
+    QCOMPARE(sec(clipOf(QStringLiteral("slip-audio")).srcIn), 4.0);
+    QCOMPARE(sec(clipOf(QStringLiteral("slip-audio")).srcOut), 7.0);
+    bool audioListed = false;
+    for (const QJsonValue &g : r.value(QStringLiteral("geometry")).toArray())
+        audioListed = audioListed || g.toObject().value(QStringLiteral("id")).toString() == QStringLiteral("slip-audio");
+    QVERIFY(audioListed);
+
+    // 7. The partner's shorter media limits the slip (8 s: its out stops there).
+    {
+        const QPair<int, int> loc = state.mcp()->locateClip(QStringLiteral("slip-audio"));
+        state.project()->tracks()[loc.first].clips[loc.second].assetId = shortMedia.id;
+    }
+    r = slip({{QStringLiteral("by"), 100.0}});
+    QCOMPARE(sec(clipOf(id).srcOut), 8.0);
+    QCOMPARE(sec(clipOf(QStringLiteral("slip-audio")).srcOut), 8.0);
+    QCOMPARE(r.value(QStringLiteral("reason")).toString(), QStringLiteral("media_end"));
+
+    // 8. Undo puts both back together.
+    state.undo();
+    QCOMPARE(sec(clipOf(id).srcIn), 4.0);
+    QCOMPARE(sec(clipOf(QStringLiteral("slip-audio")).srcIn), 4.0);
+    state.undo();
+    QCOMPARE(sec(clipOf(id).srcIn), 3.0);
+    QCOMPARE(sec(clipOf(id).srcOut), 6.0);
+    QCOMPARE(sec(clipOf(QStringLiteral("slip-audio")).srcIn), 3.0);
+
+    // Loose link: the partner keeps its range.
+    {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        state.project()->tracks()[loc.first].clips[loc.second].linkLoose = true;
+    }
+    QVERIFY(slip({{QStringLiteral("by"), 1.0}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(sec(clipOf(id).srcIn), 4.0);
+    QCOMPARE(sec(clipOf(QStringLiteral("slip-audio")).srcIn), 3.0);
+    state.undo();
+    {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        state.project()->tracks()[loc.first].clips[loc.second].linkLoose = false;
+    }
+
+    // 10. Source-indexed data and baked keys are reported, not touched.
+    {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        state.project()->tracks()[loc.first].clips[loc.second].faceTrackPath = QStringLiteral("/nonexistent/face.json");
+    }
+    r = slip({{QStringLiteral("by"), 0.5}});
+    QCOMPARE(r.value(QStringLiteral("source_data")).toArray(), QJsonArray{QStringLiteral("face_track")});
+    QVERIFY(!r.contains(QStringLiteral("baked_keys")));
+    state.undo();
+
+    // 11. A generated caption follows its words; a cue whose words slip out is removed.
+    {
+        drift::Track subs{.type = drift::TrackType::Subtitle};
+        drift::Clip sub;
+        sub.id = QStringLiteral("slip-subs");
+        sub.type = drift::ClipType::Subtitle;
+        sub.timelineStart = drift::secondsToUs(2.0);
+        sub.timelineDuration = drift::secondsToUs(3.0);
+        sub.srcOut = sub.timelineDuration;
+        sub.subtitleCues = {
+            drift::SubtitleCue{0, drift::secondsToUs(1.0), QStringLiteral("gone"), media.id},
+            drift::SubtitleCue{drift::secondsToUs(1.0), drift::secondsToUs(2.0), QStringLiteral("kept"), media.id}};
+        subs.clips.append(sub);
+        state.project()->tracks().append(subs);
+    }
+    r = slip({{QStringLiteral("by"), 1.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+    QCOMPARE(r.value(QStringLiteral("retimed_subtitles")).toArray(), QJsonArray{QStringLiteral("slip-subs")});
+    {
+        const drift::Clip &sub = clipOf(QStringLiteral("slip-subs"));
+        QCOMPARE(sub.subtitleCues.size(), qsizetype(1));
+        QCOMPARE(sub.subtitleCues.first().text, QStringLiteral("kept"));
+        // "kept" sat 1 s into the clip (source 4-5); after +1 s of slip its words play at the start.
+        QCOMPARE(sec(sub.timelineStart + sub.subtitleCues.first().startUs), 2.0);
+        QCOMPARE(sec(sub.timelineStart + sub.subtitleCues.first().endUs), 3.0);
+    }
+    state.undo();
+    QCOMPARE(clipOf(QStringLiteral("slip-subs")).subtitleCues.size(), qsizetype(2));
+
+    // 9. A looped clip shifts its repeat; `in` is refused.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_loop"), {{QStringLiteral("clip"), id}, {QStringLiteral("loop"), true}})
+                .value(QStringLiteral("ok")).toBool());
+    r = slip({{QStringLiteral("by"), 0.5}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+    QCOMPARE(r.value(QStringLiteral("loop_offset")).toDouble(), 0.5);
+    QCOMPARE(sec(clipOf(id).srcIn), 3.0);
+    QCOMPARE(sec(clipOf(id).srcOut), 6.0);
+    QCOMPARE(errorOf(slip({{QStringLiteral("in"), 1.0}})), QStringLiteral("bad_args"));
+}
+
+void McpTest::slipClipEdgeCases()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.id = QStringLiteral("edge-media");
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    drift::MediaAsset audioMedia = media;
+    audioMedia.id = QStringLiteral("edge-audio");
+    audioMedia.name = QStringLiteral("shot.wav");
+    audioMedia.kind = drift::MediaKind::Audio;
+    audioMedia.path = QStringLiteral("/nonexistent/shot.wav");
+    state.project()->addAsset(audioMedia);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto sec = [](drift::TimeUs us) { return drift::usToSeconds(us); };
+    const auto clipOf = [&](const QString &clipId) -> const drift::Clip & {
+        const QPair<int, int> loc = state.mcp()->locateClip(clipId);
+        return state.project()->tracks().at(loc.first).clips.at(loc.second);
+    };
+    const auto insert = [&](int asset, double in, double out, double at) {
+        return dispatcher.applyOne(QStringLiteral("insert_clip"),
+                                   {{QStringLiteral("asset"), asset}, {QStringLiteral("in"), in},
+                                    {QStringLiteral("out"), out}, {QStringLiteral("at"), at}})
+            .value(QStringLiteral("id")).toString();
+    };
+    // A caption track holding one clip over [start, start + cueSeconds.size() s) with one cue per second.
+    const auto addCaption = [&](const QString &capId, const QString &assetId, double start, int cues) {
+        drift::Track subs{.id = capId + QStringLiteral("-track"), .type = drift::TrackType::Subtitle};
+        drift::Clip sub;
+        sub.id = capId;
+        sub.type = drift::ClipType::Subtitle;
+        sub.timelineStart = drift::secondsToUs(start);
+        sub.timelineDuration = drift::secondsToUs(double(cues));
+        sub.srcOut = sub.timelineDuration;
+        for (int i = 0; i < cues; ++i)
+            sub.subtitleCues.append(drift::SubtitleCue{drift::secondsToUs(double(i)), drift::secondsToUs(double(i + 1)),
+                                                       QStringLiteral("cue%1").arg(i), assetId});
+        subs.clips.append(sub);
+        state.project()->tracks().append(subs);
+    };
+    const auto hasClip = [&](const QString &clipId) { return state.mcp()->locateClip(clipId).first >= 0; };
+    const auto laneIndex = [&]() {
+        for (int t = 0; t < state.project()->tracks().size(); ++t) {
+            if (state.project()->tracks().at(t).isAdjustmentLane())
+                return t;
+        }
+        return -1;
+    };
+    const auto slip = [&](const QString &id, double by) {
+        return dispatcher.applyOne(QStringLiteral("slip_clip"), {{QStringLiteral("clip"), id}, {QStringLiteral("by"), by}});
+    };
+
+    // 1. Slip by at least the clip's length (and far backwards): captions lose every cue, the
+    // emptied caption clip is removed, the reply lists it, undo restores it.
+    for (const double by : {4.0, 3.0, -3.0}) {
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        const QString id = insert(0, 3.0, 6.0, 2.0);
+        QVERIFY(!id.isEmpty());
+        addCaption(QStringLiteral("far-subs"), media.id, 2.0, 3);
+        const int steps = int(state.undoHistory().size());
+        const QJsonObject r = slip(id, by);
+        QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+        QCOMPARE(r.value(QStringLiteral("retimed_subtitles")).toArray(), QJsonArray{QStringLiteral("far-subs")});
+        QVERIFY(!hasClip(QStringLiteral("far-subs")));
+        QCOMPARE(int(state.undoHistory().size()), steps + 1);
+        state.undo();
+        QVERIFY(hasClip(QStringLiteral("far-subs")));
+        QCOMPARE(clipOf(QStringLiteral("far-subs")).subtitleCues.size(), qsizetype(3));
+        QCOMPARE(sec(clipOf(id).srcIn), 3.0);
+    }
+
+    // 2. Rounding: by 4.35 lands on exactly 7.35 s, not 7.349999.
+    {
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        const QString id = insert(0, 1.0, 2.0, 0.0);
+        QVERIFY(slip(id, 4.35).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(clipOf(id).srcIn, qRound64(5.35 * 1e6));
+    }
+
+    // 3. A looped clip slipped by exactly its range is a no-op: no undo step.
+    {
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        const QString id = insert(0, 3.0, 6.0, 0.0);
+        QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_loop"), {{QStringLiteral("clip"), id}, {QStringLiteral("loop"), true}})
+                    .value(QStringLiteral("ok")).toBool());
+        const int steps = int(state.undoHistory().size());
+        const QString hash = state.project()->contentHash();
+        const QJsonObject r = slip(id, 3.0);
+        QVERIFY(r.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(int(state.undoHistory().size()), steps);
+        QCOMPARE(state.project()->contentHash(), hash);
+        QVERIFY(slip(id, 6.0).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(int(state.undoHistory().size()), steps);
+    }
+
+    // 4. A caption spanning two clips of the same media: slipping one moves only its words.
+    {
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        const QString a = insert(0, 0.0, 2.0, 0.0);
+        const QString b = insert(0, 4.0, 6.0, 2.0);
+        addCaption(QStringLiteral("span-subs"), media.id, 0.0, 4);
+        QVERIFY(slip(b, 1.0).value(QStringLiteral("ok")).toBool());
+        {
+            const drift::Clip &sub = clipOf(QStringLiteral("span-subs"));
+            // b's words (cues 2 and 3, source 4-5 and 5-6) now sit at source 5-7: cue2 is gone, cue3 plays
+            // at the start of b (2-3 s); a's cues stay put.
+            QCOMPARE(sub.subtitleCues.size(), qsizetype(3));
+            QCOMPARE(sec(sub.timelineStart), 0.0);
+            QCOMPARE(sec(sub.timelineEnd()), 3.0);
+            const double starts[] = {0.0, 1.0, 2.0};
+            for (int i = 0; i < 3; ++i) {
+                QCOMPARE(sec(sub.timelineStart + sub.subtitleCues.at(i).startUs), starts[i]);
+                QCOMPARE(sec(sub.timelineStart + sub.subtitleCues.at(i).endUs), starts[i] + 1.0);
+            }
+            QCOMPARE(sub.subtitleCues.at(2).text, QStringLiteral("cue3"));
+            QCOMPARE(sec(clipOf(a).srcIn), 0.0);
+        }
+        state.undo();
+        QCOMPARE(clipOf(QStringLiteral("span-subs")).subtitleCues.size(), qsizetype(4));
+        // A far slip of b loses all of its words; only a's remain and the caption shrinks to them.
+        QVERIFY(slip(b, 4.0).value(QStringLiteral("ok")).toBool());
+        {
+            const drift::Clip &sub = clipOf(QStringLiteral("span-subs"));
+            QCOMPARE(sub.subtitleCues.size(), qsizetype(2));
+            QCOMPARE(sec(sub.timelineStart), 0.0);
+            QCOMPARE(sec(sub.timelineEnd()), 2.0);
+            QCOMPARE(sub.subtitleCues.at(1).text, QStringLiteral("cue1"));
+        }
+        state.undo();
+        QCOMPARE(clipOf(QStringLiteral("span-subs")).subtitleCues.size(), qsizetype(4));
+    }
+
+    // 5. A composite slips its nested window.
+    {
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        const QString inner = insert(0, 0.0, 10.0, 0.0);
+        QVERIFY(dispatcher.applyOne(QStringLiteral("select_clips"), {{QStringLiteral("clips"), QJsonArray{inner}}})
+                    .value(QStringLiteral("ok")).toBool());
+        const QJsonObject made = dispatcher.applyOne(QStringLiteral("make_composite"), {});
+        QVERIFY2(made.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(made).toJson()));
+        struct { QString id; } comp{made.value(QStringLiteral("clip")).toString()};
+        QVERIFY(hasClip(comp.id));
+        QVERIFY2(dispatcher.applyOne(QStringLiteral("set_trim"), {{QStringLiteral("clip"), comp.id}, {QStringLiteral("in"), 3.0},
+                                                                  {QStringLiteral("out"), 6.0}})
+                     .value(QStringLiteral("ok")).toBool(), "trim composite");
+        QJsonObject r = slip(comp.id, 2.0);
+        QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+        QCOMPARE(sec(clipOf(comp.id).srcIn), 5.0);
+        r = slip(comp.id, 100.0);
+        QCOMPARE(sec(clipOf(comp.id).srcOut), 10.0);
+        QCOMPARE(r.value(QStringLiteral("reason")).toString(), QStringLiteral("media_end"));
+    }
+
+    // 6. Speed retimes captions too (same helper): doubling the speed halves a cue.
+    {
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        const QString id = insert(0, 3.0, 6.0, 2.0);
+        addCaption(QStringLiteral("speed-subs"), media.id, 2.0, 3);
+        const QJsonObject r = dispatcher.applyOne(QStringLiteral("set_clip_speed"),
+                                                  {{QStringLiteral("clip"), id}, {QStringLiteral("speed"), 2.0}});
+        QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+        const drift::Clip &sub = clipOf(QStringLiteral("speed-subs"));
+        QVERIFY(!sub.subtitleCues.isEmpty());
+        QCOMPARE(sec(sub.subtitleCues.first().endUs - sub.subtitleCues.first().startUs), 0.5);
+    }
+
+    // 7. Atomic batch: a failing second op rolls the slip back, captions included.
+    {
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        const QString id = insert(0, 3.0, 6.0, 2.0);
+        addCaption(QStringLiteral("atomic-subs"), media.id, 2.0, 3);
+        const int steps = int(state.undoHistory().size());
+        const QJsonObject reply = dispatcher.apply(
+            {{QStringLiteral("atomic"), true},
+             {QStringLiteral("ops"),
+              QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("slip_clip")},
+                                     {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), id}, {QStringLiteral("by"), 4.0}}}},
+                         QJsonObject{{QStringLiteral("tool"), QStringLiteral("slip_clip")},
+                                     {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), QStringLiteral("no-such")}, {QStringLiteral("by"), 1.0}}}}}}});
+        QCOMPARE(reply.value(QStringLiteral("ok")).toBool(), false);
+        QCOMPARE(reply.value(QStringLiteral("rolled_back")).toBool(), true);
+        QVERIFY2(hasClip(QStringLiteral("atomic-subs")), "caption restored");
+        QCOMPARE(clipOf(QStringLiteral("atomic-subs")).subtitleCues.size(), qsizetype(3));
+        QCOMPARE(sec(clipOf(id).srcIn), 3.0);
+        QCOMPARE(clipOf(QStringLiteral("atomic-subs")).subtitleCues.first().startUs, 0);
+        QCOMPARE(int(state.undoHistory().size()), steps);
+    }
+
+    // 8. A partial slip that drops the caption's only cue removes the emptied caption clip (and the
+    // effect pinned to it), though the caption's own span did not collapse.
+    {
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        const QString id = insert(0, 3.0, 6.0, 2.0);
+        addCaption(QStringLiteral("partial-subs"), media.id, 2.0, 1);
+        {
+            drift::Clip &cap = state.project()->tracks()[1].clips[0];
+            cap.timelineDuration = drift::secondsToUs(3.0);
+            cap.srcOut = cap.timelineDuration;
+        }
+        drift::Track adj{.type = drift::TrackType::Adjustment};
+        drift::Clip pinned;
+        pinned.id = QStringLiteral("partial-pinned");
+        pinned.type = drift::ClipType::Adjustment;
+        pinned.linkedClipId = QStringLiteral("partial-subs");
+        pinned.timelineStart = drift::secondsToUs(2.0);
+        pinned.timelineDuration = drift::secondsToUs(3.0);
+        adj.clips.append(pinned);
+        state.project()->ensureTrackIds();
+        adj.adjustmentScope = drift::AdjustmentScope::ParentTrack;
+        adj.parentTrackId = state.project()->tracks().at(0).id;
+        state.project()->tracks().append(adj);
+        state.project()->ensureTrackIds();
+        const int trackCount = int(state.project()->tracks().size());
+        const int steps = int(state.undoHistory().size());
+        // The lane this removal empties goes with it.
+        const QJsonObject r = slip(id, 1.0);
+        QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+        QCOMPARE(r.value(QStringLiteral("retimed_subtitles")).toArray(), QJsonArray{QStringLiteral("partial-subs")});
+        QVERIFY(!hasClip(QStringLiteral("partial-subs")));
+        QVERIFY(!hasClip(QStringLiteral("partial-pinned")));
+        QCOMPARE(int(state.project()->tracks().size()), trackCount - 1);
+        QCOMPARE(int(state.undoHistory().size()), steps + 1);
+        state.undo();
+        QVERIFY(hasClip(QStringLiteral("partial-subs")));
+        QVERIFY(hasClip(QStringLiteral("partial-pinned")));
+        QCOMPARE(int(state.project()->tracks().size()), trackCount);
+        QCOMPARE(sec(clipOf(QStringLiteral("partial-subs")).timelineEnd()), 5.0);
+
+        // A free adjustment clip sharing the lane keeps it, and a selection on that clip stays.
+        {
+            drift::Clip freeAdj;
+            freeAdj.id = QStringLiteral("partial-free");
+            freeAdj.type = drift::ClipType::Adjustment;
+            freeAdj.timelineStart = drift::secondsToUs(8.0);
+            freeAdj.timelineDuration = drift::secondsToUs(1.0);
+            QVERIFY2(laneIndex() >= 0, "lane after undo");
+            state.project()->tracks()[laneIndex()].clips.append(freeAdj);
+        }
+        {
+            // Pinned clip first, free clip second, on the lane.
+            const int lane = laneIndex();
+            QVERIFY(lane >= 0);
+            QCOMPARE(state.project()->tracks().at(lane).clips.size(), qsizetype(2));
+            state.selectClip(lane, 1);
+        }
+        const QJsonObject r2 = slip(id, 1.0);
+        QVERIFY2(r2.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r2).toJson()));
+        QVERIFY(!hasClip(QStringLiteral("partial-pinned")));
+        QCOMPARE(int(state.project()->tracks().size()), trackCount);
+        // (Normalization may re-id the hand-built clip; it is the lane's only clip now.)
+        QCOMPARE(state.selectedTrack(), laneIndex());
+        QCOMPARE(state.project()->tracks().at(laneIndex()).clips.size(), qsizetype(1));
+        QCOMPARE(state.selectedClip(), 0);
+        QCOMPARE(int(state.selection().size()), 1);
+        state.undo();
+    }
+
+    // 8b. A lock on a track the slip would change refuses the whole slip: an error, no undo step,
+    // nothing changed, the selection where it was.
+    for (const bool lockLane : {false, true}) {
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        const QString id = insert(0, 3.0, 6.0, 2.0);
+        addCaption(QStringLiteral("lock-subs"), media.id, 2.0, 1);
+        {
+            drift::Clip &cap = state.project()->tracks()[1].clips[0];
+            cap.timelineDuration = drift::secondsToUs(3.0);
+            cap.srcOut = cap.timelineDuration;
+        }
+        state.project()->ensureTrackIds();
+        drift::Track adj{.type = drift::TrackType::Adjustment};
+        adj.adjustmentScope = drift::AdjustmentScope::ParentTrack;
+        adj.parentTrackId = state.project()->tracks().at(0).id;
+        drift::Clip pinned;
+        pinned.id = QStringLiteral("lock-pinned");
+        pinned.type = drift::ClipType::Adjustment;
+        pinned.linkedClipId = QStringLiteral("lock-subs");
+        pinned.timelineStart = drift::secondsToUs(2.0);
+        pinned.timelineDuration = drift::secondsToUs(3.0);
+        adj.clips.append(pinned);
+        state.project()->tracks().append(adj);
+        state.project()->ensureTrackIds();
+        const int lockedIndex = lockLane ? 2 : 1;
+        state.project()->tracks()[lockedIndex].locked = true;
+        {
+            const QPair<int, int> loc = state.mcp()->locateClip(id);
+            state.selectClip(loc.first, loc.second);
+        }
+        const QJsonObject projectBefore = state.project()->toJson(false);
+        const int steps = int(state.undoHistory().size());
+        const bool dirtyBefore = state.projectFile()->hasUnsavedChanges();
+        const QJsonObject r = slip(id, 1.0);
+        QCOMPARE(state.projectFile()->hasUnsavedChanges(), dirtyBefore);
+        QCOMPARE(r.value(QStringLiteral("ok")).toBool(), false);
+        QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QCOMPARE(r.value(QStringLiteral("detail")).toString(), QStringLiteral("Track %1 is locked").arg(lockedIndex));
+        QCOMPARE(int(state.undoHistory().size()), steps);
+        QCOMPARE(state.project()->toJson(false), projectBefore);
+        QCOMPARE(sec(clipOf(id).srcIn), 3.0);
+        QCOMPARE(sec(clipOf(id).srcOut), 6.0);
+        QCOMPARE(clipOf(QStringLiteral("lock-subs")).subtitleCues.size(), qsizetype(1));
+        QVERIFY(hasClip(QStringLiteral("lock-pinned")));
+        QVERIFY(state.selectedTrack() >= 0 && state.selectedClip() >= 0);
+        QCOMPARE(state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip()).id, id);
+    }
+
+    // 9. Removing a caption clip keeps the selection on the same clips (it is index based).
+    for (const int selected : {0, 1, 2}) {
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        const QString id = insert(0, 3.0, 6.0, 2.0);
+        addCaption(QStringLiteral("sel0"), media.id, 2.0, 1); // C0: its only cue slips out
+        {
+            drift::Clip &c0 = state.project()->tracks()[1].clips[0];
+            c0.timelineDuration = drift::secondsToUs(3.0);
+            c0.srcOut = c0.timelineDuration;
+            drift::Clip c1 = c0;
+            c1.id = QStringLiteral("sel1");
+            c1.timelineStart = drift::secondsToUs(6.0);
+            c1.subtitleCues.clear();
+            drift::Clip c2 = c1;
+            c2.id = QStringLiteral("sel2");
+            c2.timelineStart = drift::secondsToUs(10.0);
+            state.project()->tracks()[1].clips.append(c1);
+            state.project()->tracks()[1].clips.append(c2);
+        }
+        state.selectClip(1, selected);
+        QVERIFY(slip(id, 1.0).value(QStringLiteral("ok")).toBool());
+        QVERIFY(!hasClip(QStringLiteral("sel0")));
+        if (selected == 0) {
+            // The removed clip just leaves the selection; nothing else gets selected in its place.
+            const int t = state.selectedTrack();
+            const int c = state.selectedClip();
+            const bool onClip = t >= 0 && c >= 0 && t < state.project()->tracks().size()
+                                && c < state.project()->tracks().at(t).clips.size();
+            QVERIFY2(!onClip, "selection left on a clip after its removal");
+        } else {
+            const QString want = selected == 1 ? QStringLiteral("sel1") : QStringLiteral("sel2");
+            QVERIFY(state.selectedTrack() >= 0 && state.selectedClip() >= 0);
+            QCOMPARE(state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip()).id, want);
+        }
+    }
 }
 
 void McpTest::rippleTrimMovesTheRest()

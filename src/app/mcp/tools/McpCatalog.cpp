@@ -872,6 +872,20 @@ const QList<Op> &ops()
                                     propWithDefault(boolProp(QStringLiteral("Later clips follow the new length")), false)}},
                                   clipRefProps()),
                        {QStringLiteral("in"), QStringLiteral("out")}) },
+        { "slip_clip", "timeline", "Show another part of the media in the same slot",
+          "Slip: move the clip's source window and keep its start and length. by: source seconds "
+          "(+ = later in the media, at any speed or direction), or in: the new source in point. Linked "
+          "audio slips with it; a loosely linked clip doesn't. Stops at the media's ends: the reply has "
+          "requested (echoes by, or the in point), slipped (the applied move, a delta in source seconds), and reason:\"media_start\"|\"media_end\" when it stopped short. A looped "
+          "clip shifts its repeat instead, with no limit (by only; the reply adds loop_offset). "
+          "Keyframes, fades, effects and transitions stay on the timeline. Face, depth, tracker and matte "
+          "data follow the source but only cover the range they were analysed on (source_data lists "
+          "them), and keys baked from them stay (baked_keys). Generated captions follow their words; "
+          "cues whose words slip out are removed, and a caption clip left empty goes too (retimed_subtitles). One undo step. Refused for clips "
+          "with no media (titles, shapes, stills, adjustments) and on a locked track, including a locked caption track or a locked lane holding a pinned effect of a removed caption clip (the whole slip is refused).",
+          objectSchema(mergeProps({{QStringLiteral("by"), numberProp(QStringLiteral("Source seconds to move the window; + is later in the media"))},
+                                   {QStringLiteral("in"), numberProp(QStringLiteral("New source in point, seconds"))}},
+                                  clipRefProps())) },
         { "move_to_track", "timeline", "Move a clip to another lane",
           "Move a clip to another track. Type must match the destination, else type_mismatch.",
           objectSchema(mergeProps({{QStringLiteral("to_track"), integerProp(QStringLiteral("Destination track"))},
@@ -2221,7 +2235,7 @@ QJsonArray homepageTools()
                       {QStringLiteral("dry_run"),
                        propWithDefault(boolProp(QStringLiteral(
                            "true: run nothing; check each op's args and the clips, assets and tracks it names "
-                           "(not each op's own rules, such as move_clip needing one of at/before/after). "
+                           "(not each op's own rules, such as move_clip needing one of at/before/after, or slip_clip one of by/in). "
                            "{ok:true, dry_run, n}, or {ok:false, error:\"dry_run_failed\", problems:[{i, tool, error, detail}]}. "
                            "An id an earlier op would create reads as not_found")), false)}},
                      {QStringLiteral("ops")})));

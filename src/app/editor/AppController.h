@@ -1083,6 +1083,24 @@ public:
     // setClipTrim's arithmetic on one clip: clamps the range to the source and re-derives the
     // timeline duration from it and the speed.
     void applyClipTrim(drift::Clip &clip, double inPoint, double outPoint) const;
+    // Slip: moves the clip's source window by deltaUs (source time, + = later in the media) and keeps
+    // its start and length. Strict linked partners slip with it (a loose link keeps its own timing);
+    // the delta is clamped so every one of them stays inside its media (limit -1 = stopped at the
+    // media's start, +1 = its end). A looped clip shifts its repeat instead, without limit. One undo
+    // step "Slip clip", none when nothing moved. Refused (errorCode bad_args) for a clip with no media
+    // behind it (titles, shapes, stills, adjustments, ...) or a locked track (the clip's, a partner's,
+    // or one holding a caption or pinned effect the slip would change).
+    struct SlipResult
+    {
+        drift::TimeUs appliedUs = 0;
+        int limit = 0;                // -1 stopped at the media's start, +1 at its end
+        QStringList sourceData;       // source-indexed data the clip carries (face_track, depth, trackers, matte)
+        QStringList bakedKeys;        // keys baked from such data (tracker_targets, stabilize)
+        QStringList retimedSubtitles; // generated caption clips that changed or were removed
+        QString error;
+        QString errorCode;
+    };
+    SlipResult slipClip(int trackIndex, int clipIndex, drift::TimeUs deltaUs);
     // Puts another library asset under a clip in place, keeping its name (unless it was the old
     // file's), transform, effects and keyframes; linked audio follows when the new file has sound
     // (replaceClipMedia's rules). With a source range [srcInUs, srcOutUs) (either may be negative

@@ -3403,6 +3403,10 @@
         <translation>Naisara ang mga puwang</translation>
     </message>
     <message>
+        <source>Slip clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips swapped</source>
         <translation>Napagpalit ang mga clip</translation>
     </message>

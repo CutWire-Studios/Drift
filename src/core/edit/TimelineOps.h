@@ -391,6 +391,21 @@ bool closeGapOnEmptyTracks(Project &project, int originTrack, TimeUs startUs, Ti
 // does.
 void retargetClipToSource(Clip &dst, const Clip &src, TimeUs srcMediaDurationUs);
 
+// Slip: shows another stretch of the source in the same slot. The clip's start, length, speed,
+// ramp, fades and keyframes stay; only the source range [srcIn, srcOut] moves.
+// slipLimits gives the source-time deltas the range can take inside [0, mediaDurationUs]
+// (min <= 0 <= max). A looped clip has no limit: its range stays and slipping shifts where the
+// repeat starts (loopOffsetUs), so the picture moves the same way.
+struct SlipLimits
+{
+    TimeUs minUs = 0;
+    TimeUs maxUs = 0;
+};
+SlipLimits slipLimits(const Clip &clip, TimeUs mediaDurationUs);
+// Applies an in-range delta (callers clamp with slipLimits). Positive = later in the media,
+// whatever the clip's direction.
+void slipClipSource(Clip &clip, TimeUs sourceDeltaUs);
+
 // True when `left` ends where `right` begins, shares media + reverse/speed, and source ranges abut.
 bool clipsCanMerge(const Clip &left, const Clip &right);
 
@@ -413,9 +428,12 @@ QString subtitleSourceKey(const Clip &clip);
 // reverse). For every video/audio clip whose timing differs between `before` and `project`, cues
 // tied to its media that sat inside its old span are mapped old timeline -> source -> new
 // timeline, and a subtitle clip edge inside that span moves with it. `replaced` maps the id of a
-// clip that was swapped out to the id of the clip that took its place.
+// clip that was swapped out to the id of the clip that took its place. A subtitle clip whose edges
+// would collapse onto each other is left alone, unless `dropCollapsed` (slip: all its words left the
+// window): then its cues are rebased on its old span, the ones that slipped out are dropped, and a
+// clip left with no cues is removed.
 void retimeLinkedSubtitles(const Project &before, Project &project,
-                           const QHash<QString, QString> &replaced = {});
+                           const QHash<QString, QString> &replaced = {}, bool dropCollapsed = false);
 
 // Silences every clip in `snap` except `clipId`, so mixing it yields only that clip's sound,
 // whatever the tracks' solo state.

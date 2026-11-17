@@ -3403,6 +3403,10 @@
         <translation>හිඩැස් වසන ලදී</translation>
     </message>
     <message>
+        <source>Slip clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips swapped</source>
         <translation>ක්ලිප් මාරු කරන ලදී</translation>
     </message>
