@@ -65,7 +65,8 @@ QJsonObject transitionIdProp()
 QJsonObject effectKindProp()
 {
     return enumProp(QStringLiteral("Which catalog the package belongs to"),
-                    {QStringLiteral("effect"), QStringLiteral("transition"), QStringLiteral("audio_effect")});
+                    {QStringLiteral("effect"), QStringLiteral("transition"), QStringLiteral("animation"),
+                     QStringLiteral("audio_effect")});
 }
 
 QJsonObject animPropProp()
@@ -1148,6 +1149,13 @@ const QList<Op> &ops()
                         {QStringLiteral("cat"), stringProp(QStringLiteral("Category name from the default reply"))},
                         {QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label/cat"))},
                         {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max rows for q"), 1, 500), 50)}}),
+          true, false, true },
+        { "list_animations", "effects", "See shader-based in/out animation packages",
+          "Lists installed animation packages (bundled, add-ons and your own): {animations:[{id, "
+          "displayName, category, directions, defaultDurationMs}], n}. Pass the id as `kind` to "
+          "set_animation; built-in kinds (slideUp, pop, …) are not listed here.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("One animation id"))},
+                        {QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/name/category"))}}),
           true, false, true },
         { "add_effect", "effects", "Put a video effect on a clip",
           "Append a video effect to the end of the clip's stack. Returns effectIndex — its stack "

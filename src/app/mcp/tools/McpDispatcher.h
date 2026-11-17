@@ -105,6 +105,7 @@ private:
     QJsonObject opListEffects(const QJsonObject &args) const;
     QJsonObject opListAudioEffects(const QJsonObject &args) const;
     QJsonObject opListTransitions(const QJsonObject &args) const;
+    QJsonObject opListAnimations(const QJsonObject &args) const;
     QJsonObject opAddEffect(const QJsonObject &args);
     QJsonObject opRemoveEffect(const QJsonObject &args);
     QJsonObject opCopyEffects(const QJsonObject &args);

@@ -1,4 +1,6 @@
 #include "app/mcp/tools/McpDispatcher.h"
+#include "engine/packages/animations/AnimationCatalog.h"
+#include "app/forge/PackageInstaller.h"
 #include "engine/packages/audio/AudioEffectCatalog.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "core/base/CacheRoot.h"
@@ -1223,6 +1225,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opListAudioEffects(args);
     if (tool == QLatin1String("list_transitions"))
         return opListTransitions(args);
+    if (tool == QLatin1String("list_animations"))
+        return opListAnimations(args);
     if (tool == QLatin1String("add_effect"))
         return opAddEffect(args);
     if (tool == QLatin1String("remove_effect"))
@@ -2506,6 +2510,33 @@ QVariantList McpDispatcher::transitionCatalog() const
 QJsonObject McpDispatcher::opListTransitions(const QJsonObject &args) const
 {
     return catalogListing(transitionCatalog(), args, "transitions", "transition", "list_transitions");
+}
+
+QJsonObject McpDispatcher::opListAnimations(const QJsonObject &args) const
+{
+    const QString id = args.value(QStringLiteral("id")).toString().trimmed();
+    const QString q = args.value(QStringLiteral("q")).toString().trimmed();
+    const auto kind = forge::packageKind(QStringLiteral("animation"));
+    QJsonArray rows;
+    for (const AnimationPresetEntry &entry : animationCatalog()) {
+        if (!id.isEmpty() && entry.meta.id != id)
+            continue;
+        if (!q.isEmpty() && !entry.meta.id.contains(q, Qt::CaseInsensitive)
+            && !entry.meta.displayName.contains(q, Qt::CaseInsensitive)
+            && !entry.meta.category.contains(q, Qt::CaseInsensitive))
+            continue;
+        QJsonObject row{{QStringLiteral("id"), entry.meta.id},
+                        {QStringLiteral("displayName"), entry.meta.displayName},
+                        {QStringLiteral("category"), entry.meta.category},
+                        {QStringLiteral("directions"), QJsonArray::fromStringList(entry.directions)},
+                        {QStringLiteral("defaultDurationMs"), entry.defaultDurationMs}};
+        if (forge::isUserDir(*kind, entry.gpu.packageDir))
+            row.insert(QStringLiteral("user"), true);
+        rows.append(row);
+    }
+    if (!id.isEmpty() && rows.isEmpty())
+        return err("not_found", QStringLiteral("No animation package with id \"%1\". Call list_animations").arg(id));
+    return ok({{QStringLiteral("animations"), rows}, {QStringLiteral("n"), rows.size()}});
 }
 
 QJsonObject McpDispatcher::opAddEffect(const QJsonObject &args)

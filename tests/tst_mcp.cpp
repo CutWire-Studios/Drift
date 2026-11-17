@@ -61,6 +61,7 @@
 #include "engine/ml/audio/AstClassifier.h"
 #include "engine/ml/audio/ClapTagger.h"
 #include "engine/ml/vision/depth/DepthSidecar.h"
+#include "engine/packages/animations/AnimationCatalog.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/packages/procedurals/ProceduralCatalog.h"
 #include "engine/gpu/GlRuntime.h"
@@ -427,7 +428,7 @@ void McpTest::catalogOpsIncludeWhen()
     // Raise for the bake ops.
     QVERIFY2(compactSize < 25600, qPrintable(QString::number(compactSize)));
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
-                .toJson(QJsonDocument::Compact).size() < 12600); // raise for the bake ops
+                .toJson(QJsonDocument::Compact).size() < 12800); // raise for the bake and animation ops
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -8722,10 +8723,11 @@ void McpTest::authoredEffectLifecycle()
     QStandardPaths::setTestModeEnabled(true);
     const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     const auto restore = qScopeGuard([&] {
-        for (const char *sub : {"effects", "transitions", "audio-effects", "exports"})
+        for (const char *sub : {"effects", "transitions", "animations", "audio-effects", "exports"})
             QDir(QDir(appData).filePath(QString::fromLatin1(sub))).removeRecursively();
         reloadEffectCatalog();
         reloadTransitionCatalog();
+        reloadAnimationCatalog();
         reloadAudioEffectCatalog();
         QStandardPaths::setTestModeEnabled(false);
     });
@@ -8936,6 +8938,48 @@ void McpTest::authoredEffectLifecycle()
     QVERIFY(onTrack);
     QCOMPARE(call("get_effect_source", {{QStringLiteral("kind"), QStringLiteral("transition")}, {QStringLiteral("id"), QStringLiteral("user.test_mix")}})
                  .value(QStringLiteral("uses")).toInt(), 1);
+
+    const QJsonObject animationGuide = call("effect_authoring_guide", {{QStringLiteral("kind"), QStringLiteral("animation")}});
+    QVERIFY(animationGuide.value(QStringLiteral("guide")).toString().contains(QStringLiteral("u_direction")));
+
+    QJsonObject animation = manifest;
+    animation.insert(QStringLiteral("directions"), QJsonArray{QStringLiteral("in")});
+    animation.insert(QStringLiteral("defaultDurationMs"), 320);
+    const QJsonObject animFiles{{QStringLiteral("main.frag"), QStringLiteral(
+        "#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\nuniform sampler2D u_currentTexture;\n"
+        "uniform float u_progress; uniform float u_direction; uniform float amount;\n"
+        "void main() { float settled = mix(u_progress, 1.0 - u_progress, u_direction);\n"
+        "fragColor = texture(u_currentTexture, v_texCoord) * mix(1.0, settled, amount); }\n")}};
+    const QJsonObject madeAnim = call("create_effect", {{QStringLiteral("kind"), QStringLiteral("animation")},
+                                                        {QStringLiteral("slug"), QStringLiteral("test_pop")},
+                                                        {QStringLiteral("manifest"), animation},
+                                                        {QStringLiteral("files"), animFiles}});
+    QVERIFY2(madeAnim.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(madeAnim).toJson()));
+    const AnimationPresetEntry *animDef = animationDefForId(QStringLiteral("user.test_pop"));
+    QVERIFY(animDef);
+    QCOMPARE(animDef->defaultDurationMs, 320);
+    QCOMPARE(call("create_effect", {{QStringLiteral("kind"), QStringLiteral("animation")},
+                                    {QStringLiteral("slug"), QStringLiteral("test_pop")},
+                                    {QStringLiteral("manifest"), animation},
+                                    {QStringLiteral("files"), animFiles}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("exists"));
+
+    const QJsonObject animList = call("list_animations", {{QStringLiteral("id"), QStringLiteral("user.test_pop")}});
+    QVERIFY2(animList.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(animList).toJson()));
+    const QJsonObject animRow = animList.value(QStringLiteral("animations")).toArray().at(0).toObject();
+    QCOMPARE(animRow.value(QStringLiteral("defaultDurationMs")).toInt(), 320);
+    QCOMPARE(animRow.value(QStringLiteral("directions")).toArray().size(), 1);
+
+    const QJsonObject animSource = call("get_effect_source", {{QStringLiteral("kind"), QStringLiteral("animation")},
+                                                              {QStringLiteral("id"), QStringLiteral("user.test_pop")}});
+    QVERIFY2(animSource.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(animSource).toJson()));
+    QVERIFY(animSource.value(QStringLiteral("files")).toObject().contains(QStringLiteral("main.frag")));
+    QCOMPARE(animSource.value(QStringLiteral("uses")).toInt(), 0);
+
+    const QJsonObject removedAnim = call("delete_effect", {{QStringLiteral("kind"), QStringLiteral("animation")},
+                                                                   {QStringLiteral("id"), QStringLiteral("user.test_pop")}});
+    QVERIFY2(removedAnim.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(removedAnim).toJson()));
+    QVERIFY(!animationDefForId(QStringLiteral("user.test_pop")));
 }
 
 // The worked example in docs/procedural.md: each "### <file>" heading under "## Worked example" is

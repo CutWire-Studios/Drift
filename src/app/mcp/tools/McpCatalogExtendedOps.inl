@@ -384,13 +384,10 @@
                                                                        {QStringLiteral("animIn"),
                                                                         QStringLiteral("animOut")})},
                                    {QStringLiteral("kind"),
-                                    enumProp(QStringLiteral("Animation kind; fade turns on the edge fade instead"),
-                                             {QStringLiteral("none"), QStringLiteral("fade"),
-                                              QStringLiteral("slideUp"), QStringLiteral("slideDown"),
-                                              QStringLiteral("slideLeft"), QStringLiteral("slideRight"),
-                                              QStringLiteral("zoomIn"), QStringLiteral("zoomOut"),
-                                              QStringLiteral("pop"), QStringLiteral("spinCW"),
-                                              QStringLiteral("spinCCW"), QStringLiteral("bounce")})},
+                                    stringProp(QStringLiteral("Animation kind: none, fade (turns on the edge fade "
+                                                              "instead), slideUp, slideDown, slideLeft, slideRight, "
+                                                              "zoomIn, zoomOut, pop, spinCW, spinCCW, bounce, or an "
+                                                              "animation package id from list_animations"))},
                                    {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds"))},
                                    {QStringLiteral("ease"),
                                     enumProp(QStringLiteral("Easing; unknown values fall back to easeOut"),

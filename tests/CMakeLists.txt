@@ -334,6 +334,7 @@ qt_add_executable(tst_mcp
     ../src/app/mcp/tools/McpDispatcher.cpp
     ../src/app/mcp/tools/McpDispatcherExtended.cpp
     ../src/ui/theme/ThemeManager.cpp
+    ../src/app/forge/PackageInstaller.cpp
     ../src/app/mcp/tools/McpEffectAuthoring.cpp
     ../src/app/mcp/tools/McpProceduralAuthoring.cpp
     ../src/app/procedural/ProceduralAuthoringService.cpp

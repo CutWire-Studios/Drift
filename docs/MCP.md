@@ -767,8 +767,12 @@ and `add_audio_effect` as soon as it is created. The format is in
    It needs the running editor's add-on manager.
 
 `get_effect_source` adds `uses` (how many times the project uses it) for user packages, and
-`list_effects` / `list_transitions` / `list_audio_effects` rows carry `user:true` when the package is
+`list_effects` / `list_transitions` / `list_audio_effects` / `list_animations` rows carry `user:true` when the package is
 in My Effects (the key is absent otherwise).
+
+`kind:"animation"` authors a shader in/out animation (`animations/<id>/animation.json`): one input,
+`u_progress` 0..1 across the window and `u_direction` (0 in, 1 out). `list_animations` lists the
+installed packages with `directions` and `defaultDurationMs`; pass a package id to `set_animation`.
 
 Saved effect stacks (`list_user_effect_presets`, `apply_effect_preset`) are managed like text presets:
 `save_effect_preset({clip, label, effect_index?, audio?})` saves the whole stack, or just one effect
