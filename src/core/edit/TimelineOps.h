@@ -353,6 +353,33 @@ struct RippleRange
 bool closeRippleRanges(Project &project, const QList<RippleRange> &ranges, QString *blocker = nullptr,
                        QStringList *moved = nullptr, const Project *groupSource = nullptr);
 
+// Why a track did not close an all-tracks gap.
+struct GapTrackSkip
+{
+    int track = -1;
+    QString reason;  // "clip_in_gap", "locked", "linked"
+    QString blocker; // the clip in the way (empty for "locked")
+};
+
+struct EmptyTracksGapClose
+{
+    QList<int> movedTracks;      // tracks on which a clip moved
+    QList<GapTrackSkip> skipped; // tracks with something after the gap that stayed
+    QStringList moved;           // clip ids
+};
+
+// Closes [startUs, endUs) by its full width on every track that is empty over it. Tracks joined by
+// linked clips (rippleTrackGroup) close together or not at all. A group with a locked track, or a
+// clip in the range on any of its tracks, stays. So does a group whose close would push a linked
+// clip onto another or before 0 ("linked"). A free-standing adjustment track (a transform or
+// camera layer, an all-below adjustment track) is a group of its own. Only its unpinned clips
+// count and move; pinned adjustments follow their clip when the edit is normalised. Nested effect
+// lanes belong to no group: a pinned lane clip follows its parent clip, and a free (unpinned)
+// lane clip stays where it is, as in closeGap and the ripple ops. Returns false, and changes nothing, when originTrack's group
+// cannot close; `originSkip` then says why.
+bool closeGapOnEmptyTracks(Project &project, int originTrack, TimeUs startUs, TimeUs endUs,
+                           EmptyTracksGapClose *result, GapTrackSkip *originSkip = nullptr);
+
 
 // Repoint `dst` at the media `src` carries while keeping dst's timeline placement. The source
 // time is read from `src` at dst's timeline start, so the two stay in timeline sync — which is

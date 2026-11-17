@@ -3798,6 +3798,40 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     if (tool == QLatin1String("close_gap")) {
         if (!args.contains(QStringLiteral("track")) || !args.contains(QStringLiteral("at")))
             return err("bad_args", QStringLiteral("track and at required"));
+        if (jsonBool(args.value(QStringLiteral("all_tracks")), false)) {
+            const int track = jsonInt(args.value(QStringLiteral("track")), -1);
+            const double at = jsonNumber(args.value(QStringLiteral("at")), 0.0);
+            if (at < 0)
+                return err("bad_args", QStringLiteral("at must be >= 0"));
+            const AppController::GapCloseResult closed =
+                m_controller->closeGapAllTracksAt(track, qRound64(at * 1e6)); // rounded, not truncated
+            if (!closed.error.isEmpty())
+                return err(closed.error == QLatin1String("No such track") ? "not_found" : "bad_args", closed.error);
+            const auto seconds = [](drift::TimeUs us) { return drift::mcpdetail::round3(drift::usToSeconds(us)); };
+            QJsonArray movedTracks;
+            for (const int t : closed.movedTracks)
+                movedTracks.append(t);
+            QJsonArray skippedTracks;
+            for (const auto &entry : closed.skippedTracks) {
+                QJsonObject skip{{QStringLiteral("track"), entry.second.track}, {QStringLiteral("reason"), entry.second.reason}};
+                if (!entry.second.blocker.isEmpty())
+                    skip.insert(QStringLiteral("blocker"), entry.second.blocker);
+                skippedTracks.append(skip);
+            }
+            QJsonArray moved;
+            for (const QString &id : closed.moved) {
+                const ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), id}});
+                if (ref.valid())
+                    moved.append(QJsonObject{{QStringLiteral("id"), id},
+                                             {QStringLiteral("start"),
+                                              seconds(m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).timelineStart)}});
+            }
+            return ok({{QStringLiteral("closed"), QJsonObject{{QStringLiteral("at"), seconds(closed.closed.first().first)},
+                                                                {QStringLiteral("width"), seconds(closed.closed.first().second)}}},
+                       {QStringLiteral("moved_tracks"), movedTracks},
+                       {QStringLiteral("skipped_tracks"), skippedTracks},
+                       {QStringLiteral("moved"), moved}});
+        }
         m_controller->closeGap(jsonInt(args.value(QStringLiteral("track"))),
                                jsonNumber(args.value(QStringLiteral("at")), 0.0));
         return ok({});
@@ -3813,7 +3847,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                                        : -1;
         if (fromUs < 0 || (args.contains(QStringLiteral("to")) && toUs < fromUs))
             return err("bad_args", QStringLiteral("from must be >= 0 and to >= from"));
-        const AppController::GapCloseResult closed = m_controller->closeGapsRippled(track, fromUs, toUs);
+        const bool allTracks = jsonBool(args.value(QStringLiteral("all_tracks")), false);
+        const AppController::GapCloseResult closed = m_controller->closeGapsRippled(track, fromUs, toUs, allTracks);
         if (!closed.error.isEmpty())
             return err(closed.error == QLatin1String("No such track") ? "not_found" : "bad_args", closed.error);
         const auto seconds = [](drift::TimeUs us) { return drift::mcpdetail::round3(drift::usToSeconds(us)); };
@@ -3833,7 +3868,24 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                                          {QStringLiteral("start"),
                                           seconds(m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).timelineStart)}});
         }
-        return ok({{QStringLiteral("closed"), closedJson}, {QStringLiteral("skipped"), skippedJson}, {QStringLiteral("moved"), moved}});
+        QJsonObject reply{{QStringLiteral("closed"), closedJson}, {QStringLiteral("skipped"), skippedJson}, {QStringLiteral("moved"), moved}};
+        if (allTracks) {
+            QJsonArray movedTracks;
+            for (const int t : closed.movedTracks)
+                movedTracks.append(t);
+            QJsonArray skippedTracks;
+            for (const auto &entry : closed.skippedTracks) {
+                QJsonObject skip{{QStringLiteral("track"), entry.second.track},
+                                 {QStringLiteral("at"), seconds(entry.first)},
+                                 {QStringLiteral("reason"), entry.second.reason}};
+                if (!entry.second.blocker.isEmpty())
+                    skip.insert(QStringLiteral("blocker"), entry.second.blocker);
+                skippedTracks.append(skip);
+            }
+            reply.insert(QStringLiteral("moved_tracks"), movedTracks);
+            reply.insert(QStringLiteral("skipped_tracks"), skippedTracks);
+        }
+        return ok(reply);
     }
 
     if (tool == QLatin1String("set_snap")) {

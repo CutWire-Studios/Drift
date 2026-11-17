@@ -286,6 +286,9 @@ private slots:
     void undoToRestoresSnapshot();
     void setRippleIsNotUndoable();
     void closeGapClosesOneHole();
+    void closeGapAllTracksMovesEmptyTracks();
+    void closeGapsAllTracksClosesEachHole();
+    void closeGapAllTracksSnapsAndRefusesCleanly();
     void reimportOfFileChangedInPlaceReprobes();
     void refreshInFlightAcrossProjectReplaceIsDropped();
     void replaceInFlightAcrossProjectReplaceIsDropped();
@@ -7548,6 +7551,251 @@ void McpTest::setRippleIsNotUndoable()
     QCOMPARE(result.value(QStringLiteral("ripple")).toBool(), true);
     QCOMPARE(state.rippleEnabled(), true);
     QVERIFY(!state.undoAvailable());
+}
+
+namespace {
+class GapController : public AppController
+{
+public:
+    using AppController::AppController;
+    using AppController::notifyTracksChanged;
+};
+
+drift::Clip gapTestClip(const char *id, double start, double dur, drift::ClipType type)
+{
+    drift::Clip clip;
+    clip.id = QString::fromLatin1(id);
+    clip.type = type;
+    clip.timelineStart = drift::secondsToUs(start);
+    clip.timelineDuration = drift::secondsToUs(dur);
+    clip.srcOut = clip.timelineDuration;
+    return clip;
+}
+} // namespace
+
+void McpTest::closeGapAllTracksMovesEmptyTracks()
+{
+    AssetLibrary library;
+    GapController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    constexpr auto V = drift::ClipType::Video;
+    constexpr auto A = drift::ClipType::Audio;
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.clips = {gapTestClip("a", 0, 2, V), gapTestClip("b", 4, 2, V)};
+    drift::Track a1{.type = drift::TrackType::Audio};
+    a1.clips = {gapTestClip("m1", 0, 2, A), gapTestClip("m2", 4, 5, A)};
+    drift::Track a2{.type = drift::TrackType::Audio};
+    a2.clips = {gapTestClip("span", 1, 4, A)};
+    state.project()->tracks() = {v1, a1, a2};
+    state.notifyTracksChanged();
+    const auto startOf = [&](const char *id) {
+        for (const drift::Track &track : state.project()->tracks())
+            for (const drift::Clip &clip : track.clips)
+                if (clip.id == QLatin1String(id))
+                    return drift::usToSeconds(clip.timelineStart);
+        return -1.0;
+    };
+
+    const QJsonObject r = dispatcher.applyOne(QStringLiteral("close_gap"),
+                                              {{QStringLiteral("track"), 0}, {QStringLiteral("at"), 2.0},
+                                               {QStringLiteral("all_tracks"), true}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+    QCOMPARE(startOf("b"), 2.0);
+    QCOMPARE(startOf("m2"), 2.0);
+    QCOMPARE(startOf("span"), 1.0);
+    QCOMPARE(r.value(QStringLiteral("moved_tracks")).toArray(), (QJsonArray{0, 1}));
+    const QJsonArray skipped = r.value(QStringLiteral("skipped_tracks")).toArray();
+    QCOMPARE(skipped.size(), 1);
+    QCOMPARE(skipped.at(0).toObject().value(QStringLiteral("track")).toInt(), 2);
+    QCOMPARE(skipped.at(0).toObject().value(QStringLiteral("reason")).toString(), QStringLiteral("clip_in_gap"));
+    QCOMPARE(skipped.at(0).toObject().value(QStringLiteral("blocker")).toString(), QStringLiteral("span"));
+    QCOMPARE(r.value(QStringLiteral("moved")).toArray().size(), 2);
+    QCOMPARE(r.value(QStringLiteral("closed")).toObject().value(QStringLiteral("width")).toDouble(), 2.0);
+    state.undo();
+    QCOMPARE(startOf("b"), 4.0);
+    QCOMPARE(startOf("m2"), 4.0);
+
+    // Without all_tracks the unlinked track stays, as before.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("close_gap"), {{QStringLiteral("track"), 0}, {QStringLiteral("at"), 2.0}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(startOf("b"), 2.0);
+    QCOMPARE(startOf("m2"), 4.0);
+    state.undo();
+
+    // A locked origin is refused; an unknown track is not found.
+    state.project()->tracks()[0].locked = true;
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("close_gap"), {{QStringLiteral("track"), 0}, {QStringLiteral("at"), 2.0},
+                                                                {QStringLiteral("all_tracks"), true}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(startOf("m2"), 4.0);
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("close_gap"), {{QStringLiteral("track"), 42}, {QStringLiteral("at"), 2.0},
+                                                                {QStringLiteral("all_tracks"), true}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+}
+
+void McpTest::closeGapsAllTracksClosesEachHole()
+{
+    AssetLibrary library;
+    GapController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    constexpr auto V = drift::ClipType::Video;
+    constexpr auto A = drift::ClipType::Audio;
+    // V1 holes: [2,4) and [6,8). A1 is empty over the first and has a clip in the second.
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.clips = {gapTestClip("a", 0, 2, V), gapTestClip("b", 4, 2, V), gapTestClip("c", 8, 2, V)};
+    drift::Track a1{.type = drift::TrackType::Audio};
+    a1.clips = {gapTestClip("m1", 0, 2, A), gapTestClip("mid", 7, 0.5, A), gapTestClip("m3", 9, 1, A)};
+    state.project()->tracks() = {v1, a1};
+    state.notifyTracksChanged();
+    const auto startOf = [&](const char *id) {
+        for (const drift::Track &track : state.project()->tracks())
+            for (const drift::Clip &clip : track.clips)
+                if (clip.id == QLatin1String(id))
+                    return drift::usToSeconds(clip.timelineStart);
+        return -1.0;
+    };
+
+    const QJsonObject r = dispatcher.applyOne(QStringLiteral("close_gaps"),
+                                              {{QStringLiteral("track"), 0}, {QStringLiteral("all_tracks"), true}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+    QCOMPARE(r.value(QStringLiteral("closed")).toArray().size(), 2);
+    QCOMPARE(startOf("b"), 2.0);
+    QCOMPARE(startOf("c"), 4.0);
+    QCOMPARE(startOf("mid"), 5.0); // the first hole's width only
+    QCOMPARE(startOf("m3"), 7.0);
+    QCOMPARE(r.value(QStringLiteral("moved_tracks")).toArray(), (QJsonArray{0, 1}));
+    const QJsonArray skipped = r.value(QStringLiteral("skipped_tracks")).toArray();
+    QCOMPARE(skipped.size(), 1);
+    const QJsonObject skip = skipped.at(0).toObject();
+    QCOMPARE(skip.value(QStringLiteral("track")).toInt(), 1);
+    QCOMPARE(skip.value(QStringLiteral("at")).toDouble(), 6.0);
+    QCOMPARE(skip.value(QStringLiteral("reason")).toString(), QStringLiteral("clip_in_gap"));
+    QCOMPARE(skip.value(QStringLiteral("blocker")).toString(), QStringLiteral("mid"));
+    state.undo(); // one step
+    QCOMPARE(startOf("b"), 4.0);
+    QCOMPARE(startOf("c"), 8.0);
+    QCOMPARE(startOf("mid"), 7.0);
+}
+
+void McpTest::closeGapAllTracksSnapsAndRefusesCleanly()
+{
+    AssetLibrary library;
+    GapController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    constexpr auto V = drift::ClipType::Video;
+    constexpr auto A = drift::ClipType::Audio;
+    const auto startUs = [&](const char *id) {
+        for (const drift::Track &track : state.project()->tracks())
+            for (const drift::Clip &clip : track.clips)
+                if (clip.id == QLatin1String(id))
+                    return clip.timelineStart;
+        return drift::TimeUs(-1);
+    };
+    const auto call = [&](const char *tool, QJsonObject args) {
+        args.insert(QStringLiteral("all_tracks"), true);
+        return dispatcher.applyOne(QLatin1String(tool), args);
+    };
+
+    // `at` copied from a reply is rounded to milliseconds: 2.033 for a clip ending at 2033333 us.
+    {
+        drift::Track v1{.type = drift::TrackType::Video};
+        v1.clips = {gapTestClip("a", 0, 1, V), gapTestClip("b", 4, 2, V)};
+        v1.clips[0].timelineDuration = 2'033'333;
+        v1.clips[0].srcOut = 2'033'333;
+        drift::Track a1{.type = drift::TrackType::Audio};
+        a1.clips = {gapTestClip("m", 4, 3, A)};
+        state.project()->tracks() = {v1, a1};
+        state.notifyTracksChanged();
+        QJsonObject r = call("close_gap", {{QStringLiteral("track"), 0}, {QStringLiteral("at"), 2.033}});
+        QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+        QCOMPARE(startUs("b"), drift::TimeUs(2'033'333));
+        QCOMPARE(startUs("m"), drift::TimeUs(2'033'333));
+        QCOMPARE(r.value(QStringLiteral("moved_tracks")).toArray(), (QJsonArray{0, 1}));
+        // 8.04 s is 8039999 us truncated; a clip ending at exactly 8040000 still has a gap after it.
+        state.project()->tracks()[0].clips[0].timelineDuration = 8'040'000;
+        state.project()->tracks()[0].clips[1].timelineStart = 10'000'000;
+        state.project()->tracks()[1].clips[0].timelineStart = 10'000'000;
+        state.notifyTracksChanged();
+        r = call("close_gap", {{QStringLiteral("track"), 0}, {QStringLiteral("at"), 8.04}});
+        QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+        QCOMPARE(startUs("b"), drift::TimeUs(8'040'000));
+    }
+
+    // close_gaps with from/to: only the hole inside the range closes, on every empty track.
+    {
+        drift::Track v1{.type = drift::TrackType::Video};
+        v1.clips = {gapTestClip("a", 0, 2, V), gapTestClip("b", 4, 2, V), gapTestClip("c", 8, 2, V)};
+        drift::Track a1{.type = drift::TrackType::Audio};
+        a1.clips = {gapTestClip("x", 0, 1, A), gapTestClip("y", 9, 3, A)};
+        state.project()->tracks() = {v1, a1};
+        state.notifyTracksChanged();
+        const QJsonObject r = call("close_gaps", {{QStringLiteral("track"), 0}, {QStringLiteral("from"), 5.0},
+                                                  {QStringLiteral("to"), 9.0}});
+        QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+        QCOMPARE(r.value(QStringLiteral("closed")).toArray().size(), 1);
+        QCOMPARE(startUs("b"), drift::secondsToUs(4.0));
+        QCOMPARE(startUs("c"), drift::secondsToUs(6.0));
+        QCOMPARE(startUs("y"), drift::secondsToUs(7.0));
+        QCOMPARE(r.value(QStringLiteral("moved_tracks")).toArray(), (QJsonArray{0, 1}));
+        QVERIFY(r.value(QStringLiteral("skipped_tracks")).toArray().isEmpty());
+    }
+
+    // Skipped tracks within one gap come back in track order.
+    {
+        drift::Track v1{.type = drift::TrackType::Video};
+        v1.clips = {gapTestClip("a", 0, 2, V), gapTestClip("b", 4, 2, V)};
+        drift::Track a1{.type = drift::TrackType::Audio};
+        a1.clips = {gapTestClip("s1", 1, 4, A), gapTestClip("t1", 7, 1, A)};
+        drift::Track a2{.type = drift::TrackType::Audio};
+        a2.clips = {gapTestClip("s2", 1, 4, A), gapTestClip("t2", 7, 1, A)};
+        drift::Track a3{.type = drift::TrackType::Audio};
+        a3.clips = {gapTestClip("s3", 1, 4, A), gapTestClip("t3", 7, 1, A)};
+        state.project()->tracks() = {v1, a1, a2, a3};
+        state.notifyTracksChanged();
+        const QJsonObject r = call("close_gaps", {{QStringLiteral("track"), 0}});
+        QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson()));
+        QJsonArray tracks;
+        for (const QJsonValue &v : r.value(QStringLiteral("skipped_tracks")).toArray())
+            tracks.append(v.toObject().value(QStringLiteral("track")));
+        QCOMPARE(tracks, (QJsonArray{1, 2, 3}));
+    }
+
+    // Refusals say why with ids, and change nothing (no undo step).
+    {
+        drift::Track v1{.type = drift::TrackType::Video};
+        v1.clips = {gapTestClip("a", 0, 2, V), gapTestClip("b", 4, 2, V)};
+        drift::Track fx{.type = drift::TrackType::Adjustment};
+        fx.clips = {gapTestClip("g1", 0, 1, drift::ClipType::Adjustment), gapTestClip("g2", 3, 1, drift::ClipType::Adjustment)};
+        drift::Track a1{.type = drift::TrackType::Audio};
+        a1.clips = {gapTestClip("over", 1, 4, A)};
+        v1.clips[0].linkId = QStringLiteral("pair");
+        a1.clips[0].linkId = QStringLiteral("pair");
+        state.project()->tracks() = {v1, fx, a1};
+        state.notifyTracksChanged();
+        const int steps = int(state.undoHistory().size());
+
+        QJsonObject r = call("close_gap", {{QStringLiteral("track"), 0}, {QStringLiteral("at"), 2.0}});
+        QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY2(r.value(QStringLiteral("detail")).toString().contains(QStringLiteral("over")),
+                 qPrintable(QJsonDocument(r).toJson()));
+        // The adjustment track is refused as the origin by both ops.
+        r = call("close_gap", {{QStringLiteral("track"), 1}, {QStringLiteral("at"), 1.0}});
+        QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        r = call("close_gaps", {{QStringLiteral("track"), 1}});
+        QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        // A locked origin.
+        state.project()->tracks()[0].locked = true;
+        r = call("close_gap", {{QStringLiteral("track"), 0}, {QStringLiteral("at"), 2.0}});
+        QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY(r.value(QStringLiteral("detail")).toString().contains(QStringLiteral("Track 0 is locked")));
+        state.project()->tracks()[0].locked = false;
+
+        QCOMPARE(startUs("b"), drift::secondsToUs(4.0));
+        QCOMPARE(startUs("g2"), drift::secondsToUs(3.0));
+        QCOMPARE(int(state.undoHistory().size()), steps);
+    }
 }
 
 void McpTest::closeGapClosesOneHole()

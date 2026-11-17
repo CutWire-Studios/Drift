@@ -1691,6 +1691,155 @@ bool closeRippleRanges(Project &project, const QList<RippleRange> &ranges, QStri
     return true;
 }
 
+namespace {
+
+// A free adjustment clip counts for an all-tracks gap; one pinned to a clip (an effect, mask or
+// audio FX lane clip) follows that clip instead.
+bool countsForGap(const Track &track, const Clip &clip)
+{
+    return !track.isAdjustment() || clip.linkedClipId.isEmpty() || clip.adjustmentKind == AdjustmentKind::Transform;
+}
+
+} // namespace
+
+bool closeGapOnEmptyTracks(Project &project, int origin, TimeUs s, TimeUs e, EmptyTracksGapClose *result,
+                           GapTrackSkip *originSkip)
+{
+    const int count = int(project.tracks().size());
+    if (origin < 0 || origin >= count || e <= s || project.tracks().at(origin).isAdjustmentLane())
+        return false;
+
+    // Groups, the origin's first. Nested lanes follow their parent clip, so they are in none.
+    QList<QSet<int>> groups;
+    QSet<int> seen;
+    QList<int> order{origin};
+    for (int t = 0; t < count; ++t)
+        order.append(t);
+    for (const int t : std::as_const(order)) {
+        if (seen.contains(t) || project.tracks().at(t).isAdjustmentLane())
+            continue;
+        QSet<int> group = project.tracks().at(t).isAdjustment() ? QSet<int>{t} : rippleTrackGroup(project, t);
+        group.insert(t);
+        seen.unite(group);
+        groups.append(group);
+    }
+
+    EmptyTracksGapClose out;
+    QStringList movedIds;
+    for (int g = 0; g < groups.size(); ++g) {
+        const QSet<int> &group = groups.at(g);
+        QList<int> members = group.values();
+        std::sort(members.begin(), members.end());
+        const bool isOrigin = g == 0;
+
+        // Why the group stays, if it does; filled per track below.
+        QString groupReason;
+        QString groupBlocker;
+        int causeTrack = -1;
+        QList<int> withContent; // tracks with something after the gap
+        for (const int t : std::as_const(members)) {
+            const Track &track = project.tracks().at(t);
+            bool after = false;
+            for (const Clip &clip : track.clips) {
+                if (!countsForGap(track, clip))
+                    continue;
+                if (clip.timelineEnd() > s)
+                    after = true;
+                if (groupReason.isEmpty() && clip.timelineStart < e && clip.timelineEnd() > s) {
+                    groupReason = QStringLiteral("clip_in_gap");
+                    groupBlocker = clip.id;
+                    causeTrack = t;
+                }
+            }
+            if (after)
+                withContent.append(t);
+        }
+        if (withContent.isEmpty() && !isOrigin)
+            continue;
+        for (const int t : std::as_const(members)) {
+            if (project.tracks().at(t).locked) {
+                groupReason = QStringLiteral("locked");
+                groupBlocker.clear();
+                causeTrack = t;
+                break;
+            }
+        }
+
+        bool closed = false;
+        QStringList groupMoved;
+        if (groupReason.isEmpty()) {
+            if (project.tracks().at(*members.begin()).isAdjustment()) {
+                const int t = *members.begin();
+                QSet<QString> pinned;
+                for (const Clip &clip : project.tracks().at(t).clips)
+                    if (!countsForGap(project.tracks().at(t), clip))
+                        pinned.insert(clip.id);
+                groupMoved = rippleTracks(project, QSet<int>{t}, e, -(e - s), pinned);
+                closed = true;
+            } else {
+                QString blocker;
+                if (closeRippleRanges(project, {{members.first(), s, e}}, &blocker, &groupMoved)) {
+                    closed = true;
+                } else {
+                    groupReason = QStringLiteral("linked");
+                    groupBlocker = blocker;
+                }
+            }
+        }
+        if (closed) {
+            for (const int t : std::as_const(members))
+                for (const Clip &clip : project.tracks().at(t).clips)
+                    if (groupMoved.contains(clip.id)) {
+                        out.movedTracks.append(t);
+                        break;
+                    }
+            movedIds.append(groupMoved);
+            continue;
+        }
+        // The group stays: say so for each of its tracks that has something after the gap.
+        QList<GapTrackSkip> skips;
+        for (const int t : std::as_const(withContent)) {
+            GapTrackSkip skip;
+            skip.track = t;
+            if (t == causeTrack) {
+                skip.reason = groupReason;
+                skip.blocker = groupBlocker;
+            } else if (groupReason == QLatin1String("locked") && project.tracks().at(t).locked) {
+                skip.reason = groupReason;
+            } else {
+                skip.reason = groupReason == QLatin1String("linked") ? groupReason : QStringLiteral("linked");
+                skip.blocker = groupBlocker;
+            }
+            skips.append(skip);
+        }
+        if (causeTrack >= 0 && !withContent.contains(causeTrack)) {
+            GapTrackSkip skip;
+            skip.track = causeTrack;
+            skip.reason = groupReason;
+            skip.blocker = groupBlocker;
+            skips.append(skip);
+        }
+        if (isOrigin) {
+            if (originSkip) {
+                GapTrackSkip skip;
+                skip.track = causeTrack >= 0 ? causeTrack : origin;
+                skip.reason = groupReason;
+                skip.blocker = groupBlocker;
+                *originSkip = skip;
+            }
+            return false;
+        }
+        out.skipped.append(skips);
+    }
+    std::sort(out.movedTracks.begin(), out.movedTracks.end());
+    std::sort(out.skipped.begin(), out.skipped.end(),
+              [](const GapTrackSkip &a, const GapTrackSkip &b) { return a.track < b.track; });
+    out.moved = movedIds;
+    if (result)
+        *result = out;
+    return true;
+}
+
 QPair<QString, int> splitLabel(const QString &label)
 {
     const int dot = label.lastIndexOf(QLatin1Char('.'));

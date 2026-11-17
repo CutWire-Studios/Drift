@@ -167,6 +167,9 @@ AndroidBottomSheet {
                   icon: Theme.icons.linkTwo },
                 { id: "closeGap", label: qsTr("Close gap"),
                   detail: qsTr("Close gap after clip"),
+                  icon: Theme.icons.chevronsRightLeft },
+                { id: "closeGapAll", label: qsTr("Close gap on all tracks"),
+                  detail: qsTr("Close the gap after the clip on every free track"),
                   icon: Theme.icons.chevronsRightLeft }
             ]
         },
@@ -284,6 +287,7 @@ AndroidBottomSheet {
         case "speed":
             return root.hasSelection && !root.isTransformClip
         case "closeGap":
+        case "closeGapAll":
             return root.hasSelection
         case "merge":
             return EditorState.mergeAvailable
@@ -443,6 +447,12 @@ AndroidBottomSheet {
             const clip = EditorState.clipAt(EditorState.selectedTrack, EditorState.selectedClip)
             if (clip && clip.start !== undefined)
                 EditorState.closeGap(EditorState.selectedTrack, clip.start + clip.duration)
+            break
+        }
+        case "closeGapAll": {
+            const clip = EditorState.clipAt(EditorState.selectedTrack, EditorState.selectedClip)
+            if (clip && clip.start !== undefined)
+                EditorState.closeGapOnAllTracks(EditorState.selectedTrack, clip.start + clip.duration)
             break
         }
         case "separateAudio":

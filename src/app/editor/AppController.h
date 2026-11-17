@@ -937,6 +937,9 @@ public:
     // clips on other tracks (e.g. a companion audio clip) follow along to stay in sync.
     // At 0 it closes the gap before the first clip, moving the track to the timeline start.
     Q_INVOKABLE void closeGap(int trackIndex, double gapStartSeconds);
+    // closeGap on every track that is empty over the gap (drift::closeGapOnEmptyTracks), one undo
+    // step. The status line names the tracks that kept their place.
+    Q_INVOKABLE void closeGapOnAllTracks(int trackIndex, double gapStartSeconds);
     Q_INVOKABLE void alignSelectedClipLeft();
     Q_INVOKABLE void alignSelectedClipRight();
     // Mirrors drift::Haptics::TrimState (Haptics.h), which has documented since it was written
@@ -1040,8 +1043,19 @@ public:
         QList<QPair<QPair<drift::TimeUs, drift::TimeUs>, QString>> skipped;
         QStringList moved;
         QString error;
+        // closeGapAllTracksAt only: `error` worded for an agent (ids), this one for the status
+        // line (track and clip names). Empty when there is no error.
+        QString uiError;
+        // all-tracks only: the tracks a clip moved on, and the tracks that stayed (with the gap
+        // start, as it was, they stayed for).
+        QList<int> movedTracks;
+        QList<QPair<drift::TimeUs, drift::GapTrackSkip>> skippedTracks;
     };
-    GapCloseResult closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs);
+    // With `allTracks`, each gap closes on every track that is empty over it as well
+    // (drift::closeGapOnEmptyTracks).
+    GapCloseResult closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs, bool allTracks = false);
+    // closeGapOnAllTracks for one gap whose left edge is `gapStartUs`, as a result (agent op).
+    GapCloseResult closeGapAllTracksAt(int trackIndex, drift::TimeUs gapStartUs);
     // closeGapsRippled over the work area, or the whole track when there is none, reporting through
     // the status toast.
     Q_INVOKABLE void closeGapsInWorkArea(int trackIndex);
@@ -2310,6 +2324,8 @@ protected:
     // whose clip is gone. Runs in finishEdit so moves, trims, splits and deletes all keep links
     // true without every call site having to remember.
     void syncLinkedAdjustments(drift::Project &project) const;
+    // The track's name, else its default label ("Video 2") translated, as the timeline shows it.
+    QString localizedTrackLabel(const drift::Track &track) const;
 
     // Write a mask for (trackIndex, clipIndex), whether that names a mask adjustment (the mask is
     // its payload) or a media clip (the mask is pinned to it through a lane). MAY INSERT TRACKS.
