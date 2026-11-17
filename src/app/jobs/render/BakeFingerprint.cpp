@@ -1,6 +1,7 @@
 #include "app/jobs/render/BakeFingerprint.h"
 
 #include "core/project/Project.h"
+#include "core/project/Transition.h"
 
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -32,6 +33,7 @@ struct TransitionEntry
     QString from;
     QString to;
     QByteArray bytes;
+    double durationUs = 0;
 };
 
 struct TrackEntry
@@ -107,7 +109,9 @@ Timeline prepare(const QJsonArray &tracks, QHash<QString, QByteArray> &stamps)
             const QJsonObject transition = transitionValue.toObject();
             entry.transitions.push_back({transition.value(QStringLiteral("fromClipId")).toString(),
                                          transition.value(QStringLiteral("toClipId")).toString(),
-                                         compact(transition)});
+                                         compact(transition),
+                                         transition.value(QStringLiteral("durationUs"))
+                                             .toDouble(double(Transition{}.durationUs))});
         }
         out.push_back(std::move(entry));
     }
@@ -138,6 +142,16 @@ Prepared prepare(const Project &project)
     return p;
 }
 
+// The clip with this id on the track, or null.
+const ClipEntry *clipIn(const TrackEntry &track, const QString &id)
+{
+    for (const ClipEntry &clip : track.clips) {
+        if (clip.id == id)
+            return &clip;
+    }
+    return nullptr;
+}
+
 void hashTimeline(QCryptographicHash &hash, const Prepared &p, const Timeline &timeline, double startUs,
                   double endUs, QSet<QString> &visiting)
 {
@@ -145,9 +159,7 @@ void hashTimeline(QCryptographicHash &hash, const Prepared &p, const Timeline &t
     for (const TrackEntry &track : timeline) {
         hash.addData(track.head);
         QSet<QString> included;
-        for (const ClipEntry &clip : track.clips) {
-            if (!all && (clip.start >= endUs || clip.end <= startUs))
-                continue;
+        const auto include = [&](const ClipEntry &clip) {
             included.insert(clip.id);
             hash.addData(clip.bytes);
             if (!clip.sequenceId.isEmpty() && !visiting.contains(clip.sequenceId)) {
@@ -158,10 +170,38 @@ void hashTimeline(QCryptographicHash &hash, const Prepared &p, const Timeline &t
                     visiting.remove(clip.sequenceId);
                 }
             }
+        };
+        for (const ClipEntry &clip : track.clips) {
+            if (!all && (clip.start >= endUs || clip.end <= startUs))
+                continue;
+            include(clip);
         }
+        // A transition draws both its clips across its window, which reaches past the cut into the
+        // other clip's span. So when the window overlaps the range but only one side does, the
+        // other side's clip decides frames in range too.
+        std::vector<const ClipEntry *> partners;
         for (const TransitionEntry &transition : track.transitions) {
-            if (included.contains(transition.from) || included.contains(transition.to))
-                hash.addData(transition.bytes);
+            const bool hasFrom = included.contains(transition.from);
+            const bool hasTo = included.contains(transition.to);
+            if (!hasFrom && !hasTo)
+                continue;
+            hash.addData(transition.bytes);
+            if (hasFrom && hasTo)
+                continue;
+            const ClipEntry *from = clipIn(track, transition.from);
+            const ClipEntry *to = clipIn(track, transition.to);
+            TimeUs windowStart = 0;
+            TimeUs windowEnd = 0;
+            if (!from || !to
+                || !transitionWindowOf(TimeUs(from->start), TimeUs(from->end), TimeUs(to->start), TimeUs(to->end),
+                                       TimeUs(transition.durationUs), windowStart, windowEnd)
+                || double(windowStart) >= endUs || double(windowEnd) <= startUs)
+                continue;
+            partners.push_back(hasFrom ? to : from);
+        }
+        for (const ClipEntry *partner : partners) {
+            if (!included.contains(partner->id))
+                include(*partner);
         }
         hash.addData("|", 1);
     }
