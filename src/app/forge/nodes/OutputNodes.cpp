@@ -1,4 +1,4 @@
-#include "app/forge/nodes/Registry.h"
+#include "app/forge/nodes/NodeBuild.h"
 
 namespace drift::forge {
 
@@ -13,6 +13,9 @@ void registerOutputNodes()
         d.kinds = {kind};
         d.output = true;
         d.inputs = {{QStringLiteral("image"), QStringLiteral("Image"), SocketType::Color, fallback}};
+        d.emitFn = [](EmitCtx &c, const StageReader &) -> build::Out {
+            return {{"image", "return " + c.in("image") + ";"}};
+        };
         return d;
     };
     registerNodeDefs({

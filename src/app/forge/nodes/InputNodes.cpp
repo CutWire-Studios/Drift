@@ -1,4 +1,4 @@
-#include "app/forge/nodes/Registry.h"
+#include "app/forge/nodes/NodeBuild.h"
 
 namespace drift::forge {
 
@@ -97,6 +97,44 @@ void registerInputNodes()
     asset.kind = OptionKind::Asset;
     image.options = {asset};
     image.outputs = {out("image", "Image", SocketType::Color), out("alpha", "Alpha", SocketType::Float)};
+
+    using build::Out;
+    using Stage = const StageReader &;
+    video.emitFn = [](EmitCtx &c, Stage) -> Out { return {{"image", "return " + c.source(0, "uv") + ";"}}; };
+    from.emitFn = video.emitFn;
+    to.emitFn = [](EmitCtx &c, Stage) -> Out { return {{"image", "return " + c.source(1, "uv") + ";"}}; };
+    progress.emitFn = [](EmitCtx &c, Stage) -> Out { return {{"value", "return " + c.progress() + ";"}}; };
+    direction.emitFn = [](EmitCtx &c, Stage) -> Out {
+        const QString d = c.engine("u_direction");
+        const QString a = c.progress();
+        const QString b = c.progress();
+        return {{"value", "return " + d + ";"}, {"settled", "return mix(" + a + ", 1.0 - " + b + ", " + d + ");"}};
+    };
+    time.emitFn = [](EmitCtx &c, Stage) -> Out {
+        const QString t = c.time();
+        return {{"value", "return " + t + " * " + c.in("speed") + ";"}};
+    };
+    uv.emitFn = [](EmitCtx &c, Stage) -> Out {
+        const QString r = c.res();
+        return {{"uv", "return uv;"},
+                {"x", "return uv.x;"},
+                {"y", "return uv.y;"},
+                {"dist", "vec2 d = (uv - 0.5) * vec2(" + r + ".x / max(" + r + ".y, 1.0), 1.0);\n    return length(d) * 2.0;"}};
+    };
+    resolution.emitFn = [](EmitCtx &c, Stage) -> Out {
+        const QString size = "return " + c.res() + ";";
+        return {{"size", size}, {"aspect", "return " + c.aspect() + ";"}};
+    };
+    number.emitFn = [](EmitCtx &c, Stage) -> Out { return {{"value", "return " + c.in("value") + ";"}}; };
+    sw.emitFn = [](EmitCtx &c, Stage) -> Out { return {{"value", "return " + c.in("on") + " > 0.5 ? 1.0 : 0.0;"}}; };
+    color.emitFn = [](EmitCtx &c, Stage) -> Out { return {{"color", "return " + c.in("color") + ";"}}; };
+    point.emitFn = [](EmitCtx &c, Stage) -> Out { return {{"point", "return " + c.in("point") + ";"}}; };
+    image.emitFn = [](EmitCtx &c, Stage) -> Out {
+        const QString scale = c.in("scale");
+        const QString a = c.asset("uv * " + scale);
+        const QString b = c.asset("uv * " + scale);
+        return {{"image", "return " + a + ";"}, {"alpha", "return " + b + ".a;"}};
+    };
 
     registerNodeDefs({video, from, to, progress, direction, time, uv, resolution, number, sw, color, point, image});
 }

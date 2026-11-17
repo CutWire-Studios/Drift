@@ -14,6 +14,9 @@ namespace drift::forge {
 // Defined by the compiler; node emitters receive it by reference.
 class EmitCtx;
 
+// Samples a stage buffer at a uv expression.
+using StageReader = std::function<QString(const QString &uv)>;
+
 struct InputDef
 {
     QString id;
@@ -73,7 +76,7 @@ struct OptionDef
 struct StageDef
 {
     // A function body producing vec4; `prev` samples the previous stage (stage 0: none).
-    std::function<QString(EmitCtx &, const std::function<QString(const QString &)> &prev)> body;
+    std::function<QString(EmitCtx &, const StageReader &prev)> body;
 };
 
 struct NodeDef
@@ -96,8 +99,8 @@ struct NodeDef
     QStringList heavyInputsStatic;
     std::function<QStringList(const std::function<QJsonValue(const QString &)> &opt)> heavyInputs;
     QList<StageDef> stages;
-    // Named emitFn because Qt defines `emit` as a macro. One function body per output id; `stage` selects which stage's buffer is sampled when `stages` is set.
-    std::function<QMap<QString, QString>(EmitCtx &, int stage)> emitFn;
+    // Named emitFn because Qt defines `emit` as a macro. One function body per output id; `stage` samples the last stage's buffer when `stages` is set.
+    std::function<QMap<QString, QString>(EmitCtx &, const StageReader &stage)> emitFn;
 
     const InputDef *input(const QString &id) const
     {

@@ -17,6 +17,11 @@ ForgeNode createNode(const QString &type, double x, double y);
 QString outputType(Kind kind);
 
 void registerInputNodes();
+void registerControlNodes();
+void registerColorNodes();
+void registerGradeNodes();
+void registerMixNodes();
+void registerMathNodes();
 void registerOutputNodes();
 
 }

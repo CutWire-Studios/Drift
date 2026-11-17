@@ -25,6 +25,11 @@ void ensureRegistered()
 {
     static const bool done = [] {
         registerInputNodes();
+        registerControlNodes();
+        registerColorNodes();
+        registerGradeNodes();
+        registerMixNodes();
+        registerMathNodes();
         registerOutputNodes();
         return true;
     }();

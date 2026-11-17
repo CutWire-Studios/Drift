@@ -793,9 +793,19 @@ add_library(driftforge STATIC
     src/app/forge/edit/GraphOps.cpp
     src/app/forge/edit/ParamOps.cpp
     src/app/forge/nodes/InputNodes.cpp
+    src/app/forge/nodes/ControlNodes.cpp
+    src/app/forge/nodes/ColorNodes.cpp
+    src/app/forge/nodes/GradeNodes.cpp
+    src/app/forge/nodes/MixNodes.cpp
+    src/app/forge/nodes/MathNodes.cpp
     src/app/forge/nodes/OutputNodes.cpp
     src/app/forge/nodes/Registry.cpp
     src/app/forge/compiler/Validate.cpp
+    src/app/forge/compiler/Compiler.cpp
+    src/app/forge/compiler/Assemble.cpp
+    src/app/forge/compiler/Passes.cpp
+    src/app/forge/compiler/Helpers.cpp
+    src/app/forge/compiler/Manifest.cpp
 )
 target_include_directories(driftforge PUBLIC src)
 target_link_libraries(driftforge PUBLIC Qt6::Core)
