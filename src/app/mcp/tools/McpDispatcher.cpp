@@ -1199,6 +1199,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opSetDuration(args);
     if (tool == QLatin1String("set_trim"))
         return opSetTrim(args);
+    if (tool == QLatin1String("slip_clip"))
+        return opSlipClip(args);
     if (tool == QLatin1String("move_to_track"))
         return opMoveToTrack(args);
     if (tool == QLatin1String("split_clip"))
@@ -2168,6 +2170,45 @@ QJsonObject McpDispatcher::opSetTrim(const QJsonObject &args)
     }
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
     return ok(clipFeedback(after, {{QStringLiteral("moved"), moved}}));
+}
+
+QJsonObject McpDispatcher::opSlipClip(const QJsonObject &args)
+{
+    const ClipRef ref = resolveClip(args);
+    if (!ref.valid())
+        return clipRefError(args);
+    const bool hasBy = args.contains(QStringLiteral("by"));
+    const bool hasIn = args.contains(QStringLiteral("in"));
+    if (hasBy == hasIn)
+        return err("bad_args", QStringLiteral("give exactly one of by, in"));
+    const QString key = hasBy ? QStringLiteral("by") : QStringLiteral("in");
+    if (!args.value(key).isDouble())
+        return err("bad_args", QStringLiteral("%1 must be a number of seconds").arg(key));
+    const drift::Clip &clip = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip);
+    const double requested = args.value(key).toDouble();
+    if (hasIn && clip.loops())
+        return err("bad_args", QStringLiteral("A looped clip repeats its whole range: slip it with by"));
+    const drift::TimeUs requestedUs = qRound64(requested * 1e6);
+    const drift::TimeUs delta = hasBy ? requestedUs : requestedUs - clip.srcIn;
+    const AppController::SlipResult r = m_controller->slipClip(ref.track, ref.clip, delta);
+    if (!r.error.isEmpty())
+        return err(r.errorCode.toLatin1().constData(), r.error);
+    const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
+    QJsonObject extra{{QStringLiteral("requested"), requested},
+                      {QStringLiteral("slipped"), drift::mcpdetail::round3(drift::usToSeconds(r.appliedUs))}};
+    if (r.limit != 0)
+        extra.insert(QStringLiteral("reason"),
+                     r.limit < 0 ? QStringLiteral("media_start") : QStringLiteral("media_end"));
+    const drift::Clip &now = m_controller->project()->tracks().at(after.track).clips.at(after.clip);
+    if (now.loops())
+        extra.insert(QStringLiteral("loop_offset"), drift::mcpdetail::round3(drift::usToSeconds(now.loopOffsetUs)));
+    if (!r.sourceData.isEmpty())
+        extra.insert(QStringLiteral("source_data"), QJsonArray::fromStringList(r.sourceData));
+    if (!r.bakedKeys.isEmpty())
+        extra.insert(QStringLiteral("baked_keys"), QJsonArray::fromStringList(r.bakedKeys));
+    if (!r.retimedSubtitles.isEmpty())
+        extra.insert(QStringLiteral("retimed_subtitles"), QJsonArray::fromStringList(r.retimedSubtitles));
+    return ok(clipFeedback(after, extra));
 }
 
 QJsonObject McpDispatcher::opMoveToTrack(const QJsonObject &args)

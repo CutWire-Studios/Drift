@@ -3393,6 +3393,10 @@
         <translation>ギャップを埋めました</translation>
     </message>
     <message>
+        <source>Slip clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips swapped</source>
         <translation>クリップを入れ替えました</translation>
     </message>

@@ -2223,7 +2223,8 @@ std::optional<TimeUs> retimedTime(const QList<RetimedClip> &changes, const QStri
 
 } // namespace
 
-void retimeLinkedSubtitles(const Project &before, Project &project, const QHash<QString, QString> &replaced)
+void retimeLinkedSubtitles(const Project &before, Project &project, const QHash<QString, QString> &replaced,
+                           bool dropCollapsed)
 {
     QHash<QString, Clip> after;
     for (const Track &track : project.tracks()) {
@@ -2295,8 +2296,17 @@ void retimeLinkedSubtitles(const Project &before, Project &project, const QHash<
                 else if (other.timelineEnd() <= sub.timelineStart)
                     start = qMax(start, other.timelineEnd());
             }
-            if (end <= start)
-                continue;
+            bool collapsed = false;
+            if (end <= start) {
+                if (!dropCollapsed)
+                    continue;
+                // Every word of the clip left its source window (a slip by at least its length): keep
+                // the old span and rebase the cues against it, so the ones that slipped out (zero length
+                // now) are dropped below.
+                collapsed = true;
+                start = sub.timelineStart;
+                end = sub.timelineEnd();
+            }
 
             QList<SubtitleCue> rebased;
             for (SubtitleCue cue : cues) {
@@ -2307,6 +2317,12 @@ void retimeLinkedSubtitles(const Project &before, Project &project, const QHash<
             }
             sortSubtitleCues(rebased);
 
+            if (dropCollapsed && rebased.isEmpty()) {
+                // Nothing of the captions is left: remove the clip (undo restores it).
+                track.clips.removeAt(i);
+                --i;
+                continue;
+            }
             Clip &out = track.clips[i];
             out.timelineStart = start;
             out.timelineDuration = end - start;
@@ -2353,6 +2369,28 @@ QList<ClipRef> linkedPartners(const Project &project, const Clip &clip)
         }
     }
     return out;
+}
+
+SlipLimits slipLimits(const Clip &clip, TimeUs mediaDurationUs)
+{
+    if (clip.loops())
+        return {std::numeric_limits<TimeUs>::min() / 4, std::numeric_limits<TimeUs>::max() / 4};
+    return {-qMax<TimeUs>(0, clip.srcIn), qMax<TimeUs>(0, mediaDurationUs - clip.srcOut)};
+}
+
+void slipClipSource(Clip &clip, TimeUs sourceDeltaUs)
+{
+    if (sourceDeltaUs == 0)
+        return;
+    if (clip.loops()) {
+        // loopOffsetUs runs in playback order, so a reversed clip's later source is a smaller offset.
+        const TimeUs range = clip.srcOut - clip.srcIn;
+        const TimeUs d = (clip.reverse ? -sourceDeltaUs : sourceDeltaUs) % range;
+        clip.loopOffsetUs = ((clip.loopOffsetUs + d) % range + range) % range;
+        return;
+    }
+    clip.srcIn += sourceDeltaUs;
+    clip.srcOut += sourceDeltaUs;
 }
 
 void syncLinkedTiming(Clip &dst, const Clip &src)

@@ -3393,6 +3393,10 @@
         <translation>间隙已闭合</translation>
     </message>
     <message>
+        <source>Slip clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips swapped</source>
         <translation>片段已对调</translation>
     </message>

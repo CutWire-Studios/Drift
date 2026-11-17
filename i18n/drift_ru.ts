@@ -3413,6 +3413,10 @@
         <translation>Разрывы закрыты</translation>
     </message>
     <message>
+        <source>Slip clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips swapped</source>
         <translation>Клипы поменяны местами</translation>
     </message>
