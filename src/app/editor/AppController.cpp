@@ -1,4 +1,5 @@
 #include "engine/platform/AndroidUri.h"
+#include "engine/encode/proxies/ProxyLocation.h"
 #include "ui/timeline/TimelineCursors.h"
 #include "core/base/CacheRoot.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
@@ -698,6 +699,14 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         });
         connect(m_assetLibrary, &AssetLibrary::proxyRuleLearned, m_preferences,
                 &PreferencesController::addProxyNamePattern);
+        const auto applyProxyLocation = [this] {
+            m_assetLibrary->setProxyLocation(
+                drift::proxyLocationFromString(m_preferences->proxyLocation()).value_or(drift::ProxyLocation::Beside),
+                m_preferences->proxyFolder());
+        };
+        applyProxyLocation();
+        connect(m_preferences, &PreferencesController::proxyLocationChanged, this, applyProxyLocation);
+        connect(m_preferences, &PreferencesController::proxyFolderChanged, this, applyProxyLocation);
         m_assetLibrary->setProxySuggestionMode(m_preferences->proxySuggestion());
         connect(m_preferences, &PreferencesController::proxySuggestionChanged, this, [this] {
             m_assetLibrary->setProxySuggestionMode(m_preferences->proxySuggestion());

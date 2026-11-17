@@ -3547,6 +3547,8 @@ QJsonObject McpDispatcher::opGetUiPreferences() const
         {QStringLiteral("proxySuggestion"), m_controller->preferences()->proxySuggestion()},
         {QStringLiteral("useProxies"), m_controller->playback()->useProxies()},
         {QStringLiteral("proxySize"), m_controller->playback()->proxySize()},
+        {QStringLiteral("proxyLocation"), m_controller->preferences()->proxyLocation()},
+        {QStringLiteral("proxyFolder"), m_controller->preferences()->proxyFolder()},
     });
 }
 

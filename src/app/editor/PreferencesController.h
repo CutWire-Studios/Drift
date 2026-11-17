@@ -62,6 +62,13 @@ class PreferencesController : public QObject
     // What an import does with footage that would preview slowly: "ask" (offer proxies in a
     // notification, the default), "always" (create them straight away) or "never".
     Q_PROPERTY(QString proxySuggestion READ proxySuggestion WRITE setProxySuggestion NOTIFY proxySuggestionChanged)
+    // Where new proxies and reversed renders are saved: "beside" | "cache" | "folder" (proxyFolder).
+    Q_PROPERTY(QString proxyLocation READ proxyLocation WRITE setProxyLocation NOTIFY proxyLocationChanged)
+    Q_PROPERTY(QString proxyFolder READ proxyFolder NOTIFY proxyFolderChanged)
+    // Bytes of Drift's own files in proxyFolder; -1 while unknown or without a folder.
+    Q_PROPERTY(qint64 proxyFolderBytes READ proxyFolderBytes NOTIFY proxyFolderBytesChanged)
+    // False on Android: the picker returns a tree URI, not a writable path.
+    Q_PROPERTY(bool proxyFolderSupported READ proxyFolderSupported CONSTANT)
     // Undo history: "project" (saved into the project file, the default), "session" (kept until
     // the project closes, never saved) or "off" (no undo steps at all).
     Q_PROPERTY(QString undoHistoryMode READ undoHistoryMode WRITE setUndoHistoryMode NOTIFY undoHistoryModeChanged)
@@ -203,6 +210,19 @@ public:
     void setAgentNotifications(const QString &level);
     static QStringList agentNotificationLevels();
     QString proxySuggestion() const { return m_proxySuggestion; }
+    QString proxyLocation() const { return m_proxyLocation; }
+    // Refused (stays put) for "folder" without a folder, and for "folder" where it isn't supported.
+    void setProxyLocation(const QString &location);
+    QString proxyFolder() const { return m_proxyFolder; }
+    qint64 proxyFolderBytes() const { return m_proxyFolderBytes; }
+    static bool proxyFolderSupported();
+    // Returns "" on success, else a user-facing reason: absolute, exists, takes a write, and not
+    // Drift's own cache (or inside it).
+    Q_INVOKABLE QString setProxyFolder(const QString &path);
+    // Walks the folder off-thread and posts proxyFolderBytes (Drift-named files only).
+    Q_INVOKABLE void refreshProxyFolderUsage();
+    // proxyFolder as a file URL for a dialog's start directory; empty without a folder.
+    Q_INVOKABLE QUrl proxyFolderUrl() const;
     void setProxySuggestion(const QString &mode);
     static QStringList proxySuggestionModes();
     QString undoHistoryMode() const { return m_undoHistoryMode; }
@@ -346,6 +366,9 @@ signals:
     void reopenLastProjectChanged();
     void agentNotificationsChanged();
     void proxySuggestionChanged();
+    void proxyLocationChanged();
+    void proxyFolderChanged();
+    void proxyFolderBytesChanged();
     void undoHistoryModeChanged();
     void undoHistoryLimitChanged();
     void vaapiZeroCopyChanged();
@@ -388,6 +411,9 @@ private:
     bool m_reopenLastProject = false;
     QString m_agentNotifications = QStringLiteral("problems");
     QString m_proxySuggestion = QStringLiteral("ask");
+    QString m_proxyLocation = QStringLiteral("beside");
+    QString m_proxyFolder;
+    qint64 m_proxyFolderBytes = -1;
     QString m_undoHistoryMode = QStringLiteral("project");
     int m_undoHistoryLimit = 0;
     bool m_vaapiZeroCopy = false;

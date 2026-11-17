@@ -332,6 +332,126 @@ SettingsPage {
     }
 
     SettingsRow {
+        title: qsTr("Save proxies and reversed clips")
+        searchId: "preview-proxy-location"
+        description: qsTr("Where Drift saves the files it makes from your media. Changing the folder doesn’t move or delete anything. Proxies in the previous folder are no longer found; choosing that folder again finds them.")
+        keywords: "proxy folder location cache reversed disk drive"
+        stacked: true
+        query: page.query
+
+        Column {
+            id: locationColumn
+            width: parent.width
+            spacing: Theme.spacingSm
+
+            readonly property bool hasFolder: EditorState.preferences.proxyFolder.length > 0
+
+            function chooseFolder() {
+                const url = FileDialogs.openDirectory(qsTr("Folder for proxies"),
+                                                      EditorState.preferences.proxyFolderUrl())
+                if (!url || url.toString() === "")
+                    return false
+                const reason = EditorState.preferences.setProxyFolder(url.toString())
+                if (reason.length > 0) {
+                    Toasts.error(reason)
+                    return false
+                }
+                EditorState.preferences.proxyLocation = "folder"
+                return true
+            }
+
+            ThemedComboBox {
+                id: locationCombo
+                width: Theme.c.settingsRow.controlWidth
+                textRole: "label"
+                valueRole: "id"
+                model: EditorState.preferences.proxyFolderSupported
+                       ? [
+                           { id: "beside", label: qsTr("Beside the original") },
+                           { id: "cache", label: qsTr("In Drift’s cache") },
+                           { id: "folder", label: qsTr("In this folder…") }
+                         ]
+                       : [
+                           { id: "beside", label: qsTr("Beside the original") },
+                           { id: "cache", label: qsTr("In Drift’s cache") }
+                         ]
+                currentIndex: {
+                    for (var i = 0; i < model.length; ++i) {
+                        if (model[i].id === EditorState.preferences.proxyLocation)
+                            return i
+                    }
+                    return 0
+                }
+                onActivated: {
+                    const choice = model[currentIndex].id
+                    if (choice === "folder" && !locationColumn.hasFolder
+                            && !locationColumn.chooseFolder()) {
+                        // Cancelled or refused: back to what was set.
+                        currentIndex = Qt.binding(() => {
+                            for (var i = 0; i < model.length; ++i) {
+                                if (model[i].id === EditorState.preferences.proxyLocation)
+                                    return i
+                            }
+                            return 0
+                        })
+                        return
+                    }
+                    EditorState.preferences.proxyLocation = choice
+                    EditorState.preferences.refreshProxyFolderUsage()
+                }
+            }
+
+            Row {
+                width: parent.width
+                spacing: Theme.spacingSm
+                visible: EditorState.preferences.proxyLocation === "folder" || locationColumn.hasFolder
+
+                ThemedLabel {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - chooseProxyFolder.width - parent.spacing
+                    text: locationColumn.hasFolder ? EditorState.preferences.proxyFolder
+                                                   : qsTr("No folder chosen")
+                    font.family: Theme.monoFontFamily
+                    elide: Text.ElideMiddle
+                }
+                ThemedButton {
+                    id: chooseProxyFolder
+                    anchors.verticalCenter: parent.verticalCenter
+                    variant: "secondary"
+                    text: qsTr("Choose…")
+                    visible: EditorState.preferences.proxyFolderSupported
+                    onClicked: locationColumn.chooseFolder()
+                }
+            }
+
+            ThemedLabel {
+                width: parent.width
+                size: "xs"
+                tone: "muted"
+                wrapMode: Text.WordWrap
+                visible: locationColumn.hasFolder && EditorState.preferences.proxyFolderBytes >= 0
+                text: qsTr("Drift’s files in this folder: %1")
+                          .arg(DownloadFormat.formatBytes(EditorState.preferences.proxyFolderBytes) || qsTr("0 B"))
+            }
+
+            ThemedLabel {
+                width: parent.width
+                size: "xs"
+                tone: "muted"
+                wrapMode: Text.WordWrap
+                visible: EditorState.preferences.proxyLocation === "cache"
+                text: qsTr("Drift’s cache is pruned when it passes its size limit.")
+            }
+
+            Component.onCompleted: EditorState.preferences.refreshProxyFolderUsage()
+            Connections {
+                target: EditorState.preferences
+                function onProxyFolderChanged() { EditorState.preferences.refreshProxyFolderUsage() }
+            }
+        }
+    }
+
+    SettingsRow {
         title: qsTr("Proxy name patterns")
         searchId: "preview-proxy-name-patterns"
         description: qsTr("Linking a proxy teaches Drift its name pattern. Proxies next to your media that match a pattern below link automatically.")

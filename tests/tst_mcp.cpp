@@ -37,6 +37,7 @@
 #include <QImage>
 #include <QElapsedTimer>
 #include <QTemporaryDir>
+#include "engine/encode/proxies/ProxyLocation.h"
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
 #include <QSignalSpy>
@@ -355,6 +356,7 @@ private slots:
     void bakeStaleBadgeFollowsSourcesAndSetup();
     void splitBakeCountsSharedGopsOnce();
     void rebakeAllStaleQueuesNothingWhileBusy();
+    void proxyLocationPreference();
     void performanceSettingsRoundTrip();
     void binFolderOps();
     void removeAssetRefusesLockedTimeline();
@@ -13829,6 +13831,63 @@ void McpTest::replaceAssetWaitsForTheReprobe()
     QCOMPARE(state.project()->asset(assetId)->path, QFileInfo(other).absoluteFilePath());
 }
 
+void McpTest::proxyLocationPreference()
+{
+    // The folder is written to QSettings: keep it away from the user's own.
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestProxyLocation"));
+    QSettings().remove(QStringLiteral("proxy"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("proxy"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto set = [&](const QJsonObject &args) { return dispatcher.applyOne(QStringLiteral("set_ui_preferences"), args); };
+    const auto errorOf = [](const QJsonObject &r) { return r.value(QStringLiteral("error")).toString(); };
+
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("get_ui_preferences"), {});
+    QCOMPARE(r.value(QStringLiteral("proxyLocation")).toString(), QStringLiteral("beside"));
+    QCOMPARE(r.value(QStringLiteral("proxyFolder")).toString(), QString());
+
+    // Folder mode needs a folder, nothing changes on a refusal.
+    QCOMPARE(errorOf(set({{QStringLiteral("proxyLocation"), QStringLiteral("folder")}})), QStringLiteral("bad_args"));
+    QCOMPARE(errorOf(set({{QStringLiteral("proxyLocation"), QStringLiteral("elsewhere")}})), QStringLiteral("bad_args"));
+    QCOMPARE(errorOf(set({{QStringLiteral("proxyFolder"), QStringLiteral("relative/x")}})), QStringLiteral("bad_args"));
+    QCOMPARE(errorOf(set({{QStringLiteral("proxyFolder"), dir.filePath(QStringLiteral("missing"))}})), QStringLiteral("bad_args"));
+    QCOMPARE(errorOf(set({{QStringLiteral("proxyFolder"), drift::reverseCacheDir()}})), QStringLiteral("bad_args"));
+    QCOMPARE(state.preferences()->proxyFolder(), QString());
+    QCOMPARE(state.preferences()->proxyLocation(), QStringLiteral("beside"));
+
+    r = set({{QStringLiteral("proxyFolder"), dir.path()}, {QStringLiteral("proxyLocation"), QStringLiteral("folder")}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(dump(r)));
+    QCOMPARE(r.value(QStringLiteral("proxyLocation")).toString(), QStringLiteral("folder"));
+    QCOMPARE(r.value(QStringLiteral("proxyFolder")).toString(), QDir::cleanPath(dir.path()));
+    r = dispatcher.applyOne(QStringLiteral("get_ui_preferences"), {});
+    QCOMPARE(r.value(QStringLiteral("proxyLocation")).toString(), QStringLiteral("folder"));
+    QCOMPARE(r.value(QStringLiteral("proxyFolder")).toString(), QDir::cleanPath(dir.path()));
+    QCOMPARE(library.proxyFolder(), QDir::cleanPath(dir.path()));
+    QCOMPARE(library.proxyLocation(), drift::ProxyLocation::Folder);
+
+    // Switching mode keeps the remembered folder; the cache needs none.
+    r = set({{QStringLiteral("proxyLocation"), QStringLiteral("cache")}});
+    QCOMPARE(r.value(QStringLiteral("proxyLocation")).toString(), QStringLiteral("cache"));
+    QCOMPARE(r.value(QStringLiteral("proxyFolder")).toString(), QDir::cleanPath(dir.path()));
+    // A bad key in the same call changes nothing: the size check runs first.
+    QCOMPARE(errorOf(set({{QStringLiteral("proxyLocation"), QStringLiteral("beside")}, {QStringLiteral("proxySize"), 500}})),
+             QStringLiteral("bad_args"));
+    QCOMPARE(state.preferences()->proxyLocation(), QStringLiteral("cache"));
+}
+
 void McpTest::proxyOpsCreateCheckAndRemove()
 {
     if (ffmpegPath().isEmpty())
@@ -13906,6 +13965,16 @@ void McpTest::proxyOpsCreateCheckAndRemove()
     QTRY_COMPARE_WITH_TIMEOUT(stateOf(asset), QStringLiteral("ready"), 60000);
     QCOMPARE(state.undoIndex(), undoBefore);
     QVERIFY(library.hasProxyForPath(video));
+    {
+        // A ready row says where the proxy lives; every reply tail names where new ones go.
+        const QJsonObject status = dispatcher.applyOne(QStringLiteral("proxy_status"), {{QStringLiteral("assets"), QJsonArray{asset}}});
+        const QJsonObject row = status.value(QStringLiteral("proxies")).toArray().at(0).toObject();
+        QCOMPARE(row.value(QStringLiteral("location")).toString(), library.proxyWhere(asset));
+        QVERIFY(!row.value(QStringLiteral("location")).toString().isEmpty());
+        QVERIFY(QFileInfo::exists(row.value(QStringLiteral("path")).toString()));
+        QCOMPARE(status.value(QStringLiteral("proxyLocation")).toString(), state.preferences()->proxyLocation());
+        QVERIFY(status.contains(QStringLiteral("proxyFolder")));
+    }
     r = dispatcher.applyOne(QStringLiteral("create_proxies"), {{QStringLiteral("assets"), QJsonArray{asset}}});
     QCOMPARE(r.value(QStringLiteral("queued")).toArray().size(), 0);
     QCOMPARE(r.value(QStringLiteral("already")).toArray().at(0).toObject().value(QStringLiteral("state")).toString(), QStringLiteral("ready"));

@@ -554,7 +554,10 @@ PanelFrame {
     ThemedDialog {
         id: proxyFallbackDialog
         property string folders: ""
-        title: qsTr("Couldn’t save files next to the media")
+        // The chosen proxy folder is missing or read-only, as opposed to a source folder that is.
+        property bool chosenFolder: false
+        title: chosenFolder ? qsTr("Couldn’t save to the proxy folder")
+                            : qsTr("Couldn’t save files next to the media")
         acceptText: qsTr("OK")
         showReject: false
         preferredWidth: Theme.dialogWidthSm
@@ -567,7 +570,9 @@ PanelFrame {
                 width: parent.width
                 wrapMode: Text.WordWrap
                 size: "sm"
-                text: qsTr("Drift can’t write to the folders listed below, because of their permissions or because they are on a read-only network share. The proxies or reversed clips were saved to Drift’s cache instead.")
+                text: proxyFallbackDialog.chosenFolder
+                      ? qsTr("Drift can’t write to the proxy folder below. It may be unplugged or read-only. New proxies and reversed clips go to Drift’s cache until it’s back.")
+                      : qsTr("Drift can’t write to the folders listed below, because of their permissions or because they are on a read-only network share. The proxies or reversed clips were saved to Drift’s cache instead.")
             }
             TextEdit {
                 width: parent.width
@@ -600,7 +605,13 @@ PanelFrame {
             }
         }
         function onProxyLocationFallback(folders) {
+            proxyFallbackDialog.chosenFolder = false
             proxyFallbackDialog.folders = folders.join("\n")
+            proxyFallbackDialog.open()
+        }
+        function onProxyFolderUnavailable(folder) {
+            proxyFallbackDialog.chosenFolder = true
+            proxyFallbackDialog.folders = folder
             proxyFallbackDialog.open()
         }
     }

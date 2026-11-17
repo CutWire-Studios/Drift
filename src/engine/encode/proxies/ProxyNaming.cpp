@@ -2,6 +2,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QCryptographicHash>
 #include <QFileInfo>
 
 #include <algorithm>
@@ -136,12 +137,12 @@ QString reversedSidecarPath(const QString &sourcePath, TimeUs inUs, TimeUs outUs
                       .arg(outMs));
 }
 
-std::optional<ReversedRange> parseReversedSidecarName(const QString &sourcePath,
-                                                      const QString &fileName)
+// `head` is everything before the range in the file name; the tail is always ".mp4".
+static std::optional<ReversedRange> parseReversedName(const QString &head, const QString &fileName,
+                                                      Qt::CaseSensitivity cs = Qt::CaseSensitive)
 {
-    const QString head = QFileInfo(sourcePath).completeBaseName() + QStringLiteral("_reversed_");
     const QString tail = QStringLiteral(".mp4");
-    if (!fileName.startsWith(head) || !fileName.endsWith(tail)
+    if (!fileName.startsWith(head, cs) || !fileName.endsWith(tail)
         || fileName.size() < head.size() + tail.size())
         return std::nullopt;
 
@@ -162,6 +163,71 @@ std::optional<ReversedRange> parseReversedSidecarName(const QString &sourcePath,
     if (!inOk || !outOk || !digits(parts[0]) || !digits(parts[1]) || inMs >= outMs)
         return std::nullopt;
     return ReversedRange{inMs * 1000, outMs * 1000};
+}
+
+std::optional<ReversedRange> parseReversedSidecarName(const QString &sourcePath,
+                                                      const QString &fileName)
+{
+    return parseReversedName(QFileInfo(sourcePath).completeBaseName() + QStringLiteral("_reversed_"),
+                             fileName);
+}
+
+QString proxySourceKey(const QString &sourcePath)
+{
+    QString path = QDir::cleanPath(QFileInfo(sourcePath).absoluteFilePath());
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+    path = path.toCaseFolded();
+#endif
+    return QString::fromLatin1(
+        QCryptographicHash::hash(path.toUtf8(), QCryptographicHash::Sha1).toHex().left(8));
+}
+
+// <stem80>_<key>
+static QString folderStemKey(const QString &sourcePath)
+{
+    // The file system limit is 255 bytes, not characters: cut the stem at 180 UTF-8 bytes,
+    // whole characters only.
+    QString stem = QFileInfo(sourcePath).completeBaseName();
+    while (stem.toUtf8().size() > 180) {
+        stem.chop(1);
+        if (!stem.isEmpty() && stem.back().isHighSurrogate())
+            stem.chop(1);
+    }
+    return stem + QLatin1Char('_') + proxySourceKey(sourcePath);
+}
+
+QString folderProxyPath(const QString &folder, const QString &sourcePath, int shortSide)
+{
+    return QDir(folder).filePath(QStringLiteral("%1_proxy_%2.mp4").arg(folderStemKey(sourcePath)).arg(shortSide));
+}
+
+QString folderReversedPath(const QString &folder, const QString &sourcePath, TimeUs inUs, TimeUs outUs)
+{
+    const TimeUs inMs = qMax<TimeUs>(0, inUs) / 1000;
+    const TimeUs outMs = (qMax<TimeUs>(0, outUs) + 999) / 1000;
+    return QDir(folder).filePath(
+        QStringLiteral("%1_reversed_%2-%3.mp4").arg(folderStemKey(sourcePath)).arg(inMs).arg(outMs));
+}
+
+QString folderReversedHead(const QString &sourcePath)
+{
+    return folderStemKey(sourcePath) + QStringLiteral("_reversed_");
+}
+
+std::optional<ReversedRange> parseFolderReversedNameWithHead(const QString &head, const QString &fileName)
+{
+    // The key is case-folded where the file system is, so the stem must match the same way.
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+    const Qt::CaseSensitivity cs = Qt::CaseInsensitive;
+#else
+    const Qt::CaseSensitivity cs = Qt::CaseSensitive;
+#endif
+    return parseReversedName(head, fileName, cs);
+}
+
+std::optional<ReversedRange> parseFolderReversedName(const QString &sourcePath, const QString &fileName)
+{
+    return parseFolderReversedNameWithHead(folderReversedHead(sourcePath), fileName);
 }
 
 } // namespace drift
