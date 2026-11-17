@@ -2456,6 +2456,14 @@
         <translation>動畫</translation>
     </message>
     <message>
+        <source>Edit this animation in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create a new animation in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fade and motion combine — fade also ramps the volume.</source>
         <translation>淡化與動作結合——淡化同時會調節音量。</translation>
     </message>
@@ -5627,6 +5635,10 @@
         <translation>安裝自訂音訊效果，或安裝來自 Drift Forge 製作的 .driftfx 或 zip 效果</translation>
     </message>
     <message>
+        <source>Create a new audio effect in Audio Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>My Audio Effects</source>
         <translation>我的音效</translation>
     </message>
@@ -5711,6 +5723,10 @@
         <source>Add to favorites</source>
         <translation>添加到收藏</translation>
     </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AudioEffectsInspector</name>
@@ -5753,6 +5769,426 @@
     <message>
         <source>Audio effect settings</source>
         <translation>音效設置</translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgeAuditionBar</name>
+    <message>
+        <source>Valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Use selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">停止</translation>
+    </message>
+    <message>
+        <source>Loop play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick an audio or video clip on the timeline to hear the pedalboard on it. Loop play repeats its first four seconds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgeController</name>
+    <message>
+        <source>Move nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio wiring follows pedal order. Drag a pedal to a new place or delete it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit value</source>
+        <translation type="unfinished">編輯數值</translation>
+    </message>
+    <message>
+        <source>Switch on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bypass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpose %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose %1 as slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove last lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove modulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lane %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose as slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpose slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That recording is larger than 16 MB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Impulse responses must be WAV files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a convolution reverb first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import impulse response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reorder sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use lowercase letters, digits, underscores and dots, starting with a letter or digit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown field.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This package was not made in Forge.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name the package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is already installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 already exists and is not a package folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That project is not an audio effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select an audio clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select an audio clip first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgeGraphPanel</name>
+    <message>
+        <source>Audio Forge graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a saved audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">復原</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation type="unfinished">重做</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安裝</translation>
+    </message>
+    <message>
+        <source>Install it into the audio effects browser</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">導出</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">已安裝“%1”</translation>
+    </message>
+    <message>
+        <source>Replace existing?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">替換</translation>
+    </message>
+    <message>
+        <source>“%1” is already installed. Replace it with this version?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .driftfx…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .driftfx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift package (*.driftfx)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported to %1</source>
+        <translation type="unfinished">已導出到 %1</translation>
+    </message>
+    <message>
+        <source>Export folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No saved projects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgeInspectorPanel</name>
+    <message>
+        <source>Audio Forge inspector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished">詳細資訊</translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgeNodeTab</name>
+    <message>
+        <source>Select a single node in the graph to edit its settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">刪除</translation>
+    </message>
+    <message>
+        <source>The clip&apos;s sound enters the board here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whatever reaches this node is what you hear.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mixes the lanes of its split back into one sound. It follows the split.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bypass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slider: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Modulated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import recording…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import impulse response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WAV audio (*.wav)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A short WAV recording of a room, spring or plate. Its length sets the reverb tail.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lane levels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove last lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves</source>
+        <translation type="unfinished">移動方式</translation>
+    </message>
+    <message>
+        <source>Moved by</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">移除</translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation type="unfinished">深度</translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgePalettePanel</name>
+    <message>
+        <source>Audio Forge pedals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search pedals</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8487,6 +8923,10 @@
         <translation>沒有符合“%1”的效果。</translation>
     </message>
     <message>
+        <source>Create a new effect in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete effect</source>
         <translation>刪除效果</translation>
     </message>
@@ -8577,6 +9017,10 @@
     <message>
         <source>Add to favorites</source>
         <translation>添加到收藏</translation>
+    </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete from My Effects</source>
@@ -10183,6 +10627,499 @@
     <message>
         <source>Install the font pack for curated families →</source>
         <translation>安裝字體包，獲取精選字體 →</translation>
+    </message>
+</context>
+<context>
+    <name>ForgeCodeTab</name>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">複製</translation>
+    </message>
+    <message>
+        <source>Nothing compiled yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgeController</name>
+    <message>
+        <source>Move nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit value</source>
+        <translation type="unfinished">編輯數值</translation>
+    </message>
+    <message>
+        <source>Unexpose %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose %1 as slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview this node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit option</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose as slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpose slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reorder sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use lowercase letters, digits, underscores and dots, starting with a letter or digit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown field.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This package was not made in Forge.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name the package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is already installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 already exists and is not a package folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio effects are not supported yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built-in sample</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut: %1 to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgeDetailsTab</name>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">名稱</translation>
+    </message>
+    <message>
+        <source>Identifier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation type="unfinished">描述</translation>
+    </message>
+    <message>
+        <source>Author</source>
+        <translation type="unfinished">作者</translation>
+    </message>
+    <message>
+        <source>Version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plays as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished">毫秒</translation>
+    </message>
+</context>
+<context>
+    <name>ForgeGraphPanel</name>
+    <message>
+        <source>Forge node graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">轉場</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">動畫</translation>
+    </message>
+    <message>
+        <source>New %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a saved Forge project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">復原</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation type="unfinished">重做</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安裝</translation>
+    </message>
+    <message>
+        <source>Install it into the effect, transition or animation browsers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">導出</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">已安裝“%1”</translation>
+    </message>
+    <message>
+        <source>Replace existing?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">替換</translation>
+    </message>
+    <message>
+        <source>“%1” is already installed. Replace it with this version?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .driftfx…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .driftfx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift package (*.driftfx)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported to %1</source>
+        <translation type="unfinished">已導出到 %1</translation>
+    </message>
+    <message>
+        <source>Export folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No saved projects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgeInspectorPanel</name>
+    <message>
+        <source>Forge inspector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished">詳細資訊</translation>
+    </message>
+    <message>
+        <source>Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgeNodeTab</name>
+    <message>
+        <source>Slider: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a single node in the graph to edit its settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Comma-separated choices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not exposed</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgePalettePanel</name>
+    <message>
+        <source>Forge node palette</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgePreviewBar</name>
+    <message>
+        <source>Plays across the cut; Loop repeats the transition window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop repeats the in or out window of the clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shown on the target clip with the current slider values.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previewing a single node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation type="unfinished">
+            <numerusform>%n 個錯誤</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Use selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">停止</translation>
+    </message>
+    <message>
+        <source>Loop play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished">毫秒</translation>
+    </message>
+</context>
+<context>
+    <name>ForgeSlidersTab</name>
+    <message>
+        <source>Reset values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preset name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No sliders yet. Right-click a node and choose Expose as slider, or use Expose in the Node tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Label</source>
+        <translation type="unfinished">標籤</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished">上移</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">下移</translation>
+    </message>
+    <message>
+        <source>Remove slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>identifier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Min</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation type="unfinished">預設</translation>
+    </message>
+    <message>
+        <source>On by default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Comma-separated options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">預覽</translation>
+    </message>
+    <message>
+        <source>Nothing uses this slider.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15012,6 +15949,79 @@
     </message>
 </context>
 <context>
+    <name>NodeGraphEditor</name>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">縮小</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">放大</translation>
+    </message>
+    <message>
+        <source>Fit all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add node…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation type="unfinished">貼上</translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished">全選</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">復原</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation type="unfinished">重做</translation>
+    </message>
+    <message>
+        <source>Open inspector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">複製</translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">複製副本</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">刪除</translation>
+    </message>
+</context>
+<context>
+    <name>NodeInputControl</name>
+    <message>
+        <source>Randomize</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NodeMinimap</name>
+    <message>
+        <source>Empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>NotificationHistoryRow</name>
     <message>
         <source>%1  (×%2)</source>
@@ -16253,10 +17263,6 @@ If playback stutters, try another.</source>
         <translation>此項目使用了未安裝的“%1” — 將無法顯示。請開啟“附加項”進行安裝。</translation>
     </message>
     <message>
-        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation>此項目使用了 %1 個未安裝的效果或轉場（%2%3）——它們不會顯示。開啟“附加包”進行安裝。</translation>
-    </message>
-    <message>
         <source>, …</source>
         <translation>，…</translation>
     </message>
@@ -16309,6 +17315,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Failed to open Premiere Pro project</source>
         <translation>開啟 Premiere Pro 項目失敗</translation>
+    </message>
+    <message>
+        <source>This project uses %1 effects, transitions or animations that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Couldn’t write %1</source>
@@ -17045,6 +18055,21 @@ If playback stutters, try another.</source>
     <message>
         <source>Balanced</source>
         <translation>平衡</translation>
+    </message>
+</context>
+<context>
+    <name>QuickAddPopup</name>
+    <message>
+        <source>Add and connect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search nodes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching nodes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -26903,12 +27928,20 @@ If playback stutters, try another.</source>
         <source>Add to favorites</source>
         <translation>添加到收藏</translation>
     </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TransitionsTab</name>
     <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation>從 Drift Forge 製作的 .driftfx 或 zip 檔案安裝自訂轉場或效果</translation>
+    </message>
+    <message>
+        <source>Create a new transition in Forge</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -28221,6 +29254,30 @@ If playback stutters, try another.</source>
     <message>
         <source>Procedural Console</source>
         <translation>程序式主控台</translation>
+    </message>
+    <message>
+        <source>Forge Graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forge Nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forge Inspector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio Forge Graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio Forge Pedals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio Forge Inspector</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Media</source>
