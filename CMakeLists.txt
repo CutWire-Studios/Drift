@@ -1767,6 +1767,14 @@ qt_add_qml_module(drift
         src/ui/theme/ThemeManager.cpp
         src/ui/theme/backdrop/WindowBackdrop.h
         src/ui/theme/backdrop/WindowBackdrop.cpp
+        src/ui/nodes/NodeGridItem.h
+        src/ui/nodes/NodeGridItem.cpp
+        src/ui/nodes/NodeListModel.h
+        src/ui/nodes/NodeListModel.cpp
+        src/ui/nodes/EdgeListModel.h
+        src/ui/nodes/EdgeListModel.cpp
+        src/ui/nodes/NodeGraphController.h
+        src/ui/nodes/NodeGraphController.cpp
         src/app/online/marketplace/MarketSourceBrowser.h
         src/app/online/marketplace/MarketSourceBrowser.cpp
         src/app/online/marketplace/MarketItemLoader.h
@@ -2104,6 +2112,15 @@ qt_add_qml_module(drift
         src/qml/components/color/GradeSlider.qml
         src/qml/components/color/ColorWheel.qml
         src/qml/components/color/CurveEditor.qml
+        src/qml/components/nodes/NodeGraphEditor.qml
+        src/qml/components/nodes/NodeCanvas.qml
+        src/qml/components/nodes/NodeDelegate.qml
+        src/qml/components/nodes/NodeInputControl.qml
+        src/qml/components/nodes/NodeAngleDial.qml
+        src/qml/components/nodes/EdgeLayer.qml
+        src/qml/components/nodes/PortItem.qml
+        src/qml/components/nodes/NodeMinimap.qml
+        src/qml/components/nodes/QuickAddPopup.qml
         src/qml/components/panels/HistoryPanel.qml
         src/qml/components/panels/SourceViewerPanel.qml
         src/qml/components/panels/sourcelab/SourceLabViewerPanel.qml
@@ -2739,7 +2756,7 @@ target_link_libraries(drift PRIVATE
 )
 target_include_directories(drift PRIVATE src)
 # qmltyperegistrar emits bare-basename includes (<ThemeManager.h>) for the qml module's headers.
-target_include_directories(drift PRIVATE src/ui/theme src/ui/theme/backdrop src/app/online/marketplace)
+target_include_directories(drift PRIVATE src/ui/theme src/ui/theme/backdrop src/app/online/marketplace src/ui/nodes)
 if(DRIFT_BACKDROP_PLATFORM_LIBS)
     target_link_libraries(drift PRIVATE ${DRIFT_BACKDROP_PLATFORM_LIBS})
 endif()

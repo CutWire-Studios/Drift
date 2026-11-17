@@ -133,6 +133,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | categoryLime | #84cc16 | #84cc16 |
 | categoryOrange | #f97316 | #f97316 |
 | categoryIndigo | #6366f1 | #6366f1 |
+| nodeGridMinor | #ffffff12 | #00000014 |
+| nodeGridMajor | #ffffff24 | #00000028 |
 | controlsFieldWhite | #ffffffff | #ffffffff |
 | controlsFieldWhiteClear | #00ffffff | #00ffffff |
 | controlsFieldBlackClear | #00000000 | #00000000 |
@@ -3109,6 +3111,60 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidSheetHandle | background | $semantic.panel.sheetHandle | $semantic.panel.sheetHandle |
 | androidSheetHandle | radius | 2.5 | 2.5 |
 | androidLinkBusyStatus | icon | $semantic.mutedForeground | $semantic.mutedForeground |
+| nodeCanvas | background | $semantic.surface.app | $semantic.surface.app |
+| nodeCanvas | gridMinor | $palette.nodeGridMinor | $palette.nodeGridMinor |
+| nodeCanvas | gridMajor | $palette.nodeGridMajor | $palette.nodeGridMajor |
+| nodeCanvas | bandBorder | $semantic.primary | $semantic.primary |
+| nodeDelegate | radius | $metrics.radius.lg | $metrics.radius.lg |
+| nodeDelegate | background | $semantic.panel.accent | $semantic.panel.accent |
+| nodeDelegate | border | $semantic.panel.border | $semantic.panel.border |
+| nodeDelegate | headerBackground | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
+| nodeDelegate | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| nodeDelegate | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| nodeDelegate | selection | $semantic.primary | $semantic.primary |
+| nodeDelegate | error | $semantic.destructive | $semantic.destructive |
+| nodeDelegate | chipBackground | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
+| nodeDelegate | chipForeground | $semantic.panel.secondary.foreground | $semantic.panel.secondary.foreground |
+| nodeDelegate | thumbnailBackground | $semantic.surface.app | $semantic.surface.app |
+| nodeDelegate | accent.amber | $palette.categoryAmber | $palette.categoryAmber |
+| nodeDelegate | accent.red | $palette.categoryRed | $palette.categoryRed |
+| nodeDelegate | accent.violet | $palette.categoryViolet | $palette.categoryViolet |
+| nodeDelegate | accent.blue | $palette.categoryBlue | $palette.categoryBlue |
+| nodeDelegate | accent.emerald | $palette.categoryEmerald | $palette.categoryEmerald |
+| nodeDelegate | accent.pink | $palette.categoryPink | $palette.categoryPink |
+| nodeDelegate | accent.cyan | $palette.categoryCyan | $palette.categoryCyan |
+| nodeDelegate | accent.lime | $palette.categoryLime | $palette.categoryLime |
+| nodeDelegate | accent.orange | $palette.categoryOrange | $palette.categoryOrange |
+| nodeDelegate | accent.indigo | $palette.categoryIndigo | $palette.categoryIndigo |
+| nodeDelegate | accent.neutral | $semantic.mutedForeground | $semantic.mutedForeground |
+| nodeInputControl | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| nodeInputControl | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| nodeAngleDial | background | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
+| nodeAngleDial | border | $semantic.panel.border | $semantic.panel.border |
+| nodeAngleDial | needle | $semantic.primary | $semantic.primary |
+| portItem | fill | $semantic.panel.accent | $semantic.panel.accent |
+| portItem | float | $palette.categoryAmber | $palette.categoryAmber |
+| portItem | int | $palette.categoryLime | $palette.categoryLime |
+| portItem | bool | $palette.categoryOrange | $palette.categoryOrange |
+| portItem | vec2 | $palette.categoryEmerald | $palette.categoryEmerald |
+| portItem | vec3 | $palette.categoryCyan | $palette.categoryCyan |
+| portItem | vec4 | $palette.categoryIndigo | $palette.categoryIndigo |
+| portItem | color | $palette.categoryPink | $palette.categoryPink |
+| portItem | image | $palette.categoryRed | $palette.categoryRed |
+| portItem | audio | $palette.categoryBlue | $palette.categoryBlue |
+| portItem | mod | $palette.categoryViolet | $palette.categoryViolet |
+| portItem | other | $semantic.mutedForeground | $semantic.mutedForeground |
+| edgeLayer | selected | $semantic.primary | $semantic.primary |
+| nodeMinimap | radius | $metrics.radius.md | $metrics.radius.md |
+| nodeMinimap | background | $semantic.surface.panel | $semantic.surface.panel |
+| nodeMinimap | border | $semantic.panel.border | $semantic.panel.border |
+| nodeMinimap | node | $semantic.mutedForeground | $semantic.mutedForeground |
+| nodeMinimap | viewport | $semantic.primary | $semantic.primary |
+| nodeMinimap | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
+| nodeGraphEditor | radius | $metrics.radius.md | $metrics.radius.md |
+| nodeGraphEditor | controlsBackground | $semantic.surface.panel | $semantic.surface.panel |
+| nodeGraphEditor | controlsBorder | $semantic.panel.border | $semantic.panel.border |
+| nodeGraphEditor | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
 
 ## metrics
 

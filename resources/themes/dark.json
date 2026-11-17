@@ -128,6 +128,8 @@
     "categoryLime": "#84cc16",
     "categoryOrange": "#f97316",
     "categoryIndigo": "#6366f1",
+    "nodeGridMinor": "#ffffff12",
+    "nodeGridMajor": "#ffffff24",
     "controlsFieldWhite": "#ffffffff",
     "controlsFieldWhiteClear": "#00ffffff",
     "controlsFieldBlackClear": "#00000000",
@@ -4351,6 +4353,78 @@
     },
     "androidLinkBusyStatus": {
       "icon": "$semantic.mutedForeground"
+    },
+    "nodeCanvas": {
+      "background": "$semantic.surface.app",
+      "gridMinor": "$palette.nodeGridMinor",
+      "gridMajor": "$palette.nodeGridMajor",
+      "bandBorder": "$semantic.primary"
+    },
+    "nodeDelegate": {
+      "radius": "$metrics.radius.lg",
+      "background": "$semantic.panel.accent",
+      "border": "$semantic.panel.border",
+      "headerBackground": "$semantic.panel.secondary.background",
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "selection": "$semantic.primary",
+      "error": "$semantic.destructive",
+      "chipBackground": "$semantic.panel.secondary.background",
+      "chipForeground": "$semantic.panel.secondary.foreground",
+      "thumbnailBackground": "$semantic.surface.app",
+      "accent": {
+        "amber": "$palette.categoryAmber",
+        "red": "$palette.categoryRed",
+        "violet": "$palette.categoryViolet",
+        "blue": "$palette.categoryBlue",
+        "emerald": "$palette.categoryEmerald",
+        "pink": "$palette.categoryPink",
+        "cyan": "$palette.categoryCyan",
+        "lime": "$palette.categoryLime",
+        "orange": "$palette.categoryOrange",
+        "indigo": "$palette.categoryIndigo",
+        "neutral": "$semantic.mutedForeground"
+      }
+    },
+    "nodeInputControl": {
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground"
+    },
+    "nodeAngleDial": {
+      "background": "$semantic.panel.secondary.background",
+      "border": "$semantic.panel.border",
+      "needle": "$semantic.primary"
+    },
+    "portItem": {
+      "fill": "$semantic.panel.accent",
+      "float": "$palette.categoryAmber",
+      "int": "$palette.categoryLime",
+      "bool": "$palette.categoryOrange",
+      "vec2": "$palette.categoryEmerald",
+      "vec3": "$palette.categoryCyan",
+      "vec4": "$palette.categoryIndigo",
+      "color": "$palette.categoryPink",
+      "image": "$palette.categoryRed",
+      "audio": "$palette.categoryBlue",
+      "mod": "$palette.categoryViolet",
+      "other": "$semantic.mutedForeground"
+    },
+    "edgeLayer": {
+      "selected": "$semantic.primary"
+    },
+    "nodeMinimap": {
+      "radius": "$metrics.radius.md",
+      "background": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "node": "$semantic.mutedForeground",
+      "viewport": "$semantic.primary",
+      "foreground": "$semantic.mutedForeground"
+    },
+    "nodeGraphEditor": {
+      "radius": "$metrics.radius.md",
+      "controlsBackground": "$semantic.surface.panel",
+      "controlsBorder": "$semantic.panel.border",
+      "foreground": "$semantic.mutedForeground"
     }
   },
   "metrics": {

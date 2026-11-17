@@ -510,6 +510,14 @@ target_compile_definitions(tst_forgedoc PRIVATE
     DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME ForgeDoc COMMAND tst_forgedoc)
 
+qt_add_executable(tst_nodegraphmodels tst_nodegraphmodels.cpp
+    ../src/ui/nodes/NodeListModel.cpp
+    ../src/ui/nodes/EdgeListModel.cpp
+    ../src/ui/nodes/NodeGraphController.cpp)
+target_include_directories(tst_nodegraphmodels PRIVATE ../src)
+target_link_libraries(tst_nodegraphmodels PRIVATE Qt6::Test Qt6::Core Qt6::Qml)
+add_test(NAME NodeGraphModels COMMAND tst_nodegraphmodels)
+
 qt_add_executable(tst_forgecompiler tst_forgecompiler.cpp)
 target_include_directories(tst_forgecompiler PRIVATE ../src)
 target_link_libraries(tst_forgecompiler PRIVATE Qt6::Test driftforge)
