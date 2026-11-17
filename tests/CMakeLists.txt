@@ -503,6 +503,13 @@ target_include_directories(tst_forgedraft PRIVATE ../src)
 target_link_libraries(tst_forgedraft PRIVATE Qt6::Test driftengine driftcore)
 add_test(NAME ForgeDraft COMMAND tst_forgedraft)
 
+qt_add_executable(tst_forgedoc tst_forgedoc.cpp)
+target_include_directories(tst_forgedoc PRIVATE ../src)
+target_link_libraries(tst_forgedoc PRIVATE Qt6::Test driftforge)
+target_compile_definitions(tst_forgedoc PRIVATE
+    DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+add_test(NAME ForgeDoc COMMAND tst_forgedoc)
+
 qt_add_executable(tst_transform3d tst_transform3d.cpp)
 target_include_directories(tst_transform3d PRIVATE ../src)
 target_link_libraries(tst_transform3d PRIVATE Qt6::Test Qt6::Gui driftengine driftcore)

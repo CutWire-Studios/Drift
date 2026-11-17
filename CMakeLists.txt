@@ -783,6 +783,23 @@ add_library(driftprocedural STATIC
 target_include_directories(driftprocedural PUBLIC src)
 target_link_libraries(driftprocedural PUBLIC drift_lua)
 
+add_library(driftforge STATIC
+    src/app/forge/doc/ForgeDoc.cpp
+    src/app/forge/doc/Kinds.cpp
+    src/app/forge/doc/Naming.cpp
+    src/app/forge/doc/ParamTypes.cpp
+    src/app/forge/doc/Util.cpp
+    src/app/forge/glsl/Literals.cpp
+    src/app/forge/edit/GraphOps.cpp
+    src/app/forge/edit/ParamOps.cpp
+    src/app/forge/nodes/InputNodes.cpp
+    src/app/forge/nodes/OutputNodes.cpp
+    src/app/forge/nodes/Registry.cpp
+    src/app/forge/compiler/Validate.cpp
+)
+target_include_directories(driftforge PUBLIC src)
+target_link_libraries(driftforge PUBLIC Qt6::Core)
+
 # --- engine: FFmpeg-facing code, no QML deps -------------------------------
 add_library(driftengine STATIC
     src/engine/addons/AddonPackage.h
@@ -1131,6 +1148,7 @@ target_link_libraries(driftapp PUBLIC
     Qt6::Network
     driftcore
     driftengine
+    driftforge
 )
 if(ANDROID)
     find_package(Qt6 REQUIRED COMPONENTS CorePrivate)
