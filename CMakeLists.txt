@@ -816,9 +816,21 @@ add_library(driftforge STATIC
     src/app/forge/compiler/Helpers.cpp
     src/app/forge/compiler/Manifest.cpp
     src/app/forge/compiler/PackageFiles.cpp
+    src/app/forge/audio/Rack.cpp
+    src/app/forge/audio/RackOps.cpp
+    src/app/forge/audio/RackGraph.cpp
+    src/app/forge/audio/RackValidate.cpp
+    src/app/forge/audio/AudioManifest.cpp
 )
 target_include_directories(driftforge PUBLIC src)
-target_link_libraries(driftforge PUBLIC Qt6::Core)
+# PedalCatalog and the graph limits come from the audio engine, which is where the pedals live.
+target_link_libraries(driftforge PUBLIC Qt6::Core driftaudiodsp)
+file(GLOB DRIFT_FORGE_IR_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/resources/forge/ir/*.wav")
+qt_add_resources(driftforge "drift_forge_ir"
+    PREFIX "/forge/ir"
+    BASE "${CMAKE_SOURCE_DIR}/resources/forge/ir"
+    FILES ${DRIFT_FORGE_IR_FILES}
+)
 
 # --- engine: FFmpeg-facing code, no QML deps -------------------------------
 add_library(driftengine STATIC

@@ -1,9 +1,12 @@
 #include "app/forge/compiler/PackageFiles.h"
 
+#include "app/forge/audio/AudioManifest.h"
+#include "app/forge/audio/RackGraph.h"
 #include "app/forge/compiler/Manifest.h"
 #include "app/forge/doc/ParamTypes.h"
 #include "app/forge/doc/Util.h"
 
+#include <QFile>
 #include <QJsonDocument>
 #include <QRegularExpression>
 
@@ -33,8 +36,6 @@ QString exportId(const ForgeDoc &doc)
 QString exportProblem(const ForgeDoc &doc)
 {
     static const QRegularExpression valid(QStringLiteral("^[a-z0-9][a-z0-9_.]*$"));
-    if (doc.kind == Kind::Audio)
-        return QStringLiteral("Audio effects cannot be installed from Forge yet.");
     if (!valid.match(doc.meta.id).hasMatch())
         return QStringLiteral("The id must use lowercase letters, digits, underscores and dots, starting with a letter or digit.");
     if (doc.meta.displayName.trimmed().isEmpty())
@@ -42,8 +43,41 @@ QString exportProblem(const ForgeDoc &doc)
     return {};
 }
 
+namespace {
+
+PackageContents audioPackageContents(const ForgeDoc &doc)
+{
+    PackageContents out;
+    out.manifest = audioManifest(doc);
+    const Rack rack = rackOf(doc);
+    walkRack(rack.chain, [&](const RackItem &item, int) {
+        if (item.ir.isEmpty())
+            return;
+        const QString path = irPath(doc, item.ir);
+        const bool seen = std::any_of(out.files.cbegin(), out.files.cend(), [&](const PackageFile &f) { return f.path == path; });
+        if (seen)
+            return;
+        const QString builtin = builtinIr(item.ir);
+        if (!builtin.isNull()) {
+            QFile f(QStringLiteral(":/forge/ir/%1.wav").arg(builtin));
+            if (f.open(QIODevice::ReadOnly))
+                out.files.append({path, f.readAll()});
+        } else {
+            const QByteArray bytes = assetBytes(doc, item.ir);
+            if (!bytes.isEmpty())
+                out.files.append({path, bytes});
+        }
+    });
+    out.files.append({QStringLiteral("forge.json"), QJsonDocument(doc.toJson()).toJson(QJsonDocument::Indented)});
+    return out;
+}
+
+}
+
 PackageContents packageContents(const ForgeDoc &doc, const CompileResult &compiled)
 {
+    if (doc.kind == Kind::Audio)
+        return audioPackageContents(doc);
     PackageContents out;
     out.manifest = packageManifest(doc, compiled);
     for (const CompiledPass &p : compiled.passes)

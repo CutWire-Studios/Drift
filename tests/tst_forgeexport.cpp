@@ -98,7 +98,7 @@ private slots:
         QVERIFY(exportProblem(doc).isEmpty());
         doc.meta.displayName = "  ";
         QVERIFY(!exportProblem(doc).isEmpty());
-        QVERIFY(!exportProblem(emptyDoc(Kind::Audio)).isEmpty());
+        QVERIFY(exportProblem(emptyDoc(Kind::Audio)).isEmpty());
     }
 
     void idDefaulting()

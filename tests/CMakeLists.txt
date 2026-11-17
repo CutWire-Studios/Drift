@@ -532,6 +532,13 @@ target_compile_definitions(tst_forgeexport PRIVATE
     DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME ForgeExport COMMAND tst_forgeexport)
 
+qt_add_executable(tst_audioforge tst_audioforge.cpp)
+target_include_directories(tst_audioforge PRIVATE ../src)
+target_link_libraries(tst_audioforge PRIVATE Qt6::Test driftforge)
+target_compile_definitions(tst_audioforge PRIVATE
+    DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+add_test(NAME AudioForge COMMAND tst_audioforge)
+
 qt_add_executable(tst_forgegraphmapping tst_forgegraphmapping.cpp
     ../src/app/forge/ForgeGraphMapping.cpp
     ../src/ui/nodes/NodeListModel.cpp

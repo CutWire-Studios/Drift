@@ -29,7 +29,8 @@ QString exportId(const ForgeDoc &doc);
 // Why `doc` can't be installed as a package (id rules, display name, kind); empty when it can.
 QString exportProblem(const ForgeDoc &doc);
 
-// The files of one Drift package folder for an Export-mode compile of `doc`.
+// The files of one Drift package folder for an Export-mode compile of `doc`. Audio documents ignore `compiled`;
+// their files are the manifest, ir/<name>.wav for each impulse response and forge.json.
 PackageContents packageContents(const ForgeDoc &doc, const CompileResult &compiled);
 
 }

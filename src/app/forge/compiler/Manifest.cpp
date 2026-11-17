@@ -1,5 +1,6 @@
 #include "app/forge/compiler/Manifest.h"
 
+#include "app/forge/audio/AudioManifest.h"
 #include "app/forge/doc/ParamTypes.h"
 #include "app/forge/nodes/Registry.h"
 
@@ -8,9 +9,7 @@
 
 namespace drift::forge {
 
-namespace {
-
-QJsonObject paramEntry(const ForgeDoc &doc, const ParamDef &p)
+QJsonObject paramManifestEntry(const ForgeDoc &doc, const ParamDef &p)
 {
     const ParamTypeSpec &spec = paramSpec(p);
     QJsonObject e = paramManifestFields(p);
@@ -28,7 +27,21 @@ QJsonObject paramEntry(const ForgeDoc &doc, const ParamDef &p)
     return e;
 }
 
+QJsonArray presetsManifest(const ForgeDoc &doc)
+{
+    QJsonArray presets;
+    if (!doc.presets)
+        return presets;
+    for (const Preset &pr : *doc.presets) {
+        QJsonObject values;
+        for (auto it = pr.values.begin(); it != pr.values.end(); ++it)
+            if (const ParamDef *p = doc.param(it.key()))
+                values[it.key()] = paramDriftValue(doc, *p, it.value());
+        presets.append(QJsonObject{{"name", pr.name}, {"values", values}});
+    }
+    return presets;
 }
+
 
 QStringList nextFeatures(const ForgeDoc &doc, const CompileResult &compiled)
 {
@@ -64,7 +77,7 @@ QStringList nextFeatures(const ForgeDoc &doc, const CompileResult &compiled)
 QString minAppVersion(const ForgeDoc &doc, const CompileResult &compiled)
 {
     if (doc.kind == Kind::Audio)
-        return QString::fromLatin1(kNextAppVersion);
+        return audioMinAppVersion(doc);
     if (doc.kind == Kind::Animation)
         return QString::fromLatin1(kAnimationAppVersion);
     static const QSet<QString> next2 = {QStringLiteral("param:track"), QStringLiteral("param:trackMask"),
@@ -80,7 +93,7 @@ QString minAppVersion(const ForgeDoc &doc, const CompileResult &compiled)
 QJsonObject packageManifest(const ForgeDoc &doc, const CompileResult &compiled)
 {
     if (doc.kind == Kind::Audio)
-        return {};
+        return audioManifest(doc);
     QJsonArray buffers;
     for (const QJsonValue &id : compiled.buffers)
         buffers.append(QJsonObject{{"id", id}, {"scale", 1.0}});
@@ -131,19 +144,11 @@ QJsonObject packageManifest(const ForgeDoc &doc, const CompileResult &compiled)
     }
     QJsonArray parameters;
     for (const ParamDef &p : doc.params)
-        parameters.append(paramEntry(doc, p));
+        parameters.append(paramManifestEntry(doc, p));
     json["parameters"] = parameters;
     json["pipeline"] = pipeline;
     if (doc.presets && !doc.presets->isEmpty()) {
-        QJsonArray presets;
-        for (const Preset &pr : *doc.presets) {
-            QJsonObject values;
-            for (auto it = pr.values.begin(); it != pr.values.end(); ++it)
-                if (const ParamDef *p = doc.param(it.key()))
-                    values[it.key()] = paramDriftValue(doc, *p, it.value());
-            presets.append(QJsonObject{{"name", pr.name}, {"values", values}});
-        }
-        json["presets"] = presets;
+        json["presets"] = presetsManifest(doc);
     }
     const QStringList features = nextFeatures(doc, compiled);
     if (!features.isEmpty()) {

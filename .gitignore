@@ -28,6 +28,7 @@ resources/stickers/
 *.mkv
 *.webm
 *.wav
+!resources/forge/ir/*.wav
 *.mp3
 
 # Flatpak build artifacts (build-dir is already covered by build-*/ above)
