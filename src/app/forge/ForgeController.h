@@ -3,10 +3,14 @@
 #include "app/forge/ForgeGraphMapping.h"
 #include "app/forge/ForgePreview.h"
 #include "app/forge/compiler/Compiler.h"
+#include "app/forge/compiler/PackageFiles.h"
 #include "app/forge/doc/ForgeDoc.h"
 #include "ui/nodes/NodeGraphController.h"
 
 #include <QElapsedTimer>
+#include <QHash>
+#include <QImage>
+#include <QUrl>
 #include <QPointF>
 #include <QTimer>
 #include <QUndoStack>
@@ -118,6 +122,16 @@ public:
     Q_INVOKABLE QString setMeta(const QString &key, const QVariant &value);
 
     Q_INVOKABLE void newDoc(const QString &kind);
+    // Starts a document of `kind` and switches to the Forge workspace.
+    Q_INVOKABLE void createNew(const QString &kind);
+    // Compiles, thumbnails and installs the document as a user package. Replies
+    // {ok, id, error, code}; code "exists" asks the caller to confirm and call again with overwrite.
+    Q_INVOKABLE QVariantMap install(bool overwrite);
+    Q_INVOKABLE QVariantMap exportDriftfx(const QUrl &path);
+    Q_INVOKABLE QVariantMap exportFolder(const QUrl &dir);
+    // Opens an installed user package that carries its forge.json as a new project, keeping its id.
+    Q_INVOKABLE bool openPackage(const QString &kind, const QString &id);
+    Q_INVOKABLE bool canEdit(const QString &kind, const QString &id);
     Q_INVOKABLE bool open(const QString &pathOrId);
     Q_INVOKABLE bool save();
     Q_INVOKABLE void refreshRecent();
@@ -172,6 +186,11 @@ private:
     void scheduleSave();
     QString projectDir(const QString &id) const;
     void deleteNodes(const QStringList &ids);
+    bool buildPackage(drift::forge::PackageContents *out, QString *error);
+    QByteArray thumbnailPng(const drift::forge::PackageContents &contents, const drift::forge::CompileResult &compiled);
+    QImage frameAt(drift::TimeUs timeUs, int side) const;
+    QString stageForExport(const drift::forge::PackageContents &contents, const QString &dir) const;
+    void activateWorkspace();
 
     void setActive(bool active);
     void schedulePreview();
@@ -219,4 +238,5 @@ private:
     drift::TimeUs m_sampleCutUs = 0;
     QVariantList m_recent;
     QString m_savedId;
+    QHash<QString, bool> m_canEdit;
 };

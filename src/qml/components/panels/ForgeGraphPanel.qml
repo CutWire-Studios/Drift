@@ -88,6 +88,76 @@ PanelFrame {
                 enabled: Forge.canRedo
                 onClicked: Forge.redo()
             }
+            ThemedButton {
+                text: qsTr("Install")
+                tooltip: qsTr("Install it into the effect, transition or animation browsers")
+                onClicked: root.install(false)
+            }
+            IconButton {
+                id: moreButton
+                glyph: Theme.icons.ellipsis
+                tooltip: qsTr("Export")
+                onClicked: moreMenu.popup(moreButton, 0, moreButton.height)
+            }
+        }
+    }
+
+    function install(overwrite) {
+        const r = Forge.install(overwrite)
+        if (r.ok)
+            Toasts.info(r.warning ? r.warning : qsTr("Installed “%1”").arg(Forge.docName))
+        else if (r.code === "exists")
+            replaceDialog.open()
+        else
+            Toasts.error(r.error)
+    }
+
+    function report(r, okText) {
+        if (r.ok)
+            Toasts.info(okText.arg(r.path))
+        else
+            Toasts.error(r.error)
+    }
+
+    ThemedDialog {
+        id: replaceDialog
+        title: qsTr("Replace existing?")
+        acceptText: qsTr("Replace")
+        preferredWidth: Theme.dialogWidthSm
+        onAccepted: root.install(true)
+
+        contentItem: Text {
+            width: parent ? parent.width : 320
+            wrapMode: Text.WordWrap
+            text: qsTr("“%1” is already installed. Replace it with this version?").arg(Forge.docName)
+            color: Theme.c.forgePanel.foreground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeSm
+        }
+    }
+
+    ThemedContextMenu {
+        id: moreMenu
+
+        ThemedMenuItem {
+            text: qsTr("Export .driftfx…")
+            icon.name: Theme.icons.upload
+            onTriggered: Qt.callLater(() => {
+                const url = FileDialogs.saveFile(qsTr("Export .driftfx"), [qsTr("Drift package (*.driftfx)")],
+                                                 Forge.docId, "driftfx")
+                if (url.toString().length > 0)
+                    root.report(Forge.exportDriftfx(url), qsTr("Exported to %1"))
+            })
+        }
+        ThemedMenuItem {
+            visible: FileDialogs.supportsDirectoryPicker()
+            text: qsTr("Export folder…")
+            icon.name: Theme.icons.folderOutput
+            onTriggered: Qt.callLater(() => {
+                const url = FileDialogs.openDirectory(qsTr("Export folder"))
+                if (url.toString().length > 0)
+                    root.report(Forge.exportFolder(url), qsTr("Exported to %1"))
+            })
         }
     }
 

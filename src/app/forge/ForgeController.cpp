@@ -3,7 +3,16 @@
 #include "app/editor/AppController.h"
 #include "app/editor/WorkspaceStore.h"
 #include "app/forge/ForgeDraft.h"
+#include "app/forge/PackageInstaller.h"
+#include "app/online/addons/AddonManager.h"
+#include "engine/addons/AddonPackage.h"
+#include "engine/compositor/FrameCompositor.h"
+#include "engine/gpu/effects/GpuEffectExecutor.h"
+#include "engine/packages/animations/AnimationPackageLoader.h"
+#include "engine/packages/effects/EffectPackageLoader.h"
+#include "engine/packages/transitions/TransitionPackageLoader.h"
 #include "app/forge/compiler/Manifest.h"
+#include "app/forge/compiler/PackageFiles.h"
 #include "app/forge/doc/ParamTypes.h"
 #include "app/forge/doc/Util.h"
 #include "app/forge/edit/GraphOps.h"
@@ -13,14 +22,17 @@
 #include "core/project/Project.h"
 #include "engine/packages/PackageThumbnails.h"
 
+#include <QBuffer>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QRegularExpression>
 #include <QStandardPaths>
+#include <QTemporaryDir>
 #include <QUuid>
 
 #include <algorithm>
@@ -81,20 +93,6 @@ bool reaches(const ForgeDoc &doc, const QString &start, const QString &goal)
     return false;
 }
 
-QByteArray assetBytes(const ForgeDoc &doc, const QString &assetId)
-{
-    for (const ForgeAsset &a : doc.assets) {
-        if (a.id != assetId)
-            continue;
-        QString data = a.data;
-        const int comma = data.indexOf(QLatin1String("base64,"));
-        if (comma >= 0)
-            data = data.mid(comma + 7);
-        return QByteArray::fromBase64(data.toLatin1());
-    }
-    return {};
-}
-
 const drift::Clip *clipAt(const drift::Project &p, int track, int clip)
 {
     if (track < 0 || track >= p.tracks().size())
@@ -152,6 +150,8 @@ ForgeController::ForgeController(AppController *app, WorkspaceStore *workspaces,
         if (!m_app->playback()->isPlaying())
             stopLoop();
     });
+    if (m_app->addonManager())
+        connect(m_app->addonManager(), &AddonManager::kindChanged, this, [this] { m_canEdit.clear(); });
     setActive(m_workspaces->activeId() == kWorkspaceId);
 }
 
@@ -726,6 +726,246 @@ void ForgeController::newDoc(const QString &name)
         save();
     replaceDoc(seedDoc(k));
     refreshRecent();
+}
+
+void ForgeController::activateWorkspace()
+{
+    m_workspaces->setActiveId(kWorkspaceId);
+}
+
+void ForgeController::createNew(const QString &name)
+{
+    newDoc(name);
+    activateWorkspace();
+}
+
+bool ForgeController::canEdit(const QString &kindName, const QString &id)
+{
+    const QString key = kindName + QLatin1Char(':') + id;
+    const auto cached = m_canEdit.constFind(key);
+    if (cached != m_canEdit.constEnd())
+        return *cached;
+    bool found = false;
+    const auto pk = drift::forge::packageKind(kindName);
+    if (pk && kindName != QLatin1String("audio_effect")) {
+        const QString dir = drift::forge::packageDirForId(*pk, id);
+        found = drift::forge::isUserDir(*pk, dir) && QFile::exists(QDir(dir).filePath(QStringLiteral("forge.json")));
+    }
+    m_canEdit.insert(key, found);
+    return found;
+}
+
+bool ForgeController::openPackage(const QString &kindName, const QString &id)
+{
+    if (!canEdit(kindName, id))
+        return false;
+    const auto pk = drift::forge::packageKind(kindName);
+    QFile file(QDir(drift::forge::packageDirForId(*pk, id)).filePath(QStringLiteral("forge.json")));
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
+    QString error;
+    ForgeDoc doc = ForgeDoc::fromJsonText(file.readAll(), &error);
+    if (!error.isEmpty() || doc.kind == Kind::Audio || kindInfo(doc.kind).name != kindName) {
+        emit message(error.isEmpty() ? tr("This package was not made in Forge.") : error);
+        return false;
+    }
+    doc.meta.id = id;
+    if (m_dirty)
+        save();
+    replaceDoc(doc);
+    m_savedId = id;
+    activateWorkspace();
+    return true;
+}
+
+QString ForgeController::stageForExport(const PackageContents &contents, const QString &dir) const
+{
+    QJsonObject trusted;
+    for (const PackageFile &f : contents.files)
+        trusted.insert(f.path, QString::fromLatin1(f.data.toBase64()));
+    const QJsonObject error = drift::forge::stage(*drift::forge::packageKind(kind()), dir, contents.manifest,
+                                                  QJsonObject{{"trusted_files", trusted}});
+    return error.isEmpty() ? QString() : error.value("detail").toString(error.value("error").toString());
+}
+
+QImage ForgeController::frameAt(drift::TimeUs timeUs, int side) const
+{
+    const drift::Project project = m_app->project()->detachedCopy();
+    FrameCompositor::RenderOptions options;
+    options.previewScale = std::min(1.0, 512.0 / std::max(1, project.width()));
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    QImage image = compositor.compositeAt(timeUs, options).convertToFormat(QImage::Format_RGBA8888);
+    if (image.isNull())
+        return {};
+    const int edge = std::min(image.width(), image.height());
+    image = image.copy((image.width() - edge) / 2, (image.height() - edge) / 2, edge, edge);
+    return image.scaled(side, side, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+}
+
+QByteArray ForgeController::thumbnailPng(const PackageContents &contents, const CompileResult &compiled)
+{
+    QTemporaryDir tmp;
+    if (!tmp.isValid())
+        return {};
+    const QString dir = tmp.filePath(QStringLiteral("pkg"));
+    if (!stageForExport(contents, dir).isEmpty())
+        return {};
+
+    QString error;
+    drift::GpuEffectDefinition gpu;
+    QString keyPrefix;
+    switch (m_doc.kind) {
+    case Kind::Effect: gpu = EffectPackageLoader::loadPackage(dir, &error).gpu; break;
+    case Kind::Transition:
+        gpu = TransitionPackageLoader::loadPackage(dir, &error).gpu;
+        keyPrefix = QLatin1String(kTransitionCacheKeyPrefix);
+        break;
+    case Kind::Animation:
+        gpu = AnimationPackageLoader::loadPackage(dir, &error).gpu;
+        keyPrefix = QLatin1String(kAnimationCacheKeyPrefix);
+        break;
+    default: return {};
+    }
+    if (!error.isEmpty() || !gpu.valid)
+        return {};
+
+    QCryptographicHash hash(QCryptographicHash::Sha1);
+    hash.addData(QJsonDocument(contents.manifest).toJson(QJsonDocument::Compact));
+    for (const PackageFile &f : contents.files)
+        hash.addData(f.data);
+    const QString key = keyPrefix + QStringLiteral("forge.export.") + QString::fromLatin1(hash.result().toHex());
+    const QMap<QString, QVariant> params = previewParams(m_doc, compiled, m_values);
+
+    const drift::TimeUs playhead = drift::secondsToUs(m_app->playheadSeconds());
+    QImage source;
+    QImage to;
+    if (m_target.valid()) {
+        if (m_doc.kind == Kind::Transition) {
+            const drift::TimeUs margin = 33'000;
+            source = frameAt(std::max<drift::TimeUs>(0, m_target.windowStart - margin), 128);
+            to = frameAt(m_target.windowEnd + margin, 128);
+        } else {
+            const bool inside = playhead >= m_target.clipStart && playhead < m_target.clipEnd;
+            source = frameAt(inside ? playhead : (m_target.clipStart + m_target.clipEnd) / 2,
+                             m_doc.kind == Kind::Effect ? 256 : 128);
+        }
+    }
+
+    QImage image;
+    switch (m_doc.kind) {
+    case Kind::Effect: image = renderEffectThumbnail(key, gpu, params, QSize(256, 256), source); break;
+    case Kind::Transition: image = renderTransitionStrip(key, gpu, params, QSize(128, 128), 12, source, to); break;
+    default: image = renderAnimationStrip(key, gpu, params, QSize(128, 128), 12, false, source); break;
+    }
+    if (image.isNull())
+        return {};
+    QByteArray png;
+    QBuffer buffer(&png);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "PNG");
+    return png;
+}
+
+bool ForgeController::buildPackage(PackageContents *out, QString *error)
+{
+    if (m_doc.meta.id.isEmpty()) {
+        ForgeDoc next = m_doc;
+        next.meta.id = exportId(m_doc);
+        commit(next, tr("Name the package"));
+    }
+    if (const QString problem = exportProblem(m_doc); !problem.isEmpty()) {
+        *error = problem;
+        return false;
+    }
+    const CompileResult compiled = compile(m_doc);
+    if (!compiled.ok) {
+        QStringList messages;
+        for (const CompileError &e : compiled.errors)
+            messages << e.message;
+        *error = messages.join(QLatin1Char('\n'));
+        return false;
+    }
+    *out = packageContents(m_doc, compiled);
+    const QByteArray png = thumbnailPng(*out, compiled);
+    if (!png.isEmpty())
+        out->files.append({kindInfo(m_doc.kind).previewFile, png});
+    return true;
+}
+
+QVariantMap ForgeController::install(bool overwrite)
+{
+    const auto fail = [](const QString &text, const char *code = "error") {
+        return QVariantMap{{"ok", false}, {"error", text}, {"code", QString::fromLatin1(code)}};
+    };
+    PackageContents contents;
+    QString error;
+    if (!buildPackage(&contents, &error))
+        return fail(error, "invalid");
+    const drift::forge::PackageKind pk = *drift::forge::packageKind(kind());
+    const QString id = m_doc.meta.id;
+    const QString target = QDir(drift::forge::userRoot(pk)).filePath(id);
+    if (!overwrite && QFileInfo::exists(target))
+        return fail(tr("%1 is already installed.").arg(m_doc.meta.displayName), "exists");
+
+    QJsonObject trusted;
+    for (const PackageFile &f : contents.files)
+        trusted.insert(f.path, QString::fromLatin1(f.data.toBase64()));
+    const QJsonObject reply = drift::forge::install(
+        m_app, pk, target, id, QJsonObject{{"manifest", contents.manifest}, {"trusted_files", trusted}});
+    if (!reply.value("ok").toBool())
+        return fail(reply.value("detail").toString(reply.value("error").toString()), "install");
+    m_canEdit.clear();
+    QVariantMap result{{"ok", true}, {"id", id}};
+    if (reply.contains("warning"))
+        result.insert("warning", reply.value("warning").toString());
+    return result;
+}
+
+QVariantMap ForgeController::exportDriftfx(const QUrl &url)
+{
+    const auto fail = [](const QString &text) { return QVariantMap{{"ok", false}, {"error", text}}; };
+    PackageContents contents;
+    QString error;
+    if (!buildPackage(&contents, &error))
+        return fail(error);
+    QTemporaryDir tmp;
+    const QString dir = tmp.filePath(m_doc.meta.id);
+    if (!tmp.isValid() || !(error = stageForExport(contents, dir)).isEmpty())
+        return fail(error);
+    QString path = url.isLocalFile() ? url.toLocalFile() : url.toString();
+    if (!path.endsWith(QLatin1String(".driftfx")))
+        path += QLatin1String(".driftfx");
+    const QJsonObject meta{
+        {"id", QStringLiteral("user.") + m_doc.meta.id},
+        {"name", m_doc.meta.displayName},
+        {"version", m_doc.meta.version.isEmpty() ? QStringLiteral("1.0.0") : m_doc.meta.version},
+        {"author", m_doc.meta.author},
+        {"description", m_doc.meta.description},
+        {"details", QString()},
+        {"license", QString()},
+        {"generator", QStringLiteral("drift-forge")},
+    };
+    if (!drift::addon::writeUserPackage(dir, drift::forge::packageKind(kind())->subdir, meta, path, &error))
+        return fail(error);
+    return {{"ok", true}, {"path", path}};
+}
+
+QVariantMap ForgeController::exportFolder(const QUrl &url)
+{
+    const auto fail = [](const QString &text) { return QVariantMap{{"ok", false}, {"error", text}}; };
+    PackageContents contents;
+    QString error;
+    if (!buildPackage(&contents, &error))
+        return fail(error);
+    const QString root = url.isLocalFile() ? url.toLocalFile() : url.toString();
+    const QString dir = QDir(root).filePath(m_doc.meta.id);
+    const QString manifest = drift::forge::packageKind(kind())->manifest;
+    if (QFileInfo::exists(dir) && !QFile::exists(QDir(dir).filePath(manifest)))
+        return fail(tr("%1 already exists and is not a package folder.").arg(dir));
+    if (!(error = stageForExport(contents, dir)).isEmpty())
+        return fail(error);
+    return {{"ok", true}, {"path", dir}};
 }
 
 QString ForgeController::projectDir(const QString &id) const

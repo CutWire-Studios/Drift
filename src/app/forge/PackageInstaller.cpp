@@ -163,6 +163,14 @@ QJsonObject stage(const PackageKind &kind, const QString &dir, QJsonObject manif
         contents.insert(it.key(), *decoded);
     }
 
+    // Forge's own export: any bare file name (textures, forge.json, thumbnails), base64 encoded.
+    const QJsonObject trusted = args.value(QStringLiteral("trusted_files")).toObject();
+    for (auto it = trusted.begin(); it != trusted.end(); ++it) {
+        if (!kFileName.match(it.key()).hasMatch() || it.key() == kind.manifest)
+            return err("bad_args", QStringLiteral("trusted_files: bad file name \"%1\"").arg(it.key()));
+        contents.insert(it.key(), QByteArray::fromBase64(it.value().toString().toLatin1()));
+    }
+
     if (kind.name == QLatin1String("audio_effect")) {
         if (!files.isEmpty())
             return err("bad_args", QStringLiteral("audio effects carry no shaders; send the manifest only"));

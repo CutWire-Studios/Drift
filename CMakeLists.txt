@@ -815,6 +815,7 @@ add_library(driftforge STATIC
     src/app/forge/compiler/Passes.cpp
     src/app/forge/compiler/Helpers.cpp
     src/app/forge/compiler/Manifest.cpp
+    src/app/forge/compiler/PackageFiles.cpp
 )
 target_include_directories(driftforge PUBLIC src)
 target_link_libraries(driftforge PUBLIC Qt6::Core)

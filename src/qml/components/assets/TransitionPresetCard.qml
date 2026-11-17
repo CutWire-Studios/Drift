@@ -141,13 +141,23 @@ Column {
             id: cardMenu
 
             property bool favorited: false
+            property bool editable: false
 
-            onAboutToShow: favorited = EditorState.isAssetFavorite("transitions", root.modelData.kind)
+            onAboutToShow: {
+                favorited = EditorState.isAssetFavorite("transitions", root.modelData.kind)
+                editable = Forge.canEdit("transition", root.modelData.kind)
+            }
 
             ThemedMenuItem {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
                 icon.name: Theme.icons.star
                 onTriggered: EditorState.toggleAssetFavorite("transitions", root.modelData.kind)
+            }
+            ThemedMenuItem {
+                visible: cardMenu.editable && !ShellBridge.phoneShell
+                text: qsTr("Edit in Forge")
+                icon.name: Theme.icons.pencil
+                onTriggered: Forge.openPackage("transition", root.modelData.kind)
             }
         }
 
