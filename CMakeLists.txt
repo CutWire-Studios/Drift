@@ -1416,6 +1416,10 @@ target_sources(driftapp PRIVATE
     src/app/mcp/tools/McpDispatcherExtended.cpp
     src/app/forge/PackageInstaller.h
     src/app/forge/PackageInstaller.cpp
+    src/app/forge/ForgeDraft.h
+    src/app/forge/ForgeDraft.cpp
+    src/app/forge/ForgePreview.h
+    src/app/forge/ForgePreview.cpp
     src/app/mcp/tools/McpEffectAuthoring.h
     src/app/mcp/tools/McpEffectAuthoring.cpp
     src/app/mcp/tools/McpProceduralAuthoring.h

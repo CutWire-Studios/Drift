@@ -496,6 +496,13 @@ target_compile_definitions(tst_animationpackage PRIVATE
     DRIFT_TEST_ANIMATIONS_DIR="${CMAKE_SOURCE_DIR}/animations")
 add_test(NAME AnimationPackage COMMAND tst_animationpackage)
 
+qt_add_executable(tst_forgedraft tst_forgedraft.cpp
+    ../src/app/forge/ForgeDraft.cpp
+    ../src/app/forge/ForgePreview.cpp)
+target_include_directories(tst_forgedraft PRIVATE ../src)
+target_link_libraries(tst_forgedraft PRIVATE Qt6::Test driftengine driftcore)
+add_test(NAME ForgeDraft COMMAND tst_forgedraft)
+
 qt_add_executable(tst_transform3d tst_transform3d.cpp)
 target_include_directories(tst_transform3d PRIVATE ../src)
 target_link_libraries(tst_transform3d PRIVATE Qt6::Test Qt6::Gui driftengine driftcore)

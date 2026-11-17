@@ -9,6 +9,8 @@
 #include <QString>
 #include <QVariant>
 
+#include <optional>
+
 // Engine-side preset entry: core metadata plus libavfilter / compositor / GPU wiring.
 struct EffectPresetEntry
 {
@@ -33,6 +35,12 @@ using EffectDef = EffectPresetEntry;
 
 const QList<EffectPresetEntry> &effectCatalog();
 const EffectPresetEntry *effectDefForId(const QString &id);
+// The Forge's live-preview slot. Never listed in the catalog or its browsers; lookups by this id
+// resolve to the draft. A replaced draft is kept alive for a few more frames because the render
+// thread may still hold the pointer handed out for it.
+inline constexpr QLatin1String kDraftEffectId{"forge.draft.effect"};
+void setDraftEffect(std::optional<EffectPresetEntry> entry);
+
 
 // Merge fixed + instance parameters for a clip effect.
 QMap<QString, QVariant> resolvedEffectParameters(const drift::Effect &effect, const EffectPresetEntry &def);

@@ -2,11 +2,18 @@
 
 #include "engine/packages/animations/AnimationPackageLoader.h"
 
-#include <QHash>
 #include <QMutex>
 #include <QMutexLocker>
+#include <deque>
+#include <memory>
+#include <QHash>
 
 namespace {
+
+std::shared_ptr<AnimationPresetEntry> g_draft;
+std::deque<std::shared_ptr<AnimationPresetEntry>> g_retiredDrafts;
+QMutex g_draftMutex;
+constexpr size_t kDraftRetireDepth = 8;
 
 QList<AnimationPresetEntry> g_catalog;
 QHash<QString, int> g_idIndex;
@@ -49,8 +56,29 @@ const QList<AnimationPresetEntry> &animationCatalog()
     return g_catalog;
 }
 
+void setDraftAnimation(std::optional<AnimationPresetEntry> entry)
+{
+    std::shared_ptr<AnimationPresetEntry> next;
+    if (entry) {
+        next = std::make_shared<AnimationPresetEntry>(std::move(*entry));
+        next->meta.id = kDraftAnimationId;
+    }
+    QMutexLocker lock(&g_draftMutex);
+    if (g_draft) {
+        g_retiredDrafts.push_back(std::move(g_draft));
+        while (g_retiredDrafts.size() > kDraftRetireDepth)
+            g_retiredDrafts.pop_front();
+    }
+    g_draft = std::move(next);
+}
+
 const AnimationPresetEntry *animationDefForId(const QString &id)
 {
+    {
+        QMutexLocker draftLock(&g_draftMutex);
+        if (id == kDraftAnimationId && g_draft)
+            return g_draft.get();
+    }
     QMutexLocker lock(&g_mutex);
     ensureLocked();
     const auto it = g_idIndex.constFind(id);

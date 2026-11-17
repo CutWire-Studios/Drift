@@ -9,6 +9,8 @@
 #include <QStringList>
 #include <QVariant>
 
+#include <optional>
+
 // A shader-based clip in/out animation package: animation.json + fragment shaders. The pipeline
 // has a single source, the clip's isolated layer.
 struct AnimationPresetEntry
@@ -24,6 +26,12 @@ struct AnimationPresetEntry
 
 const QList<AnimationPresetEntry> &animationCatalog();
 const AnimationPresetEntry *animationDefForId(const QString &id);
+// The Forge's live-preview slot. Never listed in the catalog or its browsers; lookups by this id
+// resolve to the draft. A replaced draft is kept alive for a few more frames because the render
+// thread may still hold the pointer handed out for it.
+inline constexpr QLatin1String kDraftAnimationId{"forge.draft.animation"};
+void setDraftAnimation(std::optional<AnimationPresetEntry> entry);
+
 
 // Merge fixed + default + instance parameters for one animation.
 QMap<QString, QVariant> resolvedAnimationParameters(const QMap<QString, QVariant> &instance,

@@ -5,6 +5,10 @@
 #include "engine/audio/dsp/AudioEffectFactory.h"
 #include "engine/audio/dsp/WavReader.h"
 
+#include <QMutex>
+#include <QMutexLocker>
+#include <deque>
+#include <memory>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -19,6 +23,11 @@
 #include <optional>
 
 namespace {
+
+std::shared_ptr<AudioEffectEntry> g_draft;
+std::deque<std::shared_ptr<AudioEffectEntry>> g_retiredDrafts;
+QMutex g_draftMutex;
+constexpr size_t kDraftRetireDepth = 8;
 
 QList<AudioEffectEntry> g_catalog;
 bool g_loaded = false;
@@ -281,8 +290,29 @@ const QList<AudioEffectEntry> &audioEffectCatalog()
     return g_catalog;
 }
 
+void setDraftAudio(std::optional<AudioEffectEntry> entry)
+{
+    std::shared_ptr<AudioEffectEntry> next;
+    if (entry) {
+        next = std::make_shared<AudioEffectEntry>(std::move(*entry));
+        next->id = kDraftAudioId;
+    }
+    QMutexLocker lock(&g_draftMutex);
+    if (g_draft) {
+        g_retiredDrafts.push_back(std::move(g_draft));
+        while (g_retiredDrafts.size() > kDraftRetireDepth)
+            g_retiredDrafts.pop_front();
+    }
+    g_draft = std::move(next);
+}
+
 const AudioEffectEntry *audioEffectDefForId(const QString &id)
 {
+    {
+        QMutexLocker draftLock(&g_draftMutex);
+        if (id == kDraftAudioId && g_draft)
+            return g_draft.get();
+    }
     ensureLoaded();
     for (const AudioEffectEntry &entry : g_catalog) {
         if (entry.id == id)
