@@ -1035,6 +1035,8 @@ void ForgeController::refreshRecent()
         if (!file.open(QIODevice::ReadOnly))
             continue;
         const QJsonObject o = QJsonDocument::fromJson(file.readAll()).object();
+        if (o.value("kind").toString() == QLatin1String("audio"))
+            continue;
         const QDateTime modified = QFileInfo(file).lastModified();
         found.append({modified, {{"id", id},
                                   {"name", o.value("meta").toObject().value("displayName").toString(id)},

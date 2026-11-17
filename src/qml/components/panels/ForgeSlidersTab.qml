@@ -9,6 +9,8 @@ import Drift
 Item {
     id: root
 
+    property var forge: Forge
+
     function qmlColor(h) {
         return h.length === 9 ? "#" + h.slice(7, 9) + h.slice(1, 7) : h
     }
@@ -39,7 +41,7 @@ Item {
 
                 ThemedButton {
                     text: qsTr("Reset values")
-                    onClicked: Forge.resetPreviewValues()
+                    onClicked: root.forge.resetPreviewValues()
                 }
                 ThemedTextField {
                     id: presetName
@@ -50,9 +52,9 @@ Item {
                 }
                 ThemedButton {
                     text: qsTr("Save preset")
-                    enabled: presetName.text.trim().length > 0 && Forge.params.length > 0
+                    enabled: presetName.text.trim().length > 0 && root.forge.params.length > 0
                     onClicked: {
-                        Forge.addPreset(presetName.text.trim())
+                        root.forge.addPreset(presetName.text.trim())
                         presetName.clear()
                     }
                 }
@@ -63,7 +65,7 @@ Item {
                 spacing: Theme.spacingSm
 
                 Repeater {
-                    model: Forge.presetNames
+                    model: root.forge.presetNames
 
                     Row {
                         id: preset
@@ -73,12 +75,12 @@ Item {
                         ThemedChip {
                             text: preset.modelData
                             variant: "outline"
-                            onClicked: Forge.applyPreset(preset.modelData)
+                            onClicked: root.forge.applyPreset(preset.modelData)
                         }
                         IconButton {
                             glyph: Theme.icons.x
                             tooltip: qsTr("Delete preset")
-                            onClicked: Forge.deletePreset(preset.modelData)
+                            onClicked: root.forge.deletePreset(preset.modelData)
                         }
                     }
                 }
@@ -86,7 +88,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
-                visible: Forge.params.length === 0
+                visible: root.forge.params.length === 0
                 wrapMode: Text.WordWrap
                 text: qsTr("No sliders yet. Right-click a node and choose Expose as slider, or use Expose in the Node tab.")
                 color: Theme.c.forgePanel.foregroundMuted
@@ -95,15 +97,15 @@ Item {
             }
 
             Repeater {
-                model: Forge.params.length
+                model: root.forge.params.length
 
                 Rectangle {
                     id: card
                     required property int index
-                    readonly property var p: Forge.params[index]
+                    readonly property var p: root.forge.params[index]
                     readonly property string type: p ? p.type : ""
                     readonly property bool numeric: type === "float" || type === "int" || type === "seed"
-                    readonly property var preview: p ? Forge.previewValues[p.identifier] : undefined
+                    readonly property var preview: p ? root.forge.previewValues[p.identifier] : undefined
                     Layout.fillWidth: true
                     implicitHeight: body.implicitHeight + 2 * Theme.spacingMd
                     radius: Theme.c.nodeDelegate.radius
@@ -111,7 +113,7 @@ Item {
                     visible: !!p
 
                     function patch(values, coalesce) {
-                        Forge.updateParam(p.identifier, values, coalesce === true)
+                        root.forge.updateParam(p.identifier, values, coalesce === true)
                     }
 
                     ColumnLayout {
@@ -141,18 +143,18 @@ Item {
                                 glyph: Theme.icons.chevronUp
                                 tooltip: qsTr("Move up")
                                 enabled: card.index > 0
-                                onClicked: Forge.moveParam(card.p.identifier, -1)
+                                onClicked: root.forge.moveParam(card.p.identifier, -1)
                             }
                             IconButton {
                                 glyph: Theme.icons.chevronDown
                                 tooltip: qsTr("Move down")
-                                enabled: card.index < Forge.params.length - 1
-                                onClicked: Forge.moveParam(card.p.identifier, 1)
+                                enabled: card.index < root.forge.params.length - 1
+                                onClicked: root.forge.moveParam(card.p.identifier, 1)
                             }
                             IconButton {
                                 glyph: Theme.icons.trash
                                 tooltip: qsTr("Remove slider")
-                                onClicked: Forge.removeParam(card.p.identifier)
+                                onClicked: root.forge.removeParam(card.p.identifier)
                             }
                         }
 
@@ -364,7 +366,7 @@ Item {
                 value: Number(card ? card.preview : 0)
                 when: !slider.pressed
             }
-            onMoved: Forge.setPreviewValue(card.p.identifier, value)
+            onMoved: root.forge.setPreviewValue(card.p.identifier, value)
         }
     }
 
@@ -374,7 +376,7 @@ Item {
         ThemedSwitch {
             property var card: null
             checked: !!(card && card.preview)
-            onToggled: Forge.setPreviewValue(card.p.identifier, checked)
+            onToggled: root.forge.setPreviewValue(card.p.identifier, checked)
         }
     }
 
@@ -387,7 +389,7 @@ Item {
             font.pixelSize: Theme.fontSizeXs
             model: card && card.p && card.p.options ? card.p.options : []
             currentIndex: card ? Math.round(Number(card.preview)) : 0
-            onActivated: (i) => Forge.setPreviewValue(card.p.identifier, i)
+            onActivated: (i) => root.forge.setPreviewValue(card.p.identifier, i)
         }
     }
 
@@ -397,7 +399,7 @@ Item {
         ColorSwatchField {
             property var card: null
             hex: card && card.preview !== undefined ? root.qmlColor(String(card.preview)) : "#ffffffff"
-            onEdited: (h) => Forge.setPreviewValue(card.p.identifier, root.hexColor(h, !!card.p.alpha))
+            onEdited: (h) => root.forge.setPreviewValue(card.p.identifier, root.hexColor(h, !!card.p.alpha))
         }
     }
 
@@ -426,7 +428,7 @@ Item {
                     onEdited: (v) => {
                         const next = [Number(card.preview[0]), Number(card.preview[1])]
                         next[axis.index] = v
-                        Forge.setPreviewValue(card.p.identifier, next)
+                        root.forge.setPreviewValue(card.p.identifier, next)
                     }
                 }
             }

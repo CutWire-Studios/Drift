@@ -141,6 +141,9 @@ Item {
     Component { id: forgeGraphC; LazyPanel { panel: ForgeGraphPanel {} } }
     Component { id: forgePaletteC; LazyPanel { panel: ForgePalettePanel {} } }
     Component { id: forgeInspectorC; LazyPanel { panel: ForgeInspectorPanel {} } }
+    Component { id: audioForgeGraphC; LazyPanel { panel: AudioForgeGraphPanel {} } }
+    Component { id: audioForgePaletteC; LazyPanel { panel: AudioForgePalettePanel {} } }
+    Component { id: audioForgeInspectorC; LazyPanel { panel: AudioForgeInspectorPanel {} } }
     Component { id: historyC; LazyPanel { panel: HistoryPanel {} } }
     Component { id: sourceViewerC; LazyPanel { panel: SourceViewerPanel {} } }
     Component { id: sourceLabBinC; LazyPanel { panel: SourceLabBinPanel {} } }

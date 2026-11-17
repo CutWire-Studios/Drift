@@ -1694,6 +1694,7 @@ qt_add_resources(drift "drift_workspaces"
         resources/workspaces/3d.json
         resources/workspaces/procedural.json
         resources/workspaces/forge.json
+        resources/workspaces/audio-forge.json
 )
 
 qt_add_resources(drift "drift_marketplace"
@@ -1793,6 +1794,10 @@ qt_add_qml_module(drift
         src/app/forge/ForgeGraphMapping.cpp
         src/app/forge/ForgeController.h
         src/app/forge/ForgeController.cpp
+        src/app/forge/audio/RackGraphMapping.h
+        src/app/forge/audio/RackGraphMapping.cpp
+        src/app/forge/AudioForgeController.h
+        src/app/forge/AudioForgeController.cpp
         src/app/online/marketplace/MarketSourceBrowser.h
         src/app/online/marketplace/MarketSourceBrowser.cpp
         src/app/online/marketplace/MarketItemLoader.h
@@ -2110,6 +2115,11 @@ qt_add_qml_module(drift
         src/qml/components/panels/ForgeSlidersTab.qml
         src/qml/components/panels/ForgeDetailsTab.qml
         src/qml/components/panels/ForgeCodeTab.qml
+        src/qml/components/panels/AudioForgeGraphPanel.qml
+        src/qml/components/panels/AudioForgePalettePanel.qml
+        src/qml/components/panels/AudioForgeInspectorPanel.qml
+        src/qml/components/panels/AudioForgeAuditionBar.qml
+        src/qml/components/panels/AudioForgeNodeTab.qml
         src/qml/components/panels/SubtitleLanePanel.qml
         src/qml/components/panels/SubtitleTextPanel.qml
         src/qml/components/subtitles/SubtitleLaneToolbar.qml

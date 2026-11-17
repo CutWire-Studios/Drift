@@ -8,23 +8,25 @@ import Drift
 Item {
     id: root
 
+    property var forge: Forge
+
     property string idError: ""
 
     function commit(key, text) {
-        const error = Forge.setMeta(key, text)
+        const error = root.forge.setMeta(key, text)
         if (key === "id")
             idError = error
     }
 
     function directionList() {
-        return Forge.meta.directions ?? []
+        return root.forge.meta.directions ?? []
     }
 
     function toggleDirection(name, on) {
         const next = directionList().filter(d => d !== name)
         if (on)
             next.push(name)
-        Forge.setMeta("directions", next)
+        root.forge.setMeta("directions", next)
     }
 
     Flickable {
@@ -54,7 +56,7 @@ Item {
                 implicitHeight: Theme.controlHeightSm
                 font.pixelSize: Theme.fontSizeXs
                 Binding on text {
-                    value: String(Forge.meta[field.key] ?? "")
+                    value: String(root.forge.meta[field.key] ?? "")
                     when: !field.activeFocus
                 }
                 errorText: key === "id" ? root.idError : ""
@@ -72,9 +74,9 @@ Item {
                 Layout.fillWidth: true
                 implicitHeight: Theme.controlHeightSm
                 font.pixelSize: Theme.fontSizeXs
-                model: Forge.categories
-                currentIndex: Forge.categories.indexOf(Forge.meta.category)
-                onActivated: (i) => Forge.setMeta("category", Forge.categories[i])
+                model: root.forge.categories
+                currentIndex: root.forge.categories.indexOf(root.forge.meta.category)
+                onActivated: (i) => root.forge.setMeta("category", root.forge.categories[i])
             }
 
             FieldLabel { text: qsTr("Description") }
@@ -84,10 +86,10 @@ Item {
                 implicitHeight: 90
                 font.pixelSize: Theme.fontSizeXs
                 Binding on text {
-                    value: String(Forge.meta.description ?? "")
+                    value: String(root.forge.meta.description ?? "")
                     when: !descriptionField.activeFocus
                 }
-                onTextChanged: if (activeFocus) Forge.setMeta("description", text)
+                onTextChanged: if (activeFocus) root.forge.setMeta("description", text)
             }
 
             FieldLabel { text: qsTr("Author") }
@@ -97,11 +99,11 @@ Item {
             MetaField { key: "version" }
 
             FieldLabel {
-                visible: Forge.kind === "animation"
+                visible: root.forge.kind === "animation"
                 text: qsTr("Plays as")
             }
             Row {
-                visible: Forge.kind === "animation"
+                visible: root.forge.kind === "animation"
                 spacing: Theme.spacingSm
 
                 Repeater {
@@ -121,11 +123,11 @@ Item {
             }
 
             FieldLabel {
-                visible: Forge.kind === "animation"
+                visible: root.forge.kind === "animation"
                 text: qsTr("Default duration")
             }
             ThemedNumberField {
-                visible: Forge.kind === "animation"
+                visible: root.forge.kind === "animation"
                 Layout.fillWidth: true
                 implicitHeight: Theme.controlHeightSm
                 font.pixelSize: Theme.fontSizeXs
@@ -133,8 +135,8 @@ Item {
                 to: 10000
                 step: 50
                 unit: qsTr("ms")
-                value: Number(Forge.meta.defaultDurationMs ?? 0)
-                onEdited: (v) => Forge.setMeta("defaultDurationMs", v)
+                value: Number(root.forge.meta.defaultDurationMs ?? 0)
+                onEdited: (v) => root.forge.setMeta("defaultDurationMs", v)
             }
         }
     }

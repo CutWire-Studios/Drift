@@ -52,6 +52,15 @@ Column {
                 tooltip: qsTr("Install a custom audio effect or effect from a .driftfx or zip made in Drift Forge")
                 onClicked: ShellBridge.main.importUserPackage("")
             }
+
+            IconButton {
+                visible: !ShellBridge.phoneShell
+                glyph: Theme.icons.sparkles
+                variant: "ghost"
+                buttonSize: Theme.controlHeight
+                tooltip: qsTr("Create a new audio effect in Audio Forge")
+                onClicked: AudioForge.createNew()
+            }
         }
 
         Item {

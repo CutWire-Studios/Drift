@@ -214,6 +214,8 @@ FocusScope {
             for (let o = 0; o < 2; ++o) {
                 const isOutput = o === 1
                 for (const p of isOutput ? it.outputs : it.inputs) {
+                    if (p.hidePort)
+                        continue
                     const c = portCenter(it.nodeId, isOutput, p.id)
                     if (Math.hypot(wp.x - c.x, wp.y - c.y) <= reach)
                         return { node: it.nodeId, isOutput: isOutput, port: p.id, type: p.type }

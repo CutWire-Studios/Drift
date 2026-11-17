@@ -328,6 +328,7 @@ Item {
             canvas: root.canvas
             node: root
             isOutput: false
+            visible: !info.hidePort
             portId: info.id
             portType: info.type
             connected: !!info.connected
