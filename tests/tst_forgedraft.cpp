@@ -1,6 +1,8 @@
 #include "app/forge/ForgeDraft.h"
 #include "app/forge/ForgePreview.h"
 #include "core/project/Project.h"
+#include "engine/gpu/effects/GpuEffectExecutor.h"
+#include "engine/packages/PackageThumbnails.h"
 #include "engine/packages/animations/AnimationCatalog.h"
 #include "engine/packages/audio/AudioEffectCatalog.h"
 #include "engine/packages/effects/EffectCatalog.h"
@@ -144,6 +146,20 @@ private slots:
         drift::forge::patchAudioEffect("clip1", {})(audioCopy);
         QCOMPARE(firstClip(audioCopy).audioEffects.at(0).catalogId, QString(kDraftAudioId));
         QCOMPARE(firstClip(original).audioEffects.size(), 0);
+    }
+
+    void effectThumbnailRenders()
+    {
+        using namespace drift::forge;
+        if (!GpuEffectExecutor::instance().isAvailable())
+            QSKIP("GL unavailable");
+        QVERIFY(stageDraft("effect", effectManifest(1.0), {{"main.frag", kFrag}}).ok);
+        const EffectPresetEntry *def = effectDefForId(kDraftEffectId);
+        QVERIFY(def);
+        const QImage thumb = renderEffectThumbnail(kDraftEffectId, def->gpu, {{"amount", 1.0}}, QSize(64, 64));
+        QVERIFY(!thumb.isNull());
+        QCOMPARE(thumb.size(), QSize(64, 64));
+        clearDraft("effect");
     }
 
     void transitionPatchInsertsAtBareCut()

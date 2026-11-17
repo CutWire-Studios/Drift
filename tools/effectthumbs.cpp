@@ -2,6 +2,7 @@
 #include "engine/compositor/FrameCompositor.h"
 #include "core/project/Project.h"
 #include "engine/packages/effects/EffectCatalog.h"
+#include "engine/packages/PackageThumbnails.h"
 #include "engine/packages/effects/EffectPackageLoader.h"
 #include "engine/compositor/effects/EffectProcessor.h"
 #include "engine/face/tracking/FaceLandmarker.h"
@@ -30,33 +31,6 @@
 #include <memory>
 
 namespace {
-
-QImage makeFallbackBase(int size)
-{
-    QImage image(size, size, QImage::Format_RGBA8888);
-    image.fill(QColor(24, 26, 32));
-    QPainter p(&image);
-    p.setRenderHint(QPainter::Antialiasing, true);
-    QLinearGradient bg(0, 0, size, size);
-    bg.setColorAt(0.0, QColor(28, 32, 44));
-    bg.setColorAt(1.0, QColor(18, 18, 24));
-    p.fillRect(image.rect(), bg);
-
-    const QPoint center(size / 2, int(size * 0.42));
-    const int headR = int(size * 0.18);
-    QRadialGradient skin(center, headR);
-    skin.setColorAt(0.0, QColor(214, 172, 140));
-    skin.setColorAt(1.0, QColor(160, 118, 96));
-    p.setBrush(skin);
-    p.setPen(Qt::NoPen);
-    p.drawEllipse(center, headR, headR);
-
-    p.setBrush(QColor(52, 58, 74));
-    p.drawRoundedRect(int(size * 0.28), int(size * 0.58), int(size * 0.44), int(size * 0.55),
-                      int(size * 0.08), int(size * 0.08));
-    p.end();
-    return image;
-}
 
 // The face warp effects do nothing without anchors, so their thumbnails need a face and a track
 // to go with it. A drawn one keeps thumbnail generation reproducible and puts no real person's
@@ -852,7 +826,7 @@ int main(int argc, char *argv[])
         if (!path.isEmpty())
             image = QImage(path).convertToFormat(QImage::Format_RGBA8888);
         if (image.isNull())
-            image = makeFallbackBase(size * 2);
+            image = defaultEffectBase(size * 2);
         image = squareCrop(image, size);
         bases.insert(path, image);
         return image;
@@ -1023,7 +997,12 @@ int main(int argc, char *argv[])
             drift::Effect effect;
             effect.catalogId = def.meta.id;
             effect.parameters = params;
-            result = EffectProcessor::applyEffects(base, {effect}, 500000);
+            if (def.isGpu) {
+                result = renderEffectThumbnail(def.meta.id, def.gpu,
+                                               resolvedEffectParameters(effect, def), {size, size}, base);
+            } else {
+                result = EffectProcessor::applyEffects(base, {effect}, 500000);
+            }
             if (def.meta.id == QLatin1String("corner_pin"))
                 result = overBackdrop(result, base);
         }

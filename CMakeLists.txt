@@ -883,6 +883,8 @@ add_library(driftengine STATIC
     src/engine/packages/transitions/TransitionPackageLoader.cpp
     src/engine/packages/GpuPackageParse.h
     src/engine/packages/GpuPackageParse.cpp
+    src/engine/packages/PackageThumbnails.h
+    src/engine/packages/PackageThumbnails.cpp
     src/engine/gpu/effects/GpuEffectDefinition.h
     src/engine/compositor/GpuCompositor.h
     src/engine/compositor/GpuCompositor.cpp
