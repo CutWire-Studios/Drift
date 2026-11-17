@@ -15,6 +15,7 @@ ThemedDialog {
     readonly property var bakeList: EditorState.bakes.bakes
     readonly property bool hasWorkArea: EditorState.workAreaInSeconds >= 0
                                         && EditorState.workAreaOutSeconds > EditorState.workAreaInSeconds
+    readonly property bool inComposite: EditorState.activeSequenceId !== ""
     readonly property var qualityNames: [qsTr("Compact"), qsTr("Balanced"), qsTr("High")]
 
     function openDialog() {
@@ -148,9 +149,10 @@ ThemedDialog {
                 ThemedButton {
                     variant: EditorState.bakes.busy ? "secondary" : "primary"
                     text: EditorState.bakes.busy ? qsTr("Cancel") : qsTr("Bake work area")
-                    enabled: EditorState.bakes.busy || root.hasWorkArea
-                    tooltip: root.hasWorkArea || EditorState.bakes.busy ? ""
-                             : qsTr("Set a work area on the timeline first")
+                    enabled: EditorState.bakes.busy || (root.hasWorkArea && !root.inComposite)
+                    tooltip: EditorState.bakes.busy ? ""
+                             : root.inComposite ? qsTr("Bakes are of the main timeline. Switch to it to bake.")
+                             : root.hasWorkArea ? "" : qsTr("Set a work area on the timeline first")
                     onClicked: EditorState.bakes.busy ? EditorState.bakes.cancelBake()
                                                       : EditorState.bakes.bakeWorkArea()
                 }

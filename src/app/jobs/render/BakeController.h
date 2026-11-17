@@ -56,7 +56,8 @@ public:
     double totalBytes() const;
     int staleCount() const { return m_detached ? 0 : m_staleIds.size(); }
 
-    // Bakes the work area at the current quality. Queued behind a running bake.
+    // Bakes the work area of the main timeline at the current quality. Queued behind a running bake.
+    // Refused, with a warning, while a composite's tab is open.
     Q_INVOKABLE void bakeWorkArea();
     // Queues a bake of main-timeline [startUs, endUs), widened to whole frames and cut at the
     // timeline's end. Returns the frames queued (also when that range was already queued or

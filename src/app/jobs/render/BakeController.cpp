@@ -395,6 +395,12 @@ QPair<qint64, qint64> BakeController::bakeRange(qint64 startUs, qint64 endUs)
 
 void BakeController::bakeWorkArea()
 {
+    // Bakes are of the main timeline, and the work area is project-wide: from a composite's tab this
+    // would bake the main timeline at that tab's In/Out, which neither tab plays.
+    if (!m_app->activeSequenceId().isEmpty()) {
+        m_app->setLastMessage(tr("Bakes are of the main timeline. Switch to it to bake."), QStringLiteral("warning"));
+        return;
+    }
     if (!m_app->m_project.hasWorkArea()) {
         m_app->setLastMessage(tr("Set a work area to bake"), QStringLiteral("warning"));
         return;
