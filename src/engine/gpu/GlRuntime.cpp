@@ -3948,6 +3948,12 @@ void setPackageUniforms(QOpenGLShaderProgram *program, const drift::GpuEffectDef
                                               array.values.size() / array.tupleSize,
                                               array.tupleSize);
             }
+        } else if (value.typeId() == QMetaType::QVector2D) {
+            program->setUniformValue(loc, value.value<QVector2D>());
+        } else if (value.typeId() == QMetaType::QVector3D) {
+            program->setUniformValue(loc, value.value<QVector3D>());
+        } else if (value.typeId() == QMetaType::QVector4D) {
+            program->setUniformValue(loc, value.value<QVector4D>());
         } else if (value.typeId() == QMetaType::QString) {
             const QString s = value.toString();
             // File-path params must not fall through to s.toFloat(). A path currently binds as

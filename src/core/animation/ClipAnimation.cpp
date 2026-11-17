@@ -219,4 +219,28 @@ ClipAnimSample evaluateClipAnimation(TimeUs timelineStart, TimeUs timelineDurati
     return sample;
 }
 
+std::optional<double> clipAnimationProgress(TimeUs timelineStart, TimeUs timelineDuration,
+                                            const ClipAnimation &anim, bool isIn, TimeUs timelineUs)
+{
+    if (anim.isNone() || timelineDuration <= 0)
+        return std::nullopt;
+
+    const TimeUs dur = std::min(anim.durationUs, timelineDuration);
+    if (dur <= 0)
+        return std::nullopt;
+
+    const TimeUs rel = timelineUs - timelineStart;
+    if (isIn) {
+        if (rel < 0 || rel > dur)
+            return std::nullopt;
+        return shapedProgress(static_cast<double>(rel) / static_cast<double>(dur), anim.curve, anim.shape);
+    }
+
+    const TimeUs fromEnd = timelineDuration - rel;
+    if (fromEnd < 0 || fromEnd > dur)
+        return std::nullopt;
+    // Mirrors applyKind's "away" amount, so a custom curve shapes the outro the same way.
+    return 1.0 - shapedProgress(static_cast<double>(fromEnd) / static_cast<double>(dur), anim.curve, anim.shape);
+}
+
 } // namespace drift

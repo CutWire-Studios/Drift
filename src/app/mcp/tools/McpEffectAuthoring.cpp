@@ -341,7 +341,7 @@ GLSL: write `#version 330 core` (translated to GLSL ES on mobile), `in vec2 v_te
 (v_texCoord.y == 0 is the top), `out vec4 fragColor;`. Declare each parameter as a uniform named by
 its identifier. Engine uniforms: u_resolution (vec2, pixels), u_time (float seconds),
 u_frameIndex (int, at the project frame rate), u_frameRate (float), u_timeUs (float). Do not declare parameters with reserved names: u_currentTexture,
-u_textureN, u_resolution, u_time, u_timeUs, u_frameIndex, u_frameRate, u_progress, u_fromTexture, u_toTexture,
+u_textureN, u_resolution, u_time, u_timeUs, u_frameIndex, u_frameRate, u_progress, u_direction, u_fromTexture, u_toTexture,
 u_depth*, u_hasDepth, u_clipMask, u_hasClipMask, u_templateBounds, u_meshAspect, u_face*.
 Shaders are test-compiled on create/update; compile errors come back as shader_compile_failed with
 the driver log per pass. A shader that fails at render time shows the frame unchanged.

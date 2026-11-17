@@ -207,6 +207,7 @@ private slots:
     void bezierCurveShapesProgress();
     void bezierShapeRoundTrips();
     void clipAnimationBezierHandlesRoundTrip();
+    void clipAnimationProgressWindows();
     void textEaseParsesCubicBezier();
     void physicalOverlapTransitionWindow();
     void adjacentTransitionWindowClampsToClipExtents();
@@ -4715,6 +4716,30 @@ void CoreTest::clipAnimationBezierHandlesRoundTrip()
     QVERIFY(out.shape.hasHandles());
     QCOMPARE(out.shape.handle1(), QPointF(0.17, 0.67));
     QCOMPARE(out.shape.handle2(), QPointF(0.83, 0.2));
+}
+
+void CoreTest::clipAnimationProgressWindows()
+{
+    const drift::TimeUs start = drift::secondsToUs(1.0);
+    const drift::TimeUs dur = drift::secondsToUs(2.0);
+    drift::ClipAnimation linear;
+    linear.kindId = QStringLiteral("slideUp");
+    linear.curve = drift::FadeCurve::Linear;
+    linear.durationUs = drift::secondsToUs(0.5);
+
+    QVERIFY(!drift::clipAnimationProgress(start, dur, drift::ClipAnimation{}, true, start).has_value());
+
+    QCOMPARE(drift::clipAnimationProgress(start, dur, linear, true, start).value(), 0.0);
+    QCOMPARE(drift::clipAnimationProgress(start, dur, linear, true, start + drift::secondsToUs(0.5)).value(), 1.0);
+    QCOMPARE(drift::clipAnimationProgress(start, dur, linear, true, start + drift::secondsToUs(0.25)).value(), 0.5);
+    QVERIFY(!drift::clipAnimationProgress(start, dur, linear, true, start - 1).has_value());
+    QVERIFY(!drift::clipAnimationProgress(start, dur, linear, true, start + drift::secondsToUs(0.6)).has_value());
+
+    const drift::TimeUs end = start + dur;
+    QCOMPARE(drift::clipAnimationProgress(start, dur, linear, false, end - drift::secondsToUs(0.5)).value(), 0.0);
+    QCOMPARE(drift::clipAnimationProgress(start, dur, linear, false, end).value(), 1.0);
+    QVERIFY(!drift::clipAnimationProgress(start, dur, linear, false, end - drift::secondsToUs(0.6)).has_value());
+    QVERIFY(!drift::clipAnimationProgress(start, dur, linear, false, end + 1).has_value());
 }
 
 void CoreTest::textEaseParsesCubicBezier()
