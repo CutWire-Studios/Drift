@@ -797,6 +797,9 @@ add_library(driftforge STATIC
     src/app/forge/nodes/ColorNodes.cpp
     src/app/forge/nodes/GradeNodes.cpp
     src/app/forge/nodes/DistortNodes.cpp
+    src/app/forge/nodes/BlurNodes.cpp
+    src/app/forge/nodes/StylizeNodes.cpp
+    src/app/forge/nodes/GenerateNodes.cpp
     src/app/forge/nodes/KitNodes.cpp
     src/app/forge/nodes/ThreeNodes.cpp
     src/app/forge/nodes/MixNodes.cpp

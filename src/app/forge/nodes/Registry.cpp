@@ -31,6 +31,11 @@ void ensureRegistered()
         registerDistortNodes();
         registerKitDistortNodes();
         registerThreeNodes();
+        registerBlurNodes();
+        registerKitBlurNodes();
+        registerStylizeNodes();
+        registerGenerateNodes();
+        registerKitOverlayNodes();
         registerMixNodes();
         registerMathNodes();
         registerOutputNodes();
