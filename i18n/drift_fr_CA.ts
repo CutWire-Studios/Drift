@@ -15870,6 +15870,14 @@
         <translation>Niveau (0°)</translation>
     </message>
     <message>
+        <source>Auto-fit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The crop box shrinks to stay inside the straightened picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pause</source>
         <translation>Pause</translation>
     </message>

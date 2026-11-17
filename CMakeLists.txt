@@ -558,6 +558,8 @@ add_library(driftcore STATIC
     src/core/project/media/MediaAsset.h
     src/core/project/media/SourceLab.h
     src/core/project/media/MediaAsset.cpp
+    src/core/project/media/SourceFrameFit.h
+    src/core/project/media/SourceFrameFit.cpp
     src/core/project/media/ImageSequence.h
     src/core/project/media/ImageSequence.cpp
     src/core/effects/BlendMode.h

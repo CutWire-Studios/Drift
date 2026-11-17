@@ -15992,6 +15992,14 @@
         <source>Level (0°)</source>
         <translation>Pantay (0°)</translation>
     </message>
+    <message>
+        <source>Auto-fit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The crop box shrinks to stay inside the straightened picture</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MediaPreviewWindow</name>

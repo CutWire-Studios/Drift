@@ -26,6 +26,8 @@
 #include "ui/preview/Outliner3dModel.h"
 #include <QtTest>
 
+#include "core/project/media/SourceFrameFit.h"
+
 #include <QAccessible>
 #include <QDir>
 #include <QFile>
@@ -305,6 +307,7 @@ private slots:
     void decodeModePickerListsOnlyWorkingBackends();
     void decodeModePickerMarksOffGpuBackends();
     void exportFrameRatePersistsAcrossSessions();
+    void fitSourceFrameToStraightenInvokable();
     void exportAudioOnlyIsExposedWhileExporting();
     void lastExportSettingsNormalisesStringTypedValues();
     void textStyleBlendModeKeyframesAndEffects();
@@ -5364,6 +5367,24 @@ void EditorStateTest::invertTimelineScrollPersistsAcrossSessions()
 
     AppController relaunched(&library);
     QVERIFY(relaunched.preferences()->invertTimelineScroll());
+}
+
+void EditorStateTest::fitSourceFrameToStraightenInvokable()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    const QVariantMap fit = state.fitSourceFrameToStraighten(0, 0, 1, 1, 5, 1920, 1080);
+    const QRectF expected = drift::fitCropInsideRotation(QRectF(0, 0, 1, 1), 5, 1920, 1080);
+    QVERIFY(expected.width() < 1.0);
+    QCOMPARE(fit.value(QStringLiteral("x")).toDouble(), expected.x());
+    QCOMPARE(fit.value(QStringLiteral("y")).toDouble(), expected.y());
+    QCOMPARE(fit.value(QStringLiteral("width")).toDouble(), expected.width());
+    QCOMPARE(fit.value(QStringLiteral("height")).toDouble(), expected.height());
+
+    // Unknown source size: the box comes back unchanged.
+    const QVariantMap same = state.fitSourceFrameToStraighten(0.1, 0.2, 0.5, 0.5, 5, 0, 0);
+    QCOMPARE(same.value(QStringLiteral("x")).toDouble(), 0.1);
+    QCOMPARE(same.value(QStringLiteral("height")).toDouble(), 0.5);
 }
 
 void EditorStateTest::exportFrameRatePersistsAcrossSessions()

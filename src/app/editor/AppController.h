@@ -685,6 +685,11 @@ public:
     // straighten (Clip::sourceFrameAngle); NaN, the default, keeps the clip's current one.
     Q_INVOKABLE bool setClipSourceFrame(const QString &clipId, double x, double y, double w, double h,
                                         double angle = qQNaN());
+    // The crop box (normalised) fitted inside the source turned by `angle` (drift::fitCropInsideRotation),
+    // as {x, y, width, height}. srcW/srcH are the displayed source size; the box comes back unchanged
+    // when they are unknown (<= 0).
+    Q_INVOKABLE QVariantMap fitSourceFrameToStraighten(double x, double y, double w, double h,
+                                                       double angle, int srcW, int srcH) const;
     Q_INVOKABLE bool trackAcceptsAsset(int trackIndex, int assetIndex) const;
     Q_INVOKABLE QString trackTypeForAsset(int assetIndex) const;
     // The same two questions asked of a bare media kind ("video", "audio", "image", ...) rather

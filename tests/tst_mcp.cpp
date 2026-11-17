@@ -181,6 +181,7 @@ private slots:
     void validateRejectsWrongType();
     void setTransformWrites3dPose();
     void clipCropRoundTrip();
+    void setClipCropFitsStraighten();
     void validateEnumAndRange();
     void effectParamWritesRejectUnknownKeys();
     void setTransformKeysOnlyAnimatedOrAutoKeyed();
@@ -9590,6 +9591,132 @@ static QJsonObject inspectRow(drift::mcp::McpDispatcher &dispatcher, const QStri
         .value(QStringLiteral("items")).toArray().at(0).toObject();
 }
 
+void McpTest::setClipCropFitsStraighten()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const auto addClip = [&](const QString &id, int width, int height) {
+        drift::MediaAsset asset;
+        asset.id = id + QStringLiteral("-asset");
+        asset.kind = drift::MediaKind::Video;
+        asset.path = QStringLiteral("/nonexistent/") + id + QStringLiteral(".mp4");
+        asset.width = width;
+        asset.height = height;
+        state.project()->addAsset(asset);
+        drift::Clip clip;
+        clip.id = id;
+        clip.type = drift::ClipType::Video;
+        clip.assetId = asset.id;
+        clip.path = asset.path;
+        clip.timelineDuration = drift::secondsToUs(5.0);
+        clip.srcOut = drift::secondsToUs(5.0);
+        return clip;
+    };
+    drift::Track track{.type = drift::TrackType::Video};
+    track.clips.append(addClip(QStringLiteral("fit-clip"), 1920, 1080));
+    track.clips.append(addClip(QStringLiteral("nosize-clip"), 0, 0));
+    state.project()->tracks().clear();
+    state.project()->tracks().append(track);
+    const QJsonObject clipRef{{QStringLiteral("clip"), QStringLiteral("fit-clip")}};
+    const auto cropOf = [](const QJsonObject &r) { return r.value(QStringLiteral("crop")).toObject(); };
+    const auto num = [](const QJsonObject &c, const char *k) { return c.value(QLatin1String(k)).toDouble(); };
+    const auto call = [&](QJsonObject args) {
+        const QJsonObject r = dispatcher.applyOne(QStringLiteral("set_clip_crop"), args);
+        [&] { QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact))); }();
+        return r;
+    };
+
+    QJsonObject turn = clipRef;
+    turn.insert(QStringLiteral("angle"), 5);
+    const QJsonObject fitted = call(turn);
+    QVERIFY(cropOf(fitted).value(QStringLiteral("covered")).toBool());
+    QVERIFY(num(cropOf(fitted), "w") < 1.0);
+    QCOMPARE(num(cropOf(fitted), "w"), num(cropOf(fitted), "h"));
+    QVERIFY(qAbs(num(cropOf(fitted), "x") + num(cropOf(fitted), "w") / 2 - 0.5) < 1e-9);
+    QVERIFY(qAbs(num(cropOf(fitted), "y") + num(cropOf(fitted), "h") / 2 - 0.5) < 1e-9);
+    const QJsonObject got = dispatcher.applyOne(QStringLiteral("get_clip_crop"), clipRef);
+    QVERIFY(cropOf(got).value(QStringLiteral("covered")).toBool());
+
+    // One undo step restores box and angle together.
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, QRectF(0, 0, 1, 1));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrameAngle, 0.0);
+
+    // fit:false keeps the box and leaves transparent corners.
+    QJsonObject off = turn;
+    off.insert(QStringLiteral("fit"), false);
+    const QJsonObject kept = call(off);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, QRectF(0, 0, 1, 1));
+    QVERIFY(!cropOf(kept).value(QStringLiteral("covered")).toBool());
+
+    // An explicit window wins; fit:true fits it.
+    QJsonObject full = turn;
+    full.insert(QStringLiteral("x"), 0);
+    full.insert(QStringLiteral("y"), 0);
+    full.insert(QStringLiteral("w"), 1);
+    full.insert(QStringLiteral("h"), 1);
+    const QJsonObject explicitBox = call(full);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, QRectF(0, 0, 1, 1));
+    QVERIFY(!cropOf(explicitBox).value(QStringLiteral("covered")).toBool());
+    full.insert(QStringLiteral("fit"), true);
+    const QJsonObject explicitFit = call(full);
+    QVERIFY(cropOf(explicitFit).value(QStringLiteral("covered")).toBool());
+    QVERIFY(num(cropOf(explicitFit), "w") < 1.0);
+
+    // A null box field is not an explicit box: the angle alone still fits.
+    {
+        QJsonObject withNull = turn;
+        withNull.insert(QStringLiteral("x"), QJsonValue::Null);
+        const QJsonObject r = call(withNull);
+        QVERIFY(cropOf(r).value(QStringLiteral("covered")).toBool());
+        QVERIFY(num(cropOf(r), "w") < 1.0);
+    }
+
+    // fit:null counts as absent, like a null box field: the angle alone still fits.
+    {
+        QJsonObject nullFit = turn;
+        nullFit.insert(QStringLiteral("fit"), QJsonValue::Null);
+        const QJsonObject r = call(nullFit);
+        QVERIFY(cropOf(r).value(QStringLiteral("covered")).toBool());
+        QVERIFY(num(cropOf(r), "w") < 1.0);
+    }
+
+    // A quarter-turned clip fits against the displayed (swapped) size.
+    {
+        QJsonObject orient{{QStringLiteral("clip"), QStringLiteral("fit-clip")}, {QStringLiteral("degrees"), 90}};
+        QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_orientation"), orient).value(QStringLiteral("ok")).toBool());
+        QJsonObject strip = turn;
+        strip.insert(QStringLiteral("angle"), 10);
+        strip.insert(QStringLiteral("x"), 0);
+        strip.insert(QStringLiteral("y"), 0.35);
+        strip.insert(QStringLiteral("w"), 1);
+        strip.insert(QStringLiteral("h"), 0.3);
+        strip.insert(QStringLiteral("fit"), true);
+        const QJsonObject r = call(strip);
+        QVERIFY(cropOf(r).value(QStringLiteral("covered")).toBool());
+        QVERIFY(qAbs(num(cropOf(r), "w") - 0.93) < 0.02);
+        orient.insert(QStringLiteral("degrees"), 0);
+        dispatcher.applyOne(QStringLiteral("set_clip_orientation"), orient);
+    }
+
+    // reset ignores fit.
+    QJsonObject reset = clipRef;
+    reset.insert(QStringLiteral("reset"), true);
+    reset.insert(QStringLiteral("fit"), true);
+    call(reset);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, QRectF(0, 0, 1, 1));
+
+    // Unknown source size: the angle is set, the box is not fitted, and a warning says so.
+    QJsonObject unknown{{QStringLiteral("clip"), QStringLiteral("nosize-clip")}, {QStringLiteral("angle"), 5}};
+    const QJsonObject noSize = call(unknown);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).sourceFrame, QRectF(0, 0, 1, 1));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).sourceFrameAngle, 5.0);
+    QVERIFY(noSize.contains(QStringLiteral("warning")));
+    QVERIFY(!cropOf(noSize).contains(QStringLiteral("covered")));
+}
+
 void McpTest::clipCropRoundTrip()
 {
     AssetLibrary library;
@@ -9652,6 +9779,13 @@ void McpTest::clipCropRoundTrip()
     const QJsonObject levelled = dispatcher.applyOne(QStringLiteral("set_clip_crop"), level);
     QVERIFY2(levelled.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(levelled).toJson(QJsonDocument::Compact)));
     QCOMPARE(levelled.value(QStringLiteral("crop")).toObject().value(QStringLiteral("angle")).toDouble(), -3.5);
+    {
+        // A bare angle refits the window: still covered, same pixel aspect, never larger.
+        const QJsonObject c = levelled.value(QStringLiteral("crop")).toObject();
+        QVERIFY(c.value(QStringLiteral("covered")).toBool());
+        QVERIFY(c.value(QStringLiteral("w")).toDouble() <= 0.5);
+        QCOMPARE(c.value(QStringLiteral("w")).toDouble() / c.value(QStringLiteral("h")).toDouble(), 1.0);
+    }
     QJsonObject widen = clipRef;
     widen.insert(QStringLiteral("x"), 0.0);
     const QJsonObject widened = dispatcher.applyOne(QStringLiteral("set_clip_crop"), widen);

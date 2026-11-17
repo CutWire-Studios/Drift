@@ -1,5 +1,7 @@
 #include <QtTest>
 
+#include "core/project/media/SourceFrameFit.h"
+
 #include <QColor>
 #include <QDir>
 #include <QFile>
@@ -53,6 +55,7 @@ private slots:
     void trackAudibleFollowsMixerRule();
     void muteAllButClipClearsSolo();
     void projectPathKeyKeepsUuidsAndHashesTheRest();
+    void fitCropInsideRotation();
     void imageSequencePathRoundTrip();
     void imageSequenceFpsRationals();
     void imageSequenceDisplayName();
@@ -8758,6 +8761,107 @@ void CoreTest::projectPathKeyKeepsUuidsAndHashesTheRest()
     QCOMPARE(drift::bundleMediaKey(QString(), QStringLiteral("/tmp/a.drift")), a);
     QVERIFY(a != drift::bundleMediaKey(QString(), QStringLiteral("/tmp/b.drift")));
     QCOMPARE(drift::bundleMediaKey(uuid, QStringLiteral("/tmp/a.drift")), uuid);
+}
+
+void CoreTest::fitCropInsideRotation()
+{
+    using drift::fitCropInsideRotation;
+    using drift::sourceFrameCovered;
+    const double W = 1920, H = 1080;
+    const auto sameBox = [](const QRectF &a, const QRectF &b) {
+        return qAbs(a.x() - b.x()) < 1e-9 && qAbs(a.y() - b.y()) < 1e-9
+               && qAbs(a.width() - b.width()) < 1e-9 && qAbs(a.height() - b.height()) < 1e-9;
+    };
+    const auto pxAspect = [&](const QRectF &r) { return (r.width() * W) / (r.height() * H); };
+
+    // Angle 0 is the identity.
+    QVERIFY(sameBox(fitCropInsideRotation(QRectF(0, 0, 1, 1), 0, W, H), QRectF(0, 0, 1, 1)));
+    QVERIFY(sameBox(fitCropInsideRotation(QRectF(0.25, 0.25, 0.5, 0.5), 0, W, H), QRectF(0.25, 0.25, 0.5, 0.5)));
+
+    // 3 degrees on the full frame: the box shrinks about the centre, keeps its aspect, covers.
+    {
+        const QRectF full(0, 0, 1, 1);
+        QVERIFY(!sourceFrameCovered(full, 3, W, H));
+        const QRectF fit = fitCropInsideRotation(full, 3, W, H);
+        QVERIFY(fit.width() < 1.0 && fit.height() < 1.0);
+        QVERIFY(qAbs(pxAspect(fit) - W / H) < 1e-3);
+        QVERIFY(qAbs(fit.center().x() - 0.5) < 1e-9 && qAbs(fit.center().y() - 0.5) < 1e-9);
+        QVERIFY(sourceFrameCovered(fit, 3, W, H));
+    }
+
+    // Over a spread of angles and boxes: covered, aspect kept, never larger than the base.
+    const QList<QRectF> boxes{QRectF(0, 0, 1, 1), QRectF(0.25, 0.25, 0.5, 0.5), QRectF(0.6, 0.1, 0.3, 0.3)};
+    for (const double angle : {-45.0, -10.0, -1.0, 0.5, 5.0, 30.0, 60.0}) {
+        for (const QRectF &base : boxes) {
+            const QRectF fit = fitCropInsideRotation(base, angle, W, H);
+            QVERIFY2(sourceFrameCovered(fit, angle, W, H), qPrintable(QStringLiteral("angle %1").arg(angle)));
+            QVERIFY(qAbs(pxAspect(fit) - pxAspect(base)) < 1e-3 * pxAspect(base));
+            QVERIFY(fit.width() <= base.width() + 1e-9);
+        }
+    }
+
+    // Minimal shrink: a box that already fits is returned as it is.
+    {
+        const QRectF inside(0.3, 0.3, 0.4, 0.4);
+        QVERIFY(sourceFrameCovered(inside, 2, W, H));
+        QVERIFY(sameBox(fitCropInsideRotation(inside, 2, W, H), inside));
+    }
+
+    // A thin strip along the top: fitted, covered, and not squeezed below the size floor.
+    {
+        const QRectF strip(0, 0, 1, 0.1);
+        const QRectF fit = fitCropInsideRotation(strip, 10, W, H);
+        QVERIFY(sourceFrameCovered(fit, 10, W, H));
+        QVERIFY(fit.height() >= 0.08 - 1e-3 || qAbs(fit.center().y() - 0.5) < 1e-9);
+    }
+
+    // 90 degrees on 16:9: the biggest 16:9 box inside the portrait band is 1080 x 607.5.
+    {
+        const QRectF fit = fitCropInsideRotation(QRectF(0, 0, 1, 1), 90, W, H);
+        QVERIFY(sourceFrameCovered(fit, 90, W, H));
+        QVERIFY(qAbs(fit.width() - 0.5625) < 1e-3);
+        QVERIFY(qAbs(fit.height() - 0.5625) < 1e-3);
+    }
+
+    // Quarter-turned clip (1920x1080 shown 1080x1920): the fit uses the displayed size. A centred
+    // full-width 30%-height box at 10 degrees needs a smaller scale than with the raw size.
+    {
+        const QRectF box(0, 0.35, 1, 0.3);
+        const QRectF raw = fitCropInsideRotation(box, 10, 1920, 1080);
+        const QRectF turned = fitCropInsideRotation(box, 10, 1080, 1920);
+        QVERIFY(sourceFrameCovered(turned, 10, 1080, 1920));
+        QVERIFY(!sourceFrameCovered(raw, 10, 1080, 1920));
+        QVERIFY(turned.width() < raw.width());
+        QVERIFY(qAbs(turned.width() - 0.93) < 0.02);
+    }
+
+    // Portrait, square sources and +-180.
+    for (const QSizeF &src : {QSizeF(1080, 1920), QSizeF(1000, 1000)}) {
+        for (const double angle : {-30.0, 7.0, 45.0}) {
+            const QRectF fit = fitCropInsideRotation(QRectF(0, 0, 1, 1), angle, src.width(), src.height());
+            QVERIFY(sourceFrameCovered(fit, angle, src.width(), src.height()));
+            QVERIFY(fit.width() < 1.0);
+        }
+    }
+    for (const double angle : {180.0, -180.0}) {
+        const QRectF full(0, 0, 1, 1);
+        QVERIFY(sourceFrameCovered(full, angle, W, H));
+        QVERIFY(sameBox(fitCropInsideRotation(full, angle, W, H), full));
+        const QRectF off(0.1, 0.2, 0.3, 0.4);
+        QVERIFY(sameBox(fitCropInsideRotation(off, angle, W, H), off));
+    }
+
+    // A very thin box next to the edge is not collapsed to nothing.
+    {
+        const QRectF thin(0, 0, 1, 0.002);
+        const QRectF fit = fitCropInsideRotation(thin, 5, W, H);
+        QVERIFY(sourceFrameCovered(fit, 5, W, H));
+        QVERIFY(fit.width() > 0.1 && fit.height() > 0.0005);
+    }
+
+    // Unknown source size: identity.
+    QVERIFY(sameBox(fitCropInsideRotation(QRectF(0, 0, 1, 1), 5, 0, 0), QRectF(0, 0, 1, 1)));
+    QVERIFY(sourceFrameCovered(QRectF(0, 0, 1, 1), 5, 0, 0));
 }
 
 QTEST_MAIN(CoreTest)

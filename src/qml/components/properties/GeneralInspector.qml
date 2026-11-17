@@ -21,17 +21,23 @@ Item {
         void EditorState.tracks
         return Math.max(1, EditorState.projectFile.projectHeight())
     }
+    // Displayed source size: the raw size turned by the clip's effective orientation (probed rotation
+    // plus any correction), the same one the crop window and MCP use.
+    readonly property bool sourceQuarterTurned: {
+        if (!root.hasSelection)
+            return false
+        const rot = ((Math.round(Number(root.clipData.orientation || 0)) % 360) + 360) % 360
+        return rot === 90 || rot === 270
+    }
     readonly property int sourceDisplayW: {
         if (!root.hasSelection)
             return 0
-        const rot = Math.abs(root.clipData.sourceRotation || 0) % 180
-        return rot === 90 ? (root.clipData.sourceHeight || 0) : (root.clipData.sourceWidth || 0)
+        return root.sourceQuarterTurned ? (root.clipData.sourceHeight || 0) : (root.clipData.sourceWidth || 0)
     }
     readonly property int sourceDisplayH: {
         if (!root.hasSelection)
             return 0
-        const rot = Math.abs(root.clipData.sourceRotation || 0) % 180
-        return rot === 90 ? (root.clipData.sourceWidth || 0) : (root.clipData.sourceHeight || 0)
+        return root.sourceQuarterTurned ? (root.clipData.sourceWidth || 0) : (root.clipData.sourceHeight || 0)
     }
     readonly property bool sourceFrameChanged: {
         const frame = root.currentSourceFrame()
@@ -91,6 +97,13 @@ Item {
         if (!root.hasSelection || !root.canCrop || isNaN(angle))
             return
         const frame = root.currentSourceFrame()
+        // Auto-fit (the crop window's checkbox, shared setting): keep the box inside the turned picture.
+        if (LayoutMemory.layoutNumber("crop/straightenAutoFit", 1) !== 0) {
+            const fit = EditorState.fitSourceFrameToStraighten(frame.x, frame.y, frame.width, frame.height,
+                                                               angle, root.sourceDisplayW, root.sourceDisplayH)
+            EditorState.setClipSourceFrame(root.clipData.id, fit.x, fit.y, fit.width, fit.height, angle)
+            return
+        }
         EditorState.setClipSourceFrame(root.clipData.id, frame.x, frame.y, frame.width, frame.height, angle)
     }
 

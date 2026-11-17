@@ -1,4 +1,5 @@
 #include "engine/encode/export/Exporter.h"
+#include "core/project/media/SourceFrameFit.h"
 #include "app/mcp/tools/McpCatalog.h"
 #include "app/mcp/McpDetail.h"
 #include "app/jobs/vision/SceneDetectController.h"
@@ -1864,6 +1865,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             return ok(clipFeedback(ref, {{QStringLiteral("crop"), crop}}));
 
         double x = 0, y = 0, w = 1, h = 1, angle = 0;
+        QString warning;
         if (!jsonBool(args.value(QStringLiteral("reset")))) {
             const QJsonValue turn = args.value(QStringLiteral("angle"));
             if (!turn.isUndefined() && !turn.isNull() && !turn.isDouble())
@@ -1889,10 +1891,39 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             h = field("h", crop.value(QStringLiteral("h")).toDouble(), sy);
             if (!(w > 0) || !(h > 0))
                 return err("bad_args", QStringLiteral("w and h must be > 0"));
+
+            // Keep the window inside the turned picture. Default: on when only the angle is given
+            // (an explicit window is the caller's choice); `fit` overrides either way.
+            const auto given = [&](const char *key) {
+                const QJsonValue v = args.value(QLatin1String(key));
+                return !v.isUndefined() && !v.isNull();
+            };
+            const bool boxGiven = given("x") || given("y") || given("w") || given("h");
+            const bool fit = given("fit")
+                                 ? jsonBool(args.value(QStringLiteral("fit")))
+                                 : (!boxGiven && !std::isnan(angle));
+            const double finalAngle = std::isnan(angle) ? crop.value(QStringLiteral("angle")).toDouble() : angle;
+            if (fit && drift::normalizedSourceAngle(finalAngle) != 0.0) {
+                const double sw = crop.value(QStringLiteral("sourceWidth")).toDouble();
+                const double sh = crop.value(QStringLiteral("sourceHeight")).toDouble();
+                if (sw > 0 && sh > 0) {
+                    const QRectF fitted = drift::fitCropInsideRotation(
+                        drift::normalizedSourceFrame(x, y, w, h), drift::normalizedSourceAngle(finalAngle), sw, sh);
+                    x = fitted.x();
+                    y = fitted.y();
+                    w = fitted.width();
+                    h = fitted.height();
+                } else {
+                    warning = QStringLiteral("source size unknown; box not fitted");
+                }
+            }
         }
         if (!m_controller->setClipSourceFrame(ref.id, x, y, w, h, angle))
             return err("failed", QStringLiteral("could not crop %1").arg(ref.id));
-        return ok(clipFeedback(ref, {{QStringLiteral("crop"), m_controller->mcp()->clipCrop(ref.track, ref.clip)}}));
+        QJsonObject extra{{QStringLiteral("crop"), m_controller->mcp()->clipCrop(ref.track, ref.clip)}};
+        if (!warning.isEmpty())
+            extra.insert(QStringLiteral("warning"), warning);
+        return ok(clipFeedback(ref, extra));
     }
 
     if (tool == QLatin1String("set_blend_mode")) {
