@@ -23,6 +23,7 @@ private slots:
     void emptyGeometryKeepsThePreviousOne();
     void panelFractionRoundTrip();
     void panelFractionRejectsOutOfBandValues();
+    void cropAutoFitSettingPersists();
 
 private:
     QString m_org;
@@ -139,6 +140,18 @@ void LayoutStoreTest::panelFractionRejectsOutOfBandValues()
     // And a value already on disk from an older build is discarded on read.
     QSettings().setValue(QStringLiteral("ui/layout/landscape/properties"), 0.99);
     QCOMPARE(store.panelFraction(QStringLiteral("landscape/properties"), 0.25), 0.25);
+}
+
+void LayoutStoreTest::cropAutoFitSettingPersists()
+{
+    // The crop window's Auto-fit checkbox: on until the user turns it off, then remembered by a
+    // fresh store (a new session) until turned on again.
+    const QString key = QStringLiteral("crop/straightenAutoFit");
+    QCOMPARE(LayoutStore().layoutNumber(key, 1), 1.0);
+    LayoutStore().setLayoutNumber(key, 0);
+    QCOMPARE(LayoutStore().layoutNumber(key, 1), 0.0);
+    LayoutStore().setLayoutNumber(key, 1);
+    QCOMPARE(LayoutStore().layoutNumber(key, 0), 1.0);
 }
 
 QTEST_MAIN(LayoutStoreTest)

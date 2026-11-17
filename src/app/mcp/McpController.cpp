@@ -1,3 +1,4 @@
+#include "core/project/media/SourceFrameFit.h"
 #include "app/mcp/McpController.h"
 #include "app/bin/MediaBinController.h"
 #include "core/project/media/ImageSequence.h"
@@ -762,6 +763,8 @@ QJsonObject McpController::clipCrop(int trackIndex, int clipIndex) const
         if (sw > 0 && sh > 0) {
             out.insert(QStringLiteral("sourceWidth"), sw);
             out.insert(QStringLiteral("sourceHeight"), sh);
+            out.insert(QStringLiteral("covered"),
+                       drift::sourceFrameCovered(frame, clip.sourceFrameAngle, sw, sh));
             out.insert(QStringLiteral("pixels"),
                        QJsonObject{{QStringLiteral("x"), qRound(frame.x() * sw)},
                                    {QStringLiteral("y"), qRound(frame.y() * sh)},

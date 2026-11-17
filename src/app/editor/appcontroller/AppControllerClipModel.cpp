@@ -1,3 +1,4 @@
+#include "core/project/media/SourceFrameFit.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/packages/procedurals/ProceduralCatalog.h"
@@ -1621,6 +1622,17 @@ bool AppController::setClipSourceFrame(const QString &clipId, double x, double y
         }
     }
     return false;
+}
+
+QVariantMap AppController::fitSourceFrameToStraighten(double x, double y, double w, double h, double angle,
+                                                      int srcW, int srcH) const
+{
+    const QRectF base = drift::normalizedSourceFrame(x, y, w, h);
+    const QRectF fit = drift::fitCropInsideRotation(base, drift::normalizedSourceAngle(angle), srcW, srcH);
+    return {{QStringLiteral("x"), fit.x()},
+            {QStringLiteral("y"), fit.y()},
+            {QStringLiteral("width"), fit.width()},
+            {QStringLiteral("height"), fit.height()}};
 }
 
 int AppController::assetIndexForClip(const drift::Clip &clip) const

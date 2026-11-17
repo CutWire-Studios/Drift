@@ -287,7 +287,9 @@
           "Read a video or image clip's crop. Returns crop: {x, y, w, h} as fractions 0..1 of the "
           "displayed (rotation-corrected) source, angle (straighten, degrees clockwise), cropped "
           "false for the full, unturned frame, and, when the "
-          "source size is known, sourceWidth/sourceHeight and the same window in source pixels. The "
+          "source size is known, sourceWidth/sourceHeight, the same window in source pixels, and "
+          "covered (true when every point of the window shows picture, false when a straighten "
+          "leaves transparent corners in it). The "
           "top-level positionX/positionY/scaleX/scaleY/frameW/frameH/box are the clip's canvas placement, not the crop.",
           objectSchema(clipRefProps()),
           true, false, true },
@@ -297,8 +299,12 @@
           "source size (see get_clip_crop). Omitted fields keep their current value; reset: true "
           "restores the full, unturned frame. angle straightens: the picture turns clockwise by that "
           "many degrees about its centre (negative = anticlockwise) and the window is cut from the "
-          "turned picture, so a tilted horizon can be levelled; corners the turned picture does not "
-          "reach are transparent, so shrink w/h to hide them. Omit angle to keep the current one. "
+          "turned picture, so a tilted horizon can be levelled. When angle is given without x/y/w/h, "
+          "the window is refit to stay inside the turned picture: it keeps its centre and aspect and "
+          "shrinks only as much as it must (fit, default true then; false keeps the window as is and "
+          "leaves transparent corners). With an explicit window, fit defaults to false; fit: true "
+          "fits that window. Turning back to 0 does not regrow the window: pass the window or reset. "
+          "Omit angle to keep the current one. "
           "The window is clamped inside the source. The clip's frame "
           "(its fit size) follows the new crop's aspect, the way the inspector does it. Does not crop "
           "the project canvas (apply_canvas_crop). Returns crop as get_clip_crop does.",
@@ -311,7 +317,8 @@
                                     propWithDefault(enumProp(QStringLiteral("Units of x/y/w/h"),
                                                              {QStringLiteral("normalized"), QStringLiteral("pixels")}),
                                                     QStringLiteral("normalized"))},
-                                   {QStringLiteral("reset"), boolProp(QStringLiteral("Restore the full frame; ignores x/y/w/h/angle"))}},
+                                   {QStringLiteral("fit"), boolProp(QStringLiteral("Refit the window inside the turned picture; default true when only angle is given"))},
+                                   {QStringLiteral("reset"), boolProp(QStringLiteral("Restore the full frame; ignores x/y/w/h/angle/fit"))}},
                                   clipRefProps())) },
         { "set_blend_mode", "canvas", "Blend a clip onto the layers below",
           "Set how the clip composites over the layers below it. Unrecognised values silently fall back "
