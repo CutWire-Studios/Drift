@@ -28,6 +28,9 @@ void ensureRegistered()
         registerControlNodes();
         registerColorNodes();
         registerGradeNodes();
+        registerDistortNodes();
+        registerKitDistortNodes();
+        registerThreeNodes();
         registerMixNodes();
         registerMathNodes();
         registerOutputNodes();

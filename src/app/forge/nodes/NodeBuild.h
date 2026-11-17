@@ -49,6 +49,17 @@ inline InputDef floatIn(const char *id, const char *label, double def, double mi
     return i;
 }
 
+inline InputDef clockIn(const char *id, const char *label)
+{
+    InputDef i;
+    i.id = S(id);
+    i.label = S(label);
+    i.type = SocketType::Float;
+    i.defaultValue = 0;
+    i.clock = true;
+    return i;
+}
+
 inline InputDef vecIn(const char *id, const char *label, double x, double y, double min, double max)
 {
     InputDef i;
