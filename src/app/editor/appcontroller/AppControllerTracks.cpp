@@ -557,6 +557,34 @@ QVariantList AppController::adjustmentLanes(int trackIndex) const
     return out;
 }
 
+QString AppController::localizedTrackLabel(const drift::Track &track) const
+{
+    if (!track.name.isEmpty())
+        return track.name;
+    if (track.isCameraLayer())
+        return tr("Camera");
+    if (track.isAdjustmentLane()) {
+        const drift::AdjustmentKind kind = track.clips.isEmpty() ? drift::AdjustmentKind::VideoEffects
+                                                                 : track.clips.first().adjustmentKind;
+        return kind == drift::AdjustmentKind::AudioEffects ? tr("Audio FX")
+               : kind == drift::AdjustmentKind::Mask       ? tr("Mask")
+                                                           : tr("Effects");
+    }
+    if (track.number <= 0)
+        return drift::trackDefaultLabel(track);
+    if (track.isTransformLayer())
+        return tr("Transform %1").arg(track.number);
+    switch (track.type) {
+    case drift::TrackType::Video: return tr("Video %1").arg(track.number);
+    case drift::TrackType::Audio: return tr("Audio %1").arg(track.number);
+    case drift::TrackType::Text: return tr("Text %1").arg(track.number);
+    case drift::TrackType::Subtitle: return tr("Subtitle %1").arg(track.number);
+    case drift::TrackType::Shape: return tr("Graphic %1").arg(track.number);
+    case drift::TrackType::Adjustment: return tr("Adjustment %1").arg(track.number);
+    }
+    return drift::trackDefaultLabel(track);
+}
+
 QString AppController::adjustmentLaneKind(int laneIndex) const
 {
     if (laneIndex < 0 || laneIndex >= m_project.tracks().size())

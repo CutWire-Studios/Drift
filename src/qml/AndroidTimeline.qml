@@ -125,6 +125,11 @@ Item {
             icon.name: Theme.icons.chevronsRightLeft
             onTriggered: EditorState.closeGap(root.gapMenuTrack, root.gapMenuStart)
         }
+        ThemedMenuItem {
+            text: qsTr("Close gap on all tracks")
+            icon.name: Theme.icons.chevronsRightLeft
+            onTriggered: EditorState.closeGapOnAllTracks(root.gapMenuTrack, root.gapMenuStart)
+        }
     }
 
     ThemedDialog {

@@ -257,6 +257,7 @@ private slots:
     void sliceClipToTimelineRangeKeepsSourceInSync();
     void rippleGroupsFollowLinksAcrossTracks();
     void closeRippleRangesShiftsEachGroupOnce();
+    void closeGapOnEmptyTracksMovesEveryFreeTrack();
     void clipLabelsRoundTripAndNumberCopies();
     void diffProjectsReportsClipChanges();
 };
@@ -7837,6 +7838,86 @@ void CoreTest::rippleGroupsFollowLinksAcrossTracks()
     QVERIFY(drift::rippleTracks(project, {0}, 0, drift::secondsToUs(1),
                                 {QStringLiteral("a"), QStringLiteral("b"), QStringLiteral("c")})
                 .isEmpty());
+}
+
+// An all-tracks close moves every track that is empty over the gap by its full width; a track with a
+// clip in the gap, or a locked one, stays and is reported.
+void CoreTest::closeGapOnEmptyTracksMovesEveryFreeTrack()
+{
+    const auto sec = [](double v) { return drift::secondsToUs(v); };
+    drift::Project project;
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.clips = {rippleClip("a", 0, 10), rippleClip("b", 12, 2)};
+    drift::Track a1{.type = drift::TrackType::Audio};
+    a1.clips = {rippleClip("m1", 0, 10), rippleClip("m2", 12, 8)};
+    drift::Track a2{.type = drift::TrackType::Audio};
+    a2.clips = {rippleClip("span", 9, 4), rippleClip("tail", 15, 1)};
+    drift::Track t1{.type = drift::TrackType::Text};
+    t1.locked = true;
+    t1.clips = {rippleClip("t", 13, 1)};
+    drift::Track adj{.type = drift::TrackType::Adjustment};
+    adj.clips = {rippleClip("g", 12, 1)};
+    // A nested lane's pinned clip sits in the gap; it neither blocks nor moves.
+    drift::Track lane{.type = drift::TrackType::Adjustment};
+    lane.adjustmentScope = drift::AdjustmentScope::ParentTrack;
+    lane.parentTrackId = QStringLiteral("p");
+    drift::Clip pinned = rippleClip("pin", 10.5, 1);
+    pinned.linkedClipId = QStringLiteral("a");
+    lane.clips = {pinned};
+    project.tracks() = {v1, a1, a2, t1, adj, lane};
+
+    drift::EmptyTracksGapClose result;
+    QVERIFY(drift::closeGapOnEmptyTracks(project, 0, sec(10), sec(12), &result));
+    QCOMPARE(rippleStart(project, "b"), 10.0);
+    QCOMPARE(rippleStart(project, "m2"), 10.0);
+    QCOMPARE(rippleStart(project, "g"), 10.0);
+    QCOMPARE(rippleStart(project, "tail"), 15.0);
+    QCOMPARE(rippleStart(project, "t"), 13.0);
+    QCOMPARE(rippleStart(project, "span"), 9.0);
+    QCOMPARE(rippleStart(project, "pin"), 10.5);
+    QCOMPARE(result.movedTracks, (QList<int>{0, 1, 4}));
+    QCOMPARE(result.skipped.size(), 2);
+    QCOMPARE(result.skipped.at(0).track, 2);
+    QCOMPARE(result.skipped.at(0).reason, QStringLiteral("clip_in_gap"));
+    QCOMPARE(result.skipped.at(0).blocker, QStringLiteral("span"));
+    QCOMPARE(result.skipped.at(1).track, 3);
+    QCOMPARE(result.skipped.at(1).reason, QStringLiteral("locked"));
+
+    // A linked group with a clip in the gap on one track stays as a whole, the other track reported.
+    drift::Project linked;
+    drift::Track lv1{.type = drift::TrackType::Video};
+    lv1.clips = {rippleClip("a", 0, 10), rippleClip("b", 12, 2)};
+    drift::Track lv2{.type = drift::TrackType::Video};
+    lv2.clips = {rippleClip("x", 12, 2, "L")};
+    drift::Track la3{.type = drift::TrackType::Audio};
+    la3.clips = {rippleClip("z", 10.5, 0.5), rippleClip("y", 12, 2, "L")};
+    linked.tracks() = {lv1, lv2, la3};
+    drift::EmptyTracksGapClose linkedResult;
+    QVERIFY(drift::closeGapOnEmptyTracks(linked, 0, sec(10), sec(12), &linkedResult));
+    QCOMPARE(rippleStart(linked, "b"), 10.0);
+    QCOMPARE(rippleStart(linked, "x"), 12.0);
+    QCOMPARE(rippleStart(linked, "y"), 12.0);
+    QCOMPARE(linkedResult.movedTracks, (QList<int>{0}));
+    QCOMPARE(linkedResult.skipped.size(), 2);
+    QCOMPARE(linkedResult.skipped.at(0).track, 1);
+    QCOMPARE(linkedResult.skipped.at(0).reason, QStringLiteral("linked"));
+    QCOMPARE(linkedResult.skipped.at(1).track, 2);
+    QCOMPARE(linkedResult.skipped.at(1).reason, QStringLiteral("clip_in_gap"));
+
+    // The origin's own group cannot close: false, nothing changed, and the reason says why.
+    drift::Track ov{.type = drift::TrackType::Video};
+    ov.clips = {rippleClip("a", 0, 10), rippleClip("b", 12, 2, "L")};
+    drift::Track oa{.type = drift::TrackType::Audio};
+    oa.clips = {rippleClip("z", 10.5, 0.5), rippleClip("y", 12, 2, "L")};
+    drift::Project origin;
+    origin.tracks() = {ov, oa};
+    drift::GapTrackSkip why;
+    drift::EmptyTracksGapClose none;
+    QVERIFY(!drift::closeGapOnEmptyTracks(origin, 0, sec(10), sec(12), &none, &why));
+    QCOMPARE(why.reason, QStringLiteral("clip_in_gap"));
+    QCOMPARE(why.blocker, QStringLiteral("z"));
+    QCOMPARE(rippleStart(origin, "b"), 12.0);
+    QCOMPARE(rippleStart(origin, "y"), 12.0);
 }
 
 void CoreTest::closeRippleRangesShiftsEachGroupOnce()

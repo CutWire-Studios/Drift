@@ -545,6 +545,11 @@ private slots:
     void clipsModelInsertsAndRemovesWithoutReset();
     void clipsModelDerivesGapsAndOverlaps();
     void closeGapBeforeFirstClipMovesTrackToStart();
+    void closeGapOnAllTracksKeepsUnlinkedAudioInSync();
+    void closeGapOnAllTracksReportsBlockedAndLockedTracks();
+    void closeGapOnAllTracksActsOnOpenTimelineOnly();
+    void closeGapOnAllTracksFindsAClipEndingOnTheGapStart();
+    void closeGapOnAllTracksRefusesWithNamesAndChangesNothing();
     void timelineLayoutCullsTilesAndHits();
     void trackItemOverlaysFollowSelection();
     void trackItemExposesDrawnClipsToAccessibility();
@@ -15143,6 +15148,196 @@ void EditorStateTest::closeGapBeforeFirstClipMovesTrackToStart()
     state.undo();
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(1.5));
     QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(5.0));
+}
+
+namespace {
+drift::Clip gapClip(const char *id, double start, double dur, drift::ClipType type = drift::ClipType::Video)
+{
+    drift::Clip clip;
+    clip.id = QString::fromLatin1(id);
+    clip.type = type;
+    clip.timelineStart = drift::secondsToUs(start);
+    clip.timelineDuration = drift::secondsToUs(dur);
+    clip.srcOut = clip.timelineDuration;
+    return clip;
+}
+double gapClipStart(const drift::Project &project, const char *id)
+{
+    for (const drift::Track &track : project.tracks())
+        for (const drift::Clip &clip : track.clips)
+            if (clip.id == QLatin1String(id))
+                return drift::usToSeconds(clip.timelineStart);
+    return -1;
+}
+} // namespace
+
+// Music on an unlinked track keeps its timing against the video when the video's gap closes.
+void EditorStateTest::closeGapOnAllTracksKeepsUnlinkedAudioInSync()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.number = 1;
+    v1.clips = {gapClip("a", 0, 2), gapClip("b", 4, 2)};
+    drift::Track a1{.type = drift::TrackType::Audio};
+    a1.number = 1;
+    a1.clips = {gapClip("m1", 0, 2, drift::ClipType::Audio), gapClip("m2", 4, 5, drift::ClipType::Audio)};
+    state.project()->tracks() = {v1, a1};
+    state.notifyTracksChanged();
+
+    state.closeGapOnAllTracks(0, 2.0);
+    QCOMPARE(gapClipStart(*state.project(), "b"), 2.0);
+    QCOMPARE(gapClipStart(*state.project(), "m2"), 2.0);
+    QCOMPARE(state.lastMessage(), QStringLiteral("Gap closed on 2 track(s)"));
+
+    state.undo();
+    QCOMPARE(gapClipStart(*state.project(), "b"), 4.0);
+    QCOMPARE(gapClipStart(*state.project(), "m2"), 4.0);
+}
+
+void EditorStateTest::closeGapOnAllTracksReportsBlockedAndLockedTracks()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.number = 1;
+    v1.clips = {gapClip("a", 0, 2), gapClip("b", 4, 2)};
+    drift::Track a2{.type = drift::TrackType::Audio};
+    a2.number = 2;
+    a2.clips = {gapClip("span", 1, 4, drift::ClipType::Audio), gapClip("tail", 7, 1, drift::ClipType::Audio)};
+    drift::Track v2{.type = drift::TrackType::Video};
+    v2.number = 2;
+    v2.locked = true;
+    v2.clips = {gapClip("held", 5, 1)};
+    v1.id = QStringLiteral("t-v1");
+    a2.id = QStringLiteral("t-a2");
+    v2.id = QStringLiteral("t-v2");
+    state.project()->tracks() = {v1, a2, v2};
+    state.notifyTracksChanged();
+
+    state.closeGapOnAllTracks(0, 2.0);
+    QCOMPARE(gapClipStart(*state.project(), "b"), 2.0);
+    QCOMPARE(gapClipStart(*state.project(), "tail"), 7.0);
+    QCOMPARE(gapClipStart(*state.project(), "held"), 5.0);
+    QCOMPARE(state.lastMessage(), QStringLiteral("Gap closed on 1 track(s). Not moved: Audio 2, Video 2"));
+}
+
+// 8.04 s is 8039999 us once truncated to microseconds; the clip ends at exactly 8040000.
+void EditorStateTest::closeGapOnAllTracksFindsAClipEndingOnTheGapStart()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    const auto clipUs = [](const char *id, drift::TimeUs start, drift::TimeUs dur, drift::ClipType type) {
+        drift::Clip clip;
+        clip.id = QString::fromLatin1(id);
+        clip.type = type;
+        clip.timelineStart = start;
+        clip.timelineDuration = dur;
+        clip.srcOut = dur;
+        return clip;
+    };
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.number = 1;
+    v1.clips = {clipUs("a", 0, 8'040'000, drift::ClipType::Video),
+                clipUs("b", 10'000'000, 2'000'000, drift::ClipType::Video)};
+    drift::Track a1{.type = drift::TrackType::Audio};
+    a1.number = 1;
+    a1.clips = {clipUs("m", 10'000'000, 3'000'000, drift::ClipType::Audio)};
+    state.project()->tracks() = {v1, a1};
+    state.notifyTracksChanged();
+
+    state.closeGapOnAllTracks(0, 8.04);
+    QCOMPARE(state.lastMessage(), QStringLiteral("Gap closed on 2 track(s)"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::TimeUs(8'040'000));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::TimeUs(8'040'000));
+
+    // Also from a millisecond-rounded copy of the end (an MCP reply): 8.04 -> same, 2.033 -> 2033333.
+    state.undo();
+    state.project()->tracks()[0].clips[0].timelineDuration = 2'033'333;
+    state.project()->tracks()[0].clips[0].srcOut = 2'033'333;
+    state.notifyTracksChanged();
+    state.closeGapOnAllTracks(0, 2.033);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::TimeUs(2'033'333));
+}
+
+// The status line names tracks and clips; a refusal changes nothing and leaves no undo step.
+void EditorStateTest::closeGapOnAllTracksRefusesWithNamesAndChangesNothing()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.number = 1;
+    v1.clips = {gapClip("a", 0, 2), gapClip("b", 4, 2)};
+    state.project()->tracks() = {v1};
+    state.notifyTracksChanged();
+    const int steps = int(state.undoHistory().size());
+    const auto unchanged = [&] {
+        QCOMPARE(gapClipStart(*state.project(), "b"), 4.0);
+        QCOMPARE(int(state.undoHistory().size()), steps);
+    };
+
+    // Locked origin: the track's label, not "Track 0".
+    state.project()->tracks()[0].locked = true;
+    state.closeGapOnAllTracks(0, 2.0);
+    QCOMPARE(state.lastMessage(), QStringLiteral("Video 1 is locked"));
+    unchanged();
+    state.project()->tracks()[0].locked = false;
+
+    // A clip in the gap on the origin's own group: the clip's name, and the track's label.
+    state.project()->tracks()[0].clips[1].name = QStringLiteral("Interview");
+    state.project()->tracks()[0].clips[0].timelineDuration = drift::secondsToUs(3.0);
+    state.project()->tracks()[0].clips[1].timelineStart = drift::secondsToUs(4.0);
+    drift::Track a1{.type = drift::TrackType::Audio};
+    a1.number = 1;
+    drift::Clip over = gapClip("over", 1, 4, drift::ClipType::Audio);
+    over.name = QStringLiteral("Voice");
+    over.linkId = QStringLiteral("pair");
+    a1.clips = {over};
+    state.project()->tracks()[0].clips[0].linkId = QStringLiteral("pair");
+    state.project()->tracks().append(a1);
+    state.notifyTracksChanged();
+    state.closeGapOnAllTracks(0, 3.0);
+    QVERIFY2(state.lastMessage().contains(QStringLiteral("Voice")) || state.lastMessage().contains(QStringLiteral("Audio 1")),
+             qPrintable(state.lastMessage()));
+    QVERIFY(!state.lastMessage().contains(QStringLiteral("over")));
+    QVERIFY(!state.lastMessage().contains(QStringLiteral("Track 0")));
+    unchanged();
+
+    // An adjustment track is never the origin (close_gaps refuses it too).
+    drift::Track fx{.type = drift::TrackType::Adjustment};
+    fx.number = 1;
+    fx.clips = {gapClip("g1", 0, 1, drift::ClipType::Adjustment), gapClip("g2", 3, 1, drift::ClipType::Adjustment)};
+    state.project()->tracks().append(fx);
+    state.notifyTracksChanged();
+    state.closeGapOnAllTracks(int(state.project()->tracks().size()) - 1, 1.0);
+    QVERIFY2(state.lastMessage().contains(QStringLiteral("adjustment track")), qPrintable(state.lastMessage()));
+    QVERIFY(!state.lastMessage().contains(QStringLiteral("Track ")));
+    unchanged();
+}
+
+void EditorStateTest::closeGapOnAllTracksActsOnOpenTimelineOnly()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.notifyTracksChanged();
+    state.newTimeline();
+    QVERIFY(!state.activeSequenceId().isEmpty());
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.number = 1;
+    v1.clips = {gapClip("ca", 0, 2), gapClip("cb", 4, 2)};
+    drift::Track a1{.type = drift::TrackType::Audio};
+    a1.number = 1;
+    a1.clips = {gapClip("cm", 4, 3, drift::ClipType::Audio)};
+    state.project()->tracks() = {v1, a1};
+    state.notifyTracksChanged();
+
+    state.closeGapOnAllTracks(0, 2.0);
+    QCOMPARE(gapClipStart(*state.project(), "cb"), 2.0);
+    QCOMPARE(gapClipStart(*state.project(), "cm"), 2.0);
+    state.openSequence(QString());
+    QCOMPARE(gapClipStart(*state.project(), "clip-0"), 0.0);
+    QCOMPARE(gapClipStart(*state.project(), "clip-1"), 2.0);
 }
 
 void EditorStateTest::clipsModelDerivesGapsAndOverlaps()

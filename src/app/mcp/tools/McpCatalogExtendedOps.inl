@@ -1672,9 +1672,16 @@
           "the first clip, which moves the track to the start of the timeline). Linked A/V partners "
           "follow. With overlap off this is how you delete without leaving a hole, or how you put an "
           "intro at the front: place then close_gap behind. When moving several clips toward zero with "
-          "overlap off, sequence back-to-front or each move is pushed into the clip ahead.",
+          "overlap off, sequence back-to-front or each move is pushed into the clip ahead. "
+          "With all_tracks:true, every track that is empty over the gap closes it too, so unlinked "
+          "audio, titles and layers keep their timing. A track with a clip in the gap stays (with the "
+          "tracks linked to it), as does a locked track. The reply lists moved_tracks, "
+          "skipped_tracks:[{track, reason: clip_in_gap|locked|linked, blocker}] and moved:[{id, start}]. "
+          "Refused (nothing changes) when this track's own group cannot close, or when it is an "
+          "adjustment track. `at` within a millisecond of a clip's end counts as that end.",
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
-                        {QStringLiteral("at"), numberProp(QStringLiteral("Left edge of the hole, timeline seconds"))}},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Left edge of the hole, timeline seconds"))},
+                        {QStringLiteral("all_tracks"), boolProp(QStringLiteral("Also close the gap on every other track that is empty over it"))}},
                        {QStringLiteral("track"), QStringLiteral("at")}) },
         { "close_gaps", "timeline", "Close every hole on a track",
           "Close every gap on `track` within [from, to] (seconds; default the whole track) in one undo "
@@ -1683,10 +1690,13 @@
           "stays in sync. A gap that a clip on such a track sits in (or whose close would drag "
           "an earlier linked clip along, or past 0) is left open and listed in skipped with that clip; "
           "a locked track or an adjustment track refuses the op. Returns closed:[{at, width}] and "
-          "skipped:[{at, width, blocker}] at their positions before the op, and moved:[{id, start}].",
+          "skipped:[{at, width, blocker}] at their positions before the op, and moved:[{id, start}]. "
+          "all_tracks:true closes each gap on every track that is empty over it as well; moved_tracks "
+          "and skipped_tracks:[{track, at, reason, blocker}] are added to the reply.",
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                         {QStringLiteral("from"), numberProp(QStringLiteral("Only gaps starting at or after this time (seconds)"))},
-                        {QStringLiteral("to"), numberProp(QStringLiteral("Only gaps ending at or before this time (seconds)"))}},
+                        {QStringLiteral("to"), numberProp(QStringLiteral("Only gaps ending at or before this time (seconds)"))},
+                        {QStringLiteral("all_tracks"), boolProp(QStringLiteral("Also close each gap on every other track that is empty over it"))}},
                        {QStringLiteral("track")}) },
         { "set_snap", "timeline", "Turn magnetic snapping on or off",
           "Editor snap-to-clips/beats/bookmarks. Not undoable.",

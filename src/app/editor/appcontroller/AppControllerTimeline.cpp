@@ -3107,7 +3107,8 @@ bool AppController::rippleResizedClip(const drift::Project &before, int trackInd
     return true;
 }
 
-AppController::GapCloseResult AppController::closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs)
+AppController::GapCloseResult AppController::closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs,
+                                                                bool allTracks)
 {
     GapCloseResult result;
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size()) {
@@ -3148,7 +3149,18 @@ AppController::GapCloseResult AppController::closeGapsRippled(int trackIndex, dr
         QString blocker;
         QStringList moved;
         const drift::Project prior = m_project;
-        bool closed = drift::closeRippleRanges(m_project, {{trackIndex, gap.first, gap.second}}, &blocker, &moved);
+        bool closed = false;
+        drift::EmptyTracksGapClose all;
+        if (allTracks) {
+            drift::GapTrackSkip originSkip;
+            closed = drift::closeGapOnEmptyTracks(m_project, trackIndex, gap.first, gap.second, &all, &originSkip);
+            if (!closed)
+                blocker = originSkip.blocker;
+            else
+                moved = all.moved;
+        } else {
+            closed = drift::closeRippleRanges(m_project, {{trackIndex, gap.first, gap.second}}, &blocker, &moved);
+        }
         if (closed) {
             // A clip before the gap linked to one after it moves too and leaves the hole open (and
             // the earlier gaps' positions stale): that gap stays, with the linked clip as blocker.
@@ -3166,13 +3178,23 @@ AppController::GapCloseResult AppController::closeGapsRippled(int trackIndex, dr
             if (!closed)
                 m_project = prior;
         }
-        if (closed)
+        if (closed) {
             result.closed.prepend({gap.first, gap.second - gap.first});
-        else
+            for (const int t : std::as_const(all.movedTracks))
+                if (!result.movedTracks.contains(t))
+                    result.movedTracks.append(t);
+            // Gaps are walked from the last, so this gap's skips go in front, in track order.
+            QList<QPair<drift::TimeUs, drift::GapTrackSkip>> gapSkips;
+            for (const drift::GapTrackSkip &skip : std::as_const(all.skipped))
+                gapSkips.append({gap.first, skip});
+            result.skippedTracks = gapSkips + result.skippedTracks;
+        } else {
             result.skipped.prepend({{gap.first, gap.second - gap.first}, blocker});
+        }
     }
     if (result.closed.isEmpty())
         return result;
+    std::sort(result.movedTracks.begin(), result.movedTracks.end());
     syncOverlapTransitions(m_project);
     pushProjectEdit(before, tr("Gaps closed"));
     finishEdit(tr("Gaps closed"));
@@ -3241,6 +3263,145 @@ QStringList movedSince(const drift::Project &before, const drift::Project &after
 }
 
 } // namespace
+
+AppController::GapCloseResult AppController::closeGapAllTracksAt(int trackIndex, drift::TimeUs gapStartUs)
+{
+    GapCloseResult result;
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size()) {
+        result.error = QStringLiteral("No such track");
+        return result;
+    }
+    // Same rule as closeGapsRippled: an adjustment track (a nested lane included) is never the
+    // origin; its clips follow the clips they apply to.
+    if (m_project.tracks().at(trackIndex).isAdjustment()) {
+        result.error = QStringLiteral("Track %1 is an adjustment track; its clips follow the clips they apply to")
+                           .arg(trackIndex);
+        result.uiError = tr("%1 is an adjustment track; its clips follow the clips they apply to")
+                             .arg(localizedTrackLabel(m_project.tracks().at(trackIndex)));
+        return result;
+    }
+    // Snapshot before taking any non-const reference into m_project (copy-on-write).
+    const drift::Project before = m_project;
+    // A gap start that came through seconds can be a microsecond off the clip's end (the callers
+    // round to the microsecond, a reply carries milliseconds): an origin clip ending within a
+    // millisecond of it is where the gap starts.
+    {
+        constexpr drift::TimeUs kSnapUs = 1000;
+        drift::TimeUs snapped = gapStartUs;
+        drift::TimeUs best = kSnapUs + 1;
+        for (const drift::Clip &clip : before.tracks().at(trackIndex).clips) {
+            const drift::TimeUs off = qAbs(clip.timelineEnd() - gapStartUs);
+            if (off <= kSnapUs && off < best) {
+                best = off;
+                snapped = clip.timelineEnd();
+            }
+        }
+        if (best <= kSnapUs)
+            gapStartUs = snapped;
+    }
+    bool foundNext = false;
+    drift::TimeUs nextStart = 0;
+    bool spanned = false;
+    for (const drift::Clip &clip : before.tracks().at(trackIndex).clips) {
+        if (clip.timelineStart < gapStartUs && clip.timelineEnd() > gapStartUs)
+            spanned = true;
+        if (clip.timelineStart < gapStartUs)
+            continue;
+        if (!foundNext || clip.timelineStart < nextStart) {
+            nextStart = clip.timelineStart;
+            foundNext = true;
+        }
+    }
+    if (!foundNext || spanned || nextStart <= gapStartUs) {
+        result.error = tr("No gap at %1 s").arg(drift::usToSeconds(gapStartUs), 0, 'f', 2);
+        return result;
+    }
+
+    // Track and clip names for the status line; ids stay in `error` for agents.
+    const auto trackLabel = [this, &before](int t) {
+        return t >= 0 && t < before.tracks().size() ? localizedTrackLabel(before.tracks().at(t))
+                                                    : QString::number(t);
+    };
+    const auto clipLabel = [this, &before](const QString &id) {
+        for (const drift::Track &track : before.tracks())
+            for (const drift::Clip &clip : track.clips)
+                if (clip.id == id)
+                    return clip.name.isEmpty() ? tr("a clip") : clip.name;
+        return id;
+    };
+    const auto refuse = [&](const QString &reason, const QString &blocker, int track) {
+        m_project = before;
+        if (reason == QLatin1String("locked")) {
+            result.error = tr("Track %1 is locked").arg(track);
+            result.uiError = tr("%1 is locked").arg(trackLabel(track));
+        } else if (reason == QLatin1String("clip_in_gap")) {
+            result.error = tr("Clip %1 sits in the gap on track %2").arg(blocker).arg(track);
+            result.uiError = tr("%1 sits in the gap on %2").arg(clipLabel(blocker), trackLabel(track));
+        } else {
+            result.error = tr("Closing would push clip %1 onto another").arg(blocker);
+            result.uiError = tr("Closing would push %1 onto another clip").arg(clipLabel(blocker));
+        }
+    };
+
+    drift::EmptyTracksGapClose close;
+    drift::GapTrackSkip originSkip;
+    if (!drift::closeGapOnEmptyTracks(m_project, trackIndex, gapStartUs, nextStart, &close, &originSkip)) {
+        refuse(originSkip.reason, originSkip.blocker, originSkip.track);
+        return result;
+    }
+    // A clip before the gap that is linked to one after it moves too and leaves the hole open (as
+    // in closeGapsRippled): refuse rather than report it closed.
+    for (const drift::Clip &clip : before.tracks().at(trackIndex).clips) {
+        if (clip.timelineStart >= gapStartUs)
+            continue;
+        for (const drift::Clip &after : m_project.tracks().at(trackIndex).clips) {
+            if (after.id == clip.id && after.timelineStart != clip.timelineStart) {
+                refuse(QStringLiteral("linked"), clip.id, trackIndex);
+                return result;
+            }
+        }
+    }
+    syncOverlapTransitions(m_project);
+    pushProjectEdit(before, tr("Close gap on all tracks"));
+    const bool refusedByLock = m_editRefusedByLock;
+    finishEdit(tr("Close gap on all tracks"));
+    if (refusedByLock) {
+        result.error = tr("Track is locked");
+        result.uiError = result.error;
+        return result;
+    }
+    result.closed.append({gapStartUs, nextStart - gapStartUs});
+    result.movedTracks = close.movedTracks;
+    for (const drift::GapTrackSkip &skip : std::as_const(close.skipped))
+        result.skippedTracks.append({gapStartUs, skip});
+    result.moved = movedSince(before, m_project);
+    return result;
+}
+
+void AppController::closeGapOnAllTracks(int trackIndex, double gapStartSeconds)
+{
+    // Rounded, not truncated: 8.04 s must not become 8039999 us and miss the clip that ends there.
+    const GapCloseResult result = closeGapAllTracksAt(trackIndex, qRound64(gapStartSeconds * 1e6));
+    if (!result.error.isEmpty()) {
+        setLastMessage(result.uiError.isEmpty() ? result.error : result.uiError, QStringLiteral("warning"));
+        return;
+    }
+    const int n = int(result.movedTracks.size());
+    if (result.skippedTracks.isEmpty()) {
+        setLastMessage(tr("Gap closed on %n track(s)", nullptr, n));
+        return;
+    }
+    QStringList names;
+    for (const auto &entry : result.skippedTracks) {
+        const int t = entry.second.track;
+        if (t >= 0 && t < m_project.tracks().size()) {
+            const QString label = localizedTrackLabel(m_project.tracks().at(t));
+            if (!names.contains(label))
+                names.append(label);
+        }
+    }
+    setLastMessage(tr("Gap closed on %n track(s). Not moved: %1", nullptr, n).arg(names.join(QStringLiteral(", "))));
+}
 
 AppController::ReorderResult AppController::moveClipNextTo(const QString &clipId, const QString &neighbourId, bool after)
 {

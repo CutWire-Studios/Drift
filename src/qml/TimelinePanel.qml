@@ -2344,6 +2344,13 @@ PanelFrame {
             onTriggered: EditorState.closeGap(root.areaMenuTrack, root.areaMenuGapStart)
         }
         ThemedMenuItem {
+            visible: root.areaMenuGapStart >= 0
+            height: visible ? implicitHeight : 0
+            text: qsTr("Close Gap on All Tracks")
+            icon.name: Theme.icons.chevronsRightLeft
+            onTriggered: EditorState.closeGapOnAllTracks(root.areaMenuTrack, root.areaMenuGapStart)
+        }
+        ThemedMenuItem {
             visible: trackAreaContextMenu.track !== null
             height: visible ? implicitHeight : 0
             text: EditorState.workAreaActive ? qsTr("Close gaps in work area") : qsTr("Close all gaps on track")
