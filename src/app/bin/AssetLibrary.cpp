@@ -12,6 +12,7 @@
 #include "engine/render2d/pdf/PdfClipRenderer.h"
 #include "engine/encode/proxies/PreviewProxyRenderer.h"
 #include "engine/platform/AndroidUri.h"
+#include "engine/encode/proxies/ProxyLocation.h"
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
 #include "engine/render2d/vector/VectorInspect.h"
@@ -1587,7 +1588,8 @@ void AssetLibrary::removeProxies(const QStringList &assetIds)
             asset && proxyState(id) == QLatin1String("ready")) {
             drift::ReverseProxyCache &cache = drift::ReverseProxyCache::instance();
             const int shortSide = drift::ReverseProxyCache::previewProxyShortSide;
-            if (const QString generated = cache.sidecars(asset->path).generated.value(shortSide);
+            const drift::ReverseProxyCache::Sidecars current = cache.sidecars(asset->path);
+            if (const QString generated = current.generated.value(shortSide);
                 !generated.isEmpty()) {
                 cache.updateSidecars(asset->path, [shortSide](auto &sidecars) {
                     sidecars.generated.remove(shortSide);
@@ -1596,6 +1598,21 @@ void AssetLibrary::removeProxies(const QStringList &assetIds)
                 // cache's mutex, as in ReverseProxyCache::removePreview.
                 ClipReaderPool::instance().releasePath(generated);
                 QFile::remove(generated);
+                // The same size may also exist at the other Drift-named spot (beside the source
+                // or in the chosen folder), e.g. made before the setting changed. Only those two
+                // exact names are ever touched.
+                const QStringList others{drift::generatedProxyPath(asset->path, shortSide),
+                                         m_proxyFolder.isEmpty()
+                                             ? QString()
+                                             : drift::folderProxyPath(m_proxyFolder, asset->path, shortSide)};
+                for (const QString &other : others) {
+                    // Never the user's own file a name pattern linked as the external proxy.
+                    if (other.isEmpty() || other == generated || other == current.external
+                        || !QFileInfo(other).isFile())
+                        continue;
+                    ClipReaderPool::instance().releasePath(other);
+                    QFile::remove(other);
+                }
             } else {
                 cache.removePreview(asset->path);
             }
@@ -1651,20 +1668,16 @@ void AssetLibrary::startNextProxy()
     const int shortSide = drift::ReverseProxyCache::previewProxyShortSide;
     m_proxyCancel.storeRelaxed(0);
 
-    (void)QtConcurrent::run(&m_proxyPool, [this, assetId, sourcePath, name, shortSide]() {
-        // Beside the source when that folder takes a write, else the app cache. Tried by really
-        // creating a file because isWritable lies on network shares.
-        QString outPath;
-        bool beside = false;
-        if (drift::isLocalSourcePath(sourcePath)) {
-            const QString target = drift::generatedProxyPath(sourcePath, shortSide);
-            if (drift::canWriteBeside(target)) {
-                outPath = target;
-                beside = true;
-            }
-        }
-        if (!beside)
-            outPath = drift::newReversePath();
+    const drift::ProxyLocation mode = m_proxyLocation;
+    const QString chosenFolder = m_proxyFolder;
+    (void)QtConcurrent::run(&m_proxyPool, [this, assetId, sourcePath, name, shortSide, mode, chosenFolder]() {
+        // Where the chosen setting says, else the app cache (never beside the source from the
+        // folder mode). Tried by really creating a file because isWritable lies on network shares.
+        const drift::ProxyTarget target = drift::chooseProxyTarget(
+            mode, chosenFolder, sourcePath, drift::generatedProxyPath(sourcePath, shortSide),
+            chosenFolder.isEmpty() ? QString() : drift::folderProxyPath(chosenFolder, sourcePath, shortSide));
+        const QString outPath = target.path;
+        const bool beside = target.where != drift::ProxyTarget::Where::Cache; // a sidecar file
         QString error;
         const bool ok = !outPath.isEmpty()
             && drift::renderPreviewProxy(sourcePath, shortSide, outPath, &error,
@@ -1686,15 +1699,17 @@ void AssetLibrary::startNextProxy()
 
         QMetaObject::invokeMethod(
             this,
-            [this, assetId, sourcePath, name, shortSide, outPath, beside, ok, cancelled,
-             error]() {
+            [this, assetId, sourcePath, name, shortSide, outPath, beside, target, chosenFolder, ok,
+             cancelled, error]() {
                 m_proxyBuilding.clear();
-                if (!beside && drift::isLocalSourcePath(sourcePath)) {
+                if (target.besideRefused) {
                     const QString folder =
                         QDir::toNativeSeparators(QFileInfo(sourcePath).absolutePath());
                     if (!m_proxyFallbackFolders.contains(folder))
                         m_proxyFallbackFolders.append(folder);
                 }
+                if (target.folderUnavailable)
+                    reportFolderUnavailable(chosenFolder);
                 if (ok && cancelled && beside) {
                     // Cancelled or removed while the last frames landed; the user asked for
                     // no proxy, so don't leave one behind.
@@ -1737,6 +1752,64 @@ void AssetLibrary::setProxyNamePatterns(const QStringList &patterns)
     refreshSidecars();
 }
 
+void AssetLibrary::setProxyLocation(drift::ProxyLocation location, const QString &folder)
+{
+    const bool folderChanged = folder != m_proxyFolder;
+    m_proxyLocation = location;
+    if (!folderChanged)
+        return;
+    m_proxyFolder = folder;
+    m_proxyFolderWarned.clear();
+    refreshSidecars();
+}
+
+void AssetLibrary::reportFolderUnavailable(const QString &folder)
+{
+    if (folder.isEmpty() || m_proxyFolderWarned.contains(folder))
+        return;
+    m_proxyFolderWarned.insert(folder);
+    emit proxyFolderUnavailable(QDir::toNativeSeparators(folder));
+}
+
+QString AssetLibrary::proxyPath(const QString &assetId) const
+{
+    const drift::MediaAsset *asset = m_project ? m_project->asset(assetId) : nullptr;
+    if (!asset || asset->kind != drift::MediaKind::Video)
+        return {};
+    return drift::ReverseProxyCache::instance().lookupPreview(asset->path,
+                                                              drift::ReverseProxyCache::previewProxyShortSide);
+}
+
+QString AssetLibrary::proxyWhere(const QString &assetId) const
+{
+    const drift::MediaAsset *asset = m_project ? m_project->asset(assetId) : nullptr;
+    const QString state = proxyState(assetId);
+    if (!asset || (state != QLatin1String("ready") && state != QLatin1String("linked")))
+        return {};
+    const QString active = proxyPath(assetId);
+    const drift::ReverseProxyCache::Sidecars sidecars =
+        drift::ReverseProxyCache::instance().sidecars(asset->path);
+    const int shortSide = drift::ReverseProxyCache::previewProxyShortSide;
+    if (active.isEmpty())
+        return {};
+    if (active == sidecars.external && !sidecars.generated.contains(shortSide))
+        return QStringLiteral("linked");
+    const auto under = [&active](const QString &dir) {
+        if (dir.isEmpty())
+            return false;
+        const QString base = QDir::cleanPath(dir);
+        return QDir::cleanPath(active).startsWith(base + QLatin1Char('/'));
+    };
+    if (under(drift::reverseCacheDir()))
+        return QStringLiteral("cache");
+    // Compare the exact name: a beside proxy is "under" the chosen folder when that is the
+    // source's own folder or an ancestor of it.
+    if (!m_proxyFolder.isEmpty()
+        && QDir::cleanPath(active) == QDir::cleanPath(drift::folderProxyPath(m_proxyFolder, asset->path, shortSide)))
+        return QStringLiteral("folder");
+    return QStringLiteral("beside");
+}
+
 void AssetLibrary::refreshSidecars()
 {
     refreshSidecars(m_project ? m_project->assetOrder() : QStringList{});
@@ -1764,7 +1837,8 @@ void AssetLibrary::refreshSidecars(const QStringList &assetIds)
         return;
 
     const QStringList patterns = m_proxyNamePatterns;
-    (void)QtConcurrent::run(&m_jobs, [this, targets, patterns]() {
+    const QString folder = m_proxyFolder; // kept whatever the mode, so what is in the chosen folder is still found when the mode changes
+    (void)QtConcurrent::run(&m_jobs, [this, targets, patterns, folder]() {
         QList<drift::ProxyNameRule> rules;
         for (const QString &pattern : patterns) {
             if (const auto rule = drift::proxyRuleFromString(pattern))
@@ -1772,12 +1846,24 @@ void AssetLibrary::refreshSidecars(const QStringList &assetIds)
         }
 
         QHash<QString, QFileInfoList> reversedByDir;
+        const QFileInfoList folderReversed =
+            folder.isEmpty() ? QFileInfoList()
+                             : QDir(folder).entryInfoList({QStringLiteral("*_reversed_*.mp4")}, QDir::Files);
         QList<drift::ReverseProxyCache::Sidecars> found;
         for (const auto &[id, path] : targets) {
             drift::ReverseProxyCache::Sidecars sidecars;
             const QDateTime sourceModified = QFileInfo(path).lastModified();
             for (const int side : kGeneratedProxySides) {
-                const QFileInfo generated(drift::generatedProxyPath(path, side));
+                // The chosen folder first, then beside the source.
+                QFileInfo generated;
+                if (!folder.isEmpty()) {
+                    generated.setFile(drift::folderProxyPath(folder, path, side));
+                    if (generated.isFile() && generated.lastModified() >= sourceModified) {
+                        sidecars.generated.insert(side, generated.absoluteFilePath());
+                        continue;
+                    }
+                }
+                generated.setFile(drift::generatedProxyPath(path, side));
                 // Same rule as the reversed renders below: a proxy Drift rendered before the
                 // source was replaced in place shows the old footage. An external proxy is the
                 // user's own file, so it is left to them.
@@ -1792,6 +1878,15 @@ void AssetLibrary::refreshSidecars(const QStringList &assetIds)
                 }
             }
 
+            // The chosen folder first, then beside the source (lookup takes the first match).
+            const QString folderHead =
+                folderReversed.isEmpty() ? QString() : drift::folderReversedHead(path);
+            for (const QFileInfo &file : folderReversed) {
+                if (file.lastModified() < sourceModified)
+                    continue;
+                if (const auto range = drift::parseFolderReversedNameWithHead(folderHead, file.fileName()))
+                    sidecars.reversed.append({range->inUs, range->outUs, file.absoluteFilePath()});
+            }
             const QFileInfo source(path);
             auto listed = reversedByDir.find(source.absolutePath());
             if (listed == reversedByDir.end()) {
@@ -1812,8 +1907,13 @@ void AssetLibrary::refreshSidecars(const QStringList &assetIds)
 
         QMetaObject::invokeMethod(
             this,
-            [this, targets, found]() {
+            [this, targets, found, folder]() {
                 if (!m_project)
+                    return;
+                // Scans run on up to three threads and can land out of order: one made for a
+                // folder that is no longer chosen would put its proxies back. The scan made when
+                // the folder changed covers every asset (and any still pending auto-create).
+                if (folder != m_proxyFolder)
                     return;
                 drift::ReverseProxyCache &cache = drift::ReverseProxyCache::instance();
                 QStringList changed;
@@ -1851,6 +1951,7 @@ void AssetLibrary::refreshSidecars(const QStringList &assetIds)
                 }
                 if (!autoCreate.isEmpty())
                     createProxies(autoCreate);
+                emit sidecarScanFinished();
                 if (changed.isEmpty())
                     return;
                 bumpBadges();

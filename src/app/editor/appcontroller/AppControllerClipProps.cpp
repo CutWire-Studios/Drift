@@ -8,6 +8,7 @@
 // Engine-internal by its own header comment, and included here only for releaseCaches(): the GPU
 // caches have no other owner outside src/engine to ask. A one-line forwarder on GpuCompositor
 // would restore the boundary.
+#include "engine/encode/proxies/ProxyLocation.h"
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
 #include "engine/encode/proxies/ReverseRenderer.h"
@@ -1767,7 +1768,9 @@ void AppController::startReverseRender(const QString &sourcePath, drift::TimeUs 
 
     // Playback deliberately keeps running: renderReversed opens its own demuxer rather than
     // driving the shared decode pool, so the clip stays watchable (on the slow path) meanwhile.
-    (void)QtConcurrent::run([this, sourcePath, coverInUs, coverOutUs]() {
+    const drift::ProxyLocation mode = m_assetLibrary ? m_assetLibrary->proxyLocation() : drift::ProxyLocation::Beside;
+    const QString chosenFolder = m_assetLibrary ? m_assetLibrary->proxyFolder() : QString();
+    (void)QtConcurrent::run([this, sourcePath, coverInUs, coverOutUs, mode, chosenFolder]() {
         auto setProgress = [this](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
                 this,
@@ -1782,12 +1785,14 @@ void AppController::startReverseRender(const QString &sourcePath, drift::TimeUs 
                 Qt::QueuedConnection);
         };
 
-        auto finish = [this, sourcePath, coverInUs, coverOutUs](bool ok, const QString &message,
-                                                                const QString &proxyPath,
-                                                                bool beside) {
+        auto finish = [this, sourcePath, coverInUs, coverOutUs, chosenFolder](
+                          bool ok, const QString &message, const QString &proxyPath,
+                          const drift::ProxyTarget &target) {
+            const bool beside = target.where != drift::ProxyTarget::Where::Cache; // a sidecar file
             QMetaObject::invokeMethod(
                 this,
-                [this, ok, message, proxyPath, beside, sourcePath, coverInUs, coverOutUs]() {
+                [this, ok, message, proxyPath, beside, target, chosenFolder, sourcePath, coverInUs,
+                 coverOutUs]() {
                     m_reverseRendering = false;
                     emit reverseRenderingChanged();
                     m_reverseProgress = ok ? 1.0 : 0.0;
@@ -1800,8 +1805,10 @@ void AppController::startReverseRender(const QString &sourcePath, drift::TimeUs 
                     } else if (ok) {
                         drift::ReverseProxyCache::instance().insert(sourcePath, coverInUs,
                                                                     coverOutUs, proxyPath);
-                        if (m_assetLibrary && drift::isLocalSourcePath(sourcePath))
+                        if (m_assetLibrary && target.besideRefused)
                             m_assetLibrary->reportProxyFallback(sourcePath);
+                        if (m_assetLibrary && target.folderUnavailable)
+                            m_assetLibrary->reportFolderUnavailable(chosenFolder);
                     }
                     setLastMessage(message, ok ? QStringLiteral("info")
                                               : QStringLiteral("error"));
@@ -1814,20 +1821,15 @@ void AppController::startReverseRender(const QString &sourcePath, drift::TimeUs 
                 Qt::QueuedConnection);
         };
 
-        // Beside the source when that folder takes a write, else the app cache.
-        QString proxyPath;
-        bool beside = false;
-        if (drift::isLocalSourcePath(sourcePath)) {
-            const QString target = drift::reversedSidecarPath(sourcePath, coverInUs, coverOutUs);
-            if (drift::canWriteBeside(target)) {
-                proxyPath = target;
-                beside = true;
-            }
-        }
-        if (!beside)
-            proxyPath = drift::newReversePath();
+        // Where the setting says (beside the source, the chosen folder, or the app cache); the
+        // cache when that place takes no write.
+        const drift::ProxyTarget target = drift::chooseProxyTarget(
+            mode, chosenFolder, sourcePath, drift::reversedSidecarPath(sourcePath, coverInUs, coverOutUs),
+            chosenFolder.isEmpty() ? QString()
+                                   : drift::folderReversedPath(chosenFolder, sourcePath, coverInUs, coverOutUs));
+        const QString proxyPath = target.path;
         if (proxyPath.isEmpty()) {
-            finish(false, tr("Could not create a reversed file"), {}, false);
+            finish(false, tr("Could not create a reversed file"), {}, target);
             return;
         }
 
@@ -1837,7 +1839,7 @@ void AppController::startReverseRender(const QString &sourcePath, drift::TimeUs 
                 setProgress(fraction, tr("Reversing video…"));
                 return m_reverseCancel.loadRelaxed() == 0;
             });
-        finish(ok, ok ? QStringLiteral("Reversed clip ready") : error, proxyPath, beside);
+        finish(ok, ok ? QStringLiteral("Reversed clip ready") : error, proxyPath, target);
     });
 }
 

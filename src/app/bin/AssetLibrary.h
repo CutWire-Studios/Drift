@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/encode/proxies/ProxyLocation.h"
 #include "core/project/media/MediaAsset.h"
 
 #include <QAbstractListModel>
@@ -267,6 +268,20 @@ public:
     // The patterns that find proxies made elsewhere (ProxyNaming strings). Setting them
     // re-scans every asset.
     void setProxyNamePatterns(const QStringList &patterns);
+    // Where new proxies and reversed renders are saved (ProxyLocation). `folder` is scanned for
+    // proxies whatever the mode, so switching modes loses nothing already made. Only the current
+    // folder is scanned: after a change, proxies in the old one aren't found (not moved or
+    // deleted). A changed folder re-scans every asset.
+    void setProxyLocation(drift::ProxyLocation location, const QString &folder);
+    drift::ProxyLocation proxyLocation() const { return m_proxyLocation; }
+    QString proxyFolder() const { return m_proxyFolder; }
+    // The chosen folder is missing or takes no write, so a proxy or reversed render went to the
+    // app cache. Warns once per folder per session.
+    void reportFolderUnavailable(const QString &folder);
+    // "beside" | "folder" | "cache" | "linked" for the proxy the preview uses, "" without one.
+    Q_INVOKABLE QString proxyWhere(const QString &assetId) const;
+    // The file the preview uses as this asset's proxy, "" without one.
+    QString proxyPath(const QString &assetId) const;
     // Re-scans the folders beside these assets' sources for proxies, off-thread. The no-argument
     // form covers every asset.
     void refreshSidecars(const QStringList &assetIds);
@@ -311,10 +326,15 @@ signals:
     void badgeRevisionChanged();
     // A proxy appeared or went away, so what the preview reads has changed.
     void proxiesChanged();
+    // A sidecar scan for the current proxy folder has been applied (also when nothing changed).
+    void sidecarScanFinished();
     void proxyFailed(const QString &name, const QString &error);
     // A batch of proxies could not be written beside their sources and went to the app cache
     // instead. `folders` are the unwritable source folders, deduplicated, in native form.
     void proxyLocationFallback(const QStringList &folders);
+    // The chosen proxy folder is missing or read-only; new files go to the app cache instead.
+    // Native form. Once per folder per session.
+    void proxyFolderUnavailable(const QString &folder);
     // Result of linkProxy. `pattern` is the rule the file implies and `otherMatches` how many
     // other video assets in the project already have a file that rule would find. `error` is
     // non-empty (user-facing) when the file was refused.
@@ -419,6 +439,9 @@ private:
     QSet<QString> m_autoProxyPending;
     // Unwritable source folders met since the queue last drained.
     QStringList m_proxyFallbackFolders;
+    drift::ProxyLocation m_proxyLocation = drift::ProxyLocation::Beside;
+    QString m_proxyFolder;
+    QSet<QString> m_proxyFolderWarned;
     QString m_proxyBuilding;
     double m_proxyProgress = 0.0;
     int m_badgeRevision = 0;

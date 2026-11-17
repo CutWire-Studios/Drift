@@ -62,4 +62,18 @@ struct ReversedRange
 std::optional<ReversedRange> parseReversedSidecarName(const QString &sourcePath,
                                                       const QString &fileName);
 
+// 8 lowercase hex chars from SHA-1 of the cleaned absolute source path. Case-folded where the
+// file system ignores case, so one file opened under two spellings maps to one proxy.
+QString proxySourceKey(const QString &sourcePath);
+
+// Where Drift writes its own proxy inside the chosen folder: <folder>/<stem>_<key>_proxy_<N>.mp4.
+QString folderProxyPath(const QString &folder, const QString &sourcePath, int shortSide);
+// <folder>/<stem>_<key>_reversed_<inMs>-<outMs>.mp4, rounded outward as reversedSidecarPath.
+QString folderReversedPath(const QString &folder, const QString &sourcePath, TimeUs inUs, TimeUs outUs);
+// The range a folderReversedPath name covers, or nullopt when it isn't one for this source.
+std::optional<ReversedRange> parseFolderReversedName(const QString &sourcePath, const QString &fileName);
+// The same, split so a caller scanning many files for one source hashes the path once.
+QString folderReversedHead(const QString &sourcePath);
+std::optional<ReversedRange> parseFolderReversedNameWithHead(const QString &head, const QString &fileName);
+
 } // namespace drift

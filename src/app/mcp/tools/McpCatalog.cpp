@@ -612,7 +612,7 @@ const QList<Op> &ops()
           "proxy_status. Preview only reads them with useProxies on "
           "(set_ui_preferences). Not undoable: a proxy is a cache. Returns {queued:[ids], already:"
           "[{asset, state}], skipped:[{asset|clip, reason: not_video|missing|no_media|gone}], not_slow? (all_slow), queue:"
-          "{busy, progress, current, queued}, useProxies, proxySize}.",
+          "{busy, progress, current, queued}, useProxies, proxySize, proxyLocation, proxyFolder}.",
           objectSchema({{QStringLiteral("assets"),
                          arrayProp(assetRefProp(), QStringLiteral("Asset ids, names or indexes"))},
                         {QStringLiteral("clips"),
@@ -624,9 +624,9 @@ const QList<Op> &ops()
           "Per-asset proxy state for video assets: none, queued, building, ready (made by Drift at "
           "the current size) or linked (a file made elsewhere, matched by name). A failed build reads "
           "none with error. Default every video asset; or pick assets/clips. Returns {proxies:[{asset, "
-          "name, state, error?}], counts:{state: n}, truncated? (rows cut at 500), queue:{busy, "
-          "progress, current, queued}, useProxies, proxySize}; picked assets or clips with no video "
-          "come back in skipped.",
+          "name, state, error?, location?, path?}], counts:{state: n}, truncated? (rows cut at 500), queue:{busy, "
+          "progress, current, queued}, useProxies, proxySize, proxyLocation, proxyFolder}; picked assets or clips with no video "
+          "come back in skipped. location (ready/linked rows): beside, folder, cache or linked.",
           objectSchema({{QStringLiteral("assets"),
                          arrayProp(assetRefProp(), QStringLiteral("Asset ids, names or indexes"))},
                         {QStringLiteral("clips"),
@@ -637,7 +637,7 @@ const QList<Op> &ops()
           "Drop queued proxies, stop one being built and delete the proxies Drift made at the current "
           "size (assets, clips or all:true). A linked proxy (made elsewhere) is never deleted. Not "
           "undoable. Returns {removed:[ids], kept:[{asset|clip, reason: none|linked|not_video|"
-          "no_media}], queue, useProxies, proxySize}.",
+          "no_media}], queue, useProxies, proxySize, proxyLocation, proxyFolder}.",
           objectSchema({{QStringLiteral("assets"),
                          arrayProp(assetRefProp(), QStringLiteral("Asset ids, names or indexes"))},
                         {QStringLiteral("clips"),
@@ -648,7 +648,7 @@ const QList<Op> &ops()
         { "cancel_proxies", "media", "Stop building proxies",
           "Empty the proxy queue (automatic ones from import included) and stop the one being built; "
           "one whose last frames already landed may still finish. Proxies already made stay. Returns "
-          "{cancelled, queue, useProxies, proxySize}.",
+          "{cancelled, queue, useProxies, proxySize, proxyLocation, proxyFolder}.",
           objectSchema({}) },
         { "rename_asset", "media", "Rename a bin row",
           "Rename an asset in the bin. Does not rename the file on disk. On a composite asset it renames "
@@ -1558,7 +1558,7 @@ const QList<Op> &ops()
 
         { "get_ui_preferences", "ui", "Read editor UI settings",
           "Returns {theme:{overridden, dark}, autoKey, mediaGrid, reopenLastProject, proxySuggestion, "
-          "useProxies, proxySize, agentNotifications}. autoKey matters "
+          "useProxies, proxySize, proxyLocation, proxyFolder, agentNotifications}. autoKey matters "
           "for set_transform: when true, transform writes become keyframes at the playhead (or its `at`), which must be inside the clip.",
           objectSchema({}), true, false, true },
         { "set_theme", "ui", "Set dark or light theme",

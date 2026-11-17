@@ -5572,6 +5572,14 @@
         <translation>미디어 옆에 파일을 저장할 수 없습니다</translation>
     </message>
     <message>
+        <source>Couldn’t save to the proxy folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift can’t write to the proxy folder below. It may be unplugged or read-only. New proxies and reversed clips go to Drift’s cache until it’s back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>OK</source>
         <translation>확인</translation>
     </message>
@@ -17094,6 +17102,26 @@
 <context>
     <name>PreferencesController</name>
     <message>
+        <source>Choosing a folder isn’t supported on this device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a folder by its full path.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That folder doesn’t exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That is Drift’s own cache. Choose another folder, or pick “In Drift’s cache”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift can’t write to that folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Faster preview takes effect after you restart Drift.</source>
         <translation>더 빠른 미리보기는 Drift를 다시 시작한 후 적용됩니다.</translation>
     </message>
@@ -21424,6 +21452,50 @@ If playback stutters, try another.</source>
     <message>
         <source>Proxy resolution</source>
         <translation>프록시 해상도</translation>
+    </message>
+    <message>
+        <source>Save proxies and reversed clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where Drift saves the files it makes from your media. Changing the folder doesn’t move or delete anything. Proxies in the previous folder are no longer found; choosing that folder again finds them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Folder for proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beside the original</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In Drift’s cache</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In this folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No folder chosen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift’s files in this folder: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 B</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift’s cache is pruned when it passes its size limit.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Size of new proxies. Proxies made at another size are not used until you create them again.</source>

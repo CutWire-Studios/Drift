@@ -1542,7 +1542,12 @@
           "user can choose always (Settings › Preview), since it transcodes every later import. "
           "useProxies makes preview read proxies where they exist (create them with create_proxies); "
           "export always reads the original media. proxySize is the short side of new proxies; "
-          "proxies made at another size aren't used until made again. "
+          "proxies made at another size aren't used until made again. proxyLocation sets where new "
+          "proxies and reversed renders are saved: beside (next to the original, default; Drift's cache "
+          "when that folder refuses a write), cache (Drift's cache, pruned past its size limit) or "
+          "folder (proxyFolder, an existing writable folder; Drift's cache while it's missing). Changing "
+          "the folder moves or deletes nothing, but proxies in the previous folder are no longer found "
+          "(choose it again to find them). "
           "Returns the resulting flags plus theme {overridden, dark}.",
           objectSchema({{QStringLiteral("autoKey"), boolProp(QStringLiteral("Auto-keyframe: transform edits create keyframes at the playhead"))},
                         {QStringLiteral("mediaGrid"), boolProp(QStringLiteral("Media bin grid mode"))},
@@ -1555,7 +1560,11 @@
                          enumProp(QStringLiteral("What imports do with footage that would preview slowly: ask (a notification offers proxies; default) or never. always is user-only. Global, kept across sessions"),
                                   {QStringLiteral("ask"), QStringLiteral("never")})},
                         {QStringLiteral("useProxies"), boolProp(QStringLiteral("Preview reads proxies where they exist (Settings › Preview › Use proxies). Global, kept across sessions"))},
-                        {QStringLiteral("proxySize"), integerProp(QStringLiteral("Short side of new proxies: 360, 540, 720 or 1080. Global, kept across sessions"))}}) },
+                        {QStringLiteral("proxySize"), integerProp(QStringLiteral("Short side of new proxies: 360, 540, 720 or 1080. Global, kept across sessions"))},
+                        {QStringLiteral("proxyLocation"),
+                         enumProp(QStringLiteral("Where new proxies and reversed clips are saved. Global, kept across sessions"),
+                                  {QStringLiteral("beside"), QStringLiteral("cache"), QStringLiteral("folder")})},
+                        {QStringLiteral("proxyFolder"), stringProp(QStringLiteral("Absolute path of an existing writable folder for proxyLocation folder. Global, kept across sessions"))}}) },
 
         { "get_camera_state", "timeline", "Read the scene camera's pose at a time",
           "The camera clip covering `at` (default the playhead), or `clip`, as it is posed then, "

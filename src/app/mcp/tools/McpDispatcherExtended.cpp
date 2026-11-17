@@ -4,6 +4,7 @@
 #include "app/mcp/McpDetail.h"
 #include "app/jobs/vision/SceneDetectController.h"
 #include "app/editor/PreferencesController.h"
+#include "engine/encode/proxies/ProxyLocation.h"
 #include "app/jobs/audio/DenoiseController.h"
 #include "app/jobs/vision/DepthController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
@@ -758,6 +759,8 @@ QJsonObject McpDispatcher::opProxies(const QString &tool, const QJsonObject &arg
         // Named as in set_ui_preferences.
         out.insert(QStringLiteral("useProxies"), m_controller->playback()->useProxies());
         out.insert(QStringLiteral("proxySize"), m_controller->playback()->proxySize());
+        out.insert(QStringLiteral("proxyLocation"), m_controller->preferences()->proxyLocation());
+        out.insert(QStringLiteral("proxyFolder"), m_controller->preferences()->proxyFolder());
         return ok(out);
     };
 
@@ -839,6 +842,9 @@ QJsonObject McpDispatcher::opProxies(const QString &tool, const QJsonObject &arg
             if (state == QLatin1String("none")) {
                 if (const QString error = lib->proxyError(id); !error.isEmpty())
                     row.insert(QStringLiteral("error"), error);
+            } else if (state == QLatin1String("ready") || state == QLatin1String("linked")) {
+                row.insert(QStringLiteral("location"), lib->proxyWhere(id));
+                row.insert(QStringLiteral("path"), lib->proxyPath(id));
             }
             rows.append(row);
         }
@@ -3636,6 +3642,29 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (args.contains(QStringLiteral("proxySize")) && proxySize != 360 && proxySize != 540
             && proxySize != 720 && proxySize != 1080)
             return err("bad_args", QStringLiteral("proxySize must be 360, 540, 720 or 1080"));
+        // Same checks as the Settings page; nothing changes unless all of them pass.
+        PreferencesController *prefs = m_controller->preferences();
+        const bool hasLocation = args.contains(QStringLiteral("proxyLocation"));
+        const bool hasFolder = args.contains(QStringLiteral("proxyFolder"));
+        const QString location = args.value(QStringLiteral("proxyLocation")).toString();
+        if (hasLocation && !drift::proxyLocationFromString(location))
+            return err("bad_args", QStringLiteral("proxyLocation must be beside, cache or folder"));
+        if (hasFolder && !args.value(QStringLiteral("proxyFolder")).isString())
+            return err("bad_args", QStringLiteral("proxyFolder must be a folder path"));
+        if ((hasFolder || (hasLocation && location == QLatin1String("folder")))
+            && !PreferencesController::proxyFolderSupported())
+            return err("unsupported", QStringLiteral("A proxy folder isn't supported on this device"));
+        if (hasLocation && location == QLatin1String("folder") && !hasFolder && prefs->proxyFolder().isEmpty())
+            return err("bad_args", QStringLiteral("Set proxyFolder first"));
+        if (hasFolder) {
+            // Validated by setProxyFolder itself; an invalid folder changes nothing, but earlier
+            // keys in this call must not have been applied yet, so it runs before them.
+            if (const QString reason = prefs->setProxyFolder(args.value(QStringLiteral("proxyFolder")).toString());
+                !reason.isEmpty())
+                return err("bad_args", reason);
+        }
+        if (hasLocation)
+            prefs->setProxyLocation(location);
         if (args.contains(QStringLiteral("autoKey")))
             m_controller->setAutoKeyEnabled(jsonBool(args.value(QStringLiteral("autoKey"))));
         if (args.contains(QStringLiteral("mediaGrid")))
@@ -3655,6 +3684,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok({
             {QStringLiteral("useProxies"), m_controller->playback()->useProxies()},
             {QStringLiteral("proxySize"), m_controller->playback()->proxySize()},
+            {QStringLiteral("proxyLocation"), m_controller->preferences()->proxyLocation()},
+            {QStringLiteral("proxyFolder"), m_controller->preferences()->proxyFolder()},
             {QStringLiteral("agentNotifications"), m_controller->preferences()->agentNotifications()},
             {QStringLiteral("proxySuggestion"), m_controller->preferences()->proxySuggestion()},
             {QStringLiteral("autoKey"), m_controller->autoKeyEnabled()},

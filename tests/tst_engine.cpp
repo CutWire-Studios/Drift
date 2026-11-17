@@ -146,6 +146,7 @@
 #include "engine/compositor/layers/MaskApplier.h"
 #include "engine/encode/writers/MatteWriter.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
+#include "engine/encode/proxies/ProxyLocation.h"
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/encode/proxies/ReverseRenderer.h"
 #include "engine/encode/MediaEditor.h"
@@ -197,6 +198,8 @@ private slots:
     void proxyNamingLearnsAndMatchesRules();
     void sidecarProxiesOutrankTheCache();
     void reversedSidecarNamesRoundTrip();
+    void folderProxyNamesAreStableAndDistinct();
+    void proxyTargetFollowsTheLocationSetting();
     void reversedSidecarsOutrankTheIndex();
     void variableFrameRateIsDetected();
     void mediaEditorCropsAnImage();
@@ -6210,6 +6213,103 @@ void EngineTest::reversedSidecarNamesRoundTrip()
     QVERIFY(!parseReversedSidecarName(src, head + QStringLiteral("1-5.mov")));
     QVERIFY(!parseReversedSidecarName(src, QStringLiteral("garbage")));
     QVERIFY(!parseReversedSidecarName(src, QString()));
+}
+
+void EngineTest::folderProxyNamesAreStableAndDistinct()
+{
+    using namespace drift;
+    const QString folder = QStringLiteral("/drives/proxies");
+    const QString a = QStringLiteral("/cards/a/clip01.MP4");
+    const QString b = QStringLiteral("/cards/b/clip01.MP4");
+
+    const QString key = proxySourceKey(a);
+    QCOMPARE(key.size(), 8);
+    QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{8}$")).match(key).hasMatch());
+    QCOMPARE(proxySourceKey(a), key);
+    QVERIFY(proxySourceKey(b) != key);
+    // An unclean spelling of the same path maps to the same key.
+    QCOMPARE(proxySourceKey(QStringLiteral("/cards/a/../a/clip01.MP4")), key);
+
+    QCOMPARE(folderProxyPath(folder, a, 720), QStringLiteral("/drives/proxies/clip01_%1_proxy_720.mp4").arg(key));
+    QVERIFY(folderProxyPath(folder, a, 720) != folderProxyPath(folder, b, 720));
+
+    // A very long stem is cut so the name stays a legal file name even in 4-byte characters.
+    const QString longSource = QStringLiteral("/cards/") + QStringLiteral("\U0001F600").repeated(150) + QStringLiteral(".mp4");
+    QVERIFY(QFileInfo(folderProxyPath(folder, longSource, 720)).fileName().toUtf8().size() <= 255);
+    QVERIFY(QFileInfo(folderReversedPath(folder, longSource, 0, 4'000'000'000)).fileName().toUtf8().size() <= 255);
+
+    // 80 CJK characters are 240 bytes: the stem is cut by bytes, whole characters only.
+    const QString cjkSource = QStringLiteral("/cards/") + QString(QChar(0x65E5)).repeated(80) + QStringLiteral(".mp4");
+    const QString cjkName = QFileInfo(folderProxyPath(folder, cjkSource, 1080)).fileName();
+    QVERIFY(cjkName.toUtf8().size() <= 255);
+    QVERIFY(QFileInfo(folderReversedPath(folder, cjkSource, 0, 4'000'000'000)).fileName().toUtf8().size() <= 255);
+    QVERIFY(cjkName.startsWith(QString(QChar(0x65E5)).repeated(60) + QLatin1Char('_')));
+    QVERIFY(!cjkName.contains(QChar::ReplacementCharacter));
+    QVERIFY(parseFolderReversedName(cjkSource, QFileInfo(folderReversedPath(folder, cjkSource, 0, 2000)).fileName()));
+
+    const QString reversed = folderReversedPath(folder, a, 1'500'400, 4'000'100);
+    QCOMPARE(reversed, QStringLiteral("/drives/proxies/clip01_%1_reversed_1500-4001.mp4").arg(key));
+    const auto range = parseFolderReversedName(a, QFileInfo(reversed).fileName());
+    QVERIFY(range);
+    QCOMPARE(range->inUs, TimeUs(1'500'000));
+    QCOMPARE(range->outUs, TimeUs(4'001'000));
+    // Another source's file, and a beside-style name, are not this source's.
+    QVERIFY(!parseFolderReversedName(b, QFileInfo(reversed).fileName()));
+    QVERIFY(!parseFolderReversedName(a, QStringLiteral("clip01_reversed_1500-4001.mp4")));
+    QVERIFY(!parseFolderReversedName(a, QStringLiteral("clip01_%1_reversed_9-5.mp4").arg(key)));
+    // The beside-style parser still takes its own names.
+    QVERIFY(parseReversedSidecarName(a, QStringLiteral("clip01_reversed_1500-4001.mp4")));
+}
+
+void EngineTest::proxyTargetFollowsTheLocationSetting()
+{
+    using namespace drift;
+    QTemporaryDir source;
+    QTemporaryDir folder;
+    QVERIFY(source.isValid() && folder.isValid());
+    const QString src = source.filePath(QStringLiteral("clip.mp4"));
+    const QString beside = generatedProxyPath(src, 720);
+    const QString inFolder = folderProxyPath(folder.path(), src, 720);
+    using Where = ProxyTarget::Where;
+
+    ProxyTarget t = chooseProxyTarget(ProxyLocation::Beside, folder.path(), src, beside, inFolder);
+    QCOMPARE(t.where, Where::Beside);
+    QCOMPARE(t.path, beside);
+    QVERIFY(!t.folderUnavailable && !t.besideRefused);
+
+    t = chooseProxyTarget(ProxyLocation::Folder, folder.path(), src, beside, inFolder);
+    QCOMPARE(t.where, Where::Folder);
+    QCOMPARE(t.path, inFolder);
+    QVERIFY(!t.folderUnavailable);
+
+    // A missing folder: the cache, flagged, and nothing is created there or beside the source.
+    const QString missing = folder.filePath(QStringLiteral("gone/deeper"));
+    t = chooseProxyTarget(ProxyLocation::Folder, missing, src, beside, folderProxyPath(missing, src, 720));
+    QCOMPARE(t.where, Where::Cache);
+    QVERIFY(t.folderUnavailable);
+    QVERIFY(!t.besideRefused);
+    QVERIFY(t.path.startsWith(reverseCacheDir()));
+    QVERIFY(!QFileInfo::exists(missing));
+    QVERIFY(QDir(source.path()).entryList(QDir::Files).isEmpty());
+
+    // Folder mode without a folder behaves the same way.
+    t = chooseProxyTarget(ProxyLocation::Folder, QString(), src, beside, QString());
+    QCOMPARE(t.where, Where::Cache);
+    QVERIFY(t.folderUnavailable);
+
+    t = chooseProxyTarget(ProxyLocation::Cache, folder.path(), src, beside, inFolder);
+    QCOMPARE(t.where, Where::Cache);
+    QVERIFY(!t.folderUnavailable && !t.besideRefused);
+
+    // A source that isn't a local file always goes to the cache, with no complaint.
+    const QString uri = QStringLiteral("content://media/x");
+    t = chooseProxyTarget(ProxyLocation::Folder, folder.path(), uri, beside, inFolder);
+    QCOMPARE(t.where, Where::Cache);
+    QVERIFY(!t.folderUnavailable && !t.besideRefused);
+
+    QCOMPARE(proxyLocationToString(ProxyLocation::Folder), QStringLiteral("folder"));
+    QVERIFY(!proxyLocationFromString(QStringLiteral("nowhere")));
+    QCOMPARE(*proxyLocationFromString(QStringLiteral("cache")), ProxyLocation::Cache);
 }
 
 void EngineTest::reversedSidecarsOutrankTheIndex()

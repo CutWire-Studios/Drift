@@ -1,7 +1,9 @@
 #include "app/editor/PreferencesController.h"
 #include "app/GraphicsApiChoice.h"
 #include "core/base/CacheRoot.h"
+#include "engine/encode/proxies/ProxyLocation.h"
 #include "engine/encode/proxies/ProxyNaming.h"
+#include "engine/encode/proxies/ReverseProxyCache.h"
 #include "engine/EngineTuning.h"
 
 #include "engine/gpu/device/GpuPreference.h"
@@ -12,6 +14,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QPointer>
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
@@ -250,6 +253,12 @@ PreferencesController::PreferencesController(QObject *parent)
     m_proxySuggestion = settings.value(QStringLiteral("proxy/suggestion"), QStringLiteral("ask")).toString();
     if (!proxySuggestionModes().contains(m_proxySuggestion))
         m_proxySuggestion = QStringLiteral("ask");
+    m_proxyFolder = settings.value(QStringLiteral("proxy/folder")).toString();
+    m_proxyLocation = settings.value(QStringLiteral("proxy/location"), QStringLiteral("beside")).toString();
+    // An unknown value reads as beside; "folder" needs a folder and a platform that can have one.
+    if (!drift::proxyLocationFromString(m_proxyLocation)
+        || (m_proxyLocation == QLatin1String("folder") && (m_proxyFolder.isEmpty() || !proxyFolderSupported())))
+        m_proxyLocation = QStringLiteral("beside");
     m_undoHistoryMode = settings.value(QStringLiteral("editor/undoHistoryMode"), QStringLiteral("project")).toString();
     if (!undoHistoryModes().contains(m_undoHistoryMode))
         m_undoHistoryMode = QStringLiteral("project");
@@ -516,6 +525,98 @@ void PreferencesController::setProxySuggestion(const QString &mode)
     m_proxySuggestion = mode;
     QSettings().setValue(QStringLiteral("proxy/suggestion"), m_proxySuggestion);
     emit proxySuggestionChanged();
+}
+
+bool PreferencesController::proxyFolderSupported()
+{
+#ifdef Q_OS_ANDROID
+    return false;
+#else
+    return true;
+#endif
+}
+
+void PreferencesController::setProxyLocation(const QString &location)
+{
+    const auto parsed = drift::proxyLocationFromString(location);
+    if (!parsed || location == m_proxyLocation)
+        return;
+    if (*parsed == drift::ProxyLocation::Folder && (m_proxyFolder.isEmpty() || !proxyFolderSupported()))
+        return;
+    m_proxyLocation = location;
+    QSettings().setValue(QStringLiteral("proxy/location"), m_proxyLocation);
+    emit proxyLocationChanged();
+}
+
+QUrl PreferencesController::proxyFolderUrl() const
+{
+    return m_proxyFolder.isEmpty() ? QUrl() : QUrl::fromLocalFile(m_proxyFolder);
+}
+
+QString PreferencesController::setProxyFolder(const QString &path)
+{
+    if (!proxyFolderSupported())
+        return tr("Choosing a folder isn’t supported on this device.");
+    // The folder picker hands over a file:// URL; agents and the config hand over a path.
+    const QString raw = path.trimmed().startsWith(QLatin1String("file:"), Qt::CaseInsensitive)
+                            ? QUrl(path.trimmed()).toLocalFile()
+                            : path.trimmed();
+    const QString clean = QDir::cleanPath(raw);
+    if (raw.isEmpty() || !QDir::isAbsolutePath(clean))
+        return tr("Choose a folder by its full path.");
+    const QFileInfo info(clean);
+    if (!info.isDir())
+        return tr("That folder doesn’t exist.");
+    const QString cache = QDir::cleanPath(drift::reverseCacheDir());
+    const QString canonical = QFileInfo(clean).canonicalFilePath();
+    const QString canonicalCache = QFileInfo(cache).canonicalFilePath();
+    const auto inside = [](const QString &dir, const QString &root) {
+        return !root.isEmpty() && (dir == root || dir.startsWith(root + QLatin1Char('/')));
+    };
+    if (inside(clean, cache) || inside(canonical, canonicalCache))
+        return tr("That is Drift’s own cache. Choose another folder, or pick “In Drift’s cache”.");
+    if (!drift::canWriteBeside(QDir(clean).filePath(QStringLiteral("drift-write-test"))))
+        return tr("Drift can’t write to that folder.");
+    if (clean != m_proxyFolder) {
+        m_proxyFolder = clean;
+        QSettings().setValue(QStringLiteral("proxy/folder"), m_proxyFolder);
+        emit proxyFolderChanged();
+        m_proxyFolderBytes = -1;
+        emit proxyFolderBytesChanged();
+    }
+    return {};
+}
+
+void PreferencesController::refreshProxyFolderUsage()
+{
+    const QString folder = m_proxyFolder;
+    if (folder.isEmpty()) {
+        if (m_proxyFolderBytes != -1) {
+            m_proxyFolderBytes = -1;
+            emit proxyFolderBytesChanged();
+        }
+        return;
+    }
+    (void)QtConcurrent::run([this, guard = QPointer<PreferencesController>(this), folder] {
+        // Only Drift's own names, so the figure is Drift's share, not the user's other files.
+        qint64 bytes = 0;
+        const QFileInfoList files = QDir(folder).entryInfoList(
+            {QStringLiteral("*_????????_proxy_*.mp4"), QStringLiteral("*_????????_reversed_*-*.mp4")},
+            QDir::Files);
+        for (const QFileInfo &file : files)
+            bytes += file.size();
+        if (!guard)
+            return;
+        QMetaObject::invokeMethod(
+            guard.data(),
+            [this, folder, bytes] {
+                if (folder != m_proxyFolder || bytes == m_proxyFolderBytes)
+                    return;
+                m_proxyFolderBytes = bytes;
+                emit proxyFolderBytesChanged();
+            },
+            Qt::QueuedConnection);
+    });
 }
 
 QStringList PreferencesController::undoHistoryModes()

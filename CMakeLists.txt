@@ -1075,6 +1075,8 @@ add_library(driftengine STATIC
     src/engine/encode/writers/MatteWriter.cpp
     src/engine/encode/proxies/ProxyNaming.h
     src/engine/encode/proxies/ProxyNaming.cpp
+    src/engine/encode/proxies/ProxyLocation.h
+    src/engine/encode/proxies/ProxyLocation.cpp
     src/engine/encode/proxies/ReverseProxyCache.h
     src/engine/encode/proxies/ReverseProxyCache.cpp
     src/engine/encode/proxies/ReverseRenderer.h
