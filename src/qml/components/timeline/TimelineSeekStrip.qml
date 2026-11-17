@@ -139,6 +139,7 @@ Item {
     }
 
     TimelineBakeStrip {
+        visible: EditorState.activeSequenceId === ""
         y: parent.height - height - 1
         width: parent.width
         z: 3

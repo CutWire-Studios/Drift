@@ -6,12 +6,15 @@ Rectangle {
     id: chip
 
     readonly property bool busy: EditorState.bakes.busy
+    readonly property bool inComposite: EditorState.activeSequenceId !== ""
+    // Cancelling a running bake stays possible from any tab.
+    readonly property bool available: busy || !inComposite
 
     width: chipLabel.implicitWidth + Theme.spacingLg * 2
     height: chipLabel.implicitHeight + Theme.spacingXs * 2
     radius: Theme.c.timelineBakeChip.radius
     color: Theme.c.timelineBakeChip.background
-    opacity: chipMouse.containsMouse ? 1 : 0.85
+    opacity: !chip.available ? 0.45 : chipMouse.containsMouse ? 1 : 0.85
 
     Text {
         id: chipLabel
@@ -27,12 +30,18 @@ Rectangle {
         id: chipMouse
         anchors.fill: parent
         hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: chip.busy ? EditorState.bakes.cancelBake() : EditorState.bakes.bakeWorkArea()
+        cursorShape: chip.available ? Qt.PointingHandCursor : Qt.ArrowCursor
+        onClicked: {
+            if (!chip.available)
+                return
+            chip.busy ? EditorState.bakes.cancelBake() : EditorState.bakes.bakeWorkArea()
+        }
     }
 
     ThemedToolTip {
         visible: chipMouse.containsMouse
-        text: chip.busy ? qsTr("Cancel baking") : qsTr("Pre-render the work area for smooth playback and export")
+        text: chip.busy ? qsTr("Cancel baking")
+              : chip.inComposite ? qsTr("Bakes are of the main timeline. Switch to it to bake.")
+              : qsTr("Pre-render the work area for smooth playback and export")
     }
 }

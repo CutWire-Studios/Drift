@@ -346,6 +346,7 @@ private slots:
     void proxyOpsCreateCheckAndRemove();
     void bakeOpsListDeleteAndRefuse();
     void bakeRangeBakesAndGoesStale();
+    void bakeWorkAreaRefusedInCompositeTab();
     void exportVideoRendersStaleBakesLive();
     void rebakeAllStaleSeesAnEditAtOnce();
     void bakeStaleBadgeFollowsSourcesAndSetup();
@@ -13926,6 +13927,53 @@ void McpTest::bakeRangeBakesAndGoesStale()
     QVERIFY2(okOf(r), qPrintable(dump(r)));
     waitBake();
     QCOMPARE(call("list_bakes").value(QStringLiteral("n")).toInt(), 0);
+}
+
+// Bakes are of the main timeline: from a composite's tab, Bake work area is refused.
+void McpTest::bakeWorkAreaRefusedInCompositeTab()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpTest"));
+    const QString projectId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString bakeFile = QDir(drift::cacheRoot()).filePath(QStringLiteral("bakes/%1.driftbake").arg(projectId));
+    const auto cleanup = qScopeGuard([&] {
+        QFile::remove(bakeFile);
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->setId(projectId);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *tool, const QJsonObject &args = {}) {
+        return dispatcher.applyOne(QLatin1String(tool), args);
+    };
+    QVERIFY(call("add_text", {{QStringLiteral("text"), QStringLiteral("Hello")}, {QStringLiteral("at"), 0.0}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(call("set_work_area", {{QStringLiteral("in"), 0.0}, {QStringLiteral("out"), 1.0}})
+                .value(QStringLiteral("ok")).toBool());
+
+    const QString refusal = QStringLiteral("Bakes are of the main timeline. Switch to it to bake.");
+    state.newTimeline();
+    QVERIFY(!state.activeSequenceId().isEmpty());
+    state.bakes()->bakeWorkArea();
+    QVERIFY(!state.bakes()->busy());
+    QVERIFY(state.bakes()->bakes().isEmpty());
+    QCOMPARE(state.lastMessage(), refusal);
+
+    // Back on the main timeline the guard is gone (whether the bake itself runs needs an encoder).
+    state.openSequence(QString());
+    QVERIFY(state.activeSequenceId().isEmpty());
+    state.bakes()->bakeWorkArea();
+    QVERIFY(state.lastMessage() != refusal);
+    state.bakes()->cancelBake();
+    QTRY_VERIFY_WITH_TIMEOUT(!state.bakes()->busy(), 120000);
+    state.bakes()->deleteAllBakes();
 }
 
 namespace {
