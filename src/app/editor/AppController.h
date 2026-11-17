@@ -2331,6 +2331,8 @@ protected:
     void syncCompositeAssetDurations();
     // Drops sequences no composite bin item refers to any more, leaving their tab if open.
     void pruneOrphanSequences();
+    // Puts the bin rows, tabs and tracks back after pushProjectEdit refused a removal for a lock.
+    void resyncAfterLockRefusal(const QString &message);
     QSet<QString> clipIdsWithPartners(const QList<QPair<int, int>> &pairs) const;
     // Returns the new sequence's id.
     QString moveClipsToNewSequence(const QSet<QString> &ids, drift::TimeUs startUs);

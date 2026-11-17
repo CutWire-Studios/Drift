@@ -1407,6 +1407,10 @@ bool AppController::removeAsset(int assetIndex)
     // start now points at the wrong asset.
     setDraggingAssetIndex(-1);
     pushProjectEdit(before, tr("Media removed"));
+    if (m_editRefusedByLock) {
+        resyncAfterLockRefusal(tr("A locked track would be changed or deleted. Unlock it first"));
+        return false;
+    }
     // An undo step without finishEdit: the revision (and the change feed) moves here.
     m_mcpController->bumpEditRevision();
     settleUndoRefresh();
@@ -1450,6 +1454,10 @@ int AppController::removeAssets(const QStringList &assetIds)
 
     setDraggingAssetIndex(-1);
     pushProjectEdit(before, removed == 1 ? tr("Media removed") : tr("%n items removed", "", removed));
+    if (m_editRefusedByLock) {
+        resyncAfterLockRefusal(tr("A locked track would be changed or deleted. Unlock it first"));
+        return 0;
+    }
     // An undo step without finishEdit: the revision (and the change feed) moves here.
     m_mcpController->bumpEditRevision();
     settleUndoRefresh();
@@ -1531,6 +1539,10 @@ int AppController::removeAssetsAndClips(const QStringList &assetIds)
         removedAssets == 1
             ? tr("Media and referenced clips removed")
             : tr("%n media items and referenced clips removed", "", removedAssets));
+    if (m_editRefusedByLock) {
+        resyncAfterLockRefusal(tr("A locked track would be changed or deleted. Unlock it first"));
+        return 0;
+    }
 
     finishEdit(
         removedClips == 1

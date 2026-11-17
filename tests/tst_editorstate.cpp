@@ -386,6 +386,11 @@ private slots:
     void audioRecordingVoiceoverWorkflow();
     void lockedTrackRejectsEdits();
     void splitShortcutFollowsSelection();
+    void lockedTimelineRemovalRefusedWhicheverTimelineIsOpen();
+    void removeAssetsRefusesLockedTimeline();
+    void dissolveLastInstanceOfLockedTimelineRefused();
+    void dissolveWithOtherInstancesLeftIgnoresLockedInnerTrack();
+    void lockInOtherTimelineLeavesUnrelatedEditsAlone();
     void audioMixerTrackControlsAndMetering();
     void activeAudioClipFollowsSolo();
     void beatGridStaleOnSolo();
@@ -857,6 +862,24 @@ void setUpTwoClipSelection(AssetLibrary &library, AppController &state)
     state.setSelection({QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 0}},
                         QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 1}}});
 }
+
+// A timeline T with one locked track holding a text clip, its bin item unused, main open.
+// Returns T's asset id; *sequenceId gets its sequence.
+QString setUpLockedTimeline(AppController &state, QString *sequenceId)
+{
+    state.newTimeline();   // opens T
+    *sequenceId = state.activeSequenceId();
+    state.addTextClip(QStringLiteral("Inside"), 0.0);
+    state.setTrackLocked(0, true);
+    state.openSequence(QString());   // back to main
+    for (const drift::MediaAsset &asset : state.project()->assets()) {
+        if (asset.kind == drift::MediaKind::Composite && asset.sequenceId == *sequenceId)
+            return asset.id;
+    }
+    return {};
+}
+
+const QString kLockRefusal = QStringLiteral("A locked track would be changed or deleted. Unlock it first");
 
 } // namespace
 
@@ -9440,6 +9463,175 @@ void EditorStateTest::splitShortcutFollowsSelection()
     state.splitAtPlayheadForSelection();
     QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
     QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+}
+
+void EditorStateTest::lockedTimelineRemovalRefusedWhicheverTimelineIsOpen()
+{
+    for (int scenario = 0; scenario < 3; ++scenario) {
+        // A: main unlocked, B: main also locked, C: T open
+        AssetLibrary library;
+        AppController state(&library);
+        state.setSnapEnabled(false);
+        QString seq;
+        const QString id = setUpLockedTimeline(state, &seq);
+        QVERIFY(!id.isEmpty());
+        if (scenario == 1) {
+            state.addTextClip(QStringLiteral("Main"), 0.0);
+            state.setTrackLocked(0, true);
+        }
+        if (scenario == 2)
+            state.openSequence(seq);
+        const int count = library.count();
+        const qsizetype depth = state.undoHistory().size();
+        const bool undoable = state.undoAvailable();
+
+        QVERIFY2(!state.removeAsset(library.indexOfId(id)), qPrintable(QString::number(scenario)));
+        QVERIFY(state.project()->hasSequence(seq));
+        QCOMPARE(library.count(), count);
+        QVERIFY(library.indexOfId(id) >= 0);
+        QCOMPARE(state.undoHistory().size(), depth);
+        QCOMPARE(state.undoAvailable(), undoable);
+        QCOMPARE(state.lastMessage(), kLockRefusal);
+        const QList<drift::Track> inner = state.project()->sequenceTracks(seq);
+        QVERIFY(inner.at(0).locked);
+        QCOMPARE(inner.at(0).clips.size(), 1);
+        if (scenario == 2) {
+            QCOMPARE(state.activeSequenceId(), seq);
+            QCOMPARE(state.sequenceTabs().size(), 1);
+        }
+        if (scenario != 2) {
+            // Unlock and the same removal goes through, and undo brings the timeline back.
+            state.openSequence(seq);
+            state.setTrackLocked(0, false);
+            state.openSequence(QString());
+            if (scenario == 1)
+                state.setTrackLocked(0, false);
+            QVERIFY(state.removeAsset(library.indexOfId(id)));
+            QVERIFY(!state.project()->hasSequence(seq));
+            state.undo();
+            QVERIFY(state.project()->hasSequence(seq));
+            QVERIFY(!state.project()->sequenceTracks(seq).at(0).locked);
+        }
+    }
+}
+
+void EditorStateTest::removeAssetsRefusesLockedTimeline()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    QString seq;
+    const QString id = setUpLockedTimeline(state, &seq);
+    drift::MediaAsset other;
+    other.id = QStringLiteral("unused-1");
+    other.name = QStringLiteral("unused.mp4");
+    other.path = QStringLiteral("/tmp/unused.mp4");
+    other.kind = drift::MediaKind::Video;
+    state.project()->assets().insert(other.id, other);
+    state.project()->assetOrder().append(other.id);
+    library.syncToProject();
+    const int count = library.count();
+
+    QCOMPARE(state.removeAssets({id, other.id}), 0);
+    QCOMPARE(library.count(), count);
+    QVERIFY(library.indexOfId(id) >= 0);
+    QVERIFY(library.indexOfId(other.id) >= 0);
+    QVERIFY(state.project()->hasSequence(seq));
+
+    QCOMPARE(state.removeAssetsAndClips({id}), 0);
+    QCOMPARE(library.count(), count);
+    QVERIFY(state.project()->hasSequence(seq));
+    QCOMPARE(state.project()->sequenceTracks(seq).at(0).clips.size(), 1);
+}
+
+void EditorStateTest::dissolveLastInstanceOfLockedTimelineRefused()
+{
+    for (const bool withEffect : {false, true}) {
+        AssetLibrary library;
+        TestController state(&library);
+        setUpTwoClipSelection(library, state);
+        state.makeCompositeFromSelection();
+        const QString seq = state.project()->tracks().at(0).clips.at(0).sequenceId;
+        if (withEffect)
+            state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+        // Another clip on the composite's track: a dissolve would shift the selection's indices.
+        drift::Clip other;
+        other.id = QStringLiteral("other-clip");
+        other.type = drift::ClipType::Video;
+        other.timelineStart = drift::secondsToUs(100.0);
+        other.timelineDuration = drift::secondsToUs(1.0);
+        other.srcOut = other.timelineDuration;
+        state.project()->tracks()[0].clips.append(other);
+        state.notifyTracksChanged();
+        state.openCompositeClip(0, 0);
+        state.setTrackLocked(0, true);
+        state.openSequence(QString());
+        state.setSelection({QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 0}}});
+        QCOMPARE(state.selectionCount(), 1);
+
+        state.dissolveComposite(0, 0);
+        // The refused dissolve leaves the selection as it was: just the composite, not the clips
+        // the dissolve would have released.
+        QCOMPARE(state.selectionCount(), 1);
+        QCOMPARE(state.selectedTrack(), 0);
+        QCOMPARE(state.selectedClip(), 0);
+        QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+        QCOMPARE(state.project()->tracks().at(0).clips.at(0).type, drift::ClipType::Composite);
+        QVERIFY(state.project()->hasSequence(seq));
+        QCOMPARE(state.lastMessage(), kLockRefusal);
+
+        // The refusal flag doesn't leak into the next edit.
+        state.setClipDuration(0, 0, 2.0);
+        QVERIFY(state.lastMessage() != QStringLiteral("Track is locked"));
+    }
+}
+
+// A lock inside the composite's timeline only matters when dissolving would delete that timeline:
+// with another instance still placed, the dissolve goes through.
+void EditorStateTest::dissolveWithOtherInstancesLeftIgnoresLockedInnerTrack()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    setUpTwoClipSelection(library, state);
+    state.makeCompositeFromSelection();
+    const drift::Clip first = state.project()->tracks().at(0).clips.at(0);
+    drift::Clip second = first;
+    second.id = QStringLiteral("second-instance");
+    second.timelineStart = drift::secondsToUs(100.0);
+    state.project()->tracks()[0].clips.append(second);
+    state.notifyTracksChanged();
+    state.openCompositeClip(0, 0);
+    state.setTrackLocked(0, true);
+    state.openSequence(QString());
+
+    state.dissolveComposite(0, 0);
+    QVERIFY(state.lastMessage() != kLockRefusal);
+    QVERIFY(state.project()->hasSequence(first.sequenceId));
+    int composites = 0;
+    for (const drift::Clip &clip : state.project()->tracks().at(0).clips) {
+        QVERIFY(clip.id != first.id);
+        if (clip.type == drift::ClipType::Composite)
+            ++composites;
+    }
+    QCOMPARE(composites, 1);
+    QVERIFY(state.project()->sequenceTracks(first.sequenceId).at(0).locked);
+}
+
+void EditorStateTest::lockInOtherTimelineLeavesUnrelatedEditsAlone()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    state.addTextClip(QStringLiteral("Main"), 0.0);
+    QString seq;
+    setUpLockedTimeline(state, &seq);
+
+    state.moveClip(0, 0, 3.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(3.0));
+
+    state.openSequence(seq);
+    state.setTrackLocked(0, false);
+    state.addTextClip(QStringLiteral("More"), 5.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
 }
 
 void EditorStateTest::audioMixerTrackControlsAndMetering()

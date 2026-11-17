@@ -1064,8 +1064,12 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const int index = resolveAsset(args.value(QStringLiteral("asset")));
         if (index < 0)
             return err("not_found", QStringLiteral("Unknown asset"));
+        if (m_controller->clipCountForAsset(index) > 0)
+            return err("in_use", QStringLiteral("Clips use this asset; delete them first, or use "
+                                                "remove_unused_assets for media nothing uses"));
         if (!m_controller->removeAsset(index))
-            return err("bad_args", QStringLiteral("Remove refused"));
+            return err("locked", QStringLiteral("This is a timeline with a locked track; unlock the "
+                                                "track and try again. Nothing was removed"));
         return ok({{QStringLiteral("removed"), index}});
     }
 
@@ -1160,8 +1164,33 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                     {QStringLiteral("detail"), QStringLiteral("Assets under this folder have clips on the timeline")},
                     {QStringLiteral("assets"), inUse}};
 
+        // A timeline with a locked track can't be deleted. Checked before the batch opens, so a
+        // refusal leaves the edit revision and the change feed alone. The open timeline's stored
+        // copy is stale: its live tracks are the project's.
+        {
+            const drift::Project *project = m_controller->project();
+            for (const QString &id : std::as_const(assets)) {
+                const auto it = project->assets().constFind(id);
+                if (it == project->assets().constEnd() || it->kind != drift::MediaKind::Composite
+                    || it->sequenceId.isEmpty())
+                    continue;
+                const QList<drift::Track> &tracks = project->activeSequenceId() == it->sequenceId
+                                                        ? project->tracks()
+                                                        : project->sequenceTracks(it->sequenceId);
+                for (const drift::Track &track : tracks) {
+                    if (track.locked)
+                        return err("locked", QStringLiteral("A timeline under this folder has a locked track; unlock it "
+                                                            "and try again. Nothing was deleted"));
+                }
+            }
+        }
         m_controller->mcp()->beginBatch();
         const int removed = assets.isEmpty() ? 0 : m_controller->removeAssets(assets);
+        if (!assets.isEmpty() && removed == 0) {
+            m_controller->mcp()->endBatch(QStringLiteral("Folder deleted"), false);
+            return err("locked", QStringLiteral("A timeline under this folder has a locked track; unlock it "
+                                                "and try again. Nothing was deleted"));
+        }
         for (int i = subtree.size() - 1; i >= 0; --i)
             bin->deleteFolder(subtree.at(i));
         m_controller->mcp()->endBatch(QStringLiteral("Folder deleted"), true);
@@ -1511,13 +1540,19 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (!m_controller->canDissolveComposite(track, index))
             return err("bad_args", QStringLiteral(
                 "Select a composite clip on the main timeline first"));
-        const QString compositeId = project->tracks().at(track).clips.at(index).id;
+        const drift::Clip &composite = project->tracks().at(track).clips.at(index);
+        const QString compositeId = composite.id;
+        const bool retimed = composite.hasSpeedCurve() || composite.reverse || !qFuzzyCompare(composite.effectiveSpeed(), 1.0);
         m_controller->dissolveComposite(track, index);
         for (const drift::Track &t : m_controller->project()->tracks()) {
             for (const drift::Clip &c : t.clips) {
-                if (c.id == compositeId)
+                if (c.id != compositeId)
+                    continue;
+                if (retimed)
                     return err("apply_failed", QStringLiteral(
                         "The composite could not be dissolved (ramped, reversed or retimed composites are refused)"));
+                return err("locked", QStringLiteral(
+                    "Dissolving would change or delete a locked track; unlock it and try again"));
             }
         }
         return ok({});

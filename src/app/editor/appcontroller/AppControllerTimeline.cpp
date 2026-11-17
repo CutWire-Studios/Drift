@@ -777,8 +777,12 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     normalizeProjectStructure(&before);
     m_editRefusedByLock = false;
     bool anyLocked = false;
-    for (const drift::Track &track : before.tracks())
-        anyLocked = anyLocked || track.locked;
+    // Every timeline, not just the open one: trackContentById below walks them all, and a bin
+    // removal can delete a composite's sequence whatever is open (#83).
+    before.forEachTrackList([&anyLocked](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks)
+            anyLocked = anyLocked || track.locked;
+    });
     if (anyLocked) {
         const auto was = trackContentById(before);
         const auto now = trackContentById(m_project);
