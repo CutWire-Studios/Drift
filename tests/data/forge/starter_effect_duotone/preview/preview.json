@@ -1,0 +1,49 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "contrast",
+      "name": "k_n2_contrast",
+      "node": "n2",
+      "type": "float",
+      "value": 1.2
+    },
+    {
+      "input": "brightness",
+      "name": "k_n2_brightness",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "amount",
+      "name": "k_n3_amount",
+      "node": "n3",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"brightness_contrast\",{},[]],[\"n3\",\"gradient_map\",{},[[\"shadow\",{\"param\":\"shadowColor\"}],[\"highlight\",{\"param\":\"highlightColor\"}]]],[\"n4\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"],[\"n3\",\"image\",\"n4\",\"image\"]],[[\"shadowColor\",\"color\",false],[\"highlightColor\",\"color\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

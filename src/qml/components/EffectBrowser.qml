@@ -78,6 +78,15 @@ Column {
                 tooltip: qsTr("Install a custom effect or transition from a .driftfx or zip made in Drift Forge")
                 onClicked: ShellBridge.main.importUserPackage("")
             }
+
+            IconButton {
+                visible: !ShellBridge.phoneShell
+                glyph: Theme.icons.sparkles
+                variant: "ghost"
+                buttonSize: Theme.controlHeight
+                tooltip: qsTr("Create a new effect in Forge")
+                onClicked: Forge.createNew("effect")
+            }
         }
 
         Item {

@@ -1,0 +1,43 @@
+{
+  "backend": "gpu",
+  "category": "glitch",
+  "description": "Jumping slices and split colour, like a broken signal.",
+  "displayName": "Glitch",
+  "id": "starter_effect_glitch",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.5,
+      "displayName": "Glitch",
+      "identifier": "glitch",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 6,
+      "displayName": "Colour split",
+      "identifier": "split",
+      "maxValue": 40,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "backend": "gpu",
+  "category": "keying",
+  "description": "Cuts out a green background so the clip below shows through.",
+  "displayName": "Green screen",
+  "id": "starter_effect_green_screen",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.12,
+      "displayName": "Tolerance",
+      "identifier": "tolerance",
+      "maxValue": 0.5,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

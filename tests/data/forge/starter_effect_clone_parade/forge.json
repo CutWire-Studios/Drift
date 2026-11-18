@@ -1,0 +1,817 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n4",
+      "toSocket": "b"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n5",
+      "toSocket": "x"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "p",
+      "id": "e3",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "p",
+      "id": "e4",
+      "to": "n7",
+      "toSocket": "offset"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "p",
+      "id": "e5",
+      "to": "n8",
+      "toSocket": "offset"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "p",
+      "id": "e6",
+      "to": "n9",
+      "toSocket": "p"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "p",
+      "id": "e7",
+      "to": "n11",
+      "toSocket": "p"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e8",
+      "to": "n9",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e9",
+      "to": "n11",
+      "toSocket": "image"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "p",
+      "id": "e10",
+      "to": "n10",
+      "toSocket": "p"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "p",
+      "id": "e11",
+      "to": "n12",
+      "toSocket": "p"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e12",
+      "to": "n10",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e13",
+      "to": "n12",
+      "toSocket": "image"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "image",
+      "id": "e14",
+      "to": "n13",
+      "toSocket": "image"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "image",
+      "id": "e15",
+      "to": "n14",
+      "toSocket": "image"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "image",
+      "id": "e16",
+      "to": "n15",
+      "toSocket": "color"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "image",
+      "id": "e17",
+      "to": "n16",
+      "toSocket": "color"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "image",
+      "id": "e18",
+      "to": "n17",
+      "toSocket": "base"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "image",
+      "id": "e19",
+      "to": "n17",
+      "toSocket": "layer"
+    },
+    {
+      "from": "n17",
+      "fromSocket": "image",
+      "id": "e20",
+      "to": "n18",
+      "toSocket": "image"
+    },
+    {
+      "from": "n18",
+      "fromSocket": "image",
+      "id": "e21",
+      "to": "n19",
+      "toSocket": "color"
+    },
+    {
+      "from": "n19",
+      "fromSocket": "r",
+      "id": "e22",
+      "to": "n20",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e23",
+      "to": "n21",
+      "toSocket": "base"
+    },
+    {
+      "from": "n20",
+      "fromSocket": "image",
+      "id": "e24",
+      "to": "n21",
+      "toSocket": "layer"
+    },
+    {
+      "from": "n21",
+      "fromSocket": "image",
+      "id": "e25",
+      "to": "n22",
+      "toSocket": "a"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "image",
+      "id": "e26",
+      "to": "n22",
+      "toSocket": "b"
+    },
+    {
+      "from": "n15",
+      "fromSocket": "r",
+      "id": "e27",
+      "to": "n22",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n22",
+      "fromSocket": "image",
+      "id": "e28",
+      "to": "n23",
+      "toSocket": "a"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "image",
+      "id": "e29",
+      "to": "n23",
+      "toSocket": "b"
+    },
+    {
+      "from": "n16",
+      "fromSocket": "r",
+      "id": "e30",
+      "to": "n23",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n23",
+      "fromSocket": "image",
+      "id": "e31",
+      "to": "n24",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e32",
+      "to": "n24",
+      "toSocket": "b"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e33",
+      "to": "n24",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n24",
+      "fromSocket": "image",
+      "id": "e34",
+      "to": "n25",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "impact",
+    "description": "Two glowing copies of the person step out to either side, scaled from their feet with a linear transform.",
+    "displayName": "Clone parade",
+    "id": "starter_effect_clone_parade",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "clip_mask",
+      "x": 0,
+      "y": 880
+    },
+    {
+      "data": {
+        "shape": "sine"
+      },
+      "id": "n3",
+      "inputs": {
+        "max": 1,
+        "min": 0.8,
+        "phase": 0,
+        "rate": {
+          "param": "swayRate"
+        },
+        "seed": 0,
+        "t": 0
+      },
+      "type": "lfo",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n4",
+      "inputs": {
+        "a": {
+          "param": "spread"
+        },
+        "b": 1
+      },
+      "type": "math",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "x": 0.5,
+        "y": 0
+      },
+      "type": "combine_point",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "scale"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": -1
+      },
+      "type": "vector_math",
+      "x": 840,
+      "y": 220
+    },
+    {
+      "data": {
+        "inverse": true,
+        "square": true
+      },
+      "id": "n7",
+      "inputs": {
+        "m00": {
+          "param": "cloneSize"
+        },
+        "m01": 0,
+        "m10": 0,
+        "m11": {
+          "param": "cloneSize"
+        },
+        "offset": [
+          0,
+          0
+        ],
+        "origin": [
+          0.5,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "linear_transform",
+      "x": 1120,
+      "y": 440
+    },
+    {
+      "data": {
+        "inverse": true,
+        "square": true
+      },
+      "id": "n8",
+      "inputs": {
+        "m00": {
+          "param": "cloneSize"
+        },
+        "m01": 0,
+        "m10": 0,
+        "m11": {
+          "param": "cloneSize"
+        },
+        "offset": [
+          0,
+          0
+        ],
+        "origin": [
+          0.5,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "linear_transform",
+      "x": 1120,
+      "y": 660
+    },
+    {
+      "data": {
+        "edge": "transparent"
+      },
+      "id": "n9",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 1400,
+      "y": 0
+    },
+    {
+      "data": {
+        "edge": "transparent"
+      },
+      "id": "n10",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 1400,
+      "y": 220
+    },
+    {
+      "data": {
+        "edge": "transparent"
+      },
+      "id": "n11",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 1400,
+      "y": 440
+    },
+    {
+      "data": {
+        "edge": "transparent"
+      },
+      "id": "n12",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 1400,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n13",
+      "inputs": {
+        "amount": {
+          "param": "cloneTint"
+        },
+        "color": {
+          "param": "rightColor"
+        },
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "tint",
+      "x": 1680,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n14",
+      "inputs": {
+        "amount": {
+          "param": "cloneTint"
+        },
+        "color": {
+          "param": "leftColor"
+        },
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "tint",
+      "x": 1680,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n15",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 1680,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n16",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 1680,
+      "y": 660
+    },
+    {
+      "data": {
+        "mode": "add"
+      },
+      "id": "n17",
+      "inputs": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "layer": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "opacity": 1
+      },
+      "type": "blend",
+      "x": 1960,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n18",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": {
+          "param": "haloSize"
+        }
+      },
+      "type": "blur",
+      "x": 2240,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n19",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 2520,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n20",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": {
+          "param": "haloColor"
+        }
+      },
+      "type": "mix",
+      "x": 2800,
+      "y": 660
+    },
+    {
+      "data": {
+        "mode": "screen"
+      },
+      "id": "n21",
+      "inputs": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "layer": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "opacity": {
+          "param": "halo"
+        }
+      },
+      "type": "blend",
+      "x": 2240,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n22",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 2520,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n23",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 2800,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n24",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 3080,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n25",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 3360,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.5,
+      "displayName": "Sway speed",
+      "identifier": "swayRate",
+      "max": 3,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 0.28,
+      "displayName": "Spread",
+      "identifier": "spread",
+      "max": 0.5,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 0.9,
+      "displayName": "Clone size",
+      "identifier": "cloneSize",
+      "max": 1.2,
+      "min": 0.5,
+      "type": "float"
+    },
+    {
+      "default": 0.45,
+      "displayName": "Clone tint",
+      "identifier": "cloneTint",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": "#ff3d7f",
+      "displayName": "Right clone",
+      "identifier": "rightColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": "#3dd2ff",
+      "displayName": "Left clone",
+      "identifier": "leftColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": 18,
+      "displayName": "Halo size",
+      "identifier": "haloSize",
+      "max": 48,
+      "min": 2,
+      "type": "float"
+    },
+    {
+      "default": "#ff4f6d",
+      "displayName": "Halo",
+      "identifier": "haloColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": 0.9,
+      "displayName": "Halo glow",
+      "identifier": "halo",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "clip": "stage-model",
+    "thumbTime": 0.5
+  }
+}

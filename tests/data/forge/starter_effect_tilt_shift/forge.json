@@ -1,0 +1,209 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n2",
+      "fromSocket": "t",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "a"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n4",
+      "toSocket": "x"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "x"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e4",
+      "to": "n6",
+      "toSocket": "image"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e5",
+      "to": "n6",
+      "toSocket": "radius"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "image",
+      "id": "e6",
+      "to": "n7",
+      "toSocket": "image"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "image",
+      "id": "e7",
+      "to": "n8",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "dreamy",
+    "description": "Sharp in a band across the middle, blurred above and below: the miniature look.",
+    "displayName": "Tilt shift",
+    "id": "starter_effect_tilt_shift",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "angle": 90,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "linear_gradient",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "sub"
+      },
+      "id": "n3",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "focus"
+        }
+      },
+      "type": "math",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {
+        "fn": "abs"
+      },
+      "id": "n4",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {
+        "clamp": true
+      },
+      "id": "n5",
+      "inputs": {
+        "inMax": 0.4,
+        "inMin": 0.08,
+        "outMax": {
+          "param": "blurAmount"
+        },
+        "outMin": 0,
+        "x": 0.5
+      },
+      "type": "remap",
+      "x": 840,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n6",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": 8
+      },
+      "type": "blur",
+      "x": 1120,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n7",
+      "inputs": {
+        "amount": 1.3,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "saturation",
+      "x": 1400,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n8",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 1680,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.5,
+      "displayName": "Focus height",
+      "identifier": "focus",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 18,
+      "displayName": "Blur",
+      "identifier": "blurAmount",
+      "max": 48,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

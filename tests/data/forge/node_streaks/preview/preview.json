@@ -1,0 +1,75 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "points",
+      "name": "k_n2_points",
+      "node": "n2",
+      "type": "float",
+      "value": 4
+    },
+    {
+      "input": "threshold",
+      "name": "k_n2_threshold",
+      "node": "n2",
+      "type": "float",
+      "value": 0.7
+    },
+    {
+      "input": "rotation",
+      "name": "k_n2_rotation",
+      "node": "n2",
+      "type": "float",
+      "value": 45
+    },
+    {
+      "input": "length",
+      "name": "k_n2_length",
+      "node": "n2",
+      "type": "float",
+      "value": 60
+    },
+    {
+      "input": "intensity",
+      "name": "k_n2_intensity",
+      "node": "n2",
+      "type": "float",
+      "value": 1.5
+    },
+    {
+      "input": "tint",
+      "name": "k_n2_tint",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        1,
+        0.95,
+        0.85,
+        1
+      ]
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"streaks\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

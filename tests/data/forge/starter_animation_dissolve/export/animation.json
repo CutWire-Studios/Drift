@@ -1,0 +1,51 @@
+{
+  "category": "reveal",
+  "defaultDurationMs": 500,
+  "description": "The clip emerges from, or melts into, drifting noise.",
+  "directions": [
+    "in",
+    "out"
+  ],
+  "displayName": "Dissolve",
+  "id": "starter_animation_dissolve",
+  "nextFeatures": [
+    "kind:animation"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 5,
+      "displayName": "Patch size",
+      "identifier": "scale",
+      "maxValue": 40,
+      "minValue": 0.5,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.1,
+      "displayName": "Softness",
+      "identifier": "softness",
+      "maxValue": 0.5,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

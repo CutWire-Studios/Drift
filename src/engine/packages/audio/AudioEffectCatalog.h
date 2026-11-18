@@ -50,6 +50,12 @@ std::optional<AudioEffectEntry> loadAudioEffectPackage(const QString &packageDir
 
 const QList<AudioEffectEntry> &audioEffectCatalog();
 const AudioEffectEntry *audioEffectDefForId(const QString &id);
+// The Forge's live-preview slot. Never listed in the catalog or its browsers; lookups by this id
+// resolve to the draft. A replaced draft is kept alive for a few more frames because the render
+// thread may still hold the pointer handed out for it.
+inline constexpr QLatin1String kDraftAudioId{"forge.draft.audio"};
+void setDraftAudio(std::optional<AudioEffectEntry> entry);
+
 
 // Merge each parameter's current instance value (or its default) into a name->value map.
 QMap<QString, QVariant> resolvedAudioEffectParameters(const drift::Effect &effect,

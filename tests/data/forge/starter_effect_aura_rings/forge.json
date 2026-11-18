@@ -1,0 +1,646 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "image"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n4",
+      "toSocket": "color"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "r",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n7",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e5",
+      "to": "n7",
+      "toSocket": "b"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e6",
+      "to": "n8",
+      "toSocket": "x"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "value",
+      "id": "e7",
+      "to": "n9",
+      "toSocket": "a"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "value",
+      "id": "e8",
+      "to": "n10",
+      "toSocket": "x"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "value",
+      "id": "e9",
+      "to": "n11",
+      "toSocket": "x"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "r",
+      "id": "e10",
+      "to": "n12",
+      "toSocket": "x"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e11",
+      "to": "n13",
+      "toSocket": "x"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "value",
+      "id": "e12",
+      "to": "n14",
+      "toSocket": "a"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "value",
+      "id": "e13",
+      "to": "n14",
+      "toSocket": "b"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "value",
+      "id": "e14",
+      "to": "n15",
+      "toSocket": "a"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "value",
+      "id": "e15",
+      "to": "n15",
+      "toSocket": "b"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "r",
+      "id": "e16",
+      "to": "n16",
+      "toSocket": "x"
+    },
+    {
+      "from": "n15",
+      "fromSocket": "value",
+      "id": "e17",
+      "to": "n17",
+      "toSocket": "a"
+    },
+    {
+      "from": "n16",
+      "fromSocket": "grad",
+      "id": "e18",
+      "to": "n18",
+      "toSocket": "a"
+    },
+    {
+      "from": "n17",
+      "fromSocket": "value",
+      "id": "e19",
+      "to": "n18",
+      "toSocket": "s"
+    },
+    {
+      "from": "n19",
+      "fromSocket": "uv",
+      "id": "e20",
+      "to": "n20",
+      "toSocket": "a"
+    },
+    {
+      "from": "n18",
+      "fromSocket": "p",
+      "id": "e21",
+      "to": "n20",
+      "toSocket": "b"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e22",
+      "to": "n21",
+      "toSocket": "image"
+    },
+    {
+      "from": "n20",
+      "fromSocket": "p",
+      "id": "e23",
+      "to": "n21",
+      "toSocket": "p"
+    },
+    {
+      "from": "n15",
+      "fromSocket": "value",
+      "id": "e24",
+      "to": "n22",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n21",
+      "fromSocket": "image",
+      "id": "e25",
+      "to": "n23",
+      "toSocket": "base"
+    },
+    {
+      "from": "n22",
+      "fromSocket": "image",
+      "id": "e26",
+      "to": "n23",
+      "toSocket": "layer"
+    },
+    {
+      "from": "n23",
+      "fromSocket": "image",
+      "id": "e27",
+      "to": "n24",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e28",
+      "to": "n24",
+      "toSocket": "b"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e29",
+      "to": "n24",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n24",
+      "fromSocket": "image",
+      "id": "e30",
+      "to": "n25",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "dreamy",
+    "description": "Rings of light ripple outward from the person, bending the background along the gradient of a blurred matte.",
+    "displayName": "Aura rings",
+    "id": "starter_effect_aura_rings",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "clip_mask",
+      "x": 0,
+      "y": 1100
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": {
+          "param": "auraSize"
+        }
+      },
+      "type": "blur",
+      "x": 280,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 560,
+      "y": 660
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n5",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "rings"
+        }
+      },
+      "type": "math",
+      "x": 840,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n6",
+      "inputs": {
+        "speed": {
+          "param": "ringSpeed"
+        }
+      },
+      "type": "time",
+      "x": 840,
+      "y": 880
+    },
+    {
+      "data": {
+        "op": "add"
+      },
+      "id": "n7",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1120,
+      "y": 660
+    },
+    {
+      "data": {
+        "fn": "fract"
+      },
+      "id": "n8",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1400,
+      "y": 660
+    },
+    {
+      "data": {
+        "op": "sub"
+      },
+      "id": "n9",
+      "inputs": {
+        "a": 0,
+        "b": 0.5
+      },
+      "type": "math",
+      "x": 1680,
+      "y": 660
+    },
+    {
+      "data": {
+        "fn": "abs"
+      },
+      "id": "n10",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1960,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n11",
+      "inputs": {
+        "high": 0.5,
+        "low": 0.36,
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 2240,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n12",
+      "inputs": {
+        "high": 0.3,
+        "low": 0.02,
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 1120,
+      "y": 880
+    },
+    {
+      "data": {
+        "fn": "oneminus"
+      },
+      "id": "n13",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1120,
+      "y": 1100
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n14",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1400,
+      "y": 880
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n15",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 2520,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n16",
+      "inputs": {
+        "spacing": 2,
+        "x": 0
+      },
+      "type": "derivative",
+      "x": 840,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n17",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "refraction"
+        }
+      },
+      "type": "math",
+      "x": 2800,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "scale"
+      },
+      "id": "n18",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": 1
+      },
+      "type": "vector_math",
+      "x": 3080,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n19",
+      "inputs": {},
+      "type": "uv",
+      "x": 3080,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "add"
+      },
+      "id": "n20",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": 1
+      },
+      "type": "vector_math",
+      "x": 3360,
+      "y": 220
+    },
+    {
+      "data": {
+        "edge": "clamp"
+      },
+      "id": "n21",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 3640,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n22",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": {
+          "param": "auraColor"
+        }
+      },
+      "type": "mix",
+      "x": 3360,
+      "y": 660
+    },
+    {
+      "data": {
+        "mode": "screen"
+      },
+      "id": "n23",
+      "inputs": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "layer": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "opacity": {
+          "param": "auraGlow"
+        }
+      },
+      "type": "blend",
+      "x": 3920,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n24",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 4200,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n25",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 4480,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 40,
+      "displayName": "Aura size",
+      "identifier": "auraSize",
+      "max": 64,
+      "min": 8,
+      "type": "float"
+    },
+    {
+      "default": 8,
+      "displayName": "Rings",
+      "identifier": "rings",
+      "max": 24,
+      "min": 2,
+      "type": "float"
+    },
+    {
+      "default": 1.2,
+      "displayName": "Speed",
+      "identifier": "ringSpeed",
+      "max": 5,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 0.0025,
+      "displayName": "Refraction",
+      "identifier": "refraction",
+      "max": 0.01,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": "#ffb347",
+      "displayName": "Aura colour",
+      "identifier": "auraColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": 0.8,
+      "displayName": "Glow",
+      "identifier": "auraGlow",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "clip": "dancer",
+    "thumbTime": 0.5
+  }
+}

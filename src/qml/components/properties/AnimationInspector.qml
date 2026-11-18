@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Basic
 import QtQuick.Window
 import Drift
@@ -135,7 +136,8 @@ Item {
                                                       : sec.inspector.clipData.fadeOutHandles) || []
         readonly property string animKind: sec.anim.kind || "none"
         readonly property var kindModel: {
-            const base = sec.inspector.animKindList
+            const dir = sec.edge
+            const base = sec.inspector.animKindList.filter(e => !e.directions || e.directions.indexOf(dir) >= 0)
             return base.some(e => e.id === sec.animKind)
                    ? base : base.concat([{ id: sec.animKind, label: sec.animKind }])
         }
@@ -218,12 +220,32 @@ Item {
             }
         }
 
-        Text {
+        RowLayout {
             visible: sec.inspector.supportsBodyAnim
-            text: qsTr("Animation")
-            color: Theme.c.animationInspector.foregroundMuted
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            width: parent.width
+            spacing: Theme.spacingXs
+
+            Text {
+                Layout.fillWidth: true
+                text: qsTr("Animation")
+                color: Theme.c.animationInspector.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+            IconButton {
+                visible: !ShellBridge.phoneShell && Forge.canEdit("animation", sec.animKind)
+                glyph: Theme.icons.pencil
+                variant: "ghost"
+                tooltip: qsTr("Edit this animation in Forge")
+                onClicked: Forge.openPackage("animation", sec.animKind)
+            }
+            IconButton {
+                visible: !ShellBridge.phoneShell
+                glyph: Theme.icons.sparkles
+                variant: "ghost"
+                tooltip: qsTr("Create a new animation in Forge")
+                onClicked: Forge.createNew("animation")
+            }
         }
 
         Row {

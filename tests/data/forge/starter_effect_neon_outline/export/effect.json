@@ -1,0 +1,140 @@
+{
+  "backend": "gpu",
+  "category": "impact",
+  "description": "A glowing line traces the person. The matte's gradient finds the edge, and its direction sets the colour, so the hue wheels around the body.",
+  "displayName": "Neon outline",
+  "id": "starter_effect_neon_outline",
+  "nextFeatures": [
+    "node:clip_mask",
+    "requires:mask"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.18,
+      "displayName": "Softness",
+      "identifier": "lineSoftness",
+      "maxValue": 0.5,
+      "minValue": 0.05,
+      "type": "float"
+    },
+    {
+      "defaultValue": 90,
+      "displayName": "Colour speed (°/s)",
+      "identifier": "colorSpin",
+      "maxValue": 360,
+      "minValue": -360,
+      "type": "float"
+    },
+    {
+      "defaultValue": "#00e5ff",
+      "displayName": "Neon colour",
+      "identifier": "neonColor",
+      "type": "color"
+    },
+    {
+      "defaultValue": 14,
+      "displayName": "Glow size",
+      "identifier": "neonGlow",
+      "maxValue": 48,
+      "minValue": 2,
+      "type": "float"
+    },
+    {
+      "defaultValue": 1.8,
+      "displayName": "Glow",
+      "identifier": "neonIntensity",
+      "maxValue": 4,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": -0.35,
+      "displayName": "Background",
+      "identifier": "backdrop",
+      "maxValue": 0,
+      "minValue": -1,
+      "type": "float"
+    },
+    {
+      "defaultValue": 2,
+      "displayName": "Pulse speed",
+      "identifier": "pulseRate",
+      "maxValue": 8,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [
+      {
+        "id": "buf0",
+        "scale": 1
+      },
+      {
+        "id": "buf1",
+        "scale": 1
+      }
+    ],
+    "passes": [
+      {
+        "fragmentShader": "pass1.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        "passIndex": 0
+      },
+      {
+        "fragmentShader": "pass2.frag",
+        "inputs": [
+          {
+            "id": "buf0",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "id": "buf1",
+          "type": "buffer"
+        },
+        "passIndex": 1
+      },
+      {
+        "fragmentShader": "pass3.frag",
+        "inputs": [
+          {
+            "id": "buf1",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        "passIndex": 2
+      },
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          },
+          {
+            "id": "buf0",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 3
+      }
+    ]
+  },
+  "requires": "mask"
+}

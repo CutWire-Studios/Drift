@@ -1,0 +1,43 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "description": "The frame raised to a power as a complex number: a conformal fold that keeps every angle.",
+  "displayName": "Complex power",
+  "id": "starter_effect_complex_power",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 2,
+      "displayName": "Power",
+      "identifier": "power",
+      "maxValue": 6,
+      "minValue": -4,
+      "type": "float"
+    },
+    {
+      "defaultValue": 2,
+      "displayName": "Zoom",
+      "identifier": "zoom",
+      "maxValue": 6,
+      "minValue": 0.5,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

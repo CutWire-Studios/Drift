@@ -1,0 +1,37 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "x",
+      "name": "k_n2_x",
+      "node": "n2",
+      "type": "float",
+      "value": 0.5
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": [
+        "src"
+      ]
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"audio_track\",{\"asset\":\"a1\",\"audio\":{\"param\":\"src\"}},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n2\",\"spectrum\",\"n3\",\"image\"]],[[\"src\",\"audio\",false]],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

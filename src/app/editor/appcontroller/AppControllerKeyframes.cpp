@@ -95,7 +95,8 @@ bool AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
         if (otherKt) {
             const drift::TimeUs otherNearest = otherKt->nearestKeyframe(rel, kKeyframeToleranceUs);
             if (otherNearest < 0) {
-                const double otherVal = otherKt->evaluateAt(rel);
+                const double otherVal = otherKt->isEmpty() ? propertyBaseValue(trackIndex, clipIndex, otherProp, 0.0)
+                                                           : otherKt->evaluateAt(rel);
                 writeClipPropValue(clip, otherProp, rel, otherVal, m_autoKeyEnabled, /*force=*/true);
                 drift::KeyframeTrack<double> *srcKt = keyframeTrackForProp(clip, prop, false);
                 if (srcKt)

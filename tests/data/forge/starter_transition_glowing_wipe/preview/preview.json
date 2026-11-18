@@ -1,0 +1,54 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "sharpness",
+      "name": "k_n5_sharpness",
+      "node": "n5",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "intensity",
+      "name": "k_n5_intensity",
+      "node": "n5",
+      "type": "float",
+      "value": 1.5
+    },
+    {
+      "input": "opacity",
+      "name": "k_n6_opacity",
+      "node": "n6",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        },
+        {
+          "index": 1,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"transition\",[[\"n1\",\"from\",{},[]],[\"n2\",\"to\",{},[]],[\"n3\",\"wipe_mask\",{},[[\"angle\",{\"param\":\"direction\"}],[\"softness\",{\"param\":\"softness\"}]]],[\"n4\",\"mix\",{},[]],[\"n5\",\"edge_glow\",{},[[\"color\",{\"param\":\"glowColor\"}]]],[\"n6\",\"blend\",{\"mode\":\"add\"},[]],[\"n7\",\"transition_output\",{},[]]],[[\"n1\",\"image\",\"n4\",\"a\"],[\"n2\",\"image\",\"n4\",\"b\"],[\"n3\",\"mask\",\"n4\",\"amount\"],[\"n3\",\"mask\",\"n5\",\"mask\"],[\"n4\",\"image\",\"n6\",\"base\"],[\"n5\",\"image\",\"n6\",\"layer\"],[\"n6\",\"image\",\"n7\",\"image\"]],[[\"direction\",\"float\",false],[\"softness\",\"float\",false],[\"glowColor\",\"color\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

@@ -169,7 +169,7 @@ FrameCompositor::RenderOptions CompositorService::effectiveOptions(
     FrameCompositor::RenderOptions options) const
 {
     // A bypassed effect is edited out of the snapshot; a bake still has it in.
-    if (!m_bypassClipIds.isEmpty() && !m_bypassCatalogIds.isEmpty())
+    if ((!m_bypassClipIds.isEmpty() && !m_bypassCatalogIds.isEmpty()) || m_previewPatch)
         options.useBakes = false;
     if (!m_adaptiveQuality)
         return options;
@@ -219,6 +219,14 @@ void CompositorService::setPreviewBypass(const QSet<QString> &clipIds, const QSe
     invalidateSnapshot();
 }
 
+void CompositorService::setPreviewPatch(std::function<void(drift::Project &)> patch)
+{
+    if (!patch && !m_previewPatch)
+        return;
+    m_previewPatch = std::move(patch);
+    invalidateSnapshot();
+}
+
 std::shared_ptr<const drift::Project> CompositorService::snapshot()
 {
     if (!m_project)
@@ -241,6 +249,8 @@ std::shared_ptr<const drift::Project> CompositorService::snapshot()
                 }
             }
         }
+        if (m_previewPatch)
+            m_previewPatch(*snapshot);
         m_sharedSnapshot = std::move(snapshot);
         m_snapshotGeneration = m_liveGeneration;
         ++m_snapshotSerial;

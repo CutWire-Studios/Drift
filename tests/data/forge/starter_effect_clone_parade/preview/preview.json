@@ -1,0 +1,195 @@
+{
+  "buffers": [
+    "buf0",
+    "buf1"
+  ],
+  "errors": [],
+  "literals": [
+    {
+      "input": "m10",
+      "name": "k_n7_m10",
+      "node": "n7",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "m01",
+      "name": "k_n7_m01",
+      "node": "n7",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "origin",
+      "name": "k_n7_origin",
+      "node": "n7",
+      "type": "vec2",
+      "value": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "input": "seed",
+      "name": "k_n3_seed",
+      "node": "n3",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "phase",
+      "name": "k_n3_phase",
+      "node": "n3",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "min",
+      "name": "k_n3_min",
+      "node": "n3",
+      "type": "float",
+      "value": 0.8
+    },
+    {
+      "input": "max",
+      "name": "k_n3_max",
+      "node": "n3",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "y",
+      "name": "k_n5_y",
+      "node": "n5",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "b",
+      "name": "k_n6_b",
+      "node": "n6",
+      "type": "vec2",
+      "value": [
+        0,
+        0
+      ]
+    },
+    {
+      "input": "s",
+      "name": "k_n6_s",
+      "node": "n6",
+      "type": "float",
+      "value": -1
+    },
+    {
+      "input": "m10",
+      "name": "k_n8_m10",
+      "node": "n8",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "m01",
+      "name": "k_n8_m01",
+      "node": "n8",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "origin",
+      "name": "k_n8_origin",
+      "node": "n8",
+      "type": "vec2",
+      "value": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "input": "opacity",
+      "name": "k_n17_opacity",
+      "node": "n17",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "a",
+      "name": "k_n20_a",
+      "node": "n20",
+      "type": "color",
+      "value": [
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "pass1.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "id": "buf0",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass2.frag",
+      "inputs": [
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf1",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass3.frag",
+      "inputs": [
+        {
+          "id": "buf1",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf0",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        },
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"clip_mask\",{},[]],[\"n3\",\"lfo\",{\"shape\":\"sine\"},[[\"rate\",{\"param\":\"swayRate\"}]]],[\"n4\",\"math\",{\"op\":\"mul\"},[[\"a\",{\"param\":\"spread\"}]]],[\"n5\",\"combine_point\",{},[]],[\"n6\",\"vector_math\",{\"op\":\"scale\"},[]],[\"n7\",\"linear_transform\",{\"inverse\":true,\"square\":true},[[\"m00\",{\"param\":\"cloneSize\"}],[\"m11\",{\"param\":\"cloneSize\"}]]],[\"n8\",\"linear_transform\",{\"inverse\":true,\"square\":true},[[\"m00\",{\"param\":\"cloneSize\"}],[\"m11\",{\"param\":\"cloneSize\"}]]],[\"n9\",\"sample_at\",{\"edge\":\"transparent\"},[]],[\"n10\",\"sample_at\",{\"edge\":\"transparent\"},[]],[\"n11\",\"sample_at\",{\"edge\":\"transparent\"},[]],[\"n12\",\"sample_at\",{\"edge\":\"transparent\"},[]],[\"n13\",\"tint\",{},[[\"color\",{\"param\":\"rightColor\"}],[\"amount\",{\"param\":\"cloneTint\"}]]],[\"n14\",\"tint\",{},[[\"color\",{\"param\":\"leftColor\"}],[\"amount\",{\"param\":\"cloneTint\"}]]],[\"n15\",\"split_color\",{},[]],[\"n16\",\"split_color\",{},[]],[\"n17\",\"blend\",{\"mode\":\"add\"},[]],[\"n18\",\"blur\",{},[[\"radius\",{\"param\":\"haloSize\"}]]],[\"n19\",\"split_color\",{},[]],[\"n20\",\"mix\",{},[[\"b\",{\"param\":\"haloColor\"}]]],[\"n21\",\"blend\",{\"mode\":\"screen\"},[[\"opacity\",{\"param\":\"halo\"}]]],[\"n22\",\"mix\",{},[]],[\"n23\",\"mix\",{},[]],[\"n24\",\"mix\",{},[]],[\"n25\",\"effect_output\",{},[]]],[[\"n3\",\"value\",\"n4\",\"b\"],[\"n4\",\"value\",\"n5\",\"x\"],[\"n5\",\"p\",\"n6\",\"a\"],[\"n6\",\"p\",\"n7\",\"offset\"],[\"n5\",\"p\",\"n8\",\"offset\"],[\"n7\",\"p\",\"n9\",\"p\"],[\"n7\",\"p\",\"n11\",\"p\"],[\"n1\",\"image\",\"n9\",\"image\"],[\"n2\",\"mask\",\"n11\",\"image\"],[\"n8\",\"p\",\"n10\",\"p\"],[\"n8\",\"p\",\"n12\",\"p\"],[\"n1\",\"image\",\"n10\",\"image\"],[\"n2\",\"mask\",\"n12\",\"image\"],[\"n9\",\"image\",\"n13\",\"image\"],[\"n10\",\"image\",\"n14\",\"image\"],[\"n11\",\"image\",\"n15\",\"color\"],[\"n12\",\"image\",\"n16\",\"color\"],[\"n11\",\"image\",\"n17\",\"base\"],[\"n12\",\"image\",\"n17\",\"layer\"],[\"n17\",\"image\",\"n18\",\"image\"],[\"n18\",\"image\",\"n19\",\"color\"],[\"n19\",\"r\",\"n20\",\"amount\"],[\"n1\",\"image\",\"n21\",\"base\"],[\"n20\",\"image\",\"n21\",\"layer\"],[\"n21\",\"image\",\"n22\",\"a\"],[\"n13\",\"image\",\"n22\",\"b\"],[\"n15\",\"r\",\"n22\",\"amount\"],[\"n22\",\"image\",\"n23\",\"a\"],[\"n14\",\"image\",\"n23\",\"b\"],[\"n16\",\"r\",\"n23\",\"amount\"],[\"n23\",\"image\",\"n24\",\"a\"],[\"n1\",\"image\",\"n24\",\"b\"],[\"n2\",\"mask\",\"n24\",\"amount\"],[\"n24\",\"image\",\"n25\",\"image\"]],[[\"swayRate\",\"float\",false],[\"spread\",\"float\",false],[\"cloneSize\",\"float\",false],[\"cloneTint\",\"float\",false],[\"rightColor\",\"color\",false],[\"leftColor\",\"color\",false],[\"haloSize\",\"float\",false],[\"haloColor\",\"color\",false],[\"halo\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": true,
+  "usesTime": true
+}

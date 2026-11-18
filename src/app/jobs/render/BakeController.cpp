@@ -165,6 +165,8 @@ void BakeController::scheduleStaleCheck()
 void BakeController::recomputeStale()
 {
     m_staleTimer.stop();
+    if (m_detached)
+        return;
     QSet<QString> stale;
     if (m_index) {
         const drift::Project &project = m_app->m_project;
@@ -304,11 +306,11 @@ qint64 BakeController::estimateBytesPerMinute(int preset) const
 
 // --- jobs -------------------------------------------------------------------
 
-BakeController::Request BakeController::requestForUs(qint64 startUs, qint64 endUs) const
+BakeController::Request BakeController::requestForUs(qint64 startUs, qint64 endUs, bool floorStart) const
 {
     const int fps = qMax(1, m_app->m_project.fps());
     qint64 start = drift::BakeReaderPool::frameForTime(startUs, fps);
-    if (usForFrame(start, fps) < startUs)
+    if (!floorStart && usForFrame(start, fps) < startUs)
         ++start;
     const qint64 limitUs = qMin<qint64>(endUs, m_app->m_project.sequenceDurationUs({}));
     qint64 end = drift::BakeReaderPool::frameForTime(limitUs, fps);
@@ -317,31 +319,65 @@ BakeController::Request BakeController::requestForUs(qint64 startUs, qint64 endU
     return end > start ? Request{start, end} : Request{};
 }
 
+QPair<qint64, qint64> BakeController::bakeRange(qint64 startUs, qint64 endUs)
+{
+    syncProject();
+    // The range widens: the start floors to the frame that contains it.
+    const Request request = requestForUs(startUs, endUs, true);
+    if (request.endFrame <= request.startFrame)
+        return {};
+    enqueue(request);
+    return {request.startFrame, request.endFrame};
+}
+
 void BakeController::bakeWorkArea()
 {
     if (!m_app->m_project.hasWorkArea()) {
         m_app->setLastMessage(tr("Set a work area to bake"), QStringLiteral("warning"));
         return;
     }
-    enqueue(requestForUs(m_app->m_project.workAreaInUs(), m_app->m_project.workAreaOutUs()));
+    bakeRange(m_app->m_project.workAreaInUs(), m_app->m_project.workAreaOutUs());
 }
 
-void BakeController::rebake(const QString &id)
+QPair<qint64, qint64> BakeController::rebakeRange(const QString &id)
 {
     if (!m_index)
-        return;
-    if (const drift::Bake *bake = m_index->bakeById(id))
-        enqueue(requestForUs(usForFrame(bake->startFrame, bake->fps), usForFrame(bake->endFrame, bake->fps)));
+        return {};
+    const drift::Bake *bake = m_index->bakeById(id);
+    if (!bake)
+        return {};
+    // syncProject() inside bakeRange may reset m_index, so read the bake first.
+    const qint64 startUs = usForFrame(bake->startFrame, bake->fps);
+    const qint64 endUs = usForFrame(bake->endFrame, bake->fps);
+    return bakeRange(startUs, endUs);
 }
 
-void BakeController::rebakeAllStale()
+int BakeController::rebakeAllStale()
 {
-    if (!m_index)
-        return;
+    if (m_detached || !m_index)
+        return 0;
+    QList<QPair<qint64, qint64>> spans;
     for (const drift::Bake &bake : m_index->bakes) {
         if (m_staleIds.contains(bake.id))
-            enqueue(requestForUs(usForFrame(bake.startFrame, bake.fps), usForFrame(bake.endFrame, bake.fps)));
+            spans.append({usForFrame(bake.startFrame, bake.fps), usForFrame(bake.endFrame, bake.fps)});
     }
+    int queued = 0;
+    for (const auto &span : std::as_const(spans)) {
+        const Request request = requestForUs(span.first, span.second);
+        if (request.endFrame <= request.startFrame)
+            continue;
+        enqueue(request);
+        ++queued;
+    }
+    return queued;
+}
+
+void BakeController::refreshStale()
+{
+    if (m_detached)
+        return;
+    syncProject();
+    recomputeStale();
 }
 
 void BakeController::enqueue(Request request)
@@ -554,6 +590,9 @@ void BakeController::deleteAllBakes()
     m_queue.clear();
     if (m_busy)
         m_app->m_jobs->cancel(m_jobId);
+    // Detached: the file still belongs to the old project, whose bakes stay.
+    if (m_detached)
+        return;
     whenIdle([this]() {
         if (!m_file)
             return;

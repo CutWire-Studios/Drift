@@ -2112,6 +2112,19 @@ void AppController::splitSelectionAtPlayhead()
     splitClipsAtPlayhead(&ids);
 }
 
+void AppController::splitAtPlayheadForSelection()
+{
+    // A selection is a statement about what the next edit applies to, and Split was the one edit
+    // ignoring it: it cut every track under the playhead, so editing a stack of layers meant
+    // clearing the selection before every cut (#556). With nothing selected there is no scope to
+    // respect, so it still cuts everything. The all-tracks cut regardless of selection stays on
+    // the clip context menu and on the `splitAllTracks` action, for anyone who wants it on a key.
+    if (m_selection.isEmpty() && !isValidClipIndex(m_selectedTrack, m_selectedClip))
+        splitAtPlayhead();
+    else
+        splitSelectionAtPlayhead();
+}
+
 void AppController::splitClipsAtPlayhead(const QSet<QString> *onlyClipIds)
 {
     const drift::Project before = m_project;

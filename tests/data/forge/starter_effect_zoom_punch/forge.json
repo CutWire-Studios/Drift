@@ -1,0 +1,171 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n4",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n4",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "image"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n6",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "impact",
+    "description": "A rhythmic zoom kick with a colour split on every beat.",
+    "displayName": "Zoom punch",
+    "id": "starter_effect_zoom_punch",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "shape": "pulse"
+      },
+      "id": "n2",
+      "inputs": {
+        "max": 1.25,
+        "min": 1,
+        "phase": 0,
+        "rate": {
+          "param": "bps"
+        },
+        "seed": 0,
+        "t": 0
+      },
+      "type": "lfo",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {
+        "shape": "pulse"
+      },
+      "id": "n3",
+      "inputs": {
+        "max": 14,
+        "min": 0,
+        "phase": 0,
+        "rate": {
+          "param": "bps"
+        },
+        "seed": 0,
+        "t": 0
+      },
+      "type": "lfo",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {
+        "edge": "clamp"
+      },
+      "id": "n4",
+      "inputs": {
+        "amount": 1.5,
+        "center": [
+          0.5,
+          0.5
+        ],
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "zoom",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {
+        "mode": "radial"
+      },
+      "id": "n5",
+      "inputs": {
+        "amount": 8,
+        "angle": 0,
+        "center": [
+          0.5,
+          0.5
+        ],
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "chromatic",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n6",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 840,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 2,
+      "displayName": "Beats per second",
+      "identifier": "bps",
+      "max": 8,
+      "min": 0.25,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

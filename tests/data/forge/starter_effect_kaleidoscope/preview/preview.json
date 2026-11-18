@@ -1,0 +1,38 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "center",
+      "name": "k_n3_center",
+      "node": "n3",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.5
+      ]
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"time\",{},[[\"speed\",{\"param\":\"spin\"}]]],[\"n3\",\"kaleidoscope\",{},[[\"segments\",{\"param\":\"slices\"}]]],[\"n4\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n3\",\"image\"],[\"n2\",\"value\",\"n3\",\"rotation\"],[\"n3\",\"image\",\"n4\",\"image\"]],[[\"spin\",\"float\",false],[\"slices\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

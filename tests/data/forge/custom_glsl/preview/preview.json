@@ -1,0 +1,68 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "in2",
+      "name": "k_n2_in2",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "input": "a",
+      "name": "k_n2_a",
+      "node": "n2",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "input": "b",
+      "name": "k_n2_b",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "c",
+      "name": "k_n2_c",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "d",
+      "name": "k_n2_d",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"custom\",{\"code\":\"vec4 col = IN1(uv + vec2(a * 0.05, 0.0));\\ncol.rgb = mix(col.rgb, vec3(luma(col)), b);\\nreturn col;\",\"heavy\":true},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"in1\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

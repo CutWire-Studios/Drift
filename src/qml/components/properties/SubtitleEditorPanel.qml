@@ -69,6 +69,25 @@ Rectangle {
                             if (editor.selectedCueIndex >= 0)
                                 editor.updateCue(editor.selectedCueIndex, { text: text })
                         }
+
+                        // Enter ends this subtitle and starts the next one with whatever sits
+                        // after the cursor — typing through a transcript is one subtitle after
+                        // another, not one long block. Shift+Enter is the line break within a
+                        // subtitle, which is what Enter used to do.
+                        Keys.onPressed: (event) => {
+                            if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter)
+                                return
+                            if (event.modifiers & Qt.ShiftModifier)
+                                return
+                            event.accepted = true
+                            if (editor.selectedCueIndex < 0)
+                                return
+                            editor.splitCueAtCursor(editor.selectedCueIndex,
+                                                    cueText.cursorPosition, cueText.text)
+                            // The panel reloads the field with the new cue's text; the caret
+                            // belongs at its start, ready for the next line.
+                            cueText.cursorPosition = 0
+                        }
                     }
 
                     // Explicit "apply text" affordance (separate from adding a cue).

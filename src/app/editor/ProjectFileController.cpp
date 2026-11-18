@@ -18,6 +18,7 @@
 #include "engine/addons/AddonRegistry.h"
 #include "engine/platform/AndroidUri.h"
 #include "engine/encode/writers/AudioFileWriter.h"
+#include "engine/packages/animations/AnimationCatalog.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/encode/export/Exporter.h"
 #include "engine/project/ProjectDependencies.h"
@@ -375,12 +376,18 @@ void ProjectFileController::reportMissingCatalogEntries()
 {
     QSet<QString> missingEffects;
     QSet<QString> missingTransitions;
+    QSet<QString> missingAnimations;
 
     for (const drift::Track &track : m_app->m_project.tracks()) {
         for (const drift::Clip &clip : track.clips) {
             for (const drift::Effect &effect : clip.effects) {
                 if (!effect.catalogId.isEmpty() && !effectDefForId(effect.catalogId))
                     missingEffects.insert(effect.catalogId);
+            }
+            for (const drift::ClipAnimation *anim : {&clip.animIn, &clip.animOut}) {
+                if (!anim->isNone() && !drift::isBuiltinClipAnimation(anim->kindId)
+                    && !animationDefForId(anim->kindId))
+                    missingAnimations.insert(anim->kindId);
             }
         }
         for (const drift::Transition &transition : track.transitions) {
@@ -389,19 +396,20 @@ void ProjectFileController::reportMissingCatalogEntries()
         }
     }
 
-    const int total = missingEffects.size() + missingTransitions.size();
+    const int total = missingEffects.size() + missingTransitions.size() + missingAnimations.size();
     if (total == 0)
         return;
 
     QStringList names = QStringList(missingEffects.begin(), missingEffects.end())
-                        + QStringList(missingTransitions.begin(), missingTransitions.end());
+                        + QStringList(missingTransitions.begin(), missingTransitions.end())
+                        + QStringList(missingAnimations.begin(), missingAnimations.end());
     names.sort();
     const QString sample = names.mid(0, 3).join(QStringLiteral(", "));
 
     m_app->setLastMessage(total == 1
                        ? tr("This project uses \"%1\", which isn’t installed — it "
                             "won’t show. Open Extras to install it.").arg(sample)
-                       : tr("This project uses %1 effects or transitions that aren’t "
+                       : tr("This project uses %1 effects, transitions or animations that aren’t "
                             "installed (%2%3) — they won’t show. Open Extras to install them.")
                              .arg(total)
                              .arg(sample, names.size() > 3 ? tr(", …") : QString()));

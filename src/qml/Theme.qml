@@ -717,6 +717,8 @@ QtObject {
         circle: "circle",
         pentagon: "pentagon",
         brush: "brush",
+        lasso: "lasso",
+        magicWand: "wand",
         crosshair: "crosshair",
         ratio: "ratio",
 

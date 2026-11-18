@@ -1,0 +1,233 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n2",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n4",
+      "toSocket": "x"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n4",
+      "toSocket": "y"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "p",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "p",
+      "id": "e4",
+      "to": "n6",
+      "toSocket": "w"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n7",
+      "toSocket": "image"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "p",
+      "id": "e6",
+      "to": "n7",
+      "toSocket": "p"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "image",
+      "id": "e7",
+      "to": "n8",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "A Möbius transform whose pole wanders, bending the frame into slowly flowing circles.",
+    "displayName": "Möbius drift",
+    "id": "starter_effect_m_bius_drift",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "shape": "sine"
+      },
+      "id": "n2",
+      "inputs": {
+        "max": 1,
+        "min": -1,
+        "phase": 0,
+        "rate": {
+          "param": "drift"
+        },
+        "seed": 0,
+        "t": 0
+      },
+      "type": "lfo",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {
+        "shape": "sine"
+      },
+      "id": "n3",
+      "inputs": {
+        "max": 1,
+        "min": -1,
+        "phase": 0.25,
+        "rate": {
+          "param": "drift"
+        },
+        "seed": 0,
+        "t": 0
+      },
+      "type": "lfo",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "type": "combine_point",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "scale"
+      },
+      "id": "n5",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": {
+          "param": "wander"
+        }
+      },
+      "type": "vector_math",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "mobius"
+      },
+      "id": "n6",
+      "inputs": {
+        "n": 2,
+        "w": [
+          1,
+          0
+        ],
+        "z": [
+          0.5,
+          0.5
+        ],
+        "zoom": {
+          "param": "zoom"
+        }
+      },
+      "type": "complex_math",
+      "x": 840,
+      "y": 220
+    },
+    {
+      "data": {
+        "edge": "mirror"
+      },
+      "id": "n7",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 1120,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n8",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 1400,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.5,
+      "displayName": "Wander",
+      "identifier": "wander",
+      "max": 0.9,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 0.15,
+      "displayName": "Drift speed",
+      "identifier": "drift",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 2,
+      "displayName": "Zoom",
+      "identifier": "zoom",
+      "max": 6,
+      "min": 0.5,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

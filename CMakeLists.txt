@@ -349,6 +349,7 @@ set(DRIFT_CORE_EFFECTS
     color_grade film_grain chromatic_aberration adjust_brightness adjust_contrast adjust_gamma
     adjust_hue adjust_saturation adjust_temperature gaussian_blur bloom_glow halation stylize_vignette)
 set(DRIFT_CORE_TRANSITIONS crossfade dip dip_white)
+set(DRIFT_CORE_ANIMATIONS "")
 set(DRIFT_CORE_AUDIO_EFFECTS "")
 set(DRIFT_CORE_EFFECT_TEMPLATES "")
 find_package(OnnxRuntime QUIET)
@@ -782,6 +783,55 @@ add_library(driftprocedural STATIC
 target_include_directories(driftprocedural PUBLIC src)
 target_link_libraries(driftprocedural PUBLIC drift_lua)
 
+add_library(driftforge STATIC
+    src/app/forge/doc/ForgeDoc.cpp
+    src/app/forge/doc/Kinds.cpp
+    src/app/forge/doc/Naming.cpp
+    src/app/forge/doc/ParamTypes.cpp
+    src/app/forge/doc/Util.cpp
+    src/app/forge/glsl/Literals.cpp
+    src/app/forge/edit/GraphOps.cpp
+    src/app/forge/edit/ParamOps.cpp
+    src/app/forge/nodes/InputNodes.cpp
+    src/app/forge/nodes/ControlNodes.cpp
+    src/app/forge/nodes/ColorNodes.cpp
+    src/app/forge/nodes/GradeNodes.cpp
+    src/app/forge/nodes/DistortNodes.cpp
+    src/app/forge/nodes/BlurNodes.cpp
+    src/app/forge/nodes/TransitionNodes.cpp
+    src/app/forge/nodes/AnimateNodes.cpp
+    src/app/forge/nodes/AdvancedNodes.cpp
+    src/app/forge/nodes/StylizeNodes.cpp
+    src/app/forge/nodes/GenerateNodes.cpp
+    src/app/forge/nodes/KitNodes.cpp
+    src/app/forge/nodes/ThreeNodes.cpp
+    src/app/forge/nodes/MixNodes.cpp
+    src/app/forge/nodes/MathNodes.cpp
+    src/app/forge/nodes/OutputNodes.cpp
+    src/app/forge/nodes/Registry.cpp
+    src/app/forge/compiler/Validate.cpp
+    src/app/forge/compiler/Compiler.cpp
+    src/app/forge/compiler/Assemble.cpp
+    src/app/forge/compiler/Passes.cpp
+    src/app/forge/compiler/Helpers.cpp
+    src/app/forge/compiler/Manifest.cpp
+    src/app/forge/compiler/PackageFiles.cpp
+    src/app/forge/audio/Rack.cpp
+    src/app/forge/audio/RackOps.cpp
+    src/app/forge/audio/RackGraph.cpp
+    src/app/forge/audio/RackValidate.cpp
+    src/app/forge/audio/AudioManifest.cpp
+)
+target_include_directories(driftforge PUBLIC src)
+# PedalCatalog and the graph limits come from the audio engine, which is where the pedals live.
+target_link_libraries(driftforge PUBLIC Qt6::Core driftaudiodsp)
+file(GLOB DRIFT_FORGE_IR_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/resources/forge/ir/*.wav")
+qt_add_resources(driftforge "drift_forge_ir"
+    PREFIX "/forge/ir"
+    BASE "${CMAKE_SOURCE_DIR}/resources/forge/ir"
+    FILES ${DRIFT_FORGE_IR_FILES}
+)
+
 # --- engine: FFmpeg-facing code, no QML deps -------------------------------
 add_library(driftengine STATIC
     src/engine/addons/AddonPackage.h
@@ -854,6 +904,8 @@ add_library(driftengine STATIC
     src/engine/packages/assets/FontCatalog.cpp
     src/engine/packages/assets/StickerCatalog.h
     src/engine/packages/assets/StickerCatalog.cpp
+    src/engine/packages/assets/StickerPackImport.h
+    src/engine/packages/assets/StickerPackImport.cpp
     src/engine/packages/assets/EmojiCatalog.h
     src/engine/packages/assets/EmojiCatalog.cpp
     src/engine/packages/assets/EmojiTable.h
@@ -870,12 +922,18 @@ add_library(driftengine STATIC
     src/engine/packages/procedurals/ProceduralPackageLoader.cpp
     src/engine/packages/procedurals/ProceduralCatalog.h
     src/engine/packages/procedurals/ProceduralCatalog.cpp
+    src/engine/packages/animations/AnimationCatalog.h
+    src/engine/packages/animations/AnimationCatalog.cpp
+    src/engine/packages/animations/AnimationPackageLoader.h
+    src/engine/packages/animations/AnimationPackageLoader.cpp
     src/engine/packages/transitions/TransitionCatalog.h
     src/engine/packages/transitions/TransitionCatalog.cpp
     src/engine/packages/transitions/TransitionPackageLoader.h
     src/engine/packages/transitions/TransitionPackageLoader.cpp
     src/engine/packages/GpuPackageParse.h
     src/engine/packages/GpuPackageParse.cpp
+    src/engine/packages/PackageThumbnails.h
+    src/engine/packages/PackageThumbnails.cpp
     src/engine/gpu/effects/GpuEffectDefinition.h
     src/engine/compositor/GpuCompositor.h
     src/engine/compositor/GpuCompositor.cpp
@@ -1122,6 +1180,7 @@ target_link_libraries(driftapp PUBLIC
     Qt6::Network
     driftcore
     driftengine
+    driftforge
 )
 if(ANDROID)
     find_package(Qt6 REQUIRED COMPONENTS CorePrivate)
@@ -1306,6 +1365,8 @@ target_sources(driftapp PRIVATE
     src/app/editor/sessions/MaskStackModel.h
     src/app/editor/sessions/MaskStackModel.cpp
     src/app/editor/sessions/MaskingController.h
+    src/app/editor/sessions/MaskSelection.h
+    src/app/editor/sessions/MaskSelection.cpp
     src/app/editor/sessions/MaskingController.cpp
     src/app/editor/sessions/SubtitleController.h
     src/app/editor/sessions/SubtitleController.cpp
@@ -1405,6 +1466,12 @@ target_sources(driftapp PRIVATE
     src/app/mcp/tools/McpDispatcher.h
     src/app/mcp/tools/McpDispatcher.cpp
     src/app/mcp/tools/McpDispatcherExtended.cpp
+    src/app/forge/PackageInstaller.h
+    src/app/forge/PackageInstaller.cpp
+    src/app/forge/ForgeDraft.h
+    src/app/forge/ForgeDraft.cpp
+    src/app/forge/ForgePreview.h
+    src/app/forge/ForgePreview.cpp
     src/app/mcp/tools/McpEffectAuthoring.h
     src/app/mcp/tools/McpEffectAuthoring.cpp
     src/app/mcp/tools/McpProceduralAuthoring.h
@@ -1626,6 +1693,8 @@ qt_add_resources(drift "drift_workspaces"
         resources/workspaces/masking-tracking.json
         resources/workspaces/3d.json
         resources/workspaces/procedural.json
+        resources/workspaces/forge.json
+        resources/workspaces/audio-forge.json
 )
 
 qt_add_resources(drift "drift_marketplace"
@@ -1713,6 +1782,22 @@ qt_add_qml_module(drift
         src/ui/theme/ThemeManager.cpp
         src/ui/theme/backdrop/WindowBackdrop.h
         src/ui/theme/backdrop/WindowBackdrop.cpp
+        src/ui/nodes/NodeGridItem.h
+        src/ui/nodes/NodeGridItem.cpp
+        src/ui/nodes/NodeListModel.h
+        src/ui/nodes/NodeListModel.cpp
+        src/ui/nodes/EdgeListModel.h
+        src/ui/nodes/EdgeListModel.cpp
+        src/ui/nodes/NodeGraphController.h
+        src/ui/nodes/NodeGraphController.cpp
+        src/app/forge/ForgeGraphMapping.h
+        src/app/forge/ForgeGraphMapping.cpp
+        src/app/forge/ForgeController.h
+        src/app/forge/ForgeController.cpp
+        src/app/forge/audio/RackGraphMapping.h
+        src/app/forge/audio/RackGraphMapping.cpp
+        src/app/forge/AudioForgeController.h
+        src/app/forge/AudioForgeController.cpp
         src/app/online/marketplace/MarketSourceBrowser.h
         src/app/online/marketplace/MarketSourceBrowser.cpp
         src/app/online/marketplace/MarketItemLoader.h
@@ -2022,6 +2107,19 @@ qt_add_qml_module(drift
         src/qml/components/panels/ProceduralEditorPanel.qml
         src/qml/components/panels/ProceduralParamsPanel.qml
         src/qml/components/panels/ProceduralConsolePanel.qml
+        src/qml/components/panels/ForgeGraphPanel.qml
+        src/qml/components/panels/ForgePalettePanel.qml
+        src/qml/components/panels/ForgeInspectorPanel.qml
+        src/qml/components/panels/ForgePreviewBar.qml
+        src/qml/components/panels/ForgeNodeTab.qml
+        src/qml/components/panels/ForgeSlidersTab.qml
+        src/qml/components/panels/ForgeDetailsTab.qml
+        src/qml/components/panels/ForgeCodeTab.qml
+        src/qml/components/panels/AudioForgeGraphPanel.qml
+        src/qml/components/panels/AudioForgePalettePanel.qml
+        src/qml/components/panels/AudioForgeInspectorPanel.qml
+        src/qml/components/panels/AudioForgeAuditionBar.qml
+        src/qml/components/panels/AudioForgeNodeTab.qml
         src/qml/components/panels/SubtitleLanePanel.qml
         src/qml/components/panels/SubtitleTextPanel.qml
         src/qml/components/subtitles/SubtitleLaneToolbar.qml
@@ -2050,6 +2148,15 @@ qt_add_qml_module(drift
         src/qml/components/color/GradeSlider.qml
         src/qml/components/color/ColorWheel.qml
         src/qml/components/color/CurveEditor.qml
+        src/qml/components/nodes/NodeGraphEditor.qml
+        src/qml/components/nodes/NodeCanvas.qml
+        src/qml/components/nodes/NodeDelegate.qml
+        src/qml/components/nodes/NodeInputControl.qml
+        src/qml/components/nodes/NodeAngleDial.qml
+        src/qml/components/nodes/EdgeLayer.qml
+        src/qml/components/nodes/PortItem.qml
+        src/qml/components/nodes/NodeMinimap.qml
+        src/qml/components/nodes/QuickAddPopup.qml
         src/qml/components/panels/HistoryPanel.qml
         src/qml/components/panels/SourceViewerPanel.qml
         src/qml/components/panels/sourcelab/SourceLabViewerPanel.qml
@@ -2685,7 +2792,7 @@ target_link_libraries(drift PRIVATE
 )
 target_include_directories(drift PRIVATE src)
 # qmltyperegistrar emits bare-basename includes (<ThemeManager.h>) for the qml module's headers.
-target_include_directories(drift PRIVATE src/ui/theme src/ui/theme/backdrop src/app/online/marketplace)
+target_include_directories(drift PRIVATE src/ui/theme src/ui/theme/backdrop src/app/online/marketplace src/ui/nodes)
 if(DRIFT_BACKDROP_PLATFORM_LIBS)
     target_link_libraries(drift PRIVATE ${DRIFT_BACKDROP_PLATFORM_LIBS})
 endif()
@@ -2773,6 +2880,10 @@ if(ANDROID OR EMSCRIPTEN)
          "transitions/*/*.frag"
          "transitions/*/*.png"
          "transitions/*/*.webp"
+         "animations/*/*.json"
+         "animations/*/*.frag"
+         "animations/*/*.png"
+         "animations/*/*.webp"
          "audio-effects/*/audio-effect.json"
          "audio-effects/*/thumbnail.png"
          "audio-effects/*/thumbnail.webp"
@@ -2781,7 +2892,7 @@ if(ANDROID OR EMSCRIPTEN)
     list(REMOVE_DUPLICATES DRIFT_PACKAGE_FILES)
     if(DRIFT_BUNDLE_CORE_PACKAGES_ONLY)
         set(_drift_keep "")
-        foreach(_kind effects transitions audio-effects effect-templates)
+        foreach(_kind effects transitions animations audio-effects effect-templates)
             string(TOUPPER "${_kind}" _upper)
             string(REPLACE "-" "_" _upper "${_upper}")
             foreach(_id ${DRIFT_CORE_${_upper}})
@@ -2841,6 +2952,7 @@ if(Qt6LinguistTools_FOUND)
             src/engine/encode/MediaEditor.cpp
             src/engine/project/ProjectBundle.cpp
             src/engine/face/props/FacePropImport.cpp
+            src/engine/packages/assets/StickerPackImport.cpp
             src/core/project/Project.cpp
             src/core/project/Transcript.cpp
             src/core/project/GuideSet.cpp
@@ -3025,6 +3137,10 @@ function(drift_copy_transitions target)
     drift_stage_packages(${target} transitions)
 endfunction()
 
+function(drift_copy_animations target)
+    drift_stage_packages(${target} animations)
+endfunction()
+
 # Audio effects ship as the "audio-effects" addon, so this only makes the build tree
 # self-contained — <appDir>/audio-effects is already a search root.
 function(drift_copy_audio_effects target)
@@ -3064,11 +3180,13 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
         drift_stage_packages(drift effects ONLY ${DRIFT_CORE_EFFECTS})
         drift_stage_packages(drift effect-templates ONLY ${DRIFT_CORE_EFFECT_TEMPLATES})
         drift_stage_packages(drift transitions ONLY ${DRIFT_CORE_TRANSITIONS})
+        drift_stage_packages(drift animations ONLY ${DRIFT_CORE_ANIMATIONS})
         drift_stage_packages(drift audio-effects ONLY ${DRIFT_CORE_AUDIO_EFFECTS})
     else()
         drift_copy_effects(drift)
         drift_copy_effect_templates(drift)
         drift_copy_transitions(drift)
+        drift_copy_animations(drift)
         drift_copy_audio_effects(drift)
     endif()
     drift_bundle_onnxruntime(drift)
@@ -3113,7 +3231,7 @@ else()
     # the app searches <appDir>/<subdir> (PackageSearchPaths::defaultSearchPaths). Installing
     # them here (rather than via the DRIFT_*_DIR env vars) keeps installed addons able to
     # supersede the bundled copies.
-    foreach(_assetdir effects transitions effect-templates audio-effects)
+    foreach(_assetdir effects transitions animations effect-templates audio-effects)
         if(DRIFT_BUNDLE_CORE_PACKAGES_ONLY)
             string(TOUPPER "${_assetdir}" _upper)
             string(REPLACE "-" "_" _upper "${_upper}")

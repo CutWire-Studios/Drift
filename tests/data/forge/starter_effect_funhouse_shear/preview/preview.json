@@ -1,0 +1,118 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "m00",
+      "name": "k_n6_m00",
+      "node": "n6",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "seed",
+      "name": "k_n2_seed",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "phase",
+      "name": "k_n2_phase",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "min",
+      "name": "k_n2_min",
+      "node": "n2",
+      "type": "float",
+      "value": -1
+    },
+    {
+      "input": "max",
+      "name": "k_n2_max",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "b",
+      "name": "k_n4_b",
+      "node": "n4",
+      "type": "float",
+      "value": -0.5
+    },
+    {
+      "input": "seed",
+      "name": "k_n5_seed",
+      "node": "n5",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "phase",
+      "name": "k_n5_phase",
+      "node": "n5",
+      "type": "float",
+      "value": 0.25
+    },
+    {
+      "input": "min",
+      "name": "k_n5_min",
+      "node": "n5",
+      "type": "float",
+      "value": 0.85
+    },
+    {
+      "input": "max",
+      "name": "k_n5_max",
+      "node": "n5",
+      "type": "float",
+      "value": 1.15
+    },
+    {
+      "input": "origin",
+      "name": "k_n6_origin",
+      "node": "n6",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "input": "offset",
+      "name": "k_n6_offset",
+      "node": "n6",
+      "type": "vec2",
+      "value": [
+        0,
+        0
+      ]
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"lfo\",{\"shape\":\"sine\"},[[\"rate\",{\"param\":\"wobbleRate\"}]]],[\"n3\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"lean\"}]]],[\"n4\",\"math\",{\"op\":\"mul\"},[]],[\"n5\",\"lfo\",{\"shape\":\"sine\"},[[\"rate\",{\"param\":\"wobbleRate\"}]]],[\"n6\",\"matrix_warp\",{\"transparent\":false},[]],[\"n7\",\"effect_output\",{},[]]],[[\"n2\",\"value\",\"n3\",\"a\"],[\"n3\",\"value\",\"n4\",\"a\"],[\"n3\",\"value\",\"n6\",\"m01\"],[\"n4\",\"value\",\"n6\",\"m10\"],[\"n5\",\"value\",\"n6\",\"m11\"],[\"n1\",\"image\",\"n6\",\"image\"],[\"n6\",\"image\",\"n7\",\"image\"]],[[\"lean\",\"float\",false],[\"wobbleRate\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

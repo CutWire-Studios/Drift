@@ -384,13 +384,10 @@
                                                                        {QStringLiteral("animIn"),
                                                                         QStringLiteral("animOut")})},
                                    {QStringLiteral("kind"),
-                                    enumProp(QStringLiteral("Animation kind; fade turns on the edge fade instead"),
-                                             {QStringLiteral("none"), QStringLiteral("fade"),
-                                              QStringLiteral("slideUp"), QStringLiteral("slideDown"),
-                                              QStringLiteral("slideLeft"), QStringLiteral("slideRight"),
-                                              QStringLiteral("zoomIn"), QStringLiteral("zoomOut"),
-                                              QStringLiteral("pop"), QStringLiteral("spinCW"),
-                                              QStringLiteral("spinCCW"), QStringLiteral("bounce")})},
+                                    stringProp(QStringLiteral("Animation kind: none, fade (turns on the edge fade "
+                                                              "instead), slideUp, slideDown, slideLeft, slideRight, "
+                                                              "zoomIn, zoomOut, pop, spinCW, spinCCW, bounce, or an "
+                                                              "animation package id from list_animations"))},
                                    {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds"))},
                                    {QStringLiteral("ease"),
                                     enumProp(QStringLiteral("Easing; unknown values fall back to easeOut"),
@@ -1207,7 +1204,8 @@
           "Segment a clip with explicit points in a single call — no session needed. Prefer this over "
           "the session ops for scripted use. Async and with no progress field: re-read "
           "inspect({clips:true,detail:true}) and compare to detect completion. points are required for "
-          "the sam2 backend and ignored by rvm, which finds people on its own.",
+          "the sam2 backend and ignored by rvm, which finds people on its own. Works on video and image "
+          "clips; an image gets a single matte that covers its whole duration.",
           objectSchema(mergeProps(
               {{QStringLiteral("points"),
                 arrayProp(objectSchema({{QStringLiteral("x"), numberProp(QStringLiteral("X, 0..1 across the frame"))},

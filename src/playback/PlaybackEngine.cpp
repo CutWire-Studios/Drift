@@ -333,7 +333,7 @@ void PlaybackEngine::setProject(drift::Project *project)
 
 std::shared_ptr<const drift::Project> PlaybackEngine::projectSnapshot(const drift::Project *project)
 {
-    if (!project || project != m_project)
+    if (!project || project != m_project || m_compositor.hasPreviewPatch())
         return {};
     return m_compositor.snapshot();
 }
@@ -358,6 +358,14 @@ void PlaybackEngine::notifyProjectEdited()
 void PlaybackEngine::setPreviewEffectBypass(const QSet<QString> &clipIds, const QSet<QString> &catalogIds)
 {
     m_compositor.setPreviewBypass(clipIds, catalogIds);
+    refreshFrame();
+}
+
+void PlaybackEngine::setPreviewPatch(std::function<void(drift::Project &)> patch)
+{
+    m_compositor.setPreviewPatch(std::move(patch));
+    if (m_playing)
+        pushAudioSnapshot();
     refreshFrame();
 }
 

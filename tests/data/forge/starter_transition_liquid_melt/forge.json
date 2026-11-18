@@ -1,0 +1,299 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n6",
+      "toSocket": "x"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e3",
+      "to": "n7",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e4",
+      "to": "n8",
+      "toSocket": "image"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e5",
+      "to": "n8",
+      "toSocket": "map"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e6",
+      "to": "n8",
+      "toSocket": "strength"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e7",
+      "to": "n9",
+      "toSocket": "image"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e8",
+      "to": "n9",
+      "toSocket": "map"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e9",
+      "to": "n9",
+      "toSocket": "strength"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "image",
+      "id": "e10",
+      "to": "n11",
+      "toSocket": "a"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "image",
+      "id": "e11",
+      "to": "n11",
+      "toSocket": "b"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "value",
+      "id": "e12",
+      "to": "n11",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "image",
+      "id": "e13",
+      "to": "n12",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "liquid",
+    "description": "Both clips ripple like liquid as they swap.",
+    "displayName": "Liquid melt",
+    "id": "starter_transition_liquid_melt",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "to",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {},
+      "type": "progress",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {
+        "style": "cloud"
+      },
+      "id": "n4",
+      "inputs": {
+        "scale": 4,
+        "seed": 0,
+        "speed": 0.3,
+        "t": 0
+      },
+      "type": "noise",
+      "x": 0,
+      "y": 660
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n5",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "melt"
+        }
+      },
+      "type": "math",
+      "x": 280,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "oneminus"
+      },
+      "id": "n6",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 280,
+      "y": 660
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n7",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "melt"
+        }
+      },
+      "type": "math",
+      "x": 560,
+      "y": 660
+    },
+    {
+      "data": {
+        "edge": "mirror"
+      },
+      "id": "n8",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "map": [
+          0.5,
+          0.5,
+          0.5,
+          1
+        ],
+        "strength": 0.05
+      },
+      "type": "displace",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {
+        "edge": "mirror"
+      },
+      "id": "n9",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "map": [
+          0.5,
+          0.5,
+          0.5,
+          1
+        ],
+        "strength": 0.05
+      },
+      "type": "displace",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {
+        "curve": "inout"
+      },
+      "id": "n10",
+      "inputs": {
+        "t": 0
+      },
+      "type": "ease",
+      "x": 560,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n11",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 840,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n12",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 1120,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.25,
+      "displayName": "Melt",
+      "identifier": "melt",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

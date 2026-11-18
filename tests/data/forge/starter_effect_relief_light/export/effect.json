@@ -1,0 +1,51 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "description": "Brightness read as height and lit from the side, so the picture looks embossed in metal or clay.",
+  "displayName": "Relief light",
+  "id": "starter_effect_relief_light",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 135,
+      "displayName": "Light angle",
+      "identifier": "lightAngle",
+      "maxValue": 180,
+      "minValue": -180,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.004,
+      "displayName": "Depth",
+      "identifier": "depth",
+      "maxValue": 0.02,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.9,
+      "displayName": "Strength",
+      "identifier": "relief",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

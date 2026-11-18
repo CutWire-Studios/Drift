@@ -17,6 +17,7 @@
 #include <QFileInfo>
 #include <QFutureWatcher>
 #include <QGuiApplication>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
@@ -722,6 +723,19 @@ void PreferencesController::pushRecentTransition(const QString &kind)
         m_recentTransitions.removeLast();
     QSettings().setValue(QStringLiteral("timeline/recentTransitions"), m_recentTransitions);
     emit recentTransitionsChanged();
+}
+
+QStringList PreferencesController::assetSearchHistory(const QString &key) const
+{
+    const QString json = QSettings().value(QStringLiteral("assetSearchHistory/%1/json").arg(key)).toString();
+    return QJsonDocument::fromJson(json.toUtf8()).toVariant().toStringList();
+}
+
+void PreferencesController::setAssetSearchHistory(const QString &key, const QStringList &entries)
+{
+    QSettings().setValue(QStringLiteral("assetSearchHistory/%1/json").arg(key),
+                         QString::fromUtf8(QJsonDocument(QJsonArray::fromStringList(entries))
+                                               .toJson(QJsonDocument::Compact)));
 }
 
 namespace {

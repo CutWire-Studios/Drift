@@ -1,0 +1,384 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n2",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "x"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "grad",
+      "id": "e2",
+      "to": "n4",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "uv",
+      "id": "e3",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "p",
+      "id": "e4",
+      "to": "n6",
+      "toSocket": "b"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "p",
+      "id": "e5",
+      "to": "n7",
+      "toSocket": "p"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "det",
+      "id": "e6",
+      "to": "n8",
+      "toSocket": "b"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "value",
+      "id": "e7",
+      "to": "n9",
+      "toSocket": "x"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "value",
+      "id": "e8",
+      "to": "n10",
+      "toSocket": "x"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "value",
+      "id": "e9",
+      "to": "n11",
+      "toSocket": "image"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e10",
+      "to": "n12",
+      "toSocket": "image"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "p",
+      "id": "e11",
+      "to": "n12",
+      "toSocket": "p"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "image",
+      "id": "e12",
+      "to": "n13",
+      "toSocket": "base"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "image",
+      "id": "e13",
+      "to": "n13",
+      "toSocket": "layer"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "image",
+      "id": "e14",
+      "to": "n14",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "dreamy",
+    "description": "Rippling bright lines like sunlight through a swimming pool, focused where the water's surface bends light together.",
+    "displayName": "Pool caustics",
+    "id": "starter_effect_pool_caustics",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "style": "smooth"
+      },
+      "id": "n2",
+      "inputs": {
+        "scale": {
+          "param": "waveSize"
+        },
+        "seed": 0,
+        "speed": {
+          "param": "waveSpeed"
+        },
+        "t": 0
+      },
+      "type": "noise",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "spacing": 2,
+        "x": 0
+      },
+      "type": "derivative",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "scale"
+      },
+      "id": "n4",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": {
+          "param": "refraction"
+        }
+      },
+      "type": "vector_math",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {},
+      "type": "uv",
+      "x": 560,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "add"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": 1
+      },
+      "type": "vector_math",
+      "x": 840,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n7",
+      "inputs": {
+        "p": [
+          0.5,
+          0.5
+        ],
+        "spacing": 2
+      },
+      "type": "jacobian",
+      "x": 1120,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "div"
+      },
+      "id": "n8",
+      "inputs": {
+        "a": 1,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1400,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "abs"
+      },
+      "id": "n9",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1680,
+      "y": 440
+    },
+    {
+      "data": {
+        "clamp": true
+      },
+      "id": "n10",
+      "inputs": {
+        "inMax": 3,
+        "inMin": 1,
+        "outMax": 1,
+        "outMin": 0,
+        "x": 0.5
+      },
+      "type": "remap",
+      "x": 1960,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n11",
+      "inputs": {
+        "amount": 1,
+        "color": {
+          "param": "lightColor"
+        },
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "tint",
+      "x": 2240,
+      "y": 440
+    },
+    {
+      "data": {
+        "edge": "clamp"
+      },
+      "id": "n12",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 1120,
+      "y": 0
+    },
+    {
+      "data": {
+        "mode": "screen"
+      },
+      "id": "n13",
+      "inputs": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "layer": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "opacity": {
+          "param": "caustics"
+        }
+      },
+      "type": "blend",
+      "x": 2520,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n14",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 2800,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 5,
+      "displayName": "Wave size",
+      "identifier": "waveSize",
+      "max": 12,
+      "min": 2,
+      "type": "float"
+    },
+    {
+      "default": 0.3,
+      "displayName": "Wave speed",
+      "identifier": "waveSpeed",
+      "max": 1.5,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 0.012,
+      "displayName": "Refraction",
+      "identifier": "refraction",
+      "max": 0.04,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": "#d8fbff",
+      "displayName": "Light colour",
+      "identifier": "lightColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": 0.6,
+      "displayName": "Caustics",
+      "identifier": "caustics",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "keying",
+    "description": "Cuts out a green background so the clip below shows through.",
+    "displayName": "Green screen",
+    "id": "starter_effect_green_screen",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "key": [
+          0.1,
+          0.8,
+          0.2,
+          1
+        ],
+        "softness": 0.08,
+        "spill": 0.5,
+        "tolerance": {
+          "param": "tolerance"
+        }
+      },
+      "type": "chroma_key",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 560,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.12,
+      "displayName": "Tolerance",
+      "identifier": "tolerance",
+      "max": 0.5,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

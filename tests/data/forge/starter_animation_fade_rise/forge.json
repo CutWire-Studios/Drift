@@ -1,0 +1,178 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n2",
+      "fromSocket": "settled",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "t"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n4",
+      "toSocket": "y"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "image"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "p",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "offset"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n6",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "settled",
+      "id": "e6",
+      "to": "n6",
+      "toSocket": "mask"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "image",
+      "id": "e7",
+      "to": "n7",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "animation",
+  "meta": {
+    "author": "",
+    "category": "basic",
+    "description": "The clip fades in while drifting up into place, and back down on the way out.",
+    "displayName": "Fade & rise",
+    "id": "starter_animation_fade_rise",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "direction",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "a": {
+          "param": "rise"
+        },
+        "b": 0,
+        "t": 0.5
+      },
+      "type": "mix_value",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "x": 0,
+        "y": 0.5
+      },
+      "type": "combine_point",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {
+        "edge": "transparent"
+      },
+      "id": "n5",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "offset": [
+          0,
+          0
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "rotation": 0,
+        "scale": 1
+      },
+      "type": "transform",
+      "x": 840,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n6",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "mask": 1
+      },
+      "type": "set_alpha",
+      "x": 1120,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n7",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "type": "animation_output",
+      "x": 1400,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.12,
+      "displayName": "Rise",
+      "identifier": "rise",
+      "max": 0.5,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

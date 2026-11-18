@@ -1,0 +1,528 @@
+{
+  "assets": [
+    {
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "height": 1,
+      "id": "a1",
+      "mime": "image/png",
+      "name": "px.png",
+      "width": 1
+    }
+  ],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "image"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n8",
+      "toSocket": "image"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "image",
+      "id": "e6",
+      "to": "n9",
+      "toSocket": "a"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "image",
+      "id": "e7",
+      "to": "n9",
+      "toSocket": "b"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "image",
+      "id": "e8",
+      "to": "n12",
+      "toSocket": "a"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "color",
+      "id": "e9",
+      "to": "n12",
+      "toSocket": "b"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "mask",
+      "id": "e10",
+      "to": "n12",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "image",
+      "id": "e11",
+      "to": "n13",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e12",
+      "to": "n13",
+      "toSocket": "b"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "value",
+      "id": "e13",
+      "to": "n13",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "image",
+      "id": "e14",
+      "to": "n14",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "",
+    "displayName": "My effect",
+    "id": "params_all_types",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "center": {
+          "param": "centre"
+        },
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "rotation": 0,
+        "segments": {
+          "param": "slices"
+        }
+      },
+      "type": "kaleidoscope",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "amount": {
+          "param": "amount"
+        },
+        "color": {
+          "param": "tint"
+        },
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "tint",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "asset": {
+          "param": "picture"
+        }
+      },
+      "id": "n4",
+      "inputs": {
+        "scale": 1
+      },
+      "type": "image",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "stops": {
+          "param": "ramp"
+        }
+      },
+      "id": "n5",
+      "inputs": {
+        "amount": 1,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "gradient_ramp",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "loop": true,
+        "points": {
+          "param": "motion"
+        }
+      },
+      "id": "n6",
+      "inputs": {
+        "length": 2,
+        "max": 1,
+        "min": 0,
+        "t": 0
+      },
+      "type": "curve",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "invert": false,
+        "rect": {
+          "param": "area"
+        },
+        "shape": "ellipse"
+      },
+      "id": "n7",
+      "inputs": {
+        "softness": 0.02
+      },
+      "type": "region",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n8",
+      "inputs": {
+        "amount": 0.12,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "seed": {
+          "param": "shuffle"
+        },
+        "size": 1.5,
+        "t": 0
+      },
+      "type": "grain",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n9",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "b": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "c": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "d": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "which": {
+          "param": "style"
+        }
+      },
+      "type": "pick",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n10",
+      "inputs": {
+        "color": {
+          "param": "plain"
+        }
+      },
+      "type": "color_value",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n11",
+      "inputs": {
+        "on": {
+          "param": "flip"
+        }
+      },
+      "type": "switch_value",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n12",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n13",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n14",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.4,
+      "displayName": "amount",
+      "identifier": "amount",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": true,
+      "displayName": "flip",
+      "identifier": "flip",
+      "max": 1,
+      "min": 0,
+      "type": "bool"
+    },
+    {
+      "default": [
+        0.5,
+        0.5
+      ],
+      "displayName": "centre",
+      "identifier": "centre",
+      "max": 1,
+      "min": 0,
+      "type": "point"
+    },
+    {
+      "default": 6,
+      "displayName": "slices",
+      "identifier": "slices",
+      "max": 16,
+      "min": 0,
+      "type": "int"
+    },
+    {
+      "default": 3,
+      "displayName": "shuffle",
+      "identifier": "shuffle",
+      "max": 1000,
+      "min": 0,
+      "type": "seed"
+    },
+    {
+      "alpha": true,
+      "default": "#ff000080",
+      "displayName": "tint",
+      "identifier": "tint",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": "#336699",
+      "displayName": "plain",
+      "identifier": "plain",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": [
+        0.2,
+        0.2,
+        0.5,
+        0.5
+      ],
+      "displayName": "area",
+      "identifier": "area",
+      "max": 1,
+      "min": 0,
+      "type": "region"
+    },
+    {
+      "default": "a1",
+      "displayName": "picture",
+      "identifier": "picture",
+      "max": 1,
+      "min": 0,
+      "type": "image"
+    },
+    {
+      "default": [
+        {
+          "color": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "pos": 0
+        },
+        {
+          "color": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "pos": 1
+        }
+      ],
+      "displayName": "ramp",
+      "identifier": "ramp",
+      "max": 1,
+      "min": 0,
+      "type": "gradient"
+    },
+    {
+      "default": [
+        {
+          "ease": "smooth",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "ease": "linear",
+          "x": 1,
+          "y": 1
+        }
+      ],
+      "displayName": "motion",
+      "identifier": "motion",
+      "max": 1,
+      "min": 0,
+      "type": "curve"
+    },
+    {
+      "default": 1,
+      "displayName": "style",
+      "identifier": "style",
+      "max": 1,
+      "min": 0,
+      "options": [
+        "A",
+        "B",
+        "C"
+      ],
+      "type": "choice"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

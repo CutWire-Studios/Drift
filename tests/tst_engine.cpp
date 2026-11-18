@@ -115,6 +115,8 @@
 #include "engine/face/tracking/Face111.h"
 #include "engine/face/props/FacePropCatalog.h"
 #include "engine/face/props/FacePropImport.h"
+#include "engine/packages/assets/StickerCatalog.h"
+#include "engine/packages/assets/StickerPackImport.h"
 #include "engine/face/props/FaceModelTransform.h"
 #include "engine/render3d/models/ModelAsset.h"
 #include "engine/render3d/models/ModelAnimation.h"
@@ -301,6 +303,9 @@ private slots:
     void faceModelFillWireDoesNotLeakGlState();
     void faceMesh3dEffectPackageLoads();
     void facePropsEffectPackageLoads();
+    void stickerPackPlansManifestAndFolders();
+    void stickerPackImportFromZipAndCatalog();
+    void stickerPackImportRejectsUnsafePaths();
     void facePropImportFromMultiPropZip();
     void facePropImportFromFolder();
     void facePropImportRejectsUnsafeManifests();
@@ -461,6 +466,7 @@ private slots:
     void maskShapesUseBothSizeAxes();
     void maskRoundnessRoundsRectangleCorners();
     void splitMaskRevealsOneSideOfASeam();
+    void largeFeatherSpreadsAcrossTheFrame();
     void starMaskRotatesOnceNotTwice();
     void maskAdjustmentLaneMasksItsParentsClips();
     void maskLaneOpsCombineAcrossLanes();
@@ -4302,6 +4308,115 @@ void EngineTest::facePropsEffectPackageLoads()
     }
     QVERIFY(hasModel);
     QVERIFY(hasScale);
+}
+
+void EngineTest::stickerPackPlansManifestAndFolders()
+{
+    // No manifest: a root image forms a category named after the pack, each folder another.
+    const StickerPackLayout plain = planStickerPack(
+        {QStringLiteral("wave.png"), QStringLiteral("faces/Smile_big.webp"), QStringLiteral("faces/sub/deep.png"),
+         QStringLiteral("animals/cat.png"), QStringLiteral("notes.txt"), QStringLiteral(".hidden/x.png")},
+        {}, QStringLiteral("Mine"));
+    QCOMPARE(plain.name, QStringLiteral("Mine"));
+    QCOMPARE(plain.categories.size(), 3);
+    QCOMPARE(plain.categories.at(0).label, QStringLiteral("Mine"));
+    QCOMPARE(plain.categories.at(0).files, QStringList{QStringLiteral("wave.png")});
+    QCOMPARE(plain.categories.at(1).label, QStringLiteral("animals"));
+    QCOMPARE(plain.categories.at(2).files.size(), 2);
+
+    const QByteArray manifest = R"({"name":"Fancy","categories":[
+        {"id":"f","name":"Faces","stickers":["faces/Smile_big.webp","../evil.png","missing.png"]},
+        {"name":"Pets","folder":"animals"},
+        {"id":"empty","name":"Nothing","folder":"nowhere"}]})";
+    const StickerPackLayout fancy = planStickerPack(
+        {QStringLiteral("faces/Smile_big.webp"), QStringLiteral("animals/cat.png"), QStringLiteral("other.png")},
+        manifest, QStringLiteral("Ignored"));
+    QCOMPARE(fancy.name, QStringLiteral("Fancy"));
+    QCOMPARE(fancy.categories.size(), 2);
+    QCOMPARE(fancy.categories.at(0).id, QStringLiteral("f"));
+    QCOMPARE(fancy.categories.at(0).files, QStringList{QStringLiteral("faces/Smile_big.webp")});
+    QCOMPARE(fancy.categories.at(1).label, QStringLiteral("Pets"));
+    QCOMPARE(fancy.categories.at(1).files, QStringList{QStringLiteral("animals/cat.png")});
+}
+
+void EngineTest::stickerPackImportFromZipAndCatalog()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString zip = tmp.filePath(QStringLiteral("pack.zip"));
+    QVERIFY(writeStoredZip(zip, {
+        {QStringLiteral("Emoji Set/manifest.json"), QByteArray(R"({"name":"Emoji Set","categories":[{"id":"a","name":"Alpha","folder":"a"}]})")},
+        {QStringLiteral("Emoji Set/a/one.png"), QByteArray("png1")},
+        {QStringLiteral("Emoji Set/a/two_two.webp"), QByteArray("webp2")},
+        {QStringLiteral("Emoji Set/readme.txt"), QByteArray("x")},
+    }));
+
+    const QString dest = tmp.filePath(QStringLiteral("stickers"));
+    const StickerPackImportResult result = importStickerPackFromZip(zip, dest);
+    QVERIFY2(result.error.isEmpty(), qPrintable(result.error));
+    QCOMPARE(result.packId, QStringLiteral("custom-emoji-set"));
+    QCOMPARE(result.count, 2);
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/custom-emoji-set/a/one.png")));
+    QVERIFY(!QFileInfo::exists(dest + QStringLiteral("/custom-emoji-set/readme.txt")));
+
+    reloadStickerCatalog({dest});
+    const QList<StickerEntry> entries = stickers();
+    QCOMPARE(entries.size(), 2);
+    for (const StickerEntry &entry : entries) {
+        QVERIFY(entry.id.startsWith(QStringLiteral("custom-emoji-set/")));
+        QVERIFY(QFileInfo::exists(entry.path));
+    }
+    QCOMPARE(entries.at(1).label, QStringLiteral("two two"));
+    QVERIFY(stickerCategories().at(0).custom);
+    QCOMPARE(stickerCategories().at(0).label, QStringLiteral("Alpha"));
+
+    // Importing again replaces the pack instead of duplicating it.
+    QCOMPARE(importStickerPackFromZip(zip, dest).count, 2);
+    reloadStickerCatalog({dest});
+    QCOMPARE(stickers().size(), 2);
+
+    // Folder import, no manifest.
+    const QString src = tmp.filePath(QStringLiteral("My Folder"));
+    QVERIFY(QDir().mkpath(src + QStringLiteral("/smile")));
+    QVERIFY(writeTestFile(src + QStringLiteral("/smile/s.png"), QByteArray("p")));
+    QVERIFY(writeTestFile(src + QStringLiteral("/top.png"), QByteArray("p")));
+    const StickerPackImportResult folder = importStickerPackFromDirectory(src, dest);
+    QVERIFY2(folder.error.isEmpty(), qPrintable(folder.error));
+    QCOMPARE(folder.packId, QStringLiteral("custom-my-folder"));
+    reloadStickerCatalog({dest});
+    QCOMPARE(stickers().size(), 4);
+
+    QString error;
+    QVERIFY(!removeUserStickerPack(QStringLiteral("../stickers"), &error, dest));
+    QVERIFY(removeUserStickerPack(result.packId, &error, dest));
+    QVERIFY(!QFileInfo::exists(dest + QStringLiteral("/custom-emoji-set")));
+    reloadStickerCatalog();
+}
+
+void EngineTest::stickerPackImportRejectsUnsafePaths()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString zip = tmp.filePath(QStringLiteral("evil.zip"));
+    QVERIFY(writeStoredZip(zip, {
+        {QStringLiteral("../escape.png"), QByteArray("x")},
+        {QStringLiteral("/abs.png"), QByteArray("x")},
+        {QStringLiteral("a/../../escape2.png"), QByteArray("x")},
+        {QStringLiteral("notes.txt"), QByteArray("x")},
+    }));
+    const QString dest = tmp.filePath(QStringLiteral("stickers"));
+    const StickerPackImportResult result = importStickerPackFromZip(zip, dest);
+    QVERIFY(!result.error.isEmpty());
+    QVERIFY(!QFileInfo::exists(tmp.filePath(QStringLiteral("escape.png"))));
+    QVERIFY(!QFileInfo::exists(tmp.filePath(QStringLiteral("escape2.png"))));
+    QVERIFY(QDir(dest).entryList(QDir::Dirs | QDir::NoDotAndDotDot).isEmpty());
+
+    // The manifest cannot name a file outside the pack either.
+    const StickerPackLayout layout = planStickerPack(
+        {QStringLiteral("ok.png")}, QByteArray(R"({"categories":[{"name":"X","stickers":["../ok.png","/ok.png","ok.png"]}]})"),
+        QStringLiteral("P"));
+    QCOMPARE(layout.categories.size(), 1);
+    QCOMPARE(layout.categories.at(0).files, QStringList{QStringLiteral("ok.png")});
 }
 
 void EngineTest::facePropImportFromMultiPropZip()
@@ -12687,6 +12802,24 @@ void EngineTest::maskRoundnessRoundsRectangleCorners()
     const drift::Mask &back = loaded.tracks()[0].clips[0].mask;
     QCOMPARE(back.roundness, 0.4);
     QVERIFY(!back.keyframes.value(QStringLiteral("roundness")).isEmpty());
+}
+
+void EngineTest::largeFeatherSpreadsAcrossTheFrame()
+{
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Split;
+    mask.feather = 512.0;
+    QElapsedTimer timer;
+    timer.start();
+    const QImage alpha = drift::maskAlphaMap(mask, 1024, 1024);
+    QVERIFY2(timer.elapsed() < 2000, "large feather must not scale with radius");
+    QCOMPARE(alpha.size(), QSize(1024, 1024));
+    const int left = qGray(alpha.pixel(100, 512));
+    const int mid = qGray(alpha.pixel(512, 512));
+    const int right = qGray(alpha.pixel(900, 512));
+    QVERIFY(left > mid && mid > right);
+    QVERIFY(left < 255 && right > 0);
+    QVERIFY(qAbs(mid - 128) < 20);
 }
 
 void EngineTest::splitMaskRevealsOneSideOfASeam()

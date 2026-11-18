@@ -1,0 +1,574 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n5",
+      "toSocket": "x"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e3",
+      "to": "n7",
+      "toSocket": "x"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n8",
+      "toSocket": "m00"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e5",
+      "to": "n8",
+      "toSocket": "m11"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "mask",
+      "id": "e6",
+      "to": "n9",
+      "toSocket": "image"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "p",
+      "id": "e7",
+      "to": "n9",
+      "toSocket": "p"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "image",
+      "id": "e8",
+      "to": "n10",
+      "toSocket": "color"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "r",
+      "id": "e9",
+      "to": "n11",
+      "toSocket": "x"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "size",
+      "id": "e10",
+      "to": "n13",
+      "toSocket": "p"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "slope",
+      "id": "e11",
+      "to": "n14",
+      "toSocket": "a"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "y",
+      "id": "e12",
+      "to": "n14",
+      "toSocket": "b"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "value",
+      "id": "e13",
+      "to": "n15",
+      "toSocket": "x"
+    },
+    {
+      "from": "n15",
+      "fromSocket": "value",
+      "id": "e14",
+      "to": "n16",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n16",
+      "fromSocket": "image",
+      "id": "e15",
+      "to": "n17",
+      "toSocket": "image"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e16",
+      "to": "n18",
+      "toSocket": "x"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "r",
+      "id": "e17",
+      "to": "n19",
+      "toSocket": "a"
+    },
+    {
+      "from": "n18",
+      "fromSocket": "value",
+      "id": "e18",
+      "to": "n19",
+      "toSocket": "b"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e19",
+      "to": "n20",
+      "toSocket": "a"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e20",
+      "to": "n20",
+      "toSocket": "b"
+    },
+    {
+      "from": "n19",
+      "fromSocket": "value",
+      "id": "e21",
+      "to": "n20",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n18",
+      "fromSocket": "value",
+      "id": "e22",
+      "to": "n21",
+      "toSocket": "x"
+    },
+    {
+      "from": "n20",
+      "fromSocket": "image",
+      "id": "e23",
+      "to": "n22",
+      "toSocket": "base"
+    },
+    {
+      "from": "n17",
+      "fromSocket": "glow",
+      "id": "e24",
+      "to": "n22",
+      "toSocket": "layer"
+    },
+    {
+      "from": "n21",
+      "fromSocket": "value",
+      "id": "e25",
+      "to": "n22",
+      "toSocket": "opacity"
+    },
+    {
+      "from": "n22",
+      "fromSocket": "image",
+      "id": "e26",
+      "to": "n23",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "geometric",
+    "description": "The person's outline becomes a window into the next clip and grows exponentially until it fills the frame, traced by a neon edge.",
+    "displayName": "Silhouette portal",
+    "id": "starter_transition_silhouette_portal",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "to",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {},
+      "type": "clip_mask",
+      "x": 0,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {},
+      "type": "progress",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "square"
+      },
+      "id": "n5",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 280,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "growth"
+        }
+      },
+      "type": "math",
+      "x": 560,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "exp"
+      },
+      "id": "n7",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 840,
+      "y": 440
+    },
+    {
+      "data": {
+        "inverse": true,
+        "square": true
+      },
+      "id": "n8",
+      "inputs": {
+        "m00": 1,
+        "m01": 0,
+        "m10": 0,
+        "m11": 1,
+        "offset": [
+          0,
+          0
+        ],
+        "origin": {
+          "param": "portalCentre"
+        },
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "linear_transform",
+      "x": 1120,
+      "y": 440
+    },
+    {
+      "data": {
+        "edge": "transparent"
+      },
+      "id": "n9",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 1400,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n10",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 1680,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n11",
+      "inputs": {
+        "spacing": 2,
+        "x": 0
+      },
+      "type": "derivative",
+      "x": 1960,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n12",
+      "inputs": {},
+      "type": "resolution",
+      "x": 1960,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n13",
+      "inputs": {
+        "p": [
+          0,
+          0
+        ]
+      },
+      "type": "split_point",
+      "x": 2240,
+      "y": 880
+    },
+    {
+      "data": {
+        "op": "div"
+      },
+      "id": "n14",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 2240,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n15",
+      "inputs": {
+        "high": 0.2,
+        "low": 0.02,
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 2520,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n16",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": {
+          "param": "edgeColor"
+        }
+      },
+      "type": "mix",
+      "x": 2800,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n17",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "intensity": {
+          "param": "edgeGlow"
+        },
+        "radius": 12,
+        "threshold": 0,
+        "tint": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "glow",
+      "x": 3080,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n18",
+      "inputs": {
+        "high": 1,
+        "low": 0.85,
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 1680,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "max"
+      },
+      "id": "n19",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1960,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n20",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 2240,
+      "y": 0
+    },
+    {
+      "data": {
+        "fn": "oneminus"
+      },
+      "id": "n21",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 2520,
+      "y": 220
+    },
+    {
+      "data": {
+        "mode": "add"
+      },
+      "id": "n22",
+      "inputs": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "layer": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "opacity": 1
+      },
+      "type": "blend",
+      "x": 3360,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n23",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 3640,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 3.5,
+      "displayName": "Growth",
+      "identifier": "growth",
+      "max": 6,
+      "min": 1,
+      "type": "float"
+    },
+    {
+      "default": [
+        0.5,
+        0.4
+      ],
+      "displayName": "Grow from",
+      "identifier": "portalCentre",
+      "max": 1,
+      "min": 0,
+      "type": "point"
+    },
+    {
+      "default": "#4dfcff",
+      "displayName": "Edge colour",
+      "identifier": "edgeColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": 1.6,
+      "displayName": "Edge glow",
+      "identifier": "edgeGlow",
+      "max": 4,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "clip": "dancer",
+    "thumbTime": 0.5
+  }
+}

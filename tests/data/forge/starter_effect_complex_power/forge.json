@@ -1,0 +1,128 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "p",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "p"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "The frame raised to a power as a complex number: a conformal fold that keeps every angle.",
+    "displayName": "Complex power",
+    "id": "starter_effect_complex_power",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "op": "pow"
+      },
+      "id": "n2",
+      "inputs": {
+        "n": {
+          "param": "power"
+        },
+        "w": [
+          1,
+          0
+        ],
+        "z": [
+          0.5,
+          0.5
+        ],
+        "zoom": {
+          "param": "zoom"
+        }
+      },
+      "type": "complex_math",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {
+        "edge": "mirror"
+      },
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 840,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 2,
+      "displayName": "Power",
+      "identifier": "power",
+      "max": 6,
+      "min": -4,
+      "type": "float"
+    },
+    {
+      "default": 2,
+      "displayName": "Zoom",
+      "identifier": "zoom",
+      "max": 6,
+      "min": 0.5,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

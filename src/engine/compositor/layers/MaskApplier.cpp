@@ -5,6 +5,9 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QtMath>
+#include <algorithm>
+#include <cmath>
+#include <vector>
 
 namespace drift {
 
@@ -84,34 +87,54 @@ QPainterPath maskPath(const Mask &mask, int canvasWidth, int canvasHeight)
 
 namespace {
 
-QImage blurAlpha(const QImage &alpha, int radius)
+// Three separable running-sum box passes approximate a gaussian of sigma = feather / 2, so the
+// cost is independent of the radius. Edges replicate, matching the GPU feather's clamped taps.
+QImage blurAlpha(const QImage &alpha, double feather)
 {
-    if (radius <= 0 || alpha.isNull())
+    if (feather <= 0.0 || alpha.isNull())
         return alpha;
 
-    QImage out = alpha;
-    const int passes = qBound(1, radius / 2, 8);
-    for (int pass = 0; pass < passes; ++pass) {
-        QImage blurred(out.size(), QImage::Format_Grayscale8);
-        for (int y = 0; y < out.height(); ++y) {
-            auto *line = blurred.scanLine(y);
-            for (int x = 0; x < out.width(); ++x) {
-                int sum = 0;
-                int count = 0;
-                for (int dy = -radius; dy <= radius; ++dy) {
-                    const int sy = qBound(0, y + dy, out.height() - 1);
-                    for (int dx = -radius; dx <= radius; ++dx) {
-                        const int sx = qBound(0, x + dx, out.width() - 1);
-                        sum += qGray(out.pixel(sx, sy));
-                        ++count;
-                    }
-                }
-                line[x] = static_cast<uchar>(sum / qMax(1, count));
+    const double sigma = qMax(0.5, feather * 0.5);
+    const int r = qMax(1, qRound((std::sqrt(4.0 * sigma * sigma + 1.0) - 1.0) / 2.0));
+    const int w = alpha.width();
+    const int h = alpha.height();
+    const int span = 2 * r + 1;
+
+    QImage a = alpha;
+    QImage b(w, h, QImage::Format_Grayscale8);
+    std::vector<int> colSums(static_cast<size_t>(w));
+
+    for (int pass = 0; pass < 3; ++pass) {
+        for (int y = 0; y < h; ++y) {
+            const uchar *src = a.constScanLine(y);
+            uchar *dst = b.scanLine(y);
+            int sum = 0;
+            for (int k = -r; k <= r; ++k)
+                sum += src[qBound(0, k, w - 1)];
+            for (int x = 0; x < w; ++x) {
+                dst[x] = static_cast<uchar>((sum + span / 2) / span);
+                sum += src[qMin(x + r + 1, w - 1)] - src[qMax(x - r, 0)];
             }
         }
-        out = blurred;
+
+        std::fill(colSums.begin(), colSums.end(), 0);
+        for (int k = -r; k <= r; ++k) {
+            const uchar *row = b.constScanLine(qBound(0, k, h - 1));
+            for (int x = 0; x < w; ++x)
+                colSums[size_t(x)] += row[x];
+        }
+        for (int y = 0; y < h; ++y) {
+            uchar *dst = a.scanLine(y);
+            const uchar *add = b.constScanLine(qMin(y + r + 1, h - 1));
+            const uchar *sub = b.constScanLine(qMax(y - r, 0));
+            for (int x = 0; x < w; ++x) {
+                int &s = colSums[size_t(x)];
+                dst[x] = static_cast<uchar>((s + span / 2) / span);
+                s += add[x] - sub[x];
+            }
+        }
     }
-    return out;
+    return a;
 }
 
 // Multiply the frame's alpha by a coverage map. Shared by both applyMask overloads, which differ
@@ -168,7 +191,7 @@ QImage maskAlphaMap(const Mask &mask, int canvasWidth, int canvasHeight)
     mp.end();
 
     if (mask.feather > 0.0)
-        alpha = blurAlpha(alpha, qMax(1, static_cast<int>(mask.feather)));
+        alpha = blurAlpha(alpha, mask.feather);
 
     return alpha;
 }

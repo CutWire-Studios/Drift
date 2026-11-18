@@ -1,0 +1,67 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "x",
+      "name": "k_n4_x",
+      "node": "n4",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "b",
+      "name": "k_n3_b",
+      "node": "n3",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "pivot",
+      "name": "k_n5_pivot",
+      "node": "n5",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "input": "rotation",
+      "name": "k_n5_rotation",
+      "node": "n5",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "scale",
+      "name": "k_n5_scale",
+      "node": "n5",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"animation\",[[\"n1\",\"video\",{},[]],[\"n2\",\"direction\",{},[]],[\"n3\",\"mix_value\",{},[[\"a\",{\"param\":\"rise\"}]]],[\"n4\",\"combine_point\",{},[]],[\"n5\",\"transform\",{\"edge\":\"transparent\"},[]],[\"n6\",\"set_alpha\",{},[]],[\"n7\",\"animation_output\",{},[]]],[[\"n2\",\"settled\",\"n3\",\"t\"],[\"n3\",\"value\",\"n4\",\"y\"],[\"n1\",\"image\",\"n5\",\"image\"],[\"n4\",\"p\",\"n5\",\"offset\"],[\"n5\",\"image\",\"n6\",\"image\"],[\"n2\",\"settled\",\"n6\",\"mask\"],[\"n6\",\"image\",\"n7\",\"image\"]],[[\"rise\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

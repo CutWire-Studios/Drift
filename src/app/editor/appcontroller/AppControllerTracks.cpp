@@ -80,8 +80,13 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("pasteEffects"), QStringLiteral("Ctrl+Shift+V")},
         {QStringLiteral("pasteAttributes"), QStringLiteral("Ctrl+Alt+V")},
         {QStringLiteral("addTransitionAtPlayhead"), QStringLiteral("Ctrl+Shift+D")},
+        // S splits the selection when there is one and every track when there is not, so the
+        // common case needs no modifier either way. Shift+S is the explicit selection-only cut,
+        // and splitAllTracks is the explicit all-tracks one — unbound, since S already is it
+        // whenever nothing is selected.
         {QStringLiteral("split"), QStringLiteral("S")},
         {QStringLiteral("splitSelection"), QStringLiteral("Shift+S")},
+        {QStringLiteral("splitAllTracks"), QString()},
         {QStringLiteral("merge"), QStringLiteral("Ctrl+M")},
         {QStringLiteral("unlink"), QStringLiteral("Ctrl+Shift+U")},
         {QStringLiteral("link"), QStringLiteral("Ctrl+Shift+L")},
@@ -142,6 +147,9 @@ QHash<QString, QString> defaultShortcuts()
         // preview or it has focus or hover (never in 3D mode), so they stay free on the timeline.
         {QStringLiteral("maskingPolygonTool"), QStringLiteral("P")},
         {QStringLiteral("maskingAiTool"), QStringLiteral("A")},
+        {QStringLiteral("maskingLassoTool"), QStringLiteral("F")},
+        {QStringLiteral("maskingScissorsTool"), QStringLiteral("C")},
+        {QStringLiteral("maskingWandTool"), QStringLiteral("U")},
         {QStringLiteral("maskingBrushSmaller"), QStringLiteral("[")},
         {QStringLiteral("maskingBrushLarger"), QStringLiteral("]")},
         {QStringLiteral("maskingBrushToggleErase"), QStringLiteral("X")},
@@ -798,6 +806,9 @@ QVariantList AppController::bookmarks() const
         result.append(QVariantMap{
             {QStringLiteral("seconds"), drift::usToSeconds(bookmark.timeUs)},
             {QStringLiteral("label"), bookmark.label},
+            // Empty when unset: the marker falls back to the theme colour rather than carrying
+            // a resolved one, so a theme change recolours every uncoloured flag with it.
+            {QStringLiteral("color"), bookmark.color.isValid() ? bookmark.color.name() : QString()},
         });
     }
     return result;
@@ -921,6 +932,25 @@ void AppController::updateBookmark(int index, double seconds, const QString &lab
     bookmark.label = resolvedLabel;
     pushProjectEdit(before, tr("Edit bookmark"));
     finishEdit(tr("Bookmark updated"));
+}
+
+void AppController::setBookmarkColor(int index, const QString &color)
+{
+    if (index < 0 || index >= m_project.bookmarks().size())
+        return;
+
+    const QColor resolved = color.isEmpty() || !QColor::isValidColorName(color) ? QColor()
+                                                                               : QColor(color);
+    // Snapshot before binding the reference: bookmarks are a plain QList, so a later copy would
+    // share the buffer the reference writes into.
+    const drift::Project before = m_project;
+    drift::Bookmark &bookmark = m_project.bookmarks()[index];
+    if (bookmark.color == resolved)
+        return;
+
+    bookmark.color = resolved;
+    pushProjectEdit(before, tr("Colour bookmark"));
+    finishEdit(tr("Bookmark colour changed"));
 }
 
 void AppController::goToBookmark(int index)
@@ -1762,6 +1792,8 @@ void AppController::triggerAction(const QString &actionId)
     else if (actionId == QStringLiteral("pasteAttributes"))
         requestPasteAttributes();
     else if (actionId == QStringLiteral("split"))
+        splitAtPlayheadForSelection();
+    else if (actionId == QStringLiteral("splitAllTracks"))
         splitAtPlayhead();
     else if (actionId == QStringLiteral("toggleClipEnabled"))
         toggleSelectedClipsEnabled();

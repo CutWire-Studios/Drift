@@ -1,5 +1,6 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include <QCoreApplication>
+#include "engine/packages/animations/AnimationCatalog.h"
 #include "engine/decode/probe/MediaProbe.h"
 #include "app/mcp/McpController.h"
 #include "app/bin/MediaBinController.h"
@@ -1544,8 +1545,8 @@ bool AppController::flattenComposite(int trackIndex, int clipIndex)
     const drift::TimeUs srcInUs = clip.srcIn;
     const drift::TimeUs durationUs = clip.srcOut - clip.srcIn;
 
-    (void)QtConcurrent::run([this, source, settings, outputPath, clipId, sequenceId, name, srcInUs,
-                             durationUs]() {
+    m_exportFuture = QtConcurrent::run([this, source, settings, outputPath, clipId, sequenceId, name,
+                                        srcInUs, durationUs]() {
         Exporter::BackgroundHold hold(QStringLiteral("Flattening composite"), /*cancellable=*/true);
         QString error;
         const auto report = [this](double fraction) {
@@ -2050,9 +2051,13 @@ void AppController::setClipAnimation(int trackIndex, int clipIndex, const QStrin
 
     drift::ClipAnimation next = isIn ? clip.animIn : clip.animOut;
     if (patch.contains(QStringLiteral("kind"))) {
+        const QString previousKind = next.kindId;
         next.kindId = patch.value(QStringLiteral("kind")).toString();
         if (next.kindId == QLatin1String("none"))
             next.kindId.clear();
+        const AnimationPresetEntry *pkg = animationDefForId(next.kindId);
+        if (pkg && next.kindId != previousKind && !patch.contains(QStringLiteral("duration")))
+            next.durationUs = qint64(pkg->defaultDurationMs) * 1000;
     }
     if (patch.contains(QStringLiteral("duration")))
         next.durationUs =
@@ -2099,6 +2104,16 @@ QVariantList AppController::clipAnimationKinds() const
         out.append(QVariantMap{
             {QStringLiteral("id"), info.id},
             {QStringLiteral("label"), QCoreApplication::translate("ClipAnimation", info.label)},
+            {QStringLiteral("directions"), QStringList{QStringLiteral("in"), QStringLiteral("out")}},
+        });
+    }
+    for (const AnimationPresetEntry &entry : animationCatalog()) {
+        out.append(QVariantMap{
+            {QStringLiteral("id"), entry.meta.id},
+            {QStringLiteral("label"), entry.meta.displayName},
+            {QStringLiteral("category"), entry.meta.category},
+            {QStringLiteral("directions"), entry.directions},
+            {QStringLiteral("package"), true},
         });
     }
     return out;
@@ -2141,6 +2156,8 @@ void AppController::applyClipAnimationPreset(int trackIndex, int clipIndex, cons
         } else {
             if (anim.isNone() || anim.durationUs <= 0)
                 anim.durationUs = 500000;
+            if (const AnimationPresetEntry *pkg = animationDefForId(kind); pkg && anim.kindId != kind)
+                anim.durationUs = qint64(pkg->defaultDurationMs) * 1000;
             anim.kindId = kind;
             anim.durationUs = qMin(anim.durationUs, clip.timelineDuration);
             if (fadeUs <= 0) {

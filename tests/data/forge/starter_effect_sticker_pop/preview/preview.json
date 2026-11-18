@@ -1,0 +1,239 @@
+{
+  "buffers": [
+    "buf0",
+    "buf1",
+    "buf2",
+    "buf3"
+  ],
+  "errors": [],
+  "literals": [
+    {
+      "input": "seed",
+      "name": "k_n3_seed",
+      "node": "n3",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "phase",
+      "name": "k_n3_phase",
+      "node": "n3",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "min",
+      "name": "k_n3_min",
+      "node": "n3",
+      "type": "float",
+      "value": -1
+    },
+    {
+      "input": "max",
+      "name": "k_n3_max",
+      "node": "n3",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "b",
+      "name": "k_n6_b",
+      "node": "n6",
+      "type": "float",
+      "value": 0.017453292519943295
+    },
+    {
+      "input": "origin",
+      "name": "k_n12_origin",
+      "node": "n12",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.6
+      ]
+    },
+    {
+      "input": "offset",
+      "name": "k_n12_offset",
+      "node": "n12",
+      "type": "vec2",
+      "value": [
+        0,
+        0
+      ]
+    },
+    {
+      "input": "contrast",
+      "name": "k_n26_contrast",
+      "node": "n26",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "brightness",
+      "name": "k_n26_brightness",
+      "node": "n26",
+      "type": "float",
+      "value": -0.15
+    },
+    {
+      "input": "b",
+      "name": "k_n27_b",
+      "node": "n27",
+      "type": "color",
+      "value": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "input": "low",
+      "name": "k_n23_low",
+      "node": "n23",
+      "type": "float",
+      "value": 0.02
+    },
+    {
+      "input": "high",
+      "name": "k_n23_high",
+      "node": "n23",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "input": "b",
+      "name": "k_n20_b",
+      "node": "n20",
+      "type": "vec2",
+      "value": [
+        -0.012,
+        -0.022
+      ]
+    },
+    {
+      "input": "s",
+      "name": "k_n20_s",
+      "node": "n20",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "low",
+      "name": "k_n18_low",
+      "node": "n18",
+      "type": "float",
+      "value": 0.03
+    },
+    {
+      "input": "high",
+      "name": "k_n18_high",
+      "node": "n18",
+      "type": "float",
+      "value": 0.1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "pass1.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "id": "buf0",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass2.frag",
+      "inputs": [
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf1",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass3.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "id": "buf0",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass4.frag",
+      "inputs": [
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf2",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass5.frag",
+      "inputs": [
+        {
+          "id": "buf2",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf3",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "id": "buf1",
+          "type": "buffer"
+        },
+        {
+          "id": "buf3",
+          "type": "buffer"
+        },
+        {
+          "type": "source_texture"
+        },
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"clip_mask\",{},[]],[\"n3\",\"lfo\",{\"shape\":\"sine\"},[[\"rate\",{\"param\":\"wobbleSpeed\"}]]],[\"n4\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"wobble\"}]]],[\"n5\",\"math\",{\"op\":\"add\"},[[\"b\",{\"param\":\"tilt\"}]]],[\"n6\",\"math\",{\"op\":\"mul\"},[]],[\"n7\",\"func\",{\"fn\":\"cos\"},[]],[\"n8\",\"func\",{\"fn\":\"sin\"},[]],[\"n9\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"stickerSize\"}]]],[\"n10\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"stickerSize\"}]]],[\"n11\",\"func\",{\"fn\":\"neg\"},[]],[\"n12\",\"linear_transform\",{\"inverse\":true,\"square\":true},[]],[\"n13\",\"sample_at\",{\"edge\":\"transparent\"},[]],[\"n14\",\"sample_at\",{\"edge\":\"transparent\"},[]],[\"n15\",\"split_color\",{},[]],[\"n16\",\"blur\",{},[[\"radius\",{\"param\":\"border\"}]]],[\"n17\",\"split_color\",{},[]],[\"n18\",\"smoothstep\",{},[]],[\"n19\",\"uv\",{},[]],[\"n20\",\"vector_math\",{\"op\":\"add\"},[]],[\"n21\",\"sample_at\",{\"edge\":\"clamp\"},[]],[\"n22\",\"split_color\",{},[]],[\"n23\",\"smoothstep\",{},[]],[\"n24\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"shadow\"}]]],[\"n25\",\"blur\",{},[[\"radius\",{\"param\":\"bgBlur\"}]]],[\"n26\",\"brightness_contrast\",{},[]],[\"n27\",\"mix\",{},[]],[\"n28\",\"mix\",{},[[\"b\",{\"param\":\"borderColor\"}]]],[\"n29\",\"mix\",{},[]],[\"n30\",\"effect_output\",{},[]]],[[\"n3\",\"value\",\"n4\",\"a\"],[\"n4\",\"value\",\"n5\",\"a\"],[\"n5\",\"value\",\"n6\",\"a\"],[\"n6\",\"value\",\"n7\",\"x\"],[\"n6\",\"value\",\"n8\",\"x\"],[\"n7\",\"value\",\"n9\",\"a\"],[\"n8\",\"value\",\"n10\",\"a\"],[\"n10\",\"value\",\"n11\",\"x\"],[\"n9\",\"value\",\"n12\",\"m00\"],[\"n11\",\"value\",\"n12\",\"m01\"],[\"n10\",\"value\",\"n12\",\"m10\"],[\"n9\",\"value\",\"n12\",\"m11\"],[\"n1\",\"image\",\"n13\",\"image\"],[\"n12\",\"p\",\"n13\",\"p\"],[\"n2\",\"mask\",\"n14\",\"image\"],[\"n12\",\"p\",\"n14\",\"p\"],[\"n14\",\"image\",\"n15\",\"color\"],[\"n14\",\"image\",\"n16\",\"image\"],[\"n16\",\"image\",\"n17\",\"color\"],[\"n17\",\"r\",\"n18\",\"x\"],[\"n19\",\"uv\",\"n20\",\"a\"],[\"n16\",\"image\",\"n21\",\"image\"],[\"n20\",\"p\",\"n21\",\"p\"],[\"n21\",\"image\",\"n22\",\"color\"],[\"n22\",\"r\",\"n23\",\"x\"],[\"n23\",\"value\",\"n24\",\"a\"],[\"n1\",\"image\",\"n25\",\"image\"],[\"n25\",\"image\",\"n26\",\"image\"],[\"n26\",\"image\",\"n27\",\"a\"],[\"n24\",\"value\",\"n27\",\"amount\"],[\"n27\",\"image\",\"n28\",\"a\"],[\"n18\",\"value\",\"n28\",\"amount\"],[\"n28\",\"image\",\"n29\",\"a\"],[\"n13\",\"image\",\"n29\",\"b\"],[\"n15\",\"r\",\"n29\",\"amount\"],[\"n29\",\"image\",\"n30\",\"image\"]],[[\"wobbleSpeed\",\"float\",false],[\"wobble\",\"float\",false],[\"tilt\",\"float\",false],[\"stickerSize\",\"float\",false],[\"border\",\"float\",false],[\"shadow\",\"float\",false],[\"bgBlur\",\"float\",false],[\"borderColor\",\"color\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": true,
+  "usesTime": true
+}

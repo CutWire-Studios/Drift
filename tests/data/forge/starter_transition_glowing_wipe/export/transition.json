@@ -1,0 +1,54 @@
+{
+  "audioCurve": "crossfade",
+  "category": "basic",
+  "description": "A soft edge sweeps across with a line of light.",
+  "displayName": "Glowing wipe",
+  "id": "starter_transition_glowing_wipe",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0,
+      "displayName": "Direction",
+      "identifier": "direction",
+      "maxValue": 360,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.08,
+      "displayName": "Softness",
+      "identifier": "softness",
+      "maxValue": 0.5,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": "#ffc107",
+      "displayName": "Glow colour",
+      "identifier": "glowColor",
+      "type": "color"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          },
+          {
+            "index": 1,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

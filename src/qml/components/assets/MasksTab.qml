@@ -113,10 +113,10 @@ Item {
                 visible: segmentSection.segmentReady && segmentSection.runtimeReady
                 width: parent.width
                 text: qsTr("Cut out subject…")
-                enabled: !EditorState.segmentation.running && root.clipKind === "video"
-                tooltip: root.clipKind === "video"
+                enabled: !EditorState.segmentation.running && (root.clipKind === "video" || root.clipKind === "image")
+                tooltip: root.clipKind === "video" || root.clipKind === "image"
                          ? qsTr("Trace the subject and pin the result as a mask layer")
-                         : qsTr("Select a video clip first")
+                         : qsTr("Select a video or image clip first")
                 onClicked: {
                     if (!ShellBridge.phoneShell) {
                         Workspaces.activeId = "masking-tracking"

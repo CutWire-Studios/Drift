@@ -1,0 +1,158 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "displayName": "My effect",
+  "id": "params_all_types",
+  "nextFeatures": [
+    "param:choice",
+    "param:color-alpha",
+    "param:curve",
+    "param:gradient",
+    "param:image",
+    "param:int",
+    "param:point",
+    "param:region",
+    "param:seed"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.4,
+      "displayName": "amount",
+      "identifier": "amount",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 1,
+      "displayName": "flip",
+      "identifier": "flip",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "bool"
+    },
+    {
+      "defaultValue": [
+        0.5,
+        0.5
+      ],
+      "displayName": "centre",
+      "identifier": "centre",
+      "maxValue": [
+        1,
+        1
+      ],
+      "minValue": [
+        0,
+        0
+      ],
+      "type": "point"
+    },
+    {
+      "defaultValue": 6,
+      "displayName": "slices",
+      "identifier": "slices",
+      "maxValue": 16,
+      "minValue": 0,
+      "type": "int"
+    },
+    {
+      "defaultValue": 3,
+      "displayName": "shuffle",
+      "identifier": "shuffle",
+      "type": "seed"
+    },
+    {
+      "alpha": true,
+      "defaultValue": "#ff000080",
+      "displayName": "tint",
+      "identifier": "tint",
+      "type": "color"
+    },
+    {
+      "defaultValue": "#336699",
+      "displayName": "plain",
+      "identifier": "plain",
+      "type": "color"
+    },
+    {
+      "defaultValue": [
+        0.2,
+        0.2,
+        0.5,
+        0.5
+      ],
+      "displayName": "area",
+      "identifier": "area",
+      "shape": "rect",
+      "type": "region"
+    },
+    {
+      "defaultValue": "param_picture.png",
+      "displayName": "picture",
+      "identifier": "picture",
+      "type": "image"
+    },
+    {
+      "defaultValue": [
+        {
+          "color": "#000000ff",
+          "position": 0
+        },
+        {
+          "color": "#ffffffff",
+          "position": 1
+        }
+      ],
+      "displayName": "ramp",
+      "identifier": "ramp",
+      "type": "gradient"
+    },
+    {
+      "defaultValue": [
+        {
+          "ease": "smooth",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "ease": "linear",
+          "x": 1,
+          "y": 1
+        }
+      ],
+      "displayName": "motion",
+      "identifier": "motion",
+      "type": "curve"
+    },
+    {
+      "defaultValue": 1,
+      "displayName": "style",
+      "identifier": "style",
+      "options": [
+        "A",
+        "B",
+        "C"
+      ],
+      "type": "choice"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

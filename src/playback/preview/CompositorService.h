@@ -10,6 +10,7 @@
 #include <QThread>
 
 #include <atomic>
+#include <functional>
 #include <memory>
 
 class PlaybackStats;
@@ -119,6 +120,11 @@ public:
     // skipped when the snapshot is taken. Nothing in the live project changes.
     void setPreviewBypass(const QSet<QString> &clipIds, const QSet<QString> &catalogIds);
 
+    // Preview-only: runs on the detached snapshot copy after the bypass. Bakes are off while set.
+    // An empty function clears it.
+    void setPreviewPatch(std::function<void(drift::Project &)> patch);
+    bool hasPreviewPatch() const { return static_cast<bool>(m_previewPatch); }
+
     // Where baked frames come from. The pool's index may change at any time (it is thread safe);
     // call invalidateSnapshot() after it does so the current frame is drawn again.
     void setBakeSource(std::shared_ptr<drift::BakeReaderPool> bakes);
@@ -163,6 +169,7 @@ private:
     quint64 m_snapshotSerial = 0;
     QSet<QString> m_bypassClipIds;
     QSet<QString> m_bypassCatalogIds;
+    std::function<void(drift::Project &)> m_previewPatch;
 
     // Requests and completions are both GUI-thread only (every requestComposite caller is
     // PlaybackEngine, and onWorkerFrameReady is a queued slot), so this needs no atomic.

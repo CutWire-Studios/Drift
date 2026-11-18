@@ -52,6 +52,7 @@ private slots:
     void refusesAudioScalarCollision();
     void refusesReservedSamplerName();
     void writesUserPackageThatInstalls();
+    void writesUserAnimationPackageThatInstalls();
     void classifiesSignatures();
     void installsUnverifiedWhenAllowed();
     void parsesFolderManifest();
@@ -252,6 +253,31 @@ void TestAddonPackage::writesUserPackageThatInstalls()
     QFile installed(dest + QStringLiteral("/effects/tint/sub/main.frag"));
     QVERIFY(installed.open(QIODevice::ReadOnly));
     QCOMPARE(installed.readAll(), frag);
+}
+
+void TestAddonPackage::writesUserAnimationPackageThatInstalls()
+{
+    const QString src = m_tmp.filePath(QStringLiteral("authored/slide"));
+    QVERIFY(QDir().mkpath(src));
+    writeText(src + QStringLiteral("/animation.json"), R"({"id":"user.slide","backend":"gpu"})");
+    writeText(src + QStringLiteral("/main.frag"), "void main() {}\n");
+
+    const QString out = m_tmp.filePath(QStringLiteral("slide.driftfx"));
+    QString error;
+    QVERIFY2(writeUserPackage(src, QStringLiteral("animations"),
+                              QJsonObject{{QStringLiteral("id"), QStringLiteral("user.slide")},
+                                          {QStringLiteral("name"), QStringLiteral("Slide")},
+                                          {QStringLiteral("version"), QStringLiteral("1.0.0")}},
+                              out, &error),
+             qPrintable(error));
+    const auto manifest = readManifest(out, &error, Container::User);
+    QVERIFY2(manifest.has_value(), qPrintable(error));
+    QCOMPARE(manifest->provides.size(), 1);
+    QCOMPARE(manifest->provides.first().kind, QStringLiteral("animations"));
+
+    const QString dest = m_tmp.filePath(QStringLiteral("authored-anim-install"));
+    QVERIFY2(install(out, dest, {}, nullptr, &error, Container::User), qPrintable(error));
+    QVERIFY(QFile::exists(dest + QStringLiteral("/animations/slide/animation.json")));
 }
 
 void TestAddonPackage::classifiesSignatures()

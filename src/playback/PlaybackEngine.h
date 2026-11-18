@@ -68,6 +68,7 @@ public:
     // delivered in one event-loop turn into a single composite request.
     void notifyProjectEdited();
     // Preview-only bypass of catalog effects on the given clips. See CompositorService.
+    void setPreviewPatch(std::function<void(drift::Project &)> patch);
     void setPreviewEffectBypass(const QSet<QString> &clipIds, const QSet<QString> &catalogIds);
     // Publishes the committed bake index of the open project (null index: no bakes). Redraws the
     // current frame. Exporters take the same pool through bakeReaderPool().

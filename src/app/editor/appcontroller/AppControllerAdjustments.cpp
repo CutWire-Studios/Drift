@@ -10,6 +10,10 @@
 // would restore the boundary.
 #include "engine/ml/vision/detection/ObjectDetector.h"
 #include "engine/packages/assets/StickerCatalog.h"
+#include "engine/packages/assets/StickerPackImport.h"
+#include "engine/platform/AndroidUri.h"
+
+#include <QTemporaryFile>
 
 
 using namespace drift::appdetail;
@@ -94,9 +98,86 @@ QVariantList AppController::builtinStickerCategories() const
         out.append(QVariantMap{
             {QStringLiteral("id"), category.id},
             {QStringLiteral("label"), category.label},
+            {QStringLiteral("packId"), category.packId},
+            {QStringLiteral("custom"), category.custom},
         });
     }
     return out;
+}
+
+QVariantList AppController::customStickerPacks() const
+{
+    QVariantList out;
+    for (const StickerPack &pack : ::stickerPacks()) {
+        if (!pack.custom)
+            continue;
+        out.append(QVariantMap{
+            {QStringLiteral("id"), pack.id},
+            {QStringLiteral("name"), pack.name},
+            {QStringLiteral("count"), int(pack.stickers.size())},
+        });
+    }
+    return out;
+}
+
+QVariantMap AppController::importStickerPack(const QUrl &url)
+{
+    QString path = url.isLocalFile() ? url.toLocalFile() : url.toString();
+#ifdef Q_OS_ANDROID
+    // The zip reader seeks around the archive, so a SAF document is copied to a real file first.
+    QTemporaryFile copy(QDir::temp().filePath(QStringLiteral("drift-stickers-XXXXXX.zip")));
+    if (AndroidUri::isContentUri(url)) {
+        std::unique_ptr<QFile> src = AndroidUri::openForRead(url);
+        if (!src || !copy.open()) {
+            setLastMessage(tr("Could not read the selected file"), QStringLiteral("error"));
+            return {};
+        }
+        for (;;) {
+            const QByteArray chunk = src->read(1 << 20);
+            if (chunk.isEmpty())
+                break;
+            if (copy.write(chunk) != chunk.size()) {
+                setLastMessage(tr("Could not read the selected file"), QStringLiteral("error"));
+                return {};
+            }
+        }
+        copy.close();
+        path = copy.fileName();
+    }
+#endif
+    if (path.isEmpty())
+        return {};
+
+    const StickerPackImportResult result = QFileInfo(path).isDir()
+        ? importStickerPackFromDirectory(path, userStickerPacksDir())
+        : importStickerPackFromZip(path, userStickerPacksDir());
+    if (!result.error.isEmpty()) {
+        setLastMessage(result.error, QStringLiteral("error"));
+        return {};
+    }
+
+    reloadStickerCatalog();
+    emit stickersChanged();
+    setLastMessage(tr("Imported “%1” (%n sticker(s))", "", result.count).arg(result.name),
+                   QStringLiteral("success"));
+    return {
+        {QStringLiteral("installed"), result.packId},
+        {QStringLiteral("count"), result.count},
+    };
+}
+
+bool AppController::removeStickerPack(const QString &packId)
+{
+    QString error;
+    if (!removeUserStickerPack(packId, &error, userStickerPacksDir())) {
+        setLastMessage(error, QStringLiteral("error"));
+        return false;
+    }
+    reloadStickerCatalog();
+    emit stickersChanged();
+    setLastMessage(tr("Sticker pack removed"), QStringLiteral("success"));
+    emitPreviewFrame();
+    return true;
 }
 
 QVariantList AppController::builtinShapes() const

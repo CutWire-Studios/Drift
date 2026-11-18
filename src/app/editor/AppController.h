@@ -780,7 +780,14 @@ public:
     Q_INVOKABLE void addStickerClip(const QString &stickerId, double atSeconds,
                                     int trackIndex = -1);
     Q_INVOKABLE QVariantList builtinStickers() const;
+    // [{id, label, packId, custom}]; custom marks categories from packs the user imported.
     Q_INVOKABLE QVariantList builtinStickerCategories() const;
+    // The user's imported packs: [{id, name, count}].
+    Q_INVOKABLE QVariantList customStickerPacks() const;
+    // A .zip or a folder of .png/.webp images, with an optional manifest.json. Reports in the
+    // toast; returns {installed: packId, count} or {} on failure.
+    Q_INVOKABLE QVariantMap importStickerPack(const QUrl &url);
+    Q_INVOKABLE bool removeStickerPack(const QString &packId);
     // The full emoji set behind the sticker packs; empty until the pack carrying the font is
     // installed.
     Q_INVOKABLE QVariantList emojiCatalog() const;
@@ -925,6 +932,9 @@ public:
     Q_INVOKABLE void splitAtPlayhead();
     // Only the selected clips under the playhead (and their linked partners), not every track's.
     Q_INVOKABLE void splitSelectionAtPlayhead();
+    // What the Split shortcut runs: the selection when there is one, every track when there is
+    // not. Cutting every track while one clip is selected is never what picking that clip meant.
+    Q_INVOKABLE void splitAtPlayheadForSelection();
     Q_INVOKABLE void splitClipAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipLeftAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipRightAt(int trackIndex, int clipIndex, double seconds);
@@ -1707,6 +1717,8 @@ public:
     Q_INVOKABLE void addBookmark(double seconds, const QString &label);
     Q_INVOKABLE void removeBookmark(int index);
     Q_INVOKABLE void updateBookmark(int index, double seconds, const QString &label);
+    // Tints one flag. An empty or invalid colour puts it back on the theme's marker colour.
+    Q_INVOKABLE void setBookmarkColor(int index, const QString &color);
     Q_INVOKABLE void goToBookmark(int index);
     // Seek to the next/previous bookmark by time (wraps). No-op when empty.
     Q_INVOKABLE void goToNextBookmark();
@@ -1998,6 +2010,7 @@ signals:
     void userFontsChanged();
     void userEffectPresetsChanged();
     void facePropsChanged();
+    void stickersChanged();
     void projectLayoutChosenChanged();
     // The document has been swapped wholesale (New Project, or opening another one). The
     // auxiliary windows edit one clip each, so they have nothing left to act on and close.

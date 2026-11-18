@@ -97,6 +97,20 @@ body:
     validations:
       required: false
 
+  - type: textarea
+    id: crash_report
+    attributes:
+      label: Crash file (if Drift crashed or froze)
+      description: |
+        A crash is almost impossible to track down without the stack it died on, so if Drift closed by itself, froze, or disappeared mid-export, please attach the file:
+        - Drift offers **Save crash file…** the next time it starts after a crash.
+        - Otherwise use the **☰ menu → Save diagnostics…** (also in Settings → About), which saves your logs and system information.
+
+        Both write a `.tar.zst` you can drop straight onto this box. Drag it in, or say "no crash file" if Drift is still running.
+      placeholder: Attach drift-crash-....tar.zst or drift-diagnostics-....tar.zst here
+    validations:
+      required: false
+
   - type: input
     id: gpu
     attributes:

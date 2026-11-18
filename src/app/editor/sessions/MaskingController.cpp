@@ -15,6 +15,8 @@
 #include "core/effects/Mask.h"
 #include "core/project/Project.h"
 #include "core/project/Track.h"
+#include "engine/decode/probe/StillImage.h"
+#include "engine/decode/readers/ClipReaderPool.h"
 #include "engine/encode/writers/MatteWriter.h"
 
 #include <QCoreApplication>
@@ -141,6 +143,15 @@ QVector<QPointF> verticesFrom(const QVariantList &points)
                                 map.value(QStringLiteral("y")).toDouble()));
     }
     return vertices;
+}
+
+// The closed loops of a stroke worth filling, in the pixels of a matte `matteWidth` wide.
+QVector<QVector<QPointF>> strokeLoops(const BrushPreviewStroke &stroke, const QVector<QPointF> &pixels, int matteWidth)
+{
+    if (!stroke.fillLoops || pixels.size() < 3)
+        return {};
+    const double diameter = stroke.size * matteWidth;
+    return drift::masking::findStrokeLoops(pixels, std::max(diameter, 0.01 * matteWidth), diameter * diameter);
 }
 
 // Writes `vertices` as the key at mask time `maskUs`. A key within half a frame of it is the same
@@ -311,6 +322,31 @@ void MaskingController::setBrushPressureSize(bool on)
         return;
     m_brushPressureSize = on;
     emit brushSettingsChanged();
+}
+
+void MaskingController::setBrushFillLoops(bool on)
+{
+    if (on == m_brushFillLoops)
+        return;
+    m_brushFillLoops = on;
+    emit selectionSettingsChanged();
+}
+
+void MaskingController::setWandTolerance(double tolerance)
+{
+    tolerance = qBound(0.0, tolerance, 100.0);
+    if (qFuzzyCompare(tolerance, m_wandTolerance))
+        return;
+    m_wandTolerance = tolerance;
+    emit selectionSettingsChanged();
+}
+
+void MaskingController::setWandContiguous(bool on)
+{
+    if (on == m_wandContiguous)
+        return;
+    m_wandContiguous = on;
+    emit selectionSettingsChanged();
 }
 
 void MaskingController::setBrushErase(bool erase)
@@ -847,6 +883,8 @@ void MaskingController::paintStroke(int trackIndex, int clipIndex, const BrushPr
                      * brushPressureScale(stroke.pressures.value(i, 1.0), stroke.pressureSize));
     }
     drift::masking::paintBrushStroke(image, pixels, radii, stroke.hardness, stroke.opacity, stroke.erase);
+    for (const QVector<QPointF> &loop : strokeLoops(stroke, pixels, image.width()))
+        drift::masking::fillPolygon(image, loop, stroke.erase, stroke.opacity);
     commitBrushMatte(trackIndex, clipIndex, image, tr("Brush stroke"), strokeSeq);
 }
 
@@ -891,6 +929,7 @@ bool MaskingController::strokeBegin(const QString &clipId, double x, double y, d
     p.size = m_brushSize;
     p.hardness = m_brushHardness;
     p.opacity = m_brushOpacity;
+    p.fillLoops = m_brushFillLoops;
     p.points.append(QPointF(x / m_stroke.frameW, y / m_stroke.frameH));
     p.pressures.append(pressure);
     emit strokePreviewChanged();
@@ -1051,6 +1090,27 @@ void MaskingController::clearCutoutPatch(const QString &maskClipId)
 void MaskingController::paintCutoutPatch(const QString &maskClipId, const BrushPreviewStroke &stroke,
                                          quint64 strokeSeq)
 {
+    paintCutoutCover(maskClipId, [&stroke](const QSize &size) {
+        QVector<QPointF> pixels;
+        QVector<double> radii;
+        for (int i = 0; i < stroke.points.size(); ++i) {
+            pixels.append(QPointF(stroke.points.at(i).x() * size.width(), stroke.points.at(i).y() * size.height()));
+            radii.append(stroke.size * size.width() / 2.0
+                         * brushPressureScale(stroke.pressures.value(i, 1.0), stroke.pressureSize));
+        }
+        QImage cover(size, QImage::Format_Grayscale8);
+        cover.fill(0);
+        drift::masking::paintBrushStroke(cover, pixels, radii, stroke.hardness, stroke.opacity, false);
+        for (const QVector<QPointF> &loop : strokeLoops(stroke, pixels, size.width()))
+            drift::masking::fillPolygon(cover, loop, false, stroke.opacity);
+        return cover;
+    }, stroke.erase, strokeSeq);
+}
+
+void MaskingController::paintCutoutCover(const QString &maskClipId,
+                                         const std::function<QImage(const QSize &)> &makeCover, bool erase,
+                                         quint64 strokeSeq)
+{
     int t = -1;
     int c = -1;
     const drift::TimeUs mediaUs = cutoutMediaUs(maskClipId);
@@ -1075,20 +1135,13 @@ void MaskingController::paintCutoutPatch(const QString &maskClipId, const BrushP
         image.fill(Qt::transparent);
     }
 
-    QVector<QPointF> pixels;
-    QVector<double> radii;
-    for (int i = 0; i < stroke.points.size(); ++i) {
-        pixels.append(QPointF(stroke.points.at(i).x() * image.width(), stroke.points.at(i).y() * image.height()));
-        radii.append(stroke.size * image.width() / 2.0
-                     * brushPressureScale(stroke.pressures.value(i, 1.0), stroke.pressureSize));
-    }
-    QImage cover(image.size(), QImage::Format_Grayscale8);
-    cover.fill(0);
-    drift::masking::paintBrushStroke(cover, pixels, radii, stroke.hardness, stroke.opacity, false);
+    QImage cover = makeCover(image.size()).convertToFormat(QImage::Format_Grayscale8);
+    if (cover.size() != image.size())
+        cover = cover.scaled(image.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
     // The stroke goes over the fix: alpha unions and the gray becomes the alpha-weighted mix of the
     // old fix and the stroke's target value.
-    const int target = stroke.erase ? 0 : 255;
+    const int target = erase ? 0 : 255;
     for (int y = 0; y < image.height(); ++y) {
         QRgb *row = reinterpret_cast<QRgb *>(image.scanLine(y));
         const uchar *coverRow = cover.constScanLine(y);
@@ -1156,6 +1209,189 @@ void MaskingController::finishPatchSave(bool ok, const QString &path, const QStr
     m_app->writeClipMask(t, c, mask);
     m_app->pushProjectEdit(before, tr("Fix cutout frame"));
     m_app->finishEdit(tr("Cutout frame fixed"));
+}
+
+double MaskingController::featherLimit(int trackIndex, int clipIndex) const
+{
+    const drift::Project &project = m_app->m_project;
+    double frameW = project.width();
+    double frameH = project.height();
+    if (m_app->isValidClipIndex(trackIndex, clipIndex)) {
+        const drift::Clip &clip = project.tracks().at(trackIndex).clips.at(clipIndex);
+        if (clip.type != drift::ClipType::Adjustment) {
+            const drift::ClipLayout layout = drift::clipLayoutAt(
+                clip, m_app->m_playheadUs - clip.timelineStart, QSizeF(project.width(), project.height()));
+            const double w = std::abs(layout.frameW * layout.scaleX);
+            const double h = std::abs(layout.frameH * layout.scaleY);
+            if (w > 0.0 && h > 0.0) {
+                frameW = w;
+                frameH = h;
+            }
+        }
+    }
+    return std::max(1.0, std::round(std::max(frameW, frameH) * 0.5));
+}
+
+bool MaskingController::findBrushTarget(const QString &clipId, int *trackIndex, int *clipIndex) const
+{
+    const QList<drift::Track> &tracks = m_app->m_project.tracks();
+    for (int t = 0; t < tracks.size(); ++t) {
+        for (int c = 0; c < tracks.at(t).clips.size(); ++c) {
+            if (tracks.at(t).clips.at(c).id == clipId && isBrushTarget(t, c)) {
+                *trackIndex = t;
+                *clipIndex = c;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void MaskingController::applyCover(int trackIndex, int clipIndex,
+                                   const std::function<QImage(const QSize &)> &makeCover, bool erase,
+                                   const QString &undoText)
+{
+    const QPair<int, int> cutout = selectedCutoutMask(trackIndex, clipIndex);
+    if (cutout.first >= 0) {
+        paintCutoutCover(m_app->m_project.tracks().at(cutout.first).clips.at(cutout.second).id, makeCover, erase, 0);
+        return;
+    }
+    QImage image = brushImage(trackIndex, clipIndex);
+    drift::masking::applyCover(image, makeCover(image.size()), erase);
+    commitBrushMatte(trackIndex, clipIndex, image, undoText);
+}
+
+bool MaskingController::fillOutline(const QString &clipId, const QVariantList &points, bool erase,
+                                    const QString &undoText)
+{
+    int t = -1;
+    int c = -1;
+    const QVector<QPointF> outline = verticesFrom(points);
+    if (outline.size() < 3 || !findBrushTarget(clipId, &t, &c))
+        return false;
+    applyCover(t, c, [&outline](const QSize &size) {
+        QVector<QPointF> pixels;
+        for (const QPointF &p : outline)
+            pixels.append(QPointF(p.x() * size.width(), p.y() * size.height()));
+        QImage cover(size, QImage::Format_Grayscale8);
+        cover.fill(0);
+        drift::masking::fillPolygon(cover, pixels, false);
+        return cover;
+    }, erase, undoText);
+    return true;
+}
+
+bool MaskingController::lassoFill(const QString &clipId, const QVariantList &points, bool erase)
+{
+    return fillOutline(clipId, points, erase, tr("Lasso selection"));
+}
+
+bool MaskingController::scissorsFill(const QString &clipId, const QVariantList &points, bool erase)
+{
+    return fillOutline(clipId, points, erase, tr("Scissors selection"));
+}
+
+QImage MaskingController::clipFrameAtPlayhead(int trackIndex, int clipIndex, drift::TimeUs *sourceUs) const
+{
+    constexpr int kMaxSide = 1024;
+    constexpr quint64 kSelectStreamId = 0xA5'11'5C'A4'00'00'00'21ull;
+    const drift::Clip &clip = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const drift::TimeUs timelineUs = qBound(clip.timelineStart, m_app->m_playheadUs,
+                                            clip.timelineStart + std::max<drift::TimeUs>(1, clip.timelineDuration) - 1);
+    const drift::TimeUs source = clip.timelineToSourceUs(timelineUs);
+    if (sourceUs)
+        *sourceUs = source;
+    QImage frame;
+    if (clip.type == drift::ClipType::Image)
+        frame = drift::decodeStillImage(clip.path, kMaxSide, kMaxSide);
+    else if (clip.type == drift::ClipType::Video)
+        frame = ClipReaderPool::instance().readVideoFrame(clip.path, kSelectStreamId, source, kMaxSide, kMaxSide,
+                                                          clip.rotationCorrection);
+    if (frame.isNull())
+        return {};
+    if (clip.sourceFrame != QRectF(0, 0, 1, 1)) {
+        const QRect crop = QRectF(clip.sourceFrame.x() * frame.width(), clip.sourceFrame.y() * frame.height(),
+                                  clip.sourceFrame.width() * frame.width(), clip.sourceFrame.height() * frame.height())
+                               .toAlignedRect()
+                               .intersected(frame.rect());
+        if (crop.width() > 1 && crop.height() > 1)
+            frame = frame.copy(crop);
+    }
+    return frame;
+}
+
+bool MaskingController::scissorsPrepare(const QString &clipId)
+{
+    int t = -1;
+    int c = -1;
+    if (!findBrushTarget(clipId, &t, &c))
+        return false;
+    const drift::Clip &clip = m_app->m_project.tracks().at(t).clips.at(c);
+    const drift::TimeUs timelineUs = qBound(clip.timelineStart, m_app->m_playheadUs,
+                                            clip.timelineStart + std::max<drift::TimeUs>(1, clip.timelineDuration) - 1);
+    const drift::TimeUs source = clip.timelineToSourceUs(timelineUs);
+    if (!m_edgeMap.isNull() && m_edgeClipId == clipId && m_edgeSourceUs == source)
+        return true;
+    scissorsReset();
+    const QImage frame = clipFrameAtPlayhead(t, c, &m_edgeSourceUs);
+    if (frame.isNull()) {
+        m_app->setLastMessage(tr("This clip has no picture to follow edges on"), QStringLiteral("error"));
+        return false;
+    }
+    m_edgeMap = drift::masking::EdgeMap(frame);
+    m_edgeClipId = clipId;
+    return !m_edgeMap.isNull();
+}
+
+void MaskingController::scissorsReset()
+{
+    m_edgeMap = drift::masking::EdgeMap();
+    m_edgeClipId.clear();
+    m_edgeSourceUs = -1;
+}
+
+QPointF MaskingController::scissorsSnap(double x, double y) const
+{
+    if (m_edgeMap.isNull())
+        return QPointF(x, y);
+    const QSize size = m_edgeMap.size();
+    const QPoint snapped = m_edgeMap.snap(QPoint(qRound(x * size.width()), qRound(y * size.height())), 6);
+    return QPointF(snapped.x() / double(size.width()), snapped.y() / double(size.height()));
+}
+
+QVariantList MaskingController::scissorsPath(double x0, double y0, double x1, double y1) const
+{
+    QVariantList result;
+    if (m_edgeMap.isNull())
+        return result;
+    const QSize size = m_edgeMap.size();
+    const QVector<QPoint> path = m_edgeMap.path(QPoint(qRound(x0 * size.width()), qRound(y0 * size.height())),
+                                                QPoint(qRound(x1 * size.width()), qRound(y1 * size.height())));
+    result.reserve(path.size());
+    for (const QPoint &p : path) {
+        result.append(QVariantMap{{QStringLiteral("x"), p.x() / double(size.width())},
+                                  {QStringLiteral("y"), p.y() / double(size.height())}});
+    }
+    return result;
+}
+
+bool MaskingController::wandSelect(const QString &clipId, double x, double y, bool erase)
+{
+    int t = -1;
+    int c = -1;
+    if (!findBrushTarget(clipId, &t, &c))
+        return false;
+    const QImage frame = clipFrameAtPlayhead(t, c);
+    if (frame.isNull()) {
+        m_app->setLastMessage(tr("This clip has no picture to select from"), QStringLiteral("error"));
+        return false;
+    }
+    const QImage selection = drift::masking::magicWandCover(
+        frame, QPoint(qRound(x * frame.width()), qRound(y * frame.height())), m_wandTolerance, m_wandContiguous);
+    if (selection.isNull())
+        return false;
+    applyCover(t, c, [&selection](const QSize &) { return selection; }, erase, tr("Magic wand"));
+    return true;
 }
 
 QSize MaskingController::brushMatteSize(int trackIndex, int clipIndex) const
