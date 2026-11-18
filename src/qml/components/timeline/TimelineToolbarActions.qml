@@ -25,6 +25,8 @@ QtObject {
         "cut": { glyph: Theme.icons.scissors, label: qsTr("Cut mode"), shortcut: "bladeTool",
                     body: qsTr("Click a clip to split it there. Fast for chopping out the parts you do not need."),
                     illustration: illToolCut },
+        "slip": { glyph: Theme.icons.moveHorizontal, label: qsTr("Slip"), shortcut: "slipTool",
+                  body: qsTr("Drag a clip to change which part of its media it shows, without moving it or changing its length.") },
         "separateAudio": { glyph: Theme.icons.audioLines, label: qsTr("Show audio on separate track"),
                            shortcut: "separateAudio",
                     body: qsTr("Pull the sound out of a video onto its own track to edit it separately.") },
@@ -84,7 +86,7 @@ QtObject {
     })
 
     readonly property var defaultToolbarItems: [
-        "select", "cut", "deleteLeft", "deleteRight", "separator", "undo", "redo", "delete", "separator",
+        "select", "cut", "slip", "deleteLeft", "deleteRight", "separator", "undo", "redo", "delete", "separator",
         "separateAudio", "unlink", "link"
     ]
     readonly property var defaultMenuItems: [

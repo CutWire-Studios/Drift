@@ -101,6 +101,7 @@ QHash<QString, QStringList> driftChords()
         // TimelinePanel they were neither.
         {QStringLiteral("selectTool"), {QStringLiteral("V")}},
         {QStringLiteral("bladeTool"), {QStringLiteral("B")}},
+        {QStringLiteral("slipTool"), {QStringLiteral("Y")}},
         // Timeline zoom is QML state too, so these take the same route as the tool modes.
         {QStringLiteral("zoomIn"), {QStringLiteral("Ctrl+=")}},
         {QStringLiteral("zoomOut"), {QStringLiteral("Ctrl+-")}},

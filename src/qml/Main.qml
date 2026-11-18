@@ -1432,7 +1432,19 @@ ApplicationWindow {
     //
     // Panels get the id first: they claim global ids (delete, selectAll, clearSelection, ...)
     // while engaged, and handle their own scoped ids.
+    // A slip drag in flight is dropped without committing when Escape or a tool key arrives.
+    // Escape is spent on that (returns true); a tool key goes on to switch the tool.
+    function cancelSlipDragFor(id) {
+        if (!ShellBridge.slipDragActive
+                || !(id === "clearSelection" || id === "selectTool" || id === "bladeTool" || id === "slipTool"))
+            return false
+        ShellBridge.slipCancelRequested()
+        return id === "clearSelection"
+    }
+
     function dispatchAction(id) {
+        if (cancelSlipDragFor(id))
+            return
         if (id === "clearSelection" && EditorState.drag.interacting) {
             EditorState.drag.cancel()
             return
@@ -1449,6 +1461,8 @@ ApplicationWindow {
     // Returns whether the chord is bound to anything, which is what lets an arrow key be consumed.
     function dispatchChord(chord) {
         const globalId = EditorState.keymap.actionFor("global", chord)
+        if (globalId !== "" && cancelSlipDragFor(globalId))
+            return true
         // A drag in flight owns Esc, whichever item holds focus.
         if (globalId === "clearSelection" && EditorState.drag.interacting) {
             EditorState.drag.cancel()
@@ -1501,6 +1515,11 @@ ApplicationWindow {
         if (id === "bladeTool") {
             if (timelinePanel)
                 timelinePanel.timelineTool = "split"
+            return
+        }
+        if (id === "slipTool") {
+            if (timelinePanel)
+                timelinePanel.timelineTool = "slip"
             return
         }
         // Timeline zoom is QML state as well, and the 1.5 step matches the

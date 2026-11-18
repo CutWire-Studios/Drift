@@ -7,6 +7,8 @@
 #include "app/editor/ProjectFileController.h"
 
 #include "engine/render2d/pdf/PdfClipRenderer.h"
+#include "engine/encode/proxies/ReverseProxyCache.h"
+#include "ui/imageproviders/slipframe/SlipFrameUrl.h"
 // Engine-internal by its own header comment, and included here only for releaseCaches(): the GPU
 // caches have no other owner outside src/engine to ask. A one-line forwarder on GpuCompositor
 // would restore the boundary.
@@ -2999,11 +3001,12 @@ void AppController::applyClipTrim(drift::Clip &clip, double inPoint, double outP
     clip.syncDurationFromSpeedCurve();
 }
 
-AppController::SlipResult AppController::slipClip(int trackIndex, int clipIndex, drift::TimeUs deltaUs)
+AppController::SlipComputation AppController::computeSlip(int trackIndex, int clipIndex, drift::TimeUs deltaUs) const
 {
-    SlipResult out;
+    SlipComputation out;
     if (!isValidClipIndex(trackIndex, clipIndex)) {
         out.errorCode = QStringLiteral("not_found");
+        out.reason = QStringLiteral("not_found");
         out.error = QStringLiteral("No such clip");
         return out;
     }
@@ -3012,6 +3015,7 @@ AppController::SlipResult AppController::slipClip(int trackIndex, int clipIndex,
                            || clip.type == drift::ClipType::Composite;
     if (!hasSource) {
         out.errorCode = QStringLiteral("bad_args");
+        out.reason = QStringLiteral("no_media");
         out.error = QStringLiteral("A %1 clip has no media to slip").arg(drift::clipTypeToString(clip.type));
         return out;
     }
@@ -3034,6 +3038,7 @@ AppController::SlipResult AppController::slipClip(int trackIndex, int clipIndex,
     for (const int t : std::as_const(tracks)) {
         if (m_project.tracks().at(t).locked) {
             out.errorCode = QStringLiteral("bad_args");
+            out.reason = QStringLiteral("locked");
             out.error = QStringLiteral("Track %1 is locked").arg(t);
             return out;
         }
@@ -3047,6 +3052,117 @@ AppController::SlipResult AppController::slipClip(int trackIndex, int clipIndex,
     }
     const drift::TimeUs applied = qBound(limits.minUs, deltaUs, limits.maxUs);
     out.limit = applied < deltaUs ? 1 : applied > deltaUs ? -1 : 0;
+    out.ok = true;
+    out.appliedUs = applied;
+    out.partners = partners;
+    out.clip = clip;
+    if (applied != 0)
+        drift::slipClipSource(out.clip, applied);
+    for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip)) {
+        const bool follows = std::any_of(partners.cbegin(), partners.cend(), [&](const drift::ClipRef &q) {
+            return q.trackIndex == ref.trackIndex && q.clipIndex == ref.clipIndex;
+        });
+        if (!follows) {
+            out.partnersFollow = false;
+            break;
+        }
+    }
+    return out;
+}
+
+QVariantMap AppController::previewSlipClip(int trackIndex, int clipIndex, double sourceDeltaSeconds) const
+{
+    const SlipComputation comp = computeSlip(trackIndex, clipIndex, drift::secondsToUs(sourceDeltaSeconds));
+    if (!comp.ok)
+        return QVariantMap{{QStringLiteral("ok"), false}, {QStringLiteral("reason"), comp.reason}};
+    const drift::Clip &c = comp.clip;
+    QString firstUrl;
+    QString lastUrl;
+    drift::TimeUs firstSourceUs = 0;
+    drift::TimeUs lastSourceUs = 0;
+    if (c.type == drift::ClipType::Video && !c.path.isEmpty()) {
+        const drift::TimeUs frameUs = 1000000 / qMax(1, m_project.fps());
+        const drift::VideoRead first = drift::resolveVideoRead(c, c.timelineStart, true);
+        const drift::VideoRead last =
+            drift::resolveVideoRead(c, qMax(c.timelineStart, c.timelineEnd() - frameUs), true);
+        firstUrl = drift::slipFrameUrl(first.path, first.sourceUs, c.rotationCorrection, 0, c.sourceFrame,
+                                       c.sourceFrameAngle);
+        lastUrl = drift::slipFrameUrl(last.path, last.sourceUs, c.rotationCorrection, 1, c.sourceFrame,
+                                      c.sourceFrameAngle);
+        // The caption wants the media's own time, not the reverse proxy's mirrored one.
+        firstSourceUs = c.timelineToSourceUs(c.timelineStart);
+        lastSourceUs = c.timelineToSourceUs(qMax(c.timelineStart, c.timelineEnd() - frameUs));
+    }
+    return QVariantMap{
+        {QStringLiteral("ok"), true},
+        {QStringLiteral("reason"), QString()},
+        {QStringLiteral("applied"), drift::usToSeconds(comp.appliedUs)},
+        {QStringLiteral("limit"), comp.limit},
+        {QStringLiteral("inPoint"), drift::usToSeconds(c.srcIn)},
+        {QStringLiteral("outPoint"), drift::usToSeconds(c.srcOut)},
+        {QStringLiteral("loopOffset"), drift::usToSeconds(c.loopOffsetUs)},
+        {QStringLiteral("looped"), c.loops()},
+        {QStringLiteral("start"), drift::usToSeconds(c.timelineStart)},
+        {QStringLiteral("duration"), drift::usToSeconds(c.timelineDuration)},
+        {QStringLiteral("id"), c.id},
+        {QStringLiteral("linkId"), c.linkId},
+        {QStringLiteral("follow"), comp.partnersFollow && !c.linkId.isEmpty()},
+        {QStringLiteral("firstFrameUrl"), firstUrl},
+        {QStringLiteral("lastFrameUrl"), lastUrl},
+        // The source time of the frame each url shows (reverse, loops and speed accounted for).
+        {QStringLiteral("firstFrameSourceSeconds"), drift::usToSeconds(firstSourceUs)},
+        {QStringLiteral("lastFrameSourceSeconds"), drift::usToSeconds(lastSourceUs)},
+    };
+}
+
+double AppController::slipDeltaForDrag(int trackIndex, int clipIndex, double dxSeconds) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return 0.0;
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const double fps = qMax(1, m_project.fps());
+    const double timelineSeconds = std::round(dxSeconds * fps) / fps;
+    double rate = clip.effectiveSpeed();
+    if (!clip.loops() && clip.timelineDuration > 0)
+        rate = static_cast<double>(clip.srcOut - clip.srcIn) / static_cast<double>(clip.timelineDuration);
+    // The media slides with the pointer: dragging right shows earlier media, later for a reversed clip.
+    const double delta = (clip.reverse ? 1.0 : -1.0) * timelineSeconds * rate;
+    return delta == 0.0 ? 0.0 : delta;
+}
+
+QVariantMap AppController::commitSlipClip(int trackIndex, int clipIndex, double sourceDeltaSeconds)
+{
+    const SlipResult r = slipClip(trackIndex, clipIndex, drift::secondsToUs(sourceDeltaSeconds));
+    const bool ok = r.error.isEmpty();
+    if (!ok) {
+        if (r.reason == QLatin1String("no_media"))
+            setLastMessage(tr("Only video, audio and composite clips can be slipped"), QStringLiteral("warning"));
+        else if (r.reason == QLatin1String("locked"))
+            setLastMessage(tr("Track is locked"), QStringLiteral("warning"));
+    } else if (r.limit != 0) {
+        setLastMessage(r.limit < 0 ? tr("Reached the start of the media") : tr("Reached the end of the media"));
+    }
+    return QVariantMap{
+        {QStringLiteral("ok"), ok},
+        {QStringLiteral("reason"), r.reason},
+        {QStringLiteral("applied"), drift::usToSeconds(r.appliedUs)},
+        {QStringLiteral("limit"), r.limit},
+    };
+}
+
+AppController::SlipResult AppController::slipClip(int trackIndex, int clipIndex, drift::TimeUs deltaUs)
+{
+    SlipResult out;
+    const SlipComputation comp = computeSlip(trackIndex, clipIndex, deltaUs);
+    if (!comp.ok) {
+        out.errorCode = comp.errorCode;
+        out.error = comp.error;
+        out.reason = comp.reason;
+        return out;
+    }
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const drift::TimeUs applied = comp.appliedUs;
+    out.limit = comp.limit;
 
     // What the clip carries that depends on the source range, for the reply.
     if (!clip.faceTrackPath.isEmpty())
@@ -3164,6 +3280,7 @@ AppController::SlipResult AppController::slipClip(int trackIndex, int clipIndex,
         restoreSelectionClipIds();
         m_undoSelectionCaptured = false;
         out.errorCode = QStringLiteral("bad_args");
+        out.reason = QStringLiteral("locked");
         out.error = lockedIndex >= 0 ? QStringLiteral("Track %1 is locked").arg(lockedIndex)
                                      : QStringLiteral("A track the slip would change is locked");
         out.retimedSubtitles.clear();
@@ -3202,6 +3319,7 @@ AppController::SlipResult AppController::slipClip(int trackIndex, int clipIndex,
     finishEdit(tr("Slip clip"));
     if (refusedByLock) {
         out.errorCode = QStringLiteral("bad_args");
+        out.reason = QStringLiteral("locked");
         out.error = QStringLiteral("A track the slip would change is locked");
         out.retimedSubtitles.clear();
         return out;

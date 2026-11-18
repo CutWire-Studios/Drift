@@ -6090,6 +6090,22 @@
         <source>Added to My shapes</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Slip tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only video, audio and composite clips can be slipped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reached the start of the media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reached the end of the media</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppSettingsMenu</name>
@@ -30042,6 +30058,14 @@ If playback stutters, try another.</source>
         <source>Add camera</source>
         <translation>카메라 추가</translation>
     </message>
+    <message>
+        <source>Slip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a clip to change which part of its media it shows, without moving it or changing its length.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TimelineToolbarCustomizeDialog</name>
@@ -34000,6 +34024,48 @@ The video preview cannot render, and Drift may not start at all. Update your gra
 
 If the window is blank or black, your graphics driver is most likely outdated or faulty. Update it from your GPU vendor&apos;s website (AMD, NVIDIA or Intel) and start Drift again.</source>
         <translation>Drift가 %1초 동안 실행 중이지만 창에 아직 아무것도 표시되지 않았습니다.\n\n창이 비어 있거나 검은색이라면 그래픽 드라이버가 오래되었거나 문제가 있을 가능성이 높습니다. GPU 제조업체(AMD, NVIDIA 또는 Intel) 웹사이트에서 드라이버를 업데이트한 후 Drift를 다시 시작하세요.</translation>
+    </message>
+</context>
+<context>
+    <name>SlipFramesOverlay</name>
+    <message>
+        <source>First frame %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last frame %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TimelineSlipGesture</name>
+    <message>
+        <source>In %1 · Out %2 (%3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start of the media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End of the media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat starts at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip has no media to slip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip can&apos;t be slipped</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

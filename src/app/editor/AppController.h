@@ -1019,6 +1019,21 @@ public:
     // { ok: false } for an out-of-range clip.
     Q_INVOKABLE QVariantMap previewTrimLeft(int trackIndex, int clipIndex, double newStart, bool snap = true) const;
     Q_INVOKABLE QVariantMap previewTrimRight(int trackIndex, int clipIndex, double newEnd, bool snap = true) const;
+    // Slip preview for the timeline gesture. sourceDeltaSeconds is source time, + = later in the
+    // media (slipClip's meaning). Changes nothing. Returns
+    // { ok, reason, applied, limit, inPoint, outPoint, loopOffset, start, duration, id, linkId,
+    //   follow, firstFrameUrl, lastFrameUrl, firstFrameSourceSeconds, lastFrameSourceSeconds }
+    // (seconds; urls empty for audio and composite clips).
+    Q_INVOKABLE QVariantMap previewSlipClip(int trackIndex, int clipIndex, double sourceDeltaSeconds) const;
+    // The slip tool's drag: dxSeconds is how far the pointer moved along the timeline (+ = right).
+    // The media slides with the pointer, as in Premiere and Resolve: dragging right shows earlier
+    // media (later for a reversed clip). Rounded to whole project frames of timeline time, then
+    // scaled by the clip's source-per-timeline rate (the effective speed for a looped clip,
+    // (srcOut-srcIn)/timelineDuration otherwise, so ramps use their average).
+    Q_INVOKABLE double slipDeltaForDrag(int trackIndex, int clipIndex, double dxSeconds) const;
+    // The release: slipClip, plus a status message when refused or stopped at a media end.
+    // Returns { ok, reason, applied, limit }.
+    Q_INVOKABLE QVariantMap commitSlipClip(int trackIndex, int clipIndex, double sourceDeltaSeconds);
 
     // Opens and closes a trim drag. Scoping the gesture lets a repeated pointer position be
     // rejected before any work is done, and lets the caller find out whether the edge ever
@@ -1116,6 +1131,7 @@ public:
         QStringList retimedSubtitles; // generated caption clips that changed or were removed
         QString error;
         QString errorCode;
+        QString reason;               // "not_found" | "no_media" | "locked" when refused, for UI messages
     };
     SlipResult slipClip(int trackIndex, int clipIndex, drift::TimeUs deltaUs);
     // Puts another library asset under a clip in place, keeping its name (unless it was the old
@@ -2209,6 +2225,20 @@ protected:
         drift::TimeUs rippleFrom = 0;
         drift::TimeUs rippleDelta = 0;
     };
+    // What a slip would do, without doing it. slipClip and previewSlipClip both run it.
+    struct SlipComputation
+    {
+        bool ok = false;
+        QString error;     // untranslated, as SlipResult::error (MCP text)
+        QString errorCode; // "not_found" | "bad_args"
+        QString reason;    // "not_found" | "no_media" | "locked": for UI messages
+        drift::TimeUs appliedUs = 0;
+        int limit = 0;     // -1 stopped at the media's start, +1 at its end
+        drift::Clip clip;  // the clip as it would be after the slip
+        QList<drift::ClipRef> partners; // strict media partners that slip with it
+        bool partnersFollow = true;     // false when a linked partner stays put (loose or non-media)
+    };
+    SlipComputation computeSlip(int trackIndex, int clipIndex, drift::TimeUs deltaUs) const;
     TrimComputation computeTrimLeft(int trackIndex, int clipIndex, double newStart, bool snap = true) const;
     TrimComputation computeTrimRight(int trackIndex, int clipIndex, double newEnd, bool snap = true) const;
     int applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed, int side);

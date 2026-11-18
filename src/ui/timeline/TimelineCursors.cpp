@@ -230,6 +230,15 @@ Spec specFor(TimelineCursorKind kind)
         hArrows(g, 12, 18, 10.5, 4.5);
         s.hotspot = {12, 12};
         break;
+    case TimelineCursorKind::Slip:
+        // Two edges with the media sliding between them.
+        g.lines.moveTo(6, 4);
+        g.lines.lineTo(6, 20);
+        g.lines.moveTo(18, 4);
+        g.lines.lineTo(18, 20);
+        hArrows(g, 12, 12, 4.5, 3);
+        s.hotspot = {12, 12};
+        break;
     case TimelineCursorKind::PlayheadScrub:
         g.fills.addPolygon(QPolygonF({{6, 2}, {18, 2}, {18, 6}, {12, 11}, {6, 6}}));
         g.fills.closeSubpath();
@@ -294,6 +303,7 @@ bool timelineCursorKindFromName(const QString &name, TimelineCursorKind *kind)
         {QStringLiteral("trackResizeH"), TimelineCursorKind::TrackResizeH},
         {QStringLiteral("trackResizeV"), TimelineCursorKind::TrackResizeV},
         {QStringLiteral("pan"), TimelineCursorKind::Pan},
+        {QStringLiteral("slip"), TimelineCursorKind::Slip},
     };
     const auto it = names.constFind(name);
     if (it == names.constEnd())
