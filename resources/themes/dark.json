@@ -1087,7 +1087,8 @@
       "rowHover": "$semantic.popoverHover",
       "rowTime": "$semantic.mutedForeground",
       "speech": "$semantic.primary",
-      "music": "$semantic.accentOnPanel"
+      "music": "$semantic.accentOnPanel",
+      "silence": "$semantic.panel.accent"
     },
     "emptyState": {
       "radius": "$metrics.radius.md",

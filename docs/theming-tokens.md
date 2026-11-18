@@ -133,8 +133,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | categoryLime | #84cc16 | #84cc16 |
 | categoryOrange | #f97316 | #f97316 |
 | categoryIndigo | #6366f1 | #6366f1 |
-| nodeGridMinor | #ffffff12 | #00000014 |
-| nodeGridMajor | #ffffff24 | #00000028 |
+| nodeGridMinor | #12ffffff | #14000000 |
+| nodeGridMajor | #24ffffff | #28000000 |
 | controlsFieldWhite | #ffffffff | #ffffffff |
 | controlsFieldWhiteClear | #00ffffff | #00ffffff |
 | controlsFieldBlackClear | #00000000 | #00000000 |
@@ -878,6 +878,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | audioSheetPanel | rowTime | $semantic.mutedForeground | $semantic.mutedForeground |
 | audioSheetPanel | speech | $semantic.primary | $semantic.primary |
 | audioSheetPanel | music | $semantic.accentOnPanel | $semantic.accentOnPanel |
+| audioSheetPanel | silence | $semantic.panel.accent | $semantic.panel.accent |
 | emptyState | radius | $metrics.radius.md | $metrics.radius.md |
 | emptyState | background | $semantic.panel.accent | $semantic.panel.accent |
 | emptyState | icon | $semantic.mutedForeground | $semantic.mutedForeground |

@@ -809,6 +809,19 @@ public:
     Q_INVOKABLE double cameraZoomFromFocalLength(double millimetres) const;
     Q_INVOKABLE double cameraZoomFromFov(double degrees) const;
     Q_INVOKABLE void setCameraAimAtTarget(int trackIndex, int clipIndex, bool enabled);
+    static QStringList cameraMoveIds();
+    // The named moves as {id, label}, in the order the add-camera-move menu lists them.
+    Q_INVOKABLE QVariantList cameraMovePresets() const;
+    // Keys the named move on a camera clip over start..end (timeline seconds, inside the clip), as one
+    // undo step. amount <= 0 or !hasAmount takes the move's own default; centre (x,y,z) is the orbit
+    // pivot, the canvas centre when !hasCentre. Returns {props, from, to}, or {error} when nothing was written.
+    QVariantMap applyCameraMove(int trackIndex, int clipIndex, const QString &move, double start, double end,
+                                const QString &easing, bool hasAmount, double amount, bool hasCentre,
+                                const QVector3D &centre);
+    // The menu's entry point: the camera is the selected camera clip, else the one under the playhead;
+    // the span is the work area, else the selected clip, else two seconds from the playhead, trimmed
+    // to the camera clip. Failures go to the status line.
+    Q_INVOKABLE bool addCameraMove(const QString &move);
     // Where a clip's centre sits in the 3D world (canvas px from the top-left, y down, +z away from
     // the viewer) at `seconds`. Ignores any transform-layer parent.
     QVariantList clipWorldCentreAt(int trackIndex, int clipIndex, double seconds) const;
@@ -1598,6 +1611,19 @@ public:
     // Drops all but the newest `keepLast` applied steps, and every undone (redo) one. Returns
     // how many steps went.
     Q_INVOKABLE int clearUndoHistory(int keepLast);
+    // History snapshots on disk, and this project's own history limit (the Settings values apply
+    // until it is set). Replies are the MCP shapes: {ok, ...} or {ok:false, error, detail}.
+    Q_INVOKABLE QJsonObject historyStats(bool size = false);
+    Q_INVOKABLE QJsonObject historySettings() const;
+    Q_INVOKABLE QJsonObject takeSnapshot(const QString &label = {});
+    Q_INVOKABLE QJsonObject listSnapshots() const;
+    Q_INVOKABLE QJsonObject restoreSnapshot(const QString &hash);
+    Q_INVOKABLE QJsonObject setProjectHistorySteps(int steps);
+    Q_INVOKABLE QJsonObject setProjectHistoryPersist(bool persist);
+    Q_INVOKABLE QJsonObject resetProjectHistory();
+    // Unset optionals leave that part of the project's setting as it is.
+    QJsonObject setHistoryLimit(bool reset, std::optional<int> steps, std::optional<bool> persist);
+    QJsonObject jumpToHistory(int index, const QString &hash);
     Q_INVOKABLE void moveEffect(int trackIndex, int clipIndex, int fromIndex, int toIndex);
     Q_INVOKABLE bool setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
                                     double value);

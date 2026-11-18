@@ -369,7 +369,20 @@ Item {
                     font.pixelSize: Theme.fontSizeXs
                 }
             }
+
+            ThemedButton {
+                width: speechColumn.contentWidth
+                text: qsTr("Sound effect…")
+                variant: "secondary"
+                glyph: Theme.icons.audioLines
+                tooltip: qsTr("Generate a sound effect from a text prompt (ElevenLabs)")
+                onClicked: soundEffectDialog.open()
+            }
         }
+    }
+
+    SoundEffectDialog {
+        id: soundEffectDialog
     }
 
     NameDialog {

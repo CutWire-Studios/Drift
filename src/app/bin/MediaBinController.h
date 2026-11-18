@@ -4,6 +4,7 @@
 #include "app/bin/BinFolderListModel.h"
 
 #include <QAtomicInt>
+#include <QJsonObject>
 #include <QList>
 #include <QObject>
 #include <QSet>
@@ -154,6 +155,18 @@ public:
     // labelled `label`, and refreshes the bin and the timeline's caches. False when a locked track
     // holds one of the clips: the edit is then refused as a whole and nothing changes.
     bool relinkPaths(const QHash<QString, QString> &remap, const QString &label);
+    // Project health, in the MCP reply shapes ({ok, ...}; validateProject has no ok).
+    // validate_project: {problems:[{kind, message, clip?, asset?, track?, sequence?, ...}], n,
+    // counts?:{kind: n}, truncated?, open_sequence?}, at most `limit` rows (n counts them all).
+    Q_INVOKABLE QJsonObject validateProject(int limit = 200) const;
+    // Assets whose file is gone, with how many clips use each.
+    Q_INVOKABLE QJsonObject missingMedia() const;
+    // relink_media({from, to} | {search_dir}, dry_run?): see the catalog entry.
+    QJsonObject relinkMedia(const QJsonObject &args);
+    Q_INVOKABLE QJsonObject relinkFolder(const QString &from, const QString &to, bool dryRun);
+    Q_INVOKABLE QJsonObject relinkSearchFolder(const QUrl &folder, bool dryRun);
+    // Removes (or with dryRun lists) the assets no clip uses, composites and stabilize sources kept.
+    Q_INVOKABLE QJsonObject removeUnusedAssets(bool dryRun);
 
 signals:
     void currentFolderIdChanged();

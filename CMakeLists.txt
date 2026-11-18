@@ -2008,6 +2008,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/ScenesTab.qml
         src/qml/components/assets/SubtitlesTab.qml
         src/qml/components/assets/SpeechTab.qml
+        src/qml/components/assets/SoundEffectDialog.qml
         src/qml/components/assets/StickersTab.qml
         src/qml/components/assets/ShapesTab.qml
         src/qml/components/assets/AssetSearchBar.qml
@@ -2512,6 +2513,7 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/VideoSizeDialog.qml
         src/qml/components/shell/VideoSizeControls.qml
         src/qml/components/dialogs/ProjectPropertiesDialog.qml
+        src/qml/components/dialogs/ProjectHealthDialog.qml
         src/qml/components/shell/SettingsPane.qml
         src/qml/components/android/SheetActionRow.qml
         src/qml/components/android/SheetActionTile.qml

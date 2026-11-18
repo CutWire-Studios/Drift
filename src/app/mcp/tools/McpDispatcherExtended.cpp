@@ -497,11 +497,6 @@ drift::SceneCamera3d cameraFromState(const QVariantMap &state)
     return camera;
 }
 
-QSizeF canvasOf(AppController *controller)
-{
-    return QSizeF(controller->projectFile()->projectWidth(), controller->projectFile()->projectHeight());
-}
-
 QJsonArray eyeArray(const drift::SceneCamera3d &camera)
 {
     const QVector3D eye = drift::sceneCameraEye(camera);
@@ -666,12 +661,7 @@ QJsonObject McpDispatcher::opCameraLookAt(const QJsonObject &args)
 QJsonObject McpDispatcher::opCameraMove(const QJsonObject &args)
 {
     const QString move = args.value(QStringLiteral("move")).toString();
-    static const QStringList moves = {
-        QStringLiteral("dolly_in"),  QStringLiteral("dolly_out"), QStringLiteral("push_in"),
-        QStringLiteral("pull_out"),  QStringLiteral("pan_left"),  QStringLiteral("pan_right"),
-        QStringLiteral("tilt_up"),   QStringLiteral("tilt_down"), QStringLiteral("truck_left"),
-        QStringLiteral("truck_right"), QStringLiteral("crane_up"), QStringLiteral("crane_down"),
-        QStringLiteral("orbit_left"), QStringLiteral("orbit_right")};
+    const QStringList moves = AppController::cameraMoveIds();
     if (!moves.contains(move))
         return err("bad_args", QStringLiteral("move must be one of %1").arg(moves.join(QLatin1Char('|'))));
     if (!args.contains(QStringLiteral("start")) || !args.contains(QStringLiteral("end")))
@@ -700,38 +690,14 @@ QJsonObject McpDispatcher::opCameraMove(const QJsonObject &args)
     const double amountArg = hasAmount ? jsonNumber(args.value(QStringLiteral("amount")), 0) : 0.0;
     if (hasAmount && !(amountArg > 0.0))
         return err("bad_args", QStringLiteral("amount must be positive"));
-    auto amountOr = [&](double fallback) { return hasAmount ? amountArg : fallback; };
 
-    const drift::SceneCamera3d from = cameraFromState(state);
-    drift::SceneCamera3d to = from;
-    const QMatrix4x4 turn = drift::sceneCameraRotation(from);
-    const auto along = [&](const QVector3D &axis, double amount) {
-        const QVector3D step = turn.mapVector(axis) * float(amount);
-        to.positionX += step.x();
-        to.positionY += step.y();
-        to.positionZ += step.z();
-    };
-    if (move == QLatin1String("dolly_in") || move == QLatin1String("dolly_out")) {
-        along({0.f, 0.f, 1.f}, (move == QLatin1String("dolly_in") ? 1.0 : -1.0) * amountOr(300.0));
-    } else if (move == QLatin1String("push_in") || move == QLatin1String("pull_out")) {
-        const double fraction = qBound(0.0, amountOr(0.35), 0.9);
-        to.zoom = from.zoom * (move == QLatin1String("push_in") ? 1.0 + fraction : 1.0 - fraction);
-    } else if (move == QLatin1String("pan_left") || move == QLatin1String("pan_right")) {
-        to = drift::rotatedKeepingEye(from, from.rotationX,
-                                      from.rotationY + (move == QLatin1String("pan_right") ? 1.0 : -1.0) * amountOr(20.0));
-    } else if (move == QLatin1String("tilt_up") || move == QLatin1String("tilt_down")) {
-        to = drift::rotatedKeepingEye(from, from.rotationX + (move == QLatin1String("tilt_up") ? 1.0 : -1.0) * amountOr(15.0),
-                                      from.rotationY);
-    } else if (move == QLatin1String("truck_left") || move == QLatin1String("truck_right")) {
-        along({1.f, 0.f, 0.f}, (move == QLatin1String("truck_right") ? 1.0 : -1.0) * amountOr(200.0));
-    } else if (move == QLatin1String("crane_up") || move == QLatin1String("crane_down")) {
-        along({0.f, 1.f, 0.f}, (move == QLatin1String("crane_down") ? 1.0 : -1.0) * amountOr(200.0));
-    } else {
-        const QSizeF canvas = canvasOf(m_controller);
-        QVector3D centre(float(canvas.width() * 0.5), float(canvas.height() * 0.5), 0.f);
+    bool hasCentre = false;
+    QVector3D centre;
+    if (move.startsWith(QLatin1String("orbit_"))) {
         const QJsonValue targetValue = args.value(QStringLiteral("target"));
         if (targetValue.isObject()) {
             const QJsonObject point = targetValue.toObject();
+            hasCentre = true;
             centre = QVector3D(float(point.value(QStringLiteral("x")).toDouble()),
                                float(point.value(QStringLiteral("y")).toDouble()),
                                float(point.value(QStringLiteral("z")).toDouble()));
@@ -740,52 +706,26 @@ QJsonObject McpDispatcher::opCameraMove(const QJsonObject &args)
             if (!ref.valid())
                 return clipRefError(QJsonObject{{QStringLiteral("clip"), targetValue.toString()}});
             const QVariantList c = m_controller->clipWorldCentreAt(ref.track, ref.clip, start);
+            hasCentre = true;
             centre = QVector3D(float(c.value(0).toDouble()), float(c.value(1).toDouble()), float(c.value(2).toDouble()));
         } else if (!targetValue.isUndefined()) {
             return err("bad_args", QStringLiteral("target must be a clip id or {x,y,z}"));
         }
-        // Circle the target about the vertical axis; + degrees swings the eye toward +x (right). The
-        // eye sits at -z of its target and a right-handed turn about y takes -z toward -x, hence the sign.
-        const double degrees = (move == QLatin1String("orbit_left") ? -1.0 : 1.0) * amountOr(45.0);
-        QMatrix4x4 swing;
-        swing.rotate(float(-degrees), 0.f, 1.f, 0.f);
-        const QVector3D eye = centre + swing.map(drift::sceneCameraEye(from) - centre);
-        to = drift::aimAt(from, eye, centre);
     }
 
-    const double playhead = m_controller->playheadSeconds();
-    m_controller->mcp()->beginBatch();
-    QJsonArray written;
-    for (const CameraProp &p : kCameraProps) {
-        if (qFuzzyCompare(1.0 + from.*p.field, 1.0 + to.*p.field))
-            continue;
-        const QString prop = QString::fromLatin1(p.name);
-        m_controller->setClipKeyframe(track, index, prop, start, from.*p.field);
-        m_controller->setClipKeyframe(track, index, prop, end, to.*p.field);
-        // Easing lives on the segment's first key, and the preset acts on the key at the playhead.
-        m_controller->setPlayheadSeconds(start);
-        m_controller->setKeyframeInterpolation(track, index, prop, easing);
-        written.append(prop);
-    }
-    m_controller->setPlayheadSeconds(playhead);
-    m_controller->mcp()->endBatch(QStringLiteral("Camera move"), !written.isEmpty());
-    if (written.isEmpty())
-        return err("bad_args", QStringLiteral("That move changes nothing"));
+    const QVariantMap moved = m_controller->applyCameraMove(track, index, move, start, end, easing, hasAmount,
+                                                            amountArg, hasCentre, centre);
+    if (moved.contains(QStringLiteral("error")))
+        return err("bad_args", moved.value(QStringLiteral("error")).toString());
 
     return ok({{QStringLiteral("clip"), m_controller->mcp()->clipId(track, index)},
                {QStringLiteral("move"), move},
                {QStringLiteral("start"), start},
                {QStringLiteral("end"), end},
                {QStringLiteral("easing"), easing},
-               {QStringLiteral("props"), written},
-               {QStringLiteral("from"), QJsonObject{{QStringLiteral("eye"), eyeArray(from)},
-                                                    {QStringLiteral("rotationX"), from.rotationX},
-                                                    {QStringLiteral("rotationY"), from.rotationY},
-                                                    {QStringLiteral("zoom"), from.zoom}}},
-               {QStringLiteral("to"), QJsonObject{{QStringLiteral("eye"), eyeArray(to)},
-                                                  {QStringLiteral("rotationX"), to.rotationX},
-                                                  {QStringLiteral("rotationY"), to.rotationY},
-                                                  {QStringLiteral("zoom"), to.zoom}}}});
+               {QStringLiteral("props"), QJsonArray::fromStringList(moved.value(QStringLiteral("props")).toStringList())},
+               {QStringLiteral("from"), QJsonObject::fromVariantMap(moved.value(QStringLiteral("from")).toMap())},
+               {QStringLiteral("to"), QJsonObject::fromVariantMap(moved.value(QStringLiteral("to")).toMap())}});
 }
 
 QJsonObject McpDispatcher::opProxies(const QString &tool, const QJsonObject &args)
@@ -3566,14 +3506,14 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     if (tool == QLatin1String("undo_to")) {
         const QString hash = argString(args, QStringLiteral("hash"));
         if (!hash.isEmpty())
-            return m_controller->mcp()->undoTo(-1, hash);
+            return m_controller->jumpToHistory(-1, hash);
         if (!args.contains(QStringLiteral("index")))
             return err("bad_args", QStringLiteral("index or hash required"));
-        return m_controller->mcp()->undoTo(jsonInt(args.value(QStringLiteral("index")), -1), {});
+        return m_controller->jumpToHistory(jsonInt(args.value(QStringLiteral("index")), -1), {});
     }
 
     if (tool == QLatin1String("take_snapshot"))
-        return m_controller->mcp()->takeSnapshot(argString(args, QStringLiteral("label")));
+        return m_controller->takeSnapshot(argString(args, QStringLiteral("label")));
 
     if (tool == QLatin1String("clear_history"))
         return m_controller->mcp()->clearHistory(jsonInt(args.value(QStringLiteral("keep_last")), 0));
@@ -3586,21 +3526,21 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         std::optional<bool> persist;
         if (args.contains(QStringLiteral("persist")))
             persist = jsonBool(args.value(QStringLiteral("persist")), true);
-        return m_controller->mcp()->setHistoryLimit(jsonBool(args.value(QStringLiteral("reset")), false),
+        return m_controller->setHistoryLimit(jsonBool(args.value(QStringLiteral("reset")), false),
                                                     steps, persist);
     }
 
     if (tool == QLatin1String("history_stats"))
-        return m_controller->mcp()->historyStats(jsonBool(args.value(QStringLiteral("size")), false));
+        return m_controller->historyStats(jsonBool(args.value(QStringLiteral("size")), false));
 
     if (tool == QLatin1String("list_snapshots"))
-        return m_controller->mcp()->listSnapshots();
+        return m_controller->listSnapshots();
 
     if (tool == QLatin1String("restore_snapshot")) {
         const QString hash = argString(args, QStringLiteral("hash"));
         if (hash.isEmpty())
             return err("bad_args", QStringLiteral("hash required"));
-        return m_controller->mcp()->restoreSnapshot(hash);
+        return m_controller->restoreSnapshot(hash);
     }
 
     if (tool == QLatin1String("set_ripple")) {

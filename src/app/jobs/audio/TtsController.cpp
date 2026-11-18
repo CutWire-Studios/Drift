@@ -3,6 +3,7 @@
 #include "app/editor/AppController.h"
 #include "app/jobs/JobRegistry.h"
 #include "app/jobs/audio/VoiceLibrary.h"
+#include "app/online/CloudProviders.h"
 #include "engine/addons/AddonRegistry.h"
 #include "engine/encode/writers/AudioFileWriter.h"
 #include "engine/ml/runtime/OrtRuntime.h"
@@ -66,6 +67,24 @@ TtsController::TtsController(AppController *app, QObject *parent)
 {
     m_poll.setInterval(150);
     connect(&m_poll, &QTimer::timeout, this, &TtsController::pollJob);
+    m_sfxPoll.setInterval(150);
+    connect(&m_sfxPoll, &QTimer::timeout, this, [this] {
+        const QJsonObject job = m_app->m_jobs->job(m_sfxJobId);
+        m_sfxProgress = job.value(QStringLiteral("progress")).toDouble();
+        m_sfxStatus = job.value(QStringLiteral("status")).toString();
+        emit sfxChanged();
+    });
+    connect(m_app->m_jobs, &JobRegistry::jobFinished, this, [this](const QString &id, bool ok) {
+        if (ok || id != m_sfxJobId)
+            return;
+        const QString message = jobError(m_app->m_jobs->job(id));
+        m_sfxPoll.stop();
+        m_sfxJobId.clear();
+        m_sfxProgress = 0.0;
+        m_sfxStatus.clear();
+        emit sfxChanged();
+        emit sfxFinished(false, message.isEmpty() ? tr("Cancelled") : message);
+    });
     refreshAvailability();
 }
 
@@ -76,6 +95,99 @@ void TtsController::refreshAvailability()
         return;
     m_available = now;
     emit availableChanged();
+}
+
+QString TtsController::generatedAudioPath(const QString &kind, const QString &provider, const QString &text)
+{
+    QString slug;
+    for (const QChar c : text.toLower()) {
+        if (c.isLetterOrNumber())
+            slug.append(c);
+        else if (!slug.isEmpty() && !slug.endsWith(QLatin1Char('-')))
+            slug.append(QLatin1Char('-'));
+        if (slug.size() >= 24)
+            break;
+    }
+    while (slug.endsWith(QLatin1Char('-')))
+        slug.chop(1);
+    if (slug.isEmpty())
+        slug = QStringLiteral("audio");
+    return QDir(drift::generatedAudioDir())
+        .filePath(QStringLiteral("%1-%2-%3-%4.mp3")
+                      .arg(kind, provider, slug, QUuid::createUuid().toString(QUuid::Id128).left(8)));
+}
+
+QString TtsController::startSfxJob(const QString &prompt, double duration, double influence, bool loop,
+                                   std::function<QJsonObject(const QString &, const QJsonObject &)> imported)
+{
+    const QString provider = QString::fromLatin1(CloudProviders::kElevenLabs);
+    const QString key = m_app->m_cloud->apiKey(provider);
+    const QString path = generatedAudioPath(QStringLiteral("sfx"), provider, prompt);
+    const QJsonObject generator{{QStringLiteral("provider"), provider}, {QStringLiteral("kind"), QStringLiteral("sfx")},
+                                {QStringLiteral("prompt"), prompt}, {QStringLiteral("duration"), duration}};
+    const QPointer<TtsController> self(this);
+    return m_app->m_jobs->start(
+        QStringLiteral("sfx"), provider, JobRegistry::Lane::Network,
+        [key, prompt, duration, influence, loop, path](JobContext &ctx) {
+            ctx.progress(0.1, QStringLiteral("Generating sound…"));
+            drift::cloud::CloudError error;
+            const QByteArray audio = drift::cloud::elevenlabs::soundEffect(
+                key, prompt, duration, influence, loop, [&ctx] { return ctx.cancelled(); }, &error);
+            if (error.isError())
+                return ctx.fail(error.code, error.message);
+            QFile file(path);
+            if (audio.isEmpty() || !file.open(QIODevice::WriteOnly) || file.write(audio) != audio.size())
+                return ctx.fail(QStringLiteral("internal"), QStringLiteral("Could not write %1").arg(path));
+            ctx.succeed({});
+        },
+        [self, path, generator, imported = std::move(imported)](const QJsonObject &job) {
+            if (!self)
+                return QJsonObject{};
+            if (!job.value(QStringLiteral("ok")).toBool())
+                return QJsonObject{};
+            return imported(path, generator);
+        });
+}
+
+bool TtsController::generateSfx(const QString &prompt, double duration, double influence, bool loop, bool place)
+{
+    const QString text = prompt.trimmed();
+    if (sfxRunning() || text.isEmpty())
+        return false;
+    const QPointer<TtsController> self(this);
+    m_sfxProgress = 0.0;
+    m_sfxStatus = tr("Queued");
+    const double at = m_app->playheadSeconds();
+    // The job id is only known once start() returns, and the import runs on a later event-loop turn.
+    m_sfxJobId = startSfxJob(
+        text, duration, influence, loop,
+        [self, place, at](const QString &path, const QJsonObject &generator) {
+            if (!self)
+                return QJsonObject{};
+            const AppController::GeneratedAudioImport imported =
+                self->m_app->importGeneratedAudio(path, generator, place, at, -1);
+            self->m_sfxPoll.stop();
+            self->m_sfxJobId.clear();
+            self->m_sfxProgress = 0.0;
+            self->m_sfxStatus.clear();
+            emit self->sfxChanged();
+            if (!imported.ok) {
+                emit self->sfxFinished(false, imported.error);
+                return QJsonObject{};
+            }
+            emit self->sfxFinished(true, place ? tr("Sound effect added to the timeline")
+                                               : tr("Sound effect added to the media bin"));
+            return QJsonObject{{QStringLiteral("asset"), imported.assetId}, {QStringLiteral("path"), path}};
+        });
+    m_sfxPoll.start();
+    emit sfxChanged();
+    return true;
+}
+
+void TtsController::cancelSfx()
+{
+    if (!m_sfxJobId.isEmpty())
+        m_app->m_jobs->cancel(m_sfxJobId);
 }
 
 QString TtsController::lastVoice() const

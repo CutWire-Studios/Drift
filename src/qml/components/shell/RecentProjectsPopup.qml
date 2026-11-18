@@ -26,6 +26,7 @@ Popup {
     // signal importEdlRequested()
     // signal importOtioRequested()
     signal propertiesRequested()
+    signal healthRequested()
 
 
     // Shared row for current / previous projects: status dot, title (+ optional
@@ -293,6 +294,13 @@ Popup {
             glyph: Theme.icons.fileText
             text: qsTr("Project properties…")
             onTriggered: root.propertiesRequested()
+        }
+
+        RecentProjectsActionRow {
+            popup: root
+            glyph: Theme.icons.warning
+            text: qsTr("Project health…")
+            onTriggered: root.healthRequested()
         }
 
         Rectangle {

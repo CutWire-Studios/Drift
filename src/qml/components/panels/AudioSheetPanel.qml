@@ -25,6 +25,7 @@ PanelFrame {
     property string tagTab: "sections"
     property string searchTerm: ""
     property bool searchStarted: false
+    property bool showBands: false
 
     property bool runtimeReady: Addons.runtimeAvailable()
     property bool clapReady: Addons.hasKind("audio-tag-model") && runtimeReady
@@ -357,11 +358,63 @@ PanelFrame {
                     font.pixelSize: Theme.fontSizeXs
                 }
 
+                ThemedChip {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.presence !== null
+                    text: qsTr("Bands")
+                    selected: root.showBands
+                    onClicked: root.showBands = !root.showBands
+                }
+
                 ThemedButton {
                     visible: root.resultOk && !root.astReady && root.tagTab === "sections"
                     text: qsTr("Add speech & music")
                     variant: "secondary"
                     onClicked: ShellBridge.main.openAddonManager("audio-class-model")
+                }
+            }
+
+            Rectangle {
+                id: bandStrip
+                visible: root.showBands && root.presence !== null
+                width: parent.width
+                height: 18
+                radius: Theme.c.audioSheetPanel.statRadius
+                color: Theme.c.audioSheetPanel.listBackground
+                border.color: Theme.c.audioSheetPanel.listBorder
+                border.width: 1
+                clip: true
+
+                Repeater {
+                    model: bandStrip.visible ? root.presence.segments : []
+                    delegate: Item {
+                        id: band
+                        required property var modelData
+                        readonly property real from: root.result.duration > 0
+                                                     ? (modelData.start - root.result.start) / root.result.duration : 0
+                        readonly property real to: root.result.duration > 0
+                                                   ? (modelData.end - root.result.start) / root.result.duration : 0
+                        readonly property bool hasSpeech: modelData.kind.indexOf("speech") === 0
+                        readonly property bool hasMusic: modelData.kind === "music" || modelData.kind === "speech+music"
+                        x: Math.max(0, from) * bandStrip.width
+                        width: Math.max(1, (Math.min(1, to) - Math.max(0, from)) * bandStrip.width)
+                        height: bandStrip.height
+
+                        Rectangle {
+                            width: parent.width
+                            height: band.hasSpeech && band.hasMusic ? parent.height / 2 : parent.height
+                            visible: band.hasSpeech || band.hasMusic || band.modelData.kind === "silence"
+                            color: band.hasSpeech ? Theme.c.audioSheetPanel.speech
+                                   : (band.hasMusic ? Theme.c.audioSheetPanel.music : Theme.c.audioSheetPanel.silence)
+                        }
+                        Rectangle {
+                            y: parent.height / 2
+                            width: parent.width
+                            height: parent.height / 2
+                            visible: band.hasSpeech && band.hasMusic
+                            color: Theme.c.audioSheetPanel.music
+                        }
+                    }
                 }
             }
 
