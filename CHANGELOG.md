@@ -10,4 +10,6 @@ Tracks work done on `main` **since the last public release**. Use this to see wh
 
 ## ✨ Added
 
+- Auto ducking lowers music under speech on other tracks, with presets and voice detection through the Voice activity (silero.vad) addon, from the Audio Mixer and the clip menu; re-running replaces the previous pass. Closes #555.
+
 ## 🎨 Improved

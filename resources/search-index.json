@@ -33,6 +33,14 @@
       "needs": []
     },
     {
+      "id": "audio-ducking",
+      "target": "panel:audioMixer#audio-ducking",
+      "context": "AudioMixerPanel",
+      "source": "Ducking",
+      "keywords": "ducking duck sidechain lower music under voice auto duck",
+      "needs": []
+    },
+    {
       "id": "audio-sheet",
       "target": "panel:audioSheet#audio-sheet",
       "context": "AudioSheetPanel",

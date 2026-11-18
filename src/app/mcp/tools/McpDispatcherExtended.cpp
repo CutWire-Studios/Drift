@@ -4406,11 +4406,18 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const int overTrack = args.contains(QStringLiteral("over_track"))
                                   ? jsonInt(args.value(QStringLiteral("over_track")))
                                   : -1;
+        drift::DuckSettings settings;
+        const double amount = qBound(0.0, jsonNumber(args.value(QStringLiteral("amount")), 0.3), 1.0);
+        settings.reduceDb = args.contains(QStringLiteral("reduce_db"))
+                                ? qMin(0.0, jsonNumber(args.value(QStringLiteral("reduce_db")), -12.0))
+                                : (amount > 0.0 ? 20.0 * std::log10(amount) : -120.0);
+        settings.attackSeconds = jsonNumber(args.value(QStringLiteral("attack")), 0.12);
+        settings.releaseSeconds = jsonNumber(args.value(QStringLiteral("release")), 0.25);
+        settings.holdSeconds = jsonNumber(args.value(QStringLiteral("hold")), 0.5);
         return m_controller->mcp()->duckUnder(
-            music.track, music.clip, overTrack, overClips,
-            jsonNumber(args.value(QStringLiteral("amount")), 0.3),
-            jsonNumber(args.value(QStringLiteral("attack")), 0.12),
-            jsonNumber(args.value(QStringLiteral("release")), 0.25));
+            music.track, music.clip, overTrack, overClips, settings,
+            jsonNumber(args.value(QStringLiteral("sensitivity")), 0.5),
+            args.value(QStringLiteral("method")).toString(QStringLiteral("auto")));
     }
 
     if (tool == QLatin1String("setup_multicam")) {

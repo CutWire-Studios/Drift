@@ -4,6 +4,7 @@
 #include "core/effects/EffectStackStore.h"
 #include "core/project/Project.h"
 #include "engine/audio/analysis/LoudnessMeter.h"
+#include "engine/audio/analysis/AudioDucking.h"
 
 #include <QHash>
 #include <QJsonArray>
@@ -392,8 +393,8 @@ public:
     QVariantMap audioSheetResult() const { return m_audioSheetResult; }
     QJsonObject normalizeVolume(int trackIndex, int clipIndex, double targetLufs);
     QJsonObject duckUnder(int musicTrack, int musicClip, int overTrack,
-                             const QStringList &overClips, double amount, double attack,
-                             double release);
+                             const QStringList &overClips, const drift::DuckSettings &settings,
+                             double sensitivity, const QString &method);
     QJsonObject listFaceTrack(int trackIndex, int clipIndex) const;
     QJsonObject autoReframe(int trackIndex, int clipIndex, double aspect, const QString &mode);
     QJsonObject listAddons() const;

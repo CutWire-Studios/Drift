@@ -263,6 +263,9 @@ QtObject {
             ShellBridge._seekAnchor(seek)
     }
 
+    // Fired once an anchor is on screen and revealed, so a collapsed section can open itself.
+    signal anchorRevealed(string id)
+
     property string _anchorWanted: ""
     property int _anchorPolls: 0
     // Content can be built late (Loaders, lazy panels), so the anchor is polled for about a second.
@@ -287,6 +290,7 @@ QtObject {
             return false
         ShellBridge.anchorTimer.stop()
         ShellBridge.revealItem(item)
+        ShellBridge.anchorRevealed(ShellBridge._anchorWanted)
         return true
     }
 

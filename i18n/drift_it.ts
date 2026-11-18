@@ -5580,6 +5580,45 @@
         <translation>Rimossi %1 s di silenzio</translation>
     </message>
     <message>
+        <source>No audio on the other tracks under this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice detection needs the Voice activity (silero.vad) addon. Install it from the addon store, or use level detection.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice detection could not run: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finding speech…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto duck cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Annullato</translation>
+    </message>
+    <message>
+        <source>Auto duck</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Ducked music under %n passage(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No speech found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select exactly two clips with audio to sync</source>
         <translation>Seleziona esattamente due clip con audio da sincronizzare</translation>
     </message>
@@ -6330,8 +6369,124 @@
         <translation>Normalizzato a %1 LUFS</translation>
     </message>
     <message>
+        <source>%1 dB</source>
+        <translation type="unfinished">%1 dB</translation>
+    </message>
+    <message>
+        <source>%1%</source>
+        <translation type="unfinished">%1%</translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <translation type="unfinished">%1 ms</translation>
+    </message>
+    <message>
+        <source>Ducked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio Mixer</source>
         <translation>Mixer audio</translation>
+    </message>
+    <message>
+        <source>Ducking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lower the selected music clip while other tracks are speaking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duck against</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All other tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The tracks whose audio lowers the music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation type="unfinished">Automatico</translation>
+    </message>
+    <message>
+        <source>Level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation type="unfinished">Voce</translation>
+    </message>
+    <message>
+        <source>Auto uses voice detection when installed, otherwise loudness. Voice ignores music and noise.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto uses loudness only. Install the Voice activity (silero.vad) addon to enable Voice detection.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preset</source>
+        <translation type="unfinished">Predefinito</translation>
+    </message>
+    <message>
+        <source>Gentle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Standard</source>
+        <translation type="unfinished">Standard</translation>
+    </message>
+    <message>
+        <source>Voiceover</source>
+        <translation type="unfinished">Voce fuori campo</translation>
+    </message>
+    <message>
+        <source>Silence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Personalizzato</translation>
+    </message>
+    <message>
+        <source>Reduce by</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sensitivity</source>
+        <translation type="unfinished">Sensibilità</translation>
+    </message>
+    <message>
+        <source>Fade down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duck music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lower the selected clip under the other tracks&apos; audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a music clip with other audio overlapping it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Annulla</translation>
     </message>
     <message>
         <source>Measuring… %1%</source>
@@ -25640,6 +25795,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Remove silence</source>
         <translation>Rimuovi silenzio</translation>
+    </message>
+    <message>
+        <source>Auto duck…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sync by audio</source>

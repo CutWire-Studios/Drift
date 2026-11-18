@@ -6053,113 +6053,73 @@ QJsonObject McpController::applyNormalizeGain(int trackIndex, int clipIndex, dou
 }
 
 QJsonObject McpController::duckUnder(int musicTrack, int musicClip, int overTrack,
-                                        const QStringList &overClips, double amount, double attack,
-                                        double release)
+                                        const QStringList &overClips,
+                                        const drift::DuckSettings &settings, double sensitivity,
+                                        const QString &method)
 {
     using namespace drift::mcp;
     if (!m_app->isValidClipIndex(musicTrack, musicClip))
         return err("not_found", QStringLiteral("Unknown music clip"));
-    const double amt = qBound(0.0, amount, 1.0);
-
-    QList<SilenceRange> speech;
-    auto addSpeech = [&](int tr, int cl) {
-        const QJsonObject det = detectSilence(tr, cl, 0, 0, 0.02, 0.12, 0.0);
-        if (!det.value(QStringLiteral("ok")).toBool())
-            return;
-        const drift::Clip &clip = m_app->m_project.tracks().at(tr).clips.at(cl);
-        const double cs = drift::usToSeconds(clip.timelineStart);
-        const double ce = drift::usToSeconds(clip.timelineStart + clip.timelineDuration);
-        // Invert silence → speech, clipped to the clip.
-        double cursor = cs;
-        const QJsonArray silences = det.value(QStringLiteral("ranges")).toArray();
-        for (const QJsonValue &v : silences) {
-            const QJsonObject r = v.toObject();
-            const double s = r.value(QStringLiteral("start")).toDouble();
-            const double e = r.value(QStringLiteral("end")).toDouble();
-            if (s > cursor)
-                speech.append({cursor, s});
-            cursor = qMax(cursor, e);
-        }
-        if (ce > cursor)
-            speech.append({cursor, ce});
-    };
-
-    if (!overClips.isEmpty()) {
-        for (const QString &id : overClips) {
-            int tr = -1, cl = -1;
-            if (findClipById(m_app->m_project, id, &tr, &cl))
-                addSpeech(tr, cl);
-        }
-    } else if (overTrack >= 0 && overTrack < m_app->m_project.tracks().size()) {
-        const drift::Track &track = m_app->m_project.tracks().at(overTrack);
-        for (int c = 0; c < track.clips.size(); ++c)
-            addSpeech(overTrack, c);
-    } else {
+    if (overClips.isEmpty() && (overTrack < 0 || overTrack >= m_app->m_project.tracks().size()))
         return err("bad_args", QStringLiteral("over_track or over_clips required"));
-    }
 
-    // Read the level the music sits at going into each dip *before* touching anything. Sampling
-    // one value at the playhead flattened whatever envelope the music already had, and sampling it
-    // after a previous pass had written its own keys made each re-run collapse the rest level
-    // toward the ducked one — the pumping between words.
-    QList<SilenceRange> dips;
-    QList<double> restLevels;
-    for (const SilenceRange &span : speech) {
-        if (span.end - span.start < 0.05)
-            continue;
-        dips.append(span);
-        restLevels.append(m_app->propertyValueAt(musicTrack, musicClip, QStringLiteral("volume"),
-                                          span.start - attack, 1.0));
+    AudioAlignController::DuckRequest request;
+    request.overTrack = overTrack;
+    request.overClips = overClips;
+    request.settings = settings;
+    request.sensitivity = qBound(0.0, sensitivity, 1.0);
+    request.detect = method == QLatin1String("energy") ? QStringLiteral("level")
+                     : method == QLatin1String("vad")  ? QStringLiteral("voice")
+                                                       : QStringLiteral("auto");
+    const AudioAlignController::DuckJob job =
+        AudioAlignController::makeDuckJob(m_app->m_project, musicTrack, musicClip, request);
+    if (!job.error.isEmpty())
+        return err("bad_args", job.error);
+
+    auto detection = std::make_shared<AudioAlignController::DuckDetection>();
+    {
+        QEventLoop loop;
+        (void)QtConcurrent::run([&job, detection, &loop]() {
+            *detection = AudioAlignController::detectDuckSpeech(job, {});
+            QMetaObject::invokeMethod(&loop, &QEventLoop::quit, Qt::QueuedConnection);
+        });
+        loop.exec();
     }
+    if (!detection->ok)
+        return err("failed", detection->error);
 
     beginBatch();
+    drift::Clip &music = m_app->m_project.tracks()[musicTrack].clips[musicClip];
+    // Replaces what a previous pass wrote: keys are addressed by exact microsecond, so a re-run
+    // with any changed argument would otherwise interleave a fresh set beside the old one.
+    const int keys =
+        drift::applyDuckEnvelope(music, detection->dips, job.owned, settings, 1.0);
+    endBatch(QStringLiteral("Duck under speech"), keys > 0 || batchChangedProject());
 
-    // Writing is otherwise purely additive: keys are addressed by exact microsecond, so a re-run
-    // with any changed argument interleaves a fresh set beside the old one. Clear the windows this
-    // pass owns first, so running it twice leaves the same curve as running it once.
-    if (m_app->isValidClipIndex(musicTrack, musicClip)) {
-        const drift::Clip &music = m_app->m_project.tracks().at(musicTrack).clips.at(musicClip);
-        const double clipStart = drift::usToSeconds(music.timelineStart);
-        QList<double> doomed;
-        const auto &existing = music.volume.keyframes();
-        for (auto it = existing.constBegin(); it != existing.constEnd(); ++it) {
-            const double at = clipStart + drift::usToSeconds(it.key());
-            for (const SilenceRange &span : dips) {
-                if (at >= span.start - attack - 1e-6 && at <= span.end + release + 1e-6) {
-                    doomed.append(at);
-                    break;
-                }
-            }
-        }
-        for (const double at : doomed)
-            m_app->removeClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"), at);
-    }
-
-    int keys = 0;
-    for (int i = 0; i < dips.size(); ++i) {
-        const SilenceRange &span = dips.at(i);
-        const double rest = restLevels.at(i);
-        const double ducked = rest * amt;
-        m_app->setClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"),
-                        span.start - attack, rest);
-        m_app->setClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"), span.start, ducked);
-        m_app->setClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"), span.end, ducked);
-        m_app->setClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"),
-                        span.end + release, rest);
-        keys += 4;
-    }
-    endBatch(QStringLiteral("Duck under speech"), keys > 0);
-
-    // The rest level is per dip now, so report the first one and say when they differ rather than
+    // The rest level is per dip, so report the first one and say when they differ rather than
     // implying the whole clip was held at one level.
+    const double gain = qPow(10.0, qMin(0.0, settings.reduceDb) / 20.0);
+    const drift::Clip &written = m_app->m_project.tracks().at(musicTrack).clips.at(musicClip);
+    const double clipStart = drift::usToSeconds(written.timelineStart);
+    const double clipEnd = drift::usToSeconds(written.timelineEnd());
+    QList<double> restLevels;
+    for (const drift::DuckSpan &dip : std::as_const(detection->dips)) {
+        const double mid = (qMax(dip.start, clipStart) + qMin(dip.end, clipEnd)) / 2.0;
+        if (dip.end <= clipStart || dip.start >= clipEnd)
+            continue;
+        const double ducked =
+            written.volume.evaluateAt(drift::secondsToUs(mid) - written.timelineStart);
+        restLevels.append(gain > 0.0 ? ducked / gain : 1.0);
+    }
     const double firstRest = restLevels.isEmpty() ? 1.0 : restLevels.first();
     bool restVaries = false;
     for (const double level : restLevels)
-        restVaries = restVaries || !qFuzzyCompare(level + 1.0, firstRest + 1.0);
+        restVaries = restVaries || qAbs(level - firstRest) > 1e-6;
     QJsonObject reply{{QStringLiteral("keys"), keys},
-                      {QStringLiteral("speech"), speech.size()},
+                      {QStringLiteral("speech"), int(detection->dips.size())},
                       {QStringLiteral("rest"), round3(firstRest)},
-                      {QStringLiteral("ducked"), round3(firstRest * amt)}};
+                      {QStringLiteral("ducked"), round3(firstRest * gain)},
+                      {QStringLiteral("method"), detection->method}};
     if (restVaries)
         reply.insert(QStringLiteral("rest_varies"), true);
     return ok(reply);

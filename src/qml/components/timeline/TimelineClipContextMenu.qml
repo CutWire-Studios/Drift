@@ -205,6 +205,17 @@ ThemedContextMenu {
         onTriggered: EditorState.audioAlign.removeSilence(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
+        text: qsTr("Auto duck…")
+        icon.name: Theme.icons.audioLines
+        visible: EditorState.audioAlign.canDuck(owner.trackIndex, owner.clipIndex)
+        enabled: !EditorState.audioAlign.running
+        onTriggered: {
+            if (!owner.selected)
+                EditorState.selectClip(owner.trackIndex, owner.clipIndex)
+            ShellBridge.navigate("panel:audioMixer#audio-ducking")
+        }
+    }
+    ThemedMenuItem {
         text: qsTr("Sync by audio")
         icon.name: Theme.icons.audioLines
         visible: clipContextMenu.canSyncByAudio
