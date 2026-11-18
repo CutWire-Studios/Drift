@@ -6,36 +6,40 @@
 #include <QImage>
 #include <QLinearGradient>
 #include <QPainter>
-#include <QRadialGradient>
 
 namespace {
 
 // The time the offline tools have always rendered effects at.
 constexpr drift::TimeUs kThumbnailTimeUs = 500000;
 
-QImage makeFallbackBase(int size)
+// SMPTE-style colour bars over a grey ramp and a hue sweep, laid out for any aspect ratio.
+QImage makeTestCard(QSize size)
 {
-    QImage image(size, size, QImage::Format_RGBA8888);
-    image.fill(QColor(24, 26, 32));
+    QImage image(size, QImage::Format_RGBA8888);
+    image.fill(Qt::black);
     QPainter p(&image);
-    p.setRenderHint(QPainter::Antialiasing, true);
-    QLinearGradient bg(0, 0, size, size);
-    bg.setColorAt(0.0, QColor(28, 32, 44));
-    bg.setColorAt(1.0, QColor(18, 18, 24));
-    p.fillRect(image.rect(), bg);
+    const qreal w = size.width();
+    const qreal h = size.height();
 
-    const QPoint center(size / 2, int(size * 0.42));
-    const int headR = int(size * 0.18);
-    QRadialGradient skin(center, headR);
-    skin.setColorAt(0.0, QColor(214, 172, 140));
-    skin.setColorAt(1.0, QColor(160, 118, 96));
-    p.setBrush(skin);
-    p.setPen(Qt::NoPen);
-    p.drawEllipse(center, headR, headR);
+    const QColor bars[] = {{191, 191, 191}, {191, 191, 0}, {0, 191, 191}, {0, 191, 0},
+                           {191, 0, 191},   {191, 0, 0},   {0, 0, 191}};
+    const QColor reverse[] = {{0, 0, 191}, {19, 19, 19}, {191, 0, 191}, {19, 19, 19},
+                              {0, 191, 191}, {19, 19, 19}, {191, 191, 191}};
+    const qreal barW = w / 7.0;
+    for (int i = 0; i < 7; ++i) {
+        p.fillRect(QRectF(i * barW, 0, barW + 1, h * 0.62), bars[i]);
+        p.fillRect(QRectF(i * barW, h * 0.62, barW + 1, h * 0.08), reverse[i]);
+    }
 
-    p.setBrush(QColor(52, 58, 74));
-    p.drawRoundedRect(int(size * 0.28), int(size * 0.58), int(size * 0.44), int(size * 0.55),
-                      int(size * 0.08), int(size * 0.08));
+    QLinearGradient ramp(0, 0, w, 0);
+    ramp.setColorAt(0.0, Qt::black);
+    ramp.setColorAt(1.0, Qt::white);
+    p.fillRect(QRectF(0, h * 0.70, w, h * 0.15), ramp);
+
+    QLinearGradient hue(0, 0, w, 0);
+    for (int i = 0; i <= 6; ++i)
+        hue.setColorAt(i / 6.0, QColor::fromHsvF((i % 6) / 6.0, 1.0, 1.0));
+    p.fillRect(QRectF(0, h * 0.85, w, h * 0.15 + 1), hue);
     p.end();
     return image;
 }
@@ -132,18 +136,20 @@ QImage renderStrip(const QString &cacheKey, const drift::GpuEffectDefinition &gp
 
 QImage defaultEffectBase(int side)
 {
-    return makeFallbackBase(side);
+    return makeTestCard(QSize(side, side));
 }
 
 QImage defaultSampleImage(int which, QSize size)
 {
-    return defaultBase(which == 1 ? makeBaseA : which == 2 ? makeBaseB : makeFallbackBase, size);
+    if (which != 1 && which != 2)
+        return makeTestCard(size);
+    return defaultBase(which == 1 ? makeBaseA : makeBaseB, size);
 }
 
 QImage renderEffectThumbnail(const QString &cacheKey, const drift::GpuEffectDefinition &gpu,
                              const QMap<QString, QVariant> &params, QSize size, const QImage &source)
 {
-    const QImage base = source.isNull() ? defaultBase(makeFallbackBase, size) : source;
+    const QImage base = source.isNull() ? makeTestCard(size) : source;
     bool ok = false;
     const QImage result = GpuEffectExecutor::instance().apply(cacheKey, gpu, {base}, params,
                                                               kThumbnailTimeUs, 0.0, &ok);

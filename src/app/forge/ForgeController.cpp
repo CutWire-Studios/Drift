@@ -1159,7 +1159,7 @@ QString ForgeController::samplePath(int which)
 {
     const QString dir = rootDir() + QStringLiteral("/forge-drafts/samples");
     QDir().mkpath(dir);
-    const QString path = QStringLiteral("%1/sample%2.png").arg(dir).arg(which);
+    const QString path = QStringLiteral("%1/sample%2-v2.png").arg(dir).arg(which);
     if (!QFile::exists(path))
         defaultSampleImage(which, QSize(1280, 720)).save(path);
     return path;
