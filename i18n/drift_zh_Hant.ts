@@ -2839,6 +2839,66 @@
         <translation>已創建片段副本</translation>
     </message>
     <message>
+        <source>Detect beats first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split on beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No beats fall inside the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Split on %n beat(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No cuts were made</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped %n clip(s) to the beat</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No clips were close enough to a beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n marker(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No new markers to add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No gaps to close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gaps are blocked by linked clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Closed %n gap(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Your text here</source>
         <translation>在此輸入文字</translation>
     </message>
@@ -3449,6 +3509,78 @@
     <message>
         <source>Camera uses its own rotation</source>
         <translation>攝影機使用自身旋轉</translation>
+    </message>
+    <message>
+        <source>Dolly in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dolly out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Push in (zoom)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pull out (zoom)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tilt up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tilt down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Truck left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Truck right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crane up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crane down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That move changes nothing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a camera clip first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The camera clip does not cover that span</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -4389,6 +4521,14 @@
     <message>
         <source>Keyframes set</source>
         <translation>關鍵影格已設定</translation>
+    </message>
+    <message>
+        <source>Reframed, but the crop enlarges the source %1x</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reframed the clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset camera</source>
@@ -6728,6 +6868,10 @@
         <translation>語音 %1  ·  音樂 %2</translation>
     </message>
     <message>
+        <source>Bands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add speech &amp; music</source>
         <translation>新增語音 &amp; 音樂</translation>
     </message>
@@ -7221,6 +7365,14 @@
     <message>
         <source>Zoom, focal length (36 × 24 mm film) and field of view are one setting in three units. Zooming does not move the camera. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
         <translation>縮放、焦距（36 × 24 mm 底片）和視野是同一設定的三種單位。縮放不會移動攝影機。在此攝影機運行時，它會取代各個片段自身的「透視」值，因為同一個場景只有一個視角。</translation>
+    </message>
+    <message>
+        <source>Add camera move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keys a named move (dolly, pan, crane, orbit…) over the work area, else this clip, from the camera&apos;s current framing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset camera</source>
@@ -9674,6 +9826,10 @@
         <source>Save as preset…</source>
         <translation>另存為預設…</translation>
     </message>
+    <message>
+        <source>Remove all</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EmojiPicker</name>
@@ -11858,9 +12014,113 @@
         <source>Start</source>
         <translation>開始</translation>
     </message>
+    <message numerus="yes">
+        <source>%n step(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n state(s) in memory</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>History</source>
         <translation>歷史記錄</translation>
+    </message>
+    <message>
+        <source>Clear history…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">清除</translation>
+    </message>
+    <message>
+        <source>Frees undo memory. Undone steps (redo) are dropped too, and cleared steps can&apos;t be restored.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep last steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapshots</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Named copies of the project at this step, kept outside the undo stack</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save snapshot…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save snapshot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo history settings for this project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No snapshots yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished">恢復</translation>
+    </message>
+    <message>
+        <source>Before colour pass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore snapshot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaces the project with this snapshot. A snapshot that is no longer in the undo history starts a new history, so steps after it can&apos;t be restored.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>History settings for this project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">應用</translation>
+    </message>
+    <message>
+        <source>This project overrides the app&apos;s undo history settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Following the app&apos;s undo history settings (Settings, General).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept (-1 unlimited, 0 off)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save history with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use app settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing to undo yet. Your edits will be listed here.</source>
@@ -12301,6 +12561,10 @@
         <translation>遮罩羽化</translation>
     </message>
     <message>
+        <source>Auto-smooth keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit keyframe curve</source>
         <translation>編輯關鍵格曲線</translation>
     </message>
@@ -12378,6 +12642,18 @@
     <message>
         <source>Find beats and hits in the audio under this clip</source>
         <translation>查找此片段音頻中的節拍與拍點</translation>
+    </message>
+    <message>
+        <source>Add timeline markers at the detected beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-smooth the focused curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-smooth every shown curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>More keyframe tools</source>
@@ -12489,6 +12765,10 @@
         <translation>關鍵格編輯器</translation>
     </message>
     <message>
+        <source>Auto-smooth keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scale</source>
         <translation>縮放</translation>
     </message>
@@ -12537,6 +12817,10 @@
     <message>
         <source>Clear all keyframes of the selected properties</source>
         <translation>清除所選屬性的所有關鍵格</translation>
+    </message>
+    <message>
+        <source>Auto-smooth the selected keyframes, or every key of the selected properties</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Lanes</source>
@@ -14827,13 +15111,6 @@
     </message>
 </context>
 <context>
-    <name>McpController</name>
-    <message>
-        <source>Relink media</source>
-        <translation>重新連結媒體</translation>
-    </message>
-</context>
-<context>
     <name>MediaAssetsEmptyState</name>
     <message>
         <source>No media yet</source>
@@ -14997,6 +15274,14 @@
         <translation>替換媒體…</translation>
     </message>
     <message>
+        <source>Reload from disk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t reload this media. It may not be a file on disk, or is already being read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use as mask</source>
         <translation>用作遮罩</translation>
     </message>
@@ -15137,6 +15422,18 @@
         <translation>搜索媒體</translation>
     </message>
     <message>
+        <source>Search by sound, e.g. heavy rain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search by sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search by sound needs the audio tagging add-on. Click to get it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear search</source>
         <translation type="unfinished">清除搜尋</translation>
     </message>
@@ -15179,6 +15476,22 @@
     <message>
         <source>This folder is empty</source>
         <translation>此資料夾為空</translation>
+    </message>
+    <message>
+        <source>Listening to the bin…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a sound, like heavy rain or applause, and press Enter.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a sound Drift knows. Closest: %1</source>
+        <translation type="unfinished">非 Drift 已知聲音。最接近的聲音：%1</translation>
+    </message>
+    <message>
+        <source>Nothing in the bin sounds like that.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag media here, or import more.</source>
@@ -17612,6 +17925,147 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>ProjectHealthDialog</name>
+    <message>
+        <source>Missing media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing asset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Asset mismatch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Past end of media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orphaned effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Broken link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dangling transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation type="unfinished">重疊</translation>
+    </message>
+    <message>
+        <source>Unused asset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project health</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">關閉</translation>
+    </message>
+    <message numerus="yes">
+        <source>Relinked %n file(s), %1 still missing</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Relinked %n file(s)</source>
+        <translation type="unfinished">
+            <numerusform>已重新連結 %n 個檔案</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search folder for missing media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove unused assets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">移除</translation>
+    </message>
+    <message numerus="yes">
+        <source>Removed %n asset(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>These %n asset(s) are not used by any clip. Removing them can be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Relink folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Relink</source>
+        <translation type="unfinished">重新連結</translation>
+    </message>
+    <message>
+        <source>Missing files under the old folder are pointed at the same place under the new one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Old folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>D:/footage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New folder</source>
+        <translation type="unfinished">新建資料夾</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No problems found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n finding(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>(first %1 listed)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove unused assets…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Relink folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search folder for missing media…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ProjectLoadDialog</name>
     <message>
         <source>Opening project</source>
@@ -18680,6 +19134,10 @@ If playback stutters, try another.</source>
         <translation>項目屬性…</translation>
     </message>
     <message>
+        <source>Project health…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close project</source>
         <translation>關閉項目</translation>
     </message>
@@ -19086,6 +19544,30 @@ If playback stutters, try another.</source>
         <source>Scene detection cancelled</source>
         <translation>已取消場景檢測</translation>
     </message>
+    <message>
+        <source>No scene cuts fall inside this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Split into %n scene(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n marker(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No new markers to add</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ScenesShotRow</name>
@@ -19119,6 +19601,22 @@ If playback stutters, try another.</source>
     <message>
         <source>Clear</source>
         <translation>清除</translation>
+    </message>
+    <message>
+        <source>Split at scenes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut the selected clip at every detected shot boundary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add markers at scenes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop a timeline marker at every detected shot boundary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Identify objects</source>
@@ -21756,6 +22254,69 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SoundEffectDialog</name>
+    <message>
+        <source>Sound effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sound effects come from ElevenLabs. Add your API key in Settings to use them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow sending prompts to ElevenLabs in Settings to use sound effects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Describe the sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Heavy wooden door creaking open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let the model pick the length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prompt influence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Higher values follow the prompt more literally and vary less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make it loop seamlessly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Place at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate</source>
+        <translation type="unfinished">生成</translation>
+    </message>
+    <message>
+        <source>Billed by ElevenLabs to your account</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">關閉</translation>
+    </message>
+</context>
+<context>
     <name>SourceLabAudioSection</name>
     <message>
         <source>-14 LUFS (streaming)</source>
@@ -22918,6 +23479,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Stop generating</source>
         <translation>停止生成</translation>
+    </message>
+    <message>
+        <source>Sound effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate a sound effect from a text prompt (ElevenLabs)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Record a voice</source>
@@ -24721,6 +25290,62 @@ If playback stutters, try another.</source>
         <source>My style %1</source>
         <translation>我的樣式 %1</translation>
     </message>
+    <message>
+        <source>Import animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation presets (*.json *.lottie)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t import that animation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported, but some features aren’t supported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation preset (*.json)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation exported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t export the animation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">重命名</translation>
+    </message>
+    <message>
+        <source>Delete animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">刪除</translation>
+    </message>
+    <message>
+        <source>Remove “%1” from your imported animations? It is also cleared from the selected clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TextInspectorAccentSection</name>
@@ -24878,6 +25503,29 @@ If playback stutters, try another.</source>
     <message>
         <source>Plays for every caption</source>
         <translation>每條字幕均播放</translation>
+    </message>
+</context>
+<context>
+    <name>TextInspectorAnimatePage</name>
+    <message>
+        <source>Import…</source>
+        <translation type="unfinished">導入…</translation>
+    </message>
+    <message>
+        <source>Import an animation from a Lottie or exported preset file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation type="unfinished">重命名…</translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation type="unfinished">導出…</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">刪除</translation>
     </message>
 </context>
 <context>
@@ -25567,6 +26215,53 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineAutoReframeDialog</name>
+    <message>
+        <source>Auto reframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track</source>
+        <translation type="unfinished">跟蹤</translation>
+    </message>
+    <message>
+        <source>Follow face</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep centred</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows the clip&apos;s face track. Without one, the crop stays centred.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">形狀</translation>
+    </message>
+    <message>
+        <source>Vertical 9:16</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Square 1:1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Portrait 4:5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wide 16:9</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineBakeContextMenu</name>
     <message>
         <source>Re-bake</source>
@@ -25686,6 +26381,22 @@ If playback stutters, try another.</source>
         <translation>在播放頭處分割項目</translation>
     </message>
     <message>
+        <source>Split on beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap clips to beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap with previous clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap with next clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Separate audio</source>
         <translation>分離音頻</translation>
     </message>
@@ -25746,6 +26457,10 @@ If playback stutters, try another.</source>
         <translation>裁剪…</translation>
     </message>
     <message>
+        <source>Auto reframe…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Enhance video…</source>
         <translation>增強視頻…</translation>
     </message>
@@ -25804,6 +26519,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Paste effects</source>
         <translation>貼上效果</translation>
+    </message>
+    <message>
+        <source>Remove all effects</source>
+        <translation type="unfinished">移除所有效果</translation>
     </message>
     <message>
         <source>Save effects as preset…</source>
@@ -25987,6 +26706,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Paste here</source>
         <translation>貼上至此處</translation>
+    </message>
+    <message>
+        <source>Close gaps in work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close all gaps on track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add bookmark here</source>
@@ -28115,6 +28842,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Cancelled</source>
         <translation>已取消</translation>
+    </message>
+    <message>
+        <source>Sound effect added to the timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sound effect added to the media bin</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Speech added to the timeline</source>
