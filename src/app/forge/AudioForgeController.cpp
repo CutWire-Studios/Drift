@@ -50,6 +50,24 @@ QString clipLabel(const drift::Clip &c)
     return c.name.isEmpty() ? c.id.left(8) : c.name;
 }
 
+// A new document starts as a small working rack: a low-pass filter swept by an LFO into a delay,
+// with the delay's mix on a slider.
+ForgeDoc seedDoc()
+{
+    ForgeDoc d = emptyDoc(Kind::Audio);
+    auto apply = [&](const OpResult &r) {
+        if (r.ok())
+            d = r.doc;
+        return r.created.value(0);
+    };
+    const QString filter = apply(addPedal(d, QStringLiteral("filter")));
+    const QString delay = apply(addPedal(d, QStringLiteral("delay")));
+    const QString lfo = apply(addModulator(d, QStringLiteral("lfo")));
+    apply(addRoute(d, lfo, filter, QStringLiteral("cutoff"), 0.5));
+    apply(exposeValue(d, ValuePath::knobOf(delay, QStringLiteral("mix"))));
+    return d;
+}
+
 double asNumber(const QJsonValue &v)
 {
     return v.isBool() ? (v.toBool() ? 1.0 : 0.0) : v.toDouble();
@@ -114,7 +132,7 @@ AudioForgeController::AudioForgeController(AppController *app, WorkspaceStore *w
             useSelection();
     });
 
-    m_doc = emptyDoc(Kind::Audio);
+    m_doc = seedDoc();
     refresh(true);
     refreshRecent();
 
@@ -724,7 +742,7 @@ void AudioForgeController::newDoc()
 {
     if (m_dirty)
         save();
-    replaceDoc(emptyDoc(Kind::Audio));
+    replaceDoc(seedDoc());
     refreshRecent();
 }
 

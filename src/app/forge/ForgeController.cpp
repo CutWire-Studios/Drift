@@ -54,6 +54,8 @@ QString rootDir()
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 }
 
+// Each kind starts as a small working example rather than a bare pass-through, so a new document
+// already shows how inputs, nodes and sliders fit together.
 ForgeDoc seedDoc(Kind kind)
 {
     ForgeDoc d = emptyDoc(kind);
@@ -63,15 +65,60 @@ ForgeDoc seedDoc(Kind kind)
         d = r.doc;
         return r.created.value(0);
     };
-    const QString out = add(info.outputNode, 560, 160);
-    QString source;
-    if (kind == Kind::Transition) {
-        source = add(QStringLiteral("from"), 40, 60);
-        add(QStringLiteral("to"), 40, 260);
-    } else {
-        source = add(QStringLiteral("video"), 40, 160);
+    auto wire = [&](const QString &from, const QString &fromSocket, const QString &to, const QString &toSocket) {
+        d = drift::forge::connect(d, from, fromSocket, to, toSocket).doc;
+    };
+    auto slider = [&](const QString &node, const QString &input) {
+        const OpResult r = expose(d, node, input);
+        if (r.ok())
+            d = r.doc;
+    };
+    const QString image = QStringLiteral("image");
+    const QString value = QStringLiteral("value");
+
+    switch (kind) {
+    case Kind::Transition: {
+        // Crossfade whose timing runs through an ease curve.
+        const QString from = add(QStringLiteral("from"), 40, 40);
+        const QString to = add(QStringLiteral("to"), 40, 200);
+        const QString progress = add(QStringLiteral("progress"), 40, 360);
+        const QString ease = add(QStringLiteral("ease"), 300, 360);
+        const QString mix = add(QStringLiteral("mix"), 560, 160);
+        const QString out = add(info.outputNode, 820, 160);
+        wire(progress, value, ease, QStringLiteral("t"));
+        wire(from, image, mix, QStringLiteral("a"));
+        wire(to, image, mix, QStringLiteral("b"));
+        wire(ease, value, mix, QStringLiteral("amount"));
+        wire(mix, image, out, image);
+        break;
     }
-    d = drift::forge::connect(d, source, QStringLiteral("image"), out, QStringLiteral("image")).doc;
+    case Kind::Animation: {
+        // Eased fade from transparent to the clip; played out, it fades away.
+        const QString video = add(QStringLiteral("video"), 40, 60);
+        const QString progress = add(QStringLiteral("progress"), 40, 260);
+        const QString ease = add(QStringLiteral("ease"), 300, 260);
+        const QString mix = add(QStringLiteral("mix"), 560, 120);
+        const QString out = add(info.outputNode, 820, 120);
+        d = setData(d, ease, QStringLiteral("curve"), QStringLiteral("out"));
+        d = setInput(d, mix, QStringLiteral("a"), QJsonArray{0, 0, 0, 0});
+        wire(progress, value, ease, QStringLiteral("t"));
+        wire(video, image, mix, QStringLiteral("b"));
+        wire(ease, value, mix, QStringLiteral("amount"));
+        wire(mix, image, out, image);
+        break;
+    }
+    default: {
+        // Colour wash with its colour and strength on sliders.
+        const QString video = add(QStringLiteral("video"), 40, 160);
+        const QString tint = add(QStringLiteral("tint"), 300, 160);
+        const QString out = add(info.outputNode, 560, 160);
+        wire(video, image, tint, image);
+        wire(tint, image, out, image);
+        slider(tint, QStringLiteral("color"));
+        slider(tint, QStringLiteral("amount"));
+        break;
+    }
+    }
     return d;
 }
 
