@@ -1,6 +1,6 @@
 {
   "id": "audio-forge",
-  "name": "Audio Forge",
+  "name": "Audio effect maker",
   "builtin": true,
   "order": 13,
   "windows": [

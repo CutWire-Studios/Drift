@@ -1,6 +1,6 @@
 {
   "id": "forge",
-  "name": "Forge",
+  "name": "Video effect maker",
   "builtin": true,
   "order": 12,
   "windows": [
