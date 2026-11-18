@@ -11,12 +11,14 @@ Item {
     property bool hasTargets: false
     property bool allTargetsKeyed: false
     property bool canClear: false
+    property bool canSmooth: false
     property bool canFitSelection: false
 
     signal prevKey()
     signal nextKey()
     signal toggleKey()
     signal clearKeys()
+    signal smoothKeys()
     signal modeRequested(string mode)
     signal normalizeToggled()
     signal showHandlesToggled()
@@ -76,6 +78,13 @@ Item {
                 enabled: root.canClear
                 tooltip: qsTr("Clear all keyframes of the selected properties")
                 onClicked: root.clearKeys()
+            }
+
+            IconButton {
+                glyph: Theme.icons.wand
+                enabled: root.canSmooth
+                tooltip: qsTr("Auto-smooth the selected keyframes, or every key of the selected properties")
+                onClicked: root.smoothKeys()
             }
 
             Rectangle {

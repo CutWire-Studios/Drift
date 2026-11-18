@@ -1006,6 +1006,11 @@ public:
     };
     ReorderResult moveClipNextTo(const QString &clipId, const QString &neighbourId, bool after);
     ReorderResult swapClips(const QString &firstId, const QString &secondId);
+    // The clip right before/after this one on its track by timeline start, or empty. Adjustment
+    // tracks have none: their clips follow the clips they apply to.
+    QString neighbourClipId(int trackIndex, int clipIndex, bool next) const;
+    Q_INVOKABLE bool hasClipNeighbour(int trackIndex, int clipIndex, bool next) const;
+    Q_INVOKABLE void swapWithNeighbour(int trackIndex, int clipIndex, bool next);
     // setClipTrim's arithmetic on one clip: clamps the range to the source and re-derives the
     // timeline duration from it and the speed.
     void applyClipTrim(drift::Clip &clip, double inPoint, double outPoint) const;
@@ -1505,7 +1510,7 @@ public:
                                      double atSeconds, bool hold);
     // Catmull-Rom auto tangents on the key at atSeconds, or on every key when `all`. Never touches
     // the other position axis. Returns false when the property has no such key.
-    bool setKeyframeSmooth(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
+    Q_INVOKABLE bool setKeyframeSmooth(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
                            bool all);
     struct KeyframeBatch
     {
@@ -1554,8 +1559,11 @@ public:
     // undo step: the adjustments pinned to it go, and a nested lane left empty goes with them. A
     // pinned adjustment stands for its clip. Only this clip's stacks: a linked A/V partner keeps
     // its own. Returns how many adjustment clips were deleted; 0 changes nothing and pushes no undo.
-    int removeAllEffects(int trackIndex, int clipIndex, bool includeMasks = false);
+    Q_INVOKABLE int removeAllEffects(int trackIndex, int clipIndex, bool includeMasks = false);
     Q_INVOKABLE void setEffectEnabled(int trackIndex, int clipIndex, int effectIndex, bool enabled);
+    // Drops all but the newest `keepLast` applied steps, and every undone (redo) one. Returns
+    // how many steps went.
+    Q_INVOKABLE int clearUndoHistory(int keepLast);
     Q_INVOKABLE void moveEffect(int trackIndex, int clipIndex, int fromIndex, int toIndex);
     Q_INVOKABLE bool setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
                                     double value);
@@ -2385,9 +2393,6 @@ protected:
     void trimUndoHistory();
     // Keeps steps [first, last) of `capture` with `index` of them applied; the project is untouched.
     void rebuildUndoStack(const drift::HistoryCapture &capture, int first, int last, int index);
-    // Drops all but the newest `keepLast` applied steps, and every undone (redo) one. Returns
-    // how many steps went.
-    int clearUndoHistory(int keepLast);
     // This project's own history settings, saved with it, each overriding the app's when set.
     // Steps: kProjectHistoryUnset, -1 = no limit, 0 = no history, N = most undoable steps.
     // Persist: -1 unset, 0 = this session only, 1 = saved with the project. Kept apart so turning

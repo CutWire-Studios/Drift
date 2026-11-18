@@ -22,13 +22,16 @@ Item {
         ? qsTr("Analyzing…")
         : (EditorState.onsetsVisible ? qsTr("Hide hits")
                                      : qsTr("Find beats and hits in the audio under this clip"))
+    readonly property string smoothTip: host.focusedIndex >= 0
+        ? qsTr("Auto-smooth the focused curve")
+        : qsTr("Auto-smooth every shown curve")
     readonly property string handlesTip: host.showHandles
         ? qsTr("Hide Bezier handles")
         : qsTr("Show Bezier handles. Without them, drag a curve to bend it")
 
     // Buttons drop out lowest-priority first; the overflow button's menu has all of them.
     readonly property var fit: {
-        const wants = [true, host.curveEditing, true, true]
+        const wants = [true, host.curveEditing, true, true, true]
         let total = 0
         for (const w of wants)
             total += w ? 1 : 0
@@ -37,7 +40,7 @@ Item {
         const overflow = total > cap
         let room = overflow ? Math.max(0, cap - 1) : cap
         const out = { overflow: overflow }
-        const keys = ["toggle", "handles", "beat", "onsets"]
+        const keys = ["toggle", "handles", "beat", "onsets", "smooth"]
         for (let i = 0; i < wants.length; ++i) {
             out[keys[i]] = wants[i] && room > 0
             if (out[keys[i]])
@@ -126,6 +129,17 @@ Item {
         }
 
         IconButton {
+            visible: bar.fit.smooth
+            glyph: Theme.icons.wand
+            variant: "text"
+            buttonSize: bar.buttonSize
+            iconSize: 14
+            enabled: host.series.length > 0
+            tooltip: bar.smoothTip
+            onClicked: host.autoSmooth()
+        }
+
+        IconButton {
             id: overflowButton
             visible: bar.fit.overflow
             glyph: Theme.icons.ellipsis
@@ -162,6 +176,13 @@ Item {
             text: bar.onsetTip
             icon.name: EditorState.onsetsVisible ? Theme.icons.check : Theme.icons.audioLines
             onTriggered: bar.toggleOnsets()
+        }
+    }
+        ThemedMenuItem {
+            enabled: host.series.length > 0
+            text: bar.smoothTip
+            icon.name: Theme.icons.wand
+            onTriggered: host.autoSmooth()
         }
     }
 }

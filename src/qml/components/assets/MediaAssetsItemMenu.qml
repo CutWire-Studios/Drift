@@ -41,6 +41,15 @@ ThemedContextMenu {
         visible: root.kind !== "composite" && root.host.selectedAssetIds.length <= 1
         onTriggered: root.host.replaceRequested(root.assetIndex)
     }
+    ThemedMenuItem {
+        text: qsTr("Reload from disk")
+        icon.name: Theme.icons.reset
+        visible: root.kind !== "composite" && root.host.selectedAssetIds.length <= 1
+        onTriggered: {
+            if (!EditorState.bin.refreshSource(root.assetIndex))
+                Toasts.error(qsTr("Couldn’t reload this media. It may not be a file on disk, or is already being read."))
+        }
+    }
     // Flat rather than a nested menu: a sub-menu's entry can't be hidden per asset kind.
     ThemedMenuItem {
         text: qsTr("Use as mask")

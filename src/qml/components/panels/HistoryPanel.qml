@@ -21,6 +21,56 @@ PanelFrame {
         title: qsTr("History")
     }
 
+    ThemedButton {
+        anchors.right: header.right
+        anchors.rightMargin: Theme.spacingSm
+        anchors.verticalCenter: header.verticalCenter
+        text: qsTr("Clear history…")
+        glyph: Theme.icons.trash
+        variant: "ghost"
+        enabled: EditorState.undoHistory.length > 0
+        onClicked: {
+            clearDialog.keepLast = 0
+            keepField.value = 0
+            clearDialog.open()
+        }
+    }
+
+    ThemedDialog {
+        id: clearDialog
+
+        property int keepLast: 0
+
+        title: qsTr("Clear history")
+        acceptText: qsTr("Clear")
+        acceptVariant: "destructive"
+        preferredWidth: Theme.dialogWidthSm
+        acceptOnReturn: false
+
+        onAccepted: EditorState.clearUndoHistory(clearDialog.keepLast)
+
+        contentItem: Column {
+            spacing: Theme.spacingLg
+            width: parent ? parent.width : 320
+
+            ThemedLabel {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("Frees undo memory. Undone steps (redo) are dropped too, and cleared steps can't be restored.")
+            }
+            ThemedLabel {
+                text: qsTr("Keep last steps")
+            }
+            ThemedNumberField {
+                id: keepField
+                width: parent.width
+                from: 0
+                to: Math.max(1, EditorState.undoIndex)
+                onEdited: v => clearDialog.keepLast = Math.round(v)
+            }
+        }
+    }
+
     EmptyState {
         anchors.top: header.bottom
         anchors.bottom: parent.bottom

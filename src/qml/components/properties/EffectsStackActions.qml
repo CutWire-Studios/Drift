@@ -1,7 +1,7 @@
 import QtQuick
 import Drift
 
-Row {
+Flow {
     property var inspector
     visible: inspector.hasSelection
     width: parent.width
@@ -27,5 +27,12 @@ Row {
         variant: "secondary"
         visible: inspector.selectedEffects.length > 0
         onClicked: inspector.saveEffectPresetRequested(-1)
+    }
+    ThemedButton {
+        text: qsTr("Remove all")
+        glyph: Theme.icons.trash
+        variant: "secondary"
+        visible: inspector.selectedEffects.length > 0
+        onClicked: EditorState.removeAllEffects(EditorState.selectedTrack, EditorState.selectedClip)
     }
 }

@@ -3363,6 +3363,39 @@ AppController::ReorderResult AppController::swapClips(const QString &firstId, co
     return result;
 }
 
+QString AppController::neighbourClipId(int trackIndex, int clipIndex, bool next) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex) || m_project.tracks().at(trackIndex).isAdjustment())
+        return {};
+    const auto &clips = m_project.tracks().at(trackIndex).clips;
+    const drift::TimeUs start = clips.at(clipIndex).timelineStart;
+    const drift::Clip *best = nullptr;
+    for (int i = 0; i < clips.size(); ++i) {
+        if (i == clipIndex)
+            continue;
+        const drift::Clip &other = clips.at(i);
+        if (next ? other.timelineStart > start && (!best || other.timelineStart < best->timelineStart)
+                 : other.timelineStart < start && (!best || other.timelineStart > best->timelineStart))
+            best = &other;
+    }
+    return best ? best->id : QString();
+}
+
+bool AppController::hasClipNeighbour(int trackIndex, int clipIndex, bool next) const
+{
+    return !neighbourClipId(trackIndex, clipIndex, next).isEmpty();
+}
+
+void AppController::swapWithNeighbour(int trackIndex, int clipIndex, bool next)
+{
+    const QString other = neighbourClipId(trackIndex, clipIndex, next);
+    if (other.isEmpty())
+        return;
+    const ReorderResult result = swapClips(m_project.tracks().at(trackIndex).clips.at(clipIndex).id, other);
+    if (!result.error.isEmpty())
+        setLastMessage(result.error, QStringLiteral("error"));
+}
+
 AppController::SequenceResult AppController::setTrackSequence(int trackIndex, const QList<SequenceEntry> &entries,
                                                               drift::TimeUs startUs)
 {
