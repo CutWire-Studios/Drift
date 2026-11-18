@@ -155,8 +155,8 @@ bool checkUserLayout(const PackageInfo &info, QString *error)
     // Audio effects are safe to sideload: a package only names one of the built-in processors and
     // sets its parameters, so it carries no code.
     if (provide.kind != QLatin1String("effects") && provide.kind != QLatin1String("transitions")
-        && provide.kind != QLatin1String("audio-effects")) {
-        return fail(error, QStringLiteral("a user package can only provide an effect, a transition or an audio effect"));
+        && provide.kind != QLatin1String("animations") && provide.kind != QLatin1String("audio-effects")) {
+        return fail(error, QStringLiteral("a user package can only provide an effect, a transition, an animation or an audio effect"));
     }
 
     const QString rootPrefix = provide.root + QLatin1Char('/');

@@ -1,0 +1,35 @@
+{
+  "backend": "gpu",
+  "category": "impact",
+  "description": "A rhythmic zoom kick with a colour split on every beat.",
+  "displayName": "Zoom punch",
+  "id": "starter_effect_zoom_punch",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 2,
+      "displayName": "Beats per second",
+      "identifier": "bps",
+      "maxValue": 8,
+      "minValue": 0.25,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "mask",
+      "name": "k_n2_mask",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "sharpness",
+      "name": "k_n2_sharpness",
+      "node": "n2",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "intensity",
+      "name": "k_n2_intensity",
+      "node": "n2",
+      "type": "float",
+      "value": 1.5
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"edge_glow\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"color\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

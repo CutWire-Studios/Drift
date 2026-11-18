@@ -10,6 +10,10 @@
 // would restore the boundary.
 #include "engine/ml/vision/detection/ObjectDetector.h"
 #include "engine/packages/assets/StickerCatalog.h"
+#include "engine/packages/assets/StickerPackImport.h"
+#include "engine/platform/AndroidUri.h"
+
+#include <QTemporaryFile>
 
 
 using namespace drift::appdetail;
@@ -94,9 +98,86 @@ QVariantList AppController::builtinStickerCategories() const
         out.append(QVariantMap{
             {QStringLiteral("id"), category.id},
             {QStringLiteral("label"), category.label},
+            {QStringLiteral("packId"), category.packId},
+            {QStringLiteral("custom"), category.custom},
         });
     }
     return out;
+}
+
+QVariantList AppController::customStickerPacks() const
+{
+    QVariantList out;
+    for (const StickerPack &pack : ::stickerPacks()) {
+        if (!pack.custom)
+            continue;
+        out.append(QVariantMap{
+            {QStringLiteral("id"), pack.id},
+            {QStringLiteral("name"), pack.name},
+            {QStringLiteral("count"), int(pack.stickers.size())},
+        });
+    }
+    return out;
+}
+
+QVariantMap AppController::importStickerPack(const QUrl &url)
+{
+    QString path = url.isLocalFile() ? url.toLocalFile() : url.toString();
+#ifdef Q_OS_ANDROID
+    // The zip reader seeks around the archive, so a SAF document is copied to a real file first.
+    QTemporaryFile copy(QDir::temp().filePath(QStringLiteral("drift-stickers-XXXXXX.zip")));
+    if (AndroidUri::isContentUri(url)) {
+        std::unique_ptr<QFile> src = AndroidUri::openForRead(url);
+        if (!src || !copy.open()) {
+            setLastMessage(tr("Could not read the selected file"), QStringLiteral("error"));
+            return {};
+        }
+        for (;;) {
+            const QByteArray chunk = src->read(1 << 20);
+            if (chunk.isEmpty())
+                break;
+            if (copy.write(chunk) != chunk.size()) {
+                setLastMessage(tr("Could not read the selected file"), QStringLiteral("error"));
+                return {};
+            }
+        }
+        copy.close();
+        path = copy.fileName();
+    }
+#endif
+    if (path.isEmpty())
+        return {};
+
+    const StickerPackImportResult result = QFileInfo(path).isDir()
+        ? importStickerPackFromDirectory(path, userStickerPacksDir())
+        : importStickerPackFromZip(path, userStickerPacksDir());
+    if (!result.error.isEmpty()) {
+        setLastMessage(result.error, QStringLiteral("error"));
+        return {};
+    }
+
+    reloadStickerCatalog();
+    emit stickersChanged();
+    setLastMessage(tr("Imported “%1” (%n sticker(s))", "", result.count).arg(result.name),
+                   QStringLiteral("success"));
+    return {
+        {QStringLiteral("installed"), result.packId},
+        {QStringLiteral("count"), result.count},
+    };
+}
+
+bool AppController::removeStickerPack(const QString &packId)
+{
+    QString error;
+    if (!removeUserStickerPack(packId, &error, userStickerPacksDir())) {
+        setLastMessage(error, QStringLiteral("error"));
+        return false;
+    }
+    reloadStickerCatalog();
+    emit stickersChanged();
+    setLastMessage(tr("Sticker pack removed"), QStringLiteral("success"));
+    emitPreviewFrame();
+    return true;
 }
 
 QVariantList AppController::builtinShapes() const
@@ -1259,6 +1340,181 @@ void AppController::setCameraAimAtTarget(int trackIndex, int clipIndex, bool ena
     m_project.tracks()[trackIndex].clips[clipIndex].aimAtTarget = enabled;
     pushProjectEdit(before, enabled ? tr("Aim camera at target") : tr("Free camera"));
     finishEdit(enabled ? tr("Camera aims at its point of interest") : tr("Camera uses its own rotation"));
+}
+
+namespace {
+
+drift::SceneCamera3d cameraFromMoveState(const QVariantMap &state)
+{
+    drift::SceneCamera3d camera;
+    camera.positionX = state.value(QStringLiteral("x")).toDouble();
+    camera.positionY = state.value(QStringLiteral("y")).toDouble();
+    camera.positionZ = state.value(QStringLiteral("z")).toDouble();
+    camera.rotationX = state.value(QStringLiteral("rotationX")).toDouble();
+    camera.rotationY = state.value(QStringLiteral("rotationY")).toDouble();
+    camera.rotationZ = state.value(QStringLiteral("rotation")).toDouble();
+    camera.aimAtTarget = state.value(QStringLiteral("aim")).toBool();
+    camera.targetX = state.value(QStringLiteral("poiX")).toDouble();
+    camera.targetY = state.value(QStringLiteral("poiY")).toDouble();
+    camera.targetZ = state.value(QStringLiteral("poiZ")).toDouble();
+    camera.zoom = state.value(QStringLiteral("zoom")).toDouble();
+    return camera;
+}
+
+QVariantMap cameraMoveEnd(const drift::SceneCamera3d &camera)
+{
+    const QVector3D eye = drift::sceneCameraEye(camera);
+    return QVariantMap{{QStringLiteral("eye"), QVariantList{double(eye.x()), double(eye.y()), double(eye.z())}},
+                       {QStringLiteral("rotationX"), camera.rotationX},
+                       {QStringLiteral("rotationY"), camera.rotationY},
+                       {QStringLiteral("zoom"), camera.zoom}};
+}
+
+struct CameraMoveProp
+{
+    const char *name;
+    double drift::SceneCamera3d::*field;
+};
+constexpr CameraMoveProp kCameraMoveProps[] = {
+    {"positionX", &drift::SceneCamera3d::positionX}, {"positionY", &drift::SceneCamera3d::positionY},
+    {"z", &drift::SceneCamera3d::positionZ},       {"rotationX", &drift::SceneCamera3d::rotationX},
+    {"rotationY", &drift::SceneCamera3d::rotationY}, {"rotation", &drift::SceneCamera3d::rotationZ},
+    {"perspective", &drift::SceneCamera3d::zoom},
+    {"anchorX", &drift::SceneCamera3d::targetX},   {"anchorY", &drift::SceneCamera3d::targetY},
+    {"anchorZ", &drift::SceneCamera3d::targetZ},
+};
+
+} // namespace
+
+QStringList AppController::cameraMoveIds()
+{
+    return {QStringLiteral("dolly_in"),    QStringLiteral("dolly_out"),   QStringLiteral("push_in"),
+            QStringLiteral("pull_out"),    QStringLiteral("pan_left"),    QStringLiteral("pan_right"),
+            QStringLiteral("tilt_up"),     QStringLiteral("tilt_down"),   QStringLiteral("truck_left"),
+            QStringLiteral("truck_right"), QStringLiteral("crane_up"),    QStringLiteral("crane_down"),
+            QStringLiteral("orbit_left"),  QStringLiteral("orbit_right")};
+}
+
+QVariantList AppController::cameraMovePresets() const
+{
+    const QStringList labels = {tr("Dolly in"),    tr("Dolly out"),   tr("Push in (zoom)"), tr("Pull out (zoom)"),
+                                tr("Pan left"),    tr("Pan right"),   tr("Tilt up"),        tr("Tilt down"),
+                                tr("Truck left"),  tr("Truck right"), tr("Crane up"),       tr("Crane down"),
+                                tr("Orbit left"),  tr("Orbit right")};
+    const QStringList ids = cameraMoveIds();
+    QVariantList out;
+    for (int i = 0; i < ids.size(); ++i)
+        out.append(QVariantMap{{QStringLiteral("id"), ids.at(i)}, {QStringLiteral("label"), labels.at(i)}});
+    return out;
+}
+
+QVariantMap AppController::applyCameraMove(int track, int index, const QString &move, double start, double end,
+                                           const QString &easing, bool hasAmount, double amountArg,
+                                           bool hasCentre, const QVector3D &orbitCentre)
+{
+    const QVariantMap state = cameraStateAt(start, track, index);
+    auto amountOr = [&](double fallback) { return hasAmount ? amountArg : fallback; };
+
+    const drift::SceneCamera3d from = cameraFromMoveState(state);
+    drift::SceneCamera3d to = from;
+    const QMatrix4x4 turn = drift::sceneCameraRotation(from);
+    const auto along = [&](const QVector3D &axis, double amount) {
+        const QVector3D step = turn.mapVector(axis) * float(amount);
+        to.positionX += step.x();
+        to.positionY += step.y();
+        to.positionZ += step.z();
+    };
+    if (move == QLatin1String("dolly_in") || move == QLatin1String("dolly_out")) {
+        along({0.f, 0.f, 1.f}, (move == QLatin1String("dolly_in") ? 1.0 : -1.0) * amountOr(300.0));
+    } else if (move == QLatin1String("push_in") || move == QLatin1String("pull_out")) {
+        const double fraction = qBound(0.0, amountOr(0.35), 0.9);
+        to.zoom = from.zoom * (move == QLatin1String("push_in") ? 1.0 + fraction : 1.0 - fraction);
+    } else if (move == QLatin1String("pan_left") || move == QLatin1String("pan_right")) {
+        to = drift::rotatedKeepingEye(from, from.rotationX,
+                                      from.rotationY + (move == QLatin1String("pan_right") ? 1.0 : -1.0) * amountOr(20.0));
+    } else if (move == QLatin1String("tilt_up") || move == QLatin1String("tilt_down")) {
+        to = drift::rotatedKeepingEye(from, from.rotationX + (move == QLatin1String("tilt_up") ? 1.0 : -1.0) * amountOr(15.0),
+                                      from.rotationY);
+    } else if (move == QLatin1String("truck_left") || move == QLatin1String("truck_right")) {
+        along({1.f, 0.f, 0.f}, (move == QLatin1String("truck_right") ? 1.0 : -1.0) * amountOr(200.0));
+    } else if (move == QLatin1String("crane_up") || move == QLatin1String("crane_down")) {
+        along({0.f, 1.f, 0.f}, (move == QLatin1String("crane_down") ? 1.0 : -1.0) * amountOr(200.0));
+    } else {
+        const QVector3D centre = hasCentre ? orbitCentre
+                                           : QVector3D(float(m_project.width() * 0.5), float(m_project.height() * 0.5), 0.f);
+        // Circle the target about the vertical axis; + degrees swings the eye toward +x (right). The
+        // eye sits at -z of its target and a right-handed turn about y takes -z toward -x, hence the sign.
+        const double degrees = (move == QLatin1String("orbit_left") ? -1.0 : 1.0) * amountOr(45.0);
+        QMatrix4x4 swing;
+        swing.rotate(float(-degrees), 0.f, 1.f, 0.f);
+        const QVector3D eye = centre + swing.map(drift::sceneCameraEye(from) - centre);
+        to = drift::aimAt(from, eye, centre);
+    }
+
+    const double playhead = drift::usToSeconds(m_playheadUs);
+    m_mcpController->beginBatch();
+    QStringList written;
+    for (const CameraMoveProp &p : kCameraMoveProps) {
+        if (qFuzzyCompare(1.0 + from.*p.field, 1.0 + to.*p.field))
+            continue;
+        const QString prop = QString::fromLatin1(p.name);
+        setClipKeyframe(track, index, prop, start, from.*p.field);
+        setClipKeyframe(track, index, prop, end, to.*p.field);
+        // Easing lives on the segment's first key, and the preset acts on the key at the playhead.
+        setPlayheadSeconds(start);
+        setKeyframeInterpolation(track, index, prop, easing);
+        written.append(prop);
+    }
+    setPlayheadSeconds(playhead);
+    m_mcpController->endBatch(tr("Camera move"), !written.isEmpty());
+    if (written.isEmpty())
+        return {{QStringLiteral("error"), tr("That move changes nothing")}};
+    return {{QStringLiteral("props"), written},
+            {QStringLiteral("from"), cameraMoveEnd(from)},
+            {QStringLiteral("to"), cameraMoveEnd(to)}};
+}
+
+bool AppController::addCameraMove(const QString &move)
+{
+    if (!cameraMoveIds().contains(move))
+        return false;
+    QVariantMap state;
+    if (isValidClipIndex(m_selectedTrack, m_selectedClip))
+        state = cameraStateAt(drift::usToSeconds(m_playheadUs), m_selectedTrack, m_selectedClip);
+    if (!state.value(QStringLiteral("active")).toBool())
+        state = cameraStateAt(drift::usToSeconds(m_playheadUs));
+    if (!state.value(QStringLiteral("active")).toBool()) {
+        setLastMessage(tr("Select a camera clip first"));
+        return false;
+    }
+    const int track = state.value(QStringLiteral("track")).toInt();
+    const int index = state.value(QStringLiteral("clip")).toInt();
+    const double clipStart = state.value(QStringLiteral("start")).toDouble();
+    const double clipEnd = clipStart + state.value(QStringLiteral("dur")).toDouble();
+
+    double start = drift::usToSeconds(m_playheadUs);
+    double end = start + 2.0;
+    if (m_project.hasWorkArea()) {
+        start = workAreaInSeconds();
+        end = workAreaOutSeconds();
+    } else if (isValidClipIndex(m_selectedTrack, m_selectedClip)) {
+        const drift::Clip &selected = m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip);
+        start = drift::usToSeconds(selected.timelineStart);
+        end = drift::usToSeconds(selected.timelineEnd());
+    }
+    start = qMax(start, clipStart);
+    end = qMin(end, clipEnd);
+    if (!(end > start)) {
+        setLastMessage(tr("The camera clip does not cover that span"));
+        return false;
+    }
+    const QVariantMap result = applyCameraMove(track, index, move, start, end, QStringLiteral("ease"),
+                                               false, 0.0, false, QVector3D());
+    if (result.contains(QStringLiteral("error"))) {
+        setLastMessage(result.value(QStringLiteral("error")).toString());
+        return false;
+    }
+    return true;
 }
 
 QVariantList AppController::clipWorldCentreAt(int trackIndex, int clipIndex, double seconds) const

@@ -1,0 +1,51 @@
+{
+  "category": "reveal",
+  "defaultDurationMs": 500,
+  "description": "A soft edge sweeps across to uncover the clip, or cover it again.",
+  "directions": [
+    "in",
+    "out"
+  ],
+  "displayName": "Wipe reveal",
+  "id": "starter_animation_wipe_reveal",
+  "nextFeatures": [
+    "kind:animation"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0,
+      "displayName": "Direction",
+      "identifier": "angle",
+      "maxValue": 360,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.08,
+      "displayName": "Softness",
+      "identifier": "softness",
+      "maxValue": 0.5,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

@@ -2,13 +2,20 @@
 
 #include "engine/packages/transitions/TransitionPackageLoader.h"
 
-#include <QCoreApplication>
-#include <QHash>
 #include <QMutex>
 #include <QMutexLocker>
+#include <deque>
+#include <memory>
+#include <QCoreApplication>
+#include <QHash>
 #include <QSet>
 
 namespace {
+
+std::shared_ptr<TransitionPresetEntry> g_draft;
+std::deque<std::shared_ptr<TransitionPresetEntry>> g_retiredDrafts;
+QMutex g_draftMutex;
+constexpr size_t kDraftRetireDepth = 8;
 
 QList<TransitionPresetEntry> g_catalog;
 QHash<QString, int> g_idIndex;
@@ -76,8 +83,29 @@ const QList<TransitionPresetEntry> &transitionCatalog()
     return g_catalog;
 }
 
+void setDraftTransition(std::optional<TransitionPresetEntry> entry)
+{
+    std::shared_ptr<TransitionPresetEntry> next;
+    if (entry) {
+        next = std::make_shared<TransitionPresetEntry>(std::move(*entry));
+        next->meta.id = kDraftTransitionId;
+    }
+    QMutexLocker lock(&g_draftMutex);
+    if (g_draft) {
+        g_retiredDrafts.push_back(std::move(g_draft));
+        while (g_retiredDrafts.size() > kDraftRetireDepth)
+            g_retiredDrafts.pop_front();
+    }
+    g_draft = std::move(next);
+}
+
 const TransitionPresetEntry *transitionDefForId(const QString &id)
 {
+    {
+        QMutexLocker draftLock(&g_draftMutex);
+        if (id == kDraftTransitionId && g_draft)
+            return g_draft.get();
+    }
     QMutexLocker lock(&g_mutex);
     ensureLocked();
     const auto it = g_idIndex.constFind(id);

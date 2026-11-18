@@ -2456,6 +2456,14 @@
         <translation>動畫</translation>
     </message>
     <message>
+        <source>Edit this animation in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create a new animation in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fade and motion combine — fade also ramps the volume.</source>
         <translation>淡化與動作結合——淡化同時會調節音量。</translation>
     </message>
@@ -2595,6 +2603,10 @@
         <translation>在當前時間分割選取的片段</translation>
     </message>
     <message>
+        <source>Split every track at current time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add transition at playhead</source>
         <translation>在播放磁頭處新增轉場</translation>
     </message>
@@ -2689,6 +2701,18 @@
     <message>
         <source>Select tool</source>
         <translation>選擇工具</translation>
+    </message>
+    <message>
+        <source>Lasso mask tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Intelligent scissors mask tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magic wand mask tool</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search…</source>
@@ -2813,6 +2837,66 @@
     <message>
         <source>Clip duplicated</source>
         <translation>已創建片段副本</translation>
+    </message>
+    <message>
+        <source>Detect beats first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split on beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No beats fall inside the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Split on %n beat(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No cuts were made</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped %n clip(s) to the beat</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No clips were close enough to a beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n marker(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No new markers to add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No gaps to close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gaps are blocked by linked clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Closed %n gap(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Your text here</source>
@@ -3097,6 +3181,10 @@
         <translation>貼上屬性…</translation>
     </message>
     <message>
+        <source>Split selection, or every track, at current time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to previous cut point</source>
         <translation>轉到上一個剪下點</translation>
     </message>
@@ -3332,6 +3420,16 @@
         <source>Transition curve updated</source>
         <translation>轉場曲線已更新</translation>
     </message>
+    <message numerus="yes">
+        <source>Imported “%1” (%n sticker(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Sticker pack removed</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Shape added</source>
         <translation>已添加形狀</translation>
@@ -3411,6 +3509,78 @@
     <message>
         <source>Camera uses its own rotation</source>
         <translation>攝影機使用自身旋轉</translation>
+    </message>
+    <message>
+        <source>Dolly in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dolly out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Push in (zoom)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pull out (zoom)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tilt up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tilt down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Truck left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Truck right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crane up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crane down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That move changes nothing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a camera clip first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The camera clip does not cover that span</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -4353,6 +4523,14 @@
         <translation>關鍵影格已設定</translation>
     </message>
     <message>
+        <source>Reframed, but the crop enlarges the source %1x</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reframed the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset camera</source>
         <translation>重置攝影機</translation>
     </message>
@@ -4769,6 +4947,14 @@
     <message>
         <source>Bookmark updated</source>
         <translation>標記已更新</translation>
+    </message>
+    <message>
+        <source>Colour bookmark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bookmark colour changed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No video at the current time</source>
@@ -5510,6 +5696,44 @@
         <translation>已消除 %1 秒的靜音</translation>
     </message>
     <message>
+        <source>No audio on the other tracks under this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice detection needs the Voice activity (silero.vad) addon. Install it from the addon store, or use level detection.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice detection could not run: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finding speech…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto duck cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">已取消</translation>
+    </message>
+    <message>
+        <source>Auto duck</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Ducked music under %n passage(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No speech found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select exactly two clips with audio to sync</source>
         <translation>選取恰好兩個帶有音訊的片段進行同步</translation>
     </message>
@@ -5587,6 +5811,10 @@
     <message>
         <source>Install a custom audio effect or effect from a .driftfx or zip made in Drift Forge</source>
         <translation>安裝自訂音訊效果，或安裝來自 Drift Forge 製作的 .driftfx 或 zip 效果</translation>
+    </message>
+    <message>
+        <source>Create a new audio effect in Audio Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Audio Effects</source>
@@ -5673,6 +5901,10 @@
         <source>Add to favorites</source>
         <translation>添加到收藏</translation>
     </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AudioEffectsInspector</name>
@@ -5715,6 +5947,426 @@
     <message>
         <source>Audio effect settings</source>
         <translation>音效設置</translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgeAuditionBar</name>
+    <message>
+        <source>Valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Use selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">停止</translation>
+    </message>
+    <message>
+        <source>Loop play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick an audio or video clip on the timeline to hear the pedalboard on it. Loop play repeats its first four seconds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgeController</name>
+    <message>
+        <source>Move nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio wiring follows pedal order. Drag a pedal to a new place or delete it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit value</source>
+        <translation type="unfinished">編輯數值</translation>
+    </message>
+    <message>
+        <source>Switch on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bypass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpose %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose %1 as slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove last lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove modulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lane %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose as slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpose slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That recording is larger than 16 MB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Impulse responses must be WAV files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a convolution reverb first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import impulse response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reorder sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use lowercase letters, digits, underscores and dots, starting with a letter or digit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown field.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This package was not made in Forge.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name the package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is already installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 already exists and is not a package folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That project is not an audio effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select an audio clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select an audio clip first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgeGraphPanel</name>
+    <message>
+        <source>Audio Forge graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a saved audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">復原</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation type="unfinished">重做</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安裝</translation>
+    </message>
+    <message>
+        <source>Install it into the audio effects browser</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">導出</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">已安裝“%1”</translation>
+    </message>
+    <message>
+        <source>Replace existing?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">替換</translation>
+    </message>
+    <message>
+        <source>“%1” is already installed. Replace it with this version?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .driftfx…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .driftfx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift package (*.driftfx)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported to %1</source>
+        <translation type="unfinished">已導出到 %1</translation>
+    </message>
+    <message>
+        <source>Export folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No saved projects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgeInspectorPanel</name>
+    <message>
+        <source>Audio Forge inspector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished">詳細資訊</translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgeNodeTab</name>
+    <message>
+        <source>Select a single node in the graph to edit its settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">刪除</translation>
+    </message>
+    <message>
+        <source>The clip&apos;s sound enters the board here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whatever reaches this node is what you hear.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mixes the lanes of its split back into one sound. It follows the split.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bypass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slider: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Modulated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import recording…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import impulse response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WAV audio (*.wav)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A short WAV recording of a room, spring or plate. Its length sets the reverb tail.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lane levels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove last lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves</source>
+        <translation type="unfinished">移動方式</translation>
+    </message>
+    <message>
+        <source>Moved by</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">移除</translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation type="unfinished">深度</translation>
+    </message>
+</context>
+<context>
+    <name>AudioForgePalettePanel</name>
+    <message>
+        <source>Audio Forge pedals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search pedals</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5831,8 +6483,124 @@
         <translation>已歸一化到 %1 LUFS</translation>
     </message>
     <message>
+        <source>%1 dB</source>
+        <translation type="unfinished">%1 dB</translation>
+    </message>
+    <message>
+        <source>%1%</source>
+        <translation type="unfinished">%1%</translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <translation type="unfinished">%1 毫秒</translation>
+    </message>
+    <message>
+        <source>Ducked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio Mixer</source>
         <translation>音頻混音器</translation>
+    </message>
+    <message>
+        <source>Ducking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lower the selected music clip while other tracks are speaking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duck against</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All other tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The tracks whose audio lowers the music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation type="unfinished">自動</translation>
+    </message>
+    <message>
+        <source>Level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto uses voice detection when installed, otherwise loudness. Voice ignores music and noise.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto uses loudness only. Install the Voice activity (silero.vad) addon to enable Voice detection.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preset</source>
+        <translation type="unfinished">預設</translation>
+    </message>
+    <message>
+        <source>Gentle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Standard</source>
+        <translation type="unfinished">標準</translation>
+    </message>
+    <message>
+        <source>Voiceover</source>
+        <translation type="unfinished">配音</translation>
+    </message>
+    <message>
+        <source>Silence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">自訂</translation>
+    </message>
+    <message>
+        <source>Reduce by</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sensitivity</source>
+        <translation type="unfinished">靈敏度</translation>
+    </message>
+    <message>
+        <source>Fade down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duck music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lower the selected clip under the other tracks&apos; audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a music clip with other audio overlapping it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
     </message>
     <message>
         <source>Measuring… %1%</source>
@@ -6098,6 +6866,10 @@
     <message>
         <source>Speech %1  ·  Music %2</source>
         <translation>語音 %1  ·  音樂 %2</translation>
+    </message>
+    <message>
+        <source>Bands</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add speech &amp; music</source>
@@ -6593,6 +7365,14 @@
     <message>
         <source>Zoom, focal length (36 × 24 mm film) and field of view are one setting in three units. Zooming does not move the camera. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
         <translation>縮放、焦距（36 × 24 mm 底片）和視野是同一設定的三種單位。縮放不會移動攝影機。在此攝影機運行時，它會取代各個片段自身的「透視」值，因為同一個場景只有一個視角。</translation>
+    </message>
+    <message>
+        <source>Add camera move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keys a named move (dolly, pan, crane, orbit…) over the work area, else this clip, from the camera&apos;s current framing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset camera</source>
@@ -8449,6 +9229,10 @@
         <translation>沒有符合“%1”的效果。</translation>
     </message>
     <message>
+        <source>Create a new effect in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete effect</source>
         <translation>刪除效果</translation>
     </message>
@@ -8539,6 +9323,10 @@
     <message>
         <source>Add to favorites</source>
         <translation>添加到收藏</translation>
+    </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete from My Effects</source>
@@ -9037,6 +9825,10 @@
     <message>
         <source>Save as preset…</source>
         <translation>另存為預設…</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10148,6 +10940,499 @@
     </message>
 </context>
 <context>
+    <name>ForgeCodeTab</name>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">複製</translation>
+    </message>
+    <message>
+        <source>Nothing compiled yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgeController</name>
+    <message>
+        <source>Move nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit value</source>
+        <translation type="unfinished">編輯數值</translation>
+    </message>
+    <message>
+        <source>Unexpose %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose %1 as slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview this node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit option</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose as slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpose slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reorder sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use lowercase letters, digits, underscores and dots, starting with a letter or digit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown field.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This package was not made in Forge.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name the package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is already installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 already exists and is not a package folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio effects are not supported yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built-in sample</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut: %1 to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgeDetailsTab</name>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">名稱</translation>
+    </message>
+    <message>
+        <source>Identifier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation type="unfinished">描述</translation>
+    </message>
+    <message>
+        <source>Author</source>
+        <translation type="unfinished">作者</translation>
+    </message>
+    <message>
+        <source>Version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plays as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished">毫秒</translation>
+    </message>
+</context>
+<context>
+    <name>ForgeGraphPanel</name>
+    <message>
+        <source>Forge node graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">轉場</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">動畫</translation>
+    </message>
+    <message>
+        <source>New %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a saved Forge project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">復原</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation type="unfinished">重做</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安裝</translation>
+    </message>
+    <message>
+        <source>Install it into the effect, transition or animation browsers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">導出</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">已安裝“%1”</translation>
+    </message>
+    <message>
+        <source>Replace existing?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">替換</translation>
+    </message>
+    <message>
+        <source>“%1” is already installed. Replace it with this version?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .driftfx…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .driftfx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift package (*.driftfx)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported to %1</source>
+        <translation type="unfinished">已導出到 %1</translation>
+    </message>
+    <message>
+        <source>Export folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No saved projects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgeInspectorPanel</name>
+    <message>
+        <source>Forge inspector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished">詳細資訊</translation>
+    </message>
+    <message>
+        <source>Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgeNodeTab</name>
+    <message>
+        <source>Slider: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a single node in the graph to edit its settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Comma-separated choices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not exposed</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgePalettePanel</name>
+    <message>
+        <source>Forge node palette</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ForgePreviewBar</name>
+    <message>
+        <source>Plays across the cut; Loop repeats the transition window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop repeats the in or out window of the clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shown on the target clip with the current slider values.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previewing a single node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation type="unfinished">
+            <numerusform>%n 個錯誤</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Use selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">停止</translation>
+    </message>
+    <message>
+        <source>Loop play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished">毫秒</translation>
+    </message>
+</context>
+<context>
+    <name>ForgeSlidersTab</name>
+    <message>
+        <source>Reset values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preset name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No sliders yet. Right-click a node and choose Expose as slider, or use Expose in the Node tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Label</source>
+        <translation type="unfinished">標籤</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished">上移</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">下移</translation>
+    </message>
+    <message>
+        <source>Remove slider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>identifier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Min</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation type="unfinished">預設</translation>
+    </message>
+    <message>
+        <source>On by default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Comma-separated options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">預覽</translation>
+    </message>
+    <message>
+        <source>Nothing uses this slider.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>GeneralInspector</name>
     <message>
         <source>Video</source>
@@ -10729,9 +12014,113 @@
         <source>Start</source>
         <translation>開始</translation>
     </message>
+    <message numerus="yes">
+        <source>%n step(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n state(s) in memory</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>History</source>
         <translation>歷史記錄</translation>
+    </message>
+    <message>
+        <source>Clear history…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">清除</translation>
+    </message>
+    <message>
+        <source>Frees undo memory. Undone steps (redo) are dropped too, and cleared steps can&apos;t be restored.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep last steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapshots</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Named copies of the project at this step, kept outside the undo stack</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save snapshot…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save snapshot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo history settings for this project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No snapshots yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished">恢復</translation>
+    </message>
+    <message>
+        <source>Before colour pass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore snapshot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaces the project with this snapshot. A snapshot that is no longer in the undo history starts a new history, so steps after it can&apos;t be restored.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>History settings for this project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">應用</translation>
+    </message>
+    <message>
+        <source>This project overrides the app&apos;s undo history settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Following the app&apos;s undo history settings (Settings, General).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept (-1 unlimited, 0 off)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save history with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use app settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing to undo yet. Your edits will be listed here.</source>
@@ -11172,6 +12561,10 @@
         <translation>遮罩羽化</translation>
     </message>
     <message>
+        <source>Auto-smooth keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit keyframe curve</source>
         <translation>編輯關鍵格曲線</translation>
     </message>
@@ -11249,6 +12642,18 @@
     <message>
         <source>Find beats and hits in the audio under this clip</source>
         <translation>查找此片段音頻中的節拍與拍點</translation>
+    </message>
+    <message>
+        <source>Add timeline markers at the detected beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-smooth the focused curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-smooth every shown curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>More keyframe tools</source>
@@ -11360,6 +12765,10 @@
         <translation>關鍵格編輯器</translation>
     </message>
     <message>
+        <source>Auto-smooth keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scale</source>
         <translation>縮放</translation>
     </message>
@@ -11408,6 +12817,10 @@
     <message>
         <source>Clear all keyframes of the selected properties</source>
         <translation>清除所選屬性的所有關鍵格</translation>
+    </message>
+    <message>
+        <source>Auto-smooth the selected keyframes, or every key of the selected properties</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Lanes</source>
@@ -12638,6 +14051,22 @@
         <translation>%1 %</translation>
     </message>
     <message>
+        <source>Drag to draw an outline, release to fill it · Right-drag or Alt to subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click along an edge to place points · Right-click or Alt to subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 points · Click the first point or Enter to close · Backspace to undo · Esc to cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to select a region of similar colour · Shift adds, Alt or right-click subtracts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
         <translation>繪製以新增 · 按住右鍵拖曳或 %1 以擦除 · [ ] 或按住 Shift 拖曳以調整大小 · Ctrl+滾輪以縮放</translation>
     </message>
@@ -12854,6 +14283,26 @@
         <translation>摳圖影格已修正</translation>
     </message>
     <message>
+        <source>Lasso selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scissors selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip has no picture to follow edges on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip has no picture to select from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magic wand</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not save the brush mask. The next stroke will try again</source>
         <translation>無法儲存畫筆遮罩。下一筆畫將重試</translation>
     </message>
@@ -13009,6 +14458,18 @@
         <translation>畫筆</translation>
     </message>
     <message>
+        <source>Lasso</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scissors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magic wand</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>AI object</source>
         <translation>AI 目標</translation>
     </message>
@@ -13023,6 +14484,38 @@
     <message>
         <source>Off</source>
         <translation>關</translation>
+    </message>
+    <message>
+        <source>Click to select the region of similar colour. It is added to the same still mask the Brush paints.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag around an area to fill it into the same still mask the Brush paints.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click along an object&apos;s edge; the outline snaps to it. Close the outline to fill it into the same still mask the Brush paints.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wand tolerance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Contiguous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click adds to the mask. Shift also adds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click removes from the mask. Alt or right-click also subtracts</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Size</source>
@@ -13063,6 +14556,10 @@
     <message>
         <source>Left-drag erases</source>
         <translation>左鍵拖動進行擦除</translation>
+    </message>
+    <message>
+        <source>Fill closed loops</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pressure changes size</source>
@@ -13577,8 +15074,8 @@
         <translation>描摹主體並將結果固定為遮罩圖層</translation>
     </message>
     <message>
-        <source>Select a video clip first</source>
-        <translation>請先選擇視頻片段</translation>
+        <source>Select a video or image clip first</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Download people cutout (about 20 MB)</source>
@@ -13611,13 +15108,6 @@
     <message>
         <source>All files (*)</source>
         <translation>所有檔案 (*)</translation>
-    </message>
-</context>
-<context>
-    <name>McpController</name>
-    <message>
-        <source>Relink media</source>
-        <translation>重新連結媒體</translation>
     </message>
 </context>
 <context>
@@ -13784,6 +15274,14 @@
         <translation>替換媒體…</translation>
     </message>
     <message>
+        <source>Reload from disk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t reload this media. It may not be a file on disk, or is already being read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use as mask</source>
         <translation>用作遮罩</translation>
     </message>
@@ -13924,6 +15422,22 @@
         <translation>搜索媒體</translation>
     </message>
     <message>
+        <source>Search by sound, e.g. heavy rain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search by sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search by sound needs the audio tagging add-on. Click to get it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished">清除搜尋</translation>
+    </message>
+    <message>
         <source>Expand all</source>
         <translation>全部展開</translation>
     </message>
@@ -13962,6 +15476,22 @@
     <message>
         <source>This folder is empty</source>
         <translation>此資料夾為空</translation>
+    </message>
+    <message>
+        <source>Listening to the bin…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a sound, like heavy rain or applause, and press Enter.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a sound Drift knows. Closest: %1</source>
+        <translation type="unfinished">非 Drift 已知聲音。最接近的聲音：%1</translation>
+    </message>
+    <message>
+        <source>Nothing in the bin sounds like that.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag media here, or import more.</source>
@@ -14883,6 +16413,79 @@
     <message>
         <source>New track</source>
         <translation>新建軌道</translation>
+    </message>
+</context>
+<context>
+    <name>NodeGraphEditor</name>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">縮小</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">放大</translation>
+    </message>
+    <message>
+        <source>Fit all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add node…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation type="unfinished">貼上</translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished">全選</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">復原</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation type="unfinished">重做</translation>
+    </message>
+    <message>
+        <source>Open inspector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">複製</translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">複製副本</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">刪除</translation>
+    </message>
+</context>
+<context>
+    <name>NodeInputControl</name>
+    <message>
+        <source>Randomize</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NodeMinimap</name>
+    <message>
+        <source>Empty</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -16127,10 +17730,6 @@ If playback stutters, try another.</source>
         <translation>此項目使用了未安裝的“%1” — 將無法顯示。請開啟“附加項”進行安裝。</translation>
     </message>
     <message>
-        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation>此項目使用了 %1 個未安裝的效果或轉場（%2%3）——它們不會顯示。開啟“附加包”進行安裝。</translation>
-    </message>
-    <message>
         <source>, …</source>
         <translation>，…</translation>
     </message>
@@ -16183,6 +17782,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Failed to open Premiere Pro project</source>
         <translation>開啟 Premiere Pro 項目失敗</translation>
+    </message>
+    <message>
+        <source>This project uses %1 effects, transitions or animations that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Couldn’t write %1</source>
@@ -16319,6 +17922,147 @@ If playback stutters, try another.</source>
     <message>
         <source>Started new session</source>
         <translation>已開始新會話</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectHealthDialog</name>
+    <message>
+        <source>Missing media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing asset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Asset mismatch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Past end of media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orphaned effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Broken link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dangling transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation type="unfinished">重疊</translation>
+    </message>
+    <message>
+        <source>Unused asset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project health</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">關閉</translation>
+    </message>
+    <message numerus="yes">
+        <source>Relinked %n file(s), %1 still missing</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Relinked %n file(s)</source>
+        <translation type="unfinished">
+            <numerusform>已重新連結 %n 個檔案</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search folder for missing media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove unused assets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">移除</translation>
+    </message>
+    <message numerus="yes">
+        <source>Removed %n asset(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>These %n asset(s) are not used by any clip. Removing them can be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Relink folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Relink</source>
+        <translation type="unfinished">重新連結</translation>
+    </message>
+    <message>
+        <source>Missing files under the old folder are pointed at the same place under the new one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Old folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>D:/footage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New folder</source>
+        <translation type="unfinished">新建資料夾</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No problems found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n finding(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>(first %1 listed)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove unused assets…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Relink folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search folder for missing media…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -16922,6 +18666,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>QuickAddPopup</name>
+    <message>
+        <source>Add and connect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search nodes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>QuickSetup</name>
     <message>
         <source>Drift setup</source>
@@ -17375,6 +19134,10 @@ If playback stutters, try another.</source>
         <translation>項目屬性…</translation>
     </message>
     <message>
+        <source>Project health…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close project</source>
         <translation>關閉項目</translation>
     </message>
@@ -17781,6 +19544,30 @@ If playback stutters, try another.</source>
         <source>Scene detection cancelled</source>
         <translation>已取消場景檢測</translation>
     </message>
+    <message>
+        <source>No scene cuts fall inside this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Split into %n scene(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n marker(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No new markers to add</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ScenesShotRow</name>
@@ -17814,6 +19601,22 @@ If playback stutters, try another.</source>
     <message>
         <source>Clear</source>
         <translation>清除</translation>
+    </message>
+    <message>
+        <source>Split at scenes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut the selected clip at every detected shot boundary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add markers at scenes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop a timeline marker at every detected shot boundary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Identify objects</source>
@@ -18115,10 +19918,6 @@ If playback stutters, try another.</source>
 <context>
     <name>SegmentationController</name>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>請選擇要摳出的視頻片段</translation>
-    </message>
-    <message>
         <source>Wait for the frame to finish loading</source>
         <translation>等待格載入完成</translation>
     </message>
@@ -18181,6 +19980,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Cutout complete</source>
         <translation>摳圖完成</translation>
+    </message>
+    <message>
+        <source>Select a video or image clip to cut out</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>That object mask changed while it was being refined</source>
@@ -20451,6 +22254,69 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SoundEffectDialog</name>
+    <message>
+        <source>Sound effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sound effects come from ElevenLabs. Add your API key in Settings to use them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow sending prompts to ElevenLabs in Settings to use sound effects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Describe the sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Heavy wooden door creaking open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let the model pick the length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prompt influence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Higher values follow the prompt more literally and vary less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make it loop seamlessly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Place at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate</source>
+        <translation type="unfinished">生成</translation>
+    </message>
+    <message>
+        <source>Billed by ElevenLabs to your account</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">關閉</translation>
+    </message>
+</context>
+<context>
     <name>SourceLabAudioSection</name>
     <message>
         <source>-14 LUFS (streaming)</source>
@@ -21615,6 +23481,14 @@ If playback stutters, try another.</source>
         <translation>停止生成</translation>
     </message>
     <message>
+        <source>Sound effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate a sound effect from a text prompt (ElevenLabs)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Record a voice</source>
         <translation>錄製語音</translation>
     </message>
@@ -22161,6 +24035,57 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>StickerPackImport</name>
+    <message>
+        <source>The pack has too many images</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No .png or .webp images found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create the sticker folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The pack is too large</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write the sticker files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install the sticker pack</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom stickers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open %1</source>
+        <translation type="unfinished">無法開啟 %1</translation>
+    </message>
+    <message>
+        <source>%1 is not a .zip archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 has too many files</source>
+        <translation type="unfinished">%1 包含的檔案過多</translation>
+    </message>
+    <message>
+        <source>“%1” is not an imported sticker pack</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not delete “%1”</source>
+        <translation type="unfinished">無法刪除 “%1”</translation>
+    </message>
+</context>
+<context>
     <name>StickerPresetCard</name>
     <message>
         <source>%1 — click to add, or drag to the timeline or preview</source>
@@ -22182,12 +24107,36 @@ If playback stutters, try another.</source>
 <context>
     <name>StickersTab</name>
     <message>
+        <source>Import sticker pack</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zip archives (*.zip)</source>
+        <translation type="unfinished">Zip 壓縮包 (*.zip)</translation>
+    </message>
+    <message>
         <source>Search stickers</source>
         <translation>搜索貼紙</translation>
     </message>
     <message>
         <source>More emoji</source>
         <translation>更多表情</translation>
+    </message>
+    <message>
+        <source>Import or manage sticker packs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import sticker pack (.zip)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import sticker folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove “%1”</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No sticker packs installed</source>
@@ -23341,6 +25290,62 @@ If playback stutters, try another.</source>
         <source>My style %1</source>
         <translation>我的樣式 %1</translation>
     </message>
+    <message>
+        <source>Import animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation presets (*.json *.lottie)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t import that animation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported, but some features aren’t supported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation preset (*.json)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation exported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t export the animation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">重命名</translation>
+    </message>
+    <message>
+        <source>Delete animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">刪除</translation>
+    </message>
+    <message>
+        <source>Remove “%1” from your imported animations? It is also cleared from the selected clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TextInspectorAccentSection</name>
@@ -23498,6 +25503,29 @@ If playback stutters, try another.</source>
     <message>
         <source>Plays for every caption</source>
         <translation>每條字幕均播放</translation>
+    </message>
+</context>
+<context>
+    <name>TextInspectorAnimatePage</name>
+    <message>
+        <source>Import…</source>
+        <translation type="unfinished">導入…</translation>
+    </message>
+    <message>
+        <source>Import an animation from a Lottie or exported preset file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation type="unfinished">重命名…</translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation type="unfinished">導出…</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">刪除</translation>
     </message>
 </context>
 <context>
@@ -24187,6 +26215,53 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineAutoReframeDialog</name>
+    <message>
+        <source>Auto reframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track</source>
+        <translation type="unfinished">跟蹤</translation>
+    </message>
+    <message>
+        <source>Follow face</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep centred</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows the clip&apos;s face track. Without one, the crop stays centred.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">形狀</translation>
+    </message>
+    <message>
+        <source>Vertical 9:16</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Square 1:1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Portrait 4:5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wide 16:9</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineBakeContextMenu</name>
     <message>
         <source>Re-bake</source>
@@ -24237,6 +26312,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Rename…</source>
         <translation>重命名…</translation>
+    </message>
+    <message>
+        <source>Default colour</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
@@ -24302,6 +26381,22 @@ If playback stutters, try another.</source>
         <translation>在播放頭處分割項目</translation>
     </message>
     <message>
+        <source>Split on beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap clips to beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap with previous clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap with next clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Separate audio</source>
         <translation>分離音頻</translation>
     </message>
@@ -24330,6 +26425,10 @@ If playback stutters, try another.</source>
         <translation>移除靜音</translation>
     </message>
     <message>
+        <source>Auto duck…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Sync by audio</source>
         <translation>依音訊同步</translation>
     </message>
@@ -24356,6 +26455,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Crop…</source>
         <translation>裁剪…</translation>
+    </message>
+    <message>
+        <source>Auto reframe…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enhance video…</source>
@@ -24416,6 +26519,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Paste effects</source>
         <translation>貼上效果</translation>
+    </message>
+    <message>
+        <source>Remove all effects</source>
+        <translation type="unfinished">移除所有效果</translation>
     </message>
     <message>
         <source>Save effects as preset…</source>
@@ -24599,6 +26706,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Paste here</source>
         <translation>貼上至此處</translation>
+    </message>
+    <message>
+        <source>Close gaps in work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close all gaps on track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add bookmark here</source>
@@ -26698,12 +28813,20 @@ If playback stutters, try another.</source>
         <source>Add to favorites</source>
         <translation>添加到收藏</translation>
     </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TransitionsTab</name>
     <message>
         <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
         <translation>從 Drift Forge 製作的 .driftfx 或 zip 檔案安裝自訂轉場或效果</translation>
+    </message>
+    <message>
+        <source>Create a new transition in Forge</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -26719,6 +28842,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Cancelled</source>
         <translation>已取消</translation>
+    </message>
+    <message>
+        <source>Sound effect added to the timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sound effect added to the media bin</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Speech added to the timeline</source>
@@ -28016,6 +30147,30 @@ If playback stutters, try another.</source>
     <message>
         <source>Procedural Console</source>
         <translation>程序式主控台</translation>
+    </message>
+    <message>
+        <source>Forge Graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forge Nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forge Inspector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio Forge Graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio Forge Pedals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio Forge Inspector</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Media</source>

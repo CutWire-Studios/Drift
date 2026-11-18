@@ -52,6 +52,20 @@ public:
     // Move the playhead to a detected scene. Scenes are in source time; this maps back
     // through the clip's trim and speed to reach the right timeline position.
     Q_INVOKABLE void seekTo(int sceneIndex);
+    // Map a moment in a clip's source to where it lands on the timeline, through trim, speed
+    // and reverse.
+    static double sourceToTimeline(const drift::Clip &clip, double sourceSeconds);
+    static bool sceneMatches(const QVariantMap &scene, const QString &label, double minScore);
+    // Timeline seconds of every detected boundary inside the clip that was analysed.
+    QList<double> cutTimes(double minScore, const QString &label) const;
+    // Failure comes back as {error: code, message}; success as {clips, at}.
+    QVariantMap splitClipAtScenes(int trackIndex, int clipIndex, double minScore, const QString &label,
+                                  double minGap);
+    // Markers at the cuts; returns how many were added.
+    int bookmarkScenes(double minScore, const QString &label, const QString &labelPrefix);
+    // The Scenes tab's actions: results go to the status toast.
+    Q_INVOKABLE void splitAtScenes(int trackIndex, int clipIndex);
+    Q_INVOKABLE void addMarkersAtScenes();
     // Sensitivity, persisted in QSettings so a scan does not forget it between sessions.
     Q_INVOKABLE double threshold() const;
     Q_INVOKABLE void setThreshold(double threshold);

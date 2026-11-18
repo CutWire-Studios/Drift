@@ -1,0 +1,89 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "description": "Contour lines traced through the brightness like a hiking map, the same width on steep and gentle slopes.",
+  "displayName": "Topographic",
+  "id": "starter_effect_topographic",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 12,
+      "displayName": "Lines",
+      "identifier": "contours",
+      "maxValue": 40,
+      "minValue": 2,
+      "type": "float"
+    },
+    {
+      "defaultValue": 1.4,
+      "displayName": "Line width (px)",
+      "identifier": "lineWidth",
+      "maxValue": 4,
+      "minValue": 0.6,
+      "type": "float"
+    },
+    {
+      "defaultValue": "#fff3d6",
+      "displayName": "Line colour",
+      "identifier": "lineColor",
+      "type": "color"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [
+      {
+        "id": "buf0",
+        "scale": 1
+      },
+      {
+        "id": "buf1",
+        "scale": 1
+      }
+    ],
+    "passes": [
+      {
+        "fragmentShader": "pass1.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        "passIndex": 0
+      },
+      {
+        "fragmentShader": "pass2.frag",
+        "inputs": [
+          {
+            "id": "buf0",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "id": "buf1",
+          "type": "buffer"
+        },
+        "passIndex": 1
+      },
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          },
+          {
+            "id": "buf1",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 2
+      }
+    ]
+  }
+}

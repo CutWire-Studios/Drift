@@ -1,0 +1,26 @@
+{
+  "audioCurve": "crossfade",
+  "category": "basic",
+  "displayName": "My transition",
+  "id": "node_to",
+  "order": 1000,
+  "parameters": [],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 1,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

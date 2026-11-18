@@ -1,0 +1,43 @@
+{
+  "backend": "gpu",
+  "category": "dreamy",
+  "description": "Lights flare into star spikes.",
+  "displayName": "Star filter",
+  "id": "starter_effect_star_filter",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 4,
+      "displayName": "Spikes",
+      "identifier": "spikes",
+      "maxValue": 8,
+      "minValue": 1,
+      "type": "float"
+    },
+    {
+      "defaultValue": 70,
+      "displayName": "Length",
+      "identifier": "spikeLength",
+      "maxValue": 300,
+      "minValue": 10,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

@@ -2,6 +2,9 @@ import QtQuick
 import QtQuick.Shapes
 import Drift
 
+// Paints a raster matte on the target clip's frame. The Lasso, Intelligent Scissors and Magic wand tools
+// share this overlay: they write their selection into the same matte as the brush.
+//
 // Paints a raster matte on the target clip's frame. A stroke is collected by EditorState.masking
 // (strokeBegin/Add/End) in clip-frame pixels, drawn live by BrushStrokeItem and committed on release
 // as one undo step: left paints (or erases when the Paint/Erase toggle says so), right erases.
@@ -23,6 +26,31 @@ Item {
     readonly property real canvasH: Math.max(1, editorState.canvasHeight || 1)
     readonly property real sx: root.width / canvasW
     readonly property real sy: root.height / canvasH
+
+    readonly property string tool: EditorState.preview.maskingTool
+    readonly property bool brushTool: tool === "brush"
+    readonly property bool lassoTool: tool === "lasso"
+    readonly property bool scissorsTool: tool === "scissors"
+    readonly property bool wandTool: tool === "wand"
+
+    // Lasso outline in clip-frame pixels.
+    property var lassoPoints: []
+    property bool lassoErase: false
+    // Intelligent Scissors: clicked seeds and the edge-following segment between each pair (all
+    // normalized to the clip frame), plus the live segment from the last seed to the cursor.
+    property var scissorsSeeds: []
+    property var scissorsSegments: []
+    property var scissorsLive: []
+    property point scissorsCursor: Qt.point(0, 0)
+    readonly property bool scissorsNearFirst: scissorsSeeds.length >= 2 && scissorsTool
+        && Math.hypot(scissorsSeeds[0].x * clipFrame.width - scissorsCursor.x,
+                      scissorsSeeds[0].y * clipFrame.height - scissorsCursor.y) < 10
+    readonly property var scissorsOutline: {
+        let points = []
+        for (const seg of scissorsSegments)
+            points = points.concat(seg)
+        return points
+    }
 
     property bool strokeErase: false
     // A passive handler keeps reporting the pointer whatever the paint area grabs or loses, so the ring
@@ -52,6 +80,98 @@ Item {
             return
         editorState = EditorState.preview.maskingFrame()
         target = EditorState.masking.maskTarget()
+    }
+
+    function framePoints(points) {
+        return points.map(q => Qt.point(q.x * clipFrame.width, q.y * clipFrame.height))
+    }
+
+    function normalizedPoints(points) {
+        return points.map(q => ({ x: q.x / clipFrame.width, y: q.y / clipFrame.height }))
+    }
+
+    function targetClipId() {
+        const t = EditorState.masking.maskTarget()
+        return t.kind === "clip" ? EditorState.masking.clipIdAt(t.track, t.clip) : ""
+    }
+
+    // Right button and Alt subtract, Shift adds, otherwise the Paint/Erase toggle decides.
+    function eraseFor(button, modifiers) {
+        if (button === Qt.RightButton || (modifiers & Qt.AltModifier))
+            return true
+        return EditorState.masking.brushErase && !(modifiers & Qt.ShiftModifier)
+    }
+
+    function resetDrafts() {
+        if (interacting && lassoTool)
+            interacting = false
+        lassoPoints = []
+        cancelScissors()
+    }
+
+    function cancelScissors() {
+        scissorsSeeds = []
+        scissorsSegments = []
+        scissorsLive = []
+        liveTimer.stop()
+        EditorState.masking.scissorsReset()
+        ShellBridge.pendingPolygonPoints = 0
+    }
+
+    function syncPendingPoints() {
+        ShellBridge.pendingPolygonPoints = scissorsSeeds.length
+    }
+
+    function updateScissorsLive() {
+        if (scissorsSeeds.length === 0) {
+            scissorsLive = []
+            return
+        }
+        const last = scissorsSeeds[scissorsSeeds.length - 1]
+        const end = EditorState.masking.scissorsSnap(scissorsCursor.x / clipFrame.width,
+                                                     scissorsCursor.y / clipFrame.height)
+        scissorsLive = EditorState.masking.scissorsPath(last.x, last.y, end.x, end.y)
+    }
+
+    function scissorsClick(p, erase) {
+        const id = targetClipId()
+        if (id === "" || !EditorState.masking.scissorsPrepare(id))
+            return
+        if (scissorsNearFirst || (scissorsSeeds.length >= 2
+                && Math.hypot(scissorsSeeds[0].x * clipFrame.width - p.x,
+                              scissorsSeeds[0].y * clipFrame.height - p.y) < 10)) {
+            closeScissors(erase)
+            return
+        }
+        const seed = EditorState.masking.scissorsSnap(p.x / clipFrame.width, p.y / clipFrame.height)
+        if (scissorsSeeds.length > 0) {
+            const last = scissorsSeeds[scissorsSeeds.length - 1]
+            scissorsSegments = scissorsSegments.concat([EditorState.masking.scissorsPath(last.x, last.y, seed.x, seed.y)])
+        }
+        scissorsSeeds = scissorsSeeds.concat([Qt.point(seed.x, seed.y)])
+        scissorsLive = []
+        syncPendingPoints()
+    }
+
+    function undoScissorsSeed() {
+        if (scissorsSeeds.length === 0)
+            return
+        scissorsSeeds = scissorsSeeds.slice(0, -1)
+        scissorsSegments = scissorsSegments.slice(0, -1)
+        scissorsLive = []
+        syncPendingPoints()
+        if (scissorsSeeds.length === 0)
+            cancelScissors()
+    }
+
+    function closeScissors(erase) {
+        if (scissorsSeeds.length < 2)
+            return
+        const first = scissorsSeeds[0]
+        const last = scissorsSeeds[scissorsSeeds.length - 1]
+        const closing = EditorState.masking.scissorsPath(last.x, last.y, first.x, first.y)
+        EditorState.masking.scissorsFill(targetClipId(), scissorsOutline.concat(closing), erase)
+        cancelScissors()
     }
 
     function beginStroke(p, erase, pressure) {
@@ -86,14 +206,54 @@ Item {
     onVisibleChanged: {
         if (visible)
             refresh()
-        else
+        else {
             EditorState.masking.clearStrokePreview()
+            resetDrafts()
+        }
+    }
+
+    onToolChanged: resetDrafts()
+
+    // Keys reach this item only while it has focus, which the scissors tool asks for.
+    focus: root.scissorsTool
+    onScissorsToolChanged: {
+        if (scissorsTool)
+            forceActiveFocus()
+    }
+
+    Keys.onPressed: (event) => {
+        if (!root.scissorsTool)
+            return
+        switch (event.key) {
+        case Qt.Key_Return:
+        case Qt.Key_Enter:
+            root.closeScissors(EditorState.masking.brushErase)
+            event.accepted = true
+            break
+        case Qt.Key_Backspace:
+            root.undoScissorsSeed()
+            event.accepted = true
+            break
+        }
+    }
+
+    Connections {
+        target: ShellBridge
+        function onMaskingCancelRequested() { root.cancelScissors() }
+    }
+
+    Timer {
+        id: liveTimer
+        interval: 30
+        onTriggered: root.updateScissorsLive()
     }
     Component.onCompleted: refresh()
     Component.onDestruction: {
         if (interacting)
             endStroke()
         ShellBridge.brushStrokeActive = false
+        ShellBridge.pendingPolygonPoints = 0
+        EditorState.masking.scissorsReset()
         EditorState.masking.clearStrokePreview()
     }
     onInteractingChanged: ShellBridge.brushStrokeActive = interacting
@@ -136,10 +296,15 @@ Item {
                 }
             }
         }
-        function onSelectionChanged() { root.refresh() }
+        function onSelectionChanged() {
+            root.cancelScissors()
+            root.refresh()
+        }
         function onSelectedClipDataChanged() { root.refresh() }
         // A scrub moves the playhead per scroll event; catch up once when it ends.
         function onPlayheadSecondsChanged() {
+            if (root.scissorsSeeds.length > 0)
+                root.cancelScissors()
             if (!EditorState.scrubbing)
                 root.refresh()
         }
@@ -218,9 +383,68 @@ Item {
             layer.samples: 4
         }
 
+        Shape {
+            anchors.fill: parent
+            visible: root.lassoTool && root.lassoPoints.length >= 2
+
+            ShapePath {
+                strokeColor: root.lassoErase ? Theme.c.maskBrushOverlay.eraseStroke : Theme.c.maskDrawOverlay.stroke
+                strokeWidth: Theme.c.maskDrawOverlay.borderWidth
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathPolyline { path: root.lassoPoints.concat(root.lassoPoints.length > 0 ? [root.lassoPoints[0]] : []) }
+            }
+        }
+
+        Shape {
+            anchors.fill: parent
+            visible: root.scissorsTool && (root.scissorsOutline.length > 1 || root.scissorsLive.length > 1)
+
+            ShapePath {
+                strokeColor: Theme.c.maskDrawOverlay.stroke
+                strokeWidth: Theme.c.maskDrawOverlay.borderWidth
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathPolyline { path: root.framePoints(root.scissorsOutline) }
+            }
+
+            ShapePath {
+                strokeColor: Qt.alpha(Theme.c.maskDrawOverlay.stroke, 0.7)
+                strokeWidth: Theme.c.maskDrawOverlay.borderWidth
+                strokeStyle: ShapePath.DashLine
+                dashPattern: [4, 3]
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathPolyline { path: root.framePoints(root.scissorsLive) }
+            }
+        }
+
+        Repeater {
+            model: root.scissorsTool ? root.scissorsSeeds : []
+
+            delegate: Rectangle {
+                id: seedHandle
+                required property point modelData
+                required property int index
+                readonly property bool closing: index === 0 && root.scissorsNearFirst
+                readonly property real side: index === 0 ? 11 : 7
+
+                x: modelData.x * clipFrame.width - side / 2
+                y: modelData.y * clipFrame.height - side / 2
+                width: side
+                height: side
+                color: closing ? Theme.c.maskDrawOverlay.closeHint : Theme.c.maskDrawOverlay.stroke
+                border.color: Theme.c.maskDrawOverlay.hintBackground
+                border.width: Theme.c.maskDrawOverlay.borderWidth
+            }
+        }
+
         // The circle is the dab's full radius; the inner one marks where the falloff starts.
         Rectangle {
-            visible: root.hovering && root.clipTarget && root.hasFrame
+            visible: root.brushTool && root.hovering && root.clipTarget && root.hasFrame
             width: root.brushDiameter
             height: width
             radius: width / 2
@@ -253,7 +477,7 @@ Item {
         }
 
         Rectangle {
-            visible: root.hovering && root.clipTarget && root.hasFrame
+            visible: root.brushTool && root.hovering && root.clipTarget && root.hasFrame
             width: root.brushDiameter * EditorState.masking.brushHardness
             height: width
             radius: width / 2
@@ -270,7 +494,7 @@ Item {
     // clip-frame pixels, the frame mask coordinates are normalized to.
     ToolCursor {
         target: paintArea
-        shape: "brush"
+        shape: root.scissorsTool ? (root.scissorsNearFirst ? "polygonClose" : "polygon") : "brush"
     }
 
     MouseArea {
@@ -297,6 +521,18 @@ Item {
         onPositionChanged: (mouse) => {
             const p = clipFrame.mapFromItem(paintArea, mouse.x, mouse.y)
             root.hoverPoint = Qt.point(p.x, p.y)
+            if (root.lassoTool) {
+                if (root.interacting && Math.hypot(p.x - root.lassoPoints[root.lassoPoints.length - 1].x,
+                                                   p.y - root.lassoPoints[root.lassoPoints.length - 1].y) >= 2)
+                    root.lassoPoints = root.lassoPoints.concat([Qt.point(p.x, p.y)])
+                return
+            }
+            if (root.scissorsTool) {
+                root.scissorsCursor = Qt.point(p.x, p.y)
+                if (root.scissorsSeeds.length > 0 && !liveTimer.running)
+                    liveTimer.start()
+                return
+            }
             if (root.resizing) {
                 const size = root.resizeStartSize + (p.x - root.resizeStartX) / Math.max(1, clipFrame.width)
                 EditorState.masking.brushSize = Math.max(0.002, Math.min(0.5, size))
@@ -315,6 +551,22 @@ Item {
         }
         onPressed: (mouse) => {
             const p = clipFrame.mapFromItem(paintArea, mouse.x, mouse.y)
+            if (!root.brushTool) {
+                const erase = root.eraseFor(mouse.button, mouse.modifiers)
+                if (root.lassoTool) {
+                    root.lassoErase = erase
+                    root.lassoPoints = [Qt.point(p.x, p.y)]
+                    root.interacting = true
+                } else if (root.scissorsTool) {
+                    root.scissorsClick(p, erase)
+                } else if (root.wandTool) {
+                    const id = root.targetClipId()
+                    if (id !== "")
+                        EditorState.masking.wandSelect(id, p.x / clipFrame.width, p.y / clipFrame.height, erase)
+                    Qt.callLater(root.refresh)
+                }
+                return
+            }
             if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ShiftModifier)) {
                 root.resizing = true
                 root.resizeStartX = p.x
@@ -332,7 +584,21 @@ Item {
             }
             root.beginStroke(Qt.point(p.x, p.y), erase, pressure())
         }
+        onDoubleClicked: (mouse) => {
+            if (root.scissorsTool)
+                root.closeScissors(root.eraseFor(mouse.button, mouse.modifiers))
+        }
         onReleased: {
+            if (root.lassoTool) {
+                if (root.interacting && root.lassoPoints.length >= 3)
+                    EditorState.masking.lassoFill(root.targetClipId(), root.normalizedPoints(root.lassoPoints), root.lassoErase)
+                root.interacting = false
+                root.lassoPoints = []
+                Qt.callLater(root.refresh)
+                return
+            }
+            if (!root.brushTool)
+                return
             if (root.resizing) {
                 root.resizing = false
                 return
@@ -346,7 +612,14 @@ Item {
             root.endStroke()
             Qt.callLater(root.refresh)
         }
-        onCanceled: root.cancelStroke()
+        onCanceled: {
+            if (root.lassoTool) {
+                root.interacting = false
+                root.lassoPoints = []
+            } else {
+                root.cancelStroke()
+            }
+        }
     }
 
     Rectangle {
@@ -363,6 +636,16 @@ Item {
             anchors.centerIn: parent
             text: !root.clipTarget
                   ? qsTr("Select a video or image clip to paint a mask")
+                  : !root.editorState.inside
+                    ? qsTr("Move the playhead over the selected clip")
+                  : root.lassoTool
+                    ? qsTr("Drag to draw an outline, release to fill it · Right-drag or Alt to subtract")
+                  : root.scissorsTool
+                    ? (root.scissorsSeeds.length === 0
+                       ? qsTr("Click along an edge to place points · Right-click or Alt to subtract")
+                       : qsTr("%1 points · Click the first point or Enter to close · Backspace to undo · Esc to cancel").arg(root.scissorsSeeds.length))
+                  : root.wandTool
+                    ? qsTr("Click to select a region of similar colour · Shift adds, Alt or right-click subtracts")
                   : root.editorState.inside
                     ? qsTr("Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom").arg(EditorState.shortcutFor("maskingBrushToggleErase"))
                     : qsTr("Move the playhead over the selected clip")

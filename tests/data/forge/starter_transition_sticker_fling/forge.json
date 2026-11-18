@@ -1,0 +1,776 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n5",
+      "toSocket": "t"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e3",
+      "to": "n7",
+      "toSocket": "a"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n8",
+      "toSocket": "x"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e5",
+      "to": "n9",
+      "toSocket": "x"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e6",
+      "to": "n10",
+      "toSocket": "x"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "value",
+      "id": "e7",
+      "to": "n11",
+      "toSocket": "a"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "value",
+      "id": "e8",
+      "to": "n11",
+      "toSocket": "b"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "value",
+      "id": "e9",
+      "to": "n12",
+      "toSocket": "a"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "value",
+      "id": "e10",
+      "to": "n12",
+      "toSocket": "b"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "value",
+      "id": "e11",
+      "to": "n13",
+      "toSocket": "x"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "value",
+      "id": "e12",
+      "to": "n17",
+      "toSocket": "m00"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "value",
+      "id": "e13",
+      "to": "n17",
+      "toSocket": "m01"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "value",
+      "id": "e14",
+      "to": "n17",
+      "toSocket": "m10"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "value",
+      "id": "e15",
+      "to": "n17",
+      "toSocket": "m11"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e16",
+      "to": "n14",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e17",
+      "to": "n15",
+      "toSocket": "a"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "value",
+      "id": "e18",
+      "to": "n16",
+      "toSocket": "x"
+    },
+    {
+      "from": "n15",
+      "fromSocket": "value",
+      "id": "e19",
+      "to": "n16",
+      "toSocket": "y"
+    },
+    {
+      "from": "n16",
+      "fromSocket": "p",
+      "id": "e20",
+      "to": "n17",
+      "toSocket": "offset"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e21",
+      "to": "n18",
+      "toSocket": "image"
+    },
+    {
+      "from": "n17",
+      "fromSocket": "p",
+      "id": "e22",
+      "to": "n18",
+      "toSocket": "p"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "mask",
+      "id": "e23",
+      "to": "n19",
+      "toSocket": "image"
+    },
+    {
+      "from": "n17",
+      "fromSocket": "p",
+      "id": "e24",
+      "to": "n19",
+      "toSocket": "p"
+    },
+    {
+      "from": "n19",
+      "fromSocket": "image",
+      "id": "e25",
+      "to": "n20",
+      "toSocket": "color"
+    },
+    {
+      "from": "n19",
+      "fromSocket": "image",
+      "id": "e26",
+      "to": "n21",
+      "toSocket": "image"
+    },
+    {
+      "from": "n21",
+      "fromSocket": "image",
+      "id": "e27",
+      "to": "n22",
+      "toSocket": "color"
+    },
+    {
+      "from": "n22",
+      "fromSocket": "r",
+      "id": "e28",
+      "to": "n23",
+      "toSocket": "x"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e29",
+      "to": "n24",
+      "toSocket": "x"
+    },
+    {
+      "from": "n23",
+      "fromSocket": "value",
+      "id": "e30",
+      "to": "n25",
+      "toSocket": "a"
+    },
+    {
+      "from": "n24",
+      "fromSocket": "value",
+      "id": "e31",
+      "to": "n25",
+      "toSocket": "b"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e32",
+      "to": "n26",
+      "toSocket": "x"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e33",
+      "to": "n27",
+      "toSocket": "a"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e34",
+      "to": "n27",
+      "toSocket": "b"
+    },
+    {
+      "from": "n26",
+      "fromSocket": "value",
+      "id": "e35",
+      "to": "n27",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n27",
+      "fromSocket": "image",
+      "id": "e36",
+      "to": "n28",
+      "toSocket": "a"
+    },
+    {
+      "from": "n25",
+      "fromSocket": "value",
+      "id": "e37",
+      "to": "n28",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n28",
+      "fromSocket": "image",
+      "id": "e38",
+      "to": "n29",
+      "toSocket": "a"
+    },
+    {
+      "from": "n18",
+      "fromSocket": "image",
+      "id": "e39",
+      "to": "n29",
+      "toSocket": "b"
+    },
+    {
+      "from": "n20",
+      "fromSocket": "r",
+      "id": "e40",
+      "to": "n29",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n29",
+      "fromSocket": "image",
+      "id": "e41",
+      "to": "n30",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "stylized",
+    "description": "The person peels off as a white-bordered sticker and spins away off the top of the frame, uncovering the next clip.",
+    "displayName": "Sticker fling",
+    "id": "starter_transition_sticker_fling",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "to",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {},
+      "type": "clip_mask",
+      "x": 0,
+      "y": 1320
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {},
+      "type": "progress",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {
+        "curve": "in"
+      },
+      "id": "n5",
+      "inputs": {
+        "t": 0
+      },
+      "type": "ease",
+      "x": 280,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "spin"
+        }
+      },
+      "type": "math",
+      "x": 560,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n7",
+      "inputs": {
+        "a": 0,
+        "b": 0.017453292519943295
+      },
+      "type": "math",
+      "x": 840,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "cos"
+      },
+      "id": "n8",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1120,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "sin"
+      },
+      "id": "n9",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1120,
+      "y": 660
+    },
+    {
+      "data": {
+        "clamp": true
+      },
+      "id": "n10",
+      "inputs": {
+        "inMax": 1,
+        "inMin": 0,
+        "outMax": {
+          "param": "flingSize"
+        },
+        "outMin": 1,
+        "x": 0.5
+      },
+      "type": "remap",
+      "x": 560,
+      "y": 660
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n11",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1400,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n12",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1400,
+      "y": 660
+    },
+    {
+      "data": {
+        "fn": "neg"
+      },
+      "id": "n13",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1680,
+      "y": 660
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n14",
+      "inputs": {
+        "a": 0,
+        "b": -0.25
+      },
+      "type": "math",
+      "x": 560,
+      "y": 880
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n15",
+      "inputs": {
+        "a": 0,
+        "b": 1.4
+      },
+      "type": "math",
+      "x": 560,
+      "y": 1100
+    },
+    {
+      "data": {},
+      "id": "n16",
+      "inputs": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "type": "combine_point",
+      "x": 840,
+      "y": 880
+    },
+    {
+      "data": {
+        "inverse": true,
+        "square": true
+      },
+      "id": "n17",
+      "inputs": {
+        "m00": 1,
+        "m01": 0,
+        "m10": 0,
+        "m11": 1,
+        "offset": [
+          0,
+          0
+        ],
+        "origin": [
+          0.5,
+          0.6
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "linear_transform",
+      "x": 1960,
+      "y": 440
+    },
+    {
+      "data": {
+        "edge": "transparent"
+      },
+      "id": "n18",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 2240,
+      "y": 0
+    },
+    {
+      "data": {
+        "edge": "transparent"
+      },
+      "id": "n19",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 2240,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n20",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 2520,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n21",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": {
+          "param": "border"
+        }
+      },
+      "type": "blur",
+      "x": 2520,
+      "y": 1100
+    },
+    {
+      "data": {},
+      "id": "n22",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 2800,
+      "y": 1100
+    },
+    {
+      "data": {},
+      "id": "n23",
+      "inputs": {
+        "high": 0.1,
+        "low": 0.03,
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 3080,
+      "y": 1100
+    },
+    {
+      "data": {},
+      "id": "n24",
+      "inputs": {
+        "high": 0.08,
+        "low": 0,
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 2800,
+      "y": 1320
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n25",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 3360,
+      "y": 1100
+    },
+    {
+      "data": {},
+      "id": "n26",
+      "inputs": {
+        "high": 0.5,
+        "low": 0,
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n27",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n28",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": {
+          "param": "borderColor"
+        }
+      },
+      "type": "mix",
+      "x": 2800,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n29",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 3080,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n30",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 3360,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 35,
+      "displayName": "Spin (°)",
+      "identifier": "spin",
+      "max": 180,
+      "min": -180,
+      "type": "float"
+    },
+    {
+      "default": 1.3,
+      "displayName": "End size",
+      "identifier": "flingSize",
+      "max": 2,
+      "min": 0.5,
+      "type": "float"
+    },
+    {
+      "default": 10,
+      "displayName": "Border (px)",
+      "identifier": "border",
+      "max": 30,
+      "min": 2,
+      "type": "float"
+    },
+    {
+      "default": "#ffffff",
+      "displayName": "Border colour",
+      "identifier": "borderColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    }
+  ],
+  "preview": {
+    "clip": "stage-model",
+    "thumbTime": 0.5
+  }
+}

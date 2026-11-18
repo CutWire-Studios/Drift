@@ -412,13 +412,10 @@
                                                                        {QStringLiteral("animIn"),
                                                                         QStringLiteral("animOut")})},
                                    {QStringLiteral("kind"),
-                                    enumProp(QStringLiteral("Animation kind; fade turns on the edge fade instead"),
-                                             {QStringLiteral("none"), QStringLiteral("fade"),
-                                              QStringLiteral("slideUp"), QStringLiteral("slideDown"),
-                                              QStringLiteral("slideLeft"), QStringLiteral("slideRight"),
-                                              QStringLiteral("zoomIn"), QStringLiteral("zoomOut"),
-                                              QStringLiteral("pop"), QStringLiteral("spinCW"),
-                                              QStringLiteral("spinCCW"), QStringLiteral("bounce")})},
+                                    stringProp(QStringLiteral("Animation kind: none, fade (turns on the edge fade "
+                                                              "instead), slideUp, slideDown, slideLeft, slideRight, "
+                                                              "zoomIn, zoomOut, pop, spinCW, spinCCW, bounce, or an "
+                                                              "animation package id from list_animations"))},
                                    {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds"))},
                                    {QStringLiteral("ease"),
                                     enumProp(QStringLiteral("Easing; unknown values fall back to easeOut"),
@@ -1235,7 +1232,8 @@
           "Segment a clip with explicit points in a single call — no session needed. Prefer this over "
           "the session ops for scripted use. Async and with no progress field: re-read "
           "inspect({clips:true,detail:true}) and compare to detect completion. points are required for "
-          "the sam2 backend and ignored by rvm, which finds people on its own.",
+          "the sam2 backend and ignored by rvm, which finds people on its own. Works on video and image "
+          "clips; an image gets a single matte that covers its whole duration.",
           objectSchema(mergeProps(
               {{QStringLiteral("points"),
                 arrayProp(objectSchema({{QStringLiteral("x"), numberProp(QStringLiteral("X, 0..1 across the frame"))},
@@ -2265,13 +2263,21 @@
               clipRefProps())) },
         { "duck_under", "audio", "Lower music under speech",
           "Write volume keyframes on this (music) clip that dip whenever speech is present on "
-          "over_track or over_clips. amount is the volume multiplier during speech. One undo step.",
+          "over_track or over_clips (all other tracks are ignored). Speech is found with the "
+          "Silero voice model when installed (method auto/vad), otherwise by loudness (energy). "
+          "amount is the volume multiplier during speech, or give reduce_db. Pauses shorter than "
+          "hold + attack + release stay ducked. Re-running replaces the previous pass. One undo "
+          "step. Returns {keys, speech, rest, ducked, method}.",
           objectSchema(mergeProps(
               {{QStringLiteral("over_track"), integerProp(QStringLiteral("Track whose non-silent ranges drive the duck"))},
                {QStringLiteral("over_clips"), arrayProp(stringProp(QStringLiteral("Clip UUID")), QStringLiteral("Speech clips; wins over over_track"))},
                {QStringLiteral("amount"), propWithDefault(numberProp(QStringLiteral("Multiplier during speech"), 0, 1), 0.3)},
                {QStringLiteral("attack"), propWithDefault(numberProp(QStringLiteral("Seconds to ramp down before speech")), 0.12)},
-               {QStringLiteral("release"), propWithDefault(numberProp(QStringLiteral("Seconds to ramp back after speech")), 0.25)}},
+               {QStringLiteral("release"), propWithDefault(numberProp(QStringLiteral("Seconds to ramp back after speech")), 0.25)},
+               {QStringLiteral("reduce_db"), numberProp(QStringLiteral("Reduction in dB (<= 0); overrides amount"), -60, 0)},
+               {QStringLiteral("hold"), propWithDefault(numberProp(QStringLiteral("Pauses shorter than this stay ducked, seconds"), 0, 10), 0.5)},
+               {QStringLiteral("sensitivity"), propWithDefault(numberProp(QStringLiteral("0 = only loud speech, 1 = quiet speech too"), 0, 1), 0.5)},
+               {QStringLiteral("method"), propWithDefault(stringProp(QStringLiteral("auto, energy (loudness) or vad (voice model)")), QStringLiteral("auto"))}},
               clipRefProps())) },
         { "setup_multicam", "multicam", "Open a multi-camera session",
           "With two or more video clips selected, start punching those as angles. Otherwise place "

@@ -1,0 +1,68 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "tl",
+      "name": "k_n2_tl",
+      "node": "n2",
+      "type": "vec2",
+      "value": [
+        0.1,
+        0.1
+      ]
+    },
+    {
+      "input": "tr",
+      "name": "k_n2_tr",
+      "node": "n2",
+      "type": "vec2",
+      "value": [
+        0.9,
+        0.05
+      ]
+    },
+    {
+      "input": "br",
+      "name": "k_n2_br",
+      "node": "n2",
+      "type": "vec2",
+      "value": [
+        0.95,
+        0.9
+      ]
+    },
+    {
+      "input": "bl",
+      "name": "k_n2_bl",
+      "node": "n2",
+      "type": "vec2",
+      "value": [
+        0.05,
+        0.95
+      ]
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"corner_pin\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

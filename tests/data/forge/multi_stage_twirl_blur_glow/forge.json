@@ -1,0 +1,135 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "image"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "image",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "",
+    "displayName": "My effect",
+    "id": "multi_stage_twirl_blur_glow",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "edge": "clamp"
+      },
+      "id": "n2",
+      "inputs": {
+        "angle": 2,
+        "center": [
+          0.5,
+          0.5
+        ],
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": 0.45
+      },
+      "type": "twirl",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": 8
+      },
+      "type": "blur",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "intensity": 1,
+        "radius": 16,
+        "threshold": 0.6,
+        "tint": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "glow",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "params": [],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

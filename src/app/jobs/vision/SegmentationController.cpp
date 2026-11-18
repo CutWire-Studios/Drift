@@ -9,6 +9,7 @@
 
 #include "app/jobs/vision/SegmentationPlan.h"
 #include "engine/decode/readers/ClipReaderPool.h"
+#include "engine/decode/probe/StillImage.h"
 
 #include <QCoreApplication>
 #include <QFile>
@@ -19,6 +20,19 @@
 #include <functional>
 
 namespace {
+
+// A still has one frame whatever time is asked for; video decodes through the shared reader pool.
+QImage readSegmentFrame(bool still, const QString &path, quint64 streamId, drift::TimeUs sourceUs,
+                        int maxWidth, int maxHeight, int rotationCorrection)
+{
+    if (still) {
+        const QImage image = drift::decodeStillImage(path, maxWidth, maxHeight);
+        return image.isNull() ? image : image.convertToFormat(QImage::Format_RGBA8888);
+    }
+    return ClipReaderPool::instance().readVideoFrame(path, streamId, sourceUs, maxWidth, maxHeight,
+                                                     rotationCorrection);
+}
+
 // Offline scans read a file end to end at their own pace. They need decode cursors of their own so
 // they never share one with timeline playback of the same media — see ClipReaderPool.
 constexpr quint64 kSegmentEncodeStreamId = 0xA5'11'5C'A4'00'00'00'03ull;
@@ -132,8 +146,9 @@ void SegmentationController::beginSession(int trackIndex, int clipIndex, double 
     const drift::Track &track = m_app->m_project.tracks().at(trackIndex);
     if (clipIndex < 0 || clipIndex >= track.clips.size())
         return;
-    if (track.clips.at(clipIndex).type != drift::ClipType::Video) {
-        m_app->setLastMessage(tr("Select a video clip to cut out"), QStringLiteral("warning"));
+    const drift::ClipType type = track.clips.at(clipIndex).type;
+    if (type != drift::ClipType::Video && type != drift::ClipType::Image) {
+        m_app->setLastMessage(tr("Select a video or image clip to cut out"), QStringLiteral("warning"));
         return;
     }
 
@@ -146,6 +161,7 @@ void SegmentationController::beginSession(int trackIndex, int clipIndex, double 
     m_segTrack = trackIndex;
     m_segClip = clipIndex;
     m_segClipId = track.clips.at(clipIndex).id;
+    m_segStill = type == drift::ClipType::Image;
     m_segPoints.clear();
     m_segForTemplate = forTemplate;
     m_segSessionActive = true;
@@ -182,6 +198,7 @@ void SegmentationController::endSession()
     m_segFrame = QImage();
     m_segEmbedding = drift::Sam2Embedding{};
     m_segSourceUs = -1;
+    m_segStill = false;
     m_segFramePending.reset();
     ++m_segGeneration;
     ++m_segSeedGeneration;
@@ -242,10 +259,11 @@ void SegmentationController::setFrame(double seconds)
     // The model pass is the expensive half (seconds per frame for the SAM2 encoder on a CPU
     // provider), so it runs off the GUI thread. Decodes after this are milliseconds and stay inline.
     const int rotationCorrection = clip.rotationCorrection;
+    const bool still = m_segStill;
     (void)QtConcurrent::run([this, path, sourceUs, canvasW, canvasH, generation, rvm, quality,
-                             rotationCorrection]() {
-        const QImage frame = ClipReaderPool::instance().readVideoFrame(
-            path, kSegmentEncodeStreamId, sourceUs, canvasW, canvasH, rotationCorrection);
+                             rotationCorrection, still]() {
+        const QImage frame = readSegmentFrame(still, path, kSegmentEncodeStreamId, sourceUs, canvasW,
+                                              canvasH, rotationCorrection);
         drift::Sam2Embedding embedding;
         QImage mask;
         QString error;
@@ -330,6 +348,7 @@ void SegmentationController::scrubFrame(double seconds)
     const int canvasH = m_app->m_project.height();
     const int rotationCorrection = clip.rotationCorrection;
     const int generation = m_segGeneration;
+    const bool still = m_segStill;
 
     // Points and mask belong to the frame being left.
     m_segScrubBusy = true;
@@ -339,9 +358,9 @@ void SegmentationController::scrubFrame(double seconds)
     emit sessionPointsChanged();
 
     (void)QtConcurrent::run([this, path, sourceUs, canvasW, canvasH, rotationCorrection,
-                             generation]() {
-        const QImage frame = ClipReaderPool::instance().readVideoFrame(
-            path, kSegmentScrubStreamId, sourceUs, canvasW, canvasH, rotationCorrection);
+                             generation, still]() {
+        const QImage frame = readSegmentFrame(still, path, kSegmentScrubStreamId, sourceUs, canvasW,
+                                              canvasH, rotationCorrection);
         QMetaObject::invokeMethod(
             this,
             [this, frame, generation]() {
@@ -504,7 +523,7 @@ void SegmentationController::openSegmentationForTemplate(int trackIndex, int cli
         return;
 
     const drift::Clip &clip = track.clips.at(clipIndex);
-    if (clip.type != drift::ClipType::Video)
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image)
         return;
 
     const double startSeconds = drift::usToSeconds(clip.timelineStart);
@@ -780,11 +799,12 @@ void SegmentationController::startCutout(int trackIndex, int clipIndex, const QV
         return;
 
     const drift::Clip clip = track.clips.at(clipIndex);
-    if (clip.type != drift::ClipType::Video) {
-        m_app->setLastMessage(tr("Select a video clip to cut out"), QStringLiteral("warning"));
+    const bool still = clip.type == drift::ClipType::Image;
+    if (clip.type != drift::ClipType::Video && !still) {
+        m_app->setLastMessage(tr("Select a video or image clip to cut out"), QStringLiteral("warning"));
         return;
     }
-    if (clip.path.isEmpty() || clip.srcOut <= clip.srcIn) {
+    if (clip.path.isEmpty() || (!still && clip.srcOut <= clip.srcIn)) {
         m_app->setLastMessage(tr("This clip has no video to cut out"), QStringLiteral("warning"));
         return;
     }
@@ -855,7 +875,7 @@ void SegmentationController::startCutout(int trackIndex, int clipIndex, const QV
     job.path = clip.path;
     job.srcIn = srcIn;
     job.step = drift::kUsPerSecond / fps;
-    job.total = drift::segplan::frameCount(srcIn, clip.srcOut, job.step);
+    job.total = still ? 1 : drift::segplan::frameCount(srcIn, clip.srcOut, job.step);
     job.canvasW = m_app->m_project.width();
     job.canvasH = m_app->m_project.height();
     // Masks are traced against the frames the compositor shows, so they must decode at the same
@@ -869,7 +889,7 @@ void SegmentationController::startCutout(int trackIndex, int clipIndex, const QV
     job.oldOffsetUs = oldOffsetUs;
     job.fps = fps;
 
-    (void)QtConcurrent::run([this, job, fps, mode, clipId, rvm, rvmQuality, target, oldMattePath]() mutable {
+    (void)QtConcurrent::run([this, job, fps, mode, clipId, rvm, rvmQuality, target, oldMattePath, still]() mutable {
         auto setProgress = [this](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
                 this,
@@ -935,6 +955,65 @@ void SegmentationController::startCutout(int trackIndex, int clipIndex, const QV
 
         if (job.total <= 0) {
             finish(false, tr("Clip is too short to cut out"), {});
+            return;
+        }
+
+        if (still) {
+            QString stillPath = drift::newMattePath();
+            if (stillPath.isEmpty()) {
+                finish(false, tr("Could not create a cutout file"), {});
+                return;
+            }
+            stillPath.chop(4);
+            stillPath += QStringLiteral(".png");
+
+            // One frame, one matte: the compositor reads a still matte for the whole clip, so
+            // there is nothing to propagate and no time axis to write.
+            const QImage frame = readSegmentFrame(true, job.path, kCutoutRenderStreamId, 0, job.canvasW,
+                                                  job.canvasH, 0);
+            if (frame.isNull()) {
+                finish(false, tr("Could not decode frame %1").arg(0), {});
+                return;
+            }
+            QImage matte;
+            QString error;
+            if (rvm) {
+                std::unique_ptr<drift::RvmMatter::Track> track =
+                    drift::RvmMatter::instance().newTrack(rvmQuality);
+                if (!track) {
+                    finish(false, drift::RvmMatter::instance().lastError(), {});
+                    return;
+                }
+                const drift::RvmResult result = track->step(frame);
+                if (!result.ok) {
+                    finish(false, result.error, {});
+                    return;
+                }
+                matte = result.alpha;
+            } else {
+                const drift::Sam2Embedding embedding = sam.encode(frame);
+                if (!embedding.valid) {
+                    finish(false, sam.lastError(), {});
+                    return;
+                }
+                drift::Sam2Prompt prompt;
+                for (int p = 0; p < job.normalized.points.size(); ++p) {
+                    prompt.points.append(QPointF(job.normalized.points.at(p).x() * frame.width(),
+                                                 job.normalized.points.at(p).y() * frame.height()));
+                    prompt.labels.append(job.normalized.labels.at(p));
+                }
+                const drift::Sam2Result result = sam.segmentSeed(embedding, prompt);
+                if (!result.ok) {
+                    finish(false, result.error, {});
+                    return;
+                }
+                matte = result.mask;
+            }
+            if (matte.isNull() || !matte.convertToFormat(QImage::Format_Grayscale8).save(stillPath, "PNG")) {
+                finish(false, tr("Could not create a cutout file"), {});
+                return;
+            }
+            finish(true, tr("Cutout complete"), stillPath, {});
             return;
         }
 

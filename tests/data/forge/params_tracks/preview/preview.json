@@ -1,0 +1,39 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "x",
+      "name": "k_n4_x",
+      "node": "n4",
+      "type": "float",
+      "value": 0.5
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": [
+        "other",
+        "matte",
+        "music"
+      ]
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"other_clip\",{\"clip\":{\"param\":\"other\"}},[]],[\"n3\",\"track_mask\",{\"mask\":{\"param\":\"matte\"}},[]],[\"n4\",\"audio_track\",{\"audio\":{\"param\":\"music\"}},[]],[\"n5\",\"mix\",{},[]],[\"n6\",\"mix\",{},[]],[\"n7\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n5\",\"a\"],[\"n2\",\"image\",\"n5\",\"b\"],[\"n3\",\"mask\",\"n5\",\"amount\"],[\"n5\",\"image\",\"n6\",\"a\"],[\"n1\",\"image\",\"n6\",\"b\"],[\"n4\",\"level\",\"n6\",\"amount\"],[\"n6\",\"image\",\"n7\",\"image\"]],[[\"other\",\"track\",false],[\"matte\",\"trackMask\",false],[\"music\",\"audio\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

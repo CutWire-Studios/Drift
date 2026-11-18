@@ -258,7 +258,8 @@ void PreviewController::updateActiveTool()
     else if (!m_guideEditSetId.isEmpty())
         tool = QStringLiteral("guideEdit");
     else if (!m_maskingTool.isEmpty()) {
-        if (m_maskingTool == QLatin1String("brush"))
+        if (m_maskingTool == QLatin1String("brush") || m_maskingTool == QLatin1String("lasso")
+            || m_maskingTool == QLatin1String("scissors") || m_maskingTool == QLatin1String("wand"))
             tool = QStringLiteral("maskBrush");
         else if (m_maskingTool == QLatin1String("ai"))
             tool = QStringLiteral("maskAi");
@@ -1749,6 +1750,8 @@ void PreviewController::setMaskingTool(const QString &tool)
     const QString normalized = tool == QLatin1String("rect") || tool == QLatin1String("ellipse")
                                        || tool == QLatin1String("polygon") || tool == QLatin1String("brush")
                                        || tool == QLatin1String("ai") || tool == QLatin1String("tracker")
+                                       || tool == QLatin1String("lasso") || tool == QLatin1String("scissors")
+                                       || tool == QLatin1String("wand")
                                    ? tool
                                    : QString();
     if (m_maskingTool == normalized)

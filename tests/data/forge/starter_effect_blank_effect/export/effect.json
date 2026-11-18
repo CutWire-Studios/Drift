@@ -1,0 +1,26 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "description": "Just the clip and an output. Build anything.",
+  "displayName": "Blank effect",
+  "id": "starter_effect_blank_effect",
+  "order": 1000,
+  "parameters": [],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

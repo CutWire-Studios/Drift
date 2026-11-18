@@ -1,0 +1,47 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "map",
+      "name": "k_n2_map",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        0.5,
+        0.5,
+        0.5,
+        1
+      ]
+    },
+    {
+      "input": "strength",
+      "name": "k_n2_strength",
+      "node": "n2",
+      "type": "float",
+      "value": 0.05
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"displace\",{\"edge\":\"clamp\",\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

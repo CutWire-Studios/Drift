@@ -68,7 +68,8 @@ inline bool isReservedGpuUniform(const QString &name)
 {
     return isEngineBoundGpuUniform(name) || name.startsWith(QLatin1String("u_face"))
            || name == QLatin1String("u_audioLevel") || name == QLatin1String("u_audioBass")
-           || name == QLatin1String("u_audioBeat") || isProceduralContractUniform(name);
+           || name == QLatin1String("u_audioBeat") || name == QLatin1String("u_direction")
+           || isProceduralContractUniform(name);
 }
 
 struct GpuEffectBufferSpec

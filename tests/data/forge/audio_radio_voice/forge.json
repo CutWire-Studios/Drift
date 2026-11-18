@@ -1,0 +1,70 @@
+{
+  "assets": [],
+  "audio": {
+    "rack": {
+      "chain": [
+        {
+          "id": "a1",
+          "knobs": {
+            "high_cut": {
+              "param": "lowPass"
+            },
+            "low_cut": 450
+          },
+          "type": "classic.bandlimit"
+        },
+        {
+          "id": "a2",
+          "knobs": {
+            "drive": 14,
+            "mix": 0.6,
+            "output": -8,
+            "shape": 0
+          },
+          "type": "drive"
+        },
+        {
+          "id": "a3",
+          "knobs": {
+            "attack": 20,
+            "makeup": 2,
+            "ratio": 6,
+            "release": 250,
+            "threshold": -24
+          },
+          "type": "classic.compressor"
+        }
+      ],
+      "modulators": [],
+      "routes": []
+    }
+  },
+  "edges": [],
+  "forge": 3,
+  "kind": "audio",
+  "meta": {
+    "author": "",
+    "category": "transmission",
+    "description": "A voice squeezed through a small, overdriven speaker.",
+    "displayName": "Radio voice",
+    "id": "audio_radio_voice",
+    "version": "1.0.0"
+  },
+  "nodes": [],
+  "params": [
+    {
+      "default": 3200,
+      "displayName": "Tone",
+      "identifier": "lowPass",
+      "max": 6000,
+      "min": 2000,
+      "type": "float",
+      "ui": {
+        "unit": "Hz"
+      }
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

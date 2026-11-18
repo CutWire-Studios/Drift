@@ -1,0 +1,84 @@
+{
+  "audioCurve": "crossfade",
+  "category": "cinematic",
+  "description": "The person holds still in front while the world behind them punches through a zoom blur into the next clip, then they dissolve away.",
+  "displayName": "Subject pop-through",
+  "id": "starter_transition_subject_pop_through",
+  "nextFeatures": [
+    "node:clip_mask",
+    "requires:mask"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.45,
+      "displayName": "Punch",
+      "identifier": "punch",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 18,
+      "displayName": "Colour split (px)",
+      "identifier": "split",
+      "maxValue": 40,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.7,
+      "displayName": "Person leaves at",
+      "identifier": "holdUntil",
+      "maxValue": 0.95,
+      "minValue": 0.3,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [
+      {
+        "id": "buf0",
+        "scale": 1
+      }
+    ],
+    "passes": [
+      {
+        "fragmentShader": "pass1.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          },
+          {
+            "index": 1,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        "passIndex": 0
+      },
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "id": "buf0",
+            "type": "buffer"
+          },
+          {
+            "index": 0,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 1
+      }
+    ]
+  },
+  "requires": "mask"
+}

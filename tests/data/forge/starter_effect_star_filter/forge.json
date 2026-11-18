@@ -1,0 +1,105 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "dreamy",
+    "description": "Lights flare into star spikes.",
+    "displayName": "Star filter",
+    "id": "starter_effect_star_filter",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "intensity": 1.5,
+        "length": {
+          "param": "spikeLength"
+        },
+        "points": {
+          "param": "spikes"
+        },
+        "rotation": 45,
+        "threshold": 0.65,
+        "tint": [
+          1,
+          0.95,
+          0.85,
+          1
+        ]
+      },
+      "type": "streaks",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 560,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 4,
+      "displayName": "Spikes",
+      "identifier": "spikes",
+      "max": 8,
+      "min": 1,
+      "type": "float"
+    },
+    {
+      "default": 70,
+      "displayName": "Length",
+      "identifier": "spikeLength",
+      "max": 300,
+      "min": 10,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

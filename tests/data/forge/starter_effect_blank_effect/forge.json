@@ -1,0 +1,51 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "Just the clip and an output. Build anything.",
+    "displayName": "Blank effect",
+    "id": "starter_effect_blank_effect",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 560,
+      "y": 0
+    }
+  ],
+  "params": [],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

@@ -14,6 +14,7 @@ Rectangle {
     readonly property real diag: Math.SQRT1_2
     readonly property real cornerR: mask.maskData.shape === "rectangle"
                                     ? (mask.maskData.roundness || 0) * Math.min(mask.width, mask.height) / 2 : 0
+    readonly property real maxFeather: Math.max(64, 0.5 * Math.max(frame.width, frame.height) / Math.max(0.01, scaleX))
     readonly property real rowY: mask.height * 0.25
     readonly property bool inCorner: cornerR > rowY
     readonly property real cornerDy: cornerR - rowY
@@ -45,7 +46,7 @@ Rectangle {
                        : p.x - knob.mask.width
         EditorState.previewSetClipKeyframe(knob.mask.layerTrack, knob.mask.layerClip, "mask.feather",
                                            EditorState.playheadSeconds,
-                                           Math.round(Math.max(0, Math.min(64, edge / Math.max(0.01, knob.scaleX)))))
+                                           Math.round(Math.max(0, Math.min(maxFeather, edge / Math.max(0.01, knob.scaleX)))))
     }
 
     MouseArea {

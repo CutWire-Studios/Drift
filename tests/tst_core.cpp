@@ -90,6 +90,7 @@ private slots:
     void sourceFramingRoundTrip();
     void clipPose3dRoundTrip();
     void projectSerializationRoundTrip();
+    void bookmarkColourRoundTrip();
     void binFolderSerializationRoundTrip();
     void compositeSequenceRoundTrip();
     void activateSequenceSwapsTracks();
@@ -206,6 +207,7 @@ private slots:
     void bezierCurveShapesProgress();
     void bezierShapeRoundTrips();
     void clipAnimationBezierHandlesRoundTrip();
+    void clipAnimationProgressWindows();
     void textEaseParsesCubicBezier();
     void physicalOverlapTransitionWindow();
     void adjacentTransitionWindowClampsToClipExtents();
@@ -790,6 +792,37 @@ void CoreTest::projectSerializationRoundTrip()
     QVERIFY(loaded.hasWorkArea());
     QCOMPARE(loaded.workAreaInUs(), drift::secondsToUs(1.0));
     QCOMPARE(loaded.workAreaOutUs(), drift::secondsToUs(4.0));
+}
+
+void CoreTest::bookmarkColourRoundTrip()
+{
+    drift::Project project;
+    project.bookmarks().append({.timeUs = drift::secondsToUs(1.0),
+                                .label = QStringLiteral("Intro"),
+                                .color = QColor(QStringLiteral("#e5484d"))});
+    project.bookmarks().append(
+        {.timeUs = drift::secondsToUs(2.0), .label = QStringLiteral("Plain")});
+
+    const QJsonObject json = project.toJson();
+    // A flag on the theme colour writes no colour at all, so projects that never used one are
+    // unchanged and still open in a build without them.
+    const QJsonArray marks = json.value(QStringLiteral("bookmarks")).toArray();
+    QCOMPARE(marks.size(), 2);
+    QCOMPARE(marks.at(0).toObject().value(QStringLiteral("color")).toString(),
+             QStringLiteral("#e5484d"));
+    QVERIFY(!marks.at(1).toObject().contains(QStringLiteral("color")));
+
+    const drift::Project loaded = drift::Project::fromJson(json);
+    QCOMPARE(loaded.bookmarks().size(), 2);
+    QCOMPARE(loaded.bookmarks().at(0).color, QColor(QStringLiteral("#e5484d")));
+    QVERIFY(!loaded.bookmarks().at(1).color.isValid());
+
+    // A colour change alone is an edit: without it autosave and the unsaved-changes prompt
+    // would both let one go.
+    drift::Project recoloured = loaded;
+    recoloured.bookmarks()[1].color = QColor(QStringLiteral("#3e9bff"));
+    QCOMPARE(drift::diffProjects(loaded, recoloured).settings,
+             QStringList{QStringLiteral("bookmarks")});
 }
 
 void CoreTest::compositeSequenceRoundTrip()
@@ -4683,6 +4716,30 @@ void CoreTest::clipAnimationBezierHandlesRoundTrip()
     QVERIFY(out.shape.hasHandles());
     QCOMPARE(out.shape.handle1(), QPointF(0.17, 0.67));
     QCOMPARE(out.shape.handle2(), QPointF(0.83, 0.2));
+}
+
+void CoreTest::clipAnimationProgressWindows()
+{
+    const drift::TimeUs start = drift::secondsToUs(1.0);
+    const drift::TimeUs dur = drift::secondsToUs(2.0);
+    drift::ClipAnimation linear;
+    linear.kindId = QStringLiteral("slideUp");
+    linear.curve = drift::FadeCurve::Linear;
+    linear.durationUs = drift::secondsToUs(0.5);
+
+    QVERIFY(!drift::clipAnimationProgress(start, dur, drift::ClipAnimation{}, true, start).has_value());
+
+    QCOMPARE(drift::clipAnimationProgress(start, dur, linear, true, start).value(), 0.0);
+    QCOMPARE(drift::clipAnimationProgress(start, dur, linear, true, start + drift::secondsToUs(0.5)).value(), 1.0);
+    QCOMPARE(drift::clipAnimationProgress(start, dur, linear, true, start + drift::secondsToUs(0.25)).value(), 0.5);
+    QVERIFY(!drift::clipAnimationProgress(start, dur, linear, true, start - 1).has_value());
+    QVERIFY(!drift::clipAnimationProgress(start, dur, linear, true, start + drift::secondsToUs(0.6)).has_value());
+
+    const drift::TimeUs end = start + dur;
+    QCOMPARE(drift::clipAnimationProgress(start, dur, linear, false, end - drift::secondsToUs(0.5)).value(), 0.0);
+    QCOMPARE(drift::clipAnimationProgress(start, dur, linear, false, end).value(), 1.0);
+    QVERIFY(!drift::clipAnimationProgress(start, dur, linear, false, end - drift::secondsToUs(0.6)).has_value());
+    QVERIFY(!drift::clipAnimationProgress(start, dur, linear, false, end + 1).has_value());
 }
 
 void CoreTest::textEaseParsesCubicBezier()

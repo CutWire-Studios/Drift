@@ -1,0 +1,184 @@
+{
+  "buffers": [
+    "buf0",
+    "buf1",
+    "buf2"
+  ],
+  "errors": [],
+  "literals": [
+    {
+      "input": "center",
+      "name": "k_n2_center",
+      "node": "n2",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "input": "radius",
+      "name": "k_n2_radius",
+      "node": "n2",
+      "type": "float",
+      "value": 0.45
+    },
+    {
+      "input": "angle",
+      "name": "k_n2_angle",
+      "node": "n2",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "radius",
+      "name": "k_n3_radius",
+      "node": "n3",
+      "type": "float",
+      "value": 8
+    },
+    {
+      "input": "threshold",
+      "name": "k_n4_threshold",
+      "node": "n4",
+      "type": "float",
+      "value": 0.6
+    },
+    {
+      "input": "radius",
+      "name": "k_n4_radius",
+      "node": "n4",
+      "type": "float",
+      "value": 16
+    },
+    {
+      "input": "tint",
+      "name": "k_n4_tint",
+      "node": "n4",
+      "type": "color",
+      "value": [
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "input": "intensity",
+      "name": "k_n4_intensity",
+      "node": "n4",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "pass1.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "id": "buf0",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass2.frag",
+      "inputs": [
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf1",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass3.frag",
+      "inputs": [
+        {
+          "id": "buf1",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf0",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass4.frag",
+      "inputs": [
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf1",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass5.frag",
+      "inputs": [
+        {
+          "id": "buf1",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf2",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass6.frag",
+      "inputs": [
+        {
+          "id": "buf2",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf1",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "id": "buf1",
+          "type": "buffer"
+        },
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"twirl\",{\"edge\":\"clamp\"},[]],[\"n3\",\"blur\",{},[]],[\"n4\",\"glow\",{},[]],[\"n5\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"],[\"n3\",\"image\",\"n4\",\"image\"],[\"n4\",\"image\",\"n5\",\"image\"]],[],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

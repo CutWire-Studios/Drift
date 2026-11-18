@@ -9,6 +9,8 @@
 #include <QString>
 #include <QVariant>
 
+#include <optional>
+
 namespace drift {
 
 // Legacy ease names, read only so old projects without a "curve" key keep their feel.
@@ -65,5 +67,10 @@ ClipAnimation clipAnimationFromJson(const QJsonObject &object);
 ClipAnimSample evaluateClipAnimation(TimeUs timelineStart, TimeUs timelineDuration,
                                      const ClipAnimation &animIn, const ClipAnimation &animOut,
                                      TimeUs timelineUs, double layoutW, double layoutH);
+
+// Eased 0..1 progress of one edge animation in time order across its window (intro: start to
+// start+dur, outro: end-dur to end). nullopt when the animation is none or timelineUs is outside it.
+std::optional<double> clipAnimationProgress(TimeUs timelineStart, TimeUs timelineDuration,
+                                            const ClipAnimation &anim, bool isIn, TimeUs timelineUs);
 
 } // namespace drift

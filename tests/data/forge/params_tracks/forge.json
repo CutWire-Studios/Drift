@@ -1,0 +1,200 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n5",
+      "toSocket": "b"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "mask",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "image",
+      "id": "e4",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n6",
+      "toSocket": "b"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "level",
+      "id": "e6",
+      "to": "n6",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "image",
+      "id": "e7",
+      "to": "n7",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "",
+    "displayName": "My effect",
+    "id": "params_tracks",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "clip": {
+          "param": "other"
+        }
+      },
+      "id": "n2",
+      "inputs": {},
+      "type": "other_clip",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "mask": {
+          "param": "matte"
+        }
+      },
+      "id": "n3",
+      "inputs": {},
+      "type": "track_mask",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "audio": {
+          "param": "music"
+        }
+      },
+      "id": "n4",
+      "inputs": {
+        "x": 0.5
+      },
+      "type": "audio_track",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n6",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n7",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": "",
+      "displayName": "Other track",
+      "identifier": "other",
+      "max": 1,
+      "min": 0,
+      "type": "track"
+    },
+    {
+      "default": "",
+      "displayName": "Track mask",
+      "identifier": "matte",
+      "max": 1,
+      "min": 0,
+      "type": "trackMask"
+    },
+    {
+      "default": "",
+      "displayName": "Audio",
+      "identifier": "music",
+      "max": 1,
+      "min": 0,
+      "type": "audio"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

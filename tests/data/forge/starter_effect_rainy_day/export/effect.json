@@ -1,0 +1,35 @@
+{
+  "backend": "gpu",
+  "category": "dreamy",
+  "description": "Cool tones and falling rain.",
+  "displayName": "Rainy day",
+  "id": "starter_effect_rainy_day",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.5,
+      "displayName": "Rain",
+      "identifier": "rainAmount",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

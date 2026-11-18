@@ -36,6 +36,22 @@ QtObject {
     function importUrls(urls, fromDrop, onFinished) {
         if (!urls || urls.length === 0)
             return false
+        // A dropped folder arrives as a plain file:// URL and only C++ can tell it from a file, so
+        // dropping one used to import nothing at all. The bin walks the folders — mirroring their
+        // tree the way Import Folder does — and hands back whatever was an ordinary file.
+        // Timeline and preview drops pass a callback that places what landed: a folder's contents
+        // go to the bin rather than onto the timeline, so they are not part of that count.
+        if (EditorState.bin) {
+            const files = EditorState.bin.importFoldersFrom(urls)
+            if (files.length !== urls.length) {
+                if (files.length === 0) {
+                    if (onFinished)
+                        onFinished(0)
+                    return true
+                }
+                urls = files
+            }
+        }
         // Disabled: .mogrt template import needs more fixing. Treat it as ordinary media (the
         // probe rejects it and the caller gets a "could not open" toast) until the reader is
         // stable. Previously it was split out here so it went to the project rather than the bin.

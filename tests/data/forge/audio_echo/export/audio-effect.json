@@ -1,0 +1,44 @@
+{
+  "backend": "juce",
+  "category": "space",
+  "displayName": "My Echo",
+  "icon": "repeat",
+  "id": "audio_echo",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 60,
+      "displayName": "Delay (ms)",
+      "identifier": "delay",
+      "maxValue": 900,
+      "minValue": 10,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.4,
+      "displayName": "Decay",
+      "identifier": "decay",
+      "maxValue": 0.9,
+      "minValue": 0.1,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.8,
+      "displayName": "Input",
+      "identifier": "in_gain",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.88,
+      "displayName": "Wet Mix",
+      "identifier": "out_gain",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "prerollMs": 800,
+  "processor": "echo"
+}

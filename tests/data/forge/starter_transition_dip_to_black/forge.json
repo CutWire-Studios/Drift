@@ -1,0 +1,108 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "from"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "to"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "basic",
+    "description": "Fade out to black, then into the new clip.",
+    "displayName": "Dip to black",
+    "id": "starter_transition_dip_to_black",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "to",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "color": {
+          "param": "dipColor"
+        },
+        "from": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "hold": 0.1,
+        "p": 0,
+        "to": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "dip",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 560,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": "#000000",
+      "displayName": "Colour",
+      "identifier": "dipColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

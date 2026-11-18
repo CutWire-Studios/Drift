@@ -369,6 +369,15 @@ Item {
     readonly property bool curveEditing: laneHeight >= 140
     function isFocused(index) { return index === focusedIndex }
 
+    function autoSmooth() {
+        const entries = focusedIndex >= 0 ? [series[focusedIndex]] : series
+        EditorState.beginEditGroup()
+        for (const entry of entries)
+            EditorState.setKeyframeSmooth(EditorState.selectedTrack, EditorState.selectedClip,
+                                          entry.prop, 0, true)
+        EditorState.endEditGroup(qsTr("Auto-smooth keyframes"))
+    }
+
     // Double-click on empty graph inserts a key on the focused curve. The value comes from the
     // curve itself rather than from the cursor's height, so dropping a node in never changes
     // the animation — same contract as the speed editor's addPointAt/speedAtPos.

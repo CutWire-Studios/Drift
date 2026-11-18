@@ -1,0 +1,86 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "in1"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "",
+    "displayName": "My effect",
+    "id": "custom_glsl",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "code": "vec4 col = IN1(uv + vec2(a * 0.05, 0.0));\ncol.rgb = mix(col.rgb, vec3(luma(col)), b);\nreturn col;",
+        "heavy": true
+      },
+      "id": "n2",
+      "inputs": {
+        "a": 0.5,
+        "b": 0,
+        "c": 0,
+        "d": 0,
+        "in1": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "in2": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "custom",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "params": [],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

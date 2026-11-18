@@ -22,6 +22,10 @@ Item {
     readonly property bool isMedia: maskShape === "media"
     readonly property bool isSequence: maskShape === "sequence"
     readonly property bool hasBox: ["rectangle", "ellipse", "star", "heart"].indexOf(maskShape) >= 0
+    readonly property real featherLimit: {
+        void clipDataRevision
+        return EditorState.masking.featherLimit(EditorState.selectedTrack, EditorState.selectedClip)
+    }
     readonly property bool aspectLocked: !!(clipData.mask && clipData.mask.lockAspect)
 
     height: contentCol.height
@@ -168,7 +172,7 @@ Item {
                   min: 0, max: 1, percent: true, shapes: ["rectangle"] },
                 // Feather blurs the finished coverage map, so it applies to every shape.
                 { key: "mask.feather", label: qsTr("Feather"), def: 0, decimals: 0,
-                  min: 0, max: 64, unit: "px",
+                  min: 0, max: root.featherLimit, unit: "px",
                   shapes: ["rectangle", "ellipse", "star", "heart", "bars", "split", "freeform", "sequence"] }
             ]
             delegate: PropertyKeyframeRow {

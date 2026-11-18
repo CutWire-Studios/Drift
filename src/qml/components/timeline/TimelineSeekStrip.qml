@@ -118,10 +118,11 @@ Item {
             delegate: TimelineBookmarkMarker {
                 row: bookmarkRow
                 panel: seekStrip.panel
-                onContextMenu: (atPointer, anchor, ax, ay, bookmarkIndex, label, seconds) => {
+                onContextMenu: (atPointer, anchor, ax, ay, bookmarkIndex, label, seconds, color) => {
                     bookmarkContextMenu.bookmarkIndex = bookmarkIndex
                     bookmarkContextMenu.bookmarkLabel = label
                     bookmarkContextMenu.bookmarkSeconds = seconds
+                    bookmarkContextMenu.bookmarkColor = color
                     if (atPointer)
                         bookmarkContextMenu.popup(anchor, ax, ay)
                     else

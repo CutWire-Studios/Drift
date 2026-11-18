@@ -1,0 +1,540 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "x"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "size",
+      "id": "e2",
+      "to": "n5",
+      "toSocket": "p"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "slope",
+      "id": "e3",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "y",
+      "id": "e4",
+      "to": "n6",
+      "toSocket": "b"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e5",
+      "to": "n7",
+      "toSocket": "x"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "grad",
+      "id": "e6",
+      "to": "n8",
+      "toSocket": "a"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "value",
+      "id": "e7",
+      "to": "n10",
+      "toSocket": "a"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "angle",
+      "id": "e8",
+      "to": "n11",
+      "toSocket": "a"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "value",
+      "id": "e9",
+      "to": "n11",
+      "toSocket": "b"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "color",
+      "id": "e10",
+      "to": "n13",
+      "toSocket": "image"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "value",
+      "id": "e11",
+      "to": "n13",
+      "toSocket": "degrees"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "image",
+      "id": "e12",
+      "to": "n14",
+      "toSocket": "b"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e13",
+      "to": "n14",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "image",
+      "id": "e14",
+      "to": "n15",
+      "toSocket": "image"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e15",
+      "to": "n16",
+      "toSocket": "image"
+    },
+    {
+      "from": "n16",
+      "fromSocket": "image",
+      "id": "e16",
+      "to": "n17",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e17",
+      "to": "n17",
+      "toSocket": "b"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e18",
+      "to": "n17",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n17",
+      "fromSocket": "image",
+      "id": "e19",
+      "to": "n19",
+      "toSocket": "base"
+    },
+    {
+      "from": "n15",
+      "fromSocket": "image",
+      "id": "e20",
+      "to": "n19",
+      "toSocket": "layer"
+    },
+    {
+      "from": "n18",
+      "fromSocket": "value",
+      "id": "e21",
+      "to": "n19",
+      "toSocket": "opacity"
+    },
+    {
+      "from": "n19",
+      "fromSocket": "image",
+      "id": "e22",
+      "to": "n20",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "impact",
+    "description": "A glowing line traces the person. The matte's gradient finds the edge, and its direction sets the colour, so the hue wheels around the body.",
+    "displayName": "Neon outline",
+    "id": "starter_effect_neon_outline",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "clip_mask",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "spacing": 2,
+        "x": 0
+      },
+      "type": "derivative",
+      "x": 280,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {},
+      "type": "resolution",
+      "x": 280,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "p": [
+          0,
+          0
+        ]
+      },
+      "type": "split_point",
+      "x": 560,
+      "y": 660
+    },
+    {
+      "data": {
+        "op": "div"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 840,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n7",
+      "inputs": {
+        "high": {
+          "param": "lineSoftness"
+        },
+        "low": 0.02,
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 1120,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n8",
+      "inputs": {
+        "a": [
+          1,
+          0
+        ],
+        "b": [
+          0,
+          1
+        ]
+      },
+      "type": "vector_measure",
+      "x": 560,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n9",
+      "inputs": {
+        "speed": 1
+      },
+      "type": "time",
+      "x": 560,
+      "y": 1100
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n10",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "colorSpin"
+        }
+      },
+      "type": "math",
+      "x": 840,
+      "y": 1100
+    },
+    {
+      "data": {
+        "op": "add"
+      },
+      "id": "n11",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1120,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n12",
+      "inputs": {
+        "color": {
+          "param": "neonColor"
+        }
+      },
+      "type": "color_value",
+      "x": 1120,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n13",
+      "inputs": {
+        "degrees": 90,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "hue_shift",
+      "x": 1400,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n14",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 1680,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n15",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "intensity": {
+          "param": "neonIntensity"
+        },
+        "radius": {
+          "param": "neonGlow"
+        },
+        "threshold": 0,
+        "tint": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "glow",
+      "x": 1960,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n16",
+      "inputs": {
+        "brightness": {
+          "param": "backdrop"
+        },
+        "contrast": 1,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "brightness_contrast",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n17",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {
+        "shape": "sine"
+      },
+      "id": "n18",
+      "inputs": {
+        "max": 1,
+        "min": 0.55,
+        "phase": 0,
+        "rate": {
+          "param": "pulseRate"
+        },
+        "seed": 0,
+        "t": 0
+      },
+      "type": "lfo",
+      "x": 1960,
+      "y": 220
+    },
+    {
+      "data": {
+        "mode": "add"
+      },
+      "id": "n19",
+      "inputs": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "layer": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "opacity": 1
+      },
+      "type": "blend",
+      "x": 2240,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n20",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 2520,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.18,
+      "displayName": "Softness",
+      "identifier": "lineSoftness",
+      "max": 0.5,
+      "min": 0.05,
+      "type": "float"
+    },
+    {
+      "default": 90,
+      "displayName": "Colour speed (°/s)",
+      "identifier": "colorSpin",
+      "max": 360,
+      "min": -360,
+      "type": "float"
+    },
+    {
+      "default": "#00e5ff",
+      "displayName": "Neon colour",
+      "identifier": "neonColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    },
+    {
+      "default": 14,
+      "displayName": "Glow size",
+      "identifier": "neonGlow",
+      "max": 48,
+      "min": 2,
+      "type": "float"
+    },
+    {
+      "default": 1.8,
+      "displayName": "Glow",
+      "identifier": "neonIntensity",
+      "max": 4,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": -0.35,
+      "displayName": "Background",
+      "identifier": "backdrop",
+      "max": 0,
+      "min": -1,
+      "type": "float"
+    },
+    {
+      "default": 2,
+      "displayName": "Pulse speed",
+      "identifier": "pulseRate",
+      "max": 8,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "clip": "dancer",
+    "thumbTime": 0.5
+  }
+}

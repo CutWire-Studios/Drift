@@ -1,0 +1,181 @@
+{
+  "buffers": [
+    "buf0",
+    "buf1",
+    "buf2"
+  ],
+  "errors": [],
+  "literals": [
+    {
+      "input": "b",
+      "name": "k_n7_b",
+      "node": "n7",
+      "type": "float",
+      "value": 0.017453292519943295
+    },
+    {
+      "input": "inMin",
+      "name": "k_n10_inMin",
+      "node": "n10",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "inMax",
+      "name": "k_n10_inMax",
+      "node": "n10",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "outMin",
+      "name": "k_n10_outMin",
+      "node": "n10",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "origin",
+      "name": "k_n17_origin",
+      "node": "n17",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.6
+      ]
+    },
+    {
+      "input": "b",
+      "name": "k_n14_b",
+      "node": "n14",
+      "type": "float",
+      "value": -0.25
+    },
+    {
+      "input": "b",
+      "name": "k_n15_b",
+      "node": "n15",
+      "type": "float",
+      "value": 1.4
+    },
+    {
+      "input": "low",
+      "name": "k_n26_low",
+      "node": "n26",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "high",
+      "name": "k_n26_high",
+      "node": "n26",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "input": "low",
+      "name": "k_n23_low",
+      "node": "n23",
+      "type": "float",
+      "value": 0.03
+    },
+    {
+      "input": "high",
+      "name": "k_n23_high",
+      "node": "n23",
+      "type": "float",
+      "value": 0.1
+    },
+    {
+      "input": "low",
+      "name": "k_n24_low",
+      "node": "n24",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "high",
+      "name": "k_n24_high",
+      "node": "n24",
+      "type": "float",
+      "value": 0.08
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "pass1.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "id": "buf0",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass2.frag",
+      "inputs": [
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf1",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass3.frag",
+      "inputs": [
+        {
+          "id": "buf1",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf2",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        },
+        {
+          "index": 1,
+          "type": "source_texture"
+        },
+        {
+          "id": "buf2",
+          "type": "buffer"
+        },
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"transition\",[[\"n1\",\"from\",{},[]],[\"n2\",\"to\",{},[]],[\"n3\",\"clip_mask\",{},[]],[\"n4\",\"progress\",{},[]],[\"n5\",\"ease\",{\"curve\":\"in\"},[]],[\"n6\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"spin\"}]]],[\"n7\",\"math\",{\"op\":\"mul\"},[]],[\"n8\",\"func\",{\"fn\":\"cos\"},[]],[\"n9\",\"func\",{\"fn\":\"sin\"},[]],[\"n10\",\"remap\",{\"clamp\":true},[[\"outMax\",{\"param\":\"flingSize\"}]]],[\"n11\",\"math\",{\"op\":\"mul\"},[]],[\"n12\",\"math\",{\"op\":\"mul\"},[]],[\"n13\",\"func\",{\"fn\":\"neg\"},[]],[\"n14\",\"math\",{\"op\":\"mul\"},[]],[\"n15\",\"math\",{\"op\":\"mul\"},[]],[\"n16\",\"combine_point\",{},[]],[\"n17\",\"linear_transform\",{\"inverse\":true,\"square\":true},[]],[\"n18\",\"sample_at\",{\"edge\":\"transparent\"},[]],[\"n19\",\"sample_at\",{\"edge\":\"transparent\"},[]],[\"n20\",\"split_color\",{},[]],[\"n21\",\"blur\",{},[[\"radius\",{\"param\":\"border\"}]]],[\"n22\",\"split_color\",{},[]],[\"n23\",\"smoothstep\",{},[]],[\"n24\",\"smoothstep\",{},[]],[\"n25\",\"math\",{\"op\":\"mul\"},[]],[\"n26\",\"smoothstep\",{},[]],[\"n27\",\"mix\",{},[]],[\"n28\",\"mix\",{},[[\"b\",{\"param\":\"borderColor\"}]]],[\"n29\",\"mix\",{},[]],[\"n30\",\"transition_output\",{},[]]],[[\"n4\",\"value\",\"n5\",\"t\"],[\"n5\",\"value\",\"n6\",\"a\"],[\"n6\",\"value\",\"n7\",\"a\"],[\"n7\",\"value\",\"n8\",\"x\"],[\"n7\",\"value\",\"n9\",\"x\"],[\"n5\",\"value\",\"n10\",\"x\"],[\"n8\",\"value\",\"n11\",\"a\"],[\"n10\",\"value\",\"n11\",\"b\"],[\"n9\",\"value\",\"n12\",\"a\"],[\"n10\",\"value\",\"n12\",\"b\"],[\"n12\",\"value\",\"n13\",\"x\"],[\"n11\",\"value\",\"n17\",\"m00\"],[\"n13\",\"value\",\"n17\",\"m01\"],[\"n12\",\"value\",\"n17\",\"m10\"],[\"n11\",\"value\",\"n17\",\"m11\"],[\"n5\",\"value\",\"n14\",\"a\"],[\"n5\",\"value\",\"n15\",\"a\"],[\"n14\",\"value\",\"n16\",\"x\"],[\"n15\",\"value\",\"n16\",\"y\"],[\"n16\",\"p\",\"n17\",\"offset\"],[\"n1\",\"image\",\"n18\",\"image\"],[\"n17\",\"p\",\"n18\",\"p\"],[\"n3\",\"mask\",\"n19\",\"image\"],[\"n17\",\"p\",\"n19\",\"p\"],[\"n19\",\"image\",\"n20\",\"color\"],[\"n19\",\"image\",\"n21\",\"image\"],[\"n21\",\"image\",\"n22\",\"color\"],[\"n22\",\"r\",\"n23\",\"x\"],[\"n4\",\"value\",\"n24\",\"x\"],[\"n23\",\"value\",\"n25\",\"a\"],[\"n24\",\"value\",\"n25\",\"b\"],[\"n4\",\"value\",\"n26\",\"x\"],[\"n1\",\"image\",\"n27\",\"a\"],[\"n2\",\"image\",\"n27\",\"b\"],[\"n26\",\"value\",\"n27\",\"amount\"],[\"n27\",\"image\",\"n28\",\"a\"],[\"n25\",\"value\",\"n28\",\"amount\"],[\"n28\",\"image\",\"n29\",\"a\"],[\"n18\",\"image\",\"n29\",\"b\"],[\"n20\",\"r\",\"n29\",\"amount\"],[\"n29\",\"image\",\"n30\",\"image\"]],[[\"spin\",\"float\",false],[\"flingSize\",\"float\",false],[\"border\",\"float\",false],[\"borderColor\",\"color\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": true,
+  "usesTime": false
+}

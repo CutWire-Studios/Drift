@@ -117,7 +117,7 @@ public:
     // ("driftpkg" | "zip" | "driftfx"), name, version, author, description, nativeCode and
     // replaces (the name of an installed addon or store pack with the same id), or only `error`.
     // A "driftfx" result has gone through inspectUserPackage() and follows that flow instead; so
-    // does a zip from Drift Forge (one folder with effect.json, transition.json or
+    // does a zip from Drift Forge (one folder with effect.json, transition.json, animation.json or
     // audio-effect.json and no manifest.json).
     Q_INVOKABLE QVariantMap inspectAddonFile(const QUrl &url);
     // Installs the file inspected last. An officially signed .driftpkg installs straight away;

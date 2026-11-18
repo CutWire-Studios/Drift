@@ -34,7 +34,7 @@ struct PackageFile
 };
 
 // What the addon contributes, and where it lives inside the package. `kind` is the extension
-// point: "fonts", "stickers", "whisper-model" today; "effects", "transitions", "audio-effects",
+// point: "fonts", "stickers", "whisper-model" today; "effects", "transitions", "animations", "audio-effects",
 // "onnx-model" are routable without a format change. A pack may provide several kinds, and a
 // one-item pack is the same shape as a twenty-item one.
 struct PackageProvide
@@ -120,7 +120,7 @@ bool install(const QString &packagePath, const QString &destDir, const ProgressF
              bool requireSignature = true);
 
 // Pack <packageDir>'s files into a .driftfx at outPath, as <kind>/<folder name>/... where kind is
-// "effects", "transitions" or "audio-effects". `meta` supplies id, name, version and the other
+// "effects", "transitions", "animations" or "audio-effects". `meta` supplies id, name, version and the other
 // descriptive fields; the layout fields are filled in here. Written via <outPath>.partial.
 bool writeUserPackage(const QString &packageDir, const QString &kind, const QJsonObject &meta,
                       const QString &outPath, QString *error);

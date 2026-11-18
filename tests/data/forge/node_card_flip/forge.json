@@ -1,0 +1,109 @@
+{
+  "assets": [
+    {
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "height": 1,
+      "id": "a1",
+      "mime": "image/png",
+      "name": "px.png",
+      "width": 1
+    }
+  ],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "from"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n2",
+      "toSocket": "to"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n3",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "basic",
+    "description": "",
+    "displayName": "My transition",
+    "id": "node_card_flip",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "asset": "a1",
+        "axis": "y"
+      },
+      "id": "n2",
+      "inputs": {
+        "from": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "lift": 0.4,
+        "p": 0,
+        "perspective": 1,
+        "to": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "card_flip",
+      "x": 200,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 400,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {},
+      "type": "to",
+      "x": 0,
+      "y": 100
+    }
+  ],
+  "params": [],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

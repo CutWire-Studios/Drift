@@ -1,0 +1,132 @@
+{
+  "audioCurve": "crossfade",
+  "category": "geometric",
+  "description": "The person's outline becomes a window into the next clip and grows exponentially until it fills the frame, traced by a neon edge.",
+  "displayName": "Silhouette portal",
+  "id": "starter_transition_silhouette_portal",
+  "nextFeatures": [
+    "node:clip_mask",
+    "param:point",
+    "requires:mask"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 3.5,
+      "displayName": "Growth",
+      "identifier": "growth",
+      "maxValue": 6,
+      "minValue": 1,
+      "type": "float"
+    },
+    {
+      "defaultValue": [
+        0.5,
+        0.4
+      ],
+      "displayName": "Grow from",
+      "identifier": "portalCentre",
+      "maxValue": [
+        1,
+        1
+      ],
+      "minValue": [
+        0,
+        0
+      ],
+      "type": "point"
+    },
+    {
+      "defaultValue": "#4dfcff",
+      "displayName": "Edge colour",
+      "identifier": "edgeColor",
+      "type": "color"
+    },
+    {
+      "defaultValue": 1.6,
+      "displayName": "Edge glow",
+      "identifier": "edgeGlow",
+      "maxValue": 4,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [
+      {
+        "id": "buf0",
+        "scale": 1
+      },
+      {
+        "id": "buf1",
+        "scale": 1
+      }
+    ],
+    "passes": [
+      {
+        "fragmentShader": "pass1.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        "passIndex": 0
+      },
+      {
+        "fragmentShader": "pass2.frag",
+        "inputs": [
+          {
+            "id": "buf0",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "id": "buf1",
+          "type": "buffer"
+        },
+        "passIndex": 1
+      },
+      {
+        "fragmentShader": "pass3.frag",
+        "inputs": [
+          {
+            "id": "buf1",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        "passIndex": 2
+      },
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          },
+          {
+            "index": 1,
+            "type": "source_texture"
+          },
+          {
+            "id": "buf0",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 3
+      }
+    ]
+  },
+  "requires": "mask"
+}

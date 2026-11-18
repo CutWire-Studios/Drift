@@ -1,0 +1,114 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "mask"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "animation",
+  "meta": {
+    "author": "",
+    "category": "reveal",
+    "description": "A soft edge sweeps across to uncover the clip, or cover it again.",
+    "displayName": "Wipe reveal",
+    "id": "starter_animation_wipe_reveal",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "angle": {
+          "param": "angle"
+        },
+        "p": 0,
+        "softness": {
+          "param": "softness"
+        }
+      },
+      "type": "wipe_mask",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "mask": 1
+      },
+      "type": "set_alpha",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "type": "animation_output",
+      "x": 840,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0,
+      "displayName": "Direction",
+      "identifier": "angle",
+      "max": 360,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 0.08,
+      "displayName": "Softness",
+      "identifier": "softness",
+      "max": 0.5,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "size",
+      "name": "k_n2_size",
+      "node": "n2",
+      "type": "float",
+      "value": 0.3
+    },
+    {
+      "input": "rotation",
+      "name": "k_n2_rotation",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "center",
+      "name": "k_n2_center",
+      "node": "n2",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "input": "softness",
+      "name": "k_n2_softness",
+      "node": "n2",
+      "type": "float",
+      "value": 0.01
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"shape\",{\"shape\":\"circle\",\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n2\",\"mask\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

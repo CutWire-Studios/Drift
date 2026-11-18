@@ -14,6 +14,7 @@ Rectangle {
     signal saveJsonRequested()
     signal openJsonRequested()
     signal propertiesRequested()
+    signal healthRequested()
 
     readonly property bool open: recentPopupLoader.shown
     readonly property bool saved: !EditorState.projectFile.hasUnsavedChanges
@@ -113,6 +114,7 @@ Rectangle {
                 // onImportEdlRequested: root.openEdlTimeline()
                 // onImportOtioRequested: root.openOtioTimeline()
                 onPropertiesRequested: projectsButton.propertiesRequested()
+                onHealthRequested: projectsButton.healthRequested()
             }
         }
     }

@@ -605,6 +605,9 @@ QtObject {
         settings: "settings",
         upload: "upload",
         plus: "plus",
+        minus: "minus",
+        map: "map",
+        dices: "dices",
         volumeHigh: "volume-2",
         volumeOff: "volume-off",
         eye: "eye",
@@ -717,6 +720,8 @@ QtObject {
         circle: "circle",
         pentagon: "pentagon",
         brush: "brush",
+        lasso: "lasso",
+        magicWand: "wand",
         crosshair: "crosshair",
         ratio: "ratio",
 

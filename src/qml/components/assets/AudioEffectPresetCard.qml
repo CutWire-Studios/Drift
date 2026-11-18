@@ -125,8 +125,12 @@ Column {
             id: cardMenu
 
             property bool favorited: false
+            property bool editable: false
 
-            onAboutToShow: favorited = EditorState.isAssetFavorite("sounds", root.modelData.id)
+            onAboutToShow: {
+                favorited = EditorState.isAssetFavorite("sounds", root.modelData.id)
+                editable = AudioForge.canEdit("audio_effect", root.modelData.id)
+            }
 
             ThemedMenuItem {
                 text: qsTr("Apply to selected clip")
@@ -138,6 +142,12 @@ Column {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
                 icon.name: Theme.icons.star
                 onTriggered: EditorState.toggleAssetFavorite("sounds", root.modelData.id)
+            }
+            ThemedMenuItem {
+                visible: cardMenu.editable && !ShellBridge.phoneShell
+                text: qsTr("Edit in Forge")
+                icon.name: Theme.icons.pencil
+                onTriggered: AudioForge.openPackage("audio_effect", root.modelData.id)
             }
         }
 

@@ -1,0 +1,73 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "perspective",
+      "name": "k_n2_perspective",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "rx",
+      "name": "k_n2_rx",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "ry",
+      "name": "k_n2_ry",
+      "node": "n2",
+      "type": "float",
+      "value": 25
+    },
+    {
+      "input": "rz",
+      "name": "k_n2_rz",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "offset",
+      "name": "k_n2_offset",
+      "node": "n2",
+      "type": "vec2",
+      "value": [
+        0,
+        0
+      ]
+    },
+    {
+      "input": "distance",
+      "name": "k_n2_distance",
+      "node": "n2",
+      "type": "float",
+      "value": 0.3
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"rotate_3d\",{\"back\":\"show\",\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

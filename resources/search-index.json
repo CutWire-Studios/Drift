@@ -9,6 +9,38 @@
       "needs": []
     },
     {
+      "id": "audio-forge-graph",
+      "target": "panel:audioForgeGraph#audio-forge-graph",
+      "context": "AudioForgeGraphPanel",
+      "source": "Audio Forge graph",
+      "keywords": "audio forge pedalboard graph pedal reverb delay filter split modulator build custom effect",
+      "needs": []
+    },
+    {
+      "id": "audio-forge-inspector",
+      "target": "panel:audioForgeInspector#audio-forge-inspector",
+      "context": "AudioForgeInspectorPanel",
+      "source": "Audio Forge inspector",
+      "keywords": "audio forge inspector pedal knob sliders details impulse response modulation steps loop audition",
+      "needs": []
+    },
+    {
+      "id": "audio-forge-palette",
+      "target": "panel:audioForgePalette#audio-forge-palette",
+      "context": "AudioForgePalettePanel",
+      "source": "Audio Forge pedals",
+      "keywords": "audio forge pedals palette add filter reverb delay split modulator lfo envelope",
+      "needs": []
+    },
+    {
+      "id": "audio-ducking",
+      "target": "panel:audioMixer#audio-ducking",
+      "context": "AudioMixerPanel",
+      "source": "Ducking",
+      "keywords": "ducking duck sidechain lower music under voice auto duck",
+      "needs": []
+    },
+    {
       "id": "audio-sheet",
       "target": "panel:audioSheet#audio-sheet",
       "context": "AudioSheetPanel",
@@ -193,6 +225,30 @@
       "needs": []
     },
     {
+      "id": "forge-graph",
+      "target": "panel:forgeGraph#forge-graph",
+      "context": "ForgeGraphPanel",
+      "source": "Forge node graph",
+      "keywords": "forge effect transition animation node graph shader glsl build custom",
+      "needs": []
+    },
+    {
+      "id": "forge-inspector",
+      "target": "panel:forgeInspector#forge-inspector",
+      "context": "ForgeInspectorPanel",
+      "source": "Forge inspector",
+      "keywords": "forge inspector node sliders parameters details code glsl preview loop target",
+      "needs": []
+    },
+    {
+      "id": "forge-palette",
+      "target": "panel:forgePalette#forge-palette",
+      "context": "ForgePalettePanel",
+      "source": "Forge node palette",
+      "keywords": "forge nodes blocks palette add blur color distort mix input math",
+      "needs": []
+    },
+    {
       "id": "keyframes-editor",
       "target": "panel:keyframes#keyframes-editor",
       "context": "KeyframesPanel",
@@ -221,7 +277,7 @@
       "target": "panel:masking#masking-tracking",
       "context": "MaskingPanel",
       "source": "Masking & Tracking",
-      "keywords": "mask matte rotoscope roto brush polygon tracking tracker motion track planar object follow",
+      "keywords": "mask matte rotoscope roto brush lasso scissors magic wand select polygon tracking tracker motion track planar object follow",
       "needs": []
     },
     {

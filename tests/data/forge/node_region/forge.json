@@ -1,0 +1,80 @@
+{
+  "assets": [
+    {
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "height": 1,
+      "id": "a1",
+      "mime": "image/png",
+      "name": "px.png",
+      "width": 1
+    }
+  ],
+  "edges": [
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e1",
+      "to": "n3",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "",
+    "displayName": "My effect",
+    "id": "node_region",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "asset": "a1",
+        "invert": false,
+        "rect": [
+          0.3,
+          0.25,
+          0.4,
+          0.5
+        ],
+        "shape": "ellipse"
+      },
+      "id": "n2",
+      "inputs": {
+        "softness": 0.02
+      },
+      "type": "region",
+      "x": 200,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 400,
+      "y": 0
+    }
+  ],
+  "params": [],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

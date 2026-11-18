@@ -1,0 +1,157 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "b",
+      "name": "k_n4_b",
+      "node": "n4",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "input": "s",
+      "name": "k_n4_s",
+      "node": "n4",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "b",
+      "name": "k_n13_b",
+      "node": "n13",
+      "type": "vec2",
+      "value": [
+        0,
+        0
+      ]
+    },
+    {
+      "input": "b",
+      "name": "k_n5_b",
+      "node": "n5",
+      "type": "vec2",
+      "value": [
+        0,
+        1
+      ]
+    },
+    {
+      "input": "seed",
+      "name": "k_n10_seed",
+      "node": "n10",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "phase",
+      "name": "k_n10_phase",
+      "node": "n10",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "min",
+      "name": "k_n10_min",
+      "node": "n10",
+      "type": "float",
+      "value": -1
+    },
+    {
+      "input": "max",
+      "name": "k_n10_max",
+      "node": "n10",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "b",
+      "name": "k_n14_b",
+      "node": "n14",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "input": "s",
+      "name": "k_n14_s",
+      "node": "n14",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "a",
+      "name": "k_n19_a",
+      "node": "n19",
+      "type": "color",
+      "value": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "input": "spacing",
+      "name": "k_n16_spacing",
+      "node": "n16",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "inMin",
+      "name": "k_n18_inMin",
+      "node": "n18",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "inMax",
+      "name": "k_n18_inMax",
+      "node": "n18",
+      "type": "float",
+      "value": 4
+    },
+    {
+      "input": "outMin",
+      "name": "k_n18_outMin",
+      "node": "n18",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "outMax",
+      "name": "k_n18_outMax",
+      "node": "n18",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"clip_mask\",{},[]],[\"n3\",\"uv\",{},[]],[\"n4\",\"vector_math\",{\"op\":\"sub\"},[]],[\"n5\",\"vector_measure\",{},[]],[\"n6\",\"math\",{\"op\":\"div\"},[[\"b\",{\"param\":\"vortexSize\"}]]],[\"n7\",\"func\",{\"fn\":\"square\"},[]],[\"n8\",\"func\",{\"fn\":\"neg\"},[]],[\"n9\",\"func\",{\"fn\":\"exp\"},[]],[\"n10\",\"lfo\",{\"shape\":\"sine\"},[[\"rate\",{\"param\":\"vortexSpeed\"}]]],[\"n11\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"twist\"}]]],[\"n12\",\"math\",{\"op\":\"mul\"},[]],[\"n13\",\"vector_math\",{\"op\":\"rotate\"},[]],[\"n14\",\"vector_math\",{\"op\":\"add\"},[]],[\"n15\",\"sample_at\",{\"edge\":\"mirror\"},[]],[\"n16\",\"jacobian\",{},[]],[\"n17\",\"func\",{\"fn\":\"abs\"},[]],[\"n18\",\"remap\",{\"clamp\":true},[]],[\"n19\",\"mix\",{},[[\"b\",{\"param\":\"swirlColor\"}]]],[\"n20\",\"blend\",{\"mode\":\"screen\"},[[\"opacity\",{\"param\":\"swirlGlow\"}]]],[\"n21\",\"mix\",{},[]],[\"n22\",\"effect_output\",{},[]]],[[\"n3\",\"uv\",\"n4\",\"a\"],[\"n4\",\"p\",\"n5\",\"a\"],[\"n5\",\"length\",\"n6\",\"a\"],[\"n6\",\"value\",\"n7\",\"x\"],[\"n7\",\"value\",\"n8\",\"x\"],[\"n8\",\"value\",\"n9\",\"x\"],[\"n10\",\"value\",\"n11\",\"a\"],[\"n9\",\"value\",\"n12\",\"a\"],[\"n11\",\"value\",\"n12\",\"b\"],[\"n4\",\"p\",\"n13\",\"a\"],[\"n12\",\"value\",\"n13\",\"s\"],[\"n13\",\"p\",\"n14\",\"a\"],[\"n1\",\"image\",\"n15\",\"image\"],[\"n14\",\"p\",\"n15\",\"p\"],[\"n14\",\"p\",\"n16\",\"p\"],[\"n16\",\"curl\",\"n17\",\"x\"],[\"n17\",\"value\",\"n18\",\"x\"],[\"n18\",\"value\",\"n19\",\"amount\"],[\"n15\",\"image\",\"n20\",\"base\"],[\"n19\",\"image\",\"n20\",\"layer\"],[\"n20\",\"image\",\"n21\",\"a\"],[\"n1\",\"image\",\"n21\",\"b\"],[\"n2\",\"mask\",\"n21\",\"amount\"],[\"n21\",\"image\",\"n22\",\"image\"]],[[\"vortexSize\",\"float\",false],[\"vortexSpeed\",\"float\",false],[\"twist\",\"float\",false],[\"swirlColor\",\"color\",false],[\"swirlGlow\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": true,
+  "usesTime": true
+}

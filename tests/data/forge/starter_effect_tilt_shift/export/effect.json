@@ -1,0 +1,80 @@
+{
+  "backend": "gpu",
+  "category": "dreamy",
+  "description": "Sharp in a band across the middle, blurred above and below: the miniature look.",
+  "displayName": "Tilt shift",
+  "id": "starter_effect_tilt_shift",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.5,
+      "displayName": "Focus height",
+      "identifier": "focus",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 18,
+      "displayName": "Blur",
+      "identifier": "blurAmount",
+      "maxValue": 48,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [
+      {
+        "id": "buf0",
+        "scale": 1
+      },
+      {
+        "id": "buf1",
+        "scale": 1
+      }
+    ],
+    "passes": [
+      {
+        "fragmentShader": "pass1.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        "passIndex": 0
+      },
+      {
+        "fragmentShader": "pass2.frag",
+        "inputs": [
+          {
+            "id": "buf0",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "id": "buf1",
+          "type": "buffer"
+        },
+        "passIndex": 1
+      },
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "id": "buf1",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 2
+      }
+    ]
+  }
+}

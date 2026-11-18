@@ -1,0 +1,43 @@
+{
+  "backend": "gpu",
+  "category": "funny",
+  "description": "The picture leans and stretches back and forth like a funhouse mirror.",
+  "displayName": "Funhouse shear",
+  "id": "starter_effect_funhouse_shear",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.35,
+      "displayName": "Lean",
+      "identifier": "lean",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.5,
+      "displayName": "Speed",
+      "identifier": "wobbleRate",
+      "maxValue": 3,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

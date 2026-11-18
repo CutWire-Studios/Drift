@@ -1,0 +1,81 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "",
+    "displayName": "My effect",
+    "id": "heavy_inputs_blur_of_noise",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {
+        "style": "cloud"
+      },
+      "id": "n1",
+      "inputs": {
+        "scale": 6,
+        "seed": 0,
+        "speed": 0.3,
+        "t": 0
+      },
+      "type": "noise",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": 8
+      },
+      "type": "blur",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "params": [],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

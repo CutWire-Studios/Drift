@@ -1,0 +1,89 @@
+{
+  "assets": [],
+  "audio": {
+    "rack": {
+      "chain": [
+        {
+          "id": "a1",
+          "knobs": {
+            "cutoff": 5200,
+            "mode": 0,
+            "resonance": 0.7
+          },
+          "type": "filter"
+        },
+        {
+          "blend": {
+            "param": "blend"
+          },
+          "crossfade": true,
+          "id": "a2",
+          "lanes": [
+            {
+              "chain": [],
+              "gain": 1,
+              "id": "a3"
+            },
+            {
+              "chain": [
+                {
+                  "id": "a5",
+                  "knobs": {
+                    "damping": 0.4,
+                    "freeze": false,
+                    "mix": 1,
+                    "size": 0.85,
+                    "width": 1
+                  },
+                  "type": "reverb"
+                },
+                {
+                  "id": "a6",
+                  "knobs": {
+                    "feedback": 0.45,
+                    "mix": 0.4,
+                    "pingpong": true,
+                    "time": 380,
+                    "tone": 8000
+                  },
+                  "type": "delay"
+                }
+              ],
+              "gain": 1,
+              "id": "a4"
+            }
+          ],
+          "mode": "parallel",
+          "type": "split"
+        }
+      ],
+      "modulators": [],
+      "routes": []
+    }
+  },
+  "edges": [],
+  "forge": 3,
+  "kind": "audio",
+  "meta": {
+    "author": "",
+    "category": "space",
+    "description": "Soft, wide and far away: a darkened sound blended into reverb and echoes.",
+    "displayName": "Dreamy space",
+    "id": "audio_dreamy_space",
+    "version": "1.0.0"
+  },
+  "nodes": [],
+  "params": [
+    {
+      "default": 0.45,
+      "displayName": "Space",
+      "identifier": "blend",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

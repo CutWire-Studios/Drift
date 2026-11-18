@@ -4,6 +4,8 @@
 #include "app/bin/BinFolderListModel.h"
 
 #include <QAtomicInt>
+#include <QJsonObject>
+#include <QList>
 #include <QObject>
 #include <QSet>
 #include <QString>
@@ -84,6 +86,13 @@ public:
     // is deleting the folder by hand — but still marks the project dirty, so autosave and the
     // unsaved-changes prompt cover the hierarchy it creates.
     Q_INVOKABLE bool importFolder(const QUrl &folderUrl);
+    // Imports every local directory among `urls` the way importFolder does — one mirrored bin
+    // folder tree each, walked one after another — and returns the URLs that were not
+    // directories, for the caller to import as ordinary media. A drop is why this exists: QML
+    // is handed plain file:// URLs and cannot tell a folder from a file, so dropping one used
+    // to import nothing at all. The whole batch reads as one `importingFolder` stretch and
+    // reports one folderImportFinished with the totals.
+    Q_INVOKABLE QList<QUrl> importFoldersFrom(const QList<QUrl> &urls);
     // Points an existing bin row at a different file, keeping every clip that uses it where it
     // is — its position, trim, effects and transitions all survive. Asynchronous: true only means
     // the probe started, and the outcome arrives as replaceFinished.
@@ -146,6 +155,18 @@ public:
     // labelled `label`, and refreshes the bin and the timeline's caches. False when a locked track
     // holds one of the clips: the edit is then refused as a whole and nothing changes.
     bool relinkPaths(const QHash<QString, QString> &remap, const QString &label);
+    // Project health, in the MCP reply shapes ({ok, ...}; validateProject has no ok).
+    // validate_project: {problems:[{kind, message, clip?, asset?, track?, sequence?, ...}], n,
+    // counts?:{kind: n}, truncated?, open_sequence?}, at most `limit` rows (n counts them all).
+    Q_INVOKABLE QJsonObject validateProject(int limit = 200) const;
+    // Assets whose file is gone, with how many clips use each.
+    Q_INVOKABLE QJsonObject missingMedia() const;
+    // relink_media({from, to} | {search_dir}, dry_run?): see the catalog entry.
+    QJsonObject relinkMedia(const QJsonObject &args);
+    Q_INVOKABLE QJsonObject relinkFolder(const QString &from, const QString &to, bool dryRun);
+    Q_INVOKABLE QJsonObject relinkSearchFolder(const QUrl &folder, bool dryRun);
+    // Removes (or with dryRun lists) the assets no clip uses, composites and stabilize sources kept.
+    Q_INVOKABLE QJsonObject removeUnusedAssets(bool dryRun);
 
 signals:
     void currentFolderIdChanged();
@@ -184,6 +205,11 @@ private:
     void startEditJob(const QString &assetId, const QString &name,
                       const drift::MediaEditSpec &spec, bool conversion);
     void startNextConversion();
+    // Starts the off-thread walk of `path`. Does not touch m_importingFolder: the queue owns
+    // that, so a batch of folders is one busy stretch instead of flickering per folder.
+    void beginFolderWalk(const QString &path);
+    // Walks the next queued folder, or ends the batch and reports the totals it gathered.
+    void startNextFolderImport();
     // Old path -> new path for every other missing asset that lived in oldPath's folder and has a
     // file of the same name and size in newPath's folder.
     QHash<QString, QString> findSiblingRelinks(const QString &assetId, const QString &oldPath,
@@ -214,4 +240,11 @@ private:
     bool m_editIsConversion = false;
     // Asset ids waiting for convertToConstantFrameRate; the edit job runs one at a time.
     QStringList m_conversionQueue;
+    // Folders waiting to be walked, and the totals of the batch in progress. One walk runs at
+    // a time: each mutates the bin model on the GUI thread when it lands.
+    QList<QUrl> m_folderQueue;
+    int m_folderBatchFolders = 0;
+    int m_folderBatchFiles = 0;
+    int m_folderBatchSkipped = 0;
+    bool m_folderBatchTruncated = false;
 };

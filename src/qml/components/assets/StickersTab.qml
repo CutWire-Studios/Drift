@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Window
 import Drift
-// Stickers tab: category bar over a grid of the built-in sticker set.
+// Stickers tab: category bar over a grid of the built-in and imported sticker sets.
 Item {
     id: root
 
@@ -18,20 +18,51 @@ Item {
 
     property var categories: EditorState.builtinStickerCategories()
     property var allStickers: EditorState.builtinStickers()
+    property var customPacks: EditorState.customStickerPacks()
     readonly property bool hasStickers: allStickers.length > 0
     // The section at the top of the grid; showCategory() scrolls to one.
     readonly property string activeCategory: stickerGrid.currentSectionId
     function showCategory(id) { stickerGrid.scrollToSection(id) }
     property alias searchText: search.text
     readonly property string query: search.text.trim().toLowerCase()
+    function refresh() {
+        root.categories = EditorState.builtinStickerCategories()
+        root.allStickers = EditorState.builtinStickers()
+        root.customPacks = EditorState.customStickerPacks()
+    }
+
+    // The native dialog spins a nested event loop and an import rebuilds these lists, so both run
+    // through Qt.callLater touching only singletons and captured values.
+    function importZip() {
+        const title = qsTr("Import sticker pack")
+        const filters = [qsTr("Zip archives (*.zip)")]
+        Qt.callLater(() => {
+            const url = FileDialogs.openFile(title, filters)
+            if (url && url.toString() !== "")
+                EditorState.importStickerPack(url)
+        })
+    }
+
+    function importFolder() {
+        const title = qsTr("Import sticker pack")
+        Qt.callLater(() => {
+            const url = FileDialogs.openDirectory(title)
+            if (url && url.toString() !== "")
+                EditorState.importStickerPack(url)
+        })
+    }
+
     Connections {
         target: Addons
         function onKindChanged(kind) {
-            if (kind !== "stickers")
-                return
-            root.categories = EditorState.builtinStickerCategories()
-            root.allStickers = EditorState.builtinStickers()
+            if (kind === "stickers")
+                root.refresh()
         }
+    }
+
+    Connections {
+        target: EditorState
+        function onStickersChanged() { root.refresh() }
     }
 
     Column {
@@ -40,8 +71,6 @@ Item {
 
         AssetSearchBar {
             id: search
-            visible: root.hasStickers
-            height: visible ? implicitHeight : 0
             placeholderText: qsTr("Search stickers")
             historyKey: "stickers"
 
@@ -55,11 +84,49 @@ Item {
                 active: root.emojiPickerOpen
                 onClicked: root.emojiPickerRequested()
             }
+
+            IconButton {
+                glyph: Theme.icons.upload
+                variant: "ghost"
+                buttonSize: Theme.controlHeight
+                tooltip: qsTr("Import or manage sticker packs")
+                onClicked: packMenu.popup(0, height)
+
+                ThemedContextMenu {
+                    id: packMenu
+
+                    ThemedMenuItem {
+                        text: qsTr("Import sticker pack (.zip)…")
+                        icon.name: Theme.icons.upload
+                        onTriggered: root.importZip()
+                    }
+                    ThemedMenuItem {
+                        visible: FileDialogs.supportsDirectoryPicker()
+                        text: qsTr("Import sticker folder…")
+                        icon.name: Theme.icons.folderInput
+                        onTriggered: root.importFolder()
+                    }
+                    Instantiator {
+                        model: root.customPacks
+                        delegate: ThemedMenuItem {
+                            required property var modelData
+                            text: qsTr("Remove “%1”").arg(modelData.name)
+                            icon.name: Theme.icons.trash
+                            onTriggered: {
+                                const id = modelData.id
+                                Qt.callLater(() => EditorState.removeStickerPack(id))
+                            }
+                        }
+                        onObjectAdded: (index, object) => packMenu.addItem(object)
+                        onObjectRemoved: (index, object) => packMenu.removeItem(object)
+                    }
+                }
+            }
         }
 
         Item {
             width: 1
-            height: root.hasStickers ? Theme.spacingSm : 0
+            height: Theme.spacingSm
         }
 
         AssetCategoryChips {
@@ -74,7 +141,7 @@ Item {
         Item {
             width: parent.width
             height: Math.max(0, parent.height - search.height
-                             - (root.hasStickers ? Theme.spacingSm : 0) - categoryChips.height)
+                             - Theme.spacingSm - categoryChips.height)
 
             EmptyState {
                 visible: !root.hasStickers

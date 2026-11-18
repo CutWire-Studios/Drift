@@ -1,0 +1,297 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n4",
+      "toSocket": "t"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e3",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n7",
+      "toSocket": "n"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n8",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e6",
+      "to": "n9",
+      "toSocket": "image"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "p",
+      "id": "e7",
+      "to": "n8",
+      "toSocket": "p"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "p",
+      "id": "e8",
+      "to": "n9",
+      "toSocket": "p"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e9",
+      "to": "n10",
+      "toSocket": "t"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "image",
+      "id": "e10",
+      "to": "n11",
+      "toSocket": "a"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "image",
+      "id": "e11",
+      "to": "n11",
+      "toSocket": "b"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "value",
+      "id": "e12",
+      "to": "n11",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "image",
+      "id": "e13",
+      "to": "n12",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "distortion",
+    "description": "Both clips fold through a complex power that peaks mid-way, then unfold as the new clip.",
+    "displayName": "Conformal twist",
+    "id": "starter_transition_conformal_twist",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "to",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {},
+      "type": "progress",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {
+        "curve": "peaksmooth"
+      },
+      "id": "n4",
+      "inputs": {
+        "t": 0
+      },
+      "type": "ease",
+      "x": 280,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n5",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "twist"
+        }
+      },
+      "type": "math",
+      "x": 560,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "add"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 840,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "pow"
+      },
+      "id": "n7",
+      "inputs": {
+        "n": 2,
+        "w": [
+          1,
+          0
+        ],
+        "z": [
+          0.5,
+          0.5
+        ],
+        "zoom": 2
+      },
+      "type": "complex_math",
+      "x": 1120,
+      "y": 440
+    },
+    {
+      "data": {
+        "edge": "mirror"
+      },
+      "id": "n8",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 1400,
+      "y": 0
+    },
+    {
+      "data": {
+        "edge": "mirror"
+      },
+      "id": "n9",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 1400,
+      "y": 220
+    },
+    {
+      "data": {
+        "curve": "inout"
+      },
+      "id": "n10",
+      "inputs": {
+        "t": 0
+      },
+      "type": "ease",
+      "x": 280,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n11",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 1680,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n12",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 1960,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 2,
+      "displayName": "Twist",
+      "identifier": "twist",
+      "max": 5,
+      "min": 0.5,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

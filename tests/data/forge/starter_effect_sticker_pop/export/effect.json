@@ -1,0 +1,191 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "description": "The person peels off as a tilted, wobbling sticker with a white border and drop shadow over a soft background.",
+  "displayName": "Sticker pop",
+  "id": "starter_effect_sticker_pop",
+  "nextFeatures": [
+    "node:clip_mask",
+    "requires:mask"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.8,
+      "displayName": "Wobble speed",
+      "identifier": "wobbleSpeed",
+      "maxValue": 4,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 3,
+      "displayName": "Wobble (°)",
+      "identifier": "wobble",
+      "maxValue": 15,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": -6,
+      "displayName": "Tilt (°)",
+      "identifier": "tilt",
+      "maxValue": 30,
+      "minValue": -30,
+      "type": "float"
+    },
+    {
+      "defaultValue": 1.08,
+      "displayName": "Size",
+      "identifier": "stickerSize",
+      "maxValue": 1.4,
+      "minValue": 0.7,
+      "type": "float"
+    },
+    {
+      "defaultValue": 10,
+      "displayName": "Border (px)",
+      "identifier": "border",
+      "maxValue": 30,
+      "minValue": 2,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.55,
+      "displayName": "Shadow",
+      "identifier": "shadow",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 14,
+      "displayName": "Background blur",
+      "identifier": "bgBlur",
+      "maxValue": 48,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": "#ffffff",
+      "displayName": "Border colour",
+      "identifier": "borderColor",
+      "type": "color"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [
+      {
+        "id": "buf0",
+        "scale": 1
+      },
+      {
+        "id": "buf1",
+        "scale": 1
+      },
+      {
+        "id": "buf2",
+        "scale": 1
+      },
+      {
+        "id": "buf3",
+        "scale": 1
+      }
+    ],
+    "passes": [
+      {
+        "fragmentShader": "pass1.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        "passIndex": 0
+      },
+      {
+        "fragmentShader": "pass2.frag",
+        "inputs": [
+          {
+            "id": "buf0",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "id": "buf1",
+          "type": "buffer"
+        },
+        "passIndex": 1
+      },
+      {
+        "fragmentShader": "pass3.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        "passIndex": 2
+      },
+      {
+        "fragmentShader": "pass4.frag",
+        "inputs": [
+          {
+            "id": "buf0",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "id": "buf2",
+          "type": "buffer"
+        },
+        "passIndex": 3
+      },
+      {
+        "fragmentShader": "pass5.frag",
+        "inputs": [
+          {
+            "id": "buf2",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "id": "buf3",
+          "type": "buffer"
+        },
+        "passIndex": 4
+      },
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "id": "buf1",
+            "type": "buffer"
+          },
+          {
+            "id": "buf3",
+            "type": "buffer"
+          },
+          {
+            "type": "source_texture"
+          },
+          {
+            "id": "buf0",
+            "type": "buffer"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 5
+      }
+    ]
+  },
+  "requires": "mask"
+}

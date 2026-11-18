@@ -1,0 +1,251 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "color"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "l",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "x"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "grad",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "p",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "b"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "dot",
+      "id": "e5",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e6",
+      "to": "n7",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e7",
+      "to": "n8",
+      "toSocket": "base"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e8",
+      "to": "n8",
+      "toSocket": "layer"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "image",
+      "id": "e9",
+      "to": "n9",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "Brightness read as height and lit from the side, so the picture looks embossed in metal or clay.",
+    "displayName": "Relief light",
+    "id": "starter_effect_relief_light",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "spacing": 1.5,
+        "x": 0
+      },
+      "type": "derivative",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "rotate"
+      },
+      "id": "n4",
+      "inputs": {
+        "a": [
+          1,
+          0
+        ],
+        "b": [
+          0,
+          0
+        ],
+        "s": {
+          "param": "lightAngle"
+        }
+      },
+      "type": "vector_math",
+      "x": 560,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "a": [
+          1,
+          0
+        ],
+        "b": [
+          0,
+          1
+        ]
+      },
+      "type": "vector_measure",
+      "x": 840,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "depth"
+        }
+      },
+      "type": "math",
+      "x": 1120,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "add"
+      },
+      "id": "n7",
+      "inputs": {
+        "a": 0,
+        "b": 0.5
+      },
+      "type": "math",
+      "x": 1400,
+      "y": 220
+    },
+    {
+      "data": {
+        "mode": "overlay"
+      },
+      "id": "n8",
+      "inputs": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "layer": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "opacity": {
+          "param": "relief"
+        }
+      },
+      "type": "blend",
+      "x": 1680,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n9",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 1960,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 135,
+      "displayName": "Light angle",
+      "identifier": "lightAngle",
+      "max": 180,
+      "min": -180,
+      "type": "float"
+    },
+    {
+      "default": 0.004,
+      "displayName": "Depth",
+      "identifier": "depth",
+      "max": 0.02,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 0.9,
+      "displayName": "Strength",
+      "identifier": "relief",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

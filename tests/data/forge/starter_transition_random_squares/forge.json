@@ -1,0 +1,137 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n3",
+      "fromSocket": "random",
+      "id": "e1",
+      "to": "n4",
+      "toSocket": "pattern"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "b"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "mask",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n6",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "geometric",
+    "description": "The new clip appears tile by tile in random order.",
+    "displayName": "Random squares",
+    "id": "starter_transition_random_squares",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "to",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "count": [
+          12,
+          7
+        ],
+        "seed": 0
+      },
+      "type": "grid_cells",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {
+        "invert": false
+      },
+      "id": "n4",
+      "inputs": {
+        "p": 0,
+        "pattern": 0.5,
+        "softness": 0.02
+      },
+      "type": "reveal",
+      "x": 280,
+      "y": 440
+    },
+    {
+      "data": {},
+      "id": "n5",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n6",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 840,
+      "y": 0
+    }
+  ],
+  "params": [],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

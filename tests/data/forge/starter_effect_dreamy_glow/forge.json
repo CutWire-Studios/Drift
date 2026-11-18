@@ -1,0 +1,136 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "image"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n4",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "dreamy",
+    "description": "Highlights bloom into soft light.",
+    "displayName": "Dreamy glow",
+    "id": "starter_effect_dreamy_glow",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "intensity": {
+          "param": "intensity"
+        },
+        "radius": {
+          "param": "glowRadius"
+        },
+        "threshold": {
+          "param": "threshold"
+        },
+        "tint": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "glow",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "amount": 0.15,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "temperature",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 840,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.55,
+      "displayName": "Threshold",
+      "identifier": "threshold",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 1.2,
+      "displayName": "Intensity",
+      "identifier": "intensity",
+      "max": 4,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 18,
+      "displayName": "Radius",
+      "identifier": "glowRadius",
+      "max": 64,
+      "min": 1,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

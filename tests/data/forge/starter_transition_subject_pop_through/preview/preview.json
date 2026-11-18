@@ -1,0 +1,77 @@
+{
+  "buffers": [
+    "buf0"
+  ],
+  "errors": [],
+  "literals": [
+    {
+      "input": "angle",
+      "name": "k_n11_angle",
+      "node": "n11",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "center",
+      "name": "k_n10_center",
+      "node": "n10",
+      "type": "vec2",
+      "value": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "input": "high",
+      "name": "k_n12_high",
+      "node": "n12",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "pass1.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        },
+        {
+          "index": 1,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "id": "buf0",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        {
+          "index": 0,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"transition\",[[\"n1\",\"from\",{},[]],[\"n2\",\"to\",{},[]],[\"n3\",\"clip_mask\",{},[]],[\"n4\",\"progress\",{},[]],[\"n5\",\"ease\",{\"curve\":\"expo\"},[]],[\"n6\",\"ease\",{\"curve\":\"peaksmooth\"},[]],[\"n7\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"punch\"}]]],[\"n8\",\"math\",{\"op\":\"mul\"},[[\"b\",{\"param\":\"split\"}]]],[\"n9\",\"mix\",{},[]],[\"n10\",\"zoom_blur\",{},[]],[\"n11\",\"chromatic\",{\"mode\":\"linear\"},[]],[\"n12\",\"smoothstep\",{},[[\"low\",{\"param\":\"holdUntil\"}]]],[\"n13\",\"func\",{\"fn\":\"oneminus\"},[]],[\"n14\",\"math\",{\"op\":\"mul\"},[]],[\"n15\",\"mix\",{},[]],[\"n16\",\"transition_output\",{},[]]],[[\"n4\",\"value\",\"n5\",\"t\"],[\"n4\",\"value\",\"n6\",\"t\"],[\"n6\",\"value\",\"n7\",\"a\"],[\"n6\",\"value\",\"n8\",\"a\"],[\"n1\",\"image\",\"n9\",\"a\"],[\"n2\",\"image\",\"n9\",\"b\"],[\"n5\",\"value\",\"n9\",\"amount\"],[\"n9\",\"image\",\"n10\",\"image\"],[\"n7\",\"value\",\"n10\",\"strength\"],[\"n10\",\"image\",\"n11\",\"image\"],[\"n8\",\"value\",\"n11\",\"amount\"],[\"n4\",\"value\",\"n12\",\"x\"],[\"n12\",\"value\",\"n13\",\"x\"],[\"n3\",\"mask\",\"n14\",\"a\"],[\"n13\",\"value\",\"n14\",\"b\"],[\"n11\",\"image\",\"n15\",\"a\"],[\"n1\",\"image\",\"n15\",\"b\"],[\"n14\",\"value\",\"n15\",\"amount\"],[\"n15\",\"image\",\"n16\",\"image\"]],[[\"punch\",\"float\",false],[\"split\",\"float\",false],[\"holdUntil\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": true,
+  "usesTime": false
+}

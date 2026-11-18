@@ -59,7 +59,79 @@ Item {
     // Kind visibility filter supplied by the parent (depends on the active tab).
     property var assetVisibleFn: function(kind) { return true }
     property alias searchText: search.text
-    readonly property string query: search.text.trim().toLowerCase()
+    readonly property string query: soundMode ? "" : search.text.trim().toLowerCase()
+
+    // Search by sound ranks the bin's audio with the audio tagging model instead of matching names.
+    property bool soundMode: false
+    property bool runtimeReady: Addons.runtimeAvailable()
+    property bool clapReady: Addons.hasKind("audio-tag-model") && runtimeReady
+    property bool soundSearched: false
+    readonly property var soundResult: EditorState.mcp.assetSoundResult
+    readonly property bool soundBusy: EditorState.mcp.assetSoundBusy
+    readonly property var soundRanked: {
+        const r = root.soundResult
+        if (!root.soundMode || !root.soundSearched || r.ok !== true)
+            return []
+        return r.results.filter(row => !row.near_silent)
+    }
+
+    function searchBySound() {
+        const typed = search.text.trim()
+        if (typed.length === 0 || root.soundBusy)
+            return
+        const lowered = typed.toLowerCase()
+        const vocabulary = EditorState.mcp.audioVocabulary()
+        let term = typed
+        if (vocabulary.indexOf(lowered) >= 0) {
+            term = lowered
+        } else {
+            for (const candidate of vocabulary) {
+                if (candidate.toLowerCase().indexOf(lowered) >= 0) {
+                    term = candidate
+                    break
+                }
+            }
+        }
+        root.soundSearched = true
+        EditorState.mcp.searchAssetsBySound(term)
+    }
+
+    function setSoundMode(on) {
+        if (on && !root.clapReady) {
+            ShellBridge.main.openAddonManager(root.runtimeReady ? "audio-tag-model" : "onnxruntime")
+            return
+        }
+        root.soundMode = on
+        root.soundSearched = false
+        if (on && search.text.trim().length > 0)
+            root.searchBySound()
+    }
+
+    function soundHint() {
+        const r = root.soundResult
+        if (root.soundBusy)
+            return qsTr("Listening to the bin…")
+        if (!root.soundSearched)
+            return qsTr("Type a sound, like heavy rain or applause, and press Enter.")
+        if (r.ok === false) {
+            if (r.closest && r.closest.length > 0)
+                return qsTr("Not a sound Drift knows. Closest: %1").arg(r.closest.slice(0, 4).join(", "))
+            return r.detail ?? ""
+        }
+        return root.soundRanked.length === 0 ? qsTr("Nothing in the bin sounds like that.") : (r.summary ?? "")
+    }
+
+    Connections {
+        target: Addons
+        function onKindChanged(kind) {
+            if (kind !== "audio-tag-model" && kind !== "onnxruntime")
+                return
+            root.runtimeReady = Addons.runtimeAvailable()
+            root.clapReady = Addons.hasKind("audio-tag-model") && root.runtimeReady
+            if (!root.clapReady)
+                root.soundMode = false
+        }
+    }
 
     // Emitted from the card/row context menu — adds the selected asset(s) to the timeline in
     // selection order. The parent routes a single id to the existing single-asset add so that
@@ -429,6 +501,35 @@ Item {
         const currentFolder = EditorState.bin.currentFolderId
         const items = []
 
+        if (root.soundMode) {
+            for (const row of root.soundRanked) {
+                const index = AssetLibrary.indexOfId(row.asset)
+                if (index < 0)
+                    continue
+                const asset = AssetLibrary.assetAt(index)
+                if (!root.assetVisibleFn(asset.kind))
+                    continue
+                items.push({
+                    isFolder: false,
+                    folderId: "",
+                    assetId: asset.id,
+                    name: asset.name,
+                    assetIndex: asset.assetIndex,
+                    kind: asset.kind,
+                    duration: asset.duration,
+                    durationSeconds: asset.durationSeconds,
+                    path: asset.path,
+                    thumbnailPath: asset.thumbnailPath,
+                    filmstripPath: asset.filmstripPath,
+                    maskRole: asset.maskRole,
+                    depth: 0,
+                    expanded: false,
+                    expandable: false
+                })
+            }
+            return items
+        }
+
         if (root.treeMode)
             return root._buildTree(currentFolder, q, root.expandedFolderIds,
                                    BinFolderModel.count, AssetLibrary.count)
@@ -502,10 +603,56 @@ Item {
         anchors.margins: Theme.pagePadding
         // Shares its row with the view/sort toggles, which the panel header no
         // longer has room for alongside the import actions.
-        anchors.rightMargin: Theme.pagePadding + viewControls.width + Theme.spacingMd
+        anchors.rightMargin: Theme.pagePadding + viewControls.width + soundToggle.width + Theme.spacingMd + Theme.spacingSm
         visible: AssetLibrary.count > 0 || BinFolderModel.count > 0
-        placeholderText: qsTr("Search media")
+        placeholderText: root.soundMode ? qsTr("Search by sound, e.g. heavy rain") : qsTr("Search media")
         font.family: Theme.fontFamily
+        // Room for the clear button inside the field, so a long query does not run under it.
+        rightPadding: clearSearch.visible ? clearSearch.width + Theme.spacingSm * 2 : Theme.spacingLg
+
+        onAccepted: if (root.soundMode) root.searchBySound()
+        onTextChanged: if (root.soundMode) root.soundSearched = false
+
+        Keys.onEscapePressed: (event) => {
+            if (search.text.length > 0)
+                search.text = ""
+            else
+                event.accepted = false
+        }
+    }
+
+    IconButton {
+        id: soundToggle
+        anchors.right: viewControls.left
+        anchors.rightMargin: Theme.spacingSm
+        anchors.verticalCenter: search.verticalCenter
+        visible: search.visible
+        glyph: Theme.icons.audioLines
+        variant: "ghost"
+        active: root.soundMode
+        opacity: root.clapReady ? 1 : 0.5
+        tooltip: root.clapReady ? qsTr("Search by sound")
+                                : qsTr("Search by sound needs the audio tagging add-on. Click to get it.")
+        onClicked: root.setSoundMode(!root.soundMode)
+    }
+
+    // The catalog tabs get this from AssetSearchBar; the media tab has its own field, which left
+    // it as the one search in the panel you had to clear by hand.
+    IconButton {
+        id: clearSearch
+        anchors.right: search.right
+        anchors.rightMargin: Theme.spacingSm
+        anchors.verticalCenter: search.verticalCenter
+        visible: search.visible && search.text.length > 0
+        glyph: Theme.icons.x
+        variant: "ghost"
+        buttonSize: Theme.controlHeightSm
+        iconSize: Theme.iconSizeSm
+        tooltip: qsTr("Clear search")
+        onClicked: {
+            search.text = ""
+            search.forceActiveFocus()
+        }
     }
 
     MediaAssetsViewToolbar {
@@ -530,7 +677,7 @@ Item {
     // Where you are in the bin, and — in tree view — what the whole tree does at once.
     Item {
         id: binNavRow
-        anchors.top: search.visible ? search.bottom : parent.top
+        anchors.top: soundHintText.visible ? soundHintText.bottom : (search.visible ? search.bottom : parent.top)
         anchors.topMargin: visible ? Theme.spacingSm : 0
         anchors.left: parent.left
         anchors.right: parent.right
@@ -579,6 +726,22 @@ Item {
                 onClicked: root.collapseAllFolders()
             }
         }
+    }
+
+    Text {
+        id: soundHintText
+        anchors.top: search.bottom
+        anchors.topMargin: Theme.spacingSm
+        anchors.left: search.left
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.pagePadding
+        visible: root.soundMode && search.visible
+        height: visible ? implicitHeight : 0
+        wrapMode: Text.WordWrap
+        text: root.soundHint()
+        color: Theme.c.mediaAssetsEmptyState.foregroundMuted
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
     }
 
     // Search matched nothing in this folder.
@@ -640,6 +803,15 @@ Item {
         progress: EditorState.bin.editProgress
         cancelTooltip: qsTr("Stop converting")
         onCancelRequested: EditorState.bin.cancelEdit()
+    }
+
+    MouseArea {
+        anchors.top: conversionStatusRow.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        enabled: !Theme.touchUi
+        onDoubleClicked: root.importRequested()
     }
 
     GridView {

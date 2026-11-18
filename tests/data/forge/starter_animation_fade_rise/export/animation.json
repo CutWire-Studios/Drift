@@ -1,0 +1,43 @@
+{
+  "category": "basic",
+  "defaultDurationMs": 500,
+  "description": "The clip fades in while drifting up into place, and back down on the way out.",
+  "directions": [
+    "in",
+    "out"
+  ],
+  "displayName": "Fade & rise",
+  "id": "starter_animation_fade_rise",
+  "nextFeatures": [
+    "kind:animation"
+  ],
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.12,
+      "displayName": "Rise",
+      "identifier": "rise",
+      "maxValue": 0.5,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "index": 0,
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

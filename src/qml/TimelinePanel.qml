@@ -1117,6 +1117,10 @@ PanelFrame {
         replaceClipDialog.openFor(trackIndex, clipIndex)
     }
 
+    function requestAutoReframe(trackIndex, clipIndex) {
+        autoReframeDialog.openFor(trackIndex, clipIndex)
+    }
+
     function requestRenameClip(trackIndex, clipIndex) {
         if (trackIndex < 0 || clipIndex < 0)
             return
@@ -2348,6 +2352,13 @@ PanelFrame {
             onTriggered: EditorState.closeGap(root.areaMenuTrack, root.areaMenuGapStart)
         }
         ThemedMenuItem {
+            visible: trackAreaContextMenu.track !== null
+            height: visible ? implicitHeight : 0
+            text: EditorState.workAreaActive ? qsTr("Close gaps in work area") : qsTr("Close all gaps on track")
+            icon.name: Theme.icons.chevronsRightLeft
+            onTriggered: EditorState.closeGapsInWorkArea(root.areaMenuTrack)
+        }
+        ThemedMenuItem {
             text: qsTr("Add bookmark here")
             icon.name: Theme.icons.bookmark
             onTriggered: EditorState.addBookmark(root.areaMenuSeconds, "")
@@ -2472,6 +2483,10 @@ PanelFrame {
 
     TimelineReplaceClipDialog {
         id: replaceClipDialog
+    }
+
+    TimelineAutoReframeDialog {
+        id: autoReframeDialog
     }
 
     ThemedDialog {

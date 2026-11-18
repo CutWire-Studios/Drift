@@ -1,0 +1,63 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "seed",
+      "name": "k_n2_seed",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "weave",
+      "name": "k_n2_weave",
+      "node": "n2",
+      "type": "float",
+      "value": 0.3
+    },
+    {
+      "input": "flicker",
+      "name": "k_n2_flicker",
+      "node": "n2",
+      "type": "float",
+      "value": 0.3
+    },
+    {
+      "input": "scratches",
+      "name": "k_n2_scratches",
+      "node": "n2",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "input": "dust",
+      "name": "k_n2_dust",
+      "node": "n2",
+      "type": "float",
+      "value": 0.5
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"film_damage\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

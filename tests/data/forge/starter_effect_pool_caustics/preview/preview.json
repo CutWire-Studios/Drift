@@ -1,0 +1,108 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "spacing",
+      "name": "k_n3_spacing",
+      "node": "n3",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "seed",
+      "name": "k_n2_seed",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "b",
+      "name": "k_n4_b",
+      "node": "n4",
+      "type": "vec2",
+      "value": [
+        0,
+        0
+      ]
+    },
+    {
+      "input": "s",
+      "name": "k_n6_s",
+      "node": "n6",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "a",
+      "name": "k_n8_a",
+      "node": "n8",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "spacing",
+      "name": "k_n7_spacing",
+      "node": "n7",
+      "type": "float",
+      "value": 2
+    },
+    {
+      "input": "inMin",
+      "name": "k_n10_inMin",
+      "node": "n10",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "inMax",
+      "name": "k_n10_inMax",
+      "node": "n10",
+      "type": "float",
+      "value": 3
+    },
+    {
+      "input": "outMin",
+      "name": "k_n10_outMin",
+      "node": "n10",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "outMax",
+      "name": "k_n10_outMax",
+      "node": "n10",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "amount",
+      "name": "k_n11_amount",
+      "node": "n11",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"noise\",{\"style\":\"smooth\"},[[\"scale\",{\"param\":\"waveSize\"}],[\"speed\",{\"param\":\"waveSpeed\"}]]],[\"n3\",\"derivative\",{},[]],[\"n4\",\"vector_math\",{\"op\":\"scale\"},[[\"s\",{\"param\":\"refraction\"}]]],[\"n5\",\"uv\",{},[]],[\"n6\",\"vector_math\",{\"op\":\"add\"},[]],[\"n7\",\"jacobian\",{},[]],[\"n8\",\"math\",{\"op\":\"div\"},[]],[\"n9\",\"func\",{\"fn\":\"abs\"},[]],[\"n10\",\"remap\",{\"clamp\":true},[]],[\"n11\",\"tint\",{},[[\"color\",{\"param\":\"lightColor\"}]]],[\"n12\",\"sample_at\",{\"edge\":\"clamp\"},[]],[\"n13\",\"blend\",{\"mode\":\"screen\"},[[\"opacity\",{\"param\":\"caustics\"}]]],[\"n14\",\"effect_output\",{},[]]],[[\"n2\",\"value\",\"n3\",\"x\"],[\"n3\",\"grad\",\"n4\",\"a\"],[\"n5\",\"uv\",\"n6\",\"a\"],[\"n4\",\"p\",\"n6\",\"b\"],[\"n6\",\"p\",\"n7\",\"p\"],[\"n7\",\"det\",\"n8\",\"b\"],[\"n8\",\"value\",\"n9\",\"x\"],[\"n9\",\"value\",\"n10\",\"x\"],[\"n10\",\"value\",\"n11\",\"image\"],[\"n1\",\"image\",\"n12\",\"image\"],[\"n6\",\"p\",\"n12\",\"p\"],[\"n12\",\"image\",\"n13\",\"base\"],[\"n11\",\"image\",\"n13\",\"layer\"],[\"n13\",\"image\",\"n14\",\"image\"]],[[\"waveSize\",\"float\",false],[\"waveSpeed\",\"float\",false],[\"refraction\",\"float\",false],[\"lightColor\",\"color\",false],[\"caustics\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

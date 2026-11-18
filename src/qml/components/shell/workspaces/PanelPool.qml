@@ -96,6 +96,12 @@ Item {
         "proceduralEditor": proceduralEditorC,
         "proceduralParams": proceduralParamsC,
         "proceduralConsole": proceduralConsoleC,
+        "forgeGraph": forgeGraphC,
+        "forgePalette": forgePaletteC,
+        "forgeInspector": forgeInspectorC,
+        "audioForgeGraph": audioForgeGraphC,
+        "audioForgePalette": audioForgePaletteC,
+        "audioForgeInspector": audioForgeInspectorC,
         "undoHistory": historyC,
         "sourceViewer": sourceViewerC,
         "sourceLab.bin": sourceLabBinC,
@@ -135,6 +141,12 @@ Item {
     Component { id: proceduralEditorC; LazyPanel { panel: ProceduralEditorPanel {} } }
     Component { id: proceduralParamsC; LazyPanel { panel: ProceduralParamsPanel {} } }
     Component { id: proceduralConsoleC; LazyPanel { panel: ProceduralConsolePanel {} } }
+    Component { id: forgeGraphC; LazyPanel { panel: ForgeGraphPanel {} } }
+    Component { id: forgePaletteC; LazyPanel { panel: ForgePalettePanel {} } }
+    Component { id: forgeInspectorC; LazyPanel { panel: ForgeInspectorPanel {} } }
+    Component { id: audioForgeGraphC; LazyPanel { panel: AudioForgeGraphPanel {} } }
+    Component { id: audioForgePaletteC; LazyPanel { panel: AudioForgePalettePanel {} } }
+    Component { id: audioForgeInspectorC; LazyPanel { panel: AudioForgeInspectorPanel {} } }
     Component { id: historyC; LazyPanel { panel: HistoryPanel {} } }
     Component { id: sourceViewerC; LazyPanel { panel: SourceViewerPanel {} } }
     Component { id: sourceLabBinC; LazyPanel { panel: SourceLabBinPanel {} } }

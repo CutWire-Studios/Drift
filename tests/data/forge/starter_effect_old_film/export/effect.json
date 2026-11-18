@@ -1,0 +1,35 @@
+{
+  "backend": "gpu",
+  "category": "retro",
+  "description": "Black and white with scratches, dust and flicker.",
+  "displayName": "Old film",
+  "id": "starter_effect_old_film",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.6,
+      "displayName": "Damage",
+      "identifier": "damage",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

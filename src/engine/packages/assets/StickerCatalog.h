@@ -21,6 +21,8 @@ struct StickerCategory
 {
     QString id;
     QString label;
+    QString packId;
+    bool custom = false; // from a pack the user imported
 };
 
 struct StickerPack
@@ -30,6 +32,7 @@ struct StickerPack
     QString license;
     QString packageDir;
     int order = 0;
+    bool custom = false; // imported by the user (StickerPackImport.h); removable
     QList<StickerCategory> categories;
     QList<StickerEntry> stickers;
 };

@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls.Basic
-import QtCore
 import Drift
 // Top row of the catalog tabs: the search field, which also names the tab (these tabs
 // have no panel header), with the tab's actions as icon buttons at its right end.
@@ -14,7 +13,7 @@ Item {
     // Names this browser's history in settings. Empty turns history off.
     property string historyKey: ""
     readonly property int historyLimit: 10
-    readonly property var history: JSON.parse(store.json)
+    property var history: []
     default property alias actions: actionRow.data
 
     function commitHistory() {
@@ -24,20 +23,27 @@ Item {
         const rest = root.history.filter(function(entry) {
             return entry.toLowerCase() !== query.toLowerCase()
         })
-        store.json = JSON.stringify([query].concat(rest).slice(0, root.historyLimit))
+        root.storeHistory([query].concat(rest).slice(0, root.historyLimit))
     }
 
     function removeHistoryEntry(index) {
         const next = root.history.slice()
         next.splice(index, 1)
-        store.json = JSON.stringify(next)
+        root.storeHistory(next)
     }
 
-    Settings {
-        id: store
-        category: "assetSearchHistory/" + root.historyKey
-        property string json: "[]"
+    function storeHistory(entries) {
+        root.history = entries
+        EditorState.preferences.setAssetSearchHistory(root.historyKey, entries)
     }
+
+    function loadHistory() {
+        root.history = root.historyKey.length > 0
+                ? EditorState.preferences.assetSearchHistory(root.historyKey) : []
+    }
+
+    onHistoryKeyChanged: loadHistory()
+    Component.onCompleted: loadHistory()
 
     width: parent ? parent.width : 0
     implicitHeight: Theme.pagePadding + Theme.controlHeight

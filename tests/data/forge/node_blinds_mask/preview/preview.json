@@ -1,0 +1,50 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "angle",
+      "name": "k_n2_angle",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "count",
+      "name": "k_n2_count",
+      "node": "n2",
+      "type": "float",
+      "value": 10
+    },
+    {
+      "input": "softness",
+      "name": "k_n2_softness",
+      "node": "n2",
+      "type": "float",
+      "value": 0.05
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "index": 0,
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"transition\",[[\"n1\",\"from\",{},[]],[\"n2\",\"blinds_mask\",{\"asset\":\"a1\"},[]],[\"n3\",\"transition_output\",{},[]]],[[\"n2\",\"mask\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

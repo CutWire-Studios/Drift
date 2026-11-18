@@ -23,6 +23,7 @@
 
 #include <QColor>
 #include <QCoreApplication>
+#include <QDeadlineTimer>
 #include <QFloat16>
 #include <QMatrix3x3>
 #include <QMutex>
@@ -1095,9 +1096,9 @@ void destroyGpuRuntime()
 {
     if (!g_runtime)
         return;
+    // Not deleted: a worker that outlives QCoreApplication (an export still running at quit)
+    // reaches runtime() afterwards, and must find a shut-down runtime rather than a null one.
     g_runtime->shutdown();
-    delete g_runtime;
-    g_runtime = nullptr;
 }
 
 } // namespace
@@ -1144,23 +1145,10 @@ GlRuntime &runtime()
     return *g_runtime;
 }
 
-bool GlRuntime::initGlObjects()
+namespace {
+
+QSurfaceFormat runtimeFormat(const QOpenGLContext *shared)
 {
-    QOpenGLContext *shared = QOpenGLContext::globalShareContext();
-    const bool sharingRequired = QCoreApplication::testAttribute(Qt::AA_ShareOpenGLContexts);
-
-    // In the application, use the share context's realized format: EGL may
-    // adjust the requested format during creation. Command-line tools and
-    // tests have no Qt Quick share context, so retain an independent context.
-    if (shared && !shared->isValid())
-        shared = nullptr;
-
-    if (sharingRequired && !shared) {
-        qWarning("GlRuntime: required global OpenGL share context is unavailable");
-        setGlStatus(drift::gl::GlStatus::NoShareContext);
-        return false;
-    }
-
     QSurfaceFormat format;
     if (shared) {
         // Copy the realized format wholesale. main() may have added an 8-bit
@@ -1184,26 +1172,34 @@ bool GlRuntime::initGlObjects()
         format.setDepthBufferSize(0);
         format.setStencilBufferSize(0);
     }
+    return format;
+}
 
-    // Not every platform hands out a real offscreen surface. QOffscreenSurface
-    // then falls back to a hidden QWindow, which cannot be created off the GUI
-    // thread — Qt warns "Attempting to create QWindow-based QOffscreenSurface
-    // outside the gui thread" and this fails. QtWayland takes that path when the
-    // EGL client-buffer integration is missing, which would explain a preview that
-    // is black on Wayland and fine on X11. Building it on the GUI thread instead
-    // is not as simple as it looks: the GUI thread also calls ensureReady(), and
-    // blocking on it from here while it waits on us deadlocks. So for now this
-    // reports SurfaceFailed and the debug report says so, which is what confirms
-    // the theory on an affected machine.
-    surface = std::make_unique<QOffscreenSurface>();
-    surface->setFormat(format);
-    surface->create();
-    if (!surface->isValid()) {
+} // namespace
+
+bool GlRuntime::initGlObjects()
+{
+    QOpenGLContext *shared = QOpenGLContext::globalShareContext();
+    const bool sharingRequired = QCoreApplication::testAttribute(Qt::AA_ShareOpenGLContexts);
+
+    // In the application, use the share context's realized format: EGL may
+    // adjust the requested format during creation. Command-line tools and
+    // tests have no Qt Quick share context, so retain an independent context.
+    if (shared && !shared->isValid())
+        shared = nullptr;
+
+    if (sharingRequired && !shared) {
+        qWarning("GlRuntime: required global OpenGL share context is unavailable");
+        setGlStatus(drift::gl::GlStatus::NoShareContext);
+        return false;
+    }
+
+    if (!surface || !surface->isValid()) {
         qWarning("GlRuntime: failed to create offscreen surface");
-        surface.reset();
         setGlStatus(drift::gl::GlStatus::SurfaceFailed);
         return false;
     }
+    const QSurfaceFormat format = surface->requestedFormat();
 
     context = std::make_unique<QOpenGLContext>();
     if (shared)
@@ -1213,7 +1209,6 @@ bool GlRuntime::initGlObjects()
         qWarning("GlRuntime: failed to create OpenGL context");
         setGlStatus(describeContext(context.get(), nullptr, drift::gl::GlStatus::ContextFailed));
         context.reset();
-        surface.reset();
         return false;
     }
 
@@ -1226,7 +1221,6 @@ bool GlRuntime::initGlObjects()
         setGlStatus(
             describeContext(context.get(), nullptr, drift::gl::GlStatus::MakeCurrentFailed));
         context.reset();
-        surface.reset();
         return false;
     }
 
@@ -1236,7 +1230,6 @@ bool GlRuntime::initGlObjects()
         setGlStatus(describeContext(context.get(), nullptr, drift::gl::GlStatus::NoFunctions));
         context->doneCurrent();
         context.reset();
-        surface.reset();
         return false;
     }
 
@@ -1254,7 +1247,6 @@ bool GlRuntime::initGlObjects()
         setGlStatus(describeContext(context.get(), gl, drift::gl::GlStatus::VersionTooLow));
         context->doneCurrent();
         context.reset();
-        surface.reset();
         return false;
     }
 
@@ -1284,7 +1276,6 @@ bool GlRuntime::initGlObjects()
         copyProgram.reset();
         context->doneCurrent();
         context.reset();
-        surface.reset();
         return false;
     }
 
@@ -1303,6 +1294,8 @@ bool GlRuntime::initGlObjects()
 bool GlRuntime::ensureReady()
 {
     QMutexLocker lock(&m_initMutex);
+    if (m_shutDown)
+        return false;
     if (m_ok)
         return true;
     if (m_failedPermanently)
@@ -1334,6 +1327,45 @@ bool GlRuntime::ensureReady()
         return false;
     m_lastAttempt.start();
 
+    // QOffscreenSurface has to be created and destroyed on the GUI thread: it can be a hidden
+    // QWindow (always on WGL), and Qt delivers screen changes to it on its own thread, where
+    // they race the GUI thread's screen bookkeeping. The GL thread only makes it current. Off
+    // the GUI thread the creation is posted rather than invoked blocking, since the GUI thread
+    // may itself be waiting on m_initMutex; wait() releases it.
+    if (!surface) {
+        QOpenGLContext *shared = QOpenGLContext::globalShareContext();
+        const QSurfaceFormat format = runtimeFormat(shared && shared->isValid() ? shared : nullptr);
+        QCoreApplication *app = QCoreApplication::instance();
+        if (QThread::currentThread() == app->thread()) {
+            surface = std::make_unique<QOffscreenSurface>();
+            surface->setFormat(format);
+            surface->create();
+        } else {
+            if (!m_surfaceRequested) {
+                m_surfaceRequested = true;
+                QMetaObject::invokeMethod(app, [this, format] {
+                    QMutexLocker guiLock(&m_initMutex);
+                    m_surfaceRequested = false;
+                    if (!surface && !m_ok && !m_shutDown) {
+                        surface = std::make_unique<QOffscreenSurface>();
+                        surface->setFormat(format);
+                        surface->create();
+                    }
+                    m_surfaceCreated.wakeAll();
+                }, Qt::QueuedConnection);
+            }
+            m_surfaceCreated.wait(&m_initMutex, QDeadlineTimer(5000));
+            if (m_shutDown)
+                return false;
+            if (m_ok)
+                return true;
+            if (!surface) {
+                qWarning("GlRuntime: the GUI thread did not create the offscreen surface in time");
+                return false;
+            }
+        }
+    }
+
     m_glThread = new QThread;
     m_glThread->setObjectName(QStringLiteral("DriftGL"));
     m_glThread->start();
@@ -1354,6 +1386,9 @@ bool GlRuntime::ensureReady()
         m_glOwner = nullptr;
         delete m_glThread;
         m_glThread = nullptr;
+        if (surface && surface->thread() != QThread::currentThread())
+            surface.release()->deleteLater();
+        surface.reset();
         m_failedPermanently = !drift::gl::isTransient(GlRuntime::lastStatus().status);
         return false;
     }
@@ -1442,6 +1477,7 @@ void GlRuntime::shutdown()
 {
     {
         QMutexLocker lock(&m_initMutex);
+        m_shutDown = true;
         if (!m_ok || !m_glOwner)
             return;
     }
@@ -3912,6 +3948,12 @@ void setPackageUniforms(QOpenGLShaderProgram *program, const drift::GpuEffectDef
                                               array.values.size() / array.tupleSize,
                                               array.tupleSize);
             }
+        } else if (value.typeId() == QMetaType::QVector2D) {
+            program->setUniformValue(loc, value.value<QVector2D>());
+        } else if (value.typeId() == QMetaType::QVector3D) {
+            program->setUniformValue(loc, value.value<QVector3D>());
+        } else if (value.typeId() == QMetaType::QVector4D) {
+            program->setUniformValue(loc, value.value<QVector4D>());
         } else if (value.typeId() == QMetaType::QString) {
             const QString s = value.toString();
             // File-path params must not fall through to s.toFloat(). A path currently binds as

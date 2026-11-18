@@ -283,3 +283,99 @@ void SceneDetectController::detect(int trackIndex, int clipIndex, bool withObjec
 
 
 #include "moc_SceneDetectController.cpp"
+
+double SceneDetectController::sourceToTimeline(const drift::Clip &clip, double sourceSeconds)
+{
+    const drift::TimeUs span = clip.sourceSpanUs();
+    if (span <= 0)
+        return drift::usToSeconds(clip.timelineStart);
+
+    const double through =
+        qBound(0.0, double(drift::secondsToUs(sourceSeconds) - clip.srcIn) / double(span), 1.0);
+    const double offset = (clip.reverse ? 1.0 - through : through)
+                          * drift::usToSeconds(clip.timelineDuration);
+    return drift::usToSeconds(clip.timelineStart) + offset;
+}
+
+bool SceneDetectController::sceneMatches(const QVariantMap &scene, const QString &label, double minScore)
+{
+    if (scene.value(QStringLiteral("score")).toDouble() < minScore)
+        return false;
+    if (label.isEmpty())
+        return true;
+    return scene.value(QStringLiteral("labels")).toStringList().contains(label, Qt::CaseInsensitive);
+}
+
+QList<double> SceneDetectController::cutTimes(double minScore, const QString &label) const
+{
+    if (m_scenes.isEmpty())
+        return {};
+
+    const drift::Clip *clip = nullptr;
+    for (const drift::Track &track : m_app->m_project.tracks()) {
+        for (const drift::Clip &candidate : track.clips) {
+            if (candidate.id == m_sceneClipId) {
+                clip = &candidate;
+                break;
+            }
+        }
+    }
+    if (!clip)
+        return {};
+
+    QList<double> times;
+    for (const QVariant &value : m_scenes) {
+        const QVariantMap scene = value.toMap();
+        // Scene 0 opens at the clip's own start, which is not a cut.
+        if (scene.value(QStringLiteral("index")).toInt() == 0)
+            continue;
+        if (!sceneMatches(scene, label, minScore))
+            continue;
+        times.append(sourceToTimeline(*clip, scene.value(QStringLiteral("sourceStart")).toDouble()));
+    }
+    // Reverse playback maps later source times to earlier timeline ones.
+    std::sort(times.begin(), times.end());
+    return times;
+}
+
+QVariantMap SceneDetectController::splitClipAtScenes(int trackIndex, int clipIndex, double minScore,
+                                                     const QString &label, double minGap)
+{
+    // Read the boundaries before touching anything. Unlike beats the analysis survives edits,
+    // but the times are relative to the clip being cut, and each cut renumbers what follows.
+    const QList<double> times = cutTimes(minScore, label);
+    if (times.isEmpty()) {
+        return QVariantMap{{QStringLiteral("error"), QStringLiteral("not_found")},
+                           {QStringLiteral("message"),
+                            QStringLiteral("No scene analysis for that clip — call detect_scenes first")}};
+    }
+    return m_app->splitClipAtTimes(trackIndex, clipIndex, times, qMax(0.0, minGap),
+                                   QStringLiteral("Split on scenes"),
+                                   QStringLiteral("No scene boundaries fall inside that clip"));
+}
+
+int SceneDetectController::bookmarkScenes(double minScore, const QString &label,
+                                          const QString &labelPrefix)
+{
+    return m_app->addBookmarksAtTimes(cutTimes(minScore, label), 0.0, 0.0, false, labelPrefix,
+                                      QStringLiteral("Bookmark scenes"));
+}
+
+void SceneDetectController::splitAtScenes(int trackIndex, int clipIndex)
+{
+    const QVariantMap result = splitClipAtScenes(trackIndex, clipIndex, 0.0, {}, 0.1);
+    if (result.contains(QStringLiteral("error"))) {
+        m_app->setLastMessage(tr("No scene cuts fall inside this clip"), QStringLiteral("warning"));
+        return;
+    }
+    m_app->setLastMessage(tr("Split into %n scene(s)", nullptr, result.value(QStringLiteral("clips")).toList().size()));
+}
+
+void SceneDetectController::addMarkersAtScenes()
+{
+    const int added = bookmarkScenes(0.0, {}, tr("Scene"));
+    if (added > 0)
+        m_app->setLastMessage(tr("Added %n marker(s)", nullptr, added));
+    else
+        m_app->setLastMessage(tr("No new markers to add"), QStringLiteral("warning"));
+}

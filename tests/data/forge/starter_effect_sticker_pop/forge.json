@@ -1,0 +1,817 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n4",
+      "toSocket": "a"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n5",
+      "toSocket": "a"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e3",
+      "to": "n6",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n7",
+      "toSocket": "x"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e5",
+      "to": "n8",
+      "toSocket": "x"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e6",
+      "to": "n9",
+      "toSocket": "a"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "value",
+      "id": "e7",
+      "to": "n10",
+      "toSocket": "a"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "value",
+      "id": "e8",
+      "to": "n11",
+      "toSocket": "x"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "value",
+      "id": "e9",
+      "to": "n12",
+      "toSocket": "m00"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "value",
+      "id": "e10",
+      "to": "n12",
+      "toSocket": "m01"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "value",
+      "id": "e11",
+      "to": "n12",
+      "toSocket": "m10"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "value",
+      "id": "e12",
+      "to": "n12",
+      "toSocket": "m11"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e13",
+      "to": "n13",
+      "toSocket": "image"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "p",
+      "id": "e14",
+      "to": "n13",
+      "toSocket": "p"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "mask",
+      "id": "e15",
+      "to": "n14",
+      "toSocket": "image"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "p",
+      "id": "e16",
+      "to": "n14",
+      "toSocket": "p"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "image",
+      "id": "e17",
+      "to": "n15",
+      "toSocket": "color"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "image",
+      "id": "e18",
+      "to": "n16",
+      "toSocket": "image"
+    },
+    {
+      "from": "n16",
+      "fromSocket": "image",
+      "id": "e19",
+      "to": "n17",
+      "toSocket": "color"
+    },
+    {
+      "from": "n17",
+      "fromSocket": "r",
+      "id": "e20",
+      "to": "n18",
+      "toSocket": "x"
+    },
+    {
+      "from": "n19",
+      "fromSocket": "uv",
+      "id": "e21",
+      "to": "n20",
+      "toSocket": "a"
+    },
+    {
+      "from": "n16",
+      "fromSocket": "image",
+      "id": "e22",
+      "to": "n21",
+      "toSocket": "image"
+    },
+    {
+      "from": "n20",
+      "fromSocket": "p",
+      "id": "e23",
+      "to": "n21",
+      "toSocket": "p"
+    },
+    {
+      "from": "n21",
+      "fromSocket": "image",
+      "id": "e24",
+      "to": "n22",
+      "toSocket": "color"
+    },
+    {
+      "from": "n22",
+      "fromSocket": "r",
+      "id": "e25",
+      "to": "n23",
+      "toSocket": "x"
+    },
+    {
+      "from": "n23",
+      "fromSocket": "value",
+      "id": "e26",
+      "to": "n24",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e27",
+      "to": "n25",
+      "toSocket": "image"
+    },
+    {
+      "from": "n25",
+      "fromSocket": "image",
+      "id": "e28",
+      "to": "n26",
+      "toSocket": "image"
+    },
+    {
+      "from": "n26",
+      "fromSocket": "image",
+      "id": "e29",
+      "to": "n27",
+      "toSocket": "a"
+    },
+    {
+      "from": "n24",
+      "fromSocket": "value",
+      "id": "e30",
+      "to": "n27",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n27",
+      "fromSocket": "image",
+      "id": "e31",
+      "to": "n28",
+      "toSocket": "a"
+    },
+    {
+      "from": "n18",
+      "fromSocket": "value",
+      "id": "e32",
+      "to": "n28",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n28",
+      "fromSocket": "image",
+      "id": "e33",
+      "to": "n29",
+      "toSocket": "a"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "image",
+      "id": "e34",
+      "to": "n29",
+      "toSocket": "b"
+    },
+    {
+      "from": "n15",
+      "fromSocket": "r",
+      "id": "e35",
+      "to": "n29",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n29",
+      "fromSocket": "image",
+      "id": "e36",
+      "to": "n30",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "The person peels off as a tilted, wobbling sticker with a white border and drop shadow over a soft background.",
+    "displayName": "Sticker pop",
+    "id": "starter_effect_sticker_pop",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "clip_mask",
+      "x": 0,
+      "y": 1100
+    },
+    {
+      "data": {
+        "shape": "sine"
+      },
+      "id": "n3",
+      "inputs": {
+        "max": 1,
+        "min": -1,
+        "phase": 0,
+        "rate": {
+          "param": "wobbleSpeed"
+        },
+        "seed": 0,
+        "t": 0
+      },
+      "type": "lfo",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n4",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "wobble"
+        }
+      },
+      "type": "math",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "add"
+      },
+      "id": "n5",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "tilt"
+        }
+      },
+      "type": "math",
+      "x": 560,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n6",
+      "inputs": {
+        "a": 0,
+        "b": 0.017453292519943295
+      },
+      "type": "math",
+      "x": 840,
+      "y": 220
+    },
+    {
+      "data": {
+        "fn": "cos"
+      },
+      "id": "n7",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1120,
+      "y": 220
+    },
+    {
+      "data": {
+        "fn": "sin"
+      },
+      "id": "n8",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1120,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n9",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "stickerSize"
+        }
+      },
+      "type": "math",
+      "x": 1400,
+      "y": 220
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n10",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "stickerSize"
+        }
+      },
+      "type": "math",
+      "x": 1400,
+      "y": 440
+    },
+    {
+      "data": {
+        "fn": "neg"
+      },
+      "id": "n11",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 1680,
+      "y": 440
+    },
+    {
+      "data": {
+        "inverse": true,
+        "square": true
+      },
+      "id": "n12",
+      "inputs": {
+        "m00": 1,
+        "m01": 0,
+        "m10": 0,
+        "m11": 1,
+        "offset": [
+          0,
+          0
+        ],
+        "origin": [
+          0.5,
+          0.6
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "linear_transform",
+      "x": 1960,
+      "y": 220
+    },
+    {
+      "data": {
+        "edge": "transparent"
+      },
+      "id": "n13",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 2240,
+      "y": 0
+    },
+    {
+      "data": {
+        "edge": "transparent"
+      },
+      "id": "n14",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 2240,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n15",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 2520,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n16",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": {
+          "param": "border"
+        }
+      },
+      "type": "blur",
+      "x": 2520,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n17",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 2800,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n18",
+      "inputs": {
+        "high": 0.1,
+        "low": 0.03,
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 3080,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n19",
+      "inputs": {},
+      "type": "uv",
+      "x": 2520,
+      "y": 1100
+    },
+    {
+      "data": {
+        "op": "add"
+      },
+      "id": "n20",
+      "inputs": {
+        "a": [
+          0,
+          0
+        ],
+        "b": [
+          -0.012,
+          -0.022
+        ],
+        "s": 1
+      },
+      "type": "vector_math",
+      "x": 2800,
+      "y": 1100
+    },
+    {
+      "data": {
+        "edge": "clamp"
+      },
+      "id": "n21",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": [
+          0.5,
+          0.5
+        ]
+      },
+      "type": "sample_at",
+      "x": 3080,
+      "y": 1100
+    },
+    {
+      "data": {},
+      "id": "n22",
+      "inputs": {
+        "color": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "split_color",
+      "x": 3360,
+      "y": 1100
+    },
+    {
+      "data": {},
+      "id": "n23",
+      "inputs": {
+        "high": 0.5,
+        "low": 0.02,
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 3640,
+      "y": 1100
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n24",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "shadow"
+        }
+      },
+      "type": "math",
+      "x": 3920,
+      "y": 1100
+    },
+    {
+      "data": {},
+      "id": "n25",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "radius": {
+          "param": "bgBlur"
+        }
+      },
+      "type": "blur",
+      "x": 280,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n26",
+      "inputs": {
+        "brightness": -0.15,
+        "contrast": 1,
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "brightness_contrast",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n27",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 3360,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n28",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": {
+          "param": "borderColor"
+        }
+      },
+      "type": "mix",
+      "x": 3640,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n29",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 3920,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n30",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 4200,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.8,
+      "displayName": "Wobble speed",
+      "identifier": "wobbleSpeed",
+      "max": 4,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 3,
+      "displayName": "Wobble (°)",
+      "identifier": "wobble",
+      "max": 15,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": -6,
+      "displayName": "Tilt (°)",
+      "identifier": "tilt",
+      "max": 30,
+      "min": -30,
+      "type": "float"
+    },
+    {
+      "default": 1.08,
+      "displayName": "Size",
+      "identifier": "stickerSize",
+      "max": 1.4,
+      "min": 0.7,
+      "type": "float"
+    },
+    {
+      "default": 10,
+      "displayName": "Border (px)",
+      "identifier": "border",
+      "max": 30,
+      "min": 2,
+      "type": "float"
+    },
+    {
+      "default": 0.55,
+      "displayName": "Shadow",
+      "identifier": "shadow",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 14,
+      "displayName": "Background blur",
+      "identifier": "bgBlur",
+      "max": 48,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": "#ffffff",
+      "displayName": "Border colour",
+      "identifier": "borderColor",
+      "max": 1,
+      "min": 0,
+      "type": "color"
+    }
+  ],
+  "preview": {
+    "clip": "stage-model",
+    "thumbTime": 0.5
+  }
+}

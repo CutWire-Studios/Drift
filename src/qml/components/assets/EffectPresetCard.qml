@@ -151,8 +151,12 @@ Column {
             id: cardMenu
 
             property bool favorited: false
+            property bool editable: false
 
-            onAboutToShow: favorited = EditorState.isAssetFavorite("effects", root.modelData.id)
+            onAboutToShow: {
+                favorited = EditorState.isAssetFavorite("effects", root.modelData.id)
+                editable = Forge.canEdit("effect", root.modelData.id)
+            }
 
             ThemedMenuItem {
                 text: qsTr("Apply to selected clip")
@@ -164,6 +168,12 @@ Column {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
                 icon.name: Theme.icons.star
                 onTriggered: EditorState.toggleAssetFavorite("effects", root.modelData.id)
+            }
+            ThemedMenuItem {
+                visible: cardMenu.editable && !ShellBridge.phoneShell
+                text: qsTr("Edit in Forge")
+                icon.name: Theme.icons.pencil
+                onTriggered: Forge.openPackage("effect", root.modelData.id)
             }
             ThemedMenuSeparator { visible: root.modelData.user === true }
             ThemedMenuItem {

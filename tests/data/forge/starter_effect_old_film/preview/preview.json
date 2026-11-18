@@ -1,0 +1,117 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "seed",
+      "name": "k_n3_seed",
+      "node": "n3",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "weave",
+      "name": "k_n3_weave",
+      "node": "n3",
+      "type": "float",
+      "value": 0.3
+    },
+    {
+      "input": "amount",
+      "name": "k_n2_amount",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "flicker",
+      "name": "k_n3_flicker",
+      "node": "n3",
+      "type": "float",
+      "value": 0.3
+    },
+    {
+      "input": "dust",
+      "name": "k_n3_dust",
+      "node": "n3",
+      "type": "float",
+      "value": 0.5
+    },
+    {
+      "input": "size",
+      "name": "k_n4_size",
+      "node": "n4",
+      "type": "float",
+      "value": 1.5
+    },
+    {
+      "input": "seed",
+      "name": "k_n4_seed",
+      "node": "n4",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "amount",
+      "name": "k_n4_amount",
+      "node": "n4",
+      "type": "float",
+      "value": 0.14
+    },
+    {
+      "input": "radius",
+      "name": "k_n5_radius",
+      "node": "n5",
+      "type": "float",
+      "value": 0.75
+    },
+    {
+      "input": "softness",
+      "name": "k_n5_softness",
+      "node": "n5",
+      "type": "float",
+      "value": 0.45
+    },
+    {
+      "input": "color",
+      "name": "k_n5_color",
+      "node": "n5",
+      "type": "color",
+      "value": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "input": "amount",
+      "name": "k_n5_amount",
+      "node": "n5",
+      "type": "float",
+      "value": 0.7
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"saturation\",{},[]],[\"n3\",\"film_damage\",{},[[\"scratches\",{\"param\":\"damage\"}]]],[\"n4\",\"grain\",{},[]],[\"n5\",\"vignette\",{},[]],[\"n6\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"],[\"n3\",\"image\",\"n4\",\"image\"],[\"n4\",\"image\",\"n5\",\"image\"],[\"n5\",\"image\",\"n6\",\"image\"]],[[\"damage\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": true
+}

@@ -1,0 +1,56 @@
+{
+  "id": "forge_sample_dissolve",
+  "displayName": "Noise Dissolve",
+  "category": "basic",
+  "order": 100,
+  "description": "Dissolves the clip in or out through animated noise.",
+  "directions": [
+    "in",
+    "out"
+  ],
+  "defaultDurationMs": 700,
+  "parameters": [
+    {
+      "identifier": "softness",
+      "displayName": "Softness",
+      "type": "float",
+      "defaultValue": 0.1,
+      "minValue": 0.0,
+      "maxValue": 0.5,
+      "ui": {
+        "control": "slider",
+        "precision": 2
+      }
+    },
+    {
+      "identifier": "scale",
+      "displayName": "Scale",
+      "type": "float",
+      "defaultValue": 12.0,
+      "minValue": 1.0,
+      "maxValue": 64.0,
+      "ui": {
+        "control": "slider",
+        "precision": 0
+      }
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

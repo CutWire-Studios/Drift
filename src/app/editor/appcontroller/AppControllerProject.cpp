@@ -9,6 +9,8 @@
 #include "app/jobs/vision/StabilizeController.h"
 #include "app/editor/sessions/SpeedCurveController.h"
 #include "app/editor/ProjectFileController.h"
+#include "app/mcp/McpController.h"
+#include "app/mcp/protocol/McpJson.h"
 #include "ui/preview/PreviewController.h"
 
 #include "engine/decode/readers/ClipReaderPool.h"
@@ -41,6 +43,7 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QDir>
+#include <QSaveFile>
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;
 using drift::mcpdetail::runBeatAnalysis;
@@ -1342,4 +1345,260 @@ QByteArray AppController::historyJsonAt(int stackIndex) const
     }
     const auto *cmd = historyCommand(m_undoStack, stackIndex - 1);
     return cmd ? cmd->after().toCompactJson() : m_project.toCompactJson();
+}
+
+namespace {
+
+QString historyShortHash(const QString &hash)
+{
+    return hash.left(12);
+}
+
+} // namespace
+
+QJsonObject AppController::jumpToHistory(int index, const QString &hash)
+{
+    flushUndoHistoryTrim(); // history indices as they will stay
+    using namespace drift::mcp;
+    int target = index;
+    if (!hash.trimmed().isEmpty()) {
+        target = historyIndexForHash(hash);
+        if (target < 0)
+            return err("not_found", QStringLiteral("No history entry matches that hash"));
+    } else if (index < 0) {
+        return err("bad_args", QStringLiteral("index or hash required"));
+    }
+    if (target < 0 || target > m_undoStack.count())
+        return err("bad_args", QStringLiteral("index out of range"));
+    // Same as AppController::undo()/redo(): the selection is carried across by clip id, or the
+    // jump leaves it on whatever clip now sits at the old indices.
+    captureSelectionClipIds();
+    const int from = m_undoStack.index();
+    m_undoStack.setIndex(target);
+    m_undoSelectionCaptured = false;
+    if (mcp()) {
+        mcp()->setPendingChangeLabel(QStringLiteral("Jump to version %1").arg(target));
+        mcp()->bumpEditRevision(target < from ? McpController::ChangeKind::Undo : McpController::ChangeKind::Redo);
+    }
+    // Redoing forward can take the applied steps past the limit again; settle it before replying.
+    flushUndoHistoryTrim();
+    const QString at = historyHashAt(m_undoStack.index());
+    return ok({{QStringLiteral("index"), m_undoStack.index()},
+               {QStringLiteral("hash"), at},
+               {QStringLiteral("short"), historyShortHash(at)}});
+}
+
+QJsonObject AppController::historySettings() const
+{
+    return {{QStringLiteral("mode"), effectiveUndoHistoryMode()},
+            // Steps that can be undone at most: 0 with history off, -1 with no limit.
+            {QStringLiteral("steps"), undoHistoryCap()},
+            {QStringLiteral("source"), hasProjectHistorySettings() ? QStringLiteral("project")
+                                                                          : QStringLiteral("global")}};
+}
+
+QJsonObject AppController::setHistoryLimit(bool reset, std::optional<int> steps, std::optional<bool> persist)
+{
+    using namespace drift::mcp;
+    if (!reset && !steps && !persist)
+        return err("bad_args", QStringLiteral("steps, persist or reset required"));
+    if (steps && *steps < -1)
+        return err("bad_args", QStringLiteral("steps must be -1 (no limit), 0 (no history) or more"));
+    const int stepsBefore = m_projectHistorySteps;
+    const int persistBefore = m_projectHistoryPersist;
+    if (reset) {
+        m_projectHistorySteps = kProjectHistoryUnset;
+        m_projectHistoryPersist = -1;
+    }
+    if (steps)
+        m_projectHistorySteps = *steps;
+    if (persist)
+        m_projectHistoryPersist = *persist ? 1 : 0;
+    // Saved with the project, so changing it changes the project.
+    if (m_projectHistorySteps != stepsBefore || m_projectHistoryPersist != persistBefore)
+        m_projectFile->setDirty(true);
+    scheduleUndoHistoryTrim();
+    flushUndoHistoryTrim();
+    QJsonObject reply = historySettings();
+    reply.insert(QStringLiteral("steps_kept"), m_undoStack.count());
+    return ok(reply);
+}
+
+QJsonObject AppController::historyStats(bool size)
+{
+    using namespace drift::mcp;
+    flushUndoHistoryTrim();
+    const drift::HistoryCapture capture = drift::captureHistory(m_undoStack);
+    // Project snapshots held in memory (a step's before and after, shared where a step reuses
+    // one). Each is a full project copy, though copies share data that did not change. Counted by
+    // identity, so this serialises nothing.
+    // Walked through the live commands, not the capture: a macro's inner steps hold snapshots
+    // of their own, which the capture flattens away.
+    QSet<const drift::HistoryState *> states;
+    const std::function<void(const QUndoCommand *)> collect = [&](const QUndoCommand *command) {
+        if (const auto *snapshot = dynamic_cast<const drift::ProjectSnapshotCommand *>(command)) {
+            states.insert(snapshot->beforeState().get());
+            states.insert(snapshot->afterState().get());
+        }
+        for (int c = 0; c < command->childCount(); ++c)
+            collect(command->child(c));
+    };
+    for (int i = 0; i < m_undoStack.count(); ++i)
+        collect(m_undoStack.command(i));
+    QStringList media = historyOnlyMediaPaths().values();
+    media.sort();
+    const int mediaCount = media.size();
+    if (media.size() > 20)
+        media = media.mid(0, 20);
+    QJsonObject reply{
+        {QStringLiteral("steps"), m_undoStack.count()},
+        {QStringLiteral("undoable"), m_undoStack.index()},
+        {QStringLiteral("redoable"), m_undoStack.count() - m_undoStack.index()},
+        {QStringLiteral("snapshots"), int(states.size())},
+        {QStringLiteral("saved_with_project"), persistsUndoHistory()},
+        {QStringLiteral("history_only_media"), mediaCount},
+        {QStringLiteral("history_only_media_paths"), QJsonArray::fromStringList(media)},
+        {QStringLiteral("settings"), historySettings()},
+    };
+    if (size) {
+        // Serialises every state on this thread, so only on request: the history as uncompressed
+        // JSON, which is what a save adds before compression. Memory use is higher; it is not
+        // measured here.
+        const drift::HistoryDocument document = drift::historyToJson(capture);
+        const qint64 bytes =
+            document.json.isEmpty() ? 0 : QJsonDocument(document.json).toJson(QJsonDocument::Compact).size();
+        reply.insert(QStringLiteral("json_bytes"), double(bytes));
+    }
+    return ok(reply);
+}
+
+QJsonObject AppController::takeSnapshot(const QString &label)
+{
+    flushUndoHistoryTrim(); // history indices as they will stay
+    using namespace drift::mcp;
+    const int current = m_undoStack.index();
+    const QByteArray json = historyJsonAt(current);
+    const QString hash = historyHashAt(current);
+    if (json.isEmpty() || hash.isEmpty())
+        return err("bad_args", QStringLiteral("Nothing to snapshot"));
+
+    const QString dir = historySnapshotDir();
+    if (!QDir().mkpath(dir))
+        return err("bad_args", QStringLiteral("Could not create history folder"));
+    const QString path = dir + QLatin1Char('/') + hash + QStringLiteral(".json");
+    bool existed = QFile::exists(path);
+    if (!existed) {
+        QSaveFile file(path);
+        if (!file.open(QIODevice::WriteOnly))
+            return err("bad_args", QStringLiteral("Could not write snapshot"));
+        file.write(json);
+        if (!file.commit())
+            return err("bad_args", QStringLiteral("Could not write snapshot"));
+        pruneHistorySnapshots();
+    }
+    QJsonObject extra{{QStringLiteral("hash"), hash},
+                      {QStringLiteral("short"), historyShortHash(hash)},
+                      {QStringLiteral("path"), path},
+                      {QStringLiteral("index"), current},
+                      {QStringLiteral("existed"), existed},
+                      {QStringLiteral("bytes"), json.size()}};
+    if (!label.trimmed().isEmpty())
+        extra.insert(QStringLiteral("label"), label.trimmed());
+    else if (current > 0)
+        extra.insert(QStringLiteral("label"), m_undoStack.text(current - 1));
+    else
+        extra.insert(QStringLiteral("label"), QStringLiteral("Origin"));
+    return ok(extra);
+}
+
+QJsonObject AppController::listSnapshots() const
+{
+    using namespace drift::mcp;
+    QJsonArray snapshots;
+    QDir dir(historySnapshotDir());
+    const QFileInfoList files =
+        dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files, QDir::Time);
+    for (const QFileInfo &info : files) {
+        const QString hash = info.completeBaseName();
+        snapshots.append(QJsonObject{
+            {QStringLiteral("hash"), hash},
+            {QStringLiteral("short"), historyShortHash(hash)},
+            {QStringLiteral("path"), info.absoluteFilePath()},
+            {QStringLiteral("bytes"), info.size()},
+            {QStringLiteral("savedAt"), info.lastModified().toUTC().toString(Qt::ISODate)},
+        });
+    }
+    return ok({{QStringLiteral("snapshots"), snapshots}, {QStringLiteral("n"), snapshots.size()}});
+}
+
+QJsonObject AppController::restoreSnapshot(const QString &hash)
+{
+    using namespace drift::mcp;
+    const QString needle = hash.trimmed();
+    if (needle.size() < 8)
+        return err("bad_args", QStringLiteral("hash required"));
+
+    flushUndoHistoryTrim(); // resolve against the stack as it will stay
+    const int onStack = historyIndexForHash(needle);
+    if (onStack >= 0)
+        return jumpToHistory(onStack, {});
+
+    QDir dir(historySnapshotDir());
+    QString path;
+    int matches = 0;
+    const QFileInfoList files =
+        dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files, QDir::Name);
+    for (const QFileInfo &info : files) {
+        const QString name = info.completeBaseName();
+        if (name.startsWith(needle, Qt::CaseInsensitive) || needle.startsWith(name, Qt::CaseInsensitive)) {
+            ++matches;
+            path = info.absoluteFilePath();
+            if (name.compare(needle, Qt::CaseInsensitive) == 0) {
+                path = info.absoluteFilePath();
+                matches = 1;
+                break;
+            }
+        }
+    }
+    if (matches != 1 || path.isEmpty())
+        return err("not_found", QStringLiteral("No snapshot matches that hash"));
+
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly))
+        return err("bad_args", QStringLiteral("Could not read snapshot"));
+    const QByteArray json = file.readAll();
+    const QString fileHash = QString::fromLatin1(
+        QCryptographicHash::hash(json, QCryptographicHash::Sha256).toHex());
+    // Snapshots are hashed without transcripts; keep the session's so restoring one never loses them.
+    const auto transcripts = m_project.transcripts();
+    QString error;
+    if (!applyProjectJson(json, &error))
+        return err("bad_args", error.isEmpty() ? QStringLiteral("Snapshot refused") : error);
+    for (auto it = transcripts.cbegin(); it != transcripts.cend(); ++it) {
+        if (!m_project.transcript(it.key()))
+            m_project.setTranscript(it.key(), it.value());
+    }
+    if (mcp()) {
+        mcp()->setPendingChangeLabel(QStringLiteral("Restore snapshot"));
+        mcp()->bumpEditRevision();
+    }
+    return ok({{QStringLiteral("index"), 0},
+               {QStringLiteral("hash"), fileHash},
+               {QStringLiteral("short"), historyShortHash(fileHash)},
+               {QStringLiteral("reset"), true}});
+}
+
+QJsonObject AppController::setProjectHistorySteps(int steps)
+{
+    return setHistoryLimit(false, steps, std::nullopt);
+}
+
+QJsonObject AppController::setProjectHistoryPersist(bool persist)
+{
+    return setHistoryLimit(false, std::nullopt, persist);
+}
+
+QJsonObject AppController::resetProjectHistory()
+{
+    return setHistoryLimit(true, std::nullopt, std::nullopt);
 }

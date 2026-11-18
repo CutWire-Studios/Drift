@@ -1,0 +1,133 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n3",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n4",
+      "toSocket": "t"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n5",
+      "toSocket": "from"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e3",
+      "to": "n5",
+      "toSocket": "to"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n5",
+      "toSocket": "p"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n6",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "stylized",
+    "description": "Both clips on a turning cube.",
+    "displayName": "Cube",
+    "id": "starter_transition_cube",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "to",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {},
+      "type": "progress",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {
+        "curve": "inout"
+      },
+      "id": "n4",
+      "inputs": {
+        "t": 0
+      },
+      "type": "ease",
+      "x": 280,
+      "y": 440
+    },
+    {
+      "data": {
+        "direction": "left"
+      },
+      "id": "n5",
+      "inputs": {
+        "from": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "p": 0,
+        "perspective": 1,
+        "to": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "unzoom": 0.5
+      },
+      "type": "cube",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n6",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 840,
+      "y": 0
+    }
+  ],
+  "params": [],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

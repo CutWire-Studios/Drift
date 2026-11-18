@@ -17,8 +17,10 @@
 #include "engine/render2d/pdf/PdfClipRenderer.h"
 #include "engine/render2d/pdf/PdfiumRuntime.h"
 #include "engine/packages/assets/StickerCatalog.h"
+#include "engine/packages/animations/AnimationCatalog.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "engine/packages/transitions/TransitionPackageLoader.h"
+#include "engine/packages/animations/AnimationPackageLoader.h"
 #include "core/base/ZipArchive.h"
 
 #include <QDateTime>
@@ -1345,6 +1347,8 @@ void AddonManager::reloadForKinds(const QStringList &kinds)
             reloadEffectCatalog();
         else if (kind == QLatin1String("transitions"))
             reloadTransitionCatalog();
+        else if (kind == QLatin1String("animations"))
+            reloadAnimationCatalog();
         else if (kind == QLatin1String("audio-effects"))
             reloadAudioEffectCatalog();
         else if (kind == QLatin1String("effect-templates"))
@@ -1427,6 +1431,8 @@ QString validateCustomEffect(const QString &kind, const QString &dir)
         EffectPackageLoader::loadPackage(dir, &error);
     else if (kind == QLatin1String("transitions"))
         TransitionPackageLoader::loadPackage(dir, &error);
+    else if (kind == QLatin1String("animations"))
+        AnimationPackageLoader::loadPackage(dir, &error);
     else
         loadAudioEffectPackage(dir, &error);
     return error.isEmpty() ? QString() : QStringLiteral("Drift cannot read it: %1").arg(error);
@@ -1620,10 +1626,11 @@ QVariantMap AddonManager::inspectAddonFile(const QUrl &url)
                 error = QStringLiteral("cannot read manifest.json");
         } else if (error.isEmpty()) {
             // No manifest.json: maybe a zip from Drift Forge, one folder holding a single
-            // effect.json, transition.json or audio-effect.json. It installs like a .driftfx.
+            // effect.json, transition.json, animation.json or audio-effect.json. It installs like a .driftfx.
             static const std::pair<QLatin1String, QLatin1String> kForgeManifests[] = {
                 {QLatin1String("effect.json"), QLatin1String("effects")},
                 {QLatin1String("transition.json"), QLatin1String("transitions")},
+                {QLatin1String("animation.json"), QLatin1String("animations")},
                 {QLatin1String("audio-effect.json"), QLatin1String("audio-effects")},
             };
             const drift::zip::Entry *forge = nullptr;
@@ -1693,7 +1700,7 @@ QVariantMap AddonManager::inspectAddonFile(const QUrl &url)
                 error = QStringLiteral("it holds more than one effect; install them one at a time");
             } else {
                 error = QStringLiteral("it is neither an addon (no manifest.json) nor a Drift Forge export "
-                                       "(no folder with effect.json, transition.json or audio-effect.json)");
+                                       "(no folder with effect.json, transition.json, animation.json or audio-effect.json)");
             }
         }
     }
@@ -1879,6 +1886,7 @@ namespace {
 const std::pair<QLatin1String, QLatin1String> kCustomEffectKinds[] = {
     {QLatin1String("effects"), QLatin1String("effect.json")},
     {QLatin1String("transitions"), QLatin1String("transition.json")},
+    {QLatin1String("animations"), QLatin1String("animation.json")},
     {QLatin1String("audio-effects"), QLatin1String("audio-effect.json")},
 };
 
@@ -1950,7 +1958,8 @@ QUrl AddonManager::customEffectsFolderUrl(const QString &kind) const
 
 void AddonManager::reloadCustomEffects()
 {
-    reloadForKinds({QStringLiteral("effects"), QStringLiteral("transitions"), QStringLiteral("audio-effects")});
+    reloadForKinds({QStringLiteral("effects"), QStringLiteral("transitions"), QStringLiteral("animations"),
+                    QStringLiteral("audio-effects")});
 }
 
 void AddonManager::rescanCustomAddons()

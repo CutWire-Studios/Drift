@@ -1,0 +1,39 @@
+{
+  "backend": "gpu",
+  "category": "color",
+  "description": "Two-colour poster look.",
+  "displayName": "Duotone",
+  "id": "starter_effect_duotone",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": "#1b1446",
+      "displayName": "Shadows",
+      "identifier": "shadowColor",
+      "type": "color"
+    },
+    {
+      "defaultValue": "#ffc107",
+      "displayName": "Highlights",
+      "identifier": "highlightColor",
+      "type": "color"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "buffers": [],
+  "errors": [],
+  "literals": [
+    {
+      "input": "rr",
+      "name": "k_n2_rr",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "rg",
+      "name": "k_n2_rg",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "rb",
+      "name": "k_n2_rb",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "gr",
+      "name": "k_n2_gr",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "gg",
+      "name": "k_n2_gg",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    },
+    {
+      "input": "gb",
+      "name": "k_n2_gb",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "br",
+      "name": "k_n2_br",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "bg",
+      "name": "k_n2_bg",
+      "node": "n2",
+      "type": "float",
+      "value": 0
+    },
+    {
+      "input": "bb",
+      "name": "k_n2_bb",
+      "node": "n2",
+      "type": "float",
+      "value": 1
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"channel_mixer\",{\"asset\":\"a1\"},[]],[\"n3\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"]],[],[\"a1\"]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

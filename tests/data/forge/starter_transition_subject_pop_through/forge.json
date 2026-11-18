@@ -1,0 +1,407 @@
+{
+  "assets": [],
+  "edges": [
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e1",
+      "to": "n5",
+      "toSocket": "t"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e2",
+      "to": "n6",
+      "toSocket": "t"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e3",
+      "to": "n7",
+      "toSocket": "a"
+    },
+    {
+      "from": "n6",
+      "fromSocket": "value",
+      "id": "e4",
+      "to": "n8",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e5",
+      "to": "n9",
+      "toSocket": "a"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e6",
+      "to": "n9",
+      "toSocket": "b"
+    },
+    {
+      "from": "n5",
+      "fromSocket": "value",
+      "id": "e7",
+      "to": "n9",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n9",
+      "fromSocket": "image",
+      "id": "e8",
+      "to": "n10",
+      "toSocket": "image"
+    },
+    {
+      "from": "n7",
+      "fromSocket": "value",
+      "id": "e9",
+      "to": "n10",
+      "toSocket": "strength"
+    },
+    {
+      "from": "n10",
+      "fromSocket": "image",
+      "id": "e10",
+      "to": "n11",
+      "toSocket": "image"
+    },
+    {
+      "from": "n8",
+      "fromSocket": "value",
+      "id": "e11",
+      "to": "n11",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n4",
+      "fromSocket": "value",
+      "id": "e12",
+      "to": "n12",
+      "toSocket": "x"
+    },
+    {
+      "from": "n12",
+      "fromSocket": "value",
+      "id": "e13",
+      "to": "n13",
+      "toSocket": "x"
+    },
+    {
+      "from": "n3",
+      "fromSocket": "mask",
+      "id": "e14",
+      "to": "n14",
+      "toSocket": "a"
+    },
+    {
+      "from": "n13",
+      "fromSocket": "value",
+      "id": "e15",
+      "to": "n14",
+      "toSocket": "b"
+    },
+    {
+      "from": "n11",
+      "fromSocket": "image",
+      "id": "e16",
+      "to": "n15",
+      "toSocket": "a"
+    },
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e17",
+      "to": "n15",
+      "toSocket": "b"
+    },
+    {
+      "from": "n14",
+      "fromSocket": "value",
+      "id": "e18",
+      "to": "n15",
+      "toSocket": "amount"
+    },
+    {
+      "from": "n15",
+      "fromSocket": "image",
+      "id": "e19",
+      "to": "n16",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "transition",
+  "meta": {
+    "author": "",
+    "category": "cinematic",
+    "description": "The person holds still in front while the world behind them punches through a zoom blur into the next clip, then they dissolve away.",
+    "displayName": "Subject pop-through",
+    "id": "starter_transition_subject_pop_through",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "from",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n2",
+      "inputs": {},
+      "type": "to",
+      "x": 0,
+      "y": 220
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {},
+      "type": "clip_mask",
+      "x": 0,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n4",
+      "inputs": {},
+      "type": "progress",
+      "x": 0,
+      "y": 440
+    },
+    {
+      "data": {
+        "curve": "expo"
+      },
+      "id": "n5",
+      "inputs": {
+        "t": 0
+      },
+      "type": "ease",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "data": {
+        "curve": "peaksmooth"
+      },
+      "id": "n6",
+      "inputs": {
+        "t": 0
+      },
+      "type": "ease",
+      "x": 280,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n7",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "punch"
+        }
+      },
+      "type": "math",
+      "x": 560,
+      "y": 440
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n8",
+      "inputs": {
+        "a": 0,
+        "b": {
+          "param": "split"
+        }
+      },
+      "type": "math",
+      "x": 560,
+      "y": 660
+    },
+    {
+      "data": {},
+      "id": "n9",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 560,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n10",
+      "inputs": {
+        "center": [
+          0.5,
+          0.5
+        ],
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "strength": 0.15
+      },
+      "type": "zoom_blur",
+      "x": 840,
+      "y": 0
+    },
+    {
+      "data": {
+        "mode": "linear"
+      },
+      "id": "n11",
+      "inputs": {
+        "amount": 8,
+        "angle": 0,
+        "center": [
+          0.5,
+          0.5
+        ],
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "chromatic",
+      "x": 1120,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n12",
+      "inputs": {
+        "high": 1,
+        "low": {
+          "param": "holdUntil"
+        },
+        "x": 0.5
+      },
+      "type": "smoothstep",
+      "x": 560,
+      "y": 880
+    },
+    {
+      "data": {
+        "fn": "oneminus"
+      },
+      "id": "n13",
+      "inputs": {
+        "x": 0
+      },
+      "type": "func",
+      "x": 840,
+      "y": 880
+    },
+    {
+      "data": {
+        "op": "mul"
+      },
+      "id": "n14",
+      "inputs": {
+        "a": 0,
+        "b": 1
+      },
+      "type": "math",
+      "x": 1120,
+      "y": 880
+    },
+    {
+      "data": {},
+      "id": "n15",
+      "inputs": {
+        "a": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "amount": 0.5,
+        "b": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "type": "mix",
+      "x": 1400,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n16",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "transition_output",
+      "x": 1680,
+      "y": 0
+    }
+  ],
+  "params": [
+    {
+      "default": 0.45,
+      "displayName": "Punch",
+      "identifier": "punch",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 18,
+      "displayName": "Colour split (px)",
+      "identifier": "split",
+      "max": 40,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 0.7,
+      "displayName": "Person leaves at",
+      "identifier": "holdUntil",
+      "max": 0.95,
+      "min": 0.3,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "clip": "dancer",
+    "thumbTime": 0.5
+  }
+}

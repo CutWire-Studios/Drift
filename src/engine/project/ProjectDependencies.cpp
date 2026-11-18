@@ -1,6 +1,7 @@
 #include "engine/project/ProjectDependencies.h"
 
 #include "engine/addons/AddonRegistry.h"
+#include "engine/packages/animations/AnimationCatalog.h"
 #include "engine/packages/audio/AudioEffectCatalog.h"
 #include "engine/encode/writers/AudioFileWriter.h"
 #include "engine/packages/effects/EffectCatalog.h"
@@ -316,6 +317,10 @@ QList<AddonRef> collectAddons(const Project &project)
             // Stickers are image clips whose file lives inside the pack that provided them; user
             // media resolves to no addon at all, so this is a cheap miss for ordinary clips.
             addForPath(clip.path, QString());
+            for (const ClipAnimation *anim : {&clip.animIn, &clip.animOut}) {
+                if (const AnimationPresetEntry *def = animationDefForId(anim->kindId))
+                    addForPath(def->gpu.packageDir, QStringLiteral("animations"));
+            }
             usesEmoji = usesEmoji || !clip.emoji.isEmpty();
             usesPdf = usesPdf || clip.type == ClipType::Pdf;
         }

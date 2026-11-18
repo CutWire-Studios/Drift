@@ -1,0 +1,95 @@
+{
+  "buffers": [
+    "buf0",
+    "buf1"
+  ],
+  "errors": [],
+  "literals": [
+    {
+      "input": "tint",
+      "name": "k_n2_tint",
+      "node": "n2",
+      "type": "color",
+      "value": [
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "input": "amount",
+      "name": "k_n3_amount",
+      "node": "n3",
+      "type": "float",
+      "value": 0.15
+    }
+  ],
+  "nodeErrors": {},
+  "ok": true,
+  "passes": [
+    {
+      "file": "pass1.frag",
+      "inputs": [
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "id": "buf0",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass2.frag",
+      "inputs": [
+        {
+          "id": "buf0",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf1",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "pass3.frag",
+      "inputs": [
+        {
+          "id": "buf1",
+          "type": "buffer"
+        }
+      ],
+      "output": {
+        "id": "buf0",
+        "type": "buffer"
+      },
+      "paramSamplers": []
+    },
+    {
+      "file": "main.frag",
+      "inputs": [
+        {
+          "id": "buf0",
+          "type": "buffer"
+        },
+        {
+          "type": "source_texture"
+        }
+      ],
+      "output": {
+        "type": "canvas"
+      },
+      "paramSamplers": []
+    }
+  ],
+  "structureKey": "[\"effect\",[[\"n1\",\"video\",{},[]],[\"n2\",\"glow\",{},[[\"threshold\",{\"param\":\"threshold\"}],[\"radius\",{\"param\":\"glowRadius\"}],[\"intensity\",{\"param\":\"intensity\"}]]],[\"n3\",\"temperature\",{},[]],[\"n4\",\"effect_output\",{},[]]],[[\"n1\",\"image\",\"n2\",\"image\"],[\"n2\",\"image\",\"n3\",\"image\"],[\"n3\",\"image\",\"n4\",\"image\"]],[[\"threshold\",\"float\",false],[\"intensity\",\"float\",false],[\"glowRadius\",\"float\",false]],[]]",
+  "textures": [],
+  "usesDepth": false,
+  "usesFace": false,
+  "usesMask": false,
+  "usesTime": false
+}

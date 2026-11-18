@@ -1,0 +1,51 @@
+{
+  "backend": "gpu",
+  "category": "artistic",
+  "description": "A Möbius transform whose pole wanders, bending the frame into slowly flowing circles.",
+  "displayName": "Möbius drift",
+  "id": "starter_effect_m_bius_drift",
+  "order": 1000,
+  "parameters": [
+    {
+      "defaultValue": 0.5,
+      "displayName": "Wander",
+      "identifier": "wander",
+      "maxValue": 0.9,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 0.15,
+      "displayName": "Drift speed",
+      "identifier": "drift",
+      "maxValue": 1,
+      "minValue": 0,
+      "type": "float"
+    },
+    {
+      "defaultValue": 2,
+      "displayName": "Zoom",
+      "identifier": "zoom",
+      "maxValue": 6,
+      "minValue": 0.5,
+      "type": "float"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        },
+        "passIndex": 0
+      }
+    ]
+  }
+}

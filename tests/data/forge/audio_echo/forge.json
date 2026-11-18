@@ -1,0 +1,78 @@
+{
+  "assets": [],
+  "audio": {
+    "rack": {
+      "chain": [
+        {
+          "id": "a1",
+          "knobs": {
+            "decay": {
+              "param": "decay"
+            },
+            "delay": {
+              "param": "delay"
+            },
+            "in_gain": {
+              "param": "in_gain"
+            },
+            "out_gain": {
+              "param": "out_gain"
+            }
+          },
+          "type": "classic.echo"
+        }
+      ],
+      "modulators": [],
+      "routes": []
+    }
+  },
+  "edges": [],
+  "forge": 3,
+  "kind": "audio",
+  "meta": {
+    "author": "",
+    "category": "space",
+    "description": "",
+    "displayName": "My Echo",
+    "id": "audio_echo",
+    "version": "1.0.0"
+  },
+  "nodes": [],
+  "params": [
+    {
+      "default": 60,
+      "displayName": "Delay (ms)",
+      "identifier": "delay",
+      "max": 900,
+      "min": 10,
+      "type": "float"
+    },
+    {
+      "default": 0.4,
+      "displayName": "Decay",
+      "identifier": "decay",
+      "max": 0.9,
+      "min": 0.1,
+      "type": "float"
+    },
+    {
+      "default": 0.8,
+      "displayName": "Input",
+      "identifier": "in_gain",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    },
+    {
+      "default": 0.88,
+      "displayName": "Wet Mix",
+      "identifier": "out_gain",
+      "max": 1,
+      "min": 0,
+      "type": "float"
+    }
+  ],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

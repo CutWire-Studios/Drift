@@ -333,7 +333,8 @@ ProjectDiff diffProjects(const Project &from, const Project &to)
     bool marks = from.bookmarks().size() != to.bookmarks().size();
     for (int i = 0; !marks && i < to.bookmarks().size(); ++i)
         marks = from.bookmarks().at(i).timeUs != to.bookmarks().at(i).timeUs
-                || from.bookmarks().at(i).label != to.bookmarks().at(i).label;
+                || from.bookmarks().at(i).label != to.bookmarks().at(i).label
+                || from.bookmarks().at(i).color != to.bookmarks().at(i).color;
     if (marks)
         diff.settings.append(QStringLiteral("bookmarks"));
     if (from.workAreaInUs() != to.workAreaInUs() || from.workAreaOutUs() != to.workAreaOutUs())

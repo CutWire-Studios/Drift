@@ -1,4 +1,6 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "app/mcp/McpController.h"
+#include "engine/face/tracking/FaceTrack.h"
 #include "core/edit/TimelineOps.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/packages/procedurals/ProceduralCatalog.h"
@@ -95,7 +97,8 @@ bool AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
         if (otherKt) {
             const drift::TimeUs otherNearest = otherKt->nearestKeyframe(rel, kKeyframeToleranceUs);
             if (otherNearest < 0) {
-                const double otherVal = otherKt->evaluateAt(rel);
+                const double otherVal = otherKt->isEmpty() ? propertyBaseValue(trackIndex, clipIndex, otherProp, 0.0)
+                                                           : otherKt->evaluateAt(rel);
                 writeClipPropValue(clip, otherProp, rel, otherVal, m_autoKeyEnabled, /*force=*/true);
                 drift::KeyframeTrack<double> *srcKt = keyframeTrackForProp(clip, prop, false);
                 if (srcKt)
@@ -1253,4 +1256,157 @@ void AppController::resetClipTransformGroup(int trackIndex, int clipIndex, const
     }
     pushProjectEdit(before, tr("Reset transform"));
     finishEdit(tr("Transform reset"));
+}
+
+QVariantMap AppController::autoReframeClip(int trackIndex, int clipIndex, double aspect, const QString &mode)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return QVariantMap{{QStringLiteral("error"), QStringLiteral("not_found")}, {QStringLiteral("message"), QStringLiteral("Unknown clip")}};
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type == drift::ClipType::Audio)
+        return QVariantMap{{QStringLiteral("error"), QStringLiteral("type_mismatch")}, {QStringLiteral("message"), QStringLiteral("Cannot reframe an audio clip")}};
+
+    const double canvasW = m_project.width();
+    const double canvasH = m_project.height();
+    double targetAspect = aspect > 0.01 ? aspect : (9.0 / 16.0);
+    const QString m = mode.toLower();
+
+    struct Sample {
+        double t = 0.0;
+        double cx = 0.5;
+        double cy = 0.5;
+        double rx = 0.2;
+        double ry = 0.25;
+    };
+    QList<Sample> samples;
+    if (m != QLatin1String("center") && !clip.faceTrackPath.isEmpty()) {
+        const std::shared_ptr<const drift::FaceTrack> track =
+            drift::loadFaceTrackCached(clip.faceTrackPath);
+        if (track && !track->isEmpty() && track->fps > 0) {
+            const int total = track->frames.size();
+            const int cap = 120;
+            const int step = qMax(1, (total + cap - 1) / cap);
+            for (int i = 0; i < total; i += step) {
+                Sample s;
+                s.t = double(i) / double(track->fps);
+                for (const drift::FaceAnchors &face : track->frames.at(i).faces) {
+                    if (!face.valid)
+                        continue;
+                    s.cx = face.faceCenter.x();
+                    s.cy = face.faceCenter.y();
+                    s.rx = qMax(0.05, face.faceRx);
+                    s.ry = qMax(0.05, face.faceRy);
+                    break;
+                }
+                samples.append(s);
+            }
+        }
+    }
+    if (samples.isEmpty()) {
+        Sample s;
+        s.t = 0.0;
+        samples.append(s);
+        Sample e;
+        e.t = drift::usToSeconds(clip.timelineDuration);
+        samples.append(e);
+    }
+
+    const int radius = (m == QLatin1String("motion")) ? 4 : 2;
+    QList<Sample> smoothed = samples;
+    for (int i = 0; i < samples.size(); ++i) {
+        double cx = 0, cy = 0, n = 0;
+        for (int j = qMax(0, i - radius); j <= qMin(samples.size() - 1, i + radius); ++j) {
+            cx += samples.at(j).cx;
+            cy += samples.at(j).cy;
+            n += 1;
+        }
+        smoothed[i].cx = cx / n;
+        smoothed[i].cy = cy / n;
+    }
+
+    // The crop window is in normalised source coordinates, where the two axes have different
+    // lengths in pixels. Relating them by the target aspect alone — as this did — treats them as
+    // square, which both distorts the picture and zooms far past what was asked for: on a 4K 16:9
+    // source a 9:16 request came out as a square box and about a 3x upscale. Dividing the source's
+    // own display aspect out is what makes the window the shape the caller asked for.
+    double sourceAspect = canvasW / canvasH;
+    if (const drift::MediaAsset *asset = m_project.asset(clip.assetId)) {
+        if (asset->width > 0 && asset->height > 0)
+            sourceAspect = double(asset->width) / double(asset->height);
+    }
+
+    // How much of the source ends up across the canvas, at the tightest point. Above 1.0 the crop
+    // is being blown up past its own resolution, which no amount of framing can make sharp.
+    double tightestScale = 0.0;
+
+    // Where the target-aspect window lands on the canvas. When the canvas already is that aspect
+    // this is the whole canvas and the crop fills it. When it is not — a 9:16 crop asked for on a
+    // 16:9 timeline, which is the documented use — the window is fitted inside instead. Filling the
+    // canvas in that case would mean stretching the picture, and a reframe that distorts the
+    // subject has not reframed anything.
+    const double frameH = qMin(canvasH, canvasW / targetAspect);
+    const double frameW = frameH * targetAspect;
+    const double frameX = (canvasW - frameW) * 0.5;
+    const double frameY = (canvasH - frameH) * 0.5;
+
+    const drift::ClipLayout restLayout = drift::clipLayoutAt(clip, 0, QSizeF(canvasW, canvasH));
+    m_mcpController->beginBatch();
+    int keys = 0;
+    for (const Sample &s : smoothed) {
+        // Crop window of targetAspect centred on the face, in normalised source coords.
+        double cropH = qMin(1.0, qMax(s.ry * 2.4, 0.35));
+        double cropW = cropH * targetAspect / sourceAspect;
+        if (cropW > 1.0) {
+            cropW = 1.0;
+            cropH = qMin(1.0, cropW * sourceAspect / targetAspect);
+        }
+        double cropX = qBound(0.0, s.cx - cropW * 0.5, 1.0 - cropW);
+        double cropY = qBound(0.0, s.cy - cropH * 0.5, 1.0 - cropH);
+        // The whole source, scaled so that its crop window covers exactly the framed area. w/h
+        // comes out at the source's own aspect, so nothing is stretched. x/y/w/h is the box on
+        // the canvas; it becomes position and scale about the clip's anchor below.
+        const double w = frameW / cropW;
+        const double h = frameH / cropH;
+        const double x = frameX - cropX * w;
+        const double y = frameY - cropY * h;
+        if (const drift::MediaAsset *asset = m_project.asset(clip.assetId)) {
+            if (asset->width > 0)
+                tightestScale = qMax(tightestScale, frameW / (cropW * asset->width));
+        }
+        const double at = drift::usToSeconds(clip.timelineStart) + s.t;
+        const double scaleX = w / restLayout.frameW;
+        const double scaleY = h / restLayout.frameH;
+        setClipKeyframe(trackIndex, clipIndex, QStringLiteral("positionX"), at,
+                               x + restLayout.anchorX * scaleX);
+        setClipKeyframe(trackIndex, clipIndex, QStringLiteral("positionY"), at,
+                               y + restLayout.anchorY * scaleY);
+        setClipKeyframe(trackIndex, clipIndex, QStringLiteral("scaleX"), at, scaleX);
+        setClipKeyframe(trackIndex, clipIndex, QStringLiteral("scaleY"), at, scaleY);
+        keys += 4;
+    }
+    m_mcpController->endBatch(QStringLiteral("Auto-reframe"), keys > 0);
+    QVariantMap reply{{QStringLiteral("keys"), keys},
+                      {QStringLiteral("aspect"), drift::mcpdetail::round3(targetAspect)},
+                      {QStringLiteral("mode"), m.isEmpty() ? QStringLiteral("face") : m}};
+    if (tightestScale > 0.0) {
+        // Say how hard the crop is pushing the source, so a caller can see an upscale here rather
+        // than discover it as a soft picture in a render.
+        reply.insert(QStringLiteral("scale"), drift::mcpdetail::round3(tightestScale));
+        if (tightestScale > 1.02)
+            reply.insert(QStringLiteral("upscaled"), true);
+    }
+    return reply;
+}
+
+void AppController::autoReframe(int trackIndex, int clipIndex, double aspect, const QString &mode)
+{
+    const QVariantMap result = autoReframeClip(trackIndex, clipIndex, aspect, mode);
+    if (result.contains(QStringLiteral("error"))) {
+        setLastMessage(result.value(QStringLiteral("message")).toString(), QStringLiteral("warning"));
+        return;
+    }
+    if (result.value(QStringLiteral("upscaled")).toBool())
+        setLastMessage(tr("Reframed, but the crop enlarges the source %1x").arg(result.value(QStringLiteral("scale")).toDouble()), QStringLiteral("warning"));
+    else
+        setLastMessage(tr("Reframed the clip"));
 }

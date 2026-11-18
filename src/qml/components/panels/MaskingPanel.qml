@@ -9,7 +9,7 @@ PanelFrame {
     SearchAnchor {
         searchId: "masking-tracking"
         title: qsTr("Masking & Tracking")
-        keywords: "mask matte rotoscope roto brush polygon tracking tracker motion track planar object follow"
+        keywords: "mask matte rotoscope roto brush lasso scissors magic wand select polygon tracking tracker motion track planar object follow"
     }
 
     property bool shown: false
@@ -29,7 +29,7 @@ PanelFrame {
     readonly property bool onAdjustment: target.kind === "adjustment"
 
     // Each tool's own options, shown in toolOptions while that tool is active.
-    readonly property var toolOptionComponents: ({ "brush": brushOptions, "ai": aiOptions, "tracker": trackerOptions })
+    readonly property var toolOptionComponents: ({ "brush": brushOptions, "lasso": selectionOptions, "scissors": selectionOptions, "wand": selectionOptions, "ai": aiOptions, "tracker": trackerOptions })
 
     // Object cutout (the AI tool). backends() is a plain call, so the list is rebuilt on addon changes.
     property var aiBackendModel: []
@@ -48,6 +48,9 @@ PanelFrame {
         { id: "ellipse", label: qsTr("Ellipse"), action: "gizmoScale", glyph: Theme.icons.circle, clipOnly: false },
         { id: "polygon", label: qsTr("Polygon"), action: "maskingPolygonTool", glyph: Theme.icons.pentagon, clipOnly: false },
         { id: "brush", label: qsTr("Brush"), action: "bladeTool", glyph: Theme.icons.brush, clipOnly: true },
+        { id: "lasso", label: qsTr("Lasso"), action: "maskingLassoTool", glyph: Theme.icons.lasso, clipOnly: true },
+        { id: "scissors", label: qsTr("Scissors"), action: "maskingScissorsTool", glyph: Theme.icons.scissors, clipOnly: true },
+        { id: "wand", label: qsTr("Magic wand"), action: "maskingWandTool", glyph: Theme.icons.magicWand, clipOnly: true },
         { id: "ai", label: qsTr("AI object"), action: "maskingAiTool", glyph: Theme.icons.wand, clipOnly: true },
         { id: "tracker", label: qsTr("Tracker"), action: "gizmoMove", glyph: Theme.icons.crosshair, clipOnly: false }
     ]
@@ -72,8 +75,7 @@ PanelFrame {
         stackModel.revision
         return target.kind === "clip" && EditorState.masking.hasSelectedBrushMask(target.track, target.clip)
     }
-    readonly property bool paintingTool: EditorState.preview.maskingTool === "brush"
-                                         || EditorState.preview.maskingTool === "ai"
+    readonly property bool paintingTool: ["brush", "lasso", "scissors", "wand", "ai"].indexOf(EditorState.preview.maskingTool) >= 0
 
     function refresh() {
         target = EditorState.masking.maskTarget()
@@ -196,6 +198,86 @@ PanelFrame {
     function textFieldFocused() {
         const f = focusItem
         return !!f && f.cursorPosition !== undefined
+    }
+
+    Component {
+        id: selectionOptions
+
+        Column {
+            width: parent.width
+            spacing: Theme.spacingSm
+
+            Text {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: EditorState.preview.maskingTool === "wand"
+                      ? qsTr("Click to select the region of similar colour. It is added to the same still mask the Brush paints.")
+                      : EditorState.preview.maskingTool === "lasso"
+                        ? qsTr("Drag around an area to fill it into the same still mask the Brush paints.")
+                        : qsTr("Click along an object's edge; the outline snaps to it. Close the outline to fill it into the same still mask the Brush paints.")
+                color: Theme.c.maskingPanel.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            RowLayout {
+                visible: EditorState.preview.maskingTool === "wand"
+                width: parent.width
+                spacing: Theme.spacingSm
+
+                Text {
+                    Layout.preferredWidth: 56
+                    Layout.alignment: Qt.AlignVCenter
+                    text: qsTr("Tolerance")
+                    color: Theme.c.maskingPanel.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
+                ThemedSlider {
+                    id: wandToleranceSlider
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    label: qsTr("Wand tolerance")
+                    from: 0
+                    to: 100
+                    valueFormatter: function (v) { return Math.round(v) }
+                    Binding on value {
+                        when: !wandToleranceSlider.pressed
+                        value: EditorState.masking.wandTolerance
+                    }
+                    onMoved: EditorState.masking.wandTolerance = value
+                }
+            }
+
+            ThemedCheckBox {
+                visible: EditorState.preview.maskingTool === "wand"
+                text: qsTr("Contiguous")
+                checked: EditorState.masking.wandContiguous
+                onToggled: EditorState.masking.wandContiguous = checked
+            }
+
+            RowLayout {
+                width: parent.width
+                spacing: Theme.spacingSm
+
+                ThemedToggleButton {
+                    Layout.alignment: Qt.AlignVCenter
+                    text: qsTr("Add")
+                    tooltip: qsTr("Click adds to the mask. Shift also adds")
+                    checked: !EditorState.masking.brushErase
+                    onClicked: EditorState.masking.brushErase = false
+                }
+
+                ThemedToggleButton {
+                    Layout.alignment: Qt.AlignVCenter
+                    text: qsTr("Subtract")
+                    tooltip: qsTr("Click removes from the mask. Alt or right-click also subtracts")
+                    checked: EditorState.masking.brushErase
+                    onClicked: EditorState.masking.brushErase = true
+                }
+            }
+        }
     }
 
     Component {
@@ -322,6 +404,12 @@ PanelFrame {
                     checked: EditorState.masking.brushErase
                     onClicked: EditorState.masking.brushErase = true
                 }
+            }
+
+            ThemedCheckBox {
+                text: qsTr("Fill closed loops")
+                checked: EditorState.masking.brushFillLoops
+                onToggled: EditorState.masking.brushFillLoops = checked
             }
 
             ThemedCheckBox {
@@ -599,11 +687,12 @@ PanelFrame {
                 ThemedButton {
                     width: parent.width
                     variant: "primary"
-                    text: qsTr("Cut out through whole clip")
+                    text: EditorState.segmentation.sessionStill ? qsTr("Cut out") : qsTr("Cut out through whole clip")
                     onClicked: root.propagateAi("both")
                 }
 
                 RowLayout {
+                    visible: !EditorState.segmentation.sessionStill
                     width: parent.width
                     spacing: Theme.spacingXs
 
@@ -731,6 +820,15 @@ PanelFrame {
             return true
         case "maskingAiTool":
             EditorState.preview.maskingTool = "ai"
+            return true
+        case "maskingLassoTool":
+            EditorState.preview.maskingTool = "lasso"
+            return true
+        case "maskingScissorsTool":
+            EditorState.preview.maskingTool = "scissors"
+            return true
+        case "maskingWandTool":
+            EditorState.preview.maskingTool = "wand"
             return true
         }
         return false
@@ -1039,7 +1137,7 @@ PanelFrame {
                                     Layout.alignment: Qt.AlignVCenter
                                     label: qsTr("Feather")
                                     from: 0
-                                    to: 64
+                                    to: EditorState.masking.featherLimit(maskEntry.model.track, maskEntry.model.clip)
                                     valueFormatter: function (v) { return Math.round(v) + " px" }
                                     Binding on value {
                                         when: !featherSlider.pressed

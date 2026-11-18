@@ -1,0 +1,96 @@
+{
+  "assets": [
+    {
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "height": 1,
+      "id": "a1",
+      "mime": "image/png",
+      "name": "px.png",
+      "width": 1
+    }
+  ],
+  "edges": [
+    {
+      "from": "n1",
+      "fromSocket": "image",
+      "id": "e1",
+      "to": "n2",
+      "toSocket": "in1"
+    },
+    {
+      "from": "n2",
+      "fromSocket": "image",
+      "id": "e2",
+      "to": "n3",
+      "toSocket": "image"
+    }
+  ],
+  "forge": 3,
+  "kind": "effect",
+  "meta": {
+    "author": "",
+    "category": "artistic",
+    "description": "",
+    "displayName": "My effect",
+    "id": "node_custom",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "data": {},
+      "id": "n1",
+      "inputs": {},
+      "type": "video",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": {
+        "asset": "a1",
+        "code": "// Write GLSL that returns a vec4 colour.\n// Available: uv (vec2, 0..1, top-left origin), IN1(p) and IN2(p) sample the\n// two image inputs at any position, a b c d are the number inputs,\n// RESOLUTION is the frame size in pixels, and TIME (effects) or\n// PROGRESS (transitions) is the clock.\nvec4 col = IN1(uv);\ncol.rgb = mix(col.rgb, col.bgr, a);\nreturn col;",
+        "heavy": false
+      },
+      "id": "n2",
+      "inputs": {
+        "a": 0.5,
+        "b": 0,
+        "c": 0,
+        "d": 0,
+        "in1": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "in2": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "custom",
+      "x": 200,
+      "y": 0
+    },
+    {
+      "data": {},
+      "id": "n3",
+      "inputs": {
+        "image": [
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "type": "effect_output",
+      "x": 400,
+      "y": 0
+    }
+  ],
+  "params": [],
+  "preview": {
+    "thumbTime": 0.5
+  }
+}

@@ -1,0 +1,3 @@
+effect_output: output node, present in every other case
+transition_output: output node, present in every other case
+animation_output: output node, present in every other case
