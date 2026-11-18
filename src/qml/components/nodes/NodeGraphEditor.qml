@@ -66,7 +66,7 @@ Item {
                 anchors.centerIn: parent
 
                 IconButton {
-                    glyph: "minus"
+                    glyph: Theme.icons.minus
                     tooltip: qsTr("Zoom out")
                     onClicked: nodeCanvas.zoomCentered(1 / 1.25)
                 }
@@ -90,7 +90,7 @@ Item {
                     onClicked: nodeCanvas.fitAll()
                 }
                 IconButton {
-                    glyph: "map"
+                    glyph: Theme.icons.map
                     tooltip: qsTr("Minimap")
                     active: root.minimapVisible
                     onClicked: root.minimapVisible = !root.minimapVisible

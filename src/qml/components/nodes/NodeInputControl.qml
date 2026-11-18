@@ -230,7 +230,7 @@ Item {
 
             IconButton {
                 id: diceButton
-                glyph: "dices"
+                glyph: Theme.icons.dices
                 buttonSize: parent.height
                 iconSize: Theme.iconSizeMd
                 tooltip: qsTr("Randomize")
