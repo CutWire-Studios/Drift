@@ -3530,111 +3530,7 @@ QJsonObject McpController::setBeatLayers(bool grid, bool onsets)
     });
 }
 
-QList<double> McpController::beatTimes(const QString &unit, double minStrength) const
-{
-    QList<double> times;
-    const QString u = unit.trimmed().toLower();
-
-    if (u == QLatin1String("onset")) {
-        for (const AudioOnset &o : m_app->m_beatAnalysisRaw.onsets) {
-            if (o.strength >= minStrength)
-                times.append(o.seconds);
-        }
-        return times;
-    }
-
-    const QList<double> &beats = m_app->m_beatAnalysisRaw.beats;
-    if (u == QLatin1String("bar")) {
-        const int per = qMax(1, m_app->m_beatAnalysisRaw.beatsPerBar);
-        // Count bars from the detected downbeat, not from index 0, or every bar line lands on
-        // whichever beat happened to be first in the analysed window.
-        const int first = qBound(0, m_app->m_beatAnalysisRaw.firstDownbeat, qMax(0, beats.size() - 1));
-        for (int i = first; i < beats.size(); i += per)
-            times.append(beats.at(i));
-        return times;
-    }
-
-    times = beats;
-    return times;
-}
-
-int McpController::bookmarkBeats(double startSeconds, double durSeconds, const QString &unit,
-                                    double minStrength, const QString &labelPrefix)
-{
-    const QList<double> times = beatTimes(unit, minStrength);
-    if (times.isEmpty())
-        return 0;
-
-    const bool ranged = durSeconds > 0.0;
-    const double from = qMax(0.0, startSeconds);
-    const double to = from + durSeconds;
-
-    const drift::Project before = m_app->m_project;
-    QList<drift::Bookmark> marks = m_app->m_project.bookmarks();
-    int added = 0;
-    int n = 1;
-    for (double t : times) {
-        if (t < from || (ranged && t > to)) {
-            ++n;
-            continue;
-        }
-        const drift::TimeUs at = drift::secondsToUs(t);
-        // Bookmarks are snap targets themselves; stacking several inside one snap threshold
-        // would make the magnet ambiguous rather than stronger.
-        const bool crowded = std::any_of(marks.cbegin(), marks.cend(),
-                                         [at](const drift::Bookmark &b) {
-                                             return qAbs(b.timeUs - at) < drift::kSnapThresholdUs;
-                                         });
-        if (crowded) {
-            ++n;
-            continue;
-        }
-        marks.append(drift::Bookmark{at, QStringLiteral("%1 %2").arg(labelPrefix).arg(n)});
-        ++added;
-        ++n;
-    }
-    if (added == 0)
-        return 0;
-
-    std::sort(marks.begin(), marks.end(),
-              [](const drift::Bookmark &a, const drift::Bookmark &b) { return a.timeUs < b.timeUs; });
-    m_app->m_project.bookmarks() = marks;
-    m_app->pushProjectEdit(before, QStringLiteral("Bookmark beats"));
-    m_app->finishEdit(QStringLiteral("Bookmark beats"));
-    return added;
-}
-
 // --- scene toolbox ----------------------------------------------------------
-
-namespace {
-
-// Map a moment in a clip's source to where it lands on the timeline, through trim, speed
-// and reverse. Agents act in timeline seconds, so every scene time is reported both ways
-// rather than leaving this mapping for the caller to rediscover.
-double sceneSourceToTimeline(const drift::Clip &clip, double sourceSeconds)
-{
-    const drift::TimeUs span = clip.sourceSpanUs();
-    if (span <= 0)
-        return drift::usToSeconds(clip.timelineStart);
-
-    const double through =
-        qBound(0.0, double(drift::secondsToUs(sourceSeconds) - clip.srcIn) / double(span), 1.0);
-    const double offset = (clip.reverse ? 1.0 - through : through)
-                          * drift::usToSeconds(clip.timelineDuration);
-    return drift::usToSeconds(clip.timelineStart) + offset;
-}
-
-bool sceneMatches(const QVariantMap &scene, const QString &label, double minScore)
-{
-    if (scene.value(QStringLiteral("score")).toDouble() < minScore)
-        return false;
-    if (label.isEmpty())
-        return true;
-    return scene.value(QStringLiteral("labels")).toStringList().contains(label,
-                                                                        Qt::CaseInsensitive);
-}
-
-} // namespace
 
 QJsonObject McpController::detectScenes(int trackIndex, int clipIndex, double threshold,
                                            double minScene, bool withObjects)
@@ -3721,7 +3617,7 @@ QJsonObject McpController::listScenes(const QString &label, double minScore,
     QList<QVariantMap> rows;
     for (const QVariant &value : scenes) {
         const QVariantMap scene = value.toMap();
-        if (sceneMatches(scene, label, minScore))
+        if (SceneDetectController::sceneMatches(scene, label, minScore))
             rows.append(scene);
     }
 
@@ -3746,11 +3642,11 @@ QJsonObject McpController::listScenes(const QString &label, double minScore,
             {QStringLiteral("start"), sourceStart},
             {QStringLiteral("end"), sourceEnd},
             {QStringLiteral("duration"), scene.value(QStringLiteral("duration")).toDouble()},
-            {QStringLiteral("timeline_start"), sceneSourceToTimeline(*clip, sourceStart)},
-            {QStringLiteral("timeline_end"), sceneSourceToTimeline(*clip, sourceEnd)},
+            {QStringLiteral("timeline_start"), SceneDetectController::sourceToTimeline(*clip, sourceStart)},
+            {QStringLiteral("timeline_end"), SceneDetectController::sourceToTimeline(*clip, sourceEnd)},
             {QStringLiteral("thumb"), scene.value(QStringLiteral("thumbnailSeconds")).toDouble()},
             {QStringLiteral("timeline_thumb"),
-             sceneSourceToTimeline(*clip, scene.value(QStringLiteral("thumbnailSeconds")).toDouble())},
+             SceneDetectController::sourceToTimeline(*clip, scene.value(QStringLiteral("thumbnailSeconds")).toDouble())},
             {QStringLiteral("motion"), scene.value(QStringLiteral("motion")).toDouble()},
             {QStringLiteral("loudness"), scene.value(QStringLiteral("loudness")).toDouble()},
             {QStringLiteral("objects"), scene.value(QStringLiteral("objects")).toDouble()},
@@ -3901,8 +3797,8 @@ QJsonObject McpController::findScenes(const QString &label, double minScore, int
                 hit.index = i;
                 hit.start = drift::usToSeconds(scene.sourceIn);
                 hit.end = drift::usToSeconds(scene.sourceOut);
-                hit.timelineStart = sceneSourceToTimeline(clip, hit.start);
-                hit.timelineEnd = sceneSourceToTimeline(clip, hit.end);
+                hit.timelineStart = SceneDetectController::sourceToTimeline(clip, hit.start);
+                hit.timelineEnd = SceneDetectController::sourceToTimeline(clip, hit.end);
                 hit.score = scene.score;
                 hit.labels = scene.labels;
                 hits.append(hit);
@@ -3933,77 +3829,6 @@ QJsonObject McpController::findScenes(const QString &label, double minScore, int
     return ok({{QStringLiteral("scenes"), out},
                {QStringLiteral("n"), out.size()},
                {QStringLiteral("unscanned"), unscanned}});
-}
-
-QList<double> McpController::sceneCutTimes(double minScore, const QString &label) const
-{
-    if (m_app->scenes()->list().isEmpty())
-        return {};
-
-    const drift::Clip *clip = nullptr;
-    for (const drift::Track &track : m_app->m_project.tracks()) {
-        for (const drift::Clip &candidate : track.clips) {
-            if (candidate.id == m_app->scenes()->clipId()) {
-                clip = &candidate;
-                break;
-            }
-        }
-    }
-    if (!clip)
-        return {};
-
-    QList<double> times;
-    for (const QVariant &value : m_app->scenes()->list()) {
-        const QVariantMap scene = value.toMap();
-        // Scene 0 opens at the clip's own start, which is not a cut.
-        if (scene.value(QStringLiteral("index")).toInt() == 0)
-            continue;
-        if (!sceneMatches(scene, label, minScore))
-            continue;
-        times.append(
-            sceneSourceToTimeline(*clip, scene.value(QStringLiteral("sourceStart")).toDouble()));
-    }
-    // Reverse playback maps later source times to earlier timeline ones.
-    std::sort(times.begin(), times.end());
-    return times;
-}
-
-int McpController::bookmarkScenes(double minScore, const QString &label,
-                                     const QString &labelPrefix)
-{
-    const QList<double> times = sceneCutTimes(minScore, label);
-    if (times.isEmpty())
-        return 0;
-
-    const drift::Project before = m_app->m_project;
-    QList<drift::Bookmark> marks = m_app->m_project.bookmarks();
-    int added = 0;
-    int n = 1;
-    for (double t : times) {
-        const drift::TimeUs at = drift::secondsToUs(t);
-        // Same reasoning as bookmark_beats: bookmarks are snap targets, and stacking several
-        // inside one snap threshold makes the magnet ambiguous rather than stronger.
-        const bool crowded =
-            std::any_of(marks.cbegin(), marks.cend(), [at](const drift::Bookmark &b) {
-                return qAbs(b.timeUs - at) < drift::kSnapThresholdUs;
-            });
-        if (crowded) {
-            ++n;
-            continue;
-        }
-        marks.append(drift::Bookmark{at, QStringLiteral("%1 %2").arg(labelPrefix).arg(n)});
-        ++added;
-        ++n;
-    }
-    if (added == 0)
-        return 0;
-
-    std::sort(marks.begin(), marks.end(),
-              [](const drift::Bookmark &a, const drift::Bookmark &b) { return a.timeUs < b.timeUs; });
-    m_app->m_project.bookmarks() = marks;
-    m_app->pushProjectEdit(before, QStringLiteral("Bookmark scenes"));
-    m_app->finishEdit(QStringLiteral("Bookmark scenes"));
-    return added;
 }
 
 QJsonObject McpController::aiCapabilities() const
@@ -6162,148 +5987,6 @@ QJsonObject McpController::listFaceTrack(int trackIndex, int clipIndex) const
                {QStringLiteral("n"), total},
                {QStringLiteral("frames"), frames},
                {QStringLiteral("truncated"), step > 1}});
-}
-
-QJsonObject McpController::autoReframe(int trackIndex, int clipIndex, double aspect,
-                                          const QString &mode)
-{
-    using namespace drift::mcp;
-    if (!m_app->isValidClipIndex(trackIndex, clipIndex))
-        return err("not_found", QStringLiteral("Unknown clip"));
-    drift::Clip &clip = m_app->m_project.tracks()[trackIndex].clips[clipIndex];
-    if (clip.type == drift::ClipType::Audio)
-        return err("type_mismatch", QStringLiteral("Cannot reframe an audio clip"));
-
-    const double canvasW = m_app->m_project.width();
-    const double canvasH = m_app->m_project.height();
-    double targetAspect = aspect > 0.01 ? aspect : (9.0 / 16.0);
-    const QString m = mode.toLower();
-
-    struct Sample {
-        double t = 0.0;
-        double cx = 0.5;
-        double cy = 0.5;
-        double rx = 0.2;
-        double ry = 0.25;
-    };
-    QList<Sample> samples;
-    if (m != QLatin1String("center") && !clip.faceTrackPath.isEmpty()) {
-        const std::shared_ptr<const drift::FaceTrack> track =
-            drift::loadFaceTrackCached(clip.faceTrackPath);
-        if (track && !track->isEmpty() && track->fps > 0) {
-            const int total = track->frames.size();
-            const int cap = 120;
-            const int step = qMax(1, (total + cap - 1) / cap);
-            for (int i = 0; i < total; i += step) {
-                Sample s;
-                s.t = double(i) / double(track->fps);
-                for (const drift::FaceAnchors &face : track->frames.at(i).faces) {
-                    if (!face.valid)
-                        continue;
-                    s.cx = face.faceCenter.x();
-                    s.cy = face.faceCenter.y();
-                    s.rx = qMax(0.05, face.faceRx);
-                    s.ry = qMax(0.05, face.faceRy);
-                    break;
-                }
-                samples.append(s);
-            }
-        }
-    }
-    if (samples.isEmpty()) {
-        Sample s;
-        s.t = 0.0;
-        samples.append(s);
-        Sample e;
-        e.t = drift::usToSeconds(clip.timelineDuration);
-        samples.append(e);
-    }
-
-    const int radius = (m == QLatin1String("motion")) ? 4 : 2;
-    QList<Sample> smoothed = samples;
-    for (int i = 0; i < samples.size(); ++i) {
-        double cx = 0, cy = 0, n = 0;
-        for (int j = qMax(0, i - radius); j <= qMin(samples.size() - 1, i + radius); ++j) {
-            cx += samples.at(j).cx;
-            cy += samples.at(j).cy;
-            n += 1;
-        }
-        smoothed[i].cx = cx / n;
-        smoothed[i].cy = cy / n;
-    }
-
-    // The crop window is in normalised source coordinates, where the two axes have different
-    // lengths in pixels. Relating them by the target aspect alone — as this did — treats them as
-    // square, which both distorts the picture and zooms far past what was asked for: on a 4K 16:9
-    // source a 9:16 request came out as a square box and about a 3x upscale. Dividing the source's
-    // own display aspect out is what makes the window the shape the caller asked for.
-    double sourceAspect = canvasW / canvasH;
-    if (const drift::MediaAsset *asset = m_app->m_project.asset(clip.assetId)) {
-        if (asset->width > 0 && asset->height > 0)
-            sourceAspect = double(asset->width) / double(asset->height);
-    }
-
-    // How much of the source ends up across the canvas, at the tightest point. Above 1.0 the crop
-    // is being blown up past its own resolution, which no amount of framing can make sharp.
-    double tightestScale = 0.0;
-
-    // Where the target-aspect window lands on the canvas. When the canvas already is that aspect
-    // this is the whole canvas and the crop fills it. When it is not — a 9:16 crop asked for on a
-    // 16:9 timeline, which is the documented use — the window is fitted inside instead. Filling the
-    // canvas in that case would mean stretching the picture, and a reframe that distorts the
-    // subject has not reframed anything.
-    const double frameH = qMin(canvasH, canvasW / targetAspect);
-    const double frameW = frameH * targetAspect;
-    const double frameX = (canvasW - frameW) * 0.5;
-    const double frameY = (canvasH - frameH) * 0.5;
-
-    const drift::ClipLayout restLayout = drift::clipLayoutAt(clip, 0, QSizeF(canvasW, canvasH));
-    beginBatch();
-    int keys = 0;
-    for (const Sample &s : smoothed) {
-        // Crop window of targetAspect centred on the face, in normalised source coords.
-        double cropH = qMin(1.0, qMax(s.ry * 2.4, 0.35));
-        double cropW = cropH * targetAspect / sourceAspect;
-        if (cropW > 1.0) {
-            cropW = 1.0;
-            cropH = qMin(1.0, cropW * sourceAspect / targetAspect);
-        }
-        double cropX = qBound(0.0, s.cx - cropW * 0.5, 1.0 - cropW);
-        double cropY = qBound(0.0, s.cy - cropH * 0.5, 1.0 - cropH);
-        // The whole source, scaled so that its crop window covers exactly the framed area. w/h
-        // comes out at the source's own aspect, so nothing is stretched. x/y/w/h is the box on
-        // the canvas; it becomes position and scale about the clip's anchor below.
-        const double w = frameW / cropW;
-        const double h = frameH / cropH;
-        const double x = frameX - cropX * w;
-        const double y = frameY - cropY * h;
-        if (const drift::MediaAsset *asset = m_app->m_project.asset(clip.assetId)) {
-            if (asset->width > 0)
-                tightestScale = qMax(tightestScale, frameW / (cropW * asset->width));
-        }
-        const double at = drift::usToSeconds(clip.timelineStart) + s.t;
-        const double scaleX = w / restLayout.frameW;
-        const double scaleY = h / restLayout.frameH;
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("positionX"), at,
-                               x + restLayout.anchorX * scaleX);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("positionY"), at,
-                               y + restLayout.anchorY * scaleY);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("scaleX"), at, scaleX);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("scaleY"), at, scaleY);
-        keys += 4;
-    }
-    endBatch(QStringLiteral("Auto-reframe"), keys > 0);
-    QJsonObject reply{{QStringLiteral("keys"), keys},
-                      {QStringLiteral("aspect"), round3(targetAspect)},
-                      {QStringLiteral("mode"), m.isEmpty() ? QStringLiteral("face") : m}};
-    if (tightestScale > 0.0) {
-        // Say how hard the crop is pushing the source, so a caller can see an upscale here rather
-        // than discover it as a soft picture in a render.
-        reply.insert(QStringLiteral("scale"), round3(tightestScale));
-        if (tightestScale > 1.02)
-            reply.insert(QStringLiteral("upscaled"), true);
-    }
-    return ok(reply);
 }
 
 QJsonObject McpController::listAddons() const

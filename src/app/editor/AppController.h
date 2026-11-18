@@ -269,6 +269,7 @@ class AppController : public QObject
     // saved with the project, cleared whenever the underlying audio could have moved.
     Q_PROPERTY(QVariantMap beatAnalysis READ beatAnalysis NOTIFY beatAnalysisChanged)
     Q_PROPERTY(bool beatAnalysisRunning READ beatAnalysisRunning NOTIFY beatAnalysisChanged)
+    Q_PROPERTY(bool beatsAvailable READ beatsAvailable NOTIFY beatAnalysisChanged)
     // The grid and the transients are independently shown and snapped to. Both come out of
     // one analysis pass — the tempo is derived from the same onset envelope — so these
     // gate display and snapping, not the DSP.
@@ -936,6 +937,36 @@ public:
     // not. Cutting every track while one clip is selected is never what picking that clip meant.
     Q_INVOKABLE void splitAtPlayheadForSelection();
     Q_INVOKABLE void splitClipAt(int trackIndex, int clipIndex, double seconds);
+    // Beat times in timeline seconds from the last analysis; unit is "beat", "bar" or "onset".
+    QList<double> beatTimes(const QString &unit, double minStrength) const;
+    // The three ops below report a failure as {error: code, message}; success carries the
+    // result keys (clips/at, moved/skipped). Each is one undo step.
+    QVariantMap splitClipOnBeats(int trackIndex, int clipIndex, const QString &unit, double minStrength,
+                                 double minGap);
+    // Cuts the clip at `times` front to back, re-resolving each piece by UUID after every cut.
+    QVariantMap splitClipAtTimes(int trackIndex, int clipIndex, const QList<double> &times, double minGap,
+                                 const QString &undoText, const QString &noneInsideMessage);
+    QVariantMap snapClipsToBeats(const QStringList &clipIds, std::optional<int> track, const QString &unit,
+                                 double minStrength, double maxDistance);
+    // Markers at the beat grid (durSeconds <= 0 means to the end). Returns how many were added.
+    int bookmarkBeats(double startSeconds, double durSeconds, const QString &unit, double minStrength,
+                      const QString &labelPrefix);
+    // Markers at `times` that are not already within snap range of one; numbering counts skipped
+    // times too. Returns how many were added.
+    int addBookmarksAtTimes(const QList<double> &times, double from, double to, bool ranged,
+                            const QString &labelPrefix, const QString &undoText);
+    // The clip's id, or the ids of the whole selection when the clip is part of a multi-selection.
+    QStringList clipIdsForAction(int trackIndex, int clipIndex) const;
+    // Timeline-menu actions for the clip (or its multi-selection); results go to the status toast.
+    Q_INVOKABLE void splitSelectionOnBeats(int trackIndex, int clipIndex, const QString &unit);
+    Q_INVOKABLE void snapSelectionToBeats(int trackIndex, int clipIndex, const QString &unit);
+    Q_INVOKABLE void addMarkersAtBeats(const QString &unit);
+    bool beatsAvailable() const { return !m_beatAnalysisRaw.beats.isEmpty(); }
+    // Keys a crop window of `aspect` (<= 0 means 9:16) onto the clip's subject: mode "face" follows
+    // its face track when it has one, "center" holds the middle. Failure is {error, message};
+    // success {keys, aspect, mode[, scale, upscaled]}. One undo step.
+    QVariantMap autoReframeClip(int trackIndex, int clipIndex, double aspect, const QString &mode);
+    Q_INVOKABLE void autoReframe(int trackIndex, int clipIndex, double aspect, const QString &mode);
     Q_INVOKABLE void splitClipLeftAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipRightAt(int trackIndex, int clipIndex, double seconds);
     // What a trim would do, without doing it. The drag previews through these: applying the
@@ -990,6 +1021,9 @@ public:
         QString error;
     };
     GapCloseResult closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs);
+    // closeGapsRippled over the work area, or the whole track when there is none, reporting through
+    // the status toast.
+    Q_INVOKABLE void closeGapsInWorkArea(int trackIndex);
     // Reordering on one track, one undo step each. moveClipNextTo moves a clip (with everything
     // linked to it) to the start (`after` false) or end of another clip on its track; the clips
     // in between move by its length so the track keeps its spacing. swapClips exchanges two

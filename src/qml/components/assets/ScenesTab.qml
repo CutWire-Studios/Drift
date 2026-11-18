@@ -97,6 +97,27 @@ Item {
             }
         }
 
+        Row {
+            spacing: Theme.spacingMd
+            visible: !EditorState.scenes.detecting && root.showingSelected && EditorState.scenes.list.length > 1
+
+            ThemedButton {
+                text: qsTr("Split at scenes")
+                variant: "secondary"
+                glyph: Theme.icons.scissors
+                tooltip: qsTr("Cut the selected clip at every detected shot boundary")
+                onClicked: EditorState.scenes.splitAtScenes(root.selectedTrack, root.selectedClip)
+            }
+
+            ThemedButton {
+                text: qsTr("Add markers at scenes")
+                variant: "secondary"
+                glyph: Theme.icons.bookmark
+                tooltip: qsTr("Drop a timeline marker at every detected shot boundary")
+                onClicked: EditorState.scenes.addMarkersAtScenes()
+            }
+        }
+
         ThemedSwitch {
             id: objectToggle
             text: qsTr("Identify objects")

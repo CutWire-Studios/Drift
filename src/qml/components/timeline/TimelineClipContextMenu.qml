@@ -175,6 +175,18 @@ ThemedContextMenu {
                                              EditorState.playheadSeconds)
     }
     ThemedMenuItem {
+        text: qsTr("Split on beats")
+        icon.name: Theme.icons.scissors
+        visible: EditorState.beatsAvailable && owner.clipData.kind !== "subtitle"
+        onTriggered: EditorState.splitSelectionOnBeats(owner.trackIndex, owner.clipIndex, "beat")
+    }
+    ThemedMenuItem {
+        text: qsTr("Snap clips to beats")
+        icon.name: Theme.icons.music
+        visible: EditorState.beatsAvailable
+        onTriggered: EditorState.snapSelectionToBeats(owner.trackIndex, owner.clipIndex, "beat")
+    }
+    ThemedMenuItem {
         text: qsTr("Swap with previous clip")
         icon.name: Theme.icons.repeat
         visible: clipContextMenu.hasPrevious
@@ -281,6 +293,13 @@ ThemedContextMenu {
         visible: (owner.clipData.kind === "video" || owner.clipData.kind === "image")
                  && typeof ShellBridge.main?.openCrop === "function"
         onTriggered: ShellBridge.main.openCrop(owner.trackIndex, owner.clipIndex)
+    }
+    ThemedMenuItem {
+        text: qsTr("Auto reframe…")
+        icon.name: Theme.icons.crop
+        visible: (owner.clipData.kind === "video" || owner.clipData.kind === "image")
+                 && typeof owner.panel.requestAutoReframe === "function"
+        onTriggered: owner.panel.requestAutoReframe(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
         text: qsTr("Enhance video…")

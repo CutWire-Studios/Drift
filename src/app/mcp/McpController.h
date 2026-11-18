@@ -271,9 +271,6 @@ public:
     QJsonObject detectBeats(double startSeconds, double durSeconds, bool force);
     QJsonObject beatPayload() const;
     QJsonObject audioSummary() const;
-    // Grid times from the current analysis. `unit` is beat, bar or onset; `minStrength` filters
-    // onsets only. Empty when nothing has been analysed yet.
-    QList<double> beatTimes(const QString &unit, double minStrength) const;
     // --- scene toolbox ---
     QJsonObject detectScenes(int trackIndex, int clipIndex, double threshold, double minScene,
                                 bool withObjects);
@@ -287,9 +284,6 @@ public:
     QJsonObject describeClip(int topCount, int trackIndex = -1, int clipIndex = -1) const;
     QJsonObject findScenes(const QString &label, double minScore, int trackIndex,
                               int limit) const;
-    // Timeline seconds of every detected boundary inside the clip that was analysed.
-    QList<double> sceneCutTimes(double minScore, const QString &label) const;
-    int bookmarkScenes(double minScore, const QString &label, const QString &labelPrefix);
     // Which model addons are installed, so an agent can say what to install rather than
     // retrying blindly.
     QJsonObject aiCapabilities() const;
@@ -317,8 +311,6 @@ public:
     QJsonObject getJob(const QString &id) const;
     QJsonObject cancelJob(const QString &id);
 
-    int bookmarkBeats(double startSeconds, double durSeconds, const QString &unit,
-                         double minStrength, const QString &labelPrefix);
     QJsonObject setBeatLayers(bool grid, bool onsets);
     QJsonObject setClipVolume(int trackIndex, int clipIndex, double value, bool atGiven,
                                  double atSeconds);
@@ -396,7 +388,6 @@ public:
                              const QStringList &overClips, const drift::DuckSettings &settings,
                              double sensitivity, const QString &method);
     QJsonObject listFaceTrack(int trackIndex, int clipIndex) const;
-    QJsonObject autoReframe(int trackIndex, int clipIndex, double aspect, const QString &mode);
     QJsonObject listAddons() const;
     QJsonObject installAddon(const QString &id);
     QJsonObject installAddons(const QStringList &ids);
