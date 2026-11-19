@@ -1077,6 +1077,11 @@ void AppController::copyDebugInfo()
 {
     copyToClipboard(debugInfoText());
 }
+
+void AppController::copyText(const QString &text) const
+{
+    copyToClipboard(text);
+}
 namespace {
 
 

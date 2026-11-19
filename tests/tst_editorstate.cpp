@@ -170,6 +170,7 @@ private slots:
     void audioEffectParamsKeyframeThroughTheGenericApi();
     void pastedUnknownEffectIsKeptAndReported();
     void clipboardHasEffectsIgnoresOrdinaryText();
+    void copyTextPutsTextOnClipboard();
     void savedEffectPresetAppliesToAnotherClip();
     void multiTrackAudioSelectionAndExtraction();
     void panAndChannelWaveformsPersistAndUndo();
@@ -10979,6 +10980,19 @@ void EditorStateTest::pastedUnknownEffectIsKeptAndReported()
     QCOMPARE(target.at(1).catalogId, QStringLiteral("nope.not_installed"));
     // finishEdit() clears lastMessage, so the warning has to survive being emitted after it.
     QVERIFY(state.lastMessage().contains(QStringLiteral("nope.not_installed")));
+}
+
+// The toast's Copy button (#574).
+void EditorStateTest::copyTextPutsTextOnClipboard()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    const QString message = QStringLiteral("Export failed: /tmp/a b/clip.mp4");
+    QGuiApplication::clipboard()->setText(QStringLiteral("before"));
+    state.copyText(message);
+    QCOMPARE(QGuiApplication::clipboard()->text(), message);
+    state.copyText(QString());
+    QCOMPARE(QGuiApplication::clipboard()->text(), message);
 }
 
 void EditorStateTest::clipboardHasEffectsIgnoresOrdinaryText()

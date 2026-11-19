@@ -15,7 +15,8 @@ Item {
     // Desktop: top-right corner, clear of the transport. Phone: centered.
     property bool alignRight: true
 
-    // Sits above panel content but must never swallow clicks aimed at the editor.
+    // Sits above panel content but must never swallow clicks aimed at the editor. The empty
+    // lane lets every click through; a card keeps its own (ToastInputShield).
     anchors.fill: parent
     z: 1000
 
@@ -157,6 +158,30 @@ Item {
                         }
                     }
 
+                    // Every press, drag and wheel over the card stays on the toast (#574).
+                    // Flick sideways (or up, toward the edge it came from) to dismiss.
+                    ToastInputShield {
+                        id: shield
+                        anchors.fill: parent
+                        swipeEnabled: !toast.exiting
+                        onSwipeMoved: (dx, dy) => {
+                            toast.swipeX = dx
+                            toast.swipeY = dy
+                        }
+                        onSwipeReleased: (vx, vy) => {
+                            const farX = Math.abs(toast.swipeX) > toast.width * 0.3
+                                         || Math.abs(vx) > 800
+                            const farY = toast.swipeY < -card.height * 0.5
+                                         || vy < -600
+                            if (farX || farY) {
+                                toast.swipedOut = true
+                                Toasts.acknowledge(toast.toastId)
+                            } else {
+                                springBack.start()
+                            }
+                        }
+                    }
+
                     Row {
                         id: toastRow
                         z: 1
@@ -167,6 +192,7 @@ Item {
 
                         readonly property real fixedWidth: Theme.iconSizeBase + dismissButton.width
                                                            + (moreButton.visible ? moreButton.width + spacing : 0)
+                                                           + (copyButton.visible ? copyButton.width + spacing : 0)
                                                            + (actionButton.visible ? actionButton.width + spacing : 0)
                                                            + spacing * 2
                         readonly property real availableWidth: root.maxWidth - Theme.spacingXl
@@ -216,6 +242,21 @@ Item {
                             onClicked: Toasts.historyRequested()
                         }
 
+                        // Errors are what people need to paste into a bug report or a search (#574).
+                        IconButton {
+                            id: copyButton
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: !toast.compact
+                            glyph: copiedFeedback.running ? Theme.icons.check : Theme.icons.copy
+                            iconSize: Theme.iconSizeMd
+                            variant: "ghost"
+                            tooltip: copiedFeedback.running ? qsTr("Copied") : qsTr("Copy message")
+                            onClicked: {
+                                EditorState.copyText(toast.message)
+                                copiedFeedback.restart()
+                            }
+                        }
+
                         IconButton {
                             id: dismissButton
                             anchors.verticalCenter: parent.verticalCenter
@@ -234,39 +275,17 @@ Item {
                     }
 
                     HoverHandler { id: toastHover }
-
-                    // Flick sideways (or up, toward the edge it came from) to dismiss.
-                    DragHandler {
-                        id: swipe
-                        target: null
-                        enabled: !toast.exiting
-                        onTranslationChanged: {
-                            toast.swipeX = translation.x
-                            toast.swipeY = translation.y
-                        }
-                        onActiveChanged: {
-                            if (active)
-                                return
-                            const farX = Math.abs(toast.swipeX) > toast.width * 0.3
-                                         || Math.abs(centroid.velocity.x) > 800
-                            const farY = toast.swipeY < -card.height * 0.5
-                                         || centroid.velocity.y < -600
-                            if (farX || farY) {
-                                toast.swipedOut = true
-                                Toasts.acknowledge(toast.toastId)
-                            } else {
-                                springBack.start()
-                            }
-                        }
-                    }
                 }
+
+                // In place, not a "Copied" toast: that would push this one behind it.
+                Timer { id: copiedFeedback; interval: 1500 }
 
                 // Hovering or holding the toast pauses the countdown; it restarts in full
                 // on leave so there is time to finish reading.
                 // timeout 0 means "stays until dismissed" (errors).
                 Timer {
                     running: toast.front && toast.timeout > 0 && !toast.exiting
-                             && !toastHover.hovered && !swipe.active
+                             && !toastHover.hovered && !shield.swiping
                     interval: toast.timeout
                     onTriggered: Toasts.dismiss(toast.toastId)
                 }
