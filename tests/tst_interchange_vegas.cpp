@@ -24,6 +24,8 @@ private slots:
     void readsTrackMetadataStateAndProperties();
     void readsTimelineMarkersAndRegions();
     void detectsCrossfadesAndTransitions();
+    void readsTitlesAndTextGenerators();
+    void readsVideoEffectsLevelsAndColor();
 };
 
 void TestInterchangeVegas::detectsVegasProject()
@@ -760,6 +762,133 @@ void TestInterchangeVegas::detectsCrossfadesAndTransitions()
         QVERIFY(drift::transitionWindow(proj.tracks()[0], tr, startUs, endUs));
         QCOMPARE(startUs, 2000000);
         QCOMPARE(endUs, 3000000);
+    }
+}
+
+void TestInterchangeVegas::readsTitlesAndTextGenerators()
+{
+    // 1. Test Workprint.veg for Titles & Text generator clips
+    QString vegWorkprint = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/Workprint.veg");
+    if (!QFile::exists(vegWorkprint)) {
+        vegWorkprint = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/Workprint.veg");
+    }
+    if (QFile::exists(vegWorkprint)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegWorkprint, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        QList<drift::Clip> textClips;
+        for (const auto &track : proj.tracks()) {
+            for (const auto &clip : track.clips) {
+                if (clip.type == drift::ClipType::Text)
+                    textClips.append(clip);
+            }
+        }
+
+        qDebug() << "Workprint Text Clips found:" << textClips.size();
+        QVERIFY(textClips.size() >= 2);
+
+        bool foundThreeMonths = false;
+        bool foundWardEight = false;
+        for (const auto &clip : textClips) {
+            qDebug() << "  Text clip text:" << clip.textContent
+                     << "font:" << clip.textStyle.fontFamily
+                     << "pixelSize:" << clip.textStyle.pixelSize
+                     << "align:" << drift::textAlignToString(clip.textStyle.align);
+
+            QCOMPARE(clip.textStyle.fontFamily, QStringLiteral("Courier New"));
+            QCOMPARE(clip.textStyle.align, drift::TextAlign::Center);
+            QVERIFY(clip.textStyle.pixelSize > 0);
+
+            if (clip.textContent.contains(QStringLiteral("THREE"))
+                && clip.textContent.contains(QStringLiteral("MONTHS"))) {
+                foundThreeMonths = true;
+            }
+            if (clip.textContent.contains(QStringLiteral("WARD"))
+                && clip.textContent.contains(QStringLiteral("EIGHT"))) {
+                foundWardEight = true;
+            }
+        }
+        QVERIFY(foundThreeMonths);
+        QVERIFY(foundWardEight);
+    }
+
+    // 2. Test Previously On.veg for "PREVIOUSLY ON" title card and solid color
+    QString vegPrev = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/Previously On.veg");
+    if (!QFile::exists(vegPrev)) {
+        vegPrev = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/Previously On.veg");
+    }
+    if (QFile::exists(vegPrev)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegPrev, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        bool foundPreviouslyOn = false;
+        for (const auto &track : proj.tracks()) {
+            for (const auto &clip : track.clips) {
+                if (clip.type == drift::ClipType::Text && clip.textContent.contains(QStringLiteral("PREVIOUSLY ON"))) {
+                    foundPreviouslyOn = true;
+                    QCOMPARE(clip.textStyle.fontFamily, QStringLiteral("Franklin Gothic Medium"));
+                    QVERIFY(clip.textStyle.pixelSize > 0);
+                }
+            }
+        }
+        QVERIFY(foundPreviouslyOn);
+    }
+}
+
+void TestInterchangeVegas::readsVideoEffectsLevelsAndColor()
+{
+    // Test e3s3.veg for media-level Video FX (Levels, Color Corrector, Sharpen)
+    QString vegScene3 = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 3/Remaster/Scene 3/e3s3.veg");
+    if (!QFile::exists(vegScene3)) {
+        vegScene3 = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 3/Remaster/Scene 3/e3s3.veg");
+    }
+    if (QFile::exists(vegScene3)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegScene3, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        int totalClipsWithEffects = 0;
+        bool foundLevels = false;
+        bool foundColorGrade = false;
+        bool foundSharpen = false;
+
+        for (const auto &track : proj.tracks()) {
+            for (const auto &clip : track.clips) {
+                if (!clip.effects.isEmpty()) {
+                    ++totalClipsWithEffects;
+                    for (const auto &fx : clip.effects) {
+                        if (fx.catalogId == QStringLiteral("adjust.levels")) {
+                            foundLevels = true;
+                            QVERIFY(fx.parameters.contains(QStringLiteral("gamma")));
+                            QVERIFY(fx.parameters.value(QStringLiteral("gamma")).toDouble() > 1.0);
+                        } else if (fx.catalogId == QStringLiteral("color.grade")) {
+                            foundColorGrade = true;
+                            QVERIFY(fx.parameters.contains(QStringLiteral("saturation")));
+                            QVERIFY(fx.parameters.value(QStringLiteral("saturation")).toDouble() > 1.0);
+                        } else if (fx.catalogId == QStringLiteral("stylize.sharpen")) {
+                            foundSharpen = true;
+                            QVERIFY(fx.parameters.contains(QStringLiteral("luma_amount")));
+                            QVERIFY(fx.parameters.value(QStringLiteral("luma_amount")).toDouble() > 0.0);
+                        }
+                    }
+                }
+            }
+        }
+
+        qDebug() << "e3s3.veg clips with effects:" << totalClipsWithEffects
+                 << "foundLevels:" << foundLevels
+                 << "foundColorGrade:" << foundColorGrade
+                 << "foundSharpen:" << foundSharpen;
+
+        QVERIFY(totalClipsWithEffects >= 5);
+        QVERIFY(foundLevels);
+        QVERIFY(foundColorGrade);
+        QVERIFY(foundSharpen);
     }
 }
 

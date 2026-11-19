@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QHash>
 #include <QMap>
+#include <QRegularExpression>
 #include <QStringList>
 #include <QUuid>
 #include <cstring>
@@ -241,6 +242,434 @@ void detectTransitionsForTrack(Track &track)
             }
         }
     }
+}
+
+qsizetype findUtf16(const uint8_t *data, qsizetype size, const char *ascii)
+{
+    const qsizetype asciiLen = static_cast<qsizetype>(std::strlen(ascii));
+    if (size < asciiLen * 2)
+        return -1;
+    for (qsizetype i = 0; i + asciiLen * 2 <= size; i += 2) {
+        bool match = true;
+        for (qsizetype j = 0; j < asciiLen; ++j) {
+            if (data[i + j * 2] != static_cast<uint8_t>(ascii[j]) || data[i + j * 2 + 1] != 0) {
+                match = false;
+                break;
+            }
+        }
+        if (match)
+            return i;
+    }
+    return -1;
+}
+
+double parseDoubleParam(const uint8_t *data, qsizetype size, const char *paramName, double defaultVal)
+{
+    const qsizetype pos = findUtf16(data, size, paramName);
+    if (pos < 0)
+        return defaultVal;
+    const qsizetype valPos = pos + static_cast<qsizetype>(std::strlen(paramName) * 2) + 2;
+    if (valPos + 8 <= size) {
+        const double v = readDoubleLE(data + valPos);
+        if (!std::isnan(v) && !std::isinf(v))
+            return v;
+    }
+    return defaultVal;
+}
+
+struct VegasParsedRtf
+{
+    QString text;
+    QString fontFamily = QStringLiteral("Inter");
+    int pixelSize = 64;
+    int fontWeight = 400;
+    bool italic = false;
+    TextAlign align = TextAlign::Center;
+};
+
+VegasParsedRtf parseVegasRtf(const QString &rtf)
+{
+    VegasParsedRtf res;
+    if (rtf.isEmpty())
+        return res;
+
+    const int fontTblIdx = rtf.indexOf(QLatin1String("\\fonttbl"));
+    if (fontTblIdx >= 0) {
+        const int endTbl = rtf.indexOf(QLatin1String("}}"), fontTblIdx);
+        if (endTbl > fontTblIdx) {
+            const QString tblStr = rtf.mid(fontTblIdx, endTbl - fontTblIdx);
+            const int fcIdx = tblStr.indexOf(QLatin1String("fcharset0"));
+            if (fcIdx >= 0) {
+                const int semi = tblStr.indexOf(QLatin1Char(';'), fcIdx);
+                if (semi > fcIdx + 9) {
+                    const QString font = tblStr.mid(fcIdx + 9, semi - (fcIdx + 9)).trimmed();
+                    if (!font.isEmpty())
+                        res.fontFamily = font;
+                }
+            } else {
+                const int f0Idx = tblStr.indexOf(QLatin1String("\\f0"));
+                if (f0Idx >= 0) {
+                    const int semi = tblStr.indexOf(QLatin1Char(';'), f0Idx);
+                    if (semi > f0Idx) {
+                        const QString segment = tblStr.mid(f0Idx, semi - f0Idx);
+                        const int space = segment.lastIndexOf(QLatin1Char(' '));
+                        if (space >= 0) {
+                            const QString font = segment.mid(space + 1).trimmed();
+                            if (!font.isEmpty())
+                                res.fontFamily = font;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (rtf.contains(QLatin1String("\\ql")))
+        res.align = TextAlign::Left;
+    else if (rtf.contains(QLatin1String("\\qr")))
+        res.align = TextAlign::Right;
+    else if (rtf.contains(QLatin1String("\\qc")))
+        res.align = TextAlign::Center;
+
+    static const QRegularExpression fsRegex(QStringLiteral(R"(\\fs(\d+))"));
+    const auto fsMatch = fsRegex.match(rtf);
+    if (fsMatch.hasMatch()) {
+        const int halfPoints = fsMatch.captured(1).toInt();
+        res.pixelSize = qBound(12, static_cast<int>(halfPoints * 0.8), 256);
+    }
+
+    if (rtf.contains(QLatin1String("\\b ")) || rtf.contains(QLatin1String("\\b\\")) || rtf.contains(QLatin1String("\\b1")))
+        res.fontWeight = 700;
+    if (rtf.contains(QLatin1String("\\i ")) || rtf.contains(QLatin1String("\\i\\")) || rtf.contains(QLatin1String("\\i1")))
+        res.italic = true;
+
+    QString text;
+    int groupDepth = 0;
+    bool skipGroup = false;
+    int skipDepth = 0;
+    int i = 0;
+    const int len = rtf.size();
+
+    while (i < len) {
+        const QChar ch = rtf.at(i);
+        if (ch == QLatin1Char('{')) {
+            ++groupDepth;
+            if (rtf.mid(i, 9) == QLatin1String("{\\fonttbl")
+                || rtf.mid(i, 9) == QLatin1String("{\\colortb")
+                || rtf.mid(i, 9) == QLatin1String("{\\stylesh")
+                || rtf.mid(i, 3) == QLatin1String("{\\*")) {
+                skipGroup = true;
+                skipDepth = groupDepth;
+            }
+            ++i;
+            continue;
+        }
+        if (ch == QLatin1Char('}')) {
+            if (skipGroup && groupDepth == skipDepth)
+                skipGroup = false;
+            --groupDepth;
+            ++i;
+            continue;
+        }
+
+        if (skipGroup) {
+            ++i;
+            continue;
+        }
+
+        if (ch == QLatin1Char('\\')) {
+            const bool isPar = (rtf.mid(i, 4) == QLatin1String("\\par")
+                                && (i + 4 >= len || !rtf.at(i + 4).isLetter()));
+            const bool isLine = (rtf.mid(i, 5) == QLatin1String("\\line")
+                                 && (i + 5 >= len || !rtf.at(i + 5).isLetter()));
+            if (isPar || isLine) {
+                text.append(QLatin1Char('\n'));
+                i += isPar ? 4 : 5;
+                while (i < len && (rtf.at(i) == QLatin1Char(' ') || rtf.at(i) == QLatin1Char('\r') || rtf.at(i) == QLatin1Char('\n')))
+                    ++i;
+                continue;
+            }
+            if (rtf.mid(i, 2) == QLatin1String("\\'") && i + 4 <= len) {
+                bool ok = false;
+                const int code = rtf.mid(i + 2, 2).toInt(&ok, 16);
+                if (ok) {
+                    char c = static_cast<char>(code);
+                    text.append(QString::fromLatin1(&c, 1));
+                }
+                i += 4;
+                continue;
+            }
+            if (rtf.mid(i, 2) == QLatin1String("\\\\")) {
+                text.append(QLatin1Char('\\'));
+                i += 2;
+                continue;
+            }
+            if (rtf.mid(i, 2) == QLatin1String("\\{")) {
+                text.append(QLatin1Char('{'));
+                i += 2;
+                continue;
+            }
+            if (rtf.mid(i, 2) == QLatin1String("\\}")) {
+                text.append(QLatin1Char('}'));
+                i += 2;
+                continue;
+            }
+            ++i;
+            while (i < len && (rtf.at(i).isLetterOrNumber() || rtf.at(i) == QLatin1Char('-')))
+                ++i;
+            if (i < len && rtf.at(i) == QLatin1Char(' '))
+                ++i;
+            continue;
+        }
+
+        if (ch == QLatin1Char('\r') || ch == QLatin1Char('\n')) {
+            ++i;
+            continue;
+        }
+
+        text.append(ch);
+        ++i;
+    }
+
+    res.text = text.trimmed();
+    return res;
+}
+
+bool extractTitlesAndText(const uint8_t *payload, qsizetype payloadSize,
+                         QString *outText, TextStyle *outStyle,
+                         double *outScale, QPointF *outLocation)
+{
+    const qsizetype rtfPos = findUtf16(payload, payloadSize, "rtf1");
+    if (rtfPos < 0)
+        return false;
+
+    qsizetype ob = -1;
+    for (qsizetype i = rtfPos - 2; i >= 0 && i >= rtfPos - 64; i -= 2) {
+        if (payload[i] == '{' && payload[i + 1] == 0) {
+            ob = i;
+            break;
+        }
+    }
+    if (ob < 0)
+        ob = std::max<qsizetype>(0, rtfPos - 4);
+
+    qsizetype cb = ob;
+    int depth = 0;
+    while (cb + 2 <= payloadSize) {
+        if (payload[cb] == '{' && payload[cb + 1] == 0) {
+            ++depth;
+        } else if (payload[cb] == '}' && payload[cb + 1] == 0) {
+            --depth;
+            if (depth == 0) {
+                cb += 2;
+                break;
+            }
+        }
+        cb += 2;
+    }
+
+    if (cb <= ob)
+        return false;
+
+    const QString rtfStr = QString::fromUtf16(
+        reinterpret_cast<const char16_t *>(payload + ob),
+        (cb - ob) / 2
+    );
+
+    const VegasParsedRtf parsed = parseVegasRtf(rtfStr);
+    if (outText)
+        *outText = parsed.text;
+
+    if (outStyle) {
+        outStyle->fontFamily = parsed.fontFamily;
+        outStyle->pixelSize = parsed.pixelSize;
+        outStyle->fontWeight = parsed.fontWeight;
+        outStyle->italic = parsed.italic;
+        outStyle->align = parsed.align;
+    }
+
+    QColor textColor = Qt::white;
+    const qsizetype tcPos = findUtf16(payload, payloadSize, "TextColor");
+    if (tcPos >= 0) {
+        const qsizetype valPos = tcPos + static_cast<qsizetype>(std::strlen("TextColor") * 2) + 2;
+        if (valPos + 32 <= payloadSize) {
+            textColor = QColor::fromRgbF(
+                qBound(0.0, readDoubleLE(payload + valPos), 1.0),
+                qBound(0.0, readDoubleLE(payload + valPos + 8), 1.0),
+                qBound(0.0, readDoubleLE(payload + valPos + 16), 1.0),
+                qBound(0.0, readDoubleLE(payload + valPos + 24), 1.0)
+            );
+        }
+    }
+    if (outStyle)
+        setSolidFill(*outStyle, textColor);
+
+    if (outScale) {
+        const double s = parseDoubleParam(payload, payloadSize, "Scale", 1.0);
+        if (s > 0.01 && s < 20.0)
+            *outScale = s;
+    }
+
+    if (outLocation) {
+        const qsizetype locPos = findUtf16(payload, payloadSize, "Location");
+        if (locPos >= 0) {
+            const qsizetype valPos = locPos + static_cast<qsizetype>(std::strlen("Location") * 2) + 2;
+            if (valPos + 16 <= payloadSize) {
+                *outLocation = QPointF(readDoubleLE(payload + valPos), readDoubleLE(payload + valPos + 8));
+            }
+        }
+    }
+
+    const qsizetype trPos = findUtf16(payload, payloadSize, "Tracking");
+    if (trPos >= 0 && outStyle) {
+        const double tr = parseDoubleParam(payload, payloadSize, "Tracking", 0.0);
+        outStyle->letterSpacing = tr * 20.0;
+    }
+
+    const qsizetype owPos = findUtf16(payload, payloadSize, "OutlineWidth");
+    if (owPos >= 0 && outStyle) {
+        const double ow = parseDoubleParam(payload, payloadSize, "OutlineWidth", 0.0);
+        if (ow > 0.001) {
+            QColor outlineColor = Qt::black;
+            const qsizetype ocPos = findUtf16(payload, payloadSize, "OutlineColor");
+            if (ocPos >= 0) {
+                const qsizetype ocVal = ocPos + static_cast<qsizetype>(std::strlen("OutlineColor") * 2) + 2;
+                if (ocVal + 32 <= payloadSize) {
+                    outlineColor = QColor::fromRgbF(
+                        qBound(0.0, readDoubleLE(payload + ocVal), 1.0),
+                        qBound(0.0, readDoubleLE(payload + ocVal + 8), 1.0),
+                        qBound(0.0, readDoubleLE(payload + ocVal + 16), 1.0),
+                        qBound(0.0, readDoubleLE(payload + ocVal + 24), 1.0)
+                    );
+                }
+            }
+            outStyle->layers.prepend(strokeLayer(ow * 10.0, outlineColor));
+        }
+    }
+
+    const qsizetype sePos = findUtf16(payload, payloadSize, "ShadowEnable");
+    if (sePos >= 0 && outStyle) {
+        const qsizetype valPos = sePos + static_cast<qsizetype>(std::strlen("ShadowEnable") * 2) + 2;
+        if (valPos + 4 <= payloadSize) {
+            const quint32 enable = readU32LE(payload + valPos);
+            if (enable != 0) {
+                QColor shadowColor = QColor(0, 0, 0, 180);
+                const qsizetype scPos = findUtf16(payload, payloadSize, "ShadowColor");
+                if (scPos >= 0) {
+                    const qsizetype scVal = scPos + static_cast<qsizetype>(std::strlen("ShadowColor") * 2) + 2;
+                    if (scVal + 32 <= payloadSize) {
+                        shadowColor = QColor::fromRgbF(
+                            qBound(0.0, readDoubleLE(payload + scVal), 1.0),
+                            qBound(0.0, readDoubleLE(payload + scVal + 8), 1.0),
+                            qBound(0.0, readDoubleLE(payload + scVal + 16), 1.0),
+                            qBound(0.0, readDoubleLE(payload + scVal + 24), 1.0)
+                        );
+                    }
+                }
+                const double ox = parseDoubleParam(payload, payloadSize, "ShadowOffsetX", 0.05) * 50.0;
+                const double oy = parseDoubleParam(payload, payloadSize, "ShadowOffsetY", 0.05) * 50.0;
+                const double blur = parseDoubleParam(payload, payloadSize, "ShadowBlur", 0.1) * 50.0;
+                outStyle->layers.prepend(shadowLayer(shadowColor, ox, oy, blur, shadowColor.alphaF()));
+            }
+        }
+    }
+
+    return true;
+}
+
+bool extractSolidColor(const uint8_t *payload, qsizetype payloadSize, QColor *outColor)
+{
+    const qsizetype cPos = findUtf16(payload, payloadSize, "Color");
+    if (cPos >= 0) {
+        const qsizetype valPos = cPos + static_cast<qsizetype>(std::strlen("Color") * 2) + 2;
+        if (valPos + 32 <= payloadSize) {
+            if (outColor) {
+                *outColor = QColor::fromRgbF(
+                    qBound(0.0, readDoubleLE(payload + valPos), 1.0),
+                    qBound(0.0, readDoubleLE(payload + valPos + 8), 1.0),
+                    qBound(0.0, readDoubleLE(payload + valPos + 16), 1.0),
+                    qBound(0.0, readDoubleLE(payload + valPos + 24), 1.0)
+                );
+            }
+            return true;
+        }
+    }
+    if (outColor)
+        *outColor = Qt::black;
+    return true;
+}
+
+QList<Effect> extractVideoEffects(const uint8_t *payload, qsizetype payloadSize)
+{
+    QList<Effect> effects;
+    if (payloadSize < 16)
+        return effects;
+
+    // 1. Levels
+    const qsizetype lPos = findUtf16(payload, payloadSize, "levels}");
+    if (lPos >= 0) {
+        const qsizetype subSize = std::min<qsizetype>(payloadSize - lPos, 800);
+        const uint8_t *sub = payload + lPos;
+
+        const double inStart = parseDoubleParam(sub, subSize, "InputStart", 0.0);
+        const double inEnd = parseDoubleParam(sub, subSize, "InputEnd", 1.0);
+        const double gamma = parseDoubleParam(sub, subSize, "Gamma", 1.0);
+        const double outStart = parseDoubleParam(sub, subSize, "OutputStart", 0.0);
+        const double outEnd = parseDoubleParam(sub, subSize, "OutputEnd", 1.0);
+
+        if (inStart > 0.001 || inEnd < 0.999 || std::abs(gamma - 1.0) > 0.01 || outStart > 0.001 || outEnd < 0.999) {
+            Effect fx;
+            fx.catalogId = QStringLiteral("adjust.levels");
+            fx.name = QStringLiteral("Levels");
+            fx.parameters[QStringLiteral("input_start")] = inStart;
+            fx.parameters[QStringLiteral("input_end")] = inEnd;
+            fx.parameters[QStringLiteral("gamma")] = gamma;
+            fx.parameters[QStringLiteral("output_start")] = outStart;
+            fx.parameters[QStringLiteral("output_end")] = outEnd;
+            effects.append(fx);
+        }
+    }
+
+    // 2. Color Corrector
+    const qsizetype cPos = findUtf16(payload, payloadSize, "colorcorrector}");
+    if (cPos >= 0) {
+        const qsizetype subSize = std::min<qsizetype>(payloadSize - cPos, 1000);
+        const uint8_t *sub = payload + cPos;
+
+        const double sat = parseDoubleParam(sub, subSize, "Saturation", 1.0);
+        const double gamma = parseDoubleParam(sub, subSize, "Gamma", 1.0);
+        const double gain = parseDoubleParam(sub, subSize, "Gain", 1.0);
+        const double offset = parseDoubleParam(sub, subSize, "Offset", 0.0);
+
+        if (std::abs(sat - 1.0) > 0.01 || std::abs(gamma - 1.0) > 0.01 || std::abs(gain - 1.0) > 0.01 || std::abs(offset) > 0.01) {
+            Effect fx;
+            fx.catalogId = QStringLiteral("color.grade");
+            fx.name = QStringLiteral("Color Corrector");
+            fx.parameters[QStringLiteral("saturation")] = sat;
+            fx.parameters[QStringLiteral("gammaLuma")] = gamma - 1.0;
+            fx.parameters[QStringLiteral("gainLuma")] = gain - 1.0;
+            fx.parameters[QStringLiteral("liftLuma")] = offset / 100.0;
+            effects.append(fx);
+        }
+    }
+
+    // 3. Sharpen
+    const qsizetype sPos = findUtf16(payload, payloadSize, "sharpen}");
+    if (sPos >= 0) {
+        const qsizetype subSize = std::min<qsizetype>(payloadSize - sPos, 400);
+        const uint8_t *sub = payload + sPos;
+
+        const double amount = parseDoubleParam(sub, subSize, "Amount", 0.0);
+        if (amount > 0.01) {
+            Effect fx;
+            fx.catalogId = QStringLiteral("stylize.sharpen");
+            fx.name = QStringLiteral("Sharpen");
+            fx.parameters[QStringLiteral("luma_amount")] = amount;
+            effects.append(fx);
+        }
+    }
+
+    return effects;
 }
 
 QString extractPathFromPayload(const uint8_t *data, qsizetype size)
@@ -597,6 +1026,14 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         QString assetId;
         QString sequenceId;
         bool isNestedProject = false;
+        bool isTextGenerator = false;
+        bool isSolidColorGenerator = false;
+        QString textContent;
+        TextStyle textStyle;
+        double textScale = 1.0;
+        QPointF textLocation{0.5, 0.5};
+        QColor solidColor{0, 0, 0, 255};
+        QList<Effect> mediaEffects;
     };
     QMap<quint32, MediaEntry> mediaPool;
 
@@ -622,6 +1059,40 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                 if (payloadSize >= 64) {
                     const quint32 mid = readU32LE(payload + 60);
                     const QString winPath = extractPathFromPayload(payload, payloadSize);
+
+                    const bool isTitles = winPath.contains(QLatin1String("titlesandtext"), Qt::CaseInsensitive)
+                                          || findUtf16(payload, payloadSize, "titlesandtext") >= 0;
+                    const bool isSolid = winPath.contains(QLatin1String("solidcolor"), Qt::CaseInsensitive)
+                                         || winPath.contains(QLatin1String("02FD3B60-986B-11D4"), Qt::CaseInsensitive)
+                                         || findUtf16(payload, payloadSize, "solidcolor") >= 0;
+
+                    if (isTitles) {
+                        MediaEntry entry;
+                        entry.isTextGenerator = true;
+                        extractTitlesAndText(payload, payloadSize, &entry.textContent, &entry.textStyle,
+                                             &entry.textScale, &entry.textLocation);
+                        entry.rawFilename = entry.textContent.split(QLatin1Char('\n')).first().trimmed();
+                        if (entry.rawFilename.size() > 30)
+                            entry.rawFilename = entry.rawFilename.left(30) + QStringLiteral("…");
+                        if (entry.rawFilename.isEmpty())
+                            entry.rawFilename = QStringLiteral("Title");
+                        entry.mediaEffects = extractVideoEffects(payload, payloadSize);
+                        mediaPool.insert(mid, entry);
+                        cpos += (csize + 7) & ~7;
+                        continue;
+                    }
+
+                    if (isSolid) {
+                        MediaEntry entry;
+                        entry.isSolidColorGenerator = true;
+                        extractSolidColor(payload, payloadSize, &entry.solidColor);
+                        entry.rawFilename = QStringLiteral("Solid Color");
+                        entry.mediaEffects = extractVideoEffects(payload, payloadSize);
+                        mediaPool.insert(mid, entry);
+                        cpos += (csize + 7) & ~7;
+                        continue;
+                    }
+
                     QString diskName = cleanMediaFilename(winPath);
                     if (diskName.isEmpty() || diskName.startsWith(QLatin1Char('{')))
                         diskName = QStringLiteral("media_%1").arg(mid);
@@ -675,6 +1146,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                 entry.assetId = assetId;
                                 entry.sequenceId = seqId;
                                 entry.isNestedProject = true;
+                                entry.mediaEffects = extractVideoEffects(payload, payloadSize);
                                 mediaPool.insert(mid, entry);
 
                                 cpos += (csize + 7) & ~7;
@@ -687,6 +1159,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     entry.rawFilename = diskName;
                     entry.resolvedPath = resolved;
                     entry.assetId = assetId;
+                    entry.mediaEffects = extractVideoEffects(payload, payloadSize);
                     mediaPool.insert(mid, entry);
 
                     MediaAsset asset;
@@ -956,10 +1429,32 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                             clip.assetId = m.assetId;
                                             clip.path = m.resolvedPath;
                                             clip.name = QFileInfo(m.resolvedPath).fileName();
-                                            if (m.isNestedProject && !m.sequenceId.isEmpty()) {
+                                            if (m.isTextGenerator) {
+                                                clip.type = ClipType::Text;
+                                                clip.name = m.rawFilename.isEmpty() ? QStringLiteral("Title") : m.rawFilename;
+                                                clip.textContent = m.textContent;
+                                                clip.textStyle = m.textStyle;
+                                                clip.assetId.clear();
+                                                clip.path.clear();
+                                                if (m.textScale > 0.01 && std::abs(m.textScale - 1.0) > 0.01) {
+                                                    clip.scaleX.setKeyframe(0, m.textScale);
+                                                    clip.scaleY.setKeyframe(0, m.textScale);
+                                                }
+                                            } else if (m.isSolidColorGenerator) {
+                                                clip.type = ClipType::Shape;
+                                                clip.name = QStringLiteral("Solid Color");
+                                                clip.shapeStyle.kind = ShapeKind::Rectangle;
+                                                clip.shapeStyle.setSolidFill(m.solidColor);
+                                                clip.shapeStyle.setStroke(0.0);
+                                                clip.assetId.clear();
+                                                clip.path.clear();
+                                            } else if (m.isNestedProject && !m.sequenceId.isEmpty()) {
                                                 isNested = true;
                                                 nestedSeqId = m.sequenceId;
                                                 clip.name = QFileInfo(m.resolvedPath).completeBaseName();
+                                            }
+                                            for (const Effect &fx : m.mediaEffects) {
+                                                clip.effects.append(fx);
                                             }
                                         } else {
                                             clip.name = QStringLiteral("clip_%1").arg(track.clips.size());
@@ -973,7 +1468,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                                 clip.type = ClipType::Audio;
                                                 clip.sequenceId = nestedSeqId;
                                             }
-                                        } else {
+                                        } else if (clip.type != ClipType::Text && clip.type != ClipType::Shape) {
                                             clip.type = (trackType == TrackType::Video) ? ClipType::Video
                                                                                         : ClipType::Audio;
                                         }
@@ -1042,6 +1537,19 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     }
 
                     detectTransitionsForTrack(track);
+
+                    if (!track.clips.isEmpty()) {
+                        bool allText = true;
+                        for (const auto &c : track.clips) {
+                            if (c.type != ClipType::Text) {
+                                allText = false;
+                                break;
+                            }
+                        }
+                        if (allText)
+                            track.type = TrackType::Text;
+                    }
+
                     project.tracks().append(track);
                 }
                 tpos += (tsize + 7) & ~7;
