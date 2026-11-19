@@ -1019,6 +1019,8 @@ add_library(driftengine STATIC
     src/engine/face/tracking/FaceLandmarker.cpp
     src/engine/face/tracking/FaceTrack.h
     src/engine/face/tracking/FaceTrack.cpp
+    src/engine/face/tracking/FaceMask.h
+    src/engine/face/tracking/FaceMask.cpp
     src/engine/face/props/FaceModelTransform.h
     src/engine/face/props/FaceModelTransform.cpp
     src/engine/render3d/models/ModelAnimation.h

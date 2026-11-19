@@ -59,6 +59,11 @@ target_include_directories(tst_maskselect PRIVATE ../src)
 target_link_libraries(tst_maskselect PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
 add_test(NAME MaskSelect COMMAND tst_maskselect)
 
+qt_add_executable(tst_facemask tst_facemask.cpp)
+target_include_directories(tst_facemask PRIVATE ../src)
+target_link_libraries(tst_facemask PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftengine driftcore)
+add_test(NAME FaceMask COMMAND tst_facemask)
+
 qt_add_executable(tst_trackeroverlay tst_trackeroverlay.cpp)
 target_include_directories(tst_trackeroverlay PRIVATE ../src)
 target_link_libraries(tst_trackeroverlay PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
