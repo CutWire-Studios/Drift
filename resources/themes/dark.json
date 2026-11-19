@@ -3922,6 +3922,7 @@
       "editFriendlyPill": "$semantic.clip.editFriendly",
       "editFriendlyPillForeground": "$semantic.clip.editFriendlyForeground",
       "warning": "$semantic.warning",
+      "missing": "$semantic.destructive",
       "radiusSm": "$metrics.radius.sm",
       "radiusXs": "$metrics.radius.xs",
       "borderWidthFocus": "$metrics.borderWidthFocus",

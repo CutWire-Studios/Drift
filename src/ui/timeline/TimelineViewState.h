@@ -76,7 +76,10 @@ public:
         QColor editFriendlyPill{"#5AA9E6"};
         QColor editFriendlyPillForeground{"#06203A"};
         QColor warning{"#f97316"};
-        QColor missing;
+        // The only colour here that a theme had been able to leave unset; an unset QColor reports
+        // alpha 255 and channel 0, so the missing-media badge drew opaque black rather than simply
+        // not drawing. Defaults to $palette.destructive, like the themes supply.
+        QColor missing{"#e91616"};
         QColor loopMarker{255, 255, 255, 128};
         QColor disabledScrim{32, 32, 32, 153};
         QColor disabledStripe{255, 255, 255, 71};

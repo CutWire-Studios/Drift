@@ -2820,6 +2820,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimeline | editFriendlyPill | $semantic.clip.editFriendly | $semantic.clip.editFriendly |
 | androidTimeline | editFriendlyPillForeground | $semantic.clip.editFriendlyForeground | $semantic.clip.editFriendlyForeground |
 | androidTimeline | warning | $semantic.warning | $semantic.warning |
+| androidTimeline | missing | $semantic.destructive | $semantic.destructive |
 | androidTimeline | radiusSm | $metrics.radius.sm | $metrics.radius.sm |
 | androidTimeline | radiusXs | $metrics.radius.xs | $metrics.radius.xs |
 | androidTimeline | borderWidthFocus | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
