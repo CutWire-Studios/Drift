@@ -8,6 +8,7 @@
 #include <QPair>
 #include <QSet>
 #include <QString>
+#include <QElapsedTimer>
 #include <QTimer>
 #include <QVariantList>
 
@@ -65,7 +66,7 @@ public:
     QPair<qint64, qint64> rebakeRange(const QString &id);
     // Same range as bake `id`, at the current quality.
     Q_INVOKABLE void rebake(const QString &id) { rebakeRange(id); }
-    // Returns how many stale bakes were queued.
+    // Re-checks staleness now, then queues every stale bake. Returns how many were queued (0 while a bake runs).
     Q_INVOKABLE int rebakeAllStale();
     // Binds the open project's bake file if not yet bound, and re-checks every fingerprint now.
     void refreshStale();
@@ -113,7 +114,7 @@ private:
     void whenIdle(std::function<void()> op);
     void maybeCompact();
     Request requestForUs(qint64 startUs, qint64 endUs, bool floorStart = false) const;
-    QVariantMap bakeMap(const drift::Bake &bake, const QString &state) const;
+    QVariantMap bakeMap(const drift::Bake &bake, const QString &state, quint64 bytes) const;
 
     AppController *m_app = nullptr;
     std::shared_ptr<drift::BakeFile> m_file;
@@ -125,6 +126,7 @@ private:
     QList<Request> m_queue;
     std::list<std::function<void()>> m_afterJob;
     bool m_busy = false;
+    QElapsedTimer m_focusCheck;
     bool m_detached = false;
     QString m_jobId;
     double m_progress = 0.0;
