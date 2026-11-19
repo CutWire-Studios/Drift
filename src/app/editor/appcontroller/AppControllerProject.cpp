@@ -706,15 +706,9 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
                     thumbnail = thumbPath;
             }
         }
-        // What was rendered: hidden tracks (review tracks among them) don't stretch it.
-        drift::TimeUs renderedEndUs = 0;
-        for (const drift::Track &track : snapshot.tracks()) {
-            if (track.hidden || (track.type == drift::TrackType::Audio && track.muted))
-                continue;
-            for (const drift::Clip &clip : track.clips)
-                renderedEndUs = qMax(renderedEndUs, clip.timelineEnd());
-        }
-        const double durationSeconds = drift::usToSeconds(renderedEndUs > 0 ? renderedEndUs : snapshot.durationUs());
+        // What was rendered, by the rule the export itself used: hidden tracks (review tracks among
+        // them) and audio the mixer drops don't stretch it, and an explicit range is honoured.
+        const double durationSeconds = drift::usToSeconds(renderedDurationUs(snapshot, exportSettings));
 
         QMetaObject::invokeMethod(
             this,

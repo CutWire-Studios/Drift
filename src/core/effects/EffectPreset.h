@@ -41,7 +41,7 @@ enum class EffectParamType {
     Track,
     // Another track's folded mask lanes, by track id; bound as a sampler2D.
     TrackMask,
-    // Another track's audio, by track id ("" = Timeline mix); a sampler2D plus scalars.
+    // Another track's audio, by track id ("" = the Timeline mix as heard); a sampler2D plus scalars.
     Audio,
 };
 

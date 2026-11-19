@@ -78,6 +78,15 @@ struct ExportSettings
     int bakeGop = 0;
 };
 
+// The range export renders: settings' range clamped to the project, or, when unset, the span of
+// clips that output picture or sound. On failure both ends are 0 and *errorOut says why.
+void resolveExportRange(const drift::Project &project, const ExportSettings &settings, drift::TimeUs *startUsOut,
+                        drift::TimeUs *endUsOut, QString *errorOut);
+
+// How long the file export renders is: the resolved range's length, or the project's duration when
+// the range can't be resolved.
+drift::TimeUs renderedDurationUs(const drift::Project &project, const ExportSettings &settings);
+
 // WYSIWYG exporter: encodes frames straight from FrameCompositor and audio from
 // AudioMixer, so the exported file matches the preview exactly (single compositor).
 class Exporter

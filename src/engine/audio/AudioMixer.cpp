@@ -664,13 +664,7 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
     std::memset(interleavedStereoOut, 0, static_cast<size_t>(sampleCount) * 2 * sizeof(float));
 
     const QList<drift::Track> &tracks = project->tracks();
-    bool anySolo = false;
-    for (const drift::Track &t : tracks) {
-        if (t.solo) {
-            anySolo = true;
-            break;
-        }
-    }
+    const bool anySolo = drift::anyTrackSoloed(tracks);
 
     // A snapshot's adjustments are fixed, so they are gathered once per serial; without one the
     // project can change between blocks and they are gathered every time.
@@ -688,7 +682,7 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
     QHash<int, QPair<float, float>> newTrackLevels;
     for (int ti = 0; ti < tracks.size(); ++ti) {
         const drift::Track &track = tracks.at(ti);
-        if (track.muted || track.hidden || (anySolo && !track.solo))
+        if (!drift::trackAudible(track, anySolo))
             continue;
 
         // Adjustment tracks carry no audio of their own: a lane's effects reach the mix through

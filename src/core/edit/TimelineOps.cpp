@@ -2172,6 +2172,7 @@ void retimeLinkedSubtitles(const Project &before, Project &project, const QHash<
 void muteAllButClip(Project &snap, const QString &clipId)
 {
     for (Track &track : snap.tracks()) {
+        track.solo = false;
         bool has = false;
         for (Clip &clip : track.clips) {
             if (clip.id == clipId) {

@@ -258,6 +258,9 @@ private slots:
     void audioWindowOfSilenceIsFlat();
     void audioWindowSineLandsInItsLogBin();
     void audioWindowBassSplitsLowFromHigh();
+    void timelineAudioSourceFollowsSolo();
+    void timelineAudioSourceFingerprintTracksAudibility();
+    void exportAutoRangeSkipsSilencedAudio();
     void audioFrameTextureLayout();
     void clipGizmoSolvesDrags();
     void clipGizmoPivotsOnBoundsCentre();
@@ -19011,6 +19014,172 @@ void EngineTest::audioWindowBassSplitsLowFromHigh()
     QVERIFY(low.bass > 0.8f);
     const AudioFrame high = analyzeWindow(sineWindow(5000.0).data(), 48000);
     QVERIFY(high.bass < 0.2f);
+}
+
+namespace {
+
+// Two audio tracks, each with a one-second tone: track 0 over 0-1 s, track 1 over 1-2 s.
+drift::Project soloTestProject(const QString &toneA, const QString &toneB)
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.setSampleRate(48000);
+    const QString paths[2] = {toneA, toneB};
+    for (int i = 0; i < 2; ++i) {
+        drift::Track track{.type = drift::TrackType::Audio};
+        drift::Clip clip;
+        clip.id = QStringLiteral("tone%1").arg(i);
+        clip.type = drift::ClipType::Audio;
+        clip.path = paths[i];
+        clip.timelineStart = drift::secondsToUs(double(i));
+        clip.timelineDuration = drift::secondsToUs(1.0);
+        clip.srcIn = 0;
+        clip.srcOut = clip.timelineDuration;
+        track.clips.append(clip);
+        project.tracks().append(track);
+    }
+    project.ensureTrackIds();
+    return project;
+}
+
+float sourceEnergy(const drift::Project &project, const QString &trackId, double atSeconds)
+{
+    const QVector<float> mono = readSourceMono(project, trackId, drift::secondsToUs(atSeconds), 4800, 48000);
+    float energy = 0.0f;
+    for (const float v : mono)
+        energy += std::abs(v);
+    return energy;
+}
+
+} // namespace
+
+// The Timeline mix an audio-reactive effect reads is what the mixer plays: solo and hide apply. A
+// named track is read whatever the flags.
+void EngineTest::timelineAudioSourceFollowsSolo()
+{
+    if (ffmpegExe().isEmpty())
+        QSKIP("ffmpeg not on PATH");
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString a = dir.filePath(QStringLiteral("a.wav"));
+    const QString b = dir.filePath(QStringLiteral("b.wav"));
+    QVERIFY(makeToneWav(a, 1.0, 0.5));
+    QVERIFY(makeToneWav(b, 1.0, 0.5, 880));
+
+    drift::Project project = soloTestProject(a, b);
+    QVERIFY(sourceEnergy(project, QString(), 0.5) > 1.0f);
+    QVERIFY(sourceEnergy(project, QString(), 1.5) > 1.0f);
+
+    project.tracks()[1].solo = true;
+    QVERIFY(sourceEnergy(project, QString(), 0.5) < 0.01f);
+    QVERIFY(sourceEnergy(project, QString(), 1.5) > 1.0f);
+
+    project.tracks()[1].hidden = true;
+    QVERIFY(sourceEnergy(project, QString(), 0.5) < 0.01f);
+    QVERIFY(sourceEnergy(project, QString(), 1.5) < 0.01f);
+
+    project.tracks()[1].hidden = false;
+    QVERIFY(sourceEnergy(project, project.tracks().at(0).id, 0.5) > 1.0f);
+}
+
+void EngineTest::timelineAudioSourceFingerprintTracksAudibility()
+{
+    drift::Project project = soloTestProject(QStringLiteral("a.wav"), QStringLiteral("b.wav"));
+    const QString track0 = project.tracks().at(0).id;
+    const quint64 base = audioSourceFingerprint(project, QString());
+    const quint64 baseNamed = audioSourceFingerprint(project, track0);
+
+    project.tracks()[1].solo = true;
+    QVERIFY(audioSourceFingerprint(project, QString()) != base);
+    QCOMPARE(audioSourceFingerprint(project, track0), baseNamed);
+
+    project.tracks()[1].solo = false;
+    QCOMPARE(audioSourceFingerprint(project, QString()), base);
+    project.tracks()[0].hidden = true;
+    QVERIFY(audioSourceFingerprint(project, QString()) != base);
+
+    // Soloing the only audible track leaves the audible set as it was.
+    project.tracks()[0].hidden = false;
+    project.tracks()[0].muted = true;
+    const quint64 onlyOne = audioSourceFingerprint(project, QString());
+    project.tracks()[1].solo = true;
+    QCOMPARE(audioSourceFingerprint(project, QString()), onlyOne);
+}
+
+// V1 0-20 s, A1 0-30 s, A2 0-60 s. Only timing matters, so no media is needed.
+void EngineTest::exportAutoRangeSkipsSilencedAudio()
+{
+    drift::Project project;
+    project.tracks().clear();
+    const auto addTrack = [&](drift::TrackType type, double seconds) {
+        drift::Track track{.type = type};
+        drift::Clip clip;
+        clip.id = QStringLiteral("c%1").arg(project.tracks().size());
+        clip.type = type == drift::TrackType::Audio ? drift::ClipType::Audio : drift::ClipType::Video;
+        clip.timelineStart = 0;
+        clip.timelineDuration = drift::secondsToUs(seconds);
+        clip.srcIn = 0;
+        clip.srcOut = clip.timelineDuration;
+        track.clips.append(clip);
+        project.tracks().append(track);
+    };
+    addTrack(drift::TrackType::Video, 20.0);
+    addTrack(drift::TrackType::Audio, 30.0);
+    addTrack(drift::TrackType::Audio, 60.0);
+    project.ensureTrackIds();
+
+    const auto endSeconds = [&] {
+        drift::TimeUs start = -1;
+        drift::TimeUs end = -1;
+        QString error;
+        resolveExportRange(project, ExportSettings{}, &start, &end, &error);
+        return double(end) / drift::kUsPerSecond;
+    };
+
+    QCOMPARE(endSeconds(), 60.0);
+    project.tracks()[2].muted = true;
+    QCOMPARE(endSeconds(), 30.0);
+    project.tracks()[2].muted = false;
+    project.tracks()[1].solo = true;
+    QCOMPARE(endSeconds(), 30.0);
+    // A video track still counts for its picture.
+    project.tracks()[0].clips[0].timelineDuration = drift::secondsToUs(40.0);
+    project.tracks()[0].clips[0].srcOut = drift::secondsToUs(40.0);
+    QCOMPARE(endSeconds(), 40.0);
+    project.tracks()[0].clips[0].timelineDuration = drift::secondsToUs(20.0);
+    project.tracks()[0].clips[0].srcOut = drift::secondsToUs(20.0);
+
+    // The duration recorded for the finished export follows the same rule: A1 soloed (30 s), A2
+    // 60 s, V1 20 s renders 30 s, not 60.
+    QCOMPARE(double(renderedDurationUs(project, ExportSettings{})) / drift::kUsPerSecond, 30.0);
+
+    // An explicit range is honoured whatever is silenced.
+    ExportSettings explicitRange;
+    explicitRange.startUs = drift::secondsToUs(5.0);
+    explicitRange.endUs = drift::secondsToUs(10.0);
+    drift::TimeUs start = -1;
+    drift::TimeUs end = -1;
+    QString error;
+    resolveExportRange(project, explicitRange, &start, &end, &error);
+    QVERIFY(error.isEmpty());
+    QCOMPARE(start, drift::secondsToUs(5.0));
+    QCOMPARE(end, drift::secondsToUs(10.0));
+    QCOMPARE(double(renderedDurationUs(project, explicitRange)) / drift::kUsPerSecond, 5.0);
+
+    // With every audio track silenced and no video, nothing outputs: the range falls back to the
+    // whole project.
+    project.tracks().removeFirst();
+    project.tracks()[0].muted = true;
+    project.tracks()[1].muted = true;
+    project.tracks()[0].solo = false;
+    project.ensureTrackIds();
+    start = -1;
+    end = -1;
+    error.clear();
+    resolveExportRange(project, ExportSettings{}, &start, &end, &error);
+    QVERIFY(error.isEmpty());
+    QCOMPARE(start, drift::TimeUs(0));
+    QCOMPARE(end, project.durationUs());
 }
 
 void EngineTest::audioFrameTextureLayout()

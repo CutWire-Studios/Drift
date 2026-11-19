@@ -81,16 +81,17 @@ bool carriesAudio(const drift::Track &track)
     return track.type == drift::TrackType::Audio || track.type == drift::TrackType::Video;
 }
 
-// The clips a source reads: every audible clip of the named track, or of every unmuted track for
-// the Timeline mix. Composite clips are skipped here; they would need a nested mixer, and only the
-// clip's own file is read.
+// The clips a source reads: every audible clip of the named track, or of every track the mixer
+// plays (mute, hide and solo apply) for the Timeline mix. Composite clips are skipped here; they
+// would need a nested mixer, and only the clip's own file is read.
 template <typename Visit>
 void forEachSourceClip(const drift::Project &project, const QString &trackId, Visit &&visit)
 {
+    const bool anySolo = trackId.isEmpty() && drift::anyTrackSoloed(project.tracks());
     for (const drift::Track &track : project.tracks()) {
         if (!carriesAudio(track))
             continue;
-        if (trackId.isEmpty() ? track.muted : track.id != trackId)
+        if (trackId.isEmpty() ? !drift::trackAudible(track, anySolo) : track.id != trackId)
             continue;
         for (const drift::Clip &clip : track.clips) {
             if (!clip.enabled || clip.path.isEmpty() || !clip.sequenceId.isEmpty())
@@ -117,33 +118,6 @@ QVector<float> readSourceMonoAs(const drift::Project &project, const QString &tr
             mono[i] += 0.5f * (stereo[i * 2] + stereo[i * 2 + 1]);
     });
     return mono;
-}
-
-// Everything that changes what the source's onsets come out as. Project edits carry no serial
-// the compositor can see, so the content is hashed instead.
-quint64 audioFingerprint(const drift::Project &project, const QString &trackId)
-{
-    quint64 hash = 0;
-    for (const drift::Track &track : project.tracks()) {
-        if (!carriesAudio(track) || (!trackId.isEmpty() && track.id != trackId))
-            continue;
-        hash = qHashMulti(hash, track.id, int(track.muted), int(track.type));
-        for (const drift::Transition &transition : track.transitions) {
-            hash = qHashMulti(hash, transition.fromClipId, transition.toClipId, transition.kindId,
-                              transition.durationUs);
-        }
-        for (const drift::Clip &clip : track.clips) {
-            hash = qHashMulti(hash, clip.id, clip.path, clip.sequenceId, int(clip.type), clip.timelineStart,
-                              clip.timelineDuration, clip.srcIn, clip.srcOut, clip.speed, int(clip.reverse),
-                              clip.audioStreamIndex, int(clip.suppressEmbeddedAudio), clip.pan,
-                              clip.fadeInUs, clip.fadeOutUs, clip.audioFadeInUs, clip.audioFadeOutUs,
-                              int(clip.fadeInCurve), int(clip.fadeOutCurve), int(clip.enabled));
-            const auto &volumeKeys = clip.volume.keyframes();
-            for (auto it = volumeKeys.cbegin(); it != volumeKeys.cend(); ++it)
-                hash = qHashMulti(hash, it.key(), it.value().value);
-        }
-    }
-    return hash;
 }
 
 // Onset times in absolute timeline seconds over the source's whole extent.
@@ -205,7 +179,7 @@ QList<OnsetCacheEntry> &onsetCache()
 std::shared_ptr<const OnsetTimes> onsetsFor(const drift::Project &project, const QString &trackId, bool wait)
 {
     const QString key = trackId.isEmpty() ? QStringLiteral("<mix>") : trackId;
-    const quint64 fingerprint = audioFingerprint(project, trackId);
+    const quint64 fingerprint = audioSourceFingerprint(project, trackId);
 
     OnsetFuture future;
     {
@@ -260,6 +234,35 @@ float beatAt(const drift::Project &project, const QString &trackId, drift::TimeU
 }
 
 } // namespace
+
+// Project edits carry no serial the compositor can see, so the content is hashed instead. For the
+// Timeline mix each track contributes whether the mixer plays it, not its raw flags.
+quint64 audioSourceFingerprint(const drift::Project &project, const QString &trackId)
+{
+    quint64 hash = 0;
+    const bool anySolo = trackId.isEmpty() && drift::anyTrackSoloed(project.tracks());
+    for (const drift::Track &track : project.tracks()) {
+        if (!carriesAudio(track) || (!trackId.isEmpty() && track.id != trackId))
+            continue;
+        const int heard = trackId.isEmpty() ? int(drift::trackAudible(track, anySolo)) : int(track.muted);
+        hash = qHashMulti(hash, track.id, heard, int(track.type));
+        for (const drift::Transition &transition : track.transitions) {
+            hash = qHashMulti(hash, transition.fromClipId, transition.toClipId, transition.kindId,
+                              transition.durationUs);
+        }
+        for (const drift::Clip &clip : track.clips) {
+            hash = qHashMulti(hash, clip.id, clip.path, clip.sequenceId, int(clip.type), clip.timelineStart,
+                              clip.timelineDuration, clip.srcIn, clip.srcOut, clip.speed, int(clip.reverse),
+                              clip.audioStreamIndex, int(clip.suppressEmbeddedAudio), clip.pan,
+                              clip.fadeInUs, clip.fadeOutUs, clip.audioFadeInUs, clip.audioFadeOutUs,
+                              int(clip.fadeInCurve), int(clip.fadeOutCurve), int(clip.enabled));
+            const auto &volumeKeys = clip.volume.keyframes();
+            for (auto it = volumeKeys.cbegin(); it != volumeKeys.cend(); ++it)
+                hash = qHashMulti(hash, it.key(), it.value().value);
+        }
+    }
+    return hash;
+}
 
 QByteArray AudioFrame::rgba() const
 {

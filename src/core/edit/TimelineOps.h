@@ -390,7 +390,8 @@ QString subtitleSourceKey(const Clip &clip);
 void retimeLinkedSubtitles(const Project &before, Project &project,
                            const QHash<QString, QString> &replaced = {});
 
-// Silences every clip in `snap` except `clipId`, so mixing it yields only that clip's sound.
+// Silences every clip in `snap` except `clipId`, so mixing it yields only that clip's sound,
+// whatever the tracks' solo state.
 void muteAllButClip(Project &snap, const QString &clipId);
 
 // All clips sharing `clip.linkId` (excluding `clip` itself).

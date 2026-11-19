@@ -252,6 +252,7 @@ private slots:
     void audioToolboxReturnsSchemas();
     void waveformReturnsPeaksOnFirstCall();
     void waveformReportsSilenceAsZero();
+    void clipAnalysisIgnoresOtherTracksSolo();
     void detectBeatsRejectsShortRange();
     void detectBeatsFindsClickTempoAndPublishes();
     void splitOnBeatsCutsAndUndoesAsOneStep();
@@ -5555,6 +5556,57 @@ void McpTest::waveformReturnsPeaksOnFirstCall()
         QVERIFY(v.toDouble() >= 0.0 && v.toDouble() <= 1.0);
     QVERIFY2(result.value(QStringLiteral("max")).toDouble() > 0.2,
              qPrintable(QString::number(result.value(QStringLiteral("max")).toDouble())));
+}
+
+// Per-clip analysis reads the clip alone, so another track's solo must not silence it.
+void McpTest::clipAnalysisIgnoresOtherTracksSolo()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString source = dir.filePath(QStringLiteral("tone.wav"));
+    QVERIFY(writeHalfSilentTone(source));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QString first = importAndPlace(dispatcher, source, 0.0);
+    const QString second = importAndPlace(dispatcher, source, 10.0);
+    QVERIFY(!first.isEmpty() && !second.isEmpty());
+
+    // Move the second clip onto a track of its own, then solo that track.
+    drift::Project &project = *state.project();
+    drift::Track other{.type = drift::TrackType::Audio};
+    for (drift::Track &track : project.tracks()) {
+        for (int i = 0; i < track.clips.size(); ++i) {
+            if (track.clips.at(i).id == second) {
+                other.clips.append(track.clips.at(i));
+                track.clips.removeAt(i);
+                break;
+            }
+        }
+    }
+    QCOMPARE(other.clips.size(), 1);
+    project.tracks().append(other);
+    project.ensureTrackIds();
+    const int otherIndex = int(project.tracks().size()) - 1;
+    state.setTrackSolo(otherIndex, true);
+
+    const QJsonObject loudness = dispatcher.applyOne(QStringLiteral("analyze_loudness"),
+                                                     {{QStringLiteral("clip"), first}});
+    QVERIFY2(loudness.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(loudness).toJson(QJsonDocument::Compact)));
+    QVERIFY(std::isfinite(loudness.value(QStringLiteral("lufs")).toDouble()));
+
+    const QJsonObject waveform = dispatcher.applyOne(QStringLiteral("get_waveform"),
+                                                     {{QStringLiteral("clip"), first}, {QStringLiteral("buckets"), 16}});
+    QVERIFY2(waveform.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(waveform).toJson(QJsonDocument::Compact)));
+    QVERIFY(waveform.value(QStringLiteral("max")).toDouble() > 0.0);
+
+    QVERIFY(state.project()->tracks().at(otherIndex).solo);
 }
 
 // reduceDensePeaks floors silence at 0.05 so a quiet lane still draws; these peaks must not,
