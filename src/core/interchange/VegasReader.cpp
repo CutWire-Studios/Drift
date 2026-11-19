@@ -60,6 +60,12 @@ static const uint8_t kListAudioTrack[16] = {
 static const uint8_t kChunkAudioTrackProps[16] = {
     0x27, 0x6c, 0xd4, 0x69, 0x0b, 0x7f, 0xd2, 0x11, 0x87, 0x17, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
 };
+static const uint8_t kTypeMarkerList[16] = {
+    0xb5, 0x00, 0x09, 0x1f, 0x84, 0xdc, 0x43, 0x47, 0x81, 0xcb, 0x08, 0x77, 0x44, 0x40, 0x45, 0x98
+};
+static const uint8_t kGuidMarker[16] = {
+    0x56, 0x62, 0xf7, 0xab, 0x2d, 0x39, 0xd2, 0x11, 0x86, 0xc7, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
 
 inline quint32 readU32LE(const uint8_t *p)
 {
@@ -100,6 +106,76 @@ QString readUtf16String(const uint8_t *data, qsizetype size, qsizetype offset)
         ++len;
     }
     return QString::fromUtf16(chars, len);
+}
+
+struct ParsedMarker
+{
+    quint32 id = 0;
+    TimeUs posUs = 0;
+    TimeUs durUs = 0;
+    bool isRegion = false;
+    QString name;
+};
+
+std::optional<ParsedMarker> parseMarkerPayload(const uint8_t *p, qsizetype avail)
+{
+    if (avail < 28)
+        return std::nullopt;
+
+    quint32 ident = 0;
+    qint64 posTicks = 0;
+    qint64 lenTicks = -1;
+    quint32 nameBytes = 0;
+    const uint8_t *namePtr = nullptr;
+
+    const quint32 val0 = readU32LE(p);
+    const quint32 val4 = readU32LE(p + 4);
+    const quint32 val8 = (avail >= 12) ? readU32LE(p + 8) : 0;
+
+    if (val4 == 28 && avail >= 32) {
+        // Format A (property format): uint32 dataSize, uint32 hdrSize (28), uint32 id, int64 pos, int64 len, uint32 cbName, wszName...
+        ident = readU32LE(p + 8);
+        posTicks = static_cast<qint64>(readU64LE(p + 12));
+        lenTicks = static_cast<qint64>(readU64LE(p + 20));
+        nameBytes = readU32LE(p + 28);
+        namePtr = p + 32;
+    } else if (val8 == 28 && avail >= 36) {
+        // Format B (Wave64 64-bit chunk): uint64 chunkSize, uint32 hdrSize (28), uint32 id, int64 pos, int64 len, uint32 cbName, wszName...
+        ident = readU32LE(p + 12);
+        posTicks = static_cast<qint64>(readU64LE(p + 16));
+        lenTicks = static_cast<qint64>(readU64LE(p + 24));
+        nameBytes = readU32LE(p + 32);
+        namePtr = p + 36;
+    } else if (val0 == 28 && avail >= 28) {
+        // Format C (direct payload): uint32 hdrSize (28), uint32 id, int64 pos, int64 len, uint32 cbName, wszName...
+        ident = readU32LE(p + 4);
+        posTicks = static_cast<qint64>(readU64LE(p + 8));
+        lenTicks = static_cast<qint64>(readU64LE(p + 16));
+        nameBytes = readU32LE(p + 24);
+        namePtr = p + 28;
+    } else {
+        return std::nullopt;
+    }
+
+    if (posTicks < 0)
+        posTicks = 0;
+
+    ParsedMarker m;
+    m.id = ident;
+    m.posUs = static_cast<TimeUs>(posTicks / 10);
+    if (lenTicks > 0) {
+        m.isRegion = true;
+        m.durUs = static_cast<TimeUs>(lenTicks / 10);
+    } else {
+        m.isRegion = false;
+        m.durUs = 0;
+    }
+
+    if (nameBytes > 0 && namePtr && (namePtr - p) + static_cast<qsizetype>(nameBytes) <= avail) {
+        m.name = readUtf16String(namePtr, nameBytes, 0).trimmed();
+    }
+
+    return m;
 }
 
 QString extractPathFromPayload(const uint8_t *data, qsizetype size)
@@ -603,6 +679,29 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                         }
                     }
 
+                    // Extract embedded source markers from media payload if present
+                    qsizetype mScan = 0;
+                    while (mScan + 16 <= payloadSize) {
+                        const void *found = std::memchr(payload + mScan, kGuidMarker[0], payloadSize - mScan);
+                        if (!found)
+                            break;
+                        const qsizetype midx = static_cast<const uint8_t *>(found) - payload;
+                        if (midx + 16 > payloadSize)
+                            break;
+                        if (std::memcmp(payload + midx, kGuidMarker, 16) == 0) {
+                            auto optMarker = parseMarkerPayload(payload + midx + 16, payloadSize - (midx + 16));
+                            if (optMarker.has_value() && !optMarker->name.isEmpty()
+                                && !optMarker->name.startsWith(QLatin1String("Tempo: "))) {
+                                SourceMarker sm;
+                                sm.id = QString::number(optMarker->id);
+                                sm.timeUs = optMarker->posUs;
+                                sm.name = optMarker->name;
+                                asset.markers.append(sm);
+                            }
+                        }
+                        mScan = midx + 1;
+                    }
+
                     project.assets().insert(asset.id, asset);
                     project.assetOrder().append(asset.id);
                 }
@@ -983,7 +1082,94 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         }
     }
 
+    // 4. Parse Timeline Markers and Regions (kTypeMarkerList and kGuidMarker)
     if (depth == 0) {
+        qsizetype markerListStart = -1;
+        qsizetype markerListEnd = -1;
+
+        qsizetype lpos = 40;
+        while (lpos + 24 <= totalSize) {
+            const uint8_t *lptr = bytes + lpos;
+            const quint64 chunkSize = readU64LE(lptr + 16);
+            if (chunkSize < 24 || lpos + static_cast<qsizetype>(chunkSize) > totalSize)
+                break;
+
+            if (std::memcmp(lptr, kGuidW64List, 16) == 0 && lpos + 40 <= totalSize
+                && std::memcmp(lptr + 24, kTypeMarkerList, 16) == 0) {
+                markerListStart = lpos + 40;
+                markerListEnd = lpos + static_cast<qsizetype>(chunkSize);
+                break;
+            }
+            lpos += (chunkSize + 7) & ~7;
+        }
+
+        qsizetype scanPos = 40;
+        while (scanPos + 16 <= totalSize) {
+            const void *found = std::memchr(bytes + scanPos, kGuidMarker[0], totalSize - scanPos);
+            if (!found)
+                break;
+            const qsizetype idx = static_cast<const uint8_t *>(found) - bytes;
+            if (idx + 16 > totalSize)
+                break;
+
+            if (std::memcmp(bytes + idx, kGuidMarker, 16) == 0) {
+                const bool inMarkerList = (markerListStart >= 0 && idx >= markerListStart && idx < markerListEnd);
+                auto optMarker = parseMarkerPayload(bytes + idx + 16, totalSize - (idx + 16));
+                if (optMarker.has_value()) {
+                    const ParsedMarker &m = *optMarker;
+                    const bool isTempo = m.name.startsWith(QLatin1String("Tempo: "));
+                    if (!isTempo && (inMarkerList || !m.name.isEmpty())) {
+                        if (m.isRegion) {
+                            const QString baseLabel = m.name.isEmpty()
+                                ? QStringLiteral("Region %1").arg(m.id)
+                                : m.name;
+                            Bookmark bmIn;
+                            bmIn.timeUs = m.posUs;
+                            bmIn.label = baseLabel;
+                            project.bookmarks().append(bmIn);
+
+                            if (m.durUs > 0) {
+                                Bookmark bmOut;
+                                bmOut.timeUs = m.posUs + m.durUs;
+                                bmOut.label = QStringLiteral("%1 (Out)").arg(baseLabel);
+                                project.bookmarks().append(bmOut);
+                            }
+                        } else {
+                            Bookmark bm;
+                            bm.timeUs = m.posUs;
+                            bm.label = m.name.isEmpty()
+                                ? QStringLiteral("Marker %1").arg(m.id)
+                                : m.name;
+                            project.bookmarks().append(bm);
+                        }
+                    }
+                }
+            }
+            scanPos = idx + 1;
+        }
+
+        if (!project.bookmarks().isEmpty()) {
+            QList<Bookmark> uniqueBookmarks;
+            for (const Bookmark &bm : project.bookmarks()) {
+                bool exists = false;
+                for (const Bookmark &u : uniqueBookmarks) {
+                    if (u.timeUs == bm.timeUs && u.label == bm.label) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists)
+                    uniqueBookmarks.append(bm);
+            }
+            std::sort(uniqueBookmarks.begin(), uniqueBookmarks.end(),
+                      [](const Bookmark &a, const Bookmark &b) {
+                          if (a.timeUs != b.timeUs)
+                              return a.timeUs < b.timeUs;
+                          return a.label < b.label;
+                      });
+            project.bookmarks() = std::move(uniqueBookmarks);
+        }
+
         for (const QString &seqId : project.sequenceIds()) {
             if (!project.openSequenceTabs().contains(seqId))
                 project.openSequenceTabs().append(seqId);

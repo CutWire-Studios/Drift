@@ -22,6 +22,7 @@ private slots:
     void readsEpisode4VegasProjectWithOffset96AndSubdirectories();
     void readsEpisode4WorkprintWithNestedTimelines();
     void readsTrackMetadataStateAndProperties();
+    void readsTimelineMarkersAndRegions();
 };
 
 void TestInterchangeVegas::detectsVegasProject()
@@ -412,6 +413,193 @@ void TestInterchangeVegas::readsTrackMetadataStateAndProperties()
         QVERIFY(std::abs(proj.tracks()[1].pan - (-1.0)) < 0.01);
         // Track 2: panned full Right (+1.0)
         QVERIFY(std::abs(proj.tracks()[2].pan - 1.0) < 0.01);
+    }
+}
+
+void TestInterchangeVegas::readsTimelineMarkersAndRegions()
+{
+    // 1. Test Previously On.veg for take region (Record Take 1)
+    QString vegPrev = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/Previously On.veg");
+    if (!QFile::exists(vegPrev)) {
+        vegPrev = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/Previously On.veg");
+    }
+    if (QFile::exists(vegPrev)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegPrev, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        bool foundIn = false;
+        bool foundOut = false;
+        for (const auto &bm : proj.bookmarks()) {
+            if (bm.label == QStringLiteral("Record Take 1") && bm.timeUs == 0)
+                foundIn = true;
+            if (bm.label.contains(QStringLiteral("Record Take 1")) && bm.timeUs == 38671)
+                foundOut = true;
+        }
+        QVERIFY(foundIn);
+        QVERIFY(foundOut);
+    }
+
+    // 2. Test Acid's Story B.veg for marker (Marker 5) and source marker
+    QString vegAcid = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 5 & 6/Episode 5/Acid's Story B.veg");
+    if (!QFile::exists(vegAcid)) {
+        vegAcid = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 5 & 6/Episode 5/Acid's Story B.veg");
+    }
+    if (QFile::exists(vegAcid)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegAcid, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        bool foundMarker5 = false;
+        for (const auto &bm : proj.bookmarks()) {
+            if (bm.label == QStringLiteral("Marker 5"))
+                foundMarker5 = true;
+        }
+        QVERIFY(foundMarker5);
+
+        // Verify SourceMarker was extracted on asset
+        bool foundSourceMarker = false;
+        for (const auto &asset : proj.assets()) {
+            for (const auto &sm : asset.markers) {
+                if (sm.name == QStringLiteral("Marker 5"))
+                    foundSourceMarker = true;
+            }
+        }
+        QVERIFY(foundSourceMarker);
+    }
+
+    // 3. Test synthetic Wave64 project with kTypeMarkerList (point markers and regions)
+    {
+        static const uint8_t kW64Riff[16] = {
+            0x72, 0x69, 0x66, 0x66, 0x2e, 0x91, 0xcf, 0x11, 0xa5, 0xd6, 0x28, 0xdb, 0x04, 0xc1, 0x00, 0x00
+        };
+        static const uint8_t kW64Wave[16] = {
+            0xef, 0x29, 0xc4, 0x46, 0x4a, 0x90, 0xd2, 0x11, 0x87, 0x22, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kW64List[16] = {
+            0x6c, 0x69, 0x73, 0x74, 0x2f, 0x91, 0xcf, 0x11, 0xa5, 0xd6, 0x28, 0xdb, 0x04, 0xc1, 0x00, 0x00
+        };
+        static const uint8_t kTypeTimeline[16] = {
+            0x47, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kTypeTrack[16] = {
+            0x48, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kTypeEventContainer[16] = {
+            0x49, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kTypeEvent[16] = {
+            0x4a, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kChunkEventTime[16] = {
+            0x6a, 0x20, 0x8d, 0x16, 0x21, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kTypeMarkerList[16] = {
+            0xb5, 0x00, 0x09, 0x1f, 0x84, 0xdc, 0x43, 0x47, 0x81, 0xcb, 0x08, 0x77, 0x44, 0x40, 0x45, 0x98
+        };
+        static const uint8_t kGuidMarker[16] = {
+            0x56, 0x62, 0xf7, 0xab, 0x2d, 0x39, 0xd2, 0x11, 0x86, 0xc7, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+
+        auto writeU32 = [](QByteArray &b, quint32 v) {
+            b.append(reinterpret_cast<const char *>(&v), 4);
+        };
+        auto writeU64 = [](QByteArray &b, quint64 v) {
+            b.append(reinterpret_cast<const char *>(&v), 8);
+        };
+        auto writeGuid = [](QByteArray &b, const uint8_t *g) {
+            b.append(reinterpret_cast<const char *>(g), 16);
+        };
+        auto makeChunk = [&](const uint8_t *guid, const QByteArray &payload) {
+            QByteArray chunk;
+            writeGuid(chunk, guid);
+            writeU64(chunk, 24 + payload.size());
+            chunk.append(payload);
+            return chunk;
+        };
+        auto makeList = [&](const uint8_t *typeGuid, const QByteArray &subChunks) {
+            QByteArray payload;
+            writeGuid(payload, typeGuid);
+            payload.append(subChunks);
+            return makeChunk(kW64List, payload);
+        };
+
+        // Project settings chunk
+        QByteArray c0Payload(48, 0);
+        static const uint8_t kGuidSettings[16] = {
+            0xb2, 0x8f, 0x2d, 0x5a, 0x23, 0x0f, 0x11, 0xd2, 0xaf, 0x86, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        QByteArray c0 = makeChunk(kGuidSettings, c0Payload);
+
+        // Track with 1 event
+        QByteArray timePayload;
+        timePayload.append(16, 0);
+        writeU64(timePayload, 0);        // start 0
+        writeU64(timePayload, 10000000); // dur 1 sec
+        QByteArray timeChunk = makeChunk(kChunkEventTime, timePayload);
+        QByteArray eventList = makeList(kTypeEvent, timeChunk);
+        QByteArray eventContainer = makeList(kTypeEventContainer, eventList);
+        QByteArray trackList = makeList(kTypeTrack, eventContainer);
+        QByteArray timelineList = makeList(kTypeTimeline, trackList);
+
+        // Marker chunk helper
+        auto makeMarker = [&](quint32 id, qint64 posTicks, qint64 lenTicks, const QString &name) {
+            QByteArray chunk;
+            writeGuid(chunk, kGuidMarker);
+            QByteArray nameBytes;
+            if (!name.isEmpty()) {
+                const auto *u16 = name.utf16();
+                nameBytes.append(reinterpret_cast<const char *>(u16), (name.size() + 1) * sizeof(char16_t));
+            }
+            const quint32 hdrSize = 28;
+            const quint32 dataSize = hdrSize + nameBytes.size();
+            writeU32(chunk, dataSize);
+            writeU32(chunk, hdrSize);
+            writeU32(chunk, id);
+            writeU64(chunk, posTicks);
+            writeU64(chunk, lenTicks);
+            writeU32(chunk, nameBytes.size());
+            chunk.append(nameBytes);
+            return chunk;
+        };
+
+        QByteArray markerData;
+        markerData.append(makeMarker(1, 10000000, -1, QStringLiteral("Intro")));        // Point marker at 1.0s
+        markerData.append(makeMarker(2, 20000000, -1, QString()));                      // Unnamed marker at 2.0s -> "Marker 2"
+        markerData.append(makeMarker(3, 30000000, 15000000, QStringLiteral("Chorus"))); // Region at 3.0s, len 1.5s -> "Chorus" and "Chorus (Out)"
+
+        QByteArray markerList = makeList(kTypeMarkerList, markerData);
+
+        QByteArray body = c0 + timelineList + markerList;
+        QByteArray synthData;
+        writeGuid(synthData, kW64Riff);
+        writeU64(synthData, 40 + body.size());
+        writeGuid(synthData, kW64Wave);
+        synthData.append(body);
+
+        QString err;
+        const auto optProj = drift::vegas::readProjectData(synthData, QString(), &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        QCOMPARE(proj.bookmarks().size(), 4);
+        // 1. timeUs = 1,000,000 -> "Intro"
+        QCOMPARE(proj.bookmarks()[0].timeUs, 1000000);
+        QCOMPARE(proj.bookmarks()[0].label, QStringLiteral("Intro"));
+
+        // 2. timeUs = 2,000,000 -> "Marker 2"
+        QCOMPARE(proj.bookmarks()[1].timeUs, 2000000);
+        QCOMPARE(proj.bookmarks()[1].label, QStringLiteral("Marker 2"));
+
+        // 3. timeUs = 3,000,000 -> "Chorus"
+        QCOMPARE(proj.bookmarks()[2].timeUs, 3000000);
+        QCOMPARE(proj.bookmarks()[2].label, QStringLiteral("Chorus"));
+
+        // 4. timeUs = 4,500,000 -> "Chorus (Out)"
+        QCOMPARE(proj.bookmarks()[3].timeUs, 4500000);
+        QCOMPARE(proj.bookmarks()[3].label, QStringLiteral("Chorus (Out)"));
     }
 }
 
