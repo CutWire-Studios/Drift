@@ -2562,6 +2562,10 @@
         <translation>تمت إزالة الوسائط</translation>
     </message>
     <message>
+        <source>A locked track would be changed or deleted. Unlock it first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename media</source>
         <translation>إعادة تسمية الوسائط</translation>
     </message>
@@ -5371,15 +5375,15 @@
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">كاميرا</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">تأثيرات الصوت</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">قناع</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -17011,7 +17015,7 @@
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">تم النسخ</translation>
     </message>
     <message>
         <source>Copy message</source>
@@ -21957,7 +21961,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>0 B</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">0 ب</translation>
     </message>
     <message>
         <source>Drift’s cache is pruned when it passes its size limit.</source>
@@ -27981,7 +27985,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">تم النسخ</translation>
     </message>
     <message>
         <source>Copy message</source>

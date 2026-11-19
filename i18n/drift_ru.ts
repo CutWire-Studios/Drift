@@ -3205,6 +3205,10 @@
         <translation>%1 дБ</translation>
     </message>
     <message>
+        <source>A locked track would be changed or deleted. Unlock it first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Media rotated</source>
         <translation>Медиафайл повёрнут</translation>
     </message>
@@ -5314,19 +5318,19 @@
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Камера</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Аудиоэффекты</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Маска</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Эффекты</translation>
     </message>
     <message>
         <source>Transform %1</source>
@@ -16786,7 +16790,7 @@
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Скопировано</translation>
     </message>
     <message>
         <source>Copy message</source>
@@ -21684,7 +21688,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>0 B</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">0 Б</translation>
     </message>
     <message>
         <source>Drift’s cache is pruned when it passes its size limit.</source>
@@ -27675,7 +27679,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Скопировано</translation>
     </message>
     <message>
         <source>Copy message</source>

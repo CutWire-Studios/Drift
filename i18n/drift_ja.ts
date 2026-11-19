@@ -3091,6 +3091,10 @@
         <translation>%1 dB</translation>
     </message>
     <message>
+        <source>A locked track would be changed or deleted. Unlock it first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Media and referenced clips removed</source>
         <translation>メディアおよび参照されたクリップを削除しました</translation>
     </message>
@@ -5276,19 +5280,19 @@
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">カメラ</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">オーディオ FX</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">マスク</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">エフェクト</translation>
     </message>
     <message>
         <source>Transform %1</source>
@@ -16636,7 +16640,7 @@
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">コピーしました</translation>
     </message>
     <message>
         <source>Copy message</source>
@@ -21503,7 +21507,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>0 B</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">0 B</translation>
     </message>
     <message>
         <source>Drift’s cache is pruned when it passes its size limit.</source>
@@ -27472,7 +27476,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">コピーしました</translation>
     </message>
     <message>
         <source>Copy message</source>

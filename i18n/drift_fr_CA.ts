@@ -3199,6 +3199,10 @@
         <translation>%1 dB</translation>
     </message>
     <message>
+        <source>A locked track would be changed or deleted. Unlock it first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Media rotated</source>
         <translation>Média tourné</translation>
     </message>
@@ -5295,19 +5299,19 @@
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Caméra</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Audio FX</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Masque</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Effets</translation>
     </message>
     <message>
         <source>Transform %1</source>
@@ -16712,7 +16716,7 @@
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Copié</translation>
     </message>
     <message>
         <source>Copy message</source>
@@ -21594,7 +21598,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>0 B</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">0 o</translation>
     </message>
     <message>
         <source>Drift’s cache is pruned when it passes its size limit.</source>
@@ -27576,7 +27580,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Copié</translation>
     </message>
     <message>
         <source>Copy message</source>

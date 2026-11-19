@@ -3185,6 +3185,10 @@
         <translation>%1 dB</translation>
     </message>
     <message>
+        <source>A locked track would be changed or deleted. Unlock it first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Media rotated</source>
         <translation>媒体已旋转</translation>
     </message>
@@ -5280,15 +5284,15 @@
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">音效</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">蒙版</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">效果</translation>
     </message>
     <message>
         <source>Transform %1</source>
@@ -16636,7 +16640,7 @@
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">已复制</translation>
     </message>
     <message>
         <source>Copy message</source>
@@ -21503,7 +21507,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>0 B</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">0 B</translation>
     </message>
     <message>
         <source>Drift’s cache is pruned when it passes its size limit.</source>
@@ -27472,7 +27476,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">已复制</translation>
     </message>
     <message>
         <source>Copy message</source>

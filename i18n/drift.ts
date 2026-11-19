@@ -3195,6 +3195,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>A locked track would be changed or deleted. Unlock it first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Media rotated</source>
         <translation type="unfinished"></translation>
     </message>

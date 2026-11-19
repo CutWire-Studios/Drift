@@ -3100,6 +3100,10 @@
         <translation>%1 dB</translation>
     </message>
     <message>
+        <source>A locked track would be changed or deleted. Unlock it first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Media and referenced clips removed</source>
         <translation>Naalis ang media at mga tinukoy na clip</translation>
     </message>
@@ -5295,19 +5299,19 @@
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Camera</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Epektong audyo</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mask</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Epekto</translation>
     </message>
     <message>
         <source>Transform %1</source>
@@ -16711,7 +16715,7 @@
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nakopya</translation>
     </message>
     <message>
         <source>Copy message</source>
@@ -21594,7 +21598,7 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
     <message>
         <source>0 B</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">0 B</translation>
     </message>
     <message>
         <source>Drift’s cache is pruned when it passes its size limit.</source>
@@ -27574,7 +27578,7 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nakopya</translation>
     </message>
     <message>
         <source>Copy message</source>

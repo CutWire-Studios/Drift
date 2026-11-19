@@ -3185,6 +3185,10 @@
         <translation>%1 dB</translation>
     </message>
     <message>
+        <source>A locked track would be changed or deleted. Unlock it first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Media rotated</source>
         <translation>미디어가 회전됨</translation>
     </message>
@@ -5276,19 +5280,19 @@
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">카메라</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">오디오 효과</translation>
     </message>
     <message>
         <source>Mask</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">마스크</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">효과</translation>
     </message>
     <message>
         <source>Transform %1</source>
@@ -16636,7 +16640,7 @@
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">복사됨</translation>
     </message>
     <message>
         <source>Copy message</source>
@@ -21495,7 +21499,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>0 B</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">0 B</translation>
     </message>
     <message>
         <source>Drift’s cache is pruned when it passes its size limit.</source>
@@ -27463,7 +27467,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">복사됨</translation>
     </message>
     <message>
         <source>Copy message</source>
