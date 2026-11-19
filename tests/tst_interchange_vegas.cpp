@@ -21,6 +21,7 @@ private slots:
     void readsScene2VegasProjectWithMts();
     void readsEpisode4VegasProjectWithOffset96AndSubdirectories();
     void readsEpisode4WorkprintWithNestedTimelines();
+    void readsTrackMetadataStateAndProperties();
 };
 
 void TestInterchangeVegas::detectsVegasProject()
@@ -251,6 +252,26 @@ void TestInterchangeVegas::readsEpisode4VegasProjectWithOffset96AndSubdirectorie
     QCOMPARE(resolvedCount, proj.assets().size());
     // Seven video clips total in Ep 4 (six camera clips + one plate effect)
     QCOMPARE(videoCount, 7);
+
+    // Verify track metadata & naming (P6-05)
+    QCOMPARE(proj.tracks().size(), 4);
+    QCOMPARE(proj.tracks()[0].name, QStringLiteral("Track 1 (video)"));
+    QCOMPARE(proj.tracks()[0].type, drift::TrackType::Video);
+    QCOMPARE(proj.tracks()[0].muted, false);
+    QCOMPARE(proj.tracks()[0].solo, false);
+
+    QCOMPARE(proj.tracks()[1].name, QStringLiteral("Sin"));
+    QCOMPARE(proj.tracks()[1].type, drift::TrackType::Audio);
+    QCOMPARE(proj.tracks()[1].muted, false);
+    QCOMPARE(proj.tracks()[1].solo, false);
+    QCOMPARE(proj.tracks()[1].volume, 1.0);
+    QCOMPARE(proj.tracks()[1].pan, 0.0);
+
+    QCOMPARE(proj.tracks()[2].name, QStringLiteral("Andrew"));
+    QCOMPARE(proj.tracks()[2].type, drift::TrackType::Audio);
+
+    QCOMPARE(proj.tracks()[3].name, QStringLiteral("Boom"));
+    QCOMPARE(proj.tracks()[3].type, drift::TrackType::Audio);
 }
 
 void TestInterchangeVegas::readsEpisode4WorkprintWithNestedTimelines()
@@ -315,6 +336,82 @@ void TestInterchangeVegas::readsEpisode4WorkprintWithNestedTimelines()
     QVERIFY(wpLinkCounts.size() >= 10);
     for (auto it = wpLinkCounts.constBegin(); it != wpLinkCounts.constEnd(); ++it) {
         QVERIFY(it.value() >= 2);
+    }
+}
+
+void TestInterchangeVegas::readsTrackMetadataStateAndProperties()
+{
+    // 1. Test mute states, volume levels, and names on 6.1a.veg
+    QString veg61a = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/OLD/6.1a.veg");
+    if (!QFile::exists(veg61a)) {
+        veg61a = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/OLD/6.1a.veg");
+    }
+    if (QFile::exists(veg61a)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(veg61a, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+        QCOMPARE(proj.tracks().size(), 6);
+
+        // Track 0 & 1: muted camera audio / reference tracks
+        QVERIFY(proj.tracks()[0].muted);
+        QVERIFY(!proj.tracks()[0].solo);
+        QVERIFY(proj.tracks()[1].muted);
+        QVERIFY(!proj.tracks()[1].solo);
+        QVERIFY(!proj.tracks()[2].muted);
+
+        // Track 3: Sin (unmuted, boosted volume ~1.603)
+        QCOMPARE(proj.tracks()[3].name, QStringLiteral("Sin"));
+        QVERIFY(!proj.tracks()[3].muted);
+        QVERIFY(std::abs(proj.tracks()[3].volume - 1.6032) < 0.01);
+
+        // Track 4: Diana (unmuted, boosted volume ~1.758)
+        QCOMPARE(proj.tracks()[4].name, QStringLiteral("Diana"));
+        QVERIFY(!proj.tracks()[4].muted);
+        QVERIFY(std::abs(proj.tracks()[4].volume - 1.7579) < 0.01);
+
+        // Track 5: Room Tone (muted, volume ~0.822)
+        QCOMPARE(proj.tracks()[5].name, QStringLiteral("Room Tone"));
+        QVERIFY(proj.tracks()[5].muted);
+        QVERIFY(std::abs(proj.tracks()[5].volume - 0.8222) < 0.01);
+    }
+
+    // 2. Test solo states on BEACH PARTY B.veg
+    QString vegBeach = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/BEACH PARTY B.veg");
+    if (!QFile::exists(vegBeach)) {
+        vegBeach = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/BEACH PARTY B.veg");
+    }
+    if (QFile::exists(vegBeach)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegBeach, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+        QVERIFY(proj.tracks().size() >= 9);
+
+        QVERIFY(!proj.tracks()[0].solo);
+        QVERIFY(proj.tracks()[1].solo);
+        QVERIFY(!proj.tracks()[2].solo);
+        QVERIFY(proj.tracks()[6].solo);
+        QVERIFY(proj.tracks()[7].solo);
+        QVERIFY(proj.tracks()[8].solo);
+    }
+
+    // 3. Test stereo pan on 9.4c.veg
+    QString vegPan = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/Intermediates/9.4c.veg");
+    if (!QFile::exists(vegPan)) {
+        vegPan = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/Intermediates/9.4c.veg");
+    }
+    if (QFile::exists(vegPan)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegPan, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+        QCOMPARE(proj.tracks().size(), 3);
+
+        // Track 1: panned full Left (-1.0)
+        QVERIFY(std::abs(proj.tracks()[1].pan - (-1.0)) < 0.01);
+        // Track 2: panned full Right (+1.0)
+        QVERIFY(std::abs(proj.tracks()[2].pan - 1.0) < 0.01);
     }
 }
 

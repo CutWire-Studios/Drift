@@ -54,6 +54,12 @@ static const uint8_t kTypeEventGroupList[16] = {
 static const uint8_t kChunkEventGroup[16] = {
     0x32, 0xe1, 0x01, 0xe9, 0x77, 0xc6, 0x04, 0x46, 0xac, 0x9d, 0xdb, 0x0b, 0x87, 0xb4, 0xee, 0xbd
 };
+static const uint8_t kListAudioTrack[16] = {
+    0x26, 0x6c, 0xd4, 0x69, 0x0b, 0x7f, 0xd2, 0x11, 0x87, 0x17, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
+static const uint8_t kChunkAudioTrackProps[16] = {
+    0x27, 0x6c, 0xd4, 0x69, 0x0b, 0x7f, 0xd2, 0x11, 0x87, 0x17, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
 
 inline quint32 readU32LE(const uint8_t *p)
 {
@@ -73,6 +79,14 @@ inline double readDoubleLE(const uint8_t *p)
     double d = 0.0;
     std::memcpy(&d, &val, sizeof(d));
     return d;
+}
+
+inline float readFloatLE(const uint8_t *p)
+{
+    const quint32 val = readU32LE(p);
+    float f = 0.0f;
+    std::memcpy(&f, &val, sizeof(f));
+    return f;
 }
 
 QString readUtf16String(const uint8_t *data, qsizetype size, qsizetype offset)
@@ -665,11 +679,32 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     && std::memcmp(bytes + tpos + 24, kTypeTrack, 16) == 0) {
                     // Track Header
                     TrackType trackType = TrackType::Video;
+                    bool trackMuted = false;
+                    bool trackSolo = false;
+                    QString trackCustomName;
+
                     if (tpos + 64 <= tend) {
                         const quint64 tcsize = readU64LE(bytes + tpos + 56);
-                        if (tcsize >= 36 && tpos + 64 + 36 <= tend) {
-                            const quint32 trackTypeCode = readU32LE(bytes + tpos + 64 + 32);
-                            trackType = (trackTypeCode == 2) ? TrackType::Video : TrackType::Audio;
+                        if (tcsize >= 24 && tpos + 40 + static_cast<qsizetype>(tcsize) <= tend) {
+                            const uint8_t *cpayload = bytes + tpos + 64;
+                            const qsizetype cpayloadSize = static_cast<qsizetype>(tcsize - 24);
+
+                            if (cpayloadSize >= 8) {
+                                const quint32 flags = readU32LE(cpayload + 4);
+                                trackMuted = (flags & 0x01) != 0;
+                                trackSolo = (flags & 0x02) != 0;
+                            }
+                            if (cpayloadSize >= 20) {
+                                const quint32 nameBytes = readU32LE(cpayload + 16);
+                                if (nameBytes > 0 && cpayloadSize >= 56 + static_cast<qsizetype>(nameBytes)) {
+                                    const qsizetype strLen = std::min<qsizetype>(cpayloadSize - 56, nameBytes);
+                                    trackCustomName = readUtf16String(cpayload + 56, strLen, 0).trimmed();
+                                }
+                            }
+                            if (cpayloadSize >= 36) {
+                                const quint32 trackTypeCode = readU32LE(cpayload + 32);
+                                trackType = (trackTypeCode == 2) ? TrackType::Video : TrackType::Audio;
+                            }
                         }
                     }
 
@@ -677,10 +712,16 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     track.type = trackType;
                     track.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
                     track.number = trackNumber++;
-                    track.name = QStringLiteral("Track %1 (%2)")
-                                      .arg(track.number)
-                                      .arg(trackType == TrackType::Video ? QStringLiteral("video")
-                                                                         : QStringLiteral("audio"));
+                    track.muted = trackMuted;
+                    track.solo = trackSolo;
+                    if (!trackCustomName.isEmpty()) {
+                        track.name = trackCustomName;
+                    } else {
+                        track.name = QStringLiteral("Track %1 (%2)")
+                                          .arg(track.number)
+                                          .arg(trackType == TrackType::Video ? QStringLiteral("video")
+                                                                             : QStringLiteral("audio"));
+                    }
 
                     qsizetype evpos = tpos + 40;
                     const qsizetype evend = tpos + static_cast<qsizetype>(tsize);
@@ -788,6 +829,49 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                     }
                                 }
                                 epos += (esize + 7) & ~7;
+                            }
+                        } else if (evsize >= 40 && std::memcmp(bytes + evpos, kGuidW64List, 16) == 0
+                                   && std::memcmp(bytes + evpos + 24, kListAudioTrack, 16) == 0) {
+                            qsizetype apos = evpos + 40;
+                            const qsizetype aend = evpos + static_cast<qsizetype>(evsize);
+                            while (apos + 24 <= aend) {
+                                const uint8_t *aptr = bytes + apos;
+                                const quint64 asize = readU64LE(aptr + 16);
+                                if (asize < 24 || apos + static_cast<qsizetype>(asize) > aend)
+                                    break;
+
+                                if (std::memcmp(aptr, kChunkAudioTrackProps, 16) == 0) {
+                                    const uint8_t *apayload = aptr + 24;
+                                    const qsizetype apayloadSize = static_cast<qsizetype>(asize - 24);
+                                    if (apayloadSize >= 16) {
+                                        const float vol = readFloatLE(apayload + 12);
+                                        if (!std::isnan(vol) && !std::isinf(vol) && vol >= 0.0f)
+                                            track.volume = static_cast<double>(vol);
+                                    }
+                                    if (apayloadSize >= 20) {
+                                        float pan = readFloatLE(apayload + 16);
+                                        if (pan == 0.0f && apayloadSize >= 24)
+                                            pan = readFloatLE(apayload + 20);
+                                        if (!std::isnan(pan) && !std::isinf(pan))
+                                            track.pan = qBound(-1.0, static_cast<double>(pan), 1.0);
+                                    }
+                                }
+                                apos += (asize + 7) & ~7;
+                            }
+                        } else if (std::memcmp(bytes + evpos, kChunkAudioTrackProps, 16) == 0) {
+                            const uint8_t *apayload = bytes + evpos + 24;
+                            const qsizetype apayloadSize = static_cast<qsizetype>(evsize - 24);
+                            if (apayloadSize >= 16) {
+                                const float vol = readFloatLE(apayload + 12);
+                                if (!std::isnan(vol) && !std::isinf(vol) && vol >= 0.0f)
+                                    track.volume = static_cast<double>(vol);
+                            }
+                            if (apayloadSize >= 20) {
+                                float pan = readFloatLE(apayload + 16);
+                                if (pan == 0.0f && apayloadSize >= 24)
+                                    pan = readFloatLE(apayload + 20);
+                                if (!std::isnan(pan) && !std::isinf(pan))
+                                    track.pan = qBound(-1.0, static_cast<double>(pan), 1.0);
                             }
                         }
                         evpos += (evsize + 7) & ~7;
