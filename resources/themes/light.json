@@ -128,8 +128,8 @@
     "categoryLime": "#84cc16",
     "categoryOrange": "#f97316",
     "categoryIndigo": "#6366f1",
-    "nodeGridMinor": "#00000014",
-    "nodeGridMajor": "#00000028",
+    "nodeGridMinor": "#14000000",
+    "nodeGridMajor": "#28000000",
     "controlsFieldWhite": "#ffffffff",
     "controlsFieldWhiteClear": "#00ffffff",
     "controlsFieldBlackClear": "#00000000",
@@ -1089,7 +1089,8 @@
       "rowHover": "$semantic.popoverHover",
       "rowTime": "$semantic.mutedForeground",
       "speech": "$semantic.primary",
-      "music": "$semantic.accentOnPanel"
+      "music": "$semantic.accentOnPanel",
+      "silence": "$semantic.panel.accent"
     },
     "emptyState": {
       "radius": "$metrics.radius.md",

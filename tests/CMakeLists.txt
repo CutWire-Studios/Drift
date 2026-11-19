@@ -47,6 +47,11 @@ target_include_directories(tst_trackeroverlay PRIVATE ../src)
 target_link_libraries(tst_trackeroverlay PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
 add_test(NAME TrackerOverlay COMMAND tst_trackeroverlay)
 
+qt_add_executable(tst_audioducking tst_audioducking.cpp)
+target_include_directories(tst_audioducking PRIVATE ../src)
+target_link_libraries(tst_audioducking PRIVATE Qt6::Test Qt6::Core driftengine driftcore)
+add_test(NAME AudioDucking COMMAND tst_audioducking)
+
 qt_add_executable(tst_curveedit
     tst_curveedit.cpp
     ../src/ui/color/CurveEdit.cpp)

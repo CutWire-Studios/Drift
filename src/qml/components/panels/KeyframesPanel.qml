@@ -161,6 +161,18 @@ PanelFrame {
         selectionObject.clear()
     }
 
+    function autoSmoothKeys() {
+        EditorState.beginEditGroup()
+        if (selectionObject.count > 0) {
+            for (const ref of selectionObject.refs())
+                EditorState.setKeyframeSmooth(track, clipIndex, ref.prop, ref.seconds, false)
+        } else {
+            for (const prop of rowsModelObject.targetTracks(targets))
+                EditorState.setKeyframeSmooth(track, clipIndex, prop, 0, true)
+        }
+        EditorState.endEditGroup(qsTr("Auto-smooth keyframes"))
+    }
+
     function fitAll() {
         timeViewObject.fitClip()
         if (mode === "curves")
@@ -333,11 +345,13 @@ PanelFrame {
         hasTargets: root.targets.length > 0
         allTargetsKeyed: root.allTargetsKeyed
         canClear: root.targetsHaveKeys
+        canSmooth: root.targetsHaveKeys || selectionObject.count > 0
         canFitSelection: selectionObject.count > 0
         onPrevKey: root.jumpToKey(false)
         onNextKey: root.jumpToKey(true)
         onToggleKey: root.toggleKeyAtPlayhead()
         onClearKeys: root.clearTargetKeys()
+        onSmoothKeys: root.autoSmoothKeys()
         onModeRequested: (m) => root.mode = m
         onNormalizeToggled: root.normalize = !root.normalize
         onShowHandlesToggled: root.showHandles = !root.showHandles

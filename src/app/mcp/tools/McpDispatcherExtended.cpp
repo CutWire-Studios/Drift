@@ -378,88 +378,38 @@ QVariantList subtitleCuesFromJson(const QJsonArray &cues)
     return out;
 }
 
-// The id of the right-hand piece a split minted on the track `trackId`. A split also mints
-// tails for linked partners and pinned adjustments on other tracks, so "any new id" is not
-// enough: the next cut has to follow this clip's own piece.
-QString newPieceOnTrack(const drift::Project &project, const QString &trackId, int trackIndex,
-                        const QSet<QString> &before)
+QJsonObject opFailure(const QVariantMap &result)
 {
-    // By id when the track has one (an edit can renumber tracks); else by its index.
-    const int t = trackId.isEmpty() ? trackIndex : project.trackIndexById(trackId);
-    if (t < 0 || t >= project.tracks().size())
-        return {};
-    for (const drift::Clip &clip : project.tracks().at(t).clips) {
-        if (!before.contains(clip.id))
-            return clip.id;
-    }
-    return {};
+    return drift::mcp::err(result.value(QStringLiteral("error")).toString().toLatin1().constData(),
+                           result.value(QStringLiteral("message")).toString());
+}
+
+QJsonObject splitReply(const QVariantMap &result)
+{
+    QJsonArray clips;
+    for (const QString &id : result.value(QStringLiteral("clips")).toStringList())
+        clips.append(id);
+    QJsonArray at;
+    for (const QVariant &t : result.value(QStringLiteral("at")).toList())
+        at.append(t.toDouble());
+    return drift::mcp::ok({{QStringLiteral("clips"), clips},
+                           {QStringLiteral("at"), at},
+                           {QStringLiteral("n"), clips.size()}});
 }
 
 } // namespace
 
-// Splits front to back, each cut on the newest piece, re-resolving by UUID each pass. The id the
-// caller passed keeps naming the first piece, and the pieces are numbered left to right.
 QJsonObject McpDispatcher::opSplitOnBeats(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
 
-    const QString unit = argString(args, QStringLiteral("unit"));
-    // Read the grid before touching anything: finishEdit drops the beat analysis as soon as the
-    // mix changes, so the first cut can take the rest of the grid with it.
-    const QList<double> times = m_controller->mcp()->beatTimes(
-        unit.isEmpty() ? QStringLiteral("beat") : unit,
-        jsonNumber(args.value(QStringLiteral("min_strength")), 0.0));
-    if (times.isEmpty())
-        return err("not_found", QStringLiteral("No beat analysis yet — call detect_beats first"));
-
-    const double minGap = qMax(0.0, jsonNumber(args.value(QStringLiteral("min_gap")), 0.1));
-    const QVariantMap before = m_controller->mcp()->compactClip(ref.track, ref.clip);
-    const double start = before.value(QStringLiteral("start")).toDouble();
-    const double end = start + before.value(QStringLiteral("duration")).toDouble();
-
-    QList<double> cuts;
-    for (double t : times) {
-        if (t - start < minGap || end - t < minGap)
-            continue;
-        if (!cuts.isEmpty() && t - cuts.last() < minGap)
-            continue;
-        cuts.append(t);
-    }
-    if (cuts.isEmpty())
-        return err("bad_args", QStringLiteral("No grid times fall inside that clip"));
-
-    m_controller->mcp()->beginBatch();
-    QJsonArray at;
-    QStringList newIds;
-    // Front to back, each cut on the newest piece: the id the caller passed keeps naming the
-    // first piece, and the pieces are numbered in timeline order ("(2)", "(3)", ...).
-    for (const double cut : std::as_const(cuts)) {
-        const ClipRef here = resolveClip(QJsonObject{{QStringLiteral("clip"), newIds.isEmpty() ? ref.id : newIds.last()}});
-        if (!here.valid())
-            break;
-        const QSet<QString> idsBefore = clipIdSet(m_controller);
-        const QString trackId = m_controller->project()->tracks().at(here.track).id;
-        m_controller->splitClipAt(here.track, here.clip, cut);
-        const QString minted = newPieceOnTrack(*m_controller->project(), trackId, here.track, idsBefore);
-        if (minted.isEmpty())
-            continue; // refused (locked track, or the time landed on an edge after rounding)
-        newIds.append(minted);
-        at.append(cut);
-    }
-    m_controller->mcp()->endBatch(QStringLiteral("Split on beats"), !newIds.isEmpty());
-
-    if (newIds.isEmpty())
-        return err("apply_failed", QStringLiteral("No cuts were made"));
-
-    QJsonArray clips;
-    clips.append(ref.id); // the original id now names the first piece
-    for (const QString &id : std::as_const(newIds))
-        clips.append(id);
-    return ok({{QStringLiteral("clips"), clips},
-               {QStringLiteral("at"), at},
-               {QStringLiteral("n"), clips.size()}});
+    const QVariantMap result = m_controller->splitClipOnBeats(
+        ref.track, ref.clip, argString(args, QStringLiteral("unit")),
+        jsonNumber(args.value(QStringLiteral("min_strength")), 0.0),
+        jsonNumber(args.value(QStringLiteral("min_gap")), 0.1));
+    return result.contains(QStringLiteral("error")) ? opFailure(result) : splitReply(result);
 }
 
 QJsonObject McpDispatcher::opSplitOnScenes(const QJsonObject &args)
@@ -468,156 +418,42 @@ QJsonObject McpDispatcher::opSplitOnScenes(const QJsonObject &args)
     if (!ref.valid())
         return clipRefError(args);
 
-    // Read the boundaries before touching anything. Unlike beats the analysis survives edits,
-    // but the times are relative to the clip being cut, and each cut renumbers what follows.
-    const QList<double> times =
-        m_controller->mcp()->sceneCutTimes(jsonNumber(args.value(QStringLiteral("min_score")), 0.0),
-                                       argString(args, QStringLiteral("label")));
-    if (times.isEmpty()) {
-        return err("not_found",
-                   QStringLiteral("No scene analysis for that clip — call detect_scenes first"));
-    }
-
-    const double minGap = qMax(0.0, jsonNumber(args.value(QStringLiteral("min_gap")), 0.1));
-    const QVariantMap before = m_controller->mcp()->compactClip(ref.track, ref.clip);
-    const double start = before.value(QStringLiteral("start")).toDouble();
-    const double end = start + before.value(QStringLiteral("duration")).toDouble();
-
-    QList<double> cuts;
-    for (double t : times) {
-        if (t - start < minGap || end - t < minGap)
-            continue;
-        if (!cuts.isEmpty() && t - cuts.last() < minGap)
-            continue;
-        cuts.append(t);
-    }
-    if (cuts.isEmpty())
-        return err("bad_args", QStringLiteral("No scene boundaries fall inside that clip"));
-
-    m_controller->mcp()->beginBatch();
-    QJsonArray at;
-    QStringList newIds;
-    // Front to back, each cut on the newest piece: the id the caller passed keeps naming the
-    // first piece, and the pieces are numbered in timeline order ("(2)", "(3)", ...).
-    for (const double cut : std::as_const(cuts)) {
-        const ClipRef here = resolveClip(QJsonObject{{QStringLiteral("clip"), newIds.isEmpty() ? ref.id : newIds.last()}});
-        if (!here.valid())
-            break;
-        const QSet<QString> idsBefore = clipIdSet(m_controller);
-        const QString trackId = m_controller->project()->tracks().at(here.track).id;
-        m_controller->splitClipAt(here.track, here.clip, cut);
-        const QString minted = newPieceOnTrack(*m_controller->project(), trackId, here.track, idsBefore);
-        if (minted.isEmpty())
-            continue; // refused (locked track, or the time landed on an edge after rounding)
-        newIds.append(minted);
-        at.append(cut);
-    }
-    m_controller->mcp()->endBatch(QStringLiteral("Split on scenes"), !newIds.isEmpty());
-
-    if (newIds.isEmpty())
-        return err("apply_failed", QStringLiteral("No cuts were made"));
-
-    QJsonArray clips;
-    clips.append(ref.id); // the original id now names the first piece
-    for (const QString &id : std::as_const(newIds))
-        clips.append(id);
-    return ok({{QStringLiteral("clips"), clips},
-               {QStringLiteral("at"), at},
-               {QStringLiteral("n"), clips.size()}});
+    const QVariantMap result = m_controller->scenes()->splitClipAtScenes(
+        ref.track, ref.clip, jsonNumber(args.value(QStringLiteral("min_score")), 0.0),
+        argString(args, QStringLiteral("label")),
+        jsonNumber(args.value(QStringLiteral("min_gap")), 0.1));
+    return result.contains(QStringLiteral("error")) ? opFailure(result) : splitReply(result);
 }
 
 QJsonObject McpDispatcher::opSnapClipsToBeats(const QJsonObject &args)
 {
-    const QString unit = argString(args, QStringLiteral("unit"));
-    const QList<double> times = m_controller->mcp()->beatTimes(
-        unit.isEmpty() ? QStringLiteral("beat") : unit,
-        jsonNumber(args.value(QStringLiteral("min_strength")), 0.0));
-    if (times.isEmpty())
-        return err("not_found", QStringLiteral("No beat analysis yet — call detect_beats first"));
+    QStringList clips;
+    for (const QJsonValue &v : args.value(QStringLiteral("clips")).toArray())
+        clips.append(v.toString());
+    std::optional<int> track;
+    if (args.contains(QStringLiteral("track")))
+        track = jsonInt(args.value(QStringLiteral("track")));
 
-    // Resolve to UUIDs up front: the first move renumbers everything after it on the track.
-    QStringList targets;
-    const QJsonArray requested = args.value(QStringLiteral("clips")).toArray();
-    if (!requested.isEmpty()) {
-        for (const QJsonValue &v : requested) {
-            const QString id = v.toString().trimmed();
-            if (!id.isEmpty())
-                targets.append(id);
-        }
-    } else if (args.contains(QStringLiteral("track"))) {
-        const int t = jsonInt(args.value(QStringLiteral("track")));
-        if (t < 0 || t >= m_controller->tracks().size())
-            return err("not_found", QStringLiteral("No such track"));
-        const QVariantList clips = m_controller->tracks().at(t).toMap()
-                                       .value(QStringLiteral("clips")).toList();
-        for (int c = 0; c < clips.size(); ++c)
-            targets.append(m_controller->mcp()->clipId(t, c));
-    } else {
-        return err("bad_args", QStringLiteral("clips or track required"));
-    }
-    if (targets.isEmpty())
-        return err("not_found", QStringLiteral("No clips to quantise"));
+    const QVariantMap result = m_controller->snapClipsToBeats(
+        clips, track, argString(args, QStringLiteral("unit")),
+        jsonNumber(args.value(QStringLiteral("min_strength")), 0.0),
+        jsonNumber(args.value(QStringLiteral("max_distance")), 0.25));
+    if (result.contains(QStringLiteral("error")))
+        return opFailure(result);
 
-    const double maxDistance =
-        qMax(0.0, jsonNumber(args.value(QStringLiteral("max_distance")), 0.25));
-
-    // Ascending start order, so a clip is never shoved by the gap-resolve of a later one.
-    struct Target {
-        QString id;
-        double start = 0.0;
-    };
-    QList<Target> ordered;
-    for (const QString &id : std::as_const(targets)) {
-        const ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), id}});
-        if (!ref.valid())
-            continue;
-        ordered.append({id, m_controller->mcp()->compactClip(ref.track, ref.clip)
-                                .value(QStringLiteral("start")).toDouble()});
-    }
-    std::sort(ordered.begin(), ordered.end(),
-              [](const Target &a, const Target &b) { return a.start < b.start; });
-
-    m_controller->mcp()->beginBatch();
     QJsonArray moved;
-    QJsonArray skipped;
-    for (const Target &target : std::as_const(ordered)) {
-        double nearest = times.first();
-        for (double t : times) {
-            if (qAbs(t - target.start) < qAbs(nearest - target.start))
-                nearest = t;
-        }
-        if (qAbs(nearest - target.start) > maxDistance) {
-            skipped.append(QJsonObject{{QStringLiteral("clip"), target.id},
-                                       {QStringLiteral("reason"), QStringLiteral("too_far")}});
-            continue;
-        }
-
-        const ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), target.id}});
-        if (!ref.valid()) {
-            skipped.append(QJsonObject{{QStringLiteral("clip"), target.id},
-                                       {QStringLiteral("reason"), QStringLiteral("not_found")}});
-            continue;
-        }
-        m_controller->setClipStart(ref.track, ref.clip, nearest);
-
-        // Report where it landed, not where it was aimed: with overlap off, resolveClipStart
-        // pushes a clip to the next free gap and the two differ.
-        const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), target.id}});
-        const double placed = after.valid()
-                                  ? m_controller->mcp()->compactClip(after.track, after.clip)
-                                        .value(QStringLiteral("start")).toDouble()
-                                  : target.start;
-        if (qAbs(placed - target.start) < 0.0005) {
-            skipped.append(QJsonObject{{QStringLiteral("clip"), target.id},
-                                       {QStringLiteral("reason"), QStringLiteral("unchanged")}});
-            continue;
-        }
-        moved.append(QJsonObject{{QStringLiteral("clip"), target.id},
-                                 {QStringLiteral("from"), target.start},
-                                 {QStringLiteral("to"), placed}});
+    for (const QVariant &v : result.value(QStringLiteral("moved")).toList()) {
+        const QVariantMap m = v.toMap();
+        moved.append(QJsonObject{{QStringLiteral("clip"), m.value(QStringLiteral("clip")).toString()},
+                                 {QStringLiteral("from"), m.value(QStringLiteral("from")).toDouble()},
+                                 {QStringLiteral("to"), m.value(QStringLiteral("to")).toDouble()}});
     }
-    m_controller->mcp()->endBatch(QStringLiteral("Snap clips to beats"), !moved.isEmpty());
-
+    QJsonArray skipped;
+    for (const QVariant &v : result.value(QStringLiteral("skipped")).toList()) {
+        const QVariantMap m = v.toMap();
+        skipped.append(QJsonObject{{QStringLiteral("clip"), m.value(QStringLiteral("clip")).toString()},
+                                   {QStringLiteral("reason"), m.value(QStringLiteral("reason")).toString()}});
+    }
     return ok({{QStringLiteral("moved"), moved},
                {QStringLiteral("skipped"), skipped},
                {QStringLiteral("n"), moved.size()}});
@@ -659,11 +495,6 @@ drift::SceneCamera3d cameraFromState(const QVariantMap &state)
     camera.targetZ = state.value(QStringLiteral("poiZ")).toDouble();
     camera.zoom = state.value(QStringLiteral("zoom")).toDouble();
     return camera;
-}
-
-QSizeF canvasOf(AppController *controller)
-{
-    return QSizeF(controller->projectFile()->projectWidth(), controller->projectFile()->projectHeight());
 }
 
 QJsonArray eyeArray(const drift::SceneCamera3d &camera)
@@ -830,12 +661,7 @@ QJsonObject McpDispatcher::opCameraLookAt(const QJsonObject &args)
 QJsonObject McpDispatcher::opCameraMove(const QJsonObject &args)
 {
     const QString move = args.value(QStringLiteral("move")).toString();
-    static const QStringList moves = {
-        QStringLiteral("dolly_in"),  QStringLiteral("dolly_out"), QStringLiteral("push_in"),
-        QStringLiteral("pull_out"),  QStringLiteral("pan_left"),  QStringLiteral("pan_right"),
-        QStringLiteral("tilt_up"),   QStringLiteral("tilt_down"), QStringLiteral("truck_left"),
-        QStringLiteral("truck_right"), QStringLiteral("crane_up"), QStringLiteral("crane_down"),
-        QStringLiteral("orbit_left"), QStringLiteral("orbit_right")};
+    const QStringList moves = AppController::cameraMoveIds();
     if (!moves.contains(move))
         return err("bad_args", QStringLiteral("move must be one of %1").arg(moves.join(QLatin1Char('|'))));
     if (!args.contains(QStringLiteral("start")) || !args.contains(QStringLiteral("end")))
@@ -864,38 +690,14 @@ QJsonObject McpDispatcher::opCameraMove(const QJsonObject &args)
     const double amountArg = hasAmount ? jsonNumber(args.value(QStringLiteral("amount")), 0) : 0.0;
     if (hasAmount && !(amountArg > 0.0))
         return err("bad_args", QStringLiteral("amount must be positive"));
-    auto amountOr = [&](double fallback) { return hasAmount ? amountArg : fallback; };
 
-    const drift::SceneCamera3d from = cameraFromState(state);
-    drift::SceneCamera3d to = from;
-    const QMatrix4x4 turn = drift::sceneCameraRotation(from);
-    const auto along = [&](const QVector3D &axis, double amount) {
-        const QVector3D step = turn.mapVector(axis) * float(amount);
-        to.positionX += step.x();
-        to.positionY += step.y();
-        to.positionZ += step.z();
-    };
-    if (move == QLatin1String("dolly_in") || move == QLatin1String("dolly_out")) {
-        along({0.f, 0.f, 1.f}, (move == QLatin1String("dolly_in") ? 1.0 : -1.0) * amountOr(300.0));
-    } else if (move == QLatin1String("push_in") || move == QLatin1String("pull_out")) {
-        const double fraction = qBound(0.0, amountOr(0.35), 0.9);
-        to.zoom = from.zoom * (move == QLatin1String("push_in") ? 1.0 + fraction : 1.0 - fraction);
-    } else if (move == QLatin1String("pan_left") || move == QLatin1String("pan_right")) {
-        to = drift::rotatedKeepingEye(from, from.rotationX,
-                                      from.rotationY + (move == QLatin1String("pan_right") ? 1.0 : -1.0) * amountOr(20.0));
-    } else if (move == QLatin1String("tilt_up") || move == QLatin1String("tilt_down")) {
-        to = drift::rotatedKeepingEye(from, from.rotationX + (move == QLatin1String("tilt_up") ? 1.0 : -1.0) * amountOr(15.0),
-                                      from.rotationY);
-    } else if (move == QLatin1String("truck_left") || move == QLatin1String("truck_right")) {
-        along({1.f, 0.f, 0.f}, (move == QLatin1String("truck_right") ? 1.0 : -1.0) * amountOr(200.0));
-    } else if (move == QLatin1String("crane_up") || move == QLatin1String("crane_down")) {
-        along({0.f, 1.f, 0.f}, (move == QLatin1String("crane_down") ? 1.0 : -1.0) * amountOr(200.0));
-    } else {
-        const QSizeF canvas = canvasOf(m_controller);
-        QVector3D centre(float(canvas.width() * 0.5), float(canvas.height() * 0.5), 0.f);
+    bool hasCentre = false;
+    QVector3D centre;
+    if (move.startsWith(QLatin1String("orbit_"))) {
         const QJsonValue targetValue = args.value(QStringLiteral("target"));
         if (targetValue.isObject()) {
             const QJsonObject point = targetValue.toObject();
+            hasCentre = true;
             centre = QVector3D(float(point.value(QStringLiteral("x")).toDouble()),
                                float(point.value(QStringLiteral("y")).toDouble()),
                                float(point.value(QStringLiteral("z")).toDouble()));
@@ -904,52 +706,26 @@ QJsonObject McpDispatcher::opCameraMove(const QJsonObject &args)
             if (!ref.valid())
                 return clipRefError(QJsonObject{{QStringLiteral("clip"), targetValue.toString()}});
             const QVariantList c = m_controller->clipWorldCentreAt(ref.track, ref.clip, start);
+            hasCentre = true;
             centre = QVector3D(float(c.value(0).toDouble()), float(c.value(1).toDouble()), float(c.value(2).toDouble()));
         } else if (!targetValue.isUndefined()) {
             return err("bad_args", QStringLiteral("target must be a clip id or {x,y,z}"));
         }
-        // Circle the target about the vertical axis; + degrees swings the eye toward +x (right). The
-        // eye sits at -z of its target and a right-handed turn about y takes -z toward -x, hence the sign.
-        const double degrees = (move == QLatin1String("orbit_left") ? -1.0 : 1.0) * amountOr(45.0);
-        QMatrix4x4 swing;
-        swing.rotate(float(-degrees), 0.f, 1.f, 0.f);
-        const QVector3D eye = centre + swing.map(drift::sceneCameraEye(from) - centre);
-        to = drift::aimAt(from, eye, centre);
     }
 
-    const double playhead = m_controller->playheadSeconds();
-    m_controller->mcp()->beginBatch();
-    QJsonArray written;
-    for (const CameraProp &p : kCameraProps) {
-        if (qFuzzyCompare(1.0 + from.*p.field, 1.0 + to.*p.field))
-            continue;
-        const QString prop = QString::fromLatin1(p.name);
-        m_controller->setClipKeyframe(track, index, prop, start, from.*p.field);
-        m_controller->setClipKeyframe(track, index, prop, end, to.*p.field);
-        // Easing lives on the segment's first key, and the preset acts on the key at the playhead.
-        m_controller->setPlayheadSeconds(start);
-        m_controller->setKeyframeInterpolation(track, index, prop, easing);
-        written.append(prop);
-    }
-    m_controller->setPlayheadSeconds(playhead);
-    m_controller->mcp()->endBatch(QStringLiteral("Camera move"), !written.isEmpty());
-    if (written.isEmpty())
-        return err("bad_args", QStringLiteral("That move changes nothing"));
+    const QVariantMap moved = m_controller->applyCameraMove(track, index, move, start, end, easing, hasAmount,
+                                                            amountArg, hasCentre, centre);
+    if (moved.contains(QStringLiteral("error")))
+        return err("bad_args", moved.value(QStringLiteral("error")).toString());
 
     return ok({{QStringLiteral("clip"), m_controller->mcp()->clipId(track, index)},
                {QStringLiteral("move"), move},
                {QStringLiteral("start"), start},
                {QStringLiteral("end"), end},
                {QStringLiteral("easing"), easing},
-               {QStringLiteral("props"), written},
-               {QStringLiteral("from"), QJsonObject{{QStringLiteral("eye"), eyeArray(from)},
-                                                    {QStringLiteral("rotationX"), from.rotationX},
-                                                    {QStringLiteral("rotationY"), from.rotationY},
-                                                    {QStringLiteral("zoom"), from.zoom}}},
-               {QStringLiteral("to"), QJsonObject{{QStringLiteral("eye"), eyeArray(to)},
-                                                  {QStringLiteral("rotationX"), to.rotationX},
-                                                  {QStringLiteral("rotationY"), to.rotationY},
-                                                  {QStringLiteral("zoom"), to.zoom}}}});
+               {QStringLiteral("props"), QJsonArray::fromStringList(moved.value(QStringLiteral("props")).toStringList())},
+               {QStringLiteral("from"), QJsonObject::fromVariantMap(moved.value(QStringLiteral("from")).toMap())},
+               {QStringLiteral("to"), QJsonObject::fromVariantMap(moved.value(QStringLiteral("to")).toMap())}});
 }
 
 QJsonObject McpDispatcher::opProxies(const QString &tool, const QJsonObject &args)
@@ -3502,14 +3278,14 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
 
     if (tool == QLatin1String("bookmark_beats")) {
         const QString unit = argString(args, QStringLiteral("unit"));
-        const int added = m_controller->mcp()->bookmarkBeats(
+        const int added = m_controller->bookmarkBeats(
             jsonNumber(args.value(QStringLiteral("start")), 0.0),
             jsonNumber(args.value(QStringLiteral("duration")), 0.0),
             unit.isEmpty() ? QStringLiteral("beat") : unit,
             jsonNumber(args.value(QStringLiteral("min_strength")), 0.0),
             argString(args, QStringLiteral("label")).isEmpty() ? QStringLiteral("Beat")
                                                                : argString(args, QStringLiteral("label")));
-        if (added == 0 && m_controller->mcp()->beatTimes(unit, 0.0).isEmpty())
+        if (added == 0 && m_controller->beatTimes(unit, 0.0).isEmpty())
             return err("not_found", QStringLiteral("No beat analysis yet — call detect_beats first"));
         return ok({{QStringLiteral("added"), added}});
     }
@@ -3574,7 +3350,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return opSplitOnScenes(args);
 
     if (tool == QLatin1String("bookmark_scenes")) {
-        const int added = m_controller->mcp()->bookmarkScenes(
+        const int added = m_controller->scenes()->bookmarkScenes(
             jsonNumber(args.value(QStringLiteral("min_score")), 0.0),
             argString(args, QStringLiteral("label")),
             args.contains(QStringLiteral("prefix"))
@@ -3585,7 +3361,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                        QStringLiteral("No scene analysis to mark — call detect_scenes first"));
         }
         QJsonArray at;
-        for (double t : m_controller->mcp()->sceneCutTimes(
+        for (double t : m_controller->scenes()->cutTimes(
                  jsonNumber(args.value(QStringLiteral("min_score")), 0.0),
                  argString(args, QStringLiteral("label")))) {
             at.append(t);
@@ -3730,14 +3506,14 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     if (tool == QLatin1String("undo_to")) {
         const QString hash = argString(args, QStringLiteral("hash"));
         if (!hash.isEmpty())
-            return m_controller->mcp()->undoTo(-1, hash);
+            return m_controller->jumpToHistory(-1, hash);
         if (!args.contains(QStringLiteral("index")))
             return err("bad_args", QStringLiteral("index or hash required"));
-        return m_controller->mcp()->undoTo(jsonInt(args.value(QStringLiteral("index")), -1), {});
+        return m_controller->jumpToHistory(jsonInt(args.value(QStringLiteral("index")), -1), {});
     }
 
     if (tool == QLatin1String("take_snapshot"))
-        return m_controller->mcp()->takeSnapshot(argString(args, QStringLiteral("label")));
+        return m_controller->takeSnapshot(argString(args, QStringLiteral("label")));
 
     if (tool == QLatin1String("clear_history"))
         return m_controller->mcp()->clearHistory(jsonInt(args.value(QStringLiteral("keep_last")), 0));
@@ -3750,21 +3526,21 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         std::optional<bool> persist;
         if (args.contains(QStringLiteral("persist")))
             persist = jsonBool(args.value(QStringLiteral("persist")), true);
-        return m_controller->mcp()->setHistoryLimit(jsonBool(args.value(QStringLiteral("reset")), false),
+        return m_controller->setHistoryLimit(jsonBool(args.value(QStringLiteral("reset")), false),
                                                     steps, persist);
     }
 
     if (tool == QLatin1String("history_stats"))
-        return m_controller->mcp()->historyStats(jsonBool(args.value(QStringLiteral("size")), false));
+        return m_controller->historyStats(jsonBool(args.value(QStringLiteral("size")), false));
 
     if (tool == QLatin1String("list_snapshots"))
-        return m_controller->mcp()->listSnapshots();
+        return m_controller->listSnapshots();
 
     if (tool == QLatin1String("restore_snapshot")) {
         const QString hash = argString(args, QStringLiteral("hash"));
         if (hash.isEmpty())
             return err("bad_args", QStringLiteral("hash required"));
-        return m_controller->mcp()->restoreSnapshot(hash);
+        return m_controller->restoreSnapshot(hash);
     }
 
     if (tool == QLatin1String("set_ripple")) {
@@ -4246,7 +4022,10 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const QString mode = args.contains(QStringLiteral("mode"))
                                  ? argString(args, QStringLiteral("mode"))
                                  : QStringLiteral("face");
-        return m_controller->mcp()->autoReframe(ref.track, ref.clip, aspect, mode);
+        const QVariantMap result = m_controller->autoReframeClip(ref.track, ref.clip, aspect, mode);
+        if (result.contains(QStringLiteral("error")))
+            return opFailure(result);
+        return ok(QJsonObject::fromVariantMap(result));
     }
 
     if (tool == QLatin1String("set_scene_threshold")) {
@@ -4406,11 +4185,18 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const int overTrack = args.contains(QStringLiteral("over_track"))
                                   ? jsonInt(args.value(QStringLiteral("over_track")))
                                   : -1;
+        drift::DuckSettings settings;
+        const double amount = qBound(0.0, jsonNumber(args.value(QStringLiteral("amount")), 0.3), 1.0);
+        settings.reduceDb = args.contains(QStringLiteral("reduce_db"))
+                                ? qMin(0.0, jsonNumber(args.value(QStringLiteral("reduce_db")), -12.0))
+                                : (amount > 0.0 ? 20.0 * std::log10(amount) : -120.0);
+        settings.attackSeconds = jsonNumber(args.value(QStringLiteral("attack")), 0.12);
+        settings.releaseSeconds = jsonNumber(args.value(QStringLiteral("release")), 0.25);
+        settings.holdSeconds = jsonNumber(args.value(QStringLiteral("hold")), 0.5);
         return m_controller->mcp()->duckUnder(
-            music.track, music.clip, overTrack, overClips,
-            jsonNumber(args.value(QStringLiteral("amount")), 0.3),
-            jsonNumber(args.value(QStringLiteral("attack")), 0.12),
-            jsonNumber(args.value(QStringLiteral("release")), 0.25));
+            music.track, music.clip, overTrack, overClips, settings,
+            jsonNumber(args.value(QStringLiteral("sensitivity")), 0.5),
+            args.value(QStringLiteral("method")).toString(QStringLiteral("auto")));
     }
 
     if (tool == QLatin1String("setup_multicam")) {

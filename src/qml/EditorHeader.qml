@@ -61,7 +61,7 @@ Item {
 
     function closeTopDialog() {
         const dialogs = [unsavedDialog, exportDialogLoader.item, exportProgressDialogLoader.item,
-                         projectPropertiesDialogLoader.item, agentAccessDialog, videoSizeDialogLoader.item, bakesDialogLoader.item,
+                         projectPropertiesDialogLoader.item, projectHealthDialogLoader.item, agentAccessDialog, videoSizeDialogLoader.item, bakesDialogLoader.item,
                          languageChooserDialogLoader.item, packageProgressDialog]
         for (var i = 0; i < dialogs.length; ++i) {
             const d = dialogs[i]
@@ -341,6 +341,11 @@ Item {
     }
 
     LazyLoader {
+        id: projectHealthDialogLoader
+        sourceComponent: Component { ProjectHealthDialog { } }
+    }
+
+    LazyLoader {
         id: bakesDialogLoader
         sourceComponent: Component { BakesDialog { } }
     }
@@ -396,6 +401,7 @@ Item {
                 onSaveJsonRequested: root.saveProjectJson()
                 onOpenJsonRequested: root.openProjectJson()
                 onPropertiesRequested: projectPropertiesDialogLoader.ensure().openDialog()
+                onHealthRequested: projectHealthDialogLoader.ensure().openDialog()
             }
 
             IconButton {

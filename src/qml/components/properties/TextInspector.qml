@@ -127,12 +127,15 @@ Item {
     // Overrides the category while on: the Favorites chip shows starred presets from every category.
     property bool animFavoritesOnly: false
     property int favoritesTick: 0
+    property int userAnimTick: 0
     readonly property var animPresets: {
         void root.animSlot
+        void root.userAnimTick
         return EditorState.textAnimationPresets(root.animSlot)
     }
     readonly property var animCategories: {
         void root.animSlot
+        void root.userAnimTick
         return EditorState.textAnimationCategories(root.animSlot)
     }
     readonly property var animTileModel: {
@@ -148,6 +151,7 @@ Item {
     }
     readonly property var animation: (textStyle && textStyle.animation) || ({})
     readonly property var slotData: animation[animSlot] || ({ "preset": "", "enabled": true, "custom": false })
+    readonly property bool selectedPresetIsUser: slotHasPreset && slotData.preset.indexOf("user:") === 0
     readonly property bool slotHasPreset: !!slotData.preset && slotData.preset.length > 0
     readonly property var selectedPreset: {
         for (let i = 0; i < root.animPresets.length; ++i) {
@@ -194,6 +198,39 @@ Item {
     function openSaveStyle() {
         saveStyleDialog.openWith(qsTr("Save text style"),
                                  qsTr("My style %1").arg(EditorState.userTextPresets().length + 1))
+    }
+    function importAnimationPreset() {
+        const url = FileDialogs.openFile(qsTr("Import animation"),
+                                         [qsTr("Animation presets (*.json *.lottie)")])
+        if (!url || url.toString() === "")
+            return
+        const result = EditorState.importTextAnimationPreset(url, root.animSlot)
+        if (!result.ok) {
+            Toasts.error(result.error || qsTr("Couldn’t import that animation."))
+            return
+        }
+        root.animFavoritesOnly = false
+        root.animCategory = "imported"
+        if (result.unsupported && result.unsupported.length > 0)
+            Toasts.warning(qsTr("Imported, but some features aren’t supported: %1").arg(result.unsupported.join(", ")))
+        else
+            Toasts.info(qsTr("Animation imported."))
+    }
+    function exportAnimationPreset() {
+        const url = FileDialogs.saveFile(qsTr("Export animation"), [qsTr("Animation preset (*.json)")],
+                                         root.selectedPreset ? root.selectedPreset.label : "", "json")
+        if (!url || url.toString() === "")
+            return
+        if (EditorState.exportUserTextAnimationPreset(root.slotData.preset, url))
+            Toasts.info(qsTr("Animation exported."))
+        else
+            Toasts.error(qsTr("Couldn’t export the animation."))
+    }
+    function requestRenameAnimation() {
+        renameAnimDialog.openWith(qsTr("Rename animation"), root.selectedPreset ? root.selectedPreset.label : "")
+    }
+    function requestDeleteAnimation() {
+        deleteAnimDialog.open()
     }
     function openVoiceover() {
         voiceoverDialog.openFor(EditorState.selectedTrack, EditorState.selectedClip)
@@ -402,6 +439,38 @@ Item {
         id: saveStyleDialog
         onSubmitted: name => EditorState.saveTextStyleAsPreset(EditorState.selectedTrack,
                                                                EditorState.selectedClip, name)
+    }
+
+    Connections {
+        target: EditorState
+        function onUserTextAnimationPresetsChanged() { root.userAnimTick++ }
+    }
+
+    NameDialog {
+        id: renameAnimDialog
+        acceptText: qsTr("Rename")
+        onSubmitted: name => EditorState.renameUserTextAnimationPreset(root.slotData.preset, name)
+    }
+
+    ThemedDialog {
+        id: deleteAnimDialog
+        title: qsTr("Delete animation")
+        acceptText: qsTr("Delete")
+        acceptVariant: "destructive"
+        preferredWidth: Theme.dialogWidthSm
+        acceptOnReturn: false
+        onAccepted: {
+            const id = root.slotData.preset
+            root.pickPreset("")
+            EditorState.deleteUserTextAnimationPreset(id)
+        }
+
+        contentItem: ThemedLabel {
+            width: parent ? parent.width : 320
+            wrapMode: Text.WordWrap
+            text: qsTr("Remove “%1” from your imported animations? It is also cleared from the selected clip.")
+                      .arg(root.selectedPreset ? root.selectedPreset.label : "")
+        }
     }
 
     VoiceoverDialog {

@@ -2235,13 +2235,21 @@
               clipRefProps())) },
         { "duck_under", "audio", "Lower music under speech",
           "Write volume keyframes on this (music) clip that dip whenever speech is present on "
-          "over_track or over_clips. amount is the volume multiplier during speech. One undo step.",
+          "over_track or over_clips (all other tracks are ignored). Speech is found with the "
+          "Silero voice model when installed (method auto/vad), otherwise by loudness (energy). "
+          "amount is the volume multiplier during speech, or give reduce_db. Pauses shorter than "
+          "hold + attack + release stay ducked. Re-running replaces the previous pass. One undo "
+          "step. Returns {keys, speech, rest, ducked, method}.",
           objectSchema(mergeProps(
               {{QStringLiteral("over_track"), integerProp(QStringLiteral("Track whose non-silent ranges drive the duck"))},
                {QStringLiteral("over_clips"), arrayProp(stringProp(QStringLiteral("Clip UUID")), QStringLiteral("Speech clips; wins over over_track"))},
                {QStringLiteral("amount"), propWithDefault(numberProp(QStringLiteral("Multiplier during speech"), 0, 1), 0.3)},
                {QStringLiteral("attack"), propWithDefault(numberProp(QStringLiteral("Seconds to ramp down before speech")), 0.12)},
-               {QStringLiteral("release"), propWithDefault(numberProp(QStringLiteral("Seconds to ramp back after speech")), 0.25)}},
+               {QStringLiteral("release"), propWithDefault(numberProp(QStringLiteral("Seconds to ramp back after speech")), 0.25)},
+               {QStringLiteral("reduce_db"), numberProp(QStringLiteral("Reduction in dB (<= 0); overrides amount"), -60, 0)},
+               {QStringLiteral("hold"), propWithDefault(numberProp(QStringLiteral("Pauses shorter than this stay ducked, seconds"), 0, 10), 0.5)},
+               {QStringLiteral("sensitivity"), propWithDefault(numberProp(QStringLiteral("0 = only loud speech, 1 = quiet speech too"), 0, 1), 0.5)},
+               {QStringLiteral("method"), propWithDefault(stringProp(QStringLiteral("auto, energy (loudness) or vad (voice model)")), QStringLiteral("auto"))}},
               clipRefProps())) },
         { "setup_multicam", "multicam", "Open a multi-camera session",
           "With two or more video clips selected, start punching those as angles. Otherwise place "

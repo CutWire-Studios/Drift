@@ -269,6 +269,7 @@ class AppController : public QObject
     // saved with the project, cleared whenever the underlying audio could have moved.
     Q_PROPERTY(QVariantMap beatAnalysis READ beatAnalysis NOTIFY beatAnalysisChanged)
     Q_PROPERTY(bool beatAnalysisRunning READ beatAnalysisRunning NOTIFY beatAnalysisChanged)
+    Q_PROPERTY(bool beatsAvailable READ beatsAvailable NOTIFY beatAnalysisChanged)
     // The grid and the transients are independently shown and snapped to. Both come out of
     // one analysis pass — the tempo is derived from the same onset envelope — so these
     // gate display and snapping, not the DSP.
@@ -808,6 +809,19 @@ public:
     Q_INVOKABLE double cameraZoomFromFocalLength(double millimetres) const;
     Q_INVOKABLE double cameraZoomFromFov(double degrees) const;
     Q_INVOKABLE void setCameraAimAtTarget(int trackIndex, int clipIndex, bool enabled);
+    static QStringList cameraMoveIds();
+    // The named moves as {id, label}, in the order the add-camera-move menu lists them.
+    Q_INVOKABLE QVariantList cameraMovePresets() const;
+    // Keys the named move on a camera clip over start..end (timeline seconds, inside the clip), as one
+    // undo step. amount <= 0 or !hasAmount takes the move's own default; centre (x,y,z) is the orbit
+    // pivot, the canvas centre when !hasCentre. Returns {props, from, to}, or {error} when nothing was written.
+    QVariantMap applyCameraMove(int trackIndex, int clipIndex, const QString &move, double start, double end,
+                                const QString &easing, bool hasAmount, double amount, bool hasCentre,
+                                const QVector3D &centre);
+    // The menu's entry point: the camera is the selected camera clip, else the one under the playhead;
+    // the span is the work area, else the selected clip, else two seconds from the playhead, trimmed
+    // to the camera clip. Failures go to the status line.
+    Q_INVOKABLE bool addCameraMove(const QString &move);
     // Where a clip's centre sits in the 3D world (canvas px from the top-left, y down, +z away from
     // the viewer) at `seconds`. Ignores any transform-layer parent.
     QVariantList clipWorldCentreAt(int trackIndex, int clipIndex, double seconds) const;
@@ -936,6 +950,36 @@ public:
     // not. Cutting every track while one clip is selected is never what picking that clip meant.
     Q_INVOKABLE void splitAtPlayheadForSelection();
     Q_INVOKABLE void splitClipAt(int trackIndex, int clipIndex, double seconds);
+    // Beat times in timeline seconds from the last analysis; unit is "beat", "bar" or "onset".
+    QList<double> beatTimes(const QString &unit, double minStrength) const;
+    // The three ops below report a failure as {error: code, message}; success carries the
+    // result keys (clips/at, moved/skipped). Each is one undo step.
+    QVariantMap splitClipOnBeats(int trackIndex, int clipIndex, const QString &unit, double minStrength,
+                                 double minGap);
+    // Cuts the clip at `times` front to back, re-resolving each piece by UUID after every cut.
+    QVariantMap splitClipAtTimes(int trackIndex, int clipIndex, const QList<double> &times, double minGap,
+                                 const QString &undoText, const QString &noneInsideMessage);
+    QVariantMap snapClipsToBeats(const QStringList &clipIds, std::optional<int> track, const QString &unit,
+                                 double minStrength, double maxDistance);
+    // Markers at the beat grid (durSeconds <= 0 means to the end). Returns how many were added.
+    int bookmarkBeats(double startSeconds, double durSeconds, const QString &unit, double minStrength,
+                      const QString &labelPrefix);
+    // Markers at `times` that are not already within snap range of one; numbering counts skipped
+    // times too. Returns how many were added.
+    int addBookmarksAtTimes(const QList<double> &times, double from, double to, bool ranged,
+                            const QString &labelPrefix, const QString &undoText);
+    // The clip's id, or the ids of the whole selection when the clip is part of a multi-selection.
+    QStringList clipIdsForAction(int trackIndex, int clipIndex) const;
+    // Timeline-menu actions for the clip (or its multi-selection); results go to the status toast.
+    Q_INVOKABLE void splitSelectionOnBeats(int trackIndex, int clipIndex, const QString &unit);
+    Q_INVOKABLE void snapSelectionToBeats(int trackIndex, int clipIndex, const QString &unit);
+    Q_INVOKABLE void addMarkersAtBeats(const QString &unit);
+    bool beatsAvailable() const { return !m_beatAnalysisRaw.beats.isEmpty(); }
+    // Keys a crop window of `aspect` (<= 0 means 9:16) onto the clip's subject: mode "face" follows
+    // its face track when it has one, "center" holds the middle. Failure is {error, message};
+    // success {keys, aspect, mode[, scale, upscaled]}. One undo step.
+    QVariantMap autoReframeClip(int trackIndex, int clipIndex, double aspect, const QString &mode);
+    Q_INVOKABLE void autoReframe(int trackIndex, int clipIndex, double aspect, const QString &mode);
     Q_INVOKABLE void splitClipLeftAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipRightAt(int trackIndex, int clipIndex, double seconds);
     // What a trim would do, without doing it. The drag previews through these: applying the
@@ -990,6 +1034,9 @@ public:
         QString error;
     };
     GapCloseResult closeGapsRippled(int trackIndex, drift::TimeUs fromUs, drift::TimeUs toUs);
+    // closeGapsRippled over the work area, or the whole track when there is none, reporting through
+    // the status toast.
+    Q_INVOKABLE void closeGapsInWorkArea(int trackIndex);
     // Reordering on one track, one undo step each. moveClipNextTo moves a clip (with everything
     // linked to it) to the start (`after` false) or end of another clip on its track; the clips
     // in between move by its length so the track keeps its spacing. swapClips exchanges two
@@ -1006,6 +1053,11 @@ public:
     };
     ReorderResult moveClipNextTo(const QString &clipId, const QString &neighbourId, bool after);
     ReorderResult swapClips(const QString &firstId, const QString &secondId);
+    // The clip right before/after this one on its track by timeline start, or empty. Adjustment
+    // tracks have none: their clips follow the clips they apply to.
+    QString neighbourClipId(int trackIndex, int clipIndex, bool next) const;
+    Q_INVOKABLE bool hasClipNeighbour(int trackIndex, int clipIndex, bool next) const;
+    Q_INVOKABLE void swapWithNeighbour(int trackIndex, int clipIndex, bool next);
     // setClipTrim's arithmetic on one clip: clamps the range to the source and re-derives the
     // timeline duration from it and the speed.
     void applyClipTrim(drift::Clip &clip, double inPoint, double outPoint) const;
@@ -1505,7 +1557,7 @@ public:
                                      double atSeconds, bool hold);
     // Catmull-Rom auto tangents on the key at atSeconds, or on every key when `all`. Never touches
     // the other position axis. Returns false when the property has no such key.
-    bool setKeyframeSmooth(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
+    Q_INVOKABLE bool setKeyframeSmooth(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
                            bool all);
     struct KeyframeBatch
     {
@@ -1554,8 +1606,24 @@ public:
     // undo step: the adjustments pinned to it go, and a nested lane left empty goes with them. A
     // pinned adjustment stands for its clip. Only this clip's stacks: a linked A/V partner keeps
     // its own. Returns how many adjustment clips were deleted; 0 changes nothing and pushes no undo.
-    int removeAllEffects(int trackIndex, int clipIndex, bool includeMasks = false);
+    Q_INVOKABLE int removeAllEffects(int trackIndex, int clipIndex, bool includeMasks = false);
     Q_INVOKABLE void setEffectEnabled(int trackIndex, int clipIndex, int effectIndex, bool enabled);
+    // Drops all but the newest `keepLast` applied steps, and every undone (redo) one. Returns
+    // how many steps went.
+    Q_INVOKABLE int clearUndoHistory(int keepLast);
+    // History snapshots on disk, and this project's own history limit (the Settings values apply
+    // until it is set). Replies are the MCP shapes: {ok, ...} or {ok:false, error, detail}.
+    Q_INVOKABLE QJsonObject historyStats(bool size = false);
+    Q_INVOKABLE QJsonObject historySettings() const;
+    Q_INVOKABLE QJsonObject takeSnapshot(const QString &label = {});
+    Q_INVOKABLE QJsonObject listSnapshots() const;
+    Q_INVOKABLE QJsonObject restoreSnapshot(const QString &hash);
+    Q_INVOKABLE QJsonObject setProjectHistorySteps(int steps);
+    Q_INVOKABLE QJsonObject setProjectHistoryPersist(bool persist);
+    Q_INVOKABLE QJsonObject resetProjectHistory();
+    // Unset optionals leave that part of the project's setting as it is.
+    QJsonObject setHistoryLimit(bool reset, std::optional<int> steps, std::optional<bool> persist);
+    QJsonObject jumpToHistory(int index, const QString &hash);
     Q_INVOKABLE void moveEffect(int trackIndex, int clipIndex, int fromIndex, int toIndex);
     Q_INVOKABLE bool setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
                                     double value);
@@ -2385,9 +2453,6 @@ protected:
     void trimUndoHistory();
     // Keeps steps [first, last) of `capture` with `index` of them applied; the project is untouched.
     void rebuildUndoStack(const drift::HistoryCapture &capture, int first, int last, int index);
-    // Drops all but the newest `keepLast` applied steps, and every undone (redo) one. Returns
-    // how many steps went.
-    int clearUndoHistory(int keepLast);
     // This project's own history settings, saved with it, each overriding the app's when set.
     // Steps: kProjectHistoryUnset, -1 = no limit, 0 = no history, N = most undoable steps.
     // Persist: -1 unset, 0 = this session only, 1 = saved with the project. Kept apart so turning

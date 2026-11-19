@@ -296,10 +296,36 @@ Item {
                 wrapMode: Text.WordWrap
             }
 
-            ThemedButton {
-                text: qsTr("Reset camera")
-                tooltip: qsTr("Back to rest: the default position, no rotation, no target and the default zoom, framing the canvas head on.")
-                onClicked: EditorState.preview.resetSceneCamera(EditorState.selectedTrack, EditorState.selectedClip)
+            Row {
+                spacing: Theme.spacingSm
+
+                ThemedButton {
+                    id: addMoveButton
+                    text: qsTr("Add camera move")
+                    tooltip: qsTr("Keys a named move (dolly, pan, crane, orbit…) over the work area, else this clip, from the camera's current framing.")
+                    onClicked: moveMenu.popup(0, addMoveButton.height + 2)
+                }
+
+                ThemedButton {
+                    text: qsTr("Reset camera")
+                    tooltip: qsTr("Back to rest: the default position, no rotation, no target and the default zoom, framing the canvas head on.")
+                    onClicked: EditorState.preview.resetSceneCamera(EditorState.selectedTrack, EditorState.selectedClip)
+                }
+            }
+
+            ThemedContextMenu {
+                id: moveMenu
+
+                Instantiator {
+                    model: EditorState.cameraMovePresets()
+                    delegate: ThemedMenuItem {
+                        required property var modelData
+                        text: modelData.label
+                        onTriggered: EditorState.addCameraMove(modelData.id)
+                    }
+                    onObjectAdded: (i, object) => moveMenu.insertItem(i, object)
+                    onObjectRemoved: (i, object) => moveMenu.removeItem(object)
+                }
             }
         }
     }

@@ -2270,13 +2270,34 @@ QByteArray AppController::audioLayoutFingerprint() const
         if (track.type != drift::TrackType::Audio && track.type != drift::TrackType::Video)
             continue;
         hash.addData(drift::trackAudible(track, anySolo) ? "a" : "-");
-        for (const drift::Clip &clip : track.clips) {
+        // A plain cut leaves the mix untouched, so consecutive pieces that continue one another
+        // hash as the single clip they came from — otherwise split_on_beats drops its own grid.
+        const auto plain = [](const drift::Clip &c) {
+            return !c.reverse && !c.loops() && !c.hasSpeedCurve() && c.volume.keyframes().isEmpty();
+        };
+        for (qsizetype i = 0; i < track.clips.size(); ++i) {
+            const drift::Clip &clip = track.clips.at(i);
+            drift::TimeUs runDuration = clip.timelineDuration;
+            drift::TimeUs runSrcOut = clip.srcOut;
+            while (plain(clip) && i + 1 < track.clips.size()) {
+                const drift::Clip &next = track.clips.at(i + 1);
+                if (!plain(next) || next.assetId != clip.assetId
+                    || next.timelineStart != clip.timelineStart + runDuration
+                    || next.srcIn != runSrcOut || next.speed != clip.speed
+                    || next.suppressEmbeddedAudio != clip.suppressEmbeddedAudio
+                    || next.audioEffects.size() != clip.audioEffects.size() || next.pan != clip.pan) {
+                    break;
+                }
+                runDuration += next.timelineDuration;
+                runSrcOut = next.srcOut;
+                ++i;
+            }
             const QString row = QStringLiteral("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10")
                                     .arg(clip.assetId)
                                     .arg(clip.timelineStart)
-                                    .arg(clip.timelineDuration)
+                                    .arg(runDuration)
                                     .arg(clip.srcIn)
-                                    .arg(clip.srcOut)
+                                    .arg(runSrcOut)
                                     .arg(clip.speed)
                                     .arg(clip.reverse ? 1 : 0)
                                     .arg(clip.suppressEmbeddedAudio ? 1 : 0)

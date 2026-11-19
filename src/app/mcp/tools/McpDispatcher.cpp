@@ -1152,9 +1152,9 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
     if (tool == QLatin1String("remove_unused_assets"))
         return opRemoveUnusedAssets(args);
     if (tool == QLatin1String("list_missing_media"))
-        return m_controller->mcp()->missingMedia();
+        return m_controller->bin()->missingMedia();
     if (tool == QLatin1String("relink_media"))
-        return m_controller->mcp()->relinkMedia(args);
+        return m_controller->bin()->relinkMedia(args);
     if (tool == QLatin1String("rename_asset"))
         return opRenameAsset(args);
     if (tool == QLatin1String("add_track"))
@@ -1274,7 +1274,7 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
     if (tool == QLatin1String("wait_idle"))
         return opWaitIdle(args);
     if (tool == QLatin1String("validate_project"))
-        return ok(m_controller->mcp()->validateProject(jsonInt(args.value(QStringLiteral("limit")), 200)));
+        return ok(m_controller->bin()->validateProject(jsonInt(args.value(QStringLiteral("limit")), 200)));
     if (tool == QLatin1String("list_animated_properties"))
         return opListAnimatedProperties(args);
     if (tool == QLatin1String("list_keyframes"))
@@ -1631,52 +1631,7 @@ QJsonObject McpDispatcher::opListAssets(const QJsonObject &args) const
 
 QJsonObject McpDispatcher::opRemoveUnusedAssets(const QJsonObject &args)
 {
-    AssetLibrary *lib = m_controller->assetLibrary();
-    if (!lib)
-        return err("unsupported", QStringLiteral("No media library"));
-    const bool dryRun = jsonBool(args.value(QStringLiteral("dry_run")), false);
-    const QHash<QString, int> counts = m_controller->clipCountsByAsset();
-    const QHash<QString, int> derived = m_controller->derivedAssetCounts();
-    QStringList ids;
-    QJsonArray listed;
-    int composites = 0;
-    int sources = 0;
-    for (int i = 0; i < lib->count(); ++i) {
-        const QVariantMap a = lib->assetAt(i);
-        const QString id = a.value(QStringLiteral("id")).toString();
-        if (id.isEmpty() || counts.value(id) > 0)
-            continue;
-        // A composite is a whole nested timeline, not media: removing an unplaced one would
-        // delete that timeline, so it stays (remove_asset takes it explicitly).
-        if (a.value(QStringLiteral("kind")).toString() == QLatin1String("composite")) {
-            ++composites;
-            continue;
-        }
-        // The original of a stabilized render: re-stabilizing reads it, and a re-import would
-        // not reconnect it (it gets a new id).
-        if (derived.value(id) > 0) {
-            ++sources;
-            continue;
-        }
-        ids.append(id);
-        listed.append(QJsonObject{{QStringLiteral("id"), id},
-                                  {QStringLiteral("name"), a.value(QStringLiteral("name")).toString()},
-                                  {QStringLiteral("kind"), a.value(QStringLiteral("kind")).toString()}});
-    }
-    QJsonObject reply{{QStringLiteral("assets"), listed},
-                      {QStringLiteral("dry_run"), dryRun},
-                      {QStringLiteral("kept_composites"), composites},
-                      {QStringLiteral("kept_sources"), sources}};
-    if (dryRun || ids.isEmpty()) {
-        reply.insert(QStringLiteral("removed"), 0);
-        return ok(reply);
-    }
-    // One undo step for the lot; refused as a whole if a clip started using one meanwhile.
-    const int removed = m_controller->removeAssets(ids);
-    if (removed == 0)
-        return err("conflict", QStringLiteral("An asset came into use; list again"));
-    reply.insert(QStringLiteral("removed"), removed);
-    return ok(reply);
+    return m_controller->bin()->removeUnusedAssets(jsonBool(args.value(QStringLiteral("dry_run")), false));
 }
 
 QJsonObject McpDispatcher::opRenameAsset(const QJsonObject &args)

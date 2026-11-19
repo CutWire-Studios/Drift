@@ -3368,6 +3368,39 @@ AppController::ReorderResult AppController::swapClips(const QString &firstId, co
     return result;
 }
 
+QString AppController::neighbourClipId(int trackIndex, int clipIndex, bool next) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex) || m_project.tracks().at(trackIndex).isAdjustment())
+        return {};
+    const auto &clips = m_project.tracks().at(trackIndex).clips;
+    const drift::TimeUs start = clips.at(clipIndex).timelineStart;
+    const drift::Clip *best = nullptr;
+    for (int i = 0; i < clips.size(); ++i) {
+        if (i == clipIndex)
+            continue;
+        const drift::Clip &other = clips.at(i);
+        if (next ? other.timelineStart > start && (!best || other.timelineStart < best->timelineStart)
+                 : other.timelineStart < start && (!best || other.timelineStart > best->timelineStart))
+            best = &other;
+    }
+    return best ? best->id : QString();
+}
+
+bool AppController::hasClipNeighbour(int trackIndex, int clipIndex, bool next) const
+{
+    return !neighbourClipId(trackIndex, clipIndex, next).isEmpty();
+}
+
+void AppController::swapWithNeighbour(int trackIndex, int clipIndex, bool next)
+{
+    const QString other = neighbourClipId(trackIndex, clipIndex, next);
+    if (other.isEmpty())
+        return;
+    const ReorderResult result = swapClips(m_project.tracks().at(trackIndex).clips.at(clipIndex).id, other);
+    if (!result.error.isEmpty())
+        setLastMessage(result.error, QStringLiteral("error"));
+}
+
 AppController::SequenceResult AppController::setTrackSequence(int trackIndex, const QList<SequenceEntry> &entries,
                                                               drift::TimeUs startUs)
 {
@@ -4141,4 +4174,352 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
     if (macro)
         m_undoStack.endMacro();
     finishEdit(tr("Clips moved"));
+}
+
+namespace {
+
+QVariantMap beatsFailure(const char *code, const QString &message)
+{
+    return QVariantMap{{QStringLiteral("error"), QString::fromLatin1(code)},
+                       {QStringLiteral("message"), message}};
+}
+
+// The id of the right-hand piece a split minted on the track `trackId`. A split also mints
+// tails for linked partners and pinned adjustments on other tracks, so "any new id" is not
+// enough: the next cut has to follow this clip's own piece.
+QString newPieceOnTrack(const drift::Project &project, const QString &trackId, int trackIndex,
+                        const QSet<QString> &before)
+{
+    const int t = trackId.isEmpty() ? trackIndex : project.trackIndexById(trackId);
+    if (t < 0 || t >= project.tracks().size())
+        return {};
+    for (const drift::Clip &clip : project.tracks().at(t).clips) {
+        if (!before.contains(clip.id))
+            return clip.id;
+    }
+    return {};
+}
+
+QSet<QString> allClipIds(const drift::Project &project)
+{
+    QSet<QString> ids;
+    for (const drift::Track &track : project.tracks()) {
+        for (const drift::Clip &clip : track.clips)
+            ids.insert(clip.id);
+    }
+    return ids;
+}
+
+} // namespace
+
+QList<double> AppController::beatTimes(const QString &unit, double minStrength) const
+{
+    QList<double> times;
+    const QString u = unit.trimmed().toLower();
+
+    if (u == QLatin1String("onset")) {
+        for (const AudioOnset &o : m_beatAnalysisRaw.onsets) {
+            if (o.strength >= minStrength)
+                times.append(o.seconds);
+        }
+        return times;
+    }
+
+    const QList<double> &beats = m_beatAnalysisRaw.beats;
+    if (u == QLatin1String("bar")) {
+        const int per = qMax(1, m_beatAnalysisRaw.beatsPerBar);
+        // Count bars from the detected downbeat, not from index 0, or every bar line lands on
+        // whichever beat happened to be first in the analysed window.
+        const int first = qBound(0, m_beatAnalysisRaw.firstDownbeat, qMax(0, beats.size() - 1));
+        for (int i = first; i < beats.size(); i += per)
+            times.append(beats.at(i));
+        return times;
+    }
+
+    return beats;
+}
+
+// Splits front to back, each cut on the newest piece, re-resolving by UUID each pass. The id the
+// caller passed keeps naming the first piece, and the pieces are numbered left to right.
+QVariantMap AppController::splitClipAtTimes(int trackIndex, int clipIndex, const QList<double> &times,
+                                            double minGap, const QString &undoText,
+                                            const QString &noneInsideMessage)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return beatsFailure("not_found", QStringLiteral("Unknown clip"));
+    const drift::Clip &target = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const QString firstId = target.id;
+    const double start = drift::usToSeconds(target.timelineStart);
+    const double end = start + drift::usToSeconds(target.timelineDuration);
+
+    QList<double> cuts;
+    for (double t : times) {
+        if (t - start < minGap || end - t < minGap)
+            continue;
+        if (!cuts.isEmpty() && t - cuts.last() < minGap)
+            continue;
+        cuts.append(t);
+    }
+    if (cuts.isEmpty())
+        return beatsFailure("bad_args", noneInsideMessage);
+
+    m_mcpController->beginBatch();
+    QVariantList at;
+    QStringList newIds;
+    for (const double cut : std::as_const(cuts)) {
+        const QPair<int, int> here = m_mcpController->locateClip(newIds.isEmpty() ? firstId : newIds.last());
+        if (here.first < 0 || here.second < 0)
+            break;
+        const QSet<QString> idsBefore = allClipIds(m_project);
+        const QString trackId = m_project.tracks().at(here.first).id;
+        splitClipAt(here.first, here.second, cut);
+        const QString minted = newPieceOnTrack(m_project, trackId, here.first, idsBefore);
+        if (minted.isEmpty())
+            continue; // refused (locked track, or the time landed on an edge after rounding)
+        newIds.append(minted);
+        at.append(cut);
+    }
+    m_mcpController->endBatch(undoText, !newIds.isEmpty());
+
+    if (newIds.isEmpty())
+        return beatsFailure("apply_failed", QStringLiteral("No cuts were made"));
+
+    QStringList clips{firstId}; // the original id now names the first piece
+    clips.append(newIds);
+    return QVariantMap{{QStringLiteral("clips"), clips}, {QStringLiteral("at"), at}};
+}
+
+QVariantMap AppController::splitClipOnBeats(int trackIndex, int clipIndex, const QString &unit,
+                                            double minStrength, double minGap)
+{
+    // Read the grid before touching anything: finishEdit drops the beat analysis as soon as the
+    // mix changes, so the first cut can take the rest of the grid with it.
+    const QList<double> times = beatTimes(unit.isEmpty() ? QStringLiteral("beat") : unit, minStrength);
+    if (times.isEmpty())
+        return beatsFailure("not_found", QStringLiteral("No beat analysis yet — call detect_beats first"));
+    return splitClipAtTimes(trackIndex, clipIndex, times, qMax(0.0, minGap), QStringLiteral("Split on beats"),
+                            QStringLiteral("No grid times fall inside that clip"));
+}
+
+QVariantMap AppController::snapClipsToBeats(const QStringList &clipIds, std::optional<int> track,
+                                            const QString &unit, double minStrength,
+                                            double maxDistance)
+{
+    const QList<double> times = beatTimes(unit.isEmpty() ? QStringLiteral("beat") : unit, minStrength);
+    if (times.isEmpty())
+        return beatsFailure("not_found", QStringLiteral("No beat analysis yet — call detect_beats first"));
+
+    // Resolve to UUIDs up front: the first move renumbers everything after it on the track.
+    QStringList targets;
+    if (!clipIds.isEmpty()) {
+        for (const QString &raw : clipIds) {
+            const QString id = raw.trimmed();
+            if (!id.isEmpty())
+                targets.append(id);
+        }
+    } else if (track.has_value()) {
+        const int t = *track;
+        if (t < 0 || t >= m_project.tracks().size())
+            return beatsFailure("not_found", QStringLiteral("No such track"));
+        for (const drift::Clip &clip : m_project.tracks().at(t).clips)
+            targets.append(clip.id);
+    } else {
+        return beatsFailure("bad_args", QStringLiteral("clips or track required"));
+    }
+    if (targets.isEmpty())
+        return beatsFailure("not_found", QStringLiteral("No clips to quantise"));
+
+    maxDistance = qMax(0.0, maxDistance);
+
+    struct Target {
+        QString id;
+        double start = 0.0;
+    };
+    const auto startOf = [this](const QString &id, double *start) {
+        const QPair<int, int> at = m_mcpController->locateClip(id);
+        if (at.first < 0 || at.second < 0 || !isValidClipIndex(at.first, at.second))
+            return false;
+        *start = drift::usToSeconds(m_project.tracks().at(at.first).clips.at(at.second).timelineStart);
+        return true;
+    };
+    // Ascending start order, so a clip is never shoved by the gap-resolve of a later one.
+    QList<Target> ordered;
+    for (const QString &id : std::as_const(targets)) {
+        double start = 0.0;
+        if (startOf(id, &start))
+            ordered.append({id, start});
+    }
+    std::sort(ordered.begin(), ordered.end(),
+              [](const Target &a, const Target &b) { return a.start < b.start; });
+
+    m_mcpController->beginBatch();
+    QVariantList moved;
+    QVariantList skipped;
+    const auto skip = [&skipped](const QString &id, const char *reason) {
+        skipped.append(QVariantMap{{QStringLiteral("clip"), id},
+                                   {QStringLiteral("reason"), QString::fromLatin1(reason)}});
+    };
+    for (const Target &target : std::as_const(ordered)) {
+        double nearest = times.first();
+        for (double t : times) {
+            if (qAbs(t - target.start) < qAbs(nearest - target.start))
+                nearest = t;
+        }
+        if (qAbs(nearest - target.start) > maxDistance) {
+            skip(target.id, "too_far");
+            continue;
+        }
+
+        const QPair<int, int> at = m_mcpController->locateClip(target.id);
+        if (at.first < 0 || at.second < 0) {
+            skip(target.id, "not_found");
+            continue;
+        }
+        setClipStart(at.first, at.second, nearest);
+
+        // Report where it landed, not where it was aimed: with overlap off, resolveClipStart
+        // pushes a clip to the next free gap and the two differ.
+        double placed = target.start;
+        startOf(target.id, &placed);
+        if (qAbs(placed - target.start) < 0.0005) {
+            skip(target.id, "unchanged");
+            continue;
+        }
+        moved.append(QVariantMap{{QStringLiteral("clip"), target.id},
+                                 {QStringLiteral("from"), target.start},
+                                 {QStringLiteral("to"), placed}});
+    }
+    m_mcpController->endBatch(QStringLiteral("Snap clips to beats"), !moved.isEmpty());
+    return QVariantMap{{QStringLiteral("moved"), moved}, {QStringLiteral("skipped"), skipped}};
+}
+
+int AppController::addBookmarksAtTimes(const QList<double> &times, double from, double to, bool ranged,
+                                       const QString &labelPrefix, const QString &undoText)
+{
+    if (times.isEmpty())
+        return 0;
+
+    const drift::Project before = m_project;
+    QList<drift::Bookmark> marks = m_project.bookmarks();
+    int added = 0;
+    int n = 1;
+    for (double t : times) {
+        if (t < from || (ranged && t > to)) {
+            ++n;
+            continue;
+        }
+        const drift::TimeUs at = drift::secondsToUs(t);
+        // Bookmarks are snap targets themselves; stacking several inside one snap threshold
+        // would make the magnet ambiguous rather than stronger.
+        const bool crowded = std::any_of(marks.cbegin(), marks.cend(),
+                                         [at](const drift::Bookmark &b) {
+                                             return qAbs(b.timeUs - at) < drift::kSnapThresholdUs;
+                                         });
+        if (crowded) {
+            ++n;
+            continue;
+        }
+        marks.append(drift::Bookmark{at, QStringLiteral("%1 %2").arg(labelPrefix).arg(n)});
+        ++added;
+        ++n;
+    }
+    if (added == 0)
+        return 0;
+
+    std::sort(marks.begin(), marks.end(),
+              [](const drift::Bookmark &a, const drift::Bookmark &b) { return a.timeUs < b.timeUs; });
+    m_project.bookmarks() = marks;
+    pushProjectEdit(before, undoText);
+    finishEdit(undoText);
+    return added;
+}
+
+int AppController::bookmarkBeats(double startSeconds, double durSeconds, const QString &unit,
+                                 double minStrength, const QString &labelPrefix)
+{
+    const double from = qMax(0.0, startSeconds);
+    return addBookmarksAtTimes(beatTimes(unit, minStrength), from, from + durSeconds, durSeconds > 0.0,
+                               labelPrefix, QStringLiteral("Bookmark beats"));
+}
+
+void AppController::splitSelectionOnBeats(int trackIndex, int clipIndex, const QString &unit)
+{
+    const QStringList ids = clipIdsForAction(trackIndex, clipIndex);
+    const QList<double> times = beatTimes(unit, 0.0);
+    if (times.isEmpty()) {
+        setLastMessage(tr("Detect beats first"), QStringLiteral("warning"));
+        return;
+    }
+    int made = 0;
+    QString failure;
+    m_mcpController->beginBatch();
+    for (const QString &id : ids) {
+        const QPair<int, int> at = m_mcpController->locateClip(id);
+        const QVariantMap result = splitClipAtTimes(at.first, at.second, times, 0.1, tr("Split on beats"),
+                                                    tr("No beats fall inside the clip"));
+        if (result.contains(QStringLiteral("error")))
+            failure = result.value(QStringLiteral("message")).toString();
+        else
+            made += result.value(QStringLiteral("at")).toList().size();
+    }
+    m_mcpController->endBatch(tr("Split on beats"), made > 0);
+    if (made > 0)
+        setLastMessage(tr("Split on %n beat(s)", nullptr, made));
+    else
+        setLastMessage(failure.isEmpty() ? tr("No cuts were made") : failure, QStringLiteral("warning"));
+}
+
+void AppController::snapSelectionToBeats(int trackIndex, int clipIndex, const QString &unit)
+{
+    const QVariantMap result = snapClipsToBeats(clipIdsForAction(trackIndex, clipIndex), std::nullopt, unit,
+                                                0.0, 0.25);
+    if (result.contains(QStringLiteral("error"))) {
+        setLastMessage(result.value(QStringLiteral("message")).toString(), QStringLiteral("warning"));
+        return;
+    }
+    const int moved = result.value(QStringLiteral("moved")).toList().size();
+    if (moved > 0)
+        setLastMessage(tr("Snapped %n clip(s) to the beat", nullptr, moved));
+    else
+        setLastMessage(tr("No clips were close enough to a beat"), QStringLiteral("warning"));
+}
+
+void AppController::addMarkersAtBeats(const QString &unit)
+{
+    const int added = bookmarkBeats(0.0, 0.0, unit, 0.0, tr("Beat"));
+    if (added > 0)
+        setLastMessage(tr("Added %n marker(s)", nullptr, added));
+    else
+        setLastMessage(tr("No new markers to add"), QStringLiteral("warning"));
+}
+
+QStringList AppController::clipIdsForAction(int trackIndex, int clipIndex) const
+{
+    QStringList ids;
+    if (m_selection.contains({trackIndex, clipIndex}) && m_selection.size() > 1) {
+        for (const QPair<int, int> &pair : m_selection) {
+            if (isValidClipIndex(pair.first, pair.second))
+                ids.append(m_project.tracks().at(pair.first).clips.at(pair.second).id);
+        }
+    } else if (isValidClipIndex(trackIndex, clipIndex)) {
+        ids.append(m_project.tracks().at(trackIndex).clips.at(clipIndex).id);
+    }
+    return ids;
+}
+
+void AppController::closeGapsInWorkArea(int trackIndex)
+{
+    const bool ranged = m_project.hasWorkArea();
+    const GapCloseResult result = closeGapsRippled(trackIndex, ranged ? m_project.workAreaInUs() : 0,
+                                                   ranged ? m_project.workAreaOutUs() : -1);
+    if (!result.error.isEmpty()) {
+        setLastMessage(result.error, QStringLiteral("warning"));
+        return;
+    }
+    if (result.closed.isEmpty()) {
+        setLastMessage(result.skipped.isEmpty() ? tr("No gaps to close") : tr("Gaps are blocked by linked clips"),
+                       QStringLiteral("warning"));
+        return;
+    }
+    setLastMessage(tr("Closed %n gap(s)", nullptr, result.closed.size()));
 }

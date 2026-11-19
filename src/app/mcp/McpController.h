@@ -4,6 +4,7 @@
 #include "core/effects/EffectStackStore.h"
 #include "core/project/Project.h"
 #include "engine/audio/analysis/LoudnessMeter.h"
+#include "engine/audio/analysis/AudioDucking.h"
 
 #include <QHash>
 #include <QJsonArray>
@@ -53,6 +54,8 @@ class McpController : public QObject
     Q_PROPERTY(QVariantMap audioSheetResult READ audioSheetResult NOTIFY audioSheetChanged)
     Q_PROPERTY(bool audioSearchBusy READ audioSearchBusy NOTIFY audioSearchChanged)
     Q_PROPERTY(QVariantMap audioSearchResult READ audioSearchResult NOTIFY audioSearchChanged)
+    Q_PROPERTY(bool assetSoundBusy READ assetSoundBusy NOTIFY assetSoundChanged)
+    Q_PROPERTY(QVariantMap assetSoundResult READ assetSoundResult NOTIFY assetSoundChanged)
     Q_PROPERTY(bool startOnLaunch READ startOnLaunch WRITE setStartOnLaunch NOTIFY startOnLaunchChanged)
 
 public:
@@ -73,19 +76,11 @@ public:
     QString error() const;
     QString cursorSnippet() const;
     QString claudeCommand() const;
-    // list_missing_media: assets whose file is gone, with how many clips use each.
-    QJsonObject missingMedia() const;
-    // relink_media({from, to} | {search_dir}, dry_run?): see the catalog entry.
-    QJsonObject relinkMedia(const QJsonObject &args);
     // Background work still running, for wait_idle: {kind: how many} for each kind in `only`
     // (every kind when empty) that is busy; `jobs` is {job kind: how many}. Empty when idle.
     // Filmstrips and waveforms paused by playback can't drain: they go to `suspended` instead.
     QJsonObject backgroundWork(const QStringList &only = {}, QStringList *suspended = nullptr) const;
     static const QStringList &backgroundKinds();
-    // validate_project: what's wrong with the project, read-only. {problems:[{kind, message,
-    // clip?, asset?, track?, sequence?, ...}], n, counts?:{kind: n}, truncated?, open_sequence?},
-    // at most `limit` rows (n counts them all).
-    QJsonObject validateProject(int limit = 200) const;
     QString stdioSnippet() const;
     Q_INVOKABLE void copyCursorSnippet();
     Q_INVOKABLE void copyClaudeCommand();
@@ -137,6 +132,8 @@ public:
     // feed on, it also logs what changed since the last one.
     enum class ChangeKind { Edit, Undo, Redo };
     void bumpEditRevision(ChangeKind kind = ChangeKind::Edit);
+    // Names the next logged change; the label otherwise comes from the undo stack.
+    void setPendingChangeLabel(const QString &label) { m_pendingChangeLabel = label; }
     // The next logged change is the agent's even outside its call: an async op it started (a
     // replace_asset probe) lands from a nested event loop, where inAgentCall() is false.
     void markNextChangeByAgent() { m_nextChangeByAgent = true; }
@@ -235,8 +232,6 @@ public:
     bool editOpen() const;
     bool batchChangedProject() const;
     QJsonObject listHistory(int limit = 20) const;
-    QJsonObject undoTo(int index, const QString &hash);
-    QJsonObject takeSnapshot(const QString &label);
     // jmn8718/Drift#32: where the memory goes, and dropping what can be rebuilt.
     QJsonObject memoryStats() const;
     QJsonObject clearCache();
@@ -246,12 +241,6 @@ public:
     QJsonObject setPerformance(const QJsonObject &given);
     // Undo history housekeeping (jmn8718/Drift#30).
     QJsonObject clearHistory(int keepLast);
-    // Unset optionals leave that part of the project's setting as it is.
-    QJsonObject setHistoryLimit(bool reset, std::optional<int> steps, std::optional<bool> persist);
-    QJsonObject historyStats(bool size) const;
-    QJsonObject historySettings() const;
-    QJsonObject listSnapshots() const;
-    QJsonObject restoreSnapshot(const QString &hash);
 
     // MCP helpers (GUI thread). Used by src/app/mcp, not QML.
     // Waveform rendered as an image for agents. Blocks on the captureFrame pattern.
@@ -270,9 +259,6 @@ public:
     QJsonObject detectBeats(double startSeconds, double durSeconds, bool force);
     QJsonObject beatPayload() const;
     QJsonObject audioSummary() const;
-    // Grid times from the current analysis. `unit` is beat, bar or onset; `minStrength` filters
-    // onsets only. Empty when nothing has been analysed yet.
-    QList<double> beatTimes(const QString &unit, double minStrength) const;
     // --- scene toolbox ---
     QJsonObject detectScenes(int trackIndex, int clipIndex, double threshold, double minScene,
                                 bool withObjects);
@@ -286,9 +272,6 @@ public:
     QJsonObject describeClip(int topCount, int trackIndex = -1, int clipIndex = -1) const;
     QJsonObject findScenes(const QString &label, double minScore, int trackIndex,
                               int limit) const;
-    // Timeline seconds of every detected boundary inside the clip that was analysed.
-    QList<double> sceneCutTimes(double minScore, const QString &label) const;
-    int bookmarkScenes(double minScore, const QString &label, const QString &labelPrefix);
     // Which model addons are installed, so an agent can say what to install rather than
     // retrying blindly.
     QJsonObject aiCapabilities() const;
@@ -316,8 +299,6 @@ public:
     QJsonObject getJob(const QString &id) const;
     QJsonObject cancelJob(const QString &id);
 
-    int bookmarkBeats(double startSeconds, double durSeconds, const QString &unit,
-                         double minStrength, const QString &labelPrefix);
     QJsonObject setBeatLayers(bool grid, bool onsets);
     QJsonObject setClipVolume(int trackIndex, int clipIndex, double value, bool atGiven,
                                  double atSeconds);
@@ -380,6 +361,12 @@ public:
     // [{start, end, z, verdict}] in the scope's own seconds, or ok:false with error, and closest
     // when the term is not in the vocabulary.
     Q_INVOKABLE void searchAudioSheet(const QVariantMap &options);
+    // The media bin's search by sound: ranks the bin's audio and video assets for a vocabulary term as
+    // audio_rank does. The result lands in assetSoundResult: ok, term, results [{asset, name, z,
+    // verdict, near_silent}] best first, or ok:false with error/detail (and closest for an unknown term).
+    Q_INVOKABLE void searchAssetsBySound(const QString &term);
+    bool assetSoundBusy() const { return m_assetSoundBusy; }
+    QVariantMap assetSoundResult() const { return m_assetSoundResult; }
     // The 322 terms audio_find understands; empty until the audio.clap addon is installed.
     Q_INVOKABLE QStringList audioVocabulary() const;
     bool audioSearchBusy() const { return m_audioSearchBusy; }
@@ -392,10 +379,9 @@ public:
     QVariantMap audioSheetResult() const { return m_audioSheetResult; }
     QJsonObject normalizeVolume(int trackIndex, int clipIndex, double targetLufs);
     QJsonObject duckUnder(int musicTrack, int musicClip, int overTrack,
-                             const QStringList &overClips, double amount, double attack,
-                             double release);
+                             const QStringList &overClips, const drift::DuckSettings &settings,
+                             double sensitivity, const QString &method);
     QJsonObject listFaceTrack(int trackIndex, int clipIndex) const;
-    QJsonObject autoReframe(int trackIndex, int clipIndex, double aspect, const QString &mode);
     QJsonObject listAddons() const;
     QJsonObject installAddon(const QString &id);
     QJsonObject installAddons(const QStringList &ids);
@@ -419,6 +405,7 @@ signals:
     void toolCallStarted(const QString &tool);
     void audioSheetChanged();
     void audioSearchChanged();
+    void assetSoundChanged();
 
 private:
     struct ResolvedAudio;
@@ -452,6 +439,8 @@ private:
     QString m_audioSheetPath;
     int m_audioSheetSeq = 0;
     bool m_audioSearchBusy = false;
+    bool m_assetSoundBusy = false;
+    QVariantMap m_assetSoundResult;
     QVariantMap m_audioSearchResult;
     // The embedded candidate moments of the last searched scope, so a second term costs no model run.
     std::shared_ptr<AudioSearchIndex> m_audioSearchIndex;

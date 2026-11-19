@@ -5,6 +5,8 @@
 #include "core/edit/TimelineOps.h"
 #include "engine/audio/AudioMixer.h"
 #include "engine/audio/analysis/AudioAlign.h"
+#include "engine/ml/speech/SpeechAudio.h"
+#include "engine/ml/speech/transcription/SileroVad.h"
 
 #include <QMetaObject>
 #include <QSet>
@@ -13,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <memory>
 #include <vector>
 
 namespace {
@@ -58,10 +61,10 @@ bool findClip(const drift::Project &project, const QString &id, int *trackOut, i
     return false;
 }
 
-// Mono mix of `snap` from startUs for `frames` frames at the analysis rate. `progress` takes
-// 0-1 and returns false to stop, which leaves the result short.
+// Mono mix of `snap` from startUs for `frames` frames at `rate`. `progress` takes 0-1 and
+// returns false to stop, which leaves the result short.
 std::vector<float> mixMono(const drift::Project &snap, drift::TimeUs startUs, qint64 frames,
-                           const std::function<bool(double)> &progress)
+                           const std::function<bool(double)> &progress, int rate = kAnalysisRate)
 {
     std::vector<float> mono;
     if (frames <= 0)
@@ -78,8 +81,7 @@ std::vector<float> mixMono(const drift::Project &snap, drift::TimeUs startUs, qi
         }
         const int n = int(std::min<qint64>(kBlock, frames - off));
         std::fill(stereo.begin(), stereo.begin() + n * 2, 0.0f);
-        mixer.mix(startUs + off * drift::kUsPerSecond / kAnalysisRate, n, kAnalysisRate,
-                  stereo.data());
+        mixer.mix(startUs + off * drift::kUsPerSecond / rate, n, rate, stereo.data());
         for (int i = 0; i < n; ++i)
             mono[size_t(off + i)] = 0.5f * (stereo[i * 2] + stereo[i * 2 + 1]);
     }
@@ -251,6 +253,265 @@ void AudioAlignController::applySilence(const QString &clipId, qint64 startUs, q
     m_app->setLastMessage(
         tr("Removed %1 s of silence")
             .arg(drift::usToSeconds(clip.timelineDuration - keptTotal), 0, 'f', 1));
+}
+
+AudioAlignController::DuckJob AudioAlignController::makeDuckJob(const drift::Project &project,
+                                                                int musicTrack, int musicClip,
+                                                                const DuckRequest &request)
+{
+    DuckJob job;
+    const drift::Clip &music = project.tracks().at(musicTrack).clips.at(musicClip);
+    job.musicId = music.id;
+    job.startUs = music.timelineStart;
+    job.durationUs = music.timelineDuration;
+    job.settings = request.settings;
+    job.sensitivity = request.sensitivity;
+    job.detect = request.detect;
+
+    // The music's own lanes are never speech: its track and its linked partners' tracks.
+    QSet<int> musicTracks{musicTrack};
+    for (const drift::ClipRef &ref : drift::linkedPartners(project, music))
+        musicTracks.insert(ref.trackIndex);
+
+    QSet<QString> sources;
+    QList<drift::DuckSpan> overlaps;
+    const double musicStart = drift::usToSeconds(music.timelineStart);
+    const double musicEnd = drift::usToSeconds(music.timelineEnd());
+    for (int t = 0; t < project.tracks().size(); ++t) {
+        if (musicTracks.contains(t))
+            continue;
+        const bool requestedTrack = request.overClips.isEmpty()
+                                    && (request.overTrack < 0 || request.overTrack == t);
+        for (const drift::Clip &clip : project.tracks().at(t).clips) {
+            const bool wanted = request.overClips.isEmpty() ? requestedTrack
+                                                            : request.overClips.contains(clip.id);
+            if (!wanted || !clip.enabled || !carriesAudio(clip) || clip.id == music.id)
+                continue;
+            const double start = std::max(musicStart, drift::usToSeconds(clip.timelineStart));
+            const double end = std::min(musicEnd, drift::usToSeconds(clip.timelineEnd()));
+            if (end <= start)
+                continue;
+            sources.insert(clip.id);
+            overlaps.append({start, end});
+        }
+    }
+    if (sources.isEmpty()) {
+        job.error = tr("No audio on the other tracks under this clip");
+        return job;
+    }
+
+    job.snapshot = project.detachedCopy();
+    for (drift::Track &track : job.snapshot.tracks()) {
+        track.solo = false;
+        bool hasSource = false;
+        for (drift::Clip &clip : track.clips) {
+            if (sources.contains(clip.id)) {
+                hasSource = true;
+                continue;
+            }
+            clip.volume.clearKeyframes();
+            clip.volume.setKeyframe(0, 0.0);
+            clip.suppressEmbeddedAudio = true;
+        }
+        if (!hasSource)
+            track.muted = true;
+    }
+    job.owned = drift::ownedDuckRanges(overlaps, request.settings);
+    return job;
+}
+
+AudioAlignController::DuckDetection
+AudioAlignController::detectDuckSpeech(const DuckJob &job, const std::function<bool(double)> &progress)
+{
+    DuckDetection result;
+    const double startSeconds = drift::usToSeconds(job.startUs);
+    const bool vadInstalled = drift::SileroVad::modelPresent();
+    if (job.detect == QLatin1String("voice") && !vadInstalled) {
+        result.error = tr("Voice detection needs the Voice activity (silero.vad) addon. Install it "
+                          "from the addon store, or use level detection.");
+        return result;
+    }
+    const bool tryVoice = job.detect == QLatin1String("voice")
+                          || (job.detect != QLatin1String("level") && vadInstalled);
+
+    QList<drift::DuckSpan> speech;
+    bool detected = false;
+    if (tryVoice && drift::SileroVad::instance().available()) {
+        const int rate = drift::kSpeechSampleRate;
+        const std::vector<float> mono = mixMono(
+            job.snapshot, job.startUs, job.durationUs * rate / drift::kUsPerSecond,
+            [&progress](double f) { return progress(0.6 * f); }, rate);
+        if (mono.empty()) {
+            result.cancelled = true;
+            return result;
+        }
+        const std::vector<float> probs = drift::SileroVad::instance().probabilities(
+            mono, [&progress](double f) { return progress(0.6 + 0.4 * f); });
+        if (probs.empty()) {
+            result.cancelled = !progress(1.0);
+            if (result.cancelled)
+                return result;
+        } else {
+            drift::VadParams params;
+            params.threshold = drift::vadThresholdForSensitivity(job.sensitivity);
+            params.minSpeechMs = 200;
+            params.minSilenceMs = 150;
+            params.speechPadMs = 60;
+            for (const drift::VadRange &r : drift::vadSpeechRanges(probs, mono.size(), params))
+                speech.append({startSeconds + drift::usToSeconds(r.startUs),
+                               startSeconds + drift::usToSeconds(r.endUs)});
+            detected = true;
+            result.method = QStringLiteral("voice");
+        }
+    }
+    if (!detected) {
+        if (job.detect == QLatin1String("voice")) {
+            result.error = tr("Voice detection could not run: %1")
+                               .arg(drift::SileroVad::instance().lastError());
+            return result;
+        }
+        const std::vector<float> mono = mixMono(
+            job.snapshot, job.startUs, job.durationUs * kAnalysisRate / drift::kUsPerSecond,
+            progress);
+        if (mono.empty()) {
+            result.cancelled = true;
+            return result;
+        }
+        speech = drift::levelSpeechSpans(mono.data(), qint64(mono.size()), kAnalysisRate,
+                                         startSeconds, job.sensitivity);
+        result.method = QStringLiteral("level");
+    }
+    result.dips = drift::mergeDuckSpans(speech, job.settings);
+    result.ok = true;
+    return result;
+}
+
+bool AudioAlignController::canDuck(int track, int clip) const
+{
+    return canRemoveSilence(track, clip);
+}
+
+bool AudioAlignController::voiceDetectionAvailable() const
+{
+    return drift::SileroVad::modelPresent();
+}
+
+QVariantList AudioAlignController::duckSources(int musicTrack, int musicClip) const
+{
+    QVariantList out;
+    if (!m_app->isValidClipIndex(musicTrack, musicClip))
+        return out;
+    const drift::Project &project = m_app->m_project;
+    const drift::Clip &music = project.tracks().at(musicTrack).clips.at(musicClip);
+    QSet<int> musicTracks{musicTrack};
+    for (const drift::ClipRef &ref : drift::linkedPartners(project, music))
+        musicTracks.insert(ref.trackIndex);
+    for (int t = 0; t < project.tracks().size(); ++t) {
+        if (musicTracks.contains(t))
+            continue;
+        const drift::Track &track = project.tracks().at(t);
+        const bool has = std::any_of(track.clips.cbegin(), track.clips.cend(), [&](const drift::Clip &c) {
+            return c.enabled && carriesAudio(c) && c.timelineStart < music.timelineEnd()
+                   && c.timelineEnd() > music.timelineStart;
+        });
+        if (has)
+            out.append(QVariantMap{{QStringLiteral("track"), t},
+                                   {QStringLiteral("name"), drift::trackDefaultLabel(track)}});
+    }
+    return out;
+}
+
+void AudioAlignController::finishDuck(bool ok, int keys, int dips, const QString &method,
+                                      const QString &detail)
+{
+    emit duckFinished({{QStringLiteral("ok"), ok},
+                       {QStringLiteral("keys"), keys},
+                       {QStringLiteral("dips"), dips},
+                       {QStringLiteral("method"), method},
+                       {QStringLiteral("detail"), detail}});
+}
+
+void AudioAlignController::duck(int musicTrack, int musicClip, int overTrack,
+                                const QVariantMap &settings)
+{
+    if (!m_app->isValidClipIndex(musicTrack, musicClip)
+        || !canDuck(musicTrack, musicClip)) {
+        const QString msg = tr("Select a clip with audio");
+        m_app->setLastMessage(msg, QStringLiteral("warning"));
+        finishDuck(false, 0, 0, {}, msg);
+        return;
+    }
+    DuckRequest request;
+    request.overTrack = overTrack;
+    request.settings.reduceDb = std::min(0.0, settings.value(QStringLiteral("reduceDb"), -12.0).toDouble());
+    request.settings.attackSeconds = std::max(0.0, settings.value(QStringLiteral("attack"), 0.2).toDouble());
+    request.settings.releaseSeconds = std::max(0.0, settings.value(QStringLiteral("release"), 0.5).toDouble());
+    request.settings.holdSeconds = std::max(0.0, settings.value(QStringLiteral("hold"), 0.5).toDouble());
+    request.sensitivity = std::clamp(settings.value(QStringLiteral("sensitivity"), 0.5).toDouble(), 0.0, 1.0);
+    request.detect = settings.value(QStringLiteral("detect"), QStringLiteral("auto")).toString();
+
+    auto job = std::make_shared<DuckJob>(makeDuckJob(m_app->m_project, musicTrack, musicClip, request));
+    if (!job->error.isEmpty()) {
+        m_app->setLastMessage(job->error, QStringLiteral("warning"));
+        finishDuck(false, 0, 0, {}, job->error);
+        return;
+    }
+    if (!begin(tr("Finding speech…"))) {
+        finishDuck(false, 0, 0, {}, tr("Audio analysis already in progress"));
+        return;
+    }
+
+    (void)QtConcurrent::run([this, job]() {
+        const DuckDetection detection = detectDuckSpeech(*job, [this](double f) {
+            reportProgress(0.95 * f, {});
+            return m_cancel.loadRelaxed() == 0;
+        });
+        QMetaObject::invokeMethod(
+            this,
+            [this, job, detection]() {
+                end();
+                if (m_cancel.loadRelaxed() != 0 || detection.cancelled) {
+                    m_app->setLastMessage(tr("Auto duck cancelled"));
+                    finishDuck(false, 0, 0, detection.method, tr("Cancelled"));
+                    return;
+                }
+                if (!detection.ok) {
+                    m_app->setLastMessage(detection.error, QStringLiteral("warning"));
+                    finishDuck(false, 0, 0, detection.method, detection.error);
+                    return;
+                }
+                applyDuck(job->musicId, job->startUs, job->durationUs, *job, detection);
+            },
+            Qt::QueuedConnection);
+    });
+}
+
+void AudioAlignController::applyDuck(const QString &musicId, qint64 startUs, qint64 durationUs,
+                                     const DuckJob &job, const DuckDetection &detection)
+{
+    int track = -1, index = -1;
+    if (!findClip(m_app->m_project, musicId, &track, &index)
+        || m_app->m_project.tracks().at(track).clips.at(index).timelineStart != startUs
+        || m_app->m_project.tracks().at(track).clips.at(index).timelineDuration != durationUs) {
+        const QString msg = tr("The clip changed while it was analysed");
+        m_app->setLastMessage(msg, QStringLiteral("warning"));
+        finishDuck(false, 0, 0, detection.method, msg);
+        return;
+    }
+
+    const drift::Project before = m_app->m_project;
+    drift::Clip &clip = m_app->m_project.tracks()[track].clips[index];
+    const int keys = drift::applyDuckEnvelope(clip, detection.dips, job.owned, job.settings, 1.0);
+    const bool changed = clip.volume.keyframes() != before.tracks().at(track).clips.at(index).volume.keyframes();
+    if (changed) {
+        m_app->pushProjectEdit(before, tr("Auto duck"));
+        m_app->finishEdit(tr("Auto duck"));
+    }
+    const int dips = int(detection.dips.size());
+    const QString msg = dips > 0 ? tr("Ducked music under %n passage(s)", nullptr, dips)
+                                 : tr("No speech found");
+    m_app->setLastMessage(msg);
+    finishDuck(true, keys, dips, detection.method, dips > 0 ? QString() : msg);
 }
 
 // A selected item for syncing: every selected clip sharing a link (a video and its separated

@@ -40,9 +40,14 @@ Item {
         _dragging = false
     }
 
+    // Lists nested in a model role arrive as sequence wrappers, which Array.isArray rejects.
+    function isList(v) {
+        return v !== null && typeof v === "object" && typeof v.length === "number"
+    }
+
     function pointValue(i) {
         const v = value
-        if (Array.isArray(v))
+        if (isList(v))
             return Number(v[i] ?? 0)
         return v ? Number(i === 0 ? v.x : v.y) || 0 : 0
     }
@@ -50,7 +55,7 @@ Item {
     function colorHex(v) {
         if (typeof v === "string")
             return v
-        if (Array.isArray(v)) {
+        if (isList(v)) {
             const h = (x) => Math.round(Math.max(0, Math.min(1, x)) * 255).toString(16).padStart(2, "0")
             return "#" + h(v.length > 3 ? v[3] : 1) + h(v[0] ?? 0) + h(v[1] ?? 0) + h(v[2] ?? 0)
         }
@@ -127,6 +132,9 @@ Item {
                 to: dial.to
                 decimals: 0
                 font.pixelSize: Theme.fontSizeXs
+                topPadding: 0
+                bottomPadding: 0
+                verticalAlignment: TextInput.AlignVCenter
                 unit: "°"
                 Binding on value {
                     value: Number(root.value ?? 0)
@@ -153,6 +161,9 @@ Item {
                     decimals: 2
                     step: root.port.step ? Number(root.port.step) : 0.01
                     font.pixelSize: Theme.fontSizeXs
+                    topPadding: 0
+                    bottomPadding: 0
+                    verticalAlignment: TextInput.AlignVCenter
                     Binding on value {
                         value: root.pointValue(axis.index)
                     }
@@ -184,7 +195,7 @@ Item {
         ColorSwatchField {
             hex: root.colorHex(root.value)
             onEdited: (h) => {
-                if (Array.isArray(root.value)) {
+                if (root.isList(root.value)) {
                     const c = Qt.color(h)
                     root.send([c.r, c.g, c.b, c.a], false)
                 } else {
@@ -208,6 +219,9 @@ Item {
                 to: 2147483647
                 decimals: 0
                 font.pixelSize: Theme.fontSizeXs
+                topPadding: 0
+                bottomPadding: 0
+                verticalAlignment: TextInput.AlignVCenter
                 Binding on value {
                     value: Number(root.value ?? 0)
                 }
@@ -216,7 +230,7 @@ Item {
 
             IconButton {
                 id: diceButton
-                glyph: "dices"
+                glyph: Theme.icons.dices
                 buttonSize: parent.height
                 iconSize: Theme.iconSizeMd
                 tooltip: qsTr("Randomize")

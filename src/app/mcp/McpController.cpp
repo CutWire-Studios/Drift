@@ -342,498 +342,6 @@ QJsonObject McpController::backgroundWork(const QStringList &only, QStringList *
     return busy;
 }
 
-QJsonObject McpController::validateProject(int limit) const
-{
-    const drift::Project &project = m_app->m_project;
-    QJsonArray problems;
-    QJsonObject counts;
-    int total = 0;
-    const auto add = [&](const QString &kind, const QString &message, QJsonObject where) {
-        counts.insert(kind, counts.value(kind).toInt() + 1);
-        if (++total > limit)
-            return;
-        where.insert(QStringLiteral("kind"), kind);
-        where.insert(QStringLiteral("message"), message);
-        problems.append(where);
-    };
-
-    // Files are checked once each. Paths that aren't plain files (content: URIs, resources) are
-    // left to the platform; an image sequence is there when its first frame is, as the bin checks it.
-    QHash<QString, bool> present;
-    const auto fileMissing = [&](const QString &path) {
-        if (path.isEmpty() || path.startsWith(QLatin1String("content:")) || path.startsWith(QLatin1Char(':')))
-            return false;
-        auto it = present.constFind(path);
-        if (it == present.constEnd()) {
-            const std::optional<drift::ImageSequence> sequence = drift::parseImageSequencePath(path);
-            it = present.insert(path, QFileInfo::exists(sequence ? drift::imageSequenceFramePath(*sequence, sequence->start)
-                                                                 : path));
-        }
-        return !it.value();
-    };
-    // How many clips use each asset, anywhere: an unused bin item that's gone is less urgent.
-    QHash<QString, int> uses;
-    const auto countUses = [&](const QList<drift::Track> &tracks) {
-        for (const drift::Track &track : tracks)
-            for (const drift::Clip &clip : track.clips)
-                if (!clip.assetId.isEmpty())
-                    ++uses[clip.assetId];
-    };
-    countUses(project.rootTracks());
-    for (const QString &id : project.sequenceIds())
-        countUses(project.sequenceTracks(id));
-
-    // Media: a file that is gone.
-    QStringList assetIds = project.assets().keys();
-    assetIds.sort();
-    for (const QString &id : std::as_const(assetIds)) {
-        const drift::MediaAsset &asset = project.assets().value(id);
-        if (asset.kind != drift::MediaKind::Composite && fileMissing(asset.path))
-            add(QStringLiteral("missing_media"), QStringLiteral("%1 isn't at %2").arg(asset.name, asset.path),
-                {{QStringLiteral("asset"), id}, {QStringLiteral("clips"), uses.value(id)}});
-    }
-
-    // A clip's own file that's gone, once per file (a split clip is many clips on one file), with how
-    // many clips play it; reported after the timelines are walked. Not one an asset row has named.
-    QSet<QString> assetFiles;
-    for (const drift::MediaAsset &asset : project.assets())
-        if (!asset.path.isEmpty())
-            assetFiles.insert(QDir::cleanPath(asset.path));
-    QStringList goneClipFiles;
-    QHash<QString, QPair<QJsonObject, int>> goneClipFile;
-    const auto clipFileGone = [&](const QString &path, const QJsonObject &where) {
-        const QString cleaned = QDir::cleanPath(path);
-        if (assetFiles.contains(cleaned) || !fileMissing(path))
-            return;
-        auto it = goneClipFile.find(cleaned);
-        if (it == goneClipFile.end()) {
-            goneClipFiles.append(cleaned);
-            goneClipFile.insert(cleaned, {where, 1});
-        } else {
-            ++it->second;
-        }
-    };
-
-    const drift::TimeUs frameUs = project.fps() > 0 ? 1000000 / project.fps() : 0;
-    const auto checkTracks = [&](const QList<drift::Track> &tracks, const QString &sequence) {
-        const auto at = [&](QJsonObject where, int t) {
-            where.insert(QStringLiteral("track"), t);
-            if (!sequence.isEmpty())
-                where.insert(QStringLiteral("sequence"), sequence);
-            return where;
-        };
-        QSet<QString> clipIds;
-        QHash<QString, int> linkCount;
-        for (const drift::Track &track : tracks)
-            for (const drift::Clip &clip : track.clips) {
-                clipIds.insert(clip.id);
-                if (!clip.linkId.isEmpty())
-                    ++linkCount[clip.linkId];
-            }
-        for (int t = 0; t < tracks.size(); ++t) {
-            const drift::Track &track = tracks.at(t);
-            if (track.isAdjustmentLane() && track.clips.isEmpty())
-                add(QStringLiteral("empty_lane"), QStringLiteral("An effects lane with nothing on it"), at({}, t));
-            for (const drift::Clip &clip : track.clips) {
-                const QJsonObject here = at({{QStringLiteral("clip"), clip.id}}, t);
-                // An effect pinned to a clip that isn't there any more.
-                if (!clip.linkedClipId.isEmpty() && !clipIds.contains(clip.linkedClipId))
-                    add(QStringLiteral("orphaned_effect"),
-                        QStringLiteral("Pinned to clip %1, which is gone").arg(clip.linkedClipId), here);
-                // One side of an A/V link.
-                if (!clip.linkId.isEmpty() && linkCount.value(clip.linkId) < 2)
-                    add(QStringLiteral("broken_link"),
-                        QStringLiteral("Linked (%1), but nothing else is").arg(clip.linkId), here);
-                const bool media = clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Audio
-                                   || clip.type == drift::ClipType::Image;
-                // A recording, denoised audio or a 3D model keeps only its path.
-                if (clip.assetId.isEmpty()) {
-                    clipFileGone(clip.path, here);
-                    continue;
-                }
-                const drift::MediaAsset *asset = project.asset(clip.assetId);
-                if (!asset) {
-                    add(QStringLiteral("missing_asset"),
-                        QStringLiteral("Its asset %1 isn't in the project").arg(clip.assetId), here);
-                    continue;
-                }
-                QJsonObject withAsset = here;
-                withAsset.insert(QStringLiteral("asset"), clip.assetId);
-                // The file the clip itself plays, when it isn't its asset's (reported above): a 3D
-                // model swapped in place, or a clip relinked on its own.
-                if (!clip.path.isEmpty() && QDir::cleanPath(clip.path) != QDir::cleanPath(asset->path))
-                    clipFileGone(clip.path, withAsset);
-                // Media clips only: a 3D model swapped in place (set_model3d_source) keeps its old
-                // asset id on purpose, and resources (stickers) were moved by a load migration.
-                if (media && !clip.path.isEmpty() && !asset->path.isEmpty() && !clip.path.startsWith(QLatin1Char(':'))
-                    && QDir::cleanPath(clip.path) != QDir::cleanPath(asset->path))
-                    add(QStringLiteral("asset_mismatch"),
-                        QStringLiteral("Plays %1, but its asset %2 is %3").arg(clip.path, asset->name, asset->path),
-                        withAsset);
-                // Source past the end of time-based media (more than a frame, for rounding).
-                if ((asset->kind == drift::MediaKind::Video || asset->kind == drift::MediaKind::Audio)
-                    && asset->durationUs > 0 && clip.srcOut > asset->durationUs + frameUs) {
-                    add(QStringLiteral("range_past_media"),
-                        QStringLiteral("Out point %1 s is past the end of %2 (%3 s)")
-                            .arg(drift::usToSeconds(clip.srcOut), 0, 'f', 3)
-                            .arg(asset->name)
-                            .arg(drift::usToSeconds(asset->durationUs), 0, 'f', 3),
-                        withAsset);
-                }
-            }
-            // A transition between clips that aren't both on this track.
-            QSet<QString> onTrack;
-            for (const drift::Clip &clip : track.clips)
-                onTrack.insert(clip.id);
-            QSet<QPair<QString, QString>> joined;
-            for (const drift::Transition &transition : track.transitions) {
-                joined.insert({transition.fromClipId, transition.toClipId});
-                if (!onTrack.contains(transition.fromClipId) || !onTrack.contains(transition.toClipId))
-                    add(QStringLiteral("dangling_transition"),
-                        QStringLiteral("A transition from %1 to %2, but one of them isn't on this track")
-                            .arg(transition.fromClipId, transition.toClipId),
-                        at({{QStringLiteral("transition"), transition.id}}, t));
-            }
-            // Overlaps, when overlap is off; a crossfade (a transition joining them) is one on purpose.
-            if (m_app->allowClipOverlap() || track.isAdjustment())
-                continue;
-            QList<const drift::Clip *> byStart;
-            for (const drift::Clip &clip : track.clips)
-                byStart.append(&clip);
-            // Stable: clips starting together keep their track order, so a crossfade between them
-            // reads the same way on every call.
-            std::stable_sort(byStart.begin(), byStart.end(),
-                      [](const drift::Clip *a, const drift::Clip *b) { return a->timelineStart < b->timelineStart; });
-            // Against every earlier clip still running, so one inside a long clip isn't missed and a
-            // crossfade with one of them doesn't hide an overlap with another.
-            QList<const drift::Clip *> running;
-            for (const drift::Clip *b : std::as_const(byStart)) {
-                running.removeIf([b](const drift::Clip *a) { return a->timelineEnd() <= b->timelineStart; });
-                for (const drift::Clip *a : std::as_const(running)) {
-                    if (!joined.contains({a->id, b->id}) && !joined.contains({b->id, a->id})) {
-                        add(QStringLiteral("overlap"), QStringLiteral("Overlaps %1").arg(a->id),
-                            at({{QStringLiteral("clip"), b->id}}, t));
-                        break;
-                    }
-                }
-                running.append(b);
-            }
-        }
-    };
-    checkTracks(project.rootTracks(), {});
-    QStringList sequences = project.sequenceIds();
-    sequences.sort();
-    for (const QString &id : std::as_const(sequences))
-        checkTracks(project.sequenceTracks(id), id);
-    for (const QString &path : std::as_const(goneClipFiles)) {
-        QJsonObject where = goneClipFile.value(path).first;
-        where.insert(QStringLiteral("clips"), goneClipFile.value(path).second);
-        add(QStringLiteral("missing_media"), QStringLiteral("Plays %1, which is gone").arg(path), where);
-    }
-
-    QJsonObject out{{QStringLiteral("problems"), problems}, {QStringLiteral("n"), total}};
-    // Rows without a sequence are on the main timeline; track indexes there are its own, not the
-    // composite's that's open (whose rows carry its id).
-    if (!project.activeSequenceId().isEmpty())
-        out.insert(QStringLiteral("open_sequence"), project.activeSequenceId());
-    if (total > 0)
-        out.insert(QStringLiteral("counts"), counts);
-    if (total > limit)
-        out.insert(QStringLiteral("truncated"), true);
-    return out;
-}
-
-namespace {
-
-// The file a path stands for: an image sequence's first frame (its path is a pattern).
-QString fileOf(const QString &path)
-{
-    if (const auto seq = drift::parseImageSequencePath(path))
-        return drift::imageSequenceFramePath(*seq, seq->start);
-    return path;
-}
-
-// A path that names a file which isn't there. Paths that aren't plain files (content: URIs,
-// resources) are left to the platform.
-bool fileGone(const QString &path)
-{
-    return !path.isEmpty() && !path.startsWith(QLatin1String("content:")) && !path.startsWith(QLatin1Char(':'))
-           && !QFileInfo::exists(fileOf(path));
-}
-
-QHash<QString, int> clipsPerAsset(const drift::Project &project)
-{
-    QHash<QString, int> uses;
-    const auto count = [&](const QList<drift::Track> &tracks) {
-        for (const drift::Track &track : tracks)
-            for (const drift::Clip &clip : track.clips)
-                if (!clip.assetId.isEmpty())
-                    ++uses[clip.assetId];
-    };
-    count(project.rootTracks());
-    for (const QString &id : project.sequenceIds())
-        count(project.sequenceTracks(id));
-    return uses;
-}
-
-// File names compare as the platform's file system does.
-constexpr Qt::CaseSensitivity kPathCase =
-#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
-    Qt::CaseInsensitive;
-#else
-    Qt::CaseSensitive;
-#endif
-
-} // namespace
-
-QJsonObject McpController::missingMedia() const
-{
-    const drift::Project &project = m_app->m_project;
-    const QHash<QString, int> uses = clipsPerAsset(project);
-    QJsonArray missing;
-    for (const QString &id : project.assetOrder()) {
-        const drift::MediaAsset *asset = project.asset(id);
-        if (!asset || asset->kind == drift::MediaKind::Composite || asset->path.isEmpty())
-            continue;
-        // The bin's own answer, so this agrees with what the user sees; an image sequence is
-        // missing when its first frame is.
-        const bool gone = m_app->m_assetLibrary ? m_app->m_assetLibrary->isMissing(id) || fileGone(asset->path)
-                                                : fileGone(asset->path);
-        if (!gone)
-            continue;
-        missing.append(QJsonObject{{QStringLiteral("asset"), id},
-                                   {QStringLiteral("name"), asset->name},
-                                   {QStringLiteral("path"), asset->path},
-                                   {QStringLiteral("clips"), uses.value(id)}});
-    }
-    return {{QStringLiteral("ok"), true}, {QStringLiteral("missing"), missing}, {QStringLiteral("n"), missing.size()}};
-}
-
-QJsonObject McpController::relinkMedia(const QJsonObject &args)
-{
-    const auto fail = [](const char *code, const QString &detail) {
-        return QJsonObject{{QStringLiteral("ok"), false}, {QStringLiteral("error"), QString::fromLatin1(code)},
-                           {QStringLiteral("detail"), detail}};
-    };
-    // As given: a file:// URL or a path, either separator, without a trailing slash.
-    const auto clean = [](QString path) {
-        path = path.trimmed();
-        if (path.startsWith(QLatin1String("file:"), Qt::CaseInsensitive))
-            path = QUrl(path).toLocalFile();
-        path.replace(QLatin1Char('\\'), QLatin1Char('/'));
-        path = QDir::cleanPath(path);
-        while (path.size() > 1 && path.endsWith(QLatin1Char('/')) && !path.endsWith(QLatin1String(":/")))
-            path.chop(1);
-        return path;
-    };
-    const QString from = clean(args.value(QStringLiteral("from")).toString());
-    const QString to = clean(args.value(QStringLiteral("to")).toString());
-    const QString searchDir = clean(args.value(QStringLiteral("search_dir")).toString());
-    const bool dryRun = args.value(QStringLiteral("dry_run")).toBool();
-    const bool byPrefix = !from.isEmpty() || !to.isEmpty();
-    if (byPrefix == !searchDir.isEmpty())
-        return fail("bad_args", QStringLiteral("Give from and to (a folder or drive that moved), or search_dir (where "
-                                               "to look for missing files by name), not both"));
-    if (byPrefix && (from.isEmpty() || to.isEmpty()))
-        return fail("bad_args", QStringLiteral("from and to go together"));
-    // `from` only has to match the paths the project stores, which may come from another platform
-    // ("D:/footage" in a project made on Windows); `to` and `search_dir` are read here.
-    static const QRegularExpression kForeignAbsolute(QStringLiteral("^(/|[A-Za-z]:/)"));
-    if (!from.isEmpty() && !QDir::isAbsolutePath(from) && !kForeignAbsolute.match(from).hasMatch())
-        return fail("bad_args", QStringLiteral("%1 isn't an absolute path").arg(from));
-    for (const QString &path : {to, searchDir})
-        if (!path.isEmpty() && !QDir::isAbsolutePath(path))
-            return fail("bad_args", QStringLiteral("%1 isn't an absolute path").arg(path));
-    if (byPrefix && from.compare(to, kPathCase) == 0)
-        return fail("bad_args", QStringLiteral("from and to are the same"));
-    if (!searchDir.isEmpty() && !QFileInfo(searchDir).isDir())
-        return fail("bad_args", QStringLiteral("search_dir %1 isn't a folder").arg(searchDir));
-
-    const drift::Project &project = m_app->m_project;
-    // Every path the project names a file by, the way a relink rewrites them.
-    QSet<QString> paths;
-    {
-        drift::Project scratch = project;
-        ProjectFileController::remapPaths(scratch, [&paths](const QString &path) -> std::optional<QString> {
-            paths.insert(path);
-            return std::nullopt;
-        });
-    }
-    // What already names each file, so a relink never points two assets at one file, and what a
-    // missing asset's file weighed, to tell its file from another of the same name.
-    const auto key = [](const QString &path) {
-        const QString cleaned = QDir::cleanPath(path);
-        return kPathCase == Qt::CaseInsensitive ? cleaned.toLower() : cleaned;
-    };
-    QHash<QString, const drift::MediaAsset *> assetByPath;
-    for (const drift::MediaAsset &asset : project.assets())
-        assetByPath.insert(key(asset.path), &asset);
-    QSet<QString> claimed;
-    const auto refusal = [&](const QString &path, const QString &target) -> QString {
-        const drift::MediaAsset *asset = assetByPath.value(key(path));
-        // Two assets on one file breaks the bin (import dedupes by path); a mask or an effect file
-        // sharing an asset's file is fine.
-        const drift::MediaAsset *owner = asset ? assetByPath.value(key(target)) : nullptr;
-        if (owner && owner != asset)
-            return QStringLiteral("another asset (%1) already uses %2").arg(owner->name, target);
-        // Size before claims, so the reason doesn't depend on which asset was looked at first.
-        if (asset && asset->sourceSize > 0 && !drift::parseImageSequencePath(target)
-            && QFileInfo(target).size() != asset->sourceSize)
-            return QStringLiteral("%1 isn't the same size as the file was").arg(target);
-        if (asset && claimed.contains(key(target)))
-            return QStringLiteral("another missing file was relinked to %1").arg(target);
-        return {};
-    };
-
-    QHash<QString, QString> remap;
-    QJsonArray stillMissing;
-    int matched = 0;
-    bool truncated = false;
-    int unresolvedCount = 0;
-    const auto unresolved = [&](QJsonObject row, const QString &reason) {
-        ++unresolvedCount;
-        if (const drift::MediaAsset *asset = assetByPath.value(key(row.value(QStringLiteral("path")).toString())))
-            row.insert(QStringLiteral("asset"), asset->id);
-        row.insert(QStringLiteral("reason"), reason);
-        if (stillMissing.size() < 200)
-            stillMissing.append(row);
-    };
-    if (byPrefix) {
-        // A missing file under `from` moves to the same place under `to`, where that file is. A root
-        // ("/", "D:/") already ends with its separator.
-        const QString fromPrefix = from.endsWith(QLatin1Char('/')) ? from : from + QLatin1Char('/');
-        const QString toPrefix = to.endsWith(QLatin1Char('/')) ? to : to + QLatin1Char('/');
-        QStringList sorted(paths.cbegin(), paths.cend());
-        sorted.sort();
-        for (const QString &path : std::as_const(sorted)) {
-            QString cleaned = QDir::cleanPath(path);
-            cleaned.replace(QLatin1Char('\\'), QLatin1Char('/'));
-            const bool exact = cleaned.compare(from, kPathCase) == 0;
-            if (!exact && !cleaned.startsWith(fromPrefix, kPathCase))
-                continue;
-            ++matched;
-            if (!fileGone(path))
-                continue; // still there: not ours to move
-            const QString moved = exact ? to : toPrefix + cleaned.mid(fromPrefix.size());
-            if (!QFileInfo(fileOf(moved)).isFile()) {
-                unresolved({{QStringLiteral("path"), path}, {QStringLiteral("tried"), moved}}, QStringLiteral("no file there"));
-                continue;
-            }
-            if (const QString why = refusal(path, moved); !why.isEmpty()) {
-                unresolved({{QStringLiteral("path"), path}, {QStringLiteral("tried"), moved}}, why);
-                continue;
-            }
-            claimed.insert(key(moved));
-            remap.insert(path, moved);
-        }
-    } else {
-        // Missing assets, found by file name under search_dir.
-        QHash<QString, QList<const drift::MediaAsset *>> wanted;
-        for (const drift::MediaAsset &asset : project.assets())
-            if (asset.kind != drift::MediaKind::Composite && fileGone(asset.path)
-                && !drift::parseImageSequencePath(asset.path))
-                wanted[kPathCase == Qt::CaseInsensitive ? QFileInfo(asset.path).fileName().toLower()
-                                                        : QFileInfo(asset.path).fileName()]
-                    .append(&asset);
-        QHash<QString, QStringList> found;
-        if (!wanted.isEmpty()) {
-            int seen = 0;
-            QDirIterator it(searchDir, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
-            while (it.hasNext()) {
-                if (++seen > 200000) {
-                    truncated = true;
-                    break;
-                }
-                const QString path = it.next();
-                const QString name = kPathCase == Qt::CaseInsensitive ? it.fileName().toLower() : it.fileName();
-                if (wanted.contains(name))
-                    found[name].append(path);
-            }
-        }
-        QStringList names = wanted.keys();
-        names.sort();
-        for (const QString &name : std::as_const(names)) {
-            const QStringList candidates = found.value(name);
-            const QList<const drift::MediaAsset *> sharing = wanted.value(name);
-            // Several missing files of one name, and nothing to tell them apart: none is guessed.
-            const bool ambiguous = sharing.size() > 1
-                                   && std::any_of(sharing.cbegin(), sharing.cend(),
-                                                  [](const drift::MediaAsset *a) { return a->sourceSize <= 0; });
-            // A walk cut short may have missed another file of the name, so no match is sure.
-            if (truncated) {
-                for (const drift::MediaAsset *asset : sharing)
-                    unresolved({{QStringLiteral("path"), asset->path}},
-                               QStringLiteral("search_dir holds over 200,000 files and wasn't searched in full; "
-                                              "search a narrower folder"));
-                continue;
-            }
-            // Which of the files of this name pass for each asset: the same size when known, not
-            // another asset's, not taken.
-            QHash<const drift::MediaAsset *, QStringList> fits;
-            QHash<QString, int> fittedBy;
-            for (const drift::MediaAsset *asset : ambiguous ? QList<const drift::MediaAsset *>{} : sharing)
-                for (const QString &candidate : candidates)
-                    if (refusal(asset->path, candidate).isEmpty()) {
-                        fits[asset].append(candidate);
-                        ++fittedBy[candidate];
-                    }
-            for (const drift::MediaAsset *asset : sharing) {
-                if (ambiguous) {
-                    unresolved({{QStringLiteral("path"), asset->path}},
-                               QStringLiteral("several missing files share this name; relink them with from/to or "
-                                              "replace_asset"));
-                    continue;
-                }
-                const QStringList fit = fits.value(asset);
-                // A file that fits two of them (same name and size) can't be told to be either's.
-                if (fit.size() == 1 && fittedBy.value(fit.first()) > 1) {
-                    unresolved({{QStringLiteral("path"), asset->path}},
-                               QStringLiteral("another missing file has the same name and size; relink them with "
-                                              "from/to or replace_asset"));
-                    continue;
-                }
-                if (fit.size() == 1) {
-                    claimed.insert(key(fit.first()));
-                    remap.insert(asset->path, fit.first());
-                    continue;
-                }
-                QJsonObject row{{QStringLiteral("path"), asset->path}};
-                if (candidates.size() > 1)
-                    row.insert(QStringLiteral("candidates"), QJsonArray::fromStringList(candidates.mid(0, 10)));
-                unresolved(row, candidates.isEmpty() ? QStringLiteral("no file of that name")
-                                : fit.isEmpty()
-                                    ? (candidates.size() == 1 ? refusal(asset->path, candidates.first())
-                                                              : QStringLiteral("none of the files of that name fits"))
-                                    : QStringLiteral("several files of that name fit"));
-            }
-        }
-    }
-
-    QJsonArray relinked;
-    QStringList keys = remap.keys();
-    keys.sort();
-    for (const QString &path : std::as_const(keys))
-        if (relinked.size() < 200)
-            relinked.append(QJsonObject{{QStringLiteral("from"), path}, {QStringLiteral("to"), remap.value(path)}});
-    if (!dryRun && !remap.isEmpty() && !m_app->m_assetLibrary)
-        return fail("internal", QStringLiteral("The media bin isn't available. Nothing was relinked"));
-    if (!dryRun && !remap.isEmpty() && !m_app->bin()->relinkPaths(remap, tr("Relink media")))
-        return fail("locked", QStringLiteral("A locked track holds a clip using these files; unlock it and try again. "
-                                             "Nothing was relinked"));
-    QJsonObject out{{QStringLiteral("ok"), true},
-                    {QStringLiteral("relinked"), relinked},
-                    {QStringLiteral("n"), int(remap.size())},
-                    {QStringLiteral("still_missing"), stillMissing},
-                    {QStringLiteral("still_missing_n"), unresolvedCount}};
-    if (byPrefix)
-        out.insert(QStringLiteral("matched"), matched);
-    if (dryRun)
-        out.insert(QStringLiteral("dry_run"), true);
-    if (truncated)
-        out.insert(QStringLiteral("truncated"), true);
-    return out;
-}
-
 QString McpController::claudeCommand() const
 {
 #ifndef Q_OS_WASM
@@ -2832,36 +2340,6 @@ QJsonObject McpController::listHistory(int limit) const
                {QStringLiteral("linear"), true}});
 }
 
-QJsonObject McpController::undoTo(int index, const QString &hash)
-{
-    m_app->flushUndoHistoryTrim(); // history indices as they will stay
-    using namespace drift::mcp;
-    int target = index;
-    if (!hash.trimmed().isEmpty()) {
-        target = m_app->historyIndexForHash(hash);
-        if (target < 0)
-            return err("not_found", QStringLiteral("No history entry matches that hash"));
-    } else if (index < 0) {
-        return err("bad_args", QStringLiteral("index or hash required"));
-    }
-    if (target < 0 || target > m_app->m_undoStack.count())
-        return err("bad_args", QStringLiteral("index out of range"));
-    // Same as AppController::undo()/redo(): the selection is carried across by clip id, or the
-    // jump leaves it on whatever clip now sits at the old indices.
-    m_app->captureSelectionClipIds();
-    const int from = m_app->m_undoStack.index();
-    m_app->m_undoStack.setIndex(target);
-    m_app->m_undoSelectionCaptured = false;
-    m_pendingChangeLabel = QStringLiteral("Jump to version %1").arg(target);
-    bumpEditRevision(target < from ? ChangeKind::Undo : ChangeKind::Redo);
-    // Redoing forward can take the applied steps past the limit again; settle it before replying.
-    m_app->flushUndoHistoryTrim();
-    const QString at = m_app->historyHashAt(m_app->m_undoStack.index());
-    return ok({{QStringLiteral("index"), m_app->m_undoStack.index()},
-               {QStringLiteral("hash"), at},
-               {QStringLiteral("short"), shortHash(at)}});
-}
-
 namespace {
 
 QJsonObject frameCacheJson()
@@ -3069,15 +2547,6 @@ QJsonObject McpController::setPerformance(const QJsonObject &given)
     return out;
 }
 
-QJsonObject McpController::historySettings() const
-{
-    return {{QStringLiteral("mode"), m_app->effectiveUndoHistoryMode()},
-            // Steps that can be undone at most: 0 with history off, -1 with no limit.
-            {QStringLiteral("steps"), m_app->undoHistoryCap()},
-            {QStringLiteral("source"), m_app->hasProjectHistorySettings() ? QStringLiteral("project")
-                                                                          : QStringLiteral("global")}};
-}
-
 QJsonObject McpController::clearHistory(int keepLast)
 {
     using namespace drift::mcp;
@@ -3088,195 +2557,6 @@ QJsonObject McpController::clearHistory(int keepLast)
     return ok({{QStringLiteral("removed"), removed},
                {QStringLiteral("steps"), m_app->m_undoStack.count()},
                {QStringLiteral("index"), m_app->m_undoStack.index()}});
-}
-
-QJsonObject McpController::setHistoryLimit(bool reset, std::optional<int> steps, std::optional<bool> persist)
-{
-    using namespace drift::mcp;
-    if (!reset && !steps && !persist)
-        return err("bad_args", QStringLiteral("steps, persist or reset required"));
-    if (steps && *steps < -1)
-        return err("bad_args", QStringLiteral("steps must be -1 (no limit), 0 (no history) or more"));
-    const int stepsBefore = m_app->m_projectHistorySteps;
-    const int persistBefore = m_app->m_projectHistoryPersist;
-    if (reset) {
-        m_app->m_projectHistorySteps = AppController::kProjectHistoryUnset;
-        m_app->m_projectHistoryPersist = -1;
-    }
-    if (steps)
-        m_app->m_projectHistorySteps = *steps;
-    if (persist)
-        m_app->m_projectHistoryPersist = *persist ? 1 : 0;
-    // Saved with the project, so changing it changes the project.
-    if (m_app->m_projectHistorySteps != stepsBefore || m_app->m_projectHistoryPersist != persistBefore)
-        m_app->m_projectFile->setDirty(true);
-    m_app->scheduleUndoHistoryTrim();
-    m_app->flushUndoHistoryTrim();
-    QJsonObject reply = historySettings();
-    reply.insert(QStringLiteral("steps_kept"), m_app->m_undoStack.count());
-    return ok(reply);
-}
-
-QJsonObject McpController::historyStats(bool size) const
-{
-    using namespace drift::mcp;
-    m_app->flushUndoHistoryTrim();
-    const drift::HistoryCapture capture = drift::captureHistory(m_app->m_undoStack);
-    // Project snapshots held in memory (a step's before and after, shared where a step reuses
-    // one). Each is a full project copy, though copies share data that did not change. Counted by
-    // identity, so this serialises nothing.
-    // Walked through the live commands, not the capture: a macro's inner steps hold snapshots
-    // of their own, which the capture flattens away.
-    QSet<const drift::HistoryState *> states;
-    const std::function<void(const QUndoCommand *)> collect = [&](const QUndoCommand *command) {
-        if (const auto *snapshot = dynamic_cast<const drift::ProjectSnapshotCommand *>(command)) {
-            states.insert(snapshot->beforeState().get());
-            states.insert(snapshot->afterState().get());
-        }
-        for (int c = 0; c < command->childCount(); ++c)
-            collect(command->child(c));
-    };
-    for (int i = 0; i < m_app->m_undoStack.count(); ++i)
-        collect(m_app->m_undoStack.command(i));
-    QStringList media = m_app->historyOnlyMediaPaths().values();
-    media.sort();
-    const int mediaCount = media.size();
-    if (media.size() > 20)
-        media = media.mid(0, 20);
-    QJsonObject reply{
-        {QStringLiteral("steps"), m_app->m_undoStack.count()},
-        {QStringLiteral("undoable"), m_app->m_undoStack.index()},
-        {QStringLiteral("redoable"), m_app->m_undoStack.count() - m_app->m_undoStack.index()},
-        {QStringLiteral("snapshots"), int(states.size())},
-        {QStringLiteral("saved_with_project"), m_app->persistsUndoHistory()},
-        {QStringLiteral("history_only_media"), mediaCount},
-        {QStringLiteral("history_only_media_paths"), QJsonArray::fromStringList(media)},
-        {QStringLiteral("settings"), historySettings()},
-    };
-    if (size) {
-        // Serialises every state on this thread, so only on request: the history as uncompressed
-        // JSON, which is what a save adds before compression. Memory use is higher; it is not
-        // measured here.
-        const drift::HistoryDocument document = drift::historyToJson(capture);
-        const qint64 bytes =
-            document.json.isEmpty() ? 0 : QJsonDocument(document.json).toJson(QJsonDocument::Compact).size();
-        reply.insert(QStringLiteral("json_bytes"), double(bytes));
-    }
-    return ok(reply);
-}
-
-QJsonObject McpController::takeSnapshot(const QString &label)
-{
-    m_app->flushUndoHistoryTrim(); // history indices as they will stay
-    using namespace drift::mcp;
-    const int current = m_app->m_undoStack.index();
-    const QByteArray json = m_app->historyJsonAt(current);
-    const QString hash = m_app->historyHashAt(current);
-    if (json.isEmpty() || hash.isEmpty())
-        return err("bad_args", QStringLiteral("Nothing to snapshot"));
-
-    const QString dir = m_app->historySnapshotDir();
-    if (!QDir().mkpath(dir))
-        return err("bad_args", QStringLiteral("Could not create history folder"));
-    const QString path = dir + QLatin1Char('/') + hash + QStringLiteral(".json");
-    bool existed = QFile::exists(path);
-    if (!existed) {
-        QSaveFile file(path);
-        if (!file.open(QIODevice::WriteOnly))
-            return err("bad_args", QStringLiteral("Could not write snapshot"));
-        file.write(json);
-        if (!file.commit())
-            return err("bad_args", QStringLiteral("Could not write snapshot"));
-        m_app->pruneHistorySnapshots();
-    }
-    QJsonObject extra{{QStringLiteral("hash"), hash},
-                      {QStringLiteral("short"), shortHash(hash)},
-                      {QStringLiteral("path"), path},
-                      {QStringLiteral("index"), current},
-                      {QStringLiteral("existed"), existed},
-                      {QStringLiteral("bytes"), json.size()}};
-    if (!label.trimmed().isEmpty())
-        extra.insert(QStringLiteral("label"), label.trimmed());
-    else if (current > 0)
-        extra.insert(QStringLiteral("label"), m_app->m_undoStack.text(current - 1));
-    else
-        extra.insert(QStringLiteral("label"), QStringLiteral("Origin"));
-    return ok(extra);
-}
-
-QJsonObject McpController::listSnapshots() const
-{
-    using namespace drift::mcp;
-    QJsonArray snapshots;
-    QDir dir(m_app->historySnapshotDir());
-    const QFileInfoList files =
-        dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files, QDir::Time);
-    for (const QFileInfo &info : files) {
-        const QString hash = info.completeBaseName();
-        snapshots.append(QJsonObject{
-            {QStringLiteral("hash"), hash},
-            {QStringLiteral("short"), shortHash(hash)},
-            {QStringLiteral("path"), info.absoluteFilePath()},
-            {QStringLiteral("bytes"), info.size()},
-            {QStringLiteral("savedAt"), info.lastModified().toUTC().toString(Qt::ISODate)},
-        });
-    }
-    return ok({{QStringLiteral("snapshots"), snapshots}, {QStringLiteral("n"), snapshots.size()}});
-}
-
-QJsonObject McpController::restoreSnapshot(const QString &hash)
-{
-    using namespace drift::mcp;
-    const QString needle = hash.trimmed();
-    if (needle.size() < 8)
-        return err("bad_args", QStringLiteral("hash required"));
-
-    m_app->flushUndoHistoryTrim(); // resolve against the stack as it will stay
-    const int onStack = m_app->historyIndexForHash(needle);
-    if (onStack >= 0)
-        return undoTo(onStack, {});
-
-    QDir dir(m_app->historySnapshotDir());
-    QString path;
-    int matches = 0;
-    const QFileInfoList files =
-        dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files, QDir::Name);
-    for (const QFileInfo &info : files) {
-        const QString name = info.completeBaseName();
-        if (name.startsWith(needle, Qt::CaseInsensitive) || needle.startsWith(name, Qt::CaseInsensitive)) {
-            ++matches;
-            path = info.absoluteFilePath();
-            if (name.compare(needle, Qt::CaseInsensitive) == 0) {
-                path = info.absoluteFilePath();
-                matches = 1;
-                break;
-            }
-        }
-    }
-    if (matches != 1 || path.isEmpty())
-        return err("not_found", QStringLiteral("No snapshot matches that hash"));
-
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly))
-        return err("bad_args", QStringLiteral("Could not read snapshot"));
-    const QByteArray json = file.readAll();
-    const QString fileHash = QString::fromLatin1(
-        QCryptographicHash::hash(json, QCryptographicHash::Sha256).toHex());
-    // Snapshots are hashed without transcripts; keep the session's so restoring one never loses them.
-    const auto transcripts = m_app->m_project.transcripts();
-    QString error;
-    if (!m_app->applyProjectJson(json, &error))
-        return err("bad_args", error.isEmpty() ? QStringLiteral("Snapshot refused") : error);
-    for (auto it = transcripts.cbegin(); it != transcripts.cend(); ++it) {
-        if (!m_app->m_project.transcript(it.key()))
-            m_app->m_project.setTranscript(it.key(), it.value());
-    }
-    m_pendingChangeLabel = QStringLiteral("Restore snapshot");
-    bumpEditRevision();
-    return ok({{QStringLiteral("index"), 0},
-               {QStringLiteral("hash"), fileHash},
-               {QStringLiteral("short"), shortHash(fileHash)},
-               {QStringLiteral("reset"), true}});
 }
 
 namespace {
@@ -3530,111 +2810,7 @@ QJsonObject McpController::setBeatLayers(bool grid, bool onsets)
     });
 }
 
-QList<double> McpController::beatTimes(const QString &unit, double minStrength) const
-{
-    QList<double> times;
-    const QString u = unit.trimmed().toLower();
-
-    if (u == QLatin1String("onset")) {
-        for (const AudioOnset &o : m_app->m_beatAnalysisRaw.onsets) {
-            if (o.strength >= minStrength)
-                times.append(o.seconds);
-        }
-        return times;
-    }
-
-    const QList<double> &beats = m_app->m_beatAnalysisRaw.beats;
-    if (u == QLatin1String("bar")) {
-        const int per = qMax(1, m_app->m_beatAnalysisRaw.beatsPerBar);
-        // Count bars from the detected downbeat, not from index 0, or every bar line lands on
-        // whichever beat happened to be first in the analysed window.
-        const int first = qBound(0, m_app->m_beatAnalysisRaw.firstDownbeat, qMax(0, beats.size() - 1));
-        for (int i = first; i < beats.size(); i += per)
-            times.append(beats.at(i));
-        return times;
-    }
-
-    times = beats;
-    return times;
-}
-
-int McpController::bookmarkBeats(double startSeconds, double durSeconds, const QString &unit,
-                                    double minStrength, const QString &labelPrefix)
-{
-    const QList<double> times = beatTimes(unit, minStrength);
-    if (times.isEmpty())
-        return 0;
-
-    const bool ranged = durSeconds > 0.0;
-    const double from = qMax(0.0, startSeconds);
-    const double to = from + durSeconds;
-
-    const drift::Project before = m_app->m_project;
-    QList<drift::Bookmark> marks = m_app->m_project.bookmarks();
-    int added = 0;
-    int n = 1;
-    for (double t : times) {
-        if (t < from || (ranged && t > to)) {
-            ++n;
-            continue;
-        }
-        const drift::TimeUs at = drift::secondsToUs(t);
-        // Bookmarks are snap targets themselves; stacking several inside one snap threshold
-        // would make the magnet ambiguous rather than stronger.
-        const bool crowded = std::any_of(marks.cbegin(), marks.cend(),
-                                         [at](const drift::Bookmark &b) {
-                                             return qAbs(b.timeUs - at) < drift::kSnapThresholdUs;
-                                         });
-        if (crowded) {
-            ++n;
-            continue;
-        }
-        marks.append(drift::Bookmark{at, QStringLiteral("%1 %2").arg(labelPrefix).arg(n)});
-        ++added;
-        ++n;
-    }
-    if (added == 0)
-        return 0;
-
-    std::sort(marks.begin(), marks.end(),
-              [](const drift::Bookmark &a, const drift::Bookmark &b) { return a.timeUs < b.timeUs; });
-    m_app->m_project.bookmarks() = marks;
-    m_app->pushProjectEdit(before, QStringLiteral("Bookmark beats"));
-    m_app->finishEdit(QStringLiteral("Bookmark beats"));
-    return added;
-}
-
 // --- scene toolbox ----------------------------------------------------------
-
-namespace {
-
-// Map a moment in a clip's source to where it lands on the timeline, through trim, speed
-// and reverse. Agents act in timeline seconds, so every scene time is reported both ways
-// rather than leaving this mapping for the caller to rediscover.
-double sceneSourceToTimeline(const drift::Clip &clip, double sourceSeconds)
-{
-    const drift::TimeUs span = clip.sourceSpanUs();
-    if (span <= 0)
-        return drift::usToSeconds(clip.timelineStart);
-
-    const double through =
-        qBound(0.0, double(drift::secondsToUs(sourceSeconds) - clip.srcIn) / double(span), 1.0);
-    const double offset = (clip.reverse ? 1.0 - through : through)
-                          * drift::usToSeconds(clip.timelineDuration);
-    return drift::usToSeconds(clip.timelineStart) + offset;
-}
-
-bool sceneMatches(const QVariantMap &scene, const QString &label, double minScore)
-{
-    if (scene.value(QStringLiteral("score")).toDouble() < minScore)
-        return false;
-    if (label.isEmpty())
-        return true;
-    return scene.value(QStringLiteral("labels")).toStringList().contains(label,
-                                                                        Qt::CaseInsensitive);
-}
-
-} // namespace
 
 QJsonObject McpController::detectScenes(int trackIndex, int clipIndex, double threshold,
                                            double minScene, bool withObjects)
@@ -3721,7 +2897,7 @@ QJsonObject McpController::listScenes(const QString &label, double minScore,
     QList<QVariantMap> rows;
     for (const QVariant &value : scenes) {
         const QVariantMap scene = value.toMap();
-        if (sceneMatches(scene, label, minScore))
+        if (SceneDetectController::sceneMatches(scene, label, minScore))
             rows.append(scene);
     }
 
@@ -3746,11 +2922,11 @@ QJsonObject McpController::listScenes(const QString &label, double minScore,
             {QStringLiteral("start"), sourceStart},
             {QStringLiteral("end"), sourceEnd},
             {QStringLiteral("duration"), scene.value(QStringLiteral("duration")).toDouble()},
-            {QStringLiteral("timeline_start"), sceneSourceToTimeline(*clip, sourceStart)},
-            {QStringLiteral("timeline_end"), sceneSourceToTimeline(*clip, sourceEnd)},
+            {QStringLiteral("timeline_start"), SceneDetectController::sourceToTimeline(*clip, sourceStart)},
+            {QStringLiteral("timeline_end"), SceneDetectController::sourceToTimeline(*clip, sourceEnd)},
             {QStringLiteral("thumb"), scene.value(QStringLiteral("thumbnailSeconds")).toDouble()},
             {QStringLiteral("timeline_thumb"),
-             sceneSourceToTimeline(*clip, scene.value(QStringLiteral("thumbnailSeconds")).toDouble())},
+             SceneDetectController::sourceToTimeline(*clip, scene.value(QStringLiteral("thumbnailSeconds")).toDouble())},
             {QStringLiteral("motion"), scene.value(QStringLiteral("motion")).toDouble()},
             {QStringLiteral("loudness"), scene.value(QStringLiteral("loudness")).toDouble()},
             {QStringLiteral("objects"), scene.value(QStringLiteral("objects")).toDouble()},
@@ -3901,8 +3077,8 @@ QJsonObject McpController::findScenes(const QString &label, double minScore, int
                 hit.index = i;
                 hit.start = drift::usToSeconds(scene.sourceIn);
                 hit.end = drift::usToSeconds(scene.sourceOut);
-                hit.timelineStart = sceneSourceToTimeline(clip, hit.start);
-                hit.timelineEnd = sceneSourceToTimeline(clip, hit.end);
+                hit.timelineStart = SceneDetectController::sourceToTimeline(clip, hit.start);
+                hit.timelineEnd = SceneDetectController::sourceToTimeline(clip, hit.end);
                 hit.score = scene.score;
                 hit.labels = scene.labels;
                 hits.append(hit);
@@ -3933,77 +3109,6 @@ QJsonObject McpController::findScenes(const QString &label, double minScore, int
     return ok({{QStringLiteral("scenes"), out},
                {QStringLiteral("n"), out.size()},
                {QStringLiteral("unscanned"), unscanned}});
-}
-
-QList<double> McpController::sceneCutTimes(double minScore, const QString &label) const
-{
-    if (m_app->scenes()->list().isEmpty())
-        return {};
-
-    const drift::Clip *clip = nullptr;
-    for (const drift::Track &track : m_app->m_project.tracks()) {
-        for (const drift::Clip &candidate : track.clips) {
-            if (candidate.id == m_app->scenes()->clipId()) {
-                clip = &candidate;
-                break;
-            }
-        }
-    }
-    if (!clip)
-        return {};
-
-    QList<double> times;
-    for (const QVariant &value : m_app->scenes()->list()) {
-        const QVariantMap scene = value.toMap();
-        // Scene 0 opens at the clip's own start, which is not a cut.
-        if (scene.value(QStringLiteral("index")).toInt() == 0)
-            continue;
-        if (!sceneMatches(scene, label, minScore))
-            continue;
-        times.append(
-            sceneSourceToTimeline(*clip, scene.value(QStringLiteral("sourceStart")).toDouble()));
-    }
-    // Reverse playback maps later source times to earlier timeline ones.
-    std::sort(times.begin(), times.end());
-    return times;
-}
-
-int McpController::bookmarkScenes(double minScore, const QString &label,
-                                     const QString &labelPrefix)
-{
-    const QList<double> times = sceneCutTimes(minScore, label);
-    if (times.isEmpty())
-        return 0;
-
-    const drift::Project before = m_app->m_project;
-    QList<drift::Bookmark> marks = m_app->m_project.bookmarks();
-    int added = 0;
-    int n = 1;
-    for (double t : times) {
-        const drift::TimeUs at = drift::secondsToUs(t);
-        // Same reasoning as bookmark_beats: bookmarks are snap targets, and stacking several
-        // inside one snap threshold makes the magnet ambiguous rather than stronger.
-        const bool crowded =
-            std::any_of(marks.cbegin(), marks.cend(), [at](const drift::Bookmark &b) {
-                return qAbs(b.timeUs - at) < drift::kSnapThresholdUs;
-            });
-        if (crowded) {
-            ++n;
-            continue;
-        }
-        marks.append(drift::Bookmark{at, QStringLiteral("%1 %2").arg(labelPrefix).arg(n)});
-        ++added;
-        ++n;
-    }
-    if (added == 0)
-        return 0;
-
-    std::sort(marks.begin(), marks.end(),
-              [](const drift::Bookmark &a, const drift::Bookmark &b) { return a.timeUs < b.timeUs; });
-    m_app->m_project.bookmarks() = marks;
-    m_app->pushProjectEdit(before, QStringLiteral("Bookmark scenes"));
-    m_app->finishEdit(QStringLiteral("Bookmark scenes"));
-    return added;
 }
 
 QJsonObject McpController::aiCapabilities() const
@@ -6012,6 +5117,22 @@ void McpController::searchAudioSheet(const QVariantMap &options)
     }));
 }
 
+void McpController::searchAssetsBySound(const QString &term)
+{
+    if (m_assetSoundBusy)
+        return;
+    m_assetSoundBusy = true;
+    emit assetSoundChanged();
+    QTimer::singleShot(0, this, [this, term]() {
+        AudioRequest request;
+        request.term = term;
+        request.top = 100;
+        m_assetSoundResult = audioRank(request).toVariantMap();
+        m_assetSoundBusy = false;
+        emit assetSoundChanged();
+    });
+}
+
 QJsonObject McpController::normalizeVolume(int trackIndex, int clipIndex, double targetLufs)
 {
     using namespace drift::mcp;
@@ -6053,113 +5174,73 @@ QJsonObject McpController::applyNormalizeGain(int trackIndex, int clipIndex, dou
 }
 
 QJsonObject McpController::duckUnder(int musicTrack, int musicClip, int overTrack,
-                                        const QStringList &overClips, double amount, double attack,
-                                        double release)
+                                        const QStringList &overClips,
+                                        const drift::DuckSettings &settings, double sensitivity,
+                                        const QString &method)
 {
     using namespace drift::mcp;
     if (!m_app->isValidClipIndex(musicTrack, musicClip))
         return err("not_found", QStringLiteral("Unknown music clip"));
-    const double amt = qBound(0.0, amount, 1.0);
-
-    QList<SilenceRange> speech;
-    auto addSpeech = [&](int tr, int cl) {
-        const QJsonObject det = detectSilence(tr, cl, 0, 0, 0.02, 0.12, 0.0);
-        if (!det.value(QStringLiteral("ok")).toBool())
-            return;
-        const drift::Clip &clip = m_app->m_project.tracks().at(tr).clips.at(cl);
-        const double cs = drift::usToSeconds(clip.timelineStart);
-        const double ce = drift::usToSeconds(clip.timelineStart + clip.timelineDuration);
-        // Invert silence → speech, clipped to the clip.
-        double cursor = cs;
-        const QJsonArray silences = det.value(QStringLiteral("ranges")).toArray();
-        for (const QJsonValue &v : silences) {
-            const QJsonObject r = v.toObject();
-            const double s = r.value(QStringLiteral("start")).toDouble();
-            const double e = r.value(QStringLiteral("end")).toDouble();
-            if (s > cursor)
-                speech.append({cursor, s});
-            cursor = qMax(cursor, e);
-        }
-        if (ce > cursor)
-            speech.append({cursor, ce});
-    };
-
-    if (!overClips.isEmpty()) {
-        for (const QString &id : overClips) {
-            int tr = -1, cl = -1;
-            if (findClipById(m_app->m_project, id, &tr, &cl))
-                addSpeech(tr, cl);
-        }
-    } else if (overTrack >= 0 && overTrack < m_app->m_project.tracks().size()) {
-        const drift::Track &track = m_app->m_project.tracks().at(overTrack);
-        for (int c = 0; c < track.clips.size(); ++c)
-            addSpeech(overTrack, c);
-    } else {
+    if (overClips.isEmpty() && (overTrack < 0 || overTrack >= m_app->m_project.tracks().size()))
         return err("bad_args", QStringLiteral("over_track or over_clips required"));
-    }
 
-    // Read the level the music sits at going into each dip *before* touching anything. Sampling
-    // one value at the playhead flattened whatever envelope the music already had, and sampling it
-    // after a previous pass had written its own keys made each re-run collapse the rest level
-    // toward the ducked one — the pumping between words.
-    QList<SilenceRange> dips;
-    QList<double> restLevels;
-    for (const SilenceRange &span : speech) {
-        if (span.end - span.start < 0.05)
-            continue;
-        dips.append(span);
-        restLevels.append(m_app->propertyValueAt(musicTrack, musicClip, QStringLiteral("volume"),
-                                          span.start - attack, 1.0));
+    AudioAlignController::DuckRequest request;
+    request.overTrack = overTrack;
+    request.overClips = overClips;
+    request.settings = settings;
+    request.sensitivity = qBound(0.0, sensitivity, 1.0);
+    request.detect = method == QLatin1String("energy") ? QStringLiteral("level")
+                     : method == QLatin1String("vad")  ? QStringLiteral("voice")
+                                                       : QStringLiteral("auto");
+    const AudioAlignController::DuckJob job =
+        AudioAlignController::makeDuckJob(m_app->m_project, musicTrack, musicClip, request);
+    if (!job.error.isEmpty())
+        return err("bad_args", job.error);
+
+    auto detection = std::make_shared<AudioAlignController::DuckDetection>();
+    {
+        QEventLoop loop;
+        (void)QtConcurrent::run([&job, detection, &loop]() {
+            *detection = AudioAlignController::detectDuckSpeech(job, {});
+            QMetaObject::invokeMethod(&loop, &QEventLoop::quit, Qt::QueuedConnection);
+        });
+        loop.exec();
     }
+    if (!detection->ok)
+        return err("failed", detection->error);
 
     beginBatch();
+    drift::Clip &music = m_app->m_project.tracks()[musicTrack].clips[musicClip];
+    // Replaces what a previous pass wrote: keys are addressed by exact microsecond, so a re-run
+    // with any changed argument would otherwise interleave a fresh set beside the old one.
+    const int keys =
+        drift::applyDuckEnvelope(music, detection->dips, job.owned, settings, 1.0);
+    endBatch(QStringLiteral("Duck under speech"), keys > 0 || batchChangedProject());
 
-    // Writing is otherwise purely additive: keys are addressed by exact microsecond, so a re-run
-    // with any changed argument interleaves a fresh set beside the old one. Clear the windows this
-    // pass owns first, so running it twice leaves the same curve as running it once.
-    if (m_app->isValidClipIndex(musicTrack, musicClip)) {
-        const drift::Clip &music = m_app->m_project.tracks().at(musicTrack).clips.at(musicClip);
-        const double clipStart = drift::usToSeconds(music.timelineStart);
-        QList<double> doomed;
-        const auto &existing = music.volume.keyframes();
-        for (auto it = existing.constBegin(); it != existing.constEnd(); ++it) {
-            const double at = clipStart + drift::usToSeconds(it.key());
-            for (const SilenceRange &span : dips) {
-                if (at >= span.start - attack - 1e-6 && at <= span.end + release + 1e-6) {
-                    doomed.append(at);
-                    break;
-                }
-            }
-        }
-        for (const double at : doomed)
-            m_app->removeClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"), at);
-    }
-
-    int keys = 0;
-    for (int i = 0; i < dips.size(); ++i) {
-        const SilenceRange &span = dips.at(i);
-        const double rest = restLevels.at(i);
-        const double ducked = rest * amt;
-        m_app->setClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"),
-                        span.start - attack, rest);
-        m_app->setClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"), span.start, ducked);
-        m_app->setClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"), span.end, ducked);
-        m_app->setClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"),
-                        span.end + release, rest);
-        keys += 4;
-    }
-    endBatch(QStringLiteral("Duck under speech"), keys > 0);
-
-    // The rest level is per dip now, so report the first one and say when they differ rather than
+    // The rest level is per dip, so report the first one and say when they differ rather than
     // implying the whole clip was held at one level.
+    const double gain = qPow(10.0, qMin(0.0, settings.reduceDb) / 20.0);
+    const drift::Clip &written = m_app->m_project.tracks().at(musicTrack).clips.at(musicClip);
+    const double clipStart = drift::usToSeconds(written.timelineStart);
+    const double clipEnd = drift::usToSeconds(written.timelineEnd());
+    QList<double> restLevels;
+    for (const drift::DuckSpan &dip : std::as_const(detection->dips)) {
+        const double mid = (qMax(dip.start, clipStart) + qMin(dip.end, clipEnd)) / 2.0;
+        if (dip.end <= clipStart || dip.start >= clipEnd)
+            continue;
+        const double ducked =
+            written.volume.evaluateAt(drift::secondsToUs(mid) - written.timelineStart);
+        restLevels.append(gain > 0.0 ? ducked / gain : 1.0);
+    }
     const double firstRest = restLevels.isEmpty() ? 1.0 : restLevels.first();
     bool restVaries = false;
     for (const double level : restLevels)
-        restVaries = restVaries || !qFuzzyCompare(level + 1.0, firstRest + 1.0);
+        restVaries = restVaries || qAbs(level - firstRest) > 1e-6;
     QJsonObject reply{{QStringLiteral("keys"), keys},
-                      {QStringLiteral("speech"), speech.size()},
+                      {QStringLiteral("speech"), int(detection->dips.size())},
                       {QStringLiteral("rest"), round3(firstRest)},
-                      {QStringLiteral("ducked"), round3(firstRest * amt)}};
+                      {QStringLiteral("ducked"), round3(firstRest * gain)},
+                      {QStringLiteral("method"), detection->method}};
     if (restVaries)
         reply.insert(QStringLiteral("rest_varies"), true);
     return ok(reply);
@@ -6202,148 +5283,6 @@ QJsonObject McpController::listFaceTrack(int trackIndex, int clipIndex) const
                {QStringLiteral("n"), total},
                {QStringLiteral("frames"), frames},
                {QStringLiteral("truncated"), step > 1}});
-}
-
-QJsonObject McpController::autoReframe(int trackIndex, int clipIndex, double aspect,
-                                          const QString &mode)
-{
-    using namespace drift::mcp;
-    if (!m_app->isValidClipIndex(trackIndex, clipIndex))
-        return err("not_found", QStringLiteral("Unknown clip"));
-    drift::Clip &clip = m_app->m_project.tracks()[trackIndex].clips[clipIndex];
-    if (clip.type == drift::ClipType::Audio)
-        return err("type_mismatch", QStringLiteral("Cannot reframe an audio clip"));
-
-    const double canvasW = m_app->m_project.width();
-    const double canvasH = m_app->m_project.height();
-    double targetAspect = aspect > 0.01 ? aspect : (9.0 / 16.0);
-    const QString m = mode.toLower();
-
-    struct Sample {
-        double t = 0.0;
-        double cx = 0.5;
-        double cy = 0.5;
-        double rx = 0.2;
-        double ry = 0.25;
-    };
-    QList<Sample> samples;
-    if (m != QLatin1String("center") && !clip.faceTrackPath.isEmpty()) {
-        const std::shared_ptr<const drift::FaceTrack> track =
-            drift::loadFaceTrackCached(clip.faceTrackPath);
-        if (track && !track->isEmpty() && track->fps > 0) {
-            const int total = track->frames.size();
-            const int cap = 120;
-            const int step = qMax(1, (total + cap - 1) / cap);
-            for (int i = 0; i < total; i += step) {
-                Sample s;
-                s.t = double(i) / double(track->fps);
-                for (const drift::FaceAnchors &face : track->frames.at(i).faces) {
-                    if (!face.valid)
-                        continue;
-                    s.cx = face.faceCenter.x();
-                    s.cy = face.faceCenter.y();
-                    s.rx = qMax(0.05, face.faceRx);
-                    s.ry = qMax(0.05, face.faceRy);
-                    break;
-                }
-                samples.append(s);
-            }
-        }
-    }
-    if (samples.isEmpty()) {
-        Sample s;
-        s.t = 0.0;
-        samples.append(s);
-        Sample e;
-        e.t = drift::usToSeconds(clip.timelineDuration);
-        samples.append(e);
-    }
-
-    const int radius = (m == QLatin1String("motion")) ? 4 : 2;
-    QList<Sample> smoothed = samples;
-    for (int i = 0; i < samples.size(); ++i) {
-        double cx = 0, cy = 0, n = 0;
-        for (int j = qMax(0, i - radius); j <= qMin(samples.size() - 1, i + radius); ++j) {
-            cx += samples.at(j).cx;
-            cy += samples.at(j).cy;
-            n += 1;
-        }
-        smoothed[i].cx = cx / n;
-        smoothed[i].cy = cy / n;
-    }
-
-    // The crop window is in normalised source coordinates, where the two axes have different
-    // lengths in pixels. Relating them by the target aspect alone — as this did — treats them as
-    // square, which both distorts the picture and zooms far past what was asked for: on a 4K 16:9
-    // source a 9:16 request came out as a square box and about a 3x upscale. Dividing the source's
-    // own display aspect out is what makes the window the shape the caller asked for.
-    double sourceAspect = canvasW / canvasH;
-    if (const drift::MediaAsset *asset = m_app->m_project.asset(clip.assetId)) {
-        if (asset->width > 0 && asset->height > 0)
-            sourceAspect = double(asset->width) / double(asset->height);
-    }
-
-    // How much of the source ends up across the canvas, at the tightest point. Above 1.0 the crop
-    // is being blown up past its own resolution, which no amount of framing can make sharp.
-    double tightestScale = 0.0;
-
-    // Where the target-aspect window lands on the canvas. When the canvas already is that aspect
-    // this is the whole canvas and the crop fills it. When it is not — a 9:16 crop asked for on a
-    // 16:9 timeline, which is the documented use — the window is fitted inside instead. Filling the
-    // canvas in that case would mean stretching the picture, and a reframe that distorts the
-    // subject has not reframed anything.
-    const double frameH = qMin(canvasH, canvasW / targetAspect);
-    const double frameW = frameH * targetAspect;
-    const double frameX = (canvasW - frameW) * 0.5;
-    const double frameY = (canvasH - frameH) * 0.5;
-
-    const drift::ClipLayout restLayout = drift::clipLayoutAt(clip, 0, QSizeF(canvasW, canvasH));
-    beginBatch();
-    int keys = 0;
-    for (const Sample &s : smoothed) {
-        // Crop window of targetAspect centred on the face, in normalised source coords.
-        double cropH = qMin(1.0, qMax(s.ry * 2.4, 0.35));
-        double cropW = cropH * targetAspect / sourceAspect;
-        if (cropW > 1.0) {
-            cropW = 1.0;
-            cropH = qMin(1.0, cropW * sourceAspect / targetAspect);
-        }
-        double cropX = qBound(0.0, s.cx - cropW * 0.5, 1.0 - cropW);
-        double cropY = qBound(0.0, s.cy - cropH * 0.5, 1.0 - cropH);
-        // The whole source, scaled so that its crop window covers exactly the framed area. w/h
-        // comes out at the source's own aspect, so nothing is stretched. x/y/w/h is the box on
-        // the canvas; it becomes position and scale about the clip's anchor below.
-        const double w = frameW / cropW;
-        const double h = frameH / cropH;
-        const double x = frameX - cropX * w;
-        const double y = frameY - cropY * h;
-        if (const drift::MediaAsset *asset = m_app->m_project.asset(clip.assetId)) {
-            if (asset->width > 0)
-                tightestScale = qMax(tightestScale, frameW / (cropW * asset->width));
-        }
-        const double at = drift::usToSeconds(clip.timelineStart) + s.t;
-        const double scaleX = w / restLayout.frameW;
-        const double scaleY = h / restLayout.frameH;
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("positionX"), at,
-                               x + restLayout.anchorX * scaleX);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("positionY"), at,
-                               y + restLayout.anchorY * scaleY);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("scaleX"), at, scaleX);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("scaleY"), at, scaleY);
-        keys += 4;
-    }
-    endBatch(QStringLiteral("Auto-reframe"), keys > 0);
-    QJsonObject reply{{QStringLiteral("keys"), keys},
-                      {QStringLiteral("aspect"), round3(targetAspect)},
-                      {QStringLiteral("mode"), m.isEmpty() ? QStringLiteral("face") : m}};
-    if (tightestScale > 0.0) {
-        // Say how hard the crop is pushing the source, so a caller can see an upscale here rather
-        // than discover it as a soft picture in a render.
-        reply.insert(QStringLiteral("scale"), round3(tightestScale));
-        if (tightestScale > 1.02)
-            reply.insert(QStringLiteral("upscaled"), true);
-    }
-    return ok(reply);
 }
 
 QJsonObject McpController::listAddons() const
@@ -6931,27 +5870,9 @@ QJsonObject McpController::importGeneratedAudio(const QString &path, const QJson
 
 namespace {
 
-QString slugFor(const QString &text)
-{
-    QString slug;
-    for (const QChar c : text.toLower()) {
-        if (c.isLetterOrNumber())
-            slug.append(c);
-        else if (!slug.isEmpty() && !slug.endsWith(QLatin1Char('-')))
-            slug.append(QLatin1Char('-'));
-        if (slug.size() >= 24)
-            break;
-    }
-    while (slug.endsWith(QLatin1Char('-')))
-        slug.chop(1);
-    return slug.isEmpty() ? QStringLiteral("audio") : slug;
-}
-
 QString generatedPath(const QString &kind, const QString &provider, const QString &text)
 {
-    return QDir(drift::generatedAudioDir())
-        .filePath(QStringLiteral("%1-%2-%3-%4.mp3")
-                      .arg(kind, provider, slugFor(text), QUuid::createUuid().toString(QUuid::Id128).left(8)));
+    return TtsController::generatedAudioPath(kind, provider, text);
 }
 
 } // namespace
@@ -7240,33 +6161,14 @@ QJsonObject McpController::sfxGenerate(const QJsonObject &args)
     const QJsonObject unavailable = cloudUnavailable(provider);
     if (!unavailable.isEmpty())
         return unavailable;
-    const QString key = m_app->m_cloud->apiKey(provider);
     const double duration = args.value(QStringLiteral("duration")).toDouble(0.0);
     const double influence = args.value(QStringLiteral("prompt_influence")).toDouble(0.3);
     const bool loop = args.value(QStringLiteral("loop")).toBool(false);
-    const QString path = generatedPath(QStringLiteral("sfx"), provider, prompt);
-    const QJsonObject generator{{QStringLiteral("provider"), provider}, {QStringLiteral("kind"), QStringLiteral("sfx")},
-                                {QStringLiteral("prompt"), prompt}, {QStringLiteral("duration"), duration}};
     const QJsonValue place = args.value(QStringLiteral("place"));
     const QPointer<McpController> self(this);
-    const QString id = m_app->m_jobs->start(
-        QStringLiteral("sfx"), provider, JobRegistry::Lane::Network,
-        [key, prompt, duration, influence, loop, path](JobContext &ctx) {
-            ctx.progress(0.1, QStringLiteral("Generating sound…"));
-            drift::cloud::CloudError error;
-            const QByteArray audio = drift::cloud::elevenlabs::soundEffect(
-                key, prompt, duration, influence, loop, [&ctx] { return ctx.cancelled(); }, &error);
-            if (error.isError())
-                return ctx.fail(error.code, error.message);
-            QFile file(path);
-            if (audio.isEmpty() || !file.open(QIODevice::WriteOnly) || file.write(audio) != audio.size())
-                return ctx.fail(QStringLiteral("internal"), QStringLiteral("Could not write %1").arg(path));
-            ctx.succeed({});
-        },
-        [self, path, generator, place](const QJsonObject &job) {
+    const QString id = m_app->tts()->startSfxJob(
+        prompt, duration, influence, loop, [self, place](const QString &path, const QJsonObject &generator) {
             if (!self)
-                return QJsonObject{};
-            if (!job.value(QStringLiteral("ok")).toBool())
                 return QJsonObject{};
             QJsonObject imported = self->importGeneratedAudio(path, generator, place);
             imported.remove(QStringLiteral("ok"));

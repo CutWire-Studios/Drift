@@ -870,6 +870,8 @@ add_library(driftengine STATIC
     src/engine/audio/analysis/AudioSync.cpp
     src/engine/audio/analysis/AudioAlign.h
     src/engine/audio/analysis/AudioAlign.cpp
+    src/engine/audio/analysis/AudioDucking.h
+    src/engine/audio/analysis/AudioDucking.cpp
     src/engine/audio/analysis/RealFft.h
     src/engine/audio/analysis/AudioFrameAnalysis.h
     src/engine/audio/analysis/AudioFrameAnalysis.cpp
@@ -2006,6 +2008,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/ScenesTab.qml
         src/qml/components/assets/SubtitlesTab.qml
         src/qml/components/assets/SpeechTab.qml
+        src/qml/components/assets/SoundEffectDialog.qml
         src/qml/components/assets/StickersTab.qml
         src/qml/components/assets/ShapesTab.qml
         src/qml/components/assets/AssetSearchBar.qml
@@ -2309,6 +2312,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineCutDoomGradient.qml
         src/qml/components/timeline/TimelineCutDash.qml
         src/qml/components/timeline/TimelineClipContextMenu.qml
+        src/qml/components/timeline/TimelineAutoReframeDialog.qml
         src/qml/components/timeline/TimelineReplaceClipDialog.qml
         src/qml/components/timeline/TimelineBookmarkMarker.qml
         src/qml/components/timeline/TimelineBookmarkLaneHighlight.qml
@@ -2509,6 +2513,7 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/VideoSizeDialog.qml
         src/qml/components/shell/VideoSizeControls.qml
         src/qml/components/dialogs/ProjectPropertiesDialog.qml
+        src/qml/components/dialogs/ProjectHealthDialog.qml
         src/qml/components/shell/SettingsPane.qml
         src/qml/components/android/SheetActionRow.qml
         src/qml/components/android/SheetActionTile.qml

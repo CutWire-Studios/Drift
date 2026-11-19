@@ -4,6 +4,8 @@
 #include "app/editor/PreferencesController.h"
 #include "app/forge/AudioForgeController.h"
 #include "app/forge/ForgeController.h"
+#include "ui/nodes/NodeGraphController.h"
+#include "ui/nodes/NodeGridItem.h"
 #include "app/procedural/ProceduralEditorController.h"
 #include "app/procedural/ProceduralHighlighter.h"
 #include "app/editor/ProjectFileController.h"
@@ -939,6 +941,9 @@ int main(int argc, char *argv[])
     qmlRegisterType<KeyframeCurvesItem>("Drift", 1, 0, "KeyframeCurvesItem");
     qmlRegisterType<TrackerOverlayItem>("Drift", 1, 0, "TrackerOverlayItem");
     qmlRegisterType<ConfidenceStripItem>("Drift", 1, 0, "ConfidenceStripItem");
+    qmlRegisterType<NodeGridItem>("Drift", 1, 0, "NodeGridItem");
+    qmlRegisterUncreatableType<NodeGraphController>("Drift", 1, 0, "NodeGraphController",
+                                                     QStringLiteral("Subclassed by the graph workspaces"));
     TimelineTrackItem::installAccessibility();
 
     step(StartupSplash::tr("Starting the playback and audio engines…"), 0.12);

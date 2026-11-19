@@ -15,6 +15,8 @@ ThemedContextMenu {
     property bool canSyncByAudio: false
     property bool canReplaceMedia: false
     property bool canDeleteWithEffects: false
+    property bool hasPrevious: false
+    property bool hasNext: false
     onAboutToShow: {
         canRemoveSilence = EditorState.audioAlign.canRemoveSilence(owner.trackIndex, owner.clipIndex)
         canSyncByAudio = EditorState.audioAlign.canSyncByAudio()
@@ -24,6 +26,8 @@ ThemedContextMenu {
         // Over what the delete acts on (the selection, linked partners included), masks included.
         canDeleteWithEffects = EditorState.selectionHasPinnedAdjustments()
         canPasteAttributes = EditorState.canPasteAttributes()
+        hasPrevious = EditorState.hasClipNeighbour(owner.trackIndex, owner.clipIndex, false)
+        hasNext = EditorState.hasClipNeighbour(owner.trackIndex, owner.clipIndex, true)
         canMergeTrackSubtitles = owner.trackType === "subtitle"
                 && EditorState.canMergeAllSubtitlesOnTrack(owner.trackIndex)
         rebuildMoveToTrackMenu()
@@ -171,6 +175,30 @@ ThemedContextMenu {
                                              EditorState.playheadSeconds)
     }
     ThemedMenuItem {
+        text: qsTr("Split on beats")
+        icon.name: Theme.icons.scissors
+        visible: EditorState.beatsAvailable && owner.clipData.kind !== "subtitle"
+        onTriggered: EditorState.splitSelectionOnBeats(owner.trackIndex, owner.clipIndex, "beat")
+    }
+    ThemedMenuItem {
+        text: qsTr("Snap clips to beats")
+        icon.name: Theme.icons.music
+        visible: EditorState.beatsAvailable
+        onTriggered: EditorState.snapSelectionToBeats(owner.trackIndex, owner.clipIndex, "beat")
+    }
+    ThemedMenuItem {
+        text: qsTr("Swap with previous clip")
+        icon.name: Theme.icons.repeat
+        visible: clipContextMenu.hasPrevious
+        onTriggered: EditorState.swapWithNeighbour(owner.trackIndex, owner.clipIndex, false)
+    }
+    ThemedMenuItem {
+        text: qsTr("Swap with next clip")
+        icon.name: Theme.icons.repeat
+        visible: clipContextMenu.hasNext
+        onTriggered: EditorState.swapWithNeighbour(owner.trackIndex, owner.clipIndex, true)
+    }
+    ThemedMenuItem {
         text: qsTr("Separate audio")
         icon.name: Theme.icons.audioLines
         // CapCut: only offer extract when the clip still has embedded audio.
@@ -203,6 +231,17 @@ ThemedContextMenu {
         visible: clipContextMenu.canRemoveSilence
         enabled: !EditorState.audioAlign.running
         onTriggered: EditorState.audioAlign.removeSilence(owner.trackIndex, owner.clipIndex)
+    }
+    ThemedMenuItem {
+        text: qsTr("Auto duck…")
+        icon.name: Theme.icons.audioLines
+        visible: EditorState.audioAlign.canDuck(owner.trackIndex, owner.clipIndex)
+        enabled: !EditorState.audioAlign.running
+        onTriggered: {
+            if (!owner.selected)
+                EditorState.selectClip(owner.trackIndex, owner.clipIndex)
+            ShellBridge.navigate("panel:audioMixer#audio-ducking")
+        }
     }
     ThemedMenuItem {
         text: qsTr("Sync by audio")
@@ -254,6 +293,13 @@ ThemedContextMenu {
         visible: (owner.clipData.kind === "video" || owner.clipData.kind === "image")
                  && typeof ShellBridge.main?.openCrop === "function"
         onTriggered: ShellBridge.main.openCrop(owner.trackIndex, owner.clipIndex)
+    }
+    ThemedMenuItem {
+        text: qsTr("Auto reframe…")
+        icon.name: Theme.icons.crop
+        visible: (owner.clipData.kind === "video" || owner.clipData.kind === "image")
+                 && typeof owner.panel.requestAutoReframe === "function"
+        onTriggered: owner.panel.requestAutoReframe(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
         text: qsTr("Enhance video…")
@@ -350,6 +396,12 @@ ThemedContextMenu {
         enabled: clipContextMenu.canPasteEffects
         onTriggered: EditorState.pasteEffectsFromClipboard(owner.trackIndex,
                                                            owner.clipIndex)
+    }
+    ThemedMenuItem {
+        text: qsTr("Remove all effects")
+        icon.name: Theme.icons.trash
+        visible: owner.hasAnyEffects
+        onTriggered: EditorState.removeAllEffects(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
         text: qsTr("Save effects as preset…")
