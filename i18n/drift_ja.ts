@@ -1787,6 +1787,14 @@
         <source>Analyzing…</source>
         <translation>分析中…</translation>
     </message>
+    <message>
+        <source>Close gap on all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close the gap after the clip on every free track</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AndroidMyVideosTab</name>
@@ -2290,6 +2298,10 @@
     <message>
         <source>Close gap</source>
         <translation>ギャップを埋める</translation>
+    </message>
+    <message>
+        <source>Close gap on all tracks</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5217,6 +5229,102 @@
     <message>
         <source>Clip labelled</source>
         <translation>クリップにラベルを付けました</translation>
+    </message>
+    <message>
+        <source>%1 is an adjustment track; its clips follow the clips they apply to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No gap at %1 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track %1 is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip %1 sits in the gap on track %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 sits in the gap on %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Closing would push clip %1 onto another</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Closing would push %1 onto another clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close gap on all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transform %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitle %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graphic %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Gap closed on %n track(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Gap closed on %n track(s). Not moved: %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -26863,6 +26971,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Close Gap</source>
         <translation>ギャップを埋める</translation>
+    </message>
+    <message>
+        <source>Close Gap on All Tracks</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
