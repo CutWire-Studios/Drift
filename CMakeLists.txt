@@ -1251,6 +1251,8 @@ qt_add_executable(drift
     src/app/platform/Haptics.cpp
     src/app/platform/PointerDevices.h
     src/app/platform/PointerDevices.cpp
+    src/app/platform/PlatformDrag.h
+    src/app/platform/PlatformDrag.cpp
     src/ui/preview/PreviewItem.h
     src/ui/preview/PreviewItem.cpp
     src/ui/preview/BrushStrokeItem.h

@@ -96,13 +96,6 @@ Rectangle {
         }
     }
 
-    Drag.active: !isFolder && rowDrag.active
-    Drag.dragType: Drag.Automatic
-    Drag.supportedActions: Qt.CopyAction
-    Drag.keys: ["text/plain"]
-    Drag.mimeData: { "text/plain": assetIndex.toString() }
-    Drag.hotSpot.x: width / 2
-    Drag.hotSpot.y: height / 2
 
     HoverHandler {
         id: rowHover
@@ -194,6 +187,8 @@ Rectangle {
             onActiveChanged: {
                 if (active) {
                     EditorState.draggingAssetIndex = assetIndex
+                    PlatformDrag.start({ "text/plain": assetIndex.toString() },
+                                       Qt.point(root.width / 2, root.height / 2))
                 } else {
                     Qt.callLater(function() {
                         if (!rowDrag.active)

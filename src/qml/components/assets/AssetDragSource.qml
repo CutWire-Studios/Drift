@@ -5,9 +5,6 @@ import Drift
 // platform drag (the mime type comes from AssetDrag) and right-clicks for contextMenuRequested; a
 // finger presses-and-holds to lift into TouchDrag and taps for contextMenuRequested when the card
 // has a menu (hasContextMenu), else for tapped.
-//
-// The Drag attached properties sit on this item and the handlers on a child: a handler on the item
-// that owns Drag.Automatic re-enters QDrag::exec through its own active binding.
 Item {
     id: root
 
@@ -30,15 +27,6 @@ Item {
 
     signal tapped(int tapCount)
     signal contextMenuRequested()
-
-    Drag.active: mouseDrag.active
-    Drag.dragType: Drag.Automatic
-    Drag.supportedActions: Qt.CopyAction
-    Drag.keys: [AssetDrag.mimeKey(root.kind)]
-    Drag.mimeData: AssetDrag.mimeData(root.kind, root.payload, root.label)
-    // Centred, so the drop lands under the pointer rather than a card's width to its left.
-    Drag.hotSpot.x: width / 2
-    Drag.hotSpot.y: height / 2
 
     Item {
         anchors.fill: parent
@@ -67,9 +55,12 @@ Item {
             // Not the touchscreen: a finger on a desktop touchscreen scrolls the grid.
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
             onActiveChanged: {
-                if (active)
+                if (active) {
                     AssetDrag.begin(root.kind, root.payload, root.label)
-                else
+                    // Centred, so the drop lands under the pointer rather than a card's width to its left.
+                    PlatformDrag.start(AssetDrag.mimeData(root.kind, root.payload, root.label),
+                                       Qt.point(root.width / 2, root.height / 2))
+                } else
                     AssetDrag.end()
             }
         }

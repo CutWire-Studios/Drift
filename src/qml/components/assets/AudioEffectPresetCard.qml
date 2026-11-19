@@ -24,14 +24,6 @@ Column {
     readonly property string thumb: root.modelData.thumbnailPath || ""
     readonly property string iconGlyph: root.modelData.icon || "audio-lines"
 
-    Drag.active: presetDrag.active
-    Drag.dragType: Drag.Automatic
-    Drag.supportedActions: Qt.CopyAction
-    Drag.keys: ["application/x-drift-audio-effect"]
-    Drag.mimeData: ({ "application/x-drift-audio-effect": root.modelData.id })
-    Drag.hotSpot.x: width / 2
-    Drag.hotSpot.y: cardSize / 2
-
     Rectangle {
         width: cardSize
         height: cardSize
@@ -108,6 +100,11 @@ Column {
             // drag has no touch gesture and cannot leave the sheet.
             acceptedButtons: Qt.LeftButton
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
+            onActiveChanged: {
+                if (active)
+                    PlatformDrag.start({ "application/x-drift-audio-effect": root.modelData.id },
+                                       Qt.point(root.width / 2, root.cardSize / 2))
+            }
         }
 
         // Hold to carry the preset onto a specific clip; tap still

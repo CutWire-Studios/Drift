@@ -4,7 +4,7 @@ import Drift
 
 // Every kind of asset a browser can drag, and the desktop half of dragging one.
 //
-// The phone lifts cards into TouchDrag; the desktop uses a platform drag (Drag.Automatic), which
+// The phone lifts cards into TouchDrag; the desktop uses a platform drag (PlatformDrag), which
 // carries a mime type per kind. Both name kinds from the list below, and both drop targets hand
 // the kind and payload to AppController::planAssetDrop / dropAsset, so a kind means the same
 // thing wherever it lands.

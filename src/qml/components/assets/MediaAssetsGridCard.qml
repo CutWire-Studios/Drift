@@ -77,16 +77,17 @@ Column {
         NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
     }
 
-    Drag.active: !isFolder && frame.dragActive
-    Drag.dragType: Drag.Automatic
-    Drag.supportedActions: Qt.CopyAction
-    Drag.keys: ["text/plain"]
-    Drag.mimeData: { "text/plain": assetIndex.toString() }
-    // Default hotspot is (0,0) at the card top-left; Wayland
-    // compositors (notably Mutter) then deliver drop Y far from
-    // the grab point. Center on the thumbnail like effect cards.
-    Drag.hotSpot.x: width / 2
-    Drag.hotSpot.y: cardSize * 9 / 32
+    Connections {
+        target: frame
+        function onDragActiveChanged() {
+            // Default hotspot is (0,0) at the card top-left; Wayland
+            // compositors (notably Mutter) then deliver drop Y far from
+            // the grab point. Center on the thumbnail like effect cards.
+            if (frame.dragActive && !root.isFolder)
+                PlatformDrag.start({ "text/plain": root.assetIndex.toString() },
+                                   Qt.point(root.width / 2, root.cardSize * 9 / 32))
+        }
+    }
 
     // Grid cards had neither hover feedback nor a pointing
     // cursor, while the list rows had both.

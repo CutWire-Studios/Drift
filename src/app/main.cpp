@@ -31,6 +31,7 @@
 #include "engine/addons/AddonRegistry.h"
 #include "app/platform/Haptics.h"
 #include "app/platform/PointerDevices.h"
+#include "app/platform/PlatformDrag.h"
 #include "app/platform/PrimaryDisplay.h"
 #include "app/GraphicsApiChoice.h"
 #include "app/StartupSplash.h"
@@ -961,6 +962,7 @@ int main(int argc, char *argv[])
     AudioForgeController audioForge(&editorState, &workspaceStore);
     drift::Haptics haptics;
     drift::PointerDevices pointerDevices;
+    drift::PlatformDrag platformDrag;
     CrashReporter crashReporter;
     editorState.setAddonManager(&addonManager);
     MarketServices market(assetLibrary, editorState, addonManager);
@@ -992,6 +994,7 @@ int main(int argc, char *argv[])
     qmlRegisterSingletonInstance("Drift", 1, 0, "SearchIndex", &searchIndex);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Haptics", &haptics);
     qmlRegisterSingletonInstance("Drift", 1, 0, "PointerDevices", &pointerDevices);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "PlatformDrag", &platformDrag);
     qmlRegisterSingletonInstance("Drift", 1, 0, "CrashReports", &crashReporter);
     // QML_ELEMENT on ThemeManager is recorded in qml_register_types_Drift(), and
     // that callback runs only when an import is the first thing to touch the

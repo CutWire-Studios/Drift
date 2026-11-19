@@ -56,13 +56,6 @@ Column {
         }
     }
 
-    Drag.active: transitionDrag.active
-    Drag.dragType: Drag.Automatic
-    Drag.supportedActions: Qt.CopyAction
-    Drag.keys: ["application/x-drift-transition"]
-    Drag.mimeData: ({ "application/x-drift-transition": root.modelData.kind })
-    Drag.hotSpot.x: width / 2
-    Drag.hotSpot.y: cardSize / 2
 
     Rectangle {
         width: cardSize
@@ -117,9 +110,11 @@ Column {
             acceptedButtons: Qt.LeftButton
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
             onActiveChanged: {
-                if (active)
+                if (active) {
                     AssetDrag.begin("transition", root.modelData.kind, root.modelData.label)
-                else
+                    PlatformDrag.start({ "application/x-drift-transition": root.modelData.kind },
+                                       Qt.point(root.width / 2, root.cardSize / 2))
+                } else
                     AssetDrag.end()
             }
         }
