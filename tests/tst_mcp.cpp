@@ -123,6 +123,7 @@ private slots:
     void mutatingOpsReturnFinalGeometry();
     void rippleTrimMovesTheRest();
     void closeGapsClosesEveryHole();
+    void closeGapsHonoursDecimalBounds();
     void reorderClipsKeepsTheSpacing();
     void replaceClipKeepsTheSlot();
     void setSequenceLaysOutTheTrack();
@@ -1689,6 +1690,56 @@ void McpTest::closeGapsClosesEveryHole()
         QCOMPARE(refused.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
         QCOMPARE(state.project()->tracks().last().clips.first().timelineStart, drift::secondsToUs(5.0));
     }
+}
+
+void McpTest::closeGapsHonoursDecimalBounds()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::MediaAsset media;
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    library.syncToProject();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QStringList ids;
+    for (const double at : {1.0, 9.0}) {
+        const QJsonObject placed = dispatcher.applyOne(
+            QStringLiteral("insert_clip"),
+            {{QStringLiteral("asset"), 0}, {QStringLiteral("at"), at}, {QStringLiteral("out"), 1.0}, {QStringLiteral("ripple"), false}});
+        QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson()));
+        ids.append(placed.value(QStringLiteral("id")).toString());
+    }
+    const int track = state.mcp()->locateClip(ids.at(0)).first;
+    const auto clipAt = [&](const QString &id) -> drift::Clip & {
+        const QPair<int, int> loc = state.mcp()->locateClip(id);
+        return state.project()->tracks()[loc.first].clips[loc.second];
+    };
+
+    // A gap ending at 8.04 s: the "to" bound must reach it.
+    clipAt(ids.at(1)).timelineStart = 8'040'000;
+    const QJsonObject ranged = dispatcher.applyOne(
+        QStringLiteral("close_gaps"),
+        {{QStringLiteral("track"), track}, {QStringLiteral("from"), 2.0}, {QStringLiteral("to"), 8.04}});
+    QVERIFY2(ranged.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(ranged).toJson()));
+    QCOMPARE(ranged.value(QStringLiteral("closed")).toArray().size(), 1);
+    QCOMPARE(clipAt(ids.at(1)).timelineStart, drift::TimeUs{2'000'000});
+    state.undo();
+
+    // closeGap at a decimal second leaves no 1 us overlap.
+    clipAt(ids.at(0)).timelineStart = 7'000'000;
+    clipAt(ids.at(0)).timelineDuration = 1'040'000;
+    clipAt(ids.at(1)).timelineStart = 10'000'000;
+    state.closeGap(track, 8.04);
+    QCOMPARE(clipAt(ids.at(1)).timelineStart, drift::TimeUs{8'040'000});
+
+    // The work area lands on the named microsecond.
+    const QJsonObject area = dispatcher.applyOne(QStringLiteral("set_work_area"),
+                                                 {{QStringLiteral("in"), 8.04}, {QStringLiteral("out"), 9.0}});
+    QVERIFY2(area.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(area).toJson()));
+    QCOMPARE(state.project()->workAreaInUs(), drift::TimeUs{8'040'000});
 }
 
 void McpTest::reorderClipsKeepsTheSpacing()

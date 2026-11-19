@@ -260,6 +260,15 @@ void CoreTest::timeConversion()
     QCOMPARE(drift::secondsToUs(1.0), drift::TimeUs{1'000'000});
     QCOMPARE(drift::usToSeconds(2'500'000), 2.5);
     QCOMPARE(drift::frameDurationUs(30), drift::TimeUs{33'333});
+    QCOMPARE(drift::secondsToUs(8.04), drift::TimeUs{8'040'000});
+    QCOMPARE(drift::secondsToUs(-8.04), drift::TimeUs{-8'040'000});
+    QCOMPARE(drift::secondsToUs(0.0000004), drift::TimeUs{0});
+    QCOMPARE(drift::secondsToUs(0.0000006), drift::TimeUs{1});
+    QCOMPARE(drift::secondsToUs(0.0000005), drift::TimeUs{1});    // a half rounds away from zero
+    QCOMPARE(drift::secondsToUs(-0.0000005), drift::TimeUs{-1});
+    static_assert(drift::secondsToUs(0.5) == 500'000);
+    for (drift::TimeUs us : {drift::TimeUs{8'040'000}, drift::TimeUs{1'234'567}, drift::TimeUs{3'599'999'999}})
+        QCOMPARE(drift::secondsToUs(drift::usToSeconds(us)), us);
 }
 
 void CoreTest::keyframeHoldInterpolation()
