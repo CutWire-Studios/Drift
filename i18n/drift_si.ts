@@ -6996,6 +6996,10 @@
         <source>Work area set</source>
         <translation>වැඩ ප්‍රදේශය සකසන ලදී</translation>
     </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BakesDialog</name>
@@ -7141,6 +7145,10 @@
     <message>
         <source>Delete all bakes</source>
         <translation>සියලුම බේක් කිරීම් මකන්න</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -27350,6 +27358,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
         <translation>සුමට ධාවනය සහ නිර්යාතය සඳහා කාර්ය ප්‍රදේශය පූර්ව-රෙන්ඩර් කරන්න</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

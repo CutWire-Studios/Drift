@@ -6966,6 +6966,10 @@
         <source>Work area set</source>
         <translation>작업 영역 설정됨</translation>
     </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BakesDialog</name>
@@ -7110,6 +7114,10 @@
     <message>
         <source>Delete all bakes</source>
         <translation>모든 베이크 삭제</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -27243,6 +27251,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
         <translation>원활한 재생과 내보내기를 위해 작업 영역을 사전 렌더링합니다</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

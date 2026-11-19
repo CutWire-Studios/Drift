@@ -6996,6 +6996,10 @@
         <source>Work area set</source>
         <translation>Zone de travail définie</translation>
     </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BakesDialog</name>
@@ -7141,6 +7145,10 @@
     <message>
         <source>Delete all bakes</source>
         <translation>Supprimer tous les pré-rendus</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -27353,6 +27361,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
         <translation>Pré-rendre la zone de travail pour une lecture et une exportation fluides</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

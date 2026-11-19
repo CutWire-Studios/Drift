@@ -6966,6 +6966,10 @@
         <source>Work area set</source>
         <translation>Đã đặt vùng làm việc</translation>
     </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BakesDialog</name>
@@ -7110,6 +7114,10 @@
     <message>
         <source>Delete all bakes</source>
         <translation>Xóa tất cả bản kết xuất sẵn</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -27252,6 +27260,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
         <translation>Kết xuất trước vùng làm việc để phát và xuất mượt mà</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
