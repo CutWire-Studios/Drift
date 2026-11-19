@@ -23,6 +23,7 @@ private slots:
     void readsEpisode4WorkprintWithNestedTimelines();
     void readsTrackMetadataStateAndProperties();
     void readsTimelineMarkersAndRegions();
+    void detectsCrossfadesAndTransitions();
 };
 
 void TestInterchangeVegas::detectsVegasProject()
@@ -600,6 +601,165 @@ void TestInterchangeVegas::readsTimelineMarkersAndRegions()
         // 4. timeUs = 4,500,000 -> "Chorus (Out)"
         QCOMPARE(proj.bookmarks()[3].timeUs, 4500000);
         QCOMPARE(proj.bookmarks()[3].label, QStringLiteral("Chorus (Out)"));
+    }
+}
+
+void TestInterchangeVegas::detectsCrossfadesAndTransitions()
+{
+    // 1. Test e3s5.veg for track transitions
+    QString vegE3S5 = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 3/Remaster/Scene 5/e3s5.veg");
+    if (!QFile::exists(vegE3S5)) {
+        vegE3S5 = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 3/Remaster/Scene 5/e3s5.veg");
+    }
+    if (QFile::exists(vegE3S5)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegE3S5, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        int totalTransitions = 0;
+        for (const auto &track : proj.tracks()) {
+            totalTransitions += track.transitions.size();
+        }
+        QCOMPARE(totalTransitions, 13);
+        QCOMPARE(proj.tracks()[1].transitions.size(), 7);
+        QCOMPARE(proj.tracks()[2].transitions.size(), 6);
+
+        // Verify the 1.810s crossfade between clip 0 and clip 1 on track 1 (video)
+        const auto &tr0 = proj.tracks()[1].transitions[0];
+        QCOMPARE(tr0.kindId, QStringLiteral("crossfade"));
+        QCOMPARE(tr0.durationUs, 1809956);
+        QCOMPARE(tr0.fromClipId, proj.tracks()[1].clips[0].id);
+        QCOMPARE(tr0.toClipId, proj.tracks()[1].clips[1].id);
+
+        drift::TimeUs winStart = 0, winEnd = 0;
+        QVERIFY(drift::transitionWindow(proj.tracks()[1], tr0, winStart, winEnd));
+        QCOMPARE(winStart, 20212044);
+        QCOMPARE(winEnd, 22022000);
+        QVERIFY(drift::clipsPhysicallyOverlap(proj.tracks()[1].clips[0], proj.tracks()[1].clips[1]));
+    }
+
+    // 2. Test e3s8-9-10.veg for crossfades
+    QString vegE3S8 = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 3/Remaster/Scene 8,9,10/e3s8-9-10.veg");
+    if (!QFile::exists(vegE3S8)) {
+        vegE3S8 = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 3/Remaster/Scene 8,9,10/e3s8-9-10.veg");
+    }
+    if (QFile::exists(vegE3S8)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegE3S8, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        int totalTransitions = 0;
+        for (const auto &track : proj.tracks()) {
+            totalTransitions += track.transitions.size();
+        }
+        QCOMPARE(totalTransitions, 13);
+        QCOMPARE(proj.tracks()[0].transitions.size(), 5);
+
+        // Check first transition duration on Track 0
+        const auto &tr0 = proj.tracks()[0].transitions[0];
+        QCOMPARE(tr0.kindId, QStringLiteral("crossfade"));
+        QCOMPARE(tr0.durationUs, 667332);
+    }
+
+    // 3. Test synthetic Wave64 project with overlapping clips
+    {
+        static const uint8_t kW64Riff[16] = {
+            0x72, 0x69, 0x66, 0x66, 0x2e, 0x91, 0xcf, 0x11, 0xa5, 0xd6, 0x28, 0xdb, 0x04, 0xc1, 0x00, 0x00
+        };
+        static const uint8_t kW64Wave[16] = {
+            0xef, 0x29, 0xc4, 0x46, 0x4a, 0x90, 0xd2, 0x11, 0x87, 0x22, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kW64List[16] = {
+            0x6c, 0x69, 0x73, 0x74, 0x2f, 0x91, 0xcf, 0x11, 0xa5, 0xd6, 0x28, 0xdb, 0x04, 0xc1, 0x00, 0x00
+        };
+        static const uint8_t kTypeTimeline[16] = {
+            0x47, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kTypeTrack[16] = {
+            0x48, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kTypeEventContainer[16] = {
+            0x49, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kTypeEvent[16] = {
+            0x4a, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        static const uint8_t kChunkEventTime[16] = {
+            0x6a, 0x20, 0x8d, 0x16, 0x21, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+
+        auto writeU64 = [](QByteArray &b, quint64 v) {
+            b.append(reinterpret_cast<const char *>(&v), 8);
+        };
+        auto writeGuid = [](QByteArray &b, const uint8_t *g) {
+            b.append(reinterpret_cast<const char *>(g), 16);
+        };
+        auto makeChunk = [&](const uint8_t *guid, const QByteArray &payload) {
+            QByteArray chunk;
+            writeGuid(chunk, guid);
+            writeU64(chunk, 24 + payload.size());
+            chunk.append(payload);
+            return chunk;
+        };
+        auto makeList = [&](const uint8_t *typeGuid, const QByteArray &subChunks) {
+            QByteArray payload;
+            writeGuid(payload, typeGuid);
+            payload.append(subChunks);
+            return makeChunk(kW64List, payload);
+        };
+
+        QByteArray c0Payload(48, 0);
+        static const uint8_t kGuidSettings[16] = {
+            0xb2, 0x8f, 0x2d, 0x5a, 0x23, 0x0f, 0x11, 0xd2, 0xaf, 0x86, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+        };
+        QByteArray c0 = makeChunk(kGuidSettings, c0Payload);
+
+        // Make event 1: start 0, dur 3s (30,000,000 ticks)
+        QByteArray timePayload1;
+        timePayload1.append(16, 0);
+        writeU64(timePayload1, 0);
+        writeU64(timePayload1, 30000000);
+        QByteArray ev1 = makeList(kTypeEvent, makeChunk(kChunkEventTime, timePayload1));
+
+        // Make event 2: start 2s (20,000,000 ticks), dur 3s (30,000,000 ticks) -> 1.0s overlap
+        QByteArray timePayload2;
+        timePayload2.append(16, 0);
+        writeU64(timePayload2, 20000000);
+        writeU64(timePayload2, 30000000);
+        QByteArray ev2 = makeList(kTypeEvent, makeChunk(kChunkEventTime, timePayload2));
+
+        QByteArray eventContainer = makeList(kTypeEventContainer, ev1 + ev2);
+        QByteArray trackList = makeList(kTypeTrack, eventContainer);
+        QByteArray timelineList = makeList(kTypeTimeline, trackList);
+
+        QByteArray body = c0 + timelineList;
+        QByteArray synthData;
+        writeGuid(synthData, kW64Riff);
+        writeU64(synthData, 40 + body.size());
+        writeGuid(synthData, kW64Wave);
+        synthData.append(body);
+
+        QString err;
+        const auto optProj = drift::vegas::readProjectData(synthData, QString(), &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        QCOMPARE(proj.tracks().size(), 1);
+        QCOMPARE(proj.tracks()[0].clips.size(), 2);
+        QCOMPARE(proj.tracks()[0].transitions.size(), 1);
+
+        const auto &tr = proj.tracks()[0].transitions[0];
+        QCOMPARE(tr.fromClipId, proj.tracks()[0].clips[0].id);
+        QCOMPARE(tr.toClipId, proj.tracks()[0].clips[1].id);
+        QCOMPARE(tr.kindId, QStringLiteral("crossfade"));
+        QCOMPARE(tr.durationUs, 1000000);
+
+        drift::TimeUs startUs = 0, endUs = 0;
+        QVERIFY(drift::transitionWindow(proj.tracks()[0], tr, startUs, endUs));
+        QCOMPARE(startUs, 2000000);
+        QCOMPARE(endUs, 3000000);
     }
 }
 

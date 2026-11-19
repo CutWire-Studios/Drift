@@ -178,6 +178,71 @@ std::optional<ParsedMarker> parseMarkerPayload(const uint8_t *p, qsizetype avail
     return m;
 }
 
+void detectTransitionsForTrack(Track &track)
+{
+    if (track.clips.size() < 2)
+        return;
+
+    QList<int> sortedIndices;
+    sortedIndices.reserve(track.clips.size());
+    for (int i = 0; i < track.clips.size(); ++i)
+        sortedIndices.append(i);
+
+    std::sort(sortedIndices.begin(), sortedIndices.end(), [&](int a, int b) {
+        if (track.clips[a].timelineStart != track.clips[b].timelineStart)
+            return track.clips[a].timelineStart < track.clips[b].timelineStart;
+        return track.clips[a].timelineDuration > track.clips[b].timelineDuration;
+    });
+
+    for (int idx = 0; idx < sortedIndices.size() - 1; ++idx) {
+        const Clip &fromClip = track.clips[sortedIndices[idx]];
+        const Clip &toClip = track.clips[sortedIndices[idx + 1]];
+
+        const TimeUs fromEnd = fromClip.timelineEnd();
+        const TimeUs toStart = toClip.timelineStart;
+
+        TimeUs durationUs = 0;
+        bool isTransition = false;
+
+        // Case 1: Physical overlap on the timeline
+        if (toStart > fromClip.timelineStart && toStart < fromEnd) {
+            const TimeUs overlap = fromEnd - toStart;
+            if (overlap >= 1000) {
+                durationUs = overlap;
+                isTransition = true;
+            }
+        }
+        // Case 2: Abutting clips with fade-out on outgoing and fade-in on incoming
+        else if (qAbs(toStart - fromEnd) <= 1000 && fromClip.fadeOutUs > 0 && toClip.fadeInUs > 0) {
+            const TimeUs span = fromClip.fadeOutUs + toClip.fadeInUs;
+            if (span >= 1000) {
+                durationUs = span;
+                isTransition = true;
+            }
+        }
+
+        if (isTransition && durationUs > 0) {
+            bool exists = false;
+            for (const Transition &existing : track.transitions) {
+                if (existing.fromClipId == fromClip.id && existing.toClipId == toClip.id) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                Transition tr;
+                tr.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                tr.fromClipId = fromClip.id;
+                tr.toClipId = toClip.id;
+                tr.kindId = QStringLiteral("crossfade");
+                tr.durationUs = durationUs;
+                tr.easingCurve = FadeCurve::Linear;
+                track.transitions.append(tr);
+            }
+        }
+    }
+}
+
 QString extractPathFromPayload(const uint8_t *data, qsizetype size)
 {
     if (size < 4)
@@ -976,6 +1041,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                         evpos += (evsize + 7) & ~7;
                     }
 
+                    detectTransitionsForTrack(track);
                     project.tracks().append(track);
                 }
                 tpos += (tsize + 7) & ~7;
