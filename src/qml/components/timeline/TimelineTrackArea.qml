@@ -72,6 +72,7 @@ Item {
         }
         onMoveFinished: (clipIndex, rect) => area.finishMove(clipIndex, rect)
         onContextMenuRequested: (clipIndex) => area.openContextMenu(clipIndex)
+        onKeyframeMenuRequested: (clipIndex, seconds) => area.openKeyframeMenu(clipIndex, seconds)
         onToggleSelectionRequested: (clipIndex) => area.panel.toggleInSelection(area.trackIndex, clipIndex)
         onLiftedChanged: {
             if (typeof area.panel.setScrollLocked === "function")
@@ -134,6 +135,38 @@ Item {
                 return
             }
         }
+    }
+
+    // The keyframe markers the renderer draws are not clips, so they get their own menu rather
+    // than the clip's. Loaded on the first right-click on a marker in this track and dropped
+    // again when it closes: a Menu is a Popup, and one per track standing by for a menu nobody
+    // opened is a cost the clip menu already decided not to pay.
+    property int keyMenuClip: -1
+    property real keyMenuSeconds: 0
+
+    function openKeyframeMenu(clipIndex, seconds) {
+        keyMenuClip = clipIndex
+        keyMenuSeconds = seconds
+        if (keyframeMenuLoader.item) {
+            keyframeMenuLoader.item.openFor(clipIndex, seconds)
+            return
+        }
+        keyframeMenuLoader.active = true
+    }
+
+    Loader {
+        id: keyframeMenuLoader
+        anchors.fill: parent
+        active: false
+        sourceComponent: Component {
+            TimelineKeyframeMenu {
+                trackIndex: area.trackIndex
+                // Deferred for the same reason the clip menu defers its own unload: the signal
+                // arrives inside the Popup's close path.
+                onUnloadRequested: Qt.callLater(function() { keyframeMenuLoader.active = false })
+            }
+        }
+        onLoaded: item.openFor(area.keyMenuClip, area.keyMenuSeconds)
     }
 
     Repeater {

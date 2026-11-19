@@ -2312,6 +2312,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineCutDoomGradient.qml
         src/qml/components/timeline/TimelineCutDash.qml
         src/qml/components/timeline/TimelineClipContextMenu.qml
+        src/qml/components/timeline/TimelineKeyframeMenu.qml
         src/qml/components/timeline/TimelineAutoReframeDialog.qml
         src/qml/components/timeline/TimelineReplaceClipDialog.qml
         src/qml/components/timeline/TimelineBookmarkMarker.qml

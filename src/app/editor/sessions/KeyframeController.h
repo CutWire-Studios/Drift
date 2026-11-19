@@ -33,6 +33,10 @@ public:
 
     Q_INVOKABLE QVariantList animatableProperties(int track, int clip) const;
     QVariantList keysFor(int track, int clip, const QString &prop) const;
+    // Every key of this clip that sits at `seconds` (timeline time), as {prop, seconds} refs the
+    // ops below take. What the timeline's own keyframe markers act on: one marker stands for
+    // however many properties are keyed at that time.
+    Q_INVOKABLE QVariantList keysAt(int track, int clip, double seconds) const;
     bool snapEnabled() const;
 
     Q_INVOKABLE void addKeysAt(int track, int clip, const QStringList &props, double seconds);

@@ -279,6 +279,21 @@ QVariantList KeyframeController::keysFor(int track, int clip, const QString &pro
     return m_app->clipKeyframes(track, clip, prop);
 }
 
+QVariantList KeyframeController::keysAt(int track, int clip, double seconds) const
+{
+    QVariantList out;
+    for (const QString &prop : m_app->clipAnimatedProperties(track, clip)) {
+        KeyTarget target;
+        if (!resolveKey(track, clip, prop, seconds, &target))
+            continue;
+        // The caller's own time, not the key's: every op here re-resolves it to the nearest key
+        // within tolerance, and keeping one time for the whole group is what makes a group of
+        // keys that are a frame apart move and shape together.
+        out.append(KeyframeRows::makeRef(prop, seconds));
+    }
+    return out;
+}
+
 bool KeyframeController::snapEnabled() const
 {
     return m_app->snapEnabled();
