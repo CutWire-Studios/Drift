@@ -6996,6 +6996,10 @@
         <source>Work area set</source>
         <translation>Naitakda ang work area</translation>
     </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BakesDialog</name>
@@ -7141,6 +7145,10 @@
     <message>
         <source>Delete all bakes</source>
         <translation>I-delete ang lahat ng bake</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -27351,6 +27359,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
         <translation>I-pre-render ang work area para sa maayos na playback at pag-export</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -7026,6 +7026,10 @@
         <source>Work area set</source>
         <translation>Ustawiono obszar roboczy</translation>
     </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BakesDialog</name>
@@ -7172,6 +7176,10 @@
     <message>
         <source>Delete all bakes</source>
         <translation>Usuń wszystkie renderowania wstępne</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -27450,6 +27458,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
         <translation>Wyrenderuj wstępnie obszar roboczy, aby uzyskać płynne odtwarzanie i eksport</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -6996,6 +6996,10 @@
         <source>Work area set</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BakesDialog</name>
@@ -7140,6 +7144,10 @@
     </message>
     <message>
         <source>Delete all bakes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -27341,6 +27349,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

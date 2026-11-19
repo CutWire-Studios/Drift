@@ -6966,6 +6966,10 @@
         <source>Work area set</source>
         <translation>工作区已设置</translation>
     </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BakesDialog</name>
@@ -7110,6 +7114,10 @@
     <message>
         <source>Delete all bakes</source>
         <translation>删除所有烘焙</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -27252,6 +27260,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
         <translation>预渲染工作区以实现流畅播放与导出</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

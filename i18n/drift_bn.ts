@@ -6996,6 +6996,10 @@
         <source>Work area set</source>
         <translation>কাজের অংশ নির্ধারণ করা হয়েছে</translation>
     </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BakesDialog</name>
@@ -7141,6 +7145,10 @@
     <message>
         <source>Delete all bakes</source>
         <translation>সব বেক মুছুন</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -27350,6 +27358,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
         <translation>মসৃণ প্লেব্যাক এবং এক্সপোর্টের জন্য ওয়ার্ক এরিয়া প্রি-রেন্ডার করুন</translation>
+    </message>
+    <message>
+        <source>Bakes are of the main timeline. Switch to it to bake.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
