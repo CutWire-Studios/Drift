@@ -132,6 +132,8 @@ public:
     Q_INVOKABLE void loadEdlTimeline(const QUrl &url);
     // Imports an OpenTimelineIO (.otio) sequence.
     Q_INVOKABLE void loadOtioTimeline(const QUrl &url);
+    // Imports a Sony/MAGIX VEGAS Pro project (.veg), mapping tracks, events, takes, and media pool.
+    Q_INVOKABLE void loadVegasProject(const QUrl &url);
     // Copies (or moves) every file the project uses — bin media, the images Lottie/SVG documents
     // load, textures and the derived mattes, face tracks, depth maps and stabilized renders — into
     // Video/Audio/Images/Derived/Other under the chosen folder, then relinks the project to them.
@@ -215,6 +217,7 @@ signals:
     // to dismiss a "pick a project" screen) needs this rather than lastMessageChanged,
     // which fires for that progress message too.
     void projectLoadFinished(bool ok, const QString &message);
+    void vegasTranscodeSuggested(const QStringList &assetIds, const QUrl &projectUrl);
     void projectLoadPendingChanged();
     void projectLoadProgressChanged();
     void backgroundChanged();

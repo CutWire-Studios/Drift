@@ -6,6 +6,12 @@ qt_add_executable(tst_mediaprobe tst_mediaprobe.cpp)
 target_link_libraries(tst_mediaprobe PRIVATE Qt6::Test driftengine)
 add_test(NAME MediaProbe COMMAND tst_mediaprobe)
 
+qt_add_executable(tst_interchange_vegas tst_interchange_vegas.cpp)
+target_include_directories(tst_interchange_vegas PRIVATE ../src)
+target_link_libraries(tst_interchange_vegas PRIVATE Qt6::Test driftcore driftengine)
+target_compile_definitions(tst_interchange_vegas PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+add_test(NAME InterchangeVegas COMMAND tst_interchange_vegas)
+
 qt_add_executable(tst_core tst_core.cpp)
 target_include_directories(tst_core PRIVATE ../src)
 target_link_libraries(tst_core PRIVATE Qt6::Test driftcore)
@@ -67,6 +73,7 @@ target_include_directories(tst_editorstate PRIVATE ../src)
 # parsed there. Costs a Qt6::Quick link, but needs no QML engine — requestImage is called directly.
 target_link_libraries(tst_editorstate PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6::Multimedia Qt6::Concurrent Qt6::Network driftapp driftcore driftengine)
 target_compile_definitions(tst_editorstate PRIVATE
+    DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
     DRIFT_TEST_DENOISE_MODEL_DIR="${CMAKE_SOURCE_DIR}/models/deepfilternet3"
     DRIFT_VERSION="${PROJECT_VERSION}")
 if(DRIFT_WITH_SKIA)

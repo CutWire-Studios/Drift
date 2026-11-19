@@ -60,6 +60,9 @@ public:
     // spacing is irregular — phone and screen recordings, mostly. Header frame rates alone can't
     // tell: an interlaced CFR file also has r_frame_rate != avg_frame_rate. Blocking.
     static bool isVariableFrameRate(const QString &path);
+    // Reports whether a video codec is an intra-frame editing format (ProRes, DNxHD/DNxHR, FFV1, uncompressed)
+    // that is inherently constant frame rate and suitable for live timeline scrubbing without transcoding.
+    static bool isEditFriendlyCodec(const QString &codecName);
 };
 
 struct AVStream;

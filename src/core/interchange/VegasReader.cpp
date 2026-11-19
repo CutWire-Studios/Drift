@@ -1,0 +1,676 @@
+#include "core/interchange/VegasReader.h"
+
+#include "core/project/clip/Clip.h"
+#include "core/project/media/MediaAsset.h"
+#include "core/project/Project.h"
+#include "core/project/Track.h"
+#include "engine/decode/probe/MediaProbe.h"
+
+#include <QDir>
+#include <QDirIterator>
+#include <QFile>
+#include <QFileInfo>
+#include <QHash>
+#include <QMap>
+#include <QStringList>
+#include <QUuid>
+#include <cstring>
+
+namespace drift::vegas {
+
+namespace {
+
+// 16-byte Sony/MAGIX Wave64 RIFF chunk and type GUIDs (little-endian)
+static const uint8_t kGuidW64Riff[16] = {
+    0x72, 0x69, 0x66, 0x66, 0x2e, 0x91, 0xcf, 0x11, 0xa5, 0xd6, 0x28, 0xdb, 0x04, 0xc1, 0x00, 0x00
+};
+static const uint8_t kGuidW64List[16] = {
+    0x6c, 0x69, 0x73, 0x74, 0x2f, 0x91, 0xcf, 0x11, 0xa5, 0xd6, 0x28, 0xdb, 0x04, 0xc1, 0x00, 0x00
+};
+static const uint8_t kTypeMediaPool[16] = {
+    0x5b, 0x2d, 0x8f, 0xb2, 0x0f, 0x23, 0xd2, 0x11, 0x86, 0xaf, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
+static const uint8_t kTypeTimeline[16] = {
+    0x47, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
+static const uint8_t kTypeTrack[16] = {
+    0x48, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
+static const uint8_t kTypeEventContainer[16] = {
+    0x49, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
+static const uint8_t kTypeEvent[16] = {
+    0x4a, 0x07, 0x6c, 0x4d, 0x16, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
+static const uint8_t kChunkEventTime[16] = {
+    0x6a, 0x20, 0x8d, 0x16, 0x21, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
+static const uint8_t kChunkEventTake[16] = {
+    0x6d, 0x20, 0x8d, 0x16, 0x21, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
+
+inline quint32 readU32LE(const uint8_t *p)
+{
+    return static_cast<quint32>(p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24));
+}
+
+inline quint64 readU64LE(const uint8_t *p)
+{
+    const quint64 lo = readU32LE(p);
+    const quint64 hi = readU32LE(p + 4);
+    return lo | (hi << 32);
+}
+
+inline double readDoubleLE(const uint8_t *p)
+{
+    const quint64 val = readU64LE(p);
+    double d = 0.0;
+    std::memcpy(&d, &val, sizeof(d));
+    return d;
+}
+
+QString readUtf16String(const uint8_t *data, qsizetype size, qsizetype offset)
+{
+    if (offset + 2 > size)
+        return {};
+    const auto *chars = reinterpret_cast<const char16_t *>(data + offset);
+    const qsizetype maxChars = (size - offset) / 2;
+    qsizetype len = 0;
+    while (len < maxChars && chars[len] != 0) {
+        ++len;
+    }
+    return QString::fromUtf16(chars, len);
+}
+
+QString extractPathFromPayload(const uint8_t *data, qsizetype size)
+{
+    if (size < 4)
+        return {};
+
+    // 1. Search for UTF-16LE Windows drive separator ":\" (0x3a, 0x00, 0x5c, 0x00) or ":/" (0x3a, 0x00, 0x2f, 0x00)
+    static const uint8_t kColonBackslash[4] = { 0x3a, 0x00, 0x5c, 0x00 };
+    static const uint8_t kColonSlash[4] = { 0x3a, 0x00, 0x2f, 0x00 };
+    for (qsizetype i = 0; i + 4 <= size; i += 2) {
+        if (std::memcmp(data + i, kColonBackslash, 4) == 0 || std::memcmp(data + i, kColonSlash, 4) == 0) {
+            const qsizetype start = (i >= 2) ? (i - 2) : i;
+            const QString path = readUtf16String(data, size, start);
+            if (!path.isEmpty())
+                return path;
+        }
+    }
+
+    // 2. Search for UTF-16LE "META:\"
+    static const uint8_t kMetaPrefix[12] = { 'M', 0, 'E', 0, 'T', 0, 'A', 0, ':', 0, '\\', 0 };
+    for (qsizetype i = 0; i + 12 <= size; i += 2) {
+        if (std::memcmp(data + i, kMetaPrefix, 12) == 0) {
+            const QString path = readUtf16String(data, size, i);
+            if (!path.isEmpty())
+                return path;
+        }
+    }
+
+    // 3. Fallback to common VEGAS payload offsets (96, 102, 128, 134, 64)
+    for (const qsizetype off : { 96, 102, 128, 134, 64 }) {
+        if (off + 2 <= size) {
+            const QString s = readUtf16String(data, size, off);
+            if (!s.isEmpty() && (s.contains(QLatin1Char('/')) || s.contains(QLatin1Char('\\'))))
+                return s;
+        }
+    }
+
+    return {};
+}
+
+QString cleanMediaFilename(const QString &rawPath)
+{
+    QString s = rawPath;
+    s.replace(QLatin1Char('\\'), QLatin1Char('/'));
+
+    // Handle META:\SubClip\{<path>}
+    const int openBrace = s.indexOf(QLatin1Char('{'));
+    const int closeBrace = s.indexOf(QLatin1Char('}'), openBrace + 1);
+    if (openBrace >= 0 && closeBrace > openBrace) {
+        const QString inside = s.mid(openBrace + 1, closeBrace - openBrace - 1);
+        if (inside.contains(QLatin1Char('/')) || inside.contains(QLatin1Char('.')))
+            s = inside;
+    }
+
+    QString diskName = QFileInfo(s).fileName();
+    const int braceIdx = diskName.indexOf(QLatin1Char('}'));
+    if (braceIdx > 0 && !diskName.startsWith(QLatin1Char('{')))
+        diskName = diskName.left(braceIdx);
+    return diskName;
+}
+
+QString resolveMediaFile(const QString &winPath, const QString &diskName,
+                         const QString &sourceDir, const QList<QDir> &searchDirs,
+                         const QHash<QString, QStringList> &indexedFiles)
+{
+    if (diskName.isEmpty())
+        return {};
+
+    const QString normWin = QString(winPath).replace(QLatin1Char('\\'), QLatin1Char('/'));
+    const QFileInfo diskInfo(diskName);
+    const QString baseName = diskInfo.completeBaseName();
+    const QString ext = diskInfo.suffix().toLower();
+    const QString movName = baseName + QStringLiteral(".mov");
+
+    const bool isMov = (ext == QLatin1String("mov"));
+    // Audio, images, or documents should not be redirected to .mov
+    const bool isVideoCandidate = !isMov && (ext == QLatin1String("mts") || ext == QLatin1String("m2ts")
+                                            || ext == QLatin1String("m2t") || ext == QLatin1String("ts")
+                                            || ext == QLatin1String("mp4") || ext == QLatin1String("m4v")
+                                            || ext == QLatin1String("avi") || ext == QLatin1String("mkv")
+                                            || ext == QLatin1String("wmv") || ext == QLatin1String("flv")
+                                            || ext == QLatin1String("webm") || ext == QLatin1String("vob")
+                                            || ext.isEmpty());
+
+    // Subpath relative matches from winPath
+    // E.g. "G:/Against the Odds/Episode 4/Day 4/00017.MTS" -> checks "Day 4/00017.mov" vs "Day 4/00017.MTS"
+    QStringList movSubpathCandidates;
+    QStringList origSubpathCandidates;
+    const QStringList winParts = normWin.split(QLatin1Char('/'), Qt::SkipEmptyParts);
+    for (int i = 1; i <= std::min(qsizetype(4), winParts.size()); ++i) {
+        const QString sub = winParts.mid(winParts.size() - i).join(QLatin1Char('/'));
+        origSubpathCandidates.append(sub);
+        const QFileInfo subInfo(sub);
+        const QString subDir = subInfo.path();
+        const QString movSub = (subDir.isEmpty() || subDir == QLatin1String("."))
+                               ? (subInfo.completeBaseName() + QStringLiteral(".mov"))
+                               : (subDir + QLatin1Char('/') + subInfo.completeBaseName() + QStringLiteral(".mov"));
+        movSubpathCandidates.append(movSub);
+    }
+
+    // 1. If video media, check for converted ProRes .mov FIRST (in same dir, Transcodes_ProRes, or matching subpaths)
+    if (isVideoCandidate) {
+        for (const QDir &dir : searchDirs) {
+            if (!dir.exists())
+                continue;
+            for (const QString &movSub : movSubpathCandidates) {
+                if (dir.exists(movSub))
+                    return dir.filePath(movSub);
+            }
+            // Bare movName is valid if in sourceDir or in a Transcodes_ProRes directory
+            if (dir == QDir(sourceDir) || dir.dirName() == QLatin1String("Transcodes_ProRes")) {
+                if (dir.exists(movName))
+                    return dir.filePath(movName);
+            }
+        }
+
+        // Fast lookup from project tree index for .mov only when matching parent subdirectory
+        const QString movLow = movName.toLower();
+        if (indexedFiles.contains(movLow)) {
+            const QStringList &candidates = indexedFiles.value(movLow);
+            for (const QString &c : candidates) {
+                if (winParts.size() >= 2 && c.contains(winParts.at(winParts.size() - 2), Qt::CaseInsensitive))
+                    return c;
+            }
+        }
+
+        // Cross-drive fallback (Jellyfish <-> HAL) for .mov
+        if (!sourceDir.isEmpty()) {
+            QString altSource = sourceDir;
+            if (altSource.startsWith(QStringLiteral("/mnt/Jellyfish")))
+                altSource.replace(0, 14, QStringLiteral("/mnt/HAL"));
+            else if (altSource.startsWith(QStringLiteral("/mnt/HAL")))
+                altSource.replace(0, 8, QStringLiteral("/mnt/Jellyfish"));
+
+            if (altSource != sourceDir && QDir(altSource).exists()) {
+                const QDir altDir(altSource);
+                for (const QString &movSub : movSubpathCandidates) {
+                    if (altDir.exists(movSub))
+                        return altDir.filePath(movSub);
+                }
+                if (altDir == QDir(altSource) || altDir.dirName() == QLatin1String("Transcodes_ProRes")) {
+                    if (altDir.exists(movName))
+                        return altDir.filePath(movName);
+                }
+            }
+        }
+    }
+
+    // 2. Direct absolute path match for original file
+    const QFileInfo direct(diskName);
+    if (direct.isAbsolute() && direct.exists())
+        return direct.canonicalFilePath();
+
+    const QFileInfo winInfo(normWin);
+    if (winInfo.isAbsolute() && winInfo.exists())
+        return winInfo.canonicalFilePath();
+
+    // 3. Search directories for original file
+    for (const QDir &dir : searchDirs) {
+        if (!dir.exists())
+            continue;
+        for (const QString &sub : origSubpathCandidates) {
+            if (dir.exists(sub))
+                return dir.filePath(sub);
+        }
+        if (dir.exists(diskName))
+            return dir.filePath(diskName);
+    }
+
+    // 4. Fast lookup from project tree index for original filename
+    const QString lowName = diskName.toLower();
+    if (indexedFiles.contains(lowName)) {
+        const QStringList &candidates = indexedFiles.value(lowName);
+        for (const QString &c : candidates) {
+            if (winParts.size() >= 2 && c.contains(winParts.at(winParts.size() - 2), Qt::CaseInsensitive))
+                return c;
+        }
+        return candidates.first();
+    }
+
+    // 5. Cross-drive fallback for original file
+    if (!sourceDir.isEmpty()) {
+        QString altSource = sourceDir;
+        if (altSource.startsWith(QStringLiteral("/mnt/Jellyfish")))
+            altSource.replace(0, 14, QStringLiteral("/mnt/HAL"));
+        else if (altSource.startsWith(QStringLiteral("/mnt/HAL")))
+            altSource.replace(0, 8, QStringLiteral("/mnt/Jellyfish"));
+
+        if (altSource != sourceDir && QDir(altSource).exists()) {
+            const QDir altDir(altSource);
+            for (const QString &sub : origSubpathCandidates) {
+                if (altDir.exists(sub))
+                    return altDir.filePath(sub);
+            }
+            if (altDir.exists(diskName))
+                return altDir.filePath(diskName);
+        }
+    }
+
+    return diskName;
+}
+
+} // namespace
+
+bool isVegasData(const QByteArray &data)
+{
+    if (data.size() < 40)
+        return false;
+    return std::memcmp(data.constData(), kGuidW64Riff, 16) == 0;
+}
+
+bool isVegasProject(const QString &filePath)
+{
+    if (filePath.endsWith(QLatin1String(".veg"), Qt::CaseInsensitive))
+        return true;
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
+    const QByteArray header = file.read(40);
+    return isVegasData(header);
+}
+
+std::optional<Project> readProject(const QString &filePath, QString *error)
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        if (error)
+            *error = QStringLiteral("Could not open file: ") + filePath;
+        return std::nullopt;
+    }
+    const QByteArray data = file.readAll();
+    const QString sourceDir = QFileInfo(filePath).canonicalPath();
+    return readProjectData(data, sourceDir, error);
+}
+
+std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir,
+                                      QString *error)
+{
+    if (data.size() < 64 || !isVegasData(data)) {
+        if (error)
+            *error = QStringLiteral("Not a valid Sony/MAGIX Wave64 RIFF project");
+        return std::nullopt;
+    }
+
+    const auto *bytes = reinterpret_cast<const uint8_t *>(data.constData());
+    const qsizetype totalSize = data.size();
+
+    // Chunk 0: Project settings (starts at offset 40)
+    const quint64 c0Size = readU64LE(bytes + 56);
+    if (c0Size < 24 || 64 + c0Size - 24 > static_cast<quint64>(totalSize)) {
+        if (error)
+            *error = QStringLiteral("Corrupted Wave64 project header");
+        return std::nullopt;
+    }
+
+    const uint8_t *c0Payload = bytes + 64;
+    quint32 sampleRate = 48000;
+    if (c0Size >= 40)
+        sampleRate = readU32LE(c0Payload + 12);
+    if (sampleRate < 8000 || sampleRate > 192000)
+        sampleRate = 48000;
+
+    double fps = 23.976023976023978;
+    if (c0Size >= 48) {
+        const double readFps = readDoubleLE(c0Payload + 16);
+        if (readFps >= 1.0 && readFps <= 240.0)
+            fps = readFps;
+    }
+
+    int canvasWidth = 1920;
+    int canvasHeight = 1080;
+    if (c0Size >= 472) {
+        const quint32 wCand = readU32LE(c0Payload + 440);
+        const quint32 hCand = readU32LE(c0Payload + 444);
+        if (wCand >= 320 && wCand <= 7680 && hCand >= 240 && hCand <= 4320) {
+            canvasWidth = static_cast<int>(wCand);
+            canvasHeight = static_cast<int>(hCand);
+        }
+    }
+
+    Project project;
+    project.setResolution(canvasWidth, canvasHeight);
+    project.setFps(qRound(fps));
+    project.setSampleRate(static_cast<int>(sampleRate));
+
+    // Search directories for media resolution
+    QList<QDir> searchDirs;
+    if (!sourceDir.isEmpty()) {
+        const QDir dir(sourceDir);
+        searchDirs.append(dir);
+        searchDirs.append(QDir(dir.filePath(QStringLiteral("Transcodes_ProRes"))));
+        searchDirs.append(QDir(dir.filePath(QStringLiteral("../Transcodes_ProRes/") + dir.dirName())));
+        searchDirs.append(QDir(dir.filePath(QStringLiteral("../Transcodes_ProRes"))));
+        searchDirs.append(QDir(dir.filePath(QStringLiteral("../../Transcodes_ProRes/") + dir.dirName())));
+        searchDirs.append(QDir(dir.filePath(QStringLiteral("../../Transcodes_ProRes"))));
+        searchDirs.append(QDir(dir.filePath(QStringLiteral(".."))));
+        searchDirs.append(QDir(dir.filePath(QStringLiteral("../.."))));
+        searchDirs.append(QDir(QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 3/Remaster/Transcodes_ProRes/") + dir.dirName()));
+        searchDirs.append(QDir(QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 3/Remaster/Transcodes_ProRes")));
+        searchDirs.append(QDir(QStringLiteral("/mnt/HAL/Videos/Odds/Episode 3/Remaster/Transcodes_ProRes/") + dir.dirName()));
+        searchDirs.append(QDir(QStringLiteral("/mnt/HAL/Videos/Odds/Episode 3/Remaster/Transcodes_ProRes")));
+    }
+
+    // Index filenames in sourceDir and nearby project directories for fast resolution
+    QHash<QString, QStringList> indexedFiles;
+    if (!sourceDir.isEmpty()) {
+        auto indexDirectory = [&](const QString &dirPath) {
+            if (dirPath.isEmpty() || !QDir(dirPath).exists())
+                return;
+            QDirIterator it(dirPath, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+            int count = 0;
+            while (it.hasNext() && count < 10000) {
+                it.next();
+                ++count;
+                indexedFiles[it.fileName().toLower()].append(it.filePath());
+            }
+        };
+
+        indexDirectory(sourceDir);
+        QDir parentDir(sourceDir);
+        if (parentDir.cdUp()) {
+            indexDirectory(parentDir.absolutePath());
+            QDir grandParent(parentDir);
+            if (grandParent.cdUp())
+                indexDirectory(grandParent.absolutePath());
+        }
+
+        // Cross-drive index (Jellyfish <-> HAL)
+        QString altDir = sourceDir;
+        if (altDir.startsWith(QStringLiteral("/mnt/Jellyfish")))
+            altDir.replace(0, 14, QStringLiteral("/mnt/HAL"));
+        else if (altDir.startsWith(QStringLiteral("/mnt/HAL")))
+            altDir.replace(0, 8, QStringLiteral("/mnt/Jellyfish"));
+        if (altDir != sourceDir && QDir(altDir).exists()) {
+            indexDirectory(altDir);
+            QDir altParent(altDir);
+            if (altParent.cdUp())
+                indexDirectory(altParent.absolutePath());
+        }
+    }
+
+    // 1. Parse Media Pool
+    struct MediaEntry
+    {
+        QString rawFilename;
+        QString resolvedPath;
+        QString assetId;
+    };
+    QMap<quint32, MediaEntry> mediaPool;
+
+    qsizetype pos = 40;
+    while (pos + 24 <= totalSize) {
+        const uint8_t *ptr = bytes + pos;
+        const quint64 chunkSize = readU64LE(ptr + 16);
+        if (chunkSize < 24 || pos + static_cast<qsizetype>(chunkSize) > totalSize)
+            break;
+
+        if (std::memcmp(ptr, kGuidW64List, 16) == 0 && pos + 40 <= totalSize
+            && std::memcmp(ptr + 24, kTypeMediaPool, 16) == 0) {
+            qsizetype cpos = pos + 40;
+            const qsizetype cend = pos + static_cast<qsizetype>(chunkSize);
+            while (cpos + 24 <= cend) {
+                const uint8_t *cptr = bytes + cpos;
+                const quint64 csize = readU64LE(cptr + 16);
+                if (csize < 24 || cpos + static_cast<qsizetype>(csize) > cend)
+                    break;
+
+                const uint8_t *payload = cptr + 24;
+                const qsizetype payloadSize = static_cast<qsizetype>(csize - 24);
+                if (payloadSize >= 64) {
+                    const quint32 mid = readU32LE(payload + 60);
+                    const QString winPath = extractPathFromPayload(payload, payloadSize);
+                    QString diskName = cleanMediaFilename(winPath);
+                    if (diskName.isEmpty() || diskName.startsWith(QLatin1Char('{')))
+                        diskName = QStringLiteral("media_%1").arg(mid);
+
+                    const QString resolved = resolveMediaFile(winPath, diskName, sourceDir, searchDirs, indexedFiles);
+                    const QString assetId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+
+                    MediaEntry entry;
+                    entry.rawFilename = diskName;
+                    entry.resolvedPath = resolved;
+                    entry.assetId = assetId;
+                    mediaPool.insert(mid, entry);
+
+                    MediaAsset asset;
+                    asset.id = assetId;
+                    asset.path = resolved;
+                    asset.name = QFileInfo(resolved).fileName();
+
+                    const QFileInfo resolvedInfo(resolved);
+                    if (resolvedInfo.exists() && resolvedInfo.isFile()) {
+                        const MediaInfo probed = MediaProbe::probe(resolved);
+                        if (probed.ok) {
+                            bool hasVideo = false;
+                            for (const StreamInfo &st : probed.streams) {
+                                if (st.type == StreamInfo::Type::Video && !st.attachedPicture) {
+                                    hasVideo = true;
+                                    break;
+                                }
+                            }
+                            asset.kind = hasVideo ? MediaKind::Video : MediaKind::Audio;
+                            asset.durationUs = probed.durationUs;
+                            for (const StreamInfo &st : probed.streams) {
+                                if (st.type == StreamInfo::Type::Video && !st.attachedPicture) {
+                                    asset.width = st.width;
+                                    asset.height = st.height;
+                                    asset.fps = st.fps;
+                                    asset.codecName = st.codecName;
+                                    if (MediaProbe::isEditFriendlyCodec(st.codecName)
+                                        || resolved.endsWith(QLatin1String(".mov"), Qt::CaseInsensitive)) {
+                                        asset.editFriendly = true;
+                                        asset.frameRateKnown = true;
+                                        asset.variableFrameRate = false;
+                                    }
+                                } else if (st.type == StreamInfo::Type::Audio) {
+                                    asset.channels = st.channels;
+                                    asset.sampleRate = st.sampleRate;
+                                    asset.hasAudio = true;
+                                    asset.hasAudioKnown = true;
+                                }
+                            }
+                        }
+                    } else {
+                        const QString ext = resolvedInfo.suffix().toLower();
+                        if (ext == QLatin1String("mov") || ext == QLatin1String("mp4")
+                            || ext == QLatin1String("mts")) {
+                            asset.kind = MediaKind::Video;
+                            asset.width = canvasWidth;
+                            asset.height = canvasHeight;
+                            asset.fps = fps;
+                            asset.editFriendly = ext == QLatin1String("mov");
+                        } else {
+                            asset.kind = MediaKind::Audio;
+                        }
+                    }
+
+                    project.assets().insert(asset.id, asset);
+                    project.assetOrder().append(asset.id);
+                }
+                cpos += (csize + 7) & ~7;
+            }
+            break;
+        }
+        pos += (chunkSize + 7) & ~7;
+    }
+
+    // 2. Parse Timeline Tracks & Events
+    project.tracks().clear();
+    pos = 40;
+    int trackNumber = 1;
+    while (pos + 24 <= totalSize) {
+        const uint8_t *ptr = bytes + pos;
+        const quint64 chunkSize = readU64LE(ptr + 16);
+        if (chunkSize < 24 || pos + static_cast<qsizetype>(chunkSize) > totalSize)
+            break;
+
+        if (std::memcmp(ptr, kGuidW64List, 16) == 0 && pos + 40 <= totalSize
+            && std::memcmp(ptr + 24, kTypeTimeline, 16) == 0) {
+            qsizetype tpos = pos + 40;
+            const qsizetype tend = pos + static_cast<qsizetype>(chunkSize);
+            while (tpos + 40 <= tend) {
+                const quint64 tsize = readU64LE(bytes + tpos + 16);
+                if (tsize < 40 || tpos + static_cast<qsizetype>(tsize) > tend)
+                    break;
+
+                if (std::memcmp(bytes + tpos, kGuidW64List, 16) == 0
+                    && std::memcmp(bytes + tpos + 24, kTypeTrack, 16) == 0) {
+                    // Track Header
+                    TrackType trackType = TrackType::Video;
+                    if (tpos + 64 <= tend) {
+                        const quint64 tcsize = readU64LE(bytes + tpos + 56);
+                        if (tcsize >= 36 && tpos + 64 + 36 <= tend) {
+                            const quint32 trackTypeCode = readU32LE(bytes + tpos + 64 + 32);
+                            trackType = (trackTypeCode == 2) ? TrackType::Video : TrackType::Audio;
+                        }
+                    }
+
+                    Track track;
+                    track.type = trackType;
+                    track.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                    track.number = trackNumber++;
+                    track.name = QStringLiteral("Track %1 (%2)")
+                                      .arg(track.number)
+                                      .arg(trackType == TrackType::Video ? QStringLiteral("video")
+                                                                         : QStringLiteral("audio"));
+
+                    qsizetype evpos = tpos + 40;
+                    const qsizetype evend = tpos + static_cast<qsizetype>(tsize);
+                    while (evpos + 40 <= evend) {
+                        const quint64 evsize = readU64LE(bytes + evpos + 16);
+                        if (evsize < 40 || evpos + static_cast<qsizetype>(evsize) > evend)
+                            break;
+
+                        if (std::memcmp(bytes + evpos, kGuidW64List, 16) == 0
+                            && std::memcmp(bytes + evpos + 24, kTypeEventContainer, 16) == 0) {
+                            qsizetype epos = evpos + 40;
+                            const qsizetype eend = evpos + static_cast<qsizetype>(evsize);
+                            while (epos + 40 <= eend) {
+                                const quint64 esize = readU64LE(bytes + epos + 16);
+                                if (esize < 40 || epos + static_cast<qsizetype>(esize) > eend)
+                                    break;
+
+                                if (std::memcmp(bytes + epos, kGuidW64List, 16) == 0
+                                    && std::memcmp(bytes + epos + 24, kTypeEvent, 16) == 0) {
+                                    qsizetype cpos = epos + 40;
+                                    const qsizetype cend = epos + static_cast<qsizetype>(esize);
+                                    quint64 startTicks = 0;
+                                    quint64 durTicks = 0;
+                                    quint64 fadeInTicks = 0;
+                                    quint64 fadeOutTicks = 0;
+                                    quint64 srcInTicks = 0;
+                                    quint32 mid = 0;
+
+                                    while (cpos + 24 <= cend) {
+                                        const uint8_t *cptr = bytes + cpos;
+                                        const quint64 csize = readU64LE(cptr + 16);
+                                        if (csize < 24 || cpos + static_cast<qsizetype>(csize) > cend)
+                                            break;
+
+                                        const uint8_t *cpayload = cptr + 24;
+                                        const qsizetype cpayloadSize = static_cast<qsizetype>(csize - 24);
+
+                                        if (std::memcmp(cptr, kChunkEventTime, 16) == 0) {
+                                            if (cpayloadSize >= 32) {
+                                                startTicks = readU64LE(cpayload + 16);
+                                                durTicks = readU64LE(cpayload + 24);
+                                            }
+                                            if (cpayloadSize >= 152) {
+                                                fadeInTicks = readU64LE(cpayload + 136);
+                                                fadeOutTicks = readU64LE(cpayload + 144);
+                                            }
+                                        } else if (std::memcmp(cptr, kChunkEventTake, 16) == 0) {
+                                            if (cpayloadSize >= 40) {
+                                                srcInTicks = readU64LE(cpayload + 16);
+                                                mid = readU32LE(cpayload + 36);
+                                            }
+                                        }
+                                        cpos += (csize + 7) & ~7;
+                                    }
+
+                                    if (durTicks > 0) {
+                                        Clip clip;
+                                        clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                                        clip.type = (trackType == TrackType::Video) ? ClipType::Video
+                                                                                    : ClipType::Audio;
+
+                                        // Convert 100ns ticks to microseconds
+                                        clip.timelineStart = static_cast<TimeUs>(startTicks / 10);
+                                        clip.timelineDuration = static_cast<TimeUs>(durTicks / 10);
+                                        clip.srcIn = static_cast<TimeUs>(srcInTicks / 10);
+                                        clip.srcOut = static_cast<TimeUs>((srcInTicks + durTicks) / 10);
+                                        clip.fadeInUs = static_cast<TimeUs>(fadeInTicks / 10);
+                                        clip.fadeOutUs = static_cast<TimeUs>(fadeOutTicks / 10);
+
+                                        if (mediaPool.contains(mid)) {
+                                            const MediaEntry &m = mediaPool[mid];
+                                            clip.assetId = m.assetId;
+                                            clip.path = m.resolvedPath;
+                                            clip.name = QFileInfo(m.resolvedPath).fileName();
+                                        } else {
+                                            clip.name = QStringLiteral("clip_%1").arg(track.clips.size());
+                                        }
+
+                                        track.clips.append(clip);
+                                    }
+                                }
+                                epos += (esize + 7) & ~7;
+                            }
+                        }
+                        evpos += (evsize + 7) & ~7;
+                    }
+
+                    project.tracks().append(track);
+                }
+                tpos += (tsize + 7) & ~7;
+            }
+            break;
+        }
+        pos += (chunkSize + 7) & ~7;
+    }
+
+    if (project.tracks().isEmpty()) {
+        if (error)
+            *error = QStringLiteral("No timeline tracks found in VEGAS project");
+        return std::nullopt;
+    }
+
+    project.ensureTrackIds();
+    return project;
+}
+
+} // namespace drift::vegas

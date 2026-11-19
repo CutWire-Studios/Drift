@@ -268,6 +268,9 @@ private slots:
     void projectPersistenceRoundTrip();
     void saveProjectAsDuplicatesProject();
     void projectJsonExportImportRoundTrip();
+    void loadVegasProjectViaLoadProject();
+    void loadEpisode4VegasProjectPromptsTranscode();
+    void convertToProResTranscodesAndRelinks();
     void guidesTravelWithProject();
     void guideLibraryEditing();
     void projectJsonImportRejectsGarbageAndLeavesTimeline();
@@ -3810,6 +3813,100 @@ void EditorStateTest::projectJsonExportImportRoundTrip()
              QStringLiteral("FromJson"));
     QVERIFY(state.projectFile()->currentProjectPath().isEmpty());
     QVERIFY(state.projectFile()->hasUnsavedChanges());
+}
+
+void EditorStateTest::convertToProResTranscodesAndRelinks()
+{
+    QString realVeg = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 3/Remaster/Scene 2/E3S2.veg");
+    if (!QFile::exists(realVeg)) {
+        realVeg = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 3/Remaster/Scene 2/E3S2.veg");
+    }
+    if (!QFile::exists(realVeg)) {
+        realVeg = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 3/Remaster/Scene 1/e3s1.veg");
+    }
+    if (!QFile::exists(realVeg)) {
+        realVeg = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 3/Remaster/Scene 1/e3s1.veg");
+    }
+    if (!QFile::exists(realVeg)) {
+        QSKIP("Sample .veg file not present on Jellyfish or HAL");
+    }
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.projectFile()->loadProject(QUrl::fromLocalFile(realVeg));
+    QTRY_VERIFY_WITH_TIMEOUT(!state.projectFile()->projectLoadPending(), 10000);
+
+    const auto &assets = state.project()->assets();
+    QVERIFY(!assets.isEmpty());
+    QString videoAssetId;
+    for (auto it = assets.begin(); it != assets.end(); ++it) {
+        if (it.value().kind == drift::MediaKind::Video && !it.value().path.isEmpty() && QFile::exists(it.value().path)) {
+            videoAssetId = it.key();
+            break;
+        }
+    }
+    QVERIFY(!videoAssetId.isEmpty());
+
+    QSignalSpy transcodeFinished(state.bin(), &MediaBinController::proresTranscodeFinished);
+    state.bin()->convertToProRes({videoAssetId}, QUrl::fromLocalFile(realVeg));
+    QTRY_VERIFY_WITH_TIMEOUT(!state.bin()->editing(), 15000);
+
+    QCOMPARE(transcodeFinished.count(), 1);
+    QVERIFY(transcodeFinished.at(0).at(0).toInt() >= 1);
+    const drift::MediaAsset &updatedAsset = state.project()->assets().value(videoAssetId);
+    QVERIFY(updatedAsset.editFriendly);
+    QVERIFY(updatedAsset.path.endsWith(QLatin1String(".mov"), Qt::CaseInsensitive));
+}
+
+void EditorStateTest::loadVegasProjectViaLoadProject()
+{
+    QString testVeg = QStringLiteral(DRIFT_TEST_DATA_DIR "/sample.veg");
+    if (!QFile::exists(testVeg)) {
+        testVeg = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 3/Remaster/Scene 2/E3S2.veg");
+        if (!QFile::exists(testVeg)) {
+            testVeg = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 3/Remaster/Scene 2/E3S2.veg");
+        }
+    }
+    if (!QFile::exists(testVeg)) {
+        QSKIP("Sample .veg file not present");
+    }
+
+    AssetLibrary library;
+    AppController state(&library);
+    QSignalSpy loadFinished(state.projectFile(), &ProjectFileController::projectLoadFinished);
+    QSignalSpy transcodeSuggested(state.projectFile(), &ProjectFileController::vegasTranscodeSuggested);
+
+    state.projectFile()->loadProject(QUrl::fromLocalFile(testVeg));
+    QTRY_VERIFY_WITH_TIMEOUT(!state.projectFile()->projectLoadPending(), 10000);
+    QCOMPARE(loadFinished.count(), 1);
+    QVERIFY(loadFinished.at(0).at(0).toBool());
+    QVERIFY(state.tracks().size() >= 1);
+    QVERIFY(!state.project()->assets().isEmpty());
+}
+
+void EditorStateTest::loadEpisode4VegasProjectPromptsTranscode()
+{
+    QString ep4Veg = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/1.1.veg");
+    if (!QFile::exists(ep4Veg)) {
+        ep4Veg = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/1.1.veg");
+    }
+    if (!QFile::exists(ep4Veg)) {
+        QSKIP("Episode 4 1.1.veg not present");
+    }
+
+    AssetLibrary library;
+    AppController state(&library);
+    QSignalSpy loadFinished(state.projectFile(), &ProjectFileController::projectLoadFinished);
+    QSignalSpy transcodeSuggested(state.projectFile(), &ProjectFileController::vegasTranscodeSuggested);
+
+    state.projectFile()->loadProject(QUrl::fromLocalFile(ep4Veg));
+    QTRY_VERIFY_WITH_TIMEOUT(!state.projectFile()->projectLoadPending(), 10000);
+
+    QCOMPARE(loadFinished.count(), 1);
+    QVERIFY(loadFinished.at(0).at(0).toBool());
+    QCOMPARE(transcodeSuggested.count(), 1);
+    const QStringList unconverted = transcodeSuggested.at(0).at(0).toStringList();
+    QCOMPARE(unconverted.size(), 6);
 }
 
 void EditorStateTest::guidesTravelWithProject()

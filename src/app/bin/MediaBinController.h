@@ -136,6 +136,10 @@ public:
     // frame rate and swaps it in, one at a time, the same undoable way a crop does, marking the
     // asset edit-friendly. The original file is left where it was.
     Q_INVOKABLE void convertToConstantFrameRate(const QStringList &assetIds);
+    // "Convert to Apple ProRes 422": transcodes video assets to Apple ProRes 422 QuickTime MOV
+    // with uncompressed PCM audio in parallel, placing masters into an adjacent Transcodes_ProRes/
+    // folder and automatically relinking timeline clips.
+    Q_INVOKABLE void convertToProRes(const QStringList &assetIds, const QUrl &projectUrl = QUrl());
     // The document was replaced (load, new, close) while a replace's probe ran: AssetLibrary
     // drops the probe, so finalizeReplace never runs. Clears the busy row, and the edit that
     // was waiting on it (jmn8718/Drift#74).
@@ -150,6 +154,8 @@ public:
 signals:
     void currentFolderIdChanged();
     void importingFolderChanged();
+    void proresTranscodeProgress(int done, int total, double fraction);
+    void proresTranscodeFinished(int convertedCount, int failedCount);
     // Outcome of importFolder: how many bin folders and assets it actually created, how many
     // files it passed over as unrecognized, and whether the walk stopped at the file limit with
     // more still on disk.

@@ -8305,6 +8305,10 @@
         <translation>Все файлы (*)</translation>
     </message>
     <message>
+        <source>Sony / MAGIX VEGAS Pro (*.veg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name your project</source>
         <translation>Назовите свой проект</translation>
     </message>
@@ -11890,6 +11894,18 @@
         <source>Export finished.</source>
         <translation>Экспорт завершён.</translation>
     </message>
+    <message numerus="yes">
+        <source>This VEGAS Pro timeline contains %n unconverted AVCHD / camera raw clip(s). Convert them to Apple ProRes 422 now to prevent audio sync drift and lag?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to ProRes 422</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>Не удалось создать копию для отправки: %1</translation>
@@ -13944,6 +13960,10 @@
         <translation>Удалить прокси</translation>
     </message>
     <message>
+        <source>Convert to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to edit-friendly format</source>
         <translation>Преобразовать в формат для монтажа</translation>
     </message>
@@ -14192,6 +14212,54 @@
     <message>
         <source>%1 (%2)</source>
         <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Another conversion or media edit is currently running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No valid video files to transcode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transcoding to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform>%n клип</numerusform>
+            <numerusform>%n клипа</numerusform>
+            <numerusform>%n клипов</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Starting Apple ProRes 422 transcode for %n file(s)…</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transcode to Apple ProRes 422</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Transcoded %n clip(s) to Apple ProRes 422 and relinked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>ProRes transcoding cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ProRes transcoding failed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The project was closed before the replace landed</source>
@@ -16305,6 +16373,10 @@ If playback stutters, try another.</source>
         <source>Still opening a project — try again in a moment.</source>
         <translation>Проект всё ещё открывается — повторите попытку чуть позже.</translation>
     </message>
+    <message>
+        <source>Failed to open VEGAS Pro project</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>
         <translation>
@@ -16432,6 +16504,22 @@ If playback stutters, try another.</source>
     <message>
         <source>That project location isn’t valid</source>
         <translation>Недопустимое расположение проекта</translation>
+    </message>
+    <message numerus="yes">
+        <source>VEGAS Pro project imported, but %n media file(s) could not be found</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>VEGAS Pro project imported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>VEGAS Pro project imported: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>Project loaded, but %n media file(s) could not be found</source>
@@ -24509,6 +24597,10 @@ If playback stutters, try another.</source>
         <translation>Открыть таймлайн маски</translation>
     </message>
     <message>
+        <source>Convert to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to edit-friendly format</source>
         <translation>Преобразовать в формат для монтажа</translation>
     </message>
@@ -27456,6 +27548,35 @@ If playback stutters, try another.</source>
     <message>
         <source>Back to the drawing&apos;s own %1</source>
         <translation>Вернуть исходный цвет %1 из рисунка</translation>
+    </message>
+</context>
+<context>
+    <name>VegasTranscodeDialog</name>
+    <message>
+        <source>Convert Media to Apple ProRes 422</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to ProRes 422</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep Original Media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>This VEGAS Pro timeline contains %n unconverted AVCHD / camera raw clip(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Drift works best with edit-friendly intraframe codecs. Converting these clips to Apple ProRes 422 now ensures smooth timeline playback, responsive frame-accurate scrubbing, and prevents audio sync drift.
+
+Transcoding runs in the background using multi-threaded FFmpeg without modifying your original media files.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

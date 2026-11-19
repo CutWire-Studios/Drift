@@ -389,6 +389,11 @@ drift::MediaAsset buildProbedAsset(const QString &absolutePath, const QString &n
             asset.fps = stream.fps;
             asset.rotationDegrees = stream.rotationDegrees;
             asset.codecName = stream.codecName;
+            if (MediaProbe::isEditFriendlyCodec(stream.codecName)) {
+                asset.editFriendly = true;
+                asset.frameRateKnown = true;
+                asset.variableFrameRate = false;
+            }
         }
     }
     fillAudioPresence(asset, info);
@@ -1400,6 +1405,7 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
     asset->filmstripPath = filled.filmstripPath;
     asset->sourceSize = filled.sourceSize;
     asset->sourceModifiedMs = filled.sourceModifiedMs;
+    asset->editFriendly = filled.editFriendly;
 
     // Re-importing a file whose proxy survived in the cache would otherwise suggest another.
     if (suggestProxy && drift::ReverseProxyCache::previewProxiesEnabled
@@ -1408,8 +1414,13 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
                .isEmpty())
         m_suggestProxyIds.append(assetId);
     if (asset->kind == drift::MediaKind::Video) {
-        asset->frameRateKnown = false;
-        asset->variableFrameRate = false;
+        if (filled.editFriendly) {
+            asset->frameRateKnown = true;
+            asset->variableFrameRate = false;
+        } else {
+            asset->frameRateKnown = false;
+            asset->variableFrameRate = false;
+        }
     }
 
     emitAssetRowChanged(index,
@@ -1423,7 +1434,7 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
     // Not for an import that skipped previews: ensurePreview builds them when something shows it.
     if (!previewsDeferred)
         startThumbJob(assetId);
-    if (asset->kind == drift::MediaKind::Video)
+    if (asset->kind == drift::MediaKind::Video && !asset->editFriendly)
         isVariableFrameRate(assetId);
 }
 
