@@ -2343,7 +2343,7 @@ PanelFrame {
             icon.name: Theme.icons.clipboardPaste
             enabled: trackAreaContextMenu.canPaste
             onTriggered: {
-                EditorState.setPlayheadSeconds(root.areaMenuSeconds)
+                EditorState.playheadSeconds = root.areaMenuSeconds
                 EditorState.pasteAtPlayhead()
             }
         }
