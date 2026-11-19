@@ -15,6 +15,7 @@
 #include <QRegularExpression>
 #include <QStringList>
 #include <QUuid>
+#include <QXmlStreamReader>
 #include <cstring>
 
 namespace drift::vegas {
@@ -54,6 +55,12 @@ static const uint8_t kTypeEventGroupList[16] = {
 };
 static const uint8_t kChunkEventGroup[16] = {
     0x32, 0xe1, 0x01, 0xe9, 0x77, 0xc6, 0x04, 0x46, 0xac, 0x9d, 0xdb, 0x0b, 0x87, 0xb4, 0xee, 0xbd
+};
+static const uint8_t kListEventFx[16] = {
+    0xe4, 0xe4, 0xf0, 0x1a, 0x7f, 0x6e, 0xd2, 0x11, 0x87, 0x05, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
+static const uint8_t kChunkEventEffect[16] = {
+    0xe6, 0xe4, 0xf0, 0x1a, 0x7f, 0x6e, 0xd2, 0x11, 0x87, 0x05, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
 };
 static const uint8_t kListAudioTrack[16] = {
     0x26, 0x6c, 0xd4, 0x69, 0x0b, 0x7f, 0xd2, 0x11, 0x87, 0x17, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
@@ -244,12 +251,12 @@ void detectTransitionsForTrack(Track &track)
     }
 }
 
-qsizetype findUtf16(const uint8_t *data, qsizetype size, const char *ascii)
+qsizetype findUtf16(const uint8_t *data, qsizetype size, const char *ascii, qsizetype startOffset = 0)
 {
     const qsizetype asciiLen = static_cast<qsizetype>(std::strlen(ascii));
-    if (size < asciiLen * 2)
+    if (asciiLen <= 0 || size < asciiLen * 2 || startOffset < 0)
         return -1;
-    for (qsizetype i = 0; i + asciiLen * 2 <= size; i += 2) {
+    for (qsizetype i = startOffset; i + asciiLen * 2 <= size; i += 2) {
         bool match = true;
         for (qsizetype j = 0; j < asciiLen; ++j) {
             if (data[i + j * 2] != static_cast<uint8_t>(ascii[j]) || data[i + j * 2 + 1] != 0) {
@@ -605,9 +612,9 @@ QList<Effect> extractVideoEffects(const uint8_t *payload, qsizetype payloadSize)
     if (payloadSize < 16)
         return effects;
 
-    // 1. Levels
-    const qsizetype lPos = findUtf16(payload, payloadSize, "levels}");
-    if (lPos >= 0) {
+    // 1. Levels (Sony / VEGAS levels)
+    qsizetype lPos = 0;
+    while ((lPos = findUtf16(payload, payloadSize, "levels}", lPos)) >= 0) {
         const qsizetype subSize = std::min<qsizetype>(payloadSize - lPos, 800);
         const uint8_t *sub = payload + lPos;
 
@@ -628,11 +635,12 @@ QList<Effect> extractVideoEffects(const uint8_t *payload, qsizetype payloadSize)
             fx.parameters[QStringLiteral("output_end")] = outEnd;
             effects.append(fx);
         }
+        lPos += 14;
     }
 
-    // 2. Color Corrector
-    const qsizetype cPos = findUtf16(payload, payloadSize, "colorcorrector}");
-    if (cPos >= 0) {
+    // 2. Color Corrector (Sony / VEGAS colorcorrector)
+    qsizetype cPos = 0;
+    while ((cPos = findUtf16(payload, payloadSize, "colorcorrector}", cPos)) >= 0) {
         const qsizetype subSize = std::min<qsizetype>(payloadSize - cPos, 1000);
         const uint8_t *sub = payload + cPos;
 
@@ -651,11 +659,12 @@ QList<Effect> extractVideoEffects(const uint8_t *payload, qsizetype payloadSize)
             fx.parameters[QStringLiteral("liftLuma")] = offset / 100.0;
             effects.append(fx);
         }
+        cPos += 30;
     }
 
-    // 3. Sharpen
-    const qsizetype sPos = findUtf16(payload, payloadSize, "sharpen}");
-    if (sPos >= 0) {
+    // 3. Sharpen (Sony / VEGAS sharpen)
+    qsizetype sPos = 0;
+    while ((sPos = findUtf16(payload, payloadSize, "sharpen}", sPos)) >= 0) {
         const qsizetype subSize = std::min<qsizetype>(payloadSize - sPos, 400);
         const uint8_t *sub = payload + sPos;
 
@@ -667,6 +676,197 @@ QList<Effect> extractVideoEffects(const uint8_t *payload, qsizetype payloadSize)
             fx.parameters[QStringLiteral("luma_amount")] = amount;
             effects.append(fx);
         }
+        sPos += 16;
+    }
+
+    // 4. Unsharp Mask (Sony unsharpmask)
+    qsizetype uPos = 0;
+    while ((uPos = findUtf16(payload, payloadSize, "unsharpmask}", uPos)) >= 0) {
+        const qsizetype subSize = std::min<qsizetype>(payloadSize - uPos, 400);
+        const uint8_t *sub = payload + uPos;
+
+        const double amount = parseDoubleParam(sub, subSize, "Amount", 0.0);
+        if (amount > 0.01) {
+            Effect fx;
+            fx.catalogId = QStringLiteral("stylize.sharpen");
+            fx.name = QStringLiteral("Unsharp Mask");
+            fx.parameters[QStringLiteral("luma_amount")] = amount;
+            effects.append(fx);
+        }
+        uPos += 24;
+    }
+
+    // 5. Vignette (Sony / VEGAS vignette)
+    qsizetype vPos = 0;
+    while ((vPos = findUtf16(payload, payloadSize, "vignette}", vPos)) >= 0) {
+        const qsizetype subSize = std::min<qsizetype>(payloadSize - vPos, 1000);
+        const uint8_t *sub = payload + vPos;
+
+        const double outer = parseDoubleParam(sub, subSize, "Outer", 1.0);
+        const double inner = parseDoubleParam(sub, subSize, "Inner", 0.0);
+        const double feather = parseDoubleParam(sub, subSize, "Feather", 5.0);
+        const double aspect = parseDoubleParam(sub, subSize, "Aspect", 1.0);
+
+        double cx = 0.5;
+        double cy = 0.5;
+        const qsizetype cp = findUtf16(sub, subSize, "Center");
+        if (cp >= 0) {
+            const qsizetype cVal = cp + static_cast<qsizetype>(std::strlen("Center") * 2) + 2;
+            if (cVal + 16 <= subSize) {
+                const double x = readDoubleLE(sub + cVal);
+                const double y = readDoubleLE(sub + cVal + 8);
+                if (!std::isnan(x) && !std::isnan(y) && !std::isinf(x) && !std::isinf(y)) {
+                    cx = x;
+                    cy = y;
+                }
+            }
+        }
+
+        QColor color = Qt::black;
+        const qsizetype colPos = findUtf16(sub, subSize, "Color");
+        if (colPos >= 0) {
+            const qsizetype colVal = colPos + static_cast<qsizetype>(std::strlen("Color") * 2) + 2;
+            if (colVal + 32 <= subSize) {
+                const double r = readDoubleLE(sub + colVal);
+                const double g = readDoubleLE(sub + colVal + 8);
+                const double b = readDoubleLE(sub + colVal + 16);
+                const double a = readDoubleLE(sub + colVal + 24);
+                if (!std::isnan(r) && !std::isnan(g) && !std::isnan(b) && !std::isnan(a)) {
+                    color = QColor::fromRgbF(
+                        qBound(0.0, r, 1.0),
+                        qBound(0.0, g, 1.0),
+                        qBound(0.0, b, 1.0),
+                        qBound(0.0, a, 1.0)
+                    );
+                }
+            }
+        }
+
+        Effect fx;
+        fx.catalogId = QStringLiteral("stylize.vignette");
+        fx.name = QStringLiteral("Vignette");
+        const double amount = qBound(0.0, 1.0 - inner / std::max(outer, 0.01), 1.0);
+        fx.parameters[QStringLiteral("amount")] = amount;
+        fx.parameters[QStringLiteral("feather")] = qBound(0.0, feather / 10.0, 1.0);
+        fx.parameters[QStringLiteral("roundness")] = qBound(0.0, (aspect - 0.5) / 1.0, 1.0);
+        fx.parameters[QStringLiteral("center.x")] = qBound(0.0, cx, 1.0);
+        fx.parameters[QStringLiteral("center.y")] = qBound(0.0, cy, 1.0);
+        fx.parameters[QStringLiteral("color")] = color.name();
+        effects.append(fx);
+
+        vPos += 18;
+    }
+
+    // 6. Color Balance (Sony colorbalance)
+    qsizetype cbPos = 0;
+    while ((cbPos = findUtf16(payload, payloadSize, "colorbalance}", cbPos)) >= 0) {
+        const qsizetype subSize = std::min<qsizetype>(payloadSize - cbPos, 600);
+        const uint8_t *sub = payload + cbPos;
+
+        const double red = parseDoubleParam(sub, subSize, "Red", 0.0);
+        const double green = parseDoubleParam(sub, subSize, "Green", 0.0);
+        const double blue = parseDoubleParam(sub, subSize, "Blue", 0.0);
+
+        if (std::abs(red) > 0.001 || std::abs(green) > 0.001 || std::abs(blue) > 0.001) {
+            Effect fx;
+            fx.catalogId = QStringLiteral("color.grade");
+            fx.name = QStringLiteral("Color Balance");
+            fx.parameters[QStringLiteral("temperature")] = qBound(-1.0, red - blue, 1.0);
+            fx.parameters[QStringLiteral("tint")] = qBound(-1.0, -green, 1.0);
+            effects.append(fx);
+        }
+        cbPos += 26;
+    }
+
+    // 7. Softlight XML
+    const QByteArray buf = QByteArray::fromRawData(reinterpret_cast<const char *>(payload), payloadSize);
+    const QByteArray startTag("<Softlight");
+    const QByteArray endTag("</Softlight>");
+    qsizetype xmlSearchPos = 0;
+    while (xmlSearchPos + startTag.size() <= payloadSize) {
+        const qsizetype startOffset = buf.indexOf(startTag, xmlSearchPos);
+        if (startOffset < 0)
+            break;
+        const qsizetype endOffset = buf.indexOf(endTag, startOffset);
+        if (endOffset < 0)
+            break;
+        const qsizetype xmlEnd = endOffset + endTag.size();
+        const QByteArray xmlBytes = buf.mid(startOffset, xmlEnd - startOffset);
+
+        QXmlStreamReader xml(xmlBytes);
+        bool enabled = true;
+        double strength = 0.0;
+        double diffusion = 0.0;
+        double stretch = 0.44;
+
+        bool inVignette = false;
+        bool vigEnabled = false;
+        double vigStrength = 1.0;
+        double vigBlur = 0.2;
+        double vigX = 0.5;
+        double vigY = 0.5;
+
+        while (!xml.atEnd() && !xml.hasError()) {
+            xml.readNext();
+            if (xml.isStartElement()) {
+                const auto name = xml.name();
+                if (name == QLatin1String("VignetteEffect")) {
+                    inVignette = true;
+                } else if (!inVignette) {
+                    if (name == QLatin1String("Enabled")) {
+                        enabled = (xml.readElementText().trimmed().compare(QLatin1String("true"), Qt::CaseInsensitive) == 0);
+                    } else if (name == QLatin1String("Strength")) {
+                        strength = xml.readElementText().toDouble();
+                    } else if (name == QLatin1String("Diffusion")) {
+                        diffusion = xml.readElementText().toDouble();
+                    } else if (name == QLatin1String("Stretch")) {
+                        stretch = xml.readElementText().toDouble();
+                    }
+                } else {
+                    if (name == QLatin1String("Enabled")) {
+                        vigEnabled = (xml.readElementText().trimmed().compare(QLatin1String("true"), Qt::CaseInsensitive) == 0);
+                    } else if (name == QLatin1String("Strength")) {
+                        vigStrength = xml.readElementText().toDouble();
+                    } else if (name == QLatin1String("Blur")) {
+                        vigBlur = xml.readElementText().toDouble();
+                    } else if (name == QLatin1String("XPosition")) {
+                        vigX = xml.readElementText().toDouble();
+                    } else if (name == QLatin1String("YPos") || name == QLatin1String("YPosition")) {
+                        vigY = xml.readElementText().toDouble();
+                    }
+                }
+            } else if (xml.isEndElement()) {
+                if (xml.name() == QLatin1String("VignetteEffect")) {
+                    inVignette = false;
+                }
+            }
+        }
+
+        if (enabled) {
+            if (diffusion > 0.01 || strength > 0.01) {
+                Effect glow;
+                glow.catalogId = QStringLiteral("bloom_glow");
+                glow.name = QStringLiteral("Softlight Glow");
+                glow.parameters[QStringLiteral("intensity")] = qBound(0.0, strength * 1.5, 2.0);
+                glow.parameters[QStringLiteral("blurRadius")] = qBound(1.0, stretch * 25.0, 30.0);
+                glow.parameters[QStringLiteral("threshold")] = 0.5;
+                effects.append(glow);
+            }
+            if (vigEnabled) {
+                Effect vig;
+                vig.catalogId = QStringLiteral("stylize.vignette");
+                vig.name = QStringLiteral("Vignette");
+                vig.parameters[QStringLiteral("amount")] = qBound(0.0, vigStrength, 1.0);
+                vig.parameters[QStringLiteral("feather")] = qBound(0.0, vigBlur, 1.0);
+                vig.parameters[QStringLiteral("roundness")] = 0.5;
+                vig.parameters[QStringLiteral("center.x")] = qBound(0.0, vigX, 1.0);
+                vig.parameters[QStringLiteral("center.y")] = qBound(0.0, vigY, 1.0);
+                vig.parameters[QStringLiteral("color")] = QStringLiteral("#000000");
+                effects.append(vig);
+            }
+        }
+
+        xmlSearchPos = xmlEnd;
     }
 
     return effects;
@@ -1387,6 +1587,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                     quint64 srcInTicks = 0;
                                     quint32 mid = 0;
                                     quint32 eventId = 0;
+                                    QList<Effect> takeEffects;
 
                                     while (cpos + 24 <= cend) {
                                         const uint8_t *cptr = bytes + cpos;
@@ -1413,6 +1614,24 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                             if (cpayloadSize >= 40) {
                                                 srcInTicks = readU64LE(cpayload + 16);
                                                 mid = readU32LE(cpayload + 36);
+                                            }
+                                        } else if ((std::memcmp(cptr, kGuidW64List, 16) == 0 && cpayloadSize >= 16
+                                                    && std::memcmp(cpayload, kListEventFx, 16) == 0)
+                                                   || std::memcmp(cptr, kListEventFx, 16) == 0) {
+                                            qsizetype fpos = (std::memcmp(cptr, kGuidW64List, 16) == 0) ? (cpos + 40) : (cpos + 24);
+                                            const qsizetype fend = cpos + static_cast<qsizetype>(csize);
+                                            while (fpos + 24 <= fend) {
+                                                const uint8_t *fptr = bytes + fpos;
+                                                const quint64 fsize = readU64LE(fptr + 16);
+                                                if (fsize < 24 || fpos + static_cast<qsizetype>(fsize) > fend)
+                                                    break;
+                                                const uint8_t *fpayload = fptr + 24;
+                                                const qsizetype fpayloadSize = static_cast<qsizetype>(fsize - 24);
+                                                const QList<Effect> fx = extractVideoEffects(fpayload, fpayloadSize);
+                                                if (!fx.isEmpty()) {
+                                                    takeEffects.append(fx);
+                                                }
+                                                fpos += (fsize + 7) & ~7;
                                             }
                                         }
                                         cpos += (csize + 7) & ~7;
@@ -1458,6 +1677,10 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                             }
                                         } else {
                                             clip.name = QStringLiteral("clip_%1").arg(track.clips.size());
+                                        }
+
+                                        for (const Effect &fx : takeEffects) {
+                                            clip.effects.append(fx);
                                         }
 
                                         if (isNested) {

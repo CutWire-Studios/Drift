@@ -26,6 +26,7 @@ private slots:
     void detectsCrossfadesAndTransitions();
     void readsTitlesAndTextGenerators();
     void readsVideoEffectsLevelsAndColor();
+    void readsVignetteAndSoftlightEffects();
 };
 
 void TestInterchangeVegas::detectsVegasProject()
@@ -889,6 +890,86 @@ void TestInterchangeVegas::readsVideoEffectsLevelsAndColor()
         QVERIFY(foundLevels);
         QVERIFY(foundColorGrade);
         QVERIFY(foundSharpen);
+    }
+}
+
+void TestInterchangeVegas::readsVignetteAndSoftlightEffects()
+{
+    // 1. Test BEACH PARTY B.veg for Media Pool Sony Vignette
+    QString vegBeach = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/BEACH PARTY B.veg");
+    if (!QFile::exists(vegBeach)) {
+        vegBeach = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/BEACH PARTY B.veg");
+    }
+    if (QFile::exists(vegBeach)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegBeach, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        bool foundVignette = false;
+        for (const auto &track : proj.tracks()) {
+            for (const auto &clip : track.clips) {
+                for (const auto &fx : clip.effects) {
+                    if (fx.catalogId == QStringLiteral("stylize.vignette")) {
+                        foundVignette = true;
+                        QVERIFY(fx.parameters.contains(QStringLiteral("amount")));
+                        QVERIFY(fx.parameters.value(QStringLiteral("amount")).toDouble() > 0.0);
+                        QVERIFY(fx.parameters.contains(QStringLiteral("feather")));
+                        QVERIFY(fx.parameters.value(QStringLiteral("feather")).toDouble() > 0.0);
+                        QVERIFY(fx.parameters.contains(QStringLiteral("center.x")));
+                        QCOMPARE(fx.parameters.value(QStringLiteral("center.x")).toDouble(), 0.5);
+                        QCOMPARE(fx.parameters.value(QStringLiteral("center.y")).toDouble(), 0.5);
+                    }
+                }
+            }
+        }
+        qDebug() << "BEACH PARTY B.veg foundVignette:" << foundVignette;
+        QVERIFY(foundVignette);
+    }
+
+    // 2. Test Credits Episode 3.veg for Event-level Softlight XML and Levels
+    QString vegCredits = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 3/Remaster/Credits Episode 3.veg");
+    if (!QFile::exists(vegCredits)) {
+        vegCredits = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 3/Remaster/Credits Episode 3.veg");
+    }
+    if (QFile::exists(vegCredits)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegCredits, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        bool foundSoftlightGlow = false;
+        bool foundSoftlightVignette = false;
+        bool foundTakeLevels = false;
+
+        for (const auto &track : proj.tracks()) {
+            for (const auto &clip : track.clips) {
+                for (const auto &fx : clip.effects) {
+                    if (fx.catalogId == QStringLiteral("bloom_glow")) {
+                        foundSoftlightGlow = true;
+                        QVERIFY(fx.parameters.contains(QStringLiteral("intensity")));
+                        QVERIFY(fx.parameters.value(QStringLiteral("intensity")).toDouble() > 0.0);
+                        QVERIFY(fx.parameters.contains(QStringLiteral("blurRadius")));
+                    } else if (fx.catalogId == QStringLiteral("stylize.vignette")) {
+                        foundSoftlightVignette = true;
+                        QVERIFY(fx.parameters.contains(QStringLiteral("amount")));
+                        QVERIFY(fx.parameters.contains(QStringLiteral("feather")));
+                    } else if (fx.catalogId == QStringLiteral("adjust.levels")) {
+                        foundTakeLevels = true;
+                        QVERIFY(fx.parameters.contains(QStringLiteral("gamma")));
+                        QVERIFY(fx.parameters.value(QStringLiteral("gamma")).toDouble() > 2.0);
+                    }
+                }
+            }
+        }
+
+        qDebug() << "Credits Episode 3.veg foundSoftlightGlow:" << foundSoftlightGlow
+                 << "foundSoftlightVignette:" << foundSoftlightVignette
+                 << "foundTakeLevels:" << foundTakeLevels;
+
+        QVERIFY(foundSoftlightGlow);
+        QVERIFY(foundSoftlightVignette);
+        QVERIFY(foundTakeLevels);
     }
 }
 
