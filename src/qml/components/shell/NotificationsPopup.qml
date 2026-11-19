@@ -10,7 +10,13 @@ Popup {
     signal updateRequested()
 
     width: 380
-    height: Math.min(480, Math.max(160, list.implicitListHeight))
+    // Fits the rows; only the empty state keeps a floor so its message has room (#97).
+    readonly property real fitHeight: Math.min(480, Toasts.history.count > 0 ? list.implicitHeight
+                                                                            : Math.max(160, list.implicitHeight))
+    height: fitHeight
+    // Clear empties the list while the popup fades out: keep its size until it is gone.
+    onAboutToHide: height = height
+    onAboutToShow: height = Qt.binding(() => root.fitHeight)
     padding: 0
     modal: true
     dim: false
@@ -66,11 +72,6 @@ Popup {
 
     contentItem: NotificationList {
         id: list
-
-        // Rough fit so a short list does not open as a tall empty box.
-        readonly property real implicitListHeight: Theme.controlHeight + Theme.spacingMd
-                                                   + (showUpdate ? rowHeight + Theme.spacingSm : 0)
-                                                   + Math.max(1, Toasts.history.count) * (rowHeight + Theme.spacingMd)
 
         onUpdateRequested: {
             root.close()

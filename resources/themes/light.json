@@ -888,6 +888,8 @@
       "accent": "$semantic.primary",
       "indicator": "$semantic.primary",
       "indicatorRadius": 4,
+      "selection": "$semantic.primary",
+      "selectionForeground": "$semantic.primaryForeground",
       "divider": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth"
     },
