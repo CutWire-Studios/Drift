@@ -228,28 +228,45 @@ void hashTimeline(QCryptographicHash &hash, const Prepared &p, const Timeline &t
                 continue;
             include(clip);
         }
-        // A transition draws both its clips across its window, which reaches past the cut into the
-        // other clip's span. So when the window overlaps the range but only one side does, the
-        // other side's clip decides frames in range too.
+        // A transition draws only across its window, and there it draws both its clips, reaching
+        // past the cut into the other clip's span. So its settings count only when that window
+        // overlaps the range (half-open, as activeTransitionAt tests it), and when only one side
+        // overlaps, the other side's clip decides frames in range too. Outside its window it still
+        // matters that it exists: a clip whose cut has a transition drops its own audio fade there
+        // (audioTransitionEdgeFor), and audio-reactive visuals in range read that audio. Inside a
+        // composite every clip with a transition is in and the whole sequence counts, so every
+        // such transition does.
         std::vector<const ClipEntry *> partners;
         for (const TransitionEntry &transition : track.transitions) {
             const bool hasFrom = included.contains(transition.from);
             const bool hasTo = included.contains(transition.to);
             if (!hasFrom && !hasTo)
                 continue;
-            hash.addData(transition.bytes);
-            if (hasFrom && hasTo)
+            if (all) {
+                hash.addData(transition.bytes);
                 continue;
+            }
             const ClipEntry *from = clipIn(track, transition.from);
             const ClipEntry *to = clipIn(track, transition.to);
             TimeUs windowStart = 0;
             TimeUs windowEnd = 0;
-            if (!from || !to
-                || !transitionWindowOf(TimeUs(from->start), TimeUs(from->end), TimeUs(to->start), TimeUs(to->end),
-                                       TimeUs(transition.durationUs), windowStart, windowEnd)
-                || double(windowStart) >= endUs || double(windowEnd) <= startUs)
+            const bool hasWindow = from && to
+                && transitionWindowOf(TimeUs(from->start), TimeUs(from->end), TimeUs(to->start), TimeUs(to->end),
+                                      TimeUs(transition.durationUs), windowStart, windowEnd);
+            if (!hasWindow || double(windowStart) >= endUs || double(windowEnd) <= startUs) {
+                // Only that it is there, between which clips, and whether it takes over their audio
+                // fades: it does when it has a window and the clips meet at a cut rather than
+                // overlap (audioTransitionEdgeFor).
+                const bool ownsFades = hasWindow && !(to->start < from->end && to->start >= from->start);
+                hash.addData(transition.from.toUtf8());
+                hash.addData("\x1f", 1);
+                hash.addData(transition.to.toUtf8());
+                hash.addData(ownsFades ? "\x1fw" : "\x1f-", 2);
                 continue;
-            partners.push_back(hasFrom ? to : from);
+            }
+            hash.addData(transition.bytes);
+            if (!hasFrom || !hasTo)
+                partners.push_back(hasFrom ? to : from);
         }
         for (const ClipEntry *partner : partners) {
             if (!included.contains(partner->id))
