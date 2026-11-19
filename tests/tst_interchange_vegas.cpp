@@ -20,6 +20,7 @@ private slots:
     void readsRealVegasProject();
     void readsScene2VegasProjectWithMts();
     void readsEpisode4VegasProjectWithOffset96AndSubdirectories();
+    void readsEpisode4WorkprintWithNestedTimelines();
 };
 
 void TestInterchangeVegas::detectsVegasProject()
@@ -231,6 +232,53 @@ void TestInterchangeVegas::readsEpisode4VegasProjectWithOffset96AndSubdirectorie
     QCOMPARE(resolvedCount, proj.assets().size());
     // Seven video clips total in Ep 4 (six camera clips + one plate effect)
     QCOMPARE(videoCount, 7);
+}
+
+void TestInterchangeVegas::readsEpisode4WorkprintWithNestedTimelines()
+{
+    QString sceneVeg = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/10.1b.veg");
+    if (QFile::exists(sceneVeg)) {
+        QString err;
+        auto optScene = drift::vegas::readProject(sceneVeg, &err);
+        QVERIFY2(optScene.has_value(), qPrintable(err));
+        qDebug() << "10.1b.veg loaded! Tracks:" << optScene->tracks().size()
+                 << "Assets:" << optScene->assets().size();
+    }
+
+    QString workprintVeg = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/Workprint.veg");
+    if (!QFile::exists(workprintVeg)) {
+        workprintVeg = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/Workprint.veg");
+    }
+    if (!QFile::exists(workprintVeg)) {
+        QSKIP("Episode 4 Workprint.veg not present");
+    }
+
+    QString error;
+    const auto optProj = drift::vegas::readProject(workprintVeg, &error);
+    QVERIFY2(optProj.has_value(), qPrintable(error));
+
+    const drift::Project &proj = *optProj;
+    qDebug() << "Workprint loaded:" << proj.name()
+             << "Tracks:" << proj.tracks().size()
+             << "Assets:" << proj.assets().size()
+             << "Sequences:" << proj.sequenceIds();
+
+    for (const auto &asset : proj.assets()) {
+        qDebug() << "Workprint Asset:" << asset.id << "path:" << asset.path
+                 << "kind:" << drift::mediaKindToString(asset.kind)
+                 << "exists:" << QFile::exists(asset.path);
+    }
+
+    for (int t = 0; t < proj.tracks().size(); ++t) {
+        const auto &track = proj.tracks()[t];
+        qDebug() << "Track" << t << "type:" << drift::trackTypeToString(track.type)
+                 << "clips:" << track.clips.size();
+        for (const auto &clip : track.clips) {
+            qDebug() << "  Clip:" << clip.id << "type:" << drift::clipTypeToString(clip.type)
+                     << "assetId:" << clip.assetId << "sequenceId:" << clip.sequenceId
+                     << "timelineStart:" << clip.timelineStart << "dur:" << clip.timelineDuration;
+        }
+    }
 }
 
 QTEST_MAIN(TestInterchangeVegas)

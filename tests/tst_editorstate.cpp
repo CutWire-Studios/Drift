@@ -3904,9 +3904,22 @@ void EditorStateTest::loadEpisode4VegasProjectPromptsTranscode()
 
     QCOMPARE(loadFinished.count(), 1);
     QVERIFY(loadFinished.at(0).at(0).toBool());
-    QCOMPARE(transcodeSuggested.count(), 1);
-    const QStringList unconverted = transcodeSuggested.at(0).at(0).toStringList();
-    QCOMPARE(unconverted.size(), 6);
+
+    const bool hasTranscodes = QDir(QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/Transcodes_ProRes")).exists();
+    if (hasTranscodes) {
+        // Co-located ProRes transcodes were automatically relinked, skipping transcode prompt
+        QCOMPARE(transcodeSuggested.count(), 0);
+        int movCount = 0;
+        for (const auto &asset : state.project()->assets()) {
+            if (asset.kind == drift::MediaKind::Video && asset.path.endsWith(QLatin1String(".mov"), Qt::CaseInsensitive))
+                ++movCount;
+        }
+        QVERIFY(movCount >= 6);
+    } else {
+        QCOMPARE(transcodeSuggested.count(), 1);
+        const QStringList unconverted = transcodeSuggested.at(0).at(0).toStringList();
+        QCOMPARE(unconverted.size(), 6);
+    }
 }
 
 void EditorStateTest::guidesTravelWithProject()

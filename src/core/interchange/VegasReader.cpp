@@ -303,8 +303,13 @@ bool isVegasProject(const QString &filePath)
     return isVegasData(header);
 }
 
-std::optional<Project> readProject(const QString &filePath, QString *error)
+std::optional<Project> readProject(const QString &filePath, QString *error,
+                                   QSet<QString> visitedPaths, int depth)
 {
+    const QString canon = QFileInfo(filePath).canonicalFilePath();
+    if (!canon.isEmpty())
+        visitedPaths.insert(canon);
+
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
         if (error)
@@ -313,11 +318,12 @@ std::optional<Project> readProject(const QString &filePath, QString *error)
     }
     const QByteArray data = file.readAll();
     const QString sourceDir = QFileInfo(filePath).canonicalPath();
-    return readProjectData(data, sourceDir, error);
+    return readProjectData(data, sourceDir, error, visitedPaths, depth);
 }
 
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir,
-                                      QString *error)
+                                       QString *error,
+                                       QSet<QString> visitedPaths, int depth)
 {
     if (data.size() < 64 || !isVegasData(data)) {
         if (error)
@@ -428,6 +434,8 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         QString rawFilename;
         QString resolvedPath;
         QString assetId;
+        QString sequenceId;
+        bool isNestedProject = false;
     };
     QMap<quint32, MediaEntry> mediaPool;
 
@@ -459,6 +467,60 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
                     const QString resolved = resolveMediaFile(winPath, diskName, sourceDir, searchDirs, indexedFiles);
                     const QString assetId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+
+                    const bool isVeg = resolved.endsWith(QLatin1String(".veg"), Qt::CaseInsensitive);
+                    if (isVeg && QFile::exists(resolved) && depth < 8) {
+                        const QString canon = QFileInfo(resolved).canonicalFilePath();
+                        if (!canon.isEmpty() && !visitedPaths.contains(canon)) {
+                            QSet<QString> childVisited = visitedPaths;
+                            childVisited.insert(canon);
+                            QString nestedError;
+                            auto optNested = readProject(resolved, &nestedError, childVisited, depth + 1);
+                            if (optNested.has_value() && !optNested->tracks().isEmpty()) {
+                                drift::Project nestedProj = std::move(*optNested);
+                                const QString seqId = project.addSequence(nestedProj.tracks());
+
+                                for (const auto &nAsset : nestedProj.assets()) {
+                                    if (!project.assets().contains(nAsset.id)) {
+                                        project.assets().insert(nAsset.id, nAsset);
+                                        project.assetOrder().append(nAsset.id);
+                                    }
+                                }
+
+                                for (const QString &subSeqId : nestedProj.sequenceIds()) {
+                                    if (!project.hasSequence(subSeqId)) {
+                                        project.addSequence(nestedProj.sequenceTracks(subSeqId));
+                                    }
+                                }
+
+                                MediaAsset asset;
+                                asset.id = assetId;
+                                asset.kind = MediaKind::Composite;
+                                asset.sequenceId = seqId;
+                                asset.name = QFileInfo(resolved).completeBaseName();
+                                asset.path = resolved;
+                                asset.durationUs = nestedProj.sequenceDurationUs({});
+                                asset.width = nestedProj.width() > 0 ? nestedProj.width() : canvasWidth;
+                                asset.height = nestedProj.height() > 0 ? nestedProj.height() : canvasHeight;
+                                asset.fps = nestedProj.fps() > 0 ? nestedProj.fps() : fps;
+                                asset.editFriendly = true;
+
+                                project.assets().insert(asset.id, asset);
+                                project.assetOrder().append(asset.id);
+
+                                MediaEntry entry;
+                                entry.rawFilename = diskName;
+                                entry.resolvedPath = resolved;
+                                entry.assetId = assetId;
+                                entry.sequenceId = seqId;
+                                entry.isNestedProject = true;
+                                mediaPool.insert(mid, entry);
+
+                                cpos += (csize + 7) & ~7;
+                                continue;
+                            }
+                        }
+                    }
 
                     MediaEntry entry;
                     entry.rawFilename = diskName;
@@ -507,12 +569,15 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     } else {
                         const QString ext = resolvedInfo.suffix().toLower();
                         if (ext == QLatin1String("mov") || ext == QLatin1String("mp4")
-                            || ext == QLatin1String("mts")) {
+                            || ext == QLatin1String("mts")
+                            || winPath.contains(QLatin1String("titlesandtext"), Qt::CaseInsensitive)) {
                             asset.kind = MediaKind::Video;
                             asset.width = canvasWidth;
                             asset.height = canvasHeight;
                             asset.fps = fps;
                             asset.editFriendly = ext == QLatin1String("mov");
+                            if (winPath.contains(QLatin1String("titlesandtext"), Qt::CaseInsensitive))
+                                asset.name = QStringLiteral("Titles & Text");
                         } else {
                             asset.kind = MediaKind::Audio;
                         }
@@ -625,8 +690,35 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                     if (durTicks > 0) {
                                         Clip clip;
                                         clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-                                        clip.type = (trackType == TrackType::Video) ? ClipType::Video
-                                                                                    : ClipType::Audio;
+
+                                        bool isNested = false;
+                                        QString nestedSeqId;
+                                        if (mediaPool.contains(mid)) {
+                                            const MediaEntry &m = mediaPool[mid];
+                                            clip.assetId = m.assetId;
+                                            clip.path = m.resolvedPath;
+                                            clip.name = QFileInfo(m.resolvedPath).fileName();
+                                            if (m.isNestedProject && !m.sequenceId.isEmpty()) {
+                                                isNested = true;
+                                                nestedSeqId = m.sequenceId;
+                                                clip.name = QFileInfo(m.resolvedPath).completeBaseName();
+                                            }
+                                        } else {
+                                            clip.name = QStringLiteral("clip_%1").arg(track.clips.size());
+                                        }
+
+                                        if (isNested) {
+                                            if (trackType == TrackType::Video) {
+                                                clip.type = ClipType::Composite;
+                                                clip.sequenceId = nestedSeqId;
+                                            } else {
+                                                clip.type = ClipType::Audio;
+                                                clip.sequenceId = nestedSeqId;
+                                            }
+                                        } else {
+                                            clip.type = (trackType == TrackType::Video) ? ClipType::Video
+                                                                                        : ClipType::Audio;
+                                        }
 
                                         // Convert 100ns ticks to microseconds
                                         clip.timelineStart = static_cast<TimeUs>(startTicks / 10);
@@ -635,15 +727,6 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                         clip.srcOut = static_cast<TimeUs>((srcInTicks + durTicks) / 10);
                                         clip.fadeInUs = static_cast<TimeUs>(fadeInTicks / 10);
                                         clip.fadeOutUs = static_cast<TimeUs>(fadeOutTicks / 10);
-
-                                        if (mediaPool.contains(mid)) {
-                                            const MediaEntry &m = mediaPool[mid];
-                                            clip.assetId = m.assetId;
-                                            clip.path = m.resolvedPath;
-                                            clip.name = QFileInfo(m.resolvedPath).fileName();
-                                        } else {
-                                            clip.name = QStringLiteral("clip_%1").arg(track.clips.size());
-                                        }
 
                                         track.clips.append(clip);
                                     }
@@ -667,6 +750,42 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         if (error)
             *error = QStringLiteral("No timeline tracks found in VEGAS project");
         return std::nullopt;
+    }
+
+    // Symmetrically link companion video and audio clips sharing the same asset and timeline span
+    for (Track &vTrack : project.tracks()) {
+        if (vTrack.type != TrackType::Video)
+            continue;
+        for (Clip &vClip : vTrack.clips) {
+            if (!vClip.linkId.isEmpty() || vClip.assetId.isEmpty())
+                continue;
+            for (Track &aTrack : project.tracks()) {
+                if (aTrack.type != TrackType::Audio)
+                    continue;
+                for (Clip &aClip : aTrack.clips) {
+                    if (!aClip.linkId.isEmpty() || aClip.assetId != vClip.assetId)
+                        continue;
+                    if (qAbs(aClip.timelineStart - vClip.timelineStart) <= 1000 &&
+                        qAbs(aClip.timelineDuration - vClip.timelineDuration) <= 1000) {
+                        const QString commonLinkId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                        vClip.linkId = commonLinkId;
+                        aClip.linkId = commonLinkId;
+                        if (vClip.type == ClipType::Composite)
+                            vClip.suppressEmbeddedAudio = true;
+                        break;
+                    }
+                }
+                if (!vClip.linkId.isEmpty())
+                    break;
+            }
+        }
+    }
+
+    if (depth == 0) {
+        for (const QString &seqId : project.sequenceIds()) {
+            if (!project.openSequenceTabs().contains(seqId))
+                project.openSequenceTabs().append(seqId);
+        }
     }
 
     project.ensureTrackIds();
