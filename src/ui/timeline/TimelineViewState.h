@@ -81,6 +81,8 @@ public:
         QColor disabledScrim{32, 32, 32, 153};
         QColor disabledStripe{255, 255, 255, 71};
         QColor gapOutline{255, 255, 255, 56};
+        QColor keyframeMarker{Qt::white};
+        QColor keyframeMarkerRim{0, 0, 0, 170};
         QString fontFamily;
         double fontSizeTiny = 9.6;
         double fontSizeXs = 11.52;
@@ -106,6 +108,9 @@ public:
         QString missingTooltip;
         // Hovering a transform clip: what it does to the tracks under it.
         QString spanToolTip;
+        // Hovering a keyframe marker on a clip. Empty leaves the markers untipped, which is
+        // what the touch timeline wants: no pointer to hover with, no right-click to advertise.
+        QString keyframeToolTip;
     };
 
     explicit TimelineViewState(QObject *parent = nullptr);

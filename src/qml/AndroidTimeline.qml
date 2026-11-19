@@ -473,6 +473,8 @@ Item {
             "disabledScrim": Theme.c.androidTimeline.disabledScrim,
             "disabledStripe": Theme.c.androidTimeline.disabledStripe,
             "gapOutline": Theme.c.androidTimeline.gapOutline,
+            "keyframeMarker": Theme.c.androidTimeline.keyframeMarker,
+            "keyframeMarkerRim": Theme.c.androidTimeline.keyframeMarkerRim,
             "fontFamily": Theme.fontFamily,
             "fontSizeTiny": Theme.fontSizeTiny,
             "fontSizeXs": Theme.fontSizeXs,

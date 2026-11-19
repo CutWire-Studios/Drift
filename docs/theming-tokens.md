@@ -259,6 +259,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | clip.disabledScrim | $palette.clipDisabledScrim | $palette.clipDisabledScrim |
 | clip.disabledStripe | $palette.clipDisabledStripe | $palette.clipDisabledStripe |
 | clip.gapOutline | $palette.clipGapOutline | $palette.clipGapOutline |
+| clip.keyframeMarker | $palette.onMedia | $palette.onMedia |
+| clip.keyframeMarkerRim | $palette.scrimStrong | $palette.scrimStrong |
 | clip.editFriendly | $palette.clipEditFriendly | $palette.clipEditFriendly |
 | clip.editFriendlyForeground | $palette.clipEditFriendlyForeground | $palette.clipEditFriendlyForeground |
 | clip.adjustment.video | $semantic.clip.effect | $semantic.clip.effect |
@@ -1131,6 +1133,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineClipItem | disabledScrim | $semantic.clip.disabledScrim | $semantic.clip.disabledScrim |
 | timelineClipItem | disabledStripe | $semantic.clip.disabledStripe | $semantic.clip.disabledStripe |
 | timelineClipItem | gapOutline | $semantic.clip.gapOutline | $semantic.clip.gapOutline |
+| timelineClipItem | keyframeMarker | $semantic.clip.keyframeMarker | $semantic.clip.keyframeMarker |
+| timelineClipItem | keyframeMarkerRim | $semantic.clip.keyframeMarkerRim | $semantic.clip.keyframeMarkerRim |
 | timelineClipItem | foreground | $semantic.onMedia | $semantic.onMedia |
 | timelineClipItem | waveform | $semantic.clip.waveform | $semantic.clip.waveform |
 | timelineClipItem | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -2805,6 +2809,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimeline | disabledScrim | $semantic.clip.disabledScrim | $semantic.clip.disabledScrim |
 | androidTimeline | disabledStripe | $semantic.clip.disabledStripe | $semantic.clip.disabledStripe |
 | androidTimeline | gapOutline | $semantic.clip.gapOutline | $semantic.clip.gapOutline |
+| androidTimeline | keyframeMarker | $semantic.clip.keyframeMarker | $semantic.clip.keyframeMarker |
+| androidTimeline | keyframeMarkerRim | $semantic.clip.keyframeMarkerRim | $semantic.clip.keyframeMarkerRim |
 | androidTimeline | onMedia | $semantic.onMedia | $semantic.onMedia |
 | androidTimeline | waveform | $semantic.clip.waveform | $semantic.clip.waveform |
 | androidTimeline | mutedForeground | $semantic.mutedForeground | $semantic.mutedForeground |

@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 using timelinelayout::Zone;
 
@@ -221,6 +222,19 @@ void appendOutline(QVector<Vertex> &out, const QRectF &r, double radius, double 
         appendQuad(out, vertex(o[k].x() - ox, o[k].y(), c), vertex(o[j].x() - ox, o[j].y(), c),
                    vertex(i[j].x() - ox, i[j].y(), c), vertex(i[k].x() - ox, i[k].y(), c));
     }
+}
+
+// A keyframe marker: a filled diamond inside a darker rim, so it reads over a filmstrip, a
+// waveform and a flat clip body alike.
+void appendDiamond(QVector<Vertex> &out, const QPointF &c, double half, const QColor &fill,
+                   const QColor &rim, double ox)
+{
+    const auto diamond = [&c](double h) {
+        return QVector<QPointF>{{c.x(), c.y() - h}, {c.x() + h, c.y()},
+                                {c.x(), c.y() + h}, {c.x() - h, c.y()}};
+    };
+    appendConvex(out, diamond(half), rim, ox);
+    appendConvex(out, diamond(std::max(0.75, half - 1.25)), fill, ox);
 }
 
 // A polyline stroked as quads; GL line widths above 1 are not portable.
@@ -1101,6 +1115,23 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
                                  && row.hasEmbeddedAudio && rect.height() - band >= 30.0;
     const double barHeight = std::max(12.0, std::round((rect.height() - band) * 0.3));
 
+    // --- keyframe markers: where to put them ---------------------------------------------------
+    // One diamond per time this clip has a key at, so a glance says where the animation turns
+    // without opening the Keyframes tab. Drawn in a strip along the bottom edge, which the chip
+    // and label row below gives its height back for (contentRect) — except on a clip too short to
+    // spare it, such as a nested adjustment lane at 11 px, where the diamonds go down the middle
+    // instead: at that height the name is a sliver anyway, and where the key is in time is what
+    // the marker is there for.
+    const double keySize = row.keyTimes.isEmpty() || rect.height() < 9.0 || rect.width() < 9.0
+                               ? 0.0
+                               : std::clamp(std::floor(rect.height() * 0.38), 5.0, 8.0);
+    // 14 px is what the chip and label row needs to stay legible; below that the strip would take
+    // the text rather than share with it.
+    const bool keyStripFits = keySize > 0.0 && rect.height() - (keySize + 2.0) >= 14.0;
+    const double keyStrip = keyStripFits ? keySize + 2.0 : 0.0;
+    const double keyCenterY = keyStripFits ? rect.bottom() - keyStrip / 2.0 : rect.center().y();
+    const QRectF contentRect = rect.adjusted(0.0, 0.0, 0.0, -keyStrip);
+
     // --- filmstrip ---------------------------------------------------------------------------
     const bool filmstrip = !row.filmstripPath.isEmpty() && !showWaveform
                            && (m_trackType == QLatin1String("video")
@@ -1250,13 +1281,13 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
                                                                                     : row.effects;
     const QFont chipFont = labelFont(m_fontFamily, s.fontSizeTiny, true);
     const QFontMetricsF chipMetrics(chipFont);
-    const double chipH = std::min(rect.height() - 4.0, chipMetrics.height());
+    const double chipH = std::min(contentRect.height() - 4.0, chipMetrics.height());
     bool drewChips = false;
     if (isAdjustment && row.adjustmentKind != QLatin1String("transform") && !stack.isEmpty()
         && chipH >= chipMetrics.height() * 0.75) {
         const double gap = 3.0;
         const double right = rect.right() - 4.0;
-        const double chipTop = rect.center().y() - chipH / 2.0;
+        const double chipTop = contentRect.center().y() - chipH / 2.0;
         const auto labelOf = [this](const QVariantMap &fx) {
             const QString label = fx.value(QStringLiteral("label")).toString();
             return label.isEmpty() ? tr("Effect") : label;
@@ -1332,7 +1363,7 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
         if (!elided.isEmpty())
             m_labels.append({elided,
                              QPointF(rect.left() + 6.0 - ox,
-                                     rect.center().y() - tinyMetrics.height() / 2.0),
+                                     contentRect.center().y() - tinyMetrics.height() / 2.0),
                              s.fontSizeTiny, s.onMedia, false});
     }
 
@@ -1349,7 +1380,7 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
         if (!elided.isEmpty())
             m_labels.append({elided,
                              QPointF(rect.left() + margin - ox,
-                                     rect.center().y() - xsMetrics.height() / 2.0),
+                                     contentRect.center().y() - xsMetrics.height() / 2.0),
                              s.fontSizeXs, s.onMedia, false});
     }
 
@@ -1395,6 +1426,9 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     appendFade(rect.left(), fadeInW, false);
     appendFade(rect.right() - fadeOutW, fadeOutW, true);
 
+    if (keySize > 0.0)
+        appendKeyframeMarkers(index, rect, keyCenterY, keySize, &visual);
+
     // A clip that is off — disabled itself, or on a hidden or muted track — stays visible but
     // reads as inert.
     if (!row.enabled || m_trackDimmed) {
@@ -1432,6 +1466,51 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     }
 
     m_visible.append(visual);
+}
+
+void TimelineTrackItem::appendKeyframeMarkers(int index, const QRectF &rect, double centerY,
+                                             double keySize, ClipVisual *visual)
+{
+    const TimelineClipsModel::Row &row = m_clips->rows().at(index);
+    const TimelineViewState::Style &s = m_viewState->styleValues();
+    const double pps = m_viewState->pxPerSecond();
+    const double ox = m_originX;
+    const double half = keySize / 2.0;
+    // Pulled inside the clip so an edge key is a whole diamond on its own clip rather than half a
+    // one over its neighbour. Costs a few px of position at the very ends, which is where a key
+    // is least ambiguous anyway.
+    const double lo = rect.left() + half;
+    const double hi = rect.right() - half;
+    // Keys closer together than a marker would smear into a bar, so a run of them draws as the
+    // first one. The marker says "a key is here", not how many.
+    double lastX = -std::numeric_limits<double>::max();
+    for (const double seconds : row.keyTimes) {
+        const double x = std::clamp(rect.left() + seconds * pps, lo, hi);
+        if (x - lastX < keySize * 0.75)
+            continue;
+        lastX = x;
+        if (x + half < m_window.left || x - half > m_window.right)
+            continue;
+        appendDiamond(m_over, QPointF(x, centerY), half, s.keyframeMarker, s.keyframeMarkerRim, ox);
+        // A hit area a pointer can actually land on, which a 5 px diamond is not.
+        const QRectF hit(x - half - 3.0, centerY - half - 3.0, keySize + 6.0, keySize + 6.0);
+        visual->keys.append({hit, row.start + seconds});
+        if (!s.keyframeToolTip.isEmpty())
+            visual->toolTips.append({hit, s.keyframeToolTip});
+    }
+}
+
+double TimelineTrackItem::keyframeAt(int index, const QPointF &point) const
+{
+    for (const ClipVisual &visual : std::as_const(m_visible)) {
+        if (visual.index != index)
+            continue;
+        for (const auto &key : visual.keys) {
+            if (key.first.contains(point))
+                return key.second;
+        }
+    }
+    return -1.0;
 }
 
 void TimelineTrackItem::buildWaveform(int index, const QRectF &area, double clipX,
@@ -1865,6 +1944,22 @@ void TimelineTrackItem::mousePressEvent(QMouseEvent *event)
         m_lastPressTouch = touch;
         emit lastPressTouchChanged();
     }
+    // A right-click on a keyframe marker belongs to the key, not to the clip. Tested before the
+    // zone guard below, because the first key of a curve usually sits at the clip's very start —
+    // inside the edge band that the guard treats as the trim handles' own.
+    if (event->button() == Qt::RightButton && index >= 0 && m_editor && m_viewState) {
+        const double keySeconds = keyframeAt(index, event->position());
+        if (keySeconds >= 0.0) {
+            forceActiveFocus(Qt::MouseFocusReason);
+            if (!isSelected(index))
+                m_editor->selectClip(m_trackIndex, index);
+            updateActiveSet();
+            emit keyframeMenuRequested(index, keySeconds);
+            event->accept();
+            return;
+        }
+    }
+
     // On touch an unselected clip has no trim handles, so its edge band is just more of the clip:
     // treating it as dead left a finger-wide strip at each end of every clip that did nothing.
     const bool touchEdgeOfUnselected = touch && index >= 0

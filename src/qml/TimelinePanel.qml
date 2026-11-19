@@ -220,6 +220,8 @@ PanelFrame {
             "disabledScrim": Theme.c.timelineClipItem.disabledScrim,
             "disabledStripe": Theme.c.timelineClipItem.disabledStripe,
             "gapOutline": Theme.c.timelineClipItem.gapOutline,
+            "keyframeMarker": Theme.c.timelineClipItem.keyframeMarker,
+            "keyframeMarkerRim": Theme.c.timelineClipItem.keyframeMarkerRim,
             "fontFamily": Theme.fontFamily,
             "fontSizeTiny": Theme.fontSizeTiny,
             "fontSizeXs": Theme.fontSizeXs,
@@ -243,7 +245,8 @@ PanelFrame {
             "editFriendlyTooltip": qsTr("Converted to a constant frame rate for smooth editing"),
             "vfrTooltip": qsTr("Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format."),
             "missingTooltip": qsTr("Media file not found. Use Replace media… on this item to point it at the file again."),
-            "spanToolTip": qsTr("Transform layer: moves, scales and turns every track its bracket covers")
+            "spanToolTip": qsTr("Transform layer: moves, scales and turns every track its bracket covers"),
+            "keyframeToolTip": qsTr("Keyframe. Right-click for easing presets, or to open the Keyframes tab.")
         })
     }
 

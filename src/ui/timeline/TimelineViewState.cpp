@@ -87,6 +87,8 @@ void TimelineViewState::setStyle(const QVariantMap &style)
     color("disabledScrim", m_style.disabledScrim);
     color("disabledStripe", m_style.disabledStripe);
     color("gapOutline", m_style.gapOutline);
+    color("keyframeMarker", m_style.keyframeMarker);
+    color("keyframeMarkerRim", m_style.keyframeMarkerRim);
     text("fontFamily", m_style.fontFamily);
     real("fontSizeTiny", m_style.fontSizeTiny);
     real("fontSizeXs", m_style.fontSizeXs);
@@ -111,6 +113,7 @@ void TimelineViewState::setStyle(const QVariantMap &style)
     text("vfrTooltip", m_style.vfrTooltip);
     text("missingTooltip", m_style.missingTooltip);
     text("spanToolTip", m_style.spanToolTip);
+    text("keyframeToolTip", m_style.keyframeToolTip);
     emit styleChanged();
 }
 

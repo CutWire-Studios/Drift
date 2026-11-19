@@ -137,6 +137,9 @@ signals:
     void moveFinished(int clipIndex, const QRectF &rect);
     void moveCanceled();
     void contextMenuRequested(int clipIndex);
+    // A right-click that landed on one of the clip's keyframe markers, with the key's time in
+    // timeline seconds. The clip's own menu is not opened for it.
+    void keyframeMenuRequested(int clipIndex, double seconds);
     void toggleSelectionRequested(int clipIndex);
 
 protected:
@@ -187,6 +190,8 @@ private:
         QRectF rect;
         bool selected = false;
         QList<QPair<QRectF, QString>> toolTips;
+        // Keyframe markers: the hit rect of each one and the key's time in timeline seconds.
+        QList<QPair<QRectF, double>> keys;
     };
 
     struct DragState
@@ -244,6 +249,10 @@ private:
     void appendTile(const QString &key, const QImage &image, const QRectF &target,
                     const QRectF &source, const QRectF &clipRect, double clipRadius,
                     int clipCorners);
+    void appendKeyframeMarkers(int index, const QRectF &rect, double centerY, double keySize,
+                               ClipVisual *visual);
+    // The key marker under `point` on the clip drawn at `index`, in timeline seconds, or -1.
+    double keyframeAt(int index, const QPointF &point) const;
     QRectF effectiveRect(int index, double *inPoint = nullptr, double *outPoint = nullptr) const;
     int clipAt(const QPointF &point, timelinelayout::Zone *zone = nullptr) const;
     double edgeMargin(double clipWidth) const;
