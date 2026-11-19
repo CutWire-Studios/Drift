@@ -17890,7 +17890,7 @@ void EditorStateTest::bakeFingerprintIgnoresMixAndExportFlags()
 
     const QByteArray original = drift::bakeFingerprint(project, 0, 60);
     const QByteArray later = drift::bakeFingerprint(project, 300, 360);
-    // Heard, not seen: mute, solo and exclude from export keep the bake fresh.
+    // Heard, not seen: mute, solo and exclude from export on a non-audio track keep the bake fresh.
     project.tracks()[0].muted = true;
     QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
     project.tracks()[0].solo = true;
@@ -17914,8 +17914,8 @@ void EditorStateTest::bakeFingerprintIgnoresMixAndExportFlags()
     QCOMPARE(drift::bakeFingerprint(project, 0, 60), original);
     // ...but it does over its own clip's range.
     QVERIFY(drift::bakeFingerprint(project, 300, 360) != later);
-    // Muting an Audio or Video track changes the Timeline mix audio-reactive visuals read, so it
-    // does stale a bake whose range holds a clip on it.
+    // Muting or soloing an Audio or Video track changes the Timeline mix audio-reactive visuals read,
+    // so it does stale a bake whose range holds a clip on it.
     drift::Track audio{.type = drift::TrackType::Audio};
     audio.id = QStringLiteral("a1");
     audio.clips.append(boxShape(QStringLiteral("snd"), QRectF(0, 0, 100, 100)));
@@ -17924,6 +17924,10 @@ void EditorStateTest::bakeFingerprintIgnoresMixAndExportFlags()
     project.tracks().last().muted = true;
     QVERIFY(drift::bakeFingerprint(project, 0, 60) != withAudio);
     project.tracks().last().muted = false;
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), withAudio);
+    project.tracks().last().solo = true;
+    QVERIFY(drift::bakeFingerprint(project, 0, 60) != withAudio);
+    project.tracks().last().solo = false;
     QCOMPARE(drift::bakeFingerprint(project, 0, 60), withAudio);
 }
 
