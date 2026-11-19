@@ -27,6 +27,7 @@ private slots:
     void readsTitlesAndTextGenerators();
     void readsVideoEffectsLevelsAndColor();
     void readsVignetteAndSoftlightEffects();
+    void readsEventPanCropAndKeyframes();
 };
 
 void TestInterchangeVegas::detectsVegasProject()
@@ -970,6 +971,119 @@ void TestInterchangeVegas::readsVignetteAndSoftlightEffects()
         QVERIFY(foundSoftlightGlow);
         QVERIFY(foundSoftlightVignette);
         QVERIFY(foundTakeLevels);
+    }
+}
+
+void TestInterchangeVegas::readsEventPanCropAndKeyframes()
+{
+    // 1. Test BEACH PARTY B.veg for both static cropping and 2D pan/zoom keyframes
+    QString vegBeach = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/BEACH PARTY B.veg");
+    if (!QFile::exists(vegBeach)) {
+        vegBeach = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/BEACH PARTY B.veg");
+    }
+    if (QFile::exists(vegBeach)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(vegBeach, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        bool foundStaticCrop = false;
+        bool foundStraightenAngle = false;
+        bool foundAnimatedMotion = false;
+        bool foundZoomInFromFull = false;
+        bool foundZoomShift = false;
+        int staticCropCount = 0;
+        int animatedClipCount = 0;
+
+        for (const auto &track : proj.tracks()) {
+            for (const auto &clip : track.clips) {
+                if (clip.sourceFrame != QRectF(0, 0, 1, 1)) {
+                    foundStaticCrop = true;
+                    ++staticCropCount;
+                    // Check crop rectangle sanity
+                    QVERIFY(clip.sourceFrame.x() >= -0.05 && clip.sourceFrame.x() <= 1.0);
+                    QVERIFY(clip.sourceFrame.y() >= -0.05 && clip.sourceFrame.y() <= 1.0);
+                    QVERIFY(clip.sourceFrame.width() > 0.1 && clip.sourceFrame.width() <= 1.0);
+                    QVERIFY(clip.sourceFrame.height() > 0.1 && clip.sourceFrame.height() <= 1.0);
+
+                    if (clip.sourceFrameAngle != 0.0) {
+                        foundStraightenAngle = true;
+                        // Expect small angle correction, e.g. around -0.89 degrees
+                        QVERIFY(std::abs(clip.sourceFrameAngle) > 0.1);
+                    }
+                }
+
+                if (!clip.scaleX.isEmpty() && clip.scaleX.keyframes().size() > 1) {
+                    foundAnimatedMotion = true;
+                    ++animatedClipCount;
+                    QVERIFY(!clip.scaleY.isEmpty());
+                    QVERIFY(!clip.positionX.isEmpty());
+                    QVERIFY(!clip.positionY.isEmpty());
+
+                    // Test 2-keyframe zooms in BEACH PARTY B
+                    if (clip.scaleX.keyframes().size() == 2) {
+                        const auto keys = clip.scaleX.keyframes();
+                        QVERIFY(keys.contains(0));
+                        const auto itKey1 = std::next(keys.constBegin());
+                        QVERIFY(itKey1 != keys.constEnd());
+                        QVERIFY(itKey1.key() > 0);
+                        if (qFuzzyCompare(keys.value(0).value, 1.0)) {
+                            foundZoomInFromFull = true;
+                            QVERIFY(itKey1.value().value > 1.1);
+                        } else if (keys.value(0).value > 1.1) {
+                            foundZoomShift = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        qDebug() << "BEACH PARTY B.veg static crops:" << staticCropCount
+                 << "animated clips:" << animatedClipCount
+                 << "straighten angle found:" << foundStraightenAngle
+                 << "zoom in from full:" << foundZoomInFromFull
+                 << "zoom shift:" << foundZoomShift;
+
+        QVERIFY(foundStaticCrop);
+        QVERIFY(staticCropCount >= 10);
+        QVERIFY(foundStraightenAngle);
+        QVERIFY(foundAnimatedMotion);
+        QVERIFY(animatedClipCount >= 3);
+        QVERIFY(foundZoomInFromFull);
+        QVERIFY(foundZoomShift);
+    }
+
+    // 2. Test 3.1b.veg for 4-keyframe camera zoom out
+    QString veg31b = QStringLiteral("/mnt/Jellyfish/Videos/Odds/Episode 4/3.1b.veg");
+    if (!QFile::exists(veg31b)) {
+        veg31b = QStringLiteral("/mnt/HAL/Videos/Odds/Episode 4/3.1b.veg");
+    }
+    if (QFile::exists(veg31b)) {
+        QString err;
+        const auto optProj = drift::vegas::readProject(veg31b, &err);
+        QVERIFY2(optProj.has_value(), qPrintable(err));
+        const drift::Project &proj = *optProj;
+
+        bool found4KeyframeZoom = false;
+        for (const auto &track : proj.tracks()) {
+            for (const auto &clip : track.clips) {
+                if (clip.scaleX.keyframes().size() == 4) {
+                    found4KeyframeZoom = true;
+                    const auto &keys = clip.scaleX.keyframes();
+                    QVERIFY(keys.contains(0));
+                    // Starts zoomed in (1.785)
+                    QVERIFY(keys.value(0).value > 1.7);
+                    // Ends at 1.0 (full frame)
+                    const auto lastKey = std::prev(keys.constEnd());
+                    QCOMPARE(lastKey.value().value, 1.0);
+                    // Middle keyframe checks
+                    QVERIFY(clip.positionX.keyframes().size() == 4);
+                    QVERIFY(clip.positionY.keyframes().size() == 4);
+                }
+            }
+        }
+        qDebug() << "3.1b.veg found 4-keyframe zoom out:" << found4KeyframeZoom;
+        QVERIFY(found4KeyframeZoom);
     }
 }
 

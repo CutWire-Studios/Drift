@@ -14,6 +14,7 @@
 #include <QMap>
 #include <QRegularExpression>
 #include <QStringList>
+#include <QtMath>
 #include <QUuid>
 #include <QXmlStreamReader>
 #include <cstring>
@@ -61,6 +62,9 @@ static const uint8_t kListEventFx[16] = {
 };
 static const uint8_t kChunkEventEffect[16] = {
     0xe6, 0xe4, 0xf0, 0x1a, 0x7f, 0x6e, 0xd2, 0x11, 0x87, 0x05, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
+};
+static const uint8_t kChunkEventPanCrop[16] = {
+    0xff, 0xac, 0x4b, 0x88, 0xeb, 0x74, 0x6c, 0x45, 0x88, 0xf3, 0x73, 0x9e, 0x83, 0x90, 0xbd, 0x07
 };
 static const uint8_t kListAudioTrack[16] = {
     0x26, 0x6c, 0xd4, 0x69, 0x0b, 0x7f, 0xd2, 0x11, 0x87, 0x17, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
@@ -1073,6 +1077,162 @@ QString resolveMediaFile(const QString &winPath, const QString &diskName,
     return diskName;
 }
 
+struct PanCropKeyframe
+{
+    qint64 timeTicks = 0;
+    double w = 0.0;
+    double h = 0.0;
+    double cx = 0.0;
+    double cy = 0.0;
+    double rot = 0.0;
+};
+
+struct PanCropData
+{
+    quint32 sourceWidth = 0;
+    quint32 sourceHeight = 0;
+    QList<PanCropKeyframe> keyframes;
+};
+
+PanCropData parsePanCropChunk(const uint8_t *payload, qsizetype size)
+{
+    PanCropData result;
+    if (!payload || size < 32)
+        return result;
+
+    // 1. Locate EPCS chunk for source dimensions
+    static const uint8_t kFourCCEpcs[4] = {'E', 'P', 'C', 'S'};
+    for (qsizetype i = 0; i + 8 <= size; ++i) {
+        if (std::memcmp(payload + i, kFourCCEpcs, 4) == 0) {
+            const quint32 epcsLen = readU32LE(payload + i + 4);
+            const qsizetype dataStart = i + 8;
+            if (dataStart + 52 <= size && dataStart + static_cast<qsizetype>(epcsLen) <= size) {
+                result.sourceWidth = readU32LE(payload + dataStart + 44);
+                result.sourceHeight = readU32LE(payload + dataStart + 48);
+            }
+            break;
+        }
+    }
+
+    // 2. Locate POSK chunks for keyframes
+    static const uint8_t kFourCCPosk[4] = {'P', 'O', 'S', 'K'};
+    qsizetype pos = 0;
+    while (pos + 8 <= size) {
+        if (std::memcmp(payload + pos, kFourCCPosk, 4) == 0) {
+            const quint32 poskLen = readU32LE(payload + pos + 4);
+            const qsizetype dataStart = pos + 8;
+            if (poskLen >= 60 && dataStart + static_cast<qsizetype>(poskLen) <= size) {
+                PanCropKeyframe kf;
+                kf.timeTicks = static_cast<qint64>(readU64LE(payload + dataStart));
+                kf.w = readDoubleLE(payload + dataStart + 20);
+                kf.h = readDoubleLE(payload + dataStart + 28);
+                kf.cx = readDoubleLE(payload + dataStart + 36);
+                kf.cy = readDoubleLE(payload + dataStart + 44);
+                kf.rot = readDoubleLE(payload + dataStart + 52);
+                result.keyframes.append(kf);
+                pos = dataStart + poskLen;
+                continue;
+            }
+        }
+        ++pos;
+    }
+
+    return result;
+}
+
+void applyPanCropToClip(Clip &clip, const PanCropData &panCrop, int canvasWidth, int canvasHeight)
+{
+    if (panCrop.keyframes.isEmpty())
+        return;
+
+    quint32 sw = panCrop.sourceWidth;
+    quint32 sh = panCrop.sourceHeight;
+    if (sw == 0)
+        sw = (canvasWidth > 0) ? canvasWidth : 1920;
+    if (sh == 0)
+        sh = (canvasHeight > 0) ? canvasHeight : 1080;
+
+    // Check if keyframes are animated (differ in position/zoom/rotation over time)
+    bool isAnimated = false;
+    if (panCrop.keyframes.size() > 1) {
+        const auto &first = panCrop.keyframes.first();
+        for (int i = 1; i < panCrop.keyframes.size(); ++i) {
+            const auto &kf = panCrop.keyframes[i];
+            if (std::abs(kf.w - first.w) > 0.5 || std::abs(kf.h - first.h) > 0.5
+                || std::abs(kf.cx - first.cx) > 0.5 || std::abs(kf.cy - first.cy) > 0.5
+                || std::abs(kf.rot - first.rot) > 0.001) {
+                isAnimated = true;
+                break;
+            }
+        }
+    }
+
+    const auto &firstKf = panCrop.keyframes.first();
+    const bool isZoomedOut = (firstKf.w > sw + 1.0 || firstKf.h > sh + 1.0);
+
+    if (!isAnimated && !isZoomedOut) {
+        // P8-01: Static cropping & letterbox matching into Clip::sourceFrame and Clip::sourceFrameAngle
+        const bool isIdentity = std::abs(firstKf.w - sw) < 1.0 && std::abs(firstKf.h - sh) < 1.0
+                                && std::abs(firstKf.cx - sw / 2.0) < 1.0
+                                && std::abs(firstKf.cy - sh / 2.0) < 1.0
+                                && std::abs(firstKf.rot) < 1e-4;
+        if (!isIdentity && firstKf.w > 0.0 && firstKf.h > 0.0) {
+            const double cropLeft = firstKf.cx - firstKf.w / 2.0;
+            const double cropTop = firstKf.cy - firstKf.h / 2.0;
+            const double normX = cropLeft / static_cast<double>(sw);
+            const double normY = cropTop / static_cast<double>(sh);
+            const double normW = firstKf.w / static_cast<double>(sw);
+            const double normH = firstKf.h / static_cast<double>(sh);
+            clip.sourceFrame = drift::normalizedSourceFrame(normX, normY, normW, normH);
+            const double angleDeg = qRadiansToDegrees(firstKf.rot);
+            clip.sourceFrameAngle = drift::normalizedSourceAngle(angleDeg);
+        }
+    } else {
+        // P8-02: 2D pan and zoom motion keyframes into Clip::positionX/Y, Clip::scaleX/Y, and Clip::rotation
+        clip.sourceFrame = QRectF(0, 0, 1, 1);
+        clip.sourceFrameAngle = 0.0;
+
+        const double cWidth = (canvasWidth > 0) ? canvasWidth : sw;
+        const double cHeight = (canvasHeight > 0) ? canvasHeight : sh;
+
+        // If the first keyframe is placed after clip start, insert initial keyframe at t = 0
+        if (panCrop.keyframes.first().timeTicks > 0) {
+            const auto &kf = panCrop.keyframes.first();
+            const double sx = static_cast<double>(sw) / kf.w;
+            const double sy = static_cast<double>(sh) / kf.h;
+            const double px = (cWidth / 2.0) - (kf.cx - sw / 2.0) * sx;
+            const double py = (cHeight / 2.0) - (kf.cy - sh / 2.0) * sy;
+            const double rotDeg = -qRadiansToDegrees(kf.rot);
+
+            clip.scaleX.setKeyframe(0, sx);
+            clip.scaleY.setKeyframe(0, sy);
+            clip.positionX.setKeyframe(0, px);
+            clip.positionY.setKeyframe(0, py);
+            if (std::abs(rotDeg) > 0.001)
+                clip.rotation.setKeyframe(0, rotDeg);
+        }
+
+        for (const PanCropKeyframe &kf : panCrop.keyframes) {
+            if (kf.w <= 0.0 || kf.h <= 0.0)
+                continue;
+            const TimeUs keyTimeUs = static_cast<TimeUs>(kf.timeTicks / 10);
+            const double sx = static_cast<double>(sw) / kf.w;
+            const double sy = static_cast<double>(sh) / kf.h;
+            const double px = (cWidth / 2.0) - (kf.cx - sw / 2.0) * sx;
+            const double py = (cHeight / 2.0) - (kf.cy - sh / 2.0) * sy;
+            const double rotDeg = -qRadiansToDegrees(kf.rot);
+
+            clip.scaleX.setKeyframe(keyTimeUs, sx);
+            clip.scaleY.setKeyframe(keyTimeUs, sy);
+            clip.positionX.setKeyframe(keyTimeUs, px);
+            clip.positionY.setKeyframe(keyTimeUs, py);
+            if (std::abs(rotDeg) > 0.001 || !clip.rotation.isEmpty()) {
+                clip.rotation.setKeyframe(keyTimeUs, rotDeg);
+            }
+        }
+    }
+}
+
 } // namespace
 
 bool isVegasData(const QByteArray &data)
@@ -1588,6 +1748,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                     quint32 mid = 0;
                                     quint32 eventId = 0;
                                     QList<Effect> takeEffects;
+                                    PanCropData panCropData;
 
                                     while (cpos + 24 <= cend) {
                                         const uint8_t *cptr = bytes + cpos;
@@ -1633,6 +1794,8 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                                 }
                                                 fpos += (fsize + 7) & ~7;
                                             }
+                                        } else if (std::memcmp(cptr, kChunkEventPanCrop, 16) == 0) {
+                                            panCropData = parsePanCropChunk(cpayload, cpayloadSize);
                                         }
                                         cpos += (csize + 7) & ~7;
                                     }
@@ -1703,6 +1866,17 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                         clip.srcOut = static_cast<TimeUs>((srcInTicks + durTicks) / 10);
                                         clip.fadeInUs = static_cast<TimeUs>(fadeInTicks / 10);
                                         clip.fadeOutUs = static_cast<TimeUs>(fadeOutTicks / 10);
+
+                                        if (trackType == TrackType::Video) {
+                                            if ((panCropData.sourceWidth == 0 || panCropData.sourceHeight == 0)
+                                                && mediaPool.contains(mid)) {
+                                                if (const MediaAsset *a = project.asset(mediaPool[mid].assetId)) {
+                                                    panCropData.sourceWidth = a->width > 0 ? a->width : canvasWidth;
+                                                    panCropData.sourceHeight = a->height > 0 ? a->height : canvasHeight;
+                                                }
+                                            }
+                                            applyPanCropToClip(clip, panCropData, canvasWidth, canvasHeight);
+                                        }
 
                                         track.clips.append(clip);
                                         if (eventId > 0) {
