@@ -11,6 +11,7 @@
 #include <atomic>
 #include <cmath>
 #include <optional>
+#include <utility>
 
 namespace drift {
 
@@ -2360,8 +2361,11 @@ namespace {
 // Every clip-relative curve a clip can carry, in one place so the operations below cannot forget
 // one. TextAnimator curves are deliberately absent: their key "times" are animation progress, not
 // clip time, so moving them would distort the animation rather than move it.
-template<typename Fn>
-void forEachKeyframeTrack(Clip &clip, Fn &&fn)
+//
+// ClipT is Clip or const Clip, so a read-only pass (clipKeyTimes) and a rewriting one
+// (shiftClipKeyframes) walk the very same list.
+template<typename ClipT, typename Fn>
+void visitKeyframeTracks(ClipT &clip, Fn &&fn)
 {
     fn(clip.opacity);
     fn(clip.positionX);
@@ -2377,13 +2381,13 @@ void forEachKeyframeTrack(Clip &clip, Fn &&fn)
     fn(clip.anchorY);
     fn(clip.anchorZ);
     fn(clip.volume);
-    const auto visitMap = [&fn](QMap<QString, KeyframeTrack<double>> &tracks) {
+    const auto visitMap = [&fn](auto &tracks) {
         for (auto it = tracks.begin(); it != tracks.end(); ++it)
             fn(it.value());
     };
-    for (Effect &effect : clip.effects)
+    for (auto &effect : clip.effects)
         visitMap(effect.paramKeyframes);
-    for (Effect &effect : clip.audioEffects)
+    for (auto &effect : clip.audioEffects)
         visitMap(effect.paramKeyframes);
     visitMap(clip.mask.keyframes);
     visitMap(clip.shapeStyle.keyframes);
@@ -2394,6 +2398,12 @@ void forEachKeyframeTrack(Clip &clip, Fn &&fn)
     visitMap(clip.procedural.paramKeyframes);
 }
 
+template<typename Fn>
+void forEachKeyframeTrack(Clip &clip, Fn &&fn)
+{
+    visitKeyframeTracks(clip, std::forward<Fn>(fn));
+}
+
 } // namespace
 
 void shiftClipKeyframes(Clip &clip, TimeUs delta)
@@ -2401,6 +2411,28 @@ void shiftClipKeyframes(Clip &clip, TimeUs delta)
     if (delta == 0)
         return;
     forEachKeyframeTrack(clip, [delta](KeyframeTrack<double> &track) { track.shiftBy(delta); });
+}
+
+QList<TimeUs> clipKeyTimes(const Clip &clip)
+{
+    QSet<TimeUs> times;
+    visitKeyframeTracks(clip, [&times](const KeyframeTrack<double> &track) {
+        // A lone key at 0 is a property's resting value, not an animation — the inspector's
+        // diamond reads it that way too (clipAnimatedProperties), so it gets no marker.
+        if (track.keyframes().size() == 1 && track.keyframes().firstKey() == 0)
+            return;
+        for (auto it = track.keyframes().cbegin(); it != track.keyframes().cend(); ++it)
+            times.insert(it.key());
+    });
+    // An animated mask shape is one key per vertex list, keyed on the carrying adjustment's own
+    // start like the scalar tracks above.
+    for (auto it = clip.mask.pathKeys.cbegin(); it != clip.mask.pathKeys.cend(); ++it) {
+        if (clip.mask.pathKeys.size() > 1 || it.key() != 0)
+            times.insert(it.key());
+    }
+    QList<TimeUs> out(times.cbegin(), times.cend());
+    std::sort(out.begin(), out.end());
+    return out;
 }
 
 void rebaseKeyframesForSplitTail(Clip &tail, TimeUs offset)

@@ -466,6 +466,12 @@ void shiftClipKeyframes(Clip &clip, TimeUs delta);
 // the animation continues rather than restarting.
 void rebaseKeyframesForSplitTail(Clip &tail, TimeUs offset);
 
+// Every distinct time a clip carries a key at, on any of its own curves, sorted and clip-relative.
+// The union across properties, so one entry is "there is a keyframe here" — which is what the
+// timeline draws a marker for. Covers the same curves shiftClipKeyframes moves, so a key the
+// engine would carry with the clip is a key the timeline shows.
+QList<TimeUs> clipKeyTimes(const Clip &clip);
+
 bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out, double fps = 0);
 
 // A label's base and number: "intro" is ("intro", 1), "intro.3" is ("intro", 3).
