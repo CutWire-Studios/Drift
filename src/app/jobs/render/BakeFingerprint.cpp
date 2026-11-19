@@ -70,13 +70,12 @@ QByteArray sourceStamp(const QString &path, QHash<QString, QByteArray> &cache)
 Timeline prepare(const QJsonArray &tracks, QHash<QString, QByteArray> &stamps)
 {
     // Left out of a track's head: labels, view state, and what only the mix or the export reads.
-    // solo changes what is heard; excludeFromExport only what export renders, and export already
-    // skips bakes over such a track (BakeController::exportPool's skip spans). muted is NOT left
-    // out on Audio and Video tracks: the Timeline audio mix that audio-reactive procedural clips
-    // and effects read (AudioFrameAnalysis, forEachSourceClip) skips muted tracks, so it can change
-    // the picture. Dropping it only when no such consumer is in range would need package and effect
-    // lookups here, so it stays hashed there. If audio-reactive visuals ever follow solo, solo needs
-    // the same treatment.
+    // excludeFromExport only changes what export renders, and export already skips bakes over such
+    // a track (BakeController::exportPool's skip spans). muted and solo are NOT left out on Audio
+    // and Video tracks: the Timeline audio mix that audio-reactive procedural clips and effects read
+    // (AudioFrameAnalysis, forEachSourceClip) follows both, so they can change the picture.
+    // Dropping them only when no such consumer is in range would need package and effect lookups
+    // here, so they stay hashed there.
     static const QStringList trackUiKeys{
         QStringLiteral("name"),         QStringLiteral("number"),
         QStringLiteral("locked"),       QStringLiteral("volume"),
@@ -104,8 +103,10 @@ Timeline prepare(const QJsonArray &tracks, QHash<QString, QByteArray> &stamps)
         for (const QString &key : trackUiKeys)
             head.remove(key);
         const QString type = track.value(QStringLiteral("type")).toString();
-        if (type == QLatin1String("audio") || type == QLatin1String("video"))
+        if (type == QLatin1String("audio") || type == QLatin1String("video")) {
             head.insert(QStringLiteral("muted"), track.value(QStringLiteral("muted")));
+            head.insert(QStringLiteral("solo"), track.value(QStringLiteral("solo")));
+        }
         entry.head = compact(head);
         entry.id = track.value(QStringLiteral("id")).toString();
         entry.parentId = track.value(QStringLiteral("parentTrackId")).toString();
