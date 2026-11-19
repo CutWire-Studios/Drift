@@ -489,7 +489,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
                                 for (const QString &subSeqId : nestedProj.sequenceIds()) {
                                     if (!project.hasSequence(subSeqId)) {
-                                        project.addSequence(nestedProj.sequenceTracks(subSeqId));
+                                        project.addSequence(nestedProj.sequenceTracks(subSeqId), subSeqId);
                                     }
                                 }
 

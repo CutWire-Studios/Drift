@@ -182,7 +182,7 @@ public:
     // and muted, so they draw nothing, play nothing and don't stretch the export range.
     Project exportView(const QString &id) const;
     bool hasExportExcludedTracks() const;
-    QString addSequence(TrackList tracks);
+    QString addSequence(TrackList tracks, const QString &preferredId = QString());
     // Must not be the active sequence.
     void removeSequence(const QString &id);
 
