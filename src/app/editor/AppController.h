@@ -580,6 +580,9 @@ public:
     Q_INVOKABLE QVariantMap debugInfo() const;
     Q_INVOKABLE QString debugInfoText() const;
     Q_INVOKABLE void copyDebugInfo();
+    // Plain text to the system clipboard, for QML with no TextEdit to copy from (the toast's
+    // Copy button). An empty string leaves the clipboard alone.
+    Q_INVOKABLE void copyText(const QString &text) const;
 
     // Playback diagnostics. The environment and counter half is cheap enough to call whenever
     // the dialog opens; the benchmark decodes for a couple of seconds and so runs off the GUI

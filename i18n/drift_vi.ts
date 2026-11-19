@@ -27255,6 +27255,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         </translation>
     </message>
     <message>
+        <source>Copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy message</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Dismiss</source>
         <translation>Bỏ qua</translation>
     </message>

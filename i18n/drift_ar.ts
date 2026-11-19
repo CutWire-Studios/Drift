@@ -27754,6 +27754,14 @@ If playback stutters, try another.</source>
         </translation>
     </message>
     <message>
+        <source>Copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy message</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Dismiss</source>
         <translation>تجاهل</translation>
     </message>

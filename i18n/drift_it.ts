@@ -27354,6 +27354,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         </translation>
     </message>
     <message>
+        <source>Copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy message</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Dismiss</source>
         <translation>Ignora</translation>
     </message>

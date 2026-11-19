@@ -2652,6 +2652,7 @@ qt_add_qml_module(drift
         src/qml/components/NewTrackMenu.qml
         src/qml/components/shell/GlobalSearchPopup.qml
         src/qml/components/shell/ToastHost.qml
+        src/qml/components/shell/ToastInputShield.qml
         src/qml/components/shell/NotificationList.qml
         src/qml/components/shell/NotificationsPopup.qml
         src/qml/components/shell/EmptyState.qml

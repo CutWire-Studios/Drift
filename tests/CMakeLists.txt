@@ -35,6 +35,14 @@ target_compile_definitions(tst_timelinewheel PRIVATE
 target_link_libraries(tst_timelinewheel PRIVATE Qt6::Test Qt6::Qml)
 add_test(NAME TimelineWheel COMMAND tst_timelinewheel)
 
+# ToastInputShield.qml (#574) on its own: it imports only QtQuick, so it needs no Drift module.
+qt_add_executable(tst_toastinput tst_toastinput.cpp)
+target_compile_definitions(tst_toastinput PRIVATE
+    "DRIFT_TOAST_INPUT_SHIELD_QML=\"${CMAKE_SOURCE_DIR}/src/qml/components/shell/ToastInputShield.qml\"")
+target_link_libraries(tst_toastinput PRIVATE Qt6::Test Qt6::Gui Qt6::Qml Qt6::Quick)
+add_test(NAME ToastInput COMMAND tst_toastinput)
+set_tests_properties(ToastInput PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 qt_add_executable(tst_maskselect
     tst_maskselect.cpp
     ../src/app/editor/sessions/MaskSelection.cpp)

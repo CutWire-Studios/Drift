@@ -27355,6 +27355,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         </translation>
     </message>
     <message>
+        <source>Copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy message</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Dismiss</source>
         <translation>I-dismiss</translation>
     </message>
