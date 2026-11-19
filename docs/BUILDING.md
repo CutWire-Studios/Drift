@@ -270,7 +270,7 @@ This is local process control of the editor, not a sandbox. Any process on the m
 
 `drift --headless` instead runs the editor with no window and serves MCP itself — no editor, no token, no display needed for project edits. Rendering and export still want an OpenGL 3.3 context, so on a server run it as `QT_QPA_PLATFORM=xcb xvfb-run -a drift --headless`. See [MCP.md](MCP.md#headless) for the transports and flags.
 
-Agents should call `catalog`, then `toolbox`, then `apply` with a list of ops. `inspect({clips:true})` returns clip ids. `capture` returns a JPEG of the composition. See [AGENTS.md](../AGENTS.md) for the full agent guide. The `export` toolbox encodes the timeline (settings + `export({path})`).
+Agents should call `catalog`, then `toolbox`, then `apply` with a list of ops. `inspect({clips:true})` returns clip ids. `capture` returns a JPEG of the composition. See [MCP.md](MCP.md) for the full agent guide. The `project` toolbox encodes the timeline (`export_video({path})`).
 
 **Flatpak:** importing host files may fail unless you grant filesystem access:
 
