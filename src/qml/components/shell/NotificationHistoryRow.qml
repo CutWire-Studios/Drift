@@ -16,6 +16,17 @@ Item {
     width: ListView.view.width
     height: Math.max(host.rowHeight, body.implicitHeight + Theme.spacingLg * 2)
 
+    function copyMessage() {
+        const start = Math.max(0, messageEdit.text.indexOf(row.message))
+        messageEdit.select(start, start + row.message.length)
+        messageEdit.copy()
+        messageEdit.deselect()
+        copiedFeedback.restart()
+    }
+
+    HoverHandler { id: rowHover }
+    Timer { id: copiedFeedback; interval: 1500 }
+
     IconGlyph {
         id: rowIcon
         anchors.left: parent.left
@@ -38,21 +49,42 @@ Item {
         id: body
         anchors.left: rowIcon.right
         anchors.leftMargin: Theme.spacingMd
-        anchors.right: rowAction.visible ? rowAction.left : unreadDot.left
+        anchors.right: copyButton.left
         anchors.rightMargin: Theme.spacingMd
         anchors.verticalCenter: parent.verticalCenter
         spacing: 2
 
-        Text {
+        // Selectable so an error can be copied (#97), with a mouse only: with selectByMouse on,
+        // the first touch drag on a message doesn't scroll the list. Touch has the Copy button.
+        TextEdit {
+            id: messageEdit
             width: parent.width
+            readOnly: true
+            selectByMouse: !Theme.touchInput
+            textFormat: TextEdit.PlainText
+            wrapMode: TextEdit.Wrap
+            // replace, not chained arg(): a "%1" inside the message would take the count.
             text: row.repeats > 1
-                  ? qsTr("%1  (×%2)").arg(row.message).arg(row.repeats)
+                  ? qsTr("%1  (×%2)").replace("%2", () => String(row.repeats)).replace("%1", () => row.message)
                   : row.message
             color: Theme.c.notificationHistoryRow.foreground
+            selectionColor: Theme.c.notificationHistoryRow.selection
+            selectedTextColor: Theme.c.notificationHistoryRow.selectionForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSm
             font.weight: row.unread ? Font.Medium : Font.Normal
-            wrapMode: Text.WordWrap
+            // Ctrl+C is also the app-wide "copy clips" shortcut; with text selected here it
+            // copies the text.
+            Keys.onShortcutOverride: (event) => {
+                if (event.matches(StandardKey.Copy) && messageEdit.selectedText.length > 0)
+                    event.accepted = true
+            }
+            Keys.onPressed: (event) => {
+                if (event.matches(StandardKey.Copy) && messageEdit.selectedText.length > 0) {
+                    messageEdit.copy()
+                    event.accepted = true
+                }
+            }
         }
 
         Text {
@@ -62,6 +94,21 @@ Item {
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
         }
+    }
+
+    // Shown on hover or keyboard focus with a pointer; always on touch, where text isn't
+    // drag-selected.
+    IconButton {
+        id: copyButton
+        anchors.right: rowAction.visible ? rowAction.left : unreadDot.left
+        anchors.rightMargin: Theme.spacingSm
+        anchors.verticalCenter: parent.verticalCenter
+        opacity: Theme.touchInput || rowHover.hovered || visualFocus || copiedFeedback.running ? 1 : 0
+        glyph: copiedFeedback.running ? Theme.icons.check : Theme.icons.copy
+        iconSize: Theme.iconSizeSm
+        variant: "ghost"
+        tooltip: copiedFeedback.running ? qsTr("Copied") : qsTr("Copy message")
+        onClicked: row.copyMessage()
     }
 
     ThemedButton {

@@ -16494,6 +16494,14 @@
         <source>%1  (×%2)</source>
         <translation>%1  (×%2)</translation>
     </message>
+    <message>
+        <source>Copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy message</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NotificationList</name>

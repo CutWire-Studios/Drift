@@ -728,6 +728,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | notificationHistoryRow | accent | $semantic.primary | $semantic.primary |
 | notificationHistoryRow | indicator | $semantic.primary | $semantic.primary |
 | notificationHistoryRow | indicatorRadius | 4 | 4 |
+| notificationHistoryRow | selection | $semantic.primary | $semantic.primary |
+| notificationHistoryRow | selectionForeground | $semantic.primaryForeground | $semantic.primaryForeground |
 | notificationHistoryRow | divider | $semantic.panel.border | $semantic.panel.border |
 | notificationHistoryRow | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | globalSearchResultRow | radius | $metrics.radius.sm | $metrics.radius.sm |
