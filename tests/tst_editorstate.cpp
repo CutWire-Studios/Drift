@@ -135,6 +135,7 @@ class EditorStateTest : public QObject
     Q_OBJECT
 
 private slots:
+    void bakeFingerprintTracksTransitionPartner();
     void bakeFingerprintTracksRangeEdits();
     void snapTimeEnabled();
     void addingAPositionKeyframeKeepsTheClipWhereItIs();
@@ -17512,6 +17513,55 @@ void EditorStateTest::maskingCutoutPatchSurvivesInspectorEdits()
     QVERIFY(edited.invert);
     QCOMPARE(edited.mediaPatches.size(), 1);
     QCOMPARE(edited.mediaPatches.firstKey(), 5 * fx.frame);
+}
+
+// A transition draws both clips across a window centred on the cut, so a bake inside one half
+// depends on the clip on the other side, which does not overlap the bake's range.
+void EditorStateTest::bakeFingerprintTracksTransitionPartner()
+{
+    drift::Project project;
+    project.setResolution(1280, 720);
+    project.setFps(30);
+    project.tracks().clear();
+    drift::Track track{.type = drift::TrackType::Shape};
+    track.id = QStringLiteral("t1");
+    drift::Clip a = boxShape(QStringLiteral("a"), QRectF(0, 0, 100, 100)); // 0 s – 5 s
+    drift::Clip b = boxShape(QStringLiteral("b"), QRectF(0, 0, 100, 100));
+    b.timelineStart = drift::secondsToUs(5.0);                                // 5 s – 10 s
+    track.clips = {a, b};
+    drift::Transition crossfade;
+    crossfade.id = QStringLiteral("x");
+    crossfade.fromClipId = QStringLiteral("a");
+    crossfade.toClipId = QStringLiteral("b");
+    crossfade.durationUs = drift::secondsToUs(0.5); // window 4.75 s – 5.25 s
+    track.transitions = {crossfade};
+    project.tracks().append(track);
+
+    // Frames at 30 fps: the cut is frame 150.
+    const QByteArray incomingHalf = drift::bakeFingerprint(project, 150, 156); // 5.0 s – 5.2 s
+    const QByteArray outgoingHalf = drift::bakeFingerprint(project, 144, 150); // 4.8 s – 5.0 s
+    const QByteArray earlyA = drift::bakeFingerprint(project, 0, 60);          // outside the window
+    const QByteArray lateB = drift::bakeFingerprint(project, 240, 300);        // outside the window
+
+    // Editing the outgoing clip stales the bake inside the incoming half...
+    project.tracks()[0].clips[0].opacity.setKeyframe(0, 0.5);
+    QVERIFY(drift::bakeFingerprint(project, 150, 156) != incomingHalf);
+    // ...but not one of B outside the window.
+    QCOMPARE(drift::bakeFingerprint(project, 240, 300), lateB);
+    project.tracks()[0].clips[0].opacity = a.opacity;
+    QCOMPARE(drift::bakeFingerprint(project, 150, 156), incomingHalf);
+
+    // And the other way round.
+    project.tracks()[0].clips[1].opacity.setKeyframe(0, 0.5);
+    QVERIFY(drift::bakeFingerprint(project, 144, 150) != outgoingHalf);
+    QCOMPARE(drift::bakeFingerprint(project, 0, 60), earlyA);
+    project.tracks()[0].clips[1].opacity = b.opacity;
+
+    // Disabling the other side drops the transition there, so that stales it too.
+    project.tracks()[0].clips[0].enabled = false;
+    QVERIFY(drift::bakeFingerprint(project, 150, 156) != incomingHalf);
+    project.tracks()[0].clips[0].enabled = true;
+    QCOMPARE(drift::bakeFingerprint(project, 150, 156), incomingHalf);
 }
 
 void EditorStateTest::bakeFingerprintTracksRangeEdits()

@@ -66,6 +66,9 @@ bool clipsPhysicallyOverlap(const Clip &fromClip, const Clip &toClip);
 TimeUs physicalOverlapDurationUs(const Clip &fromClip, const Clip &toClip);
 TimeUs transitionCenterUs(const Track &track, const Transition &transition);
 bool transitionWindow(const Track &track, const Transition &transition, TimeUs &startUs, TimeUs &endUs);
+// transitionWindow from the two clips' spans alone, for callers that hold no Track.
+bool transitionWindowOf(TimeUs fromStartUs, TimeUs fromEndUs, TimeUs toStartUs, TimeUs toEndUs,
+                        TimeUs durationUs, TimeUs &startUs, TimeUs &endUs);
 double transitionProgress(TimeUs timelineUs, TimeUs windowStartUs, TimeUs windowEndUs);
 // Same, with the transition's easing curve applied. Both the picture and the audio ducking go
 // through this, so they cannot drift apart.

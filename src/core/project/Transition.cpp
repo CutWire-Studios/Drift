@@ -131,23 +131,29 @@ bool transitionWindow(const Track &track, const Transition &transition, TimeUs &
     const Clip *toClip = clipById(track, transition.toClipId);
     if (!fromClip || !toClip)
         return false;
+    return transitionWindowOf(fromClip->timelineStart, fromClip->timelineEnd(), toClip->timelineStart,
+                              toClip->timelineEnd(), transition.durationUs, startUs, endUs);
+}
 
+bool transitionWindowOf(TimeUs fromStartUs, TimeUs fromEndUs, TimeUs toStartUs, TimeUs toEndUs,
+                        TimeUs durationUs, TimeUs &startUs, TimeUs &endUs)
+{
     // Physical overlap on the timeline is the transition window.
-    if (clipsPhysicallyOverlap(*fromClip, *toClip)) {
-        startUs = toClip->timelineStart;
-        endUs = fromClip->timelineEnd();
+    if (toStartUs < fromEndUs && toStartUs >= fromStartUs) {
+        startUs = toStartUs;
+        endUs = fromEndUs;
         return endUs > startUs;
     }
 
-    if (transition.durationUs <= 0)
+    if (durationUs <= 0)
         return false;
 
     // Adjacent clips: virtual window centered on the cut, never outside the two clips
     // (a stale durationUs from a former overlap must not start before t=0 or outrun them).
-    const TimeUs center = fromClip->timelineEnd();
-    const TimeUs half = transition.durationUs / 2;
-    startUs = qMax(fromClip->timelineStart, center - half);
-    endUs = qMin(toClip->timelineEnd(), center + half);
+    const TimeUs center = fromEndUs;
+    const TimeUs half = durationUs / 2;
+    startUs = qMax(fromStartUs, center - half);
+    endUs = qMin(toEndUs, center + half);
     return endUs > startUs;
 }
 
