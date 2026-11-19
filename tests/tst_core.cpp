@@ -82,6 +82,7 @@ private slots:
     void audioHandlesForwardReverseSpeed();
     void audioTransitionEdgeOwnsButtCutOnly();
     void transcriptWordsFollowClipsOnTimeline();
+    void transcriptWordsFollowTrackAudibility();
     void keyframeHoldInterpolation();
     void keyframeLinearInterpolation();
     void keyframeEaseInterpolation();
@@ -8457,6 +8458,60 @@ void CoreTest::transcriptWordsFollowClipsOnTimeline()
     QCOMPARE(all[4].word.text, QStringLiteral("world."));
     QCOMPARE(all[4].word.startUs, drift::secondsToUs(20.0));
     QCOMPARE(drift::transcriptWordsOnTimeline(project, 0, drift::secondsToUs(100), QStringLiteral("rev")).size(), 3);
+}
+
+void CoreTest::transcriptWordsFollowTrackAudibility()
+{
+    drift::Project project;
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("a1");
+    asset.kind = drift::MediaKind::Audio;
+    project.addAsset(asset);
+    project.setTranscript(QStringLiteral("a1"), sampleTranscript());
+    project.tracks() = {drift::Track{.type = drift::TrackType::Audio}, drift::Track{.type = drift::TrackType::Audio}};
+    drift::Clip a;
+    a.id = QStringLiteral("a");
+    a.assetId = QStringLiteral("a1");
+    a.srcIn = 0;
+    a.srcOut = drift::secondsToUs(5.0);
+    a.timelineStart = 0;
+    a.timelineDuration = drift::secondsToUs(5.0);
+    drift::Clip b = a;
+    b.id = QStringLiteral("b");
+    b.timelineStart = drift::secondsToUs(10);
+    project.tracks()[0].clips = {a};
+    project.tracks()[1].clips = {b};
+
+    const auto count = [&](const QString &id) {
+        int n = 0;
+        for (const auto &w : drift::transcriptWordsOnTimeline(project, 0, drift::secondsToUs(100)))
+            n += w.clipId == id;
+        return n;
+    };
+    const int base = count(QStringLiteral("a"));
+    QVERIFY(base > 0);
+    QCOMPARE(count(QStringLiteral("b")), base);
+
+    project.tracks()[1].solo = true;
+    QCOMPARE(count(QStringLiteral("a")), 0);
+    QCOMPARE(count(QStringLiteral("b")), base);
+    project.tracks()[1].hidden = true;
+    QCOMPARE(drift::transcriptWordsOnTimeline(project, 0, drift::secondsToUs(100)).size(), 0);
+    project.tracks()[1].hidden = false;
+    project.tracks()[1].muted = true;
+    QCOMPARE(drift::transcriptWordsOnTimeline(project, 0, drift::secondsToUs(100)).size(), 0);
+    project.tracks()[1].solo = false;
+    QCOMPARE(count(QStringLiteral("a")), base);
+    QCOMPARE(count(QStringLiteral("b")), 0);
+
+    project.tracks()[1].muted = false;
+    project.tracks()[0].hidden = true;
+    QCOMPARE(count(QStringLiteral("a")), 0);
+    QCOMPARE(count(QStringLiteral("b")), base);
+
+    // A named clip is read whatever its track's state.
+    project.tracks()[1].solo = true;
+    QCOMPARE(drift::transcriptWordsOnTimeline(project, 0, drift::secondsToUs(100), QStringLiteral("a")).size(), base);
 }
 
 void CoreTest::imageSequencePathRoundTrip()

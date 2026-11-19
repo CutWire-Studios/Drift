@@ -59,7 +59,8 @@ struct TimelineWord
 };
 
 // Transcript words the timeline plays inside [viewStart, viewEnd), in time order: every audible
-// clip (unmuted track; a video's own sound only when it isn't separated), each linked pair once.
+// clip (on a track the mixer plays, see trackAudible; a video's own sound only when it isn't
+// separated), each linked pair once.
 // onlyClipId limits it to one clip, whatever track it is on.
 QList<TimelineWord> transcriptWordsOnTimeline(const Project &project, TimeUs viewStart, TimeUs viewEnd,
                                               const QString &onlyClipId = {});
