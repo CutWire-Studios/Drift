@@ -2265,6 +2265,10 @@
         <translation>معدل إطارات متغير. قد يفقد هذا المقطع تزامنه مع صوته. انقر عليه بزر الفأرة الأيمن واختر تحويل إلى تنسيق مناسب للتحرير.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>طبقة التحويل: تحرّك وتغيّر حجم وتدوّر كل مسار يغطيه قوسها</translation>
     </message>
@@ -27094,6 +27098,32 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">التخفيف الحركي…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">تعيين مؤشر التشغيل هنا</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">تعديل الإطارات المفتاحية…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -27166,6 +27196,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>طبقة التحويل: تحرك وتغير حجم وتدوّر كل مسار يغطيه قوسها</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

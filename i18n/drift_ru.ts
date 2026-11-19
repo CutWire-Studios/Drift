@@ -2262,6 +2262,10 @@
         <translation>Переменная частота кадров. Этот клип может рассинхронизироваться со звуком. Нажмите на него правой кнопкой мыши и выберите «Преобразовать в формат для монтажа».</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">Медиафайл не найден. Используйте «Заменить медиафайл…» для этого элемента, чтобы указать путь к файлу.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Слой трансформации: перемещает, масштабирует и поворачивает все дорожки в пределах своей скобки</translation>
     </message>
@@ -26803,6 +26807,29 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">Сглаживание…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">Установить курсор сюда</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">Редактировать ключевые кадры…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26875,6 +26902,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Слой трансформации: перемещает, масштабирует и поворачивает все дорожки в своём диапазоне</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

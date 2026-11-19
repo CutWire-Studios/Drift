@@ -2261,6 +2261,10 @@
         <translation>Velocidad de fotogramas variable. Este clip puede desincronizarse de su audio. Haz clic derecho en él y elige Convertir a formato apto para edición.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">Archivo de medios no encontrado. Usa Reemplazar medios… en este elemento para volver a vincular el archivo.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Capa de transformación: mueve, escala y gira cada pista que abarca su corchete</translation>
     </message>
@@ -26706,6 +26710,28 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">Suavizado…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">Colocar cabezal de reproducción aquí</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">Editar fotogramas clave…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26778,6 +26804,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Capa de transformación: mueve, escala y gira cada pista que abarca su corchete</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

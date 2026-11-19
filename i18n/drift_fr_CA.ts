@@ -2261,6 +2261,10 @@
         <translation>Fréquence d&apos;images variable. Ce clip peut se désynchroniser de son audio. Faites un clic droit dessus et choisissez « Convertir au format optimisé pour le montage ».</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">Fichier multimédia introuvable. Utilisez Remplacer le média… sur cet élément pour pointer à nouveau vers le fichier.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Calque de transformation : déplace, redimensionne et fait pivoter chaque piste couverte par son crochet</translation>
     </message>
@@ -26709,6 +26713,28 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">Amortissement…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">Placer la tête de lecture ici</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">Modifier les images clés…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26781,6 +26807,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Calque de transformation : déplace, met à l&apos;échelle et fait pivoter chaque piste couverte par son crochet</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

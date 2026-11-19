@@ -2260,6 +2260,10 @@
         <translation>可變格率。此片段可能會與其音頻失去同步。右鍵點擊它並選擇“轉換為易於剪輯的格式”。</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>變換圖層：移動、縮放並旋轉其括號範圍內的所有軌道</translation>
     </message>
@@ -26610,6 +26614,27 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">緩動…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">將播放頭移到此處</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">編輯關鍵格…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26682,6 +26707,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>變換圖層：移動、縮放並旋轉其括號取代的每個軌道</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

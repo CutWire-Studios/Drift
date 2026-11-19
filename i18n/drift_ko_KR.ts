@@ -2260,6 +2260,10 @@
         <translation>가변 프레임 속도입니다. 이 클립은 오디오와 동기화가 어긋날 수 있습니다. 마우스 오른쪽 버튼으로 클릭하고 편집하기 좋은 형식으로 변환을 선택하세요.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">미디어 파일을 찾을 수 없습니다. 이 항목에서 [미디어 교체…]를 사용하여 파일을 다시 지정하세요.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>변환 레이어: 범위 안의 모든 트랙을 이동, 크기 조정 및 회전</translation>
     </message>
@@ -26601,6 +26605,27 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">이징…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">여기에 재생 헤드 배치</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">키프레임 편집…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26673,6 +26698,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>변환 레이어: 범위 안의 모든 트랙을 이동, 크기 조정 및 회전</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

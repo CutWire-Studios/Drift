@@ -157,6 +157,7 @@ private slots:
     void removeEmptyTracksKeepsPopulatedAndUndoes();
     void compositeSeparateAudioAndRemoval();
     void newTimelineCreatesEmptyComposite();
+    void createTimelineKeepsActiveTimeline();
     void newTimelineKeepsPreviousTimeline();
     void dissolveCompositeRoundTrip();
     void dissolveCompositeKeepsTrackNumbers();
@@ -1677,6 +1678,19 @@ void EditorStateTest::newTimelineCreatesEmptyComposite()
 
     state.undo();
     QCOMPARE(state.project()->sequenceIds().size(), 1);
+}
+
+void EditorStateTest::createTimelineKeepsActiveTimeline()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    const QString assetId = state.createTimeline(QStringLiteral("Short"), QString());
+    QVERIFY(!assetId.isEmpty());
+    QVERIFY(state.activeSequenceId().isEmpty());
+    QVERIFY(state.sequenceTabs().isEmpty());
+    QCOMPARE(state.project()->asset(assetId)->name, QStringLiteral("Short"));
+    state.undo();
+    QVERIFY(!state.project()->asset(assetId));
 }
 
 void EditorStateTest::newTimelineKeepsPreviousTimeline()

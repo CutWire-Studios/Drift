@@ -2262,6 +2262,10 @@
         <translation>Zmienna liczba klatek. Ten klip może wyjść z synchronizacji z audio. Kliknij prawym przyciskiem i wybierz Konwertuj do formatu przyjaznego edycji.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">Nie znaleziono pliku multimedialnego. Użyj opcji Zastąp multimedia… dla tego elementu, aby wskazać go ponownie.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Warstwa transformacji: przesuwa, skaluje i obraca każdą ścieżkę, którą obejmuje jej nawias</translation>
     </message>
@@ -26804,6 +26808,29 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">Łagodzenie…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">Ustaw głowicę odtwarzania tutaj</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">Edytuj klatki kluczowe…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26876,6 +26903,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Warstwa transformacji: przesuwa, skaluje i obraca każdą ścieżkę, którą obejmuje jej nawias</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

@@ -2261,6 +2261,10 @@
         <translation>Frequenza dei fotogrammi variabile. Questa clip può perdere la sincronizzazione con l&apos;audio. Fai clic con il tasto destro su di essa e scegli Converti in un formato ottimizzato per la modifica.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">File multimediale non trovato. Usa Sostituisci file multimediale… su questo elemento per ricollegarlo al file.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Livello di trasformazione: sposta, ridimensiona e ruota ogni traccia coperta dalla sua parentesi</translation>
     </message>
@@ -26706,6 +26710,28 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">Attenuazione…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">Posiziona la testina di riproduzione qui</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">Modifica fotogrammi chiave…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26778,6 +26804,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Livello di trasformazione: sposta, ridimensiona e ruota ogni traccia coperta dalla sua parentesi</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

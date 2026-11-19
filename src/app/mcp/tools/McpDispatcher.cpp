@@ -1046,7 +1046,7 @@ QJsonObject McpDispatcher::checkOp(const QString &tool, QJsonObject *args, QStri
 }
 
 // dry_run: what checkOp checks, plus the clips, assets and tracks the args name, by key: clip /
-// clips / before / after (clip ids, or track+index), asset, track. Nothing runs. An id an earlier
+// clips / before / after (clip ids, or track+index), asset, track, sequence. Nothing runs. An id an earlier
 // op of the batch would create can't be known yet, so it reads as not_found.
 QJsonObject McpDispatcher::dryRunOp(const QString &tool, const QJsonObject &args) const
 {
@@ -1108,6 +1108,17 @@ QJsonObject McpDispatcher::dryRunOp(const QString &tool, const QJsonObject &args
         return err("not_found", QStringLiteral("No clip %1 on track %2").arg(index).arg(t));
     if (takes(QStringLiteral("asset")) && resolveAsset(checked.value(QStringLiteral("asset"))) < 0)
         return err("not_found", QStringLiteral("No asset %1").arg(checked.value(QStringLiteral("asset")).toVariant().toString()));
+    // A sequence id, trimmed as the ops read it. Empty is the main timeline, which exists, except
+    // that close_timeline refuses it and open_composite reads it as unknown; main:true names none.
+    if (takes(QStringLiteral("sequence")) && checked.value(QStringLiteral("sequence")).isString()
+        && !(tool == QLatin1String("open_composite") && jsonBool(checked.value(QStringLiteral("main")), false))) {
+        const QString sequenceId = checked.value(QStringLiteral("sequence")).toString().trimmed();
+        if (sequenceId.isEmpty() && tool == QLatin1String("close_timeline"))
+            return err("bad_args", QStringLiteral("sequence required; the main timeline has no tab to close"));
+        if ((sequenceId.isEmpty() && tool == QLatin1String("open_composite")) || (!sequenceId.isEmpty() && !project.hasSequence(sequenceId)))
+            return err("not_found", QStringLiteral("No sequence %1 (unless an earlier op in this batch creates it)")
+                                        .arg(sequenceId));
+    }
     QJsonObject result = ok({});
     if (!ignored.isEmpty())
         result.insert(QStringLiteral("ignored"), QJsonArray::fromStringList(ignored));

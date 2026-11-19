@@ -2261,6 +2261,10 @@
         <translation>Pabago-bagong frame rate. Maaaring mawala sa sync ang clip na ito sa audio nito. I-right-click ito at piliin ang I-convert sa format na madaling i-edit.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">Hindi nahanap ang media file. Gamitin ang Palitan ang media… sa item na ito upang ituro itong muli sa file.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Transform layer: nagpapagalaw, nag-i-scale at nagpapaikot sa bawat track na sakop ng bracket nito</translation>
     </message>
@@ -26707,6 +26711,28 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">Easing…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">Itakda ang playhead dito</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">I-edit ang mga keyframe…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26779,6 +26805,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Transform layer: nagpapagalaw, nag-i-scale at nagpapaikot sa bawat track na sakop ng bracket nito</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

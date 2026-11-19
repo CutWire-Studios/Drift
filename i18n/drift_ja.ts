@@ -2260,6 +2260,10 @@
         <translation>可変フレームレート。このクリップはオーディオとの同期がずれる可能性があります。右クリックして「編集に適した形式に変換」を選択してください。</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">メディアファイルが見つかりません。このアイテムの「メディアを置換…」を使用してファイルを再指定してください。</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>変形レイヤー : ブラケットがカバーするすべてのトラックを移動、拡大縮小、回転します</translation>
     </message>
@@ -26610,6 +26614,27 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">イージング…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">再生ヘッドをここに設定</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">キーフレームを編集…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26682,6 +26707,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>変形レイヤー : ブラケットがカバーするすべてのトラックを移動、拡大縮小、回転します</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

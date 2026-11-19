@@ -1371,6 +1371,8 @@ public:
     // Opens (or switches to) a composite's tab. "" switches to the main timeline.
     Q_INVOKABLE void openSequence(const QString &sequenceId);
     Q_INVOKABLE void newTimeline();
+    // Creates an empty timeline: a composite with one video track at the project's canvas size and fps, plus its bin item in folderId, as one undo step. An empty name takes the first free "Timeline N". Doesn't open it. Returns the composite asset's id ("" when the edit was refused).
+    QString createTimeline(const QString &name, const QString &folderId);
     Q_INVOKABLE void openCompositeClip(int trackIndex, int clipIndex);
     Q_INVOKABLE void openCompositeAsset(const QString &assetId);
     Q_INVOKABLE void closeSequenceTab(const QString &sequenceId);

@@ -1421,37 +1421,48 @@ QVariantList AppController::compositeSequences() const
     return sequences;
 }
 
-void AppController::newTimeline()
+QString AppController::createTimeline(const QString &name, const QString &folderId)
 {
     setPlaying(false);
     const drift::Project before = m_project.detachedCopy();
 
-    QSet<QString> names;
-    for (const drift::MediaAsset &existing : m_project.assets())
-        names.insert(existing.name);
-    int number = 1;
-    while (names.contains(tr("Timeline %1").arg(number)))
-        ++number;
+    QString timelineName = name.trimmed();
+    if (timelineName.isEmpty()) {
+        QSet<QString> names;
+        for (const drift::MediaAsset &existing : m_project.assets())
+            names.insert(existing.name);
+        int number = 1;
+        while (names.contains(tr("Timeline %1").arg(number)))
+            ++number;
+        timelineName = tr("Timeline %1").arg(number);
+    }
 
     drift::TrackList tracks;
     tracks.append(drift::Track{.type = drift::TrackType::Video});
     drift::MediaAsset asset;
     asset.kind = drift::MediaKind::Composite;
-    asset.name = tr("Timeline %1").arg(number);
+    asset.name = timelineName;
     asset.sequenceId = m_project.addSequence(tracks);
     asset.durationUs = 0;
     asset.width = m_project.width();
     asset.height = m_project.height();
     asset.fps = m_project.fps();
-    asset.folderId = m_bin->currentFolderId();
-    const QString sequenceId = asset.sequenceId;
-    m_project.addAsset(asset);
+    asset.folderId = folderId;
+    const QString assetId = m_project.addAsset(asset);
 
     if (m_assetLibrary)
         m_assetLibrary->syncToProject();
     pushProjectEdit(before, tr("Timeline created"));
     finishEdit(tr("Timeline created"));
-    openSequence(sequenceId);
+    // A lock refusal resets m_project, so the asset is the proof the edit landed.
+    return m_project.asset(assetId) ? assetId : QString();
+}
+
+void AppController::newTimeline()
+{
+    const QString assetId = createTimeline(QString(), m_bin->currentFolderId());
+    if (const drift::MediaAsset *asset = m_project.asset(assetId))
+        openSequence(asset->sequenceId);
 }
 
 void AppController::openSequence(const QString &sequenceId)

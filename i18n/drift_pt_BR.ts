@@ -2261,6 +2261,10 @@
         <translation>Taxa de quadros variável. Este clipe pode ficar fora de sincronia com o áudio. Clique com o botão direito nele e escolha Converter para formato otimizado para edição.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">Arquivo de mídia não encontrado. Use Substituir mídia… neste item para apontá-lo novamente ao arquivo.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Camada de transformação: move, dimensiona e gira todas as faixas que seu colchete cobre</translation>
     </message>
@@ -26706,6 +26710,28 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">Atenuação…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">Posicionar cursor de reprodução aqui</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">Editar quadros-chave…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26778,6 +26804,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Camada de transformação: move, dimensiona e gira todas as faixas que seu colchete abrange</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

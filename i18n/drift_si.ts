@@ -2261,6 +2261,10 @@
         <translation>විචල්‍ය රාමු අනුපාතය. මෙම ක්ලිපය එහි ශ්‍රව්‍ය සමඟ අසමමුහුර්ත විය හැක. එය මත දකුණු ක්ලික් කර &apos;සංස්කරණයට පහසු ආකෘතියකට පරිවර්තනය කරන්න&apos; තෝරන්න.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">මාධ්‍ය ගොනුව හමු නොවීය. නැවත එම ගොනුව වෙත යොමු කිරීමට මෙම අයිතමය මත &apos;මාධ්‍ය ප්‍රතිස්ථාපනය කරන්න…&apos; භාවිතා කරන්න.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>පරිවර්තන ස්තරය: එහි වරහන මඟින් ආවරණය වන සෑම ට්‍රැකයක්ම ගෙනයයි, පරිමාණය කරයි සහ කරකවයි</translation>
     </message>
@@ -26706,6 +26710,28 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">Easing…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">ප්ලේහෙඩ් එක මෙහි සකසන්න</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">කීෆ්‍රේම සංස්කරණය කරන්න…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26778,6 +26804,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>පරිවර්තන ස්තරය: එහි වරහන මඟින් ආවරණය වන සෑම ට්‍රැකයක්ම ගෙනයයි, ප්‍රමාණය වෙනස් කරයි සහ කරකවයි</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

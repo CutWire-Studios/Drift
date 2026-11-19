@@ -2261,6 +2261,10 @@
         <translation>Taxa de fotogramas variável. Este clipe pode perder a sincronização com o áudio. Clique nele com o botão direito e escolha Converter para formato otimizado para edição.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">Ficheiro de multimédia não encontrado. Use Substituir multimédia… neste item para voltar a apontá-lo para o ficheiro.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Camada de transformação: move, redimensiona e roda todas as faixas abrangidas pelo seu colchete</translation>
     </message>
@@ -26707,6 +26711,28 @@ Se a reprodução engasgar, experimente outro.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">Atenuação…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">Definir cursor de reprodução aqui</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">Editar fotogramas-chave…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26779,6 +26805,10 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Camada de transformação: move, redimensiona e roda todas as faixas abrangidas pelo seu colchete</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

@@ -2260,6 +2260,10 @@
         <translation>Tốc độ khung hình thay đổi. Clip này có thể không đồng bộ với âm thanh của nó. Nhấp chuột phải vào nó và chọn Chuyển sang định dạng dễ chỉnh sửa.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">Không tìm thấy tệp phương tiện. Dùng Thay thế phương tiện… trên mục này để trỏ lại vào tệp.</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Lớp chuyển đổi: di chuyển, chia tỷ lệ và xoay mọi rãnh bao phủ khung của nó</translation>
     </message>
@@ -26610,6 +26614,27 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">Gia tốc…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">Đặt đầu phát tại đây</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">Chỉnh sửa keyframe…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26682,6 +26707,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>Lớp chuyển đổi: di chuyển, chia tỷ lệ và xoay mọi rãnh bao phủ khung của nó</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

@@ -2261,6 +2261,10 @@
         <translation>পরিবর্তনশীল ফ্রেম রেট। এই ক্লিপের অডিওর সঙ্গে সিঙ্ক নষ্ট হতে পারে। ক্লিপে রাইট-ক্লিক করে সম্পাদনার উপযোগী ফরম্যাটে রূপান্তরের বিকল্পটি বেছে নিন.</translation>
     </message>
     <message>
+        <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
+        <translation type="unfinished">মিডিয়া ফাইল পাওয়া যায়নি। ফাইলে পুনরায় নির্দেশ করতে এই আইটেমে “মিডিয়া প্রতিস্থাপন করুন…” ব্যবহার করুন।</translation>
+    </message>
+    <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>ট্রান্সফর্ম লেয়ার: প্রতিটি ট্র্যাক এর ব্র্যাকেট কভার করে চলে, স্কেল করে এবং ঘুরিয়ে দেয়</translation>
     </message>
@@ -26706,6 +26710,28 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineKeyframeMenu</name>
+    <message>
+        <source>Easing…</source>
+        <translation type="unfinished">ইজিং…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n keyframe(s) here</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set playhead here</source>
+        <translation type="unfinished">প্লেহেড এখানে সেট করুন</translation>
+    </message>
+    <message>
+        <source>Edit keyframes…</source>
+        <translation type="unfinished">কীফ্রেম সম্পাদনা করুন…</translation>
+    </message>
+</context>
+<context>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
@@ -26778,6 +26804,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
         <translation>ট্রান্সফর্ম লেয়ার: প্রতিটি ট্র্যাক এর ব্র্যাকেট কভার করে চলে, স্কেল করে এবং ঘুরিয়ে দেয়</translation>
+    </message>
+    <message>
+        <source>Keyframe. Right-click for easing presets, or to open the Keyframes tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save effect preset</source>

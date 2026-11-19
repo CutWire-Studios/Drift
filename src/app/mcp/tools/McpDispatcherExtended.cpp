@@ -1543,6 +1543,44 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok({{QStringLiteral("activeSequence"), m_controller->activeSequenceId()}});
     }
 
+    if (tool == QLatin1String("new_timeline")) {
+        QString name;
+        if (args.contains(QStringLiteral("name"))) {
+            name = argString(args, QStringLiteral("name")).trimmed();
+            if (name.isEmpty())
+                return err("bad_args", QStringLiteral("name must be non-empty"));
+        }
+        QString folder = m_controller->bin()->currentFolderId();
+        if (args.contains(QStringLiteral("folder")) && !resolveFolder(args.value(QStringLiteral("folder")), &folder))
+            return err("not_found", QStringLiteral("Unknown or ambiguous folder"));
+        const QString assetId = m_controller->createTimeline(name, folder);
+        const drift::MediaAsset *asset = assetId.isEmpty() ? nullptr : m_controller->project()->asset(assetId);
+        if (!asset)
+            return err("apply_failed", QStringLiteral("No timeline was made"));
+        const QString sequenceId = asset->sequenceId;
+        const QString assetName = asset->name;
+        if (jsonBool(args.value(QStringLiteral("open")), true))
+            m_controller->openSequence(sequenceId);
+        return ok({{QStringLiteral("sequence"), sequenceId},
+                   {QStringLiteral("asset"), assetId},
+                   {QStringLiteral("name"), assetName},
+                   {QStringLiteral("activeSequence"), m_controller->activeSequenceId()}});
+    }
+
+    if (tool == QLatin1String("close_timeline")) {
+        const QString sequenceId = argString(args, QStringLiteral("sequence")).trimmed();
+        // Checked first: hasSequence("") is true for the main timeline.
+        if (sequenceId.isEmpty())
+            return err("bad_args", QStringLiteral("sequence required; the main timeline has no tab to close"));
+        if (!m_controller->project()->hasSequence(sequenceId))
+            return err("not_found", QStringLiteral("Unknown sequence"));
+        const bool wasOpen = m_controller->project()->openSequenceTabs().contains(sequenceId)
+                             || m_controller->activeSequenceId() == sequenceId;
+        m_controller->closeSequenceTab(sequenceId);
+        return ok({{QStringLiteral("closed"), wasOpen},
+                   {QStringLiteral("activeSequence"), m_controller->activeSequenceId()}});
+    }
+
     if (tool == QLatin1String("list_composites")) {
         const drift::Project *project = m_controller->project();
         QJsonArray rows;
