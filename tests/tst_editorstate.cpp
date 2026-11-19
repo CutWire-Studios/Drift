@@ -484,6 +484,7 @@ private slots:
     void trackingFrameKeepsAGhostMarkerOffTheTrackedSpan();
     void maskStackModelListsRolesAndShapeKeys();
     void trackerShortcutsAreRegistered();
+    void everyListedActionCanBeBound();
     void trackingClipIdOverloadsMatchTheIndexCalls();
     void maskStackModelCarriesTrackerRoles();
     void maskingBlurAreaMovesMaskToEffectLayerInOneUndoStep();
@@ -16955,6 +16956,41 @@ void EditorStateTest::trackerShortcutsAreRegistered()
     QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier | Qt::ShiftModifier),
              QStringLiteral("trackFrameBackward"));
     QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier), QStringLiteral("jumpBackFar"));
+}
+
+// Every action the keymap page lists has to be bindable. setShortcut() refuses an id that
+// defaultShortcuts() has no key for, and it reports that refusal the same way it reports success
+// (an empty string), so the row captures a chord, says nothing, and stores nothing. An action that
+// is unbound by default therefore still needs an entry here, with an empty chord.
+void EditorStateTest::everyListedActionCanBeBound()
+{
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestBindableActions"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("shortcuts"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+    QSettings().remove(QStringLiteral("shortcuts"));
+
+    AssetLibrary library;
+    AppController state(&library);
+
+    // No default uses a function key, so this can never be refused for clashing with one.
+    const QString probe = QStringLiteral("Ctrl+Alt+Shift+F12");
+    const QVariantList actions = state.actions();
+    QVERIFY(!actions.isEmpty());
+    for (const QVariant &action : actions) {
+        const QString id = action.toMap().value(QStringLiteral("id")).toString();
+        QVERIFY(!id.isEmpty());
+        const QString was = state.shortcutFor(id);
+        QCOMPARE(state.setShortcut(id, probe), QString());
+        QVERIFY2(state.shortcutFor(id) == probe, qPrintable(id));
+        state.setShortcut(id, was);
+        QCOMPARE(state.shortcutFor(id), was);
+    }
 }
 
 void EditorStateTest::trackingClipIdOverloadsMatchTheIndexCalls()

@@ -158,6 +158,9 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("trackBackward"), QStringLiteral("Ctrl+Shift+T")},
         {QStringLiteral("trackFrameForward"), QStringLiteral("Ctrl+Shift+Right")},
         {QStringLiteral("trackFrameBackward"), QStringLiteral("Ctrl+Shift+Left")},
+        // Unbound by default, but it has to be a key here or setShortcut refuses it and the
+        // keymap row for it silently does nothing.
+        {QStringLiteral("trackBoth"), QString()},
         // Timeline zoom is QML state too, so these take the same route as the tool modes.
         {QStringLiteral("zoomIn"), QStringLiteral("Ctrl+=")},
         {QStringLiteral("zoomOut"), QStringLiteral("Ctrl+-")},
@@ -168,6 +171,7 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("multicam"), QStringLiteral("Ctrl+Shift+C")},
         {QStringLiteral("transformTogether"), QStringLiteral("Ctrl+G")},
         {QStringLiteral("selectTransformLayer"), QStringLiteral("Shift+G")},
+        {QStringLiteral("workspace.restoreWindows"), QString()},
         {QStringLiteral("workspace.next"), QStringLiteral("Ctrl+Alt+Right")},
         {QStringLiteral("workspace.prev"), QStringLiteral("Ctrl+Alt+Left")},
         {QStringLiteral("workspace.1"), QStringLiteral("Alt+1")},
