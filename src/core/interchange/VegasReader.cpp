@@ -48,6 +48,12 @@ static const uint8_t kChunkEventTime[16] = {
 static const uint8_t kChunkEventTake[16] = {
     0x6d, 0x20, 0x8d, 0x16, 0x21, 0x23, 0xd2, 0x11, 0x86, 0xb0, 0x00, 0xc0, 0x4f, 0x8e, 0xdb, 0x8a
 };
+static const uint8_t kTypeEventGroupList[16] = {
+    0x18, 0x3e, 0xe7, 0xb8, 0x4c, 0x7f, 0x6b, 0x45, 0x93, 0xcd, 0x68, 0x66, 0xb9, 0x5e, 0x5f, 0x2b
+};
+static const uint8_t kChunkEventGroup[16] = {
+    0x32, 0xe1, 0x01, 0xe9, 0x77, 0xc6, 0x04, 0x46, 0xac, 0x9d, 0xdb, 0x0b, 0x87, 0xb4, 0xee, 0xbd
+};
 
 inline quint32 readU32LE(const uint8_t *p)
 {
@@ -593,8 +599,51 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         pos += (chunkSize + 7) & ~7;
     }
 
-    // 2. Parse Timeline Tracks & Events
+    // 2. Parse Event Group List (kTypeEventGroupList)
+    QList<QList<quint32>> eventGroups;
+    pos = 40;
+    while (pos + 24 <= totalSize) {
+        const uint8_t *ptr = bytes + pos;
+        const quint64 chunkSize = readU64LE(ptr + 16);
+        if (chunkSize < 24 || pos + static_cast<qsizetype>(chunkSize) > totalSize)
+            break;
+
+        if (std::memcmp(ptr, kGuidW64List, 16) == 0 && pos + 40 <= totalSize
+            && std::memcmp(ptr + 24, kTypeEventGroupList, 16) == 0) {
+            qsizetype gpos = pos + 40;
+            const qsizetype gend = pos + static_cast<qsizetype>(chunkSize);
+            while (gpos + 24 <= gend) {
+                const uint8_t *gptr = bytes + gpos;
+                const quint64 gsize = readU64LE(gptr + 16);
+                if (gsize < 24 || gpos + static_cast<qsizetype>(gsize) > gend)
+                    break;
+
+                if (std::memcmp(gptr, kChunkEventGroup, 16) == 0) {
+                    const uint8_t *gpayload = gptr + 24;
+                    const qsizetype gpayloadSize = static_cast<qsizetype>(gsize - 24);
+                    if (gpayloadSize >= 16) {
+                        const quint32 eventCount = readU32LE(gpayload + 8);
+                        if (eventCount > 0 && gpayloadSize >= static_cast<qsizetype>(16 + eventCount * 8)) {
+                            QList<quint32> groupEvents;
+                            groupEvents.reserve(eventCount);
+                            for (quint32 i = 0; i < eventCount; ++i) {
+                                const quint32 evId = readU32LE(gpayload + 16 + i * 8);
+                                groupEvents.append(evId);
+                            }
+                            eventGroups.append(groupEvents);
+                        }
+                    }
+                }
+                gpos += (gsize + 7) & ~7;
+            }
+            break;
+        }
+        pos += (chunkSize + 7) & ~7;
+    }
+
+    // 3. Parse Timeline Tracks & Events
     project.tracks().clear();
+    QHash<quint32, QPair<int, int>> eventIdToClipLoc;
     pos = 40;
     int trackNumber = 1;
     while (pos + 24 <= totalSize) {
@@ -659,6 +708,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                     quint64 fadeOutTicks = 0;
                                     quint64 srcInTicks = 0;
                                     quint32 mid = 0;
+                                    quint32 eventId = 0;
 
                                     while (cpos + 24 <= cend) {
                                         const uint8_t *cptr = bytes + cpos;
@@ -673,6 +723,9 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                             if (cpayloadSize >= 32) {
                                                 startTicks = readU64LE(cpayload + 16);
                                                 durTicks = readU64LE(cpayload + 24);
+                                            }
+                                            if (cpayloadSize >= 68) {
+                                                eventId = readU32LE(cpayload + 64);
                                             }
                                             if (cpayloadSize >= 152) {
                                                 fadeInTicks = readU64LE(cpayload + 136);
@@ -729,6 +782,9 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                         clip.fadeOutUs = static_cast<TimeUs>(fadeOutTicks / 10);
 
                                         track.clips.append(clip);
+                                        if (eventId > 0) {
+                                            eventIdToClipLoc.insert(eventId, qMakePair(project.tracks().size(), track.clips.size() - 1));
+                                        }
                                     }
                                 }
                                 epos += (esize + 7) & ~7;
@@ -752,7 +808,69 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         return std::nullopt;
     }
 
-    // Symmetrically link companion video and audio clips sharing the same asset and timeline span
+    // Link clips via native VEGAS event groups (kTypeEventGroupList)
+    for (const QList<quint32> &group : eventGroups) {
+        if (group.size() < 2)
+            continue;
+
+        int matchedCount = 0;
+        for (quint32 evId : group) {
+            if (eventIdToClipLoc.contains(evId))
+                ++matchedCount;
+        }
+        if (matchedCount < 2)
+            continue;
+
+        QString commonLinkId;
+        bool hasVideo = false;
+        bool hasAudio = false;
+
+        for (quint32 evId : group) {
+            if (!eventIdToClipLoc.contains(evId))
+                continue;
+            const auto loc = eventIdToClipLoc.value(evId);
+            if (loc.first < project.tracks().size() && loc.second < project.tracks()[loc.first].clips.size()) {
+                const Clip &c = project.tracks()[loc.first].clips[loc.second];
+                if (!c.linkId.isEmpty()) {
+                    commonLinkId = c.linkId;
+                    break;
+                }
+            }
+        }
+
+        if (commonLinkId.isEmpty()) {
+            commonLinkId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        }
+
+        for (quint32 evId : group) {
+            if (!eventIdToClipLoc.contains(evId))
+                continue;
+            const auto loc = eventIdToClipLoc.value(evId);
+            if (loc.first < project.tracks().size() && loc.second < project.tracks()[loc.first].clips.size()) {
+                Clip &c = project.tracks()[loc.first].clips[loc.second];
+                c.linkId = commonLinkId;
+                if (project.tracks()[loc.first].type == TrackType::Video)
+                    hasVideo = true;
+                else if (project.tracks()[loc.first].type == TrackType::Audio)
+                    hasAudio = true;
+            }
+        }
+
+        if (hasVideo && hasAudio) {
+            for (quint32 evId : group) {
+                if (!eventIdToClipLoc.contains(evId))
+                    continue;
+                const auto loc = eventIdToClipLoc.value(evId);
+                if (loc.first < project.tracks().size() && loc.second < project.tracks()[loc.first].clips.size()) {
+                    if (project.tracks()[loc.first].type == TrackType::Video) {
+                        project.tracks()[loc.first].clips[loc.second].suppressEmbeddedAudio = true;
+                    }
+                }
+            }
+        }
+    }
+
+    // Fallback: Symmetrically link companion video and audio clips sharing the same asset and timeline span
     for (Track &vTrack : project.tracks()) {
         if (vTrack.type != TrackType::Video)
             continue;

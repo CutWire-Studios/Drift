@@ -184,6 +184,25 @@ void TestInterchangeVegas::readsScene2VegasProjectWithMts()
                  << "kind:" << (asset.kind == drift::MediaKind::Video ? "video" : "audio")
                  << "editFriendly:" << asset.editFriendly;
     }
+
+    // Verify native VEGAS event grouping (P6-04)
+    int linkedCount = 0;
+    QHash<QString, int> linkIdCounts;
+    for (const drift::Track &track : proj.tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (!clip.linkId.isEmpty()) {
+                ++linkedCount;
+                ++linkIdCounts[clip.linkId];
+            }
+        }
+    }
+    qDebug() << "E3S2 linked clips:" << linkedCount << "unique link groups:" << linkIdCounts.size();
+    QVERIFY(linkedCount >= 80);
+    QVERIFY(linkIdCounts.size() >= 35);
+    for (auto it = linkIdCounts.constBegin(); it != linkIdCounts.constEnd(); ++it) {
+        QVERIFY2(it.value() >= 2, qPrintable(QStringLiteral("Link group %1 has fewer than 2 clips: %2")
+                                                .arg(it.key()).arg(it.value())));
+    }
 }
 
 void TestInterchangeVegas::readsEpisode4VegasProjectWithOffset96AndSubdirectories()
@@ -278,6 +297,24 @@ void TestInterchangeVegas::readsEpisode4WorkprintWithNestedTimelines()
                      << "assetId:" << clip.assetId << "sequenceId:" << clip.sequenceId
                      << "timelineStart:" << clip.timelineStart << "dur:" << clip.timelineDuration;
         }
+    }
+
+    // Verify native event grouping on master assembly
+    int wpLinkedCount = 0;
+    QHash<QString, int> wpLinkCounts;
+    for (const drift::Track &track : proj.tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (!clip.linkId.isEmpty()) {
+                ++wpLinkedCount;
+                ++wpLinkCounts[clip.linkId];
+            }
+        }
+    }
+    qDebug() << "Workprint linked clips:" << wpLinkedCount << "link groups:" << wpLinkCounts.size();
+    QVERIFY(wpLinkedCount >= 20);
+    QVERIFY(wpLinkCounts.size() >= 10);
+    for (auto it = wpLinkCounts.constBegin(); it != wpLinkCounts.constEnd(); ++it) {
+        QVERIFY(it.value() >= 2);
     }
 }
 
