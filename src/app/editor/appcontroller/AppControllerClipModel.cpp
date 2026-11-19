@@ -1146,6 +1146,10 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
         }
     }
     row.effectsLabel = effectNames.join(QStringLiteral(" · "));
+    const QList<drift::TimeUs> keyTimes = drift::clipKeyTimes(clip);
+    row.keyTimes.reserve(keyTimes.size());
+    for (const drift::TimeUs at : keyTimes)
+        row.keyTimes.append(drift::usToSeconds(at));
     for (const auto &kv : clip.volume.keyframes().asKeyValueRange())
         row.volumeKeys.append(QVariantMap{
             {QStringLiteral("t"), drift::usToSeconds(kv.first)},
