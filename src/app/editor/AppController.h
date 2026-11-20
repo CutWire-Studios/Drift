@@ -940,6 +940,10 @@ public:
     // P9-03: Ctrl + Drag elastic time-stretching and compression for video, audio, and composite clips.
     Q_INVOKABLE QVariantMap previewStretchClip(int trackIndex, int clipIndex, int side, double targetSeconds) const;
     Q_INVOKABLE bool commitStretchClip(int trackIndex, int clipIndex, int side, double targetSeconds);
+    // P9-04: Alt + Drag slip editing tool within clip boundaries.
+    Q_INVOKABLE QVariantMap previewSlipClip(int trackIndex, int clipIndex, double deltaSeconds) const;
+    Q_INVOKABLE bool commitSlipClip(int trackIndex, int clipIndex, double deltaSeconds);
+    Q_INVOKABLE bool nudgeSlipClip(int trackIndex, int clipIndex, int frames);
 
     // Opens and closes a trim drag. Scoping the gesture lets a repeated pointer position be
     // rejected before any work is done, and lets the caller find out whether the edge ever
@@ -2044,6 +2048,16 @@ protected:
     };
     StretchComputation computeStretchClip(int trackIndex, int clipIndex, int side,
                                           double targetSeconds, bool snap = true) const;
+
+    struct SlipComputation {
+        bool ok = false;
+        bool changed = false;
+        drift::TimeUs newSrcIn = 0;
+        drift::TimeUs newSrcOut = 0;
+        drift::TimeUs newLoopOffsetUs = 0;
+        drift::TimeUs sourceDeltaUs = 0;
+    };
+    SlipComputation computeSlipClip(int trackIndex, int clipIndex, double deltaSeconds) const;
 
     void notifyTracksChanged();
 

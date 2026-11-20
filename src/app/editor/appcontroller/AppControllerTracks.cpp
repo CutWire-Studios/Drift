@@ -139,6 +139,7 @@ QHash<QString, QString> defaultShortcuts()
         // TimelinePanel they were neither.
         {QStringLiteral("selectTool"), QStringLiteral("V")},
         {QStringLiteral("bladeTool"), QStringLiteral("B")},
+        {QStringLiteral("slipTool"), QStringLiteral("Y")},
         // Masking workspace tools. The masking panel claims these only while the pointer is over the
         // preview or it has focus or hover (never in 3D mode), so they stay free on the timeline.
         {QStringLiteral("maskingPolygonTool"), QStringLiteral("P")},

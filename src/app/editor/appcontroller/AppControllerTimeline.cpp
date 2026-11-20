@@ -2096,6 +2096,22 @@ void AppController::closeGap(int trackIndex, double gapStartSeconds)
 
 void AppController::splitAtPlayhead()
 {
+    // Sony VEGAS Pro behavior: if clips are selected, split only the selected clips at the playhead;
+    // if nothing is selected, split all clips across unlocked tracks under the playhead.
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && isValidClipIndex(m_selectedTrack, m_selectedClip))
+        pairs = {qMakePair(m_selectedTrack, m_selectedClip)};
+    if (!pairs.isEmpty()) {
+        QSet<QString> ids;
+        for (const QPair<int, int> &pair : std::as_const(pairs)) {
+            if (isValidClipIndex(pair.first, pair.second))
+                ids.insert(m_project.tracks().at(pair.first).clips.at(pair.second).id);
+        }
+        if (!ids.isEmpty()) {
+            splitClipsAtPlayhead(&ids);
+            return;
+        }
+    }
     splitClipsAtPlayhead(nullptr);
 }
 
@@ -3029,6 +3045,141 @@ bool AppController::commitStretchClip(int trackIndex, int clipIndex, int side, d
     pushProjectEdit(before, tr("Time stretch clip"));
     finishEdit(tr("Clip time stretched"));
     return true;
+}
+
+AppController::SlipComputation AppController::computeSlipClip(int trackIndex, int clipIndex,
+                                                             double deltaSeconds) const
+{
+    SlipComputation out;
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return out;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return out;
+
+    const drift::Clip &clip = track.clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio
+        && clip.type != drift::ClipType::Composite)
+        return out;
+
+    const drift::TimeUs sourceSpan = clip.srcOut - clip.srcIn;
+    if (sourceSpan <= 0)
+        return out;
+
+    out.ok = true;
+    out.newSrcIn = clip.srcIn;
+    out.newSrcOut = clip.srcOut;
+    out.newLoopOffsetUs = clip.loopOffsetUs;
+
+    const drift::TimeUs timelineDeltaUs = drift::secondsToUs(deltaSeconds);
+    drift::TimeUs sourceDeltaUs = clip.sourceDeltaForTimelineDelta(timelineDeltaUs);
+    if (clip.reverse)
+        sourceDeltaUs = -sourceDeltaUs;
+
+    if (clip.loops()) {
+        drift::TimeUs offset = (clip.loopOffsetUs + sourceDeltaUs) % sourceSpan;
+        if (offset < 0)
+            offset += sourceSpan;
+        out.newLoopOffsetUs = offset;
+        out.sourceDeltaUs = sourceDeltaUs;
+        out.changed = (out.newLoopOffsetUs != clip.loopOffsetUs);
+        return out;
+    }
+
+    const drift::TimeUs maxSourceUs = sourceDurationForClip(clip);
+    drift::TimeUs clampedSrcIn = clip.srcIn + sourceDeltaUs;
+    drift::TimeUs clampedSrcOut = clip.srcOut + sourceDeltaUs;
+
+    if (clampedSrcIn < 0) {
+        clampedSrcIn = 0;
+        clampedSrcOut = sourceSpan;
+    } else if (maxSourceUs > 0 && clampedSrcOut > maxSourceUs) {
+        if (maxSourceUs >= sourceSpan) {
+            clampedSrcOut = maxSourceUs;
+            clampedSrcIn = maxSourceUs - sourceSpan;
+        } else {
+            clampedSrcOut = maxSourceUs;
+            clampedSrcIn = 0;
+        }
+    }
+
+    out.newSrcIn = clampedSrcIn;
+    out.newSrcOut = clampedSrcOut;
+    out.sourceDeltaUs = clampedSrcIn - clip.srcIn;
+    out.changed = (out.newSrcIn != clip.srcIn || out.newSrcOut != clip.srcOut);
+    return out;
+}
+
+QVariantMap AppController::previewSlipClip(int trackIndex, int clipIndex, double deltaSeconds) const
+{
+    const SlipComputation c = computeSlipClip(trackIndex, clipIndex, deltaSeconds);
+    if (!c.ok)
+        return {{QStringLiteral("ok"), false}};
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    return QVariantMap{
+        {QStringLiteral("ok"), true},
+        {QStringLiteral("changed"), c.changed},
+        {QStringLiteral("start"), drift::usToSeconds(clip.timelineStart)},
+        {QStringLiteral("duration"), drift::usToSeconds(clip.timelineDuration)},
+        {QStringLiteral("inPoint"), drift::usToSeconds(c.newSrcIn)},
+        {QStringLiteral("outPoint"), drift::usToSeconds(c.newSrcOut)},
+        {QStringLiteral("sourceDelta"), drift::usToSeconds(c.sourceDeltaUs)},
+    };
+}
+
+bool AppController::commitSlipClip(int trackIndex, int clipIndex, double deltaSeconds)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return false;
+
+    const SlipComputation c = computeSlipClip(trackIndex, clipIndex, deltaSeconds);
+    if (!c.ok || !c.changed) {
+        if (m_previewDragActive)
+            cancelPreviewDrag();
+        return false;
+    }
+
+    const drift::Project before = m_previewDragActive ? m_previewDragBefore : m_project;
+    if (m_previewDragActive) {
+        m_previewAutoCommit->stop();
+        m_previewDragAuto = false;
+        m_previewDragActive = false;
+        m_previewDragDirty = false;
+        emit previewDragActiveChanged();
+    }
+
+    drift::Clip &clip = track.clips[clipIndex];
+    clip.srcIn = c.newSrcIn;
+    clip.srcOut = c.newSrcOut;
+    clip.loopOffsetUs = c.newLoopOffsetUs;
+
+    // Synchronize companion linked audio/video partner
+    syncLinkedPartnersFrom(m_project, clip);
+    if (clip.linkLoose) {
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip)) {
+            drift::Clip &partner = m_project.tracks()[ref.trackIndex].clips[ref.clipIndex];
+            partner.srcIn = c.newSrcIn;
+            partner.srcOut = c.newSrcOut;
+            partner.loopOffsetUs = c.newLoopOffsetUs;
+        }
+    }
+
+    syncOverlapTransitionsOnTrack(track);
+    syncLinkedAdjustments(m_project);
+    pushProjectEdit(before, tr("Slip clip"));
+    finishEdit(tr("Clip media slipped"));
+    return true;
+}
+
+bool AppController::nudgeSlipClip(int trackIndex, int clipIndex, int frames)
+{
+    if (m_project.fps() <= 0)
+        return false;
+    const double deltaSeconds = frames / double(m_project.fps());
+    return commitSlipClip(trackIndex, clipIndex, deltaSeconds);
 }
 
 // Writes a computed trim back to the project and brings everything that hangs off the clip with

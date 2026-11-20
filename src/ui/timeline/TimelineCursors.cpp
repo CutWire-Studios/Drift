@@ -246,6 +246,11 @@ Spec specFor(TimelineCursorKind kind)
         bracket(g, 3, 4, 20, 3);
         bracket(g, 21, 4, 20, -3);
         break;
+    case TimelineCursorKind::Slip:
+        bracket(g, 3, 5, 19, 3);
+        bracket(g, 21, 5, 19, -3);
+        hArrows(g, 12, 12, 6.5, 3.5);
+        break;
     case TimelineCursorKind::TransitionMove:
         bowtie(g, 12, 7, 4.5, 4);
         hArrows(g, 12, 18, 10.5, 4.5);
@@ -308,6 +313,7 @@ bool timelineCursorKindFromName(const QString &name, TimelineCursorKind *kind)
         {QStringLiteral("trimOut"), TimelineCursorKind::TrimOut},
         {QStringLiteral("stretchIn"), TimelineCursorKind::StretchIn},
         {QStringLiteral("stretchOut"), TimelineCursorKind::StretchOut},
+        {QStringLiteral("slip"), TimelineCursorKind::Slip},
         {QStringLiteral("fadeIn"), TimelineCursorKind::FadeIn},
         {QStringLiteral("fadeOut"), TimelineCursorKind::FadeOut},
         {QStringLiteral("transitionResize"), TimelineCursorKind::TransitionResize},

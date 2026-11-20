@@ -350,6 +350,8 @@ private slots:
     void linkedFadeCurveSyncsPartner();
     void vegasFadeAndTransitionCurvesSupport();
     void elasticTimeStretchCtrlDrag();
+    void cursorlessSplitAtPlayhead();
+    void slipEditingToolAltDrag();
     void customFadeCurveSessionApplyAndCancel();
     void animationCurveSessionIsSeparateFromFade();
     void clipAnimationKindsListsBuiltins();
@@ -7624,6 +7626,223 @@ void EditorStateTest::elasticTimeStretchCtrlDrag()
     QVERIFY(vFaded.fadeInUs + vFaded.fadeOutUs <= vFaded.timelineDuration);
     QCOMPARE(vFaded.fadeInUs, drift::secondsToUs(1.0));
     QCOMPARE(vFaded.fadeOutUs, drift::secondsToUs(1.0));
+}
+
+void EditorStateTest::cursorlessSplitAtPlayhead()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Setup two independent video tracks with one clip each, spanning 0.0s to 6.0s
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("asset-v");
+    asset.path = QStringLiteral("/tmp/v.mp4");
+    asset.name = QStringLiteral("V");
+    asset.kind = drift::MediaKind::Video;
+    asset.durationUs = drift::secondsToUs(10.0);
+    state.project()->assets().insert(asset.id, asset);
+    state.project()->assetOrder().append(asset.id);
+
+    drift::Clip c0;
+    c0.id = QStringLiteral("c0");
+    c0.assetId = asset.id;
+    c0.type = drift::ClipType::Video;
+    c0.timelineStart = 0;
+    c0.timelineDuration = drift::secondsToUs(6.0);
+    c0.srcIn = 0;
+    c0.srcOut = drift::secondsToUs(6.0);
+
+    drift::Clip c1;
+    c1.id = QStringLiteral("c1");
+    c1.assetId = asset.id;
+    c1.type = drift::ClipType::Video;
+    c1.timelineStart = 0;
+    c1.timelineDuration = drift::secondsToUs(6.0);
+    c1.srcIn = 0;
+    c1.srcOut = drift::secondsToUs(6.0);
+
+    state.project()->tracks()[0].clips.append(c0);
+    state.project()->tracks()[1].clips.append(c1);
+
+    // 1. When a clip is selected on track 0:
+    // Hitting 'S' (splitAtPlayhead) splits only track 0 clip, track 1 remains untouched.
+    state.selectClip(0, 0);
+    QCOMPARE(state.selectionCount(), 1);
+    state.setPlayheadSeconds(2.0);
+    state.splitAtPlayhead();
+
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(2.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineDuration, drift::secondsToUs(4.0));
+    // Track 1 was NOT selected, so it must still have only 1 clip!
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, drift::secondsToUs(6.0));
+
+    // Undo restores state
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+
+    // 2. When NO clips are selected:
+    // Hitting 'S' splits across ALL unlocked tracks under the playhead.
+    state.clearSelection();
+    QCOMPARE(state.selectionCount(), 0);
+    state.setPlayheadSeconds(2.5);
+    state.splitAtPlayhead();
+
+    // Both track 0 and track 1 should now be split!
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(2.5));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineDuration, drift::secondsToUs(3.5));
+
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, drift::secondsToUs(2.5));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(1).timelineDuration, drift::secondsToUs(3.5));
+
+    // 3. Locked tracks are respected:
+    state.undo();
+    state.setTrackLocked(1, true);
+    state.clearSelection();
+    state.setPlayheadSeconds(3.0);
+    state.splitAtPlayhead();
+
+    // Track 0 was unlocked, so split
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    // Track 1 was locked, so unchanged
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+
+    // 4. Playhead outside selected clip:
+    state.undo();
+    state.setTrackLocked(1, false);
+    state.selectClip(0, 0); // spans 0.0s to 6.0s
+    state.setPlayheadSeconds(8.0); // beyond clip end
+    state.splitAtPlayhead();
+    // Neither track split
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+}
+
+void EditorStateTest::slipEditingToolAltDrag()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Setup linked video + audio pair with asset duration 10.0s
+    // Clip positioned at timeline 1.0s, duration 4.0s, source window [2.0s, 6.0s]
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Audio});
+
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("asset-media");
+    asset.path = QStringLiteral("/tmp/media.mp4");
+    asset.name = QStringLiteral("Media");
+    asset.kind = drift::MediaKind::Video;
+    asset.durationUs = drift::secondsToUs(10.0);
+    state.project()->assets().insert(asset.id, asset);
+    state.project()->assetOrder().append(asset.id);
+
+    const QString linkId = QStringLiteral("link-slip-1");
+
+    drift::Clip video;
+    video.id = QStringLiteral("v-slip");
+    video.linkId = linkId;
+    video.assetId = asset.id;
+    video.type = drift::ClipType::Video;
+    video.timelineStart = drift::secondsToUs(1.0);
+    video.timelineDuration = drift::secondsToUs(4.0);
+    video.srcIn = drift::secondsToUs(2.0);
+    video.srcOut = drift::secondsToUs(6.0);
+
+    drift::Clip audio;
+    audio.id = QStringLiteral("a-slip");
+    audio.linkId = linkId;
+    audio.assetId = asset.id;
+    audio.type = drift::ClipType::Audio;
+    audio.timelineStart = drift::secondsToUs(1.0);
+    audio.timelineDuration = drift::secondsToUs(4.0);
+    audio.srcIn = drift::secondsToUs(2.0);
+    audio.srcOut = drift::secondsToUs(6.0);
+
+    state.project()->tracks()[0].clips.append(video);
+    state.project()->tracks()[1].clips.append(audio);
+
+    // 1. Preview slip forward by +1.0s (later in source media):
+    // Window should become [3.0s, 7.0s], timeline start & duration invariant
+    QVariantMap p1 = state.previewSlipClip(0, 0, 1.0);
+    QVERIFY(p1.value(QStringLiteral("ok")).toBool());
+    QVERIFY(p1.value(QStringLiteral("changed")).toBool());
+    QCOMPARE(p1.value(QStringLiteral("start")).toDouble(), 1.0);
+    QCOMPARE(p1.value(QStringLiteral("duration")).toDouble(), 4.0);
+    QCOMPARE(p1.value(QStringLiteral("inPoint")).toDouble(), 3.0);
+    QCOMPARE(p1.value(QStringLiteral("outPoint")).toDouble(), 7.0);
+
+    // 2. Commit slip forward +1.0s:
+    QVERIFY(state.commitSlipClip(0, 0, 1.0));
+    const drift::Clip &v1 = state.project()->tracks().at(0).clips.at(0);
+    const drift::Clip &a1 = state.project()->tracks().at(1).clips.at(0);
+    QCOMPARE(v1.timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(v1.timelineDuration, drift::secondsToUs(4.0));
+    QCOMPARE(v1.srcIn, drift::secondsToUs(3.0));
+    QCOMPARE(v1.srcOut, drift::secondsToUs(7.0));
+    // Companion linked audio synchronizes lockstep:
+    QCOMPARE(a1.timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(a1.timelineDuration, drift::secondsToUs(4.0));
+    QCOMPARE(a1.srcIn, drift::secondsToUs(3.0));
+    QCOMPARE(a1.srcOut, drift::secondsToUs(7.0));
+
+    // 3. Undo restores original window [2.0s, 6.0s]
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcIn, drift::secondsToUs(2.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcOut, drift::secondsToUs(6.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcIn, drift::secondsToUs(2.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcOut, drift::secondsToUs(6.0));
+
+    // 4. Redo re-applies [3.0s, 7.0s]
+    state.redo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcIn, drift::secondsToUs(3.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcOut, drift::secondsToUs(7.0));
+
+    // 5. Boundary clamping - slip forward past asset end (10.0s)
+    // Span is 4.0s. Dragging +10.0s should clamp srcOut to 10.0s and srcIn to 6.0s.
+    QVariantMap pEnd = state.previewSlipClip(0, 0, 10.0);
+    QCOMPARE(pEnd.value(QStringLiteral("inPoint")).toDouble(), 6.0);
+    QCOMPARE(pEnd.value(QStringLiteral("outPoint")).toDouble(), 10.0);
+
+    QVERIFY(state.commitSlipClip(0, 0, 10.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcIn, drift::secondsToUs(6.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcOut, drift::secondsToUs(10.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcIn, drift::secondsToUs(6.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcOut, drift::secondsToUs(10.0));
+
+    // Boundary clamping - slip backward past asset start (0.0s)
+    // Dragging -15.0s should clamp srcIn to 0.0s and srcOut to 4.0s.
+    QVERIFY(state.commitSlipClip(0, 0, -15.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcIn, drift::secondsToUs(0.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcOut, drift::secondsToUs(4.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcIn, drift::secondsToUs(0.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcOut, drift::secondsToUs(4.0));
+
+    // 6. Nudge slip by frames
+    // Project fps is set to 30. Nudge by +3 frames = 3 / 30.0 = 0.1s = 100000 us.
+    state.project()->setFps(30);
+    QVERIFY(state.nudgeSlipClip(0, 0, 3));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcIn, drift::TimeUs(100000));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcOut, drift::secondsToUs(4.0) + 100000);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcIn, drift::TimeUs(100000));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcOut, drift::secondsToUs(4.0) + 100000);
+
+    // 7. Looping clip slip
+    drift::Clip &loopClip = state.project()->tracks()[0].clips[0];
+    loopClip.loop = true;
+    loopClip.loopOffsetUs = 0;
+    // Slip by +1.0s with loop=true -> shifts loopOffsetUs by 1.0s % 4.0s = 1.0s, srcIn/srcOut intact
+    QVERIFY(state.commitSlipClip(0, 0, 1.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).loopOffsetUs, drift::secondsToUs(1.0));
 }
 
 void EditorStateTest::customFadeCurveSessionApplyAndCancel()

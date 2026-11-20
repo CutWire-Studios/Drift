@@ -1805,6 +1805,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("toggleLoop"), tr("Loop work area playback")),
         action(QStringLiteral("selectTool"), tr("Select tool")),
         action(QStringLiteral("bladeTool"), tr("Cut tool / Brush mask")),
+        action(QStringLiteral("slipTool"), tr("Slip tool")),
         action(QStringLiteral("maskingPolygonTool"), tr("Polygon mask tool")),
         action(QStringLiteral("maskingAiTool"), tr("AI object mask tool")),
         action(QStringLiteral("maskingBrushSmaller"), tr("Decrease brush size")),

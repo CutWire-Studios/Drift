@@ -1472,6 +1472,11 @@ ApplicationWindow {
                 timelinePanel.timelineTool = "split"
             return
         }
+        if (id === "slipTool") {
+            if (timelinePanel)
+                timelinePanel.timelineTool = timelinePanel.timelineTool === "slip" ? "" : "slip"
+            return
+        }
         // Timeline zoom is QML state as well, and the 1.5 step matches the
         // toolbar buttons. setZoom clamps to minZoom/maxZoom and re-anchors on
         // the playhead, so holding the key walks to the end of the range and stops.

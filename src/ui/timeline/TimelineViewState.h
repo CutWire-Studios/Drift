@@ -151,6 +151,11 @@ public:
     int effectDropTrack() const { return m_effectDropTrack; }
     int effectDropClip() const { return m_effectDropClip; }
 
+    Q_INVOKABLE void setTrimFollow(const QString &linkId, const QString &clipId,
+                                   double start, double duration, double inPoint, double outPoint,
+                                   const QStringList &rippleIds = {}, double rippleDelta = 0.0);
+    Q_INVOKABLE void clearTrimFollow();
+
 signals:
     void viewChanged();
     void gestureChanged();

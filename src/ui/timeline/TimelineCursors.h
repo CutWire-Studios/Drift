@@ -13,6 +13,7 @@ enum class TimelineCursorKind {
     TrimOut,
     StretchIn,
     StretchOut,
+    Slip,
     FadeIn,
     FadeOut,
     TransitionResize,

@@ -1891,6 +1891,10 @@ void TimelineTrackItem::mousePressEvent(QMouseEvent *event)
     m_drag.rightButton = event->button() == Qt::RightButton;
     m_drag.touch = touch;
 
+    const bool isAlt = (event->modifiers() & Qt::AltModifier) != 0;
+    m_drag.slipping = (isAlt || m_slipToolActive) && !m_drag.rightButton;
+    m_drag.slipDeltaSeconds = 0.0;
+
     if (m_drag.rightButton) {
         if (!wasSelected)
             m_editor->selectClip(m_trackIndex, index);
@@ -1899,6 +1903,12 @@ void TimelineTrackItem::mousePressEvent(QMouseEvent *event)
         emit contextMenuRequested(index);
         event->accept();
         return;
+    }
+
+    if (m_drag.slipping) {
+        setKeepMouseGrab(true);
+        if (m_editor)
+            m_editor->beginPreviewDrag(tr("Slip clip"));
     }
 
     // On a pointer the clip owns the press outright; on touch the Flickable may still take it
@@ -1979,6 +1989,28 @@ void TimelineTrackItem::mouseMoveEvent(QMouseEvent *event)
         event->accept();
         return;
     }
+    if (m_drag.slipping) {
+        const QPointF delta = mapFromScene(event->scenePosition()) - m_drag.pressItemPos;
+        const double pps = m_viewState ? m_viewState->pxPerSecond() : 100.0;
+        const double deltaSec = -delta.x() / pps;
+        m_drag.slipDeltaSeconds = deltaSec;
+        if (m_editor) {
+            const QVariantMap preview = m_editor->previewSlipClip(m_trackIndex, m_drag.clipIndex, deltaSec);
+            if (preview.value(QStringLiteral("ok")).toBool()) {
+                const double inPt = preview.value(QStringLiteral("inPoint")).toDouble();
+                const double outPt = preview.value(QStringLiteral("outPoint")).toDouble();
+                const double startSec = preview.value(QStringLiteral("start")).toDouble();
+                const double durSec = preview.value(QStringLiteral("duration")).toDouble();
+                setLivePreview(m_drag.clipId, true, startSec, durSec, inPt, outPt);
+                if (m_viewState && m_drag.clipIndex < m_clips->rows().size()) {
+                    const auto &row = m_clips->rows().at(m_drag.clipIndex);
+                    m_viewState->setTrimFollow(row.linkId, row.id, startSec, durSec, inPt, outPt, {}, 0.0);
+                }
+            }
+        }
+        event->accept();
+        return;
+    }
     const QPointF delta = mapFromScene(event->scenePosition()) - m_drag.pressItemPos;
     if (!m_drag.moving) {
         const bool pastThreshold = std::abs(delta.x()) > 2.0 || std::abs(delta.y()) > 2.0;
@@ -2019,6 +2051,20 @@ void TimelineTrackItem::finishPress(bool canceled)
     setKeepTouchGrab(false);
     if (drag.moving || drag.armed)
         emit draggingChanged();
+
+    if (drag.slipping) {
+        setLivePreview(drag.clipId, false, 0, 0, 0, 0);
+        if (m_viewState)
+            m_viewState->clearTrimFollow();
+        if (canceled) {
+            if (m_editor)
+                m_editor->cancelPreviewDrag();
+        } else if (m_editor) {
+            m_editor->commitSlipClip(m_trackIndex, drag.clipIndex, drag.slipDeltaSeconds);
+        }
+        scheduleRebuild();
+        return;
+    }
 
     if (drag.moving) {
         if (canceled) {
@@ -2138,7 +2184,10 @@ void TimelineTrackItem::setHovered(const QString &clipId, bool body, const QPoin
             narrow = m_viewState && visual.rect.width() < m_viewState->styleValues().clipControlsMinWidth;
     }
     const qreal dpr = window() ? window()->devicePixelRatio() : 1.0;
-    if (body && !m_drag.pressed && !narrow)
+    const bool isAlt = (QGuiApplication::keyboardModifiers() & Qt::AltModifier) != 0;
+    if (m_drag.slipping || (body && (isAlt || m_slipToolActive)))
+        setCursor(timelineCursor(TimelineCursorKind::Slip, 0, dpr));
+    else if (body && !m_drag.pressed && !narrow)
         setCursor(timelineCursor(TimelineCursorKind::Move, 0, dpr));
     else if (m_drag.moving)
         setCursor(timelineCursor(TimelineCursorKind::MoveActive, 0, dpr));
@@ -2184,6 +2233,9 @@ void TimelineTrackItem::hoverLeaveEvent(QHoverEvent *event)
 
 void TimelineTrackItem::keyPressEvent(QKeyEvent *event)
 {
+    if (event->key() == Qt::Key_Alt) {
+        setHovered(m_hoverId, m_hoverBody, QPointF());
+    }
     if ((event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) && m_editor
         && m_editor->selectionCount() > 0) {
         m_editor->deleteSelectedClip();
@@ -2191,6 +2243,14 @@ void TimelineTrackItem::keyPressEvent(QKeyEvent *event)
         return;
     }
     event->ignore();
+}
+
+void TimelineTrackItem::keyReleaseEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Alt) {
+        setHovered(m_hoverId, m_hoverBody, QPointF());
+    }
+    QQuickItem::keyReleaseEvent(event);
 }
 
 // --- accessibility -------------------------------------------------------------------------------

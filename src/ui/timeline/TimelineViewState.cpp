@@ -114,4 +114,34 @@ void TimelineViewState::setStyle(const QVariantMap &style)
     emit styleChanged();
 }
 
+void TimelineViewState::setTrimFollow(const QString &linkId, const QString &clipId,
+                                      double start, double duration, double inPoint, double outPoint,
+                                      const QStringList &rippleIds, double rippleDelta)
+{
+    m_trimFollowLinkId = linkId;
+    m_trimFollowClipId = clipId;
+    m_trimFollowStart = start;
+    m_trimFollowDuration = duration;
+    m_trimFollowIn = inPoint;
+    m_trimFollowOut = outPoint;
+    m_trimFollowActive = !linkId.isEmpty();
+    setRippleShiftIds(rippleIds);
+    m_rippleShiftDelta = rippleDelta;
+    emit gestureChanged();
+    emit trimFollowChanged();
+}
+
+void TimelineViewState::clearTrimFollow()
+{
+    if (!m_trimFollowActive)
+        return;
+    m_trimFollowActive = false;
+    m_trimFollowLinkId.clear();
+    m_trimFollowClipId.clear();
+    setRippleShiftIds({});
+    m_rippleShiftDelta = 0.0;
+    emit gestureChanged();
+    emit trimFollowChanged();
+}
+
 #include "moc_TimelineViewState.cpp"
