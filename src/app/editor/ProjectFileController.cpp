@@ -1543,6 +1543,46 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
         setDirty(true);
         deleteRecoveryFile();
         m_app->setProjectLayoutChosen(true);
+
+        // Automatically replace raw camera / MTS files with co-located ProRes .mov files if they exist
+        QHash<QString, QString> autoRemap;
+        for (const auto &asset : m_app->m_project.assets()) {
+            if (asset.kind == drift::MediaKind::Video && !asset.editFriendly && !asset.path.isEmpty()) {
+                const QFileInfo info(asset.path);
+                const QString dir = info.absolutePath();
+                const QString base = info.completeBaseName();
+                const QString ext = info.suffix().toLower();
+                if (ext == QLatin1String("mov"))
+                    continue;
+
+                const QString sameDirMov = QDir(dir).filePath(base + QStringLiteral(".mov"));
+                const QString transcodeMov = QDir(dir).filePath(QStringLiteral("Transcodes_ProRes/") + base + QStringLiteral(".mov"));
+                const QString parentTranscodeMov = QDir(dir).filePath(QStringLiteral("../Transcodes_ProRes/") + QDir(dir).dirName() + QStringLiteral("/") + base + QStringLiteral(".mov"));
+
+                if (QFileInfo::exists(sameDirMov) && QFileInfo(sameDirMov).size() > 0) {
+                    autoRemap.insert(asset.path, sameDirMov);
+                } else if (QFileInfo::exists(transcodeMov) && QFileInfo(transcodeMov).size() > 0) {
+                    autoRemap.insert(asset.path, transcodeMov);
+                } else if (QFileInfo::exists(parentTranscodeMov) && QFileInfo(parentTranscodeMov).size() > 0) {
+                    autoRemap.insert(asset.path, parentTranscodeMov);
+                }
+            }
+        }
+        if (!autoRemap.isEmpty()) {
+            remapProjectPaths(autoRemap);
+            for (auto it = autoRemap.constBegin(); it != autoRemap.constEnd(); ++it) {
+                const QString &newPath = it.value();
+                for (drift::MediaAsset &asset : m_app->m_project.assets()) {
+                    if (asset.path == newPath) {
+                        asset.editFriendly = true;
+                    }
+                }
+            }
+            if (m_app->m_assetLibrary)
+                m_app->m_assetLibrary->setProject(&m_app->m_project);
+            m_app->notifyTracksChanged();
+        }
+
         if (m_app->m_assetLibrary)
             m_app->m_assetLibrary->setProject(&m_app->m_project);
         finishProjectLoad(true, QString());
