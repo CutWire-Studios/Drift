@@ -1586,6 +1586,17 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
         if (m_app->m_assetLibrary)
             m_app->m_assetLibrary->setProject(&m_app->m_project);
         finishProjectLoad(true, QString());
+
+        QStringList unconvertedIds;
+        for (const auto &asset : m_app->m_project.assets()) {
+            if (asset.kind == drift::MediaKind::Video && !asset.editFriendly && !asset.path.isEmpty()
+                && QFileInfo::exists(asset.path)) {
+                unconvertedIds.append(asset.id);
+            }
+        }
+        if (!unconvertedIds.isEmpty()) {
+            emit vegasTranscodeSuggested(unconvertedIds, url);
+        }
         return;
     }
 

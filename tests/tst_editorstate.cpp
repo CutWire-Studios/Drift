@@ -528,6 +528,7 @@ private slots:
     void importFileNameStaysStorable();
     void splatInputsAreModelPaths();
     void loadVegasProjectViaLoadProject();
+    void convertToProResTranscodesAndRelinks();
 };
 
 // A file dragged in from the file manager has no bin row yet, so the timeline's drop preview
@@ -17319,6 +17320,59 @@ void EditorStateTest::loadVegasProjectViaLoadProject()
     QVERIFY(loadFinished.at(0).at(0).toBool());
     QVERIFY(state.tracks().size() >= 1);
     QVERIFY(!state.project()->assets().isEmpty());
+}
+
+void EditorStateTest::convertToProResTranscodesAndRelinks()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString source = dir.filePath(QStringLiteral("test_clip.mp4"));
+    if (!makeSourceLabFixture(source)) {
+        QSKIP("ffmpeg not available to make test fixture");
+    }
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::Project &project = *state.project();
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("vid-1");
+    asset.kind = drift::MediaKind::Video;
+    asset.path = source;
+    asset.name = QStringLiteral("test_clip");
+    asset.durationUs = 2 * drift::kUsPerSecond;
+    asset.width = 320;
+    asset.height = 240;
+    asset.fps = 30.0;
+    asset.hasAudio = true;
+    asset.hasAudioKnown = true;
+    project.assets().insert(asset.id, asset);
+    project.assetOrder().append(asset.id);
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("c1");
+    clip.assetId = asset.id;
+    clip.type = drift::ClipType::Video;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    drift::Track track{.type = drift::TrackType::Video};
+    track.id = QStringLiteral("t1");
+    track.clips.append(clip);
+    project.tracks().append(track);
+    library.setProject(&project);
+
+    QSignalSpy spy(state.bin(), &MediaBinController::proresTranscodeFinished);
+    state.bin()->convertToProRes({asset.id}, QUrl::fromLocalFile(dir.filePath(QStringLiteral("project.drift"))));
+
+    QVERIFY(spy.wait(10000));
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(spy.at(0).at(0).toInt(), 1); // 1 succeeded
+    QCOMPARE(spy.at(0).at(1).toInt(), 0); // 0 failed
+
+    const drift::MediaAsset *updated = project.asset(asset.id);
+    QVERIFY(updated != nullptr);
+    QVERIFY(updated->path.endsWith(QStringLiteral(".mov")));
+    QVERIFY(QFile::exists(updated->path));
+    QVERIFY(updated->editFriendly);
 }
 
 QTEST_MAIN(EditorStateTest)

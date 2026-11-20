@@ -228,6 +228,7 @@ signals:
     void openRequested();
     void saveRequested();
     void saveAsRequested();
+    void vegasTranscodeSuggested(const QStringList &assetIds, const QUrl &projectUrl);
     // MCP close_project / new_project / load_project: show or leave the start screen. GUI only; the
     // headless app has no start screen and ignores it.
     void startScreenRequested(bool visible);
