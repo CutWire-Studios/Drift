@@ -59,6 +59,20 @@ Item {
         border.color: Theme.c.timelineTransitionToffee.outline
     }
 
+    TimelineFadeCurveContextMenu {
+        id: transitionCurveContextMenu
+        titleText: qsTr("Transition Curve")
+        currentCurve: toffee.region.easingCurve || "linear"
+        onCurveSelected: (curve) => {
+            EditorState.setTransitionEasing(toffee.trackIndex, toffee.region.transitionId, curve, [])
+        }
+        onOpenEditorRequested: {
+            if (typeof ShellBridge.main.openFadeCurve === "function") {
+                ShellBridge.main.openFadeCurve(toffee.trackIndex, toffee.leftClipIndex, "in", "fade")
+            }
+        }
+    }
+
     Rectangle {
         id: body
         anchors.fill: parent
@@ -134,12 +148,23 @@ Item {
         MouseArea {
             id: bodyMouse
             anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: EditorState.selectTransition(toffee.trackIndex, toffee.leftClipIndex)
-            onDoubleClicked: toffee.panel.transitionPicker.openFor(
-                                 toffee.trackIndex, toffee.leftClipIndex, toffee.region.transitionId,
-                                 toffee.region.kind || "", body, body.width / 2, body.height)
+            onClicked: (mouse) => {
+                if (mouse.button === Qt.RightButton) {
+                    transitionCurveContextMenu.popup(body, mouse.x, mouse.y)
+                    return
+                }
+                EditorState.selectTransition(toffee.trackIndex, toffee.leftClipIndex)
+            }
+            onDoubleClicked: (mouse) => {
+                if (mouse.button === Qt.LeftButton) {
+                    toffee.panel.transitionPicker.openFor(
+                        toffee.trackIndex, toffee.leftClipIndex, toffee.region.transitionId,
+                        toffee.region.kind || "", body, body.width / 2, body.height)
+                }
+            }
         }
 
         Loader {

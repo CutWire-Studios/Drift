@@ -647,6 +647,8 @@ add_library(driftcore STATIC
     src/core/interchange/EdlReader.cpp
     src/core/interchange/OtioReader.h
     src/core/interchange/OtioReader.cpp
+    src/core/interchange/VegasReader.h
+    src/core/interchange/VegasReader.cpp
     src/core/edit/TimelineOps.h
     src/core/edit/TimelineOps.cpp
     src/core/project/ProjectDiff.h
@@ -2310,6 +2312,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineLandingOutline.qml
         src/qml/components/timeline/TimelineGapHover.qml
         src/qml/components/timeline/TimelineFadeHandle.qml
+        src/qml/components/timeline/TimelineFadeCurveContextMenu.qml
         src/qml/components/timeline/TimelineEmptyState.qml
         src/qml/components/timeline/TimelineCutOverlay.qml
         src/qml/components/timeline/TimelineCursorRequest.qml
@@ -2400,6 +2403,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/LazyLoader.qml
         src/qml/components/android/AndroidLifecycle.qml
         src/qml/components/dialogs/AccelerationFailedDialog.qml
+        src/qml/components/dialogs/VegasTranscodeDialog.qml
         src/qml/components/dialogs/MissingAddonsDialog.qml
         src/qml/components/dialogs/AboutDialog.qml
         src/qml/components/dialogs/HelpDialog.qml

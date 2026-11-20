@@ -40,7 +40,7 @@ Item {
     }
 
     Rectangle {
-        visible: fadeMouse.pressed
+        visible: fadeMouse.pressed && fadeMouse.isLeftDrag
         x: handle.outgoing ? -width - 8 : handle.width + 8
         anchors.verticalCenter: parent.verticalCenter
         width: fadeLabel.implicitWidth + 10
@@ -74,6 +74,25 @@ Item {
         }
     }
 
+    TimelineFadeCurveContextMenu {
+        id: fadeCurveContextMenu
+        titleText: handle.outgoing ? qsTr("Fade Out Curve") : qsTr("Fade In Curve")
+        currentCurve: {
+            const raw = handle.outgoing ? owner.clipData.fadeOutCurve : owner.clipData.fadeInCurve
+            return raw || "smooth"
+        }
+        onCurveSelected: (curve) => {
+            EditorState.setClipFadeCurve(owner.trackIndex, owner.clipIndex,
+                                         handle.outgoing ? "out" : "in", curve, [])
+        }
+        onOpenEditorRequested: {
+            if (typeof ShellBridge.main.openFadeCurve === "function") {
+                ShellBridge.main.openFadeCurve(owner.trackIndex, owner.clipIndex,
+                                               handle.outgoing ? "out" : "in", "fade")
+            }
+        }
+    }
+
     MouseArea {
         id: fadeMouse
         anchors.fill: parent
@@ -82,9 +101,17 @@ Item {
         anchors.topMargin: -2
         anchors.bottomMargin: -4
         z: 1
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         preventStealing: true
         hoverEnabled: true
+        property bool isLeftDrag: false
         onPressed: (mouse) => {
+            if (mouse.button === Qt.RightButton) {
+                mouse.accepted = true
+                fadeCurveContextMenu.popup(handle, mouse.x, mouse.y)
+                return
+            }
+            isLeftDrag = true
             Qt.callLater(function() { owner.forceActiveFocus() })
             mouse.accepted = true
             pointerSceneX = mapToItem(null, mouse.x, mouse.y).x
@@ -93,6 +120,8 @@ Item {
         property real pointerSceneX: 0
 
         function applyFade() {
+            if (!isLeftDrag)
+                return
             const local = mapFromItem(null, pointerSceneX, 0)
             const px = Math.max(0, Math.min(owner.width, mapToItem(owner, local.x, 0).x))
             handle.x = Math.max(owner.fadeHandleInset,
@@ -113,7 +142,7 @@ Item {
         Timer {
             interval: 16
             repeat: true
-            running: fadeMouse.pressed && typeof owner.panel.dragEdgeScroll === "function"
+            running: fadeMouse.isLeftDrag && fadeMouse.pressed && typeof owner.panel.dragEdgeScroll === "function"
             onTriggered: {
                 const panel = owner.panel
                 const px = fadeMouse.mapToItem(owner.parent, fadeMouse.mapFromItem(null, fadeMouse.pointerSceneX, 0).x, 0).x
@@ -130,13 +159,23 @@ Item {
         }
 
         onPositionChanged: (mouse) => {
-            if (!pressed)
+            if (!isLeftDrag || !pressed)
                 return
             pointerSceneX = mapToItem(null, mouse.x, mouse.y).x
             applyFade()
         }
-        onReleased: EditorState.commitPreviewDrag()
-        onCanceled: EditorState.cancelPreviewDrag()
+        onReleased: (mouse) => {
+            if (isLeftDrag) {
+                isLeftDrag = false
+                EditorState.commitPreviewDrag()
+            }
+        }
+        onCanceled: {
+            if (isLeftDrag) {
+                isLeftDrag = false
+                EditorState.cancelPreviewDrag()
+            }
+        }
 
         TimelineCursorRequest {
             kind: handle.outgoing ? "fadeOut" : "fadeIn"

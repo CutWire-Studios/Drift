@@ -18,6 +18,12 @@ QString fadeCurveToString(FadeCurve curve)
         return QStringLiteral("smooth");
     case FadeCurve::EqualPower:
         return QStringLiteral("equalPower");
+    case FadeCurve::Fast:
+        return QStringLiteral("fast");
+    case FadeCurve::Slow:
+        return QStringLiteral("slow");
+    case FadeCurve::Sharp:
+        return QStringLiteral("sharp");
     case FadeCurve::Custom:
         return QStringLiteral("custom");
     case FadeCurve::Bezier:
@@ -32,6 +38,12 @@ FadeCurve fadeCurveFromString(const QString &curve)
         return FadeCurve::Linear;
     if (curve == QStringLiteral("equalPower"))
         return FadeCurve::EqualPower;
+    if (curve == QStringLiteral("fast"))
+        return FadeCurve::Fast;
+    if (curve == QStringLiteral("slow"))
+        return FadeCurve::Slow;
+    if (curve == QStringLiteral("sharp"))
+        return FadeCurve::Sharp;
     if (curve == QStringLiteral("custom"))
         return FadeCurve::Custom;
     if (curve == QStringLiteral("bezier"))
@@ -229,6 +241,46 @@ FadeShape FadeShape::equalPowerPreset()
     for (int i = 0; i < kSamples; ++i) {
         const double t = static_cast<double>(i) / static_cast<double>(kSamples - 1);
         points.append(QPointF(t, std::sin(t * kHalfPi)));
+    }
+    FadeShape shape;
+    shape.setPoints(points);
+    return shape;
+}
+
+FadeShape FadeShape::fastPreset()
+{
+    QList<QPointF> points;
+    constexpr int kSamples = 9;
+    for (int i = 0; i < kSamples; ++i) {
+        const double t = static_cast<double>(i) / static_cast<double>(kSamples - 1);
+        points.append(QPointF(t, 1.0 - (1.0 - t) * (1.0 - t)));
+    }
+    FadeShape shape;
+    shape.setPoints(points);
+    return shape;
+}
+
+FadeShape FadeShape::slowPreset()
+{
+    QList<QPointF> points;
+    constexpr int kSamples = 9;
+    for (int i = 0; i < kSamples; ++i) {
+        const double t = static_cast<double>(i) / static_cast<double>(kSamples - 1);
+        points.append(QPointF(t, t * t));
+    }
+    FadeShape shape;
+    shape.setPoints(points);
+    return shape;
+}
+
+FadeShape FadeShape::sharpPreset()
+{
+    QList<QPointF> points;
+    constexpr int kSamples = 9;
+    for (int i = 0; i < kSamples; ++i) {
+        const double t = static_cast<double>(i) / static_cast<double>(kSamples - 1);
+        const double s = t * t * (3.0 - 2.0 * t);
+        points.append(QPointF(t, s * s * (3.0 - 2.0 * s)));
     }
     FadeShape shape;
     shape.setPoints(points);

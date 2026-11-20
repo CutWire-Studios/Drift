@@ -172,9 +172,14 @@ Item {
                                           : rightTrimHandle.areaPressed ? 1
                                           : leftTrimHandle.areaContainsMouse ? -1
                                           : rightTrimHandle.areaContainsMouse ? 1 : 0
+    readonly property bool isStretchCursor: (leftTrimHandle.areaPressed && leftTrimHandle.isStretch)
+                                         || (rightTrimHandle.areaPressed && rightTrimHandle.isStretch)
+                                         || ((leftTrimHandle.areaContainsMouse || rightTrimHandle.areaContainsMouse)
+                                             && ((Qt.application.keyboardModifiers & Qt.ControlModifier) !== 0))
     readonly property int trimCursorHeight: Math.round(height)
     TimelineCursorRequest {
-        kind: clipItem.trimCursorSide < 0 ? "trimIn" : "trimOut"
+        kind: clipItem.trimCursorSide < 0 ? (clipItem.isStretchCursor ? "stretchIn" : "trimIn")
+                                          : (clipItem.isStretchCursor ? "stretchOut" : "trimOut")
         active: clipItem.trimCursorSide !== 0
         height: clipItem.trimCursorHeight
     }

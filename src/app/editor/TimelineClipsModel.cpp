@@ -170,6 +170,7 @@ QVariantList TimelineClipsModel::transitionRegions() const
             {QStringLiteral("transitionId"), region.transitionId},
             {QStringLiteral("label"), region.label},
             {QStringLiteral("kind"), region.kind},
+            {QStringLiteral("easingCurve"), region.easingCurve},
         });
     }
     return out;

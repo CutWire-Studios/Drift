@@ -37,6 +37,7 @@ Item {
         showChannelWaveforms: area.trackData.showChannelWaveforms === true
         trackDimmed: area.dimHidden && (area.trackData.hidden === true
                      || (area.trackData.type === "audio" && area.trackData.muted === true))
+        slipToolActive: area.panel && area.panel.timelineTool === "slip"
         editor: EditorState
         assets: AssetLibrary
         haptics: Haptics

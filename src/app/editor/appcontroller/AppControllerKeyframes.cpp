@@ -787,7 +787,10 @@ QVariantList AppController::curveStyles(const QString &domain) const
             return [c, &none](double t) { return drift::shapedProgress(t, c, none); };
         };
         out.append(entry(QStringLiteral("linear"), tr("Linear"), curve(drift::FadeCurve::Linear)));
+        out.append(entry(QStringLiteral("fast"), tr("Fast"), curve(drift::FadeCurve::Fast)));
+        out.append(entry(QStringLiteral("slow"), tr("Slow"), curve(drift::FadeCurve::Slow)));
         out.append(entry(QStringLiteral("smooth"), tr("Smooth"), curve(drift::FadeCurve::Smooth)));
+        out.append(entry(QStringLiteral("sharp"), tr("Sharp"), curve(drift::FadeCurve::Sharp)));
         out.append(entry(QStringLiteral("equalPower"), tr("Natural"), curve(drift::FadeCurve::EqualPower)));
         out.append(entry(QStringLiteral("custom"), tr("Custom"), curve(drift::FadeCurve::Smooth)));
     } else if (domain == QLatin1String("text")) {

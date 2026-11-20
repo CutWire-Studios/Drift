@@ -518,6 +518,13 @@ ApplicationWindow {
         }
     }
 
+    LazyLoader {
+        id: vegasTranscodeDialogLoader
+        sourceComponent: Component {
+            VegasTranscodeDialog { }
+        }
+    }
+
     Connections {
         target: Addons
         function onAccelerationFailed(variant, error, waiting) {
@@ -1344,6 +1351,17 @@ ApplicationWindow {
             window.openPendingLaunch()
         }
 
+        function onVegasTranscodeSuggested(assetIds, projectUrl) {
+            vegasTranscodeDialogLoader.ensure().openFor(assetIds, projectUrl)
+            Toasts.post("warning",
+                        qsTr("This VEGAS Pro timeline contains %n unconverted AVCHD / camera raw clip(s). Convert them to Apple ProRes 422 now to prevent audio sync drift and lag?", "", assetIds.length),
+                        20000,
+                        qsTr("Convert to ProRes 422"),
+                        function () {
+                            EditorState.bin.convertToProRes(assetIds, projectUrl)
+                        })
+        }
+
         // An agent's close_project (true) / new_project or load_project (false). The agent already discarded
         // the document without asking, so there is no unsaved prompt here — only the screen
         // change and the same "Project closed" note requestCloseProject() posts.
@@ -1452,6 +1470,11 @@ ApplicationWindow {
         if (id === "bladeTool") {
             if (timelinePanel)
                 timelinePanel.timelineTool = "split"
+            return
+        }
+        if (id === "slipTool") {
+            if (timelinePanel)
+                timelinePanel.timelineTool = timelinePanel.timelineTool === "slip" ? "" : "slip"
             return
         }
         // Timeline zoom is QML state as well, and the 1.5 step matches the

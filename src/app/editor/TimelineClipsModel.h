@@ -151,6 +151,7 @@ public:
         QString transitionId;
         QString label;
         QString kind;
+        QString easingCurve;
         bool operator==(const TransitionRegion &) const = default;
     };
 

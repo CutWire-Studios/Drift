@@ -14,6 +14,8 @@ QtObject {
                     tip: qsTr("Select — normal editing"), shortcut: "selectTool" },
         "cut": { glyph: Theme.icons.scissors, label: qsTr("Cut mode"),
                  tip: qsTr("Cut mode — click a clip to split it"), shortcut: "bladeTool" },
+        "slip": { glyph: Theme.icons.chevronsRightLeft, label: qsTr("Slip mode"),
+                  tip: qsTr("Slip mode — drag within clip boundaries to shift media (Alt+drag)"), shortcut: "slipTool" },
         "separateAudio": { glyph: Theme.icons.audioLines, label: qsTr("Show audio on separate track"),
                            shortcut: "separateAudio" },
         "unlink": { glyph: Theme.icons.unlink, label: qsTr("Unlink video and audio"),

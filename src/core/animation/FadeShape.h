@@ -18,7 +18,7 @@ namespace drift {
 // pinned and two handles, exactly like CSS cubic-bezier(). They coexist because the polyline
 // can hold a shape (a flat hold, a step) that one cubic cannot, and the cubic gives smooth
 // acceleration that a polyline only approximates.
-enum class FadeCurve { Linear, Smooth, EqualPower, Custom, Bezier };
+enum class FadeCurve { Linear, Smooth, EqualPower, Fast, Slow, Sharp, Custom, Bezier };
 
 QString fadeCurveToString(FadeCurve curve);
 FadeCurve fadeCurveFromString(const QString &curve);
@@ -58,6 +58,10 @@ public:
     static FadeShape linearPreset();
     // Equal-power (Natural) seed.
     static FadeShape equalPowerPreset();
+    // VEGAS Fast / Slow / Sharp presets.
+    static FadeShape fastPreset();
+    static FadeShape slowPreset();
+    static FadeShape sharpPreset();
     // Cubic seeds, matching the CSS keywords of the same name.
     static FadeShape bezierPreset(const QString &name);
 
@@ -80,6 +84,14 @@ inline double shapedProgress(double t, FadeCurve curve, const FadeShape &shape)
         return t * t * (3.0 - 2.0 * t);
     case FadeCurve::EqualPower:
         return std::sin(t * 1.5707963267948966); // t * pi/2
+    case FadeCurve::Fast:
+        return 1.0 - (1.0 - t) * (1.0 - t);
+    case FadeCurve::Slow:
+        return t * t;
+    case FadeCurve::Sharp: {
+        const double s = t * t * (3.0 - 2.0 * t);
+        return s * s * (3.0 - 2.0 * s);
+    }
     case FadeCurve::Custom:
         return shape.isEmpty() ? t : shape.gainAt(t);
     case FadeCurve::Bezier:

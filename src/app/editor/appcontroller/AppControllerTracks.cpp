@@ -1,4 +1,5 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "app/editor/PreferencesController.h"
 #include "engine/decode/probe/MediaProbe.h"
 #include "app/editor/sessions/MaskingController.h"
 #include "app/mcp/McpController.h"
@@ -143,6 +144,7 @@ QHash<QString, QString> defaultShortcuts()
         // TimelinePanel they were neither.
         {QStringLiteral("selectTool"), QStringLiteral("V")},
         {QStringLiteral("bladeTool"), QStringLiteral("B")},
+        {QStringLiteral("slipTool"), QStringLiteral("Y")},
         // Masking workspace tools. The masking panel claims these only while the pointer is over the
         // preview or it has focus or hover (never in 3D mode), so they stay free on the timeline.
         {QStringLiteral("maskingPolygonTool"), QStringLiteral("P")},
@@ -1440,14 +1442,17 @@ void AppController::nudgeSelection(double deltaSeconds)
     }
 
     QSet<QString> movedIds;
+    QSet<int> movedTracks;
     for (const QPair<int, int> &pair : pairs) {
         if (!isValidClipIndex(pair.first, pair.second))
             continue;
         drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
         clip.timelineStart = qMax<drift::TimeUs>(0, clip.timelineStart + clampedDeltaUs);
         movedIds.insert(clip.id);
+        movedTracks.insert(pair.first);
     }
-    if (!m_allowClipOverlap) {
+    const bool allowOverlapGlobal = m_allowClipOverlap || m_preferences->autoCrossfadeOverlaps();
+    if (!allowOverlapGlobal) {
         QList<drift::PlacedSpan> spans;
         for (const QPair<int, int> &pair : pairs) {
             if (!isValidClipIndex(pair.first, pair.second))
@@ -1475,6 +1480,9 @@ void AppController::nudgeSelection(double deltaSeconds)
         setLastMessage(tr("A clip can't completely cover another"), QStringLiteral("warning"));
         return;
     }
+    for (const int t : std::as_const(movedTracks))
+        syncOverlapTransitionsOnTrack(m_project.tracks()[t]);
+    autoCrossfadeNewOverlaps(before);
     pushProjectEdit(before, tr("Nudge selection"));
     finishEdit(tr("Selection nudged"));
 }

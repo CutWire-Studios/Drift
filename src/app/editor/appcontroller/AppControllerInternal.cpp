@@ -88,35 +88,33 @@ void syncOverlapTransitionsOnTrack(drift::Track &track)
 {
     constexpr drift::TimeUs kDefaultAdjacentDurationUs = drift::secondsToUs(0.5);
 
-    {
-        if (!trackAllowsTransitions(track.type))
-            return;
+    if (!trackAllowsTransitions(track.type))
+        return;
 
-        // Overlap is stacking, not an implicit fade. Only keep and retune transitions the
-        // user (or MCP) actually added.
-        for (int i = track.transitions.size() - 1; i >= 0; --i) {
-            drift::Transition &transition = track.transitions[i];
-            const drift::Clip *fromClip = drift::clipById(track, transition.fromClipId);
-            const drift::Clip *toClip = drift::clipById(track, transition.toClipId);
-            if (!fromClip || !toClip || !drift::clipsEligibleForTransition(*fromClip, *toClip)) {
-                track.transitions.removeAt(i);
-                continue;
-            }
-
-            if (drift::clipsPhysicallyOverlap(*fromClip, *toClip)) {
-                const drift::TimeUs overlapUs = drift::physicalOverlapDurationUs(*fromClip, *toClip);
-                if (overlapUs > 0)
-                    transition.durationUs = overlapUs;
-                continue;
-            }
-
-            // Adjacent: a leftover overlap duration can be longer than either clip, which
-            // would paint a virtual window from before t=0. Explicit 0.75s fades stay put.
-            const drift::TimeUs shorter =
-                qMin(fromClip->timelineDuration, toClip->timelineDuration);
-            if (transition.durationUs > shorter)
-                transition.durationUs = qMin(kDefaultAdjacentDurationUs, shorter);
+    // Overlap is stacking, not an implicit fade. Only keep and retune transitions the
+    // user (or MCP) actually added.
+    for (int i = track.transitions.size() - 1; i >= 0; --i) {
+        drift::Transition &transition = track.transitions[i];
+        const drift::Clip *fromClip = drift::clipById(track, transition.fromClipId);
+        const drift::Clip *toClip = drift::clipById(track, transition.toClipId);
+        if (!fromClip || !toClip || !drift::clipsEligibleForTransition(*fromClip, *toClip)) {
+            track.transitions.removeAt(i);
+            continue;
         }
+
+        if (drift::clipsPhysicallyOverlap(*fromClip, *toClip)) {
+            const drift::TimeUs overlapUs = drift::physicalOverlapDurationUs(*fromClip, *toClip);
+            if (overlapUs > 0)
+                transition.durationUs = overlapUs;
+            continue;
+        }
+
+        // Adjacent: a leftover overlap duration can be longer than either clip, which
+        // would paint a virtual window from before t=0. Explicit 0.75s fades stay put.
+        const drift::TimeUs shorter =
+            qMin(fromClip->timelineDuration, toClip->timelineDuration);
+        if (transition.durationUs > shorter)
+            transition.durationUs = qMin(kDefaultAdjacentDurationUs, shorter);
     }
 }
 

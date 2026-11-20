@@ -18,7 +18,12 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFutureWatcher>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QProcess>
 #include <QSet>
+#include <QStandardPaths>
+#include <QThreadPool>
 #include <QtConcurrent>
 
 #include <cmath>
@@ -1008,6 +1013,261 @@ void MediaBinController::startNextConversion()
         spec.rotationOverride = asset.value(QStringLiteral("effectiveRotation"), -1).toInt();
         startEditJob(assetId, asset.value(QStringLiteral("name")).toString(), spec, true);
     }
+}
+
+void MediaBinController::convertToProRes(const QStringList &assetIds, const QUrl &projectUrl)
+{
+    if (assetIds.isEmpty() || !m_app->m_assetLibrary)
+        return;
+
+    if (m_editing) {
+        m_app->setLastMessage(tr("Another conversion or media edit is currently running"),
+                              QStringLiteral("warning"));
+        return;
+    }
+
+    struct TranscodeItem {
+        QString assetId;
+        QString name;
+        QString inputPath;
+        QString outputPath;
+        bool alreadyExists = false;
+    };
+
+    QList<TranscodeItem> items;
+
+    for (const QString &id : assetIds) {
+        if (!m_app->m_project.assets().contains(id))
+            continue;
+        const drift::MediaAsset &asset = m_app->m_project.assets().value(id);
+        if (asset.kind != drift::MediaKind::Video || asset.path.isEmpty() || !QFileInfo::exists(asset.path))
+            continue;
+
+        const QFileInfo srcInfo(asset.path);
+        const QString srcDir = srcInfo.absolutePath();
+        const QString srcBase = srcInfo.completeBaseName();
+
+        QString targetDir;
+        if (projectUrl.isValid() && projectUrl.isLocalFile()) {
+            const QDir pDir = QFileInfo(projectUrl.toLocalFile()).dir();
+            const QString relDir = pDir.relativeFilePath(srcDir);
+            const QString candidate1 = pDir.filePath(QStringLiteral("../Transcodes_ProRes/") + pDir.dirName());
+            const QString candidate2 = pDir.filePath(QStringLiteral("Transcodes_ProRes"));
+
+            if (!relDir.isEmpty() && !relDir.startsWith(QLatin1String("..")) && relDir != QLatin1String(".")) {
+                // Preserve source subdirectories (e.g. "Day 4") to avoid collisions between identical camera clip numbers
+                targetDir = pDir.filePath(QStringLiteral("Transcodes_ProRes/") + relDir);
+            } else if (QDir(candidate1).exists() || QDir(pDir.filePath(QStringLiteral("../Transcodes_ProRes"))).exists()) {
+                targetDir = candidate1;
+            } else {
+                targetDir = candidate2;
+            }
+        }
+
+        if (targetDir.isEmpty()) {
+            const QDir sDir(srcDir);
+            const QString candidate1 = sDir.filePath(QStringLiteral("../Transcodes_ProRes/") + sDir.dirName());
+            if (QDir(sDir.filePath(QStringLiteral("../Transcodes_ProRes"))).exists()) {
+                targetDir = candidate1;
+            } else {
+                targetDir = sDir.filePath(QStringLiteral("Transcodes_ProRes"));
+            }
+        }
+
+        QDir(targetDir).mkpath(QStringLiteral("."));
+
+        QString outPath;
+        if (asset.path.endsWith(QLatin1String(".mov"), Qt::CaseInsensitive)) {
+            outPath = asset.path;
+        } else {
+            const QString sameFolderMov = QDir(srcDir).filePath(srcBase + QStringLiteral(".mov"));
+            if (QFileInfo::exists(sameFolderMov) && QFileInfo(sameFolderMov).size() > 1024 * 1024) {
+                outPath = sameFolderMov;
+            } else {
+                outPath = QDir(targetDir).filePath(srcBase + QStringLiteral(".mov"));
+            }
+        }
+
+        TranscodeItem item;
+        item.assetId = id;
+        item.name = asset.name.isEmpty() ? srcInfo.fileName() : asset.name;
+        item.inputPath = asset.path;
+        item.outputPath = outPath;
+        if (QFileInfo::exists(outPath) && QFileInfo(outPath).size() > 1024 * 1024) {
+            item.alreadyExists = true;
+        }
+        items.append(item);
+    }
+
+    if (items.isEmpty()) {
+        m_app->setLastMessage(tr("No valid video files to transcode"), QStringLiteral("warning"));
+        return;
+    }
+
+    const int total = int(items.size());
+    m_editing = true;
+    m_editIsConversion = true;
+    m_editProgress = 0.0;
+    m_editStatus = tr("Transcoding to Apple ProRes 422…");
+    m_editKeepName = tr("%n clip(s)", nullptr, total);
+    m_editCancel.storeRelaxed(0);
+    emit editChanged();
+
+    m_app->setLastMessage(tr("Starting Apple ProRes 422 transcode for %n file(s)…", nullptr, total),
+                          QStringLiteral("info"));
+
+    QString ffmpegPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpegPath.isEmpty() && QFile::exists(QStringLiteral("/usr/bin/ffmpeg"))) {
+        ffmpegPath = QStringLiteral("/usr/bin/ffmpeg");
+    }
+
+    (void)QtConcurrent::run([this, items, ffmpegPath, total]() {
+        const int maxThreads = std::clamp(QThread::idealThreadCount() / 2, 1, 6);
+        QThreadPool pool;
+        pool.setMaxThreadCount(maxThreads);
+
+        struct SharedResult {
+            QMutex mutex;
+            QHash<QString, QString> remap;
+            QAtomicInt completed = 0;
+            QAtomicInt failed = 0;
+        } result;
+
+        for (const TranscodeItem &item : items) {
+            pool.start([this, item, &result, ffmpegPath, total]() {
+                if (m_editCancel.loadRelaxed() != 0)
+                    return;
+
+                if (item.alreadyExists) {
+                    {
+                        QMutexLocker locker(&result.mutex);
+                        result.remap.insert(item.inputPath, item.outputPath);
+                    }
+                    const int done = ++result.completed;
+                    const double frac = double(done) / double(total);
+                    QMetaObject::invokeMethod(
+                        this,
+                        [this, frac, done, total, name = item.name]() {
+                            m_editProgress = frac;
+                            m_editKeepName = QStringLiteral("%1 (%2/%3)").arg(name).arg(done).arg(total);
+                            emit editChanged();
+                            emit proresTranscodeProgress(done, total, frac);
+                        },
+                        Qt::QueuedConnection);
+                    return;
+                }
+
+                if (ffmpegPath.isEmpty()) {
+                    ++result.failed;
+                    return;
+                }
+
+                const QString tmpOut = item.outputPath + QStringLiteral(".tmp.mov");
+                if (QFile::exists(tmpOut))
+                    QFile::remove(tmpOut);
+
+                QStringList args;
+                args << QStringLiteral("-hide_banner")
+                     << QStringLiteral("-loglevel") << QStringLiteral("error")
+                     << QStringLiteral("-y")
+                     << QStringLiteral("-i") << item.inputPath
+                     << QStringLiteral("-c:v") << QStringLiteral("prores_ks")
+                     << QStringLiteral("-profile:v") << QStringLiteral("2")
+                     << QStringLiteral("-vendor") << QStringLiteral("apl0")
+                     << QStringLiteral("-pix_fmt") << QStringLiteral("yuv422p10le")
+                     << QStringLiteral("-c:a") << QStringLiteral("pcm_s16le")
+                     << QStringLiteral("-ar") << QStringLiteral("48000")
+                     << QStringLiteral("-map") << QStringLiteral("0:v:0")
+                     << QStringLiteral("-map") << QStringLiteral("0:a?")
+                     << tmpOut;
+
+                QProcess proc;
+                proc.start(ffmpegPath, args);
+
+                while (!proc.waitForFinished(200)) {
+                    if (m_editCancel.loadRelaxed() != 0) {
+                        proc.kill();
+                        proc.waitForFinished();
+                        QFile::remove(tmpOut);
+                        return;
+                    }
+                }
+
+                if (proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0
+                    && QFile::exists(tmpOut) && QFileInfo(tmpOut).size() > 0) {
+                    if (QFile::exists(item.outputPath))
+                        QFile::remove(item.outputPath);
+                    if (QFile::rename(tmpOut, item.outputPath)) {
+                        QMutexLocker locker(&result.mutex);
+                        result.remap.insert(item.inputPath, item.outputPath);
+                    } else {
+                        ++result.failed;
+                        QFile::remove(tmpOut);
+                    }
+                } else {
+                    ++result.failed;
+                    QFile::remove(tmpOut);
+                }
+
+                const int done = ++result.completed;
+                const double frac = double(done) / double(total);
+                QMetaObject::invokeMethod(
+                    this,
+                    [this, frac, done, total, name = item.name]() {
+                        m_editProgress = frac;
+                        m_editKeepName = QStringLiteral("%1 (%2/%3)").arg(name).arg(done).arg(total);
+                        emit editChanged();
+                        emit proresTranscodeProgress(done, total, frac);
+                    },
+                    Qt::QueuedConnection);
+            });
+        }
+
+        pool.waitForDone();
+
+        const QHash<QString, QString> remap = result.remap;
+        const int succeeded = int(remap.size());
+        const int failed = result.failed.loadRelaxed();
+
+        QMetaObject::invokeMethod(
+            this,
+            [this, remap, succeeded, failed]() {
+                m_editing = false;
+                m_editProgress = 1.0;
+                m_editKeepName.clear();
+                m_editStatus.clear();
+                emit editChanged();
+                emit proresTranscodeFinished(succeeded, failed);
+
+                if (succeeded > 0) {
+                    relinkPaths(remap, tr("Transcode to Apple ProRes 422"));
+                    for (auto it = remap.constBegin(); it != remap.constEnd(); ++it) {
+                        const QString &newPath = it.value();
+                        for (drift::MediaAsset &asset : m_app->m_project.assets()) {
+                            if (asset.path == newPath) {
+                                asset.editFriendly = true;
+                                asset.variableFrameRate = false;
+                                asset.frameRateKnown = true;
+                            }
+                        }
+                    }
+                    if (m_app->m_assetLibrary)
+                        m_app->m_assetLibrary->setProject(&m_app->m_project);
+                    m_app->notifyTracksChanged();
+
+                    const QString message = tr("Transcoded %n clip(s) to Apple ProRes 422 and relinked", nullptr, succeeded);
+                    m_app->setLastMessage(message, QStringLiteral("success"));
+                    emit editFinished(true, message);
+                } else {
+                    const QString errorMsg = m_editCancel.loadRelaxed() != 0
+                        ? tr("ProRes transcoding cancelled")
+                        : tr("ProRes transcoding failed");
+                    m_app->setLastMessage(errorMsg, QStringLiteral("error"));
+                    emit editFinished(false, errorMsg);
+                }
+            },
+            Qt::QueuedConnection);
+    });
 }
 
 void MediaBinController::finalizeReplace(const QString &assetId, const drift::MediaAsset &filled,

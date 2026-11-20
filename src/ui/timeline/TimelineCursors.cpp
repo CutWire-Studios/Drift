@@ -82,11 +82,11 @@ void paintGlyph(QPainter &p, const Glyph &g)
 }
 
 // Premiere Selection-tool trim pointer: a bar sized to the clip with a solid triangle pointing
-// toward the clip interior. side < 0 is the left edge.
-QCursor paintTrim(int side, int heightPx, qreal dpr)
+// toward the clip interior. side < 0 is the left edge. `stretch` adds an accordion wave indicator.
+QCursor paintTrim(int side, int heightPx, qreal dpr, bool stretch = false)
 {
     const int h = qBound(18, heightPx, 160);
-    const int w = 22;
+    const int w = stretch ? 26 : 22;
     QPixmap pixmap(QSize(qCeil(w * dpr), qCeil(h * dpr)));
     pixmap.setDevicePixelRatio(dpr);
     pixmap.fill(Qt::transparent);
@@ -94,7 +94,7 @@ QCursor paintTrim(int side, int heightPx, qreal dpr)
     QPainter painter(&pixmap);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    const qreal barX = side < 0 ? 14.0 : 7.0;
+    const qreal barX = side < 0 ? (stretch ? 18.0 : 14.0) : 7.0;
     const qreal top = 1.0;
     const qreal bot = h - 2.0;
     const qreal midY = h * 0.5;
@@ -119,6 +119,25 @@ QCursor paintTrim(int side, int heightPx, qreal dpr)
     painter.setBrush(kFill);
     painter.setPen(Qt::NoPen);
     painter.drawPath(arrow);
+
+    if (stretch) {
+        // Draw zigzag accordion wave indicator next to the bar
+        QPainterPath wave;
+        const qreal wx = side < 0 ? barX - 6.0 : barX + 6.0;
+        const qreal s = side < 0 ? -2.5 : 2.5;
+        wave.moveTo(wx, midY - 6.0);
+        wave.lineTo(wx + s, midY - 3.0);
+        wave.lineTo(wx, midY);
+        wave.lineTo(wx + s, midY + 3.0);
+        wave.lineTo(wx, midY + 6.0);
+
+        painter.setPen(QPen(kOutline, 2.8, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawPath(wave);
+
+        painter.setPen(QPen(kFill, 1.4, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        painter.drawPath(wave);
+    }
 
     return QCursor(pixmap, qRound(barX), qRound(midY));
 }
@@ -209,6 +228,8 @@ Spec specFor(TimelineCursorKind kind)
     case TimelineCursorKind::TrimEndTool:
     case TimelineCursorKind::TrimIn:
     case TimelineCursorKind::TrimOut:
+    case TimelineCursorKind::StretchIn:
+    case TimelineCursorKind::StretchOut:
         break;
     case TimelineCursorKind::FadeIn:
     case TimelineCursorKind::FadeOut:
@@ -224,6 +245,11 @@ Spec specFor(TimelineCursorKind kind)
         bowtie(g, 12, 12, 4, 4);
         bracket(g, 3, 4, 20, 3);
         bracket(g, 21, 4, 20, -3);
+        break;
+    case TimelineCursorKind::Slip:
+        bracket(g, 3, 5, 19, 3);
+        bracket(g, 21, 5, 19, -3);
+        hArrows(g, 12, 12, 6.5, 3.5);
         break;
     case TimelineCursorKind::TransitionMove:
         bowtie(g, 12, 7, 4.5, 4);
@@ -285,6 +311,9 @@ bool timelineCursorKindFromName(const QString &name, TimelineCursorKind *kind)
         {QStringLiteral("trimEndTool"), TimelineCursorKind::TrimEndTool},
         {QStringLiteral("trimIn"), TimelineCursorKind::TrimIn},
         {QStringLiteral("trimOut"), TimelineCursorKind::TrimOut},
+        {QStringLiteral("stretchIn"), TimelineCursorKind::StretchIn},
+        {QStringLiteral("stretchOut"), TimelineCursorKind::StretchOut},
+        {QStringLiteral("slip"), TimelineCursorKind::Slip},
         {QStringLiteral("fadeIn"), TimelineCursorKind::FadeIn},
         {QStringLiteral("fadeOut"), TimelineCursorKind::FadeOut},
         {QStringLiteral("transitionResize"), TimelineCursorKind::TransitionResize},
@@ -306,14 +335,17 @@ QCursor timelineCursor(TimelineCursorKind kind, int heightPx, qreal dpr)
 {
     dpr = qBound(1.0, dpr, 4.0);
     const bool trim = kind == TimelineCursorKind::TrimIn || kind == TimelineCursorKind::TrimOut;
-    const int h = trim ? qBound(18, heightPx, 160) : 0;
+    const bool stretch = kind == TimelineCursorKind::StretchIn || kind == TimelineCursorKind::StretchOut;
+    const int h = (trim || stretch) ? qBound(18, heightPx, 160) : 0;
     const quint64 key = (quint64(kind) << 48) | (quint64(h) << 32) | quint64(qRound(dpr * 100));
     const auto it = cache().constFind(key);
     if (it != cache().constEnd())
         return *it;
 
-    if (trim)
-        return *cache().insert(key, paintTrim(kind == TimelineCursorKind::TrimIn ? -1 : 1, h, dpr));
+    if (trim || stretch) {
+        const int side = (kind == TimelineCursorKind::TrimIn || kind == TimelineCursorKind::StretchIn) ? -1 : 1;
+        return *cache().insert(key, paintTrim(side, h, dpr, stretch));
+    }
     if (kind == TimelineCursorKind::Blade || kind == TimelineCursorKind::TrimStartTool
         || kind == TimelineCursorKind::TrimEndTool)
         return *cache().insert(key, paintBlade(kind, dpr));

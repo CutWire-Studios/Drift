@@ -15,6 +15,7 @@
 #include "core/interchange/OtioReader.h"
 #include "core/interchange/premiere/PrprojReader.h"
 #include "core/interchange/ResolveReader.h"
+#include "core/interchange/VegasReader.h"
 #include "engine/addons/AddonRegistry.h"
 #include "engine/platform/AndroidUri.h"
 #include "engine/encode/writers/AudioFileWriter.h"
@@ -883,12 +884,13 @@ std::optional<AppController::ParsedProject> readRecoveryFile(const QString &path
 
 struct ProjectFileController::LoadResult
 {
-    enum class Kind { Bundle, Json, Recovery };
+    enum class Kind { Bundle, Json, Recovery, Vegas };
 
     QString error;
     Kind kind = Kind::Bundle;
     // Empty on failure, with `error` saying why.
     std::optional<AppController::ParsedProject> parsed;
+    QString projectName;
     // Recovery loads only: the file the snapshot was taken of.
     QString originalPath;
     // Bundle loads only.
@@ -1174,6 +1176,11 @@ void ProjectFileController::loadOtioTimeline(const QUrl &url)
     m_app->setLastMessage(tr("OpenTimelineIO imported: %1").arg(proj->name()), QStringLiteral("success"));
 }
 
+void ProjectFileController::loadVegasProject(const QUrl &url)
+{
+    loadProject(url);
+}
+
 void ProjectFileController::packageProject(const QUrl &url)
 {
     // The bundle writer needs a real file to seek in, so on Android this stages into app storage
@@ -1451,6 +1458,22 @@ void ProjectFileController::loadProject(const QUrl &url)
         //     return;
         // }
 
+        if (path.endsWith(QLatin1String(".veg"), Qt::CaseInsensitive)
+            || drift::vegas::isVegasProject(path)) {
+            result->kind = LoadResult::Kind::Vegas;
+            QString readError;
+            const auto proj = drift::vegas::readProject(path, &readError);
+            if (!proj) {
+                result->error = readError.isEmpty() ? tr("Failed to open VEGAS Pro project") : readError;
+            } else {
+                result->projectName = proj->name();
+                const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
+                result->parsed = AppController::parseProjectJson(data, &result->error);
+            }
+            deliver();
+            return;
+        }
+
         if (fileStartsWithJsonObject(path)) {
             result->kind = LoadResult::Kind::Json;
             result->parsed = readProjectJsonFile(path, &result->error);
@@ -1549,10 +1572,123 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
         return;
     }
 
+    if (result->kind == LoadResult::Kind::Vegas) {
+        m_app->applyParsedProject(std::move(*result->parsed));
+        m_embeddedSources.clear();
+        // Untitled: Save must not write a .drift bundle over this project, and recents stay .drift.
+        setCurrentProjectPath(QString());
+        setDirty(true);
+        deleteRecoveryFile();
+        m_app->setProjectLayoutChosen(true);
+
+        // Automatically replace raw camera / MTS files with converted ProRes .mov files if they exist
+        QHash<QString, QString> autoRemap;
+        for (const auto &asset : m_app->m_project.assets()) {
+            if (asset.kind == drift::MediaKind::Video && !asset.editFriendly && !asset.path.isEmpty()) {
+                const QFileInfo info(asset.path);
+                const QString dir = info.absolutePath();
+                const QString base = info.completeBaseName();
+                const QString ext = info.suffix().toLower();
+                if (ext == QLatin1String("mov"))
+                    continue;
+
+                const QString sameDirMov = QDir(dir).filePath(base + QStringLiteral(".mov"));
+                const QString transcodeMov = QDir(dir).filePath(QStringLiteral("Transcodes_ProRes/") + base + QStringLiteral(".mov"));
+                const QString parentTranscodeMov = QDir(dir).filePath(QStringLiteral("../Transcodes_ProRes/") + QDir(dir).dirName() + QStringLiteral("/") + base + QStringLiteral(".mov"));
+
+                if (QFileInfo::exists(sameDirMov) && QFileInfo(sameDirMov).size() > 1024 * 1024) {
+                    autoRemap.insert(asset.path, sameDirMov);
+                } else if (QFileInfo::exists(transcodeMov) && QFileInfo(transcodeMov).size() > 1024 * 1024) {
+                    autoRemap.insert(asset.path, transcodeMov);
+                } else if (QFileInfo::exists(parentTranscodeMov) && QFileInfo(parentTranscodeMov).size() > 1024 * 1024) {
+                    autoRemap.insert(asset.path, parentTranscodeMov);
+                }
+            }
+        }
+        if (!autoRemap.isEmpty()) {
+            remapProjectPaths(autoRemap);
+            for (auto it = autoRemap.constBegin(); it != autoRemap.constEnd(); ++it) {
+                const QString &newPath = it.value();
+                for (drift::MediaAsset &asset : m_app->m_project.assets()) {
+                    if (asset.path == newPath) {
+                        asset.editFriendly = true;
+                        asset.variableFrameRate = false;
+                        asset.frameRateKnown = true;
+                    }
+                }
+            }
+            if (m_app->m_assetLibrary)
+                m_app->m_assetLibrary->setProject(&m_app->m_project);
+            m_app->notifyTracksChanged();
+        }
+
+        const int missing = m_app->m_assetLibrary->missingCount();
+        const QString message = missing > 0
+            ? tr("VEGAS Pro project imported, but %n media file(s) could not be found", nullptr, missing)
+            : (result->projectName.isEmpty()
+                   ? tr("VEGAS Pro project imported")
+                   : tr("VEGAS Pro project imported: %1").arg(result->projectName));
+        m_app->setLastMessage(message, missing > 0 ? QStringLiteral("warning") : QStringLiteral("success"));
+        finishProjectLoad(true, message);
+
+        QStringList unconvertedIds;
+        for (const auto &asset : m_app->m_project.assets()) {
+            if (asset.kind == drift::MediaKind::Video && !asset.editFriendly && !asset.path.isEmpty()
+                && QFileInfo::exists(asset.path)) {
+                unconvertedIds.append(asset.id);
+            }
+        }
+        if (!unconvertedIds.isEmpty()) {
+            emit vegasTranscodeSuggested(unconvertedIds, url);
+        }
+        return;
+    }
+
     const drift::bundle::BundleInfo &bundle = result->bundle;
     const QHash<QString, QString> &remap = result->remap;
     m_pendingPathRemap = remap;
     m_app->applyParsedProject(std::move(*result->parsed));
+
+    // Automatically replace raw camera / MTS files with converted ProRes .mov files if they exist
+    QHash<QString, QString> autoRemap;
+    for (const auto &asset : m_app->m_project.assets()) {
+        if (asset.kind == drift::MediaKind::Video && !asset.editFriendly && !asset.path.isEmpty()) {
+            const QFileInfo info(asset.path);
+            const QString dir = info.absolutePath();
+            const QString base = info.completeBaseName();
+            const QString ext = info.suffix().toLower();
+            if (ext == QLatin1String("mov"))
+                continue;
+
+            const QString sameDirMov = QDir(dir).filePath(base + QStringLiteral(".mov"));
+            const QString transcodeMov = QDir(dir).filePath(QStringLiteral("Transcodes_ProRes/") + base + QStringLiteral(".mov"));
+            const QString parentTranscodeMov = QDir(dir).filePath(QStringLiteral("../Transcodes_ProRes/") + QDir(dir).dirName() + QStringLiteral("/") + base + QStringLiteral(".mov"));
+
+            if (QFileInfo::exists(sameDirMov) && QFileInfo(sameDirMov).size() > 1024 * 1024) {
+                autoRemap.insert(asset.path, sameDirMov);
+            } else if (QFileInfo::exists(transcodeMov) && QFileInfo(transcodeMov).size() > 1024 * 1024) {
+                autoRemap.insert(asset.path, transcodeMov);
+            } else if (QFileInfo::exists(parentTranscodeMov) && QFileInfo(parentTranscodeMov).size() > 1024 * 1024) {
+                autoRemap.insert(asset.path, parentTranscodeMov);
+            }
+        }
+    }
+    if (!autoRemap.isEmpty()) {
+        remapProjectPaths(autoRemap);
+        for (auto it = autoRemap.constBegin(); it != autoRemap.constEnd(); ++it) {
+            const QString &newPath = it.value();
+            for (drift::MediaAsset &asset : m_app->m_project.assets()) {
+                if (asset.path == newPath) {
+                    asset.editFriendly = true;
+                    asset.variableFrameRate = false;
+                    asset.frameRateKnown = true;
+                }
+            }
+        }
+        if (m_app->m_assetLibrary)
+            m_app->m_assetLibrary->setProject(&m_app->m_project);
+        m_app->notifyTracksChanged();
+    }
 
     m_embeddedSources.clear();
     for (const drift::bundle::MediaEntry &entry : bundle.media) {

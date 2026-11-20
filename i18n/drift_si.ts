@@ -2846,6 +2846,14 @@
         <translation>දකුණ වෙන් කරන්න</translation>
     </message>
     <message>
+        <source>Time stretch clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip time stretched</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim clip</source>
         <translation>ක්ලිපය කප්පාදු කරන්න</translation>
     </message>
@@ -4508,8 +4516,20 @@
         <translation>රේඛීය</translation>
     </message>
     <message>
+        <source>Fast</source>
+        <translation type="unfinished">වේගවත්</translation>
+    </message>
+    <message>
+        <source>Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smooth</source>
         <translation>සුමට කරන්න</translation>
+    </message>
+    <message>
+        <source>Sharp</source>
+        <translation type="unfinished">තියුණු (Sharp)</translation>
     </message>
     <message>
         <source>Natural</source>
@@ -9198,6 +9218,10 @@
         <translation>සියලු ගොනු (*)</translation>
     </message>
     <message>
+        <source>Sony / MAGIX VEGAS Pro (*.veg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name your project</source>
         <translation>ඔබේ ව්‍යාපෘතිය නම් කරන්න</translation>
     </message>
@@ -13408,6 +13432,17 @@
         <source>Export finished.</source>
         <translation>නිර්යාත කිරීම අවසන් විය.</translation>
     </message>
+    <message numerus="yes">
+        <source>This VEGAS Pro timeline contains %n unconverted AVCHD / camera raw clip(s). Convert them to Apple ProRes 422 now to prevent audio sync drift and lag?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to ProRes 422</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>බෙදාගත හැකි පිටපත සෑදීමට නොහැකි විය: %1</translation>
@@ -15535,6 +15570,10 @@
         <translation>ප්‍රොක්සි ඉවත් කරන්න</translation>
     </message>
     <message>
+        <source>Convert to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to edit-friendly format</source>
         <translation>සංස්කරණයට පහසු ආකෘතියකට පරිවර්තනය කරන්න</translation>
     </message>
@@ -15813,6 +15852,51 @@
     <message>
         <source>%1 (%2)</source>
         <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Another conversion or media edit is currently running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No valid video files to transcode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transcoding to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform>ක්ලිප් %nක්</numerusform>
+            <numerusform>ක්ලිප් %nක්</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Starting Apple ProRes 422 transcode for %n file(s)…</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transcode to Apple ProRes 422</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Transcoded %n clip(s) to Apple ProRes 422 and relinked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>ProRes transcoding cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ProRes transcoding failed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The project was closed before the replace landed</source>
@@ -18020,6 +18104,10 @@ If playback stutters, try another.</source>
         <source>Still opening a project — try again in a moment.</source>
         <translation>තවමත් ව්‍යාපෘතියක් විවෘත වෙමින් පවතී — මොහොතකින් නැවත උත්සාහ කරන්න.</translation>
     </message>
+    <message>
+        <source>Failed to open VEGAS Pro project</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>
         <translation>
@@ -18149,6 +18237,21 @@ If playback stutters, try another.</source>
     <message>
         <source>That project location isn’t valid</source>
         <translation>එම ව්‍යාපෘති ස්ථානය වලංගු නැත</translation>
+    </message>
+    <message numerus="yes">
+        <source>VEGAS Pro project imported, but %n media file(s) could not be found</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>VEGAS Pro project imported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>VEGAS Pro project imported: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>Project loaded, but %n media file(s) could not be found</source>
@@ -26763,6 +26866,10 @@ If playback stutters, try another.</source>
         <translation>ආවරණ කාලරේඛාව විවෘත කරන්න</translation>
     </message>
     <message>
+        <source>Convert to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to edit-friendly format</source>
         <translation>සංස්කරණයට පහසු ආකෘතියකට පරිවර්තනය කරන්න</translation>
     </message>
@@ -26905,10 +27012,53 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineFadeCurveContextMenu</name>
+    <message>
+        <source>Fade Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">රේඛීය</translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation type="unfinished">වේගවත්</translation>
+    </message>
+    <message>
+        <source>Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth (S-Curve)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sharp</source>
+        <translation type="unfinished">තියුණු (Sharp)</translation>
+    </message>
+    <message>
+        <source>Natural (Equal Power)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Curve Editor…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineFadeHandle</name>
     <message>
         <source>%1s</source>
         <translation>%1s</translation>
+    </message>
+    <message>
+        <source>Fade Out Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade In Curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Adjust fade</source>
@@ -27517,18 +27667,29 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Transition Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
         <translation>ක්ලිපය නැවත නැවත කිරීමට අදින්න</translation>
     </message>
     <message>
-        <source>Drag to trim the start</source>
-        <translation>ආරම්භය කප්පාදු කිරීමට අදින්න</translation>
+        <source>Drag to trim the start (Ctrl+drag to time stretch)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag to trim the end</source>
-        <translation>අවසානය කප්පාදු කිරීමට අදින්න</translation>
+        <source>Drag to trim the end (Ctrl+drag to time stretch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time stretch clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
@@ -29774,6 +29935,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Back to the drawing&apos;s own %1</source>
         <translation>චිත්‍රයේ මුල් %1 වෙත ආපසු</translation>
+    </message>
+</context>
+<context>
+    <name>VegasTranscodeDialog</name>
+    <message>
+        <source>Convert Media to Apple ProRes 422</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to ProRes 422</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep Original Media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>This VEGAS Pro timeline contains %n unconverted AVCHD / camera raw clip(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Drift works best with edit-friendly intraframe codecs. Converting these clips to Apple ProRes 422 now ensures smooth timeline playback, responsive frame-accurate scrubbing, and prevents audio sync drift.
+
+Transcoding runs in the background using multi-threaded FFmpeg without modifying your original media files.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

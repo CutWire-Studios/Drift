@@ -69,6 +69,7 @@ class TimelineTrackItem : public QQuickItem
     Q_PROPERTY(QObject *haptics READ haptics WRITE setHaptics NOTIFY servicesChanged)
     Q_PROPERTY(QAbstractItemModel *activeClips READ activeClips CONSTANT)
     Q_PROPERTY(bool dragging READ dragging NOTIFY draggingChanged)
+    Q_PROPERTY(bool slipToolActive READ slipToolActive WRITE setSlipToolActive NOTIFY slipToolActiveChanged)
     // Touch only: a clip is picked up (held, or being dragged). The panel stops panning for it.
     Q_PROPERTY(bool lifted READ lifted NOTIFY draggingChanged)
     Q_PROPERTY(bool lastPressTouch READ lastPressTouch NOTIFY lastPressTouchChanged)
@@ -102,6 +103,15 @@ public:
     void setHaptics(QObject *haptics);
     QAbstractItemModel *activeClips() const { return m_activeClips; }
     bool dragging() const { return m_drag.moving; }
+    bool slipToolActive() const { return m_slipToolActive; }
+    void setSlipToolActive(bool active)
+    {
+        if (m_slipToolActive == active)
+            return;
+        m_slipToolActive = active;
+        emit slipToolActiveChanged();
+        scheduleRebuild();
+    }
     bool lifted() const;
     bool lastPressTouch() const { return m_lastPressTouch; }
     QPointF dragPointer() const { return m_drag.pointer; }
@@ -126,6 +136,7 @@ signals:
     void trackChanged();
     void servicesChanged();
     void draggingChanged();
+    void slipToolActiveChanged();
     void dragPointerChanged();
     void lastPressTouchChanged();
     void hoverToolTipChanged();
@@ -159,6 +170,7 @@ protected:
     void hoverMoveEvent(QHoverEvent *event) override;
     void hoverLeaveEvent(QHoverEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
 
 public:
     struct Label
@@ -203,6 +215,8 @@ private:
         bool rightButton = false;
         bool touch = false; // this press came from a finger (or the touch-only Android timeline)
         bool menuOpened = false;
+        bool slipping = false;
+        double slipDeltaSeconds = 0.0;
         int clipIndex = -1;
         QString clipId;
         QRectF pressRect;
@@ -290,6 +304,7 @@ private:
     DragState m_drag;
     QTimer m_longPress;
     bool m_lastPressTouch = false;
+    bool m_slipToolActive = false;
 
     // Built on the GUI thread in updatePolish, consumed by updatePaintNode. Coordinates are
     // relative to m_originX so vertices stay small on a long timeline.
