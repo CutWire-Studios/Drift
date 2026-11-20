@@ -733,6 +733,16 @@
       ]
     },
     {
+      "id": "masks-reset",
+      "target": "panel:properties.masks#masks-reset",
+      "context": "MasksInspector",
+      "source": "Reset mask",
+      "keywords": "default restore values geometry animation",
+      "needs": [
+        "maskable"
+      ]
+    },
+    {
       "id": "masks-feather",
       "target": "panel:properties.masks#masks-feather",
       "context": "MasksInspector",

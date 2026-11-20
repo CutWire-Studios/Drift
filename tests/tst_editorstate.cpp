@@ -462,6 +462,8 @@ private slots:
     void objectMaskReverseDecodeOrder();
     void refiningAnObjectMaskSwapsItsMatteInOneUndoStep();
     void maskRoundTripsThroughTheInspectorMap();
+    void resetMaskRestoresDefaultsInOneUndoStep();
+    void resetMediaMaskKeepsItsMatte();
     void maskScalarsKeyframeThroughTheGenericApi();
     void maskEditsKeepTheirKeyframes();
     void replacingMaskGeometryDropsItsAnimation();
@@ -13152,6 +13154,104 @@ void EditorStateTest::maskRoundTripsThroughTheInspectorMap()
     cleared.insert(QStringLiteral("shape"), QStringLiteral("none"));
     state.setClipMask(0, 0, cleared);
     QVERIFY(drift::linkedMaskAdjustments(*state.project(), 0, 0).isEmpty());
+}
+
+void EditorStateTest::resetMaskRestoresDefaultsInOneUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.addMaskToClip(0, 0, QStringLiteral("ellipse"));
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    const int track = pinned.constFirst().trackIndex;
+    const int clip = pinned.constFirst().clipIndex;
+    const QString maskId = state.project()->tracks().at(track).clips.at(clip).id;
+
+    drift::Mask edited = state.project()->tracks().at(track).clips.at(clip).mask;
+    edited.name = QStringLiteral("My ellipse");
+    edited.x = 0.2;
+    edited.y = 0.3;
+    edited.w = 0.4;
+    edited.h = 0.5;
+    edited.rotation = 45.0;
+    edited.feather = 12.0;
+    edited.roundness = 0.5;
+    edited.invert = true;
+    edited.lockAspect = true;
+    edited.op = drift::MaskOp::Subtract;
+    edited.enabled = false;
+    edited.keyframes[QStringLiteral("x")].setKeyframe(0, 0.2);
+    edited.pathKeys.insert(0, QVector<QPointF>{QPointF(0.1, 0.1), QPointF(0.9, 0.1),
+                                               QPointF(0.5, 0.9)});
+    state.project()->tracks()[track].clips[clip].mask = edited;
+
+    state.masking()->resetMask(track, clip);
+
+    const drift::Clip &after = state.project()->tracks().at(track).clips.at(clip);
+    QCOMPARE(after.id, maskId);
+    QCOMPARE(after.mask.shape, drift::MaskShape::Ellipse);
+    QCOMPARE(after.mask.name, QStringLiteral("My ellipse"));
+    QCOMPARE(after.mask.op, drift::MaskOp::Add);
+    QVERIFY(after.mask.enabled);
+    QCOMPARE(after.mask.x, 0.5);
+    QCOMPARE(after.mask.y, 0.5);
+    QCOMPARE(after.mask.w, 0.6);
+    QCOMPARE(after.mask.h, 0.6);
+    QCOMPARE(after.mask.rotation, 0.0);
+    QCOMPARE(after.mask.feather, 0.0);
+    QCOMPARE(after.mask.roundness, 0.0);
+    QVERIFY(!after.mask.invert);
+    QVERIFY(!after.mask.lockAspect);
+    QVERIFY(after.mask.keyframes.isEmpty());
+    QVERIFY(after.mask.pathKeys.isEmpty());
+
+    state.undo();
+    const drift::Mask &restored = state.project()->tracks().at(track).clips.at(clip).mask;
+    QCOMPARE(restored.x, 0.2);
+    QCOMPARE(restored.feather, 12.0);
+    QVERIFY(restored.invert);
+    QCOMPARE(restored.op, drift::MaskOp::Subtract);
+    QCOMPARE(restored.keyframes.size(), 1);
+    QCOMPARE(restored.pathKeys.size(), 1);
+}
+
+void EditorStateTest::resetMediaMaskKeepsItsMatte()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    const drift::Clip source = state.project()->tracks().at(0).clips.at(0);
+    state.segmentation()->finalizeSegmentation(source.id, QStringLiteral("/tmp/mattes/subject.mkv"),
+                                QStringLiteral("/tmp/mattes/subject.fgr.mkv"),
+                                drift::secondsToUs(0.5), QStringLiteral("adjustment"));
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    const int track = pinned.constFirst().trackIndex;
+    const int clip = pinned.constFirst().clipIndex;
+
+    drift::Mask edited = state.project()->tracks().at(track).clips.at(clip).mask;
+    edited.invert = true;
+    edited.mediaChannel = drift::MaskMediaChannel::Alpha;
+    edited.mediaFit = drift::MaskMediaFit::Fit;
+    edited.w = 0.4;
+    edited.h = 0.4;
+    state.project()->tracks()[track].clips[clip].mask = edited;
+
+    state.masking()->resetMask(track, clip);
+
+    const drift::Mask &reset = state.project()->tracks().at(track).clips.at(clip).mask;
+    QCOMPARE(reset.shape, drift::MaskShape::Media);
+    QCOMPARE(reset.mediaPath, QStringLiteral("/tmp/mattes/subject.mkv"));
+    QCOMPARE(reset.mediaFgrPath, QStringLiteral("/tmp/mattes/subject.fgr.mkv"));
+    QCOMPARE(reset.mediaSrcOffsetUs, drift::secondsToUs(0.5));
+    QCOMPARE(reset.w, 1.0);
+    QCOMPARE(reset.h, 1.0);
+    QCOMPARE(reset.mediaChannel, drift::MaskMediaChannel::Luma);
+    QCOMPARE(reset.mediaFit, drift::MaskMediaFit::Stretch);
+    QVERIFY(!reset.invert);
 }
 
 // Mask scalars animate through the same generic keyframe API as everything else, addressed as

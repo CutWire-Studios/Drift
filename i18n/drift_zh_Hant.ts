@@ -14471,6 +14471,14 @@
         <translation>遮罩已刪除</translation>
     </message>
     <message>
+        <source>Reset mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Draw polygon mask</source>
         <translation>繪製多邊形遮罩</translation>
     </message>
@@ -15109,6 +15117,14 @@
     <message>
         <source>Intersect</source>
         <translation>相交</translation>
+    </message>
+    <message>
+        <source>Reset mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore the default mask settings without deleting the mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove cutout layer</source>

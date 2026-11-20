@@ -263,6 +263,11 @@ public:
     // adjustment: sets its mask shape to None via writeClipMask.
     Q_INVOKABLE void removeMask(int trackIndex, int clipIndex);
 
+    // Puts the mask's editable values back to their defaults without deleting the adjustment, so
+    // its shape, name, media source and frame fixes survive. Clears animation too. One undo step
+    // tr("Reset mask"); the selection is left alone. No-op when there is no mask on the clip.
+    Q_INVOKABLE void resetMask(int trackIndex, int clipIndex);
+
     // The transform inspector's Shape picker. clipShape is one of drift::clipShapeIds() ("original" when
     // the clip has no shape mask). setClipShape replaces the clip's shape mask (one per clip) and
     // keeps its framing; "original" removes only that mask. Undo text tr("Set clip shape").

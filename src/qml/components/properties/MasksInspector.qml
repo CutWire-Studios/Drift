@@ -123,6 +123,24 @@ Item {
             }
         }
 
+        // Resetting puts the values back without throwing away the mask (issue #582): picking
+        // another shape or redrawing the same one used to be the only way back to the defaults.
+        SearchAnchor {
+            searchId: "masks-reset"
+            title: qsTr("Reset mask")
+            keywords: "default restore values geometry animation"
+            target: resetMaskButton
+        }
+        ThemedButton {
+            id: resetMaskButton
+            visible: root.maskShape !== "none"
+            text: qsTr("Reset mask")
+            tooltip: qsTr("Restore the default mask settings without deleting the mask")
+            glyph: Theme.icons.reset
+            onClicked: EditorState.masking.resetMask(EditorState.selectedTrack,
+                                                     EditorState.selectedClip)
+        }
+
         // Clearing a mask previously required knowing to reselect
         // "none" in the combo above.
         ThemedButton {

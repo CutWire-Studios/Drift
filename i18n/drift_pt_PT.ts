@@ -14531,6 +14531,14 @@
         <translation>Máscara eliminada</translation>
     </message>
     <message>
+        <source>Reset mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Draw polygon mask</source>
         <translation>Desenhar máscara poligonal</translation>
     </message>
@@ -15172,6 +15180,14 @@
     <message>
         <source>Intersect</source>
         <translation>Intersetar</translation>
+    </message>
+    <message>
+        <source>Reset mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore the default mask settings without deleting the mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove cutout layer</source>

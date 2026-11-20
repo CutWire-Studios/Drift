@@ -1638,6 +1638,48 @@ void MaskingController::removeMask(int trackIndex, int clipIndex)
         m_app->selectClipById(keepId);
 }
 
+void MaskingController::resetMask(int trackIndex, int clipIndex)
+{
+    if (!m_app->isValidClipIndex(trackIndex, clipIndex))
+        return;
+    const drift::Clip &clip = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Adjustment || clip.mask.shape == drift::MaskShape::None)
+        return;
+
+    const drift::Mask &old = clip.mask;
+    drift::Mask reset;
+    reset.shape = old.shape;
+    reset.name = old.name;
+    reset.cropShape = old.cropShape;
+    // The source is not a "value" the inspector edits: keep the matte it points at, its frame fixes
+    // and its timing. Raster masks get the full-frame rect from fullFrameMediaMask(); the 0.6
+    // parametric default would crop the coverage map.
+    if (old.isMedia()) {
+        reset.mediaPath = old.mediaPath;
+        reset.mediaFgrPath = old.mediaFgrPath;
+        reset.mediaSrcOffsetUs = old.mediaSrcOffsetUs;
+        reset.mediaLoop = old.mediaLoop;
+        reset.mediaTimeBase = old.mediaTimeBase;
+        reset.mediaPatches = old.mediaPatches;
+        reset.w = 1.0;
+        reset.h = 1.0;
+    } else if (old.isSequence()) {
+        reset.sequenceId = old.sequenceId;
+        reset.w = 1.0;
+        reset.h = 1.0;
+    }
+
+    const drift::Project before = m_app->m_project;
+    m_app->writeClipMask(trackIndex, clipIndex, reset);
+    // writeClipMask merges the old animation back when an incoming scalar happens to match the
+    // current one, so clearing the tracks has to happen on the written mask itself.
+    drift::Clip &holder = m_app->m_project.tracks()[trackIndex].clips[clipIndex];
+    holder.mask.keyframes.clear();
+    holder.mask.pathKeys.clear();
+    m_app->pushProjectEdit(before, tr("Reset mask"));
+    m_app->finishEdit(tr("Mask reset"));
+}
+
 void MaskingController::addPolygonMask(int trackIndex, int clipIndex, const QVariantList &points)
 {
     if (!m_app->isValidClipIndex(trackIndex, clipIndex) || points.size() < 3)
