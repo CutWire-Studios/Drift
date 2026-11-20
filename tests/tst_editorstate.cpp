@@ -311,6 +311,7 @@ private slots:
     void setTransitionKindAndDurationPersist();
     void replaceTransitionOnDrop();
     void overlapDoesNotAutoApplyCrossfade();
+    void dragToCrossfadeFormsAndResizesTransitionWithoutSplitting();
     void trimmingOverlapClampsStaleTransitionDuration();
     void trimPushesOneUndoStepAndMarksDirty();
     void commitTrimSendsOneTimelineNotification();
@@ -8161,6 +8162,71 @@ void EditorStateTest::overlapDoesNotAutoApplyCrossfade()
     state.addTransition(0, 0, QStringLiteral("dip"), 0.5);
     QCOMPARE(state.transitionBetweenClips(0, 0).value(QStringLiteral("kind")).toString(),
              QStringLiteral("dip"));
+}
+
+void EditorStateTest::dragToCrossfadeFormsAndResizesTransitionWithoutSplitting()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    state.preferences()->setAutoCrossfadeOverlaps(true);
+
+    // Initial state: 1 video track with two clips, abutting at 10.0s.
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clipA;
+    clipA.id = QStringLiteral("clip-a");
+    clipA.type = drift::ClipType::Shape;
+    clipA.timelineStart = 0;
+    clipA.timelineDuration = drift::secondsToUs(10.0);
+
+    drift::Clip clipB;
+    clipB.id = QStringLiteral("clip-b");
+    clipB.type = drift::ClipType::Shape;
+    clipB.timelineStart = drift::secondsToUs(10.0);
+    clipB.timelineDuration = drift::secondsToUs(10.0);
+
+    state.project()->tracks()[0].clips.append(clipA);
+    state.project()->tracks()[0].clips.append(clipB);
+
+    QCOMPARE(state.project()->tracks().size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 0);
+
+    // 1. Drag clip B into clip A by 2.0s (newStart = 8.0s).
+    // Automatically forms a crossfade with duration 2.0s without splitting tracks!
+    state.moveClip(0, 1, 8.0);
+
+    QCOMPARE(state.project()->tracks().size(), 1); // No track splitting
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(8.0));
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 1);
+
+    const drift::Transition &t1 = state.project()->tracks().at(0).transitions.at(0);
+    QCOMPARE(t1.fromClipId, QStringLiteral("clip-a"));
+    QCOMPARE(t1.toClipId, QStringLiteral("clip-b"));
+    QCOMPARE(t1.kindId, QStringLiteral("crossfade"));
+    QCOMPARE(t1.durationUs, drift::secondsToUs(2.0));
+
+    // 2. Drag clip B further left (newStart = 6.0s -> overlap = 4.0s).
+    // Automatically resizes the crossfade duration to 4.0s!
+    state.moveClip(0, 1, 6.0);
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 1);
+    const drift::Transition &t2 = state.project()->tracks().at(0).transitions.at(0);
+    QCOMPARE(t2.durationUs, drift::secondsToUs(4.0));
+
+    // 3. Drag clip B away (newStart = 15.0s -> 5.0s gap).
+    // Automatically removes the transition!
+    state.moveClip(0, 1, 15.0);
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 0);
+
+    // 4. Reset to abutting (10.0s) and trim clip A right edge into clip B (newEnd = 13.0s).
+    state.moveClip(0, 1, 10.0);
+    state.trimClipRight(0, 0, 13.0);
+    QCOMPARE(state.project()->tracks().size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 1);
+    const drift::Transition &t3 = state.project()->tracks().at(0).transitions.at(0);
+    QCOMPARE(t3.durationUs, drift::secondsToUs(3.0));
 }
 
 namespace {

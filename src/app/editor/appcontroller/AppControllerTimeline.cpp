@@ -1998,7 +1998,10 @@ void AppController::moveClip(int trackIndex, int clipIndex, double newStart)
         clip.timelineStart = qMax<drift::TimeUs>(0, clip.timelineStart + clampedDelta);
         movedIds.insert(clip.id);
     }
-    if (!m_allowClipOverlap) {
+    const bool allowOverlapOnTrack = m_allowClipOverlap
+        || (m_preferences->autoCrossfadeOverlaps() && trackAllowsTransitions(m_project.tracks().at(trackIndex).type));
+
+    if (!allowOverlapOnTrack) {
         QList<drift::PlacedSpan> spans;
         for (const QPair<int, int> &pair : targets) {
             if (!isValidClipIndex(pair.first, pair.second))
@@ -2038,6 +2041,7 @@ void AppController::moveClip(int trackIndex, int clipIndex, double newStart)
     if (macro)
         m_undoStack.beginMacro(tr("Clip moved"));
     pushProjectEdit(before, tr("Clip moved"));
+    syncOverlapTransitions(m_project);
     autoCrossfadeNewOverlaps(before);
     if (macro)
         m_undoStack.endMacro();
@@ -2534,7 +2538,9 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
         out.rippleDelta = trimmed.timelineDuration - oldDuration;
     };
     // Extending left can create a new overlap; clamp against neighbors when overlap is off.
-    if (!m_allowClipOverlap && !m_rippleEnabled && snappedStart < clip.timelineStart) {
+    const bool allowOverlapOnTrack = m_allowClipOverlap
+        || (m_preferences->autoCrossfadeOverlaps() && trackAllowsTransitions(track.type));
+    if (!allowOverlapOnTrack && !m_rippleEnabled && snappedStart < clip.timelineStart) {
         const QSet<QString> exclude{clip.id};
         snappedStart = drift::clampClipStartAgainstLeftNeighbors(track, exclude, clip.timelineStart,
                                                                  snappedStart);
@@ -2682,7 +2688,9 @@ AppController::TrimComputation AppController::computeTrimRight(int trackIndex, i
     const drift::TimeUs rawUs = drift::secondsToUs(newEnd);
     drift::TimeUs snappedEnd = snap ? snapTimeForGesture(rawUs) : rawUs;
     // With ripple on, extending pushes the followers along rather than stopping at them.
-    if (!m_allowClipOverlap && !m_rippleEnabled && snappedEnd > clip.timelineEnd()) {
+    const bool allowOverlapOnTrack = m_allowClipOverlap
+        || (m_preferences->autoCrossfadeOverlaps() && trackAllowsTransitions(track.type));
+    if (!allowOverlapOnTrack && !m_rippleEnabled && snappedEnd > clip.timelineEnd()) {
         const QSet<QString> exclude{clip.id};
         snappedEnd = drift::clampClipEndNoOverlap(track, exclude, clip.timelineEnd(), snappedEnd);
     }
@@ -2857,6 +2865,30 @@ int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputatio
             syncOverlapTransitionsOnTrack(m_project.tracks()[p.first]);
     }
     syncOverlapTransitionsOnTrack(track);
+    if (m_preferences->autoCrossfadeOverlaps()) {
+        for (int left = 0; left < track.clips.size(); ++left) {
+            const int right = findTransitionPartnerIndex(track, left);
+            if (right < 0)
+                continue;
+            const drift::Clip &fromClip = track.clips.at(left);
+            const drift::Clip &toClip = track.clips.at(right);
+            if (!drift::clipsPhysicallyOverlap(fromClip, toClip))
+                continue;
+            const bool hasTransition = std::any_of(track.transitions.cbegin(), track.transitions.cend(),
+                                                   [&](const drift::Transition &t) {
+                                                       return t.fromClipId == fromClip.id && t.toClipId == toClip.id;
+                                                   });
+            if (!hasTransition) {
+                drift::Transition transition;
+                transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                transition.fromClipId = fromClip.id;
+                transition.toClipId = toClip.id;
+                transition.kindId = QStringLiteral("crossfade");
+                transition.durationUs = drift::physicalOverlapDurationUs(fromClip, toClip);
+                track.transitions.append(transition);
+            }
+        }
+    }
     // A pinned adjustment takes its extent from its clip, so it has to be brought along here --
     // this path does not always reach finishEdit.
     syncLinkedAdjustments(m_project);
@@ -3975,7 +4007,10 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
         toMove.append(item);
     }
 
-    if (!m_allowClipOverlap) {
+    const bool allowOverlapOnTrack = m_allowClipOverlap
+        || (m_preferences->autoCrossfadeOverlaps() && trackAllowsTransitions(m_project.tracks().at(trackIndex).type));
+
+    if (!allowOverlapOnTrack) {
         QList<drift::PlacedSpan> spans;
         for (const ClipToMove &item : toMove) {
             if (item.followsVideo)
@@ -4119,6 +4154,7 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
     if (macro)
         m_undoStack.beginMacro(tr("Clips moved"));
     pushProjectEdit(before, tr("Clips moved"));
+    syncOverlapTransitions(m_project);
     autoCrossfadeNewOverlaps(before);
     if (macro)
         m_undoStack.endMacro();

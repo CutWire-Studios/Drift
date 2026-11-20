@@ -278,6 +278,7 @@ PanelFrame {
     property int dropTrackIndex: -1
     property real dropStartSeconds: 0
     property real dropDurationSeconds: 0
+    property string dropExcludeClipId: ""
     // True while a library asset would land on a brand-new track, and the index
     // that track would be inserted at (0 = above everything, tracks.length =
     // below everything).
@@ -446,6 +447,7 @@ PanelFrame {
         dropStartSeconds = snapped.start
         dropDurationSeconds = duration
         snapGuideSeconds = snapped.guide
+        dropExcludeClipId = excludeClipId || ""
     }
 
     // Drops only the landing outline. dropCreatesNewTrack belongs to the
@@ -454,6 +456,7 @@ PanelFrame {
     function clearLandingOutline() {
         dropTrackIndex = -1
         snapGuideSeconds = -1
+        dropExcludeClipId = ""
     }
 
     function clearLandingPreview() {
