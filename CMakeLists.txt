@@ -644,6 +644,8 @@ add_library(driftcore STATIC
     src/core/interchange/EdlReader.cpp
     src/core/interchange/OtioReader.h
     src/core/interchange/OtioReader.cpp
+    src/core/interchange/VegasReader.h
+    src/core/interchange/VegasReader.cpp
     src/core/edit/TimelineOps.h
     src/core/edit/TimelineOps.cpp
     src/core/project/ProjectDiff.h
