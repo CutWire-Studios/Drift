@@ -2802,6 +2802,235 @@ QVariantMap AppController::previewTrimRight(int trackIndex, int clipIndex, doubl
     return trimPreviewToMap(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd));
 }
 
+AppController::StretchComputation AppController::computeStretchClip(int trackIndex, int clipIndex,
+                                                                   int side, double targetSeconds,
+                                                                   bool snap) const
+{
+    StretchComputation out;
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return out;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return out;
+
+    const drift::Clip &clip = track.clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio
+        && clip.type != drift::ClipType::Composite)
+        return out;
+
+    const drift::TimeUs sourceSpanUs = clip.srcOut - clip.srcIn;
+    if (sourceSpanUs <= 0)
+        return out;
+
+    out.ok = true;
+    out.speed = clip.speed;
+    out.newStartUs = clip.timelineStart;
+    out.newDurationUs = clip.timelineDuration;
+    out.inPointUs = clip.srcIn;
+    out.outPointUs = clip.srcOut;
+
+    const drift::TimeUs rawTargetUs = drift::secondsToUs(targetSeconds);
+    const drift::TimeUs snappedTargetUs = snap ? snapTimeForGesture(rawTargetUs) : rawTargetUs;
+    drift::TimeUs targetUs = snappedTargetUs;
+
+    const bool allowOverlapOnTrack = m_allowClipOverlap
+        || (m_preferences->autoCrossfadeOverlaps() && trackAllowsTransitions(track.type));
+    const QSet<QString> exclude{clip.id};
+    const drift::TimeUs minDuration = drift::minClipDurationUs(m_project.fps());
+
+    double clampedSpeed = clip.speed;
+    drift::TimeUs clampedDurationUs = clip.timelineDuration;
+    drift::TimeUs newStartUs = clip.timelineStart;
+    double rawSpeed = 1.0;
+
+    if (side > 0) {
+        // Dragging right edge: left edge (timelineStart) is anchored
+        if (!allowOverlapOnTrack && targetUs > clip.timelineEnd()) {
+            targetUs = drift::clampClipEndNoOverlap(track, exclude, clip.timelineEnd(), targetUs);
+        }
+        drift::TimeUs proposedDurationUs = targetUs - clip.timelineStart;
+        if (proposedDurationUs < minDuration)
+            proposedDurationUs = minDuration;
+        rawSpeed = double(sourceSpanUs) / double(proposedDurationUs);
+        clampedSpeed = qBound(0.25, rawSpeed, 4.0);
+        clampedDurationUs = static_cast<drift::TimeUs>(llround(double(sourceSpanUs) / clampedSpeed));
+        clampedDurationUs = qMax(clampedDurationUs, minDuration);
+
+        if (!allowOverlapOnTrack && clip.timelineStart + clampedDurationUs > clip.timelineEnd()) {
+            const drift::TimeUs maxEnd = drift::clampClipEndNoOverlap(track, exclude, clip.timelineEnd(),
+                                                                      clip.timelineStart + clampedDurationUs);
+            if (clip.timelineStart + clampedDurationUs > maxEnd) {
+                clampedDurationUs = qMax(minDuration, maxEnd - clip.timelineStart);
+                clampedSpeed = double(sourceSpanUs) / double(clampedDurationUs);
+                clampedSpeed = qBound(0.25, clampedSpeed, 4.0);
+            }
+        }
+        newStartUs = clip.timelineStart;
+    } else {
+        // Dragging left edge: right edge (timelineEnd) is anchored
+        const drift::TimeUs oldEndUs = clip.timelineEnd();
+        if (targetUs > oldEndUs - minDuration)
+            targetUs = oldEndUs - minDuration;
+        if (!allowOverlapOnTrack && targetUs < clip.timelineStart) {
+            targetUs = drift::clampClipStartAgainstLeftNeighbors(track, exclude, clip.timelineStart, targetUs);
+        }
+        targetUs = qMax<drift::TimeUs>(0, targetUs);
+        drift::TimeUs proposedDurationUs = oldEndUs - targetUs;
+        if (proposedDurationUs < minDuration)
+            proposedDurationUs = minDuration;
+        rawSpeed = double(sourceSpanUs) / double(proposedDurationUs);
+        clampedSpeed = qBound(0.25, rawSpeed, 4.0);
+        clampedDurationUs = static_cast<drift::TimeUs>(llround(double(sourceSpanUs) / clampedSpeed));
+        clampedDurationUs = qMax(clampedDurationUs, minDuration);
+        if (clampedDurationUs > oldEndUs) {
+            clampedDurationUs = oldEndUs;
+            clampedSpeed = double(sourceSpanUs) / double(clampedDurationUs);
+            clampedSpeed = qBound(0.25, clampedSpeed, 4.0);
+        }
+        if (!allowOverlapOnTrack && oldEndUs - clampedDurationUs < clip.timelineStart) {
+            const drift::TimeUs minStart = drift::clampClipStartAgainstLeftNeighbors(
+                track, exclude, clip.timelineStart, oldEndUs - clampedDurationUs);
+            if (oldEndUs - clampedDurationUs < minStart) {
+                clampedDurationUs = qMax(minDuration, oldEndUs - minStart);
+                clampedSpeed = double(sourceSpanUs) / double(clampedDurationUs);
+                clampedSpeed = qBound(0.25, clampedSpeed, 4.0);
+            }
+        }
+        newStartUs = oldEndUs - clampedDurationUs;
+    }
+
+    const bool changed = (newStartUs != clip.timelineStart) || (clampedDurationUs != clip.timelineDuration)
+        || (std::abs(clampedSpeed - clip.speed) > 1e-4);
+
+    int outcome = TrimMoved;
+    if (rawSpeed != clampedSpeed || clampedDurationUs != (side > 0 ? (targetUs - clip.timelineStart) : (clip.timelineEnd() - targetUs)))
+        outcome = TrimBlocked;
+    else if (snappedTargetUs != rawTargetUs)
+        outcome = TrimSnapped;
+    else
+        outcome = TrimMoved;
+
+    out.changed = changed;
+    out.outcome = outcome;
+    out.speed = clampedSpeed;
+    out.newStartUs = newStartUs;
+    out.newDurationUs = clampedDurationUs;
+    return out;
+}
+
+QVariantMap AppController::previewStretchClip(int trackIndex, int clipIndex, int side, double targetSeconds) const
+{
+    const StretchComputation c = computeStretchClip(trackIndex, clipIndex, side, targetSeconds, true);
+    if (!c.ok)
+        return {{QStringLiteral("ok"), false}};
+    return QVariantMap{
+        {QStringLiteral("ok"), true},
+        {QStringLiteral("changed"), c.changed},
+        {QStringLiteral("outcome"), c.outcome},
+        {QStringLiteral("speed"), c.speed},
+        {QStringLiteral("start"), drift::usToSeconds(c.newStartUs)},
+        {QStringLiteral("duration"), drift::usToSeconds(c.newDurationUs)},
+        {QStringLiteral("inPoint"), drift::usToSeconds(c.inPointUs)},
+        {QStringLiteral("outPoint"), drift::usToSeconds(c.outPointUs)},
+        {QStringLiteral("rippleIds"), QStringList{}},
+        {QStringLiteral("rippleDelta"), 0.0},
+    };
+}
+
+bool AppController::commitStretchClip(int trackIndex, int clipIndex, int side, double targetSeconds)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return false;
+
+    const StretchComputation c = computeStretchClip(trackIndex, clipIndex, side, targetSeconds, true);
+    if (!c.ok || !c.changed) {
+        if (m_previewDragActive)
+            cancelPreviewDrag();
+        return false;
+    }
+
+    const drift::Project before = m_previewDragActive ? m_previewDragBefore : m_project;
+    if (m_previewDragActive) {
+        m_previewAutoCommit->stop();
+        m_previewDragAuto = false;
+        m_previewDragActive = false;
+        m_previewDragDirty = false;
+        emit previewDragActiveChanged();
+    }
+
+    drift::Clip &clip = track.clips[clipIndex];
+    const drift::Clip originalClip = clip;
+    clip.speed = c.speed;
+    clip.speedCurve.clear();
+    clip.timelineStart = c.newStartUs;
+    clip.timelineDuration = c.newDurationUs;
+
+    // Remap keyframes to keep them locked to the source frames
+    drift::appdetail::remapKeyframesForRetime(clip, originalClip);
+
+    // Proportionally scale or clamp fades
+    if (clip.fadeInUs + clip.fadeOutUs > clip.timelineDuration) {
+        const double ratio = double(clip.timelineDuration) / double(clip.fadeInUs + clip.fadeOutUs);
+        clip.fadeInUs = static_cast<drift::TimeUs>(llround(clip.fadeInUs * ratio));
+        clip.fadeOutUs = clip.timelineDuration - clip.fadeInUs;
+    }
+    if (clip.audioFadeInUs + clip.audioFadeOutUs > clip.timelineDuration) {
+        const double ratio = double(clip.timelineDuration) / double(clip.audioFadeInUs + clip.audioFadeOutUs);
+        clip.audioFadeInUs = static_cast<drift::TimeUs>(llround(clip.audioFadeInUs * ratio));
+        clip.audioFadeOutUs = clip.timelineDuration - clip.audioFadeInUs;
+    }
+
+    // Synchronize companion linked audio/video partner
+    syncLinkedPartnersFrom(m_project, clip);
+    if (clip.linkLoose) {
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip)) {
+            drift::Clip &partner = m_project.tracks()[ref.trackIndex].clips[ref.clipIndex];
+            partner.speed = c.speed;
+            partner.speedCurve.clear();
+            partner.timelineStart = c.newStartUs;
+            partner.timelineDuration = c.newDurationUs;
+        }
+    }
+
+    // Retime any linked subtitles
+    drift::retimeLinkedSubtitles(before, m_project);
+
+    // Auto-crossfade overlaps if enabled
+    syncOverlapTransitionsOnTrack(track);
+    if (m_preferences->autoCrossfadeOverlaps()) {
+        for (int left = 0; left < track.clips.size(); ++left) {
+            const int right = findTransitionPartnerIndex(track, left);
+            if (right < 0)
+                continue;
+            const drift::Clip &fromClip = track.clips.at(left);
+            const drift::Clip &toClip = track.clips.at(right);
+            if (!drift::clipsPhysicallyOverlap(fromClip, toClip))
+                continue;
+            const bool hasTransition = std::any_of(track.transitions.cbegin(), track.transitions.cend(),
+                                                   [&](const drift::Transition &t) {
+                                                       return t.fromClipId == fromClip.id && t.toClipId == toClip.id;
+                                                   });
+            if (!hasTransition) {
+                drift::Transition transition;
+                transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                transition.fromClipId = fromClip.id;
+                transition.toClipId = toClip.id;
+                transition.kindId = QStringLiteral("crossfade");
+                transition.durationUs = drift::physicalOverlapDurationUs(fromClip, toClip);
+                track.transitions.append(transition);
+            }
+        }
+    }
+
+    syncLinkedAdjustments(m_project);
+    pushProjectEdit(before, tr("Time stretch clip"));
+    finishEdit(tr("Clip time stretched"));
+    return true;
+}
+
 // Writes a computed trim back to the project and brings everything that hangs off the clip with
 // it. Shared by both edges.
 int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed, int side)

@@ -9,6 +9,9 @@ Rectangle {
 
     required property var owner
     property int edge: -1
+    property bool isStretch: false
+    property real stretchSpeed: 1.0
+    readonly property bool trimming: trimMouse.trimming
 
     readonly property bool areaContainsMouse: trimMouse.containsMouse
     readonly property bool areaPressed: trimMouse.pressed
@@ -111,11 +114,22 @@ Rectangle {
         sourceComponent: Component {
             ThemedToolTip {
                 text: handle.looping ? qsTr("Drag to repeat the clip")
-                      : handle.edge < 0 ? qsTr("Drag to trim the start")
-                                        : qsTr("Drag to trim the end")
+                      : handle.edge < 0 ? qsTr("Drag to trim the start (Ctrl+drag to time stretch)")
+                                        : qsTr("Drag to trim the end (Ctrl+drag to time stretch)")
                 visible: owner.showTrimHandles
                          && (handle.areaContainsMouse || handle.areaHovered)
                          && !handle.areaPressed
+            }
+        }
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: handle.trimming && handle.isStretch
+        sourceComponent: Component {
+            ThemedToolTip {
+                text: Number(handle.stretchSpeed).toFixed(2) + "x (" + Number(owner.trimPreviewDuration).toFixed(2) + "s)"
+                visible: true
             }
         }
     }
@@ -179,6 +193,30 @@ Rectangle {
                 return
             lastTrimPx = px
             lastTrimSeconds = target
+
+            if (handle.isStretch) {
+                const p = EditorState.previewStretchClip(owner.trackIndex, owner.clipIndex, handle.edge, target)
+                if (p.ok) {
+                    handle.stretchSpeed = p.speed
+                    const edgeSeconds = handle.edge < 0 ? p.start : p.start + p.duration
+                    owner.panel.snapGuideSeconds = EditorState.snapEnabled
+                            && p.outcome === 2 && Math.abs(edgeSeconds - target) > 0.0005
+                            ? edgeSeconds : -1
+                    if (p.changed) {
+                        owner.trimPreviewStart = p.start
+                        owner.trimPreviewDuration = p.duration
+                        owner.trimPreviewIn = p.inPoint
+                        owner.trimPreviewOut = p.outPoint
+                        owner.trimPreviewActive = true
+                        owner.panel.setTrimFollow(owner.clipData.linkId, owner.clipData.id,
+                                                 p.start, p.duration, p.inPoint, p.outPoint,
+                                                 [], 0)
+                    }
+                    Haptics.trimStep(p.outcome)
+                }
+                return
+            }
+
             // Previewed, not applied. The reply reports what the trim would do -- snapping
             // and every limit that can stop this edge live inside it, and the one the user
             // needs told, the source running out, has no cue on screen at all.
@@ -241,11 +279,16 @@ Rectangle {
                 EditorState.selectClip(owner.trackIndex, owner.clipIndex)
             if (!wasSelected)
                 Haptics.select()
+            handle.isStretch = (mouse.modifiers & Qt.ControlModifier) !== 0
+            handle.stretchSpeed = 1.0
             // One undo entry and one dirty mark for the whole drag. Without this a trim was
             // invisible to both: it never moved the undo stack index, and the dirty flag is
             // only ever set from that index changing — so trimming, closing, and being asked
             // nothing about saving lost the work outright.
-            EditorState.beginPreviewDrag(qsTr("Trim clip"))
+            if (handle.isStretch)
+                EditorState.beginPreviewDrag(qsTr("Time stretch clip"))
+            else
+                EditorState.beginPreviewDrag(qsTr("Trim clip"))
             EditorState.beginTrimGesture(owner.trackIndex, owner.clipIndex, handle.edge)
             lastTrimPx = -2147483647
             lastTrimSeconds = -1
@@ -285,10 +328,17 @@ Rectangle {
                 // geometry bindings are reading the project again by the time it lands.
                 owner.trimPreviewActive = false
                 owner.panel.clearTrimFollow()
-                // One call, so the edit, the undo push and finishEdit announce the timeline
-                // once between them rather than three times.
-                EditorState.commitTrim(owner.trackIndex, owner.clipIndex,
-                                       handle.edge, lastTrimSeconds)
+                if (handle.isStretch) {
+                    EditorState.commitStretchClip(owner.trackIndex, owner.clipIndex,
+                                                  handle.edge, lastTrimSeconds)
+                    EditorState.endTrimGesture()
+                    handle.isStretch = false
+                } else {
+                    // One call, so the edit, the undo push and finishEdit announce the timeline
+                    // once between them rather than three times.
+                    EditorState.commitTrim(owner.trackIndex, owner.clipIndex,
+                                           handle.edge, lastTrimSeconds)
+                }
             }
         }
         onCanceled: {
@@ -301,6 +351,7 @@ Rectangle {
                 owner.panel.clearTrimFollow()
                 EditorState.endTrimGesture()
                 EditorState.cancelPreviewDrag()
+                handle.isStretch = false
             }
         }
     }

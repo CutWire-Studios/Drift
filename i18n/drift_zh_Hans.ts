@@ -2803,6 +2803,14 @@
         <translation>分割右侧</translation>
     </message>
     <message>
+        <source>Time stretch clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip time stretched</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim clip</source>
         <translation>修剪片段</translation>
     </message>
@@ -4301,8 +4309,20 @@
         <translation>线性</translation>
     </message>
     <message>
+        <source>Fast</source>
+        <translation type="unfinished">快速</translation>
+    </message>
+    <message>
+        <source>Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smooth</source>
         <translation>平滑</translation>
+    </message>
+    <message>
+        <source>Sharp</source>
+        <translation type="unfinished">锐利</translation>
     </message>
     <message>
         <source>Natural</source>
@@ -24566,10 +24586,53 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineFadeCurveContextMenu</name>
+    <message>
+        <source>Fade Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">线性</translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation type="unfinished">快速</translation>
+    </message>
+    <message>
+        <source>Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth (S-Curve)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sharp</source>
+        <translation type="unfinished">锐利</translation>
+    </message>
+    <message>
+        <source>Natural (Equal Power)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Curve Editor…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineFadeHandle</name>
     <message>
         <source>%1s</source>
         <translation>%1 秒</translation>
+    </message>
+    <message>
+        <source>Fade Out Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade In Curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Adjust fade</source>
@@ -25139,18 +25202,29 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Transition Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
         <translation>拖动以循环重复片段</translation>
     </message>
     <message>
-        <source>Drag to trim the start</source>
-        <translation>拖动以修剪起点</translation>
+        <source>Drag to trim the start (Ctrl+drag to time stretch)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag to trim the end</source>
-        <translation>拖动以修剪终点</translation>
+        <source>Drag to trim the end (Ctrl+drag to time stretch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time stretch clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>

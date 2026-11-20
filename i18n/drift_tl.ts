@@ -2742,6 +2742,14 @@
         <translation>Hatiin pakanan</translation>
     </message>
     <message>
+        <source>Time stretch clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip time stretched</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim clip</source>
         <translation>I-trim ang clip</translation>
     </message>
@@ -4309,8 +4317,20 @@
         <translation>Linyar</translation>
     </message>
     <message>
+        <source>Fast</source>
+        <translation type="unfinished">Mabilis</translation>
+    </message>
+    <message>
+        <source>Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smooth</source>
         <translation>Makinis</translation>
+    </message>
+    <message>
+        <source>Sharp</source>
+        <translation type="unfinished">Matalas</translation>
     </message>
     <message>
         <source>Natural</source>
@@ -24651,10 +24671,53 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineFadeCurveContextMenu</name>
+    <message>
+        <source>Fade Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">Linyar</translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation type="unfinished">Mabilis</translation>
+    </message>
+    <message>
+        <source>Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth (S-Curve)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sharp</source>
+        <translation type="unfinished">Matalas</translation>
+    </message>
+    <message>
+        <source>Natural (Equal Power)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Curve Editor…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineFadeHandle</name>
     <message>
         <source>%1s</source>
         <translation>%1s</translation>
+    </message>
+    <message>
+        <source>Fade Out Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade In Curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Adjust fade</source>
@@ -25225,18 +25288,29 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Transition Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
         <translation>I-drag upang ulitin ang clip</translation>
     </message>
     <message>
-        <source>Drag to trim the start</source>
-        <translation>I-drag upang i-trim ang simula</translation>
+        <source>Drag to trim the start (Ctrl+drag to time stretch)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag to trim the end</source>
-        <translation>I-drag upang i-trim ang dulo</translation>
+        <source>Drag to trim the end (Ctrl+drag to time stretch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time stretch clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>

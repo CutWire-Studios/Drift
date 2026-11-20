@@ -2806,6 +2806,14 @@
         <translation>Dividi a destra</translation>
     </message>
     <message>
+        <source>Time stretch clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip time stretched</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim clip</source>
         <translation>Ritaglia clip</translation>
     </message>
@@ -4309,8 +4317,20 @@
         <translation>Lineare</translation>
     </message>
     <message>
+        <source>Fast</source>
+        <translation type="unfinished">Veloce</translation>
+    </message>
+    <message>
+        <source>Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smooth</source>
         <translation>Smussato</translation>
+    </message>
+    <message>
+        <source>Sharp</source>
+        <translation type="unfinished">Netto</translation>
     </message>
     <message>
         <source>Natural</source>
@@ -24650,10 +24670,53 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineFadeCurveContextMenu</name>
+    <message>
+        <source>Fade Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">Lineare</translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation type="unfinished">Veloce</translation>
+    </message>
+    <message>
+        <source>Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth (S-Curve)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sharp</source>
+        <translation type="unfinished">Netto</translation>
+    </message>
+    <message>
+        <source>Natural (Equal Power)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Curve Editor…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineFadeHandle</name>
     <message>
         <source>%1s</source>
         <translation>%1s</translation>
+    </message>
+    <message>
+        <source>Fade Out Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade In Curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Adjust fade</source>
@@ -25224,18 +25287,29 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Transition Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
         <translation>Trascina per ripetere la clip</translation>
     </message>
     <message>
-        <source>Drag to trim the start</source>
-        <translation>Trascina per ritagliare l&apos;inizio</translation>
+        <source>Drag to trim the start (Ctrl+drag to time stretch)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag to trim the end</source>
-        <translation>Trascina per ritagliare la fine</translation>
+        <source>Drag to trim the end (Ctrl+drag to time stretch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time stretch clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>

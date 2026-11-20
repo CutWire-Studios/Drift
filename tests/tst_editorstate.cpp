@@ -349,6 +349,7 @@ private slots:
     void deleteLinkedPairTogetherAndUnlinkedClipAlone();
     void linkedFadeCurveSyncsPartner();
     void vegasFadeAndTransitionCurvesSupport();
+    void elasticTimeStretchCtrlDrag();
     void customFadeCurveSessionApplyAndCancel();
     void animationCurveSessionIsSeparateFromFade();
     void clipAnimationKindsListsBuiltins();
@@ -7535,6 +7536,94 @@ void EditorStateTest::vegasFadeAndTransitionCurvesSupport()
     QVERIFY(!regions.isEmpty());
     QCOMPARE(regions.first().toMap().value(QStringLiteral("easingCurve")).toString(),
              QStringLiteral("sharp"));
+}
+
+void EditorStateTest::elasticTimeStretchCtrlDrag()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+
+    // 1. Right edge stretch (side = 1): stretch from 4.0s to 8.0s (slow down to 0.5x)
+    QVariantMap p1 = state.previewStretchClip(0, 0, 1, 8.0);
+    QVERIFY(p1.value(QStringLiteral("ok")).toBool());
+    QVERIFY(p1.value(QStringLiteral("changed")).toBool());
+    QCOMPARE(p1.value(QStringLiteral("speed")).toDouble(), 0.5);
+    QCOMPARE(p1.value(QStringLiteral("start")).toDouble(), 0.0);
+    QCOMPARE(p1.value(QStringLiteral("duration")).toDouble(), 8.0);
+    QCOMPARE(p1.value(QStringLiteral("inPoint")).toDouble(), 0.0);
+    QCOMPARE(p1.value(QStringLiteral("outPoint")).toDouble(), 4.0);
+
+    // Commit stretch:
+    QVERIFY(state.commitStretchClip(0, 0, 1, 8.0));
+    const drift::Clip &vClip1 = state.project()->tracks().at(0).clips.at(0);
+    const drift::Clip &aClip1 = state.project()->tracks().at(1).clips.at(0);
+    QCOMPARE(vClip1.speed, 0.5);
+    QCOMPARE(vClip1.timelineDuration, drift::secondsToUs(8.0));
+    QCOMPARE(vClip1.srcIn, drift::secondsToUs(0.0));
+    QCOMPARE(vClip1.srcOut, drift::secondsToUs(4.0));
+    // Linked audio companion retimed synchronously:
+    QCOMPARE(aClip1.speed, 0.5);
+    QCOMPARE(aClip1.timelineDuration, drift::secondsToUs(8.0));
+    QCOMPARE(aClip1.srcIn, drift::secondsToUs(0.0));
+    QCOMPARE(aClip1.srcOut, drift::secondsToUs(4.0));
+
+    // 2. Undo restores original 1.0x and 4.0s duration
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).speed, 1.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(4.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).speed, 1.0);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, drift::secondsToUs(4.0));
+
+    // 3. Right edge compression (side = 1): compress from 4.0s to 2.0s (speed up to 2.0x)
+    QVERIFY(state.commitStretchClip(0, 0, 1, 2.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).speed, 2.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(2.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).speed, 2.0);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, drift::secondsToUs(2.0));
+
+    // 4. Boundary clamping (0.25x min, 4.0x max)
+    // Stretch way past 4x duration (e.g. 30 seconds): clamps to 0.25x (16.0s duration)
+    QVariantMap pMin = state.previewStretchClip(0, 0, 1, 30.0);
+    QCOMPARE(pMin.value(QStringLiteral("speed")).toDouble(), 0.25);
+    QCOMPARE(pMin.value(QStringLiteral("duration")).toDouble(), 16.0);
+
+    // Compress way past 0.25x duration (e.g. 0.2 seconds): clamps to 4.0x (1.0s duration)
+    QVariantMap pMax = state.previewStretchClip(0, 0, 1, 0.2);
+    QCOMPARE(pMax.value(QStringLiteral("speed")).toDouble(), 4.0);
+    QCOMPARE(pMax.value(QStringLiteral("duration")).toDouble(), 1.0);
+
+    // 5. Left edge stretch (side = -1): right edge anchored at 2.0s
+    // Move start from 0.0s to 1.0s -> duration becomes 1.0s, speed = 4.0s / 1.0s = 4.0x
+    QVariantMap pLeft = state.previewStretchClip(0, 0, -1, 1.0);
+    QCOMPARE(pLeft.value(QStringLiteral("speed")).toDouble(), 4.0);
+    QCOMPARE(pLeft.value(QStringLiteral("start")).toDouble(), 1.0);
+    QCOMPARE(pLeft.value(QStringLiteral("duration")).toDouble(), 1.0);
+
+    QVERIFY(state.commitStretchClip(0, 0, -1, 1.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(1.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).speed, 4.0);
+    // Audio partner in lockstep:
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, drift::secondsToUs(1.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).speed, 4.0);
+
+    // 6. Fade clamping/scaling on compression
+    // Reset clip and set 1.5s in and 1.5s out fades (total 3.0s)
+    state.undo();
+    state.undo();
+    state.setClipFade(0, 0, 1.5, 1.5);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeInUs, drift::secondsToUs(1.5));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeOutUs, drift::secondsToUs(1.5));
+
+    // Compress to 2.0s duration: total fades (3.0s) exceeds 2.0s, so they scale to 1.0s each
+    QVERIFY(state.commitStretchClip(0, 0, 1, 2.0));
+    const drift::Clip &vFaded = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(vFaded.timelineDuration, drift::secondsToUs(2.0));
+    QVERIFY(vFaded.fadeInUs + vFaded.fadeOutUs <= vFaded.timelineDuration);
+    QCOMPARE(vFaded.fadeInUs, drift::secondsToUs(1.0));
+    QCOMPARE(vFaded.fadeOutUs, drift::secondsToUs(1.0));
 }
 
 void EditorStateTest::customFadeCurveSessionApplyAndCancel()

@@ -2809,6 +2809,14 @@
         <translation>Разделить справа</translation>
     </message>
     <message>
+        <source>Time stretch clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip time stretched</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim clip</source>
         <translation>Обрезать клип</translation>
     </message>
@@ -4317,8 +4325,20 @@
         <translation>Линейная</translation>
     </message>
     <message>
+        <source>Fast</source>
+        <translation type="unfinished">Быстро</translation>
+    </message>
+    <message>
+        <source>Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smooth</source>
         <translation>Плавная</translation>
+    </message>
+    <message>
+        <source>Sharp</source>
+        <translation type="unfinished">Резко</translation>
     </message>
     <message>
         <source>Natural</source>
@@ -24735,10 +24755,53 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineFadeCurveContextMenu</name>
+    <message>
+        <source>Fade Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">Линейная</translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation type="unfinished">Быстро</translation>
+    </message>
+    <message>
+        <source>Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth (S-Curve)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sharp</source>
+        <translation type="unfinished">Резко</translation>
+    </message>
+    <message>
+        <source>Natural (Equal Power)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Curve Editor…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineFadeHandle</name>
     <message>
         <source>%1s</source>
         <translation>%1 с</translation>
+    </message>
+    <message>
+        <source>Fade Out Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade In Curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Adjust fade</source>
@@ -25310,18 +25373,29 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Transition Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
         <translation>Потяните, чтобы повторить клип</translation>
     </message>
     <message>
-        <source>Drag to trim the start</source>
-        <translation>Перетащите, чтобы обрезать начало</translation>
+        <source>Drag to trim the start (Ctrl+drag to time stretch)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag to trim the end</source>
-        <translation>Перетащите, чтобы обрезать конец</translation>
+        <source>Drag to trim the end (Ctrl+drag to time stretch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time stretch clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
