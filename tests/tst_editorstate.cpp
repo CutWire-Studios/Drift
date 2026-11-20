@@ -11495,6 +11495,20 @@ void EditorStateTest::chromaKeyHueIsFlaggedForTheColourSwatch()
     stack = videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0));
     QCOMPARE(stack.first().parameters.value(QStringLiteral("u_keyHue")).toDouble(), 240.0);
 
+    // Black has no hue (#605): the swatch switches to a brightness key and sets its level in
+    // the same drag, so the switch is one undo step and leaves the hue alone.
+    state.beginPreviewDrag(QStringLiteral("Edit Key Colour"));
+    state.previewSetClipKeyframe(0, 0, QStringLiteral("fx.0.u_keyMode"), 1.0, 1.0);
+    state.previewSetClipKeyframe(0, 0, QStringLiteral("fx.0.u_keyLuma"), 1.0, 0.0);
+    state.commitPreviewDrag();
+    stack = videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0));
+    QCOMPARE(stack.first().parameters.value(QStringLiteral("u_keyMode")).toDouble(), 1.0);
+    QCOMPARE(stack.first().parameters.value(QStringLiteral("u_keyLuma")).toDouble(), 0.0);
+    QCOMPARE(stack.first().parameters.value(QStringLiteral("u_keyHue")).toDouble(), 240.0);
+    state.undo();
+    stack = videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0));
+    QCOMPARE(stack.first().parameters.value(QStringLiteral("u_keyMode")).toDouble(), 0.0);
+
     // Ordinary float params stay unflagged.
     state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
     const QVariantMap contrast = state.selectedClipEffects().last().toMap();

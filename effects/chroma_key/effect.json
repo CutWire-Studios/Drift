@@ -4,9 +4,16 @@
   "category": "keying",
   "thumbnail": "thumbnail.webp",
   "order": 400,
-  "description": "Remove a green or blue screen background. Drag Key Colour to match your backdrop, then raise Tolerance until the background disappears.",
+  "description": "Remove a green or blue screen background, or a black or white one with Key On set to Brightness. Pick Key Colour to match your backdrop, then raise Tolerance until the background disappears.",
   "backend": "gpu",
   "parameters": [
+    {
+      "identifier": "u_keyMode",
+      "displayName": "Key On",
+      "type": "choice",
+      "options": ["Colour", "Brightness"],
+      "defaultValue": 0
+    },
     {
       "identifier": "u_keyHue",
       "displayName": "Key Colour",
@@ -14,6 +21,14 @@
       "minValue": 0.0,
       "maxValue": 360.0,
       "defaultValue": 120.0
+    },
+    {
+      "identifier": "u_keyLuma",
+      "displayName": "Key Brightness",
+      "type": "float",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "defaultValue": 0.0
     },
     {
       "identifier": "u_tolerance",

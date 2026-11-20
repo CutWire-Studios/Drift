@@ -2,7 +2,9 @@
 in vec2 v_texCoord; out vec4 fragColor;
 uniform sampler2D u_currentTexture;
 
+uniform float u_keyMode;   // 0 = key on hue, 1 = key on brightness
 uniform float u_keyHue;    // backdrop hue in degrees: 120 = green, 240 = blue
+uniform float u_keyLuma;   // backdrop luma for brightness mode: 0 = black, 1 = white
 uniform float u_tolerance; // how far off the key hue still counts as background
 uniform float u_softness;  // width of the alpha ramp at the edge
 uniform float u_spill;     // how hard to pull the key colour out of what remains
@@ -35,6 +37,17 @@ vec3 hueToRgb(float degrees)
 void main()
 {
     vec4 src = texture(u_currentTexture, v_texCoord);
+
+    // Black, white and grey have no hue, so the hue key below can never select them (#605).
+    // Brightness mode keys on luma distance instead; there is no hue to spill.
+    if (u_keyMode > 0.5) {
+        float dist = abs(dot(src.rgb, kRec709) - u_keyLuma);
+        float threshold = mix(0.02, 0.5, clamp(u_tolerance, 0.0, 1.0));
+        float ramp = mix(0.02, 0.3, clamp(u_softness, 0.0, 1.0));
+        float lumaAlpha = smoothstep(threshold - ramp * 0.5, threshold + ramp * 0.5, dist);
+        fragColor = vec4(src.rgb, src.a * lumaAlpha);
+        return;
+    }
 
     // Effect parameters are plain floats, so the key is a hue rather than a picked
     // colour: we never learn how saturated the actual backdrop is. Splitting the

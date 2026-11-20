@@ -62,8 +62,8 @@ Item {
         return Qt.hsva((((hue % 360) + 360) % 360) / 360, 1, 1, 1).toString()
     }
 
-    // Returns NaN for a grey, which has no hue to key on — the caller keeps the current value
-    // rather than snapping the key to red.
+    // Returns NaN for a grey, which has no hue — the caller switches to a brightness key or keeps
+    // the current value rather than snapping the key to red.
     function hexToHue(hex) {
         // Qt.lighter(…, 1) is just string -> color; Qt.color() needs a newer Qt than we require.
         const c = Qt.lighter(hex, 1)
@@ -265,6 +265,7 @@ Item {
                                     row: paramRow
                                     effectIndex: effectCard.index
                                     inspector: root
+                                    effectParams: effectCard.effectParams
                                 }
 
                                 EffectsFaceIndexParam {
