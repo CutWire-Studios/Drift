@@ -1267,6 +1267,7 @@ TimelineClipsModel::Decorations AppController::trackDecorations(const drift::Tra
             const TransitionPresetEntry *def = transitionDefForId(transition->kindId);
             region.label = def ? def->meta.displayName : transition->kindId;
             region.kind = transition->kindId;
+            region.easingCurve = drift::fadeCurveToString(transition->easingCurve);
         } else if (drift::clipsPhysicallyOverlap(fromClip, toClip)) {
             startUs = toClip.timelineStart;
             endUs = fromClip.timelineEnd();

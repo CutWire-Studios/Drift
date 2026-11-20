@@ -348,6 +348,7 @@ private slots:
     void copiedExtractedAudioPointsAtTheCopiedVideo();
     void deleteLinkedPairTogetherAndUnlinkedClipAlone();
     void linkedFadeCurveSyncsPartner();
+    void vegasFadeAndTransitionCurvesSupport();
     void customFadeCurveSessionApplyAndCancel();
     void animationCurveSessionIsSeparateFromFade();
     void clipAnimationKindsListsBuiltins();
@@ -7466,6 +7467,74 @@ void EditorStateTest::linkedFadeCurveSyncsPartner()
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeInUs, drift::secondsToUs(1.0));
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeOutUs, drift::secondsToUs(0.5));
     state.commitPreviewDrag();
+}
+
+void EditorStateTest::vegasFadeAndTransitionCurvesSupport()
+{
+    // 1. Verify mathematical shape progress for Fast, Slow, and Sharp curves
+    const drift::FadeShape emptyShape;
+    QCOMPARE(drift::shapedProgress(0.0, drift::FadeCurve::Fast, emptyShape), 0.0);
+    QCOMPARE(drift::shapedProgress(1.0, drift::FadeCurve::Fast, emptyShape), 1.0);
+    QCOMPARE(drift::shapedProgress(0.5, drift::FadeCurve::Fast, emptyShape), 0.75); // Convex, rises quickly
+
+    QCOMPARE(drift::shapedProgress(0.0, drift::FadeCurve::Slow, emptyShape), 0.0);
+    QCOMPARE(drift::shapedProgress(1.0, drift::FadeCurve::Slow, emptyShape), 1.0);
+    QCOMPARE(drift::shapedProgress(0.5, drift::FadeCurve::Slow, emptyShape), 0.25); // Concave, starts slow
+
+    QCOMPARE(drift::shapedProgress(0.0, drift::FadeCurve::Sharp, emptyShape), 0.0);
+    QCOMPARE(drift::shapedProgress(1.0, drift::FadeCurve::Sharp, emptyShape), 1.0);
+    QCOMPARE(drift::shapedProgress(0.5, drift::FadeCurve::Sharp, emptyShape), 0.5); // Symmetric inflection
+    QVERIFY(drift::shapedProgress(0.25, drift::FadeCurve::Sharp, emptyShape)
+            < drift::shapedProgress(0.25, drift::FadeCurve::Smooth, emptyShape));
+    QVERIFY(drift::shapedProgress(0.75, drift::FadeCurve::Sharp, emptyShape)
+            > drift::shapedProgress(0.75, drift::FadeCurve::Smooth, emptyShape));
+
+    // 2. Serialization and parsing strings
+    QCOMPARE(drift::fadeCurveToString(drift::FadeCurve::Fast), QStringLiteral("fast"));
+    QCOMPARE(drift::fadeCurveToString(drift::FadeCurve::Slow), QStringLiteral("slow"));
+    QCOMPARE(drift::fadeCurveToString(drift::FadeCurve::Sharp), QStringLiteral("sharp"));
+    QCOMPARE(drift::fadeCurveFromString(QStringLiteral("fast")), drift::FadeCurve::Fast);
+    QCOMPARE(drift::fadeCurveFromString(QStringLiteral("slow")), drift::FadeCurve::Slow);
+    QCOMPARE(drift::fadeCurveFromString(QStringLiteral("sharp")), drift::FadeCurve::Sharp);
+
+    // 3. Clip edge curve assignment & partner synchronization
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+
+    state.setClipFade(0, 0, 1.0, 1.0);
+    state.setClipFadeCurve(0, 0, QStringLiteral("in"), QStringLiteral("fast"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeInCurve, drift::FadeCurve::Fast);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeInCurve, drift::FadeCurve::Fast);
+
+    state.setClipFadeCurve(0, 0, QStringLiteral("out"), QStringLiteral("slow"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeOutCurve, drift::FadeCurve::Slow);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeOutCurve, drift::FadeCurve::Slow);
+
+    state.setClipFadeCurve(0, 0, QStringLiteral("both"), QStringLiteral("sharp"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeInCurve, drift::FadeCurve::Sharp);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeOutCurve, drift::FadeCurve::Sharp);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeInCurve, drift::FadeCurve::Sharp);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeOutCurve, drift::FadeCurve::Sharp);
+
+    // 4. Transition easing curve assignment & transition regions model export
+    appendAdjacentShapeClips(*state.project(), 500);
+    state.selectClip(0, 0);
+    state.addTransition(0, 0, QStringLiteral("crossfade"), 0.5);
+    const QString transitionId = state.project()->tracks().at(0).transitions.at(0).id;
+
+    state.setTransitionEasing(0, transitionId, QStringLiteral("fast"));
+    QCOMPARE(state.project()->tracks().at(0).transitions.at(0).easingCurve, drift::FadeCurve::Fast);
+
+    state.setTransitionEasing(0, transitionId, QStringLiteral("sharp"));
+    QCOMPARE(state.project()->tracks().at(0).transitions.at(0).easingCurve, drift::FadeCurve::Sharp);
+
+    auto *clipsModel = qobject_cast<TimelineClipsModel *>(state.clipsModel(0));
+    QVERIFY(clipsModel != nullptr);
+    const auto regions = clipsModel->transitionRegions();
+    QVERIFY(!regions.isEmpty());
+    QCOMPARE(regions.first().toMap().value(QStringLiteral("easingCurve")).toString(),
+             QStringLiteral("sharp"));
 }
 
 void EditorStateTest::customFadeCurveSessionApplyAndCancel()

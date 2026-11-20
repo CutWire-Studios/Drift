@@ -2195,6 +2195,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineLandingOutline.qml
         src/qml/components/timeline/TimelineGapHover.qml
         src/qml/components/timeline/TimelineFadeHandle.qml
+        src/qml/components/timeline/TimelineFadeCurveContextMenu.qml
         src/qml/components/timeline/TimelineEmptyState.qml
         src/qml/components/timeline/TimelineCutOverlay.qml
         src/qml/components/timeline/TimelineCursorRequest.qml

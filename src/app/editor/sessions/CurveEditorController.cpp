@@ -69,6 +69,12 @@ void CurveEditorController::beginFade(int trackIndex, int clipIndex, const QStri
         m_fadeShape = drift::FadeShape::linearPreset();
     else if (current == drift::FadeCurve::EqualPower)
         m_fadeShape = drift::FadeShape::equalPowerPreset();
+    else if (current == drift::FadeCurve::Fast)
+        m_fadeShape = drift::FadeShape::fastPreset();
+    else if (current == drift::FadeCurve::Slow)
+        m_fadeShape = drift::FadeShape::slowPreset();
+    else if (current == drift::FadeCurve::Sharp)
+        m_fadeShape = drift::FadeShape::sharpPreset();
     else
         m_fadeShape = drift::FadeShape::smoothPreset();
 
@@ -193,6 +199,12 @@ void CurveEditorController::beginTransition(int trackIndex, const QString &trans
         m_transitionShape = drift::FadeShape::smoothPreset();
     else if (transition->easingCurve == drift::FadeCurve::EqualPower)
         m_transitionShape = drift::FadeShape::equalPowerPreset();
+    else if (transition->easingCurve == drift::FadeCurve::Fast)
+        m_transitionShape = drift::FadeShape::fastPreset();
+    else if (transition->easingCurve == drift::FadeCurve::Slow)
+        m_transitionShape = drift::FadeShape::slowPreset();
+    else if (transition->easingCurve == drift::FadeCurve::Sharp)
+        m_transitionShape = drift::FadeShape::sharpPreset();
     else
         m_transitionShape = drift::FadeShape::linearPreset();
 
