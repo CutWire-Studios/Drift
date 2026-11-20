@@ -19,6 +19,7 @@ private slots:
     void readsDisplayMatrixRotation();
     void multiTrackAudioProbing();
     void probesImageSequence();
+    void identifiesEditFriendlyCodecs();
 };
 
 void TestMediaProbe::missingFileFails()
@@ -158,6 +159,24 @@ void TestMediaProbe::probesImageSequence()
     QVERIFY(!frame.isNull());
     const QColor c = frame.pixelColor(32, 24);
     QVERIFY2(c.blue() > 200 && c.red() < 50 && c.green() < 50, qPrintable(c.name()));
+}
+
+
+void TestMediaProbe::identifiesEditFriendlyCodecs()
+{
+    QVERIFY(MediaProbe::isEditFriendlyCodec(QStringLiteral("prores")));
+    QVERIFY(MediaProbe::isEditFriendlyCodec(QStringLiteral("ProRes")));
+    QVERIFY(MediaProbe::isEditFriendlyCodec(QStringLiteral("dnxhd")));
+    QVERIFY(MediaProbe::isEditFriendlyCodec(QStringLiteral("DNxHD")));
+    QVERIFY(MediaProbe::isEditFriendlyCodec(QStringLiteral("ffv1")));
+    QVERIFY(MediaProbe::isEditFriendlyCodec(QStringLiteral("rawvideo")));
+    QVERIFY(MediaProbe::isEditFriendlyCodec(QStringLiteral("cfhd")));
+
+    QVERIFY(!MediaProbe::isEditFriendlyCodec(QStringLiteral("h264")));
+    QVERIFY(!MediaProbe::isEditFriendlyCodec(QStringLiteral("hevc")));
+    QVERIFY(!MediaProbe::isEditFriendlyCodec(QStringLiteral("vp9")));
+    QVERIFY(!MediaProbe::isEditFriendlyCodec(QStringLiteral("av1")));
+    QVERIFY(!MediaProbe::isEditFriendlyCodec(QStringLiteral("")));
 }
 
 QTEST_MAIN(TestMediaProbe)
