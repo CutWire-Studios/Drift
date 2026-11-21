@@ -255,8 +255,13 @@ PanelFrame {
         active: root.visible
         onSecondsChanged: {
             if (EditorState.playing)
-                root.ensurePlayheadVisible()
+                root.ensurePlayheadVisible(needle.seconds)
         }
+    }
+    Connections {
+        target: EditorState
+        // The published playhead, not needle.seconds: while playing the needle trails it.
+        function onPlayheadJumped() { root.ensurePlayheadVisible(EditorState.playheadSeconds) }
     }
     // True between beginPlayheadSeek and endPlayheadSeek when playback was
     // interrupted so a click or drag could land, and should resume on release.
@@ -1145,8 +1150,8 @@ PanelFrame {
         EditorState.playing = true
     }
 
-    function ensurePlayheadVisible() {
-        const playheadX = needle.seconds * pxPerSecond;
+    function ensurePlayheadVisible(seconds) {
+        const playheadX = seconds * pxPerSecond;
         const margin = 64;
         var target = -1
         if (playheadX < flick.contentX + margin)

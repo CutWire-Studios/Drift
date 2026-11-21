@@ -11,7 +11,7 @@ namespace drift {
 // Speed ramps live in a wider range than the scalar speed slider: curves are where extreme
 // ramps belong. The floor must stay above zero — at 0 the clip would take forever to play.
 inline constexpr double kMinCurveSpeed = 0.1;
-inline constexpr double kMaxCurveSpeed = 8.0;
+inline constexpr double kMaxCurveSpeed = 100.0;
 
 // One control point of a speed curve. `pos` is normalised over the clip's trimmed source
 // range in *playback* order — so it reads left-to-right in the editor whether or not the clip

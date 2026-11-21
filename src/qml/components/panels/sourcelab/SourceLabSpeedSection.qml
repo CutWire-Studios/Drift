@@ -26,7 +26,7 @@ SourceLabSection {
         }
         value: root.speed
         from: 0.25
-        to: 4
+        to: 100
         decimals: 2
         step: 0.05
         unit: "x"

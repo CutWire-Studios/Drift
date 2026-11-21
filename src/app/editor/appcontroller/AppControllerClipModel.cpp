@@ -1834,6 +1834,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("gizmoRotate"), tr("3D gizmo: rotate / Rectangle mask")),
         action(QStringLiteral("gizmoScale"), tr("3D gizmo: scale / Ellipse mask")),
         action(QStringLiteral("gizmoOrientation"), tr("3D gizmo: cycle world/local/view axes")),
+        action(QStringLiteral("addSpeedPoint"), tr("Add speed point at playhead")),
         action(QStringLiteral("toggleBookmark"), tr("Add/remove bookmark at current time")),
         action(QStringLiteral("nextBookmark"), tr("Go to next bookmark")),
         action(QStringLiteral("previousBookmark"), tr("Go to previous bookmark")),

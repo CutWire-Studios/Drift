@@ -414,7 +414,7 @@ void AppController::previewSetClipSpeed(int trackIndex, int clipIndex, double sp
         beginPreviewDrag(tr("Speed changed"));
 
     const drift::Project before = m_project;
-    clip.speed = qBound(0.25, speed, 4.0);
+    clip.speed = qBound(0.25, speed, drift::kMaxCurveSpeed);
     clip.syncSrcOutFromSpeed(sourceDurationForClip(clip));
     syncLinkedPartnersFrom(m_project, clip);
     drift::retimeLinkedSubtitles(before, m_project);
@@ -1623,7 +1623,7 @@ bool AppController::setClipSpeed(int trackIndex, int clipIndex, double speed)
         return false;
 
     const drift::Project before = m_project;
-    clip.speed = qBound(0.25, speed, 4.0);
+    clip.speed = qBound(0.25, speed, drift::kMaxCurveSpeed);
     clip.syncSrcOutFromSpeed(sourceDurationForClip(clip));
     syncLinkedPartnersFrom(m_project, clip);
     drift::retimeLinkedSubtitles(before, m_project);

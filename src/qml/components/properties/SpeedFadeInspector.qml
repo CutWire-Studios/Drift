@@ -109,15 +109,16 @@ Item {
             label: qsTr("Speed")
             enabled: !speedColumn.hasSpeedCurve && !EditorState.playing
             width: parent.width
-            from: 0.25
-            to: 4.0
-            stepSize: 0.05
+            from: Math.log(0.25)
+            to: Math.log(100)
+            stepSize: 0.01
+            valueFormatter: function (v) { return Math.exp(v).toFixed(2) }
             Binding on value {
                 when: !speedSlider.pressed
-                value: root.clipData.speed || 1.0
+                value: Math.log(root.clipData.speed || 1.0)
             }
             onMoved: EditorState.previewSetClipSpeed(
-                         EditorState.selectedTrack, EditorState.selectedClip, value)
+                         EditorState.selectedTrack, EditorState.selectedClip, Math.exp(value))
             onPressedChanged: {
                 if (pressed)
                     EditorState.beginPreviewDrag(qsTr("Speed changed"))

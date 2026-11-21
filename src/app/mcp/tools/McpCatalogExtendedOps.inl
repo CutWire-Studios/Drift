@@ -398,7 +398,7 @@
                          {QStringLiteral("in"), QStringLiteral("out"), QStringLiteral("both")})}},
               clipRefProps())) },
         { "set_clip_speed", "canvas", "Play a whole clip faster or slower (ramps: set_speed_curve)",
-          "Set a single playback rate for the whole clip (1.0 = normal, 2.0 = double speed), 0.25..4. "
+          "Set a single playback rate for the whole clip (1.0 = normal, 2.0 = double speed), 0.25..100. "
           "Keeps the timeline duration and scales the source span (srcOut = srcIn + duration × speed); "
           "the duration only changes when that span would run past the end of the source, where it "
           "becomes (source end − srcIn) / speed. So an untrimmed clip shrinks to fit when sped up, and "

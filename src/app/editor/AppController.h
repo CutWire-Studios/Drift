@@ -748,6 +748,7 @@ public:
     Q_INVOKABLE void saveMulticamCombined();
 
     Q_INVOKABLE void clearClipSpeedCurve(int trackIndex, int clipIndex);
+    void addSpeedPointAtPlayhead();
 
     Q_INVOKABLE void setTransitionEasing(int trackIndex, const QString &transitionId,
                                          const QString &curve, const QVariantList &handles = {});
@@ -2072,6 +2073,8 @@ signals:
     void clipPropertiesPreviewed(int trackIndex, int clipIndex, const QStringList &keys);
     void previewDragActiveChanged();
     void playheadSecondsChanged();
+    // Only for explicit jumps (go to start/end): the timeline scrolls to these, but not to every seek.
+    void playheadJumped();
     void inspectorPlayheadChanged();
     void playingChanged();
     void scrubbingChanged();

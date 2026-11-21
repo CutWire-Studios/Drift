@@ -1297,6 +1297,45 @@ void AppController::clearClipSpeedCurve(int trackIndex, int clipIndex)
     finishEdit(tr("Speed curve removed"));
 }
 
+void AppController::addSpeedPointAtPlayhead()
+{
+    if (m_selectedTrack < 0 || m_selectedTrack >= m_project.tracks().size())
+        return;
+    drift::Track &track = m_project.tracks()[m_selectedTrack];
+    if (m_selectedClip < 0 || m_selectedClip >= track.clips.size())
+        return;
+    drift::Clip &clip = track.clips[m_selectedClip];
+    const drift::TimeUs span = clip.srcOut - clip.srcIn;
+    if (!clip.hasSpeedCurve() || span <= 0 || m_playheadUs <= clip.timelineStart || m_playheadUs >= clip.timelineEnd())
+        return;
+
+    const double pos = static_cast<double>(
+                           clip.speedCurve.sourceOffsetForTimelineOffset(m_playheadUs - clip.timelineStart, span))
+                       / span;
+    QList<drift::SpeedPoint> points = clip.speedCurve.points();
+    int index = 0;
+    while (index < points.size() && points.at(index).pos <= pos)
+        ++index;
+    if (index == 0 || index >= points.size() || pos - points.at(index - 1).pos < 0.001
+        || points.at(index).pos - pos < 0.001)
+        return;
+
+    drift::SpeedPoint point;
+    point.pos = pos;
+    point.speed = clip.speedCurve.speedAt(pos);
+    point.corner = true;
+    points.insert(index, point);
+
+    const drift::Project before = m_project;
+    const drift::Clip source = clip;
+    clip.speedCurve.setPoints(points);
+    clip.syncDurationFromSpeedCurve();
+    drift::appdetail::remapKeyframesForRetime(clip, source);
+    drift::retimeLinkedSubtitles(before, m_project);
+    pushProjectEdit(before, tr("Speed point added"));
+    finishEdit(tr("Speed point added"));
+}
+
 void AppController::setTransitionEasing(int trackIndex, const QString &transitionId,
                                         const QString &curve, const QVariantList &handles)
 {

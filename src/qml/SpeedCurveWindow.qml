@@ -22,7 +22,7 @@ ToolWindow {
     property int selectedPoint: -1
 
     readonly property real minSpeed: 0.1
-    readonly property real maxSpeed: 8.0
+    readonly property real maxSpeed: 100.0
     readonly property real logSpan: Math.log(maxSpeed / minSpeed)
 
     width: 900
@@ -51,7 +51,7 @@ ToolWindow {
     }
 
     // ----- Curve maths ----------------------------------------------------------------------
-    // Speed is drawn on a log axis so 1× sits centred between 0.1× and 8×.
+    // Speed is drawn on a log axis so 1× sits centred between 0.1× and 100×.
     function yForSpeed(speed, h) {
         const clamped = Math.max(root.minSpeed, Math.min(root.maxSpeed, speed))
         return h - (Math.log(clamped / root.minSpeed) / root.logSpan) * h
@@ -288,7 +288,7 @@ ToolWindow {
 
                 // Gridlines at the speeds worth aiming for.
                 Repeater {
-                    model: [0.1, 0.25, 0.5, 1, 2, 4, 8]
+                    model: [0.1, 0.5, 1, 2, 5, 10, 25, 100]
                     delegate: SpeedCurveGridLine {
                         host: root
                         plotItem: plot

@@ -128,6 +128,7 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("gizmoRotate"), QStringLiteral("R")},
         {QStringLiteral("gizmoScale"), QStringLiteral("E")},
         {QStringLiteral("gizmoOrientation"), QStringLiteral("Shift+T")},
+        {QStringLiteral("addSpeedPoint"), QStringLiteral("Shift+K")},
         {QStringLiteral("toggleBookmark"), QStringLiteral("M")},
         {QStringLiteral("nextBookmark"), QStringLiteral("Shift+M")},
         {QStringLiteral("previousBookmark"), QStringLiteral("Ctrl+Shift+M")},
@@ -1866,6 +1867,8 @@ void AppController::triggerAction(const QString &actionId)
         m_preview->setGizmoOrientation(m_preview->gizmoOrientation() == QLatin1String("world")   ? QStringLiteral("local")
                                        : m_preview->gizmoOrientation() == QLatin1String("local") ? QStringLiteral("view")
                                                                                                  : QStringLiteral("world"));
+    else if (actionId == QStringLiteral("addSpeedPoint"))
+        addSpeedPointAtPlayhead();
     else if (actionId == QStringLiteral("toggleBookmark"))
         toggleBookmarkAtPlayhead();
     else if (actionId == QStringLiteral("nextBookmark"))
@@ -1900,10 +1903,13 @@ void AppController::triggerAction(const QString &actionId)
         jumpSeconds(-10.0);
     else if (actionId == QStringLiteral("jumpForwardFar"))
         jumpSeconds(10.0);
-    else if (actionId == QStringLiteral("goToStart"))
+    else if (actionId == QStringLiteral("goToStart")) {
         setPlayheadUs(0);
-    else if (actionId == QStringLiteral("goToEnd"))
+        emit playheadJumped();
+    } else if (actionId == QStringLiteral("goToEnd")) {
         setPlayheadUs(m_project.durationUs());
+        emit playheadJumped();
+    }
     else if (actionId == QStringLiteral("deleteLeft"))
         splitSelectedClipLeft();
     else if (actionId == QStringLiteral("deleteRight"))
