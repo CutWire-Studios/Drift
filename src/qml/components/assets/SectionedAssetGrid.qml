@@ -177,6 +177,8 @@ Flickable {
     }
 
     function _rebuild() {
+        if (root._destroyed)
+            return
         const anchor = root._anchor
         const cols = root.columnCount
         const sections = []
@@ -218,6 +220,10 @@ Flickable {
             slotModel.append({})
     }
 
+    // Qt.callLater still runs a queued _rebuild after the grid is destroyed (a Loader swapping it
+    // out), and by then its functions are gone.
+    property bool _destroyed: false
+    Component.onDestruction: _destroyed = true
     onVisibleSectionsChanged: Qt.callLater(root._rebuild)
     onColumnCountChanged: Qt.callLater(root._rebuild)
     onHeightChanged: _growPool()
