@@ -287,6 +287,7 @@ Item {
         function onNewProjectRequested() { root.requestNewProject() }
         // A synchronous save also lands here while _pendingAfterUnsaved is set; onSaveChosen
         // then finds it already cleared, so the action still runs once.
+        function onSaveFailed(error) { saveFailedDialog.openWith(error) }
         function onProjectSaved(ok) {
             if (!ok || !unsavedDialog.visible || !root._pendingAfterUnsaved)
                 return
@@ -294,6 +295,27 @@ Item {
             root._pendingAfterUnsaved = null
             unsavedDialog.close()
             action()
+        }
+    }
+
+    ThemedDialog {
+        id: saveFailedDialog
+        property string errorText: ""
+        function openWith(error) {
+            errorText = error
+            open()
+        }
+        title: qsTr("Project not saved")
+        showReject: false
+        preferredWidth: Theme.dialogWidthMd
+
+        contentItem: ThemedLabel {
+            wrapMode: Text.Wrap
+            size: "sm"
+            tone: "default"
+            text: saveFailedDialog.errorText.length > 0
+                  ? qsTr("The project couldn't be saved, and your changes are not on disk yet: %1").arg(saveFailedDialog.errorText)
+                  : qsTr("The project couldn't be saved, and your changes are not on disk yet.")
         }
     }
 

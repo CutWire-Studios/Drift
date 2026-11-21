@@ -1374,9 +1374,9 @@ const QList<Op> &ops()
           "bundle there, creating parent folders as needed. saveAs:true duplicates instead: the copy "
           "at path gets its own id and takes its title from the file name, the session continues in "
           "it, and the file it was opened from is left untouched — path is required and must differ "
-          "from inspect.path. Returns ok once the save is dispatched — "
-          "it does NOT report a failed write. Confirm with inspect: dirty should be false and path "
-          "should match.",
+          "from inspect.path. Waits for the write: a failed one returns save_failed with the reason. "
+          "When the undo history is too large to save with the project, the project is saved "
+          "without it and the result has history_dropped:true.",
           objectSchema({{QStringLiteral("path"),
                          stringProp(QStringLiteral("Absolute .drift path; omit to save to the current path"))},
                         {QStringLiteral("saveAs"),

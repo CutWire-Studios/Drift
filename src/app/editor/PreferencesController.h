@@ -421,7 +421,7 @@ private:
     QString m_proxyFolder;
     qint64 m_proxyFolderBytes = -1;
     QString m_undoHistoryMode = QStringLiteral("session");
-    int m_undoHistoryLimit = 0;
+    int m_undoHistoryLimit = 200;
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;
     QString m_preferredGpu = QStringLiteral("auto");

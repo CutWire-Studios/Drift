@@ -263,7 +263,7 @@ PreferencesController::PreferencesController(QObject *parent)
     m_undoHistoryMode = settings.value(QStringLiteral("editor/undoHistoryMode"), QStringLiteral("session")).toString();
     if (!undoHistoryModes().contains(m_undoHistoryMode))
         m_undoHistoryMode = QStringLiteral("session");
-    m_undoHistoryLimit = qMax(0, settings.value(QStringLiteral("editor/undoHistoryLimit"), 0).toInt());
+    m_undoHistoryLimit = qMax(0, settings.value(QStringLiteral("editor/undoHistoryLimit"), 200).toInt());
     m_timelineOverviewVisible =
         settings.value(QStringLiteral("ui/timelineOverviewVisible"), false).toBool();
     m_keyframeStripVisible =

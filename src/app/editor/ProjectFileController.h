@@ -109,6 +109,10 @@ public:
     // Blocks until every Save / Save As started so far has landed and its completion has run.
     // For callers that need the file on disk (MCP, tests); the UI never waits.
     void waitForSave();
+    // The outcome of the last Save / Save As to land.
+    bool lastSaveOk() const { return m_lastSaveOk; }
+    QString lastSaveError() const { return m_lastSaveError; }
+    bool lastSaveDroppedHistory() const { return m_lastSaveDroppedHistory; }
     // Export-only: the raw document JSON, no container and no media. Leaves the open project's
     // path, dirty flag and recents alone — the .drift stays the project of record.
     Q_INVOKABLE void saveProjectJson(const QUrl &url);
@@ -205,6 +209,8 @@ signals:
     // Save completion when saveProject took the Android streaming path (see saveProject). Never
     // emitted on desktop or for a plain, synchronous save — setLastMessage already covers those.
     void projectSaved(bool ok);
+    // A Save / Save As that did not reach the disk; the open project is still unsaved.
+    void saveFailed(const QString &error);
     // Addons the freshly opened project needs but that are not installed. Each entry is
     // id / name / version / kinds, for MissingAddonsDialog.
     void missingAddons(const QVariantList &addons);
@@ -267,6 +273,10 @@ private:
     SaveCapture captureSave(bool embedSource) const;
     // Worker side of captureSave: the request with its document and history media filled in.
     static drift::bundle::WriteRequest completeRequest(const SaveCapture &capture);
+    // completeRequest + bundle::write on a worker, with any exception turned into an error.
+    static bool writeBundle(const QString &path, const SaveCapture &capture,
+                            const drift::bundle::ProgressFn &progress,
+                            QList<drift::bundle::MediaEntry> *media, QString *error);
     // Who the document becomes when a Save As write succeeds. A fresh id keeps the copy from
     // sharing the original's extraction and derived-media directory, both of which are keyed on it.
     struct ProjectIdentity {
@@ -336,6 +346,9 @@ private:
     };
     QFuture<void> m_saveWrite;
     bool m_saveInFlight = false;
+    bool m_lastSaveOk = true;
+    QString m_lastSaveError;
+    bool m_lastSaveDroppedHistory = false;
     QList<QueuedSave> m_queuedSaves;
     QTimer *m_autosaveTimer = nullptr;
     // The recovery write running on a worker, and a counter that deleteRecoveryFile() bumps so a

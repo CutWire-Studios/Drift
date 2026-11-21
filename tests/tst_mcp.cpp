@@ -7908,7 +7908,7 @@ void McpTest::historyHousekeepingOps()
     QCOMPARE(stats.value(QStringLiteral("history_only_media")).toInt(), 0);
     QJsonObject settings = stats.value(QStringLiteral("settings")).toObject();
     QCOMPARE(settings.value(QStringLiteral("source")).toString(), QStringLiteral("global"));
-    QCOMPARE(settings.value(QStringLiteral("steps")).toInt(), -1);
+    QCOMPARE(settings.value(QStringLiteral("steps")).toInt(), 200); // the default limit
 
     // keep_last keeps the newest undoable steps and drops the redo one; the project stays.
     const int clipsBefore = dispatcher.inspect({}).value(QStringLiteral("clips")).toInt();
@@ -7985,7 +7985,7 @@ void McpTest::historyHousekeepingOps()
     limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("reset"), true}});
     QCOMPARE(limit.value(QStringLiteral("source")).toString(), QStringLiteral("global"));
     QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("project"));
-    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), -1);
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), 200);
     QVERIFY(!dispatcher.applyOne(QStringLiteral("set_history_limit"), {}).value(QStringLiteral("ok")).toBool());
 }
 
