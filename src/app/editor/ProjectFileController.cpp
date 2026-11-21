@@ -1596,11 +1596,55 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
         return;
     }
 
+    // Remap non-edit-friendly camera sources to co-located ProRes .mov transcodes when present
+    // alongside the source, in Transcodes_ProRes/, or in ../Transcodes_ProRes/<dir>/.
+    const auto autoRelinkCoLocatedProRes = [this]() {
+        QHash<QString, QString> autoRemap;
+        for (const auto &asset : m_app->m_project.assets()) {
+            if (asset.kind != drift::MediaKind::Video || asset.editFriendly || asset.path.isEmpty()
+                || m_embeddedSources.contains(asset.path))
+                continue;
+            const QFileInfo info(asset.path);
+            if (info.suffix().compare(QLatin1String("mov"), Qt::CaseInsensitive) == 0)
+                continue;
+
+            const QString dir = info.absolutePath();
+            const QString base = info.completeBaseName();
+            const QString candidates[] = {
+                QDir(dir).filePath(base + QStringLiteral(".mov")),
+                QDir(dir).filePath(QStringLiteral("Transcodes_ProRes/") + base + QStringLiteral(".mov")),
+                QDir(dir).filePath(QStringLiteral("../Transcodes_ProRes/") + QDir(dir).dirName()
+                                   + QLatin1Char('/') + base + QStringLiteral(".mov")),
+            };
+            for (const QString &candidate : candidates) {
+                const QFileInfo movInfo(candidate);
+                if (movInfo.exists() && movInfo.size() > 0) {
+                    autoRemap.insert(asset.path, movInfo.absoluteFilePath());
+                    break;
+                }
+            }
+        }
+        if (autoRemap.isEmpty())
+            return;
+
+        remapProjectPaths(autoRemap);
+        for (auto it = autoRemap.constBegin(); it != autoRemap.constEnd(); ++it) {
+            for (drift::MediaAsset &asset : m_app->m_project.assets()) {
+                if (asset.path == it.value())
+                    asset.editFriendly = true;
+            }
+        }
+        if (m_app->m_assetLibrary)
+            m_app->m_assetLibrary->setProject(&m_app->m_project);
+        m_app->notifyTracksChanged();
+    };
+
     if (result->kind == LoadResult::Kind::Json) {
         m_app->applyParsedProject(std::move(*result->parsed));
         // Referenced media only — a previous packaged project's extraction paths must not hitch a
         // ride into the next Save.
         m_embeddedSources.clear();
+        autoRelinkCoLocatedProRes();
         // Untitled: Save must not write a .drift bundle over this .json, and recents stay .drift.
         setCurrentProjectPath(QString());
         setDirty(true);
@@ -1633,6 +1677,7 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
             && entry.resourceOf.isEmpty())
             m_embeddedSources.insert(remap.value(entry.originalPath, entry.originalPath));
     }
+    autoRelinkCoLocatedProRes();
 
     // Not the staged path: on Android that lives in the cache the startup sweep clears, and
     // Save-in-place has to write back to the document the user actually opened. projectLocation
