@@ -647,7 +647,7 @@ Item {
                   : root.wandTool
                     ? qsTr("Click to select a region of similar colour · Shift adds, Alt or right-click subtracts")
                   : root.editorState.inside
-                    ? qsTr("Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom").arg(EditorState.shortcutFor("maskingBrushToggleErase"))
+                    ? qsTr("Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom").arg(EditorState.shortcutFor("masking.brushToggleErase"))
                     : qsTr("Move the playhead over the selected clip")
             color: Theme.c.maskDrawOverlay.hintForeground
             font.family: Theme.fontFamily

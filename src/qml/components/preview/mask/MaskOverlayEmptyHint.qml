@@ -6,7 +6,7 @@ Rectangle {
     id: hint
 
     required property bool hasFrame
-    property string message: hasFrame ? (ShellBridge.maskingActionHandler !== null
+    property string message: hasFrame ? (ShellBridge.hasActionHandler("masking")
                                          ? qsTr("Pick a mask tool in the Masking panel and draw on the preview")
                                          : qsTr("Drag a mask from the Masks tab onto a clip to edit it here"))
                                       : qsTr("Select a clip at the playhead to edit its masks")

@@ -428,6 +428,9 @@ void SearchIndex::addActions()
         const QString id = action.value(QLatin1String("id")).toString();
         if (id == QLatin1String("search") || id == QLatin1String("askCommand"))
             continue;
+        // Panel keys only mean something inside their panel.
+        if (action.value(QLatin1String("scope")).toString() != QLatin1String("global"))
+            continue;
         const bool enabled = actionEnabled(id);
         addRow({QStringLiteral("action"), action.value(QLatin1String("label")).toString(),
                 enabled ? QString() : tr("Not available now"), {},

@@ -57,8 +57,9 @@ ToolWindow {
     // than running on behind it. Save already ended the session; a second call is a no-op.
     onClosing: EditorState.endMulticamSession()
 
-    // Number keys and the numpad switch angles, the way a vision mixer's bus does. WindowShortcut
-    // context (the default) keeps them out of the main window, where digits mean nothing yet.
+    // Number keys and the numpad switch angles by default, the way a vision mixer's bus does, from
+    // the multicam scope of the keymap. WindowShortcut context (the default) keeps them out of the
+    // main window, where digits mean nothing yet.
     Repeater {
         model: 9
         Item {
@@ -67,7 +68,7 @@ ToolWindow {
             width: 0
             height: 0
             Shortcut {
-                sequences: [String(keyHost.index + 1), "Num+" + String(keyHost.index + 1)]
+                sequences: Theme.shortcutSequences("multicam.angle" + String(keyHost.index + 1))
                 enabled: keyHost.index < root.angles.length
                 onActivated: EditorState.switchMulticamAngle(keyHost.index)
             }

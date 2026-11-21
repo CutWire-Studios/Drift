@@ -43,16 +43,16 @@ PanelFrame {
     readonly property string aiRefineMaskId: stackModel.refineMaskId
 
     readonly property var tools: [
-        { id: "", label: qsTr("Select"), action: "selectTool", glyph: Theme.icons.mousePointer, clipOnly: false },
-        { id: "rect", label: qsTr("Rectangle"), action: "gizmoRotate", glyph: Theme.icons.square, clipOnly: false },
-        { id: "ellipse", label: qsTr("Ellipse"), action: "gizmoScale", glyph: Theme.icons.circle, clipOnly: false },
-        { id: "polygon", label: qsTr("Polygon"), action: "maskingPolygonTool", glyph: Theme.icons.pentagon, clipOnly: false },
-        { id: "brush", label: qsTr("Brush"), action: "bladeTool", glyph: Theme.icons.brush, clipOnly: true },
-        { id: "lasso", label: qsTr("Lasso"), action: "maskingLassoTool", glyph: Theme.icons.lasso, clipOnly: true },
-        { id: "scissors", label: qsTr("Scissors"), action: "maskingScissorsTool", glyph: Theme.icons.scissors, clipOnly: true },
-        { id: "wand", label: qsTr("Magic wand"), action: "maskingWandTool", glyph: Theme.icons.magicWand, clipOnly: true },
-        { id: "ai", label: qsTr("AI object"), action: "maskingAiTool", glyph: Theme.icons.wand, clipOnly: true },
-        { id: "tracker", label: qsTr("Tracker"), action: "gizmoMove", glyph: Theme.icons.crosshair, clipOnly: false }
+        { id: "", label: qsTr("Select"), action: "masking.selectTool", glyph: Theme.icons.mousePointer, clipOnly: false },
+        { id: "rect", label: qsTr("Rectangle"), action: "masking.rectTool", glyph: Theme.icons.square, clipOnly: false },
+        { id: "ellipse", label: qsTr("Ellipse"), action: "masking.ellipseTool", glyph: Theme.icons.circle, clipOnly: false },
+        { id: "polygon", label: qsTr("Polygon"), action: "masking.polygonTool", glyph: Theme.icons.pentagon, clipOnly: false },
+        { id: "brush", label: qsTr("Brush"), action: "masking.brushTool", glyph: Theme.icons.brush, clipOnly: true },
+        { id: "lasso", label: qsTr("Lasso"), action: "masking.lassoTool", glyph: Theme.icons.lasso, clipOnly: true },
+        { id: "scissors", label: qsTr("Scissors"), action: "masking.scissorsTool", glyph: Theme.icons.scissors, clipOnly: true },
+        { id: "wand", label: qsTr("Magic wand"), action: "masking.wandTool", glyph: Theme.icons.magicWand, clipOnly: true },
+        { id: "ai", label: qsTr("AI object"), action: "masking.aiTool", glyph: Theme.icons.wand, clipOnly: true },
+        { id: "tracker", label: qsTr("Tracker"), action: "tracking.trackerTool", glyph: Theme.icons.crosshair, clipOnly: false }
     ]
 
     function withShortcut(label, actionId) {
@@ -135,7 +135,7 @@ PanelFrame {
         if (shown)
             refresh()
         if (wantsActions)
-            ShellBridge.maskingActionHandler = root
+            setHandlerRegistered(true)
     }
 
     Connections {
@@ -392,7 +392,7 @@ PanelFrame {
                 ThemedToggleButton {
                     Layout.alignment: Qt.AlignVCenter
                     text: qsTr("Paint")
-                    tooltip: root.withShortcut(qsTr("Left-drag paints"), "maskingBrushToggleErase")
+                    tooltip: root.withShortcut(qsTr("Left-drag paints"), "masking.brushToggleErase")
                     checked: !EditorState.masking.brushErase
                     onClicked: EditorState.masking.brushErase = false
                 }
@@ -400,7 +400,7 @@ PanelFrame {
                 ThemedToggleButton {
                     Layout.alignment: Qt.AlignVCenter
                     text: qsTr("Erase")
-                    tooltip: root.withShortcut(qsTr("Left-drag erases"), "maskingBrushToggleErase")
+                    tooltip: root.withShortcut(qsTr("Left-drag erases"), "masking.brushToggleErase")
                     checked: EditorState.masking.brushErase
                     onClicked: EditorState.masking.brushErase = true
                 }
@@ -754,11 +754,11 @@ PanelFrame {
             return false
         // These keys are shared with the timeline tools and the 3D gizmo, so they are only ours
         // while the user is working here. Escape cancels state that exists only mid-edit.
-        const engaged = (ShellBridge.previewHovered || root.activeFocus || panelHover.hovered)
+        const engaged = (ShellBridge.previewHovered || ShellBridge.focusWithin(root, focusItem) || panelHover.hovered)
         if (!engaged && id !== "clearSelection")
             return false
         switch (id) {
-        case "selectTool":
+        case "masking.selectTool":
             EditorState.preview.maskingTool = ""
             return true
         case "clearSelection":
@@ -788,65 +788,78 @@ PanelFrame {
                 return false
             EditorState.preview.maskingTool = ""
             return true
-        case "maskingBrushSmaller":
+        case "masking.brushSmaller":
             if (EditorState.preview.maskingTool !== "brush")
                 return false
             EditorState.masking.brushSize = Math.max(0.002, EditorState.masking.brushSize / 1.25)
             return true
-        case "maskingBrushLarger":
+        case "masking.brushLarger":
             if (EditorState.preview.maskingTool !== "brush")
                 return false
             EditorState.masking.brushSize = Math.min(0.5, EditorState.masking.brushSize * 1.25)
             return true
-        case "maskingBrushToggleErase":
+        case "masking.brushToggleErase":
             if (EditorState.preview.maskingTool !== "brush")
                 return false
             EditorState.masking.brushErase = !EditorState.masking.brushErase
             return true
-        case "gizmoMove":
+        case "tracking.trackerTool":
             EditorState.preview.maskingTool = "tracker"
             return true
-        case "gizmoRotate":
+        case "masking.rectTool":
             EditorState.preview.maskingTool = "rect"
             return true
-        case "gizmoScale":
+        case "masking.ellipseTool":
             EditorState.preview.maskingTool = "ellipse"
             return true
-        case "maskingPolygonTool":
+        case "masking.polygonTool":
             EditorState.preview.maskingTool = "polygon"
             return true
-        case "bladeTool":
+        case "masking.brushTool":
             EditorState.preview.maskingTool = "brush"
             return true
-        case "maskingAiTool":
+        case "masking.aiTool":
             EditorState.preview.maskingTool = "ai"
             return true
-        case "maskingLassoTool":
+        case "masking.lassoTool":
             EditorState.preview.maskingTool = "lasso"
             return true
-        case "maskingScissorsTool":
+        case "masking.scissorsTool":
             EditorState.preview.maskingTool = "scissors"
             return true
-        case "maskingWandTool":
+        case "masking.wandTool":
             EditorState.preview.maskingTool = "wand"
             return true
         }
         return false
     }
 
+    // The Tracker tool is a Masking tool but its key is bound in the Tracking scope, which no
+    // handler of this panel's scope is offered.
+    readonly property QtObject trackerToolKeys: QtObject {
+        readonly property string scope: "tracking"
+        readonly property int priority: 2
+        function handleAction(id) {
+            return id === "tracking.trackerTool" && root.handleAction(id)
+        }
+    }
+
     focus: true
     activeFocusOnTab: true
 
-    onWantsActionsChanged: {
-        if (wantsActions)
-            ShellBridge.maskingActionHandler = root
-        else if (ShellBridge.maskingActionHandler === root)
-            ShellBridge.maskingActionHandler = null
+    readonly property string scope: "masking"
+    readonly property int priority: 2
+    function setHandlerRegistered(on) {
+        if (on) {
+            ShellBridge.registerActionHandler(root)
+            ShellBridge.registerActionHandler(trackerToolKeys)
+        } else {
+            ShellBridge.unregisterActionHandler(root)
+            ShellBridge.unregisterActionHandler(trackerToolKeys)
+        }
     }
-    Component.onDestruction: {
-        if (ShellBridge.maskingActionHandler === root)
-            ShellBridge.maskingActionHandler = null
-    }
+    onWantsActionsChanged: setHandlerRegistered(wantsActions)
+    Component.onDestruction: setHandlerRegistered(false)
 
     Flickable {
         id: flick

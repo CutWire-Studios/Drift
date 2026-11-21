@@ -41,7 +41,7 @@ SettingsPage {
         SettingsRow {
             required property var modelData
 
-            title: modelData.label
+            title: modelData.scope === "global" ? modelData.label : modelData.categoryLabel + ": " + modelData.label
             keywords: modelData.id + " " + (modelData.shortcut || "") + " shortcut key binding hotkey"
             query: page.query
 

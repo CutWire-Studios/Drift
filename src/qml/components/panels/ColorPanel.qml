@@ -182,11 +182,19 @@ PanelFrame {
 
     focus: true
     activeFocusOnTab: true
-    Shortcut {
-        sequence: "\\"
-        context: Qt.WindowShortcut
-        enabled: root.visible
-        onActivated: root.setBypass(!root.colorState.bypass)
+    readonly property string scope: "color"
+    readonly property int priority: 7
+    function handleAction(id) {
+        if (!root.visible || id !== "color.toggleBypass")
+            return false
+        root.setBypass(!root.colorState.bypass)
+        return true
+    }
+    onVisibleChanged: {
+        if (root.visible)
+            ShellBridge.registerActionHandler(root)
+        else
+            ShellBridge.unregisterActionHandler(root)
     }
 
     onShownChanged: {
@@ -206,6 +214,8 @@ PanelFrame {
         function onPanelRequestChanged() { root.applyPanelRequest() }
     }
     Component.onCompleted: {
+        if (root.visible)
+            ShellBridge.registerActionHandler(root)
         applyPanelRequest()
         const specs = {}
         const catalog = colorState.finishingCatalog()
@@ -213,7 +223,10 @@ PanelFrame {
             specs[catalog[i].id] = colorState.finishingParamSpecs(catalog[i].id)
         finishingSpecs = specs
     }
-    Component.onDestruction: setBypass(false)
+    Component.onDestruction: {
+        ShellBridge.unregisterActionHandler(root)
+        setBypass(false)
+    }
 
     TapHandler {
         acceptedButtons: Qt.LeftButton

@@ -48,6 +48,16 @@ QtObject {
         return key === "Left" || key === "Right" || key === "Up" || key === "Down"
     }
 
+    function isArrowKey(key) {
+        return key === Qt.Key_Left || key === Qt.Key_Right || key === Qt.Key_Up || key === Qt.Key_Down
+    }
+
+    // The Shortcut sequences for a window-local action, following the keymap as it changes.
+    function shortcutSequences(actionId) {
+        void EditorState.keymap.chords
+        return EditorState.keymap.bindings(actionId).map(nativeShortcutSequence)
+    }
+
     function shortcutDisplay(sequence) {
         if (!sequence || sequence.length === 0)
             return ""

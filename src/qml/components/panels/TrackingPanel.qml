@@ -135,18 +135,18 @@ PanelFrame {
     // not in the layout.
     function handleAction(id) {
         switch (id) {
-        case "trackForward":
-        case "trackBackward":
-        case "trackFrameForward":
-        case "trackFrameBackward":
-        case "trackBoth":
+        case "tracking.trackForward":
+        case "tracking.trackBackward":
+        case "tracking.trackFrameForward":
+        case "tracking.trackFrameBackward":
+        case "tracking.trackBoth":
             if (!shown || !hasTarget || selectedId === "" || EditorState.tracking.busy)
                 return false
-            if (id === "trackBoth")
+            if (id === "tracking.trackBoth")
                 trackBoth(selectedId)
             else
-                runTrack(selectedId, id === "trackForward" || id === "trackFrameForward",
-                         id === "trackFrameForward" || id === "trackFrameBackward")
+                runTrack(selectedId, id === "tracking.trackForward" || id === "tracking.trackFrameForward",
+                         id === "tracking.trackFrameForward" || id === "tracking.trackFrameBackward")
             return true
         }
         if (id !== "clearSelection")
@@ -161,16 +161,15 @@ PanelFrame {
         return true
     }
 
+    readonly property string scope: "tracking"
+    readonly property int priority: 3
     onWantsActionsChanged: {
         if (wantsActions)
-            ShellBridge.trackingActionHandler = root
-        else if (ShellBridge.trackingActionHandler === root)
-            ShellBridge.trackingActionHandler = null
+            ShellBridge.registerActionHandler(root)
+        else
+            ShellBridge.unregisterActionHandler(root)
     }
-    Component.onDestruction: {
-        if (ShellBridge.trackingActionHandler === root)
-            ShellBridge.trackingActionHandler = null
-    }
+    Component.onDestruction: ShellBridge.unregisterActionHandler(root)
 
     onShownChanged: {
         if (shown) {
@@ -186,7 +185,7 @@ PanelFrame {
 
     Component.onCompleted: {
         if (wantsActions)
-            ShellBridge.trackingActionHandler = root
+            ShellBridge.registerActionHandler(root)
         trackerList.selectedId = ShellBridge.selectedTrackerId
         if (shown)
             refresh()
@@ -559,7 +558,7 @@ PanelFrame {
                             width: parent.width
                             variant: "primary"
                             text: qsTr("Track whole clip")
-                            tooltip: root.withShortcut(qsTr("Follow the feature backward and forward through the whole clip"), "trackBoth")
+                            tooltip: root.withShortcut(qsTr("Follow the feature backward and forward through the whole clip"), "tracking.trackBoth")
                             enabled: !EditorState.tracking.busy
                             onClicked: root.trackBoth(trackerRow.model.id)
                         }
@@ -591,14 +590,14 @@ PanelFrame {
 
                             IconButton {
                                 glyph: Theme.icons.skipBack
-                                tooltip: root.withShortcut(qsTr("Track back to the start"), "trackBackward")
+                                tooltip: root.withShortcut(qsTr("Track back to the start"), "tracking.trackBackward")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, false, false)
                             }
 
                             IconButton {
                                 glyph: Theme.icons.stepBack
-                                tooltip: root.withShortcut(qsTr("Track one frame back"), "trackFrameBackward")
+                                tooltip: root.withShortcut(qsTr("Track one frame back"), "tracking.trackFrameBackward")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, false, true)
                             }
@@ -612,14 +611,14 @@ PanelFrame {
 
                             IconButton {
                                 glyph: Theme.icons.stepForward
-                                tooltip: root.withShortcut(qsTr("Track one frame forward"), "trackFrameForward")
+                                tooltip: root.withShortcut(qsTr("Track one frame forward"), "tracking.trackFrameForward")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, true, true)
                             }
 
                             IconButton {
                                 glyph: Theme.icons.skipForward
-                                tooltip: root.withShortcut(qsTr("Track to the end"), "trackForward")
+                                tooltip: root.withShortcut(qsTr("Track to the end"), "tracking.trackForward")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, true, false)
                             }

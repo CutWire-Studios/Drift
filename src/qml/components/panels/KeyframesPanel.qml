@@ -36,7 +36,8 @@ PanelFrame {
     readonly property bool hasClip: track >= 0 && clipIndex >= 0
                                     && Object.keys(EditorState.selectedClipData).length > 0
     readonly property real playhead: EditorState.playheadSeconds
-    readonly property bool wantsActions: shown && (activeFocus || hover.hovered)
+    readonly property bool focusWithin: ShellBridge.focusWithin(root, focusItem)
+    readonly property bool wantsActions: shown && (focusWithin || hover.hovered)
 
     readonly property var focusItem: Window.activeFocusItem
     property var curveSeen: ({})
@@ -208,10 +209,45 @@ PanelFrame {
         return !!f && f.cursorPosition !== undefined
     }
 
+    // The keys of the panel's own scope, which only act while it has the keyboard.
+    function handleScopedAction(id) {
+        switch (id) {
+        case "keyframes.addKey":
+            root.toggleKeyAtPlayhead()
+            return true
+        case "keyframes.fitSelection":
+            if (selectionObject.count > 0)
+                root.fitSelection()
+            else
+                root.fitAll()
+            return true
+        case "keyframes.fitAll":
+            root.fitAll()
+            return true
+        case "keyframes.prevKey":
+            root.jumpToKey(false)
+            return true
+        case "keyframes.nextKey":
+            root.jumpToKey(true)
+            return true
+        case "keyframes.nudgeLeft":
+        case "keyframes.nudgeRight":
+        case "keyframes.nudgeLeftFar":
+        case "keyframes.nudgeRightFar":
+            if (selectionObject.count === 0)
+                return false
+            root.nudgeSelection((id.indexOf("Left") >= 0 ? -1 : 1) * (id.endsWith("Far") ? 10 : 1))
+            return true
+        }
+        return false
+    }
+
     function handleAction(id, force) {
         if (!shown || !hasClip || textFieldFocused())
             return false
-        const mine = !!force || activeFocus || hover.hovered
+        if (id.startsWith("keyframes."))
+            return (!!force || focusWithin) && handleScopedAction(id)
+        const mine = !!force || focusWithin || hover.hovered
         if (id === "paste") {
             if (selectionObject.count === 0 && !(EditorState.keyframes.clipboardCount > 0 && mine))
                 return false
@@ -243,16 +279,15 @@ PanelFrame {
     focus: true
     activeFocusOnTab: true
 
+    readonly property string scope: "keyframes"
+    readonly property int priority: 0
     onWantsActionsChanged: {
         if (wantsActions)
-            ShellBridge.keyframesActionHandler = root
-        else if (ShellBridge.keyframesActionHandler === root)
-            ShellBridge.keyframesActionHandler = null
+            ShellBridge.registerActionHandler(root)
+        else
+            ShellBridge.unregisterActionHandler(root)
     }
-    Component.onDestruction: {
-        if (ShellBridge.keyframesActionHandler === root)
-            ShellBridge.keyframesActionHandler = null
-    }
+    Component.onDestruction: ShellBridge.unregisterActionHandler(root)
 
     onShownChanged: scheduleRebuild()
     onTrackChanged: Qt.callLater(onClipSwitched)
@@ -261,33 +296,16 @@ PanelFrame {
     onCollapsedChanged: scheduleRebuild()
     Component.onCompleted: onClipSwitched()
 
+    // The same lookup the shortcut dispatch does, for keys that reach the panel from a focused child
+    // before the editor scope sees them.
     Keys.onPressed: (event) => {
-        if (event.key === Qt.Key_K && event.modifiers === Qt.NoModifier) {
-            root.toggleKeyAtPlayhead()
+        if (event.key === Qt.Key_Escape && root.cancelGesture()) {
             event.accepted = true
-        } else if (event.key === Qt.Key_Escape && root.cancelGesture()) {
-            event.accepted = true
-        } else if ((event.key === Qt.Key_Left || event.key === Qt.Key_Right)
-                   && !(event.modifiers & (Qt.AltModifier | Qt.ControlModifier | Qt.MetaModifier))
-                   && selectionObject.count > 0 && root.hasClip) {
-            root.nudgeSelection((event.key === Qt.Key_Left ? -1 : 1) * (event.modifiers & Qt.ShiftModifier ? 10 : 1))
-            event.accepted = true
-        } else if (event.key === Qt.Key_F && event.modifiers === Qt.NoModifier && root.hasClip) {
-            if (selectionObject.count > 0)
-                root.fitSelection()
-            else
-                root.fitAll()
-            event.accepted = true
-        } else if (event.key === Qt.Key_Home && event.modifiers === Qt.NoModifier && root.hasClip) {
-            root.fitAll()
-            event.accepted = true
-        } else if (event.key === Qt.Key_Left && (event.modifiers & Qt.AltModifier)) {
-            root.jumpToKey(false)
-            event.accepted = true
-        } else if (event.key === Qt.Key_Right && (event.modifiers & Qt.AltModifier)) {
-            root.jumpToKey(true)
-            event.accepted = true
+            return
         }
+        const id = ShellBridge.scopedAction("keyframes", event)
+        if (id !== "" && root.handleAction(id, true))
+            event.accepted = true
     }
 
     KeyframeRowsModel {

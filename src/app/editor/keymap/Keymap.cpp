@@ -38,6 +38,41 @@ QString supersededLegacyDefault(int fromVersion, const QString &actionId)
     return {};
 }
 
+// Actions that were split per panel. A stored binding for `from` is carried to every id in `to`
+// (the old action did all of those jobs at once); `keep` leaves `from` in the catalog because it
+// still exists with its global meaning.
+struct IdMove {
+    const char *from;
+    QStringList to;
+    bool keep;
+};
+
+const QList<IdMove> &idMoves()
+{
+    static const QList<IdMove> moves = {
+        {"gizmoMove", {QStringLiteral("viewport3d.gizmoMove"), QStringLiteral("tracking.trackerTool")}, false},
+        {"gizmoRotate", {QStringLiteral("viewport3d.gizmoRotate"), QStringLiteral("masking.rectTool")}, false},
+        {"gizmoScale", {QStringLiteral("viewport3d.gizmoScale"), QStringLiteral("masking.ellipseTool")}, false},
+        {"gizmoOrientation", {QStringLiteral("viewport3d.gizmoOrientation")}, false},
+        {"bladeTool", {QStringLiteral("masking.brushTool")}, true},
+        {"selectTool", {QStringLiteral("masking.selectTool")}, true},
+        {"maskingPolygonTool", {QStringLiteral("masking.polygonTool")}, false},
+        {"maskingAiTool", {QStringLiteral("masking.aiTool")}, false},
+        {"maskingLassoTool", {QStringLiteral("masking.lassoTool")}, false},
+        {"maskingScissorsTool", {QStringLiteral("masking.scissorsTool")}, false},
+        {"maskingWandTool", {QStringLiteral("masking.wandTool")}, false},
+        {"maskingBrushSmaller", {QStringLiteral("masking.brushSmaller")}, false},
+        {"maskingBrushLarger", {QStringLiteral("masking.brushLarger")}, false},
+        {"maskingBrushToggleErase", {QStringLiteral("masking.brushToggleErase")}, false},
+        {"trackForward", {QStringLiteral("tracking.trackForward")}, false},
+        {"trackBackward", {QStringLiteral("tracking.trackBackward")}, false},
+        {"trackFrameForward", {QStringLiteral("tracking.trackFrameForward")}, false},
+        {"trackFrameBackward", {QStringLiteral("tracking.trackFrameBackward")}, false},
+        {"trackBoth", {QStringLiteral("tracking.trackBoth")}, false},
+    };
+    return moves;
+}
+
 bool isArrowChord(const QString &chord)
 {
     QStringList modifiers;
@@ -151,7 +186,10 @@ QString Keymap::chordFromKey(int key, int modifiers, int nativeKey, const QStrin
         break;
     }
 
-    const auto mods = Qt::KeyboardModifiers(modifiers);
+    auto mods = Qt::KeyboardModifiers(modifiers);
+    // Qt flags every arrow press on a Mac as a keypad key, which no binding means.
+    if (mac && (key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up || key == Qt::Key_Down))
+        mods &= ~Qt::KeypadModifier;
     bool shift = mods.testFlag(Qt::ShiftModifier) || key == Qt::Key_Backtab;
     QString name = namedKey(key);
     if (name.isEmpty()) {
@@ -246,12 +284,11 @@ void Keymap::load()
     if (!keymap::findPreset(m_presetId))
         m_presetId = QLatin1String(keymap::kDefaultPresetId);
     settings.beginGroup(QStringLiteral("overrides"));
+    QHash<QString, QStringList> stored;
     for (const QString &id : settings.childKeys()) {
-        if (!keymap::findAction(id))
-            continue;
         QStringList list = settings.value(id).toStringList();
         if (list == QStringList{kNoShortcut}) {
-            m_overrides.insert(id, {});
+            stored.insert(id, {});
             continue;
         }
         QStringList clean;
@@ -260,10 +297,31 @@ void Keymap::load()
             if (!normalized.isEmpty() && !clean.contains(normalized))
                 clean.append(normalized);
         }
-        m_overrides.insert(id, clean);
+        stored.insert(id, clean);
     }
     settings.endGroup();
     settings.endGroup();
+
+    for (const IdMove &move : idMoves()) {
+        const QString from = QLatin1String(move.from);
+        if (!stored.contains(from))
+            continue;
+        const QStringList chords = stored.value(from);
+        for (const QString &to : move.to) {
+            if (stored.contains(to))
+                continue;
+            stored.insert(to, chords);
+            settings.setValue(kGroup + QStringLiteral("/overrides/") + to, chords.isEmpty() ? QStringList{kNoShortcut} : chords);
+        }
+        if (!move.keep) {
+            stored.remove(from);
+            settings.remove(kGroup + QStringLiteral("/overrides/") + from);
+        }
+    }
+    for (auto it = stored.cbegin(); it != stored.cend(); ++it) {
+        if (keymap::findAction(it.key()))
+            m_overrides.insert(it.key(), it.value());
+    }
 
     pruneOverrides();
     rebuild();
@@ -279,16 +337,25 @@ void Keymap::migrateLegacy()
     const int version = settings.value(QStringLiteral("schemaVersion"), 0).toInt();
     const keymap::Preset *drift = keymap::findPreset(QLatin1String(keymap::kDefaultPresetId));
     QHash<QString, QString> migrated;
-    for (const keymap::ActionDef &action : keymap::actions()) {
-        const QString id = QLatin1String(action.id);
+    const auto consider = [&](const QString &id, const QString &defaultsFrom) {
         // An empty stored value always meant "use the default" in the old format.
         const QString stored = normalizeChord(settings.value(id).toString());
         if (stored.isEmpty() || stored == supersededLegacyDefault(version, id))
-            continue;
-        const QStringList base = keymap::presetChords(*drift, id, keymap::scopeOf(action));
+            return;
+        const keymap::ActionDef *action = keymap::findAction(defaultsFrom);
+        if (!action)
+            return;
+        const QStringList base = keymap::presetChords(*drift, defaultsFrom, keymap::scopeOf(*action));
         if (base.size() == 1 && base.first() == stored)
-            continue;
+            return;
         migrated.insert(id, stored);
+    };
+    for (const keymap::ActionDef &action : keymap::actions())
+        consider(QLatin1String(action.id), QLatin1String(action.id));
+    // Split-out ids are no longer in the catalog; load() carries what is stored under them.
+    for (const IdMove &move : idMoves()) {
+        if (!move.keep)
+            consider(QLatin1String(move.from), move.to.first());
     }
     settings.endGroup();
 
@@ -357,6 +424,8 @@ void Keymap::rebuild()
 
     QSet<QString> all;
     for (auto it = m_effective.cbegin(); it != m_effective.cend(); ++it) {
+        if (keymap::isLocalScope(scopeOf(it.key())))
+            continue;
         for (const QString &chord : it.value()) {
             if (!isArrowChord(chord))
                 all.insert(chord);
@@ -416,6 +485,7 @@ QVariantList Keymap::categories() const
             {QStringLiteral("id"), QLatin1String(category.id)},
             {QStringLiteral("label"), keymap::translatedCategoryLabel(category)},
             {QStringLiteral("scope"), QLatin1String(category.scope)},
+            {QStringLiteral("local"), category.local},
         });
     }
     return out;

@@ -11,6 +11,9 @@ struct CategoryDef {
     const char *id;
     const char *label;
     const char *scope;
+    // Keys of a local scope reach the item that owns them as key events (or a window's own
+    // Shortcut), so they are not part of Keymap::chords and get no app-wide Shortcut.
+    bool local = false;
 };
 
 struct ActionDef {
@@ -27,6 +30,7 @@ const ActionDef *findAction(const QString &id);
 const CategoryDef *findCategory(const QString &id);
 
 QString scopeOf(const ActionDef &action);
+bool isLocalScope(const QString &scope);
 QString translatedLabel(const ActionDef &action);
 QString translatedCategoryLabel(const CategoryDef &category);
 

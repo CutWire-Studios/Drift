@@ -242,6 +242,9 @@ private slots:
     void keymapDisplayTextParsesPlusAsAKey();
     void keymapTranslatesMetaOffMacAndFallsBackToDrift();
     void keymapPresetSwitchKeepsOrDiscardsOverrides();
+    void keymapScopesShareChordsButNotWithinOneScope();
+    void keymapCatalogIsConsistent();
+    void keymapCarriesBindingsOfSplitActionIds();
     void splitLeftRightUndoRestoresTheDiscardedHalf();
     void splitLeftKeepsLinkedAudioInSync();
     void splitRightKeepsLinkedAudioInSync();
@@ -3124,6 +3127,176 @@ void EditorStateTest::keymapPresetSwitchKeepsOrDiscardsOverrides()
         QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
     }
     QVERIFY(drift::Keymap().presets().size() >= 1);
+}
+
+void EditorStateTest::keymapScopesShareChordsButNotWithinOneScope()
+{
+    KeymapSandbox sandbox;
+    drift::Keymap keymap;
+
+    // A global action and a panel action may share a chord: F is the masking lasso and also the
+    // keyframes panel's fit key, Home is both goToStart and the keyframes and 3D view fit.
+    QCOMPARE(keymap.actionFor(QStringLiteral("masking"), QStringLiteral("F")), QStringLiteral("masking.lassoTool"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("keyframes"), QStringLiteral("F")), QStringLiteral("keyframes.fitSelection"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Home")), QStringLiteral("goToStart"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("keyframes"), QStringLiteral("Home")), QStringLiteral("keyframes.fitAll"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("viewport3d"), QStringLiteral("Home")), QStringLiteral("viewport3d.frameAll"));
+    QVERIFY(keymap.actionFor(QStringLiteral("global"), QStringLiteral("F")).isEmpty());
+    QCOMPARE(keymap.actionFor(QStringLiteral("masking"), QStringLiteral("V")), QStringLiteral("masking.selectTool"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("V")), QStringLiteral("selectTool"));
+
+    QVERIFY(keymap.addBinding(QStringLiteral("masking.rectTool"), QStringLiteral("Ctrl+S")).isEmpty());
+    QVERIFY(keymap.addBinding(QStringLiteral("viewport3d.frameAll"), QStringLiteral("Ctrl+S")).isEmpty());
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Ctrl+S")), QStringLiteral("save"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("masking"), QStringLiteral("Ctrl+S")), QStringLiteral("masking.rectTool"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("viewport3d"), QStringLiteral("Ctrl+S")), QStringLiteral("viewport3d.frameAll"));
+
+    // Inside one scope the chord has a single owner and the refusal names it.
+    QCOMPARE(keymap.addBinding(QStringLiteral("masking.ellipseTool"), QStringLiteral("R")), QStringLiteral("Rectangle mask tool"));
+    QCOMPARE(keymap.bindings(QStringLiteral("masking.ellipseTool")), QStringList{QStringLiteral("E")});
+    QCOMPARE(keymap.addBinding(QStringLiteral("keyframes.addKey"), QStringLiteral("F")), keymap.labelFor(QStringLiteral("keyframes.fitSelection")));
+    QCOMPARE(keymap.setBindings(QStringLiteral("viewport3d.gizmoScale"), {QStringLiteral("F9"), QStringLiteral("T")}),
+             keymap.labelFor(QStringLiteral("viewport3d.gizmoMove")));
+    QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("E")});
+
+    // Window-local scopes stay out of the app-wide shortcut list, panel scopes are in it.
+    QVERIFY(keymap.chords().contains(QStringLiteral("K")));
+    QVERIFY(keymap.chords().contains(QStringLiteral("Num+5")));
+    QVERIFY(keymap.chords().contains(QStringLiteral("Num+1")));
+    QVERIFY(!keymap.chords().contains(QStringLiteral("D")));
+    QVERIFY(!keymap.chords().contains(QStringLiteral("Backspace")));
+    QVERIFY(!keymap.chordsFor(QStringLiteral("fly3d")).isEmpty());
+}
+
+void EditorStateTest::keymapCatalogIsConsistent()
+{
+    using namespace drift::keymap;
+    QSet<QString> ids;
+    for (const ActionDef &action : actions()) {
+        const QString id = QLatin1String(action.id);
+        QVERIFY2(!ids.contains(id), qPrintable(id));
+        ids.insert(id);
+        const CategoryDef *category = findCategory(QLatin1String(action.category));
+        QVERIFY2(category, qPrintable(id));
+        const QString scope = scopeOf(action);
+        if (scope == QLatin1String(kGlobalScope)) {
+            QVERIFY2(!id.contains(QLatin1Char('.')) || id.startsWith(QLatin1String("workspace.")), qPrintable(id));
+        } else {
+            QVERIFY2(id.startsWith(scope + QLatin1Char('.')), qPrintable(id));
+            QVERIFY2(!id.mid(scope.size() + 1).contains(QLatin1Char('.')), qPrintable(id));
+        }
+        QVERIFY2(!QString(QLatin1String(action.label)).contains(QLatin1String(" / ")), qPrintable(id));
+    }
+    QSet<QString> categoryIds;
+    for (const CategoryDef &category : categories())
+    {
+        QVERIFY2(!categoryIds.contains(QLatin1String(category.id)), category.id);
+        categoryIds.insert(QLatin1String(category.id));
+    }
+
+    // The Drift preset binds no chord twice within a scope. A preset table is complete, so a chord
+    // that is missing or doubled here would silently lose an action at load time.
+    const Preset *drift = findPreset(QLatin1String(kDefaultPresetId));
+    QVERIFY(drift);
+    QHash<QString, QHash<QString, QString>> seen;
+    for (const ActionDef &action : actions()) {
+        const QString id = QLatin1String(action.id);
+        const QString scope = scopeOf(action);
+        for (const QString &chord : drift->chords.value(id)) {
+            QCOMPARE(drift::Keymap::normalizeChord(chord), chord);
+            QVERIFY2(!seen[scope].contains(chord),
+                     qPrintable(QStringLiteral("%1 and %2 both bind %3").arg(seen[scope].value(chord), id, chord)));
+            seen[scope].insert(chord, id);
+        }
+    }
+
+    // Everything the preset binds is in the catalog.
+    for (auto it = drift->chords.cbegin(); it != drift->chords.cend(); ++it)
+        QVERIFY2(ids.contains(it.key()), qPrintable(it.key()));
+
+    // So the effective bindings equal the preset's, in every scope.
+    KeymapSandbox sandbox;
+    drift::Keymap keymap;
+    for (const ActionDef &action : actions()) {
+        const QString id = QLatin1String(action.id);
+        QCOMPARE(keymap.bindings(id), drift->chords.value(id));
+    }
+}
+
+void EditorStateTest::keymapCarriesBindingsOfSplitActionIds()
+{
+    KeymapSandbox sandbox;
+    const auto seedOverrides = [](const QHash<QString, QStringList> &values) {
+        QSettings settings;
+        settings.remove(QStringLiteral("shortcuts"));
+        settings.remove(QStringLiteral("keymap"));
+        settings.setValue(QStringLiteral("keymap/schemaVersion"), 1);
+        for (auto it = values.cbegin(); it != values.cend(); ++it)
+            settings.setValue(QStringLiteral("keymap/overrides/") + it.key(), it.value());
+        settings.sync();
+    };
+
+    // The old ids were one action doing a 3D gizmo job and a mask or tracker job at once, so a
+    // rebinding lands on both.
+    seedOverrides({{QStringLiteral("gizmoMove"), {QStringLiteral("F7")}},
+                   {QStringLiteral("gizmoRotate"), {QStringLiteral("none")}},
+                   {QStringLiteral("bladeTool"), {QStringLiteral("F8")}},
+                   {QStringLiteral("maskingWandTool"), {QStringLiteral("F9")}},
+                   {QStringLiteral("trackFrameForward"), {QStringLiteral("Ctrl+Alt+Right")}},
+                   {QStringLiteral("masking.polygonTool"), {QStringLiteral("F10")}},
+                   {QStringLiteral("maskingPolygonTool"), {QStringLiteral("F11")}}});
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoMove")), QStringList{QStringLiteral("F7")});
+        QCOMPARE(keymap.bindings(QStringLiteral("tracking.trackerTool")), QStringList{QStringLiteral("F7")});
+        QVERIFY(keymap.bindings(QStringLiteral("viewport3d.gizmoRotate")).isEmpty());
+        QVERIFY(keymap.bindings(QStringLiteral("masking.rectTool")).isEmpty());
+        QVERIFY(keymap.isModified(QStringLiteral("masking.rectTool")));
+        // bladeTool still exists, and the brush mask tool follows it.
+        QCOMPARE(keymap.bindings(QStringLiteral("bladeTool")), QStringList{QStringLiteral("F8")});
+        QCOMPARE(keymap.bindings(QStringLiteral("masking.brushTool")), QStringList{QStringLiteral("F8")});
+        QCOMPARE(keymap.bindings(QStringLiteral("masking.wandTool")), QStringList{QStringLiteral("F9")});
+        QCOMPARE(keymap.bindings(QStringLiteral("tracking.trackFrameForward")), QStringList{QStringLiteral("Ctrl+Alt+Right")});
+        // A binding already stored under the new id wins over the carried one.
+        QCOMPARE(keymap.bindings(QStringLiteral("masking.polygonTool")), QStringList{QStringLiteral("F10")});
+        QVERIFY(!keymap.actionFor(QStringLiteral("viewport3d"), QStringLiteral("F7")).isEmpty());
+        // Untouched actions keep their defaults.
+        QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("E")});
+    }
+    // Persisted under the new ids; the removed ones are gone from the settings.
+    {
+        QSettings settings;
+        QVERIFY(!settings.contains(QStringLiteral("keymap/overrides/gizmoMove")));
+        QVERIFY(!settings.contains(QStringLiteral("keymap/overrides/maskingWandTool")));
+        QCOMPARE(settings.value(QStringLiteral("keymap/overrides/tracking.trackerTool")).toStringList(),
+                 QStringList{QStringLiteral("F7")});
+        QCOMPARE(settings.value(QStringLiteral("keymap/overrides/masking.rectTool")).toStringList(),
+                 QStringList{QStringLiteral("none")});
+    }
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.bindings(QStringLiteral("masking.wandTool")), QStringList{QStringLiteral("F9")});
+    }
+
+    // The same through the legacy group.
+    {
+        QSettings settings;
+        settings.remove(QStringLiteral("keymap"));
+        settings.beginGroup(QStringLiteral("shortcuts"));
+        settings.setValue(QStringLiteral("gizmoScale"), QStringLiteral("F6"));
+        settings.setValue(QStringLiteral("maskingBrushSmaller"), QStringLiteral("["));
+        settings.setValue(QStringLiteral("trackForward"), QStringLiteral("F5"));
+        settings.endGroup();
+        settings.sync();
+    }
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("F6")});
+        QCOMPARE(keymap.bindings(QStringLiteral("masking.ellipseTool")), QStringList{QStringLiteral("F6")});
+        QCOMPARE(keymap.bindings(QStringLiteral("tracking.trackForward")), QStringList{QStringLiteral("F5")});
+        // Equal to the default, so not an override.
+        QVERIFY(!keymap.isModified(QStringLiteral("masking.brushSmaller")));
+    }
 }
 
 void EditorStateTest::splitLeftRightUndoRestoresTheDiscardedHalf()
@@ -18519,36 +18692,43 @@ void EditorStateTest::trackerShortcutsAreRegistered()
 
     AssetLibrary library;
     AppController state(&library);
-    QCOMPARE(state.shortcutFor(QStringLiteral("trackForward")), QStringLiteral("Ctrl+T"));
-    QCOMPARE(state.shortcutFor(QStringLiteral("trackBackward")), QStringLiteral("Ctrl+Shift+T"));
-    QCOMPARE(state.shortcutFor(QStringLiteral("trackFrameForward")), QStringLiteral("Ctrl+Shift+Right"));
-    QCOMPARE(state.shortcutFor(QStringLiteral("trackFrameBackward")), QStringLiteral("Ctrl+Shift+Left"));
-    QVERIFY(state.shortcutFor(QStringLiteral("trackBoth")).isEmpty());
+    QCOMPARE(state.shortcutFor(QStringLiteral("tracking.trackForward")), QStringLiteral("Ctrl+T"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("tracking.trackBackward")), QStringLiteral("Ctrl+Shift+T"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("tracking.trackFrameForward")), QStringLiteral("Ctrl+Shift+Right"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("tracking.trackFrameBackward")), QStringLiteral("Ctrl+Shift+Left"));
+    QVERIFY(state.shortcutFor(QStringLiteral("tracking.trackBoth")).isEmpty());
+    QCOMPARE(state.shortcutFor(QStringLiteral("tracking.trackerTool")), QStringLiteral("T"));
 
     QStringList registered;
     QSet<QString> trackerKeys;
     for (const QVariant &action : state.actions()) {
         const QVariantMap map = action.toMap();
         registered.append(map.value(QStringLiteral("id")).toString());
-        if (map.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("track")))
+        if (map.value(QStringLiteral("scope")).toString() == QLatin1String("tracking"))
             trackerKeys.insert(map.value(QStringLiteral("shortcut")).toString());
     }
-    for (const char *id : {"trackForward", "trackBackward", "trackFrameForward", "trackFrameBackward", "trackBoth"})
+    for (const char *id : {"tracking.trackForward", "tracking.trackBackward", "tracking.trackFrameForward",
+                           "tracking.trackFrameBackward", "tracking.trackBoth"})
         QVERIFY2(registered.contains(QLatin1String(id)), id);
     trackerKeys.remove(QString());
+    // Only the global scope has to stay clear of the tracker keys: a panel scope may reuse a chord.
     for (const QVariant &action : state.actions()) {
         const QVariantMap map = action.toMap();
-        if (map.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("track")))
+        if (map.value(QStringLiteral("scope")).toString() != QLatin1String("global"))
             continue;
         QVERIFY2(!trackerKeys.contains(map.value(QStringLiteral("shortcut")).toString()),
                  qPrintable(map.value(QStringLiteral("id")).toString()));
     }
 
-    QCOMPARE(state.actionForArrowChord(Qt::Key_Right, Qt::ControlModifier | Qt::ShiftModifier),
-             QStringLiteral("trackFrameForward"));
-    QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier | Qt::ShiftModifier),
-             QStringLiteral("trackFrameBackward"));
+    const auto trackerAction = [&state](int key, Qt::KeyboardModifiers mods) {
+        return state.keymap()->actionFor(QStringLiteral("tracking"), state.shortcutChord(key, int(mods)));
+    };
+    QCOMPARE(trackerAction(Qt::Key_Right, Qt::ControlModifier | Qt::ShiftModifier),
+             QStringLiteral("tracking.trackFrameForward"));
+    QCOMPARE(trackerAction(Qt::Key_Left, Qt::ControlModifier | Qt::ShiftModifier),
+             QStringLiteral("tracking.trackFrameBackward"));
     QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier), QStringLiteral("jumpBackFar"));
+    QVERIFY(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier | Qt::ShiftModifier).isEmpty());
 }
 
 // Every action the keymap page lists has to be bindable. setShortcut() refuses an id that

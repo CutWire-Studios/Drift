@@ -1403,29 +1403,46 @@ ApplicationWindow {
         }
     }
 
-    // The one place a bound action is dispatched, shared by the ApplicationShortcut
-    // Repeater below and the editor FocusScope's arrow handling. A handful of ids are
-    // QML state and have no triggerAction branch at all, so a second dispatch site
-    // that called EditorState.triggerAction directly would turn them into dead keys
-    // the moment someone rebound one onto an arrow chord.
+    // The one place a bound action is dispatched, shared by dispatchChord (the Shortcut items
+    // below and the editor FocusScope's arrow handling), the Mac menu bar and global search. A
+    // handful of ids are QML state and have no triggerAction branch at all, so a second dispatch
+    // site that called EditorState.triggerAction directly would turn them into dead keys the
+    // moment someone rebound one onto an arrow chord.
     //
+    // Panels get the id first: they claim global ids (delete, selectAll, clearSelection, ...)
+    // while engaged, and handle their own scoped ids.
+    function dispatchAction(id) {
+        for (const handler of ShellBridge.actionHandlers) {
+            if (handler.handleAction(id))
+                return
+        }
+        dispatchGlobalAction(id)
+    }
+
+    // A pressed chord: each engaged panel is offered the action its scope binds to the chord and
+    // then the global one, in priority order; what none of them takes runs as the global action.
+    // Returns whether the chord is bound to anything, which is what lets an arrow key be consumed.
+    function dispatchChord(chord) {
+        const globalId = EditorState.keymap.actionFor("global", chord)
+        let bound = globalId !== ""
+        for (const handler of ShellBridge.actionHandlers) {
+            const scopedId = handler.scope === "global" ? "" : EditorState.keymap.actionFor(handler.scope, chord)
+            if (scopedId !== "") {
+                bound = true
+                if (handler.handleAction(scopedId))
+                    return true
+            }
+            if (globalId !== "" && handler.handleAction(globalId))
+                return true
+        }
+        if (globalId !== "")
+            dispatchGlobalAction(globalId)
+        return bound
+    }
+
     // Escape (clearSelection): CapCut-style — if a timeline cut tool is active,
     // first press returns to Select; only then does Escape clear the selection.
-    function dispatchAction(id) {
-        if (ShellBridge.keyframesActionHandler && ShellBridge.keyframesActionHandler.handleAction(id))
-            return
-        if (ShellBridge.shapePathActionHandler && ShellBridge.shapePathActionHandler.handleAction(id))
-            return
-        if (ShellBridge.maskingActionHandler && ShellBridge.maskingActionHandler.handleAction(id))
-            return
-        if (ShellBridge.trackingActionHandler && ShellBridge.trackingActionHandler.handleAction(id))
-            return
-        if (ShellBridge.subtitleActionHandler && ShellBridge.subtitleActionHandler.handleAction(id))
-            return
-        if (ShellBridge.sourceLabActionHandler && ShellBridge.sourceLabActionHandler.handleAction(id))
-            return
-        if (ShellBridge.sourceLabRangesHandler && ShellBridge.sourceLabRangesHandler.handleAction(id))
-            return
+    function dispatchGlobalAction(id) {
         if (id === "workspace.restoreWindows") {
             window.restoreWindows()
             return
@@ -1496,17 +1513,19 @@ ApplicationWindow {
         EditorState.triggerAction(id)
     }
 
-    // Shortcut is not an Item, so wrap each binding in a zero-size host.
+    // One Shortcut per distinct chord across the global and panel scopes; dispatchChord decides
+    // whose it is. Shortcut is not an Item, so wrap each in a zero-size host. Arrow chords are
+    // left to the editor FocusScope below.
     Repeater {
-        model: EditorState.actions
+        model: EditorState.keymap.chords.filter((chord) => !Theme.shortcutSequenceUsesArrowKey(chord))
         Item {
-            required property var modelData
+            id: chordHost
+            required property string modelData
+            readonly property string globalId: EditorState.keymap.actionFor("global", modelData)
             width: 0
             height: 0
             Shortcut {
-                sequences: modelData.shortcuts.filter(
-                               (chord) => !Theme.shortcutSequenceUsesArrowKey(chord))
-                           .map((chord) => Theme.nativeShortcutSequence(chord))
+                sequence: Theme.nativeShortcutSequence(chordHost.modelData)
                 context: Qt.ApplicationShortcut
                 // ApplicationShortcut fires regardless of what is on screen, so without
                 // this a key like M (toggleBookmark) still edited the document hidden
@@ -1519,9 +1538,9 @@ ApplicationWindow {
                 // triggerAction Connections below), which already gate on a pending load
                 // and unsaved changes — the same functions the start screen's own tiles
                 // call — so there is nothing editing-shaped about letting them through.
-                enabled: (modelData.id === "newProject" || modelData.id === "open"
+                enabled: (chordHost.globalId === "newProject" || chordHost.globalId === "open"
                          || !window.showStartScreen)
-                onActivated: window.dispatchAction(modelData.id)
+                onActivated: window.dispatchChord(chordHost.modelData)
             }
         }
     }
@@ -1553,11 +1572,10 @@ ApplicationWindow {
         enabled: !window.showStartScreen
         focus: true
         Keys.onPressed: function(event) {
-            const id = EditorState.actionForArrowChord(event.key, event.modifiers)
-            if (id === "")
-                return
-            window.dispatchAction(id)
-            event.accepted = true
+            if (Theme.isArrowKey(event.key)
+                    && window.dispatchChord(EditorState.keymap.chordFromKey(event.key, event.modifiers,
+                                                                           event.nativeScanCode, event.text)))
+                event.accepted = true
         }
 
         EditorWorkspace {

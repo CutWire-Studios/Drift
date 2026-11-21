@@ -11,11 +11,40 @@ QtObject {
     // object each time, so a repeat request still lands; read on creation too, since the panel
     // may not exist yet.
     property var panelRequest: null
-    property var keyframesActionHandler: null
-    property var maskingActionHandler: null
-    property var trackingActionHandler: null
-    // The shape path overlay while it is up: it claims Escape and Delete for its own session.
-    property var shapePathActionHandler: null
+    // Panels that claim keys while they are engaged. A handler has `scope` (its keymap scope),
+    // `priority` (lower is asked first, so overlapping panels resolve the same way every time) and
+    // handleAction(id), which does its own engagement check and returns whether it took the
+    // action. It is offered the scoped action its scope binds to the pressed chord, then the global
+    // one. The shape path overlay is one: it claims Escape and Delete for its own session.
+    property var actionHandlers: []
+    function registerActionHandler(handler) {
+        if (actionHandlers.indexOf(handler) >= 0)
+            return
+        const next = actionHandlers.concat([handler])
+        next.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+        actionHandlers = next
+    }
+    function unregisterActionHandler(handler) {
+        if (actionHandlers.indexOf(handler) >= 0)
+            actionHandlers = actionHandlers.filter(h => h !== handler)
+    }
+    // Whether `focus` (a window's activeFocusItem, passed so a binding re-evaluates when it
+    // changes) is `item` or one of its descendants: keys bubble up from focused children.
+    function focusWithin(item, focus) {
+        for (let f = focus; f; f = f.parent) {
+            if (f === item)
+                return true
+        }
+        return false
+    }
+    function hasActionHandler(scope) {
+        return actionHandlers.some(h => h.scope === scope)
+    }
+    // The action `scope` binds to a key event, or "".
+    function scopedAction(scope, event) {
+        const keymap = EditorState.keymap
+        return keymap.actionFor(scope, keymap.chordFromKey(event.key, event.modifiers, event.nativeScanCode, event.text))
+    }
     // Whether the pointer is over the preview panel; masking tool keys are only claimed there.
     property bool previewHovered: false
     // Vertices placed by the polygon tool so far. Escape cancels them before it leaves the tool.
@@ -111,10 +140,6 @@ QtObject {
                 Workspaces.activeId = hosting
         }
     }
-
-    property var subtitleActionHandler: null
-    property var sourceLabActionHandler: null
-    property var sourceLabRangesHandler: null
 
     // The phone shell (AndroidMain) is the one that hosts AndroidEditor's sheets. Touch sizing
     // alone does not decide this: a tablet can run the desktop shell.

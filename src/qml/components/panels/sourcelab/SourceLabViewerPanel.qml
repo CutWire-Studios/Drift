@@ -132,6 +132,12 @@ PanelFrame {
         case "goToIn": root.preview.seek(root.preview.snapToFrame(root.recipe.trimIn ?? 0)); return true
         case "goToOut": root.goToOut(); return true
         case "toggleBookmark": root.lab.addMarker(root.preview.snapToFrame(root.preview.position)); return true
+        case "sourceLab.shuttleStop": root.preview.shuttleStop(); return true
+        case "sourceLab.toggleCompare":
+            if (root.isAudio)
+                return false
+            root.toggleCompareKey()
+            return true
         }
         return false
     }
@@ -141,16 +147,17 @@ PanelFrame {
     }
     onAssetIdChanged: root.syncSession()
     onRecipeChanged: root.applyRecipe()
+    readonly property string scope: "sourceLab"
+    readonly property int priority: 5
     onKeysActiveChanged: {
         if (root.keysActive)
-            ShellBridge.sourceLabActionHandler = root
-        else if (ShellBridge.sourceLabActionHandler === root)
-            ShellBridge.sourceLabActionHandler = null
+            ShellBridge.registerActionHandler(root)
+        else
+            ShellBridge.unregisterActionHandler(root)
     }
     Component.onDestruction: {
         root.endSession()
-        if (ShellBridge.sourceLabActionHandler === root)
-            ShellBridge.sourceLabActionHandler = null
+        ShellBridge.unregisterActionHandler(root)
     }
 
     Connections {
@@ -168,17 +175,6 @@ PanelFrame {
             root.segmentStart = startSeconds
             root.segmentKey = root.pendingSegmentKey
         }
-    }
-
-    Shortcut {
-        sequence: "K"
-        enabled: root.keysActive
-        onActivated: root.preview.shuttleStop()
-    }
-    Shortcut {
-        sequence: "\\"
-        enabled: root.keysActive && !root.isAudio
-        onActivated: root.toggleCompareKey()
     }
 
     AssetsPanelHeader {

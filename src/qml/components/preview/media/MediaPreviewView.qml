@@ -402,12 +402,12 @@ Item {
     }
 
     Shortcut {
-        sequence: "Space"
+        sequences: Theme.shortcutSequences("mediaPreview.playPause")
         enabled: root.shortcutsEnabled && root.page === 0
         onActivated: root.togglePlay()
     }
     Shortcut {
-        sequence: "I"
+        sequences: Theme.shortcutSequences("mediaPreview.markIn")
         enabled: root.shortcutsEnabled && root.canTrim && !root.saving && root.page === 0
         onActivated: {
             root.inSeconds = Math.max(0, root.position)
@@ -415,7 +415,7 @@ Item {
         }
     }
     Shortcut {
-        sequence: "O"
+        sequences: Theme.shortcutSequences("mediaPreview.markOut")
         enabled: root.shortcutsEnabled && root.canTrim && !root.saving && root.page === 0
         onActivated: {
             root.outSeconds = Math.max(root.inSeconds, root.position)

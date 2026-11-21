@@ -1549,16 +1549,6 @@ void AppController::triggerAction(const QString &actionId)
         m_preview->setGuidesEnabled(!m_preview->guidesEnabled());
     else if (actionId == QStringLiteral("toggleTrackHidden"))
         setTrackHidden(m_selectedTrack, !trackHidden(m_selectedTrack));
-    else if (actionId == QStringLiteral("gizmoMove"))
-        m_preview->setGizmoTool(QStringLiteral("move"));
-    else if (actionId == QStringLiteral("gizmoRotate"))
-        m_preview->setGizmoTool(QStringLiteral("rotate"));
-    else if (actionId == QStringLiteral("gizmoScale"))
-        m_preview->setGizmoTool(QStringLiteral("scale"));
-    else if (actionId == QStringLiteral("gizmoOrientation"))
-        m_preview->setGizmoOrientation(m_preview->gizmoOrientation() == QLatin1String("world")   ? QStringLiteral("local")
-                                       : m_preview->gizmoOrientation() == QLatin1String("local") ? QStringLiteral("view")
-                                                                                                 : QStringLiteral("world"));
     else if (actionId == QStringLiteral("addSpeedPoint"))
         addSpeedPointAtPlayhead();
     else if (actionId == QStringLiteral("toggleBookmark"))

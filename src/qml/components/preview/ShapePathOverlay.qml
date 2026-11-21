@@ -414,6 +414,9 @@ Item {
             EditorState.preview.shapePathMode = ""
     }
 
+    readonly property string scope: "global"
+    readonly property int priority: 1
+
     // Escape, then Delete, as routed by Main before any panel sees them.
     function handleAction(id) {
         if (!visible || (Window.activeFocusItem && Window.activeFocusItem.cursorPosition !== undefined))
@@ -623,14 +626,11 @@ Item {
     }
     onVisibleChanged: if (visible) refresh()
     Component.onCompleted: {
-        ShellBridge.shapePathActionHandler = root
+        ShellBridge.registerActionHandler(root)
         refresh()
         forceActiveFocus()
     }
-    Component.onDestruction: {
-        if (ShellBridge.shapePathActionHandler === root)
-            ShellBridge.shapePathActionHandler = null
-    }
+    Component.onDestruction: ShellBridge.unregisterActionHandler(root)
 
     focus: true
     Keys.onPressed: (event) => {

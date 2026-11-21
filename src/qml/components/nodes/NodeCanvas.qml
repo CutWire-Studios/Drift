@@ -323,71 +323,73 @@ FocusScope {
     // The app-wide Ctrl+Z / Delete / Space shortcuts fire before key events reach an item; claiming
     // them here is what keeps a graph's undo and delete off the project while the canvas has focus.
     Keys.onShortcutOverride: (event) => {
-        if (!controller)
-            return
-        const ctrl = (event.modifiers & Qt.ControlModifier) !== 0
-        const ctrlKeys = [Qt.Key_Z, Qt.Key_Y, Qt.Key_A, Qt.Key_C, Qt.Key_V, Qt.Key_D, Qt.Key_0, Qt.Key_Plus,
-                          Qt.Key_Equal, Qt.Key_Minus]
-        const plainKeys = [Qt.Key_Delete, Qt.Key_Backspace, Qt.Key_Space, Qt.Key_F, Qt.Key_Escape]
-        if (ctrl ? ctrlKeys.includes(event.key) : plainKeys.includes(event.key))
+        if (controller && ShellBridge.scopedAction("nodes", event) !== "")
             event.accepted = true
     }
+
+    // The key that started a pan, so letting go of it ends the pan whatever modifiers are down by then.
+    property int panKey: 0
 
     Keys.onPressed: (event) => {
         if (!controller)
             return
-        const ctrl = (event.modifiers & Qt.ControlModifier) !== 0
-        const shift = (event.modifiers & Qt.ShiftModifier) !== 0
-        if (event.key === Qt.Key_Space && !event.isAutoRepeat) {
+        switch (ShellBridge.scopedAction("nodes", event)) {
+        case "nodes.pan":
+            if (event.isAutoRepeat)
+                return
             spaceDown = true
             spacePanned = false
-            event.accepted = true
-        } else if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace) {
+            panKey = event.key
+            break
+        case "nodes.delete":
             deleteSelection()
-            event.accepted = true
-        } else if (ctrl && event.key === Qt.Key_Z) {
-            if (shift)
-                controller.redo()
-            else
-                controller.undo()
-            event.accepted = true
-        } else if (ctrl && event.key === Qt.Key_Y) {
+            break
+        case "nodes.undo":
+            controller.undo()
+            break
+        case "nodes.redo":
+        case "nodes.redoAlt":
             controller.redo()
-            event.accepted = true
-        } else if (ctrl && event.key === Qt.Key_A) {
+            break
+        case "nodes.selectAll":
             controller.selectAll()
-            event.accepted = true
-        } else if (event.key === Qt.Key_Escape) {
+            break
+        case "nodes.cancel":
             cancelPending()
             selectedEdge = ""
-            event.accepted = true
-        } else if (ctrl && event.key === Qt.Key_C) {
+            break
+        case "nodes.copy":
             controller.copySelection()
-            event.accepted = true
-        } else if (ctrl && event.key === Qt.Key_V) {
+            break
+        case "nodes.paste": {
             const at = isNaN(hoverPos.x) ? Qt.point(width / 2, height / 2) : hoverPos
             controller.paste(toWorld(at.x, at.y))
-            event.accepted = true
-        } else if (ctrl && event.key === Qt.Key_D) {
-            controller.duplicateSelection()
-            event.accepted = true
-        } else if (!ctrl && event.key === Qt.Key_F) {
-            frameSelection()
-            event.accepted = true
-        } else if (ctrl && event.key === Qt.Key_0) {
-            fitAll()
-            event.accepted = true
-        } else if (ctrl && (event.key === Qt.Key_Plus || event.key === Qt.Key_Equal)) {
-            zoomCentered(1.12)
-            event.accepted = true
-        } else if (ctrl && event.key === Qt.Key_Minus) {
-            zoomCentered(1 / 1.12)
-            event.accepted = true
+            break
         }
+        case "nodes.duplicate":
+            controller.duplicateSelection()
+            break
+        case "nodes.frameSelected":
+            frameSelection()
+            break
+        case "nodes.fitAll":
+            fitAll()
+            break
+        case "nodes.zoomIn":
+        case "nodes.zoomInAlt":
+            zoomCentered(1.12)
+            break
+        case "nodes.zoomOut":
+            zoomCentered(1 / 1.12)
+            break
+        default:
+            return
+        }
+        event.accepted = true
     }
 
     Keys.onReleased: (event) => {
-        if (event.key === Qt.Key_Space && !event.isAutoRepeat) {
+        if (spaceDown && event.key === panKey && !event.isAutoRepeat) {
             const tapped = spaceDown && !spacePanned
             spaceDown = false
             event.accepted = true

@@ -132,11 +132,11 @@ ApplicationWindow {
         focus: true
         enabled: !(ShellBridge.main?.showStartScreen ?? false)
         Keys.onPressed: function(event) {
-            const id = EditorState.actionForArrowChord(event.key, event.modifiers)
-            if (id === "" || !ShellBridge.main)
+            if (!ShellBridge.main || !Theme.isArrowKey(event.key))
                 return
-            ShellBridge.main.dispatchAction(id)
-            event.accepted = true
+            if (ShellBridge.main.dispatchChord(EditorState.keymap.chordFromKey(event.key, event.modifiers,
+                                                                              event.nativeScanCode, event.text)))
+                event.accepted = true
         }
 
         WorkspaceHost {
