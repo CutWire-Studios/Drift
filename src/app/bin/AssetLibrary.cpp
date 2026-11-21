@@ -365,9 +365,6 @@ void fillAudioPresence(drift::MediaAsset &asset, const MediaInfo &info)
         asset.channels = stream.channels;
         if (asset.codecName.isEmpty())
             asset.codecName = stream.codecName;
-            if (MediaProbe::isEditFriendlyCodec(stream.codecName)) {
-                asset.editFriendly = true;
-            }
         break;
     }
     asset.hasAudio = hasAudio;

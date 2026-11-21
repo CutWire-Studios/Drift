@@ -161,7 +161,6 @@ void TestMediaProbe::probesImageSequence()
     QVERIFY2(c.blue() > 200 && c.red() < 50 && c.green() < 50, qPrintable(c.name()));
 }
 
-
 void TestMediaProbe::identifiesEditFriendlyCodecs()
 {
     QVERIFY(MediaProbe::isEditFriendlyCodec(QStringLiteral("prores")));
