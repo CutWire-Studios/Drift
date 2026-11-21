@@ -10,6 +10,7 @@ uniform float shutter;
 uniform float samples;
 uniform float maxBlur;
 uniform float strength;
+uniform float mode;
 
 vec2 flowTexel(sampler2D s, ivec2 p, ivec2 sz) {
     vec4 b = texelFetch(s, clamp(p, ivec2(0), sz - 1), 0);
@@ -25,8 +26,14 @@ vec2 flowAt(sampler2D s, vec2 uv) {
                mix(flowTexel(s, i + ivec2(0, 1), sz), flowTexel(s, i + ivec2(1, 1), sz), t.x), t.y);
 }
 
+bool blendMode() {
+    return mode > 1.5 || (mode < 0.5 && sourceStep() >= 1.95);
+}
+
+// The flow is measured between adjacent source frames; a project frame lasts sourceStep() of them, and the
+// shutter is a share of the project frame.
 vec2 toPixels(vec2 flow) {
-    vec2 px = flow * (clamp(shutter, 0.0, 360.0) / 360.0 * strength) * u_resolution;
+    vec2 px = flow * (clamp(shutter, 0.0, 360.0) / 360.0 * strength * sourceStep()) * u_resolution;
     float len = length(px);
     float limit = maxBlur * 0.01 * u_resolution.x;
     return len > limit ? px * (limit / len) : px;
@@ -69,12 +76,46 @@ float matchError(vec2 flow, bool before) {
 // its later half the flow towards the next one, so accelerating or curving motion bends the smear. Where
 // the two disagree beyond what acceleration explains (an occlusion), the one that matches the footage
 // better stands in for both. With no frame on one side the other side's flow is mirrored.
+//
+// Frame blend averages the media's own frames instead: each source frame j is held for one source frame
+// from its own time, and counts by how much of that hold falls inside the shutter, which is centred on
+// this instant and as long as shutter / 360 * strength project frames (sourceStep() source frames each).
+// sourcePhase() is how far into the shown frame (j = 0) this instant is, so frame j starts at j - phase.
+// Frames the engine did not decode (the ends of the clip, the footage's rate, scrubbing) carry no weight.
+vec4 frameBlend(vec4 src) {
+    float reach = 0.5 * clamp(shutter, 0.0, 360.0) / 360.0 * strength * sourceStep();
+    int past = int(historyCount() + 0.5);
+    int future = int(futureCount() + 0.5);
+    float phase = sourcePhase();
+    vec4 acc = vec4(0.0);
+    float total = 0.0;
+    for (int j = -4; j <= 4; ++j) {
+        if (j < -past || j > future)
+            continue;
+        float a = float(j) - phase;
+        float w = clamp(min(a + 1.0, reach) - max(a, -reach), 0.0, 1.0);
+        if (w <= 0.0)
+            continue;
+        vec4 c = j == 0 ? src : (j < 0 ? historyFrame(float(-j), v_texCoord) : futureFrame(float(j), v_texCoord));
+        acc += vec4(c.rgb * c.a, c.a) * w;
+        total += w;
+    }
+    if (total <= 0.0)
+        return src;
+    acc /= total;
+    return vec4(acc.a > 1e-5 ? acc.rgb / acc.a : vec3(0.0), acc.a);
+}
+
 void main() {
     vec4 src = texture(u_currentTexture, v_texCoord);
     bool hasBefore = historyCount() > 0.5;
     bool hasAfter = futureCount() > 0.5;
     if (!hasBefore && !hasAfter) {
         fragColor = src;
+        return;
+    }
+    if (blendMode()) {
+        fragColor = frameBlend(src);
         return;
     }
     ivec2 nsz = textureSize(u_texture2, 0);

@@ -779,7 +779,8 @@ HistoryNeeds historyNeeds(const GpuLayer &layer)
             effect.enabled && !effect.catalogId.isEmpty() ? effectDefForId(effect.catalogId) : nullptr;
         if (!def || !def->isGpu || !def->gpu.valid)
             continue;
-        needs.sourceFrames = qMax(needs.sourceFrames, def->gpu.historyFrames);
+        if (!def->gpu.sourceUnits)
+            needs.sourceFrames = qMax(needs.sourceFrames, def->gpu.historyFrames);
         if (def->gpu.needsPrevOutput)
             needs.outputEffects.insert(i, def->meta.id);
     }
@@ -798,6 +799,38 @@ GlTarget videoSourceTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const Previ
     else if (target.isValid() && crop != QRectF(0, 0, 1, 1))
         target = cropTarget(rt, std::move(target), crop);
     return target;
+}
+
+// The layer's decoded neighbour frames (GpuLayer::neighbourVideo) uploaded into one atlas, one tile
+// per frame, for "historyUnits": "source" effects. Invalid when the layer has none or the upload fails.
+drift::gl::NeighbourAtlas buildNeighbourAtlas(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer)
+{
+    drift::gl::NeighbourAtlas atlas;
+    const int count = layer.neighbourPast + layer.neighbourFuture;
+    if (count <= 0 || int(layer.neighbourVideo.size()) != count)
+        return atlas;
+    for (int slot = 0; slot < count; ++slot) {
+        GlTarget frame = videoSourceTarget(rt, gl, layer.neighbourVideo[size_t(slot)], layer.videoCrop,
+                                           layer.videoCropAngle);
+        if (!frame.isValid()) {
+            // A frame that cannot be uploaded ends the run on its side: keep the nearer ones.
+            if (slot < layer.neighbourPast) {
+                rt.releaseTarget(std::move(atlas.atlas));
+                return {};
+            }
+            atlas.future = slot - layer.neighbourPast;
+            break;
+        }
+        if (!atlas.atlas.isValid()
+            && !drift::gl::beginNeighbourAtlas(rt, gl, frame.size(), layer.neighbourPast,
+                                               layer.neighbourFuture, atlas)) {
+            rt.releaseTarget(std::move(frame));
+            return {};
+        }
+        drift::gl::writeNeighbour(rt, gl, atlas, slot, frame);
+        rt.releaseTarget(std::move(frame));
+    }
+    return atlas;
 }
 
 // `modelDepth`: for a model layer that takes part in depth occlusion, its packed depth.
@@ -884,6 +917,9 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     // The frames after this one, uploaded the first time a "future" effect asks for them.
     std::vector<GlTarget> futureTargets;
     bool futureTried = false;
+    // The media's frames around the current one, built the first time a source-unit effect asks.
+    drift::gl::NeighbourAtlas neighbours;
+    bool neighboursTried = false;
 
     for (int effectIndex = 0; effectIndex < layer.effects.size(); ++effectIndex) {
         const drift::Effect &effect = layer.effects.at(effectIndex);
@@ -936,21 +972,36 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         std::vector<GlTarget> inputTargets;
         bindTrackInputs(rt, gl, layer, effectIndex, def->gpu, canvasSize, aux.paramTextures, inputTargets);
         bindAudioInputs(rt, gl, layer, effectIndex, def->gpu, aux);
-        if (def->gpu.historyFrames > 0)
-            aux.history = history.sourceBinding();
-        if (def->gpu.futureFrames > 0) {
-            if (!futureTried) {
-                futureTried = true;
-                for (const PreviewVideoFrame &video : layer.futureVideo) {
-                    GlTarget ahead = videoSourceTarget(rt, gl, video, layer.videoCrop, layer.videoCropAngle);
-                    if (!ahead.isValid())
-                        break;
-                    futureTargets.push_back(std::move(ahead));
-                }
+        if (def->gpu.sourceUnits) {
+            if (!neighboursTried) {
+                neighboursTried = true;
+                neighbours = buildNeighbourAtlas(rt, gl, layer);
             }
-            aux.futureCount = int(qMin<size_t>(futureTargets.size(), aux.future.size()));
-            for (int k = 0; k < aux.futureCount; ++k)
-                aux.future[size_t(k)] = futureTargets[size_t(k)].texture();
+            if (neighbours.atlas.isValid()) {
+                aux.history = neighbours.binding;
+                aux.futureCount = neighbours.future;
+                aux.neighbourPast = neighbours.past;
+            }
+            aux.sourceFps = layer.sourceFps;
+            aux.sourcePhase = layer.sourcePhase;
+            aux.sourceStep = layer.sourceStep;
+        } else {
+            if (def->gpu.historyFrames > 0)
+                aux.history = history.sourceBinding();
+            if (def->gpu.futureFrames > 0) {
+                if (!futureTried) {
+                    futureTried = true;
+                    for (const PreviewVideoFrame &video : layer.futureVideo) {
+                        GlTarget ahead = videoSourceTarget(rt, gl, video, layer.videoCrop, layer.videoCropAngle);
+                        if (!ahead.isValid())
+                            break;
+                        futureTargets.push_back(std::move(ahead));
+                    }
+                }
+                aux.futureCount = int(qMin<size_t>(futureTargets.size(), aux.future.size()));
+                for (int k = 0; k < aux.futureCount; ++k)
+                    aux.future[size_t(k)] = futureTargets[size_t(k)].texture();
+            }
         }
         if (def->gpu.needsPrevOutput)
             aux.prevOutput = history.previousOutput(effectIndex);
@@ -973,6 +1024,8 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         rt.releaseTarget(std::move(clipMask));
     for (GlTarget &ahead : futureTargets)
         rt.releaseTarget(std::move(ahead));
+    if (neighbours.atlas.isValid())
+        rt.releaseTarget(std::move(neighbours.atlas));
     return target;
 }
 

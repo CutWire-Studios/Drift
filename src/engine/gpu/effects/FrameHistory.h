@@ -147,6 +147,28 @@ private:
     FrameHistoryStore *m_store = nullptr;
 };
 
+// The media's frames around the current one for "historyUnits": "source" effects, laid out in one
+// atlas like the history ring so historyFrame() reads it unchanged: slots 0..past-1 are the past frames
+// oldest first (age `past` down to 1), then the future frames nearest first. Built per composite
+// and released with `rt.releaseTarget(std::move(atlas.atlas))`; nothing is remembered between frames.
+struct NeighbourAtlas
+{
+    GlTarget atlas;
+    HistoryBinding binding;
+    int past = 0;
+    int future = 0;
+    int tiles = 0;
+};
+
+// Plans and allocates the atlas for `past + future` frames of `frame` size, shrinking the tiles to fit
+// the texture limit and byte budget. False when it cannot be made.
+bool beginNeighbourAtlas(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QSize &frame, int past, int future,
+                         NeighbourAtlas &out);
+
+// Writes `frame` into slot `slot` (scaled to the tile).
+void writeNeighbour(GlRuntime &rt, QOpenGLExtraFunctions *gl, NeighbourAtlas &atlas, int slot,
+                    const GlTarget &frame);
+
 // The clip's source frame `age` project frames before the one being rendered (1 = the previous
 // frame), or an invalid one while fewer are recorded: the first frame, after a seek, or when the
 // layer did not ask for that many (GpuLayer::sourceHistoryFrames). Valid once buildLayerTarget has

@@ -1140,7 +1140,7 @@ int exactHistoryFrames(const QList<drift::Effect> &effects)
     for (const drift::Effect &effect : effects) {
         const EffectPresetEntry *def =
             effect.enabled && !effect.catalogId.isEmpty() ? effectDefForId(effect.catalogId) : nullptr;
-        if (def && def->isGpu && def->gpu.valid)
+        if (def && def->isGpu && def->gpu.valid && !def->gpu.sourceUnits)
             frames = qMax(frames, def->gpu.historyExactFrames);
     }
     return frames;
@@ -1152,10 +1152,23 @@ int futureFrameCount(const QList<drift::Effect> &effects)
     for (const drift::Effect &effect : effects) {
         const EffectPresetEntry *def =
             effect.enabled && !effect.catalogId.isEmpty() ? effectDefForId(effect.catalogId) : nullptr;
-        if (def && def->isGpu && def->gpu.valid)
+        if (def && def->isGpu && def->gpu.valid && !def->gpu.sourceUnits)
             frames = qMax(frames, def->gpu.futureFrames);
     }
     return frames;
+}
+
+// The most source frames either side that the "historyUnits": "source" effects in `effects` ask for.
+void sourceNeighbourFrames(const QList<drift::Effect> &effects, int *past, int *future)
+{
+    for (const drift::Effect &effect : effects) {
+        const EffectPresetEntry *def =
+            effect.enabled && !effect.catalogId.isEmpty() ? effectDefForId(effect.catalogId) : nullptr;
+        if (def && def->isGpu && def->gpu.valid && def->gpu.sourceUnits) {
+            *past = qMax(*past, def->gpu.historyExactFrames);
+            *future = qMax(*future, def->gpu.futureFrames);
+        }
+    }
 }
 
 // The clip's own source frames `first`..`last` project frames from timelineUs (negative is earlier),
@@ -1253,6 +1266,78 @@ void fillGpuLayerFuture(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs 
         ++usable;
     frames.resize(usable);
     layer.futureVideo = std::move(frames);
+}
+
+// The media's own frames around the one `layer.video` shows, for "historyUnits": "source" effects.
+// They are not taken from the history ring, which records one frame per project frame: that is
+// the wrong unit exactly where this matters (120 fps footage on a 30 fps timeline skips three of
+// every four frames, 24 fps footage on a 60 fps one repeats them). The frames come from the clip's
+// own reader, stepped from the shown frame's pts by the stream's frame duration, and are cache hits
+// during playback. Times go through the same direction logic as resolveVideoRead: a reverse proxy
+// plays forwards in its own time, a reversed clip without one plays backwards in the source's.
+//
+// How many are decoded is capped by the footage: taps further than one project frame of source
+// time away serve no time-local effect, so 30 fps footage on a 30 fps timeline decodes one each
+// side even for a package that asks for four. Also records the media's fps, the phase between the
+// shown frame and the next one, and how many source frames a project frame advances.
+void fillGpuLayerSourceNeighbours(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs timelineUs, int fps,
+                                  int wantPast, int wantFuture, int maxWidth, int maxHeight)
+{
+    if ((wantPast <= 0 && wantFuture <= 0) || !layer.video.isValid() || layer.video.ptsUs < 0
+        || layer.video.frameDurUs <= 0)
+        return;
+    const drift::TimeUs dur = layer.video.frameDurUs;
+    const drift::TimeUs projectDur = std::llround(1'000'000.0 / (fps > 0 ? fps : 30));
+    const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
+    const bool backwards = clip.reverse && read.path == clip.path;
+
+    const double sinceFrame = double(read.sourceUs - layer.video.ptsUs) / double(dur);
+    layer.sourceFps = float(1'000'000.0 / double(dur));
+    layer.sourcePhase = float(qBound(0.0, backwards ? 1.0 - sinceFrame : sinceFrame, 1.0));
+    const drift::TimeUs here = clip.timelineToSourceUs(timelineUs);
+    drift::TimeUs moved = qAbs(clip.timelineToSourceUs(timelineUs + projectDur) - here);
+    if (moved == 0)
+        moved = qAbs(here - clip.timelineToSourceUs(timelineUs - projectDur));
+    layer.sourceStep = float(qBound(0.0, double(moved) / double(dur), 32.0));
+
+    if (t_exactApproximate)
+        return;
+    const int perProjectFrame = qMax(1, int(std::ceil(double(layer.sourceStep) - 0.05)));
+    wantPast = qMin(wantPast, perProjectFrame);
+    wantFuture = qMin(wantFuture, perProjectFrame);
+
+    const drift::TimeUs realHere = clip.timelineToSourceUs(timelineUs);
+    const int playback = clip.reverse ? -1 : 1;
+    const auto reachable = [&](int k) {
+        const drift::TimeUs at = realHere + playback * k * dur;
+        return at >= qMax<drift::TimeUs>(clip.srcIn, 0) && (clip.srcOut <= clip.srcIn || at < clip.srcOut);
+    };
+    const auto tap = [&](int k) {
+        const drift::TimeUs at = layer.video.ptsUs + (backwards ? -k : k) * dur + dur / 8;
+        return ClipReaderPool::instance().readPreviewVideoFrame(
+            read.path, streamIdFor(clip.id), at, qCeil(maxWidth / clip.sourceFrame.width()),
+            qCeil(maxHeight / clip.sourceFrame.height()), clip.rotationCorrection);
+    };
+
+    std::vector<PreviewVideoFrame> past;
+    for (int k = 1; k <= wantPast && reachable(-k); ++k) {
+        PreviewVideoFrame frame = tap(-k);
+        if (!frame.isValid())
+            break;
+        past.push_back(std::move(frame));
+    }
+    std::vector<PreviewVideoFrame> future;
+    for (int k = 1; k <= wantFuture && reachable(k); ++k) {
+        PreviewVideoFrame frame = tap(k);
+        if (!frame.isValid())
+            break;
+        future.push_back(std::move(frame));
+    }
+    layer.neighbourPast = int(past.size());
+    layer.neighbourFuture = int(future.size());
+    layer.neighbourVideo.assign(past.rbegin(), past.rend());
+    for (PreviewVideoFrame &frame : future)
+        layer.neighbourVideo.push_back(std::move(frame));
 }
 
 // The word the playhead sits on, for styles whose accent rule follows the speech. -1 for every
@@ -1682,10 +1767,17 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
                              qMax(exactHistoryFrames(clipEffects), exactHistoryFrames(laneEffects)),
                              bound.width(), bound.height());
         fillGpuLayerPixels(layer, clip, timelineUs, bound.width(), bound.height());
-        if (neighbours && layer.video.isValid())
+        if (neighbours && layer.video.isValid()) {
             fillGpuLayerFuture(layer, clip, timelineUs, projectFps,
                                qMax(futureFrameCount(clipEffects), futureFrameCount(laneEffects)),
                                bound.width(), bound.height());
+            int sourcePast = 0;
+            int sourceFuture = 0;
+            sourceNeighbourFrames(clipEffects, &sourcePast, &sourceFuture);
+            sourceNeighbourFrames(laneEffects, &sourcePast, &sourceFuture);
+            fillGpuLayerSourceNeighbours(layer, clip, timelineUs, projectFps, sourcePast, sourceFuture,
+                                         bound.width(), bound.height());
+        }
         layer.effects = clipEffects;
     }
 

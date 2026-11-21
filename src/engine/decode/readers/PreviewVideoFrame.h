@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/base/Time.h"
+
 #include <QMetaType>
 
 #include <memory>
@@ -22,6 +24,11 @@ struct PreviewVideoFrame
     int rotation = 0;
     int colorspace = AVCOL_SPC_UNSPECIFIED;
     int colorRange = AVCOL_RANGE_UNSPECIFIED;
+    // Where the frame sits on the reader's timeline and how long the stream's frames last, when the
+    // reader that produced it knows (-1 and 0 otherwise). Neighbour reads for source-unit effects
+    // step from these instead of guessing the media's grid.
+    drift::TimeUs ptsUs = -1;
+    drift::TimeUs frameDurUs = 0;
 
     // VAAPI and VideoToolbox surfaces live in data[3] and leave data[0] null, so testing
     // data[0] alone rejected every one of them — and ClipReader reads that rejection as a

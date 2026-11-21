@@ -2107,6 +2107,8 @@ bool ClipReader::decodePreviewVideoFrameAtOnce(drift::TimeUs sourceUs, PreviewVi
         }
         return false;
     }
+    converted.ptsUs = m_coverPtsUs;
+    converted.frameDurUs = m_sourceFrameDurationUs;
     out = converted;
     storeCachedPreview(m_coverPtsUs, converted);
     return true;
@@ -2232,6 +2234,8 @@ bool ClipReader::decodePreviewVideoFrameApprox(drift::TimeUs sourceUs, PreviewVi
         }
         return false;
     }
+    converted.ptsUs = m_coverPtsUs;
+    converted.frameDurUs = m_sourceFrameDurationUs;
     out = converted;
     storeCachedPreview(m_coverPtsUs, converted);
     return true;

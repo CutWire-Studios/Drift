@@ -10219,8 +10219,8 @@ void McpTest::authoredEffectTimeHistory()
     refused(QStringLiteral("test_hist_0"), QStringLiteral("history"), 0, historyText);
     refused(QStringLiteral("test_hist_33"), QStringLiteral("history"), 33, historyText);
     refused(QStringLiteral("test_hist_frac"), QStringLiteral("history"), 2.5, historyText);
-    refused(QStringLiteral("test_hist_future"), QStringLiteral("nextFeatures"),
-            QJsonArray{QStringLiteral("history:future")}, "needs a newer Drift");
+    refused(QStringLiteral("test_hist_unknown"), QStringLiteral("nextFeatures"),
+            QJsonArray{QStringLiteral("history:from-the-future")}, "needs a newer Drift");
 
     // 4. Name clashes (GL only).
     if (haveGl) {

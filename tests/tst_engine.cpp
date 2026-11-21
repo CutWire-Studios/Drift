@@ -422,6 +422,10 @@ private slots:
     void effectPackageLoaderParsesHistoryExact();
     void futureFramesReadTheNextFrame();
     void effectPackageLoaderParsesFuture();
+    void effectPackageLoaderParsesHistoryUnits();
+    void sourceUnitNeighboursAreTheMediasOwnFrames();
+    void motionBlurBlendsRealFramesOfHighRateFootage();
+    void motionBlurAutoKeepsFlowAtTheTimelineRate();
     void motionBlurFollowsAcceleratingMotionBothWays();
     void gpuGaussianBlurChangesImage();
     void gpuMultiPassPreservesVerticalOrientation();
@@ -11292,6 +11296,265 @@ void EngineTest::motionBlurFollowsAcceleratingMotionBothWays()
     const int ahead = lum(smeared, 120);
     QVERIFY2(ahead > behind + 30, qPrintable(QStringLiteral("behind %1 ahead %2").arg(behind).arg(ahead)));
     QVERIFY2(lum(smeared, 100) > 240, qPrintable(QString::number(lum(smeared, 100))));
+}
+
+namespace {
+
+// 64x64 gray, 120 fps, frame n a luma of 16 * n (distinct for n < 16), no B-frames.
+QString makeHighRateGrayVideo(QTemporaryDir &dir)
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        return {};
+    const QString out = dir.filePath(QStringLiteral("gray120.mp4"));
+    QProcess proc;
+    proc.start(ffmpeg,
+               {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                QStringLiteral("color=c=black:s=64x64:r=120:d=2,geq=lum='mod(N*16,256)':cb=128:cr=128"),
+                QStringLiteral("-c:v"), QStringLiteral("libx264"), QStringLiteral("-crf"), QStringLiteral("10"),
+                QStringLiteral("-g"), QStringLiteral("120"), QStringLiteral("-bf"), QStringLiteral("0"),
+                QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"), out});
+    if (!proc.waitForFinished(30000) || proc.exitCode() != 0)
+        return {};
+    return out;
+}
+
+drift::Project highRateProject(const QString &video, int fps, const drift::Effect *effect)
+{
+    HistoryProject history;
+    history.setUp(video, effect ? *effect : drift::Effect{});
+    history.project.setFps(fps);
+    if (!effect)
+        history.project.tracks()[0].clips[0].effects.clear();
+    return history.project;
+}
+
+QImage frameAtRate(const FrameCompositor &compositor, int frame, int fps)
+{
+    return compositor.compositeAt(drift::TimeUs(std::llround(double(frame) * 1'000'000.0 / fps)))
+        .convertToFormat(QImage::Format_RGBA8888);
+}
+
+} // namespace
+
+void EngineTest::effectPackageLoaderParsesHistoryUnits()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString body = QStringLiteral("void main(){ fragColor = futureFrame(1.0, v_texCoord) + historyFrame(1.0, v_texCoord); }\n");
+
+    QString error;
+    const EffectPresetEntry ok = EffectPackageLoader::loadPackage(
+        writeHistoryFixture(dir, QStringLiteral("units_ok"),
+                            QStringLiteral(R"("historyUnits": "source", "historyExact": 4, "future": 3,
+                                             "nextFeatures": ["history:exact", "history:future", "history:source-units"],)"),
+                            QString(), body),
+        &error);
+    QVERIFY2(ok.gpu.valid, qPrintable(error));
+    QVERIFY(ok.gpu.sourceUnits);
+    QCOMPARE(ok.gpu.historyExactFrames, 4);
+    QCOMPARE(ok.gpu.futureFrames, 3);
+    QVERIFY(ok.gpu.historyFrames > 0);
+
+    const EffectPresetEntry project = EffectPackageLoader::loadPackage(
+        writeHistoryFixture(dir, QStringLiteral("units_project"),
+                            QStringLiteral(R"("historyUnits": "project", "history": 2, "historyExact": 1,
+                                             "nextFeatures": ["history:exact"],)"),
+                            QString(), body),
+        &error);
+    QVERIFY2(project.gpu.valid, qPrintable(error));
+    QVERIFY(!project.gpu.sourceUnits);
+
+    int n = 0;
+    for (const QString &fields : {QStringLiteral(R"("historyUnits": "frames",)"),
+                                  QStringLiteral(R"("historyUnits": "source", "historyExact": 5,)"),
+                                  QStringLiteral(R"("historyUnits": "source", "future": 5,)"),
+                                  QStringLiteral(R"("historyUnits": "project", "future": 3,)")}) {
+        const EffectPresetEntry bad = EffectPackageLoader::loadPackage(
+            writeHistoryFixture(dir, QStringLiteral("units_bad_%1").arg(n++), fields, QString(), body), &error);
+        QVERIFY2(!bad.gpu.valid, qPrintable(fields));
+    }
+
+    const EffectPresetEntry blur = *effectDefForId(QStringLiteral("motion.blur"));
+    QVERIFY(blur.gpu.valid);
+    QVERIFY(blur.gpu.sourceUnits);
+    drift::Effect effect;
+    effect.catalogId = QStringLiteral("motion.blur");
+    QCOMPARE(resolvedEffectParameters(effect, blur).value(QStringLiteral("mode")).toInt(), 0);
+}
+
+void EngineTest::sourceUnitNeighboursAreTheMediasOwnFrames()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    QTemporaryDir videoDir;
+    QVERIFY(videoDir.isValid());
+    const QString video = makeHighRateGrayVideo(videoDir);
+    if (video.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir fixtures;
+    QVERIFY(fixtures.isValid());
+    QVERIFY(!writeHistoryFixture(
+                 fixtures, QStringLiteral("src_taps"),
+                 QStringLiteral(R"("historyUnits": "source", "historyExact": 2, "future": 2,
+                                  "nextFeatures": ["history:exact", "history:future", "history:source-units"],)"),
+                 QString(),
+                 QStringLiteral("void main(){ fragColor = vec4(historyFrame(1.0, v_texCoord).r, futureFrame(1.0, v_texCoord).r,"
+                                " futureFrame(2.0, v_texCoord).r, 1.0); }\n"))
+                 .isEmpty());
+    QVERIFY(!writeHistoryFixture(
+                 fixtures, QStringLiteral("src_info"), QStringLiteral(R"("historyUnits": "source", "historyExact": 4, "future": 4,
+                                  "nextFeatures": ["history:exact", "history:future", "history:source-units"],)"),
+                 QString(),
+                 QStringLiteral("void main(){ fragColor = vec4(sourceFrameRate() / 255.0, projectFrameRate() / 255.0,"
+                                " sourceStep() / 8.0, 1.0); }\n"))
+                 .isEmpty());
+    QStringList roots = historyTestEffectRoots();
+    roots.append(fixtures.path());
+    reloadEffectCatalog(roots);
+    const auto restore = qScopeGuard([] { reloadEffectCatalog(historyTestEffectRoots()); });
+    for (const char *id : {"test.src_taps", "test.src_info"}) {
+        QVERIFY(effectDefForId(QString::fromLatin1(id)));
+        QVERIFY2(effectDefForId(QString::fromLatin1(id))->gpu.valid,
+                 qPrintable(effectDefForId(QString::fromLatin1(id))->gpu.errorMessage));
+    }
+
+    drift::Project plainProject = highRateProject(video, 120, nullptr);
+    FrameCompositor plain;
+    plain.setProject(&plainProject);
+    const auto sourceRed = [&](int n) { return frameAtRate(plain, n, 120).pixelColor(32, 32).red(); };
+
+    drift::Effect taps;
+    taps.catalogId = QStringLiteral("test.src_taps");
+    drift::Project tapProject = highRateProject(video, 30, &taps);
+    FrameCompositor cold;
+    cold.setProject(&tapProject);
+    // Project frame 2 shows source frame 8: the taps are the source frames either side, not the
+    // frames 33 ms away.
+    const QColor atTwo = frameAtRate(cold, 2, 30).pixelColor(32, 32);
+    QVERIFY2(qAbs(atTwo.red() - sourceRed(7)) <= 3, qPrintable(QStringLiteral("%1 vs %2").arg(atTwo.red()).arg(sourceRed(7))));
+    QVERIFY2(qAbs(atTwo.green() - sourceRed(9)) <= 3, qPrintable(QStringLiteral("%1 vs %2").arg(atTwo.green()).arg(sourceRed(9))));
+    QVERIFY2(qAbs(atTwo.blue() - sourceRed(10)) <= 3, qPrintable(QStringLiteral("%1 vs %2").arg(atTwo.blue()).arg(sourceRed(10))));
+    QVERIFY(sourceRed(7) != sourceRed(9));
+
+    // Cold equals sequential, and a paused re-render stays put.
+    FrameCompositor sequential;
+    sequential.setProject(&tapProject);
+    QImage played;
+    for (int frame = 0; frame <= 2; ++frame)
+        played = frameAtRate(sequential, frame, 30);
+    QCOMPARE(frameAtRate(cold, 2, 30), played);
+    QCOMPARE(frameAtRate(cold, 2, 30), played);
+    FrameCompositor::RenderOptions scrub;
+    scrub.approximateSeek = true;
+    FrameCompositor scrubbing;
+    scrubbing.setProject(&tapProject);
+    scrubbing.compositeAt(drift::TimeUs(66'667), scrub);
+    QCOMPARE(frameAtRate(scrubbing, 2, 30), played);
+
+    drift::Effect info;
+    info.catalogId = QStringLiteral("test.src_info");
+    drift::Project infoProject = highRateProject(video, 30, &info);
+    FrameCompositor reporting;
+    reporting.setProject(&infoProject);
+    const QColor reported = frameAtRate(reporting, 3, 30).pixelColor(32, 32);
+    QVERIFY2(qAbs(reported.red() - 120) <= 1, qPrintable(QString::number(reported.red())));
+    QVERIFY2(qAbs(reported.green() - 30) <= 1, qPrintable(QString::number(reported.green())));
+    QVERIFY2(qAbs(reported.blue() - 255.0 * 4.0 / 8.0) <= 2, qPrintable(QString::number(reported.blue())));
+}
+
+void EngineTest::motionBlurBlendsRealFramesOfHighRateFootage()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    QVERIFY(effectDefForId(QStringLiteral("motion.blur")));
+    QTemporaryDir videoDir;
+    QVERIFY(videoDir.isValid());
+    const QString video = makeHighRateGrayVideo(videoDir);
+    if (video.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    drift::Project plainProject = highRateProject(video, 120, nullptr);
+    FrameCompositor plain;
+    plain.setProject(&plainProject);
+    const auto sourceRed = [&](int n) { return frameAtRate(plain, n, 120).pixelColor(32, 32).red(); };
+
+    drift::Effect blend;
+    blend.catalogId = QStringLiteral("motion.blur");
+    blend.parameters.insert(QStringLiteral("mode"), 2);
+    drift::Effect autoMode;
+    autoMode.catalogId = QStringLiteral("motion.blur");
+    drift::Effect flow;
+    flow.catalogId = QStringLiteral("motion.blur");
+    flow.parameters.insert(QStringLiteral("mode"), 1);
+    drift::Project blendProject = highRateProject(video, 30, &blend);
+    drift::Project autoProject = highRateProject(video, 30, &autoMode);
+    drift::Project flowProject = highRateProject(video, 30, &flow);
+    FrameCompositor blended;
+    blended.setProject(&blendProject);
+    FrameCompositor automatic;
+    automatic.setProject(&autoProject);
+    FrameCompositor flowing;
+    flowing.setProject(&flowProject);
+
+    // A 180 degree shutter at 30 fps is 1/60 s: two 120 fps frames, centred on source frame 8's start,
+    // so source frames 7 and 8.
+    const QImage blurred = frameAtRate(blended, 2, 30);
+    const int expected = (sourceRed(7) + sourceRed(8)) / 2;
+    QVERIFY2(qAbs(blurred.pixelColor(32, 32).red() - expected) <= 4,
+             qPrintable(QStringLiteral("%1 vs %2").arg(blurred.pixelColor(32, 32).red()).arg(expected)));
+    QVERIFY(sourceRed(7) != sourceRed(8));
+
+    // Auto picks blend at 4 source frames per project frame, and the result is the same cold or in order.
+    QCOMPARE(frameAtRate(automatic, 2, 30), blurred);
+    FrameCompositor sequential;
+    sequential.setProject(&autoProject);
+    QImage played;
+    for (int frame = 0; frame <= 2; ++frame)
+        played = frameAtRate(sequential, frame, 30);
+    QCOMPARE(played, blurred);
+
+    // A longer shutter widens the interval over frames it has: 360 degrees is four frames, 6 to 9.
+    blendProject.tracks()[0].clips[0].effects[0].parameters.insert(QStringLiteral("shutter"), 360.0);
+    FrameCompositor wide;
+    wide.setProject(&blendProject);
+    const int wideExpected = (sourceRed(6) + sourceRed(7) + sourceRed(8) + sourceRed(9)) / 4;
+    QVERIFY2(qAbs(frameAtRate(wide, 2, 30).pixelColor(32, 32).red() - wideExpected) <= 4, "360 degree shutter");
+}
+
+void EngineTest::motionBlurAutoKeepsFlowAtTheTimelineRate()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    QVERIFY(effectDefForId(QStringLiteral("motion.blur")));
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString video = makeMovingSquareVideo(dir, 12);
+    if (video.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    drift::Project plainProject = motionBlurProject(video, false);
+    drift::Project autoProject = motionBlurProject(video, true);
+    drift::Project flowProject = motionBlurProject(video, true);
+    flowProject.tracks()[0].clips[0].effects[0].parameters.insert(QStringLiteral("mode"), 1);
+    FrameCompositor plain;
+    plain.setProject(&plainProject);
+    FrameCompositor automatic;
+    automatic.setProject(&autoProject);
+    FrameCompositor flowing;
+    flowing.setProject(&flowProject);
+
+    QImage sharp;
+    QImage viaAuto;
+    QImage viaFlow;
+    for (int frame = 5; frame <= 8; ++frame) {
+        sharp = frameAt(plain, frame);
+        viaAuto = frameAt(automatic, frame);
+        viaFlow = frameAt(flowing, frame);
+    }
+    QVERIFY(viaFlow != sharp);
+    QCOMPARE(viaAuto, viaFlow);
 }
 
 void EngineTest::trendingTimeEffectsLoadAndCompile()

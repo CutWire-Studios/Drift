@@ -428,6 +428,47 @@ vec4 futureFrame(float ahead, vec2 uv)
 }
 )";
 
+// Compiled into every pass of a "historyUnits": "source" package. The past and future frames share the
+// history atlas: historyFrame() reads the past slots as for the ring, and futureFrame() the slots after them.
+constexpr const char *kSourceUnitsPrelude = R"(
+uniform float u_sourceFps;
+uniform float u_sourcePhase;
+uniform float u_sourceStep;
+uniform float u_projectFps;
+
+// The media's frame rate, the project's, how far between the source frame shown and the next one (in
+// playback order) this frame falls (0 to 1), and how many source frames one project frame advances
+// (the media rate over the project rate, times the clip's speed).
+float sourceFrameRate() { return u_sourceFps; }
+float projectFrameRate() { return u_projectFps; }
+float sourcePhase() { return u_sourcePhase; }
+float sourceStep() { return u_sourceStep; }
+)";
+
+constexpr const char *kSourceFuturePrelude = R"(
+uniform float u_futureCount;
+uniform float u_futureSlot;
+
+// How many source frames after the shown one are available; 0 at the clip's end and while scrubbing.
+float futureCount()
+{
+    return u_futureCount;
+}
+
+// The media's frame `ahead` source frames after the one shown (1 = the next), rounded and clamped to
+// what is available. With none available this is the effect's own input.
+vec4 futureFrame(float ahead, vec2 uv)
+{
+    int n = max(int(u_futureCount + 0.5), 1);
+    int slots = int(u_historyGrid.y + 0.5);
+    int columns = int(u_historyGrid.x + 0.5);
+    int slot = min(int(u_futureSlot + 0.5) + clamp(int(floor(ahead + 0.5)), 1, n) - 1, slots - 1);
+    vec2 cell = vec2(float(slot % columns), float(slot / columns));
+    vec2 px = cell * u_historyTile + clamp(uv * u_historyTile, vec2(0.5), u_historyTile - 0.5);
+    return texture(u_historyTexture, px / u_historyAtlas);
+}
+)";
+
 constexpr const char *kPrevOutputPrelude = R"(
 uniform sampler2D u_prevOutput;
 )";
@@ -470,7 +511,9 @@ QByteArray packagePrelude(const drift::GpuEffectDefinition &gpu)
     if (gpu.historyFrames > 0)
         out += kHistoryPrelude;
     if (gpu.futureFrames > 0)
-        out += kFuturePrelude;
+        out += gpu.sourceUnits ? kSourceFuturePrelude : kFuturePrelude;
+    if (gpu.sourceUnits)
+        out += kSourceUnitsPrelude;
     if (gpu.needsPrevOutput)
         out += kPrevOutputPrelude;
     if (gpu.needsDepth)
@@ -3409,6 +3452,8 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
         sourceSig += QLatin1String("#history");
     if (gpu.futureFrames > 0)
         sourceSig += QLatin1String("#future");
+    if (gpu.sourceUnits)
+        sourceSig += QLatin1String("#srcunits");
     if (gpu.needsPrevOutput)
         sourceSig += QLatin1String("#prev");
     if (gpu.usesFloatBuffers())
@@ -4526,7 +4571,7 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
 
             if (gpu.historyFrames > 0) {
                 HistoryBinding h;
-                if (aux && aux->history.atlas && aux->history.count > 0) {
+                if (aux && aux->history.atlas && (aux->history.count > 0 || gpu.sourceUnits)) {
                     h = aux->history;
                 } else {
                     h.atlas = sourceTexAt(0);
@@ -4547,7 +4592,18 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
                                                    float(qMax(1, h.tileSize.height()))));
             }
 
-            if (gpu.futureFrames > 0) {
+            if (gpu.sourceUnits) {
+                program->setUniformValue("u_sourceFps", aux && aux->sourceFps > 0.f ? aux->sourceFps
+                                                        : (aux && aux->frameRate > 0 ? float(aux->frameRate) : 30.f));
+                program->setUniformValue("u_projectFps", aux && aux->frameRate > 0 ? float(aux->frameRate) : 30.f);
+                program->setUniformValue("u_sourcePhase", aux ? aux->sourcePhase : 0.f);
+                program->setUniformValue("u_sourceStep", aux ? aux->sourceStep : 1.f);
+            }
+
+            if (gpu.futureFrames > 0 && gpu.sourceUnits) {
+                program->setUniformValue("u_futureCount", float(aux ? aux->futureCount : 0));
+                program->setUniformValue("u_futureSlot", float(aux ? aux->neighbourPast : 0));
+            } else if (gpu.futureFrames > 0) {
                 const int have = aux ? qBound(0, aux->futureCount, 2) : 0;
                 for (int k = 0; k < 2; ++k) {
                     const GLuint tex = have > 0 ? aux->future[size_t(qMin(k, have - 1))] : sourceTexAt(0);

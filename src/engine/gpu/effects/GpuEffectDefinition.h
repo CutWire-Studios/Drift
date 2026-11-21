@@ -17,6 +17,8 @@ inline constexpr int kMaxHistoryFrames = 32;
 inline constexpr int kMaxHistoryExactFrames = 2;
 // The most source frames after the current one a package may ask for with "future".
 inline constexpr int kMaxFutureFrames = 2;
+// With "historyUnits": "source", the most source frames on either side of the current one.
+inline constexpr int kMaxSourceNeighbourFrames = 4;
 
 // A vecN[] uniform carried through the parameter map. Only the engine produces these — the face
 // contour loops are the one thing too large to spell out as named scalars, and 128 points would
@@ -41,7 +43,9 @@ inline bool isEngineBoundGpuUniform(const QString &name)
         || name == QLatin1String("u_fromTexture") || name == QLatin1String("u_toTexture")
         || name == QLatin1String("u_hasDepth") || name == QLatin1String("u_floatBuffers") || name == QLatin1String("u_templateBounds")
         || name == QLatin1String("u_clipMask") || name == QLatin1String("u_hasClipMask")
-        || name == QLatin1String("u_meshAspect") || name == QLatin1String("u_prevOutput")) {
+        || name == QLatin1String("u_meshAspect") || name == QLatin1String("u_prevOutput")
+        || name == QLatin1String("u_sourceFps") || name == QLatin1String("u_sourcePhase")
+        || name == QLatin1String("u_sourceStep") || name == QLatin1String("u_projectFps")) {
         return true;
     }
     // The depth map and its size, bound for "requires": "depth" packages.
@@ -168,6 +172,10 @@ struct GpuEffectDefinition
     // "future": N: the N source frames after the current one are decoded for the effect and sampled with
     // futureFrame(ahead, uv). 0 for packages that do not look ahead.
     int futureFrames = 0;
+    // "historyUnits": "source": historyExact and future count the clip's own source frames (the ones
+    // the media holds) around the one shown, not project frames, and are read from decoded neighbours
+    // instead of the history ring. `historyFrames` is then just the prelude switch.
+    bool sourceUnits = false;
     // "previousOutput": true: u_prevOutput is this effect's own result from the previous project frame.
     bool needsPrevOutput = false;
     // Parameters bound beyond plain scalars, from the package's parameter list (declaration order).

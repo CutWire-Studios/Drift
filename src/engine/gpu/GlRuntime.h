@@ -726,6 +726,13 @@ struct PipelineAux
     // (0 binds the effect's input as the next frame).
     std::array<GLuint, 2> future{};
     int futureCount = 0;
+    // For "historyUnits": "source" packages the past and future frames share the `history` atlas
+    // (past slots first, then future ones); `neighbourPast` is where the future ones start and the
+    // rest describe the shown source frame. A zero `sourceFps` reads as the project's.
+    int neighbourPast = 0;
+    float sourceFps = 0.f;
+    float sourcePhase = 0.f;
+    float sourceStep = 1.f;
     // For "previousOutput" packages: the effect's result one frame ago, 0 for none (the first
     // frame, or after a seek), which binds transparent.
     GLuint prevOutput = 0;

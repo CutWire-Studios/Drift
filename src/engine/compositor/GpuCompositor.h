@@ -167,6 +167,17 @@ struct GpuLayer
     // Source frames after the current one, nearest first (the first is one project frame ahead),
     // decoded for a "future" effect. Fewer than asked at the clip's end; empty while scrubbing.
     std::vector<PreviewVideoFrame> futureVideo;
+    // For "historyUnits": "source" effects: the media's own frames around the one shown, as decoded
+    // (oldest past first, then the future nearest first; `neighbourPast` of the first and
+    // `neighbourFuture` of the rest, in playback order). Empty while scrubbing.
+    std::vector<PreviewVideoFrame> neighbourVideo;
+    int neighbourPast = 0;
+    int neighbourFuture = 0;
+    // The media's frame rate (0 when unknown), how far between the source frame shown and the next one in
+    // playback order this frame falls (0..1), and how many source frames one project frame advances.
+    float sourceFps = 0.f;
+    float sourcePhase = 0.f;
+    float sourceStep = 1.f;
     // This frame's baked face anchors, one per tracked slot, sampled by FrameCompositor. Carried
     // by value: the scene outlives the cache lookup that produced them.
     QList<drift::FaceAnchors> faceSlots;

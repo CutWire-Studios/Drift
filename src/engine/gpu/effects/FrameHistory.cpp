@@ -290,6 +290,46 @@ void ClipHistory::seedPast(GlRuntime &rt, QOpenGLExtraFunctions *gl, int age, co
     ring.count = age + 1;
 }
 
+bool beginNeighbourAtlas(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QSize &frame, int past, int future,
+                         NeighbourAtlas &out)
+{
+    const int tiles = past + future;
+    if (tiles <= 0 || !frame.isValid())
+        return false;
+    int hw = 0;
+    gl->glGetIntegerv(GL_MAX_TEXTURE_SIZE, &hw);
+    const int maxEdge = hw > 0 ? std::min(hw, kMaxAtlasEdge) : 4096;
+    const RingPlan plan = planRing(frame, tiles, kRingBudgetBytes, maxEdge);
+    if (!plan.ok)
+        return false;
+    GlTarget atlas = rt.acquireTarget(plan.atlas.width(), plan.atlas.height());
+    if (!atlas.isValid())
+        return false;
+    out.atlas = std::move(atlas);
+    out.past = past;
+    out.future = future;
+    out.tiles = tiles;
+    out.binding.atlas = out.atlas.texture();
+    out.binding.atlasSize = out.atlas.size();
+    out.binding.tileSize = plan.tile;
+    out.binding.columns = plan.columns;
+    out.binding.ringSize = tiles;
+    out.binding.count = past;
+    out.binding.newest = std::max(past - 1, 0);
+    return true;
+}
+
+void writeNeighbour(GlRuntime &rt, QOpenGLExtraFunctions *gl, NeighbourAtlas &atlas, int slot,
+                    const GlTarget &frame)
+{
+    if (!atlas.atlas.isValid() || !frame.isValid() || slot < 0 || slot >= atlas.tiles)
+        return;
+    const QSize &tile = atlas.binding.tileSize;
+    blitToRect(rt, gl, frame.texture(), atlas.atlas,
+               QRect((slot % atlas.binding.columns) * tile.width(), (slot / atlas.binding.columns) * tile.height(),
+                     tile.width(), tile.height()));
+}
+
 GLuint ClipHistory::previousOutput(int effectIndex) const
 {
     if (!m_entry)

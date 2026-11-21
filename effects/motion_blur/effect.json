@@ -4,13 +4,20 @@
   "category": "impact",
   "thumbnail": "thumbnail.webp",
   "order": 94,
-  "description": "Blurs movement inside the footage along its direction, as a camera shutter would, by measuring the motion towards the previous and the next frame. Moving objects smear past their outline onto what is behind them. Strength exaggerates the smear beyond a real shutter. Looks one frame ahead as well as behind, so acceleration bends the smear; the first and last frames of a clip blur from one side only, and frames while scrubbing are not blurred. The clip's own keyframed movement is not blurred.",
+  "description": "Blurs movement inside the footage along its direction, as a camera shutter would, by measuring the motion towards the previous and the next frame of the footage (optical flow). Footage shot at twice the timeline's frame rate or more, or sped up that far, is instead blurred by averaging its real frames across the shutter: Auto picks between the two, or choose one. Moving objects smear past their outline onto what is behind them. Strength exaggerates the smear beyond a real shutter. Looks one frame ahead as well as behind, so acceleration bends the smear; the first and last frames of a clip blur from one side only, and frames while scrubbing are not blurred. The clip's own keyframed movement is not blurred.",
   "backend": "gpu",
-  "history": 1,
-  "historyExact": 1,
-  "future": 1,
-  "nextFeatures": ["history:source", "history:exact", "history:future", "buffer:float"],
+  "historyUnits": "source",
+  "historyExact": 4,
+  "future": 4,
+  "nextFeatures": ["history:exact", "history:future", "history:source-units", "buffer:float"],
   "parameters": [
+    {
+      "identifier": "mode",
+      "displayName": "Mode",
+      "type": "choice",
+      "options": ["Auto", "Optical flow", "Frame blend"],
+      "defaultValue": 0
+    },
     {
       "identifier": "shutter",
       "displayName": "Shutter angle",
