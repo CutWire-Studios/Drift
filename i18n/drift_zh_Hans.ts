@@ -2675,10 +2675,6 @@
         <translation>隐藏/显示所选片段的轨道</translation>
     </message>
     <message>
-        <source>3D gizmo: cycle world/local/view axes</source>
-        <translation>3D 手柄：循环切换世界/局部/视图坐标轴</translation>
-    </message>
-    <message>
         <source>Add speed point at playhead</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2719,8 +2715,224 @@
         <translation>循环播放工作区</translation>
     </message>
     <message>
+        <source>Rename bookmark at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete bookmark at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all bookmarks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move selection left one second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move selection right one second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim start tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim end tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split selected clip on beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap with previous clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap with next clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add text at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace clip with…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move adjustment to its own track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make composite from selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Flatten composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reverse clip</source>
+        <translation type="unfinished">倒放片段</translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished">裁剪…</translation>
+    </message>
+    <message>
+        <source>Color grade</source>
+        <translation type="unfinished">调色</translation>
+    </message>
+    <message>
+        <source>Edit keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask &amp; track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip properties</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto duck</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sync by audio</source>
+        <translation type="unfinished">按音频同步</translation>
+    </message>
+    <message>
+        <source>Mute/unmute selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo/unsolo selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add video track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add audio track</source>
+        <translation type="unfinished">添加音轨</translation>
+    </message>
+    <message>
+        <source>Make selected track taller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make selected track shorter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start/stop voiceover recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select tool</source>
         <translation>选择工具</translation>
+    </message>
+    <message>
+        <source>Zoom timeline to fit project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle ripple editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle clip overlap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle auto-select under playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle audio mixer strip</source>
+        <translation type="unfinished">切换音频混音器条</translation>
+    </message>
+    <message>
+        <source>Toggle keyframe strip</source>
+        <translation type="unfinished">切换关键帧条显示</translation>
+    </message>
+    <message>
+        <source>Toggle timeline overview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle preview fullscreen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add or remove keyframe at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit view to the selected keys, or all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit view to the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten frames earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten frames later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rectangle mask tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ellipse mask tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brush mask tool</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Lasso mask tool</source>
@@ -2735,11 +2947,303 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Brush: switch between paint and erase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected cues earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected cues later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected cues 0.1 s earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected cues 0.1 s later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find in cues</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop shuttle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle before/after compare</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorite the selected ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reject the selected ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the selected ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bypass color grade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo: move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo: rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo: scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo: cycle world/local/view axes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation type="unfinished">聚焦所选内容</translation>
+    </message>
+    <message>
+        <source>Frame everything</source>
+        <translation type="unfinished">最大化显示全部</translation>
+    </message>
+    <message>
+        <source>Reset the view</source>
+        <translation type="unfinished">重置视图</translation>
+    </message>
+    <message>
+        <source>Fly mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle orthographic projection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look through the scene camera</source>
+        <translation type="unfinished">切换到场景摄像机视角</translation>
+    </message>
+    <message>
+        <source>Front view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Redo (alternate)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel the pending connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit all nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom in (alternate)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hold to pan, tap for quick add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 6</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 7</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 8</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 9</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set in point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set out point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search…</source>
         <translation>搜索…</translation>
     </message>
     <message>
+        <source>Import media to timeline…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation type="unfinished">导出…</translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open keyboard shortcuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Ask (editing command)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deselect all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select next clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select previous clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple delete selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove all effects from clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename clip…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop and reset speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step back five frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step forward five frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark work area to selected clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut tool</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3265,22 +3769,6 @@
         <translation>减慢播放速度</translation>
     </message>
     <message>
-        <source>3D gizmo: move / Tracker tool</source>
-        <translation>3D 手柄：移动 / 跟踪器工具</translation>
-    </message>
-    <message>
-        <source>3D gizmo: rotate / Rectangle mask</source>
-        <translation>3D 手柄：旋转 / 矩形蒙版</translation>
-    </message>
-    <message>
-        <source>3D gizmo: scale / Ellipse mask</source>
-        <translation>3D 手柄：缩放 / 椭圆蒙版</translation>
-    </message>
-    <message>
-        <source>Cut tool / Brush mask</source>
-        <translation>剪切工具 / 画笔蒙版</translation>
-    </message>
-    <message>
         <source>Polygon mask tool</source>
         <translation>多边形蒙版工具</translation>
     </message>
@@ -3297,8 +3785,8 @@
         <translation>增大画笔大小</translation>
     </message>
     <message>
-        <source>Brush: switch paint / erase</source>
-        <translation>画笔：切换绘制 / 擦除</translation>
+        <source>Tracker tool</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track forward</source>
@@ -5021,6 +5509,42 @@
         <translation>
             <numerusform>已粘贴 %n 个片段</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Not a valid key combination</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark work area to clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Work area set to clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear work area in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Work area in cleared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear work area out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Work area out cleared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove all bookmarks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bookmarks removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Exporting…</source>
@@ -9316,6 +9840,18 @@
         <translation>保存共享副本</translation>
     </message>
     <message>
+        <source>Project not saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project couldn&apos;t be saved, and your changes are not on disk yet: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project couldn&apos;t be saved, and your changes are not on disk yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Untitled Project</source>
         <translation>未命名项目</translation>
     </message>
@@ -13244,6 +13780,109 @@
     <message>
         <source>Change %1</source>
         <translation>调整 %1</translation>
+    </message>
+</context>
+<context>
+    <name>Keymap</name>
+    <message>
+        <source>File &amp; app</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished">剪辑</translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished">播放</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation type="unfinished">导航</translation>
+    </message>
+    <message>
+        <source>Marking &amp; work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Markers</source>
+        <translation type="unfinished">标记</translation>
+    </message>
+    <message>
+        <source>Timeline editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracks &amp; audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview &amp; view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workspaces</source>
+        <translation type="unfinished">工作区</translation>
+    </message>
+    <message>
+        <source>Keyframes panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Masking</source>
+        <translation type="unfinished">蒙版</translation>
+    </message>
+    <message>
+        <source>Tracking</source>
+        <translation type="unfinished">跟踪</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source Lab viewer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source Lab ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D viewport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D fly mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam window</source>
+        <translation type="unfinished">多机位窗口</translation>
+    </message>
+    <message>
+        <source>Media preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift</source>
+        <translation type="unfinished">Drift</translation>
     </message>
 </context>
 <context>
@@ -18189,6 +18828,22 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Not enough memory to save the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save the project: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project saved without its undo history: the history was too large to save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t write %1</source>
         <translation>无法写入 %1</translation>
     </message>
@@ -21291,20 +21946,64 @@ If playback stutters, try another.</source>
         <translation>键盘快捷键</translation>
     </message>
     <message>
-        <source>Click a shortcut, then press the keys. Esc cancels, Backspace clears.</source>
-        <translation>点击一个快捷键，然后按下新按键。Esc 取消，Backspace 清除</translation>
+        <source>%1 — only while it is in focus</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reset to defaults</source>
-        <translation>重置为默认值</translation>
+        <source>Click + to add a shortcut, × to remove. Esc cancels.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Restores every shortcut to its original key.</source>
-        <translation>将所有快捷键恢复为原始按键</translation>
+        <source>Shortcut preset</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Shortcuts reset to defaults.</source>
-        <translation>快捷键已重置为默认值</translation>
+        <source>The set of keys your changes are applied on top of.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset to preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removes every change you made and restores the preset&apos;s keys.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcuts reset to the preset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Modified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset this shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset shortcut for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You have changed some shortcuts. Keep those changes on top of the new preset, or discard them?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <source>Discard my changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep my changes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23082,24 +23781,27 @@ If playback stutters, try another.</source>
 <context>
     <name>ShortcutCaptureField</name>
     <message>
-        <source>Shortcut for %1</source>
-        <translation>%1 的快捷键</translation>
-    </message>
-    <message>
-        <source>Not set</source>
-        <translation>未设置</translation>
+        <source>Add shortcut for %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Press keys…</source>
         <translation>请按键…</translation>
     </message>
     <message>
-        <source>Click to set</source>
-        <translation>点击设置</translation>
-    </message>
-    <message>
         <source>“%1” is already used by %2.</source>
         <translation>“%1”已被 %2 使用。</translation>
+    </message>
+</context>
+<context>
+    <name>ShortcutChip</name>
+    <message>
+        <source>Remove this shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove shortcut %1 from %2</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -30538,10 +31240,6 @@ If playback stutters, try another.</source>
         <translation>正交投影</translation>
     </message>
     <message>
-        <source>Numpad 5</source>
-        <translation>小键盘 5</translation>
-    </message>
-    <message>
         <source>Move</source>
         <translation>移动</translation>
     </message>
@@ -30570,16 +31268,8 @@ If playback stutters, try another.</source>
         <translation>飞行（WASD 移动，Q/E 下降/上升，朝指针方向转向）</translation>
     </message>
     <message>
-        <source>Shift+F</source>
-        <translation>Shift+F</translation>
-    </message>
-    <message>
         <source>Look through the scene camera</source>
         <translation>切换到场景摄像机视角</translation>
-    </message>
-    <message>
-        <source>Numpad 0</source>
-        <translation>小键盘 0</translation>
     </message>
     <message>
         <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
@@ -30594,24 +31284,12 @@ If playback stutters, try another.</source>
         <translation>聚焦所选内容</translation>
     </message>
     <message>
-        <source>F</source>
-        <translation>F</translation>
-    </message>
-    <message>
         <source>Frame everything</source>
         <translation>最大化显示全部</translation>
     </message>
     <message>
-        <source>Home</source>
-        <translation>Home</translation>
-    </message>
-    <message>
         <source>Reset the view</source>
         <translation>重置视图</translation>
-    </message>
-    <message>
-        <source>Shift+Home</source>
-        <translation>Shift+Home</translation>
     </message>
 </context>
 <context>
