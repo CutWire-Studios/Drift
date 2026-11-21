@@ -8138,6 +8138,41 @@
     </message>
 </context>
 <context>
+    <name>CommandBarController</name>
+    <message>
+        <source>The command model took too long to answer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The Command Bar Model add-on is not installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The command model failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching command for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t run “%1”: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 can&apos;t be undone, so it was not run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t run: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CommunityInstaller</name>
     <message>
         <source>Starting…</source>
@@ -9411,6 +9446,10 @@
         <source>Search</source>
         <translation>搜索</translation>
     </message>
+    <message>
+        <source>Thinking…</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorHeaderSettingsButton</name>
@@ -9997,6 +10036,10 @@
     <message>
         <source>Effect settings</source>
         <translation>效果设置</translation>
+    </message>
+    <message>
+        <source>This clip already has a frame for every project frame, so Motion Smoothing adds nothing here. It helps footage with a lower frame rate than the project, or slowed down.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11910,6 +11953,10 @@
     <message>
         <source>Control</source>
         <translation>控件</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished">询问</translation>
     </message>
     <message>
         <source>No matches</source>
@@ -20059,6 +20106,18 @@ If playback stutters, try another.</source>
 <context>
     <name>SearchIndex</name>
     <message>
+        <source>Ask: “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run as an editing command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install the Command Bar Model to run commands like this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not available now</source>
         <translation>暂不可用</translation>
     </message>
@@ -20522,6 +20581,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn agent access on automatically the next time you open Drift. Turning access off resets this.</source>
         <translation>下次打开 Drift 时自动开启智能体访问。关闭访问会重置此设置</translation>
+    </message>
+    <message>
+        <source>Commands in search (Ctrl+K)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a sentence such as &quot;split at 12 seconds&quot; in search and run it as an editing command. Needs the Command Bar Model and llama.cpp runtime add-ons; runs on this device.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Notifications for agent actions</source>
@@ -22887,6 +22954,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Adjustment layer</source>
         <translation>调整图层</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">撤销</translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31163,6 +31238,45 @@ If playback stutters, try another.</source>
     <message>
         <source>Drift closed unexpectedly during your last session.</source>
         <translation>Drift 在上次会话中意外退出。</translation>
+    </message>
+</context>
+<context>
+    <name>drift::llm::LlamaServer</name>
+    <message>
+        <source>The llama.cpp runtime is not installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The command model file is missing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local language models are not supported on this platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No free local port for the language model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not start llama-server: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>llama-server exited (code %1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>llama-server did not become ready within 60 seconds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The language model was stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpected reply from llama-server.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

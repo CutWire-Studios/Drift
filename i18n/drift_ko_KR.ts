@@ -8138,6 +8138,41 @@
     </message>
 </context>
 <context>
+    <name>CommandBarController</name>
+    <message>
+        <source>The command model took too long to answer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The Command Bar Model add-on is not installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The command model failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching command for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t run “%1”: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 can&apos;t be undone, so it was not run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t run: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CommunityInstaller</name>
     <message>
         <source>Starting…</source>
@@ -9411,6 +9446,10 @@
         <source>Search</source>
         <translation>검색</translation>
     </message>
+    <message>
+        <source>Thinking…</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorHeaderSettingsButton</name>
@@ -9997,6 +10036,10 @@
     <message>
         <source>Effect settings</source>
         <translation>효과 설정</translation>
+    </message>
+    <message>
+        <source>This clip already has a frame for every project frame, so Motion Smoothing adds nothing here. It helps footage with a lower frame rate than the project, or slowed down.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11910,6 +11953,10 @@
     <message>
         <source>Control</source>
         <translation>제어</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished">확인</translation>
     </message>
     <message>
         <source>No matches</source>
@@ -20051,6 +20098,18 @@ If playback stutters, try another.</source>
 <context>
     <name>SearchIndex</name>
     <message>
+        <source>Ask: “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run as an editing command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install the Command Bar Model to run commands like this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not available now</source>
         <translation>현재 사용할 수 없음</translation>
     </message>
@@ -20514,6 +20573,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn agent access on automatically the next time you open Drift. Turning access off resets this.</source>
         <translation>다음에 Drift를 열 때 에이전트 접근을 자동으로 켭니다. 접근을 끄면 이 설정이 초기화됩니다.</translation>
+    </message>
+    <message>
+        <source>Commands in search (Ctrl+K)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a sentence such as &quot;split at 12 seconds&quot; in search and run it as an editing command. Needs the Command Bar Model and llama.cpp runtime add-ons; runs on this device.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Notifications for agent actions</source>
@@ -22879,6 +22946,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Adjustment layer</source>
         <translation>보정 레이어</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">실행 취소</translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31154,6 +31229,45 @@ If playback stutters, try another.</source>
     <message>
         <source>Drift closed unexpectedly during your last session.</source>
         <translation>이전 세션 중에 Drift가 예기치 않게 종료되었습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::llm::LlamaServer</name>
+    <message>
+        <source>The llama.cpp runtime is not installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The command model file is missing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local language models are not supported on this platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No free local port for the language model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not start llama-server: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>llama-server exited (code %1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>llama-server did not become ready within 60 seconds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The language model was stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpected reply from llama-server.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

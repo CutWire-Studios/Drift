@@ -8175,6 +8175,41 @@
     </message>
 </context>
 <context>
+    <name>CommandBarController</name>
+    <message>
+        <source>The command model took too long to answer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The Command Bar Model add-on is not installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The command model failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching command for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t run “%1”: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 can&apos;t be undone, so it was not run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t run: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CommunityInstaller</name>
     <message>
         <source>Starting…</source>
@@ -9453,6 +9488,10 @@
         <source>Search</source>
         <translation>Rechercher</translation>
     </message>
+    <message>
+        <source>Thinking…</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorHeaderSettingsButton</name>
@@ -10040,6 +10079,10 @@
     <message>
         <source>Effect settings</source>
         <translation>Paramètres d’effet</translation>
+    </message>
+    <message>
+        <source>This clip already has a frame for every project frame, so Motion Smoothing adds nothing here. It helps footage with a lower frame rate than the project, or slowed down.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11958,6 +12001,10 @@
     <message>
         <source>Control</source>
         <translation>Contrôle</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished">Demander</translation>
     </message>
     <message>
         <source>No matches</source>
@@ -20153,6 +20200,18 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>SearchIndex</name>
     <message>
+        <source>Ask: “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run as an editing command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install the Command Bar Model to run commands like this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not available now</source>
         <translation>Non disponible actuellement</translation>
     </message>
@@ -20616,6 +20675,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Turn agent access on automatically the next time you open Drift. Turning access off resets this.</source>
         <translation>Activer automatiquement l’accès de l’agent la prochaine fois que vous ouvrirez Drift. La désactivation de l’accès réinitialise ce paramètre.</translation>
+    </message>
+    <message>
+        <source>Commands in search (Ctrl+K)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a sentence such as &quot;split at 12 seconds&quot; in search and run it as an editing command. Needs the Command Bar Model and llama.cpp runtime add-ons; runs on this device.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Notifications for agent actions</source>
@@ -22982,6 +23049,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Adjustment layer</source>
         <translation>Calque d&apos;ajustement</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">Annuler</translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31279,6 +31354,45 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Drift closed unexpectedly during your last session.</source>
         <translation>Drift s’est fermé de manière inattendue lors de votre dernière session.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::llm::LlamaServer</name>
+    <message>
+        <source>The llama.cpp runtime is not installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The command model file is missing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local language models are not supported on this platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No free local port for the language model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not start llama-server: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>llama-server exited (code %1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>llama-server did not become ready within 60 seconds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The language model was stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unexpected reply from llama-server.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
