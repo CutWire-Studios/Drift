@@ -280,6 +280,12 @@ ThemedContextMenu {
         onTriggered: EditorState.openSequence(sequenceId)
     }
     ThemedMenuItem {
+        text: qsTr("Convert to Apple ProRes 422…")
+        icon.name: Theme.icons.rabbit
+        visible: owner.mediaAssetId.length > 0 && !owner.mediaEditFriendly
+        onTriggered: EditorState.bin.convertToProRes([owner.mediaAssetId])
+    }
+    ThemedMenuItem {
         text: qsTr("Convert to edit-friendly format")
         icon.name: Theme.icons.rabbit
         // Converts the bin media, so every clip using it follows along.
