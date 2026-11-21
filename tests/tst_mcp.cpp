@@ -310,6 +310,7 @@ private slots:
     void assembleAppendsMultiAssetEdl();
     void cutWordsByTextAndIndex();
     void getWaveformImageReportsWords();
+    void getWaveformWordsFollowTrackAudibility();
     void setEffectStringParamSetsFileParam();
     void addShapeReturnsMintedId();
     void shapeStyleLayersAndKeyframes();
@@ -14242,6 +14243,99 @@ void McpTest::getWaveformImageReportsWords()
     QCOMPARE(words.size(), 6);
     QCOMPARE(words.at(3).toObject().value(QStringLiteral("i")).toInt(), 3);
     QVERIFY(r.value(QStringLiteral("image")).toObject().value(QStringLiteral("lanes")).toArray().contains(QStringLiteral("words")));
+}
+
+// The words lane of the timeline waveform reads what the mixer plays: mute, hide and solo apply.
+void McpTest::getWaveformWordsFollowTrackAudibility()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available");
+    QTemporaryDir dir;
+    const QString source = dir.filePath(QStringLiteral("half-tone.wav"));
+    QVERIFY(writeHalfSilentTone(source));
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString a = placeWithTranscript(dispatcher, state, source);
+    const QString b = importAndPlace(dispatcher, source, 10.0);
+    QVERIFY(!a.isEmpty() && !b.isEmpty());
+
+    drift::Project &project = *state.project();
+    QString aAsset, bAsset;
+    drift::Track other{.type = drift::TrackType::Audio};
+    for (drift::Track &track : project.tracks()) {
+        for (int i = 0; i < track.clips.size(); ++i) {
+            if (track.clips.at(i).id == a)
+                aAsset = track.clips.at(i).assetId;
+            if (track.clips.at(i).id == b) {
+                bAsset = track.clips.at(i).assetId;
+                other.clips.append(track.clips.at(i));
+                track.clips.removeAt(i);
+                --i;
+            }
+        }
+    }
+    QCOMPARE(other.clips.size(), 1);
+    if (bAsset != aAsset)
+        project.setTranscript(bAsset, project.transcript(aAsset));
+    project.tracks().append(other);
+    project.ensureTrackIds();
+    const int trackB = int(project.tracks().size()) - 1;
+
+    // Returns the reply's text part; words land in `a` (before 5 s) or `b` (from 10 s). `replyOk`
+    // keeps a silent mix honest: an error reply would also have no words.
+    bool replyOk = false;
+    const auto read = [&](const QJsonObject &args, int &inA, int &inB, bool *hasWordsLane = nullptr) {
+        const QJsonObject reply = dispatcher.applyOne(QStringLiteral("get_waveform"), args);
+        const QJsonObject r = QJsonDocument::fromJson(
+            reply.value(QStringLiteral("content")).toArray().at(0).toObject().value(QStringLiteral("text")).toString().toUtf8()).object();
+        replyOk = r.value(QStringLiteral("ok")).toBool();
+        inA = inB = 0;
+        for (const QJsonValue &v : r.value(QStringLiteral("words")).toArray()) {
+            const double start = v.toObject().value(QStringLiteral("start")).toDouble();
+            (start < 5.0 ? inA : inB)++;
+        }
+        if (hasWordsLane)
+            *hasWordsLane = r.value(QStringLiteral("image")).toObject().value(QStringLiteral("lanes")).toArray().contains(QStringLiteral("words"));
+        return r;
+    };
+    const QJsonObject timeline{{QStringLiteral("start"), 0}, {QStringLiteral("duration"), 15}, {QStringLiteral("image"), true}};
+    int inA = 0, inB = 0;
+
+    read(timeline, inA, inB);
+    QVERIFY(replyOk);
+    QCOMPARE(inA, 6);
+    QCOMPARE(inB, 6);
+
+    state.setTrackSolo(trackB, true);
+    read(timeline, inA, inB);
+    QVERIFY(replyOk);
+    QCOMPARE(inA, 0);
+    QCOMPARE(inB, 6);
+
+    state.setTrackHidden(trackB, true);
+    bool lane = true;
+    read(timeline, inA, inB, &lane);
+    QVERIFY(replyOk);
+    QCOMPARE(inA + inB, 0);
+    QVERIFY(!lane);
+
+    state.setTrackHidden(trackB, false);
+    state.setTrackMuted(trackB, true);
+    read(timeline, inA, inB);
+    QVERIFY(replyOk);
+    QCOMPARE(inA + inB, 0);
+
+    state.setTrackSolo(trackB, false);
+    read(timeline, inA, inB);
+    QVERIFY(replyOk);
+    QCOMPARE(inA, 6);
+    QCOMPARE(inB, 0);
+
+    // Clip mode reads that clip whatever its track's state.
+    read({{QStringLiteral("clip"), b}, {QStringLiteral("image"), true}}, inA, inB);
+    QVERIFY(replyOk);
+    QCOMPARE(inA + inB, 6);
 }
 
 // The proxy suggestion on import follows the preference, decided in the library so it also

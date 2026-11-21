@@ -304,7 +304,9 @@ something happen” to “what is it”:
 
 For audio, **`get_waveform({image:true, …})`** returns a PNG with a mixed-peaks lane, a
 speech-band lane, silent stretches shaded, onset ticks when `detect_beats` is current, a lane
-of the transcript's words when the media is transcribed (indices in the reply's `words`), an
+of the transcript's words when the media is transcribed (indices in the reply's `words`; in
+timeline mode only from tracks you would hear: muted, hidden and solo-silenced tracks are left
+out, as in the mix), an
 optional `spectrogram:true` lane, and a time axis — together with a `summary_buckets` (50)
 numeric summary and the `silence` ranges it found. In `clip` mode the image form is
 timeline-space (through the clip's volume and fades), unlike the numeric clip form.
@@ -331,7 +333,7 @@ at the cuts.
 2. **`get_transcript`** reads it three ways:
    - `{asset}`: the whole take in **source seconds**, which is what `keep_ranges` and `assemble` take.
    - `{clip}`: only what that clip plays, in **timeline seconds**.
-   - `{start, end}`: everything audible on the timeline in that range.
+   - `{start, end}`: everything audible on the timeline in that range. It reads the words of tracks you would hear (mute, hide and solo apply); `clip` reads that clip whatever its track's state.
 
    The default `view:"phrases"` breaks lines on a pause of at least `break_on_silence` (0.7 s) or
    a speaker change, and adds a `compact` string, `[12.40-15.10] S1 text` per line, which is the

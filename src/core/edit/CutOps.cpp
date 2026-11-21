@@ -178,8 +178,11 @@ QList<TimelineWord> transcriptWordsOnTimeline(const Project &project, TimeUs vie
 {
     QList<TimelineWord> out;
     QSet<QString> seen;
+    // The timeline form reads the tracks the mixer plays (mute, hide and solo apply). A named clip
+    // is read whatever its track's state, as per-clip analysis ignores other tracks' solo.
+    const bool anySolo = anyTrackSoloed(project.tracks());
     for (const Track &track : project.tracks()) {
-        if (onlyClipId.isEmpty() && track.muted)
+        if (onlyClipId.isEmpty() && !trackAudible(track, anySolo))
             continue;
         for (const Clip &clip : track.clips) {
             if (!onlyClipId.isEmpty() && clip.id != onlyClipId)
