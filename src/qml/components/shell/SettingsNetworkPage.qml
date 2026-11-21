@@ -5,7 +5,7 @@ SettingsPage {
     id: page
 
     pageId: "network"
-    title: qsTr("Network")
+    title: qsTr("Network & internet")
 
     function saveProxy() {
         EditorState.preferences.setNetworkProxy(proxyModeCombo.model[proxyModeCombo.currentIndex].id,
@@ -22,7 +22,7 @@ SettingsPage {
     }
 
     SettingsRow {
-        title: qsTr("Proxy")
+        title: qsTr("Internet proxy server")
         searchId: "network-proxy"
         description: qsTr("How Drift reaches the internet for downloads, updates, and online services. Applies immediately.")
         keywords: "proxy http socks5 internet firewall network"
@@ -51,7 +51,7 @@ SettingsPage {
     }
 
     SettingsRow {
-        title: qsTr("Proxy server")
+        title: qsTr("Proxy server details")
         searchId: "network-proxy-server"
         description: qsTr("Host and port of the proxy. The username and password are optional.")
         keywords: "proxy host port username password login"

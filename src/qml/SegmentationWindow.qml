@@ -22,7 +22,7 @@ ToolWindow {
     height: 720
     minimumWidth: 780
     minimumHeight: 520
-    title: qsTr("Cut out subject")
+    title: qsTr("Remove background")
     color: Theme.c.segmentationWindow.background
 
     function openFor(track, clip, startSeconds, durationSeconds, sessionAlreadyStarted) {

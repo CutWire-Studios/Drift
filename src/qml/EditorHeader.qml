@@ -242,7 +242,7 @@ Item {
     // Save As with every source file copied in, so the result opens on a machine that has none of
     // the media. Always asks for a path: it is a different artefact from the working save.
     function packageProject() {
-        var url = FileDialogs.saveFile(qsTr("Save Shareable Copy"), root.projectFilter,
+        var url = FileDialogs.saveFile(qsTr("Save with media"), root.projectFilter,
                                        EditorState.projectFile.projectName, "drift", "",
                                        root.projectMimeTypes)
         if (url != "")
@@ -422,6 +422,7 @@ Item {
                 onOpenRecentRequested: (path) => root.openRecent(path)
                 onCloseProjectRequested: root.closeProject()
                 onSaveAsRequested: root.saveProjectAs()
+                onExportRequested: root.exportVideo()
                 onPackageRequested: root.packageProject()
                 onSaveJsonRequested: root.saveProjectJson()
                 onOpenJsonRequested: root.openProjectJson()
@@ -449,6 +450,10 @@ Item {
                 onBakesRequested: bakesDialogLoader.ensure().openDialog()
                 onLayoutRequested: videoSizeDialogLoader.ensure().openDialog()
             }
+
+            EditorHeaderSeparator {}
+
+            EditorHeaderWorkspaceButton { }
         }
 
         // Absorbs leftover space so the groups stay apart but can compress.
@@ -485,6 +490,8 @@ Item {
             EditorHeaderDownloadsButton { }
 
             EditorHeaderSettingsButton { }
+
+            EditorHeaderHelpButton { }
 
             EditorHeaderSeparator {}
 

@@ -2,6 +2,7 @@
   "id": "ripple_water",
   "displayName": "Ripple / Water",
   "category": "glitch",
+  "keywords": ["water", "ripple", "underwater", "wavy", "distort"],
   "thumbnail": "thumbnail.webp",
   "order": 360,
   "parameters": [

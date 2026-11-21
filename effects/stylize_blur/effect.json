@@ -2,6 +2,7 @@
   "id": "stylize.blur",
   "displayName": "Blur",
   "category": "dreamy",
+  "keywords": ["blur", "soften", "defocus"],
   "thumbnail": "thumbnail.webp",
   "order": 100,
   "parameters": [

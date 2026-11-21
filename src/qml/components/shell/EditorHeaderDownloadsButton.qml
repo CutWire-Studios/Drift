@@ -20,10 +20,12 @@ Item {
         anchors.fill: parent
         glyph: Theme.icons.store
         variant: "ghost"
+        text: qsTr("Marketplace")
         active: downloadsButton.activeCount > 0
         tooltip: downloadsButton.activeCount > 0
                  ? qsTr("Marketplace — %n download(s) running", "", downloadsButton.activeCount)
                  : qsTr("Marketplace")
+        tooltipBody: qsTr("Effects, transitions, sound effects and stock media to add to projects")
         onClicked: ShellBridge.main.openMarketplace(downloadsButton.activeCount > 0 ? "downloads" : "")
     }
 

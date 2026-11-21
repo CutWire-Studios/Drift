@@ -2,6 +2,7 @@
   "id": "adjust.saturation",
   "displayName": "Saturation",
   "category": "color",
+  "keywords": ["vibrance", "vivid", "colorful", "desaturate", "muted", "black and white"],
   "thumbnail": "thumbnail.webp",
   "order": 30,
   "parameters": [

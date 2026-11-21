@@ -71,6 +71,12 @@ QString translatedCategoryLabel(const QString &slug)
         return QCoreApplication::translate("EffectCatalog", "Artistic");
     if (slug == QLatin1String("depth"))
         return QCoreApplication::translate("EffectCatalog", "Depth & Lighting");
+    if (slug == QLatin1String("fix"))
+        return QCoreApplication::translate("EffectCatalog", "Fix");
+    if (slug == QLatin1String("privacy"))
+        return QCoreApplication::translate("EffectCatalog", "Privacy");
+    if (slug == QLatin1String("background"))
+        return QCoreApplication::translate("EffectCatalog", "Background");
     if (slug.isEmpty())
         return QCoreApplication::translate("EffectCatalog", "Other");
     return slug.at(0).toUpper() + slug.mid(1);

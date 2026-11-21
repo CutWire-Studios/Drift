@@ -122,6 +122,13 @@ Item {
         anchors.bottom: parent.bottom
         spacing: Theme.spacingMd
 
+        WorkspaceLink {
+            active: tool.hasEnhanced && tool.labAssetId.length > 0
+            rowHeight: Theme.controlHeight
+            target: ({ panel: "sourceLab.viewer", assetId: tool.labAssetId })
+            onTriggered: tool.close()
+        }
+
         ThemedButton {
             variant: tool.running ? "destructive" : "ghost"
             text: tool.running ? qsTr("Stop") : qsTr("Close")

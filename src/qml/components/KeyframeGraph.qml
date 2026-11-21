@@ -748,15 +748,24 @@ Item {
             EditorState.saveEasingPreset(qsTr("My easing %1").arg(n), segment.spec)
         }
 
-        ThemedMenuItem {
-            text: qsTr("Straight")
-            icon.name: keyMenu.isPreset("linear") ? Theme.icons.check : ""
-            onTriggered: keyMenu.setSegment({ kind: "linear" })
-        }
-        ThemedMenuItem {
-            text: qsTr("Jump")
-            icon.name: keyMenu.isPreset("hold") ? Theme.icons.check : ""
-            onTriggered: keyMenu.setSegment({ kind: "hold" })
+        ThemedContextMenu {
+            title: qsTr("Interpolation")
+
+            ThemedMenuItem {
+                text: qsTr("Smooth")
+                onTriggered: EditorState.setKeyframeSmooth(EditorState.selectedTrack, EditorState.selectedClip,
+                                                           keyMenu.keyProp, keyMenu.keySeconds, false)
+            }
+            ThemedMenuItem {
+                text: qsTr("Straight")
+                icon.name: keyMenu.isPreset("linear") ? Theme.icons.check : ""
+                onTriggered: keyMenu.setSegment({ kind: "linear" })
+            }
+            ThemedMenuItem {
+                text: qsTr("Hold")
+                icon.name: keyMenu.isPreset("hold") ? Theme.icons.check : ""
+                onTriggered: keyMenu.setSegment({ kind: "hold" })
+            }
         }
         ThemedMenuItem {
             text: qsTr("Easing…")

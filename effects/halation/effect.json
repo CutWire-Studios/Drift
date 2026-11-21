@@ -2,6 +2,7 @@
   "id": "halation",
   "displayName": "Halation",
   "category": "dreamy",
+  "keywords": ["film", "glow", "red glow", "highlights", "bleed", "cinematic", "bloom"],
   "thumbnail": "thumbnail.webp",
   "order": 190,
   "parameters": [

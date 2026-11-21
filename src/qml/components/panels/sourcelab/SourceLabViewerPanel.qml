@@ -155,6 +155,19 @@ PanelFrame {
         else
             ShellBridge.unregisterActionHandler(root)
     }
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "sourceLab.viewer")
+            return
+        ShellBridge.panelRequest = null
+        if (request.assetId)
+            root.lab.load(request.assetId)
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+    Component.onCompleted: applyPanelRequest()
     Component.onDestruction: {
         root.endSession()
         ShellBridge.unregisterActionHandler(root)

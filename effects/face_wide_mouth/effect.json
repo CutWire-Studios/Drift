@@ -2,6 +2,7 @@
   "id": "face_wide_mouth",
   "displayName": "Wide Mouth",
   "category": "funny",
+  "keywords": ["funny face", "big mouth", "smile", "widen"],
   "thumbnail": "thumbnail.webp",
   "order": 620,
   "requires": "face",

@@ -224,6 +224,11 @@ Item {
         anchors.margins: Theme.spacingLg
         spacing: Theme.spacingMd
 
+        WorkspaceLink {
+            rowHeight: Theme.controlHeight
+            target: ({ panel: "recorder" })
+        }
+
         ThemedButton {
             visible: root.showCancel
             variant: "ghost"

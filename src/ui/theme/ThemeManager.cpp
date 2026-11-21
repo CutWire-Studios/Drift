@@ -776,6 +776,9 @@ ThemeManager::ThemeManager(QObject *parent)
         QSettings settings;
         settings.beginGroup(QStringLiteral("Theme"));
         m_hotReload = settings.value(QStringLiteral("hotReload"), false).toBool();
+        const QColor accent(settings.value(QStringLiteral("accent")).toString());
+        if (accent.isValid())
+            m_accentOverride = accent.name();
     }
 
     QString error;
@@ -1062,6 +1065,23 @@ void ThemeManager::setHotReload(bool enabled)
     emit hotReloadChanged();
 }
 
+void ThemeManager::setAccentOverride(const QString &color)
+{
+    const QColor parsed(color);
+    const QString normalized = parsed.isValid() ? parsed.name() : QString();
+    if (normalized == m_accentOverride)
+        return;
+    m_accentOverride = normalized;
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("Theme"));
+    if (m_accentOverride.isEmpty())
+        settings.remove(QStringLiteral("accent"));
+    else
+        settings.setValue(QStringLiteral("accent"), m_accentOverride);
+    reload();
+    emit accentOverrideChanged();
+}
+
 void ThemeManager::setLastError(const QString &error)
 {
     if (m_lastError == error)
@@ -1295,6 +1315,19 @@ std::optional<ThemeManager::Loaded> ThemeManager::readTheme(const QString &nameO
     if (leafName.isEmpty())
         leafName = fallbackName(path);
     merged.insert(QStringLiteral("name"), leafName);
+
+    if (!m_accentOverride.isEmpty()) {
+        const QColor accent(m_accentOverride);
+        const QString foreground = accent.lightnessF() > 0.55 ? QStringLiteral("#1a1a1a") : QStringLiteral("#ffffff");
+        QVariantMap palette = merged.value(QStringLiteral("palette")).toMap();
+        palette.insert(QStringLiteral("primary"), m_accentOverride);
+        palette.insert(QStringLiteral("primaryForeground"), foreground);
+        merged.insert(QStringLiteral("palette"), palette);
+        QVariantMap semantic = merged.value(QStringLiteral("semantic")).toMap();
+        semantic.insert(QStringLiteral("primary"), m_accentOverride);
+        semantic.insert(QStringLiteral("primaryForeground"), foreground);
+        merged.insert(QStringLiteral("semantic"), semantic);
+    }
 
     QStringList refs;
     const QVariant resolved = resolveTree(merged, merged, &refs, QString(), path);

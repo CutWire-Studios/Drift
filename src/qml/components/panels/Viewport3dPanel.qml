@@ -5,6 +5,11 @@ import Drift
 // the Edit preview's camera output. The tools sit in a header above the image, not on it.
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "viewport3d-panel"
+        title: qsTr("3D viewport")
+        keywords: "3d viewport scene view orbit free camera perspective world"
+    }
 
     property bool shown: false
 
@@ -21,10 +26,6 @@ PanelFrame {
     readonly property bool hasCamera: {
         void EditorState.tracksRevision
         return EditorState.preview.projectHasCamera()
-    }
-
-    function withShortcut(label, key) {
-        return key.length > 0 ? qsTr("%1 (%2)").arg(label).arg(key) : label
     }
 
     function applyViewPreset(id) {
@@ -127,7 +128,8 @@ PanelFrame {
 
             ThemedChip {
                 text: qsTr("Ortho")
-                tooltip: root.withShortcut(qsTr("Orthographic projection"), EditorState.shortcutFor("viewport3d.toggleOrthographic"))
+                tooltip: qsTr("Orthographic projection")
+                tooltipActionId: "viewport3d.toggleOrthographic"
                 selected: EditorState.preview.orthographic
                 onClicked: EditorState.preview.toggleOrthographic()
             }
@@ -144,7 +146,8 @@ PanelFrame {
                     required property var modelData
                     glyph: modelData.glyph
                     variant: "text"
-                    tooltip: root.withShortcut(modelData.label, EditorState.shortcutFor(modelData.action))
+                    tooltip: modelData.label
+                    tooltipActionId: modelData.action
                     Accessible.name: modelData.label
                     active: EditorState.preview.gizmoTool === modelData.value
                     onClicked: EditorState.preview.gizmoTool = modelData.value
@@ -157,8 +160,8 @@ PanelFrame {
                 width: Math.max(84, widestContentWidth)
                 model: [qsTr("World"), qsTr("Local"), qsTr("View")]
                 currentIndex: Math.max(0, ids.indexOf(EditorState.preview.gizmoOrientation))
-                tooltip: root.withShortcut(qsTr("Which axes the gizmo follows: the scene's, the selected object's or the screen's"),
-                                           EditorState.shortcutFor("viewport3d.gizmoOrientation"))
+                tooltip: qsTr("Which axes the gizmo follows: the scene's, the selected object's or the screen's")
+                tooltipActionId: "viewport3d.gizmoOrientation"
                 onActivated: EditorState.preview.gizmoOrientation = ids[currentIndex]
             }
 
@@ -166,13 +169,15 @@ PanelFrame {
 
             IconButton {
                 glyph: Theme.icons.fly
-                tooltip: root.withShortcut(qsTr("Fly (WASD to move, Q/E down/up, steer toward the pointer)"), EditorState.shortcutFor("viewport3d.toggleFly"))
+                tooltip: qsTr("Fly (WASD to move, Q/E down/up, steer toward the pointer)")
+                tooltipActionId: "viewport3d.toggleFly"
                 active: EditorState.preview.flying
                 onClicked: EditorState.preview.flying = !EditorState.preview.flying
             }
             IconButton {
                 glyph: Theme.icons.video
-                tooltip: root.withShortcut(qsTr("Look through the scene camera"), EditorState.shortcutFor("viewport3d.lookThrough"))
+                tooltip: qsTr("Look through the scene camera")
+                tooltipActionId: "viewport3d.lookThrough"
                 active: EditorState.preview.lookThrough
                 onClicked: EditorState.preview.toggleLookThrough()
             }
@@ -193,17 +198,20 @@ PanelFrame {
 
             IconButton {
                 glyph: Theme.icons.zoomFit
-                tooltip: root.withShortcut(qsTr("Frame the selection"), EditorState.shortcutFor("viewport3d.frameSelected"))
+                tooltip: qsTr("Frame the selection")
+                tooltipActionId: "viewport3d.frameSelected"
                 onClicked: EditorState.preview.frameSelection()
             }
             IconButton {
                 glyph: Theme.icons.maximize
-                tooltip: root.withShortcut(qsTr("Frame everything"), EditorState.shortcutFor("viewport3d.frameAll"))
+                tooltip: qsTr("Frame everything")
+                tooltipActionId: "viewport3d.frameAll"
                 onClicked: EditorState.preview.frameAll()
             }
             IconButton {
                 glyph: Theme.icons.reset
-                tooltip: root.withShortcut(qsTr("Reset the view"), EditorState.shortcutFor("viewport3d.resetView"))
+                tooltip: qsTr("Reset the view")
+                tooltipActionId: "viewport3d.resetView"
                 onClicked: EditorState.preview.resetView()
             }
         }

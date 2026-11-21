@@ -398,11 +398,11 @@ void BakeController::bakeWorkArea()
     // Bakes are of the main timeline, and the work area is project-wide: from a composite's tab this
     // would bake the main timeline at that tab's In/Out, which neither tab plays.
     if (!m_app->activeSequenceId().isEmpty()) {
-        m_app->setLastMessage(tr("Bakes are of the main timeline. Switch to it to bake."), QStringLiteral("warning"));
+        m_app->setLastMessage(tr("Pre-rendered sections are of the main timeline. Switch to it to pre-render."), QStringLiteral("warning"));
         return;
     }
     if (!m_app->m_project.hasWorkArea()) {
-        m_app->setLastMessage(tr("Set a work area to bake"), QStringLiteral("warning"));
+        m_app->setLastMessage(tr("Set a work area to pre-render"), QStringLiteral("warning"));
         return;
     }
     bakeRange(m_app->m_project.workAreaInUs(), m_app->m_project.workAreaOutUs());
@@ -482,7 +482,7 @@ void BakeController::startNext()
         return;
     if (!ensureFile()) {
         m_queue.clear();
-        m_app->setLastMessage(tr("Could not open the bake cache"), QStringLiteral("error"));
+        m_app->setLastMessage(tr("Could not open the pre-render cache"), QStringLiteral("error"));
         return;
     }
     const Request request = m_queue.takeFirst();
@@ -613,11 +613,11 @@ void BakeController::onJobDone(const std::shared_ptr<JobState> &state, bool canc
 
     if (!m_detached) {
         if (cancelled)
-            m_app->setLastMessage(tr("Bake cancelled"));
+            m_app->setLastMessage(tr("Pre-render cancelled"));
         else if (!result.ok)
-            m_app->setLastMessage(error.isEmpty() ? tr("Bake failed") : error, QStringLiteral("error"));
+            m_app->setLastMessage(error.isEmpty() ? tr("Pre-render failed") : error, QStringLiteral("error"));
         else
-            m_app->setLastMessage(tr("Bake complete"));
+            m_app->setLastMessage(tr("Pre-render complete"));
     }
 
     publish();
@@ -702,7 +702,7 @@ void BakeController::setWorkAreaToBake(const QString &id)
     const drift::Project before = m_app->m_project;
     m_app->m_project.setWorkAreaInUs(usForFrame(bake->startFrame, bake->fps));
     m_app->m_project.setWorkAreaOutUs(usForFrame(bake->endFrame, bake->fps));
-    m_app->pushProjectEdit(before, tr("Set work area to bake"));
+    m_app->pushProjectEdit(before, tr("Set work area to pre-render"));
     m_app->finishEdit(tr("Work area set"));
     emit m_app->workAreaChanged();
 }

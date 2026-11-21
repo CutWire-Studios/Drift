@@ -9,24 +9,31 @@ ThemedContextMenu {
     signal bakesRequested()
     signal cropRequested()
     signal layoutRequested()
+    signal multicamRequested()
 
     ThemedMenuItem {
-        text: qsTr("Bakes…")
-        icon.name: Theme.icons.layers
-        onTriggered: root.bakesRequested()
+        text: qsTr("Size, aspect & frame rate…")
+        icon.name: Theme.icons.ratio
+        onTriggered: root.layoutRequested()
     }
 
     ThemedMenuItem {
-        text: EditorState.preview.canvasCropMode ? qsTr("Cancel crop") : qsTr("Crop video")
+        text: EditorState.preview.canvasCropMode ? qsTr("Cancel crop") : qsTr("Crop canvas")
         icon.name: Theme.icons.crop
         onTriggered: root.cropRequested()
+    }
+
+    ThemedMenuItem {
+        text: qsTr("Multicam…")
+        icon.name: Theme.icons.shuffle
+        onTriggered: root.multicamRequested()
     }
 
     ThemedMenuSeparator { }
 
     ThemedMenuItem {
-        text: qsTr("Adjust video layout…")
-        icon.name: Theme.icons.ratio
-        onTriggered: root.layoutRequested()
+        text: qsTr("Pre-rendered sections…")
+        icon.name: Theme.icons.layers
+        onTriggered: root.bakesRequested()
     }
 }

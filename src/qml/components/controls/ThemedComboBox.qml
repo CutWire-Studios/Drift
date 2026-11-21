@@ -7,6 +7,10 @@ ComboBox {
     id: root
 
     property string tooltip: ""
+
+    property string tooltipActionId: ""
+
+    property string tooltipShortcut: ""
     property var sections: []
 
     // Analogue of implicitContentWidth, measured across every entry instead of only the current
@@ -96,8 +100,10 @@ ComboBox {
         }
     }
 
-    ThemedToolTip {
+    RichToolTip {
         text: root.tooltip
+        actionId: root.tooltipActionId
+        shortcut: root.tooltipShortcut
         visible: root.tooltip.length > 0 && !root.popup.visible
                  && (root.hovered || root.visualFocus)
     }

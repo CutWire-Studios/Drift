@@ -2,6 +2,7 @@
   "id": "beat_shake",
   "displayName": "Beat Shake",
   "category": "impact",
+  "keywords": ["camera shake", "earthquake", "rumble", "shaky", "bass", "hit"],
   "thumbnail": "thumbnail.webp",
   "order": 75,
   "parameters": [

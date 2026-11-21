@@ -294,7 +294,22 @@ PanelFrame {
     onClipIndexChanged: Qt.callLater(onClipSwitched)
     onAnimatedOnlyChanged: scheduleRebuild()
     onCollapsedChanged: scheduleRebuild()
-    Component.onCompleted: onClipSwitched()
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "keyframes")
+            return
+        ShellBridge.panelRequest = null
+        if (request.prop)
+            Qt.callLater(() => root.focusedProp = request.prop)
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+    Component.onCompleted: {
+        onClipSwitched()
+        applyPanelRequest()
+    }
 
     // The same lookup the shortcut dispatch does, for keys that reach the panel from a focused child
     // before the editor scope sees them.

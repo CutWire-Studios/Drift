@@ -688,6 +688,13 @@ Column {
         }
     }
 
+    WorkspaceLink {
+        active: !root.curveMode
+        label: qsTr("Edit curve in graph ↗")
+        target: ({ panel: "keyframes", prop: root.propKey })
+        onTriggered: root.closeRequested()
+    }
+
     ThemedContextMenu {
         id: userMenu
         implicitWidth: 160

@@ -6,7 +6,9 @@ QuickSetupPage {
     id: root
 
     title: qsTr("Pick a look")
-    subtitle: qsTr("Choose how Drift looks. You can change this any time in Settings.")
+    subtitle: qsTr("Choose how Drift looks, and an accent colour. You can change both any time in Settings.")
+    // Illustration slot "illustration": a mini editor window recolouring between the light and
+    // dark themes. The live QML mock editor below stays as the interactive preview.
     glyph: Theme.icons.sun
     contentMaxWidth: 900
 
@@ -134,6 +136,24 @@ QuickSetupPage {
             Layout.fillWidth: true
             Layout.preferredHeight: width * 0.625
             Layout.alignment: Qt.AlignTop
+        }
+    }
+
+    Column {
+        width: parent.width
+        spacing: Theme.spacingMd
+
+        Text {
+            width: parent.width
+            text: qsTr("Accent colour")
+            color: Theme.c.quickSetup.foreground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeSm
+            font.weight: Font.Medium
+        }
+
+        AccentSwatches {
+            width: parent.width
         }
     }
 }

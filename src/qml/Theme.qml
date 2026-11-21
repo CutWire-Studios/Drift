@@ -429,6 +429,7 @@ QtObject {
     // --- Layout: assets panel -----------------------------------------------
     readonly property real panelHeaderHeight: inputMetric(ThemeManager.metrics.panelHeaderHeight)
     readonly property real tabRailWidth: inputMetric(ThemeManager.metrics.tabRailWidth)
+    readonly property real tabRailLabelWidth: Math.round(tabRailWidth * 1.75)
     readonly property real assetCardWidth: ThemeManager.metrics.assetCardWidth
     readonly property real assetCardGap: ThemeManager.metrics.assetCardGap
 

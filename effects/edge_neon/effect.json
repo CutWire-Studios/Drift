@@ -2,6 +2,7 @@
   "id": "edge_neon",
   "displayName": "Edge Glow / Neon",
   "category": "dreamy",
+  "keywords": ["neon glow", "outline", "edges", "cyberpunk"],
   "thumbnail": "thumbnail.webp",
   "backend": "gpu",
   "order": 140,

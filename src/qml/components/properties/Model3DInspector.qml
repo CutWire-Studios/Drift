@@ -70,6 +70,11 @@ Item {
         width: root.width
         spacing: Theme.spacingXl
 
+        WorkspaceLink {
+            x: parent.width - width
+            target: ({ panel: "viewport3d" })
+        }
+
         // ----- File --------------------------------------------------------
         Column {
             width: parent.width

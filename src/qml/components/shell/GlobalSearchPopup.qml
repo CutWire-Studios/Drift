@@ -10,8 +10,11 @@ Popup {
     id: root
 
     property int highlightIndex: 0
+    property string query: ""
+    property bool asking: false
 
     signal finished()
+    signal queryPicked(string text)
 
     padding: Theme.spacingMd
     modal: false
@@ -49,6 +52,8 @@ Popup {
     }
 
     function search(query) {
+        root.query = query
+        asking = false
         if (!opened)
             SearchIndex.rebuild()
         SearchIndex.setQuery(query)
@@ -59,6 +64,7 @@ Popup {
     }
 
     function ask(text) {
+        asking = true
         if (!opened)
             SearchIndex.rebuild()
         SearchIndex.setAskQuery(text)
@@ -94,15 +100,49 @@ Popup {
     contentItem: Item {
         implicitHeight: SearchIndex.count > 0 ? Math.min(list.contentHeight, 420) : empty.implicitHeight
 
-        Text {
+        Column {
             id: empty
             visible: SearchIndex.count === 0
             width: parent.width
             padding: Theme.spacingLg
-            text: qsTr("No matches")
-            color: Theme.c.globalSearchPopup.foregroundMuted
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeSm
+            spacing: Theme.spacingMd
+
+            Text {
+                width: parent.width - empty.padding * 2
+                wrapMode: Text.Wrap
+                text: root.asking || root.query.length === 0 ? qsTr("No matches")
+                                                              : qsTr("No matches for “%1”").arg(root.query)
+                color: Theme.c.globalSearchPopup.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
+            }
+
+            Text {
+                visible: !root.asking
+                text: qsTr("Popular searches")
+                color: Theme.c.globalSearchPopup.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            Flow {
+                visible: !root.asking
+                width: parent.width - empty.padding * 2
+                spacing: Theme.spacingSm
+
+                Repeater {
+                    model: [qsTr("Captions"), qsTr("Remove background"), qsTr("Speed"), qsTr("Crop"),
+                            qsTr("Stabilize"), qsTr("Export")]
+
+                    ThemedChip {
+                        required property string modelData
+                        text: modelData
+                        variant: "outline"
+                        focusPolicy: Qt.NoFocus
+                        onClicked: root.queryPicked(modelData)
+                    }
+                }
+            }
         }
 
         ListView {

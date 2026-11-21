@@ -2,6 +2,7 @@
   "id": "face_fisheye",
   "displayName": "Face Fisheye",
   "category": "funny",
+  "keywords": ["funny face", "bulge", "fisheye", "face"],
   "thumbnail": "thumbnail.webp",
   "order": 610,
   "requires": "face",

@@ -4,6 +4,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "agent-log-panel"
+        title: qsTr("Agent log")
+        keywords: "agent log ai commands history mcp tool calls activity"
+    }
 
     property int expandedId: -1
     property bool followTail: true

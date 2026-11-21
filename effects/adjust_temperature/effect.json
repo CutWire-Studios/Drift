@@ -2,6 +2,7 @@
   "id": "adjust.temperature",
   "displayName": "Temperature",
   "category": "color",
+  "keywords": ["white balance", "warm", "cool", "kelvin", "orange", "blue", "color", "cast"],
   "thumbnail": "thumbnail.webp",
   "order": 60,
   "parameters": [

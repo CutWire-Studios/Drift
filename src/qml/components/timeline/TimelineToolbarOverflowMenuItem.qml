@@ -6,9 +6,8 @@ ThemedMenuItem {
     property var host
     property string actionId
 
-    text: host.actionMeta[actionId].shortcut
-          ? host.withShortcut(host.actionMeta[actionId].label, host.actionMeta[actionId].shortcut)
-          : host.actionMeta[actionId].label
+    text: host.actionMeta[actionId].label
+    shortcutId: host.actionMeta[actionId].shortcut ?? ""
     icon.name: host.actionMeta[actionId].glyph
     enabled: host.actionEnabled(actionId)
     onTriggered: host.triggerAction(actionId)

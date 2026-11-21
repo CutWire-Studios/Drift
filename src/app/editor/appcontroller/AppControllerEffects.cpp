@@ -72,6 +72,8 @@ QVariantList AppController::effectCatalog() const
             {QStringLiteral("displayName"), def.meta.displayName},
             {QStringLiteral("category"), def.meta.category},
             {QStringLiteral("categoryLabel"), effectCategoryLabel(def.meta.category)},
+            {QStringLiteral("description"), def.meta.description},
+            {QStringLiteral("keywords"), def.meta.keywords},
             {QStringLiteral("compositorOnly"), def.meta.compositorOnly},
             {QStringLiteral("thumbnailPath"), def.thumbnailPath},
             {QStringLiteral("user"), isUserPackageDir(def.gpu.packageDir, QStringLiteral("effects"))},

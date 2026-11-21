@@ -465,9 +465,9 @@ void SearchIndex::addCommands()
             QStringLiteral("dialog:marketplace"));
     command(tr("Downloads"), QStringLiteral("download link"), QStringLiteral("dialog:downloads"));
     command(tr("Language…"), QStringLiteral("translate locale"), QStringLiteral("dialog:language"));
-    command(tr("Video size and layout"), QStringLiteral("canvas resolution aspect ratio"),
+    command(tr("Video size and layout"), QStringLiteral("canvas resolution aspect ratio tiktok reels shorts vertical 9:16 portrait instagram story"),
             QStringLiteral("dialog:videoSize"));
-    command(tr("Bakes"), QStringLiteral("bake cache pre-render render work area stale"), QStringLiteral("dialog:bakes"));
+    command(tr("Pre-rendered sections"), QStringLiteral("bakes bake cache pre-render render work area stale"), QStringLiteral("dialog:bakes"));
     command(tr("Crop video"), QStringLiteral("canvas crop frame edges"), QStringLiteral("dialog:cropVideo"));
     command(tr("Switch to mobile layout…"), QStringLiteral("phone shell"), QStringLiteral("dialog:mobileShell"));
     command(tr("Settings"), QStringLiteral("preferences options"), QStringLiteral("dialog:settings"));
@@ -535,7 +535,8 @@ void SearchIndex::addEditorCatalogs()
                 e.value(QLatin1String("categoryLabel")).toString(),
                 hasClip ? applyHint : tr("Add as adjustment clip"), {},
                 QStringLiteral("apply:effect:") + id, true},
-               id);
+               id + QLatin1Char(' ') + e.value(QLatin1String("keywords")).toStringList().join(QLatin1Char(' '))
+                   + QLatin1Char(' ') + e.value(QLatin1String("description")).toString());
     }
 
     for (const QVariant &v : listCall(m_editor, "effectTemplateCatalog")) {
@@ -635,13 +636,12 @@ void SearchIndex::addAddons()
     for (const QVariant &v : listOf(m_addons, "catalog")) {
         const QVariantMap e = v.toMap();
         const QString state = e.value(QLatin1String("state")).toString();
-        if (state != QLatin1String("installed") && state != QLatin1String("update-available"))
-            continue;
+        const bool installed = state == QLatin1String("installed") || state == QLatin1String("update-available");
         const QString kind = e.value(QLatin1String("kind")).toString();
         const QString target = QStringLiteral("extras:addon/") + e.value(QLatin1String("id")).toString();
-        QString sub = tr("Extras");
+        QString sub = installed ? tr("Extras") : tr("Install");
         for (const AddonPlace &place : kAddonPlaces) {
-            if (kind == QLatin1String(place.kind)) {
+            if (installed && kind == QLatin1String(place.kind)) {
                 sub = panelLabel(QString::fromLatin1(place.target).section(QLatin1Char('#'), 0, 0).mid(6));
                 break;
             }

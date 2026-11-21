@@ -12,6 +12,12 @@ PanelFrame {
         keywords: "mask matte rotoscope roto brush lasso scissors magic wand select polygon tracking tracker motion track planar object follow"
     }
 
+    SearchAnchor {
+        searchId: "masking-remove-background"
+        title: qsTr("Remove background")
+        keywords: "remove background replace background cut out subject cutout person people green screen transparent"
+    }
+
     property bool shown: false
 
     readonly property var focusItem: Window.activeFocusItem
@@ -42,23 +48,24 @@ PanelFrame {
     readonly property int aiExcludeCount: aiPoints.length - aiIncludeCount
     readonly property string aiRefineMaskId: stackModel.refineMaskId
 
-    readonly property var tools: [
-        { id: "", label: qsTr("Select"), action: "masking.selectTool", glyph: Theme.icons.mousePointer, clipOnly: false },
-        { id: "rect", label: qsTr("Rectangle"), action: "masking.rectTool", glyph: Theme.icons.square, clipOnly: false },
-        { id: "ellipse", label: qsTr("Ellipse"), action: "masking.ellipseTool", glyph: Theme.icons.circle, clipOnly: false },
-        { id: "polygon", label: qsTr("Polygon"), action: "masking.polygonTool", glyph: Theme.icons.pentagon, clipOnly: false },
-        { id: "brush", label: qsTr("Brush"), action: "masking.brushTool", glyph: Theme.icons.brush, clipOnly: true },
-        { id: "lasso", label: qsTr("Lasso"), action: "masking.lassoTool", glyph: Theme.icons.lasso, clipOnly: true },
-        { id: "scissors", label: qsTr("Scissors"), action: "masking.scissorsTool", glyph: Theme.icons.scissors, clipOnly: true },
-        { id: "wand", label: qsTr("Magic wand"), action: "masking.wandTool", glyph: Theme.icons.magicWand, clipOnly: true },
-        { id: "ai", label: qsTr("AI object"), action: "masking.aiTool", glyph: Theme.icons.wand, clipOnly: true },
-        { id: "tracker", label: qsTr("Tracker"), action: "tracking.trackerTool", glyph: Theme.icons.crosshair, clipOnly: false }
-    ]
+    Component { id: illMaskShape; MaskShapeIllustration { } }
+    Component { id: illMaskPolygon; MaskPolygonIllustration { } }
+    Component { id: illMaskBrush; MaskBrushIllustration { } }
+    Component { id: illAiObject; AiObjectIllustration { } }
+    Component { id: illTracker; TrackerIllustration { } }
 
-    function withShortcut(label, actionId) {
-        const key = EditorState.shortcutFor(actionId)
-        return key.length > 0 ? qsTr("%1 (%2)").arg(label).arg(key) : label
-    }
+    readonly property var tools: [
+        { id: "", label: qsTr("Select"), action: "masking.selectTool", glyph: Theme.icons.mousePointer, clipOnly: false, body: qsTr("Move and reshape masks you have already drawn.") },
+        { id: "rect", label: qsTr("Rectangle"), action: "masking.rectTool", glyph: Theme.icons.square, clipOnly: false, body: qsTr("Draw a rectangular mask to keep or hide a box-shaped area."), illustration: illMaskShape },
+        { id: "ellipse", label: qsTr("Ellipse"), action: "masking.ellipseTool", glyph: Theme.icons.circle, clipOnly: false, body: qsTr("Draw an oval mask, such as a spotlight or a vignette."), illustration: illMaskShape },
+        { id: "polygon", label: qsTr("Polygon"), action: "masking.polygonTool", glyph: Theme.icons.pentagon, clipOnly: false, body: qsTr("Click out a shape point by point for precise edges."), illustration: illMaskPolygon },
+        { id: "brush", label: qsTr("Brush"), action: "masking.brushTool", glyph: Theme.icons.brush, clipOnly: true, body: qsTr("Paint the mask by hand and fix the edges."), illustration: illMaskBrush },
+        { id: "lasso", label: qsTr("Lasso"), action: "masking.lassoTool", glyph: Theme.icons.lasso, clipOnly: true, body: qsTr("Draw around an object freehand to select it.") },
+        { id: "scissors", label: qsTr("Scissors"), action: "masking.scissorsTool", glyph: Theme.icons.scissors, clipOnly: true, body: qsTr("Click along an edge and it snaps to the outline.") },
+        { id: "wand", label: qsTr("Magic wand"), action: "masking.wandTool", glyph: Theme.icons.magicWand, clipOnly: true, body: qsTr("Click a colour to select all similar pixels next to it.") },
+        { id: "ai", label: qsTr("AI object"), action: "masking.aiTool", glyph: Theme.icons.wand, clipOnly: true, body: qsTr("Click what you want and AI finds its outline. Use it to remove a background."), illustration: illAiObject },
+        { id: "tracker", label: qsTr("Tracker"), action: "tracking.trackerTool", glyph: Theme.icons.crosshair, clipOnly: false, body: qsTr("Pin a point to something moving so a mask or object can follow it."), illustration: illTracker }
+    ]
 
     readonly property var viewModes: [
         { id: "off", label: qsTr("Off") },
@@ -131,11 +138,25 @@ PanelFrame {
         }
     }
 
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "masking")
+            return
+        ShellBridge.panelRequest = null
+        if (request.tool)
+            EditorState.preview.maskingTool = request.tool
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+
     Component.onCompleted: {
         if (shown)
             refresh()
         if (wantsActions)
             setHandlerRegistered(true)
+        applyPanelRequest()
     }
 
     Connections {
@@ -392,7 +413,8 @@ PanelFrame {
                 ThemedToggleButton {
                     Layout.alignment: Qt.AlignVCenter
                     text: qsTr("Paint")
-                    tooltip: root.withShortcut(qsTr("Left-drag paints"), "masking.brushToggleErase")
+                    tooltip: qsTr("Left-drag paints")
+                    tooltipActionId: "masking.brushToggleErase"
                     checked: !EditorState.masking.brushErase
                     onClicked: EditorState.masking.brushErase = false
                 }
@@ -400,7 +422,8 @@ PanelFrame {
                 ThemedToggleButton {
                     Layout.alignment: Qt.AlignVCenter
                     text: qsTr("Erase")
-                    tooltip: root.withShortcut(qsTr("Left-drag erases"), "masking.brushToggleErase")
+                    tooltip: qsTr("Left-drag erases")
+                    tooltipActionId: "masking.brushToggleErase"
                     checked: EditorState.masking.brushErase
                     onClicked: EditorState.masking.brushErase = true
                 }
@@ -926,7 +949,11 @@ PanelFrame {
                         required property var modelData
                         visible: !(modelData.clipOnly && root.onAdjustment)
                         glyph: modelData.glyph
-                        tooltip: root.withShortcut(modelData.label, modelData.action)
+                        tooltip: modelData.label
+                        tooltipActionId: modelData.action
+                        tooltipBody: modelData.body
+                        tooltipIllustration: modelData.illustration ?? null
+                        tooltipState: modelData.id === "ai" && !root.aiRuntimeReady ? qsTr("Needs AI Engine") : ""
                         active: EditorState.preview.maskingTool === modelData.id
                         onClicked: EditorState.preview.maskingTool = modelData.id
                     }

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "displayName": "Face Retouch",
   "category": "beauty",
+  "keywords": ["beauty", "skin smoothing", "makeup", "whitening", "lipstick", "blush", "slim face", "retouch"],
   "thumbnail": "thumbnail.webp",
   "description": "Skin smoothing, whitening, slim face, big eyes, lipstick and blush in one effect. Ported from GPUPixel.",
   "order": 700,

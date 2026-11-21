@@ -14,6 +14,12 @@ AbstractButton {
 
     property string glyph: ""
     property string tooltip: ""
+    property string tooltipActionId: ""
+    property string tooltipBody: ""
+    property string tooltipShortcut: ""
+    property string tooltipState: ""
+    property url tooltipPreview: ""
+    property Component tooltipIllustration: null
     property real buttonSize: Theme.iconButtonSize
     property real iconSize: Theme.iconSizeBase
     property bool active: false
@@ -153,8 +159,14 @@ AbstractButton {
         }
     }
 
-    ThemedToolTip {
+    RichToolTip {
         text: root.tooltip
+        actionId: root.tooltipActionId
+        shortcut: root.tooltipShortcut
+        body: root.tooltipBody
+        state: root.tooltipState
+        preview: root.tooltipPreview
+        illustration: root.tooltipIllustration
         // Shown on hover, and on keyboard focus so Tab users get the same labels.
         // Skip when the tooltip is just the visible label again.
         visible: root.tooltip.length > 0 && root.tooltip !== root.text

@@ -18,10 +18,13 @@ Item {
     // Leave empty to omit the button.
     property string actionText: ""
     property string actionVariant: "secondary"
+    // Optional quieter second button beside the primary one. Leave empty to omit it.
+    property string secondaryText: ""
     // Compact drops the icon frame — for small panes where it would dominate.
     property bool compact: false
 
     signal actionTriggered()
+    signal secondaryTriggered()
 
     // Parents that size from this item's height report exactly the full layout, so they
     // always fit; a zero-height parent is treated as not laid out yet.
@@ -33,6 +36,7 @@ Item {
         if (root.title.length > 0) { h += titleText.implicitHeight; n++ }
         if (hint && root.hint.length > 0) { h += hintText.implicitHeight; n++ }
         if (action && root.actionText.length > 0) { h += actionButton.implicitHeight; n++ }
+        if (action && root.secondaryText.length > 0) { h += secondaryButton.implicitHeight; n++ }
         return h + Math.max(0, n - 1) * Theme.spacingLg
     }
     readonly property bool actionFits: actionButton.implicitWidth <= root.width
@@ -103,6 +107,15 @@ Item {
             text: root.actionText
             variant: root.actionVariant
             onClicked: root.actionTriggered()
+        }
+
+        ThemedButton {
+            id: secondaryButton
+            visible: root.secondaryText.length > 0 && root.showAction
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: root.secondaryText
+            variant: "ghost"
+            onClicked: root.secondaryTriggered()
         }
     }
 }

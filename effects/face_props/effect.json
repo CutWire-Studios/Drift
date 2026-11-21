@@ -2,6 +2,7 @@
   "id": "face_props",
   "displayName": "Face Props",
   "category": "props",
+  "keywords": ["glasses", "hat", "mask", "sunglasses", "3d props", "ar filter"],
   "thumbnail": "thumbnail.webp",
   "order": 800,
   "backend": "model3d",

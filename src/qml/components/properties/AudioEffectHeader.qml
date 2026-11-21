@@ -9,6 +9,70 @@ Rectangle {
     radius: Theme.c.audioEffectHeader.radius
     color: Theme.c.audioEffectHeader.background
 
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: audioEffectCardMenu.popup()
+    }
+    TapHandler {
+        acceptedDevices: PointerDevice.TouchScreen
+        onLongPressed: audioEffectCardMenu.popup(parent, point.position.x, point.position.y)
+    }
+    ThemedContextMenu {
+        id: audioEffectCardMenu
+
+        property bool editable: false
+        onAboutToShow: editable = AudioForge.canEdit("audio_effect", card.effectData.catalogId)
+
+        ThemedMenuItem {
+            text: card.effectEnabled ? qsTr("Disable effect") : qsTr("Enable effect")
+            icon.name: card.effectEnabled ? Theme.icons.eyeOff : Theme.icons.eye
+            onTriggered: EditorState.setAudioEffectEnabled(
+                             EditorState.selectedTrack, EditorState.selectedClip,
+                             card.index, !card.effectEnabled)
+        }
+        ThemedMenuItem {
+            text: qsTr("Move up")
+            icon.name: Theme.icons.chevronUp
+            enabled: card.index > 0
+            onTriggered: EditorState.moveAudioEffect(
+                             EditorState.selectedTrack, EditorState.selectedClip,
+                             card.index, card.index - 1)
+        }
+        ThemedMenuItem {
+            text: qsTr("Move down")
+            icon.name: Theme.icons.chevronDown
+            enabled: card.index < inspector.selectedAudioEffects.length - 1
+            onTriggered: EditorState.moveAudioEffect(
+                             EditorState.selectedTrack, EditorState.selectedClip,
+                             card.index, card.index + 1)
+        }
+        ThemedMenuItem {
+            text: qsTr("Copy effect")
+            icon.name: Theme.icons.copy
+            onTriggered: EditorState.copyAudioEffectToClipboard(
+                             EditorState.selectedTrack, EditorState.selectedClip,
+                             card.index)
+        }
+        ThemedMenuSeparator {
+            visible: audioForgeItem.visible
+        }
+        ThemedMenuItem {
+            id: audioForgeItem
+            visible: audioEffectCardMenu.editable && !ShellBridge.phoneShell
+            text: qsTr("Edit in Forge")
+            icon.name: Theme.icons.pencil
+            onTriggered: AudioForge.openPackage("audio_effect", card.effectData.catalogId)
+        }
+        ThemedMenuSeparator { }
+        ThemedMenuItem {
+            text: qsTr("Remove effect")
+            icon.name: Theme.icons.trash
+            onTriggered: EditorState.removeAudioEffect(
+                             EditorState.selectedTrack, EditorState.selectedClip,
+                             card.index)
+        }
+    }
+
     Row {
         id: audioEffectHeader
         anchors.left: parent.left

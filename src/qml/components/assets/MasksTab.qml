@@ -112,15 +112,14 @@ Item {
             ThemedButton {
                 visible: segmentSection.segmentReady && segmentSection.runtimeReady
                 width: parent.width
-                text: qsTr("Cut out subject…")
+                text: qsTr("Remove background…")
                 enabled: !EditorState.segmentation.running && (root.clipKind === "video" || root.clipKind === "image")
                 tooltip: root.clipKind === "video" || root.clipKind === "image"
                          ? qsTr("Trace the subject and pin the result as a mask layer")
                          : qsTr("Select a video or image clip first")
                 onClicked: {
                     if (!ShellBridge.phoneShell) {
-                        Workspaces.activeId = "masking-tracking"
-                        Qt.callLater(() => EditorState.preview.maskingTool = "ai")
+                        ShellBridge.goDeeper({ panel: "masking", tool: "ai" })
                         return
                     }
                     const data = EditorState.selectedClipData

@@ -9,6 +9,7 @@ Column {
 
     property int activeTab: 0
     property var tabLabels: ({})
+    property var tabHints: ({})
     property var tabIcons: []
     property bool showSeparator: true
 
@@ -31,12 +32,29 @@ Column {
                     glyph: root.tabIcons[root.model.icon]
                     variant: "ghost"
                     tooltip: root.tabLabels[root.model.tabId]
+                    tooltipBody: root.tabHints[root.model.tabId] ?? ""
                     active: root.activeTab === root.index
                     onClicked: root.tabSelected(root.index)
 
                     Accessible.role: Accessible.PageTab
                     Accessible.name: root.tabLabels[root.model.tabId]
                     Accessible.checked: root.activeTab === root.index
+                }
+
+                Text {
+                    width: parent.width - Theme.spacingXs * 2
+                    x: Theme.spacingXs
+                    visible: EditorState.preferences.showRailLabels
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    text: root.tabLabels[root.model.tabId]
+                    color: root.activeTab === root.index ? Theme.c.assetsPanelTabButton.labelActive
+                                                         : Theme.c.assetsPanelTabButton.label
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                    font.weight: root.activeTab === root.index ? Font.Medium : Font.Normal
+
+                    TapHandler { onTapped: root.tabSelected(root.index) }
                 }
 
                 // Group divider — sits in the rail gap so related tabs

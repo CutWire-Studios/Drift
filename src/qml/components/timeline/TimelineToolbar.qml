@@ -13,15 +13,6 @@ Item {
 
     height: Theme.timelineToolbarHeight
 
-    // Appends an action's current binding to its tooltip. Every action here has one,
-    // but only the header's Save button used to show it, so the keyboard route to
-    // anything on this toolbar was undiscoverable. Rebound keys follow automatically
-    // because shortcutFor reads the live map.
-    function withShortcut(label, actionId) {
-        const key = EditorState.shortcutFor(actionId)
-        return key.length > 0 ? qsTr("%1 (%2)").arg(label).arg(key) : label
-    }
-
     ThemeSlot {
         slot: "TimelineToolbarBackground"
         control: toolbar
@@ -51,8 +42,7 @@ Item {
 
     function actionTooltip(id) {
         const meta = actionMeta[id]
-        const label = meta.tip || meta.label
-        return meta.shortcut ? withShortcut(label, meta.shortcut) : label
+        return meta.label
     }
 
     function triggerAction(id) {
@@ -164,7 +154,8 @@ Item {
             variant: "primary"
             glyph: Theme.icons.plus
             text: qsTr("Import media")
-            tooltip: toolbar.withShortcut(qsTr("Add video or audio files directly to the timeline at the playhead"), "importMedia")
+            tooltip: qsTr("Add video or audio files directly to the timeline at the playhead")
+            tooltipActionId: "importMedia"
             height: Math.min(Theme.controlHeightSm, toolbar.height - Theme.spacingXs * 2)
             topPadding: Theme.spacingXs
             bottomPadding: Theme.spacingXs
@@ -218,13 +209,18 @@ Item {
 
         TimelineToolbarToolButton {
             glyph: Theme.icons.option
-            tooltip: toolbar.withShortcut(qsTr("Allow clip overlap"), "toggleOverlap")
+            tooltip: qsTr("Allow clip overlap")
+            tooltipBody: qsTr("Let clips sit on top of each other on one track instead of pushing apart.")
+            tooltipActionId: "toggleOverlap"
             active: EditorState.allowClipOverlap
             onClicked: EditorState.allowClipOverlap = !EditorState.allowClipOverlap
         }
         TimelineToolbarToolButton {
             glyph: Theme.icons.locateFixed
-            tooltip: toolbar.withShortcut(qsTr("Auto-select: select the clip under the playhead"), "toggleAutoSelect")
+            tooltip: qsTr("Auto-select")
+            tooltipBody: qsTr("Selects the clip under the playhead as you move it, so the inspector follows.")
+            tooltipIllustration: Component { AutoSelectIllustration { } }
+            tooltipActionId: "toggleAutoSelect"
             active: EditorState.preferences.autoSelectUnderPlayhead
             onClicked: EditorState.preferences.autoSelectUnderPlayhead = !EditorState.preferences.autoSelectUnderPlayhead
         }
@@ -234,13 +230,19 @@ Item {
         // Keep the magnetic tools next to zoom, where CapCut users expect them.
         TimelineToolbarToolButton {
             glyph: Theme.icons.magnet
-            tooltip: toolbar.withShortcut(qsTr("Magnetic snapping: align video and audio edges across tracks"), "toggleSnapping")
+            tooltip: qsTr("Snapping")
+            tooltipBody: qsTr("Clips and the playhead snap to neighbouring edges so cuts line up exactly.")
+            tooltipIllustration: Component { SnappingIllustration { } }
+            tooltipActionId: "toggleSnapping"
             active: EditorState.snapEnabled
             onClicked: EditorState.snapEnabled = !EditorState.snapEnabled
         }
         TimelineToolbarToolButton {
             glyph: Theme.icons.foldHorizontal
-            tooltip: toolbar.withShortcut(qsTr("Ripple editing: keep following clips together when trimming"), "toggleRipple")
+            tooltip: qsTr("Ripple editing")
+            tooltipBody: qsTr("When you trim or delete, later clips shift to close or open the gap.")
+            tooltipIllustration: Component { RippleIllustration { } }
+            tooltipActionId: "toggleRipple"
             active: EditorState.rippleEnabled
             onClicked: EditorState.rippleEnabled = !EditorState.rippleEnabled
         }
@@ -253,21 +255,24 @@ Item {
 
         TimelineToolbarToolButton {
             glyph: Theme.icons.slidersVertical
-            tooltip: toolbar.withShortcut(qsTr("Toggle audio mixer strip"), "toggleMixerStrip")
+            tooltip: qsTr("Toggle audio mixer strip")
+            tooltipActionId: "toggleMixerStrip"
             active: EditorState.preferences.audioMixerVisible
             onClicked: EditorState.preferences.audioMixerVisible = !EditorState.preferences.audioMixerVisible
         }
 
         TimelineToolbarToolButton {
             glyph: Theme.icons.spline
-            tooltip: toolbar.withShortcut(qsTr("Toggle keyframe strip"), "toggleKeyframeStrip")
+            tooltip: qsTr("Toggle keyframe strip")
+            tooltipActionId: "toggleKeyframeStrip"
             active: EditorState.preferences.keyframeStripVisible
             onClicked: EditorState.preferences.keyframeStripVisible = !EditorState.preferences.keyframeStripVisible
         }
 
         TimelineToolbarToolButton {
             glyph: Theme.icons.panelTop
-            tooltip: toolbar.withShortcut(qsTr("Timeline overview — a minimap of the whole project; click or drag it to jump the view"), "toggleOverview")
+            tooltip: qsTr("Timeline overview — a minimap of the whole project; click or drag it to jump the view")
+            tooltipActionId: "toggleOverview"
             active: EditorState.preferences.timelineOverviewVisible
             onClicked: EditorState.preferences.timelineOverviewVisible = !EditorState.preferences.timelineOverviewVisible
         }

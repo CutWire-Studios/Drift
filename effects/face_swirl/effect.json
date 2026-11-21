@@ -2,6 +2,7 @@
   "id": "face_swirl",
   "displayName": "Face Swirl",
   "category": "funny",
+  "keywords": ["funny face", "twist", "swirl", "warp", "face"],
   "thumbnail": "thumbnail.webp",
   "order": 650,
   "requires": "face",

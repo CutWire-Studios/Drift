@@ -2,6 +2,7 @@
   "id": "stylize.sepia",
   "displayName": "Sepia",
   "category": "retro",
+  "keywords": ["old photo", "vintage", "brown", "antique", "sepia"],
   "thumbnail": "thumbnail.webp",
   "order": 210,
   "parameters": [],

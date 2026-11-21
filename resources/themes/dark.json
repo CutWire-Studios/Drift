@@ -360,6 +360,12 @@
     }
   },
   "components": {
+    "illustration": {
+      "surface": "$semantic.surface.panel",
+      "foreground": "$semantic.panel.foreground",
+      "accent": "$semantic.primary",
+      "muted": "$semantic.mutedForeground"
+    },
     "themedButton": {
       "foreground": "$semantic.panel.foreground",
       "primaryForeground": "$semantic.primaryForeground",
@@ -497,10 +503,21 @@
       "focusBorderWidth": "$metrics.borderWidthFocus",
       "radius": "$metrics.radius.sm"
     },
+    "workspaceLink": {
+      "foreground": "$semantic.mutedForeground",
+      "foregroundHover": "$semantic.panel.foreground"
+    },
+    "workspaceBackPill": {
+      "background": "$semantic.panel.accent",
+      "foreground": "$semantic.panel.foreground",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth"
+    },
     "themedMenuItem": {
       "foreground": "$semantic.panel.foreground",
       "foregroundDisabled": "$semantic.mutedForeground",
       "sectionForeground": "$semantic.mutedForeground",
+      "shortcutForeground": "$semantic.mutedForeground",
       "icon": "$semantic.mutedForeground",
       "backgroundHighlighted": "$semantic.panel.accent",
       "radius": "$metrics.radius.xs"
@@ -577,6 +594,10 @@
     },
     "themedToolTip": {
       "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "chipBackground": "$semantic.panel.accent",
+      "pillBackground": "$semantic.panel.accent",
+      "pillForeground": "$semantic.mutedForeground",
       "background": "$semantic.surface.panel",
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
@@ -750,6 +771,18 @@
       "foreground": "$semantic.panel.foreground",
       "titleSize": 22
     },
+    "settingsAccentSwatch": {
+      "amber": "#F8B81C",
+      "orange": "#F97316",
+      "red": "#EF4444",
+      "pink": "#EC4899",
+      "purple": "#8B5CF6",
+      "blue": "#3B82F6",
+      "teal": "#14B8A6",
+      "green": "#22C55E",
+      "ring": "$semantic.panel.foreground",
+      "ringWidth": 2
+    },
     "settingsGroupHeader": {
       "foregroundMuted": "$semantic.mutedForeground",
       "divider": "$semantic.panel.border",
@@ -918,6 +951,13 @@
       "foreground": "$semantic.foreground",
       "icon": "$semantic.mutedForeground"
     },
+    "editorHeaderWorkspaceButton": {
+      "radius": "$metrics.radius.sm",
+      "backgroundHover": "$semantic.popoverHover",
+      "background": "$semantic.accent",
+      "foreground": "$semantic.foreground",
+      "icon": "$semantic.mutedForeground"
+    },
     "editorHeaderNotificationsButton": {
       "badge": "$semantic.primary",
       "badgeForeground": "$semantic.primaryForeground",
@@ -951,10 +991,8 @@
       "placeholder": "$semantic.mutedForeground",
       "selectionForeground": "$semantic.primaryForeground",
       "selection": "$semantic.primary",
-      "workspacePrefix": "$semantic.mutedForeground",
       "workspaceForeground": "$semantic.panel.foreground",
-      "workspaceBackgroundHover": "$semantic.popoverHover",
-      "divider": "$semantic.panel.border"
+      "workspaceBackgroundHover": "$semantic.popoverHover"
     },
     "editorHeaderHairline": {
       "borderWidth": "$metrics.borderWidth",
@@ -1006,6 +1044,7 @@
       "radius": "$metrics.radius.sm",
       "backgroundHover": "$semantic.accent",
       "icon": "$semantic.foreground",
+      "shortcutForeground": "$semantic.mutedForeground",
       "foreground": "$semantic.foreground"
     },
     "notificationsPopup": {
@@ -2497,6 +2536,18 @@
       "shader": "$semantic.clip.effect",
       "info": "$semantic.constructive"
     },
+    "inlineTip": {
+      "foregroundMuted": "$semantic.mutedForeground",
+      "link": "$semantic.primary"
+    },
+    "propertiesSuggestionStrip": {
+      "background": "$semantic.panel.accent",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "foreground": "$semantic.panel.foreground",
+      "icon": "$semantic.primary",
+      "radius": "$metrics.radius.md"
+    },
     "propertiesEmptyState": {
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
@@ -2509,6 +2560,8 @@
       "foregroundMuted": "$semantic.mutedForeground"
     },
     "propertiesPanel": {
+      "railLabel": "$semantic.mutedForeground",
+      "railLabelActive": "$semantic.panel.foreground",
       "background": "$semantic.surface.panel",
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
@@ -3423,6 +3476,8 @@
       "radius": "$metrics.radius.sm"
     },
     "assetsPanelTabButton": {
+      "label": "$semantic.mutedForeground",
+      "labelActive": "$semantic.panel.foreground",
       "separator": "$semantic.panel.border",
       "separatorOpacity": 0.85,
       "separatorRadius": "$metrics.radius.pill",

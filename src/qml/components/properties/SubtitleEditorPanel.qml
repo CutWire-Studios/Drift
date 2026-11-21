@@ -50,6 +50,11 @@ Rectangle {
             width: parent.width
             spacing: 8
 
+            WorkspaceLink {
+                x: parent.width - width
+                target: ({ panel: "subtitles" })
+            }
+
             // Editor for the selected cue.
             Column {
                 width: parent.width

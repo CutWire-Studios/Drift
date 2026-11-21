@@ -5,6 +5,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "recorder-panel"
+        title: qsTr("Recorder")
+        keywords: "record voiceover microphone narration audio teleprompter noise"
+    }
 
     readonly property bool recording: EditorState.isRecordingAudio
     readonly property bool paused: EditorState.isAudioRecordingPaused

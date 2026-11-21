@@ -2,6 +2,7 @@
   "id": "zoom_pulse",
   "displayName": "Zoom Punch",
   "category": "impact",
+  "keywords": ["zoom punch", "beat zoom", "bounce zoom", "in", "impact", "pulse"],
   "thumbnail": "thumbnail.webp",
   "order": 80,
   "parameters": [

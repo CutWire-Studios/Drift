@@ -15,6 +15,10 @@ AbstractButton {
     property string glyph: ""
     property real glyphSize: Theme.iconSizeMd
     property string tooltip: ""
+    property string tooltipActionId: ""
+    property string tooltipShortcut: ""
+    property string tooltipBody: ""
+    property string tooltipState: ""
     property real toggleHeight: Theme.controlHeightSm
 
     checkable: true
@@ -113,8 +117,12 @@ AbstractButton {
         }
     }
 
-    ThemedToolTip {
+    RichToolTip {
         text: root.tooltip
+        actionId: root.tooltipActionId
+        shortcut: root.tooltipShortcut
+        body: root.tooltipBody
+        state: root.tooltipState
         visible: root.tooltip.length > 0 && (root.hovered || root.visualFocus)
     }
 

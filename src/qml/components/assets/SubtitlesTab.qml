@@ -131,9 +131,10 @@ Item {
                 text: qsTr("Add auto caption")
                 variant: "secondary"
                 glyph: Theme.icons.captions
-                tooltip: root.captionTargetReady
-                         ? qsTr("Create captions from the selected clips' speech — several clips become one caption clip")
-                         : qsTr("Select a video or audio clip first")
+                tooltip: qsTr("Auto captions")
+                tooltipBody: root.captionTargetReady
+                             ? qsTr("Writes captions from the selected clips' speech.")
+                             : qsTr("Select a video or audio clip first.")
                 enabled: root.captionTargetReady
                 onClicked: {
                     const lang = captionLanguageBox.currentValue !== undefined
@@ -194,7 +195,9 @@ Item {
                       : qsTr("Install AI engine first")
                 variant: "primary"
                 glyph: Theme.icons.download
-                tooltip: qsTr("Needed for auto captions from speech")
+                tooltip: qsTr("Auto captions")
+                tooltipBody: qsTr("Writes captions from the speech in your clips, on your computer.")
+                tooltipState: root.runtimeReady ? qsTr("Needs speech model") : qsTr("Needs AI Engine")
                 onClicked: ShellBridge.main.openAddonManager(
                     root.runtimeReady ? "whisper-model" : "onnxruntime")
             }

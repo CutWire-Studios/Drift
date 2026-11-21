@@ -6,6 +6,11 @@ import "../subtitles/SubtitleTime.js" as SubtitleTime
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "subtitles-panel"
+        title: qsTr("Captions")
+        keywords: "subtitles captions cues transcript speech text list review"
+    }
 
     property bool shown: true
     property bool follow: true
@@ -279,6 +284,27 @@ PanelFrame {
 
     focus: true
     activeFocusOnTab: true
+
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "subtitles")
+            return
+        ShellBridge.panelRequest = null
+        if (request.time === undefined)
+            return
+        EditorState.playheadSeconds = request.time
+        Qt.callLater(() => {
+            if (root.activeCue >= 0) {
+                root.selectOnly(root.activeCue, false)
+                root.scrollToCue(root.activeCue)
+            }
+        })
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+    Component.onCompleted: applyPanelRequest()
 
     onTrackChanged: onClipSwitched()
     onClipIndexChanged: onClipSwitched()

@@ -2,6 +2,7 @@
   "id": "face_mesh_3d",
   "displayName": "3D Face Mesh",
   "category": "props",
+  "keywords": ["face tracking", "wireframe", "landmarks", "mesh", "ar"],
   "thumbnail": "thumbnail.webp",
   "order": 810,
   "backend": "model3d",

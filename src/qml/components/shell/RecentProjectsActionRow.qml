@@ -8,6 +8,11 @@ Rectangle {
 
     property alias glyph: rowIcon.glyph
     property alias text: rowLabel.text
+    property string shortcutId: ""
+    // Opens a menu of its own, so the popup stays up behind it.
+    property bool hasSubmenu: false
+    readonly property string _shortcutText: shortcutId.length > 0
+        ? Theme.shortcutDisplay(EditorState.shortcutFor(shortcutId)) : ""
     signal triggered()
 
     width: parent ? parent.width : 0
@@ -37,13 +42,35 @@ Rectangle {
         }
     }
 
+    Text {
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.spacingLg
+        anchors.verticalCenter: parent.verticalCenter
+        visible: actionRow._shortcutText.length > 0
+        text: actionRow._shortcutText
+        color: Theme.c.recentProjectsActionRow.shortcutForeground
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
+    }
+
+    IconGlyph {
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.spacingLg
+        anchors.verticalCenter: parent.verticalCenter
+        visible: actionRow.hasSubmenu
+        glyph: Theme.icons.chevronRight
+        iconSize: Theme.iconSizeMd
+        iconColor: Theme.c.recentProjectsActionRow.icon
+    }
+
     MouseArea {
         id: actionArea
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: {
-            popup.close()
+            if (!actionRow.hasSubmenu)
+                popup.close()
             actionRow.triggered()
         }
     }

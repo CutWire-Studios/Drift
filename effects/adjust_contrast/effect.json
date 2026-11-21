@@ -2,6 +2,7 @@
   "id": "adjust.contrast",
   "displayName": "Contrast",
   "category": "color",
+  "keywords": ["punchy", "flat", "washed out", "tonal range"],
   "thumbnail": "thumbnail.webp",
   "order": 10,
   "parameters": [

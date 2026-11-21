@@ -1,7 +1,8 @@
 {
   "id": "key.chroma",
   "displayName": "Chroma Key",
-  "category": "keying",
+  "category": "background",
+  "keywords": ["green screen", "greenscreen", "blue screen", "remove background", "key out", "transparent background", "replace background", "cutout"],
   "thumbnail": "thumbnail.webp",
   "order": 400,
   "description": "Remove a green or blue screen background, or a black or white one with Key On set to Brightness. Pick Key Colour to match your backdrop, then raise Tolerance until the background disappears.",

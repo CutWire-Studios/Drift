@@ -399,7 +399,7 @@ ThemedDialog {
 
     ThemedDialog {
         id: staleBakesDialog
-        title: qsTr("Some bakes are out of date")
+        title: qsTr("Some pre-rendered sections are out of date")
         preferredWidth: Theme.dialogWidthSm
         showFooter: false
         acceptOnReturn: false
@@ -412,7 +412,7 @@ ThemedDialog {
                 width: parent.width
                 size: "sm"
                 tone: "default"
-                text: qsTr("%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.", "",
+                text: qsTr("%n pre-rendered section(s) no longer match your edits. Exporting them as is uses the old pictures.", "",
                            root.staleBakes.length)
             }
 
@@ -422,7 +422,7 @@ ThemedDialog {
 
                 ThemedButton {
                     variant: "primary"
-                    text: qsTr("Re-bake first")
+                    text: qsTr("Re-render first")
                     onClicked: {
                         staleBakesDialog.close()
                         EditorState.bakes.rebakeAllStale()
@@ -484,7 +484,7 @@ ThemedDialog {
             ThemedCheckBox {
                 width: parent.width
                 visible: root.exportMode === "video" && EditorState.bakes.bakes.length > 0
-                text: qsTr("Use baked ranges")
+                text: qsTr("Use pre-rendered sections")
                 checked: root.useBakes
                 tooltip: qsTr("Read pre-rendered ranges instead of compositing them again")
                 onToggled: root.useBakes = checked

@@ -2,6 +2,7 @@
   "id": "lightning_sky",
   "displayName": "Lightning Sky",
   "category": "dreamy",
+  "keywords": ["lightning", "storm", "flash", "thunder"],
   "thumbnail": "thumbnail.webp",
   "order": 196,
   "parameters": [

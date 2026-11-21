@@ -14936,7 +14936,7 @@ void McpTest::bakeWorkAreaRefusedInCompositeTab()
     QVERIFY(call("set_work_area", {{QStringLiteral("in"), 0.0}, {QStringLiteral("out"), 1.0}})
                 .value(QStringLiteral("ok")).toBool());
 
-    const QString refusal = QStringLiteral("Bakes are of the main timeline. Switch to it to bake.");
+    const QString refusal = QStringLiteral("Pre-rendered sections are of the main timeline. Switch to it to pre-render.");
     state.newTimeline();
     QVERIFY(!state.activeSequenceId().isEmpty());
     state.bakes()->bakeWorkArea();

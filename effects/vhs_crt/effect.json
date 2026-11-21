@@ -2,6 +2,7 @@
   "id": "vhs_crt",
   "displayName": "VHS / CRT",
   "category": "retro",
+  "keywords": ["vhs", "crt", "tv", "old tv", "scanlines", "retro", "monitor"],
   "thumbnail": "thumbnail.webp",
   "order": 230,
   "parameters": [

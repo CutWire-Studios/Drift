@@ -144,7 +144,7 @@ ThemedDialog {
             wrapMode: Text.WordWrap
             text: fromSettings
                   ? qsTr("Pick a platform template and quality. This updates the project video size.")
-                  : qsTr("Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.")
+                  : qsTr("Pick a category, then a template and quality. You can change this anytime from Video → Size, aspect & frame rate….")
         }
 
         Flickable {

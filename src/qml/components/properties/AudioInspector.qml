@@ -49,6 +49,11 @@ Item {
             keywords: "loud gain level mute"
             target: audioVolumeRow
         }
+        WorkspaceLink {
+            x: root.width - width
+            label: qsTr("Mixer ↗")
+            target: ({ panel: "audioMixer", track: EditorState.selectedTrack })
+        }
         PropertyKeyframeRow {
             id: audioVolumeRow
             width: root.width
@@ -237,7 +242,7 @@ Item {
             SearchAnchor {
                 searchId: "audio-remove-noise"
                 title: qsTr("Remove noise…")
-                keywords: "denoise hiss background clean"
+                keywords: "denoise hiss clean"
                 target: audioRemoveNoiseButton
             }
             ThemedButton {
@@ -245,6 +250,8 @@ Item {
                 visible: denoiseSection.denoiseReady && denoiseSection.runtimeReady
                 width: parent.width
                 text: qsTr("Remove noise…")
+                tooltip: qsTr("Remove noise")
+                tooltipBody: qsTr("Cleans hiss, hum and background noise from speech.")
                 enabled: !EditorState.denoise.running
                 onClicked: {
                     const data = EditorState.selectedClipData
@@ -261,6 +268,9 @@ Item {
                       ? qsTr("Download noise removal (about 9 MB)")
                       : qsTr("Install AI engine first")
                 variant: "primary"
+                tooltip: qsTr("Remove noise")
+                tooltipBody: qsTr("Cleans hiss, hum and background noise from speech.")
+                tooltipState: denoiseSection.runtimeReady ? qsTr("Needs noise model") : qsTr("Needs AI Engine")
                 onClicked: ShellBridge.main.openAddonManager(
                     denoiseSection.runtimeReady ? "denoise-model" : "onnxruntime")
             }

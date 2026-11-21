@@ -3,6 +3,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "denoise-panel"
+        title: qsTr("Remove noise")
+        keywords: "denoise noise reduction clean audio hiss noise voice"
+    }
 
     // Set by PanelPool. The panel only runs the model while it is on screen.
     property bool shown: false

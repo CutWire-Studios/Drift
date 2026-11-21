@@ -19,6 +19,10 @@ AbstractButton {
     property string variant: "primary"
     property real chipHeight: Theme.controlHeightSm
     property string tooltip: ""
+    property string tooltipActionId: ""
+    property string tooltipShortcut: ""
+    property string tooltipBody: ""
+    property string tooltipState: ""
     // Selected fill/border for the "primary" variant. Override to tint a chip to
     // the series it stands for (e.g. keyframe curve colors).
     property color accentColor: Theme.c.themedChip.primaryBackground
@@ -127,8 +131,12 @@ AbstractButton {
         elide: Text.ElideRight
     }
 
-    ThemedToolTip {
+    RichToolTip {
         text: root.tooltip
+        actionId: root.tooltipActionId
+        shortcut: root.tooltipShortcut
+        body: root.tooltipBody
+        state: root.tooltipState
         visible: root.tooltip.length > 0 && (root.hovered || root.visualFocus)
     }
 

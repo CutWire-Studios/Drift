@@ -11,7 +11,7 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
-    // Composites (and audio separated from one) read a nested timeline, which the Custom speed
+    // Composites (and audio separated from one) read a nested timeline, which the Speed ramp
     // preview and the reverse render cannot decode.
     readonly property bool nestedSource: hasSelection && !!clipData.sequenceId
 
@@ -57,14 +57,14 @@ Item {
 
             SearchAnchor {
                 searchId: "speed-custom"
-                title: qsTr("Custom speed…")
+                title: qsTr("Speed ramp…")
                 keywords: "ramp curve"
                 target: speedCustomButton
             }
             ThemedButton {
                 id: speedCustomButton
                 visible: !root.nestedSource
-                text: qsTr("Custom speed…")
+                text: qsTr("Speed ramp…")
                 variant: "secondary"
                 onClicked: ShellBridge.main.openSpeedCurve(
                                EditorState.selectedTrack, EditorState.selectedClip)
@@ -73,7 +73,7 @@ Item {
             ThemedChip {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: speedColumn.hasSpeedCurve
-                text: qsTr("Custom speed active — remove")
+                text: qsTr("Speed ramp active — remove")
                 selected: true
                 onClicked: EditorState.clearClipSpeedCurve(
                                EditorState.selectedTrack, EditorState.selectedClip)
@@ -104,6 +104,13 @@ Item {
                 }
             }
 
+        InlineTip {
+            tipId: "speed.split"
+            readonly property var keys: EditorState.shortcutFor("split")
+            text: keys.length > 0 ? qsTr("Split (%1) to speed up only part of a clip").arg(Theme.shortcutDisplay(keys))
+                                  : qsTr("Split the clip to speed up only part of it")
+        }
+
         ThemedSlider {
             id: speedSlider
             label: qsTr("Speed")
@@ -129,7 +136,7 @@ Item {
 
         Text {
             text: (speedColumn.hasSpeedCurve
-                   ? qsTr("Custom speed")
+                   ? qsTr("Speed ramp")
                    : (root.clipData.speed || 1).toFixed(2) + "×")
                     + (root.clipData.reverse ? qsTr(" (reversed)") : "")
             color: Theme.c.speedFadeInspector.foregroundMuted

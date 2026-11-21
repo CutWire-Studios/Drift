@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "displayName": "Audio Spectrum Bars",
   "category": "artistic",
+  "keywords": ["music visualizer", "equalizer", "eq", "bars", "audio reactive", "sound"],
   "description": "Vertical bars that rise and fall with the frequency spectrum of an audio source.",
   "backend": "gpu",
   "order": 950,

@@ -83,10 +83,12 @@ Column {
             cursorShape: Qt.PointingHandCursor
         }
 
-        ThemedToolTip {
-            text: root.draggable
-                  ? qsTr("%1 — drag onto where two clips meet, or on touch hold then drag").arg(root.modelData.label)
-                  : root.modelData.label
+        RichToolTip {
+            title: root.modelData.label
+            body: root.draggable ? qsTr("Drag onto where two clips meet. On touch, hold then drag.")
+                                 : qsTr("Click to use this transition")
+            preview: root.strip.length > 0 ? EditorState.imageUrl(root.strip) : ""
+            previewFrames: root.frameCount
             visible: transitionHover.hovered
         }
 

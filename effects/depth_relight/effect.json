@@ -2,6 +2,7 @@
   "id": "depth.relight",
   "displayName": "3D Relight",
   "category": "depth",
+  "keywords": ["lighting", "light", "3d", "relight", "shadows", "add", "light"],
   "thumbnail": "thumbnail.webp",
   "order": 900,
   "description": "Adds lights that fall on the scene in 3D, using the clip's estimated depth.",

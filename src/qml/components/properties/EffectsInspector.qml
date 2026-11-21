@@ -167,6 +167,16 @@ Item {
                     inspector: root
                 }
 
+                InlineTip {
+                    tipId: "effects.privacyTrack"
+                    shown: effectCard.effectData.catalogId === "builtin.effects.privacy_blur"
+                    text: qsTr("Blurring something that moves?")
+                    actionText: qsTr("Track it in Mask & track")
+                    onActionTriggered: ShellBridge.goDeeper({ panel: "masking",
+                                                              track: EditorState.selectedTrack,
+                                                              clip: EditorState.selectedClip })
+                }
+
                 Loader {
                     active: effectCard.effectData.catalogId === "face_props"
                     visible: active

@@ -2,6 +2,7 @@
   "id": "chromatic_aberration",
   "displayName": "Chromatic Aberration",
   "category": "glitch",
+  "keywords": ["color fringing", "lens fringe", "rgb split", "lens distortion"],
   "thumbnail": "thumbnail.webp",
   "order": 950,
   "parameters": [

@@ -2,6 +2,7 @@
   "id": "depth.fog",
   "displayName": "Depth Fog",
   "category": "depth",
+  "keywords": ["haze", "mist", "atmosphere", "fog", "depth"],
   "thumbnail": "thumbnail.webp",
   "order": 920,
   "description": "Haze that thickens with distance, using the clip's estimated depth.",

@@ -13,6 +13,10 @@ Button {
     property string glyph: ""
     property real glyphSize: Theme.iconSizeMd
     property string tooltip: ""
+    property string tooltipActionId: ""
+    property string tooltipShortcut: ""
+    property string tooltipBody: ""
+    property string tooltipState: ""
     // Corner rounding of the background. Segments merged into one bordered group
     // (the media bin's split Import button) tuck a smaller radius inside the box.
     property real radius: Theme.c.themedButton.radius
@@ -161,8 +165,12 @@ Button {
         }
     }
 
-    ThemedToolTip {
+    RichToolTip {
         text: root.tooltip
+        actionId: root.tooltipActionId
+        shortcut: root.tooltipShortcut
+        body: root.tooltipBody
+        state: root.tooltipState
         visible: root.tooltip.length > 0 && (root.hovered || root.visualFocus)
     }
 

@@ -2,6 +2,7 @@
   "id": "halftone_comic",
   "displayName": "Comic",
   "category": "artistic",
+  "keywords": ["comic book", "cartoon", "pop art", "dots", "halftone"],
   "thumbnail": "thumbnail.webp",
   "order": 500,
   "parameters": [

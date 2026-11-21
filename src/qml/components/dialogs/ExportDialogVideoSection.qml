@@ -24,6 +24,52 @@ Column {
         text: qsTr("Saves what you see in the preview. Pick a size — the picture shape stays the same.")
     }
 
+    Column {
+        width: parent.width
+        spacing: Theme.spacingSm
+
+        ThemedLabel {
+            text: qsTr("Format")
+        }
+
+        ThemedLabel {
+            width: parent.width
+            size: "sm"
+            wrapMode: Text.WordWrap
+            text: {
+                void EditorState.tracksRevision
+                return qsTr("%1×%2. Vertical for TikTok, Reels and Shorts, wide for YouTube.")
+                    .arg(EditorState.projectFile.projectWidth()).arg(EditorState.projectFile.projectHeight())
+            }
+        }
+
+        Row {
+            spacing: Theme.spacingMd
+
+            ThemedButton {
+                text: qsTr("Choose layout…")
+                tooltip: qsTr("Pick a platform template (YouTube, Instagram, TikTok, …) and quality")
+                onClicked: {
+                    dialog.close()
+                    ShellBridge.main.openLayoutChooser()
+                }
+            }
+
+            ThemedButton {
+                readonly property var timeline: ShellBridge.main ? ShellBridge.main.timelinePanel : null
+                visible: !!timeline
+                enabled: EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
+                text: qsTr("Auto reframe…")
+                tooltip: enabled ? qsTr("Crop the selected clip to follow its subject in a new shape")
+                                 : qsTr("Select a video clip on the timeline first")
+                onClicked: {
+                    dialog.close()
+                    timeline.requestAutoReframe(EditorState.selectedTrack, EditorState.selectedClip)
+                }
+            }
+        }
+    }
+
     ThemedLabel {
         text: qsTr("Downscale")
     }

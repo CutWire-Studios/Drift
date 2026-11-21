@@ -674,6 +674,31 @@ void AppController::addTrack(const QString &type)
     finishEdit(tr("Track added"));
 }
 
+void AppController::insertTrack(const QString &type, int index)
+{
+    const QString normalized = type.trimmed().toLower();
+    if (normalized != QLatin1String("video") && normalized != QLatin1String("audio")
+        && normalized != QLatin1String("text") && normalized != QLatin1String("subtitle")
+        && normalized != QLatin1String("shape")) {
+        return;
+    }
+
+    const drift::Project before = m_project;
+    m_project.ensureTrackIds();
+    const QList<QPair<QString, int>> selection = captureSelectionByTrackId();
+    const QString transitionTrackId = trackIdAt(m_selectedTransitionTrack);
+
+    m_project.tracks().insert(qBound(0, index, int(m_project.tracks().size())),
+                              drift::Track{.type = drift::trackTypeFromString(normalized)});
+    normalizeAdjustmentLanes(m_project);
+
+    restoreSelectionByTrackId(selection);
+    m_selectedTransitionTrack = m_project.trackIndexById(transitionTrackId);
+
+    pushProjectEdit(before, tr("Add track"));
+    finishEdit(tr("Track added"));
+}
+
 QVariantList AppController::bookmarks() const
 {
     QVariantList result;

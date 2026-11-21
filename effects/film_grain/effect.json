@@ -2,6 +2,7 @@
   "id": "film_grain",
   "displayName": "Film Grain",
   "category": "color",
+  "keywords": ["grain", "noise", "texture", "analog", "35mm", "film"],
   "thumbnail": "thumbnail.webp",
   "order": 970,
   "parameters": [

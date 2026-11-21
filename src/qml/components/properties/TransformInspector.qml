@@ -265,13 +265,21 @@ Item {
                 unit: "px"
             }
 
+            WorkspaceLink {
+                readonly property var keys: (root.clipData.keyframes && root.clipData.keyframes.positionX
+                                             && root.clipData.keyframes.positionX.points) || []
+                active: keys.length >= 2 && !!root.clipData.id
+                label: qsTr("Follow an object…")
+                target: ({ panel: "tracking", followerId: root.clipData.id })
+            }
+
             Item {
                 width: parent.width
                 height: sizeLinkButton.height
                 SearchAnchor {
                     searchId: "transform-scale"
                     title: qsTr("Scale")
-                    keywords: "size zoom resize"
+                    keywords: "size zoom resize ken burns slow zoom"
                 }
 
                 Text {
@@ -309,6 +317,14 @@ Item {
                                              : qsTr("Scale width and height together")
                     onClicked: EditorState.sizeLinked = !EditorState.sizeLinked
                 }
+            }
+
+            InlineTip {
+                tipId: "transform.scaleKeyframes"
+                shown: !EditorState.autoKeyEnabled
+                text: qsTr("To animate Scale, move to a time and change it. Auto keyframes adds the keyframes for you.")
+                actionText: qsTr("Turn on Auto keyframes")
+                onActionTriggered: EditorState.autoKeyEnabled = true
             }
 
             Row {
@@ -549,11 +565,10 @@ Item {
                                                       EditorState.selectedClip, checked)
             }
 
-            ThemedButton {
-                visible: !ShellBridge.phoneShell && (!!root.clipData.layer3d || root.isModel3d)
-                text: qsTr("Open 3D workspace")
-                tooltip: qsTr("Position, rotation, anchor point and depth occlusion are in the 3D workspace's 3D Transform panel")
-                onClicked: EditorState.preview.requestViewport3d()
+            WorkspaceLink {
+                active: !!root.clipData.layer3d || root.isModel3d
+                label: qsTr("Open 3D workspace ↗")
+                target: ({ panel: "viewport3d" })
             }
 
             Text {

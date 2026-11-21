@@ -22,8 +22,35 @@ Rectangle {
     }
     ThemedContextMenu {
         id: effectCardMenu
+
+        property bool editable: false
+        onAboutToShow: editable = Forge.canEdit("effect", card.effectData.catalogId)
+
         ThemedMenuItem {
-            text: qsTr("Copy this effect")
+            text: card.effectEnabled ? qsTr("Disable effect") : qsTr("Enable effect")
+            icon.name: card.effectEnabled ? Theme.icons.eyeOff : Theme.icons.eye
+            onTriggered: EditorState.setEffectEnabled(
+                             EditorState.selectedTrack, EditorState.selectedClip,
+                             card.index, !card.effectEnabled)
+        }
+        ThemedMenuItem {
+            text: qsTr("Move up")
+            icon.name: Theme.icons.chevronUp
+            enabled: card.index > 0
+            onTriggered: EditorState.moveEffect(
+                             EditorState.selectedTrack, EditorState.selectedClip,
+                             card.index, card.index - 1)
+        }
+        ThemedMenuItem {
+            text: qsTr("Move down")
+            icon.name: Theme.icons.chevronDown
+            enabled: card.index < inspector.selectedEffects.length - 1
+            onTriggered: EditorState.moveEffect(
+                             EditorState.selectedTrack, EditorState.selectedClip,
+                             card.index, card.index + 1)
+        }
+        ThemedMenuItem {
+            text: qsTr("Copy effect")
             icon.name: Theme.icons.copy
             onTriggered: EditorState.copyEffectToClipboard(
                              EditorState.selectedTrack, EditorState.selectedClip,
@@ -33,6 +60,31 @@ Rectangle {
             text: qsTr("Save as preset…")
             icon.name: Theme.icons.save
             onTriggered: inspector.saveEffectPresetRequested(card.index)
+        }
+        ThemedMenuSeparator {
+            visible: colorItem.visible || forgeItem.visible
+        }
+        WorkspaceMenuItem {
+            id: colorItem
+            text: qsTr("Open in Color")
+            icon.name: Theme.icons.blend
+            visible: card.effectData.catalogId === "color.grade" && !ShellBridge.phoneShell
+            target: ({ panel: "color" })
+        }
+        ThemedMenuItem {
+            id: forgeItem
+            visible: effectCardMenu.editable && !ShellBridge.phoneShell
+            text: qsTr("Edit in Forge")
+            icon.name: Theme.icons.pencil
+            onTriggered: Forge.openPackage("effect", card.effectData.catalogId)
+        }
+        ThemedMenuSeparator { }
+        ThemedMenuItem {
+            text: qsTr("Remove effect")
+            icon.name: Theme.icons.trash
+            onTriggered: EditorState.removeEffect(
+                             EditorState.selectedTrack, EditorState.selectedClip,
+                             card.index)
         }
     }
 

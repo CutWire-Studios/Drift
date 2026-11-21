@@ -1854,6 +1854,28 @@ qt_add_qml_module(drift
         src/qml/BlendModes.qml
         src/qml/AndroidNotificationsSheet.qml
         src/qml/components/shell/NavRailButton.qml
+        src/qml/components/illustrations/AdjustmentLayerIllustration.qml
+        src/qml/components/illustrations/AiObjectIllustration.qml
+        src/qml/components/illustrations/AutoSelectIllustration.qml
+        src/qml/components/illustrations/FreezeFrameIllustration.qml
+        src/qml/components/illustrations/GuidesIllustration.qml
+        src/qml/components/illustrations/LinkClipsIllustration.qml
+        src/qml/components/illustrations/MaskBrushIllustration.qml
+        src/qml/components/illustrations/MaskPolygonIllustration.qml
+        src/qml/components/illustrations/MaskShapeIllustration.qml
+        src/qml/components/illustrations/OnboardingAgenticIllustration.qml
+        src/qml/components/illustrations/OnboardingExperienceIllustration.qml
+        src/qml/components/illustrations/OnboardingFinishIllustration.qml
+        src/qml/components/illustrations/OnboardingMakeIllustration.qml
+        src/qml/components/illustrations/OnboardingWelcomeIllustration.qml
+        src/qml/components/illustrations/RippleIllustration.qml
+        src/qml/components/illustrations/SnappingIllustration.qml
+        src/qml/components/illustrations/ToolCutIllustration.qml
+        src/qml/components/illustrations/ToolSelectIllustration.qml
+        src/qml/components/illustrations/TrackerIllustration.qml
+        src/qml/components/illustrations/TransformLayerIllustration.qml
+        src/qml/components/illustrations/TrimEndIllustration.qml
+        src/qml/components/illustrations/TrimStartIllustration.qml
         # Touch entry point, loaded instead of Main.qml on Android (see src/app/main.cpp).
         src/qml/AndroidLayoutSheet.qml
         src/qml/AndroidMain.qml
@@ -1990,6 +2012,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/PropertiesSheetTabChip.qml
         src/qml/components/properties/PropertiesInspectorHeading.qml
         src/qml/components/properties/PropertiesEmptyState.qml
+        src/qml/components/properties/PropertiesSuggestionStrip.qml
         src/qml/components/properties/KeyframeGraphValueAxis.qml
         src/qml/components/properties/KeyframeGraphTangentHandle.qml
         src/qml/components/properties/KeyframeGraphResizeGrip.qml
@@ -2347,6 +2370,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineTransitionEar.qml
         src/qml/components/timeline/TimelineCutDoomGradient.qml
         src/qml/components/timeline/TimelineCutDash.qml
+        src/qml/components/suggestions/ClipSuggestions.js
         src/qml/components/timeline/TimelineClipContextMenu.qml
         src/qml/components/timeline/TimelineKeyframeMenu.qml
         src/qml/components/timeline/TimelineAutoReframeDialog.qml
@@ -2399,6 +2423,9 @@ qt_add_qml_module(drift
         src/qml/components/SubtitleCueLane.qml
         src/qml/components/shell/ShortcutCaptureField.qml
         src/qml/components/shell/ShortcutChip.qml
+        src/qml/components/shell/WorkspaceLink.qml
+        src/qml/components/shell/WorkspaceMenuItem.qml
+        src/qml/components/shell/WorkspaceBackPill.qml
         src/qml/components/ColorSwatchField.qml
         src/qml/components/controls/ThemedColorDialog.qml
         src/qml/components/ColorEyedropper.qml
@@ -2421,6 +2448,8 @@ qt_add_qml_module(drift
         src/qml/components/EmojiPicker.qml
         src/qml/components/controls/ThemedButton.qml
         src/qml/components/controls/ThemedChip.qml
+        src/qml/components/controls/AccentSwatches.qml
+        src/qml/components/controls/InlineTip.qml
         src/qml/components/controls/ScrollStrip.qml
         src/qml/components/controls/ThemedProgressBar.qml
         src/qml/components/MediaPill.qml
@@ -2701,6 +2730,7 @@ qt_add_qml_module(drift
         src/qml/components/controls/ThemedCheckBox.qml
         src/qml/components/controls/ThemedToggleButton.qml
         src/qml/components/controls/ThemedToolTip.qml
+        src/qml/components/controls/RichToolTip.qml
         src/qml/components/controls/ThemedContextMenu.qml
         src/qml/components/controls/ThemedMenuItem.qml
         src/qml/components/controls/ThemedMenuSeparator.qml
@@ -2722,7 +2752,11 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsGeneralPage.qml
         src/qml/components/shell/SettingsGroupHeader.qml
         src/qml/components/shell/SettingsKeymapPage.qml
+        src/qml/components/shell/SettingsExportPage.qml
         src/qml/components/shell/SettingsNetworkPage.qml
+        src/qml/components/shell/SettingsNotificationsPage.qml
+        src/qml/components/shell/SettingsPersonalizePage.qml
+        src/qml/components/shell/SettingsStoragePage.qml
         src/qml/components/shell/SettingsPage.qml
         src/qml/components/shell/SettingsPerformancePage.qml
         src/qml/components/shell/SettingsPreviewPage.qml
@@ -2734,12 +2768,14 @@ qt_add_qml_module(drift
         src/qml/components/quicksetup/QuickSetupWelcomePage.qml
         src/qml/components/quicksetup/QuickSetupThemePage.qml
         src/qml/components/quicksetup/QuickSetupScalePage.qml
-        src/qml/components/quicksetup/QuickSetupAddonsPage.qml
+        src/qml/components/quicksetup/QuickSetupMakePage.qml
+        src/qml/components/quicksetup/QuickSetupExperiencePage.qml
+        src/qml/components/quicksetup/QuickSetupAgenticPage.qml
+        src/qml/components/quicksetup/QuickSetupFinishPage.qml
+        src/qml/components/quicksetup/QuickSetupChoiceCard.qml
+        src/qml/components/quicksetup/QuickSetupDownloads.qml
         src/qml/components/quicksetup/QuickSetupAddonRow.qml
-        src/qml/components/quicksetup/QuickSetupTipsPage.qml
-        src/qml/components/quicksetup/QuickSetupCommunityPage.qml
         src/qml/components/quicksetup/QuickSetupMockEditor.qml
-        src/qml/components/quicksetup/QuickSetupTipArt.qml
         src/qml/components/extras/ExtrasIcon.qml
         src/qml/components/extras/ExtrasIconTile.qml
         src/qml/components/extras/ExtrasCard.qml
@@ -2749,7 +2785,6 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsThemeEntry.qml
         src/qml/components/shell/SettingsThemeList.qml
         src/qml/components/shell/SettingsTimelinePage.qml
-        src/qml/components/shell/SettingsToolbarPage.qml
         src/qml/components/shell/SegmentationFrameColumn.qml
         src/qml/components/shell/SegmentationControlColumn.qml
         src/qml/components/shell/RestoreUpscalerPicker.qml
@@ -2780,6 +2815,8 @@ qt_add_qml_module(drift
         src/qml/components/shell/workspaces/designer/WorkspaceDesigner.qml
         src/qml/components/shell/SettingsWorkspacesPage.qml
         src/qml/components/shell/EditorHeaderSettingsButton.qml
+        src/qml/components/shell/EditorHeaderHelpButton.qml
+        src/qml/components/shell/EditorHeaderWorkspaceButton.qml
         src/qml/components/shell/AppSettingsMenu.qml
         src/qml/components/shell/EditorHeaderVideoButton.qml
         src/qml/components/shell/VideoMenu.qml

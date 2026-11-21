@@ -1,24 +1,28 @@
 import QtQuick
+import QtQuick.Window
 import Drift
 
 QuickSetupPage {
     id: root
 
     title: qsTr("Interface size")
-    subtitle: qsTr("Make buttons, text and icons larger or smaller.")
+    subtitle: qsTr("Drift looks cramped or oversized at this screen resolution. We picked a size that fits; change it if you like.")
     glyph: Theme.icons.zoomIn
     contentMaxWidth: 760
 
     readonly property var scales: [0.75, 0.8, 0.9, 1.0, 1.25, 1.5, 1.75, 2.0]
                                   .concat(Qt.platform.os === "windows" ? [0] : [])
-    property real recommended: EditorState.preferences.uiScale
+    readonly property real recommended: Window.window ? Window.window.recommendedScale : 1.0
     readonly property real applied: EditorState.preferences.appliedUiScale > 0
                                     ? EditorState.preferences.appliedUiScale : 1.0
     readonly property real ratio: (EditorState.preferences.uiScale > 0
                                    ? EditorState.preferences.uiScale
                                    : EditorState.preferences.systemUiScale) / applied
 
-    Component.onCompleted: recommended = EditorState.preferences.uiScale
+    Component.onCompleted: {
+        if (Math.abs(EditorState.preferences.uiScale - applied) < 0.001)
+            EditorState.preferences.uiScale = recommended
+    }
 
     Flow {
         width: parent.width

@@ -26,7 +26,7 @@ Item {
         variant: "ghost"
         text: qsTr("Video")
         active: videoMenu.opened || EditorState.preview.canvasCropMode || videoButton.dialogShown
-        tooltip: qsTr("Bakes, crop and video layout")
+        tooltip: qsTr("Video size, crop, multicam and pre-rendered sections")
         onClicked: videoMenu.popup(0, videoButton.height + Theme.spacingMd)
     }
 
@@ -35,5 +35,6 @@ Item {
         onBakesRequested: videoButton.bakesRequested()
         onCropRequested: videoButton.toggleCrop()
         onLayoutRequested: videoButton.layoutRequested()
+        onMulticamRequested: ShellBridge.main.openMulticam()
     }
 }

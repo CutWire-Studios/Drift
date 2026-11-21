@@ -1859,6 +1859,8 @@ public:
     Q_INVOKABLE double trackHeightScaleMax() const { return 4.0; }
     Q_INVOKABLE void moveTrack(int fromIndex, int toIndex);
     Q_INVOKABLE void addTrack(const QString &type);
+    // Same whitelist as addTrack; `index` is the project track index the new track takes.
+    Q_INVOKABLE void insertTrack(const QString &type, int index);
     Q_INVOKABLE void removeTrack(int trackIndex);
     Q_INVOKABLE int removeEmptyTracks();
     Q_INVOKABLE bool hasEmptyTracks() const;

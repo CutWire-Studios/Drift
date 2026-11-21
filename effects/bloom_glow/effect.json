@@ -2,6 +2,7 @@
   "id": "bloom_glow",
   "displayName": "Bloom / Glow",
   "category": "dreamy",
+  "keywords": ["glow dreamy", "soft light", "haze", "bright", "glow"],
   "thumbnail": "thumbnail.webp",
   "backend": "gpu",
   "order": 130,

@@ -213,6 +213,8 @@ struct EffectPresetMeta
     QString id;           // e.g. "rgb_split", "stylize.bloom"
     QString displayName;  // e.g. "RGB Split"
     QString category;     // stable slug, e.g. "glitch", "retro", "dreamy", "impact"
+    QString description;  // optional one-paragraph explainer from effect.json
+    QStringList keywords; // search vocabulary beyond the name, from effect.json
     QList<EffectParamSpec> parameters;
     bool compositorOnly = false; // true when not expressible via libavfilter alone
 };

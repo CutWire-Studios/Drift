@@ -11,14 +11,34 @@ ApplicationWindow {
 
     // Ordered list of setup pages. To add one: create a QuickSetupPage subtype
     // under components/quicksetup, register it in CMakeLists, and add an entry here.
+    // The phone shell has no workspaces, Ask button or rail labels, so the experience and
+    // agentic steps would change nothing there.
     readonly property var pages: [
         { id: "welcome", page: welcomePage },
         { id: "theme", page: themePage },
         { id: "scale", page: scalePage },
-        { id: "addons", page: addonsPage },
-        { id: "tips", page: tipsPage },
-        { id: "community", page: communityPage }
-    ].filter(p => !(mobile && p.id === "scale"))
+        { id: "make", page: makePage },
+        { id: "experience", page: experiencePage },
+        { id: "agentic", page: agenticPage },
+        { id: "finish", page: finishPage }
+    ].filter(p => !(p.id === "scale" && !scaleLooksOff)
+                  && !(mobile && (p.id === "experience" || p.id === "agentic")))
+
+    // The layout is designed for about 1080 logical rows. Outside +-20% of that the UI is cramped
+    // or oversized, so the scale step is offered with the size that gets back to 1080 rows.
+    readonly property real logicalShortSide: Math.min(Screen.width, Screen.height)
+    readonly property bool scaleLooksOff: !mobile && (logicalShortSide < 864 || logicalShortSide > 1296)
+    readonly property real recommendedScale: {
+        const ideal = logicalShortSide * Screen.devicePixelRatio / 1080
+        const steps = [0.75, 0.8, 0.9, 1.0, 1.25, 1.5, 1.75, 2.0]
+        let best = 1.0
+        for (const step of steps) {
+            if (Math.abs(ideal - step) < Math.abs(ideal - best))
+                best = step
+        }
+        return best
+    }
+    readonly property var downloads: downloadsModel
 
     property int step: 0
     property int direction: 1
@@ -36,11 +56,15 @@ ApplicationWindow {
         transition.start()
     }
 
+    function finish(startProject) {
+        EditorState.preferences.completeQuickSetup(startProject)
+    }
+
     function next() {
         if (!canAdvance)
             return
         if (isLast)
-            EditorState.preferences.completeQuickSetup()
+            finish(currentPage.startsProject === true)
         else
             go(1)
     }
@@ -55,18 +79,15 @@ ApplicationWindow {
     title: qsTr("Drift setup")
     color: Theme.c.quickSetup.background
 
-    Connections {
-        target: window.currentPage
-        ignoreUnknownSignals: true
-        function onSkipRequested() { window.go(1) }
-    }
+    QuickSetupDownloads { id: downloadsModel }
 
     Component { id: welcomePage; QuickSetupWelcomePage { } }
     Component { id: themePage; QuickSetupThemePage { } }
     Component { id: scalePage; QuickSetupScalePage { } }
-    Component { id: addonsPage; QuickSetupAddonsPage { } }
-    Component { id: tipsPage; QuickSetupTipsPage { } }
-    Component { id: communityPage; QuickSetupCommunityPage { } }
+    Component { id: makePage; QuickSetupMakePage { } }
+    Component { id: experiencePage; QuickSetupExperiencePage { } }
+    Component { id: agenticPage; QuickSetupAgenticPage { } }
+    Component { id: finishPage; QuickSetupFinishPage { } }
 
     Item {
         anchors.fill: parent

@@ -411,7 +411,19 @@ ApplicationWindow {
             return
         if (layoutChooserDialogLoader.shown || recoveryDialogLoader.shown)
             return
+        if (window.applyMakeCanvas())
+            return
         layoutChooserDialogLoader.ensure().openChooser()
+    }
+
+    // Quick Setup's "What you make" answers the canvas question for new projects.
+    function applyMakeCanvas() {
+        const canvas = LayoutPresets.makeCanvas(EditorState.preferences.whatYouMake)
+        if (!canvas)
+            return false
+        EditorState.projectFile.setProjectSetup(canvas.width, canvas.height, EditorState.projectFile.projectFps())
+        EditorState.markProjectLayoutChosen()
+        return true
     }
 
     // Quiet catalog refresh for the header attention indicator.
@@ -1186,6 +1198,14 @@ ApplicationWindow {
             window.showStartScreen = false
             return
         }
+        // Quick Setup's "Start a project" finish. Recovery is left alone: newProject() would
+        // delete the snapshot.
+        if (!EditorState.projectFile.recoveryAvailable && EditorState.preferences.takeStartProject()) {
+            window.showStartScreen = false
+            EditorState.projectFile.newProject(true)
+            window.applyMakeCanvas()
+            return
+        }
         // Opt-in: restore unsaved recovery or the last clean project silently.
         if (EditorState.projectFile.restoreLastSessionIfEnabled())
             return
@@ -1282,7 +1302,8 @@ ApplicationWindow {
 
         function onSubtitleGenerationFinished(ok, message) {
             if (ok)
-                Toasts.success(message.length > 0 ? message : qsTr("Captions created."))
+                Toasts.post("success", message.length > 0 ? message : qsTr("Captions created."), undefined,
+                            qsTr("Review captions"), function () { ShellBridge.goDeeper({ panel: "subtitles" }) })
             else
                 Toasts.error(message.length > 0
                              ? qsTr("Couldn’t create captions: %1").arg(message)
@@ -1678,6 +1699,9 @@ ApplicationWindow {
                 onOpenRecentRequested: (path) => window.requestOpenRecentProject(path)
                 onHelpRequested: window.openHelpDialog()
                 onMoreSettingsRequested: window.openSettings()
+                onShortcutsRequested: window.openSettings("keymap")
+                onUpdatesRequested: window.checkForUpdates()
+                onAboutRequested: window.openAboutDialog()
                 onDebugInfoRequested: window.openDebugInfo()
                 onAgentAccessRequested: editorHeader.openAgentAccess()
             }

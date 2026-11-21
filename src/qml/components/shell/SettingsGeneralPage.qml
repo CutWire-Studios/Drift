@@ -7,13 +7,6 @@ SettingsPage {
     pageId: "general"
     title: qsTr("General")
 
-    function cacheSizeText(bytes) {
-        const gib = 1024 * 1024 * 1024
-        if (bytes >= gib)
-            return qsTr("%1 GB").arg((bytes / gib).toFixed(1))
-        return qsTr("%1 MB").arg((bytes / (1024 * 1024)).toFixed(1))
-    }
-
     SettingsGroupHeader {
         text: qsTr("Language & region")
         query: page.query
@@ -166,35 +159,6 @@ SettingsPage {
     }
 
     SettingsGroupHeader {
-        text: qsTr("Extras")
-        query: page.query
-    }
-
-    SettingsRow {
-        title: qsTr("Remind about essential packs")
-        searchId: "general-remind-essential-packs"
-        description: qsTr("Pulse the Extras icon when the video, transitions, and audio packs are not installed.")
-        query: page.query
-
-        ThemedSwitch {
-            checked: Addons.remindEssential
-            onToggled: Addons.remindEssential = checked
-        }
-    }
-
-    SettingsRow {
-        title: qsTr("Remind about pack updates")
-        searchId: "general-remind-pack-updates"
-        description: qsTr("Pulse the Extras icon when updates are available for packs you already have installed.")
-        query: page.query
-
-        ThemedSwitch {
-            checked: Addons.remindUpdates
-            onToggled: Addons.remindUpdates = checked
-        }
-    }
-
-    SettingsGroupHeader {
         text: qsTr("Feedback")
         query: page.query
     }
@@ -229,55 +193,6 @@ SettingsPage {
         ThemedSwitch {
             checked: CrashReports.automaticReports
             onToggled: CrashReports.automaticReports = checked
-        }
-    }
-
-    SettingsGroupHeader {
-        text: qsTr("Storage")
-        query: page.query
-    }
-
-    SettingsRow {
-        title: qsTr("Cache")
-        searchId: "general-cache"
-        description: qsTr("%1 used").arg(page.cacheSizeText(EditorState.preferences.cacheSizeBytes))
-        keywords: "disk space thumbnails proxies"
-        query: page.query
-        Component.onCompleted: EditorState.preferences.refreshCacheSize()
-
-        ThemedButton {
-            variant: "secondary"
-            text: qsTr("Clear cache")
-            enabled: !EditorState.preferences.cacheBusy
-            onClicked: EditorState.preferences.clearCache()
-        }
-    }
-
-    SettingsRow {
-        title: qsTr("Cache location")
-        searchId: "general-cache-location"
-        description: EditorState.preferences.cacheLocationPendingRestart
-                         ? qsTr("%1. Takes effect after restart.").arg(EditorState.preferences.cacheLocation)
-                         : EditorState.preferences.cacheLocation
-        keywords: "cache folder directory path storage"
-        available: Qt.platform.os !== "android" && Qt.platform.os !== "wasm"
-        query: page.query
-
-        ThemedButton {
-            variant: "secondary"
-            text: qsTr("Reset")
-            visible: EditorState.preferences.cacheLocationCustom
-            onClicked: EditorState.preferences.resetCacheLocation()
-        }
-
-        ThemedButton {
-            variant: "secondary"
-            text: qsTr("Change…")
-            onClicked: {
-                const url = FileDialogs.openDirectory(qsTr("Cache location"))
-                if (url && url.toString() !== "")
-                    EditorState.preferences.setCacheLocation(url)
-            }
         }
     }
 

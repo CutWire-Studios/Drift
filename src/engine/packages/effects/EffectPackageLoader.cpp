@@ -65,6 +65,9 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
     entry.meta.category =
         GpuPackageParse::slugifyCategory(categoryRaw.isEmpty() ? QStringLiteral("dreamy") : categoryRaw);
     entry.catalogOrder = root.value(QStringLiteral("order")).toInt(0);
+    entry.meta.description = root.value(QStringLiteral("description")).toString();
+    for (const QJsonValue &keyword : root.value(QStringLiteral("keywords")).toArray())
+        entry.meta.keywords.append(keyword.toString());
 
     // A single name, or a list when a package needs more than one kind of per-frame data.
     const QJsonValue requiresValue = root.value(QStringLiteral("requires"));

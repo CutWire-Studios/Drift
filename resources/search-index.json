@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "id": "agent-log-panel",
+      "target": "panel:agentLog#agent-log-panel",
+      "context": "AgentLogPanel",
+      "source": "Agent log",
+      "keywords": "agent log ai commands history mcp tool calls activity",
+      "needs": []
+    },
+    {
       "id": "agent-views",
       "target": "panel:agentViews#agent-views",
       "context": "AgentViewsPanel",
@@ -225,6 +233,14 @@
       "needs": []
     },
     {
+      "id": "denoise-panel",
+      "target": "panel:denoise#denoise-panel",
+      "context": "DenoisePanel",
+      "source": "Remove noise",
+      "keywords": "denoise noise reduction clean audio hiss noise voice",
+      "needs": []
+    },
+    {
       "id": "forge-graph",
       "target": "panel:forgeGraph#forge-graph",
       "context": "ForgeGraphPanel",
@@ -260,7 +276,7 @@
       "id": "color-looks",
       "target": "panel:looks#color-looks",
       "context": "LooksPanel",
-      "source": "Color Grading LUTs",
+      "source": "Looks",
       "keywords": "lut filter preset cube",
       "needs": []
     },
@@ -278,6 +294,14 @@
       "context": "MaskingPanel",
       "source": "Masking & Tracking",
       "keywords": "mask matte rotoscope roto brush lasso scissors magic wand select polygon tracking tracker motion track planar object follow",
+      "needs": []
+    },
+    {
+      "id": "masking-remove-background",
+      "target": "panel:masking#masking-remove-background",
+      "context": "MaskingPanel",
+      "source": "Remove background",
+      "keywords": "remove background replace background cut out subject cutout person people green screen transparent",
       "needs": []
     },
     {
@@ -334,6 +358,14 @@
       "context": "ProceduralParamsPanel",
       "source": "Procedural parameters panel",
       "keywords": "procedural params seed package keyframe",
+      "needs": []
+    },
+    {
+      "id": "recorder-panel",
+      "target": "panel:recorder#recorder-panel",
+      "context": "RecorderPanel",
+      "source": "Recorder",
+      "keywords": "record voiceover microphone narration audio teleprompter noise",
       "needs": []
     },
     {
@@ -401,6 +433,22 @@
       "needs": []
     },
     {
+      "id": "subtitles-panel",
+      "target": "panel:subtitles#subtitles-panel",
+      "context": "SubtitlesPanel",
+      "source": "Captions",
+      "keywords": "subtitles captions cues transcript speech text list review",
+      "needs": []
+    },
+    {
+      "id": "tracking-panel",
+      "target": "panel:tracking#tracking-panel",
+      "context": "TrackingPanel",
+      "source": "Motion tracking",
+      "keywords": "motion tracking tracker follow object attach track point stabilize planar",
+      "needs": []
+    },
+    {
       "id": "transform3d-panel",
       "target": "panel:transform3d#transform3d-panel",
       "context": "Transform3dPanel",
@@ -446,6 +494,14 @@
       "context": "View3dPanel",
       "source": "3D model lights",
       "keywords": "light ambient spot brightness shading",
+      "needs": []
+    },
+    {
+      "id": "viewport3d-panel",
+      "target": "panel:viewport3d#viewport3d-panel",
+      "context": "Viewport3dPanel",
+      "source": "3D viewport",
+      "keywords": "3d viewport scene view orbit free camera perspective world",
       "needs": []
     },
     {
@@ -579,7 +635,7 @@
       "target": "panel:properties.audio#audio-remove-noise",
       "context": "AudioInspector",
       "source": "Remove noise…",
-      "keywords": "denoise hiss background clean",
+      "keywords": "denoise hiss clean",
       "needs": [
         "audible"
       ]
@@ -936,7 +992,7 @@
       "id": "speed-custom",
       "target": "panel:properties.speed#speed-custom",
       "context": "SpeedFadeInspector",
-      "source": "Custom speed…",
+      "source": "Speed ramp…",
       "keywords": "ramp curve",
       "needs": [
         "retimable"
@@ -1073,7 +1129,7 @@
       "target": "panel:properties.transform#transform-scale",
       "context": "TransformInspector",
       "source": "Scale",
-      "keywords": "size zoom resize",
+      "keywords": "size zoom resize ken burns slow zoom",
       "needs": [
         "transformable"
       ]
@@ -1192,15 +1248,6 @@
       "descriptionSource": "Walk through language, theme, interface size and add-ons again."
     },
     {
-      "id": "about-drift",
-      "target": "settings:about#about-drift",
-      "context": "SettingsAboutPage",
-      "source": "About Drift",
-      "keywords": "license credits version",
-      "needs": [],
-      "descriptionSource": "Open-source video editor by CutWire Studios."
-    },
-    {
       "id": "about-debug-info",
       "target": "settings:about#about-debug-info",
       "context": "SettingsAboutPage",
@@ -1254,15 +1301,6 @@
       "descriptionSource": "Type a sentence such as \"split at 12 seconds\" in search and run it as an editing command. Needs the Command Bar Model and llama.cpp runtime add-ons; runs on this device."
     },
     {
-      "id": "ai-agent-notifications",
-      "target": "settings:ai#ai-agent-notifications",
-      "context": "SettingsAiPage",
-      "source": "Notifications for agent actions",
-      "keywords": "mcp agent toast notification quiet silence",
-      "needs": [],
-      "descriptionSource": "Which pop-ups an agent's own edits show you. Errors always show."
-    },
-    {
       "id": "ai-cloud-services",
       "target": "settings:ai#ai-cloud-services",
       "context": "SettingsAiPage",
@@ -1314,15 +1352,6 @@
       "needs": []
     },
     {
-      "id": "appearance-workspace-orientation",
-      "target": "settings:appearance#appearance-workspace-orientation",
-      "context": "SettingsAppearancePage",
-      "source": "Workspace orientation",
-      "keywords": "landscape portrait rotate layout",
-      "needs": [],
-      "descriptionSource": "Landscape or portrait workspace. Auto follows the shape of the canvas."
-    },
-    {
       "id": "audio-output",
       "target": "settings:audio#audio-output",
       "context": "SettingsAudioPage",
@@ -1339,6 +1368,15 @@
       "keywords": "recording voiceover mic input",
       "needs": [],
       "descriptionSource": "Audio device used for recording voiceovers onto audio tracks."
+    },
+    {
+      "id": "export-hardware-encoder",
+      "target": "settings:export#export-hardware-encoder",
+      "context": "SettingsExportPage",
+      "source": "Prefer hardware encoder for new exports",
+      "keywords": "nvenc qsv amf vaapi videotoolbox mediacodec gpu encode h264 x264",
+      "needs": [],
+      "descriptionSource": "Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder."
     },
     {
       "id": "general-language",
@@ -1386,24 +1424,6 @@
       "descriptionSource": "Older steps are dropped, and media only they used is no longer kept for them."
     },
     {
-      "id": "general-remind-essential-packs",
-      "target": "settings:general#general-remind-essential-packs",
-      "context": "SettingsGeneralPage",
-      "source": "Remind about essential packs",
-      "keywords": "",
-      "needs": [],
-      "descriptionSource": "Pulse the Extras icon when the video, transitions, and audio packs are not installed."
-    },
-    {
-      "id": "general-remind-pack-updates",
-      "target": "settings:general#general-remind-pack-updates",
-      "context": "SettingsGeneralPage",
-      "source": "Remind about pack updates",
-      "keywords": "",
-      "needs": [],
-      "descriptionSource": "Pulse the Extras icon when updates are available for packs you already have installed."
-    },
-    {
       "id": "general-haptic-feedback",
       "target": "settings:general#general-haptic-feedback",
       "context": "SettingsGeneralPage",
@@ -1420,22 +1440,6 @@
       "keywords": "crash report privacy telemetry diagnostics error upload",
       "needs": [],
       "descriptionSource": "After a crash, send the error details, a short scrubbed log and your system and graphics information to help fix it. No project files or media."
-    },
-    {
-      "id": "general-cache",
-      "target": "settings:general#general-cache",
-      "context": "SettingsGeneralPage",
-      "source": "Cache",
-      "keywords": "disk space thumbnails proxies",
-      "needs": []
-    },
-    {
-      "id": "general-cache-location",
-      "target": "settings:general#general-cache-location",
-      "context": "SettingsGeneralPage",
-      "source": "Cache location",
-      "keywords": "cache folder directory path storage",
-      "needs": []
     },
     {
       "id": "general-export-import",
@@ -1468,7 +1472,7 @@
       "id": "network-proxy",
       "target": "settings:network#network-proxy",
       "context": "SettingsNetworkPage",
-      "source": "Proxy",
+      "source": "Internet proxy server",
       "keywords": "proxy http socks5 internet firewall network",
       "needs": [],
       "descriptionSource": "How Drift reaches the internet for downloads, updates, and online services. Applies immediately."
@@ -1477,19 +1481,37 @@
       "id": "network-proxy-server",
       "target": "settings:network#network-proxy-server",
       "context": "SettingsNetworkPage",
-      "source": "Proxy server",
+      "source": "Proxy server details",
       "keywords": "proxy host port username password login",
       "needs": [],
       "descriptionSource": "Host and port of the proxy. The username and password are optional."
     },
     {
-      "id": "performance-advanced-users",
-      "target": "settings:performance#performance-advanced-users",
-      "context": "SettingsPerformancePage",
-      "source": "For advanced users",
-      "keywords": "performance advanced tuning power user memory cache",
+      "id": "general-remind-essential-packs",
+      "target": "settings:notifications#general-remind-essential-packs",
+      "context": "SettingsNotificationsPage",
+      "source": "Remind about essential packs",
+      "keywords": "",
       "needs": [],
-      "descriptionSource": "These tune memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately."
+      "descriptionSource": "Pulse the Extras icon when the video, transitions, and audio packs are not installed."
+    },
+    {
+      "id": "general-remind-pack-updates",
+      "target": "settings:notifications#general-remind-pack-updates",
+      "context": "SettingsNotificationsPage",
+      "source": "Remind about pack updates",
+      "keywords": "",
+      "needs": [],
+      "descriptionSource": "Pulse the Extras icon when updates are available for packs you already have installed."
+    },
+    {
+      "id": "ai-agent-notifications",
+      "target": "settings:notifications#ai-agent-notifications",
+      "context": "SettingsNotificationsPage",
+      "source": "Notifications for agent actions",
+      "keywords": "mcp agent toast notification quiet silence",
+      "needs": [],
+      "descriptionSource": "Which pop-ups an agent's own edits show you. Errors always show."
     },
     {
       "id": "performance-graphics-api",
@@ -1500,10 +1522,55 @@
       "needs": []
     },
     {
+      "id": "preview-faster-vaapi",
+      "target": "settings:performance#preview-faster-vaapi",
+      "context": "SettingsPerformancePage",
+      "source": "Faster preview (experimental)",
+      "keywords": "zero copy vaapi gpu hardware",
+      "needs": [],
+      "descriptionSource": "Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart."
+    },
+    {
+      "id": "preview-faster-mediacodec",
+      "target": "settings:performance#preview-faster-mediacodec",
+      "context": "SettingsPerformancePage",
+      "source": "Faster preview (experimental)",
+      "keywords": "zero copy mediacodec gpu hardware",
+      "needs": [],
+      "descriptionSource": "Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart."
+    },
+    {
+      "id": "preview-graphics-card",
+      "target": "settings:performance#preview-graphics-card",
+      "context": "SettingsPerformancePage",
+      "source": "Graphics card",
+      "keywords": "gpu integrated discrete nvidia power battery",
+      "needs": [],
+      "descriptionSource": "Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart."
+    },
+    {
+      "id": "preview-graphics-card-system-settings",
+      "target": "settings:performance#preview-graphics-card-system-settings",
+      "context": "SettingsPerformancePage",
+      "source": "Graphics card",
+      "keywords": "gpu windows display nvidia",
+      "needs": [],
+      "descriptionSource": "Choose which graphics card Drift runs on in Windows Settings, under Display > Graphics. Takes effect after restart."
+    },
+    {
+      "id": "performance-advanced-users",
+      "target": "settings:performance#performance-advanced-users",
+      "context": "SettingsPerformancePage",
+      "source": "Advanced tuning",
+      "keywords": "performance advanced tuning power user memory cache buffer",
+      "needs": [],
+      "descriptionSource": "Memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately."
+    },
+    {
       "id": "performance-drop-late-frames",
       "target": "settings:performance#performance-drop-late-frames",
       "context": "SettingsPerformancePage",
-      "source": "Drop late frames",
+      "source": "Skip frames when playback falls behind",
       "keywords": "stale lag late drop skip frames stutter slow motion cut",
       "needs": [],
       "descriptionSource": "Skip preview frames that finish this far behind the playhead, instead of showing them late. Can reduce slow-motion at clip cuts on slow machines. Off never drops a frame for being late."
@@ -1512,7 +1579,7 @@
       "id": "performance-read-ahead",
       "target": "settings:performance#performance-read-ahead",
       "context": "SettingsPerformancePage",
-      "source": "Read-ahead",
+      "source": "Playback buffer",
       "keywords": "buffer prefetch decode ahead playback",
       "needs": [],
       "descriptionSource": "How much video each clip decodes ahead of the playhead during playback. More absorbs slow-to-decode footage but competes with the frames on screen. Default 2000 ms."
@@ -1521,7 +1588,7 @@
       "id": "performance-continuous-read-ahead",
       "target": "settings:performance#performance-continuous-read-ahead",
       "context": "SettingsPerformancePage",
-      "source": "Continuous read-ahead",
+      "source": "Keep the playback buffer full",
       "keywords": "prefetch buffer decode ahead",
       "needs": [],
       "descriptionSource": "Keep decoding until the whole read-ahead window is full. Off decodes one frame ahead per displayed frame, which leaves more decoder time for the clip on screen but buffers less."
@@ -1530,7 +1597,7 @@
       "id": "performance-decoded-frame-cache",
       "target": "settings:performance#performance-decoded-frame-cache",
       "context": "SettingsPerformancePage",
-      "source": "Decoded frame cache",
+      "source": "Preview memory",
       "keywords": "ram memory preview frames buffer",
       "needs": [],
       "descriptionSource": "Memory shared by all clips for decoded preview frames. Automatic uses an eighth of system memory (a sixteenth on Android), at least 128 MiB."
@@ -1539,7 +1606,7 @@
       "id": "performance-cpu-frame-history",
       "target": "settings:performance#performance-cpu-frame-history",
       "context": "SettingsPerformancePage",
-      "source": "CPU frame history per clip",
+      "source": "Scrubbing memory per clip",
       "keywords": "ram memory history reader image",
       "needs": [],
       "descriptionSource": "Limit the decoded images each clip keeps in memory for scrubbing and effects. Unlimited keeps up to 16 frames per clip, which is large for 4K footage."
@@ -1548,7 +1615,7 @@
       "id": "performance-render-target-pool-count",
       "target": "settings:performance#performance-render-target-pool-count",
       "context": "SettingsPerformancePage",
-      "source": "Render target pool: count",
+      "source": "Effects workspace: buffer count",
       "keywords": "gpu vram framebuffer texture pool",
       "needs": [],
       "descriptionSource": "Idle GPU render targets kept for reuse. Fewer saves video memory; more avoids reallocating while effects and transitions play."
@@ -1557,7 +1624,7 @@
       "id": "performance-render-target-pool-size",
       "target": "settings:performance#performance-render-target-pool-size",
       "context": "SettingsPerformancePage",
-      "source": "Render target pool: size",
+      "source": "Effects workspace: video memory limit",
       "keywords": "gpu vram framebuffer texture pool bytes",
       "needs": [],
       "descriptionSource": "Cap on the video memory held by idle render targets, in addition to the count."
@@ -1566,7 +1633,7 @@
       "id": "performance-image-upload-cache-count",
       "target": "settings:performance#performance-image-upload-cache-count",
       "context": "SettingsPerformancePage",
-      "source": "Image upload cache: count",
+      "source": "Graphics card image cache: image count",
       "keywords": "gpu vram texture upload images",
       "needs": [],
       "descriptionSource": "Stills and converted frames kept on the GPU so they are not uploaded again every frame."
@@ -1575,19 +1642,82 @@
       "id": "performance-image-upload-cache-size",
       "target": "settings:performance#performance-image-upload-cache-size",
       "context": "SettingsPerformancePage",
-      "source": "Image upload cache: size",
+      "source": "Graphics card image cache: video memory limit",
       "keywords": "gpu vram texture upload images bytes",
       "needs": [],
       "descriptionSource": "Cap on the video memory used by the image upload cache, in addition to the count. 48 uploads of 4K frames take about 1.5 GiB."
     },
     {
-      "id": "performance-hardware-encoder-exports",
-      "target": "settings:performance#performance-hardware-encoder-exports",
-      "context": "SettingsPerformancePage",
-      "source": "Prefer hardware encoder for new exports",
-      "keywords": "nvenc qsv amf vaapi videotoolbox mediacodec gpu encode h264 x264",
+      "id": "personalize-what-you-make",
+      "target": "settings:personalize#personalize-what-you-make",
+      "context": "SettingsPersonalizePage",
+      "source": "What you make",
+      "keywords": "youtube shorts films podcasts tutorials creator content type",
       "needs": [],
-      "descriptionSource": "Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder."
+      "descriptionSource": "Used to suggest sensible defaults for new projects."
+    },
+    {
+      "id": "personalize-experience-level",
+      "target": "settings:personalize#personalize-experience-level",
+      "context": "SettingsPersonalizePage",
+      "source": "Experience with video editing",
+      "keywords": "beginner expert level pro studio workspaces simple",
+      "needs": [],
+      "descriptionSource": "First time hides the Studio workspaces. You can show any of them again below."
+    },
+    {
+      "id": "personalize-agentic-use",
+      "target": "settings:personalize#personalize-agentic-use",
+      "context": "SettingsPersonalizePage",
+      "source": "Working with AI agents",
+      "keywords": "agentic assistant ai ask mcp claude automation",
+      "needs": [],
+      "descriptionSource": "None hides the AI and Procedural workspaces and the Ask button in the header."
+    },
+    {
+      "id": "personalize-accent-colour",
+      "target": "settings:personalize#personalize-accent-colour",
+      "context": "SettingsPersonalizePage",
+      "source": "Accent colour",
+      "keywords": "accent color colour highlight brand primary swatch",
+      "needs": [],
+      "descriptionSource": "Colours buttons, selections and highlights on top of the current theme."
+    },
+    {
+      "id": "personalize-rail-labels",
+      "target": "settings:personalize#personalize-rail-labels",
+      "context": "SettingsPersonalizePage",
+      "source": "Labels under panel tabs",
+      "keywords": "rail labels icons text tabs sidebar",
+      "needs": [],
+      "descriptionSource": "Show a name under each icon on the side tab rails."
+    },
+    {
+      "id": "personalize-show-hints",
+      "target": "settings:personalize#personalize-show-hints",
+      "context": "SettingsPersonalizePage",
+      "source": "Show hints",
+      "keywords": "tips suggestions tooltips help onboarding",
+      "needs": [],
+      "descriptionSource": "Short tips and suggestions that appear as you work."
+    },
+    {
+      "id": "personalize-reset-tips",
+      "target": "settings:personalize#personalize-reset-tips",
+      "context": "SettingsPersonalizePage",
+      "source": "Reset dismissed tips",
+      "keywords": "tips suggestions hints dismissed restore again",
+      "needs": [],
+      "descriptionSource": "Bring back every tip and suggestion you closed. They reappear the next time you open the panel they belong to."
+    },
+    {
+      "id": "personalize-workspace-visibility",
+      "target": "settings:personalize#personalize-workspace-visibility",
+      "context": "SettingsPersonalizePage",
+      "source": "Workspaces in the switcher",
+      "keywords": "workspace hide show studio switcher visibility edit color audio 3d forge procedural",
+      "needs": [],
+      "descriptionSource": "Hidden workspaces stay reachable from search (Ctrl+K) and their Alt+number shortcuts. Edit is always shown."
     },
     {
       "id": "preview-show-guides",
@@ -1653,82 +1783,62 @@
       "descriptionSource": "How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K."
     },
     {
-      "id": "preview-faster-vaapi",
-      "target": "settings:preview#preview-faster-vaapi",
-      "context": "SettingsPreviewPage",
-      "source": "Faster preview (experimental)",
-      "keywords": "zero copy vaapi gpu hardware",
-      "needs": [],
-      "descriptionSource": "Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart."
+      "id": "general-cache",
+      "target": "settings:storage#general-cache",
+      "context": "SettingsStoragePage",
+      "source": "Cache",
+      "keywords": "disk space thumbnails proxies",
+      "needs": []
     },
     {
-      "id": "preview-faster-mediacodec",
-      "target": "settings:preview#preview-faster-mediacodec",
-      "context": "SettingsPreviewPage",
-      "source": "Faster preview (experimental)",
-      "keywords": "zero copy mediacodec gpu hardware",
-      "needs": [],
-      "descriptionSource": "Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart."
-    },
-    {
-      "id": "preview-graphics-card",
-      "target": "settings:preview#preview-graphics-card",
-      "context": "SettingsPreviewPage",
-      "source": "Graphics card",
-      "keywords": "gpu integrated discrete nvidia power battery",
-      "needs": [],
-      "descriptionSource": "Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart."
-    },
-    {
-      "id": "preview-graphics-card-system-settings",
-      "target": "settings:preview#preview-graphics-card-system-settings",
-      "context": "SettingsPreviewPage",
-      "source": "Graphics card",
-      "keywords": "gpu windows display nvidia",
-      "needs": [],
-      "descriptionSource": "Choose which graphics card Drift runs on in Windows Settings, under Display > Graphics. Takes effect after restart."
+      "id": "general-cache-location",
+      "target": "settings:storage#general-cache-location",
+      "context": "SettingsStoragePage",
+      "source": "Cache location",
+      "keywords": "cache folder directory path storage",
+      "needs": []
     },
     {
       "id": "preview-use-proxies",
-      "target": "settings:preview#preview-use-proxies",
-      "context": "SettingsPreviewPage",
-      "source": "Use proxies for preview",
+      "target": "settings:storage#preview-use-proxies",
+      "context": "SettingsStoragePage",
+      "source": "Use preview copies for playback",
       "keywords": "proxy low resolution optimized",
       "needs": [],
-      "descriptionSource": "Play clips from their low-resolution proxies where one exists. Export always uses the original media."
+      "descriptionSource": "Play clips from their low-resolution preview copies (proxies) where one exists. Export always uses the original media."
     },
     {
       "id": "preview-proxy-suggestion",
-      "target": "settings:preview#preview-proxy-suggestion",
-      "context": "SettingsPreviewPage",
-      "source": "Suggest proxies on import",
+      "target": "settings:storage#preview-proxy-suggestion",
+      "context": "SettingsStoragePage",
+      "source": "Suggest preview copies on import",
       "keywords": "proxy import suggest notification automatic",
       "needs": [],
       "descriptionSource": "What to do when imported footage may preview slowly."
     },
     {
       "id": "preview-proxy-resolution",
-      "target": "settings:preview#preview-proxy-resolution",
-      "context": "SettingsPreviewPage",
-      "source": "Proxy resolution",
+      "target": "settings:storage#preview-proxy-resolution",
+      "context": "SettingsStoragePage",
+      "source": "Preview copy resolution",
       "keywords": "proxy size 720p 1080p",
       "needs": [],
-      "descriptionSource": "Size of new proxies. Proxies made at another size are not used until you create them again."
+      "descriptionSource": "Size of new preview copies. Copies made at another size are not used until you create them again."
     },
     {
       "id": "preview-proxy-location",
-      "target": "settings:preview#preview-proxy-location",
-      "context": "SettingsPreviewPage",
-      "source": "Save proxies and reversed clips",
+      "target": "settings:storage#preview-proxy-location",
+      "context": "SettingsStoragePage",
+      "source": "Save preview copies and reversed clips",
       "keywords": "proxy folder location cache reversed disk drive",
       "needs": [],
       "descriptionSource": "Where Drift saves the files it makes from your media. Changing the folder doesn’t move or delete anything. Proxies in the previous folder are no longer found; choosing that folder again finds them."
     },
     {
       "id": "preview-proxy-name-patterns",
-      "target": "settings:preview#preview-proxy-name-patterns",
-      "context": "SettingsPreviewPage",
-      "source": "Proxy name patterns",
+      "target": "settings:storage#preview-proxy-name-patterns",
+      "context": "SettingsStoragePage",
+      "source": "Preview copy name patterns",
       "keywords": "proxy naming file name regex",
       "needs": [],
       "descriptionSource": "Linking a proxy teaches Drift its name pattern. Proxies next to your media that match a pattern below link automatically."
@@ -1770,15 +1880,6 @@
       "descriptionSource": "Dragging a slider also creates keyframes."
     },
     {
-      "id": "timeline-loop-work-area",
-      "target": "settings:timeline#timeline-loop-work-area",
-      "context": "SettingsTimelinePage",
-      "source": "Loop work area",
-      "keywords": "repeat in out",
-      "needs": [],
-      "descriptionSource": "Playback repeats between the work area in and out points."
-    },
-    {
       "id": "timeline-still-image-duration",
       "target": "settings:timeline#timeline-still-image-duration",
       "context": "SettingsTimelinePage",
@@ -1816,12 +1917,21 @@
     },
     {
       "id": "toolbar-layout",
-      "target": "settings:toolbar#toolbar-layout",
-      "context": "SettingsToolbarPage",
+      "target": "settings:timeline#toolbar-layout",
+      "context": "SettingsTimelinePage",
       "source": "Toolbar layout",
       "keywords": "buttons actions overflow menu customize",
       "needs": [],
       "descriptionSource": "Choose which actions appear on the toolbar above the timeline and which go in its overflow menu."
+    },
+    {
+      "id": "workspaces-orientation",
+      "target": "settings:workspaces#workspaces-orientation",
+      "context": "SettingsWorkspacesPage",
+      "source": "Workspace orientation",
+      "keywords": "landscape portrait rotate layout",
+      "needs": [],
+      "descriptionSource": "Landscape or portrait workspace. Auto follows the shape of the canvas."
     },
     {
       "id": "workspaces-layout-designer",
@@ -1838,31 +1948,31 @@
       "id": "general",
       "context": "SettingsPane",
       "source": "General",
-      "keywords": "language locale startup autosave recovery cache backup"
+      "keywords": "language locale startup autosave recovery backup undo crash reports privacy"
+    },
+    {
+      "id": "personalize",
+      "context": "SettingsPane",
+      "source": "Personalize",
+      "keywords": "accent colour color rail labels hints tips workspaces hide show experience level beginner pro agentic ai ask what you make youtube shorts films podcasts tutorials"
     },
     {
       "id": "appearance",
       "context": "SettingsPane",
       "source": "Appearance",
-      "keywords": "theme dark light color workspace layout translucency"
+      "keywords": "theme dark light color translucency interface size scale layout"
     },
     {
       "id": "workspaces",
       "context": "SettingsPane",
       "source": "Workspaces",
-      "keywords": "workspace layout panel window monitor screen dock preset"
+      "keywords": "workspace layout panel window monitor screen dock preset orientation landscape portrait"
     },
     {
       "id": "timeline",
       "context": "SettingsPane",
       "source": "Timeline",
-      "keywords": "scroll wheel horizontal vertical crossfade transition overview minimap"
-    },
-    {
-      "id": "toolbar",
-      "context": "SettingsPane",
-      "source": "Timeline toolbar",
-      "keywords": "toolbar buttons customize"
+      "keywords": "scroll wheel horizontal vertical crossfade transition overview minimap toolbar buttons customize auto keyframes animation"
     },
     {
       "id": "keymap",
@@ -1874,13 +1984,25 @@
       "id": "preview",
       "context": "SettingsPane",
       "source": "Preview",
-      "keywords": "quality resolution decode proxies guides background graphics gpu"
+      "keywords": "quality resolution decode guides background"
     },
     {
       "id": "performance",
       "context": "SettingsPane",
       "source": "Performance",
-      "keywords": "advanced tuning cache memory ram vram read-ahead buffer drop frames hardware encoder export pool"
+      "keywords": "graphics card gpu faster preview zero copy advanced tuning cache memory ram vram buffer drop frames pool"
+    },
+    {
+      "id": "storage",
+      "context": "SettingsPane",
+      "source": "Storage & media",
+      "keywords": "cache location disk space preview copies proxies proxy folder thumbnails"
+    },
+    {
+      "id": "export",
+      "context": "SettingsPane",
+      "source": "Export",
+      "keywords": "hardware encoder gpu encode h264 nvenc folder"
     },
     {
       "id": "audio",
@@ -1895,16 +2017,22 @@
       "keywords": "agent mcp claude cursor api key elevenlabs voice scene detection"
     },
     {
+      "id": "notifications",
+      "context": "SettingsPane",
+      "source": "Notifications",
+      "keywords": "extras reminders pack updates agent notifications toasts pop-ups quiet"
+    },
+    {
       "id": "network",
       "context": "SettingsPane",
-      "source": "Network",
-      "keywords": "proxy http socks internet firewall"
+      "source": "Network & internet",
+      "keywords": "internet proxy server http socks firewall"
     },
     {
       "id": "about",
       "context": "SettingsPane",
       "source": "About",
-      "keywords": "version updates debug info diagnostics"
+      "keywords": "version updates debug info diagnostics quick setup"
     }
   ],
   "propertiesTabs": [

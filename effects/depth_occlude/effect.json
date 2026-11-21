@@ -2,6 +2,7 @@
   "id": "depth.occlude",
   "displayName": "Behind Subject",
   "category": "depth",
+  "keywords": ["behind subject", "text behind person", "layer behind object", "depth"],
   "thumbnail": "thumbnail.webp",
   "order": 940,
   "description": "Puts this layer inside a video clip beneath it, so anything in that clip nearer than Distance \u2014 a person walking in front \u2014 passes in front of it. Pick the clip under Clip; its depth has to be estimated once.",

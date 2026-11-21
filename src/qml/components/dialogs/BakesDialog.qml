@@ -7,7 +7,7 @@ import Drift
 ThemedDialog {
     id: root
 
-    title: qsTr("Bakes")
+    title: qsTr("Pre-rendered sections")
     preferredWidth: Theme.dialogWidthLg
     showAccept: false
     rejectText: qsTr("Close")
@@ -42,7 +42,7 @@ ThemedDialog {
     }
 
     function stateLabel(bake) {
-        return bake.state === "baking" ? qsTr("Baking %1%").arg(Math.round(bake.progress * 100))
+        return bake.state === "baking" ? qsTr("Pre-rendering %1%").arg(Math.round(bake.progress * 100))
                : bake.state === "stale" ? qsTr("Stale") : qsTr("Fresh")
     }
 
@@ -52,7 +52,7 @@ ThemedDialog {
 
     ThemedDialog {
         id: deleteAllConfirm
-        title: qsTr("Delete all bakes?")
+        title: qsTr("Delete all pre-rendered sections?")
         preferredWidth: Theme.dialogWidthSm
         acceptText: qsTr("Delete")
         acceptVariant: "destructive"
@@ -73,13 +73,13 @@ ThemedDialog {
         property bool real: bakeId !== "" && bakeId !== "pending"
 
         ThemedMenuItem {
-            text: qsTr("Re-bake at current quality")
+            text: qsTr("Re-render at current quality")
             icon.name: Theme.icons.refresh
             enabled: rowMenu.real && !EditorState.bakes.busy
             onTriggered: EditorState.bakes.rebake(rowMenu.bakeId)
         }
         ThemedMenuItem {
-            text: qsTr("Set work area to bake")
+            text: qsTr("Set work area to pre-render")
             enabled: rowMenu.real
             onTriggered: EditorState.bakes.setWorkAreaToBake(rowMenu.bakeId)
         }
@@ -111,7 +111,7 @@ ThemedDialog {
                 Layout.fillWidth: true
                 spacing: Theme.spacingSm
 
-                ThemedLabel { text: qsTr("Quality for new bakes") }
+                ThemedLabel { text: qsTr("Quality for new pre-rendered sections") }
 
                 Row {
                     spacing: 0
@@ -143,15 +143,15 @@ ThemedDialog {
                     visible: EditorState.bakes.busy
                     anchors.verticalCenter: parent.verticalCenter
                     tone: "default"
-                    text: qsTr("Baking %1%").arg(Math.round(EditorState.bakes.progress * 100))
+                    text: qsTr("Pre-rendering %1%").arg(Math.round(EditorState.bakes.progress * 100))
                 }
 
                 ThemedButton {
                     variant: EditorState.bakes.busy ? "secondary" : "primary"
-                    text: EditorState.bakes.busy ? qsTr("Cancel") : qsTr("Bake work area")
+                    text: EditorState.bakes.busy ? qsTr("Cancel") : qsTr("Pre-render work area")
                     enabled: EditorState.bakes.busy || (root.hasWorkArea && !root.inComposite)
                     tooltip: EditorState.bakes.busy ? ""
-                             : root.inComposite ? qsTr("Bakes are of the main timeline. Switch to it to bake.")
+                             : root.inComposite ? qsTr("Pre-rendered sections are of the main timeline. Switch to it to pre-render.")
                              : root.hasWorkArea ? "" : qsTr("Set a work area on the timeline first")
                     onClicked: EditorState.bakes.busy ? EditorState.bakes.cancelBake()
                                                       : EditorState.bakes.bakeWorkArea()
@@ -176,7 +176,7 @@ ThemedDialog {
                     const outKeys = EditorState.shortcutFor("markOut")
                     const i = inKeys.length > 0 ? Theme.shortcutDisplay(inKeys) : qsTr("I")
                     const o = outKeys.length > 0 ? Theme.shortcutDisplay(outKeys) : qsTr("O")
-                    return qsTr("Bake a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Bake.")
+                    return qsTr("Pre-render a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Pre-render.")
                            .arg(i).arg(o)
                 }
             }
@@ -286,7 +286,7 @@ ThemedDialog {
 
                             ThemedButton {
                                 visible: row.modelData.state === "stale"
-                                text: qsTr("Re-bake")
+                                text: qsTr("Re-render")
                                 enabled: !EditorState.bakes.busy
                                 onClicked: EditorState.bakes.rebake(row.modelData.id)
                             }
@@ -301,7 +301,7 @@ ThemedDialog {
                             }
                             IconButton {
                                 glyph: Theme.icons.trash
-                                tooltip: qsTr("Delete bake")
+                                tooltip: qsTr("Delete pre-rendered section")
                                 enabled: row.real
                                 onClicked: EditorState.bakes.deleteBake(row.modelData.id)
                             }
@@ -318,16 +318,16 @@ ThemedDialog {
             ThemedLabel {
                 Layout.fillWidth: true
                 tone: "default"
-                text: qsTr("%n bake(s) · %1", "", root.bakeList.length)
+                text: qsTr("%n pre-rendered section(s) · %1", "", root.bakeList.length)
                       .arg(DownloadFormat.formatBytes(EditorState.bakes.totalBytes) || qsTr("0 B"))
             }
             ThemedButton {
-                text: qsTr("Re-bake all stale")
+                text: qsTr("Re-render all stale")
                 enabled: EditorState.bakes.staleCount > 0 && !EditorState.bakes.busy
                 onClicked: EditorState.bakes.rebakeAllStale()
             }
             ThemedButton {
-                text: qsTr("Delete all bakes")
+                text: qsTr("Delete all pre-rendered sections")
                 enabled: root.bakeList.length > 0
                 onClicked: deleteAllConfirm.open()
             }

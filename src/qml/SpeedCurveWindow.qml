@@ -29,7 +29,7 @@ ToolWindow {
     height: 720
     minimumWidth: 680
     minimumHeight: 560
-    title: qsTr("Custom speed")
+    title: qsTr("Speed ramp")
     color: Theme.c.speedCurveWindow.background
 
     function openFor(track, clip) {

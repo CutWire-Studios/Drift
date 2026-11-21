@@ -45,6 +45,12 @@ Item {
         width: root.width
         spacing: Theme.spacingXl
 
+        WorkspaceLink {
+            x: parent.width - width
+            label: qsTr("Draw & track ↗")
+            target: ({ panel: "masking" })
+        }
+
         // The tab used to open with a lone unlabelled combo box
         // and no explanation of what a mask does.
         Text {

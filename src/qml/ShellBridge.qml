@@ -141,6 +141,63 @@ QtObject {
         }
     }
 
+    // The workspace goDeeper() left; goBack() returns to it. Any other workspace switch clears it.
+    property string returnWorkspaceId: ""
+    property bool _navigating: false
+    property Connections workspaceWatcher: Connections {
+        target: Workspaces
+        function onActiveIdChanged() {
+            if (!ShellBridge._navigating)
+                ShellBridge.returnWorkspaceId = ""
+        }
+    }
+
+    // Opens the panel's home elsewhere: ctx is {panel, workspace, anchor, tab, track, clip, assetId,
+    // prop, tool, followerId, time}. The workspace is `workspace`, else the one holding `panel`;
+    // a panel already on screen is revealed in place. Returns false when nothing could be opened.
+    function goDeeper(ctx) {
+        if (ShellBridge.phoneShell || !ShellBridge.main)
+            return false
+        const panel = ctx.panel ?? ""
+        const pool = ShellBridge.main.panelPool
+        if (ctx.track !== undefined && ctx.clip !== undefined)
+            EditorState.selectClip(ctx.track, ctx.clip)
+        const request = Object.assign({}, ctx)
+        delete request.workspace
+        delete request.anchor
+        let target = ctx.workspace ?? ""
+        if (target === "" && panel !== "" && !(pool && pool.inLayout(panel)))
+            target = Workspaces.workspaceWithPanel(panel)
+        if (target !== "" && target !== Workspaces.activeId) {
+            const from = Workspaces.activeId
+            ShellBridge._navigating = true
+            Workspaces.activeId = target
+            ShellBridge._navigating = false
+            ShellBridge.returnWorkspaceId = from
+        } else if (target === "" && !(pool && pool.inLayout(panel))) {
+            if (panel === "")
+                return false
+            ShellBridge.main.openFloatingPanel(panel)
+        }
+        if (panel !== "") {
+            pool?.reveal(panel)
+            ShellBridge.panelRequest = request
+        }
+        if ((ctx.anchor ?? "") !== "")
+            ShellBridge._seekAnchor(ctx.anchor)
+        return true
+    }
+
+    function goBack() {
+        const target = ShellBridge.returnWorkspaceId
+        ShellBridge.returnWorkspaceId = ""
+        if (target === "")
+            return
+        ShellBridge._navigating = true
+        Workspaces.activeId = target
+        ShellBridge._navigating = false
+    }
+
     // The phone shell (AndroidMain) is the one that hosts AndroidEditor's sheets. Touch sizing
     // alone does not decide this: a tablet can run the desktop shell.
     readonly property bool phoneShell: EditorState.preferences.appliedShell === "mobile"

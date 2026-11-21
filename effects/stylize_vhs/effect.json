@@ -2,6 +2,7 @@
   "id": "stylize.vhs",
   "displayName": "VHS",
   "category": "retro",
+  "keywords": ["vhs", "retro", "tape", "90s", "analog", "camcorder"],
   "thumbnail": "thumbnail.webp",
   "order": 220,
   "parameters": [

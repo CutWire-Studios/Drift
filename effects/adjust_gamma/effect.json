@@ -2,6 +2,7 @@
   "id": "adjust.gamma",
   "displayName": "Gamma",
   "category": "color",
+  "keywords": ["midtones", "shadows", "lift", "mid", "brightness"],
   "thumbnail": "thumbnail.webp",
   "order": 40,
   "parameters": [

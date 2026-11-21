@@ -16,10 +16,12 @@ EmptyState {
     z: 4
     glyph: Theme.icons.layers
     title: qsTr("Your timeline is empty")
-    hint: qsTr("Drag media here from the library, or add an empty track to start.")
-    actionText: qsTr("New track")
+    hint: qsTr("Drag media here from the library, or import a file to start.")
+    actionText: qsTr("Import media")
     actionVariant: "primary"
-    onActionTriggered: newTrackMenuFromEmpty.open()
+    secondaryText: qsTr("New track")
+    onActionTriggered: panel.importMediaDirectlyToTimeline()
+    onSecondaryTriggered: newTrackMenuFromEmpty.open()
 
     NewTrackMenu {
         id: newTrackMenuFromEmpty

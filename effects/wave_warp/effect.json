@@ -2,6 +2,7 @@
   "id": "wave_warp",
   "displayName": "Wave Warp",
   "category": "glitch",
+  "keywords": ["wavy", "distort", "wave", "warp", "flag"],
   "thumbnail": "thumbnail.webp",
   "order": 385,
   "parameters": [

@@ -20,6 +20,8 @@ ToolWindow {
     property int sourceWidth: 0
     property int sourceHeight: 0
     property real sourceFps: 30
+    // The bin asset behind the target, for the Source Lab link.
+    property string labAssetId: ""
 
     // Rebuilt rather than bound: models() is a plain call, so nothing would re-evaluate it
     // when an addon is installed or a model is dropped into the folder while this window is open.
@@ -124,11 +126,13 @@ ToolWindow {
 
     function openFor(track, clip) {
         root.forAsset = false
+        root.labAssetId = EditorState.clipAt(track, clip).assetId || ""
         root.openTarget(EditorState.clipAt(track, clip).id || "")
     }
 
     function openForAsset(assetId) {
         root.forAsset = true
+        root.labAssetId = assetId
         root.openTarget(assetId)
     }
 

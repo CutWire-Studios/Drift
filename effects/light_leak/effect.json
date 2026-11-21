@@ -2,6 +2,7 @@
   "id": "light_leak",
   "displayName": "Light Leak",
   "category": "dreamy",
+  "keywords": ["light leak", "film leak", "warm", "flash", "analog", "overlay"],
   "thumbnail": "thumbnail.webp",
   "order": 180,
   "parameters": [

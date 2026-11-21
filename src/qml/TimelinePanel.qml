@@ -2349,6 +2349,7 @@ PanelFrame {
 
         ThemedMenuItem {
             text: qsTr("Paste here")
+            shortcutId: "paste"
             icon.name: Theme.icons.clipboardPaste
             enabled: trackAreaContextMenu.canPaste
             onTriggered: {
@@ -2357,16 +2358,24 @@ PanelFrame {
             }
         }
         ThemedMenuItem {
+            text: qsTr("Add bookmark here")
+            icon.name: Theme.icons.bookmark
+            onTriggered: EditorState.addBookmark(root.areaMenuSeconds, "")
+        }
+        ThemedMenuSeparator {
+            visible: root.areaMenuGapStart >= 0 || trackAreaContextMenu.track !== null
+        }
+        ThemedMenuItem {
             visible: root.areaMenuGapStart >= 0
             height: visible ? implicitHeight : 0
-            text: qsTr("Close Gap")
+            text: qsTr("Close gap")
             icon.name: Theme.icons.chevronsRightLeft
             onTriggered: EditorState.closeGap(root.areaMenuTrack, root.areaMenuGapStart)
         }
         ThemedMenuItem {
             visible: root.areaMenuGapStart >= 0
             height: visible ? implicitHeight : 0
-            text: qsTr("Close Gap on All Tracks")
+            text: qsTr("Close gap on all tracks")
             icon.name: Theme.icons.chevronsRightLeft
             onTriggered: EditorState.closeGapOnAllTracks(root.areaMenuTrack, root.areaMenuGapStart)
         }
@@ -2376,11 +2385,6 @@ PanelFrame {
             text: EditorState.workAreaActive ? qsTr("Close gaps in work area") : qsTr("Close all gaps on track")
             icon.name: Theme.icons.chevronsRightLeft
             onTriggered: EditorState.closeGapsInWorkArea(root.areaMenuTrack)
-        }
-        ThemedMenuItem {
-            text: qsTr("Add bookmark here")
-            icon.name: Theme.icons.bookmark
-            onTriggered: EditorState.addBookmark(root.areaMenuSeconds, "")
         }
         ThemedMenuSeparator {}
         ThemedMenuItem {
@@ -2399,39 +2403,57 @@ PanelFrame {
         }
         ThemedMenuItem {
             text: qsTr("Select all clips")
+            shortcutId: "selectAll"
             icon.name: Theme.icons.maximize
             onTriggered: EditorState.selectAllClips()
         }
-        ThemedMenuSeparator {
-            visible: trackAreaContextMenu.track !== null
+        ThemedMenuSeparator {}
+        ThemedContextMenu {
+            title: qsTr("Add track")
+
+            ThemedMenuItem {
+                text: qsTr("Video")
+                icon.name: Theme.icons.film
+                onTriggered: EditorState.addTrack("video")
+            }
+            ThemedMenuItem {
+                text: qsTr("Audio")
+                icon.name: Theme.icons.music
+                onTriggered: EditorState.addTrack("audio")
+            }
+            ThemedMenuItem {
+                text: qsTr("Text")
+                icon.name: Theme.icons.type
+                onTriggered: EditorState.addTrack("text")
+            }
+            ThemedMenuItem {
+                text: qsTr("Subtitle")
+                icon.name: Theme.icons.captions
+                onTriggered: EditorState.addTrack("subtitle")
+            }
+            ThemedMenuItem {
+                text: qsTr("Graphic")
+                icon.name: Theme.icons.shapes
+                onTriggered: EditorState.addTrack("shape")
+            }
+            ThemedMenuItem {
+                text: qsTr("Adjustment")
+                icon.name: Theme.icons.wand
+                onTriggered: EditorState.addAdjustmentTrack("videoEffects")
+            }
         }
         ThemedMenuItem {
-            readonly property bool on: trackAreaContextMenu.track !== null && trackAreaContextMenu.track.muted === true
-            visible: trackAreaContextMenu.track !== null
-            height: visible ? implicitHeight : 0
-            text: on ? qsTr("Unmute track") : qsTr("Mute track")
-            icon.name: on ? Theme.icons.volumeHigh : Theme.icons.volumeOff
-            onTriggered: EditorState.setTrackMuted(root.areaMenuTrack, !on)
-        }
-        ThemedMenuItem {
-            readonly property bool on: trackAreaContextMenu.track !== null && trackAreaContextMenu.track.hidden === true
-            visible: trackAreaContextMenu.track !== null
-            height: visible ? implicitHeight : 0
-            text: on ? qsTr("Show track") : qsTr("Hide track")
-            icon.name: on ? Theme.icons.eye : Theme.icons.eyeOff
-            onTriggered: EditorState.setTrackHidden(root.areaMenuTrack, !on)
-        }
-        ThemedMenuItem {
-            readonly property bool on: trackAreaContextMenu.track !== null && trackAreaContextMenu.track.locked === true
-            visible: trackAreaContextMenu.track !== null
-            height: visible ? implicitHeight : 0
-            text: on ? qsTr("Unlock track") : qsTr("Lock track")
-            icon.name: on ? Theme.icons.lockOpen : Theme.icons.lock
-            onTriggered: EditorState.setTrackLocked(root.areaMenuTrack, !on)
+            text: qsTr("Split all tracks here")
+            shortcutId: "splitAllTracks"
+            icon.name: Theme.icons.scissors
+            onTriggered: {
+                EditorState.playheadSeconds = root.areaMenuSeconds
+                EditorState.splitAtPlayhead()
+            }
         }
         ThemedMenuSeparator {}
         ThemedMenuItem {
-            text: qsTr("Remove empty tracks")
+            text: qsTr("Delete all empty tracks")
             icon.name: Theme.icons.trash
             enabled: trackAreaContextMenu.hasEmptyTracks
             onTriggered: EditorState.removeEmptyTracks()

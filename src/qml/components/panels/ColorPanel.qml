@@ -637,7 +637,7 @@ PanelFrame {
                         readonly property bool none: (root.params.look || "") === ""
                         wrapMode: none ? Text.WordWrap : Text.NoWrap
                         elide: none ? Text.ElideNone : Text.ElideRight
-                        text: none ? qsTr("None. Choose one in the Color Grading LUTs panel.") : root.target.lookLabel
+                        text: none ? qsTr("None. Choose one in the Looks panel.") : root.target.lookLabel
                         color: Theme.mutedForeground
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeXs

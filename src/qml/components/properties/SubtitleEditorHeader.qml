@@ -12,7 +12,7 @@ Column {
 
     Item {
         width: parent.width
-        height: titleText.implicitHeight
+        height: Math.max(titleText.implicitHeight, Theme.controlHeightSm)
 
         Text {
             id: titleText
@@ -25,6 +25,19 @@ Column {
             font.weight: Font.Medium
         }
 
+        IconButton {
+            anchors.left: titleText.right
+            anchors.leftMargin: Theme.spacingSm
+            anchors.verticalCenter: parent.verticalCenter
+            buttonSize: Theme.controlHeightSm
+            iconSize: Theme.iconSizeSm
+            variant: "ghost"
+            glyph: Theme.icons.info
+            tooltip: editor.compactEdit
+                     ? qsTr("Play the timeline — the line on screen lights up. Tap any line to edit it.")
+                     : qsTr("Play the timeline — the line on screen lights up. Click any line to jump to it and edit it below.")
+        }
+
         Text {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
@@ -33,18 +46,6 @@ Column {
             font.family: Theme.monoFontFamily
             font.pixelSize: Theme.fontSizeXs
         }
-    }
-
-    Text {
-        width: parent.width
-        wrapMode: Text.WordWrap
-        text: editor.compactEdit
-              ? qsTr("Play the timeline — the line on screen lights up. Tap any line to edit it.")
-              : qsTr("Play the timeline — the line on screen lights up. Click any line to jump to it and edit it below.")
-        color: Theme.c.subtitleEditorHeader.foregroundMuted
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeXs
-        opacity: 0.8
     }
 
     Row {
