@@ -27,7 +27,7 @@ Search order: `DRIFT_EFFECTS_DIR`, `<applicationDir>/effects`, `<AppDataLocation
 | `history` | Whole number 1–32: the effect samples that many of the clip's earlier source frames (see "Time effects" below). `gpu` backend only |
 | `historyExact` | Whole number 1–2, no more than `history`: the engine decodes that many earlier source frames on demand when its ring lacks them (see "Time effects"). `gpu` backend only; `nextFeatures` name `history:exact` |
 | `previousOutput` | `true`: the effect can read its own output from the previous frame (see "Time effects"). `gpu` backend only |
-| `pipeline` | `intermediateBuffers` + `passes` |
+| `pipeline` | `intermediateBuffers` + `passes`. A buffer is `{"id", "scale", "format"}`; `format` is optional: `"rgba8"` (default), `"rgba16f"` or `"rg16f"` (half-float: values outside 0..1 and negatives survive between passes). Any other value is a parse error. A package using a half-float format lists `buffer:float` in `nextFeatures`. See "Float intermediate buffers" |
 
 ### Parameter types
 
@@ -322,6 +322,26 @@ result is a texture plus the `uv` rectangle of that frame inside it.
 The Time effects in the Trending Effects addon (Feedback, Trails, Time Echo, Frame Delay, Slit
 Scan) use the `time` category. The catalog has no fixed list beyond its five built-ins: any other
 category slug appears as an extra group, labelled with the capitalised slug.
+
+## Float intermediate buffers
+
+`"format": "rgba16f" | "rg16f"` on an `intermediateBuffers` entry allocates it as RGBA16F, so a pass can
+store signed or large values (flow vectors, accumulators) without packing them into 8 bits. `rg16f` is
+allocated as RGBA16F too (Qt's framebuffer object has no two-channel half-float), so it saves no memory.
+The buffer pool keys on the format, so 8-bit and half-float targets never mix.
+
+Where the context cannot render to half float (a GLES 3.0/3.1 or WebGL2 context without
+`EXT_color_buffer_float` or `EXT_color_buffer_half_float`, or an allocation that fails), every
+buffer of the pipeline is allocated as RGBA8 instead and a single `qInfo` is logged. A shader
+must therefore work either way. A package with a half-float buffer gets this prelude:
+
+- `uniform float u_floatBuffers`: 1 when the buffers are half float, 0 on the fallback.
+- `vec4 packFlow(vec2 v)` / `vec2 unpackFlow(vec4 texel)`: store and read a signed vec2 in
+  [-0.5, 0.5]. Half float keeps it as is in `.rg`; the fallback keeps 16 bits per component in the
+  `.rg` and `.ba` byte pairs. Use them for every read and write of such a buffer and the same shader
+  runs on both paths. A shader that needs a different range tests `u_floatBuffers` itself.
+
+`effects/motion_blur` keeps all its flow, tile-max and neighbour-max buffers as `rg16f` through these helpers.
 
 ## 3D face mesh (`backend: "model3d"`)
 

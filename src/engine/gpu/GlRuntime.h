@@ -70,6 +70,7 @@ struct GlTarget
     int width = 0;
     int height = 0;
     bool hasDepth = false;
+    bool floatColor = false; // RGBA16F colour attachment
     // Colour is already multiplied by alpha (a Skia layer straight off the GPU); every other
     // layer target is straight alpha.
     bool premultiplied = false;
@@ -336,7 +337,12 @@ public:
     // Framebuffers are recycled by size (and depth attachment): allocating a fresh FBO per
     // effect per frame churns GPU memory during steady-state playback. wantDepth is only set
     // for the model3d overlay — every other caller keeps the default.
-    GlTarget acquireTarget(int width, int height, bool wantDepth = false);
+    GlTarget acquireTarget(int width, int height, bool wantDepth = false, bool floatColor = false);
+
+    // Whether this context can render to half-float textures. Probed once; GL thread only.
+    bool supportsFloatTargets();
+    // Test only: makes supportsFloatTargets() false so the RGBA8 fallback can be exercised.
+    void setFloatTargetsDisabledForTest(bool disabled) { m_floatTargetsDisabled = disabled; }
     void releaseTarget(GlTarget &&target);
 
     // glFinish then read the FBO. Apple's GL can hand toImage() a half-resolved
@@ -477,6 +483,8 @@ private:
 
     std::multimap<uint64_t, std::unique_ptr<QOpenGLFramebufferObject>> m_targetPool;
     size_t m_pooledTargets = 0;
+    int m_floatTargetsProbe = -1;
+    bool m_floatTargetsDisabled = false;
     size_t m_pooledTargetBytes = 0;
 
     GlTarget m_presentRing[kPresentStreams * kPresentRingSize];

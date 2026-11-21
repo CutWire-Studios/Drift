@@ -7,16 +7,6 @@ uniform sampler2D u_texture1;
 const float kMinBase = 0.004;
 const float kRelative = 0.85;
 
-vec2 enc(float v) {
-    float e = floor(clamp(v + 0.5, 0.0, 1.0) * 65535.0 + 0.5);
-    float hi = floor(e / 256.0);
-    return vec2(hi, e - hi * 256.0) / 255.0;
-}
-
-float dec(vec2 b) {
-    return (floor(b.x * 255.0 + 0.5) * 256.0 + floor(b.y * 255.0 + 0.5)) / 65535.0 - 0.5;
-}
-
 float luma(ivec2 p, ivec2 sz, int channel) {
     vec2 t = (vec2(clamp(p, ivec2(0), sz - 1)) + 0.5) / vec2(sz);
     return texture(u_currentTexture, t)[channel];
@@ -38,7 +28,7 @@ void main() {
     ivec2 p = ivec2(v_texCoord * vec2(sz));
     ivec2 cp = clamp(ivec2(v_texCoord * vec2(cs)), ivec2(0), cs - 1);
     vec4 coarse = texture(u_texture1, (vec2(cp) + 0.5) / vec2(cs));
-    ivec2 guess = ivec2(floor(vec2(dec(coarse.rg), dec(coarse.ba)) * vec2(sz) + 0.5));
+    ivec2 guess = ivec2(floor(unpackFlow(coarse) * vec2(sz) + 0.5));
 
     float base = cost(p, ivec2(0), sz);
     float best = base;
@@ -73,5 +63,5 @@ void main() {
         }
     }
     vec2 uvD = (vec2(bestD) + sub) / vec2(sz);
-    fragColor = vec4(enc(uvD.x), enc(uvD.y));
+    fragColor = packFlow(uvD);
 }

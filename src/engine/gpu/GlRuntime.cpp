@@ -91,6 +91,9 @@ extern "C" {
 // qopengl.h includes <GLES2/gl2.h> accordingly. The ES 3.0 *functions* this file uses still resolve,
 // because QOpenGLExtraFunctions looks them up at runtime — but the ES 3.0 *enum constants* are
 // simply absent from the ES2 header, so they are supplied here.
+#ifndef GL_RGBA16F
+#define GL_RGBA16F 0x881A
+#endif
 #ifndef GL_RED
 #define GL_RED 0x1903
 #endif
@@ -406,6 +409,37 @@ constexpr const char *kPrevOutputPrelude = R"(
 uniform sampler2D u_prevOutput;
 )";
 
+// Compiled into every pass of a package that declares a half-float buffer. u_floatBuffers is 0 when the
+// context could not allocate them and the buffers are RGBA8, so a shader writes and reads its signed
+// vec2 through packFlow / unpackFlow and works either way. The value must lie within [-0.5, 0.5]; the
+// RGBA8 form keeps it to 16 bits per component in the red/green and blue/alpha channel pairs.
+constexpr const char *kFloatBufferPrelude = R"(
+uniform float u_floatBuffers;
+
+vec2 packFlowComponent(float v)
+{
+    float e = floor(clamp(v + 0.5, 0.0, 1.0) * 65535.0 + 0.5);
+    float hi = floor(e / 256.0);
+    return vec2(hi, e - hi * 256.0) / 255.0;
+}
+
+float unpackFlowComponent(vec2 b)
+{
+    return (floor(b.x * 255.0 + 0.5) * 256.0 + floor(b.y * 255.0 + 0.5)) / 65535.0 - 0.5;
+}
+
+vec4 packFlow(vec2 v)
+{
+    return u_floatBuffers > 0.5 ? vec4(v, 0.0, 1.0)
+                                : vec4(packFlowComponent(v.x), packFlowComponent(v.y));
+}
+
+vec2 unpackFlow(vec4 b)
+{
+    return u_floatBuffers > 0.5 ? b.rg : vec2(unpackFlowComponent(b.rg), unpackFlowComponent(b.ba));
+}
+)";
+
 // The engine declarations a package's passes are compiled with.
 QByteArray packagePrelude(const drift::GpuEffectDefinition &gpu)
 {
@@ -418,6 +452,8 @@ QByteArray packagePrelude(const drift::GpuEffectDefinition &gpu)
         out += kDepthPrelude;
     if (gpu.needsMask)
         out += kMaskPrelude;
+    if (gpu.usesFloatBuffers())
+        out += kFloatBufferPrelude;
     return out;
 }
 
@@ -1082,12 +1118,18 @@ QString describePrime(const VaDrmPrimeSurfaceDescriptor &desc)
 }
 #endif // DRIFT_VAAPI_IMPORT
 
-uint64_t targetPoolKey(int width, int height, bool wantDepth)
+uint64_t targetPoolKey(int width, int height, bool wantDepth, bool floatColor)
 {
-    // w/h fit in 31 bits; the low bit tags depth so colour-only and depth targets never share.
+    // w/h fit in 31 bits; bit 0 tags depth and bit 32 half-float colour, so those never share.
     return (uint64_t(uint32_t(width) & 0x7fffffffu) << 33)
            | (uint64_t(uint32_t(height) & 0x7fffffffu) << 1)
+           | (floatColor ? (uint64_t(1) << 32) : 0u)
            | (wantDepth ? 1u : 0u);
+}
+
+size_t targetBytesPerPixel(bool depth, bool floatColor)
+{
+    return (floatColor ? 8u : 4u) + (depth ? 4u : 0u);
 }
 
 GlRuntime *g_runtime = nullptr;
@@ -1587,27 +1629,54 @@ void GlRuntime::shutdown()
 }
 
 
-GlTarget GlRuntime::acquireTarget(int width, int height, bool wantDepth)
+bool GlRuntime::supportsFloatTargets()
+{
+    if (m_floatTargetsDisabled)
+        return false;
+    if (m_floatTargetsProbe >= 0)
+        return m_floatTargetsProbe == 1;
+    bool ok = false;
+    if (const QOpenGLContext *ctx = QOpenGLContext::currentContext()) {
+        const QSurfaceFormat fmt = ctx->format();
+        const auto has = [ctx](const char *name) {
+            return ctx->hasExtension(QByteArray("GL_") + name) || ctx->hasExtension(QByteArray(name));
+        };
+        if (!ctx->isOpenGLES())
+            ok = fmt.majorVersion() >= 3;
+        else
+            ok = (fmt.majorVersion() > 3 || (fmt.majorVersion() == 3 && fmt.minorVersion() >= 2))
+                 || has("EXT_color_buffer_float") || has("EXT_color_buffer_half_float");
+    }
+    m_floatTargetsProbe = ok ? 1 : 0;
+    if (!ok)
+        qInfo("GlRuntime: half-float render targets unavailable, effect buffers fall back to RGBA8");
+    return ok;
+}
+
+GlTarget GlRuntime::acquireTarget(int width, int height, bool wantDepth, bool floatColor)
 {
     GlTarget target;
     target.width = qMax(1, width);
     target.height = qMax(1, height);
     target.hasDepth = wantDepth;
+    target.floatColor = floatColor;
 
-    const uint64_t key = targetPoolKey(target.width, target.height, wantDepth);
+    const uint64_t key = targetPoolKey(target.width, target.height, wantDepth, floatColor);
     const auto it = m_targetPool.find(key);
     if (it != m_targetPool.end()) {
         target.fbo = std::move(it->second);
         m_targetPool.erase(it);
         --m_pooledTargets;
         m_pooledTargetBytes -= size_t(target.width) * size_t(target.height)
-                               * (wantDepth ? 8u : 4u);
+                               * targetBytesPerPixel(wantDepth, floatColor);
         return target;
     }
 
     QOpenGLFramebufferObjectFormat fmt;
     fmt.setAttachment(wantDepth ? QOpenGLFramebufferObject::Depth
                                 : QOpenGLFramebufferObject::NoAttachment);
+    if (floatColor)
+        fmt.setInternalTextureFormat(GL_RGBA16F);
     target.fbo = std::make_unique<QOpenGLFramebufferObject>(target.width, target.height, fmt);
     return target;
 }
@@ -1619,17 +1688,18 @@ void GlRuntime::releaseTarget(GlTarget &&target)
 
     // Count both the color texture and (when present) the depth attachment.
     const size_t bytes = size_t(target.width) * size_t(target.height)
-                         * (target.hasDepth ? 8u : 4u);
+                         * targetBytesPerPixel(target.hasDepth, target.floatColor);
     const size_t maxTargets = size_t(qMax(1, drift::tuning::targetPoolMax.load(std::memory_order_relaxed)));
     const size_t maxBytes = size_t(qMax(0, drift::tuning::targetPoolMiB.load(std::memory_order_relaxed)))
                             * size_t(drift::tuning::kMiB);
     if (maxBytes > 0 && bytes > maxBytes)
         return;
 
-    const uint64_t key = targetPoolKey(target.width, target.height, target.hasDepth);
+    const uint64_t key = targetPoolKey(target.width, target.height, target.hasDepth, target.floatColor);
     const auto entryBytes = [](const QOpenGLFramebufferObject *fbo) {
         const bool depth = fbo->format().attachment() != QOpenGLFramebufferObject::NoAttachment;
-        return size_t(fbo->width()) * size_t(fbo->height()) * (depth ? 8u : 4u);
+        const bool floatColor = fbo->format().internalTextureFormat() == GLenum(GL_RGBA16F);
+        return size_t(fbo->width()) * size_t(fbo->height()) * targetBytesPerPixel(depth, floatColor);
     };
     while (!m_targetPool.empty()
            && (m_pooledTargets >= maxTargets
@@ -3314,6 +3384,8 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
         sourceSig += QLatin1String("#history");
     if (gpu.needsPrevOutput)
         sourceSig += QLatin1String("#prev");
+    if (gpu.usesFloatBuffers())
+        sourceSig += QLatin1String("#float");
     const QByteArray prelude = packagePrelude(gpu);
 
     CompiledEffect &cached = programs[cacheKey];
@@ -4185,16 +4257,27 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
 
     std::map<QString, GlTarget> buffers;
     bool failed = false;
-    for (const drift::GpuEffectBufferSpec &spec : gpu.intermediateBuffers) {
-        const int w = qMax(1, int(std::lround(canvasSize.width() * spec.scale)));
-        const int h = qMax(1, int(std::lround(canvasSize.height() * spec.scale)));
-        GlTarget target = rt.acquireTarget(w, h);
-        if (!target.isValid()) {
-            qWarning("GlRuntime: FBO alloc failed for buffer %s", qPrintable(spec.id));
-            failed = true;
-            break;
+    bool floatBuffers = gpu.usesFloatBuffers() && rt.supportsFloatTargets();
+    for (int attempt = 0; attempt < 2; ++attempt) {
+        failed = false;
+        for (const drift::GpuEffectBufferSpec &spec : gpu.intermediateBuffers) {
+            const int w = qMax(1, int(std::lround(canvasSize.width() * spec.scale)));
+            const int h = qMax(1, int(std::lround(canvasSize.height() * spec.scale)));
+            const bool wantFloat = floatBuffers && spec.format != drift::GpuBufferFormat::Rgba8;
+            GlTarget target = rt.acquireTarget(w, h, false, wantFloat);
+            if (!target.isValid()) {
+                qWarning("GlRuntime: FBO alloc failed for buffer %s", qPrintable(spec.id));
+                failed = true;
+                break;
+            }
+            buffers.emplace(spec.id, std::move(target));
         }
-        buffers.emplace(spec.id, std::move(target));
+        if (!failed || !floatBuffers)
+            break;
+        for (auto &entry : buffers)
+            rt.releaseTarget(std::move(entry.second));
+        buffers.clear();
+        floatBuffers = false;
     }
 
     std::map<QString, GLuint> textures;
@@ -4359,6 +4442,9 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
                 program->setUniformValue("u_fromTexture", fromUnit);
             if (toUnit >= 0)
                 program->setUniformValue("u_toTexture", toUnit);
+
+            if (gpu.usesFloatBuffers())
+                program->setUniformValue("u_floatBuffers", floatBuffers ? 1.f : 0.f);
 
             // Re-apply resolution after possible buffer-sized primary input.
             program->setUniformValue("u_resolution",

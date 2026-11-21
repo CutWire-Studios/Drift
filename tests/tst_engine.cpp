@@ -416,6 +416,9 @@ private slots:
     void motionBlurLeavesStaticFootageAlone();
     void motionBlurNeedsThePreviousFrame();
     void historyExactDecodesThePreviousFrameOnDemand();
+    void effectPackageLoaderParsesBufferFormat();
+    void floatIntermediateBufferKeepsValuesOutsideZeroToOne();
+    void motionBlurStillBlursWithoutFloatBuffers();
     void effectPackageLoaderParsesHistoryExact();
     void gpuGaussianBlurChangesImage();
     void gpuMultiPassPreservesVerticalOrientation();
@@ -10951,6 +10954,177 @@ void EngineTest::effectPackageLoaderParsesHistoryExact()
         QVERIFY2(error.contains(QStringLiteral("historyExact")) || error.contains(QStringLiteral("history")),
                  qPrintable(error));
     }
+}
+
+void EngineTest::effectPackageLoaderParsesBufferFormat()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto write = [&](const QString &name, const QString &bufferJson, const QString &features) {
+        const QString pkg = dir.filePath(name);
+        QDir().mkpath(pkg);
+        QFile json(QDir(pkg).filePath(QStringLiteral("effect.json")));
+        json.open(QIODevice::WriteOnly | QIODevice::Text);
+        json.write(QStringLiteral(R"({
+          "id": "test.%1", "displayName": "%1", "category": "time", "backend": "gpu",
+          %3 "parameters": [],
+          "pipeline": {"intermediateBuffers": [%2], "passes": [
+            {"passIndex": 0, "fragmentShader": "main.frag",
+             "inputs": [{"type": "source_texture"}], "output": {"type": "buffer", "id": "b"}},
+            {"passIndex": 1, "fragmentShader": "main.frag",
+             "inputs": [{"type": "buffer", "id": "b"}], "output": {"type": "canvas"}}
+          ]}
+        })").arg(name, bufferJson, features).toUtf8());
+        json.close();
+        QFile frag(QDir(pkg).filePath(QStringLiteral("main.frag")));
+        frag.open(QIODevice::WriteOnly | QIODevice::Text);
+        frag.write("#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\nuniform sampler2D u_currentTexture;\n"
+                   "void main(){ fragColor = texture(u_currentTexture, v_texCoord); }\n");
+        return pkg;
+    };
+    const QString features = QStringLiteral(R"("nextFeatures": ["buffer:float"],)");
+    QString error;
+    const struct { const char *format; drift::GpuBufferFormat expected; } good[] = {
+        {R"(, "format": "rgba8")", drift::GpuBufferFormat::Rgba8},
+        {R"(, "format": "rgba16f")", drift::GpuBufferFormat::Rgba16F},
+        {R"(, "format": "rg16f")", drift::GpuBufferFormat::Rg16F},
+        {"", drift::GpuBufferFormat::Rgba8},
+    };
+    int n = 0;
+    for (const auto &c : good) {
+        const EffectPresetEntry entry = EffectPackageLoader::loadPackage(
+            write(QStringLiteral("fmt_%1").arg(n++), QStringLiteral(R"({"id": "b", "scale": 0.5%1})").arg(QLatin1String(c.format)),
+                  features),
+            &error);
+        QVERIFY2(entry.gpu.valid, qPrintable(error));
+        QCOMPARE(entry.gpu.intermediateBuffers.size(), 1);
+        QCOMPARE(entry.gpu.intermediateBuffers[0].format, c.expected);
+    }
+    const EffectPresetEntry bad = EffectPackageLoader::loadPackage(
+        write(QStringLiteral("fmt_bad"), QStringLiteral(R"({"id": "b", "format": "rgba32f"})"), features), &error);
+    QVERIFY(!bad.gpu.valid);
+    QVERIFY2(error.contains(QStringLiteral("format")), qPrintable(error));
+    const EffectPresetEntry old = EffectPackageLoader::loadPackage(
+        write(QStringLiteral("fmt_future"), QStringLiteral(R"({"id": "b", "format": "rg16f"})"),
+              QStringLiteral(R"("nextFeatures": ["buffer:float", "buffer:from-the-future"],)")),
+        &error);
+    QVERIFY(!old.gpu.valid);
+}
+
+namespace {
+
+// Pass 0 writes (-3.5, 7, 0) into a `format` buffer, pass 1 shows green when it reads that back and
+// red when the buffer clamped it.
+QString writeFloatRoundTripFixture(const QTemporaryDir &dir)
+{
+    const QString pkg = dir.filePath(QStringLiteral("float_roundtrip"));
+    QDir().mkpath(pkg);
+    QFile json(QDir(pkg).filePath(QStringLiteral("effect.json")));
+    json.open(QIODevice::WriteOnly | QIODevice::Text);
+    json.write(R"({
+      "id": "test.float_roundtrip", "displayName": "float", "category": "time", "backend": "gpu",
+      "nextFeatures": ["buffer:float"], "parameters": [],
+      "pipeline": {"intermediateBuffers": [{"id": "f", "scale": 0.5, "format": "rgba16f"}], "passes": [
+        {"passIndex": 0, "fragmentShader": "write.frag",
+         "inputs": [{"type": "source_texture"}], "output": {"type": "buffer", "id": "f"}},
+        {"passIndex": 1, "fragmentShader": "read.frag",
+         "inputs": [{"type": "buffer", "id": "f"}], "output": {"type": "canvas"}}
+      ]}
+    })");
+    json.close();
+    const char *head = "#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\nuniform sampler2D u_currentTexture;\n";
+    QFile write(QDir(pkg).filePath(QStringLiteral("write.frag")));
+    write.open(QIODevice::WriteOnly | QIODevice::Text);
+    write.write(QByteArray(head) + "void main(){ fragColor = vec4(-3.5, 7.0, 0.0, 1.0); }\n");
+    write.close();
+    QFile read(QDir(pkg).filePath(QStringLiteral("read.frag")));
+    read.open(QIODevice::WriteOnly | QIODevice::Text);
+    read.write(QByteArray(head)
+               + "void main(){ vec4 v = texture(u_currentTexture, v_texCoord);"
+                 " bool ok = abs(v.r + 3.5) < 0.01 && abs(v.g - 7.0) < 0.01;"
+                 " fragColor = ok ? vec4(0.0, 1.0, 0.0, 1.0) : vec4(1.0, 0.0, 0.0, 1.0); }\n");
+    read.close();
+    return pkg;
+}
+
+} // namespace
+
+void EngineTest::floatIntermediateBufferKeepsValuesOutsideZeroToOne()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    QTemporaryDir videoDir;
+    QVERIFY(videoDir.isValid());
+    const QString video = makeColorSegmentsVideo(videoDir);
+    if (video.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir fixtures;
+    QVERIFY(fixtures.isValid());
+    QVERIFY(!writeFloatRoundTripFixture(fixtures).isEmpty());
+    QStringList roots = historyTestEffectRoots();
+    roots.append(fixtures.path());
+    reloadEffectCatalog(roots);
+    const auto restore = qScopeGuard([] { reloadEffectCatalog(historyTestEffectRoots()); });
+    QVERIFY(effectDefForId(QStringLiteral("test.float_roundtrip")));
+    QVERIFY(effectDefForId(QStringLiteral("test.float_roundtrip"))->gpu.valid);
+
+    drift::Effect effect;
+    effect.catalogId = QStringLiteral("test.float_roundtrip");
+    HistoryProject project;
+    project.setUp(video, effect);
+    FrameCompositor compositor;
+    compositor.setProject(&project.project);
+
+    bool supported = false;
+    drift::gl::runtime().exec([&] { supported = drift::gl::runtime().supportsFloatTargets(); });
+    if (!supported)
+        QSKIP("Context cannot render to half-float targets");
+    const QColor c = centreAtFrame(compositor, 5);
+    QVERIFY2(c.green() > 200 && c.red() < 60, qPrintable(c.name()));
+
+    // The 8-bit fallback clamps, which the same shader reports as red.
+    drift::gl::runtime().exec([] { drift::gl::runtime().setFloatTargetsDisabledForTest(true); });
+    const auto reenable = qScopeGuard([] {
+        drift::gl::runtime().exec([] { drift::gl::runtime().setFloatTargetsDisabledForTest(false); });
+    });
+    const QColor clamped = centreAtFrame(compositor, 6);
+    QVERIFY2(clamped.red() > 200 && clamped.green() < 60, qPrintable(clamped.name()));
+}
+
+void EngineTest::motionBlurStillBlursWithoutFloatBuffers()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    QVERIFY(effectDefForId(QStringLiteral("motion.blur")));
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString video = makeMovingSquareVideo(dir, 12);
+    if (video.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    drift::gl::runtime().exec([] { drift::gl::runtime().setFloatTargetsDisabledForTest(true); });
+    const auto reenable = qScopeGuard([] {
+        drift::gl::runtime().exec([] { drift::gl::runtime().setFloatTargetsDisabledForTest(false); });
+    });
+
+    drift::Project plainProject = motionBlurProject(video, false);
+    drift::Project blurProject = motionBlurProject(video, true);
+    FrameCompositor plain;
+    plain.setProject(&plainProject);
+    FrameCompositor blurred;
+    blurred.setProject(&blurProject);
+    QImage sharp;
+    QImage smeared;
+    for (int frame = 8; frame <= 10; ++frame) {
+        sharp = frameAt(plain, frame);
+        smeared = frameAt(blurred, frame);
+    }
+    QVERIFY(!sharp.isNull() && !smeared.isNull());
+    const auto lum = [](const QImage &img, int x) { return img.pixelColor(x, 64).red(); };
+    QVERIFY2(lum(smeared, 150) > lum(sharp, 150) + 30, qPrintable(QString::number(lum(smeared, 150))));
+    QVERIFY2(lum(smeared, 184) > lum(sharp, 184) + 30, qPrintable(QString::number(lum(smeared, 184))));
+    QVERIFY2(lum(smeared, 100) < 8 && lum(smeared, 200) < 8, qPrintable(QString::number(lum(smeared, 100))));
 }
 
 void EngineTest::trendingTimeEffectsLoadAndCompile()

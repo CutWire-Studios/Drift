@@ -10,13 +10,9 @@ uniform float samples;
 uniform float maxBlur;
 uniform float strength;
 
-float dec(vec2 b) {
-    return (floor(b.x * 255.0 + 0.5) * 256.0 + floor(b.y * 255.0 + 0.5)) / 65535.0 - 0.5;
-}
-
 vec2 flowTexel(ivec2 p, ivec2 sz) {
     vec4 b = texelFetch(u_texture1, clamp(p, ivec2(0), sz - 1), 0);
-    return vec2(dec(b.rg), dec(b.ba));
+    return unpackFlow(b);
 }
 
 vec2 flowAt(vec2 uv) {
@@ -55,7 +51,7 @@ void main() {
     }
     ivec2 nsz = textureSize(u_texture2, 0);
     vec4 nb = texelFetch(u_texture2, clamp(ivec2(v_texCoord * vec2(nsz)), ivec2(0), nsz - 1), 0);
-    vec2 vn = toPixels(vec2(dec(nb.rg), dec(nb.ba)));
+    vec2 vn = toPixels(unpackFlow(nb));
     float len = length(vn);
     if (len < 0.75) {
         fragColor = src;

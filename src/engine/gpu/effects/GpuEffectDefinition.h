@@ -37,7 +37,7 @@ inline bool isEngineBoundGpuUniform(const QString &name)
         || name == QLatin1String("u_frameRate")
         || name == QLatin1String("u_currentTexture") || name == QLatin1String("u_progress")
         || name == QLatin1String("u_fromTexture") || name == QLatin1String("u_toTexture")
-        || name == QLatin1String("u_hasDepth") || name == QLatin1String("u_templateBounds")
+        || name == QLatin1String("u_hasDepth") || name == QLatin1String("u_floatBuffers") || name == QLatin1String("u_templateBounds")
         || name == QLatin1String("u_clipMask") || name == QLatin1String("u_hasClipMask")
         || name == QLatin1String("u_meshAspect") || name == QLatin1String("u_prevOutput")) {
         return true;
@@ -74,10 +74,16 @@ inline bool isReservedGpuUniform(const QString &name)
            || isProceduralContractUniform(name);
 }
 
+// What an intermediate buffer stores per texel. The half-float formats hold values outside [0, 1]
+// and keep their sign; Rg16F is stored as RGBA16F, so it is no smaller in memory. Where the GL
+// context cannot render to half float the runtime allocates Rgba8 instead.
+enum class GpuBufferFormat { Rgba8, Rgba16F, Rg16F };
+
 struct GpuEffectBufferSpec
 {
     QString id;
     double scale = 1.0;
+    GpuBufferFormat format = GpuBufferFormat::Rgba8;
 };
 
 // Static image asset loaded from the package dir and bound as a sampler.
@@ -134,6 +140,13 @@ struct GpuEffectDefinition
 {
     QString packageDir;
     QList<GpuEffectBufferSpec> intermediateBuffers;
+    bool usesFloatBuffers() const
+    {
+        for (const GpuEffectBufferSpec &b : intermediateBuffers)
+            if (b.format != GpuBufferFormat::Rgba8)
+                return true;
+        return false;
+    }
     QList<GpuEffectTextureSpec> textures;
     QList<GpuEffectPass> passes;
     // "requires": "depth": the depth prelude is compiled into every pass and the clip's depth map

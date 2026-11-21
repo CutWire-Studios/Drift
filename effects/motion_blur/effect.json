@@ -8,7 +8,7 @@
   "backend": "gpu",
   "history": 1,
   "historyExact": 1,
-  "nextFeatures": ["history:source", "history:exact"],
+  "nextFeatures": ["history:source", "history:exact", "buffer:float"],
   "parameters": [
     {
       "identifier": "shutter",
@@ -48,12 +48,12 @@
       {"id": "luma4", "scale": 0.25},
       {"id": "luma16", "scale": 0.0625},
       {"id": "luma64", "scale": 0.015625},
-      {"id": "flow64", "scale": 0.015625},
-      {"id": "flow16", "scale": 0.0625},
-      {"id": "flow4", "scale": 0.25},
-      {"id": "flow4s", "scale": 0.25},
-      {"id": "tile16", "scale": 0.0625},
-      {"id": "nbr16", "scale": 0.0625}
+      {"id": "flow64", "scale": 0.015625, "format": "rg16f"},
+      {"id": "flow16", "scale": 0.0625, "format": "rg16f"},
+      {"id": "flow4", "scale": 0.25, "format": "rg16f"},
+      {"id": "flow4s", "scale": 0.25, "format": "rg16f"},
+      {"id": "tile16", "scale": 0.0625, "format": "rg16f"},
+      {"id": "nbr16", "scale": 0.0625, "format": "rg16f"}
     ],
     "passes": [
       {"passIndex": 0, "fragmentShader": "luma4.frag",

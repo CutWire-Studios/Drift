@@ -3,10 +3,6 @@ in vec2 v_texCoord;
 out vec4 fragColor;
 uniform sampler2D u_currentTexture;
 
-float dec(vec2 b) {
-    return (floor(b.x * 255.0 + 0.5) * 256.0 + floor(b.y * 255.0 + 0.5)) / 65535.0 - 0.5;
-}
-
 // The longest tile flow of the 3x3 tiles around this one, so a pixel next to a fast object still
 // knows the object will sweep over it.
 void main() {
@@ -17,7 +13,7 @@ void main() {
     for (int y = -1; y <= 1; ++y)
         for (int x = -1; x <= 1; ++x) {
             vec4 b = texelFetch(u_currentTexture, clamp(p + ivec2(x, y), ivec2(0), sz - 1), 0);
-            float len = length(vec2(dec(b.rg), dec(b.ba)));
+            float len = length(unpackFlow(b));
             if (len > bestLen) {
                 bestLen = len;
                 best = b;

@@ -7,12 +7,6 @@ const int kRadius = 4;
 const float kMinBase = 0.004;
 const float kRelative = 0.85;
 
-vec2 enc(float v) {
-    float e = floor(clamp(v + 0.5, 0.0, 1.0) * 65535.0 + 0.5);
-    float hi = floor(e / 256.0);
-    return vec2(hi, e - hi * 256.0) / 255.0;
-}
-
 float luma(ivec2 p, ivec2 sz, int channel) {
     vec2 t = (vec2(clamp(p, ivec2(0), sz - 1)) + 0.5) / vec2(sz);
     return texture(u_currentTexture, t)[channel];
@@ -48,5 +42,5 @@ void main() {
             bestD = ivec2(0);
     }
     vec2 uvD = vec2(bestD) / vec2(sz);
-    fragColor = vec4(enc(uvD.x), enc(uvD.y));
+    fragColor = packFlow(uvD);
 }

@@ -443,7 +443,7 @@ bool checkNextFeatures(const QJsonObject &root, QString *errorOut)
         QStringLiteral("uniform:audio"),    QStringLiteral("requires:mask"),
         QStringLiteral("requires:depth"),   QStringLiteral("requires:face"),
         QStringLiteral("history:source"),   QStringLiteral("history:previous-output"),
-        QStringLiteral("history:exact"),
+        QStringLiteral("history:exact"),    QStringLiteral("buffer:float"),
     };
     QStringList unsupported;
     for (const QJsonValue &v : root.value(QStringLiteral("nextFeatures")).toArray()) {
@@ -483,6 +483,16 @@ bool loadGpuPipeline(const QJsonObject &root, const QString &packageDir, int max
         }
         if (buf.scale <= 0.0) {
             fail(errorOut, QStringLiteral("intermediate buffer scale must be > 0"));
+            return false;
+        }
+        const QString format = b.value(QStringLiteral("format")).toString(QStringLiteral("rgba8"));
+        if (format == QLatin1String("rgba16f"))
+            buf.format = drift::GpuBufferFormat::Rgba16F;
+        else if (format == QLatin1String("rg16f"))
+            buf.format = drift::GpuBufferFormat::Rg16F;
+        else if (format != QLatin1String("rgba8")) {
+            fail(errorOut, QStringLiteral("intermediate buffer \"%1\": format must be rgba8, rgba16f or rg16f")
+                               .arg(buf.id));
             return false;
         }
         out->intermediateBuffers.append(buf);

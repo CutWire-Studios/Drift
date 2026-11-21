@@ -6,19 +6,9 @@ uniform sampler2D u_currentTexture;
 const int kReach = 12;
 const float kMoving = 0.25;
 
-vec2 enc(float v) {
-    float e = floor(clamp(v + 0.5, 0.0, 1.0) * 65535.0 + 0.5);
-    float hi = floor(e / 256.0);
-    return vec2(hi, e - hi * 256.0) / 255.0;
-}
-
-float dec(vec2 b) {
-    return (floor(b.x * 255.0 + 0.5) * 256.0 + floor(b.y * 255.0 + 0.5)) / 65535.0 - 0.5;
-}
-
 vec2 flowAt(ivec2 p, ivec2 sz) {
     vec4 b = texture(u_currentTexture, (vec2(clamp(p, ivec2(0), sz - 1)) + 0.5) / vec2(sz));
-    return vec2(dec(b.rg), dec(b.ba));
+    return unpackFlow(b);
 }
 
 // A hole is a texel without measured motion. It inherits motion only when moving texels sit on two
@@ -60,7 +50,7 @@ void main() {
                     weight += 1.0 / dist[k];
                 }
         vec2 flow = weight > 0.0 ? sum / weight : vec2(0.0);
-        fragColor = vec4(enc(flow.x), enc(flow.y));
+        fragColor = packFlow(flow);
         return;
     }
 
@@ -76,5 +66,5 @@ void main() {
             weight += w;
         }
     vec2 flow = sum / weight;
-    fragColor = vec4(enc(flow.x), enc(flow.y));
+    fragColor = packFlow(flow);
 }
