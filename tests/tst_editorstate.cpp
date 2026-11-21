@@ -145,6 +145,7 @@ class EditorStateTest : public QObject
 
 private slots:
     void bakeFingerprintTracksTransitionPartner();
+    void bakeFingerprintTracksTransitionsByWindow();
     void unsafeProjectIdStaysInItsFolders();
     void bakeFingerprintTracksRangeEdits();
     void bakeFingerprintIgnoresMixAndExportFlags();
@@ -18716,6 +18717,96 @@ void EditorStateTest::bakeFingerprintTracksTransitionPartner()
     QVERIFY(drift::bakeFingerprint(project, 150, 156) != incomingHalf);
     project.tracks()[0].clips[0].enabled = true;
     QCOMPARE(drift::bakeFingerprint(project, 150, 156), incomingHalf);
+}
+
+// A transition draws only across its window, so its settings count toward a bake only when that
+// window overlaps the bake's range, even when one of its clips does. That it exists still counts.
+void EditorStateTest::bakeFingerprintTracksTransitionsByWindow()
+{
+    drift::Project project;
+    project.setResolution(1280, 720);
+    project.setFps(30);
+    project.tracks().clear();
+    drift::Track track{.type = drift::TrackType::Shape};
+    track.id = QStringLiteral("t1");
+    drift::Clip a = boxShape(QStringLiteral("a"), QRectF(0, 0, 100, 100)); // 0 s – 5 s
+    drift::Clip b = boxShape(QStringLiteral("b"), QRectF(0, 0, 100, 100));
+    b.timelineStart = drift::secondsToUs(5.0);                                // 5 s – 10 s
+    drift::Clip c = boxShape(QStringLiteral("c"), QRectF(0, 0, 100, 100));
+    c.timelineStart = drift::secondsToUs(10.0);                               // 10 s – 15 s
+    track.clips = {a, b, c};
+    drift::Transition first;
+    first.id = QStringLiteral("x");
+    first.fromClipId = QStringLiteral("a");
+    first.toClipId = QStringLiteral("b");
+    first.durationUs = drift::secondsToUs(1.0); // window 4.5 s – 5.5 s
+    drift::Transition second;
+    second.id = QStringLiteral("y");
+    second.fromClipId = QStringLiteral("b");
+    second.toClipId = QStringLiteral("c");
+    second.durationUs = drift::secondsToUs(1.0); // window 9.5 s – 10.5 s
+    track.transitions = {first, second};
+    project.tracks().append(track);
+    auto transitions = [&]() -> QList<drift::Transition> & { return project.tracks()[0].transitions; };
+
+    const QByteArray middle = drift::bakeFingerprint(project, 180, 240); // 6 s – 8 s, only B, no window
+    const QByteArray cut = drift::bakeFingerprint(project, 144, 156);    // 4.8 s – 5.2 s, inside x
+
+    transitions()[0].kindId = QStringLiteral("wipe_left");
+    QCOMPARE(drift::bakeFingerprint(project, 180, 240), middle);
+    QVERIFY(drift::bakeFingerprint(project, 144, 156) != cut);
+    transitions()[0] = first;
+    transitions()[0].parameters.insert(QStringLiteral("softness"), 0.3);
+    QCOMPARE(drift::bakeFingerprint(project, 180, 240), middle);
+    QVERIFY(drift::bakeFingerprint(project, 144, 156) != cut);
+    transitions()[0] = first;
+    transitions()[0].easingCurve = drift::FadeCurve::Smooth;
+    QCOMPARE(drift::bakeFingerprint(project, 180, 240), middle);
+    QVERIFY(drift::bakeFingerprint(project, 144, 156) != cut);
+    transitions()[0] = first;
+    QCOMPARE(drift::bakeFingerprint(project, 144, 156), cut);
+
+    transitions()[1].kindId = QStringLiteral("wipe_left");
+    QCOMPARE(drift::bakeFingerprint(project, 180, 240), middle);
+    QCOMPARE(drift::bakeFingerprint(project, 144, 156), cut);
+    transitions()[1] = second;
+
+    transitions()[0].durationUs = drift::secondsToUs(2.0); // 4 s – 6 s: touches the range's start
+    QCOMPARE(drift::bakeFingerprint(project, 180, 240), middle);
+    transitions()[0].durationUs = drift::secondsToUs(2.2); // 3.9 s – 6.1 s
+    QVERIFY(drift::bakeFingerprint(project, 180, 240) != middle);
+    transitions()[0] = first;
+    QCOMPARE(drift::bakeFingerprint(project, 180, 240), middle);
+
+    transitions()[1].durationUs = drift::secondsToUs(4.0); // 8 s – 12 s: touches the range's end
+    QCOMPARE(drift::bakeFingerprint(project, 180, 240), middle);
+    transitions()[1].durationUs = drift::secondsToUs(4.2); // 7.9 s – 12.1 s
+    QVERIFY(drift::bakeFingerprint(project, 180, 240) != middle);
+    transitions()[1] = second;
+    QCOMPARE(drift::bakeFingerprint(project, 180, 240), middle);
+
+    // A far transition still counts by being there: the clip at its cut drops its own audio fade
+    // (audioTransitionEdgeFor), and audio-reactive visuals in range read that audio. So taking its
+    // window away, or removing it, stales a bake over either of its clips.
+    // Sliding C back over B's end keeps y's window (9.9 s – 10 s, still outside the range) but
+    // the clips now overlap instead of meeting at a cut, so y no longer takes B's audio fade.
+    project.tracks()[0].clips[2].timelineStart = drift::secondsToUs(9.9);
+    QVERIFY(drift::bakeFingerprint(project, 180, 240) != middle);
+    project.tracks()[0].clips[2].timelineStart = drift::secondsToUs(10.0);
+    QCOMPARE(drift::bakeFingerprint(project, 180, 240), middle);
+    transitions()[1].durationUs = 0; // a butt cut with no duration has no window
+    QVERIFY(drift::bakeFingerprint(project, 180, 240) != middle);
+    QVERIFY(drift::bakeFingerprint(project, 144, 156) != cut);
+    transitions()[1] = second;
+    QCOMPARE(drift::bakeFingerprint(project, 180, 240), middle);
+    transitions().removeAt(1);
+    QVERIFY(drift::bakeFingerprint(project, 180, 240) != middle);
+    QVERIFY(drift::bakeFingerprint(project, 144, 156) != cut);
+    // A clip with no transition at either cut is not touched by them: a bake over C alone
+    // (11 s – 14 s) doesn't see x come and go.
+    const QByteArray onlyC = drift::bakeFingerprint(project, 330, 420);
+    transitions().removeAt(0);
+    QCOMPARE(drift::bakeFingerprint(project, 330, 420), onlyC);
 }
 
 void EditorStateTest::bakeFingerprintTracksRangeEdits()
