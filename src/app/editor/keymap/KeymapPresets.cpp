@@ -284,10 +284,188 @@ QHash<QString, QStringList> driftChords()
     };
 }
 
+struct Row {
+    const char *id;
+    const char *chords; // space-separated; chord names never contain a space
+};
+
+QHash<QString, QStringList> fromRows(std::initializer_list<Row> rows)
+{
+    QHash<QString, QStringList> out;
+    for (const Row &row : rows)
+        out.insert(QLatin1String(row.id), QString::fromLatin1(row.chords).split(QLatin1Char(' ')));
+    return out;
+}
+
+// Follows Premiere Pro's default layout (Windows keys; Qt maps Ctrl to Cmd on a Mac).
+QHash<QString, QStringList> premiereChords()
+{
+    return fromRows({
+        {"newProject", "Ctrl+Alt+N"}, {"open", "Ctrl+O"}, {"save", "Ctrl+S"}, {"saveAs", "Ctrl+Shift+S"},
+        {"importMedia", "Ctrl+I"}, {"export", "Ctrl+M"}, {"openSettings", "Ctrl+,"}, {"openKeymap", "Ctrl+Alt+K"},
+        {"undo", "Ctrl+Z"}, {"redo", "Ctrl+Shift+Z"}, {"copy", "Ctrl+C"}, {"cut", "Ctrl+X"}, {"paste", "Ctrl+V"},
+        {"pasteAttributes", "Ctrl+Alt+V"}, {"delete", "Delete"}, {"rippleDelete", "Shift+Delete"},
+        {"selectAll", "Ctrl+A"}, {"deselectAll", "Ctrl+Shift+A"}, {"clearSelection", "Escape"},
+        {"selectClipAtPlayhead", "D"},
+        {"playPause", "Space"}, {"stop", "K"}, {"speedUp", "L"}, {"speedDown", "J"},
+        {"stepBack", "Left"}, {"stepForward", "Right"}, {"stepBack5", "Shift+Left"}, {"stepForward5", "Shift+Right"},
+        {"goToStart", "Home"}, {"goToEnd", "End"}, {"previousEdit", "Up"}, {"nextEdit", "Down"},
+        {"markIn", "I"}, {"markOut", "O"}, {"goToIn", "Shift+I"}, {"goToOut", "Shift+O"},
+        {"clearIn", "Ctrl+Shift+I"}, {"clearOut", "Ctrl+Shift+O"}, {"clearInOut", "Ctrl+Shift+X"}, {"markClip", "X"},
+        {"toggleBookmark", "M"}, {"nextBookmark", "Shift+M"}, {"previousBookmark", "Ctrl+Shift+M"},
+        {"deleteBookmark", "Ctrl+Alt+M"}, {"deleteAllBookmarks", "Ctrl+Alt+Shift+M"},
+        {"split", "Ctrl+K"}, {"splitAllTracks", "Ctrl+Shift+K"}, {"deleteLeft", "Q"}, {"deleteRight", "W"},
+        {"nudgeLeft", "Alt+Left"}, {"nudgeRight", "Alt+Right"}, {"clipSpeed", "Ctrl+R"}, {"link", "Ctrl+L"},
+        {"addTransitionAtPlayhead", "Ctrl+D"}, {"toggleClipEnabled", "Shift+E"},
+        {"selectTool", "V"}, {"bladeTool", "C"}, {"zoomIn", "="}, {"zoomOut", "-"}, {"zoomToFit", "\\"},
+        {"toggleSnapping", "S"}, {"togglePreviewFullscreen", "Ctrl+`"},
+        {"workspace.1", "Alt+Shift+1"}, {"workspace.2", "Alt+Shift+2"}, {"workspace.3", "Alt+Shift+3"},
+        {"workspace.4", "Alt+Shift+4"}, {"workspace.5", "Alt+Shift+5"}, {"workspace.6", "Alt+Shift+6"},
+        {"workspace.7", "Alt+Shift+7"}, {"workspace.8", "Alt+Shift+8"}, {"workspace.9", "Alt+Shift+9"},
+    });
+}
+
+// Follows DaVinci Resolve's default layout (Windows/Linux keys).
+QHash<QString, QStringList> resolveChords()
+{
+    return fromRows({
+        {"newProject", "Ctrl+N"}, {"open", "Ctrl+O"}, {"save", "Ctrl+S"}, {"saveAs", "Ctrl+Shift+S"},
+        {"importMedia", "Ctrl+I"}, {"export", "Ctrl+E"}, {"openSettings", "Ctrl+,"}, {"openKeymap", "Ctrl+Alt+K"},
+        {"undo", "Ctrl+Z"}, {"redo", "Ctrl+Shift+Z"}, {"copy", "Ctrl+C"}, {"cut", "Ctrl+X"}, {"paste", "Ctrl+V"},
+        {"pasteAttributes", "Alt+V"}, {"delete", "Delete Backspace"}, {"rippleDelete", "Shift+Delete Shift+Backspace"},
+        {"selectAll", "Ctrl+A"}, {"deselectAll", "Ctrl+Shift+A"}, {"clearSelection", "Escape"},
+        {"selectClipAtPlayhead", "Shift+V"},
+        {"playPause", "Space"}, {"stop", "K"}, {"speedUp", "L"}, {"speedDown", "J"},
+        {"stepBack", "Left"}, {"stepForward", "Right"}, {"jumpBack", "Shift+Left"}, {"jumpForward", "Shift+Right"},
+        {"goToStart", "Home"}, {"goToEnd", "End"}, {"previousEdit", "Up"}, {"nextEdit", "Down"},
+        {"markIn", "I"}, {"markOut", "O"}, {"goToIn", "Shift+I"}, {"goToOut", "Shift+O"},
+        {"clearIn", "Alt+I"}, {"clearOut", "Alt+O"}, {"clearInOut", "Alt+X"}, {"markClip", "X"},
+        {"toggleLoop", "Ctrl+/"},
+        {"toggleBookmark", "M"}, {"editBookmark", "Shift+M"}, {"deleteBookmark", "Alt+M"},
+        {"nextBookmark", "Shift+Down"}, {"previousBookmark", "Shift+Up"},
+        {"split", "Ctrl+B Ctrl+\\"}, {"merge", "Alt+\\"}, {"deleteLeft", "{"}, {"deleteRight", "}"},
+        {"nudgeLeft", ","}, {"nudgeRight", "."}, {"freezeFrame", "Shift+R"}, {"clipSpeed", "Ctrl+R"},
+        {"link", "Ctrl+Alt+L"}, {"addTransitionAtPlayhead", "Ctrl+T"}, {"toggleClipEnabled", "D"},
+        {"selectTool", "A"}, {"bladeTool", "B"}, {"toggleSnapping", "N"},
+        {"zoomIn", "Ctrl+="}, {"zoomOut", "Ctrl+-"}, {"zoomToFit", "Shift+Z"}, {"togglePreviewFullscreen", "Shift+F"},
+    });
+}
+
+// Follows Final Cut Pro's default layout. Written with the Mac keys: Cmd is Ctrl, Option is Alt and
+// Control is Meta, which off macOS becomes Ctrl+Alt (see translateForPlatform).
+QHash<QString, QStringList> finalCutChords()
+{
+    return fromRows({
+        {"newProject", "Ctrl+N"}, {"open", "Ctrl+O"}, {"save", "Ctrl+S"},
+        {"importMedia", "Ctrl+I"}, {"export", "Ctrl+E"}, {"openSettings", "Ctrl+,"}, {"openKeymap", "Ctrl+Alt+K"},
+        {"undo", "Ctrl+Z"}, {"redo", "Ctrl+Shift+Z"}, {"copy", "Ctrl+C"}, {"cut", "Ctrl+X"}, {"paste", "Ctrl+V"},
+        {"duplicate", "Ctrl+D"}, {"copyEffects", "Ctrl+Alt+C"}, {"pasteEffects", "Ctrl+Alt+V"},
+        {"pasteAttributes", "Ctrl+Shift+V"}, {"removeAllEffects", "Ctrl+Alt+X"},
+        {"delete", "Backspace Delete Shift+Backspace"},
+        {"selectAll", "Ctrl+A"}, {"deselectAll", "Ctrl+Shift+A"}, {"clearSelection", "Escape"},
+        {"selectClipAtPlayhead", "C"}, {"selectPreviousClip", "Ctrl+Left"}, {"selectNextClip", "Ctrl+Right"},
+        {"playPause", "Space"}, {"stop", "K"}, {"speedUp", "L"}, {"speedDown", "J"},
+        {"stepBack", "Left"}, {"stepForward", "Right"},
+        {"goToStart", "Home"}, {"goToEnd", "End"}, {"previousEdit", ";"}, {"nextEdit", "'"},
+        {"markIn", "I"}, {"markOut", "O"}, {"goToIn", "Shift+I"}, {"goToOut", "Shift+O"},
+        {"clearIn", "Alt+I"}, {"clearOut", "Alt+O"}, {"clearInOut", "Alt+X"}, {"markClip", "X"},
+        {"toggleLoop", "Ctrl+L"},
+        {"toggleBookmark", "M"}, {"editBookmark", "Alt+M"}, {"deleteBookmark", "Meta+M"},
+        {"nextBookmark", "Meta+'"}, {"previousBookmark", "Meta+;"},
+        {"split", "Ctrl+B"}, {"splitAllTracks", "Ctrl+Shift+B"}, {"deleteLeft", "Alt+["}, {"deleteRight", "Alt+]"},
+        {"nudgeLeft", ","}, {"nudgeRight", "."}, {"addTransitionAtPlayhead", "Ctrl+T"}, {"clipSpeed", "Ctrl+R"},
+        {"separateAudio", "Meta+Shift+S"}, {"toggleClipEnabled", "V"}, {"toggleSnapping", "N"},
+        {"recordVoiceover", "Ctrl+Alt+8"},
+        {"selectTool", "A"}, {"bladeTool", "B"}, {"zoomIn", "Ctrl+="}, {"zoomOut", "Ctrl+-"}, {"zoomToFit", "Shift+Z"},
+        {"togglePreviewFullscreen", "Ctrl+Shift+F"},
+    });
+}
+
+// Follows CapCut desktop's default layout (Windows keys).
+QHash<QString, QStringList> capCutChords()
+{
+    return fromRows({
+        {"newProject", "Ctrl+N"}, {"open", "Ctrl+O"}, {"save", "Ctrl+S"},
+        {"importMedia", "Ctrl+I"}, {"export", "Ctrl+E"},
+        {"undo", "Ctrl+Z"}, {"redo", "Ctrl+Shift+Z"}, {"copy", "Ctrl+C"}, {"cut", "Ctrl+X"}, {"paste", "Ctrl+V"},
+        {"duplicate", "Ctrl+D"}, {"delete", "Delete Backspace"},
+        {"selectAll", "Ctrl+A"}, {"deselectAll", "Alt+X"}, {"clearSelection", "Escape"},
+        {"playPause", "Space"}, {"stop", "K"}, {"speedUp", "L"}, {"speedDown", "J"},
+        {"stepBack", "Left"}, {"stepForward", "Right"},
+        {"goToStart", "Home"}, {"goToEnd", "End"}, {"previousEdit", "Up"}, {"nextEdit", "Down"},
+        {"markIn", "I"}, {"markOut", "O"},
+        {"toggleBookmark", "M"}, {"nextBookmark", "Shift+M"}, {"previousBookmark", "Alt+Shift+M"},
+        {"split", "Ctrl+B"}, {"splitAllTracks", "Ctrl+Shift+B"}, {"deleteLeft", "Q"}, {"deleteRight", "W"},
+        {"clipSpeed", "Ctrl+R"}, {"link", "Ctrl+L"}, {"separateAudio", "Ctrl+Shift+S"},
+        {"toggleClipEnabled", "V"}, {"toggleSnapping", "N"}, {"addText", "Ctrl+T"},
+        {"addAdjustmentLayer", "Ctrl+Shift+A"},
+        {"selectTool", "A"}, {"bladeTool", "B"}, {"zoomIn", "Ctrl+="}, {"zoomOut", "Ctrl+-"}, {"zoomToFit", "Shift+Z"},
+        {"togglePreviewFullscreen", "Ctrl+Shift+F"},
+    });
+}
+
+// Follows Kdenlive's default layout.
+QHash<QString, QStringList> kdenliveChords()
+{
+    return fromRows({
+        {"newProject", "Ctrl+N"}, {"open", "Ctrl+O"}, {"save", "Ctrl+S"}, {"saveAs", "Ctrl+Shift+S"},
+        {"export", "Ctrl+Return"}, {"openSettings", "Ctrl+<"}, {"openKeymap", "Ctrl+Alt+,"}, {"search", "Ctrl+Alt+I"},
+        {"undo", "Ctrl+Z"}, {"redo", "Ctrl+Shift+Z"}, {"copy", "Ctrl+C"}, {"cut", "Ctrl+X"}, {"paste", "Ctrl+V"},
+        {"duplicate", "Ctrl+D"}, {"delete", "Delete"}, {"rippleDelete", "Shift+Delete"},
+        {"selectAll", "Ctrl+A"}, {"deselectAll", "Ctrl+Shift+A -"}, {"clearSelection", "Escape"},
+        {"selectClipAtPlayhead", "+"},
+        {"playPause", "Space"}, {"stop", "K"}, {"speedUp", "L"}, {"speedDown", "J"},
+        {"stepBack", "Left"}, {"stepForward", "Right"}, {"jumpBack", "Shift+Left"}, {"jumpForward", "Shift+Right"},
+        {"goToStart", "Ctrl+Home"}, {"goToEnd", "Ctrl+End"}, {"previousEdit", "Alt+Left"}, {"nextEdit", "Alt+Right"},
+        {"markIn", "I"}, {"markOut", "O"}, {"goToIn", "Shift+I"}, {"goToOut", "Shift+O"}, {"markClip", "Shift+Z"},
+        {"toggleLoop", "Ctrl+Shift+Space"},
+        {"toggleBookmark", "G"}, {"nextBookmark", "Ctrl+Right"}, {"previousBookmark", "Ctrl+Left"},
+        {"split", "Shift+R"}, {"splitAllTracks", "Ctrl+Shift+R"}, {"deleteLeft", "("}, {"deleteRight", ")"},
+        {"toggleTrackHidden", "Shift+H"}, {"toggleTrackLocked", "Shift+L"}, {"recordVoiceover", "R"},
+        {"selectTool", "S"}, {"bladeTool", "X"}, {"zoomIn", "Ctrl+="}, {"zoomOut", "Ctrl+-"},
+        {"togglePreviewFullscreen", "Ctrl+Shift+F F11"},
+    });
+}
+
+// Follows Shotcut's default layout.
+QHash<QString, QStringList> shotcutChords()
+{
+    return fromRows({
+        {"newProject", "Ctrl+N"}, {"open", "Ctrl+O"}, {"save", "Ctrl+S"}, {"saveAs", "Ctrl+Shift+S"},
+        {"export", "Ctrl+E"}, {"openSettings", "Ctrl+,"}, {"openKeymap", "? /"},
+        {"undo", "Ctrl+Z"}, {"redo", "Ctrl+Shift+Z Ctrl+Y"}, {"copy", "Ctrl+C"}, {"cut", "Ctrl+X"}, {"paste", "Ctrl+V"},
+        {"delete", "Delete Backspace"}, {"rippleDelete", "X Shift+Delete Shift+Backspace"},
+        {"selectAll", "Ctrl+A"}, {"deselectAll", "Ctrl+D"}, {"clearSelection", "Escape"},
+        {"selectClipAtPlayhead", "Ctrl+Space"}, {"selectPreviousClip", "Ctrl+Left"}, {"selectNextClip", "Ctrl+Right"},
+        {"renameClip", "F2"},
+        {"playPause", "Space"}, {"stop", "K"}, {"speedUp", "L"}, {"speedDown", "J"},
+        {"stepBack", "Left"}, {"stepForward", "Right"}, {"jumpBack", "PgUp"}, {"jumpForward", "PgDown"},
+        {"jumpBackFar", "Ctrl+Shift+PgUp"}, {"jumpForwardFar", "Ctrl+Shift+PgDown"},
+        {"goToStart", "Home"}, {"goToEnd", "End"}, {"previousEdit", "Alt+Left"}, {"nextEdit", "Alt+Right"},
+        {"toggleLoop", "\\"},
+        {"toggleBookmark", "M"}, {"nextBookmark", ">"}, {"previousBookmark", "<"}, {"deleteBookmark", "Ctrl+Shift+M"},
+        {"split", "S"}, {"splitAllTracks", "Shift+S"}, {"nudgeLeft", ","}, {"nudgeRight", "."},
+        {"freezeFrame", "Ctrl+Shift+H"},
+        {"toggleTrackMuted", "Ctrl+M"}, {"toggleTrackHidden", "Ctrl+H"}, {"toggleTrackLocked", "Ctrl+L"},
+        {"addVideoTrack", "Ctrl+I"}, {"addAudioTrack", "Ctrl+U"},
+        {"trackTaller", "Ctrl++"}, {"trackShorter", "Ctrl+-"},
+        {"toggleSnapping", "Ctrl+P"}, {"toggleRipple", "Ctrl+R"},
+        {"zoomIn", "+"}, {"zoomOut", "-"}, {"zoomToFit", "0"}, {"togglePreviewFullscreen", "Ctrl+Shift+F F11"},
+        {"workspace.1", "Alt+1"}, {"workspace.2", "Alt+2"}, {"workspace.3", "Alt+3"},
+        {"workspace.4", "Alt+4"}, {"workspace.5", "Alt+5"}, {"workspace.6", "Alt+6"},
+    });
+}
+
 QList<Preset> buildPresets()
 {
     return {
         {QStringLiteral("drift"), QT_TRANSLATE_NOOP("Keymap", "Drift"), driftChords()},
+        {QStringLiteral("premiere"), "Premiere Pro", premiereChords()},
+        {QStringLiteral("resolve"), "DaVinci Resolve", resolveChords()},
+        {QStringLiteral("finalcut"), "Final Cut Pro", finalCutChords()},
+        {QStringLiteral("capcut"), "CapCut", capCutChords()},
+        {QStringLiteral("kdenlive"), "Kdenlive", kdenliveChords()},
+        {QStringLiteral("shotcut"), "Shotcut", shotcutChords()},
     };
 }
 

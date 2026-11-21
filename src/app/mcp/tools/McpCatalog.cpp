@@ -1634,7 +1634,8 @@ const QList<Op> &ops()
           false, false, true },
         { "list_shortcuts", "ui", "List action bindings",
           "Returns {actions:[{id, label, shortcut, shortcuts, category, scope}], n} for every editor action. "
-          "shortcuts lists every binding (shortcut is the first); scope is global or a panel.",
+          "shortcuts lists every binding (shortcut is the first); scope is global or a panel. Also returns preset "
+          "(the active preset id) and presets:[{id, name}].",
           objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label/shortcut"))}}),
           true, false, true },
         { "set_shortcut", "ui", "Rebind a shortcut",
@@ -1650,8 +1651,12 @@ const QList<Op> &ops()
                                       QStringLiteral("Qt key sequence, e.g. Ctrl+S, or an array of them; empty string or array clears")}}}},
                        {QStringLiteral("action"), QStringLiteral("keys")}) },
         { "reset_shortcuts", "ui", "Restore default shortcuts",
-          "Reset every action binding to its default. Not undoable.",
-          objectSchema({}), false, true }
+          "Drop every custom binding and return to the active preset. With preset (an id from list_shortcuts) "
+          "it switches to that preset first; keep_overrides true keeps the custom bindings through the switch. "
+          "Not undoable.",
+          objectSchema({{QStringLiteral("preset"), stringProp(QStringLiteral("Preset id from list_shortcuts, e.g. premiere"))},
+                        {QStringLiteral("keep_overrides"), boolProp(QStringLiteral("Keep custom bindings when switching preset (default false)"))}}),
+          false, true }
 #include "app/mcp/tools/McpCatalogExtendedOps.inl"
     };
     return k;

@@ -100,8 +100,8 @@ QString namedKey(int key)
     case Qt::Key_Up:        return QStringLiteral("Up");
     case Qt::Key_Right:     return QStringLiteral("Right");
     case Qt::Key_Down:      return QStringLiteral("Down");
-    case Qt::Key_PageUp:    return QStringLiteral("PageUp");
-    case Qt::Key_PageDown:  return QStringLiteral("PageDown");
+    case Qt::Key_PageUp:    return QStringLiteral("PgUp");
+    case Qt::Key_PageDown:  return QStringLiteral("PgDown");
     case Qt::Key_Space:     return QStringLiteral("Space");
     case Qt::Key_Tab:
     case Qt::Key_Backtab:   return QStringLiteral("Tab");

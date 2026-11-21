@@ -16,7 +16,7 @@ struct Preset {
 
 inline constexpr char kDefaultPresetId[] = "drift";
 
-// Presets in picker order. Phase 5 appends the other editors' tables here.
+// Presets in picker order.
 const QList<Preset> &presets();
 const Preset *findPreset(const QString &id);
 QString translatedName(const Preset &preset);

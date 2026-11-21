@@ -243,8 +243,10 @@ private slots:
     void keymapDisplayTextParsesPlusAsAKey();
     void keymapTranslatesMetaOffMacAndFallsBackToDrift();
     void keymapPresetSwitchKeepsOrDiscardsOverrides();
+    void keymapPresetSwitchResolvesConflictsInFavourOfOverrides();
     void keymapScopesShareChordsButNotWithinOneScope();
     void keymapCatalogIsConsistent();
+    void keymapEveryPresetIsConsistent();
     void keymapCarriesBindingsOfSplitActionIds();
     void splitLeftRightUndoRestoresTheDiscardedHalf();
     void splitLeftKeepsLinkedAudioInSync();
@@ -3140,6 +3142,36 @@ void EditorStateTest::keymapPresetSwitchKeepsOrDiscardsOverrides()
     QVERIFY(drift::Keymap().presets().size() >= 1);
 }
 
+void EditorStateTest::keymapPresetSwitchResolvesConflictsInFavourOfOverrides()
+{
+    KeymapSandbox sandbox;
+    {
+        drift::Keymap keymap;
+        QVERIFY(keymap.addBinding(QStringLiteral("zoomToFit"), QStringLiteral("D")).isEmpty());
+        QVERIFY(keymap.setBindings(QStringLiteral("playPause"), {QStringLiteral("F9")}).isEmpty());
+        keymap.setPreset(QStringLiteral("premiere"), true);
+        QCOMPARE(keymap.presetId(), QStringLiteral("premiere"));
+        QVERIFY(keymap.hasOverrides());
+        // Premiere gives D to selectClipAtPlayhead; the user's binding keeps it and the preset's
+        // loses it in memory only.
+        QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("D")), QStringLiteral("zoomToFit"));
+        QVERIFY(keymap.bindings(QStringLiteral("selectClipAtPlayhead")).isEmpty());
+        QVERIFY(!keymap.isModified(QStringLiteral("selectClipAtPlayhead")));
+        QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("F9")});
+        QCOMPARE(keymap.bindings(QStringLiteral("split")), QStringList{QStringLiteral("Ctrl+K")});
+    }
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.presetId(), QStringLiteral("premiere"));
+        QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("D")), QStringLiteral("zoomToFit"));
+        keymap.setPreset(QStringLiteral("premiere"), false);
+        QVERIFY(!keymap.hasOverrides());
+        QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("D")), QStringLiteral("selectClipAtPlayhead"));
+        QCOMPARE(keymap.bindings(QStringLiteral("zoomToFit")), QStringList{QStringLiteral("\\")});
+        QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    }
+}
+
 void EditorStateTest::keymapScopesShareChordsButNotWithinOneScope()
 {
     KeymapSandbox sandbox;
@@ -3231,6 +3263,61 @@ void EditorStateTest::keymapCatalogIsConsistent()
     for (const ActionDef &action : actions()) {
         const QString id = QLatin1String(action.id);
         QCOMPARE(keymap.bindings(id), drift->chords.value(id));
+    }
+}
+
+void EditorStateTest::keymapEveryPresetIsConsistent()
+{
+    using namespace drift::keymap;
+    QCOMPARE(presets().size(), 7);
+    const QStringList essentials = {QStringLiteral("undo"), QStringLiteral("redo"), QStringLiteral("save"),
+                                    QStringLiteral("open"), QStringLiteral("newProject"), QStringLiteral("copy"),
+                                    QStringLiteral("paste"), QStringLiteral("cut"), QStringLiteral("selectAll"),
+                                    QStringLiteral("playPause"), QStringLiteral("delete")};
+    QSet<QString> ids;
+    QHash<QString, QString> scopes;
+    for (const ActionDef &action : actions()) {
+        ids.insert(QLatin1String(action.id));
+        scopes.insert(QLatin1String(action.id), scopeOf(action));
+    }
+    for (const Preset &preset : presets()) {
+        for (const bool mac : {true, false}) {
+            const QString label = QStringLiteral("%1 mac=%2").arg(preset.id).arg(mac);
+            QHash<QString, QHash<QString, QString>> seen;
+            for (auto it = preset.chords.cbegin(); it != preset.chords.cend(); ++it) {
+                QVERIFY2(ids.contains(it.key()), qPrintable(label + QLatin1Char(' ') + it.key()));
+                for (const QString &raw : it.value()) {
+                    const QString chord = translateForPlatform(raw, mac);
+                    const QString where = QStringLiteral("%1 %2 %3").arg(label, it.key(), chord);
+                    QCOMPARE(drift::Keymap::normalizeChord(raw), raw);
+                    QCOMPARE(drift::Keymap::normalizeChord(chord), chord);
+                    const QKeySequence parsed = QKeySequence::fromString(chord, QKeySequence::PortableText);
+                    QVERIFY2(parsed.count() == 1, qPrintable(where));
+                    QCOMPARE(QKeySequence::fromString(parsed.toString(QKeySequence::PortableText),
+                                                      QKeySequence::PortableText), parsed);
+                    const QString scope = scopes.value(it.key());
+                    QVERIFY2(!seen[scope].contains(chord),
+                             qPrintable(where + QStringLiteral(" already on ") + seen[scope].value(chord)));
+                    seen[scope].insert(chord, it.key());
+                }
+            }
+        }
+        for (const QString &id : essentials)
+            QVERIFY2(!preset.chords.value(id).isEmpty(), qPrintable(preset.id + QLatin1Char(' ') + id));
+    }
+
+    // The keymap built from each preset gives every listed chord to its action: nothing is dropped
+    // by the in-memory conflict rule.
+    for (const Preset &preset : presets()) {
+        KeymapSandbox sandbox;
+        drift::Keymap keymap;
+        keymap.setPreset(preset.id, false);
+        for (auto it = preset.chords.cbegin(); it != preset.chords.cend(); ++it) {
+            QStringList expected;
+            for (const QString &raw : it.value())
+                expected << translateForPlatform(raw, false);
+            QCOMPARE(keymap.bindings(it.key()), expected);
+        }
     }
 }
 
