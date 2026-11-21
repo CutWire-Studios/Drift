@@ -2,6 +2,9 @@
 #include "app/editor/keymap/KeymapCatalog.h"
 #include "app/editor/keymap/KeymapPresets.h"
 
+#include <QCoreApplication>
+#include <QEvent>
+#include <QKeyEvent>
 #include <QKeySequence>
 #include <QSettings>
 #include <QVariantMap>
@@ -223,7 +226,22 @@ QString Keymap::chordFromKey(int key, int modifiers, int nativeKey, const QStrin
 
 QString Keymap::chordFromKey(int key, int modifiers, int nativeKey, const QString &text) const
 {
-    return chordFromKey(key, modifiers, nativeKey, text, kMac);
+    return chordFromKey(key, modifiers, kMac ? nativeKeyFor(key, nativeKey) : nativeKey, text, kMac);
+}
+
+int Keymap::nativeKeyFor(int key, int fallback) const
+{
+    return key == m_lastKey && m_lastVirtualKey >= 0 ? m_lastVirtualKey : fallback;
+}
+
+bool Keymap::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::KeyPress) {
+        const auto *press = static_cast<QKeyEvent *>(event);
+        m_lastKey = press->key();
+        m_lastVirtualKey = int(press->nativeVirtualKey());
+    }
+    return QObject::eventFilter(watched, event);
 }
 
 QString Keymap::displayText(const QString &chord, bool mac)
@@ -271,6 +289,8 @@ QString Keymap::displayText(const QString &chord) const
 Keymap::Keymap(QObject *parent)
     : QObject(parent)
 {
+    if (QCoreApplication::instance())
+        QCoreApplication::instance()->installEventFilter(this);
     load();
 }
 

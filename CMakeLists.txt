@@ -2398,6 +2398,7 @@ qt_add_qml_module(drift
         src/qml/components/KeyframeGraph.qml
         src/qml/components/SubtitleCueLane.qml
         src/qml/components/shell/ShortcutCaptureField.qml
+        src/qml/components/shell/ShortcutChip.qml
         src/qml/components/ColorSwatchField.qml
         src/qml/components/controls/ThemedColorDialog.qml
         src/qml/components/ColorEyedropper.qml

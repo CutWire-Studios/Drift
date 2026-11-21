@@ -27,6 +27,7 @@
 #include "app/editor/sessions/SpeedCurveController.h"
 #include "ui/preview/PreviewController.h"
 #include "ui/preview/Outliner3dModel.h"
+#include <QKeyEvent>
 #include <QtTest>
 
 #include "core/project/media/SourceFrameFit.h"
@@ -3020,6 +3021,15 @@ void EditorStateTest::keymapCapturesPunctuationKeypadAndFunctionKeys()
     QVERIFY(chord(Qt::Key_Control, Qt::ControlModifier).isEmpty());
     QVERIFY(chord(Qt::Key_unknown, Qt::NoModifier).isEmpty());
     QCOMPARE(chord(Qt::Key_unknown, Qt::NoModifier, QStringLiteral("q")), QStringLiteral("Q"));
+
+    {
+        drift::Keymap recorder;
+        QObject target;
+        QKeyEvent press(QEvent::KeyPress, 0xdf, Qt::AltModifier, 1, 0, 0, QStringLiteral("ß"));
+        QCoreApplication::sendEvent(&target, &press);
+        QCOMPARE(recorder.nativeKeyFor(0xdf, 99), 0);
+        QCOMPARE(recorder.nativeKeyFor(Qt::Key_A, 99), 99);
+    }
 
     // macOS: Option composes characters, so the virtual key code names the key.
     QVERIFY(Keymap::chordFromKey(0xdf, int(Qt::AltModifier), 1, QStringLiteral("ß"), false).isEmpty());

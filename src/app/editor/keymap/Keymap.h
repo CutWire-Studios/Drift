@@ -47,8 +47,8 @@ public:
     Q_INVOKABLE void resetAll();
     Q_INVOKABLE void setPreset(const QString &presetId, bool keepOverrides);
 
-    // nativeKey is QKeyEvent::nativeScanCode(), which is all QML's KeyEvent exposes. It is only
-    // read on macOS, where it is the virtual key code.
+    // QML's KeyEvent does not expose nativeVirtualKey, so an application event filter records the
+    // last key press; on macOS its virtual key code stands in for nativeKey when the key matches.
     Q_INVOKABLE QString chordFromKey(int key, int modifiers, int nativeKey = 0,
                                      const QString &text = QString()) const;
     Q_INVOKABLE QString displayText(const QString &chord) const;
@@ -58,8 +58,14 @@ public:
     static QString displayText(const QString &chord, bool mac);
     static QString macKeyName(int virtualKey);
 
+    // The virtual key code of the last recorded press of `key`, else `fallback`.
+    int nativeKeyFor(int key, int fallback = 0) const;
+
 signals:
     void changed();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     void load();
@@ -75,6 +81,8 @@ private:
     QHash<QString, QStringList> m_effective;
     QHash<QString, QHash<QString, QString>> m_owners;
     QStringList m_chords;
+    int m_lastKey = 0;
+    int m_lastVirtualKey = -1;
 };
 
 } // namespace drift

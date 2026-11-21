@@ -840,6 +840,17 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | missingMediaWarning | radius | $metrics.radius.pill | $metrics.radius.pill |
 | missingMediaWarning | background | $semantic.destructive | $semantic.destructive |
 | missingMediaWarning | foreground | $semantic.onMedia | $semantic.onMedia |
+| shortcutChip | height | 24 | 24 |
+| shortcutChip | radius | $metrics.radius.sm | $metrics.radius.sm |
+| shortcutChip | background | $semantic.panel.accent | $semantic.panel.accent |
+| shortcutChip | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| shortcutChip | border | $semantic.panel.border | $semantic.panel.border |
+| shortcutChip | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| settingsKeymapPage | modifiedMarkerSize | 6 | 6 |
+| settingsKeymapPage | modifiedMarker | $semantic.primary | $semantic.primary |
+| shortcutCaptureField | height | 24 | 24 |
+| shortcutCaptureField | idleWidth | 24 | 24 |
+| shortcutCaptureField | capturingWidth | 110 | 110 |
 | shortcutCaptureField | radius | $metrics.radius.sm | $metrics.radius.sm |
 | shortcutCaptureField | backgroundCapturing | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
 | shortcutCaptureField | backgroundHover | $semantic.popoverHover | $semantic.popoverHover |

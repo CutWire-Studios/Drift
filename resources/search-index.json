@@ -1447,13 +1447,22 @@
       "descriptionSource": "Save your preferences to a JSON file, or load them from one."
     },
     {
-      "id": "keymap-reset-defaults",
-      "target": "settings:keymap#keymap-reset-defaults",
+      "id": "keymap-preset",
+      "target": "settings:keymap#keymap-preset",
       "context": "SettingsKeymapPage",
-      "source": "Reset to defaults",
+      "source": "Shortcut preset",
+      "keywords": "keymap preset layout scheme premiere resolve final cut",
+      "needs": [],
+      "descriptionSource": "The set of keys your changes are applied on top of."
+    },
+    {
+      "id": "keymap-reset-preset",
+      "target": "settings:keymap#keymap-reset-preset",
+      "context": "SettingsKeymapPage",
+      "source": "Reset to preset",
       "keywords": "restore original default shortcut",
       "needs": [],
-      "descriptionSource": "Restores every shortcut to its original key."
+      "descriptionSource": "Removes every change you made and restores the preset's keys."
     },
     {
       "id": "network-proxy",

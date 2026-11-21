@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Controls.Basic
 import Drift
 
-// Click or focus and press Space/Enter to arm, then press a chord (modifiers + key).
-// Esc cancels; Backspace clears.
+// The "+" that adds a binding. Click or focus and press Space/Enter to arm, then press a chord
+// (modifiers + key). Esc cancels; every other key, Backspace and Delete included, is the chord.
 //
 // Built on AbstractButton rather than a bare Rectangle so it joins the tab chain and
 // reports a role — as a plain Rectangle it was unreachable by keyboard, which made the
@@ -12,19 +12,19 @@ AbstractButton {
     id: root
 
     property string actionId
-    property string shortcut
+    property string actionLabel
     property bool capturing: false
 
-    implicitWidth: 120
-    implicitHeight: 26
-    width: 120
-    height: 26
+    implicitWidth: capturing ? Theme.c.shortcutCaptureField.capturingWidth
+                             : Theme.c.shortcutCaptureField.idleWidth
+    implicitHeight: Theme.c.shortcutCaptureField.height
+    width: implicitWidth
+    height: implicitHeight
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
 
     Accessible.role: Accessible.Button
-    Accessible.name: qsTr("Shortcut for %1").arg(root.actionId)
-    Accessible.description: root.shortcut.length > 0 ? Theme.shortcutDisplay(root.shortcut) : qsTr("Not set")
+    Accessible.name: qsTr("Add shortcut for %1").arg(root.actionLabel)
     Accessible.onPressAction: root.arm()
 
     function arm() {
@@ -57,15 +57,18 @@ AbstractButton {
         return EditorState.keymap.chordFromKey(event.key, event.modifiers, event.nativeScanCode, event.text)
     }
 
+    // Without this an app-wide shortcut such as Delete or Ctrl+E would fire instead of being captured.
+    Keys.onShortcutOverride: function(event) {
+        if (root.capturing)
+            event.accepted = true
+    }
+
     contentItem: Text {
         anchors.margins: 4
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
-        text: root.capturing ? qsTr("Press keys…")
-                             : (root.shortcut.length > 0
-                                ? Theme.shortcutDisplay(root.shortcut)
-                                : qsTr("Click to set"))
+        text: root.capturing ? qsTr("Press keys…") : "+"
         color: root.capturing ? Theme.c.shortcutCaptureField.foregroundCapturing
                               : Theme.c.shortcutCaptureField.foreground
         font.family: Theme.monoFontFamily
@@ -89,23 +92,15 @@ AbstractButton {
             event.accepted = true
             return
         }
-        if (event.key === Qt.Key_Backspace || event.key === Qt.Key_Delete) {
-            EditorState.setShortcut(root.actionId, "")
-            root.capturing = false
-            event.accepted = true
-            return
-        }
-
         const chord = root.chordFromEvent(event)
         if (chord.length === 0)
             return
 
-        // Non-empty means refused: the chord already belongs to another action, and
-        // binding it twice would make Qt fire neither.
-        const clash = EditorState.setShortcut(root.actionId, chord)
+        // Non-empty means refused: the chord already belongs to another action in this scope.
+        const clash = EditorState.keymap.addBinding(root.actionId, chord)
         if (clash.length > 0)
             Toasts.warning(qsTr("“%1” is already used by %2.")
-                           .arg(Theme.shortcutDisplay(chord)).arg(clash))
+                           .arg(EditorState.keymap.displayText(chord)).arg(clash))
         root.capturing = false
         event.accepted = true
     }

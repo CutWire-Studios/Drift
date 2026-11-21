@@ -1039,7 +1039,22 @@
       "background": "$semantic.destructive",
       "foreground": "$semantic.onMedia"
     },
+    "shortcutChip": {
+      "height": 24,
+      "radius": "$metrics.radius.sm",
+      "background": "$semantic.panel.accent",
+      "borderWidth": "$metrics.borderWidth",
+      "border": "$semantic.panel.border",
+      "foreground": "$semantic.panel.foreground"
+    },
+    "settingsKeymapPage": {
+      "modifiedMarkerSize": 6,
+      "modifiedMarker": "$semantic.primary"
+    },
     "shortcutCaptureField": {
+      "height": 24,
+      "idleWidth": 24,
+      "capturingWidth": 110,
       "radius": "$metrics.radius.sm",
       "backgroundCapturing": "$semantic.panel.secondary.background",
       "backgroundHover": "$semantic.popoverHover",
