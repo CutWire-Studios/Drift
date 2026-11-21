@@ -2742,6 +2742,10 @@
         <translation>Buscar…</translation>
     </message>
     <message>
+        <source>Ask (editing command)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Restore Workspace Windows</source>
         <translation>Restaurar ventanas del espacio de trabajo</translation>
     </message>
@@ -9481,12 +9485,28 @@
         <translation>Personalizar diseños en Ajustes…</translation>
     </message>
     <message>
+        <source>Describe an edit, e.g. “fade in over half a second”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search  %1</source>
         <translation>Buscar  %1</translation>
     </message>
     <message>
         <source>Search</source>
         <translation>Buscar</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished">Preguntar</translation>
+    </message>
+    <message>
+        <source>Ask Drift to make an edit  %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask Drift to make an edit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Thinking…</source>
@@ -12004,6 +12024,10 @@
     <message>
         <source>Ask</source>
         <translation type="unfinished">Preguntar</translation>
+    </message>
+    <message>
+        <source>Suggestion</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No matches</source>
@@ -20208,6 +20232,54 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Install the Command Bar Model to run commands like this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install the Command Bar Model to run editing commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A small local model, about 490 MB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split it at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in over half a second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out for 1.5 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make it black and white</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed this up to 1.5x</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set the volume to 50%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a title that says Hello</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to 10 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump to the start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
