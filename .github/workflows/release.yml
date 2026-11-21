@@ -340,5 +340,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run playstore-aab.yml -R "$GITHUB_REPOSITORY" --ref main -f ref="$GITHUB_REF_NAME"
+          gh workflow run playstore-aab.yml -R "$GITHUB_REPOSITORY" --ref main -f ref="$GITHUB_REF_NAME" -f publish=true
           gh workflow run msstore.yml -R "$GITHUB_REPOSITORY" --ref main -f ref="$GITHUB_REF_NAME"

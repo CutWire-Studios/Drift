@@ -17,6 +17,11 @@ on:
         required: false
         default: ""
         type: string
+      publish:
+        description: "Upload to the Play production track and send for review (release.yml sets this on tags)."
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -344,6 +349,36 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+      # Play caps "What's new" at 500 characters per language.
+      - name: Write Play release notes
+        if: inputs.publish
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/whatsnew"
+          python3 scripts/extract_release_notes.py "$VERSION" "$RUNNER_TEMP/notes.md"
+          python3 - "$RUNNER_TEMP/notes.md" "$RUNNER_TEMP/whatsnew/whatsnew-en-US" <<'PY'
+          import sys
+          text = open(sys.argv[1]).read().replace("\n- ", "\n• ").removeprefix("- ").strip()
+          if len(text) > 500:
+              text = text[:499].rsplit("\n", 1)[0].rstrip() + "…"
+          open(sys.argv[2], "w").write(text)
+          PY
+          cat "$RUNNER_TEMP/whatsnew/whatsnew-en-US"
+
+      - name: Publish to Play production
+        if: inputs.publish
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: org.cutwire.drift
+          releaseFiles: ${{ runner.temp }}/out/Drift-${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.version_code }}.aab
+          releaseName: ${{ steps.meta.outputs.version_code }} (${{ steps.meta.outputs.version }})
+          track: production
+          status: completed
+          whatsNewDirectory: ${{ runner.temp }}/whatsnew
+
       - name: Summary
         run: |
           {
@@ -353,4 +388,5 @@ jobs:
             echo "- **versionName:** ${{ steps.meta.outputs.version }}"
             echo "- **versionCode:** ${{ steps.meta.outputs.version_code }}"
             echo "- **artifact:** \`Drift-${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.version_code }}.aab\`"
+            echo "- **published to production:** ${{ inputs.publish }}"
           } >> "$GITHUB_STEP_SUMMARY"
