@@ -1,9 +1,10 @@
 {
   "id": "motion_trail",
-  "displayName": "Motion Trail",
+  "displayName": "Directional Smear",
   "category": "impact",
   "thumbnail": "thumbnail.webp",
   "order": 95,
+  "description": "Smears the picture in one fixed direction. It does not follow movement in the footage: for that, use Motion Blur.",
   "parameters": [
     {
       "identifier": "amount",
