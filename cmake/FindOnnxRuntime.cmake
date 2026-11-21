@@ -22,6 +22,7 @@ find_path(OnnxRuntime_INCLUDE_DIR
         ${ONNXRUNTIME_ROOT}/include/onnxruntime
         ${ONNXRUNTIME_ROOT}/include/onnxruntime/core/session
         $ENV{ONNXRUNTIME_ROOT}/include
+        ${CMAKE_SOURCE_DIR}/third_party/onnxruntime/include
         /usr/include
         /usr/include/onnxruntime
         /usr/include/onnxruntime/core/session
