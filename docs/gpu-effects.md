@@ -291,9 +291,15 @@ Behaviour, shared by both:
   compositor) always runs with an empty one, so there a time effect shows the current frame.
 
 `effects/motion_blur` (`motion.blur`) is a plain `history: 1` package: it estimates optical flow
-between `historyFrame(1.0, uv)` and the current frame on a luma pyramid (quarter and sixteenth size, block
-matching, then a flow-aware smoothing pass) and averages the picture along the flow scaled by
-`shutter / 360`, capped by `maxBlur`. It passes the picture through while `historyCount()` is 0.
+between `historyFrame(1.0, uv)` and the current frame on a three-level luma pyramid (1/64, 1/16 and 1/4
+size, block matching with each level refining the coarser one, sub-pixel at the finest, and a relative
+accept test so flat-ish areas keep their motion), then a flow-aware smoothing pass that also fills the
+flat inside of a moving object. A tile-max pass (1/16 size) and a 3x3 neighbour-max pass give each pixel
+the longest velocity near it, and the final pass samples along that velocity after McGuire et al.'s
+reconstruction filter, weighting each tap by whether its own velocity reaches the pixel, so a moving
+object smears past its outline onto the background. Taps are jittered per pixel. The smear length is
+the flow scaled by `shutter / 360 * strength`, capped by `maxBlur`; `strength` above 1 exaggerates beyond
+a real shutter. It passes the picture through while `historyCount()` is 0.
 
 Compositor code that wants the previous source frame of a clip sets `GpuLayer::sourceHistoryFrames` and, after `buildLayerTarget` has run for the layer, calls
 `drift::gl::pastSourceFrame(rt, layer.historyScope, layer.historyKey, age)` (FrameHistory.h). The

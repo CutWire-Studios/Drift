@@ -4,7 +4,7 @@
   "category": "impact",
   "thumbnail": "thumbnail.webp",
   "order": 94,
-  "description": "Blurs movement inside the footage along its direction, as a camera shutter would, by measuring the motion between the previous frame and this one. Needs the previous frame, so the first frame after a seek and any frame while scrubbing are not blurred. The clip's own keyframed movement is not blurred.",
+  "description": "Blurs movement inside the footage along its direction, as a camera shutter would, by measuring the motion between the previous frame and this one. Moving objects smear past their outline onto what is behind them. Strength exaggerates the smear beyond a real shutter. Needs the previous frame, so the first frame after a seek and any frame while scrubbing are not blurred. The clip's own keyframed movement is not blurred.",
   "backend": "gpu",
   "history": 1,
   "nextFeatures": ["history:source"],
@@ -32,30 +32,51 @@
       "minValue": 0.5,
       "maxValue": 25,
       "defaultValue": 8
+    },
+    {
+      "identifier": "strength",
+      "displayName": "Strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 4,
+      "defaultValue": 1
     }
   ],
   "pipeline": {
     "intermediateBuffers": [
       {"id": "luma4", "scale": 0.25},
       {"id": "luma16", "scale": 0.0625},
+      {"id": "luma64", "scale": 0.015625},
+      {"id": "flow64", "scale": 0.015625},
       {"id": "flow16", "scale": 0.0625},
       {"id": "flow4", "scale": 0.25},
-      {"id": "flow4s", "scale": 0.25}
+      {"id": "flow4s", "scale": 0.25},
+      {"id": "tile16", "scale": 0.0625},
+      {"id": "nbr16", "scale": 0.0625}
     ],
     "passes": [
       {"passIndex": 0, "fragmentShader": "luma4.frag",
        "inputs": [{"type": "source_texture"}], "output": {"type": "buffer", "id": "luma4"}},
       {"passIndex": 1, "fragmentShader": "luma16.frag",
        "inputs": [{"type": "buffer", "id": "luma4"}], "output": {"type": "buffer", "id": "luma16"}},
-      {"passIndex": 2, "fragmentShader": "match16.frag",
-       "inputs": [{"type": "buffer", "id": "luma16"}], "output": {"type": "buffer", "id": "flow16"}},
-      {"passIndex": 3, "fragmentShader": "match4.frag",
+      {"passIndex": 2, "fragmentShader": "luma16.frag",
+       "inputs": [{"type": "buffer", "id": "luma16"}], "output": {"type": "buffer", "id": "luma64"}},
+      {"passIndex": 3, "fragmentShader": "match64.frag",
+       "inputs": [{"type": "buffer", "id": "luma64"}], "output": {"type": "buffer", "id": "flow64"}},
+      {"passIndex": 4, "fragmentShader": "match16.frag",
+       "inputs": [{"type": "buffer", "id": "luma16"}, {"type": "buffer", "id": "flow64"}],
+       "output": {"type": "buffer", "id": "flow16"}},
+      {"passIndex": 5, "fragmentShader": "match4.frag",
        "inputs": [{"type": "buffer", "id": "luma4"}, {"type": "buffer", "id": "flow16"}],
        "output": {"type": "buffer", "id": "flow4"}},
-      {"passIndex": 4, "fragmentShader": "smooth.frag",
+      {"passIndex": 6, "fragmentShader": "smooth.frag",
        "inputs": [{"type": "buffer", "id": "flow4"}], "output": {"type": "buffer", "id": "flow4s"}},
-      {"passIndex": 5, "fragmentShader": "blur.frag",
-       "inputs": [{"type": "source_texture"}, {"type": "buffer", "id": "flow4s"}],
+      {"passIndex": 7, "fragmentShader": "tilemax.frag",
+       "inputs": [{"type": "buffer", "id": "flow4s"}], "output": {"type": "buffer", "id": "tile16"}},
+      {"passIndex": 8, "fragmentShader": "nbrmax.frag",
+       "inputs": [{"type": "buffer", "id": "tile16"}], "output": {"type": "buffer", "id": "nbr16"}},
+      {"passIndex": 9, "fragmentShader": "blur.frag",
+       "inputs": [{"type": "source_texture"}, {"type": "buffer", "id": "flow4s"}, {"type": "buffer", "id": "nbr16"}],
        "output": {"type": "canvas"}}
     ]
   }

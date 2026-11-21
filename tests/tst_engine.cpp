@@ -412,6 +412,7 @@ private slots:
     void pastSourceFrameServesThePreviousFrame();
     void trendingTimeEffectsLoadAndCompile();
     void motionBlurSmearsMovementInsideTheFootage();
+    void motionBlurSmearsPastTheOutline();
     void motionBlurLeavesStaticFootageAlone();
     void motionBlurNeedsThePreviousFrame();
     void gpuGaussianBlurChangesImage();
@@ -10691,10 +10692,12 @@ QString makeMovingSquareVideo(QTemporaryDir &dir, int speed)
     return out;
 }
 
-drift::Project motionBlurProject(const QString &video, bool blurred)
+drift::Project motionBlurProject(const QString &video, bool blurred, double strength = 1.0)
 {
     drift::Effect blur;
     blur.catalogId = QStringLiteral("motion.blur");
+    if (strength != 1.0)
+        blur.parameters.insert(QStringLiteral("strength"), strength);
     HistoryProject history;
     history.setUp(video, blur);
     history.project.setResolution(256, 128);
@@ -10745,6 +10748,41 @@ void EngineTest::motionBlurSmearsMovementInsideTheFootage()
     QVERIFY2(lum(smeared, 166) > 240, qPrintable(QString::number(lum(smeared, 166))));
     // Nothing is touched beyond the smear, nor above the square, where nothing moves.
     QVERIFY2(lum(smeared, 100) < 8 && lum(smeared, 200) < 8, qPrintable(QString::number(lum(smeared, 100))));
+    QVERIFY2(smeared.pixelColor(166, 20).red() < 8, qPrintable(QString::number(smeared.pixelColor(166, 20).red())));
+}
+
+void EngineTest::motionBlurSmearsPastTheOutline()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    QVERIFY(effectDefForId(QStringLiteral("motion.blur")));
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString video = makeMovingSquareVideo(dir, 12);
+    if (video.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    drift::Project plainProject = motionBlurProject(video, false);
+    drift::Project blurProject = motionBlurProject(video, true, 3.0);
+    FrameCompositor plain;
+    plain.setProject(&plainProject);
+    FrameCompositor blurred;
+    blurred.setProject(&blurProject);
+
+    // Strength 3 makes the smear 18 px long, so the square's pixels reach 9 px past each edge. A
+    // gather-only blur cannot do that: the background there has no motion of its own.
+    QImage sharp;
+    QImage smeared;
+    for (int frame = 8; frame <= 10; ++frame) {
+        sharp = frameAt(plain, frame);
+        smeared = frameAt(blurred, frame);
+    }
+    QVERIFY(!sharp.isNull() && !smeared.isNull());
+    const auto lum = [](const QImage &img, int x) { return img.pixelColor(x, 64).red(); };
+    QVERIFY2(lum(sharp, 187) < 20 && lum(sharp, 148) < 20, qPrintable(QString::number(lum(sharp, 187))));
+    QVERIFY2(lum(smeared, 187) > 30, qPrintable(QString::number(lum(smeared, 187))));
+    QVERIFY2(lum(smeared, 148) > 30, qPrintable(QString::number(lum(smeared, 148))));
+    QVERIFY2(lum(smeared, 100) < 8 && lum(smeared, 230) < 8, qPrintable(QString::number(lum(smeared, 230))));
     QVERIFY2(smeared.pixelColor(166, 20).red() < 8, qPrintable(QString::number(smeared.pixelColor(166, 20).red())));
 }
 

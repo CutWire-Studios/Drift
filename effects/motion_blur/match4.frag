@@ -4,7 +4,8 @@ out vec4 fragColor;
 uniform sampler2D u_currentTexture;
 uniform sampler2D u_texture1;
 
-const float kMinGain = 0.015;
+const float kMinBase = 0.004;
+const float kRelative = 0.85;
 
 vec2 enc(float v) {
     float e = floor(clamp(v + 0.5, 0.0, 1.0) * 65535.0 + 0.5);
@@ -29,7 +30,8 @@ float cost(ivec2 p, ivec2 d, ivec2 sz) {
     return sum / 25.0;
 }
 
-// Refines the coarse flow around its own guess, within two texels each way.
+// Refines the coarse flow around its own guess, within two texels each way, then to a fraction of a
+// texel from the cost curve either side of the best shift.
 void main() {
     ivec2 sz = textureSize(u_currentTexture, 0);
     ivec2 cs = textureSize(u_texture1, 0);
@@ -41,21 +43,35 @@ void main() {
     float base = cost(p, ivec2(0), sz);
     float best = base;
     ivec2 bestD = ivec2(0);
-    if (base > kMinGain) {
+    vec2 sub = vec2(0.0);
+    if (base > kMinBase) {
         best = cost(p, guess, sz);
         bestD = guess;
         for (int dy = -2; dy <= 2; ++dy)
             for (int dx = -2; dx <= 2; ++dx) {
                 ivec2 d = guess + ivec2(dx, dy);
-                float c = cost(p, d, sz) + 0.002 * length(vec2(dx, dy));
+                float c = cost(p, d, sz) + 0.0002 * length(vec2(dx, dy));
                 if (c < best) {
                     best = c;
                     bestD = d;
                 }
             }
-        if (best > base - kMinGain)
+        if (!(best < kRelative * base)) {
             bestD = ivec2(0);
+        } else {
+            float c0 = cost(p, bestD, sz);
+            float xm = cost(p, bestD - ivec2(1, 0), sz);
+            float xp = cost(p, bestD + ivec2(1, 0), sz);
+            float ym = cost(p, bestD - ivec2(0, 1), sz);
+            float yp = cost(p, bestD + ivec2(0, 1), sz);
+            float dx = xm - 2.0 * c0 + xp;
+            float dy = ym - 2.0 * c0 + yp;
+            if (dx > 1e-6 && c0 <= xm && c0 <= xp)
+                sub.x = clamp(0.5 * (xm - xp) / dx, -0.5, 0.5);
+            if (dy > 1e-6 && c0 <= ym && c0 <= yp)
+                sub.y = clamp(0.5 * (ym - yp) / dy, -0.5, 0.5);
+        }
     }
-    vec2 uvD = vec2(bestD) / vec2(sz);
+    vec2 uvD = (vec2(bestD) + sub) / vec2(sz);
     fragColor = vec4(enc(uvD.x), enc(uvD.y));
 }
