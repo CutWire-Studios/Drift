@@ -25,6 +25,7 @@ Search order: `DRIFT_EFFECTS_DIR`, `<applicationDir>/effects`, `<AppDataLocation
 | `fixedParams` | Hidden uniforms (colors as `#rrggbb`, enums as strings) |
 | `requires` | `"face"` to receive the baked face anchors, `"depth"` to receive the clip's depth map (see below), or an array of both. Any other value is a parse error. `"depth"` is `gpu` backend only |
 | `history` | Whole number 1–32: the effect samples that many of the clip's earlier source frames (see "Time effects" below). `gpu` backend only |
+| `historyExact` | Whole number 1–2, no more than `history`: the engine decodes that many earlier source frames on demand when its ring lacks them (see "Time effects"). `gpu` backend only; `nextFeatures` name `history:exact` |
 | `previousOutput` | `true`: the effect can read its own output from the previous frame (see "Time effects"). `gpu` backend only |
 | `pipeline` | `intermediateBuffers` + `passes` |
 
@@ -275,12 +276,25 @@ Behaviour, shared by both:
 - **Stepping.** Each composite looks at the clip's time in project frames
   (`round(clipTime * fps)`). The same frame again (a paused re-render after an edit) replaces what
   was recorded for it; the next frame — or the one after, when playback dropped a frame — appends;
-  anything else (a seek, a scrub, a loop, a trim) clears the history. Until it fills an effect
+  anything else (a seek, a scrub, a loop, a trim) clears the history (unless the package sets
+  `historyExact`, below). Until it fills an effect
   shows something sensible: `historyFrame` clamps to the oldest frame recorded and a transparent
   `u_prevOutput` leaves the live picture alone.
+- **`"historyExact": N` (1–2, `history` must be at least N, `nextFeatures`: `history:exact`).** When
+  the ring does not already hold the previous N frames (after a seek, on a paused frame the ring
+  never saw, at the first frame of an export range) the compositor decodes frames `t - k` for
+  k = N..1 from the clip's own reader and seeds the ring, so the effect sees them from the first
+  frame. The times go through the clip's speed, ramp and reverse mapping, so "previous" is the
+  temporal previous frame. Normal playback already has them and decodes nothing extra. Not done
+  while scrubbing (the approximate-seek read), for frames before the clip's start, for clips of
+  composite, still-image, procedural or cutout layers, which keep the ring behaviour, or by the
+  single-image executor. The seeded frames are cropped and straightened like the live one. Each
+  extra frame is one more held decoder surface until the frame has rendered, which is why
+  `kHwExtraFrames` has two spare.
 - **Export is deterministic.** It composes frame after frame in order, so each frame is built from
   exactly the frames before it, and the history is empty at the start of the file or range.
-  Starting an export mid-clip begins with an empty history at the range's first frame.
+  Starting an export mid-clip begins with an empty history at the range's first frame, except for
+  `historyExact` packages, which decode the frames before it.
 - **Memory is bounded.** The source ring is one atlas texture per clip, scaled down in steps when
   N full-size frames would not fit (the frames sampled by `historyFrame` can therefore be softer
   than the live one on long rings and large canvases), and the whole store is capped (768 MiB
@@ -290,7 +304,7 @@ Behaviour, shared by both:
   history, and the single-image executor (`GpuEffectExecutor`: effect thumbnails and the CPU
   compositor) always runs with an empty one, so there a time effect shows the current frame.
 
-`effects/motion_blur` (`motion.blur`) is a plain `history: 1` package: it estimates optical flow
+`effects/motion_blur` (`motion.blur`) is a `history: 1`, `historyExact: 1` package: it estimates optical flow
 between `historyFrame(1.0, uv)` and the current frame on a three-level luma pyramid (1/64, 1/16 and 1/4
 size, block matching with each level refining the coarser one, sub-pixel at the finest, and a relative
 accept test so flat-ish areas keep their motion), then a flow-aware smoothing pass that also fills the
@@ -299,7 +313,7 @@ the longest velocity near it, and the final pass samples along that velocity aft
 reconstruction filter, weighting each tap by whether its own velocity reaches the pixel, so a moving
 object smears past its outline onto the background. Taps are jittered per pixel. The smear length is
 the flow scaled by `shutter / 360 * strength`, capped by `maxBlur`; `strength` above 1 exaggerates beyond
-a real shutter. It passes the picture through while `historyCount()` is 0.
+a real shutter. It passes the picture through while `historyCount()` is 0, which now only happens at the start of a clip.
 
 Compositor code that wants the previous source frame of a clip sets `GpuLayer::sourceHistoryFrames` and, after `buildLayerTarget` has run for the layer, calls
 `drift::gl::pastSourceFrame(rt, layer.historyScope, layer.historyKey, age)` (FrameHistory.h). The

@@ -263,6 +263,33 @@ HistoryBinding ClipHistory::sourceBinding() const
     return binding;
 }
 
+int ClipHistory::pastRecorded() const
+{
+    if (!m_entry || m_entry->source.ringSize == 0 || !m_entry->source.atlas.isValid())
+        return 0;
+    return m_entry->source.count - 1;
+}
+
+int ClipHistory::pastMissing(int wanted) const
+{
+    if (!m_entry || m_entry->source.ringSize == 0 || !m_entry->source.atlas.isValid())
+        return 0;
+    const FrameHistoryStore::SourceRing &ring = m_entry->source;
+    return std::max(0, std::min(wanted, ring.ringSize - 1) - (ring.count - 1));
+}
+
+void ClipHistory::seedPast(GlRuntime &rt, QOpenGLExtraFunctions *gl, int age, const GlTarget &frame)
+{
+    if (!m_entry || !frame.isValid() || age != pastRecorded() + 1 || age >= m_entry->source.ringSize)
+        return;
+    FrameHistoryStore::SourceRing &ring = m_entry->source;
+    const int slot = ((ring.head - age) % ring.ringSize + ring.ringSize) % ring.ringSize;
+    blitToRect(rt, gl, frame.texture(), ring.atlas,
+               QRect((slot % ring.columns) * ring.tile.width(), (slot / ring.columns) * ring.tile.height(),
+                     ring.tile.width(), ring.tile.height()));
+    ring.count = age + 1;
+}
+
 GLuint ClipHistory::previousOutput(int effectIndex) const
 {
     if (!m_entry)

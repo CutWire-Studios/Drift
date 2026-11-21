@@ -387,15 +387,17 @@ private:
     static constexpr int kMaxHwCachedFrames = 12;
     // Must stay ahead of kMaxHwCachedFrames plus the cover and peek refs and the decoder's
     // own reorder buffer, or the pool runs dry and decode stalls waiting for a free surface.
-    static constexpr int kHwExtraFrames = 20;
+    // The two on top are the past frames a "historyExact" effect's scene holds until it has
+    // rendered (GpuLayer::pastVideo, at most kMaxHistoryExactFrames).
+    static constexpr int kHwExtraFrames = 22;
     // Cover and peek hold one ref each on top of the cache; the rest is the decoder's own
     // reorder headroom. Raising the cache without raising the pool is what stalls decode.
-    static_assert(kHwExtraFrames >= kMaxHwCachedFrames + 2 + 4,
+    static_assert(kHwExtraFrames >= kMaxHwCachedFrames + 2 + 2 + 4,
                   "hardware surface pool must cover the preview cache, cover/peek, and the "
                   "decoder's reorder buffer");
     // Cover and peek hold one ref each on top of the cache; the rest is the decoder's own
     // reorder headroom. Raising the cache without raising the pool is what stalls decode.
-    static_assert(kHwExtraFrames >= kMaxHwCachedFrames + 2 + 4,
+    static_assert(kHwExtraFrames >= kMaxHwCachedFrames + 2 + 2 + 4,
                   "hardware surface pool must cover the preview cache, cover/peek, and the "
                   "decoder's reorder buffer");
 

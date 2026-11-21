@@ -17,6 +17,10 @@ namespace drift {
 class BakeReaderPool;
 }
 
+// What prepare() last asked of each clip's frame history, so past frames are decoded only when the
+// GPU ring cannot already hold them. Defined in FrameCompositor.cpp.
+struct ExactHistoryTracker;
+
 // Preview canvas as a fraction of project resolution. Below this, text and effect
 // radii collapse to subpixels. The compositor only goes past 1.0 when export raises RenderOptions::maxScale.
 inline constexpr double kMinPreviewScale = 0.02;
@@ -178,10 +182,12 @@ private:
                          int width, int height, double renderScale) const;
 
     static quint64 nextHistoryId();
+    static std::shared_ptr<ExactHistoryTracker> makeExactHistory();
 
     const drift::Project *m_project = nullptr;
     // Names this compositor's frame histories apart from every other one's (GpuScene::historyScope).
     quint64 m_historyId = nextHistoryId();
+    std::shared_ptr<ExactHistoryTracker> m_exactHistory = makeExactHistory();
     std::shared_ptr<drift::BakeReaderPool> m_bakes;
     int m_bakeOwner = 0;
     mutable QHash<QString, std::shared_ptr<const drift::Project>> m_nestedViews;

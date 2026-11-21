@@ -55,8 +55,27 @@
 #include <QtMath>
 
 #include <atomic>
+#include <map>
+#include <vector>
 #include <type_traits>
 #include <unordered_map>
+
+// What prepare() last did for each clip's frame history, so the frames a "historyExact" effect
+// needs are decoded only when the GPU ring cannot already hold them. It mirrors ClipHistory's
+// stepping from FrameHistory.cpp (same frame: repeat, the next one or two: advance, else restart),
+// and is only a hint: the ring seeds just the frames it is actually missing.
+struct ExactHistoryTracker
+{
+    struct Entry
+    {
+        qint64 lastFrame = 0;
+        int have = 0;
+        quint64 serial = 0;
+    };
+    QMutex mutex;
+    std::map<std::pair<quint64, quint64>, Entry> entries;
+    std::map<quint64, quint64> serials;
+};
 
 namespace {
 
@@ -95,6 +114,42 @@ struct HistoryScope
     explicit HistoryScope(quint64 scope) : previous(t_historyScope) { t_historyScope = scope; }
     ~HistoryScope() { t_historyScope = previous; }
     quint64 previous;
+};
+
+// The tracker, scope and scrub flag of the prepare() running on this thread.
+thread_local ExactHistoryTracker *t_exactTracker = nullptr;
+thread_local quint64 t_exactSerial = 0;
+thread_local bool t_exactApproximate = false;
+
+struct ExactHistoryScope
+{
+    ExactHistoryScope(ExactHistoryTracker *tracker, quint64 scope, bool approximate)
+        : previousTracker(t_exactTracker), previousSerial(t_exactSerial),
+          previousApproximate(t_exactApproximate)
+    {
+        t_exactTracker = tracker;
+        t_exactApproximate = approximate;
+        if (!tracker)
+            return;
+        QMutexLocker lock(&tracker->mutex);
+        t_exactSerial = ++tracker->serials[scope];
+        // A clip that sat out the last composite lost its ring with it (HistoryComposite).
+        for (auto it = tracker->entries.begin(); it != tracker->entries.end();) {
+            if (it->first.first == scope && it->second.serial + 1 < t_exactSerial)
+                it = tracker->entries.erase(it);
+            else
+                ++it;
+        }
+    }
+    ~ExactHistoryScope()
+    {
+        t_exactTracker = previousTracker;
+        t_exactSerial = previousSerial;
+        t_exactApproximate = previousApproximate;
+    }
+    ExactHistoryTracker *previousTracker;
+    quint64 previousSerial;
+    bool previousApproximate;
 };
 
 // Sequences being rendered on this thread, outermost first.
@@ -1079,6 +1134,79 @@ void fillGpuLayerPixels(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs 
     layer.source = decodeClipMediaFrame(clip, timelineUs, maxWidth, maxHeight);
 }
 
+int exactHistoryFrames(const QList<drift::Effect> &effects)
+{
+    int frames = 0;
+    for (const drift::Effect &effect : effects) {
+        const EffectPresetEntry *def =
+            effect.enabled && !effect.catalogId.isEmpty() ? effectDefForId(effect.catalogId) : nullptr;
+        if (def && def->isGpu && def->gpu.valid)
+            frames = qMax(frames, def->gpu.historyExactFrames);
+    }
+    return frames;
+}
+
+// The source frames before this one that a "historyExact" effect asked for (`want` of them),
+// decoded from the clip's own reader, oldest first, only when the GPU ring cannot already hold
+// them: after a seek, on a paused frame the ring never saw, or at the first frame of an export.
+// Times go through resolveVideoRead, so speed, ramps and reverse give the temporal previous frame.
+// Skipped while scrubbing, and for frames that fall before the clip starts.
+void fillGpuLayerPast(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs timelineUs, int fps,
+                      int want, int maxWidth, int maxHeight)
+{
+    if (want <= 0 || !t_exactTracker || t_historyScope == 0)
+        return;
+    const drift::TimeUs clipTimeUs = timelineUs - clip.timelineStart;
+    const int rate = fps > 0 ? fps : 30;
+    const qint64 frame = std::llround(double(clipTimeUs) * rate / 1'000'000.0);
+
+    int reachable = 0;
+    for (int k = 1; k <= want; ++k) {
+        if (timelineUs - std::llround(double(k) * 1'000'000.0 / rate) >= clip.timelineStart)
+            reachable = k;
+    }
+
+    bool fetch = false;
+    {
+        QMutexLocker lock(&t_exactTracker->mutex);
+        ExactHistoryTracker::Entry &entry = t_exactTracker->entries[{t_historyScope, streamIdFor(clip.id)}];
+        int have = 0;
+        if (entry.serial + 1 == t_exactSerial) {
+            const qint64 gap = frame - entry.lastFrame;
+            if (gap == 0)
+                have = entry.have;
+            else if (gap >= 1 && gap <= 2)
+                have = entry.have + 1;
+        }
+        have = qMin(have, reachable);
+        fetch = have < reachable && !t_exactApproximate;
+        entry.lastFrame = frame;
+        entry.serial = t_exactSerial;
+        entry.have = have;
+    }
+    if (!fetch)
+        return;
+
+    std::vector<PreviewVideoFrame> frames;
+    for (int k = reachable; k >= 1; --k) {
+        const drift::TimeUs pastUs = timelineUs - std::llround(double(k) * 1'000'000.0 / rate);
+        const drift::VideoRead read = drift::resolveVideoRead(clip, pastUs, t_allowProxies);
+        frames.push_back(ClipReaderPool::instance().readPreviewVideoFrame(
+            read.path, streamIdFor(clip.id), read.sourceUs, qCeil(maxWidth / clip.sourceFrame.width()),
+            qCeil(maxHeight / clip.sourceFrame.height()), clip.rotationCorrection));
+    }
+    // The newest frames matter most: drop from the oldest end at the first one that failed.
+    int usable = 0;
+    while (usable < int(frames.size()) && frames[frames.size() - 1 - usable].isValid())
+        ++usable;
+    frames.erase(frames.begin(), frames.end() - usable);
+    {
+        QMutexLocker lock(&t_exactTracker->mutex);
+        t_exactTracker->entries[{t_historyScope, streamIdFor(clip.id)}].have = usable;
+    }
+    layer.pastVideo = std::move(frames);
+}
+
 // The word the playhead sits on, for styles whose accent rule follows the speech. -1 for every
 // other rule, which keeps their raster time-independent and therefore cached across the clip.
 int karaokeWordIndex(const drift::Clip &clip, drift::TimeUs timelineUs)
@@ -1496,6 +1624,16 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         // Bounded by the canvas, not the layout rect — see decodeClipMediaFrame.
         const QSize bound =
             decodeBoundForClip(clip, projectWidth, projectHeight, renderScale, canvasWidth, canvasHeight);
+        if (clip.type == drift::ClipType::Video) {
+            // A lone cutout swaps in its own foreground, which the ring records instead of this frame.
+            const bool cutout = laneMasks.size() == 1 && !laneMasks.first().mask.mediaFgrPath.isEmpty()
+                                && !laneMasks.first().mask.invert;
+            if (!cutout)
+                fillGpuLayerPast(layer, clip, timelineUs, projectFps,
+                                 qMax(exactHistoryFrames(resolvedClipEffects(clip, clipTimeUs)),
+                                      exactHistoryFrames(laneEffects)),
+                                 bound.width(), bound.height());
+        }
         fillGpuLayerPixels(layer, clip, timelineUs, bound.width(), bound.height());
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
     }
@@ -2165,6 +2303,11 @@ FrameCompositor::TextEditGeometry FrameCompositor::textEditGeometry(const drift:
     return out;
 }
 
+std::shared_ptr<ExactHistoryTracker> FrameCompositor::makeExactHistory()
+{
+    return std::make_shared<ExactHistoryTracker>();
+}
+
 quint64 FrameCompositor::nextHistoryId()
 {
     static std::atomic<quint64> counter{0};
@@ -2245,6 +2388,7 @@ bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &opt
     // each step their clips' frame histories on their own, so none disturbs another.
     const quint64 historyScope = (m_historyId << 4) | quint64(options.stream & 0xF);
     const HistoryScope historyScopeGuard(historyScope);
+    const ExactHistoryScope exactHistoryGuard(m_exactHistory.get(), historyScope, options.approximateSeek);
     // Covers the warm below and every read buildGpuScene makes, nested timelines included.
     const ClipReaderPool::ApproximateSeekScope approximate(options.approximateSeek);
     const NestedViewsScope nestedViews(m_nestedViews);

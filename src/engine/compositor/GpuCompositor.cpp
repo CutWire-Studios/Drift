@@ -787,6 +787,19 @@ HistoryNeeds historyNeeds(const GpuLayer &layer)
     return needs;
 }
 
+// A decoded video frame as the layer's source: converted to RGBA, then straightened or cropped to the
+// clip's source frame.
+GlTarget videoSourceTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const PreviewVideoFrame &video,
+                           const QRectF &crop, double cropAngle)
+{
+    GlTarget target = promoteVideoFrameToTargetCached(rt, gl, video);
+    if (target.isValid() && cropAngle != 0.0)
+        target = straightenCropTarget(rt, gl, std::move(target), crop, cropAngle);
+    else if (target.isValid() && crop != QRectF(0, 0, 1, 1))
+        target = cropTarget(rt, std::move(target), crop);
+    return target;
+}
+
 // `modelDepth`: for a model layer that takes part in depth occlusion, its packed depth.
 GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
                           const QSize &canvasSize, GlTarget *modelDepth = nullptr)
@@ -813,11 +826,7 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     } else if (layer.nested) {
         target = nestedLayerTarget(rt, gl, *layer.nested);
     } else if (layer.video.isValid()) {
-        target = promoteVideoFrameToTargetCached(rt, gl, layer.video);
-        if (target.isValid() && layer.videoCropAngle != 0.0)
-            target = straightenCropTarget(rt, gl, std::move(target), layer.videoCrop, layer.videoCropAngle);
-        else if (target.isValid() && layer.videoCrop != QRectF(0, 0, 1, 1))
-            target = cropTarget(rt, std::move(target), layer.videoCrop);
+        target = videoSourceTarget(rt, gl, layer.video, layer.videoCrop, layer.videoCropAngle);
     } else {
 #ifdef DRIFT_WITH_SKIA
         if (layer.vector) {
@@ -856,6 +865,18 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     drift::gl::ClipHistory history(rt, gl, layer.historyScope, layer.historyKey, layer.clipTimeUs,
                                    layer.frameRate, target, historyAsk.sourceFrames,
                                    historyAsk.outputEffects);
+    if (!layer.pastVideo.empty()) {
+        const int have = int(layer.pastVideo.size());
+        const int last = history.pastRecorded() + history.pastMissing(have);
+        for (int age = history.pastRecorded() + 1; age <= last; ++age) {
+            GlTarget past = videoSourceTarget(rt, gl, layer.pastVideo[have - age], layer.videoCrop,
+                                              layer.videoCropAngle);
+            if (!past.isValid())
+                break;
+            history.seedPast(rt, gl, age, past);
+            rt.releaseTarget(std::move(past));
+        }
+    }
 
     // The folded mask stack, built the first time an effect asks for it and shared down the chain.
     GlTarget clipMask;

@@ -126,6 +126,16 @@ public:
     // when there are none yet.
     HistoryBinding sourceBinding() const;
 
+    // How many of the `wanted` frames behind the current one the ring does not hold yet (0 when
+    // it is not recording). The frames to seed are ages recorded() + 1 .. recorded() + missing.
+    int pastMissing(int wanted) const;
+    int pastRecorded() const;
+
+    // Writes `frame` (already cropped and straightened like the current one) as the source frame
+    // `age` project frames back, and counts it as recorded. Ages must be seeded in ascending order
+    // from pastRecorded() + 1. For after a seek, a pause or an export start, where the ring is empty.
+    void seedPast(GlRuntime &rt, QOpenGLExtraFunctions *gl, int age, const GlTarget &frame);
+
     // The effect's output one frame ago, or 0 for none.
     GLuint previousOutput(int effectIndex) const;
 

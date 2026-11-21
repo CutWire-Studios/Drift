@@ -415,6 +415,8 @@ private slots:
     void motionBlurSmearsPastTheOutline();
     void motionBlurLeavesStaticFootageAlone();
     void motionBlurNeedsThePreviousFrame();
+    void historyExactDecodesThePreviousFrameOnDemand();
+    void effectPackageLoaderParsesHistoryExact();
     void gpuGaussianBlurChangesImage();
     void gpuMultiPassPreservesVerticalOrientation();
     void gpuBrokenShaderPassthrough();
@@ -10825,10 +10827,130 @@ void EngineTest::motionBlurNeedsThePreviousFrame()
     FrameCompositor blurred;
     blurred.setProject(&blurProject);
 
-    QCOMPARE(frameAt(blurred, 10), frameAt(plain, 10));
+    // The first frame of the clip has no frame before it.
+    QCOMPARE(frameAt(blurred, 0), frameAt(plain, 0));
     QVERIFY(frameAt(blurred, 11) != frameAt(plain, 11));
-    // A seek forgets the previous frame.
-    QCOMPARE(frameAt(blurred, 30), frameAt(plain, 30));
+
+    // Motion Blur asks for its previous frame to be decoded on demand, so a frame rendered cold
+    // after a seek, and again while paused, equals the one reached by playing up to it.
+    drift::Project sequentialProject = motionBlurProject(video, true);
+    FrameCompositor sequential;
+    sequential.setProject(&sequentialProject);
+    QImage played;
+    for (int frame = 0; frame <= 10; ++frame)
+        played = frameAt(sequential, frame);
+    drift::Project coldProject = motionBlurProject(video, true);
+    FrameCompositor cold;
+    cold.setProject(&coldProject);
+    const QImage seeked = frameAt(cold, 10);
+    QVERIFY(seeked != frameAt(plain, 10));
+    QCOMPARE(seeked, played);
+    QCOMPARE(frameAt(cold, 10), played);
+    QCOMPARE(frameAt(cold, 10), played);
+
+    // A scrub reads the clip approximately and does not decode extra frames; the settled frame does.
+    FrameCompositor::RenderOptions scrub;
+    scrub.approximateSeek = true;
+    cold.compositeAt(drift::TimeUs(14) * 40'000, scrub);
+    for (int frame = 11; frame <= 14; ++frame)
+        played = frameAt(sequential, frame);
+    QCOMPARE(frameAt(cold, 14), played);
+    QVERIFY(played != frameAt(plain, 14));
+}
+
+void EngineTest::historyExactDecodesThePreviousFrameOnDemand()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir videoDir;
+    QVERIFY(videoDir.isValid());
+    const QString video = makeColorSegmentsVideo(videoDir);
+    if (video.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir fixtures;
+    QVERIFY(fixtures.isValid());
+    const QString body = QStringLiteral("void main(){ fragColor = historyFrame(1.0, v_texCoord); }\n");
+    QVERIFY(!writeHistoryFixture(fixtures, QStringLiteral("history_exact"),
+                                 QStringLiteral(R"("history": 1, "historyExact": 1, "nextFeatures": ["history:exact"],)"),
+                                 QString(), body).isEmpty());
+    QVERIFY(!writeHistoryFixture(fixtures, QStringLiteral("history_ring"),
+                                 QStringLiteral(R"("history": 1,)"), QString(), body).isEmpty());
+    QStringList roots = historyTestEffectRoots();
+    roots.append(fixtures.path());
+    reloadEffectCatalog(roots);
+    const auto restore = qScopeGuard([] { reloadEffectCatalog(historyTestEffectRoots()); });
+    QVERIFY(effectDefForId(QStringLiteral("test.history_exact")));
+    QVERIFY(effectDefForId(QStringLiteral("test.history_exact"))->gpu.valid);
+
+    // Red until frame 24, lime from 25: frame 25 reading the frame before it shows red.
+    const auto isRed = [](const QColor &c) { return c.red() > 200 && c.green() < 60; };
+    const auto isLime = [](const QColor &c) { return c.green() > 200 && c.red() < 60; };
+
+    drift::Effect exact;
+    exact.catalogId = QStringLiteral("test.history_exact");
+    HistoryProject exactProject;
+    exactProject.setUp(video, exact);
+    FrameCompositor compositor;
+    compositor.setProject(&exactProject.project);
+
+    // Cold, right after opening: no frame was ever rendered before this one.
+    const QColor cold = centreAtFrame(compositor, 25);
+    QVERIFY2(isRed(cold), qPrintable(cold.name()));
+    // Paused re-renders stay the same, and a later seek is served the same way.
+    QCOMPARE(centreAtFrame(compositor, 25), cold);
+    QCOMPARE(centreAtFrame(compositor, 25), cold);
+    QVERIFY2(isLime(centreAtFrame(compositor, 40)), "frame 40 follows lime");
+    QCOMPARE(centreAtFrame(compositor, 25), cold);
+    // In sequence nothing needs decoding on demand and the result is the same.
+    FrameCompositor sequential;
+    sequential.setProject(&exactProject.project);
+    QColor played;
+    for (int frame = 20; frame <= 25; ++frame)
+        played = centreAtFrame(sequential, frame);
+    QCOMPARE(played, cold);
+
+    // The clip's first frame has none before it: it shows itself.
+    QVERIFY2(isRed(centreAtFrame(compositor, 0)), "first frame");
+
+    // Without historyExact the ring is all there is, and a seek forgets.
+    drift::Effect ring;
+    ring.catalogId = QStringLiteral("test.history_ring");
+    HistoryProject ringProject;
+    ringProject.setUp(video, ring);
+    FrameCompositor forgetful;
+    forgetful.setProject(&ringProject.project);
+    const QColor afterSeek = centreAtFrame(forgetful, 25);
+    QVERIFY2(isLime(afterSeek), qPrintable(afterSeek.name()));
+}
+
+void EngineTest::effectPackageLoaderParsesHistoryExact()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString body = QStringLiteral("void main(){ fragColor = historyFrame(1.0, v_texCoord); }\n");
+
+    QString error;
+    const EffectPresetEntry ok = EffectPackageLoader::loadPackage(
+        writeHistoryFixture(dir, QStringLiteral("exact_ok"),
+                            QStringLiteral(R"("history": 4, "historyExact": 2, "nextFeatures": ["history:exact"],)"),
+                            QString(), body),
+        &error);
+    QVERIFY2(ok.gpu.valid, qPrintable(error));
+    QCOMPARE(ok.gpu.historyExactFrames, 2);
+
+    int n = 0;
+    for (const QString &fields : {QStringLiteral(R"("history": 4, "historyExact": 0,)"),
+                                  QStringLiteral(R"("history": 4, "historyExact": 3,)"),
+                                  QStringLiteral(R"("history": 1, "historyExact": 2,)"),
+                                  QStringLiteral(R"("historyExact": 1,)")}) {
+        const EffectPresetEntry bad = EffectPackageLoader::loadPackage(
+            writeHistoryFixture(dir, QStringLiteral("exact_bad_%1").arg(n++), fields, QString(), body), &error);
+        QVERIFY2(!bad.gpu.valid, qPrintable(fields));
+        QVERIFY2(error.contains(QStringLiteral("historyExact")) || error.contains(QStringLiteral("history")),
+                 qPrintable(error));
+    }
 }
 
 void EngineTest::trendingTimeEffectsLoadAndCompile()

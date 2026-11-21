@@ -4,10 +4,11 @@
   "category": "impact",
   "thumbnail": "thumbnail.webp",
   "order": 94,
-  "description": "Blurs movement inside the footage along its direction, as a camera shutter would, by measuring the motion between the previous frame and this one. Moving objects smear past their outline onto what is behind them. Strength exaggerates the smear beyond a real shutter. Needs the previous frame, so the first frame after a seek and any frame while scrubbing are not blurred. The clip's own keyframed movement is not blurred.",
+  "description": "Blurs movement inside the footage along its direction, as a camera shutter would, by measuring the motion between the previous frame and this one. Moving objects smear past their outline onto what is behind them. Strength exaggerates the smear beyond a real shutter. Needs the previous frame, so the first frame of a clip and frames while scrubbing are not blurred. The clip's own keyframed movement is not blurred.",
   "backend": "gpu",
   "history": 1,
-  "nextFeatures": ["history:source"],
+  "historyExact": 1,
+  "nextFeatures": ["history:source", "history:exact"],
   "parameters": [
     {
       "identifier": "shutter",

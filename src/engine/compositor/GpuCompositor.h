@@ -25,6 +25,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace drift {
 struct GpuEffectDefinition;
@@ -159,6 +160,10 @@ struct GpuLayer
     // that wants the previous frame (optical-flow motion blur) sets 1 and fetches it with
     // pastSourceFrame(rt, layer.historyScope, layer.historyKey) once buildLayerTarget has run.
     int sourceHistoryFrames = 0;
+    // Source frames before the current one, oldest first (the last is one project frame back),
+    // decoded for a "historyExact" effect when the history ring could not hold them. Fewer than
+    // asked at the start of the clip; empty when the ring already has them.
+    std::vector<PreviewVideoFrame> pastVideo;
     // This frame's baked face anchors, one per tracked slot, sampled by FrameCompositor. Carried
     // by value: the scene outlives the cache lookup that produced them.
     QList<drift::FaceAnchors> faceSlots;

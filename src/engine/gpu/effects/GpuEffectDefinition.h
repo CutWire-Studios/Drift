@@ -13,6 +13,8 @@ namespace drift {
 
 // The most past source frames a package may ask for with "history".
 inline constexpr int kMaxHistoryFrames = 32;
+// The most of those a package may have decoded on demand with "historyExact".
+inline constexpr int kMaxHistoryExactFrames = 2;
 
 // A vecN[] uniform carried through the parameter map. Only the engine produces these — the face
 // contour loops are the one thing too large to spell out as named scalars, and 128 points would
@@ -144,6 +146,9 @@ struct GpuEffectDefinition
     // "history": N source frames before the current one are kept for the clip and sampled with
     // historyFrame(age, uv). 0 for packages that do not look back. See docs/gpu-effects.md.
     int historyFrames = 0;
+    // "historyExact": N: the N frames before the current one are decoded when the ring lacks them
+    // (after a seek, a pause, an export start), so the effect always sees them. At most `historyFrames`.
+    int historyExactFrames = 0;
     // "previousOutput": true: u_prevOutput is this effect's own result from the previous project frame.
     bool needsPrevOutput = false;
     // Parameters bound beyond plain scalars, from the package's parameter list (declaration order).

@@ -443,6 +443,7 @@ bool checkNextFeatures(const QJsonObject &root, QString *errorOut)
         QStringLiteral("uniform:audio"),    QStringLiteral("requires:mask"),
         QStringLiteral("requires:depth"),   QStringLiteral("requires:face"),
         QStringLiteral("history:source"),   QStringLiteral("history:previous-output"),
+        QStringLiteral("history:exact"),
     };
     QStringList unsupported;
     for (const QJsonValue &v : root.value(QStringLiteral("nextFeatures")).toArray()) {
