@@ -192,6 +192,28 @@ McpController::~McpController()
 #endif
 }
 
+void McpController::logLocalCall(const QString &source, const QString &tool, const QJsonObject &args, bool ok,
+                                 const QString &error, qint64 ms)
+{
+    constexpr int kMaxToolLog = 500;
+    QString summary = QStringLiteral("[%1] ").arg(source)
+                      + QString::fromUtf8(QJsonDocument(args).toJson(QJsonDocument::Compact));
+    if (summary.size() > 120)
+        summary = summary.left(119) + QChar(0x2026);
+    m_toolLog.append(QVariantMap{{QStringLiteral("id"), --m_localCallSeq},
+                                 {QStringLiteral("time"), QDateTime::currentMSecsSinceEpoch()},
+                                 {QStringLiteral("tool"), tool},
+                                 {QStringLiteral("summary"), summary},
+                                 {QStringLiteral("source"), source},
+                                 {QStringLiteral("pending"), false},
+                                 {QStringLiteral("ok"), ok},
+                                 {QStringLiteral("error"), error},
+                                 {QStringLiteral("ms"), ms}});
+    while (m_toolLog.size() > kMaxToolLog)
+        m_toolLog.removeFirst();
+    emit toolLogChanged();
+}
+
 void McpController::clearToolLog()
 {
     if (m_toolLog.isEmpty())

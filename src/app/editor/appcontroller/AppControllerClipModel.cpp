@@ -1866,6 +1866,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("zoomOut"), tr("Zoom out")),
         action(QStringLiteral("multicam"), tr("Multicam window")),
         action(QStringLiteral("search"), tr("Search…")),
+        action(QStringLiteral("askCommand"), tr("Ask (editing command)…")),
         action(QStringLiteral("workspace.restoreWindows"), tr("Restore Workspace Windows")),
         action(QStringLiteral("workspace.next"), tr("Next workspace")),
         action(QStringLiteral("workspace.prev"), tr("Previous workspace")),

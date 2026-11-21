@@ -90,6 +90,19 @@ QtObject {
         }
     }
 
+    // Command bar outcomes. "undo" and "run" are the toast's one button.
+    property Connections commandBarWatcher: Connections {
+        target: EditorState.commandBar
+        function onToastRequested(severity, message, action) {
+            if (action === "undo")
+                Toasts.post(severity, message, 8000, qsTr("Undo"), function () { EditorState.undo() })
+            else if (action === "run")
+                Toasts.post(severity, message, 15000, qsTr("Run"), function () { EditorState.commandBar.runPending() })
+            else
+                Toasts.post(severity, message, severity === "info" ? 6000 : undefined)
+        }
+    }
+
     property Connections viewport3dWatcher: Connections {
         target: EditorState.preview
         function onViewport3dRequested() {
@@ -144,7 +157,8 @@ QtObject {
     }
 
     // Deep links from global search: action:<id>, workspace:<id>, panel:<type>[#anchor|#tab=<n>[/anchor]],
-    // settings:<page>[#anchor], dialog:<name>[?key=value], extras:<addon/<id>|target>, theme:<light|dark|id>.
+    // settings:<page>[#anchor], dialog:<name>[?key=value], extras:<addon/<id>|target>, theme:<light|dark|id>,
+    // ask:<sentence> (run as a command bar command).
     // Anything else is ignored.
     function navigate(target) {
         const colon = target.indexOf(":")
@@ -178,6 +192,9 @@ QtObject {
         }
         case "extras":
             ShellBridge.main.openExtrasTarget(rest.startsWith("addon/") ? "addon:" + rest.slice(6) : rest)
+            break
+        case "ask":
+            EditorState.commandBar.ask(rest)
             break
         case "theme":
             if (rest === "light" || rest === "dark")

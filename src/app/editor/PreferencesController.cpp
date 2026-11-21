@@ -247,6 +247,7 @@ PreferencesController::PreferencesController(QObject *parent)
 {
     QSettings settings;
     m_reopenLastProject = settings.value(QStringLiteral("editor/reopenLastProject"), false).toBool();
+    m_commandBarEnabled = settings.value(QStringLiteral("commandBar/enabled"), true).toBool();
     m_agentNotifications = settings.value(QStringLiteral("agent/notifications"), QStringLiteral("problems")).toString();
     if (!agentNotificationLevels().contains(m_agentNotifications))
         m_agentNotifications = QStringLiteral("problems");
@@ -487,6 +488,15 @@ void PreferencesController::setTimelineToolbarLayout(const QStringList &toolbarI
         settings.setValue(QStringLiteral("ui/timelineMenuItems"), menuItems);
     }
     emit timelineToolbarLayoutChanged();
+}
+
+void PreferencesController::setCommandBarEnabled(bool enabled)
+{
+    if (m_commandBarEnabled == enabled)
+        return;
+    m_commandBarEnabled = enabled;
+    QSettings().setValue(QStringLiteral("commandBar/enabled"), m_commandBarEnabled);
+    emit commandBarEnabledChanged();
 }
 
 void PreferencesController::setReopenLastProject(bool enabled)

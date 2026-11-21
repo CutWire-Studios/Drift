@@ -40,6 +40,8 @@ public:
 
     Q_INVOKABLE void rebuild();
     Q_INVOKABLE void setQuery(const QString &query);
+    // Ask mode: an "Ask" row for the typed text, then the suggested commands that contain it.
+    Q_INVOKABLE void setAskQuery(const QString &text);
     Q_INVOKABLE bool activate(int row);
 
 signals:
@@ -77,6 +79,15 @@ private:
     void addStatic();
     bool actionEnabled(const QString &id) const;
     void runApply(const QString &payload);
+    // m_visible holds -1 - k for m_extra[k].
+    const Row &rowAt(int visibleIndex) const
+    {
+        const int i = m_visible.at(visibleIndex);
+        return i < 0 ? m_extra.at(-1 - i) : m_entries.at(i).row;
+    }
+    void showOnly(const QVector<Row> &rows);
+    bool commandBarEnabled() const;
+    Row askRow(const QString &text) const;
     QString panelLabel(const QString &type) const;
 
     QObject *m_editor = nullptr;
@@ -89,6 +100,7 @@ private:
     QHash<QString, QString> m_panelLabels;
 
     QVector<Entry> m_entries;
-    QVector<int> m_visible;
+    QVector<int> m_visible; // index into m_entries, or -1 - k for m_extra[k]
+    QVector<Row> m_extra;   // ask and suggestion rows
     QString m_query;
 };

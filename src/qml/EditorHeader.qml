@@ -53,6 +53,10 @@ Item {
         searchField.focusField()
     }
 
+    function focusAsk() {
+        searchField.focusAsk()
+    }
+
     // Clears the field and hands the keyboard back to the editor, so shortcuts work again.
     function endSearch() {
         searchField.dismiss()

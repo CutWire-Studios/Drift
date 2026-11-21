@@ -58,6 +58,7 @@ class RestoreController;
 class SceneDetectController;
 class SegmentationController;
 class StabilizeController;
+class CommandBarController;
 class TrackingController;
 class TtsController;
 class VoiceLibrary;
@@ -137,6 +138,7 @@ class AppController : public QObject
     Q_MOC_INCLUDE("app/jobs/vision/SceneDetectController.h")
     Q_MOC_INCLUDE("app/jobs/vision/SegmentationController.h")
     Q_MOC_INCLUDE("app/jobs/vision/StabilizeController.h")
+    Q_MOC_INCLUDE("app/commandbar/CommandBarController.h")
     Q_MOC_INCLUDE("app/jobs/vision/TrackingController.h")
     Q_MOC_INCLUDE("app/jobs/audio/TtsController.h")
     Q_MOC_INCLUDE("app/jobs/audio/VoiceLibrary.h")
@@ -192,6 +194,8 @@ class AppController : public QObject
     Q_PROPERTY(FaceTrackingController *faces READ faces CONSTANT)
     // Clip stabilization. QML: EditorState.stabilize.
     Q_PROPERTY(StabilizeController *stabilize READ stabilize CONSTANT)
+    // Natural-language commands from Ctrl+K. QML: EditorState.commandBar.
+    Q_PROPERTY(CommandBarController *commandBar READ commandBar CONSTANT)
     Q_PROPERTY(TrackingController *tracking READ tracking CONSTANT)
     // Local text-to-speech and the cloned-voice library. QML: EditorState.tts, EditorState.voices.
     Q_PROPERTY(TtsController *tts READ tts CONSTANT)
@@ -413,6 +417,7 @@ public:
     RestoreController *restore() const { return m_restore; }
     FaceTrackingController *faces() const { return m_faces; }
     StabilizeController *stabilize() const { return m_stabilize; }
+    CommandBarController *commandBar() const { return m_commandBar; }
     TrackingController *tracking() const { return m_tracking; }
     TtsController *tts() const { return m_tts; }
     VoiceLibrary *voices() const { return m_voices; }
@@ -2742,6 +2747,7 @@ protected:
     RestoreController *m_restore = nullptr;
     FaceTrackingController *m_faces = nullptr;
     StabilizeController *m_stabilize = nullptr;
+    CommandBarController *m_commandBar = nullptr;
     TrackingController *m_tracking = nullptr;
     MediaBinController *m_bin = nullptr;
     SourceLabController *m_sourceLab = nullptr;

@@ -120,6 +120,19 @@ SettingsPage {
     }
 
     SettingsRow {
+        title: qsTr("Commands in search (Ctrl+K)")
+        searchId: "ai-command-bar"
+        description: qsTr("Type a sentence such as \"split at 12 seconds\" in search and run it as an editing command. Needs the Command Bar Model and llama.cpp runtime add-ons; runs on this device.")
+        keywords: "command bar natural language ask prompt llm assistant ctrl+k"
+        query: page.query
+
+        ThemedSwitch {
+            checked: EditorState.preferences.commandBarEnabled
+            onToggled: EditorState.preferences.commandBarEnabled = checked
+        }
+    }
+
+    SettingsRow {
         title: qsTr("Notifications for agent actions")
         searchId: "ai-agent-notifications"
         description: qsTr("Which pop-ups an agent's own edits show you. Errors always show.")

@@ -24,6 +24,7 @@
 #include "app/bin/MediaBinController.h"
 #include "app/bin/SourceLabController.h"
 #include "app/jobs/vision/StabilizeController.h"
+#include "app/commandbar/CommandBarController.h"
 #include "app/jobs/vision/TrackingController.h"
 #include "app/jobs/audio/TtsController.h"
 #include "app/jobs/audio/VoiceLibrary.h"
@@ -627,6 +628,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_restore = new RestoreController(this, this);
     m_faces = new FaceTrackingController(this, this);
     m_stabilize = new StabilizeController(this, this);
+    m_commandBar = new CommandBarController(this, this);
     m_tracking = new TrackingController(this, this);
     m_bin = new MediaBinController(this, this);
     m_sourceLab = new SourceLabController(this, this);

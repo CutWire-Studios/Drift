@@ -1,0 +1,184 @@
+[
+ {
+  "text": "No tool fits this request.",
+  "refusal": true,
+  "calls": []
+ },
+ {
+  "text": "No tool fits this request.<|im_end|>",
+  "refusal": true,
+  "calls": []
+ },
+ {
+  "text": "<tool_call>\n{\"name\": \"split_clip\", \"arguments\": {\"track\": 1, \"index\": 2, \"at\": 12.5}}\n</tool_call>",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "split_clip",
+    "arguments": {
+     "track": 1,
+     "index": 2,
+     "at": 12.5
+    }
+   }
+  ]
+ },
+ {
+  "text": "<tool_call>\n{\"name\": \"split_clip\", \"arguments\": {\"track\": 1, \"index\": 2, \"at\": 12.5}}\n</tool_call>\n<tool_call>\n{\"name\": \"set_clip_speed\", \"arguments\": {\"track\": 1, \"index\": 2, \"speed\": 0.5}}\n</tool_call><|im_end|>",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "split_clip",
+    "arguments": {
+     "track": 1,
+     "index": 2,
+     "at": 12.5
+    }
+   },
+   {
+    "name": "set_clip_speed",
+    "arguments": {
+     "track": 1,
+     "index": 2,
+     "speed": 0.5
+    }
+   }
+  ]
+ },
+ {
+  "text": "<tool_call>\n{\"name\": \"mute_track\", \"arguments\": {\"track\": 2, \"muted\": true}}",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "mute_track",
+    "arguments": {
+     "track": 2,
+     "muted": true
+    }
+   }
+  ]
+ },
+ {
+  "text": "<tool_call>{\"name\":\"add_text\",\"arguments\":{\"text\":\"Summer \\\"Trip\\\" é—x\",\"at\":0}}</tool_call>",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "add_text",
+    "arguments": {
+     "text": "Summer \"Trip\" é—x",
+     "at": 0
+    }
+   }
+  ]
+ },
+ {
+  "text": "<tool_call>\n[{\"name\": \"undo\", \"arguments\": {}}, {\"name\": \"redo\", \"arguments\": {}}]\n</tool_call>",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "undo",
+    "arguments": {}
+   },
+   {
+    "name": "redo",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "text": "[{\"name\": \"undo\", \"arguments\": {}}]",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "undo",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "text": "{\"name\": \"play\", \"parameters\": {\"from\": 3}}",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "play",
+    "arguments": {
+     "from": 3
+    }
+   }
+  ]
+ },
+ {
+  "text": "<tool_call>\n{\"name\": \"seek\", \"arguments\": \"{\\\"to\\\": 4.5}\"}\n</tool_call>",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "seek",
+    "arguments": {
+     "to": 4.5
+    }
+   }
+  ]
+ },
+ {
+  "text": "```json\n{\"name\": \"undo\", \"arguments\": {}}\n```",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "undo",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "text": "<tool_call>\n{\"arguments\": {\"a\": 1}}\n</tool_call>",
+  "refusal": false,
+  "calls": []
+ },
+ {
+  "text": "<tool_call>\n{\"name\": \"broken\", \"arguments\": {\"a\": }\n</tool_call>",
+  "refusal": false,
+  "calls": []
+ },
+ {
+  "text": "Sure, I will split the clip.",
+  "refusal": false,
+  "calls": []
+ },
+ {
+  "text": "",
+  "refusal": false,
+  "calls": []
+ },
+ {
+  "text": "<tool_call>\n{\"name\": \"undo\"}\n</tool_call>",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "undo",
+    "arguments": {}
+   }
+  ]
+ },
+ {
+  "text": "<tool_call>\n{\"name\": \"a\", \"arguments\": {\"x\": 1}}\n</tool_call>\n<tool_call>\n{\"name\": \"b\", \"arguments\": {\"y\": [1, 2.5, \"z\"]}}",
+  "refusal": false,
+  "calls": [
+   {
+    "name": "a",
+    "arguments": {
+     "x": 1
+    }
+   },
+   {
+    "name": "b",
+    "arguments": {
+     "y": [
+      1,
+      2.5,
+      "z"
+     ]
+    }
+   }
+  ]
+ }
+]

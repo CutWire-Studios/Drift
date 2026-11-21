@@ -323,6 +323,35 @@ struct DCtxDeleter
     void operator()(ZSTD_DCtx *ctx) const { ZSTD_freeDCtx(ctx); }
 };
 
+// Files in a llama-runtime pack that are run as programs: the llama-server binary and whatever
+// runtime.json names as "server". The payload writer creates plain data files.
+void markExecutables(const QString &destDir, const PackageInfo &info)
+{
+#ifndef Q_OS_WIN
+    for (const PackageProvide &provide : info.provides) {
+        if (provide.kind != QLatin1String("llama-runtime"))
+            continue;
+        const QDir root(QDir(destDir).filePath(provide.root));
+        QStringList names{QStringLiteral("llama-server")};
+        QFile meta(root.filePath(QStringLiteral("runtime.json")));
+        if (meta.open(QIODevice::ReadOnly)) {
+            const QString server = QJsonDocument::fromJson(meta.readAll()).object().value(QStringLiteral("server")).toString();
+            if (!server.isEmpty() && safeRelativePath(server))
+                names.append(server);
+        }
+        for (const QString &name : names) {
+            QFile file(root.filePath(name));
+            if (file.exists())
+                file.setPermissions(file.permissions() | QFileDevice::ExeOwner | QFileDevice::ExeGroup
+                                    | QFileDevice::ExeOther);
+        }
+    }
+#else
+    Q_UNUSED(destDir)
+    Q_UNUSED(info)
+#endif
+}
+
 } // namespace
 
 QString currentPlatform()
@@ -396,7 +425,7 @@ bool hasNativeCode(const PackageInfo &info)
 {
     for (const PackageProvide &provide : info.provides) {
         if (provide.kind == QLatin1String("onnxruntime") || provide.kind == QLatin1String("onnxruntime-ep")
-            || provide.kind == QLatin1String("pdfium"))
+            || provide.kind == QLatin1String("pdfium") || provide.kind == QLatin1String("llama-runtime"))
             return true;
     }
     return false;
@@ -560,6 +589,7 @@ bool install(const QString &packagePath, const QString &destDir, const ProgressF
         return fail(error, QStringLiteral("cannot move %1 into place").arg(stagingDir));
 
     guard.promoted = true;
+    markExecutables(destDir, info);
     if (installed)
         *installed = info;
     return true;

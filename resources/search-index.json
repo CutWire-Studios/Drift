@@ -1245,6 +1245,15 @@
       "descriptionSource": "Turn agent access on automatically the next time you open Drift. Turning access off resets this."
     },
     {
+      "id": "ai-command-bar",
+      "target": "settings:ai#ai-command-bar",
+      "context": "SettingsAiPage",
+      "source": "Commands in search (Ctrl+K)",
+      "keywords": "command bar natural language ask prompt llm assistant ctrl+k",
+      "needs": [],
+      "descriptionSource": "Type a sentence such as \"split at 12 seconds\" in search and run it as an editing command. Needs the Command Bar Model and llama.cpp runtime add-ons; runs on this device."
+    },
+    {
       "id": "ai-agent-notifications",
       "target": "settings:ai#ai-agent-notifications",
       "context": "SettingsAiPage",

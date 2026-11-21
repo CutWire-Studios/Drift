@@ -167,6 +167,7 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("zoomOut"), QStringLiteral("Ctrl+-")},
         // The global search field lives in EditorHeader, so this is QML-only as well.
         {QStringLiteral("search"), QStringLiteral("Ctrl+K")},
+        {QStringLiteral("askCommand"), QStringLiteral("Ctrl+Shift+K")},
         // QML owns the window, so triggerAction only raises the request — same shape as the
         // file actions above.
         {QStringLiteral("multicam"), QStringLiteral("Ctrl+Shift+C")},

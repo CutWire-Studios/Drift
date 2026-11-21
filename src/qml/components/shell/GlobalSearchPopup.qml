@@ -33,8 +33,13 @@ Popup {
         "sticker": qsTr("Sticker"),
         "textStyle": qsTr("Text style"),
         "addon": qsTr("Add-on"),
-        "control": qsTr("Control")
+        "control": qsTr("Control"),
+        "ask": qsTr("Ask"),
+        "suggestion": qsTr("Suggestion")
     })
+
+    // The model takes a few seconds to load; start it now so the command is quick if one follows.
+    onOpened: if (EditorState.preferences.commandBarEnabled) EditorState.commandBar.prewarm()
 
     Connections {
         target: SearchIndex
@@ -47,6 +52,16 @@ Popup {
         if (!opened)
             SearchIndex.rebuild()
         SearchIndex.setQuery(query)
+        highlightIndex = 0
+        list.positionViewAtBeginning()
+        if (!opened)
+            open()
+    }
+
+    function ask(text) {
+        if (!opened)
+            SearchIndex.rebuild()
+        SearchIndex.setAskQuery(text)
         highlightIndex = 0
         list.positionViewAtBeginning()
         if (!opened)

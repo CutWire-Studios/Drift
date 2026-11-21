@@ -47,6 +47,8 @@ private slots:
     void enabledRoleDoesNotShadowItemEnabled();
     void activateNavigatesOnlyWhenEnabled();
     void realIndexParses();
+    void askRowRules();
+    void askModeSuggestions();
 };
 
 void SearchIndexTest::scoreOrdering()
@@ -188,6 +190,87 @@ void SearchIndexTest::realIndexParses()
     index.rebuild();
     index.setQuery(QStringLiteral("settings"));
     QVERIFY(index.rowCount() > 0);
+}
+
+void SearchIndexTest::askRowRules()
+{
+    QObject editor;
+    auto *preferences = new QObject(&editor);
+    preferences->setProperty("commandBarEnabled", true);
+    auto *bar = new QObject(&editor);
+    bar->setProperty("available", true);
+    editor.setProperty("preferences", QVariant::fromValue(preferences));
+    editor.setProperty("commandBar", QVariant::fromValue(bar));
+    SearchIndex index;
+    index.loadStaticJson(kSmallIndex);
+    index.setSources(&editor, nullptr, nullptr, nullptr);
+    index.rebuild();
+
+    const auto lastKind = [&] {
+        return index.rowCount() ? index.data(index.index(index.rowCount() - 1, 0), SearchIndex::KindRole).toString()
+                                : QString();
+    };
+    index.setQuery(QStringLiteral("make the effects library bigger please"));
+    QCOMPARE(lastKind(), QStringLiteral("ask"));
+    index.setQuery(QStringLiteral("opacity"));
+    QVERIFY(lastKind() != QStringLiteral("ask"));
+    index.setQuery(QStringLiteral("effects library"));
+    QVERIFY(lastKind() != QStringLiteral("ask"));
+
+    index.setQuery(QStringLiteral("> split"));
+    QCOMPARE(index.rowCount(), 1);
+    QCOMPARE(index.data(index.index(0, 0), SearchIndex::TargetRole).toString(), QStringLiteral("ask:split"));
+
+    bar->setProperty("available", false);
+    index.setQuery(QStringLiteral("> split"));
+    QVERIFY(index.data(index.index(0, 0), SearchIndex::TargetRole).toString().startsWith(QLatin1String("extras:addon/")));
+
+    preferences->setProperty("commandBarEnabled", false);
+    index.setQuery(QStringLiteral("make the effects library bigger please"));
+    QVERIFY(lastKind() != QStringLiteral("ask"));
+}
+
+void SearchIndexTest::askModeSuggestions()
+{
+    QObject editor;
+    auto *bar = new QObject(&editor);
+    bar->setProperty("available", true);
+    editor.setProperty("commandBar", QVariant::fromValue(bar));
+    editor.setProperty("selectedClip", -1);
+    SearchIndex index;
+    index.loadStaticJson(kSmallIndex);
+    index.setSources(&editor, nullptr, nullptr, nullptr);
+    index.rebuild();
+
+    const auto kind = [&](int row) { return index.data(index.index(row, 0), SearchIndex::KindRole).toString(); };
+    const auto target = [&](int row) { return index.data(index.index(row, 0), SearchIndex::TargetRole).toString(); };
+
+    index.setAskQuery(QString());
+    const int general = index.rowCount();
+    QVERIFY(general > 0);
+    QCOMPARE(kind(0), QStringLiteral("suggestion"));
+    QVERIFY(target(0).startsWith(QLatin1String("ask:")));
+
+    editor.setProperty("selectedClip", 2);
+    index.setAskQuery(QString());
+    QVERIFY(index.rowCount() > general);
+
+    index.setAskQuery(QStringLiteral("fade"));
+    QCOMPARE(kind(0), QStringLiteral("ask"));
+    QCOMPARE(target(0), QStringLiteral("ask:fade"));
+    QVERIFY(index.rowCount() >= 3);
+    for (int row = 1; row < index.rowCount(); ++row)
+        QVERIFY(index.data(index.index(row, 0), SearchIndex::LabelRole).toString().contains(QLatin1String("ade")));
+
+    bar->setProperty("available", false);
+    index.setAskQuery(QStringLiteral("fade"));
+    QCOMPARE(index.rowCount(), 1);
+    QVERIFY(target(0).startsWith(QLatin1String("extras:addon/")));
+
+    // Leaving ask mode drops the extra rows.
+    index.setQuery(QStringLiteral("opacity"));
+    for (int row = 0; row < index.rowCount(); ++row)
+        QVERIFY(kind(row) != QStringLiteral("suggestion"));
 }
 
 QTEST_MAIN(SearchIndexTest)

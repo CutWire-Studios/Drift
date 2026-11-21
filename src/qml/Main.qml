@@ -1474,6 +1474,11 @@ ApplicationWindow {
                 editorHeader.focusSearch()
             return
         }
+        if (id === "askCommand") {
+            if (editorHeader.visible)
+                editorHeader.focusAsk()
+            return
+        }
         if (id === "workspace.next" || id === "workspace.prev") {
             const list = Workspaces.workspaces
             const step = id === "workspace.next" ? 1 : -1

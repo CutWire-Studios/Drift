@@ -988,6 +988,8 @@ add_library(driftengine STATIC
     src/engine/ml/runtime/OrtSupport.h
     src/engine/ml/runtime/OrtRuntime.h
     src/engine/ml/runtime/OrtRuntime.cpp
+    src/engine/ml/llm/LlamaServer.h
+    src/engine/ml/llm/LlamaServer.cpp
     src/engine/render2d/pdf/PdfClipRenderer.h
     src/engine/render2d/pdf/PdfClipRenderer.cpp
     src/engine/render2d/pdf/PdfiumRuntime.h
@@ -1122,6 +1124,9 @@ target_include_directories(driftengine SYSTEM PRIVATE ${CMAKE_SOURCE_DIR}/third_
 target_link_libraries(driftengine PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGL Qt6::Multimedia FFmpeg::FFmpeg driftcore
     driftaudiodsp driftprocedural onnxruntime::headers)
 target_link_libraries(driftengine PRIVATE ${DRIFT_ZSTD_TARGET} OpenSSL::Crypto ${CMAKE_DL_LIBS})
+# LlamaServer talks HTTP to its own child process on loopback; nothing else in the engine needs it.
+find_package(Qt6 REQUIRED COMPONENTS Network)
+target_link_libraries(driftengine PRIVATE Qt6::Network)
 if(WIN32)
     # Hybrid-graphics laptops: D3D11VA -> OpenGL preview interop, and DXGI adapter enumeration for
     # the GPU preference and for opening D3D11VA on the GPU that renders.
@@ -1195,6 +1200,11 @@ target_link_libraries(driftapp PUBLIC
 if(ANDROID)
     find_package(Qt6 REQUIRED COMPONENTS CorePrivate)
     target_link_libraries(driftapp PUBLIC Qt6::CorePrivate)
+endif()
+
+# The ranking has to reproduce rank_bm25's float sums bit for bit; a fused multiply-add would not.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set_source_files_properties(src/app/commandbar/CommandRetriever.cpp PROPERTIES COMPILE_OPTIONS "-ffp-contract=off")
 endif()
 
 qt_add_executable(drift
@@ -1468,6 +1478,14 @@ target_sources(drift PRIVATE
     src/app/mcp/protocol/McpJson.h
 )
 target_sources(driftapp PRIVATE
+    src/app/commandbar/CommandBarController.h
+    src/app/commandbar/CommandBarController.cpp
+    src/app/commandbar/CommandCatalog.h
+    src/app/commandbar/CommandCatalog.cpp
+    src/app/commandbar/CommandPrompt.h
+    src/app/commandbar/CommandPrompt.cpp
+    src/app/commandbar/CommandRetriever.h
+    src/app/commandbar/CommandRetriever.cpp
     src/app/mcp/protocol/McpSession.h
     src/app/mcp/protocol/McpSession.cpp
     src/app/platform/RunningInstances.h

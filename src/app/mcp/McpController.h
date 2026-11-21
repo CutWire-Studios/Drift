@@ -96,6 +96,10 @@ public:
     QString agentGuide() const;
     QVariantList toolLog() const { return m_toolLog; }
     Q_INVOKABLE void clearToolLog();
+    // A call made from inside the app rather than by an agent (the command bar) goes in the same
+    // log, tagged with `source`. Finished already; ids are negative so they never meet a server id.
+    void logLocalCall(const QString &source, const QString &tool, const QJsonObject &args, bool ok,
+                      const QString &error, qint64 ms);
     AgentImageLog *imageLog() const { return m_imageLog; }
 
     // Helpers (GUI thread). Used by src/app/mcp, not QML.
@@ -433,6 +437,7 @@ private:
     std::unique_ptr<drift::mcp::McpServer> m_mcp;
 #endif
     QVariantList m_toolLog;
+    int m_localCallSeq = 0;
     AgentImageLog *m_imageLog = nullptr;
     bool m_audioSheetBusy = false;
     QVariantMap m_audioSheetResult;

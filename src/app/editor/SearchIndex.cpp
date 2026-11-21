@@ -124,7 +124,7 @@ QVariant SearchIndex::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid() || index.row() >= m_visible.size())
         return {};
-    const Row &row = m_entries.at(m_visible.at(index.row())).row;
+    const Row &row = rowAt(index.row());
     switch (role) {
     case KindRole:
         return row.kind;
@@ -220,11 +220,89 @@ void SearchIndex::rebuild()
     setQuery(m_query);
 }
 
+// A typed sentence is offered to the command bar when no row matches it as a phrase. Scores, from
+// score(): 1000 exact, 800-len prefix, 600-at word start, 400-at inside a word, <=200 letters in
+// order; keyword and sub-line matches are scaled by 0.5 and 0.4, every-word-somewhere is 300, and
+// an actionable row gets +50. 500 is therefore "the whole phrase starts a word in a row's label":
+// anything under it is a fuzzy or per-word hit that a sentence like "split the clip at 12 seconds"
+// reaches by accident ("at" is in nearly every row), so the ask row is offered after it.
+constexpr double kAskScoreThreshold = 500;
+// With the ask row due, the accidental hits above it are cut to this many so it stays in reach.
+constexpr int kAskHitLimit = 8;
+
+bool SearchIndex::commandBarEnabled() const
+{
+    QObject *preferences = prop(m_editor, "preferences").value<QObject *>();
+    return preferences && prop(preferences, "commandBarEnabled").toBool();
+}
+
+SearchIndex::Row SearchIndex::askRow(const QString &text) const
+{
+    QObject *bar = prop(m_editor, "commandBar").value<QObject *>();
+    if (prop(bar, "available").toBool())
+        return {QStringLiteral("ask"), tr("Ask: “%1”").arg(text), tr("Run as an editing command"), {}, {},
+                QStringLiteral("ask:") + text, true};
+    return {QStringLiteral("ask"), tr("Install the Command Bar Model to run commands like this"),
+            tr("Ask: “%1”").arg(text), {}, {}, QStringLiteral("extras:addon/llm.drift-command-qwen3-0.6b"), true};
+}
+
+void SearchIndex::showOnly(const QVector<Row> &rows)
+{
+    beginResetModel();
+    m_extra = rows;
+    m_visible.clear();
+    for (int k = 0; k < rows.size(); ++k)
+        m_visible.append(-1 - k);
+    endResetModel();
+    emit countChanged();
+}
+
+void SearchIndex::setAskQuery(const QString &text)
+{
+    m_query = text;
+    const QString typed = text.trimmed();
+    QObject *bar = prop(m_editor, "commandBar").value<QObject *>();
+    if (!prop(bar, "available").toBool()) {
+        showOnly({{QStringLiteral("ask"), tr("Install the Command Bar Model to run editing commands"),
+                   tr("A small local model, about 490 MB"), {}, {},
+                   QStringLiteral("extras:addon/llm.drift-command-qwen3-0.6b"), true}});
+        return;
+    }
+    // Phrasings the model handles well. The clip ones act on the selection, so they only show with one.
+    QStringList suggestions;
+    const QVariant selected = prop(m_editor, "selectedClip");
+    if (selected.isValid() && selected.toInt() >= 0)
+        suggestions << tr("Split it at the playhead") << tr("Fade in over half a second")
+                    << tr("Fade out for 1.5 seconds") << tr("Make it black and white")
+                    << tr("Speed this up to 1.5x") << tr("Set the volume to 50%") << tr("Mute this clip");
+    suggestions << tr("Add a title that says Hello") << tr("Go to 10 seconds") << tr("Jump to the start");
+
+    QVector<Row> rows;
+    if (!typed.isEmpty())
+        rows.append(askRow(typed));
+    const QString lower = typed.toLower();
+    for (const QString &s : std::as_const(suggestions)) {
+        if (s.compare(typed, Qt::CaseInsensitive) != 0 && (lower.isEmpty() || s.toLower().contains(lower)))
+            rows.append({QStringLiteral("suggestion"), s, {}, {}, {}, QStringLiteral("ask:") + s, true});
+    }
+    showOnly(rows);
+}
+
 void SearchIndex::setQuery(const QString &query)
 {
     m_query = query;
-    const QString q = query.trimmed().toLower();
+    QString q = query.trimmed().toLower();
     QVector<int> visible;
+    // ">" skips the search and runs the rest as a command.
+    if (q.startsWith(QLatin1Char('>'))) {
+        const QString text = query.trimmed().mid(1).trimmed();
+        if (!text.isEmpty() && commandBarEnabled()) {
+            showOnly({askRow(text)});
+            return;
+        }
+        q = text.toLower();
+    }
+    bool wantsAsk = false;
     if (q.isEmpty()) {
         for (int i = 0; i < m_entries.size(); ++i) {
             const Row &row = m_entries.at(i).row;
@@ -258,10 +336,17 @@ void SearchIndex::setQuery(const QString &query)
             hits.append({i, best});
         }
         std::stable_sort(hits.begin(), hits.end(), [](const Hit &a, const Hit &b) { return a.score > b.score; });
-        if (hits.size() > 50)
-            hits.resize(50);
+        wantsAsk = words.size() >= 2 && (hits.isEmpty() || hits.first().score < kAskScoreThreshold)
+                   && commandBarEnabled();
+        if (hits.size() > (wantsAsk ? kAskHitLimit : 50))
+            hits.resize(wantsAsk ? kAskHitLimit : 50);
         for (const Hit &hit : std::as_const(hits))
             visible.append(hit.index);
+    }
+    m_extra.clear();
+    if (wantsAsk) {
+        m_extra.append(askRow(query.trimmed()));
+        visible.append(-1);
     }
     beginResetModel();
     m_visible = visible;
@@ -274,7 +359,7 @@ bool SearchIndex::activate(int row)
     if (row < 0 || row >= m_visible.size())
         return false;
     // Copied: a navigate handler may rebuild and invalidate the reference.
-    const Row picked = m_entries.at(m_visible.at(row)).row;
+    const Row picked = rowAt(row);
     if (!picked.enabled)
         return false;
     if (picked.target.startsWith(QLatin1String("apply:")))
@@ -341,7 +426,7 @@ void SearchIndex::addActions()
     for (const QVariant &v : listOf(m_editor, "actions")) {
         const QVariantMap action = v.toMap();
         const QString id = action.value(QLatin1String("id")).toString();
-        if (id == QLatin1String("search"))
+        if (id == QLatin1String("search") || id == QLatin1String("askCommand"))
             continue;
         const bool enabled = actionEnabled(id);
         addRow({QStringLiteral("action"), action.value(QLatin1String("label")).toString(),

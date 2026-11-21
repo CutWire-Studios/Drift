@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": "630851f65afc99c4",
-  "generated": "2026-11-10T14:18:47+00:00",
+  "revision": "aa41f9aec74b982f",
+  "generated": "2026-11-21T11:39:43+00:00",
   "categories": [
     {
       "id": "essentials",
@@ -848,6 +848,60 @@
         }
       ],
       "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 20
+    },
+    {
+      "id": "llm.drift-command-qwen3-0.6b",
+      "tagline": "Type editing commands in the search bar",
+      "summary": "Lets you type what you want in the Ctrl+K search bar, like \"trim the selected clip to 5 seconds\", and Drift does it. Runs on this computer, so nothing leaves your project and no account is needed.",
+      "categories": [
+        "ai-assistant"
+      ],
+      "keywords": [
+        "command",
+        "command bar",
+        "ctrl+k",
+        "search",
+        "assistant",
+        "local ai",
+        "offline",
+        "qwen"
+      ],
+      "icon": "bot",
+      "useCases": [
+        "Run edits by typing them instead of hunting through menus",
+        "Work without sending your project online",
+        "Speed up repetitive edits"
+      ],
+      "howTo": [
+        "Press Ctrl+K",
+        "Type what you want done to your project",
+        "Press Enter to run it"
+      ],
+      "unlocks": [
+        {
+          "label": "Natural-language commands",
+          "location": "Search bar (Ctrl+K)"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "llama-runtime",
+          "prefer": {
+            "linux-x64": "llama.cpp.cpu.linux-x64",
+            "linux-arm64": "llama.cpp.cpu.linux-arm64",
+            "win-x64": "llama.cpp.cpu.win-x64",
+            "win-arm64": "llama.cpp.cpu.win-arm64",
+            "osx-arm64": "llama.cpp.cpu.osx-arm64",
+            "osx-x64": "llama.cpp.cpu.osx-x64"
+          },
+          "default": null,
+          "reason": "Runs the model on this computer"
+        }
+      ],
       "recommends": [],
       "images": [],
       "links": [],
