@@ -497,7 +497,7 @@ QJsonObject exportSettingsProps()
         {QStringLiteral("height"), integerProp(QStringLiteral("Target height in pixels; 0 = project height"))},
         {QStringLiteral("fps"), QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("number"), QStringLiteral("string")}},
                                             {QStringLiteral("description"), QStringLiteral("Output fps; 0 = project rate. An fps id from list_export_options is also accepted as a string.")}}},
-        {QStringLiteral("video"), stringProp(QStringLiteral("Video codec id from list_export_options.video (h264, hevc, …)"))},
+        {QStringLiteral("video"), stringProp(QStringLiteral("Video codec id from list_export_options.video (h264, h265, …)"))},
         {QStringLiteral("audio"), stringProp(QStringLiteral("Audio codec id from list_export_options.audio (aac, opus, …)"))},
         {QStringLiteral("rate"), enumProp(QStringLiteral("Rate control mode — decides whether crf or bitrate is honoured. Defaults to crf. Not listed by list_export_options; crf is only applied by codecs that support it, otherwise the encoder falls back to bitrate."),
                                           {QStringLiteral("crf"), QStringLiteral("bitrate")})},

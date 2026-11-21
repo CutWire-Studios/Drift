@@ -2869,8 +2869,19 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref));
     }
 
-    if (tool == QLatin1String("list_whisper_languages"))
-        return ok({{QStringLiteral("languages"), compactCatalogList(m_controller->whisperLanguages())}});
+    if (tool == QLatin1String("list_whisper_languages")) {
+        // Rows key the language by "code", which compactCatalogItem would drop.
+        QJsonArray languages;
+        for (const QVariant &v : m_controller->whisperLanguages()) {
+            const QVariantMap row = v.toMap();
+            QJsonObject o{{QStringLiteral("label"), row.value(QStringLiteral("label")).toString()}};
+            const QString code = row.value(QStringLiteral("code")).toString();
+            if (!code.isEmpty())
+                o.insert(QStringLiteral("id"), code);
+            languages.append(o);
+        }
+        return ok({{QStringLiteral("languages"), languages}});
+    }
 
     if (tool == QLatin1String("generate_subtitles")) {
         const QString language = args.value(QStringLiteral("language")).toString();
