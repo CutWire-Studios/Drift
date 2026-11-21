@@ -1447,6 +1447,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | effectsFileParam | destructive | $semantic.destructive | $semantic.destructive |
 | effectsFileParam | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | effectsHueParam | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| effectsInspector | warning | $semantic.warning | $semantic.warning |
 | effectsMaskSection | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | effectsMaskSection | warning | $semantic.warning | $semantic.warning |
 | effectsOccludeSection | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |

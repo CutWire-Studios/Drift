@@ -375,6 +375,24 @@ above 1 exaggerates beyond a real shutter. It passes the picture through only wh
 It runs 14 passes over 13 buffers (`luma4/16/64`, `flow64/16/4` and `flow4s` for backward flow, the same with
 an `f` suffix for forward flow, `tile16`, `nbr16`; flows are `rg16f`).
 
+`effects/motion_smooth` (`motion.smooth`, "Motion Smoothing") is a `historyUnits: "source"`, `future: 1` package that
+invents the frames between the media's own. Its `multiplier` choice (x2, x3, x4, x5, x8) makes the output behave like
+footage at the media rate times the multiplier: `sourcePhase()` is quantised down to a multiple of 1/multiplier, and
+phase 0 (the shown frame itself), the clip's last frame and scrubbing pass the shown frame through untouched. The
+frames interpolated are the shown frame `u_currentTexture` (A) and `futureFrame(1.0, uv)` (B), the media's next
+frame; B is the raw source, so effects above Motion Smoothing in the stack are not in it and it belongs first. Flow
+is measured both ways (A to B and B to A) on the Motion Blur pyramid (`luma4/16/64` hold A in R and B in G;
+`match*` and `match*r` are the two directions; `smooth` as there; flows are `rg16f`), 12 passes. `interpolate.frag`
+then looks x up in A at the `a` solving `a + p * AB(a) = x` and in B at the `b` solving `b + (1 - p) * BA(b) = x`
+(three fixed-point steps), and blends them by `(1 - p)` and `p` times a confidence: the flow's round trip
+(A to B and back) must land within a pixel or two of where it started and the two ends must agree in colour, so a
+side that is being covered or uncovered counts for little. With both sides unreliable the nearer frame is shown
+unwarped. It only helps when the media's frame rate times the clip's speed is below the project's; the
+description says so and the Effects inspector shows a notice (`framesCoverProject` in the clip map, from
+`drift::framesAlreadyCoverProject`) when it is not. The reader's cache answers with the nearest frame, so
+`fillGpuLayerSourceNeighbours` steps back to the frame at or before the instant when the cache returned the one
+after it; without that the phase would be clamped to 0 and the effect would do nothing on half the frames.
+
 Compositor code that wants the previous source frame of a clip sets `GpuLayer::sourceHistoryFrames` and, after `buildLayerTarget` has run for the layer, calls
 `drift::gl::pastSourceFrame(rt, layer.historyScope, layer.historyKey, age)` (FrameHistory.h). The
 result is a texture plus the `uv` rectangle of that frame inside it.

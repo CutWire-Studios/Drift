@@ -1970,6 +1970,9 @@
     "effectsHueParam": {
       "foregroundMuted": "$semantic.mutedForeground"
     },
+    "effectsInspector": {
+      "warning": "$semantic.warning"
+    },
     "effectsMaskSection": {
       "foregroundMuted": "$semantic.mutedForeground",
       "warning": "$semantic.warning"

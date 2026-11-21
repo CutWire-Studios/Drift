@@ -947,6 +947,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
     // Full source length backs the filmstrip's timestamp mapping (the strip is sampled across
     // the whole source, so tiles need the total to place srcIn/srcOut within it).
     const drift::MediaAsset *sourceAsset = m_project.asset(clip.assetId);
+    const drift::MediaAsset *faceAsset = m_project.asset(face.assetId);
 
     QVariantMap map{
         {QStringLiteral("id"), clip.id},
@@ -974,6 +975,8 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("blendMode"), drift::blendModeToString(clip.blendMode)},
         {QStringLiteral("speed"), clip.speed},
         {QStringLiteral("hasSpeedCurve"), clip.hasSpeedCurve()},
+        {QStringLiteral("framesCoverProject"), !face.hasSpeedCurve() && faceAsset
+             && drift::framesAlreadyCoverProject(faceAsset->fps, face.speed, m_project.fps())},
         {QStringLiteral("reverse"), clip.reverse},
         {QStringLiteral("loop"), clip.loop},
         {QStringLiteral("enabled"), clip.enabled},

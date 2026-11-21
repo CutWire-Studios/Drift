@@ -412,6 +412,8 @@ private slots:
     void pastSourceFrameServesThePreviousFrame();
     void trendingTimeEffectsLoadAndCompile();
     void motionBlurSmearsMovementInsideTheFootage();
+    void motionSmoothingPlacesInBetweenFramesOnTheMotionPath();
+    void motionSmoothingNoticeKnowsWhenFramesAlreadyCoverTheProject();
     void motionBlurSmearsPastTheOutline();
     void motionBlurLeavesStaticFootageAlone();
     void motionBlurNeedsThePreviousFrame();
@@ -10683,17 +10685,17 @@ void EngineTest::pastSourceFrameServesThePreviousFrame()
 namespace {
 
 // A white 32x32 square on black, 256x128 at 25 fps, moving `speed` px a frame from x = 20.
-QString makeMovingSquareVideo(QTemporaryDir &dir, int speed)
+QString makeMovingSquareVideo(QTemporaryDir &dir, int speed, int fps = 25)
 {
     const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
     if (ffmpeg.isEmpty())
         return {};
-    const QString out = dir.filePath(QStringLiteral("square_%1.mp4").arg(speed));
+    const QString out = dir.filePath(QStringLiteral("square_%1_%2.mp4").arg(speed).arg(fps));
     QProcess proc;
     proc.start(ffmpeg,
                {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
-                QStringLiteral("color=c=black:s=256x128:r=25:d=2"), QStringLiteral("-f"), QStringLiteral("lavfi"),
-                QStringLiteral("-i"), QStringLiteral("color=c=white:s=32x32:r=25:d=2"),
+                QStringLiteral("color=c=black:s=256x128:r=%1:d=2").arg(fps), QStringLiteral("-f"), QStringLiteral("lavfi"),
+                QStringLiteral("-i"), QStringLiteral("color=c=white:s=32x32:r=%1:d=2").arg(fps),
                 QStringLiteral("-filter_complex"),
                 QStringLiteral("[0][1]overlay=x='20+%1*n':y=48:eval=frame[v]").arg(speed),
                 QStringLiteral("-map"), QStringLiteral("[v]"), QStringLiteral("-c:v"), QStringLiteral("libx264"),
@@ -10761,6 +10763,83 @@ void EngineTest::motionBlurSmearsMovementInsideTheFootage()
     // Nothing is touched beyond the smear, nor above the square, where nothing moves.
     QVERIFY2(lum(smeared, 100) < 8 && lum(smeared, 200) < 8, qPrintable(QString::number(lum(smeared, 100))));
     QVERIFY2(smeared.pixelColor(166, 20).red() < 8, qPrintable(QString::number(smeared.pixelColor(166, 20).red())));
+}
+
+void EngineTest::motionSmoothingPlacesInBetweenFramesOnTheMotionPath()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    QVERIFY(effectDefForId(QStringLiteral("motion.smooth")));
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString video = makeMovingSquareVideo(dir, 8, 15);
+    if (video.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    const auto atRate = [](const FrameCompositor &compositor, int frame, int fps) {
+        return compositor.compositeAt(drift::TimeUs(std::llround(double(frame) * 1'000'000.0 / fps)))
+            .convertToFormat(QImage::Format_RGBA8888);
+    };
+    const auto centroid = [](const QImage &img) {
+        double sum = 0.0;
+        double weight = 0.0;
+        for (int x = 0; x < img.width(); ++x) {
+            const double v = img.pixelColor(x, 64).red();
+            sum += v * x;
+            weight += v;
+        }
+        return weight > 0.0 ? sum / weight + 0.5 : -1.0;
+    };
+
+    // The 32 px square moves 8 px per source frame from x = 20. At 30 fps with x2 the odd project frames
+    // lie half way between two source frames, so the left edge is at 20 + 4 * n.
+    for (const int fps : {30, 60}) {
+        const int multiplier = fps / 15;
+        drift::Effect effect;
+        effect.catalogId = QStringLiteral("motion.smooth");
+        effect.parameters.insert(QStringLiteral("multiplier"), multiplier == 2 ? 0 : 2);
+        drift::Project smoothProject = motionBlurProject(video, true);
+        smoothProject.tracks()[0].clips[0].effects[0] = effect;
+        smoothProject.setFps(fps);
+        drift::Project plainProject = motionBlurProject(video, false);
+        plainProject.setFps(fps);
+        FrameCompositor smooth;
+        smooth.setProject(&smoothProject);
+        FrameCompositor plain;
+        plain.setProject(&plainProject);
+
+        for (int n = 4; n <= 9; ++n) {
+            const QImage out = atRate(smooth, n, fps);
+            QVERIFY(!out.isNull());
+            if (n % multiplier == 0) {
+                QCOMPARE(out, atRate(plain, n, fps));
+                continue;
+            }
+            const double left = 28.0 + 8.0 * n / multiplier;
+            const double centre = centroid(out);
+            QVERIFY2(qAbs(centre - (left + 16.0)) <= 2.0,
+                     qPrintable(QStringLiteral("fps %1 frame %2 centre %3 expected %4")
+                                    .arg(fps).arg(n).arg(centre).arg(left + 16.0)));
+            const auto lum = [&](int x) { return out.pixelColor(x, 64).red(); };
+            QVERIFY2(lum(int(left) + 16) > 230, qPrintable(QString::number(lum(int(left) + 16))));
+            // A cross-fade of the two source frames would leave half-bright squares where each stood.
+            const int shown = 28 + 8 * (n / multiplier);
+            QVERIFY2(lum(shown + 1) < 60, qPrintable(QStringLiteral("shown frame's edge %1").arg(lum(shown + 1))));
+            QVERIFY2(lum(shown + 8 + 30) < 60, qPrintable(QStringLiteral("next frame's edge %1").arg(lum(shown + 38))));
+        }
+    }
+}
+
+void EngineTest::motionSmoothingNoticeKnowsWhenFramesAlreadyCoverTheProject()
+{
+    QVERIFY(!drift::framesAlreadyCoverProject(15.0, 1.0, 30.0));
+    QVERIFY(drift::framesAlreadyCoverProject(30.0, 1.0, 30.0));
+    QVERIFY(drift::framesAlreadyCoverProject(29.97, 1.0, 30.0));
+    QVERIFY(drift::framesAlreadyCoverProject(60.0, 1.0, 30.0));
+    QVERIFY(drift::framesAlreadyCoverProject(15.0, 2.0, 30.0));
+    QVERIFY(!drift::framesAlreadyCoverProject(30.0, 0.5, 30.0));
+    QVERIFY(drift::framesAlreadyCoverProject(30.0, -1.0, 30.0));
+    QVERIFY(!drift::framesAlreadyCoverProject(0.0, 1.0, 30.0));
 }
 
 void EngineTest::motionBlurSmearsPastTheOutline()

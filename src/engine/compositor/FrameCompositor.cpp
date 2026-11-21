@@ -1291,7 +1291,20 @@ void fillGpuLayerSourceNeighbours(GpuLayer &layer, const drift::Clip &clip, drif
     const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
     const bool backwards = clip.reverse && read.path == clip.path;
 
-    const double sinceFrame = double(read.sourceUs - layer.video.ptsUs) / double(dur);
+    double sinceFrame = double(read.sourceUs - layer.video.ptsUs) / double(dur);
+    // The reader's cache answers with the nearest frame, so once a neighbour is cached the shown frame can be
+    // the one after the instant. The phase is measured from the frame at or before it: step back to that one,
+    // or the same instant would interpolate from the other side depending on what was decoded before.
+    if (!backwards && !t_exactApproximate && sinceFrame < -0.02) {
+        PreviewVideoFrame earlier = ClipReaderPool::instance().readPreviewVideoFrame(
+            read.path, streamIdFor(clip.id), layer.video.ptsUs - dur + dur / 8,
+            qCeil(maxWidth / clip.sourceFrame.width()), qCeil(maxHeight / clip.sourceFrame.height()),
+            clip.rotationCorrection);
+        if (earlier.isValid() && earlier.ptsUs >= 0 && earlier.ptsUs <= read.sourceUs) {
+            layer.video = std::move(earlier);
+            sinceFrame = double(read.sourceUs - layer.video.ptsUs) / double(dur);
+        }
+    }
     layer.sourceFps = float(1'000'000.0 / double(dur));
     layer.sourcePhase = float(qBound(0.0, backwards ? 1.0 - sinceFrame : sinceFrame, 1.0));
     const drift::TimeUs here = clip.timelineToSourceUs(timelineUs);

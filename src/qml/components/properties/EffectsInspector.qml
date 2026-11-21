@@ -178,6 +178,17 @@ Item {
                     }
                 }
 
+                Text {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    visible: effectCard.effectData.catalogId === "motion.smooth" && root.clipData.framesCoverProject === true
+                    opacity: effectCard.effectEnabled ? 1 : 0.45
+                    text: qsTr("This clip already has a frame for every project frame, so Motion Smoothing adds nothing here. It helps footage with a lower frame rate than the project, or slowed down.")
+                    color: Theme.c.effectsInspector.warning
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
                 Column {
                     width: parent.width
                     spacing: 6
