@@ -185,6 +185,17 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
             }
             entry.gpu.historyExactFrames = exact;
         }
+        if (root.contains(QStringLiteral("future"))) {
+            const int future = root.value(QStringLiteral("future")).toInt(0);
+            if (future < 1 || future > drift::kMaxFutureFrames) {
+                entry.gpu.valid = false;
+                setError(errorOut, &entry,
+                         QStringLiteral("future must be a whole number from 1 to %1")
+                             .arg(drift::kMaxFutureFrames));
+                return entry;
+            }
+            entry.gpu.futureFrames = future;
+        }
         entry.gpu.needsPrevOutput = root.value(QStringLiteral("previousOutput")).toBool(false);
         return entry;
     }

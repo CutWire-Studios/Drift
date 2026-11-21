@@ -26,6 +26,7 @@ Search order: `DRIFT_EFFECTS_DIR`, `<applicationDir>/effects`, `<AppDataLocation
 | `requires` | `"face"` to receive the baked face anchors, `"depth"` to receive the clip's depth map (see below), or an array of both. Any other value is a parse error. `"depth"` is `gpu` backend only |
 | `history` | Whole number 1–32: the effect samples that many of the clip's earlier source frames (see "Time effects" below). `gpu` backend only |
 | `historyExact` | Whole number 1–2, no more than `history`: the engine decodes that many earlier source frames on demand when its ring lacks them (see "Time effects"). `gpu` backend only; `nextFeatures` name `history:exact` |
+| `future` | Whole number 1–2: the engine decodes that many of the clip's following source frames for each composite (see "Time effects"). `gpu` backend only; `nextFeatures` name `history:future` |
 | `previousOutput` | `true`: the effect can read its own output from the previous frame (see "Time effects"). `gpu` backend only |
 | `pipeline` | `intermediateBuffers` + `passes`. A buffer is `{"id", "scale", "format"}`; `format` is optional: `"rgba8"` (default), `"rgba16f"` or `"rg16f"` (half-float: values outside 0..1 and negatives survive between passes). Any other value is a parse error. A package using a half-float format lists `buffer:float` in `nextFeatures`. See "Float intermediate buffers" |
 
@@ -128,7 +129,7 @@ See `effects/face_retouch` for lipstick and blush templates drawn this way, and
 ## GLSL
 
 - `#version 330 core`
-- Reserved: `u_currentTexture`, `u_textureN`, `u_resolution`, `u_time`, `u_timeUs`, `u_frameIndex`, `u_frameRate`, `u_progress`, `u_fromTexture`, `u_toTexture`, `u_depth*`, `u_hasDepth`, `u_history*`, `u_prevOutput`, `u_templateBounds`, `u_meshAspect`, `u_face*`
+- Reserved: `u_currentTexture`, `u_textureN`, `u_resolution`, `u_time`, `u_timeUs`, `u_frameIndex`, `u_frameRate`, `u_progress`, `u_fromTexture`, `u_toTexture`, `u_depth*`, `u_hasDepth`, `u_history*`, `u_future*`, `u_prevOutput`, `u_templateBounds`, `u_meshAspect`, `u_face*`
 
 **Grace mode:** compile/GL failure → passthrough.
 
@@ -240,10 +241,10 @@ A transition with `"requires": "mask"` reads the **outgoing** clip's masks, laid
 where that clip is drawn, and that side is drawn whole for the transition. Neither is applied on the
 CPU compositor, where the package runs with `u_hasClipMask = 0` and the clip is still cut out.
 
-## Time effects (`history`, `previousOutput`)
+## Time effects (`history`, `previousOutput`, `future`)
 
-An effect can look back in time. Two independent top-level fields in `effect.json` say how, and a
-package may set both. Each also has a `nextFeatures` name (`history:source`,
+An effect can look back in time, and with `future` ahead too. Independent top-level fields in `effect.json`
+say how (`history` and `previousOutput` below; `future` after them), and a package may set several. Each also has a `nextFeatures` name (`history:source`,
 `history:previous-output`) so an older Drift rejects the package with "needs a newer Drift" instead
 of failing to compile it.
 
@@ -304,16 +305,42 @@ Behaviour, shared by both:
   history, and the single-image executor (`GpuEffectExecutor`: effect thumbnails and the CPU
   compositor) always runs with an empty one, so there a time effect shows the current frame.
 
-`effects/motion_blur` (`motion.blur`) is a `history: 1`, `historyExact: 1` package: it estimates optical flow
-between `historyFrame(1.0, uv)` and the current frame on a three-level luma pyramid (1/64, 1/16 and 1/4
-size, block matching with each level refining the coarser one, sub-pixel at the finest, and a relative
-accept test so flat-ish areas keep their motion), then a flow-aware smoothing pass that also fills the
-flat inside of a moving object. A tile-max pass (1/16 size) and a 3x3 neighbour-max pass give each pixel
-the longest velocity near it, and the final pass samples along that velocity after McGuire et al.'s
-reconstruction filter, weighting each tap by whether its own velocity reaches the pixel, so a moving
-object smears past its outline onto the background. Taps are jittered per pixel. The smear length is
-the flow scaled by `shutter / 360 * strength`, capped by `maxBlur`; `strength` above 1 exaggerates beyond
-a real shutter. It passes the picture through while `historyCount()` is 0, which now only happens at the start of a clip.
+**Future frames** (`"future": N`, 1–2, `nextFeatures`: `history:future`). After reading the clip's current
+frame the compositor decodes the N frames after it (`t + k` project frames, `k = 1..N`, through the clip's
+speed, ramp and reverse mapping, from the clip's own reader) and uploads them for the effect every composite.
+They are the clip's source frames before its effect chain, cropped and straightened like the live one. The
+prelude gives every pass:
+
+| Name | Kind | Notes |
+|---|---|---|
+| `vec4 futureFrame(float ahead, vec2 uv)` | helper | The source frame `ahead` project frames later at `uv` (1 = the next frame). Rounded and clamped to what is available; with none available it reads the effect's own input |
+| `float futureCount()` | helper | How many following frames are available: 0 at the end of the clip, when a decode fails, and while scrubbing (the approximate-seek read decodes nothing extra) |
+| `u_futureTexture1`, `u_futureTexture2`, `u_futureCount` | engine-bound | The frames behind `futureFrame`, on units 13 and 12 (so a `future` package keeps at most two sampler params clear of them). Reserved (`u_future*`) |
+
+Nothing is kept between composites, so a frame rendered cold, paused or in sequence sees the same future
+frames. During playback the frame decoded as `t + 1` is the next composite's current frame and comes from
+the reader's cache. Only video clips with a decoded source frame get them: nested, still-image, procedural
+and cutout layers, the single-image executor and standalone adjustment clips see `futureCount() == 0`.
+Each future frame is one more decoder surface held until the frame has rendered, which is why `kHwExtraFrames`
+has two more spare.
+
+`effects/motion_blur` (`motion.blur`) is a `history: 1`, `historyExact: 1`, `future: 1` package: it estimates
+optical flow from the current frame to both neighbours (`historyFrame(1.0, uv)` and `futureFrame(1.0, uv)`) on
+a three-level luma pyramid (1/64, 1/16 and 1/4 size; the three frames' luma share one buffer's R, G and B;
+block matching with each level refining the coarser one, sub-pixel at the finest, and a relative accept test
+so flat-ish areas keep their motion), then a flow-aware smoothing pass per direction that also fills the flat
+inside of a moving object. A tile-max pass (1/16 size, over both directions' magnitudes) and a 3x3
+neighbour-max pass give each pixel the longest velocity near it, and the final pass samples after McGuire et
+al.'s reconstruction filter, weighting each tap by whether its own velocity reaches the pixel, so a moving
+object smears past its outline onto the background. The shutter is centred on the frame: its earlier half
+follows the flow towards the previous frame and its later half the flow towards the next, so accelerating
+or curving motion bends the smear. Where the two flows disagree by more than acceleration explains
+(an occlusion), the direction that matches the footage better is mirrored for the whole shutter; with a frame
+missing on one side (the clip's first or last frame, a scrub) the other direction is mirrored. Taps are jittered
+per pixel. The smear length is the flow scaled by `shutter / 360 * strength`, capped by `maxBlur`; `strength`
+above 1 exaggerates beyond a real shutter. It passes the picture through only when neither neighbour exists.
+It runs 14 passes over 13 buffers (`luma4/16/64`, `flow64/16/4` and `flow4s` for backward flow, the same with
+an `f` suffix for forward flow, `tile16`, `nbr16`; flows are `rg16f`).
 
 Compositor code that wants the previous source frame of a clip sets `GpuLayer::sourceHistoryFrames` and, after `buildLayerTarget` has run for the layer, calls
 `drift::gl::pastSourceFrame(rt, layer.historyScope, layer.historyKey, age)` (FrameHistory.h). The

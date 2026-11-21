@@ -109,7 +109,7 @@ GLSL: write `#version 330 core` (translated to GLSL ES on mobile), `in vec2 v_te
 its identifier. Engine uniforms: u_resolution (vec2, pixels), u_time (float seconds),
 u_frameIndex (int, at the project frame rate), u_frameRate (float), u_timeUs (float). Do not declare parameters with reserved names: u_currentTexture,
 u_textureN, u_resolution, u_time, u_timeUs, u_frameIndex, u_frameRate, u_progress, u_direction, u_fromTexture, u_toTexture,
-u_depth*, u_hasDepth, u_clipMask, u_hasClipMask, u_history*, u_prevOutput, u_templateBounds, u_meshAspect, u_face*.
+u_depth*, u_hasDepth, u_clipMask, u_hasClipMask, u_history*, u_future*, u_prevOutput, u_templateBounds, u_meshAspect, u_face*.
 Shaders are test-compiled on create/update; compile errors come back as shader_compile_failed with
 the driver log per pass. A shader that fails at render time shows the frame unchanged.
 )";
@@ -144,6 +144,7 @@ List their nextFeatures names as well, so an older Drift refuses the package ("n
 Drift") instead of failing to compile it:
   "history": N (whole number 1-32)  ->  "nextFeatures": [..., "history:source"]
   "previousOutput": true            ->  "nextFeatures": [..., "history:previous-output"]
+  "future": N (whole number 1-2)    ->  "nextFeatures": [..., "history:future"]
 
 history keeps the clip's last N source frames (the picture before the clip's effect chain, one per
 project frame). Every pass then has, declared for you:
@@ -153,13 +154,18 @@ project frame). Every pass then has, declared for you:
                                          reads the effect's own input.
   float historyCount()                   frames recorded so far: 0 on the first frame and after a
                                          seek, up to N.
+future decodes the N source frames after the current one and declares for every pass:
+  vec4 futureFrame(float ahead, vec2 uv)  the source frame `ahead` project frames later (1 = the next
+                                          one), rounded and clamped to what is available; with none it
+                                          reads the effect's own input.
+  float futureCount()                     frames available: 0 at the clip's end and while scrubbing.
 previousOutput gives sampler2D u_prevOutput, also declared for you: this effect's own final output
 for the previous project frame, same size and uv. It is transparent on the first frame and after a
 seek. Feed it back (scale or rotate it a little, fade it by a decay) for trails, tunnels and echoes.
 
 previousOutput must be a JSON boolean (true); any other value counts as false.
 
-Those names are reserved: never declare historyFrame, historyCount, u_history* or u_prevOutput
+Those names are reserved: never declare historyFrame, historyCount, futureFrame, futureCount, u_history*, u_future* or u_prevOutput
 yourself (the engine already declares them, and redeclaring may fail to compile), and don't use them
 without the matching field.
 A seek, scrub, loop or trim clears the history, so an effect must look right while historyCount()

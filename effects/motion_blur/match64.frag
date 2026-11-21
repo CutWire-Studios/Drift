@@ -4,6 +4,8 @@ out vec4 fragColor;
 uniform sampler2D u_currentTexture;
 
 const int kRadius = 4;
+// Channel of the luma buffer holding the frame matched against: G is the previous frame, B the next.
+const int kOther = 1;
 const float kMinBase = 0.004;
 const float kRelative = 0.85;
 
@@ -16,7 +18,7 @@ float cost(ivec2 p, ivec2 d, ivec2 sz) {
     float sum = 0.0;
     for (int y = -2; y <= 2; ++y)
         for (int x = -2; x <= 2; ++x)
-            sum += abs(luma(p + ivec2(x, y), sz, 0) - luma(p + ivec2(x, y) + d, sz, 1));
+            sum += abs(luma(p + ivec2(x, y), sz, 0) - luma(p + ivec2(x, y) + d, sz, kOther));
     return sum / 25.0;
 }
 

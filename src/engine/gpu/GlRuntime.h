@@ -678,6 +678,9 @@ constexpr int kClipMaskTextureUnit = 9;
 // guarantees, out of reach of the sampler params paramSamplerUnit hands out from the bottom.
 constexpr int kHistoryTextureUnit = 14;
 constexpr int kPrevOutputTextureUnit = 15;
+// The frames after the current one for "future" packages: the first on kFutureTextureUnit, the
+// second on the unit below it. Below the sampler params only when a package has fewer than three.
+constexpr int kFutureTextureUnit = 13;
 
 // The texture unit for a pass's index-th sampler param, after its `inputCount` input units and
 // skipping the depth and mask units. Mirrors paramSamplerUnit in Forge's compiler/passes.ts.
@@ -719,6 +722,10 @@ struct PipelineAux
     int frameRate = 0;
     // For "history" packages; a count of 0 reads the effect's own input.
     HistoryBinding history;
+    // For "future" packages: the frames after the current one, nearest first, and how many there are
+    // (0 binds the effect's input as the next frame).
+    std::array<GLuint, 2> future{};
+    int futureCount = 0;
     // For "previousOutput" packages: the effect's result one frame ago, 0 for none (the first
     // frame, or after a seek), which binds transparent.
     GLuint prevOutput = 0;

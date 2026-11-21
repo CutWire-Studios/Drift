@@ -164,6 +164,9 @@ struct GpuLayer
     // decoded for a "historyExact" effect when the history ring could not hold them. Fewer than
     // asked at the start of the clip; empty when the ring already has them.
     std::vector<PreviewVideoFrame> pastVideo;
+    // Source frames after the current one, nearest first (the first is one project frame ahead),
+    // decoded for a "future" effect. Fewer than asked at the clip's end; empty while scrubbing.
+    std::vector<PreviewVideoFrame> futureVideo;
     // This frame's baked face anchors, one per tracked slot, sampled by FrameCompositor. Carried
     // by value: the scene outlives the cache lookup that produced them.
     QList<drift::FaceAnchors> faceSlots;

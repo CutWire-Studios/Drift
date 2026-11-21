@@ -420,6 +420,9 @@ private slots:
     void floatIntermediateBufferKeepsValuesOutsideZeroToOne();
     void motionBlurStillBlursWithoutFloatBuffers();
     void effectPackageLoaderParsesHistoryExact();
+    void futureFramesReadTheNextFrame();
+    void effectPackageLoaderParsesFuture();
+    void motionBlurFollowsAcceleratingMotionBothWays();
     void gpuGaussianBlurChangesImage();
     void gpuMultiPassPreservesVerticalOrientation();
     void gpuBrokenShaderPassthrough();
@@ -10749,7 +10752,7 @@ void EngineTest::motionBlurSmearsMovementInsideTheFootage()
     QVERIFY2(lum(sharp, 149) < 20 && lum(sharp, 185) < 20, qPrintable(QString::number(lum(sharp, 149))));
     QVERIFY2(lum(smeared, 150) > lum(sharp, 150) + 30, qPrintable(QString::number(lum(smeared, 150))));
     QVERIFY2(lum(smeared, 184) > lum(sharp, 184) + 30, qPrintable(QString::number(lum(smeared, 184))));
-    QVERIFY2(lum(smeared, 152) < lum(sharp, 152) - 30, qPrintable(QString::number(lum(smeared, 152))));
+    QVERIFY2(lum(smeared, 152) < lum(sharp, 152) - 15, qPrintable(QString::number(lum(smeared, 152))));
     QVERIFY2(lum(smeared, 166) > 240, qPrintable(QString::number(lum(smeared, 166))));
     // Nothing is touched beyond the smear, nor above the square, where nothing moves.
     QVERIFY2(lum(smeared, 100) < 8 && lum(smeared, 200) < 8, qPrintable(QString::number(lum(smeared, 100))));
@@ -10830,8 +10833,8 @@ void EngineTest::motionBlurNeedsThePreviousFrame()
     FrameCompositor blurred;
     blurred.setProject(&blurProject);
 
-    // The first frame of the clip has no frame before it.
-    QCOMPARE(frameAt(blurred, 0), frameAt(plain, 0));
+    // The first frame of the clip has no frame before it, but the next one still gives it a blur.
+    QVERIFY(frameAt(blurred, 0) != frameAt(plain, 0));
     QVERIFY(frameAt(blurred, 11) != frameAt(plain, 11));
 
     // Motion Blur asks for its previous frame to be decoded on demand, so a frame rendered cold
@@ -11125,6 +11128,170 @@ void EngineTest::motionBlurStillBlursWithoutFloatBuffers()
     QVERIFY2(lum(smeared, 150) > lum(sharp, 150) + 30, qPrintable(QString::number(lum(smeared, 150))));
     QVERIFY2(lum(smeared, 184) > lum(sharp, 184) + 30, qPrintable(QString::number(lum(smeared, 184))));
     QVERIFY2(lum(smeared, 100) < 8 && lum(smeared, 200) < 8, qPrintable(QString::number(lum(smeared, 100))));
+}
+
+void EngineTest::futureFramesReadTheNextFrame()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir videoDir;
+    QVERIFY(videoDir.isValid());
+    const QString video = makeColorSegmentsVideo(videoDir);
+    if (video.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir fixtures;
+    QVERIFY(fixtures.isValid());
+    const QString one = QStringLiteral("void main(){ fragColor = futureFrame(1.0, v_texCoord); }\n");
+    const QString two = QStringLiteral("void main(){ fragColor = futureFrame(2.0, v_texCoord); }\n");
+    const QString count = QStringLiteral("void main(){ fragColor = vec4(futureCount() / 2.0, 0.0, 0.0, 1.0); }\n");
+    const QString fields = QStringLiteral(R"("future": %1, "nextFeatures": ["history:future"],)");
+    QVERIFY(!writeHistoryFixture(fixtures, QStringLiteral("future_one"), fields.arg(1), QString(), one).isEmpty());
+    QVERIFY(!writeHistoryFixture(fixtures, QStringLiteral("future_two"), fields.arg(2), QString(), two).isEmpty());
+    QVERIFY(!writeHistoryFixture(fixtures, QStringLiteral("future_count"), fields.arg(2), QString(), count).isEmpty());
+    QStringList roots = historyTestEffectRoots();
+    roots.append(fixtures.path());
+    reloadEffectCatalog(roots);
+    const auto restore = qScopeGuard([] { reloadEffectCatalog(historyTestEffectRoots()); });
+    for (const char *id : {"test.future_one", "test.future_two", "test.future_count"}) {
+        QVERIFY(effectDefForId(QString::fromLatin1(id)));
+        QVERIFY(effectDefForId(QString::fromLatin1(id))->gpu.valid);
+    }
+
+    // Red until frame 24, lime from 25.
+    const auto isRed = [](const QColor &c) { return c.red() > 200 && c.green() < 60; };
+    const auto isLime = [](const QColor &c) { return c.green() > 200 && c.red() < 60; };
+    const auto projectWith = [&](const char *id) {
+        drift::Effect effect;
+        effect.catalogId = QString::fromLatin1(id);
+        auto project = std::make_unique<HistoryProject>();
+        project->setUp(video, effect);
+        return project;
+    };
+
+    const auto next = projectWith("test.future_one");
+    FrameCompositor cold;
+    cold.setProject(&next->project);
+    const QColor atCut = centreAtFrame(cold, 24);
+    QVERIFY2(isLime(atCut), qPrintable(atCut.name()));
+    QVERIFY2(isRed(centreAtFrame(cold, 23)), "frame 23 sees frame 24");
+    QCOMPARE(centreAtFrame(cold, 24), atCut);
+
+    FrameCompositor sequential;
+    sequential.setProject(&next->project);
+    QColor played;
+    for (int frame = 20; frame <= 24; ++frame)
+        played = centreAtFrame(sequential, frame);
+    QCOMPARE(played, atCut);
+
+    // A scrub decodes nothing extra: the effect's own input stands in.
+    FrameCompositor::RenderOptions scrub;
+    scrub.approximateSeek = true;
+    FrameCompositor scrubbing;
+    scrubbing.setProject(&next->project);
+    const QImage scrubbed = scrubbing.compositeAt(drift::TimeUs(24) * 40'000, scrub);
+    QVERIFY(isRed(scrubbed.pixelColor(32, 32)));
+
+    const auto ahead = projectWith("test.future_two");
+    FrameCompositor twoAhead;
+    twoAhead.setProject(&ahead->project);
+    QVERIFY2(isLime(centreAtFrame(twoAhead, 23)), "two frames ahead of frame 23");
+    QVERIFY2(isRed(centreAtFrame(twoAhead, 22)), "two frames ahead of frame 22");
+
+    const auto counted = projectWith("test.future_count");
+    FrameCompositor counting;
+    counting.setProject(&counted->project);
+    QCOMPARE(centreAtFrame(counting, 10).red(), 255);
+    FrameCompositor scrubCounting;
+    scrubCounting.setProject(&counted->project);
+    QCOMPARE(scrubCounting.compositeAt(drift::TimeUs(10) * 40'000, scrub).pixelColor(32, 32).red(), 0);
+}
+
+void EngineTest::effectPackageLoaderParsesFuture()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString body = QStringLiteral("void main(){ fragColor = futureFrame(1.0, v_texCoord); }\n");
+
+    QString error;
+    const EffectPresetEntry ok = EffectPackageLoader::loadPackage(
+        writeHistoryFixture(dir, QStringLiteral("future_ok"),
+                            QStringLiteral(R"("future": 2, "nextFeatures": ["history:future"],)"), QString(), body),
+        &error);
+    QVERIFY2(ok.gpu.valid, qPrintable(error));
+    QCOMPARE(ok.gpu.futureFrames, 2);
+    QCOMPARE(ok.gpu.historyFrames, 0);
+
+    int n = 0;
+    for (const QString &fields : {QStringLiteral(R"("future": 0,)"), QStringLiteral(R"("future": 3,)"),
+                                  QStringLiteral(R"("future": "one",)")}) {
+        const EffectPresetEntry bad = EffectPackageLoader::loadPackage(
+            writeHistoryFixture(dir, QStringLiteral("future_bad_%1").arg(n++), fields, QString(), body), &error);
+        QVERIFY2(!bad.gpu.valid, qPrintable(fields));
+        QVERIFY2(error.contains(QStringLiteral("future")), qPrintable(error));
+    }
+}
+
+namespace {
+
+// A white 32x32 square on black, 256x128 at 25 fps, moving 8 px a frame until frame 8 and 16 px a frame after.
+QString makeAcceleratingSquareVideo(QTemporaryDir &dir)
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        return {};
+    const QString out = dir.filePath(QStringLiteral("square_accel.mp4"));
+    QProcess proc;
+    proc.start(ffmpeg,
+               {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                QStringLiteral("color=c=black:s=256x128:r=25:d=2"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+                QStringLiteral("-i"), QStringLiteral("color=c=white:s=32x32:r=25:d=2"),
+                QStringLiteral("-filter_complex"),
+                QStringLiteral("[0][1]overlay=x='20+if(lt(n,8),8*n,64+16*(n-8))':y=48:eval=frame[v]"),
+                QStringLiteral("-map"), QStringLiteral("[v]"), QStringLiteral("-c:v"), QStringLiteral("libx264"),
+                QStringLiteral("-crf"), QStringLiteral("10"), QStringLiteral("-g"), QStringLiteral("50"),
+                QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"), out});
+    if (!proc.waitForFinished(30000) || proc.exitCode() != 0)
+        return {};
+    return out;
+}
+
+} // namespace
+
+void EngineTest::motionBlurFollowsAcceleratingMotionBothWays()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    QVERIFY(effectDefForId(QStringLiteral("motion.blur")));
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString video = makeAcceleratingSquareVideo(dir);
+    if (video.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    drift::Project plainProject = motionBlurProject(video, false);
+    drift::Project blurProject = motionBlurProject(video, true);
+    blurProject.tracks()[0].clips[0].effects[0].parameters.insert(QStringLiteral("shutter"), 360.0);
+    FrameCompositor plain;
+    plain.setProject(&plainProject);
+    FrameCompositor blurred;
+    blurred.setProject(&blurProject);
+
+    // At frame 7 the square (the clip's frame 8, as in the tests above) sits at x 84..115 after moving 8 px, and moves 16 px next: a full-frame
+    // shutter reaches about 4 px behind it and 8 px ahead.
+    QImage sharp;
+    QImage smeared;
+    for (int frame = 5; frame <= 7; ++frame) {
+        sharp = frameAt(plain, frame);
+        smeared = frameAt(blurred, frame);
+    }
+    const auto lum = [](const QImage &img, int x) { return img.pixelColor(x, 64).red(); };
+    QVERIFY2(lum(sharp, 79) < 20 && lum(sharp, 120) < 20, qPrintable(QString::number(lum(sharp, 79))));
+    const int behind = lum(smeared, 79);
+    const int ahead = lum(smeared, 120);
+    QVERIFY2(ahead > behind + 30, qPrintable(QStringLiteral("behind %1 ahead %2").arg(behind).arg(ahead)));
+    QVERIFY2(lum(smeared, 100) > 240, qPrintable(QString::number(lum(smeared, 100))));
 }
 
 void EngineTest::trendingTimeEffectsLoadAndCompile()

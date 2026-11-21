@@ -881,6 +881,9 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     // The folded mask stack, built the first time an effect asks for it and shared down the chain.
     GlTarget clipMask;
     bool clipMaskTried = false;
+    // The frames after this one, uploaded the first time a "future" effect asks for them.
+    std::vector<GlTarget> futureTargets;
+    bool futureTried = false;
 
     for (int effectIndex = 0; effectIndex < layer.effects.size(); ++effectIndex) {
         const drift::Effect &effect = layer.effects.at(effectIndex);
@@ -935,6 +938,20 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         bindAudioInputs(rt, gl, layer, effectIndex, def->gpu, aux);
         if (def->gpu.historyFrames > 0)
             aux.history = history.sourceBinding();
+        if (def->gpu.futureFrames > 0) {
+            if (!futureTried) {
+                futureTried = true;
+                for (const PreviewVideoFrame &video : layer.futureVideo) {
+                    GlTarget ahead = videoSourceTarget(rt, gl, video, layer.videoCrop, layer.videoCropAngle);
+                    if (!ahead.isValid())
+                        break;
+                    futureTargets.push_back(std::move(ahead));
+                }
+            }
+            aux.futureCount = int(qMin<size_t>(futureTargets.size(), aux.future.size()));
+            for (int k = 0; k < aux.futureCount; ++k)
+                aux.future[size_t(k)] = futureTargets[size_t(k)].texture();
+        }
         if (def->gpu.needsPrevOutput)
             aux.prevOutput = history.previousOutput(effectIndex);
 
@@ -954,6 +971,8 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
 
     if (clipMask.isValid())
         rt.releaseTarget(std::move(clipMask));
+    for (GlTarget &ahead : futureTargets)
+        rt.releaseTarget(std::move(ahead));
     return target;
 }
 

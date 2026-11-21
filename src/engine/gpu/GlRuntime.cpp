@@ -405,6 +405,29 @@ vec4 historyFrame(float age, vec2 uv)
 }
 )";
 
+// Compiled into every pass of a "future" package.
+constexpr const char *kFuturePrelude = R"(
+uniform sampler2D u_futureTexture1;
+uniform sampler2D u_futureTexture2;
+uniform float u_futureCount;
+
+// How many source frames after the current one are available; 0 at the end of the clip and while scrubbing.
+float futureCount()
+{
+    return u_futureCount;
+}
+
+// The clip's source frame `ahead` project frames later (1 = the next frame) at uv, rounded and clamped to
+// what is available. With none available the engine binds the effect's own input, so this is the current
+// frame.
+vec4 futureFrame(float ahead, vec2 uv)
+{
+    int n = max(int(u_futureCount + 0.5), 1);
+    int k = clamp(int(floor(ahead + 0.5)), 1, n);
+    return k == 1 ? texture(u_futureTexture1, uv) : texture(u_futureTexture2, uv);
+}
+)";
+
 constexpr const char *kPrevOutputPrelude = R"(
 uniform sampler2D u_prevOutput;
 )";
@@ -446,6 +469,8 @@ QByteArray packagePrelude(const drift::GpuEffectDefinition &gpu)
     QByteArray out;
     if (gpu.historyFrames > 0)
         out += kHistoryPrelude;
+    if (gpu.futureFrames > 0)
+        out += kFuturePrelude;
     if (gpu.needsPrevOutput)
         out += kPrevOutputPrelude;
     if (gpu.needsDepth)
@@ -3382,6 +3407,8 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
         sourceSig += QLatin1String("#mask");
     if (gpu.historyFrames > 0)
         sourceSig += QLatin1String("#history");
+    if (gpu.futureFrames > 0)
+        sourceSig += QLatin1String("#future");
     if (gpu.needsPrevOutput)
         sourceSig += QLatin1String("#prev");
     if (gpu.usesFloatBuffers())
@@ -4518,6 +4545,19 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
                 program->setUniformValue("u_historyTile",
                                          QVector2D(float(qMax(1, h.tileSize.width())),
                                                    float(qMax(1, h.tileSize.height()))));
+            }
+
+            if (gpu.futureFrames > 0) {
+                const int have = aux ? qBound(0, aux->futureCount, 2) : 0;
+                for (int k = 0; k < 2; ++k) {
+                    const GLuint tex = have > 0 ? aux->future[size_t(qMin(k, have - 1))] : sourceTexAt(0);
+                    gl->glActiveTexture(GL_TEXTURE0 + kFutureTextureUnit - k);
+                    gl->glBindTexture(GL_TEXTURE_2D, tex);
+                    program->setUniformValue(k == 0 ? "u_futureTexture1" : "u_futureTexture2",
+                                             kFutureTextureUnit - k);
+                }
+                gl->glActiveTexture(GL_TEXTURE0);
+                program->setUniformValue("u_futureCount", float(have));
             }
 
             if (gpu.needsPrevOutput) {
