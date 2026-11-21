@@ -52,6 +52,45 @@
     </message>
 </context>
 <context>
+    <name>AccentSwatches</name>
+    <message>
+        <source>Amber</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished">橙色</translation>
+    </message>
+    <message>
+        <source>Red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Purple</source>
+        <translation type="unfinished">紫色</translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Teal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme default</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AddonManager</name>
     <message>
         <source>Automatic (recommended)</source>
@@ -5946,20 +5985,28 @@
 <context>
     <name>AppSettingsMenu</name>
     <message>
-        <source>Help…</source>
-        <translation>說明…</translation>
+        <source>Help</source>
+        <translation type="unfinished">說明</translation>
+    </message>
+    <message>
+        <source>Keyboard shortcuts</source>
+        <translation type="unfinished">鍵盤快速鍵</translation>
+    </message>
+    <message>
+        <source>Check for updates…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save diagnostics…</source>
         <translation>儲存診斷資訊…</translation>
     </message>
     <message>
-        <source>Settings…</source>
-        <translation>設置…</translation>
+        <source>Debug info…</source>
+        <translation type="unfinished">調試信息…</translation>
     </message>
     <message>
-        <source>Multicam</source>
-        <translation>多機位</translation>
+        <source>About Drift</source>
+        <translation type="unfinished">關於 Drift</translation>
     </message>
 </context>
 <context>
@@ -6282,6 +6329,54 @@
         <translation>音效</translation>
     </message>
     <message>
+        <source>Your imported video, audio and images. Drag them onto the timeline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Titles and captions with ready-made styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate captions from speech, or import a subtitle file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn text into a voiceover, or clone a voice.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Emoji and stickers to place over your video.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shapes and arrows for callouts and backgrounds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find the cuts in a long clip so you can jump to each scene.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show only part of a clip, or cut a subject out of its background.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Looks, glitches, blurs and more. Click one to apply it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready-made effect combinations you can apply in one click.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fades, wipes and zooms between two clips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio effects like echo, EQ and noise gate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New folder</source>
         <translation>新建資料夾</translation>
     </message>
@@ -6586,6 +6681,34 @@
 </context>
 <context>
     <name>AudioEffectHeader</name>
+    <message>
+        <source>Disable effect</source>
+        <translation type="unfinished">禁用效果</translation>
+    </message>
+    <message>
+        <source>Enable effect</source>
+        <translation type="unfinished">啟用效果</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished">上移</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">下移</translation>
+    </message>
+    <message>
+        <source>Copy effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove effect</source>
+        <translation type="unfinished">移除效果</translation>
+    </message>
     <message>
         <source>%1 (not installed)</source>
         <translation>%1（未安裝）</translation>
@@ -7124,6 +7247,10 @@
         <translation>每條字幕 %1 個詞</translation>
     </message>
     <message>
+        <source>Mixer ↗</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pan</source>
         <translation>聲像</translation>
     </message>
@@ -7164,12 +7291,28 @@
         <translation>移除噪聲…</translation>
     </message>
     <message>
+        <source>Remove noise</source>
+        <translation type="unfinished">去除噪聲</translation>
+    </message>
+    <message>
+        <source>Cleans hiss, hum and background noise from speech.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Download noise removal (about 9 MB)</source>
         <translation>下載降噪功能（約 9 MB）</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
         <translation>請先安裝 AI 引擎</translation>
+    </message>
+    <message>
+        <source>Needs noise model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Auto subtitles</source>
@@ -7400,6 +7543,10 @@
     <message>
         <source>Close audio mixer</source>
         <translation>關閉音頻混音器</translation>
+    </message>
+    <message>
+        <source>Open in Audio workspace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Resume recording</source>
@@ -7667,47 +7814,47 @@
 <context>
     <name>BakeController</name>
     <message>
-        <source>Set a work area to bake</source>
-        <translation>設定要預渲染的工作區域</translation>
+        <source>Pre-rendered sections are of the main timeline. Switch to it to pre-render.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not open the bake cache</source>
-        <translation>無法開啟預渲染快取</translation>
+        <source>Set a work area to pre-render</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the pre-render cache</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Baking…</source>
         <translation>正在預渲染…</translation>
     </message>
     <message>
-        <source>Bake cancelled</source>
-        <translation>預渲染已取消</translation>
+        <source>Pre-render cancelled</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bake failed</source>
-        <translation>預渲染失敗</translation>
+        <source>Pre-render failed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bake complete</source>
-        <translation>預渲染完成</translation>
+        <source>Pre-render complete</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Set work area to bake</source>
-        <translation>設定要預渲染的工作區域</translation>
+        <source>Set work area to pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Work area set</source>
         <translation>工作區域已設定</translation>
     </message>
-    <message>
-        <source>Bakes are of the main timeline. Switch to it to bake.</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>BakesDialog</name>
     <message>
-        <source>Bakes</source>
-        <translation>預渲染</translation>
+        <source>Pre-rendered sections</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>
@@ -7734,8 +7881,58 @@
         <translation>%1秒</translation>
     </message>
     <message>
-        <source>Baking %1%</source>
-        <translation>正在預渲染 %1%</translation>
+        <source>Pre-rendering %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all pre-rendered sections?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-render at current quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to pre-render</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality for new pre-rendered sections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-render work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-rendered sections are of the main timeline. Switch to it to pre-render.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-render a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Pre-render.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-render</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete pre-rendered section</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n pre-rendered section(s) · %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Re-render all stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all pre-rendered sections</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stale</source>
@@ -7746,10 +7943,6 @@
         <translation>最新</translation>
     </message>
     <message>
-        <source>Delete all bakes?</source>
-        <translation>刪除所有預渲染？</translation>
-    </message>
-    <message>
         <source>Delete</source>
         <translation>刪除</translation>
     </message>
@@ -7758,28 +7951,12 @@
         <translation>播放和匯出將重新即時渲染這些範圍。您的專案不會被變更。</translation>
     </message>
     <message>
-        <source>Re-bake at current quality</source>
-        <translation>以當前品質重新預渲染</translation>
-    </message>
-    <message>
-        <source>Set work area to bake</source>
-        <translation>設定要預渲染的工作區域</translation>
-    </message>
-    <message>
-        <source>Quality for new bakes</source>
-        <translation>新預渲染的品質</translation>
-    </message>
-    <message>
         <source>≈ %1 per minute</source>
         <translation>≈ 每分鐘 %1</translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>取消</translation>
-    </message>
-    <message>
-        <source>Bake work area</source>
-        <translation>預渲染工作區域</translation>
     </message>
     <message>
         <source>Set a work area on the timeline first</source>
@@ -7792,10 +7969,6 @@
     <message>
         <source>O</source>
         <translation>O</translation>
-    </message>
-    <message>
-        <source>Bake a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Bake.</source>
-        <translation>預渲染時間軸的完成部分以使其順暢播放和匯出。使用 %1 和 %2 設定工作區域，然後點選「預渲染」。</translation>
     </message>
     <message>
         <source>Range</source>
@@ -7818,38 +7991,12 @@
         <translation>狀態</translation>
     </message>
     <message>
-        <source>Re-bake</source>
-        <translation>重新預渲染</translation>
-    </message>
-    <message>
         <source>More</source>
         <translation>更多</translation>
     </message>
     <message>
-        <source>Delete bake</source>
-        <translation>刪除預渲染</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n bake(s) · %1</source>
-        <translation>
-            <numerusform>%n 個預渲染 · %1</numerusform>
-        </translation>
-    </message>
-    <message>
         <source>0 B</source>
         <translation>0 B</translation>
-    </message>
-    <message>
-        <source>Re-bake all stale</source>
-        <translation>重新預渲染所有過期項目</translation>
-    </message>
-    <message>
-        <source>Delete all bakes</source>
-        <translation>刪除所有預渲染</translation>
-    </message>
-    <message>
-        <source>Bakes are of the main timeline. Switch to it to bake.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8183,6 +8330,21 @@
     <message>
         <source>Bounce</source>
         <translation>彈跳</translation>
+    </message>
+</context>
+<context>
+    <name>ClipSuggestions</name>
+    <message>
+        <source>Generate captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto reframe…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilize this shaky clip</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8554,6 +8716,10 @@
         <translation>顏色</translation>
     </message>
     <message>
+        <source>None. Choose one in the Looks panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Color wheels</source>
         <translation>色彩輪</translation>
     </message>
@@ -8596,10 +8762,6 @@
     <message>
         <source>LUT</source>
         <translation>LUT</translation>
-    </message>
-    <message>
-        <source>None. Choose one in the Color Grading LUTs panel.</source>
-        <translation>無。請在「調色 LUT」面板中選擇一個。</translation>
     </message>
     <message>
         <source>LUT Intensity</source>
@@ -9171,6 +9333,10 @@
 <context>
     <name>DenoisePanel</name>
     <message>
+        <source>Remove noise</source>
+        <translation type="unfinished">去除噪聲</translation>
+    </message>
+    <message>
         <source>Noise Removal</source>
         <translation>降噪</translation>
     </message>
@@ -9626,6 +9792,10 @@
         <translation>將此緩動用於 %1 的所有關鍵格之間</translation>
     </message>
     <message>
+        <source>Edit curve in graph ↗</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename…</source>
         <translation>重命名…</translation>
     </message>
@@ -9836,8 +10006,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save Shareable Copy</source>
-        <translation>儲存共享副本</translation>
+        <source>Save with media</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project not saved</source>
@@ -9889,6 +10059,10 @@
         </translation>
     </message>
     <message>
+        <source>Effects, transitions, sound effects and stock media to add to projects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Marketplace</source>
         <translation>素材市場</translation>
     </message>
@@ -9924,6 +10098,25 @@
     <message>
         <source>Recommended packs and updates</source>
         <translation>推薦資源包與更新</translation>
+    </message>
+    <message>
+        <source>Optional AI engines, models and add-ons that unlock more features</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>EditorHeaderHelpButton</name>
+    <message>
+        <source>Help</source>
+        <translation type="unfinished">說明</translation>
+    </message>
+    <message>
+        <source>Help and support</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Guides, keyboard shortcuts, updates and diagnostics</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9963,22 +10156,6 @@
 <context>
     <name>EditorHeaderSearchField</name>
     <message>
-        <source>Workspace: %1</source>
-        <translation>工作區：%1</translation>
-    </message>
-    <message>
-        <source>Workspace:</source>
-        <translation>工作區：</translation>
-    </message>
-    <message>
-        <source>Switch workspace</source>
-        <translation>切換工作區</translation>
-    </message>
-    <message>
-        <source>Customize layouts in Settings…</source>
-        <translation>在「設定」中自訂版面配置…</translation>
-    </message>
-    <message>
         <source>Describe an edit, e.g. “fade in over half a second”</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9995,11 +10172,7 @@
         <translation type="unfinished">詢問</translation>
     </message>
     <message>
-        <source>Ask Drift to make an edit  %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ask Drift to make an edit</source>
+        <source>Describe an edit in plain words and Drift does it, e.g. “fade in over half a second”.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10013,6 +10186,10 @@
         <source>Settings</source>
         <translation>設置</translation>
     </message>
+    <message>
+        <source>Preferences, appearance, shortcuts and workspaces</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorHeaderVideoButton</name>
@@ -10021,8 +10198,35 @@
         <translation>視頻</translation>
     </message>
     <message>
-        <source>Bakes, crop and video layout</source>
-        <translation>預渲染、裁剪與影片版面配置</translation>
+        <source>Video size, crop, multicam and pre-rendered sections</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>EditorHeaderWorkspaceButton</name>
+    <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">工作區：%1</translation>
+    </message>
+    <message>
+        <source>Switch workspace</source>
+        <translation type="unfinished">切換工作區</translation>
+    </message>
+    <message>
+        <source>Each workspace arranges the panels for one kind of task</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everyday</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Customize layouts in Settings…</source>
+        <translation type="unfinished">在「設定」中自訂版面配置…</translation>
     </message>
 </context>
 <context>
@@ -10133,6 +10337,18 @@
         <translation>景深與光照</translation>
     </message>
     <message>
+        <source>Fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation type="unfinished">隱私權</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">背景</translation>
+    </message>
+    <message>
         <source>Other</source>
         <translation>其他</translation>
     </message>
@@ -10140,12 +10356,12 @@
 <context>
     <name>EffectPresetCard</name>
     <message>
-        <source>%1 — click to apply to the selection, or drag onto a clip</source>
-        <translation>%1 — 點擊應用到所選內容，或拖到片段上</translation>
+        <source>Click to apply to the selection, or drag onto a clip</source>
+        <translation type="unfinished">點擊應用到所選內容，或拖到片段上</translation>
     </message>
     <message>
-        <source>%1 — click to add as an adjustment layer, or drag onto a clip</source>
-        <translation>%1 — 點擊添加為調整圖層，或拖到片段上</translation>
+        <source>Click to add as an adjustment layer, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -10463,6 +10679,26 @@
         <translation>另存為預設…</translation>
     </message>
     <message>
+        <source>Move up</source>
+        <translation type="unfinished">上移</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">下移</translation>
+    </message>
+    <message>
+        <source>Copy effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1（未安裝）</translation>
     </message>
@@ -10594,6 +10830,14 @@
         <translation>效果設置</translation>
     </message>
     <message>
+        <source>Blurring something that moves?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track it in Mask &amp; track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This clip already has a frame for every project frame, so Motion Smoothing adds nothing here. It helps footage with a lower frame rate than the project, or slowed down.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10632,8 +10876,8 @@
         <translation>新增遮罩</translation>
     </message>
     <message>
-        <source>Cutout subject</source>
-        <translation>摳出主體</translation>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10755,18 +10999,22 @@
         <translation>導出已取消。</translation>
     </message>
     <message>
-        <source>Some bakes are out of date</source>
-        <translation>部分預渲染已過期</translation>
+        <source>Some pre-rendered sections are out of date</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
-        <translation>
-            <numerusform>%n 個預渲染範圍與您的編輯不再相符。按原樣匯出將使用舊畫面。</numerusform>
+        <source>%n pre-rendered section(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Re-bake first</source>
-        <translation>先重新預渲染</translation>
+        <source>Re-render first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use pre-rendered sections</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Re-baking. Export again when it finishes.</source>
@@ -10783,10 +11031,6 @@
     <message>
         <source>Cancel</source>
         <translation>取消</translation>
-    </message>
-    <message>
-        <source>Use baked ranges</source>
-        <translation>使用已預渲染範圍</translation>
     </message>
     <message>
         <source>Read pre-rendered ranges instead of compositing them again</source>
@@ -10887,6 +11131,34 @@
     <message>
         <source>Saves what you see in the preview. Pick a size — the picture shape stays the same.</source>
         <translation>導出預覽中看到的畫面。選擇一個尺寸，畫面比例保持不變。</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1×%2. Vertical for TikTok, Reels and Shorts, wide for YouTube.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose layout…</source>
+        <translation type="unfinished">選擇佈局…</translation>
+    </message>
+    <message>
+        <source>Pick a platform template (YouTube, Instagram, TikTok, …) and quality</source>
+        <translation type="unfinished">選擇平台模板（YouTube、Instagram、TikTok 等）和質量</translation>
+    </message>
+    <message>
+        <source>Auto reframe…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop the selected clip to follow its subject in a new shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a video clip on the timeline first</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Downscale</source>
@@ -12522,6 +12794,38 @@
         <source>No matches</source>
         <translation>無符合項</translation>
     </message>
+    <message>
+        <source>No matches for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular searches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">速度</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">裁剪</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">防抖</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">導出</translation>
+    </message>
 </context>
 <context>
     <name>GradeSlider</name>
@@ -13104,6 +13408,13 @@
     </message>
 </context>
 <context>
+    <name>InlineTip</name>
+    <message>
+        <source>Hide this tip</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>JobRegistry</name>
     <message>
         <source>Queued</source>
@@ -13454,8 +13765,20 @@
         <translation>我的緩動 %1</translation>
     </message>
     <message>
+        <source>Interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">平滑</translation>
+    </message>
+    <message>
         <source>Straight</source>
         <translation>直線</translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <translation type="unfinished">保持</translation>
     </message>
     <message>
         <source>Easing…</source>
@@ -13464,10 +13787,6 @@
     <message>
         <source>Save curve as preset…</source>
         <translation>將曲線儲存為預設…</translation>
-    </message>
-    <message>
-        <source>Jump</source>
-        <translation>跳變</translation>
     </message>
 </context>
 <context>
@@ -13575,8 +13894,16 @@
         <translation>直線</translation>
     </message>
     <message>
-        <source>Jump</source>
-        <translation>跳變</translation>
+        <source>Interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">平滑</translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <translation type="unfinished">保持</translation>
     </message>
     <message>
         <source>Easing…</source>
@@ -13935,8 +14262,8 @@
         <translation>選擇平台模板和畫質。這將更新項目視頻尺寸。</translation>
     </message>
     <message>
-        <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
-        <translation>選擇分類、模板和畫質。之後可在 設置 → 選擇版式 中隨時更改。</translation>
+        <source>Pick a category, then a template and quality. You can change this anytime from Video → Size, aspect &amp; frame rate….</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Favorites</source>
@@ -14089,10 +14416,6 @@
         <translation>移除</translation>
     </message>
     <message>
-        <source>Color Grading LUTs</source>
-        <translation>調色 LUT</translation>
-    </message>
-    <message>
         <source>Import LUTs</source>
         <translation>匯入 LUT</translation>
     </message>
@@ -14111,6 +14434,10 @@
     <message>
         <source>Missing LUT</source>
         <translation>遺失 LUT</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>LUT Intensity</source>
@@ -14190,6 +14517,10 @@
         <translation>導出完成。</translation>
     </message>
     <message>
+        <source>Review captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>無法創建可分享副本：%1</translation>
     </message>
@@ -14253,8 +14584,8 @@
         <translation>導出視頻(&amp;E)…</translation>
     </message>
     <message>
-        <source>&amp;Package Project…</source>
-        <translation>打包項目(&amp;P)…</translation>
+        <source>Save with &amp;Media…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>&amp;Close Project</source>
@@ -14427,6 +14758,10 @@
     <message>
         <source>&amp;Help</source>
         <translation>說明(&amp;H)</translation>
+    </message>
+    <message>
+        <source>Drift Help</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keyboard Shortcuts</source>
@@ -15458,10 +15793,6 @@
         <translation>追蹤器</translation>
     </message>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
         <source>Off</source>
         <translation>關</translation>
     </message>
@@ -15642,6 +15973,10 @@
         <translation>細化所選遮罩</translation>
     </message>
     <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Invert</source>
         <translation>反轉</translation>
     </message>
@@ -15760,6 +16095,50 @@
     <message>
         <source>Add</source>
         <translation>相加</translation>
+    </message>
+    <message>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move and reshape masks you have already drawn.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw a rectangular mask to keep or hide a box-shaped area.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw an oval mask, such as a spotlight or a vignette.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click out a shape point by point for precise edges.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint the mask by hand and fix the edges.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw around an object freehand to select it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click along an edge and it snaps to the outline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a colour to select all similar pixels next to it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click what you want and AI finds its outline. Use it to remove a background.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pin a point to something moving so a mask or object can follow it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Subtract</source>
@@ -15915,6 +16294,10 @@
         <translation>形狀</translation>
     </message>
     <message>
+        <source>Draw &amp; track ↗</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rectangle</source>
         <translation>矩形</translation>
     </message>
@@ -16054,8 +16437,8 @@
         <translation>主體</translation>
     </message>
     <message>
-        <source>Cut out subject…</source>
-        <translation>摳出主體…</translation>
+        <source>Remove background…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trace the subject and pin the result as a mask layer</source>
@@ -16246,12 +16629,12 @@
         <translation>添加到時間線</translation>
     </message>
     <message>
-        <source>Trim, crop and upscale…</source>
-        <translation>修剪、裁剪和放大…</translation>
-    </message>
-    <message>
         <source>Preview and edit…</source>
         <translation>預覽和編輯…</translation>
+    </message>
+    <message>
+        <source>Preview and trim…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename…</source>
@@ -16268,6 +16651,18 @@
     <message>
         <source>Couldn’t reload this media. It may not be a file on disk, or is already being read.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prepare in Source Lab…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save a copy…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished">播放</translation>
     </message>
     <message>
         <source>Use as mask</source>
@@ -16326,10 +16721,6 @@
     <message>
         <source>Export image…</source>
         <translation>導出圖像…</translation>
-    </message>
-    <message>
-        <source>Save As…</source>
-        <translation>另存為…</translation>
     </message>
     <message numerus="yes">
         <source>Remove %n items from project</source>
@@ -18142,8 +18533,12 @@ If playback stutters, try another.</source>
 <context>
     <name>PreviewOsdGuidesButton</name>
     <message>
-        <source>Toggle guides</source>
-        <translation>切換參考線</translation>
+        <source>Guides</source>
+        <translation type="unfinished">參考線</translation>
+    </message>
+    <message>
+        <source>Overlay safe areas and grids so titles and subjects stay framed.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -18182,12 +18577,12 @@ If playback stutters, try another.</source>
 <context>
     <name>PreviewStatusLayer</name>
     <message>
-        <source>Stale bake</source>
-        <translation>過期的預渲染</translation>
+        <source>Stale pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Baked</source>
-        <translation>已預渲染</translation>
+        <source>Pre-rendered</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing to preview yet</source>
@@ -18224,10 +18619,6 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>PreviewTransportBar</name>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
     <message>
         <source>Go to start</source>
         <translation>跳到開頭</translation>
@@ -18548,6 +18939,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Package &quot;%1&quot; is not installed; the clip renders nothing until it returns.</source>
         <translation>套件「%1」未安裝；在套件恢復前該片段不會渲染任何內容。</translation>
+    </message>
+    <message>
+        <source>Edit package ↗</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Package</source>
@@ -19237,8 +19632,48 @@ If playback stutters, try another.</source>
         <translation>點按時間線上的片段以編輯其屬性</translation>
     </message>
     <message>
-        <source>Click a clip on the timeline to edit its properties</source>
-        <translation>點擊時間線上的片段以編輯其屬性</translation>
+        <source>Select a clip to…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the subtitle cues to generate or edit captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">速度</translation>
+    </message>
+    <message>
+        <source>Select the clip at the playhead and open its Speed tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the clip at the playhead and open its Effects tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">文本</translation>
+    </message>
+    <message>
+        <source>Select the clip at the playhead and open its Text tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">背景</translation>
+    </message>
+    <message>
+        <source>Open Masking to remove or replace the background</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -19248,76 +19683,160 @@ If playback stutters, try another.</source>
         <translation>常規</translation>
     </message>
     <message>
+        <source>Name, notes and basic details of the clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation>文本</translation>
+    </message>
+    <message>
+        <source>Edit the words, font, colour and animation.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Shape</source>
         <translation>形狀</translation>
     </message>
     <message>
+        <source>Fill, outline and corners of the shape.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Motion</source>
         <translation>運動</translation>
+    </message>
+    <message>
+        <source>Edit the animated vector graphic.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>3D Model</source>
         <translation>3D 模型</translation>
     </message>
     <message>
+        <source>Position and light the 3D model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>PDF</source>
         <translation>PDF</translation>
+    </message>
+    <message>
+        <source>Choose the pages to show.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Procedural</source>
         <translation>程序式</translation>
     </message>
     <message>
+        <source>Adjust the generated visual.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>子標題</translation>
+    </message>
+    <message>
+        <source>Edit caption lines and their timing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transform</source>
         <translation>變換</translation>
     </message>
     <message>
+        <source>Move, scale, rotate and crop the clip on the canvas.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Camera</source>
         <translation>攝影機</translation>
+    </message>
+    <message>
+        <source>Pan, zoom and move the viewpoint.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization</source>
         <translation>防抖</translation>
     </message>
     <message>
+        <source>Smooth out shaky handheld footage.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>動畫</translation>
+    </message>
+    <message>
+        <source>Add intro, outro and looping motion.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio</source>
         <translation>音頻</translation>
     </message>
     <message>
+        <source>Volume, fades, noise removal and ducking.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Speed</source>
         <translation>速度</translation>
+    </message>
+    <message>
+        <source>Slow down, speed up, reverse or ramp the speed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Blending</source>
         <translation>混合</translation>
     </message>
     <message>
+        <source>Opacity and how the clip mixes with layers below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Masks</source>
         <translation>遮罩</translation>
+    </message>
+    <message>
+        <source>Show only part of the clip, or remove its background.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Effects</source>
         <translation>效果</translation>
     </message>
     <message>
+        <source>Filters, blurs and colour looks on this clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio FX</source>
         <translation>音效</translation>
     </message>
     <message>
+        <source>Echo, EQ and other sound effects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transition</source>
         <translation>轉場</translation>
+    </message>
+    <message>
+        <source>How this clip blends into the next one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead over a clip first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clip at the playhead has no %1 tab</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip to edit its %1</source>
@@ -19338,6 +19857,17 @@ If playback stutters, try another.</source>
     <message>
         <source>My look</source>
         <translation>我的樣式</translation>
+    </message>
+</context>
+<context>
+    <name>PropertiesSuggestionStrip</name>
+    <message>
+        <source>Do it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation type="unfinished">暫不</translation>
     </message>
 </context>
 <context>
@@ -19779,97 +20309,270 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>QuickSetupAddonsPage</name>
+    <name>QuickSetupAgenticPage</name>
     <message>
-        <source>Install the essentials</source>
-        <translation>安裝必備元件</translation>
+        <source>None</source>
+        <translation type="unfinished">無</translation>
     </message>
     <message>
-        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
-        <translation>Drift 的基本效果、轉場、音訊效果、字型和調色 LUT 均以附加元件形式提供。缺少它們編輯器將遺失大部分預期功能，因此現在進行安裝。</translation>
+        <source>Hide the AI workspaces and the Ask button</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Needs a newer version of Drift.</source>
-        <translation>需要較新版本的 Drift。</translation>
+        <source>Some</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not available in the download store.</source>
-        <translation>下載商店中未提供。</translation>
+        <source>Keep AI tools and Ask within reach</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The download failed.</source>
-        <translation>下載失敗。</translation>
+        <source>Lots</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 of %2 installed</source>
-        <translation>已安裝 %2 個中的 %1 個</translation>
+        <source>AI agents are part of how I edit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Couldn&apos;t reach the download store. Until the essentials are installed the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation>無法連線至下載商店。在安裝必備元件之前，編輯器將缺少基本效果、轉場和字型。您稍後可以從 Extras 安裝它們。</translation>
+        <source>Will you work with AI agents?</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Some packs didn&apos;t install. Until they are, the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation>部分套件未安裝。在安裝完成之前，編輯器將缺少基本效果、轉場和字型。您稍後可以從 Extras 安裝它們。</translation>
-    </message>
-    <message>
-        <source>Optional</source>
-        <translation>選用</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>重試</translation>
-    </message>
-    <message>
-        <source>Skip for now</source>
-        <translation>暫時略過</translation>
-    </message>
-    <message>
-        <source>Continue without the essentials?</source>
-        <translation>不安裝必備元件繼續？</translation>
-    </message>
-    <message>
-        <source>Continue</source>
-        <translation>繼續</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>取消</translation>
-    </message>
-    <message>
-        <source>You can find more effects, models and stickers later in Extras.</source>
-        <translation>稍後您可以在 Extras 中找到更多效果、模型和貼圖。</translation>
+        <source>Drift can be driven by assistants such as Claude through MCP. Choose how much of that to show.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>QuickSetupCommunityPage</name>
+    <name>QuickSetupDownloads</name>
+    <message>
+        <source>Needs a newer version of Drift.</source>
+        <translation type="unfinished">需要較新版本的 Drift。</translation>
+    </message>
+    <message>
+        <source>Not available in the download store.</source>
+        <translation type="unfinished">下載商店中未提供。</translation>
+    </message>
+    <message>
+        <source>The download failed.</source>
+        <translation type="unfinished">下載失敗。</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupExperiencePage</name>
+    <message>
+        <source>First time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer workspaces, labelled tabs and hints as you go</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some experience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All the usual tools, labels and hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every workspace, compact tabs and no hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How much editing have you done?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This decides how much Drift shows at first. Anything hidden stays reachable from search (Ctrl+K) and in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupFinishPage</name>
+    <message>
+        <source>YouTube</source>
+        <translation type="unfinished">YouTube</translation>
+    </message>
+    <message>
+        <source>Shorts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Films</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Podcasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tutorials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>First time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some experience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a YouTube project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a vertical project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a widescreen project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a podcast project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a tutorial project</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>You&apos;re all set</source>
-        <translation>一切就緒</translation>
+        <translation type="unfinished">一切就緒</translation>
     </message>
     <message>
-        <source>Need help or have an idea? We&apos;d love to hear from you.</source>
-        <translation>需要協助或有好點子？我們很樂意聽取您的意見。</translation>
+        <source>Your Drift: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Finish</source>
-        <translation>完成</translation>
+        <source>Open the editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing add-ons: %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You can continue now. Downloads carry on in the editor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach the download store. Until the essentials are installed the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
+        <translation type="unfinished">無法連線至下載商店。在安裝必備元件之前，編輯器將缺少基本效果、轉場和字型。您稍後可以從 Extras 安裝它們。</translation>
+    </message>
+    <message>
+        <source>Some packs didn&apos;t install. Until they are, the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
+        <translation type="unfinished">部分套件未安裝。在安裝完成之前，編輯器將缺少基本效果、轉場和字型。您稍後可以從 Extras 安裝它們。</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">重試</translation>
+    </message>
+    <message>
+        <source>Hide details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional</source>
+        <translation type="unfinished">選用</translation>
+    </message>
+    <message>
+        <source>Drift will restart to apply the interface size. Downloads still running will stop and can be resumed from Extras.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift will restart to apply the interface size.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Just open the editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Questions or ideas?</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Join our Discord</source>
-        <translation>加入我們的 Discord</translation>
-    </message>
-    <message>
-        <source>Copied</source>
-        <translation>已複製</translation>
-    </message>
-    <message>
-        <source>Copy email address</source>
-        <translation>複製電子郵件地址</translation>
+        <translation type="unfinished">加入我們的 Discord</translation>
     </message>
     <message>
         <source>If Drift crashes, it sends an error report to help fix it. No project files or media are included. You can turn this off in Settings.</source>
-        <translation>若 Drift 發生當機，將會傳送錯誤報告以協助修復問題。報告不包含任何專案檔案或媒體。您可以在「設定」中關閉此功能。</translation>
+        <translation type="unfinished">若 Drift 發生當機，將會傳送錯誤報告以協助修復問題。報告不包含任何專案檔案或媒體。您可以在「設定」中關閉此功能。</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupMakePage</name>
+    <message>
+        <source>YouTube videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Long videos in widescreen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorts and Reels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical videos for phones</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Films</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cinematic edits and color grading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Podcasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Talking heads, captions and clean audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tutorials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Screen recordings and walkthroughs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What do you make?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift sets up new projects, the workspace and suggested add-ons to match. You can skip this and change it later in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished">跳過</translation>
     </message>
 </context>
 <context>
@@ -19890,8 +20593,8 @@ If playback stutters, try another.</source>
         <translation>界面大小</translation>
     </message>
     <message>
-        <source>Make buttons, text and icons larger or smaller.</source>
-        <translation>讓按鈕、文字與圖示變大或變小。</translation>
+        <source>Drift looks cramped or oversized at this screen resolution. We picked a size that fits; change it if you like.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Windows</source>
@@ -19920,8 +20623,8 @@ If playback stutters, try another.</source>
         <translation>選擇外觀風格</translation>
     </message>
     <message>
-        <source>Choose how Drift looks. You can change this any time in Settings.</source>
-        <translation>選擇 Drift 的外觀風格。您隨時可以在「設定」中進行變更。</translation>
+        <source>Choose how Drift looks, and an accent colour. You can change both any time in Settings.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Match system</source>
@@ -19943,179 +20646,9 @@ If playback stutters, try another.</source>
         <source>Dark</source>
         <translation>深色</translation>
     </message>
-</context>
-<context>
-    <name>QuickSetupTipArt</name>
     <message>
-        <source>Edit</source>
-        <translation>編輯</translation>
-    </message>
-    <message>
-        <source>Color</source>
-        <translation>顏色</translation>
-    </message>
-    <message>
-        <source>Keyframes</source>
-        <translation>關鍵格</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>字幕</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>效果</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>轉場</translation>
-    </message>
-    <message>
-        <source>LUTs</source>
-        <translation>LUT</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation>字體</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>貼圖</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation>AI 工具</translation>
-    </message>
-    <message>
-        <source>color</source>
-        <translation>顏色</translation>
-    </message>
-    <message>
-        <source>Color workspace</source>
-        <translation>顏色工作區</translation>
-    </message>
-    <message>
-        <source>Color grade effect</source>
-        <translation>調色效果</translation>
-    </message>
-    <message>
-        <source>Appearance settings</source>
-        <translation>外觀設定</translation>
-    </message>
-    <message>
-        <source>Auto subtitles</source>
-        <translation>自動字幕</translation>
-    </message>
-    <message>
-        <source>People cutout</source>
-        <translation>人像去背</translation>
-    </message>
-    <message>
-        <source>Find scenes</source>
-        <translation>查找場景</translation>
-    </message>
-    <message>
-        <source>Hello and welcome back</source>
-        <translation>您好，歡迎回來</translation>
-    </message>
-    <message>
-        <source>Select multiple</source>
-        <translation>多選</translation>
-    </message>
-</context>
-<context>
-    <name>QuickSetupTipsPage</name>
-    <message>
-        <source>Search anything</source>
-        <translation>搜尋任何內容</translation>
-    </message>
-    <message>
-        <source>Press %1 to search actions, workspaces, add-ons, themes and settings from anywhere, then jump straight to the result.</source>
-        <translation>在任何位置按 %1 即可搜尋操作、工作區、附加元件、主題與設定，並直接跳轉至結果。</translation>
-    </message>
-    <message>
-        <source>Use the search field in the header to find actions, workspaces, add-ons, themes and settings, then jump straight to the result.</source>
-        <translation>使用頂部標題列中的搜尋欄尋找操作、工作區、附加元件、主題與設定，並直接跳轉至結果。</translation>
-    </message>
-    <message>
-        <source>Switch workspaces</source>
-        <translation>切換工作區</translation>
-    </message>
-    <message>
-        <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header, or press %1 to %2 to jump to one.</source>
-        <translation>每個工作區都針對特定工作排版面板，例如「編輯」、「顏色」、「關鍵影格」或「字幕」。開啟標題列中的「工作區」功能表，或按 %1 至 %2 即可快速切換。</translation>
-    </message>
-    <message>
-        <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header to switch.</source>
-        <translation>每個工作區都針對特定工作排版面板，例如「編輯」、「顏色」、「關鍵影格」或「字幕」。開啟標題列中的「工作區」功能表即可切換。</translation>
-    </message>
-    <message>
-        <source>Get more from Extras</source>
-        <translation>從 Extras 取得更多內容</translation>
-    </message>
-    <message>
-        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
-        <translation>更多效果、轉場、調色 LUT、字型、貼圖和 AI 模型可從頂端列的 Extras 安裝。</translation>
-    </message>
-    <message>
-        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
-        <translation>更多效果、轉場、調色 LUT、字型、貼圖和 AI 模型可從頂部標題列的 Extras 安裝。</translation>
-    </message>
-    <message>
-        <source>Use your fingers</source>
-        <translation>使用觸控手勢</translation>
-    </message>
-    <message>
-        <source>Pinch the timeline to zoom it, and pinch the preview to zoom and pan the picture. Long-press a clip and choose Select multiple to pick several clips at once.</source>
-        <translation>在時間軸上雙指捏合可進行縮放，在預覽畫面上雙指捏合可縮放並平移畫面。長按片段並選擇「多選」可一次選取多個片段。</translation>
-    </message>
-    <message>
-        <source>Play/Pause</source>
-        <translation>播放/暫停</translation>
-    </message>
-    <message>
-        <source>Split at current time</source>
-        <translation>在目前時間分割</translation>
-    </message>
-    <message>
-        <source>Delete selection</source>
-        <translation>刪除所選內容</translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation>復原</translation>
-    </message>
-    <message>
-        <source>Edit from the keyboard</source>
-        <translation>使用鍵盤進行編輯</translation>
-    </message>
-    <message>
-        <source>A few shortcuts cover most of an edit. See and change every shortcut in Settings, under Keyboard shortcuts.</source>
-        <translation>幾個快速鍵即可涵蓋大部分編輯操作。請在「設定」的「鍵盤快速鍵」中查看並變更所有快速鍵。</translation>
-    </message>
-    <message>
-        <source>AI tools on your device</source>
-        <translation>裝置端 AI 工具</translation>
-    </message>
-    <message>
-        <source>Auto subtitles, people cutout and scene finding run locally. Install their add-ons from Extras, under AI tools.</source>
-        <translation>自動字幕、人像去背與場景偵測均在本地端執行。請從 Extras 的「AI 工具」下安裝相應附加元件。</translation>
-    </message>
-    <message>
-        <source>A few tips before you start</source>
-        <translation>開始前的幾個提示</translation>
-    </message>
-    <message>
-        <source>Quick pointers to the parts of Drift people tend to miss.</source>
-        <translation>帶您快速了解容易被忽略的 Drift 功能。</translation>
-    </message>
-    <message>
-        <source>Previous tip</source>
-        <translation>上一個提示</translation>
-    </message>
-    <message>
-        <source>Next tip</source>
-        <translation>下一個提示</translation>
+        <source>Accent colour</source>
+        <translation type="unfinished">強調色</translation>
     </message>
 </context>
 <context>
@@ -20158,12 +20691,32 @@ If playback stutters, try another.</source>
 %1</translation>
     </message>
     <message>
-        <source>Initialize new project</source>
-        <translation>新建項目</translation>
+        <source>New project</source>
+        <translation type="unfinished">新建項目</translation>
     </message>
     <message>
-        <source>Open project…</source>
-        <translation>開啟項目…</translation>
+        <source>Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import / Export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save project as JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open project from JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check for missing media…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save as…</source>
@@ -20172,14 +20725,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Save with media…</source>
         <translation>連同媒體一起儲存…</translation>
-    </message>
-    <message>
-        <source>Save as JSON…</source>
-        <translation>另存為 JSON…</translation>
-    </message>
-    <message>
-        <source>Open JSON…</source>
-        <translation>開啟 JSON…</translation>
     </message>
     <message>
         <source>Import Kdenlive / Shotcut project (experimental)…</source>
@@ -20192,10 +20737,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Project properties…</source>
         <translation>項目屬性…</translation>
-    </message>
-    <message>
-        <source>Project health…</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close project</source>
@@ -20869,8 +21410,12 @@ If playback stutters, try another.</source>
         <translation>視頻尺寸與佈局</translation>
     </message>
     <message>
-        <source>Bakes</source>
-        <translation>預渲染</translation>
+        <source>Pre-rendered sections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安裝</translation>
     </message>
     <message>
         <source>Crop video</source>
@@ -21023,8 +21568,8 @@ If playback stutters, try another.</source>
         <translation>摳出並應用效果</translation>
     </message>
     <message>
-        <source>Cut out subject</source>
-        <translation>摳出主體</translation>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -21072,6 +21617,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Clip is too short to cut out</source>
         <translation>片段太短，無法摳圖</translation>
+    </message>
+    <message>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not create a cutout file</source>
@@ -21125,10 +21674,6 @@ If playback stutters, try another.</source>
         <source>Cutout</source>
         <translation>摳圖</translation>
     </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>摳出主體</translation>
-    </message>
 </context>
 <context>
     <name>SegmentationFrameColumn</name>
@@ -21148,8 +21693,8 @@ If playback stutters, try another.</source>
 <context>
     <name>SegmentationWindow</name>
     <message>
-        <source>Cut out subject</source>
-        <translation>摳出主體</translation>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything (click to pick)</source>
@@ -21239,18 +21784,6 @@ If playback stutters, try another.</source>
         <translation>再次執行</translation>
     </message>
     <message>
-        <source>About Drift</source>
-        <translation>關於 Drift</translation>
-    </message>
-    <message>
-        <source>Open-source video editor by CutWire Studios.</source>
-        <translation>CutWire Studios 出品的開源視頻編輯器</translation>
-    </message>
-    <message>
-        <source>Show about dialog</source>
-        <translation>顯示關於對話框</translation>
-    </message>
-    <message>
         <source>Debug info</source>
         <translation>調試信息</translation>
     </message>
@@ -21316,26 +21849,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Type a sentence such as &quot;split at 12 seconds&quot; in search and run it as an editing command. Needs the Command Bar Model and llama.cpp runtime add-ons; runs on this device.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Notifications for agent actions</source>
-        <translation>Agent 代理操作通知</translation>
-    </message>
-    <message>
-        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
-        <translation>選擇 Agent 代理自行編輯時向您顯示的彈出式視窗。錯誤一律會顯示。</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>全部</translation>
-    </message>
-    <message>
-        <source>Problems only</source>
-        <translation>僅問題</translation>
-    </message>
-    <message>
-        <source>None (errors still show)</source>
-        <translation>無 (錯誤仍會顯示)</translation>
     </message>
     <message>
         <source>Cloud</source>
@@ -21488,8 +22001,8 @@ If playback stutters, try another.</source>
         <translation>淺色</translation>
     </message>
     <message>
-        <source>This theme has a dark and a light variant. The header toggle switches between them.</source>
-        <translation>此主題有深色和淺色兩個變體，頂欄開關可在二者間切換</translation>
+        <source>This theme has a dark and a light variant, and follows your system’s light or dark setting.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Translucent windows</source>
@@ -21558,30 +22071,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Restart now</source>
         <translation>立即重啟</translation>
-    </message>
-    <message>
-        <source>Workspace</source>
-        <translation>工作區</translation>
-    </message>
-    <message>
-        <source>Workspace orientation</source>
-        <translation>工作區方向</translation>
-    </message>
-    <message>
-        <source>Landscape or portrait workspace. Auto follows the shape of the canvas.</source>
-        <translation>橫向或縱向工作區。自動會跟隨畫布形狀</translation>
-    </message>
-    <message>
-        <source>Auto (follow canvas)</source>
-        <translation>自動（跟隨畫布）</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>橫向</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>縱向</translation>
     </message>
 </context>
 <context>
@@ -21713,18 +22202,29 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SettingsExportPage</name>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">導出</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prefer hardware encoder for new exports</source>
+        <translation type="unfinished">新導出優先使用硬件編碼器</translation>
+    </message>
+    <message>
+        <source>Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder.</source>
+        <translation type="unfinished">有可用的 GPU H.264 編碼器時，新導出將使用它。速度更快，但同碼率下的畫質通常低於預設的軟體編碼器。</translation>
+    </message>
+</context>
+<context>
     <name>SettingsGeneralPage</name>
     <message>
         <source>General</source>
         <translation>常規</translation>
-    </message>
-    <message>
-        <source>%1 GB</source>
-        <translation>%1 GB</translation>
-    </message>
-    <message>
-        <source>%1 MB</source>
-        <translation>%1 MB</translation>
     </message>
     <message>
         <source>Language &amp; region</source>
@@ -21827,26 +22327,6 @@ If playback stutters, try another.</source>
         <translation>50 步</translation>
     </message>
     <message>
-        <source>Extras</source>
-        <translation>附加項</translation>
-    </message>
-    <message>
-        <source>Remind about essential packs</source>
-        <translation>提醒必備附加包</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed.</source>
-        <translation>未安裝視頻、轉場和音頻附加包時，“附加項”圖標會閃爍提示</translation>
-    </message>
-    <message>
-        <source>Remind about pack updates</source>
-        <translation>提醒附加包更新</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when updates are available for packs you already have installed.</source>
-        <translation>已安裝的附加包有可用更新時，“附加項”圖標會閃爍提示</translation>
-    </message>
-    <message>
         <source>Feedback</source>
         <translation>反饋</translation>
     </message>
@@ -21869,38 +22349,6 @@ If playback stutters, try another.</source>
     <message>
         <source>After a crash, send the error details, a short scrubbed log and your system and graphics information to help fix it. No project files or media.</source>
         <translation>當機發生後，傳送錯誤詳細資訊、去識別化的簡短記錄檔以及您的系統與顯示卡資訊以協助修正問題。不包含任何專案檔案或媒體。</translation>
-    </message>
-    <message>
-        <source>Storage</source>
-        <translation>存儲</translation>
-    </message>
-    <message>
-        <source>Cache</source>
-        <translation>緩存</translation>
-    </message>
-    <message>
-        <source>%1 used</source>
-        <translation>已使用 %1</translation>
-    </message>
-    <message>
-        <source>Clear cache</source>
-        <translation>清除緩存</translation>
-    </message>
-    <message>
-        <source>Cache location</source>
-        <translation>快取位置</translation>
-    </message>
-    <message>
-        <source>%1. Takes effect after restart.</source>
-        <translation>%1。重新啟動後生效。</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>重置</translation>
-    </message>
-    <message>
-        <source>Change…</source>
-        <translation>變更…</translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -22009,16 +22457,16 @@ If playback stutters, try another.</source>
 <context>
     <name>SettingsNetworkPage</name>
     <message>
-        <source>Network</source>
-        <translation>網絡</translation>
-    </message>
-    <message>
         <source>Connection</source>
         <translation>連接</translation>
     </message>
     <message>
-        <source>Proxy</source>
-        <translation>代理</translation>
+        <source>Network &amp; internet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Internet proxy server</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>How Drift reaches the internet for downloads, updates, and online services. Applies immediately.</source>
@@ -22041,8 +22489,8 @@ If playback stutters, try another.</source>
         <translation>SOCKS5 代理</translation>
     </message>
     <message>
-        <source>Proxy server</source>
-        <translation>代理服務器</translation>
+        <source>Proxy server details</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Host and port of the proxy. The username and password are optional.</source>
@@ -22066,10 +22514,65 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SettingsNotificationsPage</name>
+    <message>
+        <source>Notifications</source>
+        <translation type="unfinished">通知</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">附加項</translation>
+    </message>
+    <message>
+        <source>Remind about essential packs</source>
+        <translation type="unfinished">提醒必備附加包</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed.</source>
+        <translation type="unfinished">未安裝視頻、轉場和音頻附加包時，“附加項”圖標會閃爍提示</translation>
+    </message>
+    <message>
+        <source>Remind about pack updates</source>
+        <translation type="unfinished">提醒附加包更新</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when updates are available for packs you already have installed.</source>
+        <translation type="unfinished">已安裝的附加包有可用更新時，“附加項”圖標會閃爍提示</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation type="unfinished">Agent 代理</translation>
+    </message>
+    <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished">Agent 代理操作通知</translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished">選擇 Agent 代理自行編輯時向您顯示的彈出式視窗。錯誤一律會顯示。</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished">僅問題</translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished">無 (錯誤仍會顯示)</translation>
+    </message>
+</context>
+<context>
     <name>SettingsPane</name>
     <message>
         <source>General</source>
         <translation>常規</translation>
+    </message>
+    <message>
+        <source>Personalize</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Appearance</source>
@@ -22084,10 +22587,6 @@ If playback stutters, try another.</source>
         <translation>時間線</translation>
     </message>
     <message>
-        <source>Timeline toolbar</source>
-        <translation>時間線工具欄</translation>
-    </message>
-    <message>
         <source>Keyboard shortcuts</source>
         <translation>鍵盤快速鍵</translation>
     </message>
@@ -22100,6 +22599,14 @@ If playback stutters, try another.</source>
         <translation>性能</translation>
     </message>
     <message>
+        <source>Storage &amp; media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">導出</translation>
+    </message>
+    <message>
         <source>Audio</source>
         <translation>音頻</translation>
     </message>
@@ -22108,8 +22615,12 @@ If playback stutters, try another.</source>
         <translation>AI 與雲</translation>
     </message>
     <message>
-        <source>Network</source>
-        <translation>網絡</translation>
+        <source>Notifications</source>
+        <translation type="unfinished">通知</translation>
+    </message>
+    <message>
+        <source>Network &amp; internet</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>About</source>
@@ -22129,14 +22640,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Performance</source>
         <translation>性能</translation>
-    </message>
-    <message>
-        <source>For advanced users</source>
-        <translation>面向高級用戶</translation>
-    </message>
-    <message>
-        <source>These tune memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately.</source>
-        <translation>這些選項用於調整快取佔用和播放行為。預設值適合大多數設備；更改後可能導致播放卡頓或佔用大量快取。多數更改會立即生效</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
@@ -22171,20 +22674,108 @@ If playback stutters, try another.</source>
         <translation>Metal (macOS 預設)</translation>
     </message>
     <message>
+        <source>Graphics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Faster preview (experimental)</source>
+        <translation type="unfinished">更快預覽（實驗性）</translation>
+    </message>
+    <message>
+        <source>Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.</source>
+        <translation type="unfinished">將視頻保留在顯卡上可使播放更流暢。如果畫面顯示異常，請關閉此選項。重啟後生效。</translation>
+    </message>
+    <message>
+        <source>Graphics card</source>
+        <translation type="unfinished">顯卡</translation>
+    </message>
+    <message>
+        <source>Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.</source>
+        <translation type="unfinished">Drift 運行所用的顯卡。“高性能”讓 NVIDIA 卡上的視頻解碼留在該卡上；“省電”更省電池。重啟後生效。</translation>
+    </message>
+    <message>
+        <source>Windows default</source>
+        <translation type="unfinished">Windows 預設</translation>
+    </message>
+    <message>
+        <source>Power saving (integrated GPU)</source>
+        <translation type="unfinished">省電（集成顯卡）</translation>
+    </message>
+    <message>
+        <source>High performance (discrete GPU)</source>
+        <translation type="unfinished">高性能（獨立顯卡）</translation>
+    </message>
+    <message>
+        <source>Choose which graphics card Drift runs on in Windows Settings, under Display &gt; Graphics. Takes effect after restart.</source>
+        <translation type="unfinished">在 Windows 設置的“顯示 &gt; 圖形”中選擇 Drift 運行所用的顯卡。重啟後生效。</translation>
+    </message>
+    <message>
+        <source>Open graphics settings</source>
+        <translation type="unfinished">開啟圖形設置</translation>
+    </message>
+    <message>
+        <source>Advanced tuning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation type="unfinished">隱藏</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Playback</source>
         <translation>播放</translation>
     </message>
     <message>
-        <source>Drop late frames</source>
-        <translation>丟棄延遲格</translation>
+        <source>Skip frames when playback falls behind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip frames that are late by more than</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback buffer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the playback buffer full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview memory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scrubbing memory per clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects workspace: buffer count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects workspace: video memory limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graphics card image cache: image count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graphics card image cache: video memory limit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip preview frames that finish this far behind the playhead, instead of showing them late. Can reduce slow-motion at clip cuts on slow machines. Off never drops a frame for being late.</source>
         <translation>跳過比播放頭落後超過此時長的預覽格，而不是延遲顯示。在低性能設備上可減少片段切換處的慢動作現象。關閉時絕不因延遲而丟格</translation>
-    </message>
-    <message>
-        <source>Drop frames lagging behind playback by more than</source>
-        <translation>丟棄落後於播放超過此時長的格</translation>
     </message>
     <message>
         <source>ms</source>
@@ -22195,16 +22786,8 @@ If playback stutters, try another.</source>
         <translation>關閉</translation>
     </message>
     <message>
-        <source>Read-ahead</source>
-        <translation>預讀</translation>
-    </message>
-    <message>
         <source>How much video each clip decodes ahead of the playhead during playback. More absorbs slow-to-decode footage but competes with the frames on screen. Default 2000 ms.</source>
         <translation>播放時每個片段在播放頭之前預先解碼的視頻量。越大越能消化解碼慢的素材，但會與螢幕上正在顯示的格爭搶解碼資源。預設 2000 毫秒</translation>
-    </message>
-    <message>
-        <source>Continuous read-ahead</source>
-        <translation>連續預讀</translation>
     </message>
     <message>
         <source>Keep decoding until the whole read-ahead window is full. Off decodes one frame ahead per displayed frame, which leaves more decoder time for the clip on screen but buffers less.</source>
@@ -22213,10 +22796,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Memory &amp; caches</source>
         <translation>快取與緩存</translation>
-    </message>
-    <message>
-        <source>Decoded frame cache</source>
-        <translation>已解碼格緩存</translation>
     </message>
     <message>
         <source>Memory shared by all clips for decoded preview frames. Automatic uses an eighth of system memory (a sixteenth on Android), at least 128 MiB.</source>
@@ -22231,20 +22810,12 @@ If playback stutters, try another.</source>
         <translation>自動</translation>
     </message>
     <message>
-        <source>CPU frame history per clip</source>
-        <translation>每個片段的 CPU 格歷史</translation>
-    </message>
-    <message>
         <source>Limit the decoded images each clip keeps in memory for scrubbing and effects. Unlimited keeps up to 16 frames per clip, which is large for 4K footage.</source>
         <translation>限制每個片段在快取中保留的已解碼圖像數量，用於拖動瀏覽和效果。無限制時每個片段最多保留 16 格，對 4K 素材來說佔用很大。</translation>
     </message>
     <message>
         <source>Unlimited</source>
         <translation>無限制</translation>
-    </message>
-    <message>
-        <source>Render target pool: count</source>
-        <translation>算圖目標池：數量</translation>
     </message>
     <message>
         <source>Idle GPU render targets kept for reuse. Fewer saves video memory; more avoids reallocating while effects and transitions play.</source>
@@ -22255,16 +22826,8 @@ If playback stutters, try another.</source>
         <translation>個</translation>
     </message>
     <message>
-        <source>Render target pool: size</source>
-        <translation>算圖目標池：大小</translation>
-    </message>
-    <message>
         <source>Cap on the video memory held by idle render targets, in addition to the count.</source>
         <translation>在數量之外，限制空閒算圖目標佔用的顯存。</translation>
-    </message>
-    <message>
-        <source>Image upload cache: count</source>
-        <translation>圖像上傳緩存：數量</translation>
     </message>
     <message>
         <source>Stills and converted frames kept on the GPU so they are not uploaded again every frame.</source>
@@ -22275,24 +22838,151 @@ If playback stutters, try another.</source>
         <translation>張</translation>
     </message>
     <message>
-        <source>Image upload cache: size</source>
-        <translation>圖像上傳緩存：大小</translation>
-    </message>
-    <message>
         <source>Cap on the video memory used by the image upload cache, in addition to the count. 48 uploads of 4K frames take about 1.5 GiB.</source>
         <translation>在數量之外，限製圖像上傳緩存佔用的顯存。48 個 4K 格的上傳約佔用 1.5 GiB。</translation>
     </message>
+</context>
+<context>
+    <name>SettingsPersonalizePage</name>
     <message>
-        <source>Export</source>
-        <translation>導出</translation>
+        <source>Personalize</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Prefer hardware encoder for new exports</source>
-        <translation>新導出優先使用硬件編碼器</translation>
+        <source>About you</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder.</source>
-        <translation>有可用的 GPU H.264 編碼器時，新導出將使用它。速度更快，但同碼率下的畫質通常低於預設的軟體編碼器。</translation>
+        <source>What you make</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Used to suggest sensible defaults for new projects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>YouTube videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorts and Reels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Films</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Podcasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tutorials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experience with video editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>First time hides the Studio workspaces. You can show any of them again below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>First time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some experience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Working with AI agents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None hides the AI and Procedural workspaces and the Ask button in the header.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">無</translation>
+    </message>
+    <message>
+        <source>Some</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lots</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accent colour</source>
+        <translation type="unfinished">強調色</translation>
+    </message>
+    <message>
+        <source>Colours buttons, selections and highlights on top of the current theme.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Labels under panel tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show a name under each icon on the side tab rails.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Short tips and suggestions that appear as you work.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset dismissed tips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bring back every tip and suggestion you closed. They reappear the next time you open the panel they belong to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset tips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tips will show again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workspaces</source>
+        <translation type="unfinished">工作區</translation>
+    </message>
+    <message>
+        <source>Workspaces in the switcher</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden workspaces stay reachable from search (Ctrl+K) and their Alt+number shortcuts. Edit is always shown.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22397,80 +23087,107 @@ If playback stutters, try another.</source>
         <source>How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K.</source>
         <translation>預覽視頻的解碼方式。軟體解碼對大多數片段更流暢，但佔用更多 CPU。硬件解碼適合高質量 4K 素材。</translation>
     </message>
+</context>
+<context>
+    <name>SettingsStoragePage</name>
     <message>
-        <source>Faster preview (experimental)</source>
-        <translation>更快預覽（實驗性）</translation>
+        <source>Storage &amp; media</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.</source>
-        <translation>將視頻保留在顯卡上可使播放更流暢。如果畫面顯示異常，請關閉此選項。重啟後生效。</translation>
+        <source>%1 GB</source>
+        <translation type="unfinished">%1 GB</translation>
     </message>
     <message>
-        <source>Graphics card</source>
-        <translation>顯卡</translation>
+        <source>%1 MB</source>
+        <translation type="unfinished">%1 MB</translation>
     </message>
     <message>
-        <source>Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.</source>
-        <translation>Drift 運行所用的顯卡。“高性能”讓 NVIDIA 卡上的視頻解碼留在該卡上；“省電”更省電池。重啟後生效。</translation>
+        <source>Cache</source>
+        <translation type="unfinished">緩存</translation>
     </message>
     <message>
-        <source>Windows default</source>
-        <translation>Windows 預設</translation>
+        <source>%1 used</source>
+        <translation type="unfinished">已使用 %1</translation>
     </message>
     <message>
-        <source>Power saving (integrated GPU)</source>
-        <translation>省電（集成顯卡）</translation>
+        <source>Clear cache</source>
+        <translation type="unfinished">清除緩存</translation>
     </message>
     <message>
-        <source>High performance (discrete GPU)</source>
-        <translation>高性能（獨立顯卡）</translation>
+        <source>Cache location</source>
+        <translation type="unfinished">快取位置</translation>
     </message>
     <message>
-        <source>Choose which graphics card Drift runs on in Windows Settings, under Display &gt; Graphics. Takes effect after restart.</source>
-        <translation>在 Windows 設置的“顯示 &gt; 圖形”中選擇 Drift 運行所用的顯卡。重啟後生效。</translation>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished">%1。重新啟動後生效。</translation>
     </message>
     <message>
-        <source>Open graphics settings</source>
-        <translation>開啟圖形設置</translation>
+        <source>Reset</source>
+        <translation type="unfinished">重置</translation>
     </message>
     <message>
-        <source>Proxies</source>
-        <translation>代理</translation>
+        <source>Change…</source>
+        <translation type="unfinished">變更…</translation>
     </message>
     <message>
-        <source>Use proxies for preview</source>
-        <translation>預覽使用代理</translation>
+        <source>Preview copies (proxies)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
-        <translation>存在代理時，從其低解析度代理播放片段。導出始終使用原始媒體。</translation>
+        <source>Use preview copies for playback</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Suggest proxies on import</source>
-        <translation>匯入時建議建立代理</translation>
+        <source>Play clips from their low-resolution preview copies (proxies) where one exists. Export always uses the original media.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest preview copies on import</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>What to do when imported footage may preview slowly.</source>
-        <translation>當匯入的素材預覽可能變慢時所採取的處理方式。</translation>
+        <translation type="unfinished">當匯入的素材預覽可能變慢時所採取的處理方式。</translation>
     </message>
     <message>
         <source>Ask</source>
-        <translation>詢問</translation>
+        <translation type="unfinished">詢問</translation>
     </message>
     <message>
-        <source>Always create proxies</source>
-        <translation>一律建立代理</translation>
+        <source>Always create preview copies</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Never ask</source>
-        <translation>永不詢問</translation>
+        <translation type="unfinished">永不詢問</translation>
     </message>
     <message>
-        <source>Proxy resolution</source>
-        <translation>代理解析度</translation>
+        <source>Preview copy resolution</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save proxies and reversed clips</source>
+        <source>Size of new preview copies. Copies made at another size are not used until you create them again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>360p</source>
+        <translation type="unfinished">360p</translation>
+    </message>
+    <message>
+        <source>540p</source>
+        <translation type="unfinished">540p</translation>
+    </message>
+    <message>
+        <source>720p</source>
+        <translation type="unfinished">720p</translation>
+    </message>
+    <message>
+        <source>1080p</source>
+        <translation type="unfinished">1080p</translation>
+    </message>
+    <message>
+        <source>Save preview copies and reversed clips</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -22514,40 +23231,20 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Size of new proxies. Proxies made at another size are not used until you create them again.</source>
-        <translation>新代理的尺寸。以其他尺寸創建的代理在重新創建之前不會被使用。</translation>
-    </message>
-    <message>
-        <source>360p</source>
-        <translation>360p</translation>
-    </message>
-    <message>
-        <source>540p</source>
-        <translation>540p</translation>
-    </message>
-    <message>
-        <source>720p</source>
-        <translation>720p</translation>
-    </message>
-    <message>
-        <source>1080p</source>
-        <translation>1080p</translation>
-    </message>
-    <message>
-        <source>Proxy name patterns</source>
-        <translation>代理名稱模式</translation>
+        <source>Preview copy name patterns</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Linking a proxy teaches Drift its name pattern. Proxies next to your media that match a pattern below link automatically.</source>
-        <translation>關聯代理會讓 Drift 記住其命名模式。位於媒體旁邊且符合以下模式的代理將自動關聯。</translation>
+        <translation type="unfinished">關聯代理會讓 Drift 記住其命名模式。位於媒體旁邊且符合以下模式的代理將自動關聯。</translation>
     </message>
     <message>
         <source>Remove pattern</source>
-        <translation>移除模式</translation>
+        <translation type="unfinished">移除模式</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
-        <translation>恢復預設</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22643,6 +23340,10 @@ If playback stutters, try another.</source>
         <translation>播放頭移動時自動選中其下方的片段。</translation>
     </message>
     <message>
+        <source>Animation</source>
+        <translation type="unfinished">動畫</translation>
+    </message>
+    <message>
         <source>Auto keyframes</source>
         <translation>自動關鍵格</translation>
     </message>
@@ -22651,12 +23352,16 @@ If playback stutters, try another.</source>
         <translation>拖動滑塊時同時創建關鍵格。</translation>
     </message>
     <message>
-        <source>Loop work area</source>
-        <translation>循環工作區</translation>
+        <source>Toolbar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Playback repeats between the work area in and out points.</source>
-        <translation>播放會在工作區的入點和出點之間循環。</translation>
+        <source>Toolbar layout</source>
+        <translation type="unfinished">工具欄佈局</translation>
+    </message>
+    <message>
+        <source>Choose which actions appear on the toolbar above the timeline and which go in its overflow menu.</source>
+        <translation type="unfinished">選擇哪些操作顯示在時間線上方的工具欄上，哪些放入溢出選單。</translation>
     </message>
     <message>
         <source>Defaults</source>
@@ -22700,21 +23405,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsToolbarPage</name>
-    <message>
-        <source>Timeline toolbar</source>
-        <translation>時間線工具欄</translation>
-    </message>
-    <message>
-        <source>Toolbar layout</source>
-        <translation>工具欄佈局</translation>
-    </message>
-    <message>
-        <source>Choose which actions appear on the toolbar above the timeline and which go in its overflow menu.</source>
-        <translation>選擇哪些操作顯示在時間線上方的工具欄上，哪些放入溢出選單。</translation>
-    </message>
-</context>
-<context>
     <name>SettingsWorkspacesPage</name>
     <message>
         <source>Workspaces</source>
@@ -22723,6 +23413,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Arrange panels into layouts, optionally across several windows. Drag a panel onto an edge of another block to split it, or onto its middle to add a tab. Nothing changes in the editor until you save.</source>
         <translation>將面板排列成佈局，也可以跨多個視窗。將面板拖到另一區塊的邊緣可拆分，拖到中間可添加標籤頁。儲存之前編輯器不會有任何變化。</translation>
+    </message>
+    <message>
+        <source>Orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workspace orientation</source>
+        <translation type="unfinished">工作區方向</translation>
+    </message>
+    <message>
+        <source>Landscape or portrait workspace. Auto follows the shape of the canvas.</source>
+        <translation type="unfinished">橫向或縱向工作區。自動會跟隨畫布形狀</translation>
+    </message>
+    <message>
+        <source>Auto (follow canvas)</source>
+        <translation type="unfinished">自動（跟隨畫布）</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation type="unfinished">橫屏</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation type="unfinished">豎屏</translation>
+    </message>
+    <message>
+        <source>Layouts</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout designer</source>
@@ -25115,20 +25833,20 @@ If playback stutters, try another.</source>
 <context>
     <name>SpeedCurveController</name>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>自訂速度適用於視頻和音頻片段</translation>
+        <source>Speed ramp works on video and audio clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>This clip has no media to speed up or slow down</source>
         <translation>此片段沒有可加速或減速的媒體</translation>
     </message>
     <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>片段已移動——請重新開啟自訂速度</translation>
+        <source>That clip moved — open Speed ramp again</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Custom speed applied</source>
-        <translation>自訂速度已應用</translation>
+        <source>Speed ramp applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25141,8 +25859,8 @@ If playback stutters, try another.</source>
 <context>
     <name>SpeedCurveWindow</name>
     <message>
-        <source>Custom speed</source>
-        <translation>自訂速度</translation>
+        <source>Speed ramp</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pause</source>
@@ -25204,14 +25922,6 @@ If playback stutters, try another.</source>
         <translation>播放速度</translation>
     </message>
     <message>
-        <source>Custom speed…</source>
-        <translation>自訂速度…</translation>
-    </message>
-    <message>
-        <source>Custom speed active — remove</source>
-        <translation>自訂速度已啟用——移除</translation>
-    </message>
-    <message>
         <source>Speed</source>
         <translation>速度</translation>
     </message>
@@ -25220,8 +25930,24 @@ If playback stutters, try another.</source>
         <translation>速度已更改</translation>
     </message>
     <message>
-        <source>Custom speed</source>
-        <translation>自訂速度</translation>
+        <source>Speed ramp…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed ramp active — remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split (%1) to speed up only part of a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split the clip to speed up only part of it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed ramp</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source> (reversed)</source>
@@ -25478,6 +26204,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Settings</source>
         <translation>設置</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation type="unfinished">說明</translation>
+    </message>
+    <message>
+        <source>Help and support</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Debug info</source>
@@ -26505,6 +27239,10 @@ If playback stutters, try another.</source>
 <context>
     <name>SubtitlesPanel</name>
     <message>
+        <source>Captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No cues yet</source>
         <translation>尚無提示</translation>
     </message>
@@ -26572,12 +27310,28 @@ If playback stutters, try another.</source>
         <translation>較短的字幕會通過均勻分割每個短語來定時，因此可能略微與語音不同步。</translation>
     </message>
     <message>
-        <source>Create captions from the selected clips&apos; speech — several clips become one caption clip</source>
-        <translation>從所選剪輯的語音創建字幕 — 多個剪輯合併為一個字幕剪輯</translation>
+        <source>Auto captions</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select a video or audio clip first</source>
-        <translation>請先選一個視頻或音頻片段</translation>
+        <source>Writes captions from the selected clips&apos; speech.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a video or audio clip first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writes captions from the speech in your clips, on your computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs speech model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Creating captions… %1%</source>
@@ -26598,10 +27352,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Install AI engine first</source>
         <translation>請先安裝 AI 引擎</translation>
-    </message>
-    <message>
-        <source>Needed for auto captions from speech</source>
-        <translation>從語音自動生成字幕所需</translation>
     </message>
     <message>
         <source>Recommended caption length</source>
@@ -27815,27 +28565,27 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineBakeContextMenu</name>
     <message>
-        <source>Re-bake</source>
-        <translation>重新預渲染</translation>
+        <source>Re-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Set work area to bake</source>
-        <translation>設定要預渲染的工作區域</translation>
+        <source>Set work area to pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Delete bake</source>
-        <translation>刪除預渲染</translation>
+        <source>Delete pre-rendered section</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Manage bakes…</source>
-        <translation>管理預渲染…</translation>
+        <source>Manage pre-rendered sections…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>TimelineBakeStrip</name>
     <message>
-        <source>Baking %1%</source>
-        <translation>正在預渲染 %1%</translation>
+        <source>Pre-rendering %1%</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stale</source>
@@ -27880,12 +28630,68 @@ If playback stutters, try another.</source>
         <translation>移動至軌道</translation>
     </message>
     <message>
+        <source>Paste at current time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>屬性</translation>
     </message>
     <message>
         <source>Select multiple</source>
         <translation>多選</translation>
+    </message>
+    <message>
+        <source>Speed and reverse…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame</source>
+        <translation type="unfinished">定格</translation>
+    </message>
+    <message>
+        <source>Detach audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detach all audio tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink video and audio</source>
+        <translation type="unfinished">取消鏈接視頻與音頻</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+    <message>
+        <source>Blur area</source>
+        <translation type="unfinished">模糊區域</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">音頻</translation>
+    </message>
+    <message>
+        <source>Generate captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">變換</translation>
+    </message>
+    <message>
+        <source>Stabilize…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">更多</translation>
     </message>
     <message>
         <source>Open composite</source>
@@ -27928,10 +28734,6 @@ If playback stutters, try another.</source>
         <translation>在播放頭處分割</translation>
     </message>
     <message>
-        <source>Split item at current time</source>
-        <translation>在播放頭處分割項目</translation>
-    </message>
-    <message>
         <source>Split on beats</source>
         <translation type="unfinished"></translation>
     </message>
@@ -27946,14 +28748,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Swap with next clip</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Separate audio</source>
-        <translation>分離音頻</translation>
-    </message>
-    <message>
-        <source>Separate all audio tracks</source>
-        <translation>分離所有音軌</translation>
     </message>
     <message>
         <source>Enable clip</source>
@@ -28014,10 +28808,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Enhance video…</source>
         <translation>增強視頻…</translation>
-    </message>
-    <message>
-        <source>Unlink</source>
-        <translation>取消鏈接</translation>
     </message>
     <message>
         <source>Link</source>
@@ -28084,10 +28874,6 @@ If playback stutters, try another.</source>
         <translation>調色…</translation>
     </message>
     <message>
-        <source>Blur area…</source>
-        <translation>模糊區域…</translation>
-    </message>
-    <message>
         <source>Edit keyframes…</source>
         <translation>編輯關鍵格…</translation>
     </message>
@@ -28133,8 +28919,12 @@ If playback stutters, try another.</source>
         <translation>時間線為空</translation>
     </message>
     <message>
-        <source>Drag media here from the library, or add an empty track to start.</source>
-        <translation>從素材庫拖入媒體，或添加空軌道開始。</translation>
+        <source>Drag media here from the library, or import a file to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import media</source>
+        <translation type="unfinished">導入媒體</translation>
     </message>
     <message>
         <source>New track</source>
@@ -28284,11 +29074,55 @@ If playback stutters, try another.</source>
         <translation>貼上至此處</translation>
     </message>
     <message>
+        <source>Close gap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close gap on all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close gaps in work area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close all gaps on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add track</source>
+        <translation type="unfinished">添加軌道</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">視頻</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">音頻</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">文本</translation>
+    </message>
+    <message>
+        <source>Subtitle</source>
+        <translation type="unfinished">字幕</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation type="unfinished">圖形</translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split all tracks here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all empty tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -28306,34 +29140,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Select all clips</source>
         <translation>全選片段</translation>
-    </message>
-    <message>
-        <source>Unmute track</source>
-        <translation>取消靜音軌道</translation>
-    </message>
-    <message>
-        <source>Mute track</source>
-        <translation>靜音軌道</translation>
-    </message>
-    <message>
-        <source>Show track</source>
-        <translation>顯示軌道</translation>
-    </message>
-    <message>
-        <source>Hide track</source>
-        <translation>隱藏軌道</translation>
-    </message>
-    <message>
-        <source>Unlock track</source>
-        <translation>解鎖軌道</translation>
-    </message>
-    <message>
-        <source>Lock track</source>
-        <translation>鎖定軌道</translation>
-    </message>
-    <message>
-        <source>Remove empty tracks</source>
-        <translation>移除空白軌道</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -28382,14 +29188,6 @@ If playback stutters, try another.</source>
     <message>
         <source>My look</source>
         <translation>我的風格</translation>
-    </message>
-    <message>
-        <source>Close Gap</source>
-        <translation>閉合間隙</translation>
-    </message>
-    <message>
-        <source>Close Gap on All Tracks</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -28441,10 +29239,6 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineToolbar</name>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
         <source>Import media</source>
         <translation>導入媒體</translation>
     </message>
@@ -28461,16 +29255,32 @@ If playback stutters, try another.</source>
         <translation>播放</translation>
     </message>
     <message>
-        <source>Auto-select: select the clip under the playhead</source>
-        <translation>自動選擇：選擇播放頭下方的片段</translation>
+        <source>Let clips sit on top of each other on one track instead of pushing apart.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Magnetic snapping: align video and audio edges across tracks</source>
-        <translation>磁性吸附：對齊跨軌道的視頻和音頻邊緣</translation>
+        <source>Auto-select</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Ripple editing: keep following clips together when trimming</source>
-        <translation>波紋編輯：修剪時保持後續片段連貫</translation>
+        <source>Selects the clip under the playhead as you move it, so the inspector follows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished">吸附</translation>
+    </message>
+    <message>
+        <source>Clips and the playhead snap to neighbouring edges so cuts line up exactly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When you trim or delete, later clips shift to close or open the gap.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Toggle audio mixer strip</source>
@@ -28496,16 +29306,8 @@ If playback stutters, try another.</source>
         <translation>選擇</translation>
     </message>
     <message>
-        <source>Select — normal editing</source>
-        <translation>選擇——常規編輯</translation>
-    </message>
-    <message>
         <source>Cut mode</source>
         <translation>剪下模式</translation>
-    </message>
-    <message>
-        <source>Cut mode — click a clip to split it</source>
-        <translation>剪下模式——單擊片段即可分割</translation>
     </message>
     <message>
         <source>Show audio on separate track</source>
@@ -28524,24 +29326,52 @@ If playback stutters, try another.</source>
         <translation>修剪起點</translation>
     </message>
     <message>
-        <source>Trim start — click a clip to drop everything left of the cut</source>
-        <translation>修剪起點——單擊片段以刪除剪下左側所有內容</translation>
-    </message>
-    <message>
         <source>Trim end</source>
         <translation>修剪終點</translation>
     </message>
     <message>
-        <source>Trim end — click a clip to drop everything right of the cut</source>
-        <translation>修剪終點——單擊片段以刪除剪下右側所有內容</translation>
+        <source>Click, drag and trim clips as normal. Switch back here after using Cut.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a clip to split it there. Fast for chopping out the parts you do not need.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pull the sound out of a video onto its own track to edit it separately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move or trim the picture and its sound separately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the selected clips moving, trimming and deleting together.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a clip to drop everything before that point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a clip to drop everything after that point.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start to playhead</source>
         <translation>修剪起點至播放頭</translation>
     </message>
     <message>
+        <source>Drop everything before the playhead from the selected clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim end to playhead</source>
         <translation>修剪終點至播放頭</translation>
+    </message>
+    <message>
+        <source>Drop everything after the playhead from the selected clip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -28596,24 +29426,32 @@ If playback stutters, try another.</source>
         <translation>在目前位置凍結格</translation>
     </message>
     <message>
+        <source>Hold the current frame as a still. Good for emphasis or a title card.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add adjustment layer</source>
         <translation>添加調整圖層</translation>
+    </message>
+    <message>
+        <source>An empty layer whose effects apply to everything under it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add transform layer</source>
         <translation>添加變換圖層</translation>
     </message>
     <message>
-        <source>Add transform layer — moves the selected clips&apos; tracks as one</source>
-        <translation>添加變換圖層 — 將所選剪輯的軌道作為一個整體移動</translation>
+        <source>Move, scale and rotate the selected clips together as one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One viewpoint the whole timeline is seen through. Use it for pans and zooms.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera</source>
         <translation>添加相機</translation>
-    </message>
-    <message>
-        <source>Add camera — one viewpoint the whole timeline is seen through. With a camera already there, adds a new camera clip (a cut to a new framing) at the playhead</source>
-        <translation>添加相機——整個時間線通過單一視點查看。已有相機時，在播放頭處添加新的相機片段（切換到新構圖）</translation>
     </message>
 </context>
 <context>
@@ -28773,24 +29611,24 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineWorkAreaBakeChip</name>
     <message>
-        <source>Baking %1%</source>
-        <translation>正在預渲染 %1%</translation>
+        <source>Pre-rendering %1%</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bake</source>
-        <translation>預渲染</translation>
+        <source>Pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel baking</source>
         <translation>取消預渲染</translation>
     </message>
     <message>
-        <source>Pre-render the work area for smooth playback and export</source>
-        <translation>預渲染工作區域以確保流暢播放與匯出</translation>
+        <source>Pre-rendered sections are of the main timeline. Switch to it to pre-render.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bakes are of the main timeline. Switch to it to bake.</source>
-        <translation type="unfinished"></translation>
+        <source>Pre-render the work area for smooth playback and export</source>
+        <translation>預渲染工作區域以確保流暢播放與匯出</translation>
     </message>
 </context>
 <context>
@@ -28978,6 +29816,10 @@ If playback stutters, try another.</source>
         <translation>顯示軌道</translation>
     </message>
     <message>
+        <source>Show in clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide track</source>
         <translation>隱藏軌道</translation>
     </message>
@@ -28996,6 +29838,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Exclude from export</source>
         <translation>從匯出中排除</translation>
+    </message>
+    <message>
+        <source>Recording setup (teleprompter, noise)…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -29042,12 +29888,28 @@ If playback stutters, try another.</source>
         <translation>減小行高</translation>
     </message>
     <message>
-        <source>Delete track</source>
-        <translation>刪除軌道</translation>
+        <source>Add track above</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove empty tracks</source>
-        <translation>移除空白軌道</translation>
+        <source>Add track below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished">上移</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">下移</translation>
+    </message>
+    <message>
+        <source>Select clips on track</source>
+        <translation type="unfinished">選取軌道上的片段</translation>
+    </message>
+    <message>
+        <source>Delete track</source>
+        <translation>刪除軌道</translation>
     </message>
 </context>
 <context>
@@ -29503,10 +30365,6 @@ If playback stutters, try another.</source>
         <translation>透視</translation>
     </message>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
         <source>No clip selected</source>
         <translation>未選擇剪輯</translation>
     </message>
@@ -29531,10 +30389,6 @@ If playback stutters, try another.</source>
         <translation>跟隨物件</translation>
     </message>
     <message>
-        <source>Click an object on the video; this clip will follow it through the clip</source>
-        <translation>在視訊上按一下物件；此片段將在整個片段期間跟隨該物件</translation>
-    </message>
-    <message>
         <source>Follows %1 on %2</source>
         <translation>跟隨 %2 上的 %1</translation>
     </message>
@@ -29555,16 +30409,8 @@ If playback stutters, try another.</source>
         <translation>點</translation>
     </message>
     <message>
-        <source>Track a feature with one point</source>
-        <translation>使用單點跟蹤特徵</translation>
-    </message>
-    <message>
         <source>Planar</source>
         <translation>平面</translation>
-    </message>
-    <message>
-        <source>Track a flat surface outlined by its corners</source>
-        <translation>跟蹤由角點勾勒的平面</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -29597,10 +30443,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Track whole clip</source>
         <translation>追蹤整個片段</translation>
-    </message>
-    <message>
-        <source>Follow the feature backward and forward through the whole clip</source>
-        <translation>在整個片段中前後跟隨特徵</translation>
     </message>
     <message>
         <source>Corrected at this frame. Track ▶ to continue.</source>
@@ -29695,12 +30537,40 @@ If playback stutters, try another.</source>
         <translation>停止跟蹤</translation>
     </message>
     <message>
+        <source>Motion tracking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position + rotation</source>
         <translation>位置 + 旋轉</translation>
     </message>
     <message>
         <source>Position, rotation + size</source>
         <translation>位置、旋轉 + 大小</translation>
+    </message>
+    <message>
+        <source>Click something in the preview and this clip follows it, such as a label on a moving car.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows one spot, such as a corner or a face, for position-only following.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Planar tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows a flat surface, such as a screen or sign, including its rotation and scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows the feature backward and forward from here through the whole clip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track one frame forward</source>
@@ -30038,6 +30908,10 @@ If playback stutters, try another.</source>
         <translation>重設位置</translation>
     </message>
     <message>
+        <source>Follow an object…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset size</source>
         <translation>重設大小</translation>
     </message>
@@ -30048,6 +30922,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Scale width and height together</source>
         <translation>同時縮放寬度和高度</translation>
+    </message>
+    <message>
+        <source>To animate Scale, move to a time and change it. Auto keyframes adds the keyframes for you.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on Auto keyframes</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Previous scale keyframe</source>
@@ -30094,14 +30976,6 @@ If playback stutters, try another.</source>
         <translation>在預覽畫面中使用 3D 控制點在 3D 空間中旋轉片段並在深度方向移動。關閉此選項會使片段重新變回平面。</translation>
     </message>
     <message>
-        <source>Open 3D workspace</source>
-        <translation>開啟 3D 工作區</translation>
-    </message>
-    <message>
-        <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
-        <translation>位置、旋轉、錨點和深度遮擋位於 3D 工作區的「3D 變形」面板中</translation>
-    </message>
-    <message>
         <source>Reset all</source>
         <translation>全部重設</translation>
     </message>
@@ -30112,6 +30986,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Rotate 90°</source>
         <translation>旋轉 90°</translation>
+    </message>
+    <message>
+        <source>Open 3D workspace ↗</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Corrects the source&apos;s own rotation losslessly — unlike Rotation above, this changes decoding, not just the on-screen box.</source>
@@ -30394,8 +31272,12 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionPresetCard</name>
     <message>
-        <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
-        <translation>%1 — 拖放到兩個片段交界處，或在觸屏上按住後拖動</translation>
+        <source>Drag onto where two clips meet. On touch, hold then drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to use this transition</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from favorites</source>
@@ -31012,20 +31894,24 @@ If playback stutters, try another.</source>
 <context>
     <name>VideoMenu</name>
     <message>
-        <source>Bakes…</source>
-        <translation>預渲染…</translation>
+        <source>Size, aspect &amp; frame rate…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel crop</source>
         <translation>取消裁剪</translation>
     </message>
     <message>
-        <source>Crop video</source>
-        <translation>裁剪視頻</translation>
+        <source>Crop canvas</source>
+        <translation type="unfinished">裁剪畫布</translation>
     </message>
     <message>
-        <source>Adjust video layout…</source>
-        <translation>調整視訊版面配置…</translation>
+        <source>Multicam…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-rendered sections…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31220,8 +32106,8 @@ If playback stutters, try another.</source>
         <translation>場景攝影機</translation>
     </message>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
+        <source>3D viewport</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>View</source>
@@ -31465,6 +32351,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>WorkspaceBackPill</name>
+    <message>
+        <source>← Back to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceDesigner</name>
     <message>
         <source>Panels</source>
@@ -31561,6 +32454,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Cancel</source>
         <translation>取消</translation>
+    </message>
+</context>
+<context>
+    <name>WorkspaceLink</name>
+    <message>
+        <source>Open in %1 ↗</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31671,6 +32571,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Color</source>
         <translation>顏色</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Scopes</source>
@@ -31811,10 +32715,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Camera</source>
         <translation>攝影機</translation>
-    </message>
-    <message>
-        <source>Color Grading LUTs</source>
-        <translation>調色 LUT</translation>
     </message>
     <message>
         <source>Stabilization</source>

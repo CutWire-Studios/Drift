@@ -52,6 +52,45 @@
     </message>
 </context>
 <context>
+    <name>AccentSwatches</name>
+    <message>
+        <source>Amber</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished">Kahel</translation>
+    </message>
+    <message>
+        <source>Red</source>
+        <translation type="unfinished">Pula</translation>
+    </message>
+    <message>
+        <source>Pink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Purple</source>
+        <translation type="unfinished">Lila</translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation type="unfinished">Asul</translation>
+    </message>
+    <message>
+        <source>Teal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation type="unfinished">Berde</translation>
+    </message>
+    <message>
+        <source>Theme default</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AddonManager</name>
     <message>
         <source>Automatic (recommended)</source>
@@ -5967,20 +6006,28 @@
 <context>
     <name>AppSettingsMenu</name>
     <message>
-        <source>Help…</source>
-        <translation>Tulong…</translation>
+        <source>Help</source>
+        <translation type="unfinished">Tulong</translation>
+    </message>
+    <message>
+        <source>Keyboard shortcuts</source>
+        <translation type="unfinished">Mga keyboard shortcut</translation>
+    </message>
+    <message>
+        <source>Check for updates…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save diagnostics…</source>
         <translation>I-save ang mga diagnostic…</translation>
     </message>
     <message>
-        <source>Settings…</source>
-        <translation>Mga Setting…</translation>
+        <source>Debug info…</source>
+        <translation type="unfinished">Impormasyon sa pag-debug…</translation>
     </message>
     <message>
-        <source>Multicam</source>
-        <translation>Multicam</translation>
+        <source>About Drift</source>
+        <translation type="unfinished">Tungkol sa Drift</translation>
     </message>
 </context>
 <context>
@@ -6310,6 +6357,54 @@
         <translation>Epektong audyo</translation>
     </message>
     <message>
+        <source>Your imported video, audio and images. Drag them onto the timeline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Titles and captions with ready-made styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate captions from speech, or import a subtitle file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn text into a voiceover, or clone a voice.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Emoji and stickers to place over your video.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shapes and arrows for callouts and backgrounds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find the cuts in a long clip so you can jump to each scene.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show only part of a clip, or cut a subject out of its background.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Looks, glitches, blurs and more. Click one to apply it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready-made effect combinations you can apply in one click.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fades, wipes and zooms between two clips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio effects like echo, EQ and noise gate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New folder</source>
         <translation>Bagong folder</translation>
     </message>
@@ -6617,6 +6712,34 @@
 </context>
 <context>
     <name>AudioEffectHeader</name>
+    <message>
+        <source>Disable effect</source>
+        <translation type="unfinished">I-disable ang epekto</translation>
+    </message>
+    <message>
+        <source>Enable effect</source>
+        <translation type="unfinished">I-enable ang epekto</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished">Ilipat pataas</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">Ilipat pababa</translation>
+    </message>
+    <message>
+        <source>Copy effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove effect</source>
+        <translation type="unfinished">Alisin ang epekto</translation>
+    </message>
     <message>
         <source>%1 (not installed)</source>
         <translation>%1 (hindi naka-install)</translation>
@@ -7156,6 +7279,10 @@
         <translation>%1 salita bawat caption</translation>
     </message>
     <message>
+        <source>Mixer ↗</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pan</source>
         <translation>Pan</translation>
     </message>
@@ -7196,12 +7323,28 @@
         <translation>Alisin ang ingay…</translation>
     </message>
     <message>
+        <source>Remove noise</source>
+        <translation type="unfinished">Alisin ang ingay</translation>
+    </message>
+    <message>
+        <source>Cleans hiss, hum and background noise from speech.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Download noise removal (about 9 MB)</source>
         <translation>I-download ang pag-alis ng ingay (humigit-kumulang 9 MB)</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
         <translation>I-install muna ang AI engine</translation>
+    </message>
+    <message>
+        <source>Needs noise model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Auto subtitles</source>
@@ -7432,6 +7575,10 @@
     <message>
         <source>Close audio mixer</source>
         <translation>Isara ang audio mixer</translation>
+    </message>
+    <message>
+        <source>Open in Audio workspace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Resume recording</source>
@@ -7699,47 +7846,47 @@
 <context>
     <name>BakeController</name>
     <message>
-        <source>Set a work area to bake</source>
-        <translation>Magtakda ng work area upang i-bake</translation>
+        <source>Pre-rendered sections are of the main timeline. Switch to it to pre-render.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not open the bake cache</source>
-        <translation>Hindi mabuksan ang cache ng bake</translation>
+        <source>Set a work area to pre-render</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the pre-render cache</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Baking…</source>
         <translation>Nagbe-bake…</translation>
     </message>
     <message>
-        <source>Bake cancelled</source>
-        <translation>Kinansela ang pag-bake</translation>
+        <source>Pre-render cancelled</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bake failed</source>
-        <translation>Nabigo ang pag-bake</translation>
+        <source>Pre-render failed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bake complete</source>
-        <translation>Kumpleto ang pag-bake</translation>
+        <source>Pre-render complete</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Set work area to bake</source>
-        <translation>Itakda ang work area upang i-bake</translation>
+        <source>Set work area to pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Work area set</source>
         <translation>Naitakda ang work area</translation>
     </message>
-    <message>
-        <source>Bakes are of the main timeline. Switch to it to bake.</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>BakesDialog</name>
     <message>
-        <source>Bakes</source>
-        <translation>Mga Bake</translation>
+        <source>Pre-rendered sections</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>
@@ -7766,8 +7913,59 @@
         <translation>%1s</translation>
     </message>
     <message>
-        <source>Baking %1%</source>
-        <translation>Nagbe-bake %1%</translation>
+        <source>Pre-rendering %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all pre-rendered sections?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-render at current quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to pre-render</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality for new pre-rendered sections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-render work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-rendered sections are of the main timeline. Switch to it to pre-render.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-render a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Pre-render.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-render</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete pre-rendered section</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n pre-rendered section(s) · %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Re-render all stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all pre-rendered sections</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stale</source>
@@ -7778,10 +7976,6 @@
         <translation>Bago</translation>
     </message>
     <message>
-        <source>Delete all bakes?</source>
-        <translation>I-delete ang lahat ng bake?</translation>
-    </message>
-    <message>
         <source>Delete</source>
         <translation>Burahin</translation>
     </message>
@@ -7790,28 +7984,12 @@
         <translation>Ipe-playback at i-export ang mga saklaw na ito nang live muli sa pag-render. Hindi mababago ang iyong proyekto.</translation>
     </message>
     <message>
-        <source>Re-bake at current quality</source>
-        <translation>I-bake muli sa kasalukuyang kalidad</translation>
-    </message>
-    <message>
-        <source>Set work area to bake</source>
-        <translation>Itakda ang work area upang i-bake</translation>
-    </message>
-    <message>
-        <source>Quality for new bakes</source>
-        <translation>Kalidad para sa mga bagong bake</translation>
-    </message>
-    <message>
         <source>≈ %1 per minute</source>
         <translation>≈ %1 bawat minuto</translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>Kanselahin</translation>
-    </message>
-    <message>
-        <source>Bake work area</source>
-        <translation>I-bake ang work area</translation>
     </message>
     <message>
         <source>Set a work area on the timeline first</source>
@@ -7824,10 +8002,6 @@
     <message>
         <source>O</source>
         <translation>O</translation>
-    </message>
-    <message>
-        <source>Bake a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Bake.</source>
-        <translation>I-bake ang isang natapos na bahagi ng iyong timeline upang ma-play at ma-export ito nang maayos. Magtakda ng work area gamit ang %1 at %2, pagkatapos ay pindutin ang I-bake.</translation>
     </message>
     <message>
         <source>Range</source>
@@ -7850,39 +8024,12 @@
         <translation>Kalagayan</translation>
     </message>
     <message>
-        <source>Re-bake</source>
-        <translation>I-bake muli</translation>
-    </message>
-    <message>
         <source>More</source>
         <translation>Higit pa</translation>
     </message>
     <message>
-        <source>Delete bake</source>
-        <translation>I-delete ang bake</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n bake(s) · %1</source>
-        <translation>
-            <numerusform>%n bake · %1</numerusform>
-            <numerusform>%n mga bake · %1</numerusform>
-        </translation>
-    </message>
-    <message>
         <source>0 B</source>
         <translation>0 B</translation>
-    </message>
-    <message>
-        <source>Re-bake all stale</source>
-        <translation>I-bake muli ang lahat ng luma</translation>
-    </message>
-    <message>
-        <source>Delete all bakes</source>
-        <translation>I-delete ang lahat ng bake</translation>
-    </message>
-    <message>
-        <source>Bakes are of the main timeline. Switch to it to bake.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8216,6 +8363,21 @@
     <message>
         <source>Bounce</source>
         <translation>Bounce</translation>
+    </message>
+</context>
+<context>
+    <name>ClipSuggestions</name>
+    <message>
+        <source>Generate captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto reframe…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilize this shaky clip</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8590,6 +8752,10 @@
         <translation>Kulay</translation>
     </message>
     <message>
+        <source>None. Choose one in the Looks panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Color wheels</source>
         <translation>Mga color wheel</translation>
     </message>
@@ -8632,10 +8798,6 @@
     <message>
         <source>LUT</source>
         <translation>LUT</translation>
-    </message>
-    <message>
-        <source>None. Choose one in the Color Grading LUTs panel.</source>
-        <translation>Wala. Pumili ng isa sa panel ng Mga Color Grading LUT.</translation>
     </message>
     <message>
         <source>LUT Intensity</source>
@@ -9208,6 +9370,10 @@
 <context>
     <name>DenoisePanel</name>
     <message>
+        <source>Remove noise</source>
+        <translation type="unfinished">Alisin ang ingay</translation>
+    </message>
+    <message>
         <source>Noise Removal</source>
         <translation>Pag-alis ng Ingay</translation>
     </message>
@@ -9667,6 +9833,10 @@
         <translation>Gamitin ang easing na ito sa pagitan ng bawat keyframe ng %1</translation>
     </message>
     <message>
+        <source>Edit curve in graph ↗</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename…</source>
         <translation>Palitan ang pangalan…</translation>
     </message>
@@ -9877,8 +10047,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save Shareable Copy</source>
-        <translation>I-save ang Maibabahaging Kopya</translation>
+        <source>Save with media</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project not saved</source>
@@ -9931,6 +10101,10 @@
         </translation>
     </message>
     <message>
+        <source>Effects, transitions, sound effects and stock media to add to projects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Marketplace</source>
         <translation>Marketplace</translation>
     </message>
@@ -9966,6 +10140,25 @@
     <message>
         <source>Recommended packs and updates</source>
         <translation>Mga inirerekomendang pack at update</translation>
+    </message>
+    <message>
+        <source>Optional AI engines, models and add-ons that unlock more features</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>EditorHeaderHelpButton</name>
+    <message>
+        <source>Help</source>
+        <translation type="unfinished">Tulong</translation>
+    </message>
+    <message>
+        <source>Help and support</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Guides, keyboard shortcuts, updates and diagnostics</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10005,22 +10198,6 @@
 <context>
     <name>EditorHeaderSearchField</name>
     <message>
-        <source>Workspace: %1</source>
-        <translation>Workspace: %1</translation>
-    </message>
-    <message>
-        <source>Workspace:</source>
-        <translation>Workspace:</translation>
-    </message>
-    <message>
-        <source>Switch workspace</source>
-        <translation>Lumipat ng workspace</translation>
-    </message>
-    <message>
-        <source>Customize layouts in Settings…</source>
-        <translation>I-customize ang mga layout sa Mga Setting…</translation>
-    </message>
-    <message>
         <source>Describe an edit, e.g. “fade in over half a second”</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10037,11 +10214,7 @@
         <translation type="unfinished">Magtanong</translation>
     </message>
     <message>
-        <source>Ask Drift to make an edit  %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ask Drift to make an edit</source>
+        <source>Describe an edit in plain words and Drift does it, e.g. “fade in over half a second”.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10055,6 +10228,10 @@
         <source>Settings</source>
         <translation>Mga Setting</translation>
     </message>
+    <message>
+        <source>Preferences, appearance, shortcuts and workspaces</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorHeaderVideoButton</name>
@@ -10063,8 +10240,35 @@
         <translation>Video</translation>
     </message>
     <message>
-        <source>Bakes, crop and video layout</source>
-        <translation>Mga bake, crop at layout ng video</translation>
+        <source>Video size, crop, multicam and pre-rendered sections</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>EditorHeaderWorkspaceButton</name>
+    <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">Workspace: %1</translation>
+    </message>
+    <message>
+        <source>Switch workspace</source>
+        <translation type="unfinished">Lumipat ng workspace</translation>
+    </message>
+    <message>
+        <source>Each workspace arranges the panels for one kind of task</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everyday</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Customize layouts in Settings…</source>
+        <translation type="unfinished">I-customize ang mga layout sa Mga Setting…</translation>
     </message>
 </context>
 <context>
@@ -10176,6 +10380,18 @@
         <translation>Depth at Pag-iilaw</translation>
     </message>
     <message>
+        <source>Fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation type="unfinished">Privacy</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">Background</translation>
+    </message>
+    <message>
         <source>Other</source>
         <translation>Iba pa</translation>
     </message>
@@ -10183,12 +10399,12 @@
 <context>
     <name>EffectPresetCard</name>
     <message>
-        <source>%1 — click to apply to the selection, or drag onto a clip</source>
-        <translation>%1 — i-click upang ilapat sa napili, o i-drag sa isang clip</translation>
+        <source>Click to apply to the selection, or drag onto a clip</source>
+        <translation type="unfinished">I-click upang ilapat sa napili, o i-drag sa isang clip</translation>
     </message>
     <message>
-        <source>%1 — click to add as an adjustment layer, or drag onto a clip</source>
-        <translation>%1 — i-click upang idagdag bilang adjustment layer, o i-drag sa isang clip</translation>
+        <source>Click to add as an adjustment layer, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -10506,6 +10722,26 @@
         <translation>I-save bilang preset…</translation>
     </message>
     <message>
+        <source>Move up</source>
+        <translation type="unfinished">Ilipat pataas</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">Ilipat pababa</translation>
+    </message>
+    <message>
+        <source>Copy effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1 (hindi naka-install)</translation>
     </message>
@@ -10637,6 +10873,14 @@
         <translation>Mga setting ng epekto</translation>
     </message>
     <message>
+        <source>Blurring something that moves?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track it in Mask &amp; track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This clip already has a frame for every project frame, so Motion Smoothing adds nothing here. It helps footage with a lower frame rate than the project, or slowed down.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10675,8 +10919,8 @@
         <translation>Magdagdag ng bagong mask</translation>
     </message>
     <message>
-        <source>Cutout subject</source>
-        <translation>I-cutout ang paksa</translation>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10798,19 +11042,23 @@
         <translation>Kinansela ang pagluwas.</translation>
     </message>
     <message>
-        <source>Some bakes are out of date</source>
-        <translation>Ang ilang bake ay luma na</translation>
+        <source>Some pre-rendered sections are out of date</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
-        <translation>
-            <numerusform>Hindi na tumutugma ang %n na-bake na saklaw sa iyong mga pag-edit. Ang pag-export sa mga ito kung ano ang naroroon ay gagamit ng mga lumang larawan.</numerusform>
-            <numerusform>Hindi na tumutugma ang %n mga na-bake na saklaw sa iyong mga pag-edit. Ang pag-export sa mga ito kung ano ang naroroon ay gagamit ng mga lumang larawan.</numerusform>
+        <source>%n pre-rendered section(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Re-bake first</source>
-        <translation>I-bake muli muna</translation>
+        <source>Re-render first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use pre-rendered sections</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Re-baking. Export again when it finishes.</source>
@@ -10827,10 +11075,6 @@
     <message>
         <source>Cancel</source>
         <translation>Kanselahin</translation>
-    </message>
-    <message>
-        <source>Use baked ranges</source>
-        <translation>Gamitin ang mga na-bake na saklaw</translation>
     </message>
     <message>
         <source>Read pre-rendered ranges instead of compositing them again</source>
@@ -10931,6 +11175,34 @@
     <message>
         <source>Saves what you see in the preview. Pick a size — the picture shape stays the same.</source>
         <translation>Inise-save ang nakikita mo sa preview. Pumili ng laki — nananatiling pareho ang hugis ng larawan.</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1×%2. Vertical for TikTok, Reels and Shorts, wide for YouTube.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose layout…</source>
+        <translation type="unfinished">Pumili ng layout…</translation>
+    </message>
+    <message>
+        <source>Pick a platform template (YouTube, Instagram, TikTok, …) and quality</source>
+        <translation type="unfinished">Pumili ng template ng platform (YouTube, Instagram, TikTok, …) at kalidad</translation>
+    </message>
+    <message>
+        <source>Auto reframe…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop the selected clip to follow its subject in a new shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a video clip on the timeline first</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Downscale</source>
@@ -12569,6 +12841,38 @@
         <source>No matches</source>
         <translation>Walang mga tugma</translation>
     </message>
+    <message>
+        <source>No matches for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular searches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Bilis</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">I-crop</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">Patatagin</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">I-export</translation>
+    </message>
 </context>
 <context>
     <name>GradeSlider</name>
@@ -13156,6 +13460,13 @@
     </message>
 </context>
 <context>
+    <name>InlineTip</name>
+    <message>
+        <source>Hide this tip</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>JobRegistry</name>
     <message>
         <source>Queued</source>
@@ -13507,8 +13818,20 @@
         <translation>Aking easing %1</translation>
     </message>
     <message>
+        <source>Interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Makinis</translation>
+    </message>
+    <message>
         <source>Straight</source>
         <translation>Diretso</translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <translation type="unfinished">Hold</translation>
     </message>
     <message>
         <source>Easing…</source>
@@ -13517,10 +13840,6 @@
     <message>
         <source>Save curve as preset…</source>
         <translation>I-save ang curve bilang preset…</translation>
-    </message>
-    <message>
-        <source>Jump</source>
-        <translation>Lundag</translation>
     </message>
 </context>
 <context>
@@ -13629,8 +13948,16 @@
         <translation>Diretso</translation>
     </message>
     <message>
-        <source>Jump</source>
-        <translation>Lundag</translation>
+        <source>Interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Makinis</translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <translation type="unfinished">Hold</translation>
     </message>
     <message>
         <source>Easing…</source>
@@ -13990,8 +14317,8 @@
         <translation>Pumili ng template ng platform at kalidad. Ina-update nito ang laki ng video ng proyekto.</translation>
     </message>
     <message>
-        <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
-        <translation>Pumili ng kategorya, pagkatapos ay template at kalidad. Maaari mo itong baguhin anumang oras sa Mga Setting → Pumili ng layout.</translation>
+        <source>Pick a category, then a template and quality. You can change this anytime from Video → Size, aspect &amp; frame rate….</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Favorites</source>
@@ -14144,10 +14471,6 @@
         <translation>Tanggal</translation>
     </message>
     <message>
-        <source>Color Grading LUTs</source>
-        <translation>Mga Color Grading LUT</translation>
-    </message>
-    <message>
         <source>Import LUTs</source>
         <translation>Mag-import ng mga LUT</translation>
     </message>
@@ -14166,6 +14489,10 @@
     <message>
         <source>Missing LUT</source>
         <translation>Nawawalang LUT</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>LUT Intensity</source>
@@ -14246,6 +14573,10 @@
         <translation>Tapos na ang pagluwas.</translation>
     </message>
     <message>
+        <source>Review captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>Hindi malikha ang maibabahaging kopya: %1</translation>
     </message>
@@ -14309,8 +14640,8 @@
         <translation>&amp;I-export ang Video…</translation>
     </message>
     <message>
-        <source>&amp;Package Project…</source>
-        <translation>I-&amp;package ang Proyekto…</translation>
+        <source>Save with &amp;Media…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>&amp;Close Project</source>
@@ -14483,6 +14814,10 @@
     <message>
         <source>&amp;Help</source>
         <translation>&amp;Tulong</translation>
+    </message>
+    <message>
+        <source>Drift Help</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keyboard Shortcuts</source>
@@ -15519,10 +15854,6 @@
         <translation>Tracker</translation>
     </message>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
         <source>Off</source>
         <translation>Naka-off</translation>
     </message>
@@ -15705,6 +16036,10 @@
         <translation>Linawin ang napiling mask</translation>
     </message>
     <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Invert</source>
         <translation>Baligtarin</translation>
     </message>
@@ -15823,6 +16158,50 @@
     <message>
         <source>Add</source>
         <translation>Magdagdag</translation>
+    </message>
+    <message>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move and reshape masks you have already drawn.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw a rectangular mask to keep or hide a box-shaped area.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw an oval mask, such as a spotlight or a vignette.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click out a shape point by point for precise edges.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint the mask by hand and fix the edges.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw around an object freehand to select it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click along an edge and it snaps to the outline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a colour to select all similar pixels next to it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click what you want and AI finds its outline. Use it to remove a background.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pin a point to something moving so a mask or object can follow it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Subtract</source>
@@ -16063,6 +16442,10 @@
         <translation>Feather</translation>
     </message>
     <message>
+        <source>Draw &amp; track ↗</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Polygon</source>
         <translation>Polygon</translation>
     </message>
@@ -16118,8 +16501,8 @@
         <translation>Paksa</translation>
     </message>
     <message>
-        <source>Cut out subject…</source>
-        <translation>I-cut out ang paksa…</translation>
+        <source>Remove background…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trace the subject and pin the result as a mask layer</source>
@@ -16311,12 +16694,12 @@
         <translation>Idagdag sa timeline</translation>
     </message>
     <message>
-        <source>Trim, crop and upscale…</source>
-        <translation>I-trim, i-crop at i-upscale…</translation>
-    </message>
-    <message>
         <source>Preview and edit…</source>
         <translation>I-preview at i-edit…</translation>
+    </message>
+    <message>
+        <source>Preview and trim…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename…</source>
@@ -16333,6 +16716,18 @@
     <message>
         <source>Couldn’t reload this media. It may not be a file on disk, or is already being read.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prepare in Source Lab…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save a copy…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished">Playback</translation>
     </message>
     <message>
         <source>Use as mask</source>
@@ -16394,10 +16789,6 @@
     <message>
         <source>Export image…</source>
         <translation>Mag-export ng imahe…</translation>
-    </message>
-    <message>
-        <source>Save As…</source>
-        <translation>I-save Bilang…</translation>
     </message>
     <message numerus="yes">
         <source>Remove %n items from project</source>
@@ -18223,8 +18614,12 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>PreviewOsdGuidesButton</name>
     <message>
-        <source>Toggle guides</source>
-        <translation>I-toggle ang mga gabay</translation>
+        <source>Guides</source>
+        <translation type="unfinished">Mga Gabay</translation>
+    </message>
+    <message>
+        <source>Overlay safe areas and grids so titles and subjects stay framed.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -18263,12 +18658,12 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>PreviewStatusLayer</name>
     <message>
-        <source>Stale bake</source>
-        <translation>Hindi napapanahong bake</translation>
+        <source>Stale pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Baked</source>
-        <translation>Na-bake</translation>
+        <source>Pre-rendered</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing to preview yet</source>
@@ -18305,10 +18700,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 </context>
 <context>
     <name>PreviewTransportBar</name>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
     <message>
         <source>Go to start</source>
         <translation>Pumunta sa simula</translation>
@@ -18629,6 +19020,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Package &quot;%1&quot; is not installed; the clip renders nothing until it returns.</source>
         <translation>Hindi naka-install ang package na &quot;%1&quot;; walang nire-render ang clip hanggang sa bumalik ito.</translation>
+    </message>
+    <message>
+        <source>Edit package ↗</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Package</source>
@@ -19328,8 +19723,48 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-tap ang isang clip sa timeline upang i-edit ang mga katangian nito</translation>
     </message>
     <message>
-        <source>Click a clip on the timeline to edit its properties</source>
-        <translation>I-click ang isang clip sa timeline upang i-edit ang mga katangian nito</translation>
+        <source>Select a clip to…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the subtitle cues to generate or edit captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Bilis</translation>
+    </message>
+    <message>
+        <source>Select the clip at the playhead and open its Speed tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the clip at the playhead and open its Effects tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">Teksto</translation>
+    </message>
+    <message>
+        <source>Select the clip at the playhead and open its Text tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">Background</translation>
+    </message>
+    <message>
+        <source>Open Masking to remove or replace the background</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -19339,76 +19774,160 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Pangkalahatan</translation>
     </message>
     <message>
+        <source>Name, notes and basic details of the clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation>Teksto</translation>
+    </message>
+    <message>
+        <source>Edit the words, font, colour and animation.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Shape</source>
         <translation>Hugis</translation>
     </message>
     <message>
+        <source>Fill, outline and corners of the shape.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Motion</source>
         <translation>Galaw</translation>
+    </message>
+    <message>
+        <source>Edit the animated vector graphic.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>3D Model</source>
         <translation>3D Model</translation>
     </message>
     <message>
+        <source>Position and light the 3D model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>PDF</source>
         <translation>PDF</translation>
+    </message>
+    <message>
+        <source>Choose the pages to show.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Procedural</source>
         <translation>Procedural</translation>
     </message>
     <message>
+        <source>Adjust the generated visual.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>Mga Subtitle</translation>
+    </message>
+    <message>
+        <source>Edit caption lines and their timing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transform</source>
         <translation>Pagbabagong-anyo</translation>
     </message>
     <message>
+        <source>Move, scale, rotate and crop the clip on the canvas.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Camera</source>
         <translation>Camera</translation>
+    </message>
+    <message>
+        <source>Pan, zoom and move the viewpoint.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization</source>
         <translation>Pagpapatatag</translation>
     </message>
     <message>
+        <source>Smooth out shaky handheld footage.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>Animasyon</translation>
+    </message>
+    <message>
+        <source>Add intro, outro and looping motion.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio</source>
         <translation>Audyo</translation>
     </message>
     <message>
+        <source>Volume, fades, noise removal and ducking.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Speed</source>
         <translation>Bilis</translation>
+    </message>
+    <message>
+        <source>Slow down, speed up, reverse or ramp the speed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Blending</source>
         <translation>Paghahalo</translation>
     </message>
     <message>
+        <source>Opacity and how the clip mixes with layers below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Masks</source>
         <translation>Mga Maskara</translation>
+    </message>
+    <message>
+        <source>Show only part of the clip, or remove its background.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Effects</source>
         <translation>Epekto</translation>
     </message>
     <message>
+        <source>Filters, blurs and colour looks on this clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio FX</source>
         <translation>Epektong audyo</translation>
     </message>
     <message>
+        <source>Echo, EQ and other sound effects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transition</source>
         <translation>Transisyon</translation>
+    </message>
+    <message>
+        <source>How this clip blends into the next one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead over a clip first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clip at the playhead has no %1 tab</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip to edit its %1</source>
@@ -19429,6 +19948,17 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>My look</source>
         <translation>Aking look</translation>
+    </message>
+</context>
+<context>
+    <name>PropertiesSuggestionStrip</name>
+    <message>
+        <source>Do it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation type="unfinished">Huwag muna</translation>
     </message>
 </context>
 <context>
@@ -19870,97 +20400,270 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
-    <name>QuickSetupAddonsPage</name>
+    <name>QuickSetupAgenticPage</name>
     <message>
-        <source>Install the essentials</source>
-        <translation>I-install ang mga pinakapangunahin</translation>
+        <source>None</source>
+        <translation type="unfinished">Wala</translation>
     </message>
     <message>
-        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
-        <translation>Ang mga pangunahing epekto, transisyon, epektong audio, font, at color grading LUT ng Drift ay dumarating bilang mga add-on. Kung wala ang mga ito, mawawala sa editor ang karamihan sa inaasahan mo, kaya ini-install ang mga ito ngayon.</translation>
+        <source>Hide the AI workspaces and the Ask button</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Needs a newer version of Drift.</source>
-        <translation>Kailangan ng mas bagong bersyon ng Drift.</translation>
+        <source>Some</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not available in the download store.</source>
-        <translation>Hindi available sa store ng pag-download.</translation>
+        <source>Keep AI tools and Ask within reach</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The download failed.</source>
-        <translation>Nabigo ang pag-download.</translation>
+        <source>Lots</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 of %2 installed</source>
-        <translation>%1 sa %2 ang naka-install</translation>
+        <source>AI agents are part of how I edit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Couldn&apos;t reach the download store. Until the essentials are installed the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation>Hindi maabot ang store ng pag-download. Hangga&apos;t hindi nai-install ang mga pinakapangunahin, mawawala sa editor ang mga pangunahing epekto, transisyon, at font. Maaari mong i-install ang mga ito sa ibang pagkakataon mula sa Dagdag.</translation>
+        <source>Will you work with AI agents?</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Some packs didn&apos;t install. Until they are, the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation>Hindi na-install ang ilang pack. Hangga&apos;t hindi pa, mawawala sa editor ang mga pangunahing epekto, transisyon, at font. Maaari mong i-install ang mga ito sa ibang pagkakataon mula sa Dagdag.</translation>
-    </message>
-    <message>
-        <source>Optional</source>
-        <translation>Opsyonal</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>Subukan muli</translation>
-    </message>
-    <message>
-        <source>Skip for now</source>
-        <translation>Laktawan muna</translation>
-    </message>
-    <message>
-        <source>Continue without the essentials?</source>
-        <translation>Magpatuloy nang wala ang mga pinakapangunahin?</translation>
-    </message>
-    <message>
-        <source>Continue</source>
-        <translation>Magpatuloy</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Kanselahin</translation>
-    </message>
-    <message>
-        <source>You can find more effects, models and stickers later in Extras.</source>
-        <translation>Makakahanap ka ng higit pang mga epekto, modelo, at sticker sa ibang pagkakataon sa Dagdag.</translation>
+        <source>Drift can be driven by assistants such as Claude through MCP. Choose how much of that to show.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>QuickSetupCommunityPage</name>
+    <name>QuickSetupDownloads</name>
+    <message>
+        <source>Needs a newer version of Drift.</source>
+        <translation type="unfinished">Kailangan ng mas bagong bersyon ng Drift.</translation>
+    </message>
+    <message>
+        <source>Not available in the download store.</source>
+        <translation type="unfinished">Hindi available sa store ng pag-download.</translation>
+    </message>
+    <message>
+        <source>The download failed.</source>
+        <translation type="unfinished">Nabigo ang pag-download.</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupExperiencePage</name>
+    <message>
+        <source>First time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer workspaces, labelled tabs and hints as you go</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some experience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All the usual tools, labels and hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every workspace, compact tabs and no hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How much editing have you done?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This decides how much Drift shows at first. Anything hidden stays reachable from search (Ctrl+K) and in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupFinishPage</name>
+    <message>
+        <source>YouTube</source>
+        <translation type="unfinished">YouTube</translation>
+    </message>
+    <message>
+        <source>Shorts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Films</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Podcasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tutorials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>First time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some experience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a YouTube project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a vertical project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a widescreen project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a podcast project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a tutorial project</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>You&apos;re all set</source>
-        <translation>Handa ka na</translation>
+        <translation type="unfinished">Handa ka na</translation>
     </message>
     <message>
-        <source>Need help or have an idea? We&apos;d love to hear from you.</source>
-        <translation>Kailangan ng tulong o may ideya? Nais naming marinig mula sa iyo.</translation>
+        <source>Your Drift: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Finish</source>
-        <translation>Tapusin</translation>
+        <source>Open the editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing add-ons: %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You can continue now. Downloads carry on in the editor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach the download store. Until the essentials are installed the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
+        <translation type="unfinished">Hindi maabot ang store ng pag-download. Hangga&apos;t hindi nai-install ang mga pinakapangunahin, mawawala sa editor ang mga pangunahing epekto, transisyon, at font. Maaari mong i-install ang mga ito sa ibang pagkakataon mula sa Dagdag.</translation>
+    </message>
+    <message>
+        <source>Some packs didn&apos;t install. Until they are, the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
+        <translation type="unfinished">Hindi na-install ang ilang pack. Hangga&apos;t hindi pa, mawawala sa editor ang mga pangunahing epekto, transisyon, at font. Maaari mong i-install ang mga ito sa ibang pagkakataon mula sa Dagdag.</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Subukan muli</translation>
+    </message>
+    <message>
+        <source>Hide details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional</source>
+        <translation type="unfinished">Opsyonal</translation>
+    </message>
+    <message>
+        <source>Drift will restart to apply the interface size. Downloads still running will stop and can be resumed from Extras.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift will restart to apply the interface size.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Just open the editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Questions or ideas?</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Join our Discord</source>
-        <translation>Sumali sa aming Discord</translation>
-    </message>
-    <message>
-        <source>Copied</source>
-        <translation>Nakopya</translation>
-    </message>
-    <message>
-        <source>Copy email address</source>
-        <translation>Kopyahin ang email address</translation>
+        <translation type="unfinished">Sumali sa aming Discord</translation>
     </message>
     <message>
         <source>If Drift crashes, it sends an error report to help fix it. No project files or media are included. You can turn this off in Settings.</source>
-        <translation>Kung mag-crash ang Drift, nagpapadala ito ng ulat ng error upang makatulong na ayusin ito. Walang kasamang mga file ng proyekto o media. Maaari mo itong i-off sa Mga Setting.</translation>
+        <translation type="unfinished">Kung mag-crash ang Drift, nagpapadala ito ng ulat ng error upang makatulong na ayusin ito. Walang kasamang mga file ng proyekto o media. Maaari mo itong i-off sa Mga Setting.</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupMakePage</name>
+    <message>
+        <source>YouTube videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Long videos in widescreen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorts and Reels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical videos for phones</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Films</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cinematic edits and color grading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Podcasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Talking heads, captions and clean audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tutorials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Screen recordings and walkthroughs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What do you make?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift sets up new projects, the workspace and suggested add-ons to match. You can skip this and change it later in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished">Laktawan</translation>
     </message>
 </context>
 <context>
@@ -19981,8 +20684,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Laki ng interface</translation>
     </message>
     <message>
-        <source>Make buttons, text and icons larger or smaller.</source>
-        <translation>Gawing mas malaki o mas maliit ang mga button, teksto, at icon.</translation>
+        <source>Drift looks cramped or oversized at this screen resolution. We picked a size that fits; change it if you like.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Windows</source>
@@ -20011,8 +20714,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Pumili ng hitsura</translation>
     </message>
     <message>
-        <source>Choose how Drift looks. You can change this any time in Settings.</source>
-        <translation>Piliin kung ano ang hitsura ng Drift. Maaari mo itong baguhin anumang oras sa Mga Setting.</translation>
+        <source>Choose how Drift looks, and an accent colour. You can change both any time in Settings.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Match system</source>
@@ -20034,179 +20737,9 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <source>Dark</source>
         <translation>Madilim</translation>
     </message>
-</context>
-<context>
-    <name>QuickSetupTipArt</name>
     <message>
-        <source>Edit</source>
-        <translation>Pag-edit</translation>
-    </message>
-    <message>
-        <source>Color</source>
-        <translation>Kulay</translation>
-    </message>
-    <message>
-        <source>Keyframes</source>
-        <translation>Mga Keyframe</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>Mga Subtitle</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>Epekto</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>Pagbabagong-kalagayan</translation>
-    </message>
-    <message>
-        <source>LUTs</source>
-        <translation>Mga LUT</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation>Mga Font</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>Mga Sticker</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation>Mga tool ng AI</translation>
-    </message>
-    <message>
-        <source>color</source>
-        <translation>kulay</translation>
-    </message>
-    <message>
-        <source>Color workspace</source>
-        <translation>Workspace ng Kulay</translation>
-    </message>
-    <message>
-        <source>Color grade effect</source>
-        <translation>Epekto ng color grade</translation>
-    </message>
-    <message>
-        <source>Appearance settings</source>
-        <translation>Mga setting ng hitsura</translation>
-    </message>
-    <message>
-        <source>Auto subtitles</source>
-        <translation>Awtomatikong mga subtitle</translation>
-    </message>
-    <message>
-        <source>People cutout</source>
-        <translation>Cutout ng mga tao</translation>
-    </message>
-    <message>
-        <source>Find scenes</source>
-        <translation>Maghanap ng mga eksena</translation>
-    </message>
-    <message>
-        <source>Hello and welcome back</source>
-        <translation>Kumusta at maligayang pagbabalik</translation>
-    </message>
-    <message>
-        <source>Select multiple</source>
-        <translation>Pumili ng marami</translation>
-    </message>
-</context>
-<context>
-    <name>QuickSetupTipsPage</name>
-    <message>
-        <source>Search anything</source>
-        <translation>Maghanap ng kahit ano</translation>
-    </message>
-    <message>
-        <source>Press %1 to search actions, workspaces, add-ons, themes and settings from anywhere, then jump straight to the result.</source>
-        <translation>Pindutin ang %1 upang maghanap ng mga aksyon, workspace, add-on, tema, at setting mula saanman, pagkatapos ay lumukso diretso sa resulta.</translation>
-    </message>
-    <message>
-        <source>Use the search field in the header to find actions, workspaces, add-ons, themes and settings, then jump straight to the result.</source>
-        <translation>Gamitin ang field ng paghahanap sa header upang maghanap ng mga aksyon, workspace, add-on, tema, at setting, pagkatapos ay lumukso diretso sa resulta.</translation>
-    </message>
-    <message>
-        <source>Switch workspaces</source>
-        <translation>Lumipat ng mga workspace</translation>
-    </message>
-    <message>
-        <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header, or press %1 to %2 to jump to one.</source>
-        <translation>Iniaayos ng bawat workspace ang mga panel para sa isang gawain, tulad ng Pag-edit, Kulay, Mga Keyframe o Mga Subtitle. Buksan ang menu ng Workspace sa header, o pindutin ang %1 hanggang %2 upang lumukso sa isa.</translation>
-    </message>
-    <message>
-        <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header to switch.</source>
-        <translation>Iniaayos ng bawat workspace ang mga panel para sa isang gawain, tulad ng Pag-edit, Kulay, Mga Keyframe o Mga Subtitle. Buksan ang menu ng Workspace sa header upang lumipat.</translation>
-    </message>
-    <message>
-        <source>Get more from Extras</source>
-        <translation>Kumuha ng higit pa mula sa Dagdag</translation>
-    </message>
-    <message>
-        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
-        <translation>Ang higit pang mga epekto, transisyon, color grading LUT, font, sticker, at AI model ay ini-install mula sa Dagdag, sa itaas na bar.</translation>
-    </message>
-    <message>
-        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
-        <translation>Ang higit pang mga epekto, transisyon, color grading LUT, font, sticker, at AI model ay ini-install mula sa Dagdag, sa header.</translation>
-    </message>
-    <message>
-        <source>Use your fingers</source>
-        <translation>Gamitin ang iyong mga daliri</translation>
-    </message>
-    <message>
-        <source>Pinch the timeline to zoom it, and pinch the preview to zoom and pan the picture. Long-press a clip and choose Select multiple to pick several clips at once.</source>
-        <translation>I-pinch ang timeline upang i-zoom ito, at i-pinch ang preview upang i-zoom at i-pan ang larawan. Pindutin nang matagal ang isang clip at piliin ang Pumili ng marami upang pumili ng ilang clip nang sabay-sabay.</translation>
-    </message>
-    <message>
-        <source>Play/Pause</source>
-        <translation>I-play/I-pause</translation>
-    </message>
-    <message>
-        <source>Split at current time</source>
-        <translation>Hatiin sa kasalukuyang oras</translation>
-    </message>
-    <message>
-        <source>Delete selection</source>
-        <translation>Tanggalin ang napili</translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation>I-undo</translation>
-    </message>
-    <message>
-        <source>Edit from the keyboard</source>
-        <translation>Mag-edit mula sa keyboard</translation>
-    </message>
-    <message>
-        <source>A few shortcuts cover most of an edit. See and change every shortcut in Settings, under Keyboard shortcuts.</source>
-        <translation>Sinasakop ng ilang shortcut ang karamihan sa pag-edit. Tingnan at baguhin ang bawat shortcut sa Mga Setting, sa ilalim ng Mga keyboard shortcut.</translation>
-    </message>
-    <message>
-        <source>AI tools on your device</source>
-        <translation>Mga AI tool sa iyong device</translation>
-    </message>
-    <message>
-        <source>Auto subtitles, people cutout and scene finding run locally. Install their add-ons from Extras, under AI tools.</source>
-        <translation>Lokal na tumatakbo ang mga auto subtitle, cutout ng mga tao, at paghahanap ng eksena. I-install ang kanilang mga add-on mula sa Dagdag, sa ilalim ng Mga AI tool.</translation>
-    </message>
-    <message>
-        <source>A few tips before you start</source>
-        <translation>Ilang tip bago ka magsimula</translation>
-    </message>
-    <message>
-        <source>Quick pointers to the parts of Drift people tend to miss.</source>
-        <translation>Mabilis na mga pahiwatig sa mga bahagi ng Drift na madalas makaligtaan ng mga tao.</translation>
-    </message>
-    <message>
-        <source>Previous tip</source>
-        <translation>Nakaraang tip</translation>
-    </message>
-    <message>
-        <source>Next tip</source>
-        <translation>Susunod na tip</translation>
+        <source>Accent colour</source>
+        <translation type="unfinished">Kulay ng accent</translation>
     </message>
 </context>
 <context>
@@ -20249,12 +20782,32 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 %1</translation>
     </message>
     <message>
-        <source>Initialize new project</source>
-        <translation>Magsimula ng bagong proyekto</translation>
+        <source>New project</source>
+        <translation type="unfinished">Bagong proyekto</translation>
     </message>
     <message>
-        <source>Open project…</source>
-        <translation>Buksan ang proyekto…</translation>
+        <source>Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import / Export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save project as JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open project from JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check for missing media…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save as…</source>
@@ -20263,14 +20816,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Save with media…</source>
         <translation>I-save kasama ang media…</translation>
-    </message>
-    <message>
-        <source>Save as JSON…</source>
-        <translation>I-save bilang JSON…</translation>
-    </message>
-    <message>
-        <source>Open JSON…</source>
-        <translation>Buksan ang JSON…</translation>
     </message>
     <message>
         <source>Import Kdenlive / Shotcut project (experimental)…</source>
@@ -20283,10 +20828,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Project properties…</source>
         <translation>Mga katangian ng proyekto…</translation>
-    </message>
-    <message>
-        <source>Project health…</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close project</source>
@@ -20963,8 +21504,12 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Laki at layout ng video</translation>
     </message>
     <message>
-        <source>Bakes</source>
-        <translation>Mga Bake</translation>
+        <source>Pre-rendered sections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">I-install</translation>
     </message>
     <message>
         <source>Crop video</source>
@@ -21117,8 +21662,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-cut out at ilapat ang epekto</translation>
     </message>
     <message>
-        <source>Cut out subject</source>
-        <translation>I-cut out ang paksa</translation>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -21166,6 +21711,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Clip is too short to cut out</source>
         <translation>Masyadong maikli ang clip upang i-cut out</translation>
+    </message>
+    <message>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not create a cutout file</source>
@@ -21219,10 +21768,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <source>Cutout</source>
         <translation>Cutout</translation>
     </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>I-cut out ang paksa</translation>
-    </message>
 </context>
 <context>
     <name>SegmentationFrameColumn</name>
@@ -21242,8 +21787,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>SegmentationWindow</name>
     <message>
-        <source>Cut out subject</source>
-        <translation>I-cut out ang paksa</translation>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything (click to pick)</source>
@@ -21333,18 +21878,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Patakbuhin muli</translation>
     </message>
     <message>
-        <source>About Drift</source>
-        <translation>Tungkol sa Drift</translation>
-    </message>
-    <message>
-        <source>Open-source video editor by CutWire Studios.</source>
-        <translation>Open-source na video editor mula sa CutWire Studios.</translation>
-    </message>
-    <message>
-        <source>Show about dialog</source>
-        <translation>Ipakita ang dialog ng tungkol dito</translation>
-    </message>
-    <message>
         <source>Debug info</source>
         <translation>Impormasyon sa pag-debug</translation>
     </message>
@@ -21410,26 +21943,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Type a sentence such as &quot;split at 12 seconds&quot; in search and run it as an editing command. Needs the Command Bar Model and llama.cpp runtime add-ons; runs on this device.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Notifications for agent actions</source>
-        <translation>Mga abiso para sa mga aksyon ng agent</translation>
-    </message>
-    <message>
-        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
-        <translation>Aling mga pop-up ang ipinapakita sa iyo ng sariling mga pag-edit ng agent. Laging ipinapakita ang mga error.</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Lahat</translation>
-    </message>
-    <message>
-        <source>Problems only</source>
-        <translation>Mga problema lamang</translation>
-    </message>
-    <message>
-        <source>None (errors still show)</source>
-        <translation>Wala (lumalabas pa rin ang mga error)</translation>
     </message>
     <message>
         <source>Cloud</source>
@@ -21582,8 +22095,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>maliwanag</translation>
     </message>
     <message>
-        <source>This theme has a dark and a light variant. The header toggle switches between them.</source>
-        <translation>May madilim at maliwanag na variant ang temang ito. Lumilipat sa pagitan nila ang toggle sa header.</translation>
+        <source>This theme has a dark and a light variant, and follows your system’s light or dark setting.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Translucent windows</source>
@@ -21652,30 +22165,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Restart now</source>
         <translation>I-restart ngayon</translation>
-    </message>
-    <message>
-        <source>Workspace</source>
-        <translation>Workspace</translation>
-    </message>
-    <message>
-        <source>Workspace orientation</source>
-        <translation>Oryentasyon ng workspace</translation>
-    </message>
-    <message>
-        <source>Landscape or portrait workspace. Auto follows the shape of the canvas.</source>
-        <translation>Workspace na landscape o portrait. Awtomatikong sumusunod sa hugis ng canvas ang Auto.</translation>
-    </message>
-    <message>
-        <source>Auto (follow canvas)</source>
-        <translation>Auto (sundin ang canvas)</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>Landscape</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>Portrait</translation>
     </message>
 </context>
 <context>
@@ -21807,18 +22296,29 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>SettingsExportPage</name>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">I-export</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prefer hardware encoder for new exports</source>
+        <translation type="unfinished">Mas piliin ang hardware encoder para sa mga bagong pag-export</translation>
+    </message>
+    <message>
+        <source>Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder.</source>
+        <translation type="unfinished">Simulan ang mga bagong pag-export sa isang GPU H.264 encoder kapag may available. Mas mabilis, ngunit ang kalidad bawat bitrate ay karaniwang mas mababa kaysa sa default na software encoder.</translation>
+    </message>
+</context>
+<context>
     <name>SettingsGeneralPage</name>
     <message>
         <source>General</source>
         <translation>Pangkalahatan</translation>
-    </message>
-    <message>
-        <source>%1 GB</source>
-        <translation>%1 GB</translation>
-    </message>
-    <message>
-        <source>%1 MB</source>
-        <translation>%1 MB</translation>
     </message>
     <message>
         <source>Language &amp; region</source>
@@ -21921,26 +22421,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>50 hakbang</translation>
     </message>
     <message>
-        <source>Extras</source>
-        <translation>Dagdag</translation>
-    </message>
-    <message>
-        <source>Remind about essential packs</source>
-        <translation>Ipaalala ang tungkol sa mahahalagang pack</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed.</source>
-        <translation>Mag-pulse ang icon ng Dagdag kapag hindi naka-install ang mga video, transition, at audio pack.</translation>
-    </message>
-    <message>
-        <source>Remind about pack updates</source>
-        <translation>Ipaalala ang tungkol sa mga update ng pack</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when updates are available for packs you already have installed.</source>
-        <translation>Mag-pulse ang icon ng Dagdag kapag may available na mga update para sa mga pack na naka-install na sa iyo.</translation>
-    </message>
-    <message>
         <source>Feedback</source>
         <translation>Feedback</translation>
     </message>
@@ -21963,38 +22443,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>After a crash, send the error details, a short scrubbed log and your system and graphics information to help fix it. No project files or media.</source>
         <translation>Pagkatapos ng pag-crash, ipadala ang mga detalye ng error, isang maikling nilinis na log, at ang impormasyon ng iyong system at graphics upang makatulong na ayusin ito. Walang mga file ng proyekto o media.</translation>
-    </message>
-    <message>
-        <source>Storage</source>
-        <translation>Imbakan</translation>
-    </message>
-    <message>
-        <source>Cache</source>
-        <translation>Cache</translation>
-    </message>
-    <message>
-        <source>%1 used</source>
-        <translation>%1 ang nagamit</translation>
-    </message>
-    <message>
-        <source>Clear cache</source>
-        <translation>I-clear ang cache</translation>
-    </message>
-    <message>
-        <source>Cache location</source>
-        <translation>Lokasyon ng cache</translation>
-    </message>
-    <message>
-        <source>%1. Takes effect after restart.</source>
-        <translation>%1. Magkakabisa pagkatapos i-restart.</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>I-reset</translation>
-    </message>
-    <message>
-        <source>Change…</source>
-        <translation>Baguhin…</translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -22103,16 +22551,16 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>SettingsNetworkPage</name>
     <message>
-        <source>Network</source>
-        <translation>Network</translation>
-    </message>
-    <message>
         <source>Connection</source>
         <translation>Koneksyon</translation>
     </message>
     <message>
-        <source>Proxy</source>
-        <translation>Proxy</translation>
+        <source>Network &amp; internet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Internet proxy server</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>How Drift reaches the internet for downloads, updates, and online services. Applies immediately.</source>
@@ -22135,8 +22583,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>SOCKS5 proxy</translation>
     </message>
     <message>
-        <source>Proxy server</source>
-        <translation>Proxy server</translation>
+        <source>Proxy server details</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Host and port of the proxy. The username and password are optional.</source>
@@ -22160,10 +22608,65 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>SettingsNotificationsPage</name>
+    <message>
+        <source>Notifications</source>
+        <translation type="unfinished">Mga Abiso</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Dagdag</translation>
+    </message>
+    <message>
+        <source>Remind about essential packs</source>
+        <translation type="unfinished">Ipaalala ang tungkol sa mahahalagang pack</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed.</source>
+        <translation type="unfinished">Mag-pulse ang icon ng Dagdag kapag hindi naka-install ang mga video, transition, at audio pack.</translation>
+    </message>
+    <message>
+        <source>Remind about pack updates</source>
+        <translation type="unfinished">Ipaalala ang tungkol sa mga update ng pack</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when updates are available for packs you already have installed.</source>
+        <translation type="unfinished">Mag-pulse ang icon ng Dagdag kapag may available na mga update para sa mga pack na naka-install na sa iyo.</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation type="unfinished">Mga Agent</translation>
+    </message>
+    <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished">Mga abiso para sa mga aksyon ng agent</translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished">Aling mga pop-up ang ipinapakita sa iyo ng sariling mga pag-edit ng agent. Laging ipinapakita ang mga error.</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">Lahat</translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished">Mga problema lamang</translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished">Wala (lumalabas pa rin ang mga error)</translation>
+    </message>
+</context>
+<context>
     <name>SettingsPane</name>
     <message>
         <source>General</source>
         <translation>Pangkalahatan</translation>
+    </message>
+    <message>
+        <source>Personalize</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Appearance</source>
@@ -22178,10 +22681,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Timeline</translation>
     </message>
     <message>
-        <source>Timeline toolbar</source>
-        <translation>Toolbar ng timeline</translation>
-    </message>
-    <message>
         <source>Keyboard shortcuts</source>
         <translation>Mga keyboard shortcut</translation>
     </message>
@@ -22194,6 +22693,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Pagganap</translation>
     </message>
     <message>
+        <source>Storage &amp; media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">I-export</translation>
+    </message>
+    <message>
         <source>Audio</source>
         <translation>Audyo</translation>
     </message>
@@ -22202,8 +22709,12 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>AI at Cloud</translation>
     </message>
     <message>
-        <source>Network</source>
-        <translation>Network</translation>
+        <source>Notifications</source>
+        <translation type="unfinished">Mga Abiso</translation>
+    </message>
+    <message>
+        <source>Network &amp; internet</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>About</source>
@@ -22223,14 +22734,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Performance</source>
         <translation>Pagganap</translation>
-    </message>
-    <message>
-        <source>For advanced users</source>
-        <translation>Para sa mga advanced user</translation>
-    </message>
-    <message>
-        <source>These tune memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately.</source>
-        <translation>Tinitono ng mga ito ang paggamit ng memory at gawi ng playback. Angkop ang mga default sa karamihan ng mga makina; ang pagpapalit sa mga ito ay maaaring magdulot ng pag-stutter ng playback o gumamit ng higit na maraming memory. Karamihan sa mga pagbabago ay nalalapat agad.</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
@@ -22265,20 +22768,108 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Metal (default sa macOS)</translation>
     </message>
     <message>
+        <source>Graphics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Faster preview (experimental)</source>
+        <translation type="unfinished">Mas mabilis na preview (eksperimental)</translation>
+    </message>
+    <message>
+        <source>Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.</source>
+        <translation type="unfinished">Maaaring gawing mas makinis ang playback sa pamamagitan ng pagpapanatili ng video sa graphics card. I-off ito kung mukhang mali ang larawan. Magkakabisa pagkatapos mag-restart.</translation>
+    </message>
+    <message>
+        <source>Graphics card</source>
+        <translation type="unfinished">Graphics card</translation>
+    </message>
+    <message>
+        <source>Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.</source>
+        <translation type="unfinished">Kung aling graphics card tatakbo ang Drift. Ang mataas na pagganap ay nagpapanatili ng video na na-decode sa isang NVIDIA card sa card na iyon; ang pagtitipid ng kuryente ay gumagamit ng mas kaunting baterya. Magkakabisa pagkatapos mag-restart.</translation>
+    </message>
+    <message>
+        <source>Windows default</source>
+        <translation type="unfinished">Default ng Windows</translation>
+    </message>
+    <message>
+        <source>Power saving (integrated GPU)</source>
+        <translation type="unfinished">Pagtitipid ng kuryente (pinagsamang GPU)</translation>
+    </message>
+    <message>
+        <source>High performance (discrete GPU)</source>
+        <translation type="unfinished">Mataas na pagganap (discrete GPU)</translation>
+    </message>
+    <message>
+        <source>Choose which graphics card Drift runs on in Windows Settings, under Display &gt; Graphics. Takes effect after restart.</source>
+        <translation type="unfinished">Piliin kung aling graphics card tatakbo ang Drift sa Mga Setting ng Windows, sa ilalim ng Display &gt; Graphics. Magkakabisa pagkatapos mag-restart.</translation>
+    </message>
+    <message>
+        <source>Open graphics settings</source>
+        <translation type="unfinished">Buksan ang mga setting ng graphics</translation>
+    </message>
+    <message>
+        <source>Advanced tuning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation type="unfinished">Itago</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Playback</source>
         <translation>Playback</translation>
     </message>
     <message>
-        <source>Drop late frames</source>
-        <translation>I-drop ang mga huling frame</translation>
+        <source>Skip frames when playback falls behind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip frames that are late by more than</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback buffer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the playback buffer full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview memory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scrubbing memory per clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects workspace: buffer count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects workspace: video memory limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graphics card image cache: image count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graphics card image cache: video memory limit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip preview frames that finish this far behind the playhead, instead of showing them late. Can reduce slow-motion at clip cuts on slow machines. Off never drops a frame for being late.</source>
         <translation>Laktawan ang mga frame ng preview na natapos nang ganito kalayo sa likod ng playhead, sa halip na ipakita ang mga ito nang huli. Maaaring bawasan ang slow-motion sa mga cut ng clip sa mababagal na makina. Ang Naka-off ay hindi kailanman nagda-drop ng frame dahil sa pagkahuli.</translation>
-    </message>
-    <message>
-        <source>Drop frames lagging behind playback by more than</source>
-        <translation>I-drop ang mga frame na nahuhuli sa playback nang higit sa</translation>
     </message>
     <message>
         <source>ms</source>
@@ -22289,16 +22880,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Naka-off</translation>
     </message>
     <message>
-        <source>Read-ahead</source>
-        <translation>Read-ahead</translation>
-    </message>
-    <message>
         <source>How much video each clip decodes ahead of the playhead during playback. More absorbs slow-to-decode footage but competes with the frames on screen. Default 2000 ms.</source>
         <translation>Gaano karaming video ang dine-decode ng bawat clip nang maaga sa playhead habang nagpe-playback. Ang mas marami ay sumisipsip sa mabagal i-decode na footage ngunit nakikipagkumpitensya sa mga frame sa screen. Default ay 2000 ms.</translation>
-    </message>
-    <message>
-        <source>Continuous read-ahead</source>
-        <translation>Tuloy-tuloy na read-ahead</translation>
     </message>
     <message>
         <source>Keep decoding until the whole read-ahead window is full. Off decodes one frame ahead per displayed frame, which leaves more decoder time for the clip on screen but buffers less.</source>
@@ -22307,10 +22890,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Memory &amp; caches</source>
         <translation>Memory at mga cache</translation>
-    </message>
-    <message>
-        <source>Decoded frame cache</source>
-        <translation>Cache ng na-decode na frame</translation>
     </message>
     <message>
         <source>Memory shared by all clips for decoded preview frames. Automatic uses an eighth of system memory (a sixteenth on Android), at least 128 MiB.</source>
@@ -22325,20 +22904,12 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Awtomatiko</translation>
     </message>
     <message>
-        <source>CPU frame history per clip</source>
-        <translation>Kasaysayan ng frame ng CPU bawat clip</translation>
-    </message>
-    <message>
         <source>Limit the decoded images each clip keeps in memory for scrubbing and effects. Unlimited keeps up to 16 frames per clip, which is large for 4K footage.</source>
         <translation>Limitahan ang mga na-decode na imahe na itinatago ng bawat clip sa memory para sa scrubbing at mga epekto. Ang Walang limitasyon ay nagtatago ng hanggang 16 na frame bawat clip, na malaki para sa 4K footage.</translation>
     </message>
     <message>
         <source>Unlimited</source>
         <translation>Walang limitasyon</translation>
-    </message>
-    <message>
-        <source>Render target pool: count</source>
-        <translation>Pool ng render target: bilang</translation>
     </message>
     <message>
         <source>Idle GPU render targets kept for reuse. Fewer saves video memory; more avoids reallocating while effects and transitions play.</source>
@@ -22349,16 +22920,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>mga target</translation>
     </message>
     <message>
-        <source>Render target pool: size</source>
-        <translation>Pool ng render target: laki</translation>
-    </message>
-    <message>
         <source>Cap on the video memory held by idle render targets, in addition to the count.</source>
         <translation>Limitasyon sa video memory na hawak ng mga nakatiwangwang na render target, bukod pa sa bilang.</translation>
-    </message>
-    <message>
-        <source>Image upload cache: count</source>
-        <translation>Cache ng pag-upload ng imahe: bilang</translation>
     </message>
     <message>
         <source>Stills and converted frames kept on the GPU so they are not uploaded again every frame.</source>
@@ -22369,24 +22932,151 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>mga imahe</translation>
     </message>
     <message>
-        <source>Image upload cache: size</source>
-        <translation>Cache ng pag-upload ng imahe: laki</translation>
-    </message>
-    <message>
         <source>Cap on the video memory used by the image upload cache, in addition to the count. 48 uploads of 4K frames take about 1.5 GiB.</source>
         <translation>Limitasyon sa video memory na ginagamit ng cache ng pag-upload ng imahe, bukod pa sa bilang. Ang 48 pag-upload ng 4K frame ay gumagamit ng humigit-kumulang 1.5 GiB.</translation>
     </message>
+</context>
+<context>
+    <name>SettingsPersonalizePage</name>
     <message>
-        <source>Export</source>
-        <translation>I-export</translation>
+        <source>Personalize</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Prefer hardware encoder for new exports</source>
-        <translation>Mas piliin ang hardware encoder para sa mga bagong pag-export</translation>
+        <source>About you</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder.</source>
-        <translation>Simulan ang mga bagong pag-export sa isang GPU H.264 encoder kapag may available. Mas mabilis, ngunit ang kalidad bawat bitrate ay karaniwang mas mababa kaysa sa default na software encoder.</translation>
+        <source>What you make</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Used to suggest sensible defaults for new projects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>YouTube videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorts and Reels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Films</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Podcasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tutorials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experience with video editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>First time hides the Studio workspaces. You can show any of them again below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>First time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some experience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Working with AI agents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None hides the AI and Procedural workspaces and the Ask button in the header.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">Wala</translation>
+    </message>
+    <message>
+        <source>Some</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lots</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accent colour</source>
+        <translation type="unfinished">Kulay ng accent</translation>
+    </message>
+    <message>
+        <source>Colours buttons, selections and highlights on top of the current theme.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Labels under panel tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show a name under each icon on the side tab rails.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Short tips and suggestions that appear as you work.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset dismissed tips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bring back every tip and suggestion you closed. They reappear the next time you open the panel they belong to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset tips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tips will show again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workspaces</source>
+        <translation type="unfinished">Mga Workspace</translation>
+    </message>
+    <message>
+        <source>Workspaces in the switcher</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden workspaces stay reachable from search (Ctrl+K) and their Alt+number shortcuts. Edit is always shown.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22491,80 +23181,107 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <source>How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K.</source>
         <translation>Kung paano dine-decode ang video para sa preview. Mas makinis ang software para sa karamihan ng mga clip ngunit gumagamit ng mas maraming CPU. Angkop ang hardware sa mataas na kalidad na 4K.</translation>
     </message>
+</context>
+<context>
+    <name>SettingsStoragePage</name>
     <message>
-        <source>Faster preview (experimental)</source>
-        <translation>Mas mabilis na preview (eksperimental)</translation>
+        <source>Storage &amp; media</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.</source>
-        <translation>Maaaring gawing mas makinis ang playback sa pamamagitan ng pagpapanatili ng video sa graphics card. I-off ito kung mukhang mali ang larawan. Magkakabisa pagkatapos mag-restart.</translation>
+        <source>%1 GB</source>
+        <translation type="unfinished">%1 GB</translation>
     </message>
     <message>
-        <source>Graphics card</source>
-        <translation>Graphics card</translation>
+        <source>%1 MB</source>
+        <translation type="unfinished">%1 MB</translation>
     </message>
     <message>
-        <source>Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.</source>
-        <translation>Kung aling graphics card tatakbo ang Drift. Ang mataas na pagganap ay nagpapanatili ng video na na-decode sa isang NVIDIA card sa card na iyon; ang pagtitipid ng kuryente ay gumagamit ng mas kaunting baterya. Magkakabisa pagkatapos mag-restart.</translation>
+        <source>Cache</source>
+        <translation type="unfinished">Cache</translation>
     </message>
     <message>
-        <source>Windows default</source>
-        <translation>Default ng Windows</translation>
+        <source>%1 used</source>
+        <translation type="unfinished">%1 ang nagamit</translation>
     </message>
     <message>
-        <source>Power saving (integrated GPU)</source>
-        <translation>Pagtitipid ng kuryente (pinagsamang GPU)</translation>
+        <source>Clear cache</source>
+        <translation type="unfinished">I-clear ang cache</translation>
     </message>
     <message>
-        <source>High performance (discrete GPU)</source>
-        <translation>Mataas na pagganap (discrete GPU)</translation>
+        <source>Cache location</source>
+        <translation type="unfinished">Lokasyon ng cache</translation>
     </message>
     <message>
-        <source>Choose which graphics card Drift runs on in Windows Settings, under Display &gt; Graphics. Takes effect after restart.</source>
-        <translation>Piliin kung aling graphics card tatakbo ang Drift sa Mga Setting ng Windows, sa ilalim ng Display &gt; Graphics. Magkakabisa pagkatapos mag-restart.</translation>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished">%1. Magkakabisa pagkatapos i-restart.</translation>
     </message>
     <message>
-        <source>Open graphics settings</source>
-        <translation>Buksan ang mga setting ng graphics</translation>
+        <source>Reset</source>
+        <translation type="unfinished">I-reset</translation>
     </message>
     <message>
-        <source>Proxies</source>
-        <translation>Mga Proxy</translation>
+        <source>Change…</source>
+        <translation type="unfinished">Baguhin…</translation>
     </message>
     <message>
-        <source>Use proxies for preview</source>
-        <translation>Gumamit ng mga proxy para sa preview</translation>
+        <source>Preview copies (proxies)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
-        <translation>I-play ang mga clip mula sa kanilang mga proxy na may mababang resolusyon kung saan mayroon. Palaging ginagamit ng pag-export ang orihinal na media.</translation>
+        <source>Use preview copies for playback</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Suggest proxies on import</source>
-        <translation>Magmungkahi ng mga proxy sa pag-import</translation>
+        <source>Play clips from their low-resolution preview copies (proxies) where one exists. Export always uses the original media.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest preview copies on import</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>What to do when imported footage may preview slowly.</source>
-        <translation>Kung ano ang gagawin kapag maaaring mabagal mag-preview ang na-import na footage.</translation>
+        <translation type="unfinished">Kung ano ang gagawin kapag maaaring mabagal mag-preview ang na-import na footage.</translation>
     </message>
     <message>
         <source>Ask</source>
-        <translation>Magtanong</translation>
+        <translation type="unfinished">Magtanong</translation>
     </message>
     <message>
-        <source>Always create proxies</source>
-        <translation>Laging lumikha ng mga proxy</translation>
+        <source>Always create preview copies</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Never ask</source>
-        <translation>Huwag kailanman magtanong</translation>
+        <translation type="unfinished">Huwag kailanman magtanong</translation>
     </message>
     <message>
-        <source>Proxy resolution</source>
-        <translation>Resolusyon ng proxy</translation>
+        <source>Preview copy resolution</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save proxies and reversed clips</source>
+        <source>Size of new preview copies. Copies made at another size are not used until you create them again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>360p</source>
+        <translation type="unfinished">360p</translation>
+    </message>
+    <message>
+        <source>540p</source>
+        <translation type="unfinished">540p</translation>
+    </message>
+    <message>
+        <source>720p</source>
+        <translation type="unfinished">720p</translation>
+    </message>
+    <message>
+        <source>1080p</source>
+        <translation type="unfinished">1080p</translation>
+    </message>
+    <message>
+        <source>Save preview copies and reversed clips</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -22608,40 +23325,20 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Size of new proxies. Proxies made at another size are not used until you create them again.</source>
-        <translation>Laki ng mga bagong proxy. Ang mga proxy na ginawa sa ibang laki ay hindi ginagamit hanggang sa likhain mo muli ang mga ito.</translation>
-    </message>
-    <message>
-        <source>360p</source>
-        <translation>360p</translation>
-    </message>
-    <message>
-        <source>540p</source>
-        <translation>540p</translation>
-    </message>
-    <message>
-        <source>720p</source>
-        <translation>720p</translation>
-    </message>
-    <message>
-        <source>1080p</source>
-        <translation>1080p</translation>
-    </message>
-    <message>
-        <source>Proxy name patterns</source>
-        <translation>Mga pattern ng pangalan ng proxy</translation>
+        <source>Preview copy name patterns</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Linking a proxy teaches Drift its name pattern. Proxies next to your media that match a pattern below link automatically.</source>
-        <translation>Ang pag-link ng isang proxy ay nagtuturo sa Drift ng pattern ng pangalan nito. Awtomatikong nagli-link ang mga proxy sa tabi ng iyong media na tumutugma sa isang pattern sa ibaba.</translation>
+        <translation type="unfinished">Ang pag-link ng isang proxy ay nagtuturo sa Drift ng pattern ng pangalan nito. Awtomatikong nagli-link ang mga proxy sa tabi ng iyong media na tumutugma sa isang pattern sa ibaba.</translation>
     </message>
     <message>
         <source>Remove pattern</source>
-        <translation>Alisin ang pattern</translation>
+        <translation type="unfinished">Alisin ang pattern</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
-        <translation>I-reset sa mga default</translation>
+        <translation type="unfinished">I-reset sa mga default</translation>
     </message>
 </context>
 <context>
@@ -22737,6 +23434,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Piliin ang clip sa ilalim ng playhead habang gumagalaw ang playhead.</translation>
     </message>
     <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animasyon</translation>
+    </message>
+    <message>
         <source>Auto keyframes</source>
         <translation>Awtomatikong mga keyframe</translation>
     </message>
@@ -22745,12 +23446,16 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Lumilikha rin ng mga keyframe ang pag-drag ng slider.</translation>
     </message>
     <message>
-        <source>Loop work area</source>
-        <translation>I-loop ang bahagi ng gawa</translation>
+        <source>Toolbar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Playback repeats between the work area in and out points.</source>
-        <translation>Umuulit ang playback sa pagitan ng mga in at out point ng bahagi ng gawa.</translation>
+        <source>Toolbar layout</source>
+        <translation type="unfinished">Layout ng toolbar</translation>
+    </message>
+    <message>
+        <source>Choose which actions appear on the toolbar above the timeline and which go in its overflow menu.</source>
+        <translation type="unfinished">Piliin kung aling mga aksyon ang lilitaw sa toolbar sa ibabaw ng timeline at kung alin ang mapupunta sa overflow menu nito.</translation>
     </message>
     <message>
         <source>Defaults</source>
@@ -22794,21 +23499,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
-    <name>SettingsToolbarPage</name>
-    <message>
-        <source>Timeline toolbar</source>
-        <translation>Toolbar ng timeline</translation>
-    </message>
-    <message>
-        <source>Toolbar layout</source>
-        <translation>Layout ng toolbar</translation>
-    </message>
-    <message>
-        <source>Choose which actions appear on the toolbar above the timeline and which go in its overflow menu.</source>
-        <translation>Piliin kung aling mga aksyon ang lilitaw sa toolbar sa ibabaw ng timeline at kung alin ang mapupunta sa overflow menu nito.</translation>
-    </message>
-</context>
-<context>
     <name>SettingsWorkspacesPage</name>
     <message>
         <source>Workspaces</source>
@@ -22817,6 +23507,34 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Arrange panels into layouts, optionally across several windows. Drag a panel onto an edge of another block to split it, or onto its middle to add a tab. Nothing changes in the editor until you save.</source>
         <translation>Ayusin ang mga panel sa mga layout, opsyonal sa maraming mga window. Mag-drag ng panel sa gilid ng isa pang block upang hatiin ito, o sa gitna nito upang magdagdag ng tab. Walang magbabago sa editor hanggang sa mag-save ka.</translation>
+    </message>
+    <message>
+        <source>Orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workspace orientation</source>
+        <translation type="unfinished">Oryentasyon ng workspace</translation>
+    </message>
+    <message>
+        <source>Landscape or portrait workspace. Auto follows the shape of the canvas.</source>
+        <translation type="unfinished">Workspace na landscape o portrait. Awtomatikong sumusunod sa hugis ng canvas ang Auto.</translation>
+    </message>
+    <message>
+        <source>Auto (follow canvas)</source>
+        <translation type="unfinished">Auto (sundin ang canvas)</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation type="unfinished">Landscape</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation type="unfinished">Portrait</translation>
+    </message>
+    <message>
+        <source>Layouts</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout designer</source>
@@ -25212,20 +25930,20 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>SpeedCurveController</name>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>Gumagana ang custom na bilis sa mga clip ng video at audio</translation>
+        <source>Speed ramp works on video and audio clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>This clip has no media to speed up or slow down</source>
         <translation>Walang media ang clip na ito upang pabilisin o pabagalin</translation>
     </message>
     <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>Nailipat ang clip na iyon — buksan muli ang Custom na bilis</translation>
+        <source>That clip moved — open Speed ramp again</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Custom speed applied</source>
-        <translation>Nailapat ang custom na bilis</translation>
+        <source>Speed ramp applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25238,8 +25956,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>SpeedCurveWindow</name>
     <message>
-        <source>Custom speed</source>
-        <translation>Custom na bilis</translation>
+        <source>Speed ramp</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pause</source>
@@ -25301,14 +26019,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Bilis ng playback</translation>
     </message>
     <message>
-        <source>Custom speed…</source>
-        <translation>Custom na bilis…</translation>
-    </message>
-    <message>
-        <source>Custom speed active — remove</source>
-        <translation>Aktibo ang custom na bilis — alisin</translation>
-    </message>
-    <message>
         <source>Speed</source>
         <translation>Bilis</translation>
     </message>
@@ -25317,8 +26027,24 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Nabago ang bilis</translation>
     </message>
     <message>
-        <source>Custom speed</source>
-        <translation>Custom na bilis</translation>
+        <source>Speed ramp…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed ramp active — remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split (%1) to speed up only part of a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split the clip to speed up only part of it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed ramp</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source> (reversed)</source>
@@ -25575,6 +26301,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Settings</source>
         <translation>Mga Setting</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation type="unfinished">Tulong</translation>
+    </message>
+    <message>
+        <source>Help and support</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Debug info</source>
@@ -26608,6 +27342,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>SubtitlesPanel</name>
     <message>
+        <source>Captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No cues yet</source>
         <translation>Wala pang mga cue</translation>
     </message>
@@ -26675,12 +27413,28 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Ang mas maiikling mga caption ay tina-time sa pamamagitan ng pantay na paghahati sa bawat parirala, kaya maaari silang bahagyang mawala sa sync sa pagsasalita.</translation>
     </message>
     <message>
-        <source>Create captions from the selected clips&apos; speech — several clips become one caption clip</source>
-        <translation>Gumawa ng mga caption mula sa pagsasalita ng mga napiling clip — ang ilang mga clip ay nagiging isang caption clip</translation>
+        <source>Auto captions</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select a video or audio clip first</source>
-        <translation>Pumili muna ng video o audio clip</translation>
+        <source>Writes captions from the selected clips&apos; speech.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a video or audio clip first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writes captions from the speech in your clips, on your computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs speech model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Creating captions… %1%</source>
@@ -26701,10 +27455,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Install AI engine first</source>
         <translation>I-install muna ang AI engine</translation>
-    </message>
-    <message>
-        <source>Needed for auto captions from speech</source>
-        <translation>Kailangan para sa mga auto caption mula sa pagsasalita</translation>
     </message>
     <message>
         <source>Recommended caption length</source>
@@ -27918,27 +28668,27 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>TimelineBakeContextMenu</name>
     <message>
-        <source>Re-bake</source>
-        <translation>Muling i-bake</translation>
+        <source>Re-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Set work area to bake</source>
-        <translation>Itakda ang work area sa bake</translation>
+        <source>Set work area to pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Delete bake</source>
-        <translation>Burahin ang bake</translation>
+        <source>Delete pre-rendered section</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Manage bakes…</source>
-        <translation>Pamahalaan ang mga bake…</translation>
+        <source>Manage pre-rendered sections…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>TimelineBakeStrip</name>
     <message>
-        <source>Baking %1%</source>
-        <translation>Nagbe-bake %1%</translation>
+        <source>Pre-rendering %1%</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stale</source>
@@ -27983,12 +28733,68 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Ilipat sa track</translation>
     </message>
     <message>
+        <source>Paste at current time</source>
+        <translation type="unfinished">I-paste sa kasalukuyang oras</translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>Mga Katangian</translation>
     </message>
     <message>
         <source>Select multiple</source>
         <translation>Pumili ng marami</translation>
+    </message>
+    <message>
+        <source>Speed and reverse…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame</source>
+        <translation type="unfinished">I-freeze ang frame</translation>
+    </message>
+    <message>
+        <source>Detach audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detach all audio tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink video and audio</source>
+        <translation type="unfinished">I-unlink ang video at audio</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+    <message>
+        <source>Blur area</source>
+        <translation type="unfinished">Lugar ng blur</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Audyo</translation>
+    </message>
+    <message>
+        <source>Generate captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">Pagbabagong-anyo</translation>
+    </message>
+    <message>
+        <source>Stabilize…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">Higit pa</translation>
     </message>
     <message>
         <source>Open composite</source>
@@ -28031,10 +28837,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Hatiin sa kasalukuyang oras</translation>
     </message>
     <message>
-        <source>Split item at current time</source>
-        <translation>Hatiin ang item sa kasalukuyang oras</translation>
-    </message>
-    <message>
         <source>Split on beats</source>
         <translation type="unfinished"></translation>
     </message>
@@ -28049,14 +28851,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Swap with next clip</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Separate audio</source>
-        <translation>Ihiwalay ang audyo</translation>
-    </message>
-    <message>
-        <source>Separate all audio tracks</source>
-        <translation>Ihiwalay ang lahat ng track ng audyo</translation>
     </message>
     <message>
         <source>Enable clip</source>
@@ -28117,10 +28911,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Enhance video…</source>
         <translation>Pagandahin ang video…</translation>
-    </message>
-    <message>
-        <source>Unlink</source>
-        <translation>I-unlink</translation>
     </message>
     <message>
         <source>Link</source>
@@ -28187,10 +28977,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Color grade…</translation>
     </message>
     <message>
-        <source>Blur area…</source>
-        <translation>I-blur ang lugar…</translation>
-    </message>
-    <message>
         <source>Edit keyframes…</source>
         <translation>I-edit ang mga keyframe…</translation>
     </message>
@@ -28236,8 +29022,12 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Walang laman ang iyong timeline</translation>
     </message>
     <message>
-        <source>Drag media here from the library, or add an empty track to start.</source>
-        <translation>Mag-drag ng media rito mula sa library, o magdagdag ng bakanteng track upang magsimula.</translation>
+        <source>Drag media here from the library, or import a file to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import media</source>
+        <translation type="unfinished">Mag-import ng media</translation>
     </message>
     <message>
         <source>New track</source>
@@ -28388,11 +29178,55 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-paste rito</translation>
     </message>
     <message>
+        <source>Close gap</source>
+        <translation type="unfinished">Isara ang puwang</translation>
+    </message>
+    <message>
+        <source>Close gap on all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close gaps in work area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close all gaps on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add track</source>
+        <translation type="unfinished">Magdagdag ng track</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">Video</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Audyo</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">Teksto</translation>
+    </message>
+    <message>
+        <source>Subtitle</source>
+        <translation type="unfinished">Subtitle</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation type="unfinished">Grapiko</translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished">Adjustment</translation>
+    </message>
+    <message>
+        <source>Split all tracks here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all empty tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -28410,34 +29244,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Select all clips</source>
         <translation>Piliin ang lahat ng clip</translation>
-    </message>
-    <message>
-        <source>Unmute track</source>
-        <translation>I-unmute ang track</translation>
-    </message>
-    <message>
-        <source>Mute track</source>
-        <translation>I-mute ang track</translation>
-    </message>
-    <message>
-        <source>Show track</source>
-        <translation>Ipakita ang track</translation>
-    </message>
-    <message>
-        <source>Hide track</source>
-        <translation>Itago ang track</translation>
-    </message>
-    <message>
-        <source>Unlock track</source>
-        <translation>I-unlock ang track</translation>
-    </message>
-    <message>
-        <source>Lock track</source>
-        <translation>I-lock ang track</translation>
-    </message>
-    <message>
-        <source>Remove empty tracks</source>
-        <translation>Alisin ang mga walang lamang track</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -28486,14 +29292,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>My look</source>
         <translation>Aking look</translation>
-    </message>
-    <message>
-        <source>Close Gap</source>
-        <translation>Isara ang Puwang</translation>
-    </message>
-    <message>
-        <source>Close Gap on All Tracks</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -28546,10 +29344,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>TimelineToolbar</name>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
         <source>Import media</source>
         <translation>Mag-import ng media</translation>
     </message>
@@ -28566,16 +29360,32 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-play</translation>
     </message>
     <message>
-        <source>Auto-select: select the clip under the playhead</source>
-        <translation>Auto-select: piliin ang clip sa ilalim ng playhead</translation>
+        <source>Let clips sit on top of each other on one track instead of pushing apart.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Magnetic snapping: align video and audio edges across tracks</source>
-        <translation>Magnetic snapping: ihanay ang mga gilid ng video at audio sa mga track</translation>
+        <source>Auto-select</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Ripple editing: keep following clips together when trimming</source>
-        <translation>Ripple editing: panatilihing magkasama ang mga sumusunod na clip kapag nagti-trim</translation>
+        <source>Selects the clip under the playhead as you move it, so the inspector follows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished">Pag-snap</translation>
+    </message>
+    <message>
+        <source>Clips and the playhead snap to neighbouring edges so cuts line up exactly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When you trim or delete, later clips shift to close or open the gap.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Toggle audio mixer strip</source>
@@ -28601,16 +29411,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Piliin</translation>
     </message>
     <message>
-        <source>Select — normal editing</source>
-        <translation>Piliin — normal na pag-edit</translation>
-    </message>
-    <message>
         <source>Cut mode</source>
         <translation>Cut mode</translation>
-    </message>
-    <message>
-        <source>Cut mode — click a clip to split it</source>
-        <translation>Cut mode — i-click ang isang clip upang hatiin ito</translation>
     </message>
     <message>
         <source>Show audio on separate track</source>
@@ -28629,24 +29431,52 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-trim ang simula</translation>
     </message>
     <message>
-        <source>Trim start — click a clip to drop everything left of the cut</source>
-        <translation>I-trim ang simula — i-click ang isang clip upang alisin ang lahat sa kaliwa ng cut</translation>
-    </message>
-    <message>
         <source>Trim end</source>
         <translation>I-trim ang dulo</translation>
     </message>
     <message>
-        <source>Trim end — click a clip to drop everything right of the cut</source>
-        <translation>I-trim ang wakas — i-click ang isang clip upang alisin ang lahat sa kanan ng cut</translation>
+        <source>Click, drag and trim clips as normal. Switch back here after using Cut.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a clip to split it there. Fast for chopping out the parts you do not need.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pull the sound out of a video onto its own track to edit it separately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move or trim the picture and its sound separately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the selected clips moving, trimming and deleting together.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a clip to drop everything before that point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a clip to drop everything after that point.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start to playhead</source>
         <translation>I-trim ang simula sa playhead</translation>
     </message>
     <message>
+        <source>Drop everything before the playhead from the selected clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim end to playhead</source>
         <translation>I-trim ang wakas sa playhead</translation>
+    </message>
+    <message>
+        <source>Drop everything after the playhead from the selected clip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -28701,24 +29531,32 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-freeze ang frame sa kasalukuyang oras</translation>
     </message>
     <message>
+        <source>Hold the current frame as a still. Good for emphasis or a title card.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add adjustment layer</source>
         <translation>Magdagdag ng adjustment layer</translation>
+    </message>
+    <message>
+        <source>An empty layer whose effects apply to everything under it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add transform layer</source>
         <translation>Magdagdag ng transform layer</translation>
     </message>
     <message>
-        <source>Add transform layer — moves the selected clips&apos; tracks as one</source>
-        <translation>Magdagdag ng transform layer — iginagalaw ang mga track ng mga napiling clip bilang isa</translation>
+        <source>Move, scale and rotate the selected clips together as one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One viewpoint the whole timeline is seen through. Use it for pans and zooms.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera</source>
         <translation>Magdagdag ng camera</translation>
-    </message>
-    <message>
-        <source>Add camera — one viewpoint the whole timeline is seen through. With a camera already there, adds a new camera clip (a cut to a new framing) at the playhead</source>
-        <translation>Magdagdag ng camera — isang viewpoint kung saan nakikita ang buong timeline. Kung may camera na roon, nagdaragdag ng bagong camera clip (isang cut sa bagong framing) sa playhead</translation>
     </message>
 </context>
 <context>
@@ -28878,24 +29716,24 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>TimelineWorkAreaBakeChip</name>
     <message>
-        <source>Baking %1%</source>
-        <translation>Nagbe-bake %1%</translation>
+        <source>Pre-rendering %1%</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bake</source>
-        <translation>Bake</translation>
+        <source>Pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel baking</source>
         <translation>Kanselahin ang pag-bake</translation>
     </message>
     <message>
-        <source>Pre-render the work area for smooth playback and export</source>
-        <translation>I-pre-render ang work area para sa maayos na playback at pag-export</translation>
+        <source>Pre-rendered sections are of the main timeline. Switch to it to pre-render.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bakes are of the main timeline. Switch to it to bake.</source>
-        <translation type="unfinished"></translation>
+        <source>Pre-render the work area for smooth playback and export</source>
+        <translation>I-pre-render ang work area para sa maayos na playback at pag-export</translation>
     </message>
 </context>
 <context>
@@ -29084,6 +29922,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Ipakita ang track</translation>
     </message>
     <message>
+        <source>Show in clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide track</source>
         <translation>Itago ang track</translation>
     </message>
@@ -29102,6 +29944,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Exclude from export</source>
         <translation>Ibukod sa pag-export</translation>
+    </message>
+    <message>
+        <source>Recording setup (teleprompter, noise)…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -29148,12 +29994,28 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Mas maikling hilera</translation>
     </message>
     <message>
-        <source>Delete track</source>
-        <translation>Tanggalin ang track</translation>
+        <source>Add track above</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove empty tracks</source>
-        <translation>Alisin ang mga walang lamang track</translation>
+        <source>Add track below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished">Ilipat pataas</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">Ilipat pababa</translation>
+    </message>
+    <message>
+        <source>Select clips on track</source>
+        <translation type="unfinished">Piliin ang mga clip sa track</translation>
+    </message>
+    <message>
+        <source>Delete track</source>
+        <translation>Tanggalin ang track</translation>
     </message>
 </context>
 <context>
@@ -29610,10 +30472,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Perspective</translation>
     </message>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
         <source>No clip selected</source>
         <translation>Walang napiling clip</translation>
     </message>
@@ -29638,10 +30496,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Sundan ang isang bagay</translation>
     </message>
     <message>
-        <source>Click an object on the video; this clip will follow it through the clip</source>
-        <translation>Mag-click ng bagay sa video; susundan ito ng clip na ito sa kabuuan ng clip</translation>
-    </message>
-    <message>
         <source>Follows %1 on %2</source>
         <translation>Sumusunod sa %1 sa %2</translation>
     </message>
@@ -29662,16 +30516,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Punto</translation>
     </message>
     <message>
-        <source>Track a feature with one point</source>
-        <translation>Subaybayan ang isang feature gamit ang isang punto</translation>
-    </message>
-    <message>
         <source>Planar</source>
         <translation>Planar</translation>
-    </message>
-    <message>
-        <source>Track a flat surface outlined by its corners</source>
-        <translation>Subaybayan ang isang patag na ibabaw na may outline ng mga sulok nito</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -29704,10 +30550,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Track whole clip</source>
         <translation>Subaybayan ang buong clip</translation>
-    </message>
-    <message>
-        <source>Follow the feature backward and forward through the whole clip</source>
-        <translation>Sundan ang feature pabalik at pasulong sa kabuuan ng clip</translation>
     </message>
     <message>
         <source>Corrected at this frame. Track ▶ to continue.</source>
@@ -29802,12 +30644,40 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Ihinto ang pagsubaybay</translation>
     </message>
     <message>
+        <source>Motion tracking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position + rotation</source>
         <translation>Posisyon + pag-ikot</translation>
     </message>
     <message>
         <source>Position, rotation + size</source>
         <translation>Posisyon, pag-ikot + laki</translation>
+    </message>
+    <message>
+        <source>Click something in the preview and this clip follows it, such as a label on a moving car.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows one spot, such as a corner or a face, for position-only following.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Planar tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows a flat surface, such as a screen or sign, including its rotation and scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows the feature backward and forward from here through the whole clip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track one frame forward</source>
@@ -30146,6 +31016,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-reset ang posisyon</translation>
     </message>
     <message>
+        <source>Follow an object…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset size</source>
         <translation>I-reset ang laki</translation>
     </message>
@@ -30156,6 +31030,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Scale width and height together</source>
         <translation>Sama-samang i-scale ang lapad at taas</translation>
+    </message>
+    <message>
+        <source>To animate Scale, move to a time and change it. Auto keyframes adds the keyframes for you.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on Auto keyframes</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Previous scale keyframe</source>
@@ -30202,14 +31084,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Paikutin ang clip sa 3D at igalaw ito sa lalim, na may mga 3D grip sa preview. Kapag ini-off ito, magiging patag muli ang clip.</translation>
     </message>
     <message>
-        <source>Open 3D workspace</source>
-        <translation>Buksan ang 3D workspace</translation>
-    </message>
-    <message>
-        <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
-        <translation>Nasa panel ng 3D Transform ng 3D workspace ang posisyon, pag-ikot, anchor point, at depth occlusion</translation>
-    </message>
-    <message>
         <source>Reset all</source>
         <translation>I-reset lahat</translation>
     </message>
@@ -30220,6 +31094,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Rotate 90°</source>
         <translation>Iikot nang 90°</translation>
+    </message>
+    <message>
+        <source>Open 3D workspace ↗</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Corrects the source&apos;s own rotation losslessly — unlike Rotation above, this changes decoding, not just the on-screen box.</source>
@@ -30506,8 +31384,12 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>TransitionPresetCard</name>
     <message>
-        <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
-        <translation>%1 — i-drag sa kung saan nagtatagpo ang dalawang clip, o sa touch ay pindutin nang matagal bago i-drag</translation>
+        <source>Drag onto where two clips meet. On touch, hold then drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to use this transition</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from favorites</source>
@@ -31126,20 +32008,24 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>VideoMenu</name>
     <message>
-        <source>Bakes…</source>
-        <translation>Mga Bake…</translation>
+        <source>Size, aspect &amp; frame rate…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel crop</source>
         <translation>Kanselahin ang crop</translation>
     </message>
     <message>
-        <source>Crop video</source>
-        <translation>I-crop ang video</translation>
+        <source>Crop canvas</source>
+        <translation type="unfinished">I-crop ang canvas</translation>
     </message>
     <message>
-        <source>Adjust video layout…</source>
-        <translation>I-adjust ang layout ng video…</translation>
+        <source>Multicam…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-rendered sections…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31334,8 +32220,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Camera ng eksena</translation>
     </message>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
+        <source>3D viewport</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>View</source>
@@ -31579,6 +32465,13 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>WorkspaceBackPill</name>
+    <message>
+        <source>← Back to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceDesigner</name>
     <message>
         <source>Panels</source>
@@ -31675,6 +32568,13 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Cancel</source>
         <translation>Kanselahin</translation>
+    </message>
+</context>
+<context>
+    <name>WorkspaceLink</name>
+    <message>
+        <source>Open in %1 ↗</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31785,6 +32685,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Color</source>
         <translation>Kulay</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Scopes</source>
@@ -31925,10 +32829,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Camera</source>
         <translation>Camera</translation>
-    </message>
-    <message>
-        <source>Color Grading LUTs</source>
-        <translation>Mga Color Grading LUT</translation>
     </message>
     <message>
         <source>Stabilization</source>
