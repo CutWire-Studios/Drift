@@ -2082,10 +2082,35 @@ void EditorStateTest::undoBookmarkAdd()
     QCOMPARE(state.bookmarks().size(), 0);
 }
 
+namespace {
+// The history settings live in QSettings: isolated from the host's store, and removed again so a
+// crash mid-test cannot leave a limit behind for the other history tests.
+auto restoreUndoHistorySettings()
+{
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestUndoHistory"));
+    const auto clear = [] {
+        QSettings settings;
+        settings.remove(QStringLiteral("editor/undoHistoryMode"));
+        settings.remove(QStringLiteral("editor/undoHistoryLimit"));
+    };
+    clear();
+    return qScopeGuard([org, app, clear] {
+        clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+}
+} // namespace
+
 void EditorStateTest::undoHistorySurvivesSaveAndLoad()
 {
+    const auto restore = restoreUndoHistorySettings();
     AssetLibrary library;
     AppController state(&library);
+    state.preferences()->setUndoHistoryMode(QStringLiteral("project"));
     for (int i = 0; i < 60; ++i)
         state.addBookmark(i + 1.0, QStringLiteral("B%1").arg(i));
     QCOMPARE(state.bookmarks().size(), 60);
@@ -2137,8 +2162,10 @@ void EditorStateTest::savedBundleKeepsHistoryAndShrinksIt()
     QStandardPaths::setTestModeEnabled(true);
     const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
 
+    const auto restoreHistory = restoreUndoHistorySettings();
     AssetLibrary library;
     AppController state(&library);
+    state.preferences()->setUndoHistoryMode(QStringLiteral("project"));
     for (int i = 0; i < 6; ++i)
         state.addTextClip(QStringLiteral("Title %1 with a reasonably long caption").arg(i), i * 2.0);
     for (int i = 0; i < 50; ++i)
@@ -2184,29 +2211,6 @@ void EditorStateTest::savedBundleKeepsHistoryAndShrinksIt()
     reopened.redo();
     QCOMPARE(reopened.bookmarks().size(), 50);
 }
-
-namespace {
-// The history settings live in QSettings: isolated from the host's store, and removed again so a
-// crash mid-test cannot leave a limit behind for the other history tests.
-auto restoreUndoHistorySettings()
-{
-    const QString org = QCoreApplication::organizationName();
-    const QString app = QCoreApplication::applicationName();
-    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
-    QCoreApplication::setApplicationName(QStringLiteral("DriftTestUndoHistory"));
-    const auto clear = [] {
-        QSettings settings;
-        settings.remove(QStringLiteral("editor/undoHistoryMode"));
-        settings.remove(QStringLiteral("editor/undoHistoryLimit"));
-    };
-    clear();
-    return qScopeGuard([org, app, clear] {
-        clear();
-        QCoreApplication::setOrganizationName(org);
-        QCoreApplication::setApplicationName(app);
-    });
-}
-} // namespace
 
 void EditorStateTest::undoHistoryLimitDropsTheOldestSteps()
 {
@@ -2518,6 +2522,7 @@ void EditorStateTest::recoverySnapshotSkipsAnUnchangedProject()
 
 void EditorStateTest::legacyPlainRecoveryFileStillRestores()
 {
+    const auto restoreHistory = restoreUndoHistorySettings();
     QStandardPaths::setTestModeEnabled(true);
     const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
     const QString recovery = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
@@ -2528,6 +2533,7 @@ void EditorStateTest::legacyPlainRecoveryFileStillRestores()
     AssetLibrary library;
     {
         AppController state(&library);
+        state.preferences()->setUndoHistoryMode(QStringLiteral("project"));
         for (int i = 0; i < 5; ++i)
             state.addBookmark(i + 1.0, QStringLiteral("B%1").arg(i));
         QJsonObject root = QJsonDocument::fromJson(state.serializeProjectJson()).object();

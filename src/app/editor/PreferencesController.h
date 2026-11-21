@@ -71,7 +71,7 @@ class PreferencesController : public QObject
     Q_PROPERTY(qint64 proxyFolderBytes READ proxyFolderBytes NOTIFY proxyFolderBytesChanged)
     // False on Android: the picker returns a tree URI, not a writable path.
     Q_PROPERTY(bool proxyFolderSupported READ proxyFolderSupported CONSTANT)
-    // Undo history: "project" (saved into the project file, the default), "session" (kept until
+    // Undo history: "project" (saved into the project file), "session" (the default; kept until
     // the project closes, never saved) or "off" (no undo steps at all).
     Q_PROPERTY(QString undoHistoryMode READ undoHistoryMode WRITE setUndoHistoryMode NOTIFY undoHistoryModeChanged)
     // Most undo steps kept; older ones are dropped, with the media only they referenced. 0 = no limit.
@@ -420,7 +420,7 @@ private:
     QString m_proxyLocation = QStringLiteral("beside");
     QString m_proxyFolder;
     qint64 m_proxyFolderBytes = -1;
-    QString m_undoHistoryMode = QStringLiteral("project");
+    QString m_undoHistoryMode = QStringLiteral("session");
     int m_undoHistoryLimit = 0;
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;

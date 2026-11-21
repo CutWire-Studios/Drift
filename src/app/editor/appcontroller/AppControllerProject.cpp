@@ -1171,7 +1171,7 @@ QSet<QString> AppController::historyMediaPaths() const
 
 QString AppController::effectiveUndoHistoryMode() const
 {
-    const QString global = m_preferences ? m_preferences->undoHistoryMode() : QStringLiteral("project");
+    const QString global = m_preferences ? m_preferences->undoHistoryMode() : QStringLiteral("session");
     if (m_projectHistorySteps == 0
         || (m_projectHistorySteps == kProjectHistoryUnset && global == QLatin1String("off")))
         return QStringLiteral("off");
