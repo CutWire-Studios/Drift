@@ -15,11 +15,12 @@ bool isOtioTimeline(const QString &filePath);
 bool isOtioData(const QByteArray &data);
 
 // Reads an OpenTimelineIO (.otio) file from disk and imports it as a drift::Project.
-std::optional<Project> readProject(const QString &filePath, QString *error = nullptr);
+// skippedOut receives how many effects, transitions and unlinked items had no Drift equivalent.
+std::optional<Project> readProject(const QString &filePath, QString *error = nullptr, int *skippedOut = nullptr);
 
 // Reads raw OTIO JSON data and converts it to a drift::Project.
 // sourceDir is used to resolve relative media references.
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir = QString(),
-                                      QString *error = nullptr);
+                                      QString *error = nullptr, int *skippedOut = nullptr);
 
 } // namespace drift::otio

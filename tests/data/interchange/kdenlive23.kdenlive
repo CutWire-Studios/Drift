@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mlt LC_NUMERIC="C" producer="main_bin" root="@ROOT@" version="7.39.0">
+ <profile colorspace="709" description="1920x1080 30.00fps" frame_rate_den="1" frame_rate_num="30" height="1080" progressive="1" width="1920"/>
+ <producer id="producer0" in="00:00:00.000" out="00:01:00.000">
+  <property name="length">2147483647</property>
+  <property name="resource">black</property>
+  <property name="mlt_service">color</property>
+ </producer>
+ <chain id="chain0" out="00:01:00.000">
+  <property name="length">1801</property>
+  <property name="resource">media/talk.mp4</property>
+  <property name="mlt_service">avformat-novalidate</property>
+  <property name="audio_index">1</property>
+  <property name="video_index">0</property>
+  <property name="kdenlive:clipname">Talk</property>
+ </chain>
+ <playlist id="playlist0">
+  <property name="kdenlive:audio_track">1</property>
+  <entry in="00:00:01.000" out="00:00:03.967" producer="chain0">
+   <filter id="filter0">
+    <property name="mlt_service">volume</property>
+    <property name="kdenlive_id">fadeout</property>
+   </filter>
+  </entry>
+ </playlist>
+ <playlist id="playlist1">
+  <property name="kdenlive:audio_track">1</property>
+ </playlist>
+ <tractor id="tractor0" in="00:00:00.000" out="00:00:03.967">
+  <property name="kdenlive:audio_track">1</property>
+  <track hide="video" producer="playlist0"/>
+  <track hide="video" producer="playlist1"/>
+  <filter id="filter1">
+   <property name="mlt_service">volume</property>
+   <property name="internal_added">237</property>
+  </filter>
+ </tractor>
+ <chain id="chain1" out="00:01:00.000">
+  <property name="length">1801</property>
+  <property name="resource">media/talk.mp4</property>
+  <property name="mlt_service">avformat-novalidate</property>
+  <property name="audio_index">1</property>
+  <property name="video_index">0</property>
+  <property name="kdenlive:clipname">Talk</property>
+ </chain>
+ <playlist id="playlist2">
+  <entry in="00:00:01.000" out="00:00:03.967" producer="chain1"/>
+ </playlist>
+ <playlist id="playlist3"/>
+ <tractor id="tractor1" in="00:00:00.000" out="00:00:03.967">
+  <track hide="audio" producer="playlist2"/>
+  <track hide="audio" producer="playlist3"/>
+ </tractor>
+ <playlist id="playlist4"/>
+ <playlist id="playlist5"/>
+ <tractor id="tractor2" in="00:00:00.000" out="00:00:00.000">
+  <track hide="both" producer="playlist4"/>
+  <track hide="both" producer="playlist5"/>
+ </tractor>
+ <tractor id="{11111111-2222-3333-4444-555555555555}" in="00:00:00.000" out="00:00:03.967">
+  <property name="kdenlive:clipname">Sequence 1</property>
+  <track producer="producer0"/>
+  <track producer="tractor0"/>
+  <track producer="tractor1"/>
+  <track producer="tractor2"/>
+  <transition id="transition0">
+   <property name="mlt_service">mix</property>
+   <property name="internal_added">237</property>
+  </transition>
+ </tractor>
+ <playlist id="main_bin">
+  <property name="kdenlive:docproperties.documentid">1700000000000</property>
+  <entry in="00:00:00.000" out="00:00:03.967" producer="{11111111-2222-3333-4444-555555555555}"/>
+ </playlist>
+ <tractor id="tractor3" in="00:00:00.000" out="00:00:03.967">
+  <property name="kdenlive:projectTractor">1</property>
+  <track in="00:00:00.000" out="00:00:03.967" producer="{11111111-2222-3333-4444-555555555555}"/>
+ </tractor>
+</mlt>

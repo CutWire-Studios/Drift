@@ -11,11 +11,14 @@
 #include <QDomElement>
 #include <QFile>
 #include <QFileInfo>
+#include <QHash>
 #include <QMap>
 #include <QUrl>
 #include <QUuid>
 #include <QtMath>
+#include <algorithm>
 #include <cstring>
+#include <functional>
 #include <zlib.h>
 
 namespace drift::kdenlive {
@@ -249,7 +252,17 @@ struct MltProducer
     bool isText = false;
     ParsedTitleInfo titleInfo;
     QString assetId;
+    double speed = 1.0; // timewarp; negative plays backward
+    int userFilterCount = 0;
 };
+
+QString propertyValue(const QDomElement &el, const QString &name)
+{
+    for (auto p = el.firstChildElement(QStringLiteral("property")); !p.isNull(); p = p.nextSiblingElement(QStringLiteral("property")))
+        if (p.attribute(QStringLiteral("name")) == name)
+            return p.text();
+    return {};
+}
 
 } // namespace
 
@@ -280,7 +293,7 @@ bool isKdenliveData(const QByteArray &data)
     return data.contains("<mlt");
 }
 
-std::optional<Project> readProject(const QString &filePath, QString *error)
+std::optional<Project> readProject(const QString &filePath, QString *error, int *skippedOut)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -291,10 +304,11 @@ std::optional<Project> readProject(const QString &filePath, QString *error)
 
     const QByteArray data = file.readAll();
     const QString sourceDir = QFileInfo(filePath).canonicalPath();
-    return readProjectData(data, sourceDir, error);
+    return readProjectData(data, sourceDir, error, skippedOut);
 }
 
-std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error)
+std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error,
+                                      int *skippedOut)
 {
     const QByteArray xmlData = isGzip(data) ? decompressGzip(data) : data;
     if (xmlData.isEmpty()) {
@@ -322,6 +336,20 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     }
 
     Project project;
+    int skipped = 0;
+
+    // Shotcut and Kdenlive write resources relative to <mlt root="...">; fall back to the
+    // project's own folder for a project moved together with its media.
+    const QString mltRoot = root.attribute(QStringLiteral("root"));
+    const auto resolve = [&](const QString &raw) {
+        const QString norm = normalizeMediaPath(raw);
+        if (!mltRoot.isEmpty()) {
+            const QString viaRoot = resolveMedia(norm, mltRoot);
+            if (QFileInfo::exists(viaRoot))
+                return viaRoot;
+        }
+        return resolveMedia(norm, sourceDir);
+    };
 
     // 1. Profile (Resolution and Frame Rate)
     double fps = 30.0;
@@ -431,6 +459,8 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
     // 3. Scan Producers and Chains
     QMap<QString, MltProducer> producers;
+    // Kdenlive gives every timeline clip its own chain of the same file, and Shotcut does too.
+    QHash<QString, QString> assetIdByPath;
 
     const auto processProducerElement = [&](const QDomElement &pEl) {
         const QString id = pEl.attribute(QStringLiteral("id"));
@@ -461,6 +491,13 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
         QString titleXml;
         QString caption;
+        QString service;
+        QString warpSpeed;
+        QString warpResource;
+
+        for (auto f = pEl.firstChildElement(QStringLiteral("filter")); !f.isNull(); f = f.nextSiblingElement(QStringLiteral("filter")))
+            if (propertyValue(f, QStringLiteral("internal_added")).isEmpty())
+                ++prod.userFilterCount;
 
         for (auto p = pEl.firstChildElement(QStringLiteral("property")); !p.isNull(); p = p.nextSiblingElement(QStringLiteral("property"))) {
             const QString key = p.attribute(QStringLiteral("name"));
@@ -480,7 +517,33 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                 titleXml = val;
             } else if (key == QLatin1String("caption") && prod.name.isEmpty()) {
                 prod.name = val;
+            } else if (key == QLatin1String("mlt_service")) {
+                service = val;
+            } else if (key == QLatin1String("warp_speed")) {
+                warpSpeed = val;
+            } else if (key == QLatin1String("warp_resource")) {
+                warpResource = val;
             }
+        }
+
+        // Generated sources (colour, noise, count...) have no file to import; their entries are
+        // reported as skipped.
+        if (service == QLatin1String("color") || service == QLatin1String("colour") || service == QLatin1String("noise")
+            || service == QLatin1String("count"))
+            return;
+
+        // timewarp resource is "<speed>:<path>", the path itself possibly "C:/...".
+        if (service == QLatin1String("timewarp")) {
+            const int colon = prod.resource.indexOf(QLatin1Char(':'));
+            bool ok = false;
+            const double prefixSpeed = colon > 0 ? prod.resource.left(colon).toDouble(&ok) : 0.0;
+            const double speed = warpSpeed.isEmpty() ? (ok ? prefixSpeed : 1.0) : warpSpeed.toDouble();
+            if (speed != 0.0)
+                prod.speed = speed;
+            if (!warpResource.isEmpty())
+                prod.resource = warpResource;
+            else if (ok)
+                prod.resource = prod.resource.mid(colon + 1);
         }
 
         // Check if title clip
@@ -491,7 +554,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                 prod.name = prod.titleInfo.text.left(24);
         } else if (prod.resource.endsWith(QLatin1String(".kdenlivetitle"), Qt::CaseInsensitive)) {
             prod.isText = true;
-            const QString titlePath = resolveMedia(normalizeMediaPath(prod.resource), sourceDir);
+            const QString titlePath = resolve(prod.resource);
             QFile tFile(titlePath);
             if (tFile.open(QIODevice::ReadOnly)) {
                 prod.titleInfo = parseKdenliveTitleXml(QString::fromUtf8(tFile.readAll()));
@@ -502,8 +565,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
         // Normalize resource path if media file
         if (!prod.resource.isEmpty() && !prod.isText && !prod.resource.startsWith(QLatin1Char('#'))) {
-            const QString norm = normalizeMediaPath(prod.resource);
-            prod.resource = resolveMedia(norm, sourceDir);
+            prod.resource = resolve(prod.resource);
             const QString ext = QFileInfo(prod.resource).suffix().toLower();
 
             if (prod.videoIndex == -1
@@ -517,12 +579,23 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
             if (prod.name.isEmpty())
                 prod.name = QFileInfo(prod.resource).fileName();
 
+            const TimeUs sourceDurationUs = static_cast<TimeUs>(llround(static_cast<double>(prod.durationUs) * qAbs(prod.speed)));
+            if (const auto known = assetIdByPath.constFind(prod.resource); known != assetIdByPath.constEnd()) {
+                prod.assetId = known.value();
+                MediaAsset *asset = project.asset(prod.assetId);
+                if (asset->folderId.isEmpty() && folderIdToUuid.contains(prod.folderId))
+                    asset->folderId = folderIdToUuid.value(prod.folderId);
+                asset->durationUs = qMax(asset->durationUs, sourceDurationUs);
+                producers.insert(id, prod);
+                return;
+            }
+
             // Register in project assets
             MediaAsset asset;
             asset.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
             asset.name = prod.name;
             asset.path = prod.resource;
-            asset.durationUs = prod.durationUs;
+            asset.durationUs = sourceDurationUs;
             if (folderIdToUuid.contains(prod.folderId))
                 asset.folderId = folderIdToUuid.value(prod.folderId);
 
@@ -535,6 +608,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
             project.addAsset(asset);
             prod.assetId = asset.id;
+            assetIdByPath.insert(prod.resource, asset.id);
         }
 
         producers.insert(id, prod);
@@ -547,63 +621,106 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         processProducerElement(el);
     }
 
-    // 4. Discover Sequence Playlists
-    // Check if there is a main tractor with a multitrack container
-    QStringList trackPlaylistIds;
-    for (auto tr = root.firstChildElement(QStringLiteral("tractor")); !tr.isNull(); tr = tr.nextSiblingElement(QStringLiteral("tractor"))) {
-        const QDomElement mt = tr.firstChildElement(QStringLiteral("multitrack"));
-        if (!mt.isNull()) {
-            for (auto t = mt.firstChildElement(QStringLiteral("track")); !t.isNull(); t = t.nextSiblingElement(QStringLiteral("track"))) {
-                const QString pid = t.attribute(QStringLiteral("producer"));
-                if (!pid.isEmpty() && pid != QLatin1String("black_track") && pid != QLatin1String("black"))
-                    trackPlaylistIds.append(pid);
-            }
-            if (!trackPlaylistIds.isEmpty())
-                break;
-        }
-    }
-
-    // If no multitrack tractor, discover all playlists that are not the project bin
+    // 4. Resolve the track layout. MLT plays the last top-level service, so the last tractor is
+    // the timeline. Its tracks are playlists (Shotcut) or nested tractors (Kdenlive 23.04+:
+    // project tractor -> sequence tractor -> one tractor per track wrapping two playlists).
+    // Tracks may sit in a <multitrack> or directly in the tractor.
     QMap<QString, QDomElement> playlistsById;
     for (auto pl = root.firstChildElement(QStringLiteral("playlist")); !pl.isNull(); pl = pl.nextSiblingElement(QStringLiteral("playlist"))) {
         const QString pid = pl.attribute(QStringLiteral("id"));
         if (!pid.isEmpty())
             playlistsById.insert(pid, pl);
     }
+    QMap<QString, QDomElement> tractorsById;
+    QDomElement rootTractor;
+    for (auto tr = root.firstChildElement(QStringLiteral("tractor")); !tr.isNull(); tr = tr.nextSiblingElement(QStringLiteral("tractor"))) {
+        tractorsById.insert(tr.attribute(QStringLiteral("id")), tr);
+        rootTractor = tr;
+    }
 
-    if (trackPlaylistIds.isEmpty()) {
+    // Kdenlive's per-track volume/panner/level filters and its track-compositing transitions carry
+    // internal_added; Shotcut's compositing transitions are always_active. Neither is a user effect.
+    const auto isStructural = [](const QDomElement &el) {
+        return !propertyValue(el, QStringLiteral("internal_added")).isEmpty()
+            || propertyValue(el, QStringLiteral("always_active")) == QLatin1String("1");
+    };
+    const auto countUserServices = [&](const QDomElement &el) {
+        for (auto f = el.firstChildElement(QStringLiteral("filter")); !f.isNull(); f = f.nextSiblingElement(QStringLiteral("filter")))
+            if (!isStructural(f))
+                ++skipped;
+        for (auto t = el.firstChildElement(QStringLiteral("transition")); !t.isNull(); t = t.nextSiblingElement(QStringLiteral("transition")))
+            if (!isStructural(t))
+                ++skipped;
+    };
+
+    struct LeafTrack
+    {
+        QDomElement playlist;
+        QString hide;
+        bool audioTractor = false;
+        // The second playlist of a Kdenlive track tractor only holds same-track mixes.
+        bool dropIfEmpty = false;
+    };
+    QList<LeafTrack> leaves;
+
+    std::function<void(const QDomElement &, int)> expand = [&](const QDomElement &tractor, int depth) {
+        countUserServices(tractor);
+        const bool audioTractor = propertyValue(tractor, QStringLiteral("kdenlive:audio_track")) == QLatin1String("1");
+        const QDomElement mt = tractor.firstChildElement(QStringLiteral("multitrack"));
+        const QDomElement trackParent = mt.isNull() ? tractor : mt;
+        bool first = true;
+        for (auto t = trackParent.firstChildElement(QStringLiteral("track")); !t.isNull(); t = t.nextSiblingElement(QStringLiteral("track"))) {
+            const QString pid = t.attribute(QStringLiteral("producer"));
+            if (pid == QLatin1String("black_track") || pid == QLatin1String("black") || pid == QLatin1String("background"))
+                continue;
+            if (playlistsById.contains(pid)) {
+                const QDomElement pl = playlistsById.value(pid);
+                countUserServices(pl);
+                leaves.append({pl, t.attribute(QStringLiteral("hide")), audioTractor, depth > 0 && !first});
+                first = false;
+            } else if (tractorsById.contains(pid) && depth < 8) {
+                expand(tractorsById.value(pid), depth + 1);
+            }
+        }
+    };
+    if (!rootTractor.isNull())
+        expand(rootTractor, 0);
+
+    // No tractor: a bare MLT file of playlists. Take every playlist that is not the project bin.
+    if (leaves.isEmpty()) {
         for (auto it = playlistsById.constBegin(); it != playlistsById.constEnd(); ++it) {
             const QString pid = it.key();
             if (pid != QLatin1String("main_bin") && pid != QLatin1String("main bin") && pid != QLatin1String("bin")
-                && pid != QLatin1String("timeline_preview")) {
-                trackPlaylistIds.append(pid);
+                && pid != QLatin1String("timeline_preview") && pid != QLatin1String("background")) {
+                leaves.append({it.value(), QString(), false, false});
             }
         }
     }
 
     // 5. Construct Project Tracks and Clips
-    project.tracks().clear();
+    QList<Track> builtTracks;
 
-    for (int tIdx = 0; tIdx < trackPlaylistIds.size(); ++tIdx) {
-        const QString pid = trackPlaylistIds.at(tIdx);
-        if (!playlistsById.contains(pid))
-            continue;
+    for (const LeafTrack &leaf : std::as_const(leaves)) {
+        const QDomElement &plEl = leaf.playlist;
+        const QString trackName = !propertyValue(plEl, QStringLiteral("kdenlive:track_name")).isEmpty()
+                                      ? propertyValue(plEl, QStringLiteral("kdenlive:track_name"))
+                                      : propertyValue(plEl, QStringLiteral("shotcut:name"));
 
-        const QDomElement plEl = playlistsById.value(pid);
-
-        // Track Name and properties
-        QString trackName;
+        // Shotcut hides a muted-out video track with hide="video" too, so its own markers win.
+        bool kindKnown = true;
         bool isAudioTrack = false;
+        if (leaf.audioTractor || propertyValue(plEl, QStringLiteral("kdenlive:audio_track")) == QLatin1String("1")
+            || propertyValue(plEl, QStringLiteral("shotcut:audio")) == QLatin1String("1"))
+            isAudioTrack = true;
+        else if (propertyValue(plEl, QStringLiteral("shotcut:video")) == QLatin1String("1"))
+            isAudioTrack = false;
+        else if (leaf.hide == QLatin1String("video"))
+            isAudioTrack = true;
+        else
+            kindKnown = !leaf.hide.isEmpty();
 
-        for (auto p = plEl.firstChildElement(QStringLiteral("property")); !p.isNull(); p = p.nextSiblingElement(QStringLiteral("property"))) {
-            const QString key = p.attribute(QStringLiteral("name"));
-            const QString val = p.text();
-            if (key == QLatin1String("kdenlive:track_name") || key == QLatin1String("shotcut:name")) {
-                trackName = val;
-            } else if (key == QLatin1String("kdenlive:audio_track") && val == QLatin1String("1")) {
-                isAudioTrack = true;
-            }
-        }
+        const bool hideAudio = leaf.hide == QLatin1String("audio") || leaf.hide == QLatin1String("both");
+        const bool hideVideo = leaf.hide == QLatin1String("video") || leaf.hide == QLatin1String("both");
 
         // Build clips for this playlist
         QList<Clip> clips;
@@ -619,60 +736,78 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                 currentTimelineUs += blankDur;
             } else if (tag == QLatin1String("entry")) {
                 const QString prodId = child.attribute(QStringLiteral("producer"));
-                if (!producers.contains(prodId))
-                    continue;
-
-                const MltProducer &prod = producers.value(prodId);
-
-                TimeUs inUs = 0;
-                TimeUs outUs = 0;
-
                 const bool hasIn = child.hasAttribute(QStringLiteral("in"));
                 const bool hasOut = child.hasAttribute(QStringLiteral("out"));
                 const bool hasLength = child.hasAttribute(QStringLiteral("length"));
 
+                TimeUs inUs = 0;
+                TimeUs outUs = 0;
                 if (hasIn)
                     inUs = parseMltTime(child.attribute(QStringLiteral("in")), fps);
                 if (hasOut)
                     outUs = parseMltTime(child.attribute(QStringLiteral("out")), fps);
+
+                const MltProducer *prod = producers.contains(prodId) ? &producers[prodId] : nullptr;
 
                 TimeUs durationUs = 0;
                 if (hasLength) {
                     durationUs = parseMltTime(child.attribute(QStringLiteral("length")), fps);
                 } else if (hasOut && outUs >= inUs) {
                     durationUs = (outUs - inUs) + frameUs;
-                } else if (prod.durationUs > 0) {
-                    durationUs = prod.durationUs;
+                } else if (prod && prod->durationUs > 0) {
+                    durationUs = prod->durationUs;
                 } else {
                     durationUs = 5000000LL;
                 }
 
+                // Colour clips, nested sequences and the like: keep the gap so later clips stay put.
+                if (!prod) {
+                    ++skipped;
+                    currentTimelineUs += durationUs;
+                    continue;
+                }
+
+                countUserServices(child);
+                skipped += prod->userFilterCount;
+
+                // A timewarp producer's in/out count warped frames; the source moves |speed| times faster.
+                const double speed = qAbs(prod->speed);
+
                 Clip clip;
                 clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-                clip.name = prod.name;
+                clip.name = prod->name;
                 clip.timelineStart = currentTimelineUs;
                 clip.timelineDuration = durationUs;
-                clip.srcIn = inUs;
-                clip.srcOut = inUs + durationUs;
+                clip.srcIn = static_cast<TimeUs>(llround(static_cast<double>(inUs) * speed));
+                clip.srcOut = clip.srcIn + static_cast<TimeUs>(llround(static_cast<double>(durationUs) * speed));
+                clip.speed = speed;
+                clip.reverse = prod->speed < 0.0;
 
-                if (prod.isText) {
+                if (prod->isText) {
                     clip.type = ClipType::Text;
-                    clip.textContent = prod.titleInfo.text;
-                    clip.textStyle.fontFamily = prod.titleInfo.fontFamily;
-                    clip.textStyle.pixelSize = prod.titleInfo.fontSize;
-                    clip.textStyle.fontWeight = prod.titleInfo.fontWeight;
-                    drift::setSolidFill(clip.textStyle, prod.titleInfo.color);
+                    clip.srcIn = inUs;
+                    clip.srcOut = inUs + durationUs;
+                    clip.speed = 1.0;
+                    clip.reverse = false;
+                    clip.textContent = prod->titleInfo.text;
+                    clip.textStyle.fontFamily = prod->titleInfo.fontFamily;
+                    clip.textStyle.pixelSize = prod->titleInfo.fontSize;
+                    clip.textStyle.fontWeight = prod->titleInfo.fontWeight;
+                    drift::setSolidFill(clip.textStyle, prod->titleInfo.color);
 
                     clip.frameH = height * 0.30;
                     hasVideoClips = true;
-                } else if (prod.isAudioOnly) {
+                } else if (prod->isAudioOnly || isAudioTrack) {
+                    // Kdenlive puts an A/V clip's sound on an audio track as a second entry of the
+                    // same file; that entry is the audio, not another copy of the picture.
                     clip.type = ClipType::Audio;
-                    clip.assetId = prod.assetId;
-                    clip.path = prod.resource;
+                    clip.assetId = prod->assetId;
+                    clip.path = prod->resource;
                 } else {
-                    clip.type = prod.isImage ? ClipType::Image : ClipType::Video;
-                    clip.assetId = prod.assetId;
-                    clip.path = prod.resource;
+                    clip.type = prod->isImage ? ClipType::Image : ClipType::Video;
+                    clip.assetId = prod->assetId;
+                    clip.path = prod->resource;
+                    clip.suppressEmbeddedAudio = hideAudio;
                     hasVideoClips = true;
                 }
 
@@ -681,21 +816,31 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
             }
         }
 
-        // If the playlist has clips or is declared as a track
+        if (clips.isEmpty() && leaf.dropIfEmpty)
+            continue;
+
+        if (!kindKnown && !hasVideoClips && !clips.isEmpty())
+            isAudioTrack = true;
+
         Track track;
         track.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-
-        if (isAudioTrack || (!hasVideoClips && !clips.isEmpty())) {
-            track.type = TrackType::Audio;
-            track.name = trackName.isEmpty() ? QStringLiteral("A%1").arg(project.tracks().size() + 1) : trackName;
-        } else {
-            track.type = TrackType::Video;
-            track.name = trackName.isEmpty() ? QStringLiteral("V%1").arg(project.tracks().size() + 1) : trackName;
-        }
-
+        track.type = isAudioTrack ? TrackType::Audio : TrackType::Video;
+        track.name = trackName;
+        if (isAudioTrack)
+            track.muted = hideAudio;
+        else
+            track.hidden = hideVideo;
         track.clips = clips;
-        project.tracks().append(track);
+        builtTracks.append(track);
     }
+
+    // MLT lists tracks bottom to top; Drift's track 0 is the top, with audio below all video.
+    std::reverse(builtTracks.begin(), builtTracks.end());
+    std::stable_partition(builtTracks.begin(), builtTracks.end(),
+                          [](const Track &t) { return t.type != TrackType::Audio; });
+    project.tracks() = builtTracks;
+    if (skippedOut)
+        *skippedOut = skipped;
 
     // If no tracks were found, ensure default tracks
     if (project.tracks().isEmpty()) {

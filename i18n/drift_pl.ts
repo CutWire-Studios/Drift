@@ -2685,6 +2685,10 @@
         <translation>Manipulator 3D: przełącz osie globalne/lokalne/widoku</translation>
     </message>
     <message>
+        <source>Add speed point at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add/remove bookmark at current time</source>
         <translation>Dodaj/usuń zakładkę w bieżącym czasie</translation>
     </message>
@@ -3457,6 +3461,10 @@
         <translation>Te klipy nakładają się w czasie — napisz napisy osobno</translation>
     </message>
     <message>
+        <source>Speed point added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transition curve</source>
         <translation>Krzywa przejścia</translation>
     </message>
@@ -3474,6 +3482,10 @@
     </message>
     <message>
         <source>Sticker pack removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My shapes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5375,6 +5387,74 @@
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Edit shape path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape path changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animate shape path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop animating shape path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape path animated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape path static</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete shape key</source>
+        <translation type="unfinished">Usuń klucz kształtu</translation>
+    </message>
+    <message>
+        <source>Shape path key removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This shape has no outline to edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make shape editable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape is now editable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This shape has no outline to save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved to My shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not import the SVG: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to My shapes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9249,6 +9329,30 @@
     <message>
         <source>%1 copy</source>
         <translation>Kopia %1</translation>
+    </message>
+    <message>
+        <source>Import Kdenlive / Shotcut Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive &amp; Shotcut project (*.kdenlive *.mlt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive project (*.kdenlive)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shotcut project (*.mlt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import OpenTimelineIO (.otio)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO sequence (*.otio)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save Shareable Copy</source>
@@ -18118,6 +18222,26 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Nadal otwieram projekt — spróbuj ponownie za chwilę.</translation>
     </message>
     <message numerus="yes">
+        <source>Project imported: %1. %n effect(s), transition(s) or generated clip(s) have no Drift equivalent and were left out.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>OpenTimelineIO imported: %1. %n effect(s), transition(s) or unlinked item(s) have no Drift equivalent and were left out.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>
         <translation>
             <numerusform>Wczytano plik JSON projektu, ale nie znaleziono %n pliku multimedialnego</numerusform>
@@ -18172,10 +18296,6 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Failed to open Kdenlive / MLT project</source>
         <translation>Nie udało się otworzyć projektu Kdenlive / MLT</translation>
-    </message>
-    <message>
-        <source>Kdenlive project imported: %1</source>
-        <translation>Zaimportowano projekt Kdenlive: %1</translation>
     </message>
     <message>
         <source>Failed to open DaVinci Resolve project / timeline</source>
@@ -19492,6 +19612,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Open JSON…</source>
         <translation>Otwórz JSON…</translation>
+    </message>
+    <message>
+        <source>Import Kdenlive / Shotcut project (experimental)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import OpenTimelineIO (.otio) (experimental)…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties…</source>
@@ -22095,6 +22223,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Ścięte</translation>
     </message>
     <message>
+        <source>Butt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished">Kwadrat</translation>
+    </message>
+    <message>
         <source>Opacity</source>
         <translation>Krycie</translation>
     </message>
@@ -22129,6 +22265,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>How the stroke turns a corner: sharp, rounded or cut off</source>
         <translation>Jak obrys zakręca w narożniku: ostro, zaokrąglone lub ścięte</translation>
+    </message>
+    <message>
+        <source>Cap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the stroke ends on open paths and dashes: flat, rounded or squared off</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Miter limit</source>
@@ -22337,8 +22481,120 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Zamiana kształtu zachowuje jego pozycję, rozmiar, styl i efekty.</translation>
     </message>
     <message>
+        <source>Sides</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Teeth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shape style</source>
         <translation>Styl kształtu</translation>
+    </message>
+    <message>
+        <source>Make editable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn this shape into a path you can reshape point by point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make shape editable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its size, style and effects stay; knob animation on the shape is dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit this path&apos;s points and handles in the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill rule</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Non-zero</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Even-odd</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How overlapping or nested contours are filled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Path animation: %n key(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Path animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Stop</translation>
+    </message>
+    <message>
+        <source>Animate</source>
+        <translation type="unfinished">Animuj</translation>
+    </message>
+    <message>
+        <source>Remove all path keys and keep the current outline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key the whole outline at the playhead, then edit it at other times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animate path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key at %1 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead to this key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove this key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to My shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep this shape&apos;s outline in the Shapes tab to reuse it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save shape to My shapes</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layers</source>
@@ -22385,6 +22641,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Wewnętrzny promień</translation>
     </message>
     <message>
+        <source>Sweep</source>
+        <translation type="unfinished">Zamiatanie</translation>
+    </message>
+    <message>
         <source>Head size</source>
         <translation>Rozmiar głowy</translation>
     </message>
@@ -22399,6 +22659,64 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Tail size</source>
         <translation>Rozmiar ogona</translation>
+    </message>
+</context>
+<context>
+    <name>ShapePathHintBar</name>
+    <message>
+        <source>Add points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep drawing from the selected end of the path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the segment joining the last point to the first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join the last point back to the first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Gotowe</translation>
+    </message>
+</context>
+<context>
+    <name>ShapePathOverlay</name>
+    <message>
+        <source>Move the playhead over the selected clip</source>
+        <translation type="unfinished">Przesuń głowicę odtwarzania nad zaznaczony klip</translation>
+    </message>
+    <message>
+        <source>Drawing a path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editing path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click for a corner point, drag for a smooth one. Shift snaps to 45 degrees. Click the first point to close, Enter to finish, Esc to cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag points and handles. Click a segment to add a point, double-click a point to switch corner and smooth, Alt-drag a handle to break it, Delete removes a point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This path is keyframed: edits are stored as a key at the playhead.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22418,6 +22736,26 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Add to favorites</source>
         <translation>Dodaj do ulubionych</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">Zmień nazwę</translation>
+    </message>
+    <message>
+        <source>Rename shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Usuń</translation>
+    </message>
+    <message>
+        <source>Delete shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove “%1” from My shapes? Clips already using it keep their outline.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22473,6 +22811,50 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Trapezoid</source>
         <translation>Trapez</translation>
+    </message>
+    <message>
+        <source>Pill</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation type="unfinished">Wielokąt</translation>
+    </message>
+    <message>
+        <source>Ring</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame</source>
+        <translation type="unfinished">Ramka</translation>
+    </message>
+    <message>
+        <source>Pie</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crescent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished">Linia</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished">Krzywa</translation>
+    </message>
+    <message>
+        <source>Wave</source>
+        <translation type="unfinished">Fala</translation>
+    </message>
+    <message>
+        <source>Zigzag</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Arrow</source>
@@ -22539,8 +22921,48 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Baner</translation>
     </message>
     <message>
+        <source>Gear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Badge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shield</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Teardrop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Location pin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bookmark</source>
+        <translation type="unfinished">Zakładka</translation>
+    </message>
+    <message>
+        <source>Checkmark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Basic</source>
         <translation>Podstawowe</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Arrows</source>
@@ -22579,6 +23001,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Rozmiar ogona</translation>
     </message>
     <message>
+        <source>Sweep</source>
+        <translation type="unfinished">Zamiatanie</translation>
+    </message>
+    <message>
         <source>Points</source>
         <translation>Punkty</translation>
     </message>
@@ -22586,12 +23012,40 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
 <context>
     <name>ShapesTab</name>
     <message>
+        <source>Import SVG</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SVG images (*.svg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search shapes</source>
         <translation>Szukaj kształtów</translation>
     </message>
     <message>
+        <source>Draw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw a line or custom shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an SVG file to My shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My shapes: draw or import a shape, then Save to My shapes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No shapes match “%1”.</source>
         <translation>Brak kształtów pasujących do „%1”.</translation>
+    </message>
+    <message>
+        <source>My shapes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

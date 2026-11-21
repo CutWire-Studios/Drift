@@ -167,9 +167,30 @@ Item {
         })
     }
 
-    // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML, Kdenlive/Shotcut,
-    // .mogrt, EDL, OTIO). Uncomment alongside the loadProject() routing in AppController once the
-    // readers are stable.
+    function openKdenliveProject() {
+        root.confirmIfDirty(function () {
+            var url = FileDialogs.openFile(qsTr("Import Kdenlive / Shotcut Project"),
+                                           [qsTr("Kdenlive & Shotcut project (*.kdenlive *.mlt)"),
+                                            qsTr("Kdenlive project (*.kdenlive)"),
+                                            qsTr("Shotcut project (*.mlt)")],
+                                           ["application/xml", "text/xml", "application/x-kdenlive"])
+            if (url != "")
+                EditorState.projectFile.loadKdenliveProject(url)
+        })
+    }
+
+    function openOtioTimeline() {
+        root.confirmIfDirty(function () {
+            var url = FileDialogs.openFile(qsTr("Import OpenTimelineIO (.otio)"),
+                                           [qsTr("OpenTimelineIO sequence (*.otio)")],
+                                           ["application/json", "text/plain", "application/octet-stream"])
+            if (url != "")
+                EditorState.projectFile.loadOtioTimeline(url)
+        })
+    }
+
+    // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML, .mogrt, EDL).
+    // Uncomment alongside the loadProject() routing in AppController once the readers are stable.
     //
     // function openPremiereProject() {
     //     root.confirmIfDirty(function () {
@@ -192,18 +213,6 @@ Item {
     //         EditorState.projectFile.importMogrt(url)
     // }
     //
-    // function openKdenliveProject() {
-    //     root.confirmIfDirty(function () {
-    //         var url = FileDialogs.openFile(qsTr("Import Kdenlive / Shotcut Project"),
-    //                                        [qsTr("Kdenlive & Shotcut project (*.kdenlive *.mlt)"),
-    //                                         qsTr("Kdenlive project (*.kdenlive)"),
-    //                                         qsTr("Shotcut project (*.mlt)")],
-    //                                        ["application/xml", "text/xml", "application/x-kdenlive"])
-    //         if (url != "")
-    //             EditorState.projectFile.loadKdenliveProject(url)
-    //     })
-    // }
-    //
     // function openResolveProject() {
     //     root.confirmIfDirty(function () {
     //         var url = FileDialogs.openFile(qsTr("Import DaVinci Resolve Project / FCPXML"),
@@ -223,16 +232,6 @@ Item {
     //                                        ["text/plain", "application/octet-stream"])
     //         if (url != "")
     //             EditorState.projectFile.loadEdlTimeline(url)
-    //     })
-    // }
-    //
-    // function openOtioTimeline() {
-    //     root.confirmIfDirty(function () {
-    //         var url = FileDialogs.openFile(qsTr("Import OpenTimelineIO (.otio)"),
-    //                                        [qsTr("OpenTimelineIO sequence (*.otio)")],
-    //                                        ["application/json", "text/plain", "application/octet-stream"])
-    //         if (url != "")
-    //             EditorState.projectFile.loadOtioTimeline(url)
     //     })
     // }
 
@@ -400,6 +399,8 @@ Item {
                 onPackageRequested: root.packageProject()
                 onSaveJsonRequested: root.saveProjectJson()
                 onOpenJsonRequested: root.openProjectJson()
+                onImportKdenliveRequested: root.openKdenliveProject()
+                onImportOtioRequested: root.openOtioTimeline()
                 onPropertiesRequested: projectPropertiesDialogLoader.ensure().openDialog()
                 onHealthRequested: projectHealthDialogLoader.ensure().openDialog()
             }

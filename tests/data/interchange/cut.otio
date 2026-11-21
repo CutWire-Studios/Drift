@@ -1,0 +1,59 @@
+{
+    "OTIO_SCHEMA": "Timeline.1",
+    "name": "Cut",
+    "global_start_time": {"OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 0.0},
+    "tracks": {
+        "OTIO_SCHEMA": "Stack.1",
+        "children": [
+            {
+                "OTIO_SCHEMA": "Track.1",
+                "kind": "Video",
+                "name": "V1",
+                "children": [
+                    {
+                        "OTIO_SCHEMA": "Gap.1",
+                        "source_range": {"OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {"OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 0.0},
+                            "duration": {"OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 30.0}}
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "name": "talk",
+                        "source_range": {"OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {"OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 60.0},
+                            "duration": {"OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 90.0}},
+                        "effects": [{"OTIO_SCHEMA": "LinearTimeWarp.1", "name": "speed", "time_scalar": 2.0}],
+                        "media_references": {
+                            "DEFAULT_MEDIA": {"OTIO_SCHEMA": "ExternalReference.1", "target_url": "media/talk.mp4"}
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    }
+                ]
+            },
+            {
+                "OTIO_SCHEMA": "Track.1",
+                "kind": "Audio",
+                "name": "A1",
+                "children": [
+                    {
+                        "OTIO_SCHEMA": "Clip.1",
+                        "name": "talk audio",
+                        "source_range": {"OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {"OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 0.0},
+                            "duration": {"OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 60.0}},
+                        "media_reference": {"OTIO_SCHEMA": "ExternalReference.1", "target_url": "media/talk.mp4"}
+                    },
+                    {"OTIO_SCHEMA": "Transition.1", "name": "dissolve"},
+                    {
+                        "OTIO_SCHEMA": "Clip.1",
+                        "name": "offline",
+                        "source_range": {"OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {"OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 0.0},
+                            "duration": {"OTIO_SCHEMA": "RationalTime.1", "rate": 30.0, "value": 30.0}},
+                        "media_reference": {"OTIO_SCHEMA": "MissingReference.1"}
+                    }
+                ]
+            }
+        ]
+    }
+}

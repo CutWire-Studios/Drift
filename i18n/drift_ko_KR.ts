@@ -2679,6 +2679,10 @@
         <translation>3D 기즈모: 월드/로컬/뷰 축 순환</translation>
     </message>
     <message>
+        <source>Add speed point at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add/remove bookmark at current time</source>
         <translation>현재 시점에 책갈피 추가/제거</translation>
     </message>
@@ -3437,6 +3441,10 @@
         <translation>이 클립들은 시간이 겹칩니다 — 각각 따로 캡션을 만드세요</translation>
     </message>
     <message>
+        <source>Speed point added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transition curve</source>
         <translation>전환 곡선</translation>
     </message>
@@ -3452,6 +3460,10 @@
     </message>
     <message>
         <source>Sticker pack removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My shapes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5333,6 +5345,74 @@
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Edit shape path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape path changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animate shape path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop animating shape path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape path animated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape path static</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete shape key</source>
+        <translation type="unfinished">도형 키 삭제</translation>
+    </message>
+    <message>
+        <source>Shape path key removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This shape has no outline to edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make shape editable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape is now editable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This shape has no outline to save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved to My shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not import the SVG: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to My shapes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9167,6 +9247,30 @@
     <message>
         <source>%1 copy</source>
         <translation>%1 복사본</translation>
+    </message>
+    <message>
+        <source>Import Kdenlive / Shotcut Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive &amp; Shotcut project (*.kdenlive *.mlt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive project (*.kdenlive)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shotcut project (*.mlt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import OpenTimelineIO (.otio)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO sequence (*.otio)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save Shareable Copy</source>
@@ -17951,6 +18055,22 @@ If playback stutters, try another.</source>
         <translation>아직 프로젝트를 여는 중입니다 — 잠시 후 다시 시도하세요.</translation>
     </message>
     <message numerus="yes">
+        <source>Project imported: %1. %n effect(s), transition(s) or generated clip(s) have no Drift equivalent and were left out.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>OpenTimelineIO imported: %1. %n effect(s), transition(s) or unlinked item(s) have no Drift equivalent and were left out.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>
         <translation>
             <numerusform>프로젝트 JSON을 로드했으나, 미디어 파일 %n개를 찾을 수 없습니다</numerusform>
@@ -18003,10 +18123,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Failed to open Kdenlive / MLT project</source>
         <translation>Kdenlive / MLT 프로젝트를 열지 못했습니다</translation>
-    </message>
-    <message>
-        <source>Kdenlive project imported: %1</source>
-        <translation>Kdenlive 프로젝트 가져옴: %1</translation>
     </message>
     <message>
         <source>Failed to open DaVinci Resolve project / timeline</source>
@@ -19308,6 +19424,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Open JSON…</source>
         <translation>JSON 열기…</translation>
+    </message>
+    <message>
+        <source>Import Kdenlive / Shotcut project (experimental)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import OpenTimelineIO (.otio) (experimental)…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties…</source>
@@ -21905,6 +22029,14 @@ If playback stutters, try another.</source>
         <translation>베벨</translation>
     </message>
     <message>
+        <source>Butt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished">정사각형</translation>
+    </message>
+    <message>
         <source>Opacity</source>
         <translation>불투명도</translation>
     </message>
@@ -21939,6 +22071,14 @@ If playback stutters, try another.</source>
     <message>
         <source>How the stroke turns a corner: sharp, rounded or cut off</source>
         <translation>선이 모서리에서 꺾이는 방식: 뾰족하게, 둥글게 또는 각지게 잘라냄</translation>
+    </message>
+    <message>
+        <source>Cap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the stroke ends on open paths and dashes: flat, rounded or squared off</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Miter limit</source>
@@ -22147,8 +22287,118 @@ If playback stutters, try another.</source>
         <translation>도형을 바꿔도 위치, 크기, 스타일 및 효과는 유지됩니다.</translation>
     </message>
     <message>
+        <source>Sides</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Teeth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shape style</source>
         <translation>도형 스타일</translation>
+    </message>
+    <message>
+        <source>Make editable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn this shape into a path you can reshape point by point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make shape editable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its size, style and effects stay; knob animation on the shape is dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit this path&apos;s points and handles in the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill rule</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Non-zero</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Even-odd</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How overlapping or nested contours are filled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Path animation: %n key(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Path animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">중지</translation>
+    </message>
+    <message>
+        <source>Animate</source>
+        <translation type="unfinished">애니메이션</translation>
+    </message>
+    <message>
+        <source>Remove all path keys and keep the current outline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key the whole outline at the playhead, then edit it at other times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animate path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key at %1 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead to this key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove this key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to My shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep this shape&apos;s outline in the Shapes tab to reuse it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save shape to My shapes</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layers</source>
@@ -22195,6 +22445,10 @@ If playback stutters, try another.</source>
         <translation>내부 반경</translation>
     </message>
     <message>
+        <source>Sweep</source>
+        <translation type="unfinished">스윕</translation>
+    </message>
+    <message>
         <source>Head size</source>
         <translation>머리 크기</translation>
     </message>
@@ -22209,6 +22463,64 @@ If playback stutters, try another.</source>
     <message>
         <source>Tail size</source>
         <translation>꼬리 크기</translation>
+    </message>
+</context>
+<context>
+    <name>ShapePathHintBar</name>
+    <message>
+        <source>Add points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep drawing from the selected end of the path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the segment joining the last point to the first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join the last point back to the first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+</context>
+<context>
+    <name>ShapePathOverlay</name>
+    <message>
+        <source>Move the playhead over the selected clip</source>
+        <translation type="unfinished">선택한 클립 위로 재생 헤드를 이동하세요</translation>
+    </message>
+    <message>
+        <source>Drawing a path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editing path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click for a corner point, drag for a smooth one. Shift snaps to 45 degrees. Click the first point to close, Enter to finish, Esc to cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag points and handles. Click a segment to add a point, double-click a point to switch corner and smooth, Alt-drag a handle to break it, Delete removes a point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This path is keyframed: edits are stored as a key at the playhead.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22228,6 +22540,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Add to favorites</source>
         <translation>즐겨찾기에 추가</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">이름 변경</translation>
+    </message>
+    <message>
+        <source>Rename shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">삭제</translation>
+    </message>
+    <message>
+        <source>Delete shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove “%1” from My shapes? Clips already using it keep their outline.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22283,6 +22615,50 @@ If playback stutters, try another.</source>
     <message>
         <source>Trapezoid</source>
         <translation>사다리꼴</translation>
+    </message>
+    <message>
+        <source>Pill</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation type="unfinished">다각형</translation>
+    </message>
+    <message>
+        <source>Ring</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame</source>
+        <translation type="unfinished">프레임</translation>
+    </message>
+    <message>
+        <source>Pie</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crescent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished">줄</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished">곡선</translation>
+    </message>
+    <message>
+        <source>Wave</source>
+        <translation type="unfinished">웨이브</translation>
+    </message>
+    <message>
+        <source>Zigzag</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Arrow</source>
@@ -22349,8 +22725,48 @@ If playback stutters, try another.</source>
         <translation>배너</translation>
     </message>
     <message>
+        <source>Gear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Badge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shield</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Teardrop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Location pin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bookmark</source>
+        <translation type="unfinished">책갈피</translation>
+    </message>
+    <message>
+        <source>Checkmark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Basic</source>
         <translation>기본</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Arrows</source>
@@ -22389,6 +22805,10 @@ If playback stutters, try another.</source>
         <translation>꼬리 크기</translation>
     </message>
     <message>
+        <source>Sweep</source>
+        <translation type="unfinished">스윕</translation>
+    </message>
+    <message>
         <source>Points</source>
         <translation>점</translation>
     </message>
@@ -22396,12 +22816,40 @@ If playback stutters, try another.</source>
 <context>
     <name>ShapesTab</name>
     <message>
+        <source>Import SVG</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SVG images (*.svg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search shapes</source>
         <translation>도형 검색</translation>
     </message>
     <message>
+        <source>Draw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw a line or custom shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an SVG file to My shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My shapes: draw or import a shape, then Save to My shapes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No shapes match “%1”.</source>
         <translation>“%1”과(와) 일치하는 도형이 없습니다.</translation>
+    </message>
+    <message>
+        <source>My shapes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

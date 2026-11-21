@@ -13,6 +13,8 @@ Rectangle {
     signal packageRequested()
     signal saveJsonRequested()
     signal openJsonRequested()
+    signal importKdenliveRequested()
+    signal importOtioRequested()
     signal propertiesRequested()
     signal healthRequested()
 
@@ -106,13 +108,13 @@ Rectangle {
                 onPackageRequested: projectsButton.packageRequested()
                 onSaveJsonRequested: projectsButton.saveJsonRequested()
                 onOpenJsonRequested: projectsButton.openJsonRequested()
-                // Disabled: external project imports. Uncomment with the open*() functions above.
+                onImportKdenliveRequested: projectsButton.importKdenliveRequested()
+                onImportOtioRequested: projectsButton.importOtioRequested()
+                // Disabled: external project imports. Uncomment with the open*() functions in EditorHeader.
                 // onImportPremiereRequested: root.openPremiereProject()
                 // onImportMogrtRequested: root.openMogrt()
-                // onImportKdenliveRequested: root.openKdenliveProject()
                 // onImportResolveRequested: root.openResolveProject()
                 // onImportEdlRequested: root.openEdlTimeline()
-                // onImportOtioRequested: root.openOtioTimeline()
                 onPropertiesRequested: projectsButton.propertiesRequested()
                 onHealthRequested: projectsButton.healthRequested()
             }

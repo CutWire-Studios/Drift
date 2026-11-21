@@ -15,11 +15,12 @@ bool isKdenliveProject(const QString &filePath);
 bool isKdenliveData(const QByteArray &data);
 
 // Reads a Kdenlive (.kdenlive) or Shotcut (.mlt) project from disk and imports it as a drift::Project.
-std::optional<Project> readProject(const QString &filePath, QString *error = nullptr);
+// skippedOut receives how many effects, transitions and generated clips had no Drift equivalent.
+std::optional<Project> readProject(const QString &filePath, QString *error = nullptr, int *skippedOut = nullptr);
 
 // Reads raw project XML data (either gzipped or uncompressed) and converts it to a drift::Project.
 // sourceDir is used to attempt relative media resolution if original paths do not exist.
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir = QString(),
-                                      QString *error = nullptr);
+                                      QString *error = nullptr, int *skippedOut = nullptr);
 
 } // namespace drift::kdenlive

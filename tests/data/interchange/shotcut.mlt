@@ -1,0 +1,82 @@
+<?xml version="1.0" standalone="no"?>
+<mlt LC_NUMERIC="C" version="7.22.0" title="Shotcut version 24.02" producer="main_bin" root="@ROOT@">
+  <profile description="HD 1080p 25 fps" width="1920" height="1080" progressive="1" sample_aspect_num="1" sample_aspect_den="1" display_aspect_num="16" display_aspect_den="9" frame_rate_num="25" frame_rate_den="1" colorspace="709"/>
+  <playlist id="main_bin">
+    <property name="xml_retain">1</property>
+  </playlist>
+  <producer id="black" in="00:00:00.000" out="00:00:20.000">
+    <property name="length">00:00:20.040</property>
+    <property name="resource">0</property>
+    <property name="mlt_service">color</property>
+  </producer>
+  <playlist id="background">
+    <entry producer="black" in="00:00:00.000" out="00:00:20.000"/>
+  </playlist>
+  <chain id="chain0" out="00:01:00.000">
+    <property name="length">1501</property>
+    <property name="resource">media/talk.mp4</property>
+    <property name="mlt_service">avformat-novalidate</property>
+    <property name="shotcut:caption">talk.mp4</property>
+    <filter id="filter0">
+      <property name="mlt_service">brightness</property>
+    </filter>
+  </chain>
+  <chain id="chain1" out="00:01:00.000">
+    <property name="length">1501</property>
+    <property name="resource">media/talk.mp4</property>
+    <property name="mlt_service">avformat-novalidate</property>
+  </chain>
+  <producer id="producer0" in="00:00:00.000" out="00:00:29.960">
+    <property name="length">750</property>
+    <property name="resource">2:media/talk.mp4</property>
+    <property name="mlt_service">timewarp</property>
+    <property name="warp_speed">2</property>
+    <property name="warp_resource">media/talk.mp4</property>
+  </producer>
+  <producer id="color0" in="00:00:00.000" out="00:00:00.960">
+    <property name="resource">#ff000000</property>
+    <property name="mlt_service">color</property>
+  </producer>
+  <playlist id="playlist0">
+    <property name="shotcut:video">1</property>
+    <property name="shotcut:name">V1</property>
+    <entry producer="chain0" in="00:00:02.000" out="00:00:05.960"/>
+    <blank length="00:00:01.000"/>
+    <entry producer="color0" in="00:00:00.000" out="00:00:00.960"/>
+    <entry producer="producer0" in="00:00:01.000" out="00:00:02.960"/>
+  </playlist>
+  <playlist id="playlist1">
+    <property name="shotcut:video">1</property>
+    <property name="shotcut:name">V2</property>
+    <entry producer="chain1" in="00:00:10.000" out="00:00:10.960"/>
+  </playlist>
+  <chain id="chain2" out="00:00:30.000">
+    <property name="length">751</property>
+    <property name="resource">media/music.wav</property>
+    <property name="mlt_service">avformat-novalidate</property>
+  </chain>
+  <playlist id="playlist2">
+    <property name="shotcut:audio">1</property>
+    <property name="shotcut:name">A1</property>
+    <entry producer="chain2" in="00:00:00.000" out="00:00:09.960"/>
+  </playlist>
+  <tractor id="tractor0" title="Shotcut version 24.02" in="00:00:00.000" out="00:00:09.960">
+    <property name="shotcut">1</property>
+    <track producer="background"/>
+    <track producer="playlist0"/>
+    <track producer="playlist1"/>
+    <track producer="playlist2" hide="video"/>
+    <transition id="transition0">
+      <property name="a_track">0</property>
+      <property name="b_track">1</property>
+      <property name="mlt_service">mix</property>
+      <property name="always_active">1</property>
+    </transition>
+    <transition id="transition1">
+      <property name="a_track">0</property>
+      <property name="b_track">1</property>
+      <property name="mlt_service">frei0r.cairoblend</property>
+      <property name="always_active">1</property>
+    </transition>
+  </tractor>
+</mlt>

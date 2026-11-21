@@ -21,6 +21,8 @@
 #include "core/project/Project.h"
 #include "core/project/clip/Stabilize.h"
 #include "core/shapes/ShapePath.h"
+#include "core/interchange/KdenliveReader.h"
+#include "core/interchange/OtioReader.h"
 #include "core/interchange/subtitles/SrtIO.h"
 #include "core/interchange/subtitles/VttIO.h"
 #include "core/project/SubtitleCue.h"
@@ -268,6 +270,9 @@ private slots:
     void closeGapOnEmptyTracksMovesEveryFreeTrack();
     void clipLabelsRoundTripAndNumberCopies();
     void diffProjectsReportsClipChanges();
+    void shotcutImportMapsTracksSpeedAndRoot();
+    void kdenliveImportExpandsNestedTractors();
+    void otioImportMapsTracksAndTimeWarp();
 };
 
 void CoreTest::timeConversion()
@@ -8649,7 +8654,8 @@ void CoreTest::imageSequenceDetection()
     QVERIFY(dir.isValid());
     auto touch = [&](const QString &name) -> QString {
         QFile f(dir.filePath(name));
-        f.open(QIODevice::WriteOnly);
+        if (!f.open(QIODevice::WriteOnly))
+            QTest::qFail("cannot create fixture file", __FILE__, __LINE__);
         return dir.filePath(name);
     };
     auto fileList = [&](const QString &fmt, int from, int to) {
@@ -9168,6 +9174,162 @@ void CoreTest::fitCropInsideRotation()
     // Unknown source size: identity.
     QVERIFY(sameBox(fitCropInsideRotation(QRectF(0, 0, 1, 1), 5, 0, 0), QRectF(0, 0, 1, 1)));
     QVERIFY(sourceFrameCovered(QRectF(0, 0, 1, 1), 5, 0, 0));
+}
+
+namespace {
+
+// Fixtures reference media/talk.mp4 and media/music.wav; the readers only check they exist.
+bool makeInterchangeMedia(const QTemporaryDir &dir)
+{
+    if (!QDir(dir.path()).mkpath(QStringLiteral("media")))
+        return false;
+    for (const char *name : {"media/talk.mp4", "media/music.wav"}) {
+        QFile f(dir.filePath(QLatin1String(name)));
+        if (!f.open(QIODevice::WriteOnly))
+            return false;
+    }
+    return true;
+}
+
+QByteArray interchangeFixture(const QString &name, const QString &root)
+{
+    QFile f(QStringLiteral(DRIFT_TEST_DATA_DIR "/interchange/") + name);
+    if (!f.open(QIODevice::ReadOnly))
+        return {};
+    return f.readAll().replace("@ROOT@", root.toUtf8());
+}
+
+} // namespace
+
+void CoreTest::shotcutImportMapsTracksSpeedAndRoot()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(makeInterchangeMedia(dir));
+    const QString root = QFileInfo(dir.path()).canonicalFilePath();
+
+    QString error;
+    int skipped = -1;
+    const auto proj = drift::kdenlive::readProjectData(interchangeFixture(QStringLiteral("shotcut.mlt"), root),
+                                                       QString(), &error, &skipped);
+    QVERIFY2(proj.has_value(), qPrintable(error));
+
+    // The brightness filter and the colour clip; compositing transitions are structural.
+    QCOMPARE(skipped, 2);
+    QCOMPARE(proj->fps(), 25);
+
+    // Background track dropped; MLT's bottom-to-top order flipped, audio last.
+    const QList<drift::Track> &tracks = proj->tracks();
+    QCOMPARE(tracks.size(), 3);
+    QCOMPARE(tracks[0].name, QStringLiteral("V2"));
+    QCOMPARE(tracks[1].name, QStringLiteral("V1"));
+    QCOMPARE(tracks[2].name, QStringLiteral("A1"));
+    QCOMPARE(tracks[2].type, drift::TrackType::Audio);
+    QVERIFY(!tracks[2].muted);
+
+    const QList<drift::Clip> &v1 = tracks[1].clips;
+    QCOMPARE(v1.size(), 2);
+    QCOMPARE(v1[0].type, drift::ClipType::Video);
+    QCOMPARE(v1[0].timelineStart, drift::TimeUs(0));
+    QCOMPARE(v1[0].srcIn, drift::TimeUs(2000000));
+    QCOMPARE(v1[0].timelineDuration, drift::TimeUs(4000000));
+    QCOMPARE(v1[0].path, root + QStringLiteral("/media/talk.mp4"));
+
+    // 1 s blank + 1 s skipped colour clip keep the timewarp clip at 6 s.
+    QCOMPARE(v1[1].timelineStart, drift::TimeUs(6000000));
+    QCOMPARE(v1[1].timelineDuration, drift::TimeUs(2000000));
+    QCOMPARE(v1[1].speed, 2.0);
+    QCOMPARE(v1[1].srcIn, drift::TimeUs(2000000));
+    QCOMPARE(v1[1].srcOut, drift::TimeUs(6000000));
+    QCOMPARE(v1[1].path, root + QStringLiteral("/media/talk.mp4"));
+
+    QCOMPARE(tracks[2].clips.size(), 1);
+    QCOMPARE(tracks[2].clips[0].type, drift::ClipType::Audio);
+
+    // Three chains/producers of talk.mp4 share one bin asset.
+    QCOMPARE(proj->assets().size(), 2);
+    QCOMPARE(v1[0].assetId, v1[1].assetId);
+    QCOMPARE(v1[0].assetId, tracks[0].clips[0].assetId);
+}
+
+void CoreTest::kdenliveImportExpandsNestedTractors()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(makeInterchangeMedia(dir));
+    const QString root = QFileInfo(dir.path()).canonicalFilePath();
+
+    QString error;
+    int skipped = -1;
+    const auto proj = drift::kdenlive::readProjectData(interchangeFixture(QStringLiteral("kdenlive23.kdenlive"), root),
+                                                       QString(), &error, &skipped);
+    QVERIFY2(proj.has_value(), qPrintable(error));
+
+    // Only the fade; Kdenlive's internal_added track filters and mixes are not user effects.
+    QCOMPARE(skipped, 1);
+
+    // project tractor -> sequence -> three track tractors; their empty mix playlists are dropped.
+    const QList<drift::Track> &tracks = proj->tracks();
+    QCOMPARE(tracks.size(), 3);
+    QCOMPARE(tracks[0].type, drift::TrackType::Video);
+    QVERIFY(tracks[0].hidden);
+    QVERIFY(tracks[0].clips.isEmpty());
+
+    QCOMPARE(tracks[1].type, drift::TrackType::Video);
+    QCOMPARE(tracks[1].clips.size(), 1);
+    const drift::Clip &video = tracks[1].clips[0];
+    QCOMPARE(video.type, drift::ClipType::Video);
+    // The sound is the audio track's entry, so the picture must not play it again.
+    QVERIFY(video.suppressEmbeddedAudio);
+    QCOMPARE(video.srcIn, drift::TimeUs(1000000));
+    QCOMPARE(video.timelineDuration, drift::TimeUs(3000333));
+    QCOMPARE(video.path, root + QStringLiteral("/media/talk.mp4"));
+
+    QCOMPARE(tracks[2].type, drift::TrackType::Audio);
+    QCOMPARE(tracks[2].clips.size(), 1);
+    QCOMPARE(tracks[2].clips[0].type, drift::ClipType::Audio);
+    QCOMPARE(tracks[2].clips[0].assetId, video.assetId);
+    QCOMPARE(proj->assets().size(), 1);
+}
+
+void CoreTest::otioImportMapsTracksAndTimeWarp()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(makeInterchangeMedia(dir));
+    const QString otioPath = dir.filePath(QStringLiteral("cut.otio"));
+    QVERIFY(QFile::copy(QStringLiteral(DRIFT_TEST_DATA_DIR "/interchange/cut.otio"), otioPath));
+
+    QString error;
+    int skipped = -1;
+    const auto proj = drift::otio::readProject(otioPath, &error, &skipped);
+    QVERIFY2(proj.has_value(), qPrintable(error));
+
+    // The transition and the clip with a MissingReference.
+    QCOMPARE(skipped, 2);
+    QCOMPARE(proj->fps(), 30);
+
+    const QList<drift::Track> &tracks = proj->tracks();
+    QCOMPARE(tracks.size(), 2);
+    QCOMPARE(tracks[0].type, drift::TrackType::Video);
+    QCOMPARE(tracks[1].type, drift::TrackType::Audio);
+
+    QCOMPARE(tracks[0].clips.size(), 1);
+    const drift::Clip &video = tracks[0].clips[0];
+    QCOMPARE(video.type, drift::ClipType::Video);
+    QCOMPARE(video.timelineStart, drift::TimeUs(1000000));
+    QCOMPARE(video.timelineDuration, drift::TimeUs(3000000));
+    QCOMPARE(video.srcIn, drift::TimeUs(2000000));
+    QCOMPARE(video.srcOut, drift::TimeUs(8000000));
+    QCOMPARE(video.speed, 2.0);
+    // Relative target_url resolves against the .otio's folder, keeping its subdirectory.
+    QCOMPARE(video.path, QDir::cleanPath(dir.filePath(QStringLiteral("media/talk.mp4"))));
+
+    QCOMPARE(tracks[1].clips.size(), 1);
+    QCOMPARE(tracks[1].clips[0].type, drift::ClipType::Audio);
+    QCOMPARE(tracks[1].clips[0].assetId, video.assetId);
+    QCOMPARE(proj->assets().size(), 1);
+    QCOMPARE(proj->assets().cbegin().value().kind, drift::MediaKind::Video);
 }
 
 QTEST_MAIN(CoreTest)

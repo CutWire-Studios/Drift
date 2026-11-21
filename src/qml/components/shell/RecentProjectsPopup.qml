@@ -17,14 +17,14 @@ Popup {
     signal packageRequested()
     signal saveJsonRequested()
     signal openJsonRequested()
-    // Disabled: external project imports need more fixing before shipping. Re-enable the signals
-    // and ActionRows below together with the loadProject() routing in AppController.
+    signal importKdenliveRequested()
+    signal importOtioRequested()
+    // Disabled: these external project imports need more fixing before shipping. Re-enable the
+    // signals and ActionRows below together with the loadProject() routing in AppController.
     // signal importPremiereRequested()
     // signal importMogrtRequested()
-    // signal importKdenliveRequested()
     // signal importResolveRequested()
     // signal importEdlRequested()
-    // signal importOtioRequested()
     signal propertiesRequested()
     signal healthRequested()
 
@@ -251,8 +251,22 @@ Popup {
             onTriggered: root.openJsonRequested()
         }
 
-        // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML,
-        // Kdenlive/Shotcut, .mogrt, EDL, OTIO). Uncomment to re-enable once the readers are stable.
+        RecentProjectsActionRow {
+            popup: root
+            glyph: Theme.icons.film
+            text: qsTr("Import Kdenlive / Shotcut project (experimental)…")
+            onTriggered: root.importKdenliveRequested()
+        }
+
+        RecentProjectsActionRow {
+            popup: root
+            glyph: Theme.icons.listTree
+            text: qsTr("Import OpenTimelineIO (.otio) (experimental)…")
+            onTriggered: root.importOtioRequested()
+        }
+
+        // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML, .mogrt, EDL).
+        // Uncomment to re-enable once the readers are stable.
         // ActionRow {
         //     glyph: Theme.icons.film
         //     text: qsTr("Import Premiere project…")
@@ -267,12 +281,6 @@ Popup {
         //
         // ActionRow {
         //     glyph: Theme.icons.film
-        //     text: qsTr("Import Kdenlive / Shotcut project…")
-        //     onTriggered: root.importKdenliveRequested()
-        // }
-        //
-        // ActionRow {
-        //     glyph: Theme.icons.film
         //     text: qsTr("Import DaVinci Resolve project / FCPXML…")
         //     onTriggered: root.importResolveRequested()
         // }
@@ -281,12 +289,6 @@ Popup {
         //     glyph: Theme.icons.list
         //     text: qsTr("Import Edit Decision List (.edl)…")
         //     onTriggered: root.importEdlRequested()
-        // }
-        //
-        // ActionRow {
-        //     glyph: Theme.icons.share2
-        //     text: qsTr("Import OpenTimelineIO (.otio)…")
-        //     onTriggered: root.importOtioRequested()
         // }
 
         RecentProjectsActionRow {

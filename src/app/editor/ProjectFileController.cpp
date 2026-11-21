@@ -1044,7 +1044,8 @@ void ProjectFileController::loadKdenliveProject(const QUrl &url)
     }
 
     QString readError;
-    const std::optional<drift::Project> proj = drift::kdenlive::readProject(path, &readError);
+    int skipped = 0;
+    const std::optional<drift::Project> proj = drift::kdenlive::readProject(path, &readError, &skipped);
     if (!proj) {
         m_app->setLastMessage(readError.isEmpty() ? tr("Failed to open Kdenlive / MLT project") : readError,
                        QStringLiteral("error"));
@@ -1068,7 +1069,13 @@ void ProjectFileController::loadKdenliveProject(const QUrl &url)
     setDirty(true);
     deleteRecoveryFile();
     m_app->setProjectLayoutChosen(true);
-    m_app->setLastMessage(tr("Kdenlive project imported: %1").arg(proj->name()), QStringLiteral("success"));
+    if (skipped > 0)
+        m_app->setLastMessage(tr("Project imported: %1. %n effect(s), transition(s) or generated clip(s) have no Drift "
+                                 "equivalent and were left out.", nullptr, skipped)
+                                  .arg(proj->name()),
+                              QStringLiteral("warning"));
+    else
+        m_app->setLastMessage(tr("Project imported: %1").arg(proj->name()), QStringLiteral("success"));
 }
 
 void ProjectFileController::loadResolveProject(const QUrl &url)
@@ -1149,7 +1156,8 @@ void ProjectFileController::loadOtioTimeline(const QUrl &url)
     }
 
     QString readError;
-    const std::optional<drift::Project> proj = drift::otio::readProject(path, &readError);
+    int skipped = 0;
+    const std::optional<drift::Project> proj = drift::otio::readProject(path, &readError, &skipped);
     if (!proj) {
         m_app->setLastMessage(readError.isEmpty() ? tr("Failed to open OpenTimelineIO (.otio) sequence") : readError,
                        QStringLiteral("error"));
@@ -1171,7 +1179,13 @@ void ProjectFileController::loadOtioTimeline(const QUrl &url)
     setDirty(true);
     deleteRecoveryFile();
     m_app->setProjectLayoutChosen(true);
-    m_app->setLastMessage(tr("OpenTimelineIO imported: %1").arg(proj->name()), QStringLiteral("success"));
+    if (skipped > 0)
+        m_app->setLastMessage(tr("OpenTimelineIO imported: %1. %n effect(s), transition(s) or unlinked item(s) have no "
+                                 "Drift equivalent and were left out.", nullptr, skipped)
+                                  .arg(proj->name()),
+                              QStringLiteral("warning"));
+    else
+        m_app->setLastMessage(tr("OpenTimelineIO imported: %1").arg(proj->name()), QStringLiteral("success"));
 }
 
 void ProjectFileController::packageProject(const QUrl &url)
