@@ -43,29 +43,6 @@ cleanup:
 modules:
   - shared-modules/lua5.4/lua-5.4.json
 
-  # Headers only. Drift does not link ONNX Runtime — it dlopens whichever build the user
-  # installed from the Acceleration category, so the app ships none and neither does this
-  # manifest. The library in this archive is deliberately discarded. Built with
-  # -DDRIFT_FETCH_ONNXRUNTIME=OFF so the sandboxed build never downloads anything itself.
-  - name: onnxruntime-headers
-    buildsystem: simple
-    build-commands:
-      - install -d ${FLATPAK_DEST}/include
-      - cp -a include/. ${FLATPAK_DEST}/include/
-    sources:
-      - type: archive
-        url: https://github.com/microsoft/onnxruntime/releases/download/v1.27.0/onnxruntime-linux-x64-1.27.0.tgz
-        sha256: 547e40a48f1fe73e3f812d7c88a948612c23f896b91e4e2ee1e232d7b468246f
-        strip-components: 1
-        only-arches:
-          - x86_64
-      - type: archive
-        url: https://github.com/microsoft/onnxruntime/releases/download/v1.27.0/onnxruntime-linux-aarch64-1.27.0.tgz
-        sha256: 3e4d83ac06924a32a07b6d7f91ce6f852876153fc0bbdf931bf517a140bfbe48
-        strip-components: 1
-        only-arches:
-          - aarch64
-
   # libnuma, for the AMD AI engine only. ROCm comes from the host's /opt through a user override
   # (see the AMD engine's note in OrtRuntime.cpp), and everything else ROCm needs is in the runtime
   # or the GL extension (libdrm_amdgpu) — this is the one library missing. Only the library is
@@ -137,7 +114,6 @@ modules:
         -DDRIFT_SYSTEM_LUA=ON
         -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
         -DDRIFT_BUNDLE_CORE_PACKAGES_ONLY=ON
-        -DONNXRUNTIME_ROOT=/app
         -DDRIFT_FETCH_JUCE=OFF
         -DDRIFT_JUCE_DIR=juce
         -DDRIFT_UPDATE_FEED_URL=
