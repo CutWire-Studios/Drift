@@ -15,7 +15,8 @@ const QString kRoot = QStringLiteral(DRIFT_TEST_DATA_DIR "/forge");
 ForgeDoc load(const QString &name)
 {
     QFile f(kRoot + "/" + name + "/forge.json");
-    Q_ASSERT(f.open(QIODevice::ReadOnly));
+    if (!f.open(QIODevice::ReadOnly))
+        qFatal("cannot open %s", qPrintable(f.fileName()));
     QString error;
     const ForgeDoc doc = ForgeDoc::fromJsonText(f.readAll(), &error);
     Q_ASSERT(error.isEmpty());
