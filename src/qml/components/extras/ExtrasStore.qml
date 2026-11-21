@@ -22,6 +22,8 @@ Item {
 
     property string pendingRemovalId: ""
     property string pendingRemovalName: ""
+    property var downloadAllPlan: ({})
+    readonly property bool canDownloadAll: rows.some(r => isSelectable(r))
 
     signal showRequested()
 
@@ -199,6 +201,12 @@ Item {
         return false
     }
 
+    function requestDownloadAll() {
+        const ids = rows.filter(r => isSelectable(r)).map(r => r.id)
+        downloadAllPlan = Addons.planInstall(ids)
+        confirmDownloadAll.open()
+    }
+
     function requestRemoval(id, name) {
         pendingRemovalId = id
         pendingRemovalName = name
@@ -253,6 +261,24 @@ Item {
             root.pendingRemovalId = ""
         }
         onRejected: root.pendingRemovalId = ""
+    }
+
+    ThemedDialog {
+        id: confirmDownloadAll
+        title: qsTr("Download all extras?")
+        acceptText: qsTr("Download")
+        preferredWidth: Theme.dialogWidthSm
+
+        contentItem: ThemedLabel {
+            width: parent ? parent.width : Theme.dialogWidthSm
+            wrapMode: Text.WordWrap
+            size: "sm"
+            text: qsTr("%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.",
+                       "", root.downloadAllPlan.count || 0)
+                  .arg(DownloadFormat.formatBytes(root.downloadAllPlan.downloadSize || 0))
+        }
+
+        onAccepted: Addons.installMany(root.downloadAllPlan.ids || [])
     }
 
     UserPackageImporter { id: importer }
@@ -443,6 +469,16 @@ Item {
                 ThemedButton {
                     width: parent.width
                     variant: "ghost"
+                    glyph: Theme.icons.download
+                    text: qsTr("Download all…")
+                    tooltip: qsTr("Install every add-on so Drift works offline")
+                    enabled: root.canDownloadAll
+                    onClicked: root.requestDownloadAll()
+                }
+
+                ThemedButton {
+                    width: parent.width
+                    variant: "ghost"
                     glyph: Theme.icons.upload
                     text: qsTr("Install from file…")
                     onClicked: root.importUserPackage("")
@@ -480,9 +516,17 @@ Item {
                     spacing: Theme.spacingMd
 
                     SearchBox {
-                        width: parent.width - uploadButton.width - parent.spacing
+                        width: parent.width - uploadButton.width - downloadAllButton.width - parent.spacing * 2
                         text: root.searchText
                         onTextEdited: root.searchText = text
+                    }
+                    IconButton {
+                        id: downloadAllButton
+                        anchors.verticalCenter: parent.verticalCenter
+                        glyph: Theme.icons.download
+                        tooltip: qsTr("Download all…")
+                        enabled: root.canDownloadAll
+                        onClicked: root.requestDownloadAll()
                     }
                     IconButton {
                         id: uploadButton

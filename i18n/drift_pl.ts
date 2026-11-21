@@ -10768,12 +10768,36 @@
         <translation>„%1” i pobrane dane zostaną usunięte. Możesz zainstalować je ponownie później.</translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation>Pobrać wszystkie dodatki?</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Pobierz</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation>
+            <numerusform>Zostanie pobrany %n dodatek, łącznie %1. Po instalacji wszystko w Drift działa bez połączenia z internetem.</numerusform>
+            <numerusform>Zostaną pobrane %n dodatki, łącznie %1. Po instalacji wszystko w Drift działa bez połączenia z internetem.</numerusform>
+            <numerusform>Zostanie pobranych %n dodatków, łącznie %1. Po instalacji wszystko w Drift działa bez połączenia z internetem.</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation>Szukaj dodatków</translation>
     </message>
     <message>
         <source>Clear search</source>
         <translation>Wyczyść wyszukiwanie</translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation>Pobierz wszystko…</translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
+        <translation>Zainstaluj wszystkie dodatki, aby Drift działał offline</translation>
     </message>
     <message>
         <source>Install from file…</source>

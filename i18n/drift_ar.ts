@@ -10903,12 +10903,39 @@
         <translation>ستُحذف “%1” وبياناتها المنزلة. يمكنك تثبيتها مجددًا لاحقًا.</translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation>تنزيل كل الإضافات؟</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>تنزيل</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation>
+            <numerusform>سيتم تنزيل %n إضافة، بحجم إجمالي %1. بعد تثبيتها، يعمل كل شيء في Drift دون اتصال بالإنترنت.</numerusform>
+            <numerusform>سيتم تنزيل %n إضافة، بحجم إجمالي %1. بعد تثبيتها، يعمل كل شيء في Drift دون اتصال بالإنترنت.</numerusform>
+            <numerusform>سيتم تنزيل %n إضافة، بحجم إجمالي %1. بعد تثبيتها، يعمل كل شيء في Drift دون اتصال بالإنترنت.</numerusform>
+            <numerusform>سيتم تنزيل %n إضافة، بحجم إجمالي %1. بعد تثبيتها، يعمل كل شيء في Drift دون اتصال بالإنترنت.</numerusform>
+            <numerusform>سيتم تنزيل %n إضافة، بحجم إجمالي %1. بعد تثبيتها، يعمل كل شيء في Drift دون اتصال بالإنترنت.</numerusform>
+            <numerusform>سيتم تنزيل %n إضافة، بحجم إجمالي %1. بعد تثبيتها، يعمل كل شيء في Drift دون اتصال بالإنترنت.</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation>البحث في الإضافات</translation>
     </message>
     <message>
         <source>Clear search</source>
         <translation>مسح البحث</translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation>تنزيل الكل…</translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
+        <translation>ثبّت كل الإضافات ليعمل Drift دون اتصال</translation>
     </message>
     <message>
         <source>Install from file…</source>

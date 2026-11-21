@@ -10768,12 +10768,36 @@
         <translation>«%1» и загруженные данные будут удалены. Вы сможете установить пакет снова позже.</translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation>Загрузить все дополнения?</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Загрузить</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation>
+            <numerusform>Будет загружено %n дополнение, всего %1. После установки всё в Drift работает без подключения к интернету.</numerusform>
+            <numerusform>Будет загружено %n дополнения, всего %1. После установки всё в Drift работает без подключения к интернету.</numerusform>
+            <numerusform>Будет загружено %n дополнений, всего %1. После установки всё в Drift работает без подключения к интернету.</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation>Поиск дополнений</translation>
     </message>
     <message>
         <source>Clear search</source>
         <translation>Очистить поиск</translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation>Загрузить всё…</translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
+        <translation>Установить все дополнения, чтобы Drift работал без интернета</translation>
     </message>
     <message>
         <source>Install from file…</source>

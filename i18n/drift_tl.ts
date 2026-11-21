@@ -10723,12 +10723,35 @@
         <translation>Matatanggal ang “%1” at ang na-download nitong data. Maaari mo itong i-install muli mamaya.</translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation>I-download ang lahat ng add-on?</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>I-download</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation>
+            <numerusform>%n add-on ang ida-download, %1 lahat. Kapag na-install na, gagana ang lahat sa Drift kahit walang internet.</numerusform>
+            <numerusform>%n add-on ang ida-download, %1 lahat. Kapag na-install na, gagana ang lahat sa Drift kahit walang internet.</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation>Maghanap ng mga extra</translation>
     </message>
     <message>
         <source>Clear search</source>
         <translation>I-clear ang paghahanap</translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation>I-download lahat…</translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
+        <translation>I-install ang lahat ng add-on para gumana ang Drift offline</translation>
     </message>
     <message>
         <source>Install from file…</source>

@@ -10723,12 +10723,35 @@
         <translation>“%1” এবং এর ডাউনলোড করা ডেটা মুছে ফেলা হবে। আপনি এটি পরে আবার ইনস্টল করতে পারেন.</translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation>সব অ্যাড-অন ডাউনলোড করবেন?</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>ডাউনলোড করুন</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation>
+            <numerusform>%nটি অ্যাড-অন ডাউনলোড হবে, মোট %1। ইনস্টল হয়ে গেলে Drift-এর সবকিছু ইন্টারনেট ছাড়াই কাজ করবে।</numerusform>
+            <numerusform>%nটি অ্যাড-অন ডাউনলোড হবে, মোট %1। ইনস্টল হয়ে গেলে Drift-এর সবকিছু ইন্টারনেট ছাড়াই কাজ করবে।</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation>এক্সট্রা অনুসন্ধান করুন</translation>
     </message>
     <message>
         <source>Clear search</source>
         <translation>অনুসন্ধান মুছুন</translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation>সব ডাউনলোড করুন…</translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
+        <translation>প্রতিটি অ্যাড-অন ইনস্টল করুন যাতে Drift অফলাইনে কাজ করে</translation>
     </message>
     <message>
         <source>Install from file…</source>

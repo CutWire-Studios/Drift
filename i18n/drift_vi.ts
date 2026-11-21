@@ -10678,12 +10678,34 @@
         <translation>“%1” và dữ liệu đã tải xuống của nó sẽ bị xóa. Bạn có thể cài đặt lại sau.</translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation>Tải xuống tất cả add-on?</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Tải xuống</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation>
+            <numerusform>Sẽ tải xuống %n add-on, tổng cộng %1. Sau khi cài đặt, mọi tính năng của Drift đều hoạt động mà không cần kết nối internet.</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation>Tìm kiếm bổ trợ</translation>
     </message>
     <message>
         <source>Clear search</source>
         <translation>Xóa tìm kiếm</translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation>Tải xuống tất cả…</translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
+        <translation>Cài đặt mọi add-on để dùng Drift khi không có mạng</translation>
     </message>
     <message>
         <source>Install from file…</source>

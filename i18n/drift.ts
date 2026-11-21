@@ -10723,11 +10723,34 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -10723,12 +10723,35 @@
         <translation>“%1” සහ එහි බාගත් දත්ත මකාදැමෙනු ඇත. ඔබට පසුව එය නැවත ස්ථාපනය කළ හැක.</translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation>සියලු ඇඩෝන බාගන්නද?</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>බාගන්න</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation>
+            <numerusform>ඇඩෝන %n ක් බාගනු ලැබේ, මුළු ප්‍රමාණය %1. ස්ථාපනය කළ පසු, Drift හි සියල්ල අන්තර්ජාලය නොමැතිව ක්‍රියා කරයි.</numerusform>
+            <numerusform>ඇඩෝන %n ක් බාගනු ලැබේ, මුළු ප්‍රමාණය %1. ස්ථාපනය කළ පසු, Drift හි සියල්ල අන්තර්ජාලය නොමැතිව ක්‍රියා කරයි.</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation>අමතර අංග සොයන්න</translation>
     </message>
     <message>
         <source>Clear search</source>
         <translation>සෙවීම හිස් කරන්න</translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation>සියල්ල බාගන්න…</translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
+        <translation>Drift නොබැඳිව ක්‍රියා කිරීමට සියලු ඇඩෝන ස්ථාපනය කරන්න</translation>
     </message>
     <message>
         <source>Install from file…</source>

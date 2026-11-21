@@ -10678,12 +10678,34 @@
         <translation>「%1」とそのダウンロードデータが削除されます。後で再度インストールできます。</translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation>すべてのアドオンをダウンロードしますか？</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>ダウンロード</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation>
+            <numerusform>%n 個のアドオン（合計 %1）をダウンロードします。インストールが完了すると、Drift のすべての機能をインターネット接続なしで使えます。</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation>エクストラを検索</translation>
     </message>
     <message>
         <source>Clear search</source>
         <translation>検索をクリア</translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation>すべてダウンロード…</translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
+        <translation>すべてのアドオンをインストールして Drift をオフラインで使えるようにします</translation>
     </message>
     <message>
         <source>Install from file…</source>

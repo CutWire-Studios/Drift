@@ -10723,12 +10723,35 @@
         <translation>Se eliminarán “%1” y sus datos descargados. Puedes volver a instalarlo más tarde.</translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation>¿Descargar todos los complementos?</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Descargar</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation>
+            <numerusform>Se descargará %n complemento, %1 en total. Una vez instalado, todo en Drift funciona sin conexión a internet.</numerusform>
+            <numerusform>Se descargarán %n complementos, %1 en total. Una vez instalados, todo en Drift funciona sin conexión a internet.</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation>Buscar extras</translation>
     </message>
     <message>
         <source>Clear search</source>
         <translation>Borrar búsqueda</translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation>Descargar todo…</translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
+        <translation>Instala todos los complementos para que Drift funcione sin conexión</translation>
     </message>
     <message>
         <source>Install from file…</source>

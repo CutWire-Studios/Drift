@@ -10678,12 +10678,34 @@
         <translation>“%1” 和它下載的數據將被刪除。你可以稍後再重新安裝。</translation>
     </message>
     <message>
+        <source>Download all extras?</source>
+        <translation>下載所有附加元件？</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>下載</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n add-on(s) will be downloaded, %1 in total. Once they are installed, everything in Drift works without an internet connection.</source>
+        <translation>
+            <numerusform>將下載 %n 個附加元件，共 %1。安裝完成後，Drift 的所有功能都能在沒有網路連線時使用。</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Search extras</source>
         <translation>搜尋附加元件</translation>
     </message>
     <message>
         <source>Clear search</source>
         <translation>清除搜尋</translation>
+    </message>
+    <message>
+        <source>Download all…</source>
+        <translation>全部下載…</translation>
+    </message>
+    <message>
+        <source>Install every add-on so Drift works offline</source>
+        <translation>安裝所有附加元件，以便離線使用 Drift</translation>
     </message>
     <message>
         <source>Install from file…</source>
