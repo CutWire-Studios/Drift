@@ -60,6 +60,7 @@ public:
     // spacing is irregular — phone and screen recordings, mostly. Header frame rates alone can't
     // tell: an interlaced CFR file also has r_frame_rate != avg_frame_rate. Blocking.
     static bool isVariableFrameRate(const QString &path);
+    static bool isEditFriendlyCodec(const QString &codecName);
 };
 
 struct AVStream;

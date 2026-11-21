@@ -390,6 +390,9 @@ drift::MediaAsset buildProbedAsset(const QString &absolutePath, const QString &n
             asset.fps = stream.fps;
             asset.rotationDegrees = stream.rotationDegrees;
             asset.codecName = stream.codecName;
+            if (MediaProbe::isEditFriendlyCodec(stream.codecName)) {
+                asset.editFriendly = true;
+            }
         }
     }
     fillAudioPresence(asset, info);

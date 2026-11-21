@@ -243,3 +243,17 @@ bool MediaProbe::isVariableFrameRate(const QString &path)
     });
     return irregular * 20 > int64_t(deltas.size());
 }
+
+bool MediaProbe::isEditFriendlyCodec(const QString &codecName)
+{
+    const QString lower = codecName.toLower();
+    return lower == QLatin1String("prores")
+        || lower == QLatin1String("dnxhd")
+        || lower == QLatin1String("ffv1")
+        || lower == QLatin1String("rawvideo")
+        || lower == QLatin1String("v210")
+        || lower == QLatin1String("v410")
+        || lower == QLatin1String("r210")
+        || lower == QLatin1String("qtrle")
+        || lower == QLatin1String("cfhd");
+}
