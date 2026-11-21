@@ -14,6 +14,8 @@ QtObject {
     property var keyframesActionHandler: null
     property var maskingActionHandler: null
     property var trackingActionHandler: null
+    // The shape path overlay while it is up: it claims Escape and Delete for its own session.
+    property var shapePathActionHandler: null
     // Whether the pointer is over the preview panel; masking tool keys are only claimed there.
     property bool previewHovered: false
     // Vertices placed by the polygon tool so far. Escape cancels them before it leaves the tool.

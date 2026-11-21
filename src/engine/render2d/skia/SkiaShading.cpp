@@ -226,6 +226,21 @@ void applyStrokeJoin(SkPaint &paint, StrokeJoin join, double miterLimit)
     }
 }
 
+void applyStrokeCap(SkPaint &paint, StrokeCap cap)
+{
+    switch (cap) {
+    case StrokeCap::Butt:
+        paint.setStrokeCap(SkPaint::kButt_Cap);
+        break;
+    case StrokeCap::Round:
+        paint.setStrokeCap(SkPaint::kRound_Cap);
+        break;
+    case StrokeCap::Square:
+        paint.setStrokeCap(SkPaint::kSquare_Cap);
+        break;
+    }
+}
+
 sk_sp<SkPathEffect> strokePathEffectFor(const TextShadingLayer &layer, double strokeWidthPx, double scale)
 {
     sk_sp<SkPathEffect> effect;

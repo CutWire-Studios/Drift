@@ -70,6 +70,10 @@ class PreviewController : public QObject
     Q_PROPERTY(bool canvasCropMode READ canvasCropMode WRITE setCanvasCropMode NOTIFY canvasCropModeChanged)
     // Phone crop page: the selected clip's source frame is edited on the preview. Exclusive with canvasCropMode.
     Q_PROPERTY(bool clipCropMode READ clipCropMode WRITE setClipCropMode NOTIFY clipCropModeChanged)
+    // Pen/path editing of a custom shape: "" (off), "edit" (the selected Path shape clip's outline) or
+    // "draw" (a new path, no clip yet). Exclusive with the other modes; "edit" ends when the selection
+    // stops being a Path shape clip.
+    Q_PROPERTY(QString shapePathMode READ shapePathMode WRITE setShapePathMode NOTIFY shapePathModeChanged)
     Q_PROPERTY(QString maskViewMode READ maskViewMode WRITE setMaskViewMode NOTIFY maskViewModeChanged)
     // The masking workspace's drawing tool: "" (none), "rect", "ellipse", "polygon", "brush", "ai"
     // or "tracker". Session state, like the rest of this class.
@@ -79,7 +83,7 @@ class PreviewController : public QObject
     // itself a request to edit it, so the toggle is only needed to keep the handles up while some
     // *other* clip is selected.
     Q_PROPERTY(bool maskEditActive READ maskEditActive NOTIFY maskEditActiveChanged)
-    // The one tool that owns the preview's pointer: "crop", "clipCrop", "guideEdit", "maskDraw", "maskBrush",
+    // The one tool that owns the preview's pointer: "crop", "clipCrop", "shapePath", "guideEdit", "maskDraw", "maskBrush",
     // "maskAi", "tracker", "mask" or "transform", in that order of precedence. The masking tools
     // and the mask editor are 2D tools, so the editor viewport falls through to "transform".
     Q_PROPERTY(QString activeTool READ activeTool NOTIFY activeToolChanged)
@@ -139,6 +143,8 @@ public:
     void setCanvasCropMode(bool active);
     bool clipCropMode() const { return m_clipCropMode; }
     void setClipCropMode(bool active);
+    QString shapePathMode() const { return m_shapePathMode; }
+    void setShapePathMode(const QString &mode);
     QString maskViewMode() const { return m_maskViewMode; }
     void setMaskViewMode(const QString &mode);
     bool maskEditMode() const { return m_maskEditMode; }
@@ -315,6 +321,7 @@ signals:
     void guideEditSetIdChanged();
     void canvasCropModeChanged();
     void clipCropModeChanged();
+    void shapePathModeChanged();
     void maskEditModeChanged();
     void maskViewModeChanged();
     void maskingToolChanged();
@@ -355,6 +362,7 @@ private:
                    double right, double up);
     void setView(const drift::EditorView3d &view);
     void updateActiveTool();
+    bool selectionIsPathShape() const;
     void updateHandlesVisible();
     void refreshOutliner();
 
@@ -388,6 +396,7 @@ private:
     QString m_guideEditSetId;
     bool m_canvasCropMode = false;
     bool m_clipCropMode = false;
+    QString m_shapePathMode;
     bool m_maskEditMode = false;
     QString m_maskViewMode = QStringLiteral("off");
     QString m_maskingTool;

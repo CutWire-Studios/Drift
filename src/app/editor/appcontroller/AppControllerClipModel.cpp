@@ -1,4 +1,5 @@
 #include "core/project/media/SourceFrameFit.h"
+#include "core/shapes/ShapePath.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/packages/procedurals/ProceduralCatalog.h"
@@ -201,7 +202,17 @@ QVariantMap shapeStyleToMap(const drift::ShapeStyle &s, drift::TimeUs timelineSt
         {QStringLiteral("thickness"), s.thickness},
         {QStringLiteral("tailX"), s.tailX},
         {QStringLiteral("tailSize"), s.tailSize},
+        {QStringLiteral("sweep"), s.sweep},
+        {QStringLiteral("fillRule"), s.fillRule == Qt::OddEvenFill ? QStringLiteral("evenodd") : QStringLiteral("nonzero")},
+        {QStringLiteral("contours"), shapeContoursToVariant(s.contours)},
+        {QStringLiteral("pathAnimated"), !s.pathKeys.isEmpty()},
     };
+    if (s.kind == drift::ShapeKind::Path)
+        map.insert(QStringLiteral("path"), drift::contoursToSvgPath(s.contours));
+    QVariantList pathKeyTimes;
+    for (auto it = s.pathKeys.constBegin(); it != s.pathKeys.constEnd(); ++it)
+        pathKeyTimes.append(drift::usToSeconds(timelineStart + it.key()));
+    map.insert(QStringLiteral("pathKeyTimes"), pathKeyTimes);
     QVariantMap keyframes;
     for (auto it = s.keyframes.constBegin(); it != s.keyframes.constEnd(); ++it) {
         if (!it->isEmpty())

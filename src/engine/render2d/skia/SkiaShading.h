@@ -33,6 +33,7 @@ void applyShadingPaint(SkPaint &paint, const TextPaint &source, const QRectF &bo
 sk_sp<SkPathEffect> strokePathEffectFor(const TextShadingLayer &layer, double strokeWidthPx, double scale);
 // The layer's corner join (and the miter limit it implies) on a stroke paint.
 void applyStrokeJoin(SkPaint &paint, StrokeJoin join, double miterLimit);
+void applyStrokeCap(SkPaint &paint, StrokeCap cap);
 // The sketch jitter on a fill outline; null when off.
 sk_sp<SkPathEffect> fillPathEffectFor(const TextShadingLayer &layer, double scale);
 

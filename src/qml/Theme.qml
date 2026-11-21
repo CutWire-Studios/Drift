@@ -687,6 +687,7 @@ QtObject {
         check: "check",
         pencil: "pencil",
         spline: "spline",
+        penTool: "pen-tool",
         clock: "clock",
         lock: "lock",
         lockOpen: "lock-open",

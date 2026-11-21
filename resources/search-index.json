@@ -883,6 +883,46 @@
       ]
     },
     {
+      "id": "shape-make-editable",
+      "target": "panel:properties.shape#shape-make-editable",
+      "context": "ShapeInspector",
+      "source": "Make shape editable",
+      "keywords": "path bezier points convert vector",
+      "needs": [
+        "shape"
+      ]
+    },
+    {
+      "id": "shape-edit-path",
+      "target": "panel:properties.shape#shape-edit-path",
+      "context": "ShapeInspector",
+      "source": "Edit path",
+      "keywords": "pen bezier points handles vector",
+      "needs": [
+        "shape"
+      ]
+    },
+    {
+      "id": "shape-path-animation",
+      "target": "panel:properties.shape#shape-path-animation",
+      "context": "ShapeInspector",
+      "source": "Animate path",
+      "keywords": "keyframe morph path shape",
+      "needs": [
+        "shape"
+      ]
+    },
+    {
+      "id": "shape-save-to-library",
+      "target": "panel:properties.shape#shape-save-to-library",
+      "context": "ShapeInspector",
+      "source": "Save shape to My shapes",
+      "keywords": "library custom svg",
+      "needs": [
+        "shape"
+      ]
+    },
+    {
       "id": "speed-playback",
       "target": "panel:properties.speed#speed-playback",
       "context": "SpeedFadeInspector",
@@ -1656,6 +1696,15 @@
       "keywords": "proxy size 720p 1080p",
       "needs": [],
       "descriptionSource": "Size of new proxies. Proxies made at another size are not used until you create them again."
+    },
+    {
+      "id": "preview-proxy-location",
+      "target": "settings:preview#preview-proxy-location",
+      "context": "SettingsPreviewPage",
+      "source": "Save proxies and reversed clips",
+      "keywords": "proxy folder location cache reversed disk drive",
+      "needs": [],
+      "descriptionSource": "Where Drift saves the files it makes from your media. Changing the folder doesn’t move or delete anything. Proxies in the previous folder are no longer found; choosing that folder again finds them."
     },
     {
       "id": "preview-proxy-name-patterns",

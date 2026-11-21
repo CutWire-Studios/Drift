@@ -11,6 +11,7 @@
 #include "engine/render3d/splats/SplatAsset.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "app/mcp/McpDetail.h"
+#include "engine/render2d/shapes/SvgShapeImport.h"
 
 #include <QStandardPaths>
 #include <QDir>
@@ -407,7 +408,10 @@ QVariantMap legacyTextAnimationMap(const drift::TextAnimationSlot &slot)
 
 QVariantMap textLayerToMap(const drift::TextShadingLayer &layer)
 {
-    return drift::textShadingLayerToJson(layer).toVariantMap();
+    QVariantMap map = drift::textShadingLayerToJson(layer).toVariantMap();
+    // The JSON omits the default, which the inspector would then have to know.
+    map.insert(QStringLiteral("cap"), drift::strokeCapToString(layer.cap));
+    return map;
 }
 
 QJsonObject deepMergeJson(QJsonObject base, const QJsonObject &patch)
@@ -1898,6 +1902,61 @@ void applyShapeStylePatch(drift::ShapeStyle &s, const QVariantMap &m)
         s.tailX = qBound(0.08, m.value(QStringLiteral("tailX")).toDouble(), 0.92);
     if (m.contains(QStringLiteral("tailSize")))
         s.tailSize = qBound(0.05, m.value(QStringLiteral("tailSize")).toDouble(), 0.5);
+    if (m.contains(QStringLiteral("sweep")))
+        s.sweep = qBound(1.0, m.value(QStringLiteral("sweep")).toDouble(), 359.0);
+    // A path replaces the outline, so the keys that animated the old one go.
+    if (m.contains(QStringLiteral("path"))) {
+        QVector<drift::ShapeContour> contours;
+        if (drift::contoursFromSvgPath(m.value(QStringLiteral("path")).toString(), &contours, nullptr, nullptr)) {
+            s.kind = drift::ShapeKind::Path;
+            s.contours = contours;
+            s.pathKeys.clear();
+        }
+    } else if (m.contains(QStringLiteral("contours"))) {
+        s.contours = shapeContoursFromVariant(m.value(QStringLiteral("contours")).toList());
+        s.pathKeys.clear();
+    }
+    if (m.contains(QStringLiteral("fillRule")))
+        s.fillRule = m.value(QStringLiteral("fillRule")).toString() == QLatin1String("evenodd") ? Qt::OddEvenFill
+                                                                                              : Qt::WindingFill;
+}
+
+QVariantList shapeContoursToVariant(const QVector<drift::ShapeContour> &contours)
+{
+    QVariantList out;
+    for (const drift::ShapeContour &contour : contours) {
+        QVariantList vertices;
+        for (const drift::ShapeVertex &v : contour.vertices) {
+            vertices.append(QVariantMap{{QStringLiteral("x"), v.p.x()},
+                                        {QStringLiteral("y"), v.p.y()},
+                                        {QStringLiteral("inX"), v.in.x()},
+                                        {QStringLiteral("inY"), v.in.y()},
+                                        {QStringLiteral("outX"), v.out.x()},
+                                        {QStringLiteral("outY"), v.out.y()},
+                                        {QStringLiteral("smooth"), v.smooth}});
+        }
+        out.append(QVariantMap{{QStringLiteral("vertices"), vertices}, {QStringLiteral("closed"), contour.closed}});
+    }
+    return out;
+}
+
+QVector<drift::ShapeContour> shapeContoursFromVariant(const QVariantList &list)
+{
+    QVector<drift::ShapeContour> out;
+    for (const QVariant &entry : list) {
+        const QVariantMap map = entry.toMap();
+        drift::ShapeContour contour;
+        contour.closed = map.value(QStringLiteral("closed"), true).toBool();
+        for (const QVariant &vertex : map.value(QStringLiteral("vertices")).toList()) {
+            const QVariantMap v = vertex.toMap();
+            const auto num = [&v](const char *key) { return v.value(QLatin1String(key)).toDouble(); };
+            contour.vertices.append({QPointF(num("x"), num("y")), QPointF(num("inX"), num("inY")),
+                                     QPointF(num("outX"), num("outY")), v.value(QStringLiteral("smooth")).toBool()});
+        }
+        if (!contour.vertices.isEmpty())
+            out.append(contour);
+    }
+    return out;
 }
 
 drift::Mask clipMatte(const drift::Project &project, int trackIndex, int clipIndex)

@@ -8,6 +8,8 @@
 #include <QJsonObject>
 #include <QList>
 #include <QMap>
+#include <QPointF>
+#include <QVector>
 #include <QString>
 #include <QStringList>
 
@@ -46,6 +48,46 @@ enum class ShapeKind {
     Cross,
     Burst,
     Banner,
+    // Editable bezier outline, see ShapeStyle::contours
+    Path,
+    // Basic (added after the first roster)
+    Ring,
+    Pie,
+    Arc,
+    Crescent,
+    Pill,
+    Frame,
+    Polygon,
+    // Fun
+    Gear,
+    Seal,
+    Shield,
+    Teardrop,
+    LocationPin,
+    Tag,
+    Bookmark,
+    Checkmark,
+    XMark,
+};
+
+// in / out are tangent handles as offsets from p; both zero = a corner. `smooth` only records that
+// the handles are kept mirrored while editing, the outline never reads it.
+struct ShapeVertex
+{
+    QPointF p;
+    QPointF in;
+    QPointF out;
+    bool smooth = false;
+
+    bool operator==(const ShapeVertex &o) const = default;
+};
+
+struct ShapeContour
+{
+    QVector<ShapeVertex> vertices;
+    bool closed = true;
+
+    bool operator==(const ShapeContour &o) const = default;
 };
 
 QString shapeKindToString(ShapeKind kind);
@@ -73,6 +115,14 @@ struct ShapeStyle
     double thickness = 0.4;    // arrows / chevron / cross: shaft, fraction of height
     double tailX = 0.25;       // bubbles: tail anchor along the bottom edge, 0..1
     double tailSize = 0.2;     // bubbles: tail extent, fraction of height
+    double sweep = 270.0;      // pie / arc: angle covered, degrees 1..359
+
+    // ShapeKind::Path only. Points are normalized to the layout box (0..1).
+    QVector<ShapeContour> contours;
+    Qt::FillRule fillRule = Qt::WindingFill;
+    // Whole-path keys: the contour list is one key. Between two keys with the same structure the
+    // points interpolate linearly; otherwise the earlier key holds.
+    QMap<TimeUs, QVector<ShapeContour>> pathKeys;
 
     // Keyed by shapeKeyframeProperties() names ("cornerRadius", "layer.<id>.<field>", …); times
     // are relative to the clip start.
@@ -122,6 +172,11 @@ struct ShapeCategory
     QString id;
     QString label;
 };
+
+// A Path style for a library shape, an SVG import or a pen drawing: open-only paths get the Line
+// preset's look (no fill, a round centred stroke), anything with a closed contour the default fill
+// and stroke.
+ShapeStyle pathShapeStyle(const QVector<ShapeContour> &contours, Qt::FillRule rule);
 
 const QList<ShapeCatalogEntry> &shapeCatalog();
 const ShapeCatalogEntry *shapeCatalogEntry(const QString &id);

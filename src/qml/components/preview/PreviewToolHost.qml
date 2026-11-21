@@ -24,7 +24,7 @@ Item {
     // the canvas edges to grow it. Transform and clip crop span it too and lays its content on the canvas rect
     // itself, so grips on a clip that runs past an edge stay inside the item that takes the pointer.
     readonly property bool fillsViewport: tool === "crop" || tool === "guideEdit" || tool === "transform"
-                                         || tool === "clipCrop"
+                                         || tool === "clipCrop" || tool === "shapePath"
     // Typed loosely: each platform's tools are different types, and only some have `interacting`.
     readonly property var item: toolLoader.item
     // True while the tool is mid-drag.

@@ -46,6 +46,23 @@ constexpr KindName kKindNames[] = {
     {ShapeKind::Cross, "cross"},
     {ShapeKind::Burst, "burst"},
     {ShapeKind::Banner, "banner"},
+    {ShapeKind::Path, "path"},
+    {ShapeKind::Ring, "ring"},
+    {ShapeKind::Pie, "pie"},
+    {ShapeKind::Arc, "arc"},
+    {ShapeKind::Crescent, "crescent"},
+    {ShapeKind::Pill, "pill"},
+    {ShapeKind::Frame, "frame"},
+    {ShapeKind::Polygon, "polygon"},
+    {ShapeKind::Gear, "gear"},
+    {ShapeKind::Seal, "seal"},
+    {ShapeKind::Shield, "shield"},
+    {ShapeKind::Teardrop, "teardrop"},
+    {ShapeKind::LocationPin, "location-pin"},
+    {ShapeKind::Tag, "tag"},
+    {ShapeKind::Bookmark, "bookmark"},
+    {ShapeKind::Checkmark, "checkmark"},
+    {ShapeKind::XMark, "x-mark"},
 };
 
 ShapeStyle makeStyle(ShapeKind kind, const QColor &fill, const QColor &fillSecondary)
@@ -53,6 +70,30 @@ ShapeStyle makeStyle(ShapeKind kind, const QColor &fill, const QColor &fillSecon
     ShapeStyle style;
     style.kind = kind;
     style.layers = defaultShapeLayers(fill, fillSecondary);
+    return style;
+}
+
+ShapeVertex corner(double x, double y)
+{
+    return {QPointF(x, y), {}, {}, false};
+}
+
+// A smooth vertex with its tangent handles mirrored.
+ShapeVertex smoothVertex(double x, double y, double dx, double dy)
+{
+    return {QPointF(x, y), QPointF(-dx, -dy), QPointF(dx, dy), true};
+}
+
+// Open stroke-only path: fill off, round caps, centred so the width reads the same on both sides.
+ShapeStyle makeLineStyle(const QVector<ShapeVertex> &vertices)
+{
+    ShapeStyle style;
+    style.kind = ShapeKind::Path;
+    style.layers = defaultShapeLayers(QColor(0, 180, 255), QColor(), Qt::white, 8.0);
+    style.layers[0].enabled = false;
+    style.layers[1].strokeAlign = StrokeAlign::Center;
+    style.layers[1].cap = StrokeCap::Round;
+    style.contours = {ShapeContour{vertices, false}};
     return style;
 }
 
@@ -100,6 +141,34 @@ QList<ShapeCatalogEntry> buildCatalog()
          1.6, makeStyle(ShapeKind::Parallelogram, blue, blueDeep)},
         {QStringLiteral("trapezoid"), QCoreApplication::translate("ShapeStyle", "Trapezoid"), QStringLiteral("basic"), 1.6,
          makeStyle(ShapeKind::Trapezoid, blue, blueDeep)},
+        {QStringLiteral("pill"), QCoreApplication::translate("ShapeStyle", "Pill"), QStringLiteral("basic"), 2.4,
+         makeStyle(ShapeKind::Pill, green, greenDeep)},
+        {QStringLiteral("polygon"), QCoreApplication::translate("ShapeStyle", "Polygon"), QStringLiteral("basic"), 1.0,
+         makeStyle(ShapeKind::Polygon, purple, purpleDeep)},
+        {QStringLiteral("ring"), QCoreApplication::translate("ShapeStyle", "Ring"), QStringLiteral("basic"), 1.0,
+         makeStyle(ShapeKind::Ring, orange, orangeDeep)},
+        {QStringLiteral("frame"), QCoreApplication::translate("ShapeStyle", "Frame"), QStringLiteral("basic"), 1.6,
+         makeStyle(ShapeKind::Frame, blue, blueDeep)},
+        {QStringLiteral("pie"), QCoreApplication::translate("ShapeStyle", "Pie"), QStringLiteral("basic"), 1.0,
+         makeStyle(ShapeKind::Pie, yellow, yellowDeep)},
+        {QStringLiteral("arc"), QCoreApplication::translate("ShapeStyle", "Arc"), QStringLiteral("basic"), 1.6,
+         makeStyle(ShapeKind::Arc, orange, orangeDeep)},
+        {QStringLiteral("crescent"), QCoreApplication::translate("ShapeStyle", "Crescent"), QStringLiteral("basic"), 0.9,
+         makeStyle(ShapeKind::Crescent, yellow, yellowDeep)},
+
+        {QStringLiteral("line"), QCoreApplication::translate("ShapeStyle", "Line"), QStringLiteral("lines"), 12.0,
+         makeLineStyle({corner(0.0, 0.5), corner(1.0, 0.5)})},
+        {QStringLiteral("curve"), QCoreApplication::translate("ShapeStyle", "Curve"), QStringLiteral("lines"), 1.6,
+         makeLineStyle({{QPointF(0.0, 1.0), {}, QPointF(0.5, 0.0), true}, {QPointF(1.0, 0.0), QPointF(-0.5, 0.0), {}, true}})},
+        {QStringLiteral("wave"), QCoreApplication::translate("ShapeStyle", "Wave"), QStringLiteral("lines"), 4.0,
+         makeLineStyle({{QPointF(0.0, 0.5), {}, QPointF(0.0833, -0.5), true},
+                        smoothVertex(0.25, 0.0, 0.0833, 0.0),
+                        smoothVertex(0.5, 1.0, 0.0833, 0.0),
+                        smoothVertex(0.75, 0.0, 0.0833, 0.0),
+                        {QPointF(1.0, 0.5), QPointF(-0.0833, 0.5), {}, true}})},
+        {QStringLiteral("zigzag"), QCoreApplication::translate("ShapeStyle", "Zigzag"), QStringLiteral("lines"), 4.0,
+         makeLineStyle({corner(0.0, 1.0), corner(0.2, 0.0), corner(0.4, 1.0), corner(0.6, 0.0), corner(0.8, 1.0),
+                        corner(1.0, 0.0)})},
 
         {QStringLiteral("arrow"), QCoreApplication::translate("ShapeStyle", "Arrow"), QStringLiteral("arrows"), 2.0,
          makeStyle(ShapeKind::Arrow, orange, orangeDeep)},
@@ -135,6 +204,24 @@ QList<ShapeCatalogEntry> buildCatalog()
          makeStyle(ShapeKind::Cross, pink, pinkDeep)},
         {QStringLiteral("banner"), QCoreApplication::translate("ShapeStyle", "Banner"), QStringLiteral("fun"), 2.2,
          makeStyle(ShapeKind::Banner, purple, purpleDeep)},
+        {QStringLiteral("gear"), QCoreApplication::translate("ShapeStyle", "Gear"), QStringLiteral("fun"), 1.0,
+         makeStyle(ShapeKind::Gear, QColor(170, 180, 195), QColor(100, 110, 130))},
+        {QStringLiteral("seal"), QCoreApplication::translate("ShapeStyle", "Badge"), QStringLiteral("fun"), 1.0,
+         makeStyle(ShapeKind::Seal, yellow, yellowDeep)},
+        {QStringLiteral("shield"), QCoreApplication::translate("ShapeStyle", "Shield"), QStringLiteral("fun"), 0.85,
+         makeStyle(ShapeKind::Shield, blue, blueDeep)},
+        {QStringLiteral("teardrop"), QCoreApplication::translate("ShapeStyle", "Teardrop"), QStringLiteral("fun"), 0.7,
+         makeStyle(ShapeKind::Teardrop, blue, blueDeep)},
+        {QStringLiteral("location-pin"), QCoreApplication::translate("ShapeStyle", "Location pin"), QStringLiteral("fun"),
+         0.72, makeStyle(ShapeKind::LocationPin, orange, orangeDeep)},
+        {QStringLiteral("tag"), QCoreApplication::translate("ShapeStyle", "Tag"), QStringLiteral("fun"), 1.4,
+         makeStyle(ShapeKind::Tag, green, greenDeep)},
+        {QStringLiteral("bookmark"), QCoreApplication::translate("ShapeStyle", "Bookmark"), QStringLiteral("fun"), 0.7,
+         makeStyle(ShapeKind::Bookmark, pink, pinkDeep)},
+        {QStringLiteral("checkmark"), QCoreApplication::translate("ShapeStyle", "Checkmark"), QStringLiteral("fun"), 1.2,
+         makeStyle(ShapeKind::Checkmark, green, greenDeep)},
+        {QStringLiteral("x-mark"), QCoreApplication::translate("ShapeStyle", "X mark"), QStringLiteral("fun"), 1.0,
+         makeStyle(ShapeKind::XMark, pink, pinkDeep)},
     };
 
     // Per-kind geometry defaults. Everything not listed keeps the ShapeStyle defaults.
@@ -157,6 +244,36 @@ QList<ShapeCatalogEntry> buildCatalog()
             break;
         case ShapeKind::CurvedArrow:
             entry.style.thickness = 0.35;
+            break;
+        case ShapeKind::Polygon:
+            entry.style.points = 7;
+            break;
+        case ShapeKind::Ring:
+            entry.style.thickness = 0.3;
+            break;
+        case ShapeKind::Frame:
+            entry.style.thickness = 0.2;
+            break;
+        case ShapeKind::Pie:
+            entry.style.sweep = 270.0;
+            break;
+        case ShapeKind::Arc:
+            entry.style.sweep = 200.0;
+            entry.style.thickness = 0.25;
+            break;
+        case ShapeKind::Gear:
+            entry.style.points = 8;
+            entry.style.innerRatio = 0.78;
+            break;
+        case ShapeKind::Seal:
+            entry.style.points = 14;
+            entry.style.innerRatio = 0.9;
+            break;
+        case ShapeKind::Checkmark:
+            entry.style.thickness = 0.3;
+            break;
+        case ShapeKind::XMark:
+            entry.style.thickness = 0.28;
             break;
         default:
             break;
@@ -196,6 +313,21 @@ const QList<ShapeCatalogEntry> &shapeCatalog()
     return catalog;
 }
 
+ShapeStyle pathShapeStyle(const QVector<ShapeContour> &contours, Qt::FillRule rule)
+{
+    const bool allOpen = !contours.isEmpty()
+        && std::all_of(contours.cbegin(), contours.cend(), [](const ShapeContour &c) { return !c.closed; });
+    ShapeStyle style;
+    if (allOpen) {
+        if (const ShapeCatalogEntry *line = shapeCatalogEntry(QStringLiteral("line")))
+            style.layers = line->style.layers;
+    }
+    style.kind = ShapeKind::Path;
+    style.contours = contours;
+    style.fillRule = rule;
+    return style;
+}
+
 const ShapeCatalogEntry *shapeCatalogEntry(const QString &id)
 {
     const QList<ShapeCatalogEntry> &catalog = shapeCatalog();
@@ -208,6 +340,7 @@ QList<ShapeCategory> shapeCategories()
 {
     return {
         {QStringLiteral("basic"), QCoreApplication::translate("ShapeStyle", "Basic")},
+        {QStringLiteral("lines"), QCoreApplication::translate("ShapeStyle", "Lines")},
         {QStringLiteral("arrows"), QCoreApplication::translate("ShapeStyle", "Arrows")},
         {QStringLiteral("bubbles"), QCoreApplication::translate("ShapeStyle", "Bubbles")},
         {QStringLiteral("fun"), QCoreApplication::translate("ShapeStyle", "Fun")},
@@ -291,6 +424,7 @@ constexpr KnobField kKnobs[] = {
     {"thickness", QT_TRANSLATE_NOOP("ShapeStyle", "Thickness"), &ShapeStyle::thickness, 0.05, 1.0},
     {"tailX", QT_TRANSLATE_NOOP("ShapeStyle", "Tail position"), &ShapeStyle::tailX, 0.08, 0.92},
     {"tailSize", QT_TRANSLATE_NOOP("ShapeStyle", "Tail size"), &ShapeStyle::tailSize, 0.05, 0.5},
+    {"sweep", QT_TRANSLATE_NOOP("ShapeStyle", "Sweep"), &ShapeStyle::sweep, 1.0, 359.0},
 };
 
 const KnobField *knobFor(const QString &key)
@@ -375,12 +509,62 @@ bool setShapeStyleScalar(ShapeStyle &style, const QString &key, double value)
 
 bool ShapeStyle::isAnimated() const
 {
+    if (!pathKeys.isEmpty())
+        return true;
     for (auto it = keyframes.constBegin(); it != keyframes.constEnd(); ++it) {
         if (!it->isEmpty() && it->enabled())
             return true;
     }
     return false;
 }
+
+namespace {
+
+bool sameStructure(const QVector<ShapeContour> &a, const QVector<ShapeContour> &b)
+{
+    if (a.size() != b.size())
+        return false;
+    for (int i = 0; i < a.size(); ++i) {
+        if (a.at(i).closed != b.at(i).closed || a.at(i).vertices.size() != b.at(i).vertices.size())
+            return false;
+    }
+    return true;
+}
+
+// The contours between the two keys around `timeUs`. A structure mismatch means the path was
+// reshaped rather than moved, so the earlier key holds until the later one arrives (as Mask does).
+QVector<ShapeContour> contoursAt(const QMap<TimeUs, QVector<ShapeContour>> &keys, TimeUs timeUs)
+{
+    if (keys.size() == 1)
+        return keys.first();
+    auto after = keys.lowerBound(timeUs);
+    if (after == keys.constEnd())
+        return std::prev(after).value();
+    if (after.key() == timeUs || after == keys.constBegin())
+        return after.value();
+
+    const auto before = std::prev(after);
+    const QVector<ShapeContour> &a = before.value();
+    const QVector<ShapeContour> &b = after.value();
+    if (!sameStructure(a, b))
+        return a;
+
+    const double span = double(after.key() - before.key());
+    const double t = span > 0.0 ? double(timeUs - before.key()) / span : 0.0;
+    QVector<ShapeContour> out = a;
+    for (int c = 0; c < out.size(); ++c) {
+        for (int v = 0; v < out[c].vertices.size(); ++v) {
+            ShapeVertex &r = out[c].vertices[v];
+            const ShapeVertex &vb = b.at(c).vertices.at(v);
+            r.p += (vb.p - r.p) * t;
+            r.in += (vb.in - r.in) * t;
+            r.out += (vb.out - r.out) * t;
+        }
+    }
+    return out;
+}
+
+} // namespace
 
 ShapeStyle ShapeStyle::resolvedAt(TimeUs clipTimeUs) const
 {
@@ -389,13 +573,24 @@ ShapeStyle ShapeStyle::resolvedAt(TimeUs clipTimeUs) const
         if (!it->isEmpty())
             setShapeStyleScalar(out, it.key(), it->evaluateAt(clipTimeUs));
     }
+    if (!pathKeys.isEmpty()) {
+        out.contours = contoursAt(pathKeys, clipTimeUs);
+        out.pathKeys.clear();
+    }
     return out;
 }
 
 quint64 shapeStyleHash(const ShapeStyle &style)
 {
-    return qHashMulti(0, static_cast<int>(style.kind), textLayersHash(style.layers), style.cornerRadius, style.points,
-                      style.innerRatio, style.headSize, style.thickness, style.tailX, style.tailSize);
+    quint64 h = qHashMulti(0, static_cast<int>(style.kind), textLayersHash(style.layers), style.cornerRadius,
+                           style.points, style.innerRatio, style.headSize, style.thickness, style.tailX,
+                           style.tailSize, style.sweep, static_cast<int>(style.fillRule));
+    for (const ShapeContour &c : style.contours) {
+        h = qHashMulti(h, c.closed, c.vertices.size());
+        for (const ShapeVertex &v : c.vertices)
+            h = qHashMulti(h, v.p.x(), v.p.y(), v.in.x(), v.in.y(), v.out.x(), v.out.y());
+    }
+    return h;
 }
 
 bool shapeTimeDrivenPaint(const ShapeStyle &style)
@@ -417,6 +612,55 @@ bool shapeTimeDrivenPaint(const ShapeStyle &style)
 // ---------------------------------------------------------------------------------------------
 // JSON
 
+namespace {
+
+QJsonArray contoursToJson(const QVector<ShapeContour> &contours)
+{
+    QJsonArray out;
+    for (const ShapeContour &c : contours) {
+        QJsonArray vertices;
+        for (const ShapeVertex &v : c.vertices) {
+            QJsonObject o{{QStringLiteral("x"), v.p.x()}, {QStringLiteral("y"), v.p.y()}};
+            if (!v.in.isNull()) {
+                o.insert(QStringLiteral("inX"), v.in.x());
+                o.insert(QStringLiteral("inY"), v.in.y());
+            }
+            if (!v.out.isNull()) {
+                o.insert(QStringLiteral("outX"), v.out.x());
+                o.insert(QStringLiteral("outY"), v.out.y());
+            }
+            if (v.smooth)
+                o.insert(QStringLiteral("smooth"), true);
+            vertices.append(o);
+        }
+        out.append(QJsonObject{{QStringLiteral("closed"), c.closed}, {QStringLiteral("vertices"), vertices}});
+    }
+    return out;
+}
+
+QVector<ShapeContour> contoursFromJson(const QJsonArray &array)
+{
+    QVector<ShapeContour> out;
+    for (const QJsonValue &cv : array) {
+        const QJsonObject co = cv.toObject();
+        ShapeContour c;
+        c.closed = co.value(QStringLiteral("closed")).toBool(true);
+        for (const QJsonValue &vv : co.value(QStringLiteral("vertices")).toArray()) {
+            const QJsonObject o = vv.toObject();
+            ShapeVertex v;
+            v.p = QPointF(o.value(QStringLiteral("x")).toDouble(), o.value(QStringLiteral("y")).toDouble());
+            v.in = QPointF(o.value(QStringLiteral("inX")).toDouble(), o.value(QStringLiteral("inY")).toDouble());
+            v.out = QPointF(o.value(QStringLiteral("outX")).toDouble(), o.value(QStringLiteral("outY")).toDouble());
+            v.smooth = o.value(QStringLiteral("smooth")).toBool(false);
+            c.vertices.append(v);
+        }
+        out.append(c);
+    }
+    return out;
+}
+
+} // namespace
+
 QJsonObject shapeStyleToJson(const ShapeStyle &s)
 {
     QJsonArray layers;
@@ -432,7 +676,19 @@ QJsonObject shapeStyleToJson(const ShapeStyle &s)
         {QStringLiteral("thickness"), s.thickness},
         {QStringLiteral("tailX"), s.tailX},
         {QStringLiteral("tailSize"), s.tailSize},
+        {QStringLiteral("sweep"), s.sweep},
     };
+    if (!s.contours.isEmpty())
+        o.insert(QStringLiteral("contours"), contoursToJson(s.contours));
+    if (s.fillRule != Qt::WindingFill)
+        o.insert(QStringLiteral("fillRule"), QStringLiteral("evenodd"));
+    if (!s.pathKeys.isEmpty()) {
+        QJsonArray keys;
+        for (auto it = s.pathKeys.constBegin(); it != s.pathKeys.constEnd(); ++it)
+            keys.append(QJsonObject{{QStringLiteral("t"), qint64(it.key())},
+                                    {QStringLiteral("contours"), contoursToJson(it.value())}});
+        o.insert(QStringLiteral("pathKeys"), keys);
+    }
     QJsonObject keyframesJson;
     for (auto it = s.keyframes.constBegin(); it != s.keyframes.constEnd(); ++it) {
         if (!it->isEmpty())
@@ -506,6 +762,15 @@ ShapeStyle shapeStyleFromJson(const QJsonObject &o)
     s.thickness = o.value(QStringLiteral("thickness")).toDouble(s.thickness);
     s.tailX = o.value(QStringLiteral("tailX")).toDouble(s.tailX);
     s.tailSize = o.value(QStringLiteral("tailSize")).toDouble(s.tailSize);
+    s.sweep = o.value(QStringLiteral("sweep")).toDouble(s.sweep);
+    s.contours = contoursFromJson(o.value(QStringLiteral("contours")).toArray());
+    s.fillRule = o.value(QStringLiteral("fillRule")).toString() == QLatin1String("evenodd") ? Qt::OddEvenFill
+                                                                                          : Qt::WindingFill;
+    for (const QJsonValue &v : o.value(QStringLiteral("pathKeys")).toArray()) {
+        const QJsonObject key = v.toObject();
+        s.pathKeys.insert(TimeUs(key.value(QStringLiteral("t")).toInteger()),
+                          contoursFromJson(key.value(QStringLiteral("contours")).toArray()));
+    }
     const QJsonObject keyframesJson = o.value(QStringLiteral("keyframes")).toObject();
     for (auto it = keyframesJson.constBegin(); it != keyframesJson.constEnd(); ++it) {
         const QString canonical = shapeKeyframeCanonicalKey(it.key(), s);

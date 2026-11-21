@@ -40,6 +40,8 @@ Column {
     readonly property var dashLabels: [qsTr("Solid"), qsTr("Dashed"), qsTr("Dotted"), qsTr("Dash-dot")]
     readonly property var joins: ["miter", "round", "bevel"]
     readonly property var joinLabels: [qsTr("Miter"), qsTr("Round"), qsTr("Bevel")]
+    readonly property var caps: ["butt", "round", "square"]
+    readonly property var capLabels: [qsTr("Butt"), qsTr("Round"), qsTr("Square")]
     readonly property bool sketchy: Number(row.layerData.sketchLength) > 0 || Number(row.layerData.sketchDeviation) > 0
     property bool sketchExpanded: false
 
@@ -178,22 +180,45 @@ Column {
             }
         }
 
-        Column {
-            width: (parent.width - parent.leftPadding - parent.rightPadding - 8) / 2
-            spacing: 4
+        Row {
+            width: parent.width - parent.leftPadding - parent.rightPadding
+            spacing: 8
             visible: row.kind === "stroke"
-            Text {
-                text: qsTr("Join")
-                color: Theme.c.shadingLayerRow.foregroundMuted
-                font.pixelSize: Theme.fontSizeXs
-                font.family: Theme.fontFamily
+
+            Column {
+                width: (parent.width - parent.spacing) / 2
+                spacing: 4
+                Text {
+                    text: qsTr("Join")
+                    color: Theme.c.shadingLayerRow.foregroundMuted
+                    font.pixelSize: Theme.fontSizeXs
+                    font.family: Theme.fontFamily
+                }
+                ThemedComboBox {
+                    width: parent.width
+                    model: row.joinLabels
+                    tooltip: qsTr("How the stroke turns a corner: sharp, rounded or cut off")
+                    currentIndex: Math.max(0, row.joins.indexOf(row.layerData.join || "round"))
+                    onActivated: row.setLayer({ "join": row.joins[currentIndex] })
+                }
             }
-            ThemedComboBox {
-                width: parent.width
-                model: row.joinLabels
-                tooltip: qsTr("How the stroke turns a corner: sharp, rounded or cut off")
-                currentIndex: Math.max(0, row.joins.indexOf(row.layerData.join || "round"))
-                onActivated: row.setLayer({ "join": row.joins[currentIndex] })
+
+            Column {
+                width: (parent.width - parent.spacing) / 2
+                spacing: 4
+                Text {
+                    text: qsTr("Cap")
+                    color: Theme.c.shadingLayerRow.foregroundMuted
+                    font.pixelSize: Theme.fontSizeXs
+                    font.family: Theme.fontFamily
+                }
+                ThemedComboBox {
+                    width: parent.width
+                    model: row.capLabels
+                    tooltip: qsTr("How the stroke ends on open paths and dashes: flat, rounded or squared off")
+                    currentIndex: Math.max(0, row.caps.indexOf(row.layerData.cap || "round"))
+                    onActivated: row.setLayer({ "cap": row.caps[currentIndex] })
+                }
             }
         }
 

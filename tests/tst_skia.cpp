@@ -21,6 +21,8 @@
 #include "engine/render2d/skia/SkiaRuntime.h"
 #include "engine/render2d/skia/SkiaShading.h"
 #include "engine/render2d/shapes/SkiaShapePainter.h"
+#include "engine/render2d/shapes/SvgShapeImport.h"
+#include "core/shapes/ShapePath.h"
 #include "engine/render2d/text/SkiaTextGeometry.h"
 #include "engine/render2d/text/SkiaTextPainter.h"
 #include "engine/render2d/text/SkiaTextEffects.h"
@@ -255,7 +257,12 @@ const QList<ShapeKind> &allShapeKinds()
         ShapeKind::SpeechBubbleRect, ShapeKind::ThoughtBubble, ShapeKind::Callout,
         ShapeKind::Star,         ShapeKind::LightningBolt,    ShapeKind::Cloud,
         ShapeKind::Heart,        ShapeKind::Cross,            ShapeKind::Burst,
-        ShapeKind::Banner,
+        ShapeKind::Banner,       ShapeKind::Ring,             ShapeKind::Pie,
+        ShapeKind::Arc,          ShapeKind::Crescent,         ShapeKind::Pill,
+        ShapeKind::Frame,        ShapeKind::Polygon,          ShapeKind::Gear,
+        ShapeKind::Seal,         ShapeKind::Shield,           ShapeKind::Teardrop,
+        ShapeKind::LocationPin,  ShapeKind::Tag,              ShapeKind::Bookmark,
+        ShapeKind::Checkmark,    ShapeKind::XMark,
     };
     return kinds;
 }
@@ -292,6 +299,8 @@ private slots:
     void cacheServesStaticPainters();
     void compositorRendersVectorLayer();
     void sceneUnchangedAfterSkiaUse();
+    void svgShapeImportReadsTransformsAndEvenOdd();
+    void svgShapeImportKeepsOpenLinesAndSkipsDefs();
     void allShapeKindsRasterize_data();
     void allShapeKindsRasterize();
     void shapePainterCacheKey();
@@ -300,6 +309,7 @@ private slots:
     void shapeTrimAndDashRemoveMass();
     void shapeShadowOffsetsSilhouette();
     void keyframedShapeStrokeGrowsOverTime();
+    void openPathStrokesCentredWithCaps();
     void compositorDrawsShapeThroughSkia();
     void textPainterCacheKeys();
     void neonFlickerIsAnimated();
@@ -584,6 +594,71 @@ double massInside(const QImage &image, const QRect &rect)
 
 // Every ShapeKind × paint variant rasterizes to something: a solid fill, a gradient fill, a
 // dashed stroke and a soft shadow all leave ink, and all of it inside the painter's image.
+void SkiaTest::svgShapeImportReadsTransformsAndEvenOdd()
+{
+    // A square with a square hole, moved and doubled by its group, plus a rounded rect and an
+    // arc under a rotation; <defs> content must not show up.
+    const QByteArray svg =
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
+        "<defs><circle cx='500' cy='500' r='400'/></defs>"
+        "<g transform='translate(10 20) scale(2)'>"
+        "<path fill-rule='evenodd' d='M0 0 L10 0 L10 10 L0 10 Z M3 3 L7 3 L7 7 L3 7 Z'/>"
+        "</g>"
+        "</svg>";
+    QVector<drift::ShapeContour> contours;
+    Qt::FillRule rule = Qt::WindingFill;
+    double aspect = 0.0;
+    QString error;
+    QVERIFY2(drift::importSvgShapeData(svg, &contours, &rule, &aspect, &error), qPrintable(error));
+    QCOMPARE(rule, Qt::OddEvenFill);
+    QCOMPARE(contours.size(), 2);
+    QVERIFY(contours.at(0).closed && contours.at(1).closed);
+    QVERIFY(qAbs(aspect - 1.0) < 1e-9);
+    // Normalized to the union bounds: the outer square spans 0..1, the hole 0.3..0.7.
+    QVERIFY((contours.at(0).vertices.at(0).p - QPointF(0, 0)).manhattanLength() < 1e-6);
+    QVERIFY((contours.at(0).vertices.at(2).p - QPointF(1, 1)).manhattanLength() < 1e-6);
+    QVERIFY((contours.at(1).vertices.at(0).p - QPointF(0.3, 0.3)).manhattanLength() < 1e-6);
+
+    // Rotation about a point, a rounded rect and an elliptical arc (a conic in Skia).
+    const QByteArray more =
+        "<svg xmlns='http://www.w3.org/2000/svg'>"
+        "<rect x='0' y='0' width='40' height='20' rx='5'/>"
+        "<path transform='rotate(90 0 0)' d='M0 0 A10 10 0 0 1 20 0'/>"
+        "</svg>";
+    QVERIFY2(drift::importSvgShapeData(more, &contours, &rule, &aspect, &error), qPrintable(error));
+    QCOMPARE(rule, Qt::WindingFill);
+    QCOMPARE(contours.size(), 2);
+    QVERIFY(contours.at(0).closed);
+    QVERIFY(!contours.at(1).closed);
+}
+
+void SkiaTest::svgShapeImportKeepsOpenLinesAndSkipsDefs()
+{
+    QVector<drift::ShapeContour> contours;
+    Qt::FillRule rule = Qt::WindingFill;
+    double aspect = 0.0;
+    QString error;
+    QVERIFY2(drift::importSvgShapeData("<svg xmlns='http://www.w3.org/2000/svg'><line x1='0' y1='5' x2='100' y2='5'/></svg>",
+                                       &contours, &rule, &aspect, &error),
+             qPrintable(error));
+    QCOMPARE(contours.size(), 1);
+    QVERIFY(!contours.first().closed);
+    QVERIFY(qAbs(contours.first().vertices.first().p.y() - 0.5) < 1e-9);
+    QVERIFY(aspect > 10.0);
+
+    QVERIFY(!drift::importSvgShapeData("<html/>", &contours, &rule, &aspect, &error));
+    QVERIFY(!drift::importSvgShapeData("<svg xmlns='http://www.w3.org/2000/svg'><defs><path d='M0 0 L1 1'/></defs></svg>",
+                                       &contours, &rule, &aspect, &error));
+
+    // The MCP spelling: path data already in the 0..1 box, round-tripped through contoursToSvgPath.
+    QVERIFY(drift::contoursFromSvgPath(QStringLiteral("M 0 1 L 0.5 0 L 1 1 Z"), &contours, &rule, &error));
+    QCOMPARE(contours.size(), 1);
+    QVERIFY(contours.first().closed);
+    QCOMPARE(contours.first().vertices.size(), 3);
+    QVERIFY(drift::contoursFromSvgPath(drift::contoursToSvgPath(contours), &contours, &rule, &error));
+    QCOMPARE(contours.first().vertices.size(), 3);
+}
+
 void SkiaTest::allShapeKindsRasterize_data()
 {
     QTest::addColumn<int>("kind");
@@ -788,6 +863,26 @@ void SkiaTest::shapeShadowOffsetsSilhouette()
 }
 
 // A keyframed stroke width resolves per frame through the compositor: the ring is thicker later.
+void SkiaTest::openPathStrokesCentredWithCaps()
+{
+    ShapeStyle style = shapeStyleWith(ShapeKind::Path, QColor(255, 0, 0), 10.0, Qt::green);
+    style.layers[0].enabled = false;
+    style.layers[1].strokeAlign = StrokeAlign::Inside; // meaningless on an open path
+    style.contours = {ShapeContour{{{QPointF(0.2, 0.5), {}, {}, false}, {QPointF(0.8, 0.5), {}, {}, false}}, false}};
+
+    const int w = 200;
+    const int h = 40;
+    style.layers[1].cap = StrokeCap::Butt;
+    const QImage butt = rasterShape(style, w, h);
+    QVERIFY2(coverageOf(butt).mass > 100, "open line must draw");
+    QCOMPARE(massInside(butt, QRect(0, 0, butt.width(), 1)), 0.0);
+    QCOMPARE(massInside(butt, QRect(0, butt.height() - 1, butt.width(), 1)), 0.0);
+
+    style.layers[1].cap = StrokeCap::Square;
+    const double square = coverageOf(rasterShape(style, w, h)).mass;
+    QVERIFY2(square > coverageOf(butt).mass + 50.0, "square cap extends past the endpoints");
+}
+
 void SkiaTest::keyframedShapeStrokeGrowsOverTime()
 {
     ShapeStyle style = shapeStyleWith(ShapeKind::Ellipse, QColor(255, 0, 0), 2.0, Qt::green);

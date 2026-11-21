@@ -82,7 +82,7 @@ QJsonObject animPropProp()
         "outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still map onto the "
         "stroke/shadow/glow/fill layers; colour channels 0..1). On a shape clip the same layer fields "
         "are shape.layer.<layerId>.<field> (a fresh shape's layers are \"fill\" and \"stroke\") and the "
-        "geometry knobs shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>. On "
+        "geometry knobs shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize|sweep>. On "
         "an SVG vector clip the svg.* overrides: vector.svg.<strokeWidth|opacity>, "
         "vector.svg.<fill|stroke>.<r|g|b|a>, or the same under vector.svg.<elementId>. On a 3D "
         "model clip model3d.<ambient|modelScale|modelScaleZ|light<n>_<x|y|z|intensity|radius|cone|aimX|aimY>> (n 1..4); a model is placed by its "
@@ -298,6 +298,8 @@ QJsonObject textLayerSchema(const QString &description)
                                           {QStringLiteral("solid"), QStringLiteral("dash"), QStringLiteral("dot"), QStringLiteral("dashdot")})},
         {QStringLiteral("join"), enumProp(QStringLiteral("Stroke corner join (default round)"),
                                           {QStringLiteral("miter"), QStringLiteral("round"), QStringLiteral("bevel")})},
+        {QStringLiteral("cap"), enumProp(QStringLiteral("Stroke end cap, visible on open paths and dashes (default round)"),
+                                         {QStringLiteral("butt"), QStringLiteral("round"), QStringLiteral("square")})},
         {QStringLiteral("miterLimit"), numberProp(QStringLiteral("Miter join limit, 1-100 (default 4); lower it to cut off spikes on sharp corners"))},
         {QStringLiteral("dashOffset"), numberProp(QStringLiteral("Dash phase in stroke widths (keyframe for marching ants)"))},
         {QStringLiteral("sketchLength"), numberProp(QStringLiteral("Hand-drawn jitter segment length in px; 0 = off"))},
@@ -321,6 +323,7 @@ QStringList shapeCatalogIds()
     QStringList ids;
     for (const drift::ShapeCatalogEntry &entry : drift::shapeCatalog())
         ids.append(entry.id);
+    ids.append(QStringLiteral("path"));
     return ids;
 }
 
@@ -331,7 +334,7 @@ QJsonObject shapeStyleSchema()
                       mergeProps(layerPatch.value(QStringLiteral("properties")).toObject(),
                                  {{QStringLiteral("index"), integerProp(QStringLiteral("Layer index, when no id"))}}));
     QJsonObject s = objectSchema({
-        {QStringLiteral("kind"), enumProp(QStringLiteral("Shape catalog id (circle is an ellipse with a square box); changes the geometry, keeps the layers"), shapeCatalogIds())},
+        {QStringLiteral("kind"), enumProp(QStringLiteral("Shape catalog id (circle is an ellipse with a square box); changes the geometry, keeps the layers. \"path\" is a custom outline: on a preset shape it converts it to an editable path, on a path clip it keeps the path; supply `path` to draw one"), shapeCatalogIds())},
         {QStringLiteral("layers"), QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
                                                {QStringLiteral("items"), textLayerSchema(QStringLiteral("A shading layer"))},
                                                {QStringLiteral("description"), QStringLiteral("The whole shading stack, replaced as given; layers[0] is drawn first (back-most). A fresh shape has a fill (id \"fill\") under a stroke (id \"stroke\"). Use `layer` to patch one.")}}},
@@ -355,6 +358,10 @@ QJsonObject shapeStyleSchema()
         {QStringLiteral("thickness"), numberProp(QStringLiteral("Shaft thickness: arrow, double-arrow, chevron, curved-arrow, cross"), 0.05, 1)},
         {QStringLiteral("tailX"), numberProp(QStringLiteral("Tail x: speech-bubble, speech-bubble-rect, thought-bubble, callout"), 0.08, 0.92)},
         {QStringLiteral("tailSize"), numberProp(QStringLiteral("Tail size: the same four bubbles"), 0.05, 0.5)},
+        {QStringLiteral("sweep"), numberProp(QStringLiteral("Angle covered in degrees: pie, arc"), 1, 359)},
+        {QStringLiteral("path"), stringProp(QStringLiteral("A custom outline as an SVG path `d` string (M L C Q A Z, absolute or relative) in the shape's box, 0..1 on both axes with y down, e.g. \"M 0 1 L 0.5 0 L 1 1 Z\". Sets the kind to path, replaces the outline and clears its keys. A sub-path without Z is an open line (give it a stroke; the fill still closes it); the box is refitted to the drawn extent without moving the shape. inspect returns it for path clips"))},
+        {QStringLiteral("fillRule"), enumProp(QStringLiteral("Which regions of a path count as inside: nonzero (default) or evenodd (overlaps become holes)"),
+                                              {QStringLiteral("nonzero"), QStringLiteral("evenodd")})},
     });
     s.insert(QStringLiteral("description"),
              QStringLiteral("Partial style patch; only supplied keys change. Each geometry knob is read by a subset of shape kinds"));
@@ -1974,6 +1981,9 @@ QString agentGuideText()
         "list_shapes → add_shape({shape}) → set_shape_style({style:{kind, layers|layer, cornerRadius,\n"
         "points, …}}); the same *_shape_layer ops as text edit its stack; keyframe shape.<key> and\n"
         "shape.layer.<id>.<field>. A fresh shape has layers \"fill\" and \"stroke\".\n"
+        "Custom outlines: set_shape_style({style:{path:\"M 0 1 L 0.5 0 L 1 1 Z\"}}) draws any SVG path in the\n"
+        "shape's 0..1 box (open sub-paths are lines; give them a stroke), and {kind:\"path\"} alone turns a\n"
+        "preset into an editable path. Saved \"My shapes\" appear in list_shapes as user:<name> ids.\n"
         "\n"
         "Masks (canvas toolbox): set_mask replaces a clip's whole mask (lockAspect is kept when left out).\n"
         "use_as_mask({clips}) turns titles, shapes or footage into a live mask over the video track\n"

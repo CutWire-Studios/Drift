@@ -66,6 +66,7 @@ PanelFrame {
                 mask: maskTool,
                 crop: cropTool,
                 guideEdit: guideEditTool,
+                shapePath: shapePathTool,
                 maskDraw: maskDrawTool,
                 maskBrush: maskBrushTool,
                 maskAi: maskAiTool,
@@ -235,6 +236,13 @@ PanelFrame {
             previewCanvas: panelViewport.canvas
             hintDismissed: root.cropHintDismissed
             onHintDismissedChanged: root.cropHintDismissed = hintDismissed
+        }
+    }
+
+    Component {
+        id: shapePathTool
+        ShapePathOverlay {
+            canvas: panelViewport.canvas
         }
     }
 

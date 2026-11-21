@@ -1,6 +1,7 @@
 #include "ui/imageproviders/ShapePreviewImageProvider.h"
 
 #include "core/shapes/ShapeStyle.h"
+#include "engine/render2d/shapes/UserShapeStore.h"
 #ifdef DRIFT_WITH_SKIA
 #include "engine/render2d/skia/SkiaRuntime.h"
 #include "engine/render2d/shapes/SkiaShapePainter.h"
@@ -30,8 +31,20 @@ ShapePreviewImageProvider::ShapePreviewImageProvider()
 
 QImage ShapePreviewImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
 {
-    const drift::ShapeCatalogEntry *entry = drift::shapeCatalogEntry(id);
-    if (!entry) {
+    // "user:<stem>?r=<revision>" for a library shape: the suffix only keeps this cache honest.
+    const QString shapeId = id.left(id.indexOf(u'?'));
+    drift::ShapeStyle style;
+    double aspect = 0.0;
+    if (drift::UserShapeStore::isUserId(shapeId)) {
+        if (const std::optional<drift::UserShape> shape = drift::UserShapeStore::instance().find(shapeId)) {
+            style = drift::pathShapeStyle(shape->contours, shape->fillRule);
+            aspect = shape->aspect;
+        }
+    } else if (const drift::ShapeCatalogEntry *entry = drift::shapeCatalogEntry(shapeId)) {
+        style = entry->style;
+        aspect = entry->aspect;
+    }
+    if (aspect <= 0.0) {
         if (size)
             *size = QSize();
         return {};
@@ -52,7 +65,7 @@ QImage ShapePreviewImageProvider::requestImage(const QString &id, QSize *size, c
     card.fill(Qt::transparent);
 #ifdef DRIFT_WITH_SKIA
     // The shape box is fitted inside the card with room for the bleed (stroke, shadow) around it.
-    const double aspect = entry->aspect > 0.01 ? entry->aspect : 1.0;
+    aspect = aspect > 0.01 ? aspect : 1.0;
     double boxH = cardH;
     double boxW = boxH * aspect;
     if (boxW > cardW) {
@@ -60,7 +73,7 @@ QImage ShapePreviewImageProvider::requestImage(const QString &id, QSize *size, c
         boxH = boxW / aspect;
     }
     double scale = boxH / kReferenceHeight;
-    const double bleed = drift::skia::shapeBleedFor(entry->style) * scale;
+    const double bleed = drift::skia::shapeBleedFor(style) * scale;
     const double fit = qMin((cardW - 2.0 * bleed) / boxW, (cardH - 2.0 * bleed) / boxH);
     if (fit > 0.0 && fit < 1.0) {
         boxW *= fit;
@@ -68,7 +81,7 @@ QImage ShapePreviewImageProvider::requestImage(const QString &id, QSize *size, c
         scale *= fit;
     }
     drift::skia::ShapePaintRequest request;
-    request.style = entry->style;
+    request.style = style;
     request.layoutRect = QRectF((cardW - boxW) / 2.0, (cardH - boxH) / 2.0, boxW, boxH);
     request.renderScale = scale;
     const drift::skia::ShapePainterResult painted = drift::skia::makeShapePainter(request);

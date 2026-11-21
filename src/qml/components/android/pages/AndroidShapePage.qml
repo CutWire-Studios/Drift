@@ -5,7 +5,7 @@ AndroidAddPage {
     id: page
 
     propertiesComponent: Component {
-        ShapeInspector { }
+        ShapeInspector { canEditPath: false }
     }
 
     ShapesTab {

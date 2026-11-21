@@ -165,6 +165,11 @@ private slots:
     void assetWithoutSourceLabKeysLoadsEmpty();
     void sourceLabRebaseMath();
     void shapeCatalogPathsFitBounds();
+    void shapeCatalogMakeEditableRebuildsOutline();
+    void cloudHasNoHoleWhereTwoPuffsOverlap();
+    void shapePathStyleJsonRoundTrip();
+    void shapePathKeysInterpolateOrHold();
+    void shapeStrokeCapJson();
     void vectorSourceSerialization();
     void dotLottieUnpacks();
     void textStyleKeyframesSerialization();
@@ -3253,13 +3258,140 @@ void CoreTest::shapeCatalogPathsFitBounds()
 
         // Cubic control points can bow a hair outside the hull, so allow a small tolerance.
         const QRectF box = path.boundingRect();
-        QVERIFY2(bounds.adjusted(-1, -1, 1, 1).contains(box), qPrintable(entry.id));
         QVERIFY2(box.width() > bounds.width() * 0.3, qPrintable(entry.id));
-        QVERIFY2(box.height() > bounds.height() * 0.3, qPrintable(entry.id));
+        // A straight line preset is flat by nature.
+        if (entry.id != QLatin1String("line")) {
+            QVERIFY2(bounds.adjusted(-1, -1, 1, 1).contains(box), qPrintable(entry.id));
+            QVERIFY2(box.height() > bounds.height() * 0.3, qPrintable(entry.id));
+        }
 
         // Ids are what QML and the drag mime data carry, so every one must resolve.
         QVERIFY2(drift::shapeCatalogEntry(entry.id) != nullptr, qPrintable(entry.id));
     }
+}
+
+void CoreTest::shapeCatalogMakeEditableRebuildsOutline()
+{
+    const QRectF bounds(0, 0, 200, 120);
+    for (const drift::ShapeCatalogEntry &entry : drift::shapeCatalog()) {
+        const QPainterPath original = drift::shapePath(entry.style, bounds);
+        drift::ShapeStyle editable = entry.style;
+        editable.kind = drift::ShapeKind::Path;
+        editable.contours = drift::contoursFromPainterPath(original, bounds);
+        editable.fillRule = original.fillRule();
+        QVERIFY2(!editable.contours.isEmpty(), qPrintable(entry.id));
+        const QPainterPath rebuilt = drift::shapePath(editable, bounds);
+
+        const QRectF a = original.boundingRect();
+        const QRectF b = rebuilt.boundingRect();
+        QVERIFY2(qAbs(a.left() - b.left()) < 1e-3 && qAbs(a.top() - b.top()) < 1e-3 && qAbs(a.width() - b.width()) < 1e-3
+                     && qAbs(a.height() - b.height()) < 1e-3,
+                 qPrintable(entry.id));
+        int mismatches = 0;
+        for (int y = 0; y < 60; ++y) {
+            for (int x = 0; x < 100; ++x) {
+                const QPointF pt((x + 0.5) * 2.0, (y + 0.5) * 2.0);
+                mismatches += original.contains(pt) != rebuilt.contains(pt);
+            }
+        }
+        QVERIFY2(mismatches == 0, qPrintable(QStringLiteral("%1: %2 mismatches").arg(entry.id).arg(mismatches)));
+    }
+}
+
+void CoreTest::cloudHasNoHoleWhereTwoPuffsOverlap()
+{
+    const QRectF bounds(0, 0, 160, 100);
+    const QPainterPath path = drift::shapePath(drift::shapeCatalogEntry(QStringLiteral("cloud"))->style, bounds);
+    // Midpoint of the two big upper puffs, in the cloud's design space mapped onto the bounds.
+    QVERIFY(path.contains(QPointF((0.68 - 0.04) / 1.44 * bounds.width(), (0.39 - 0.06) / 0.82 * bounds.height())));
+    // Midpoint of the left puff and the base.
+    QVERIFY(path.contains(QPointF((0.30 - 0.04) / 1.44 * bounds.width(), (0.70 - 0.06) / 0.82 * bounds.height())));
+    QVERIFY(path.contains(bounds.center()));
+
+    drift::ShapeStyle thought = drift::shapeCatalogEntry(QStringLiteral("thought-bubble"))->style;
+    const QPainterPath bubble = drift::shapePath(thought, QRectF(0, 0, 140, 100));
+    QVERIFY(bubble.contains(QPointF(70, 40)));
+}
+
+void CoreTest::shapePathStyleJsonRoundTrip()
+{
+    drift::ShapeStyle style;
+    style.kind = drift::ShapeKind::Path;
+    style.fillRule = Qt::OddEvenFill;
+    style.layers[1].cap = drift::StrokeCap::Square;
+    style.contours = {drift::ShapeContour{{{QPointF(0.1, 0.2), {}, QPointF(0.1, 0.0), true},
+                                           {QPointF(0.9, 0.8), QPointF(-0.1, 0.0), {}, false}},
+                                          false},
+                      drift::ShapeContour{{{QPointF(0, 0), {}, {}, false}, {QPointF(1, 0), {}, {}, false},
+                                           {QPointF(0.5, 1), {}, {}, false}},
+                                          true}};
+    auto moved = style.contours;
+    moved[0].vertices[1].p = QPointF(0.5, 0.5);
+    style.pathKeys.insert(0, style.contours);
+    style.pathKeys.insert(drift::kUsPerSecond, moved);
+
+    const drift::ShapeStyle loaded = drift::shapeStyleFromJson(drift::shapeStyleToJson(style));
+    QCOMPARE(loaded.kind, drift::ShapeKind::Path);
+    QCOMPARE(loaded.fillRule, Qt::OddEvenFill);
+    QCOMPARE(loaded.layers[1].cap, drift::StrokeCap::Square);
+    QCOMPARE(loaded.contours, style.contours);
+    QCOMPARE(loaded.pathKeys, style.pathKeys);
+    QCOMPARE(drift::shapeStyleHash(loaded), drift::shapeStyleHash(style));
+
+    const QJsonObject plain = drift::shapeStyleToJson(drift::ShapeStyle{});
+    QVERIFY(!plain.contains(QStringLiteral("contours")));
+    QVERIFY(!plain.contains(QStringLiteral("pathKeys")));
+    QVERIFY(!plain.contains(QStringLiteral("fillRule")));
+    QCOMPARE(drift::shapeKindFromString(QStringLiteral("path")), drift::ShapeKind::Path);
+    QCOMPARE(drift::shapeKindToString(drift::ShapeKind::XMark), QStringLiteral("x-mark"));
+    QVERIFY(drift::shapeStyleFromJson(drift::shapeStyleToJson(*&drift::shapeCatalogEntry(QStringLiteral("pie"))->style))
+                .sweep == 270.0);
+}
+
+void CoreTest::shapePathKeysInterpolateOrHold()
+{
+    const auto contour = [](double x, int count, bool closed = true) {
+        drift::ShapeContour c;
+        c.closed = closed;
+        for (int i = 0; i < count; ++i)
+            c.vertices.append({QPointF(x + i, 0.0), {}, QPointF(x, 0.0), false});
+        return QVector<drift::ShapeContour>{c};
+    };
+    drift::ShapeStyle style;
+    style.kind = drift::ShapeKind::Path;
+    QVERIFY(!style.isAnimated());
+    style.pathKeys.insert(0, contour(0.0, 3));
+    style.pathKeys.insert(drift::kUsPerSecond, contour(1.0, 3));
+    style.pathKeys.insert(2 * drift::kUsPerSecond, contour(5.0, 4));
+    QVERIFY(style.isAnimated());
+
+    const drift::ShapeStyle mid = style.resolvedAt(drift::kUsPerSecond / 2);
+    QCOMPARE(mid.contours.first().vertices.first().p.x(), 0.5);
+    QCOMPARE(mid.contours.first().vertices.first().out.x(), 0.5);
+    QVERIFY(mid.pathKeys.isEmpty());
+    // Vertex counts differ between the last two keys: the earlier key holds.
+    const drift::ShapeStyle held = style.resolvedAt(drift::kUsPerSecond + drift::kUsPerSecond / 2);
+    QCOMPARE(held.contours.first().vertices.size(), 3);
+    QCOMPARE(held.contours.first().vertices.first().p.x(), 1.0);
+    QCOMPARE(style.resolvedAt(2 * drift::kUsPerSecond).contours.first().vertices.size(), 4);
+    QCOMPARE(style.resolvedAt(10 * drift::kUsPerSecond).contours.first().vertices.size(), 4);
+
+    drift::ShapeStyle flip = style;
+    flip.pathKeys.clear();
+    flip.pathKeys.insert(0, contour(0.0, 3, true));
+    flip.pathKeys.insert(drift::kUsPerSecond, contour(1.0, 3, false));
+    QVERIFY(flip.resolvedAt(drift::kUsPerSecond / 2).contours.first().closed);
+}
+
+void CoreTest::shapeStrokeCapJson()
+{
+    drift::TextShadingLayer layer = drift::strokeLayer(4.0, Qt::white, QStringLiteral("stroke"));
+    QVERIFY(!drift::textShadingLayerToJson(layer).contains(QStringLiteral("cap")));
+    layer.cap = drift::StrokeCap::Butt;
+    const QJsonObject json = drift::textShadingLayerToJson(layer);
+    QCOMPARE(json.value(QStringLiteral("cap")).toString(), QStringLiteral("butt"));
+    QCOMPARE(drift::textShadingLayerFromJson(json).cap, drift::StrokeCap::Butt);
+    QVERIFY(drift::textLayersHash({layer}) != drift::textLayersHash({drift::strokeLayer(4.0, Qt::white, QStringLiteral("stroke"))}));
 }
 
 void CoreTest::effectCatalogIdSerialization()

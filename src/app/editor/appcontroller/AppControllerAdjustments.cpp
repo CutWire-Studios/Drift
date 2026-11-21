@@ -13,6 +13,7 @@
 #include "engine/packages/assets/StickerPackImport.h"
 #include "engine/platform/AndroidUri.h"
 
+#include "engine/render2d/shapes/UserShapeStore.h"
 #include <QTemporaryFile>
 
 
@@ -193,6 +194,19 @@ QVariantList AppController::builtinShapes() const
             {QStringLiteral("aspect"), entry.aspect},
         });
     }
+    for (const drift::UserShape &shape : drift::UserShapeStore::instance().all()) {
+        out.append(QVariantMap{
+            {QStringLiteral("id"), shape.id},
+            {QStringLiteral("label"), shape.name},
+            {QStringLiteral("category"), QStringLiteral("mine")},
+            {QStringLiteral("kind"), drift::shapeKindToString(drift::ShapeKind::Path)},
+            {QStringLiteral("aspect"), shape.aspect},
+            {QStringLiteral("user"), true},
+            // image://shape/<thumbnail> is what a card loads; the revision keeps a deleted and
+            // re-saved shape of the same name from showing its predecessor's cached card.
+            {QStringLiteral("thumbnail"), QStringLiteral("%1?r=%2").arg(shape.id).arg(shape.revision)},
+        });
+    }
     return out;
 }
 
@@ -205,6 +219,11 @@ QVariantList AppController::builtinShapeCategories() const
             {QStringLiteral("label"), category.label},
         });
     }
+    // Always listed, even when empty: the Shapes tab shows its own empty state for it.
+    out.append(QVariantMap{
+        {QStringLiteral("id"), QStringLiteral("mine")},
+        {QStringLiteral("label"), tr("My shapes")},
+    });
     return out;
 }
 
@@ -215,8 +234,24 @@ void AppController::addShapeClip(const QString &shapeKind, double atSeconds)
 
 void AppController::addShapeClipAt(const QString &shapeId, int trackIndex, double atSeconds)
 {
+    if (drift::UserShapeStore::isUserId(shapeId)) {
+        const std::optional<drift::UserShape> shape = drift::UserShapeStore::instance().find(shapeId);
+        if (!shape)
+            return;
+        placeShapeClip(drift::pathShapeStyle(shape->contours, shape->fillRule), shape->name, shape->aspect, {}, trackIndex,
+                       atSeconds, tr("Shape added"));
+        return;
+    }
     const drift::ShapeCatalogEntry *entry = drift::shapeCatalogEntry(shapeId);
     const drift::ShapeStyle style = entry ? entry->style : shapeStyleForKind(shapeId);
+    placeShapeClip(style, entry ? entry->label : drift::shapeKindToString(style.kind), entry ? entry->aspect : 1.6, {},
+                   trackIndex, atSeconds, tr("Shape added"));
+}
+
+drift::ClipRef AppController::placeShapeClip(const drift::ShapeStyle &style, const QString &name, double aspect,
+                                             const QRectF &canvasBox, int trackIndex, double atSeconds,
+                                             const QString &undoText)
+{
     const drift::Project before = m_project;
 
     const drift::TimeUs wantStart = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
@@ -227,30 +262,32 @@ void AppController::addShapeClipAt(const QString &shapeId, int trackIndex, doubl
                                                    drift::imageClipDurationUs(), true);
     }
     if (target < 0)
-        return;
+        return {-1, -1};
 
     drift::Track &track = m_project.tracks()[target];
-    const drift::TimeUs startSeconds = wantStart;
-    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startSeconds,
+    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, wantStart,
                                                         drift::imageClipDurationUs(), m_snapEnabled, m_playheadUs);
 
     drift::Clip clip;
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     clip.type = drift::ClipType::Shape;
-    clip.name = entry ? entry->label : drift::shapeKindToString(style.kind);
+    clip.name = name;
     clip.shapeStyle = style;
     clip.timelineStart = start;
     clip.timelineDuration = drift::imageClipDurationUs();
     clip.srcIn = 0;
     clip.srcOut = drift::imageClipDurationUs();
-    applyDefaultVisualLayout(clip, m_project.width(), m_project.height(),
-                             entry ? entry->aspect : 1.6);
+    if (canvasBox.isValid())
+        setClipFrameBox(clip, canvasBox.x(), canvasBox.y(), canvasBox.width(), canvasBox.height());
+    else
+        applyDefaultVisualLayout(clip, m_project.width(), m_project.height(), aspect);
 
     track.clips.append(clip);
     const int newClipIndex = track.clips.size() - 1;
-    pushProjectEdit(before, tr("Shape added"));
-    finishEdit(tr("Shape added"));
+    pushProjectEdit(before, undoText);
+    finishEdit(undoText);
     selectClip(target, newClipIndex);
+    return {target, newClipIndex};
 }
 
 int AppController::ensureAdjustmentLaneFor(int parentTrackIndex, drift::AdjustmentKind kind,

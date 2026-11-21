@@ -38,6 +38,8 @@
 #include <QSettings>
 #include <QSignalSpy>
 #include <QStandardPaths>
+#include "core/shapes/ShapePath.h"
+#include "engine/render2d/shapes/UserShapeStore.h"
 #include <QTemporaryDir>
 #include <QTemporaryFile>
 #include <QUrl>
@@ -411,6 +413,10 @@ private slots:
     void speedCurveSessionExposesTrimmedSourceWindow();
     void shapeStylePartialUpdateAndUndo();
     void shapeLayersAndKeyframes();
+    void shapeConvertToPathKeepsOutlineAndUndoes();
+    void shapeContoursRefitKeepsVerticesOnScreen();
+    void shapePathKeysInterpolateThroughTheApi();
+    void shapeUserLibraryRoundTrip();
     void replaceSourceRebindsClipsAndClampsTrim();
     void linkProxyValidatesAndCountsMatches();
     void proxyGenerationWritesBesideSource();
@@ -9921,6 +9927,269 @@ void EditorStateTest::shapeStylePartialUpdateAndUndo()
     state.undo();
     QCOMPARE(layerNamed(QStringLiteral("fill")).value(QStringLiteral("paint")).toMap().value(QStringLiteral("kind")).toString(),
              QStringLiteral("solid"));
+}
+
+namespace {
+
+// Where a normalized point of a clip's box lands on the canvas at clip time 0.
+QPointF shapeCanvasPoint(const drift::Clip &clip, const QPointF &u, const QSizeF &canvas)
+{
+    const drift::ClipLayout layout = drift::clipLayoutAt(clip, 0, canvas);
+    QTransform turn;
+    turn.rotate(layout.rotation);
+    const QPointF d = turn.map(QPointF((u.x() * layout.frameW - layout.anchorX) * layout.scaleX,
+                                       (u.y() * layout.frameH - layout.anchorY) * layout.scaleY));
+    return QPointF(layout.posX + d.x(), layout.posY + d.y());
+}
+
+QVariantMap shapeVertex(double x, double y)
+{
+    return {{"x", x}, {"y", y}};
+}
+
+} // namespace
+
+void EditorStateTest::shapeConvertToPathKeepsOutlineAndUndoes()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addShapeClip(QStringLiteral("star"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    const drift::Clip before = state.project()->tracks().at(track).clips.at(clip);
+
+    state.convertShapeToPath(track, clip);
+    const drift::Clip after = state.project()->tracks().at(track).clips.at(clip);
+    QCOMPARE(after.shapeStyle.kind, drift::ShapeKind::Path);
+    QCOMPARE(after.shapeStyle.layers.size(), before.shapeStyle.layers.size());
+    QCOMPARE(after.frameW, before.frameW);
+    QCOMPARE(after.frameH, before.frameH);
+    QCOMPARE(after.shapeStyle.contours.size(), 1);
+    QCOMPARE(after.shapeStyle.contours.first().vertices.size(), 10);
+
+    const QRectF box(0, 0, after.frameW, after.frameH);
+    const QPainterPath a = drift::shapePath(before.shapeStyle, box);
+    const QPainterPath b = drift::shapePath(after.shapeStyle, box);
+    QVERIFY((a.boundingRect().topLeft() - b.boundingRect().topLeft()).manhattanLength() < 1e-3);
+    QVERIFY((a.boundingRect().bottomRight() - b.boundingRect().bottomRight()).manhattanLength() < 1e-3);
+
+    const QVariantMap map = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap();
+    QCOMPARE(map.value(QStringLiteral("kind")).toString(), QStringLiteral("path"));
+    QCOMPARE(map.value(QStringLiteral("contours")).toList().size(), 1);
+    QCOMPARE(map.value(QStringLiteral("fillRule")).toString(),
+             a.fillRule() == Qt::OddEvenFill ? QStringLiteral("evenodd") : QStringLiteral("nonzero"));
+    QVERIFY(!map.value(QStringLiteral("path")).toString().isEmpty());
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(track).clips.at(clip).shapeStyle.kind, drift::ShapeKind::Star);
+}
+
+// A vertex dragged past the box grows it; every point has to stay put on the canvas, through
+// rotation and scale, and the drag is one undo step.
+void EditorStateTest::shapeContoursRefitKeepsVerticesOnScreen()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addShapeClip(QStringLiteral("rectangle"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    state.convertShapeToPath(track, clip);
+    const drift::Clip start = state.project()->tracks().at(track).clips.at(clip);
+    const QSizeF canvas(state.project()->width(), state.project()->height());
+    state.project()->tracks()[track].clips[clip].rotation.setKeyframe(0, 30.0);
+    state.project()->tracks()[track].clips[clip].scaleX.setKeyframe(0, 1.4);
+    state.project()->tracks()[track].clips[clip].scaleY.setKeyframe(0, 0.8);
+    const drift::Clip posed = state.project()->tracks().at(track).clips.at(clip);
+
+    QVariantList contours = state.shapeContoursAt(track, clip);
+    QCOMPARE(contours.size(), 1);
+    const QVariantList vertices = contours.first().toMap().value("vertices").toList();
+    QVERIFY(vertices.size() >= 4);
+    const int moved = 2;
+    const QPointF droppedAt(1.5, 1.3);
+    const QPointF otherBefore(vertices.at(0).toMap().value("x").toDouble(), vertices.at(0).toMap().value("y").toDouble());
+    const QPointF expectedMoved = shapeCanvasPoint(posed, droppedAt, canvas);
+    const QPointF expectedOther = shapeCanvasPoint(posed, otherBefore, canvas);
+
+    // The drag: live moves that each adopt what comes back, then the release. The vertex is
+    // addressed in the box as it currently stands, since every call may refit it.
+    QVariantList live = contours;
+    for (int step = 1; step <= 4; ++step) {
+        const drift::Clip now = state.project()->tracks().at(track).clips.at(clip);
+        // Where the target is in the box as it stands now.
+        const drift::ClipLayout layout = drift::clipLayoutAt(now, 0, canvas);
+        QTransform inverse;
+        inverse.rotate(layout.rotation);
+        const QTransform back = inverse.inverted();
+        const QPointF d = back.map(expectedMoved - QPointF(layout.posX, layout.posY));
+        const double t = step / 4.0;
+        const QPointF full((d.x() / layout.scaleX + layout.anchorX) / layout.frameW,
+                           (d.y() / layout.scaleY + layout.anchorY) / layout.frameH);
+        const QPointF from(live.first().toMap().value("vertices").toList().at(moved).toMap().value("x").toDouble(),
+                           live.first().toMap().value("vertices").toList().at(moved).toMap().value("y").toDouble());
+        const QPointF target = from + (full - from) * t;
+        QVariantList vs = live.first().toMap().value("vertices").toList();
+        QVariantMap v = vs.at(moved).toMap();
+        v["x"] = target.x();
+        v["y"] = target.y();
+        vs[moved] = v;
+        QVariantMap c = live.first().toMap();
+        c["vertices"] = vs;
+        live = state.setShapeContours(track, clip, {c}, step == 4);
+    }
+
+    const drift::Clip end = state.project()->tracks().at(track).clips.at(clip);
+    QVERIFY(end.frameW > start.frameW);
+    QVERIFY(end.frameH > start.frameH);
+    const QVariantList stored = state.shapeContoursAt(track, clip);
+    const QVariantList sv = stored.first().toMap().value("vertices").toList();
+    double minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+    for (const QVariant &v : sv) {
+        minX = qMin(minX, v.toMap().value("x").toDouble());
+        minY = qMin(minY, v.toMap().value("y").toDouble());
+        maxX = qMax(maxX, v.toMap().value("x").toDouble());
+        maxY = qMax(maxY, v.toMap().value("y").toDouble());
+    }
+    QVERIFY(qAbs(minX) < 1e-6 && qAbs(minY) < 1e-6 && qAbs(maxX - 1.0) < 1e-6 && qAbs(maxY - 1.0) < 1e-6);
+    const auto at = [&](int i) {
+        return QPointF(sv.at(i).toMap().value("x").toDouble(), sv.at(i).toMap().value("y").toDouble());
+    };
+    QVERIFY((shapeCanvasPoint(end, at(moved), canvas) - expectedMoved).manhattanLength() < 1e-4);
+    QVERIFY((shapeCanvasPoint(end, at(0), canvas) - expectedOther).manhattanLength() < 1e-4);
+
+    // Four live moves and the release are one undo step.
+    state.undo();
+    const drift::Clip undone = state.project()->tracks().at(track).clips.at(clip);
+    QCOMPARE(undone.frameW, posed.frameW);
+    QCOMPARE(undone.frameH, posed.frameH);
+    QCOMPARE(undone.shapeStyle.contours, posed.shapeStyle.contours);
+}
+
+void EditorStateTest::shapePathKeysInterpolateThroughTheApi()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addShapeClip(QStringLiteral("rectangle"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    state.convertShapeToPath(track, clip);
+    const auto style = [&]() { return state.project()->tracks().at(track).clips.at(clip).shapeStyle; };
+
+    state.setShapePathKeyed(track, clip, true);
+    QCOMPARE(style().pathKeys.size(), 1);
+    QVERIFY(state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap().value(QStringLiteral("pathAnimated")).toBool());
+
+    // Keying at the end writes the edit as a key there, leaving the first key alone.
+    state.setPlayheadSeconds(2.0);
+    QVariantList contours = state.shapeContoursAt(track, clip);
+    QVariantList vs = contours.first().toMap().value("vertices").toList();
+    QVariantMap v = vs.at(0).toMap();
+    const double x0 = v.value("x").toDouble();
+    v["x"] = x0 + 0.2;
+    vs[0] = v;
+    QVariantMap c = contours.first().toMap();
+    c["vertices"] = vs;
+    state.setShapeContours(track, clip, {c}, true);
+    QCOMPARE(style().pathKeys.size(), 2);
+
+    // Halfway, the first vertex is halfway between the keys. The box refits to the union of every
+    // key, so compare the on-screen position rather than the stored coordinate.
+    const drift::Clip posed = state.project()->tracks().at(track).clips.at(clip);
+    const QSizeF canvas(state.project()->width(), state.project()->height());
+    const auto screenX = [&](double seconds) {
+        const QVariantList cs = [&]() {
+            state.setPlayheadSeconds(seconds);
+            return state.shapeContoursAt(track, clip);
+        }();
+        const QVariantMap first = cs.first().toMap().value("vertices").toList().at(0).toMap();
+        return shapeCanvasPoint(state.project()->tracks().at(track).clips.at(clip),
+                                QPointF(first.value("x").toDouble(), first.value("y").toDouble()), canvas)
+            .x();
+    };
+    Q_UNUSED(posed);
+    const double a = screenX(0.0);
+    const double b = screenX(2.0);
+    QVERIFY(b > a);
+    QVERIFY(qAbs(screenX(1.0) - (a + b) / 2.0) < 1e-3);
+
+    state.removeShapePathKey(track, clip, 2.0);
+    QCOMPARE(style().pathKeys.size(), 1);
+    state.setShapePathKeyed(track, clip, false);
+    QVERIFY(style().pathKeys.isEmpty());
+    QVERIFY(!style().contours.isEmpty());
+}
+
+void EditorStateTest::shapeUserLibraryRoundTrip()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    QDir(drift::UserShapeStore::dir()).removeRecursively();
+    drift::UserShapeStore::instance().reload();
+
+    AssetLibrary library;
+    AppController state(&library);
+    QSignalSpy changed(&state, &AppController::userShapesChanged);
+
+    // "mine" is listed even when empty.
+    bool hasMine = false;
+    for (const QVariant &c : state.builtinShapeCategories())
+        hasMine = hasMine || c.toMap().value("id").toString() == QStringLiteral("mine");
+    QVERIFY(hasMine);
+
+    // A line is an open path; the open flag has to survive the .svg on disk.
+    state.addShapeClip(QStringLiteral("line"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    const QString id = state.saveShapeToLibrary(track, clip, QStringLiteral("My line"));
+    QVERIFY(id.startsWith(QStringLiteral("user:")));
+    QCOMPARE(changed.count(), 1);
+    QVERIFY(QFileInfo::exists(QDir(drift::UserShapeStore::dir()).filePath(id.mid(5) + QStringLiteral(".svg"))));
+
+    drift::UserShapeStore::instance().reload();
+    QVariantMap entry;
+    for (const QVariant &v : state.builtinShapes()) {
+        if (v.toMap().value("id").toString() == id)
+            entry = v.toMap();
+    }
+    QCOMPARE(entry.value("label").toString(), QStringLiteral("My line"));
+    QCOMPARE(entry.value("category").toString(), QStringLiteral("mine"));
+    QCOMPARE(entry.value("kind").toString(), QStringLiteral("path"));
+    QVERIFY(entry.value("user").toBool());
+    QVERIFY(entry.value("thumbnail").toString().startsWith(id + QStringLiteral("?r=")));
+
+    state.addShapeClipAt(id, -1, 5.0);
+    const drift::Clip added = state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip());
+    QCOMPARE(added.shapeStyle.kind, drift::ShapeKind::Path);
+    QCOMPARE(added.shapeStyle.contours.size(), 1);
+    QVERIFY(!added.shapeStyle.contours.first().closed);
+    QVERIFY(!drift::firstTextLayerOfKind(added.shapeStyle.layers, drift::TextLayerKind::Fill, false)->enabled);
+    QCOMPARE(added.name, QStringLiteral("My line"));
+
+    QVERIFY(state.renameUserShape(id, QStringLiteral("Renamed")));
+    drift::UserShapeStore::instance().reload();
+    QCOMPARE(drift::UserShapeStore::instance().find(id)->name, QStringLiteral("Renamed"));
+
+    // An .svg dropped in becomes a library entry and a clip.
+    const QString svgPath = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).filePath(QStringLiteral("drift-test-tri.svg"));
+    {
+        QFile f(svgPath);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M0 10 L5 0 L10 10 Z'/></svg>");
+    }
+    const QString svgId = state.importSvgToLibrary(svgPath);
+    QVERIFY(svgId.startsWith(QStringLiteral("user:")));
+    const QVariantMap ref = state.importSvgAsShapeClip(svgPath, -1, 8.0);
+    QVERIFY(!ref.isEmpty());
+    QVERIFY(state.importSvgAsShapeClip(QStringLiteral("/nonexistent/x.svg"), -1, 0.0).isEmpty());
+    QFile::remove(svgPath);
+
+    QVERIFY(state.deleteUserShape(id));
+    QVERIFY(state.deleteUserShape(svgId));
+    QVERIFY(!state.deleteUserShape(id));
+    for (const QVariant &v : state.builtinShapes())
+        QVERIFY(!v.toMap().value("user").toBool());
+    QDir(drift::UserShapeStore::dir()).removeRecursively();
+    drift::UserShapeStore::instance().reload();
 }
 
 // The generic layer ops work on a shape the way they do on a caption, and a shape's style

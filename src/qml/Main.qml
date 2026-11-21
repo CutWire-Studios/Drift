@@ -1414,6 +1414,8 @@ ApplicationWindow {
     function dispatchAction(id) {
         if (ShellBridge.keyframesActionHandler && ShellBridge.keyframesActionHandler.handleAction(id))
             return
+        if (ShellBridge.shapePathActionHandler && ShellBridge.shapePathActionHandler.handleAction(id))
+            return
         if (ShellBridge.maskingActionHandler && ShellBridge.maskingActionHandler.handleAction(id))
             return
         if (ShellBridge.trackingActionHandler && ShellBridge.trackingActionHandler.handleAction(id))

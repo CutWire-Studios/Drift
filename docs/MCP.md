@@ -881,6 +881,13 @@ ids (`list_shapes` rows carry `kind` and the default box `aspect`): basic `recta
 | `headSize` | `arrow`, `double-arrow`, `block-arrow`, `chevron`, the `banner` notch |
 | `thickness` | `arrow`, `double-arrow`, `chevron`, `curved-arrow`, `cross` |
 | `tailX`, `tailSize` | the four bubbles |
+| `sweep` | `pie`, `arc` (degrees, 1..359) |
+| `path` | a custom outline as an SVG path `d` string in the shape's 0..1 box (y down); sets `kind:"path"`, replaces the outline and clears its keys, and refits the box without moving the shape. A sub-path without `Z` is an open line: give it a stroke (the fill still closes it). `inspect` returns it on path clips |
+| `fillRule` | `nonzero` (default) or `evenodd`, for paths |
+| `layer.cap` | `butt` / `round` (default) / `square` stroke end caps, visible on open paths and dashes |
+
+`kind:"path"` alone converts a preset into an editable path with the same outline. Shapes saved to
+the app's "My shapes" library appear in `list_shapes` as `user:<name>` ids and `add_shape` takes them.
 
 `add_shape_layer` / `set_shape_layer` / `remove_shape_layer` / `move_shape_layer` /
 `duplicate_shape_layer` are the text layer tools under another name. Animate with

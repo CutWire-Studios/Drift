@@ -191,7 +191,15 @@ PreviewController::PreviewController(AppController &app, QObject *parent)
 
     connect(this, &PreviewController::canvasCropModeChanged, this, &PreviewController::updateActiveTool);
     connect(this, &PreviewController::clipCropModeChanged, this, &PreviewController::updateActiveTool);
+    connect(this, &PreviewController::shapePathModeChanged, this, &PreviewController::updateActiveTool);
     connect(this, &PreviewController::guideEditSetIdChanged, this, &PreviewController::updateActiveTool);
+    // Path editing is about one clip; leaving it for anything that is not a Path shape ends the session.
+    const auto endStalePathEdit = [this] {
+        if (m_shapePathMode == QLatin1String("edit") && !selectionIsPathShape())
+            setShapePathMode(QString());
+    };
+    connect(&m_app, &AppController::selectionChanged, this, endStalePathEdit);
+    connect(&m_app, &AppController::tracksChanged, this, endStalePathEdit);
     connect(this, &PreviewController::maskEditActiveChanged, this, &PreviewController::updateActiveTool);
 
     connect(&m_app, &AppController::playingChanged, this, &PreviewController::updateHandlesVisible);
@@ -255,6 +263,8 @@ void PreviewController::updateActiveTool()
         tool = QStringLiteral("crop");
     else if (m_clipCropMode)
         tool = QStringLiteral("clipCrop");
+    else if (!m_shapePathMode.isEmpty())
+        tool = QStringLiteral("shapePath");
     else if (!m_guideEditSetId.isEmpty())
         tool = QStringLiteral("guideEdit");
     else if (!m_maskingTool.isEmpty()) {
@@ -415,6 +425,7 @@ void PreviewController::setGuideEditSetId(const QString &id)
     if (!id.isEmpty()) {
         setCanvasCropMode(false);
         setMaskEditMode(false);
+        setShapePathMode(QString());
         setGuidesEnabled(true);
         m_app.setGuideSetActive(id, true);
     }
@@ -1700,6 +1711,7 @@ void PreviewController::setCanvasCropMode(bool active)
     if (active) {
         setGuideEditSetId(QString());
         setMaskingTool(QString());
+        setShapePathMode(QString());
     }
     emit canvasCropModeChanged();
 }
@@ -1720,6 +1732,7 @@ void PreviewController::setClipCropMode(bool active)
         }
         setGuideEditSetId(QString());
         setMaskingTool(QString());
+        setShapePathMode(QString());
     }
     emit clipCropModeChanged();
 }
@@ -1757,6 +1770,8 @@ void PreviewController::setMaskingTool(const QString &tool)
     if (m_maskingTool == normalized)
         return;
     m_maskingTool = normalized;
+    if (!normalized.isEmpty())
+        setShapePathMode(QString());
     emit maskingToolChanged();
     updateActiveTool();
 }
@@ -1800,6 +1815,32 @@ void PreviewController::pushMaskView()
     m_app.m_playback.setMaskView(view);
 }
 
+bool PreviewController::selectionIsPathShape() const
+{
+    if (!m_app.isValidClipIndex(m_app.m_selectedTrack, m_app.m_selectedClip))
+        return false;
+    const drift::Clip &clip = m_app.m_project.tracks().at(m_app.m_selectedTrack).clips.at(m_app.m_selectedClip);
+    return clip.type == drift::ClipType::Shape && clip.shapeStyle.kind == drift::ShapeKind::Path;
+}
+
+void PreviewController::setShapePathMode(const QString &mode)
+{
+    const QString normalized = mode == QLatin1String("draw") || (mode == QLatin1String("edit") && selectionIsPathShape())
+                                   ? mode
+                                   : QString();
+    if (m_shapePathMode == normalized)
+        return;
+    m_shapePathMode = normalized;
+    if (!normalized.isEmpty()) {
+        setCanvasCropMode(false);
+        setClipCropMode(false);
+        setMaskEditMode(false);
+        setGuideEditSetId(QString());
+        setMaskingTool(QString());
+    }
+    emit shapePathModeChanged();
+}
+
 void PreviewController::setMaskEditMode(bool active)
 {
     if (m_maskEditMode == active)
@@ -1809,8 +1850,10 @@ void PreviewController::setMaskEditMode(bool active)
         m_canvasCropMode = false;
         emit canvasCropModeChanged();
     }
-    if (active)
+    if (active) {
         setGuideEditSetId(QString());
+        setShapePathMode(QString());
+    }
     emit maskEditModeChanged();
 }
 

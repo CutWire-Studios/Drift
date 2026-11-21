@@ -6,6 +6,7 @@
 
 #include <QtMath>
 
+#include <algorithm>
 #include <cmath>
 
 #include "include/core/SkCanvas.h"
@@ -33,6 +34,25 @@ bool nativeCornerKind(ShapeKind kind)
     }
 }
 
+// Inside / Outside clip a doubled stroke to the closed outline, which an open contour does not have,
+// so open paths always stroke centred.
+bool hasOpenContour(const ShapeStyle &style)
+{
+    if (style.kind != ShapeKind::Path)
+        return false;
+    const auto open = [](const QVector<ShapeContour> &contours) {
+        return std::any_of(contours.cbegin(), contours.cend(), [](const ShapeContour &c) { return !c.closed; });
+    };
+    if (open(style.contours))
+        return true;
+    return std::any_of(style.pathKeys.cbegin(), style.pathKeys.cend(), open);
+}
+
+StrokeAlign effectiveAlign(const ShapeStyle &style, const TextShadingLayer &layer)
+{
+    return hasOpenContour(style) ? StrokeAlign::Center : layer.strokeAlign;
+}
+
 // How far a stroke layer reaches outside the outline, as a multiple of its width.
 double strokeReachFactor(StrokeAlign align)
 {
@@ -48,10 +68,15 @@ double strokeReachFactor(StrokeAlign align)
 }
 
 // A miter corner reaches out to the miter limit in half-widths; round and bevel stay within one.
-double strokeReachFactor(const TextShadingLayer &layer)
+// A square cap's corner sits half a width times sqrt(2) from the endpoint of an open contour.
+double strokeReachFactor(const ShapeStyle &style, const TextShadingLayer &layer)
 {
-    const double factor = strokeReachFactor(layer.strokeAlign);
-    return layer.join == StrokeJoin::Miter ? factor * layer.miterLimit : factor;
+    double factor = strokeReachFactor(effectiveAlign(style, layer));
+    if (layer.join == StrokeJoin::Miter)
+        factor *= layer.miterLimit;
+    if (hasOpenContour(style) && layer.cap == StrokeCap::Square)
+        factor = qMax(factor, M_SQRT1_2);
+    return factor;
 }
 
 // The outward stroke a shadow or glow silhouette grows by; `join` takes that stroke's corners.
@@ -61,7 +86,7 @@ double widestOutwardStroke(const ShapeStyle &style, StrokeJoin *join = nullptr, 
     for (const TextShadingLayer &layer : style.layers) {
         if (!layer.enabled || layer.kind != TextLayerKind::Stroke)
             continue;
-        const double reach = layer.width * strokeReachFactor(layer.strokeAlign);
+        const double reach = layer.width * strokeReachFactor(effectiveAlign(style, layer));
         if (reach > widest) {
             widest = reach;
             if (join)
@@ -89,7 +114,7 @@ public:
         scaled.cornerRadius = m_style.cornerRadius * m_scale;
         const SkPath outline = toSkPath(shapePath(scaled, QRectF(0, 0, width, height)));
         if (!nativeCornerKind(scaled.kind) && scaled.cornerRadius > 0.0) {
-            SkPathBuilder rounded;
+            SkPathBuilder rounded(outline.getFillType());
             SkStrokeRec rec(SkStrokeRec::kFill_InitStyle);
             if (SkCornerPathEffect::Make(float(scaled.cornerRadius))->filterPath(&rounded, outline, &rec))
                 m_path = rounded.detach();
@@ -98,6 +123,7 @@ public:
         } else {
             m_path = outline;
         }
+        m_box = QRectF(0, 0, width, height);
         m_silhouetteStrokePx = widestOutwardStroke(style, &m_silhouetteJoin, &m_silhouetteMiter) * m_scale * 2.0;
     }
 
@@ -107,8 +133,11 @@ public:
     void paint(SkCanvas &canvas) const override
     {
         canvas.translate(float(m_bleed), float(m_bleed));
+        // A custom path's tight bounds can be flat (a straight line), which a gradient cannot map onto.
         const SkRect bounds = m_path.getBounds();
-        const QRectF box(bounds.left(), bounds.top(), bounds.width(), bounds.height());
+        const QRectF box = m_style.kind == ShapeKind::Path
+                               ? m_box
+                               : QRectF(bounds.left(), bounds.top(), bounds.width(), bounds.height());
         for (const TextShadingLayer &layer : m_style.layers) {
             if (!layer.enabled || layer.opacity <= 0.0)
                 continue;
@@ -139,9 +168,10 @@ private:
             applyShadingPaint(paint, layer.paint, box, m_timeSec, 1.0, -1.0, m_frameRate);
             paint.setStyle(SkPaint::kStroke_Style);
             applyStrokeJoin(paint, layer.join, layer.miterLimit);
-            paint.setStrokeCap(SkPaint::kRound_Cap);
+            applyStrokeCap(paint, layer.cap);
             paint.setPathEffect(strokePathEffectFor(layer, width, m_scale));
-            if (layer.strokeAlign == StrokeAlign::Center) {
+            const StrokeAlign align = effectiveAlign(m_style, layer);
+            if (align == StrokeAlign::Center) {
                 paint.setStrokeWidth(float(width));
                 canvas.drawPath(m_path, paint);
                 break;
@@ -150,7 +180,7 @@ private:
             // half that grows purely outward or purely inward.
             paint.setStrokeWidth(float(width * 2.0));
             canvas.save();
-            canvas.clipPath(m_path, layer.strokeAlign == StrokeAlign::Inside ? SkClipOp::kIntersect : SkClipOp::kDifference,
+            canvas.clipPath(m_path, align == StrokeAlign::Inside ? SkClipOp::kIntersect : SkClipOp::kDifference,
                             true);
             canvas.drawPath(m_path, paint);
             canvas.restore();
@@ -193,6 +223,7 @@ private:
     QSize m_size;
     quint64 m_key = 0;
     SkPath m_path;
+    QRectF m_box;
     double m_silhouetteStrokePx = 0.0;
     StrokeJoin m_silhouetteJoin = StrokeJoin::Round;
     double m_silhouetteMiter = 4.0;
@@ -216,7 +247,7 @@ double shapeBleedFor(const ShapeStyle &style)
                        + layer.sketchDeviation;
         switch (layer.kind) {
         case TextLayerKind::Stroke:
-            reach += layer.width * strokeReachFactor(layer);
+            reach += layer.width * strokeReachFactor(style, layer);
             break;
         case TextLayerKind::Extrude:
             reach += layer.width;

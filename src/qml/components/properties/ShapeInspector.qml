@@ -6,6 +6,8 @@ import Drift
 Item {
     id: root
 
+    // The pen tool lives on the desktop preview; the phone shell has no tool to enter.
+    property bool canEditPath: true
     property int clipDataRevision: 0
     readonly property var clipData: {
         void clipDataRevision
@@ -34,11 +36,18 @@ Item {
     // Which geometry controls apply to the selected kind. The catalog id and the stored kind are
     // not always the same word ("circle" is an ellipse), so match on the stored kind.
     readonly property var shapeFamilies: ({
-        "star": ["star", "burst"],
+        "points": ["star", "burst", "gear", "seal", "polygon"],
+        "inner": ["star", "burst", "gear", "seal"],
+        "sweep": ["pie", "arc"],
         "arrow": ["arrow", "double-arrow", "block-arrow", "chevron", "banner"],
-        "shaft": ["arrow", "double-arrow", "chevron", "cross", "curved-arrow"],
+        "shaft": ["arrow", "double-arrow", "chevron", "cross", "curved-arrow", "ring", "frame", "arc",
+                  "checkmark", "x-mark"],
         "bubble": ["speech-bubble", "speech-bubble-rect", "thought-bubble", "callout"]
     })
+    readonly property bool isPath: shapeStyle.kind === "path"
+    readonly property var pathKeyTimes: shapeStyle.pathKeyTimes || []
+    readonly property string pointsLabel: shapeStyle.kind === "polygon" ? qsTr("Sides")
+                                          : shapeStyle.kind === "gear" ? qsTr("Teeth") : qsTr("Points")
     function shapeHas(family) {
         return root.shapeFamilies[family].indexOf(root.shapeStyle.kind) >= 0
     }
@@ -92,11 +101,13 @@ Item {
             const out = []
             for (let i = 0; i < root.shapeCatalog.length; ++i) {
                 const entry = root.shapeCatalog[i]
-                if (seen[entry.kind])
+                if (seen[entry.kind] || entry.user === true || entry.kind === "path")
                     continue
                 seen[entry.kind] = true
                 out.push(entry)
             }
+            if (root.isPath)
+                out.push({ "id": "path", "kind": "path", "label": qsTr("Custom path") })
             return out
         }
 
@@ -134,7 +145,153 @@ Item {
                     }
                     return 0
                 }
-                onActivated: root.setShapeKey("kind", currentValue)
+                onActivated: {
+                    if (currentValue !== "path")
+                        root.setShapeKey("kind", currentValue)
+                }
+            }
+        }
+
+        // ----- Custom path ------------------------------------------------
+        Column {
+            width: parent.width
+            spacing: Theme.spacingMd
+
+            Column {
+                width: parent.width
+                spacing: Theme.spacingXs
+                visible: !root.isPath && root.canEditPath
+
+                ThemedButton {
+                    variant: "secondary"
+                    glyph: Theme.icons.penTool
+                    text: qsTr("Make editable")
+                    tooltip: qsTr("Turn this shape into a path you can reshape point by point")
+                    onClicked: {
+                        EditorState.convertShapeToPath(EditorState.selectedTrack, EditorState.selectedClip)
+                        EditorState.preview.shapePathMode = "edit"
+                    }
+
+                    SearchAnchor {
+                        searchId: "shape-make-editable"
+                        title: qsTr("Make shape editable")
+                        keywords: "path bezier points convert vector"
+                    }
+                }
+                ThemedLabel {
+                    width: parent.width
+                    opacity: 0.8
+                    text: qsTr("Its size, style and effects stay; knob animation on the shape is dropped.")
+                }
+            }
+
+            Column {
+                width: parent.width
+                spacing: Theme.spacingMd
+                visible: root.isPath
+
+                ThemedButton {
+                    visible: root.canEditPath
+                    variant: "secondary"
+                    glyph: Theme.icons.penTool
+                    text: qsTr("Edit path")
+                    tooltip: qsTr("Edit this path's points and handles in the preview")
+                    onClicked: EditorState.preview.shapePathMode = "edit"
+
+                    SearchAnchor {
+                        searchId: "shape-edit-path"
+                        title: qsTr("Edit path")
+                        keywords: "pen bezier points handles vector"
+                    }
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingXs
+
+                    ThemedLabel { text: qsTr("Fill rule") }
+                    ThemedComboBox {
+                        width: parent.width
+                        model: [qsTr("Non-zero"), qsTr("Even-odd")]
+                        tooltip: qsTr("How overlapping or nested contours are filled")
+                        currentIndex: root.shapeStyle.fillRule === "evenodd" ? 1 : 0
+                        onActivated: root.setShapeKey("fillRule", currentIndex === 1 ? "evenodd" : "nonzero")
+                    }
+                }
+
+                Row {
+                    width: parent.width
+                    spacing: Theme.spacingSm
+
+                    Text {
+                        width: parent.width - pathKeyButton.width - parent.spacing
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.shapeStyle.pathAnimated
+                              ? qsTr("Path animation: %n key(s)", "", root.pathKeyTimes.length)
+                              : qsTr("Path animation")
+                        color: Theme.c.shapeInspector.foreground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeSm
+                    }
+                    ThemedButton {
+                        id: pathKeyButton
+                        variant: root.shapeStyle.pathAnimated ? "primary" : "secondary"
+                        glyph: root.shapeStyle.pathAnimated ? Theme.icons.diamondMinus : Theme.icons.diamondPlus
+                        text: root.shapeStyle.pathAnimated ? qsTr("Stop") : qsTr("Animate")
+                        tooltip: root.shapeStyle.pathAnimated
+                                 ? qsTr("Remove all path keys and keep the current outline")
+                                 : qsTr("Key the whole outline at the playhead, then edit it at other times")
+                        onClicked: EditorState.setShapePathKeyed(EditorState.selectedTrack, EditorState.selectedClip,
+                                                                 !root.shapeStyle.pathAnimated)
+
+                        SearchAnchor {
+                            searchId: "shape-path-animation"
+                            title: qsTr("Animate path")
+                            keywords: "keyframe morph path shape"
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: root.pathKeyTimes.length
+                    delegate: Row {
+                        id: keyRow
+                        required property int index
+                        readonly property real keyTime: root.pathKeyTimes[index] || 0
+                        width: parent.width
+                        spacing: Theme.spacingSm
+
+                        ThemedButton {
+                            width: parent.width - removeKeyButton.width - parent.spacing
+                            variant: "ghost"
+                            text: qsTr("Key at %1 s").arg(keyRow.keyTime.toFixed(2))
+                            tooltip: qsTr("Move the playhead to this key")
+                            onClicked: EditorState.playheadSeconds = keyRow.keyTime
+                        }
+                        ThemedButton {
+                            id: removeKeyButton
+                            variant: "ghost"
+                            glyph: Theme.icons.trash
+                            tooltip: qsTr("Remove this key")
+                            onClicked: EditorState.removeShapePathKey(EditorState.selectedTrack, EditorState.selectedClip,
+                                                                      keyRow.keyTime)
+                        }
+                    }
+                }
+            }
+
+            ThemedButton {
+                variant: "secondary"
+                glyph: Theme.icons.shapes
+                text: qsTr("Save to My shapes")
+                tooltip: qsTr("Keep this shape's outline in the Shapes tab to reuse it")
+                onClicked: saveShapeDialog.openWith(qsTr("Save to My shapes"), qsTr("My shape"))
+
+                SearchAnchor {
+                    searchId: "shape-save-to-library"
+                    title: qsTr("Save shape to My shapes")
+                    keywords: "library custom svg"
+                }
             }
         }
 
@@ -226,11 +383,11 @@ Item {
                 Row {
                     width: parent.width
                     spacing: 8
-                    visible: root.shapeHas("star")
+                    visible: root.shapeHas("points")
 
                     PropertyKeyframeRow {
-                        width: (parent.width - parent.spacing) / 2
-                        propDef: root.knob("points", qsTr("Points"), 0)
+                        width: root.shapeHas("inner") ? (parent.width - parent.spacing) / 2 : parent.width
+                        propDef: root.knob("points", root.pointsLabel, 0)
                         keyframeList: root.knobKeyframes("points")
                         useSlider: true
                         sliderFrom: 3
@@ -238,6 +395,7 @@ Item {
                     }
                     PropertyKeyframeRow {
                         width: (parent.width - parent.spacing) / 2
+                        visible: root.shapeHas("inner")
                         propDef: root.knob("innerRatio", qsTr("Inner radius"), 2)
                         keyframeList: root.knobKeyframes("innerRatio")
                         useSlider: true
@@ -245,6 +403,17 @@ Item {
                         sliderTo: 0.95
                         percent: true
                     }
+                }
+
+                PropertyKeyframeRow {
+                    width: parent.width
+                    visible: root.shapeHas("sweep")
+                    propDef: root.knob("sweep", qsTr("Sweep"), 0)
+                    keyframeList: root.knobKeyframes("sweep")
+                    useSlider: true
+                    sliderFrom: 1
+                    sliderTo: 359
+                    unit: "°"
                 }
 
                 Row {
@@ -300,5 +469,10 @@ Item {
                 }
             }
         }
+    }
+
+    NameDialog {
+        id: saveShapeDialog
+        onSubmitted: name => EditorState.saveShapeToLibrary(EditorState.selectedTrack, EditorState.selectedClip, name)
     }
 }

@@ -20,6 +20,7 @@ Item {
 
         ShapeInspector {
             id: inspector
+            canEditPath: false
             x: Theme.pagePadding
             y: Theme.pagePadding
             width: scroll.width - Theme.pagePadding * 2

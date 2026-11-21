@@ -11,6 +11,7 @@ Column {
     // The shape the phone page last added.
     property bool picked: false
     signal added()
+    readonly property bool isUser: root.modelData.user === true
     width: cardSize
     spacing: Theme.spacingSm
 
@@ -45,7 +46,7 @@ Column {
         Image {
             anchors.fill: parent
             anchors.margins: Theme.pagePadding
-            source: "image://shape/" + root.modelData.id
+            source: "image://shape/" + (root.modelData.user ? root.modelData.thumbnail : root.modelData.id)
             sourceSize: Qt.size(cardSize * 2, cardSize * 2)
             fillMode: Image.PreserveAspectFit
             asynchronous: true
@@ -103,6 +104,43 @@ Column {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
                 icon.name: Theme.icons.star
                 onTriggered: EditorState.toggleAssetFavorite("shapes", root.modelData.id)
+            }
+            ThemedMenuItem {
+                visible: root.isUser
+                text: qsTr("Rename")
+                icon.name: Theme.icons.pencil
+                onTriggered: renameDialog.openWith(qsTr("Rename shape"), root.modelData.label)
+            }
+            ThemedMenuItem {
+                visible: root.isUser
+                text: qsTr("Delete")
+                icon.name: Theme.icons.trash
+                onTriggered: deleteDialog.open()
+            }
+        }
+
+        NameDialog {
+            id: renameDialog
+            onSubmitted: name => EditorState.renameUserShape(root.modelData.id, name)
+        }
+
+        ThemedDialog {
+            id: deleteDialog
+            title: qsTr("Delete shape")
+            acceptText: qsTr("Delete")
+            acceptVariant: "destructive"
+            preferredWidth: Theme.dialogWidthSm
+            acceptOnReturn: false
+            onAccepted: EditorState.deleteUserShape(root.modelData.id)
+
+            contentItem: Text {
+                width: parent ? parent.width : 320
+                wrapMode: Text.WordWrap
+                text: qsTr("Remove “%1” from My shapes? Clips already using it keep their outline.")
+                          .arg(root.modelData.label)
+                color: Theme.c.shapePresetCard.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
             }
         }
 

@@ -910,6 +910,10 @@ add_library(driftengine STATIC
     src/engine/packages/assets/StickerCatalog.cpp
     src/engine/packages/assets/StickerPackImport.h
     src/engine/packages/assets/StickerPackImport.cpp
+    src/engine/render2d/shapes/SvgShapeImport.h
+    src/engine/render2d/shapes/SvgShapeImport.cpp
+    src/engine/render2d/shapes/UserShapeStore.h
+    src/engine/render2d/shapes/UserShapeStore.cpp
     src/engine/packages/assets/EmojiCatalog.h
     src/engine/packages/assets/EmojiCatalog.cpp
     src/engine/packages/assets/EmojiTable.h
@@ -1333,6 +1337,7 @@ target_sources(driftapp PRIVATE
     src/app/editor/appcontroller/AppControllerClipProps.cpp
     src/app/editor/appcontroller/AppControllerComposite.cpp
     src/app/editor/appcontroller/AppControllerVector.cpp
+    src/app/editor/appcontroller/AppControllerShapeEdit.cpp
     src/app/editor/appcontroller/AppControllerKeyframes.cpp
     src/app/editor/appcontroller/AppControllerEffects.cpp
     src/app/editor/appcontroller/AppControllerTracks.cpp
@@ -1871,6 +1876,7 @@ qt_add_qml_module(drift
         src/qml/components/preview/GuidesPopover.qml
         src/qml/components/preview/GuideEditOverlay.qml
         src/qml/components/preview/MaskOverlay.qml
+        src/qml/components/preview/ShapePathOverlay.qml
         src/qml/components/preview/masking/MaskDrawOverlay.qml
         src/qml/components/preview/masking/MaskBrushOverlay.qml
         src/qml/components/preview/masking/MaskAiOverlay.qml
@@ -2462,6 +2468,9 @@ qt_add_qml_module(drift
         src/qml/components/preview/media/MediaPreviewAudioPlaceholder.qml
         src/qml/components/preview/media/MediaPreviewView.qml
         src/qml/components/preview/mask/MaskOverlayVertexHandle.qml
+        src/qml/components/preview/shapepath/ShapePathHandle.qml
+        src/qml/components/preview/shapepath/ShapePathHintBar.qml
+        src/qml/components/preview/shapepath/ShapePathVertex.qml
         src/qml/components/preview/mask/MaskOverlayRotateHandle.qml
         src/qml/components/preview/mask/MaskOverlayResizeGrip.qml
         src/qml/components/preview/mask/MaskOverlayOutline.qml

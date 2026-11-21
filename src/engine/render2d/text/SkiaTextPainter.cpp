@@ -548,7 +548,7 @@ private:
             // glyph instead.
             paint.setStrokeWidth(float(layer.strokeAlign != StrokeAlign::Center ? width * 2.0 : width));
             applyStrokeJoin(paint, layer.join, layer.miterLimit);
-            paint.setStrokeCap(SkPaint::kRound_Cap);
+            applyStrokeCap(paint, layer.cap);
             paint.setPathEffect(strokePathEffectFor(layer, width, m_scale));
             if (layer.strokeAlign == StrokeAlign::Inside) {
                 canvas.save();

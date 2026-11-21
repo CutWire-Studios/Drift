@@ -559,8 +559,18 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
         style.insert(QStringLiteral("animation"), animation);
         m.insert(QStringLiteral("textStyle"), style);
     }
-    if (kind != QLatin1String("shape"))
+    if (kind != QLatin1String("shape")) {
         m.remove(QStringLiteral("shapeStyle"));
+    } else {
+        // Agents read and write the outline as `path`; the structured form is the editor's.
+        QVariantMap shape = m.value(QStringLiteral("shapeStyle")).toMap();
+        shape.remove(QStringLiteral("contours"));
+        if (!shape.value(QStringLiteral("pathAnimated")).toBool()) {
+            shape.remove(QStringLiteral("pathAnimated"));
+            shape.remove(QStringLiteral("pathKeyTimes"));
+        }
+        m.insert(QStringLiteral("shapeStyle"), shape);
+    }
     if (kind != QLatin1String("adjustment"))
         m.remove(QStringLiteral("adjustmentKind"));
 

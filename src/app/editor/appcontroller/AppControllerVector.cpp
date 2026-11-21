@@ -315,6 +315,18 @@ void AppController::setShapeStyle(int trackIndex, int clipIndex, const QVariantM
     if (m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Shape)
         return;
 
+    // Asking for the Path kind without a path is "make editable": a kind switch alone would blank the shape.
+    if (m.value(QStringLiteral("kind")).toString() == QLatin1String("path") && !m.contains(QStringLiteral("path"))
+        && !m.contains(QStringLiteral("contours"))
+        && m_project.tracks().at(trackIndex).clips.at(clipIndex).shapeStyle.kind != drift::ShapeKind::Path) {
+        convertShapeToPath(trackIndex, clipIndex);
+        QVariantMap rest = m;
+        rest.remove(QStringLiteral("kind"));
+        if (!rest.isEmpty())
+            setShapeStyle(trackIndex, clipIndex, rest);
+        return;
+    }
+
     // Snapshot before taking any reference into m_project: Project holds an implicitly shared
     // QList, so writing through a reference obtained before the copy would mutate the snapshot too
     // and the undo step would be a no-op.
@@ -329,6 +341,10 @@ void AppController::setShapeStyle(int trackIndex, int clipIndex, const QVariantM
             clip.name = entry->label;
     }
     applyShapeStylePatch(s, m);
+    if (s.kind == drift::ShapeKind::Path && (m.contains(QStringLiteral("path")) || m.contains(QStringLiteral("contours")))) {
+        const drift::TimeUs relative = qBound<drift::TimeUs>(0, m_playheadUs - clip.timelineStart, clip.timelineDuration);
+        refitShapeBox(clip, QSizeF(m_project.width(), m_project.height()), relative);
+    }
 
     // Slider drags wrap their stream of updates in beginPreviewDrag/commitPreviewDrag, which
     // already holds the "before" snapshot — pushing here too would give one undo step per frame.

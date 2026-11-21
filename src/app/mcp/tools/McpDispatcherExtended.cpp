@@ -20,6 +20,8 @@
 #include <QFutureWatcher>
 
 #include "core/shapes/ShapeStyle.h"
+#include "engine/render2d/shapes/SvgShapeImport.h"
+#include "engine/render2d/shapes/UserShapeStore.h"
 #include "core/text/animation/TextAnimationPreset.h"
 #include "core/text/TextPresetStore.h"
 #include "core/text/TextStyle.h"
@@ -66,6 +68,8 @@ QJsonObject unknownShapeId(const QString &raw)
     QStringList ids;
     for (const drift::ShapeCatalogEntry &entry : drift::shapeCatalog())
         ids.append(entry.id);
+    for (const drift::UserShape &shape : drift::UserShapeStore::instance().all())
+        ids.append(shape.id);
     const QStringList nearest = nearestStrings(raw, ids, 3);
     return err("not_found", QStringLiteral("Unknown shape id \"%1\"%2. Call list_shapes")
                                 .arg(raw, nearest.isEmpty() ? QString()
@@ -2336,6 +2340,12 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             if (!drift::shapeCatalogEntry(kind) && drift::shapeKindToString(drift::shapeKindFromString(kind)) != kind)
                 return unknownShapeId(kind);
         }
+        if (style.contains(QStringLiteral("path"))) {
+            QVector<drift::ShapeContour> contours;
+            QString pathError;
+            if (!drift::contoursFromSvgPath(style.value(QStringLiteral("path")).toString(), &contours, nullptr, &pathError))
+                return err("bad_args", QStringLiteral("path: %1").arg(pathError));
+        }
         m_controller->setShapeStyle(ref.track, ref.clip, style);
         return ok(clipFeedback(ref));
     }
@@ -2761,7 +2771,10 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const QString shapeId = argString(args, QStringLiteral("shape"));
         if (shapeId.isEmpty())
             return err("bad_args", QStringLiteral("shape required"));
-        if (!drift::shapeCatalogEntry(shapeId))
+        const bool known = drift::UserShapeStore::isUserId(shapeId)
+                               ? drift::UserShapeStore::instance().find(shapeId).has_value()
+                               : drift::shapeCatalogEntry(shapeId) != nullptr;
+        if (!known)
             return unknownShapeId(shapeId);
         const double at = args.contains(QStringLiteral("at"))
                               ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())

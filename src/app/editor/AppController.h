@@ -1453,6 +1453,35 @@ public:
     // Partial patch: only the keys present are applied, like setTextStyle.
     Q_INVOKABLE void setShapeStyle(int trackIndex, int clipIndex, const QVariantMap &style);
 
+    // Custom path editing (ShapeKind::Path). Contours are lists of {closed, vertices: [{x, y, inX,
+    // inY, outX, outY, smooth}]} in the clip's normalized box (0..1; tangents are offsets from the
+    // vertex), the shape of shapeStyle.contours.
+    // setShapeContours writes the edit and refits the box so the points stay inside 0..1 without
+    // the shape moving on screen, then returns the contours as stored: a drag calls it with
+    // commit=false per move (one undo step, opened on the first call) and commit=true on release,
+    // and must re-read the clip's frame and adopt the returned contours after every call, because
+    // a refit changes both. A path with keys writes the key at the playhead instead of the base.
+    Q_INVOKABLE QVariantList setShapeContours(int trackIndex, int clipIndex, const QVariantList &contours,
+                                              bool commit);
+    // The contours at the playhead (the resolved key interpolation); empty unless a Path clip.
+    Q_INVOKABLE QVariantList shapeContoursAt(int trackIndex, int clipIndex) const;
+    // Stopwatch: on keys the current path at the playhead, off clears the keys and keeps the path
+    // as it stands at the playhead.
+    Q_INVOKABLE void setShapePathKeyed(int trackIndex, int clipIndex, bool keyed);
+    Q_INVOKABLE void removeShapePathKey(int trackIndex, int clipIndex, double atSeconds);
+    // "Make editable": any shape becomes an equivalent Path, keeping layers and transform.
+    Q_INVOKABLE void convertShapeToPath(int trackIndex, int clipIndex);
+    // A new Path clip from contours drawn on the canvas, in canvas px (tangents in px too). Returns
+    // {track, clip} of the new, selected clip, or an empty map.
+    Q_INVOKABLE QVariantMap addPathShapeClip(const QVariantList &canvasContours, int trackIndex, double atSeconds);
+    // The "My shapes" library (shape ids "user:<stem>"). Paths may be a file path or a file:// URL.
+    Q_INVOKABLE QString saveShapeToLibrary(int trackIndex, int clipIndex, const QString &name);
+    Q_INVOKABLE bool renameUserShape(const QString &shapeId, const QString &name);
+    Q_INVOKABLE bool deleteUserShape(const QString &shapeId);
+    // Both report a failure through lastMessage (error) and return an empty id / map.
+    Q_INVOKABLE QString importSvgToLibrary(const QString &path);
+    Q_INVOKABLE QVariantMap importSvgAsShapeClip(const QString &path, int trackIndex, double atSeconds);
+
     // Vector (Lottie / SVG) clips. `source` is the document text itself or a path to a .json/.svg
     // file; opts keys: kind (lottie|svg, else detected), fit, loop, offset (seconds), slots
     // ({id: value}), name, duration (seconds; default = the animation's own length, 5 s for a
@@ -2125,6 +2154,7 @@ signals:
     void userEffectPresetsChanged();
     void facePropsChanged();
     void stickersChanged();
+    void userShapesChanged();
     void projectLayoutChosenChanged();
     // The document has been swapped wholesale (New Project, or opening another one). The
     // auxiliary windows edit one clip each, so they have nothing left to act on and close.
@@ -2792,6 +2822,10 @@ protected:
     void writeClipSourceFrame(int t, int c, const QRectF &frame, double turn);
     void emitPreviewFrame();
     void emitPreviewEdit(int trackIndex, int clipIndex, const QStringList &keys);
+    // Adds a shape clip on a track that takes it and selects it. `canvasBox` (canvas px) is its
+    // frame when valid, else the default box for `aspect`. {-1, -1} when no track could be made.
+    drift::ClipRef placeShapeClip(const drift::ShapeStyle &style, const QString &name, double aspect,
+                                  const QRectF &canvasBox, int trackIndex, double atSeconds, const QString &undoText);
     void beginImplicitPreviewDrag(const QString &undoText);
     struct ClipboardItem
     {
