@@ -3619,13 +3619,17 @@ QJsonObject McpDispatcher::opListShortcuts(const QJsonObject &args) const
         const QString id = map.value(QStringLiteral("id")).toString();
         const QString label = map.value(QStringLiteral("label")).toString();
         const QString shortcut = map.value(QStringLiteral("shortcut")).toString();
+        const QStringList shortcuts = map.value(QStringLiteral("shortcuts")).toStringList();
         if (!q.isEmpty() && !id.contains(q, Qt::CaseInsensitive) && !label.contains(q, Qt::CaseInsensitive)
-            && !shortcut.contains(q, Qt::CaseInsensitive))
+            && !shortcuts.join(QLatin1Char(' ')).contains(q, Qt::CaseInsensitive))
             continue;
         actions.append(QJsonObject{
             {QStringLiteral("id"), id},
             {QStringLiteral("label"), label},
             {QStringLiteral("shortcut"), shortcut},
+            {QStringLiteral("shortcuts"), QJsonArray::fromStringList(shortcuts)},
+            {QStringLiteral("category"), map.value(QStringLiteral("category")).toString()},
+            {QStringLiteral("scope"), map.value(QStringLiteral("scope")).toString()},
         });
     }
     return ok({{QStringLiteral("actions"), actions}, {QStringLiteral("n"), actions.size()}});
@@ -3638,11 +3642,26 @@ QJsonObject McpDispatcher::opSetShortcut(const QJsonObject &args)
         return err("bad_args", QStringLiteral("action required"));
     if (!args.contains(QStringLiteral("keys")))
         return err("bad_args", QStringLiteral("keys required"));
-    const QString keys = args.value(QStringLiteral("keys")).toString();
-    const QString conflict = m_controller->setShortcut(action, keys);
+    if (m_controller->keymap()->scopeOf(action).isEmpty())
+        return err("bad_args", QStringLiteral("unknown action: %1").arg(action));
+    const QJsonValue keysValue = args.value(QStringLiteral("keys"));
+    QStringList keys;
+    if (keysValue.isArray()) {
+        for (const QJsonValue &key : keysValue.toArray())
+            keys << key.toString();
+    } else {
+        keys << keysValue.toString();
+    }
+    keys.removeAll(QString());
+    for (const QString &key : std::as_const(keys)) {
+        if (drift::Keymap::normalizeChord(key).isEmpty())
+            return err("bad_args", QStringLiteral("not a valid key sequence: %1").arg(key));
+    }
+    const QString conflict = m_controller->keymap()->setBindings(action, keys);
     if (!conflict.isEmpty())
         return err("conflict", conflict);
-    return ok({{QStringLiteral("action"), action}, {QStringLiteral("keys"), keys}});
+    return ok({{QStringLiteral("action"), action},
+               {QStringLiteral("keys"), QJsonArray::fromStringList(m_controller->keymap()->bindings(action))}});
 }
 
 QJsonObject McpDispatcher::opResetShortcuts()

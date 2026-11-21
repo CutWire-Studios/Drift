@@ -54,7 +54,7 @@ AbstractButton {
     }
 
     function chordFromEvent(event) {
-        return EditorState.shortcutChord(event.key, event.modifiers)
+        return EditorState.keymap.chordFromKey(event.key, event.modifiers, event.nativeScanCode, event.text)
     }
 
     contentItem: Text {

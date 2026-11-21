@@ -942,7 +942,8 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         }
     });
 
-    loadShortcuts();
+    m_keymap = new drift::Keymap(this);
+    connect(m_keymap, &drift::Keymap::changed, this, &AppController::shortcutsChanged);
     QSettings settings;
     for (const QJsonValue &value :
          QJsonDocument::fromJson(settings.value(QStringLiteral("preview/guideSets")).toByteArray()).array())

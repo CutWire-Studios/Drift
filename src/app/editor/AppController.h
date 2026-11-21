@@ -6,6 +6,7 @@
 #include "engine/media/thumbnails/FilmstripTileCache.h"
 #include "engine/media/waveforms/WaveformBlockCache.h"
 #include "app/editor/TimelineClipsModel.h"
+#include "app/editor/keymap/Keymap.h"
 #include "app/mcp/tools/McpMarket.h"
 #include "core/project/GuideSet.h"
 #include <QAtomicInt>
@@ -345,6 +346,7 @@ class AppController : public QObject
     Q_PROPERTY(QVariantList guideItems READ guideItems NOTIFY guidesChanged)
     Q_PROPERTY(bool inlineTextEditing READ inlineTextEditing NOTIFY inlineTextEditingChanged)
     Q_PROPERTY(QVariantList actions READ actions NOTIFY shortcutsChanged)
+    Q_PROPERTY(drift::Keymap *keymap READ keymap CONSTANT)
     Q_PROPERTY(QVariantList bookmarks READ bookmarks NOTIFY bookmarksChanged)
     Q_PROPERTY(bool workAreaActive READ workAreaActive NOTIFY workAreaChanged)
     Q_PROPERTY(double workAreaInSeconds READ workAreaInSeconds NOTIFY workAreaChanged)
@@ -422,6 +424,7 @@ public:
     TtsController *tts() const { return m_tts; }
     VoiceLibrary *voices() const { return m_voices; }
     McpController *mcp() const { return m_mcpController; }
+    drift::Keymap *keymap() const { return m_keymap; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
     void setAudioOutputDeviceId(const QString &id);
@@ -1911,12 +1914,9 @@ public:
     // shortcut by firing *neither* action, so a silent double-binding would break
     // both with no indication anywhere.
     Q_INVOKABLE QString setShortcut(const QString &actionId, const QString &keys);
-    // Restores every default binding. Backspace clears a binding and persists the
-    // empty string, so without this there was no route back from having cleared one.
+    // Drops every override and returns to the current preset.
     Q_INVOKABLE void resetShortcuts();
-    // Canonical chord string for a key event (Ctrl+Shift+Left, …). Same names the
-    // Shortcut items and the shortcut-capture field use, so a rebound chord still
-    // matches when it is dispatched from Keys.onPressed rather than Shortcut {}.
+    // Canonical chord string for a key event (Ctrl+Shift+Left, …); see Keymap::chordFromKey.
     Q_INVOKABLE QString shortcutChord(int key, int modifiers) const;
     // The action bound to this arrow-key chord, or an empty string when the key is
     // not an arrow or nothing claims it. ApplicationShortcut matching for Left/Right
@@ -2248,10 +2248,6 @@ protected:
     // Publishes a finished beat analysis into m_beatAnalysis / m_beatSnapTargets.
     void applyBeatAnalysis(const AudioBeatAnalysis &analysis, double startSeconds, double durSeconds,
                            const QByteArray &fingerprint);
-    // Builds m_shortcuts from the defaults plus whatever QSettings holds, migrating
-    // stored values that a new release has superseded and dropping any default that
-    // would end up sharing a chord with a stored one.
-    void loadShortcuts();
     void loadAssetFavorites();
     void saveAssetFavorites(const QString &tabId);
     void applyEffectTemplateInternal(int trackIndex, int clipIndex, const EffectTemplateEntry &entry,
@@ -2762,7 +2758,7 @@ protected:
     drift::GuideSet *libraryGuideSet(const QString &id);
     // Persists the library; an edit to an active set also changes what the project saves.
     void guideLibraryEdited(const QString &id);
-    QHash<QString, QString> m_shortcuts;
+    drift::Keymap *m_keymap = nullptr;
     QHash<QString, QSet<QString>> m_assetFavorites;
     int m_draggingAssetIndex = -1;
     QString m_lastMessage;

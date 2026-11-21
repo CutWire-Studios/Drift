@@ -51,56 +51,7 @@ QtObject {
     function shortcutDisplay(sequence) {
         if (!sequence || sequence.length === 0)
             return ""
-
-        if (!isMacOS)
-            return sequence
-
-        const parts = sequence.split("+")
-
-        let control = false
-        let option = false
-        let shift = false
-        let command = false
-        let key = ""
-
-        for (let i = 0; i < parts.length; ++i) {
-            const part = parts[i]
-
-            // Qt's native Apple mapping:
-            // Ctrl = Command, Meta = physical Control.
-            if (part === "Ctrl")
-                command = true
-            else if (part === "Meta")
-                control = true
-            else if (part === "Alt")
-                option = true
-            else if (part === "Shift")
-                shift = true
-            else
-                key = part
-        }
-
-        const keySymbols = {
-            "Left": "←",
-            "Right": "→",
-            "Up": "↑",
-            "Down": "↓",
-            "Backspace": "⌫",
-            "Delete": "⌦",
-            "Escape": "⎋",
-            "Return": "↩",
-            "Enter": "⌅"
-        }
-
-        if (keySymbols[key] !== undefined)
-            key = keySymbols[key]
-
-        // Ordem visual tradicional da Apple.
-        return (control ? "⌃" : "")
-             + (option ? "⌥" : "")
-             + (shift ? "⇧" : "")
-             + (command ? "⌘" : "")
-             + key
+        return EditorState.keymap.displayText(sequence)
     }
 
     function platformShortcutText(text) {

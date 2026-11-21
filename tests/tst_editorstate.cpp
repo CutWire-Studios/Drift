@@ -17,6 +17,9 @@
 #include "app/jobs/vision/TrackingController.h"
 #include "app/jobs/audio/TtsController.h"
 #include "app/jobs/audio/VoiceLibrary.h"
+#include "app/editor/keymap/Keymap.h"
+#include "app/editor/keymap/KeymapCatalog.h"
+#include "app/editor/keymap/KeymapPresets.h"
 #include "app/editor/sessions/CurveEditorController.h"
 #include "app/editor/sessions/SubtitleController.h"
 #include "app/jobs/vision/StabilizeController.h"
@@ -231,6 +234,14 @@ private slots:
     void editPointNavigationWalksEveryClipEdge();
     void arrowKeysJogAndJumpThePlayhead();
     void storedArrowShortcutsMigrateOntoTheNewJogLayout();
+    void keymapSupportsSeveralBindingsPerAction();
+    void keymapRefusesAChordTakenInTheSameScope();
+    void keymapClearedShortcutSurvivesARestart();
+    void keymapMigratesTheLegacyShortcutsGroup();
+    void keymapCapturesPunctuationKeypadAndFunctionKeys();
+    void keymapDisplayTextParsesPlusAsAKey();
+    void keymapTranslatesMetaOffMacAndFallsBackToDrift();
+    void keymapPresetSwitchKeepsOrDiscardsOverrides();
     void splitLeftRightUndoRestoresTheDiscardedHalf();
     void splitLeftKeepsLinkedAudioInSync();
     void splitRightKeepsLinkedAudioInSync();
@@ -2655,10 +2666,12 @@ void EditorStateTest::arrowKeysJogAndJumpThePlayhead()
     QCoreApplication::setApplicationName(QStringLiteral("DriftTestArrowKeys"));
     const auto restore = qScopeGuard([&] {
         QSettings().remove(QStringLiteral("shortcuts"));
+        QSettings().remove(QStringLiteral("keymap"));
         QCoreApplication::setOrganizationName(org);
         QCoreApplication::setApplicationName(app);
     });
     QSettings().remove(QStringLiteral("shortcuts"));
+    QSettings().remove(QStringLiteral("keymap"));
 
     AssetLibrary library;
     AppController state(&library);
@@ -2736,6 +2749,7 @@ void EditorStateTest::storedArrowShortcutsMigrateOntoTheNewJogLayout()
     QCoreApplication::setApplicationName(QStringLiteral("DriftTestShortcutMigration"));
     const auto restore = qScopeGuard([&] {
         QSettings().remove(QStringLiteral("shortcuts"));
+        QSettings().remove(QStringLiteral("keymap"));
         QCoreApplication::setOrganizationName(org);
         QCoreApplication::setApplicationName(app);
     });
@@ -2743,6 +2757,7 @@ void EditorStateTest::storedArrowShortcutsMigrateOntoTheNewJogLayout()
     const auto seed = [](const QHash<QString, QString> &values) {
         QSettings settings;
         settings.remove(QStringLiteral("shortcuts"));
+        settings.remove(QStringLiteral("keymap"));
         settings.beginGroup(QStringLiteral("shortcuts"));
         for (auto it = values.cbegin(); it != values.cend(); ++it)
             settings.setValue(it.key(), it.value());
@@ -2766,11 +2781,11 @@ void EditorStateTest::storedArrowShortcutsMigrateOntoTheNewJogLayout()
                  QStringLiteral("stepBack"));
         QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ShiftModifier),
                  QStringLiteral("jumpBack"));
-        // Stamped, so the next launch leaves the (now deliberate) bindings alone.
+        // Stamped, so the next launch leaves the (now deliberate) bindings alone, and the
+        // legacy group is gone.
         QSettings settings;
-        settings.beginGroup(QStringLiteral("shortcuts"));
-        QCOMPARE(settings.value(QStringLiteral("schemaVersion")).toInt(), 1);
-        settings.endGroup();
+        QCOMPARE(settings.value(QStringLiteral("keymap/schemaVersion")).toInt(), 1);
+        QVERIFY(!settings.childGroups().contains(QStringLiteral("shortcuts")));
     }
 
     // A deliberate rebinding of the same action is not the superseded default, so it
@@ -2796,6 +2811,319 @@ void EditorStateTest::storedArrowShortcutsMigrateOntoTheNewJogLayout()
         // Nothing else was disturbed.
         QCOMPARE(state.shortcutFor(QStringLiteral("stepForward")), QStringLiteral("Right"));
     }
+}
+
+namespace {
+struct KeymapSandbox {
+    QString org = QCoreApplication::organizationName();
+    QString app = QCoreApplication::applicationName();
+    KeymapSandbox()
+    {
+        QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+        QCoreApplication::setApplicationName(QStringLiteral("DriftTestKeymap"));
+        clear();
+    }
+    ~KeymapSandbox()
+    {
+        clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    }
+    static void clear()
+    {
+        QSettings settings;
+        settings.remove(QStringLiteral("keymap"));
+        settings.remove(QStringLiteral("shortcuts"));
+        settings.sync();
+    }
+};
+} // namespace
+
+void EditorStateTest::keymapSupportsSeveralBindingsPerAction()
+{
+    KeymapSandbox sandbox;
+    drift::Keymap keymap;
+    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    QVERIFY(!keymap.isModified(QStringLiteral("playPause")));
+
+    QSignalSpy changed(&keymap, &drift::Keymap::changed);
+    QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("K")).isEmpty());
+    QCOMPARE(changed.count(), 1);
+    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), (QStringList{QStringLiteral("Space"), QStringLiteral("K")}));
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("K")), QStringLiteral("playPause"));
+    QVERIFY(keymap.isModified(QStringLiteral("playPause")));
+    QVERIFY(keymap.chords().contains(QStringLiteral("K")));
+    QVERIFY(!keymap.chords().contains(QStringLiteral("Left")));
+    QVERIFY(keymap.chords().contains(QStringLiteral("Ctrl+S")));
+
+    // Adding what is already bound changes nothing.
+    QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("K")).isEmpty());
+    QCOMPARE(changed.count(), 1);
+
+    keymap.removeBinding(QStringLiteral("playPause"), QStringLiteral("Space"));
+    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("K")});
+    QVERIFY(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Space")).isEmpty());
+
+    keymap.resetAction(QStringLiteral("playPause"));
+    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    QVERIFY(!keymap.isModified(QStringLiteral("playPause")));
+
+    AssetLibrary library;
+    AppController state(&library);
+    QVERIFY(state.keymap()->addBinding(QStringLiteral("playPause"), QStringLiteral("K")).isEmpty());
+    for (const QVariant &entry : state.actions()) {
+        const QVariantMap map = entry.toMap();
+        if (map.value(QStringLiteral("id")).toString() != QLatin1String("playPause"))
+            continue;
+        QCOMPARE(map.value(QStringLiteral("shortcuts")).toStringList(),
+                 (QStringList{QStringLiteral("Space"), QStringLiteral("K")}));
+        QCOMPARE(map.value(QStringLiteral("shortcut")).toString(), QStringLiteral("Space"));
+        QCOMPARE(map.value(QStringLiteral("category")).toString(), QStringLiteral("playback"));
+        QCOMPARE(map.value(QStringLiteral("scope")).toString(), QStringLiteral("global"));
+        QVERIFY(map.value(QStringLiteral("modified")).toBool());
+    }
+    QCOMPARE(state.shortcutFor(QStringLiteral("playPause")), QStringLiteral("Space"));
+    state.resetShortcuts();
+    QCOMPARE(state.keymap()->bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+}
+
+void EditorStateTest::keymapRefusesAChordTakenInTheSameScope()
+{
+    KeymapSandbox sandbox;
+    drift::Keymap keymap;
+    QCOMPARE(keymap.addBinding(QStringLiteral("undo"), QStringLiteral("Ctrl+S")), QStringLiteral("Save project"));
+    QCOMPARE(keymap.bindings(QStringLiteral("undo")), QStringList{QStringLiteral("Ctrl+Z")});
+    QCOMPARE(keymap.setBindings(QStringLiteral("undo"), {QStringLiteral("F9"), QStringLiteral("Ctrl+S")}),
+             QStringLiteral("Save project"));
+    QCOMPARE(keymap.bindings(QStringLiteral("undo")), QStringList{QStringLiteral("Ctrl+Z")});
+    QVERIFY(!keymap.isModified(QStringLiteral("undo")));
+
+    // Taking it back from its owner first makes it free.
+    keymap.removeBinding(QStringLiteral("save"), QStringLiteral("Ctrl+S"));
+    QVERIFY(keymap.addBinding(QStringLiteral("undo"), QStringLiteral("Ctrl+S")).isEmpty());
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Ctrl+S")), QStringLiteral("undo"));
+
+    // A chord is stored once, whatever spelling it arrived in.
+    QVERIFY(keymap.addBinding(QStringLiteral("save"), QStringLiteral("ctrl+shift+f9")).isEmpty());
+    QCOMPARE(keymap.bindings(QStringLiteral("save")), QStringList{QStringLiteral("Ctrl+Shift+F9")});
+    QCOMPARE(keymap.addBinding(QStringLiteral("undo"), QStringLiteral("ctrl+shift+f9")), QStringLiteral("Save project"));
+}
+
+void EditorStateTest::keymapClearedShortcutSurvivesARestart()
+{
+    KeymapSandbox sandbox;
+    {
+        drift::Keymap keymap;
+        QVERIFY(keymap.setBindings(QStringLiteral("delete"), {}).isEmpty());
+        QVERIFY(keymap.bindings(QStringLiteral("delete")).isEmpty());
+        QVERIFY(keymap.setBindings(QStringLiteral("selectAll"), {QStringLiteral("Ctrl+,"), QStringLiteral("Ctrl+|")}).isEmpty());
+    }
+    {
+        drift::Keymap keymap;
+        QVERIFY(keymap.bindings(QStringLiteral("delete")).isEmpty());
+        QVERIFY(keymap.isModified(QStringLiteral("delete")));
+        QVERIFY(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Delete")).isEmpty());
+        QCOMPARE(keymap.bindings(QStringLiteral("selectAll")),
+                 (QStringList{QStringLiteral("Ctrl+,"), QStringLiteral("Ctrl+|")}));
+        keymap.resetAction(QStringLiteral("delete"));
+    }
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.bindings(QStringLiteral("delete")), QStringList{QStringLiteral("Delete")});
+        keymap.resetAll();
+    }
+    {
+        drift::Keymap keymap;
+        QVERIFY(!keymap.hasOverrides());
+        QCOMPARE(keymap.bindings(QStringLiteral("selectAll")), QStringList{QStringLiteral("Ctrl+A")});
+    }
+
+    // Through AppController: setShortcut("") is the old "clear" call.
+    {
+        AssetLibrary library;
+        AppController state(&library);
+        QVERIFY(state.setShortcut(QStringLiteral("toggleGuides"), QString()).isEmpty());
+    }
+    {
+        AssetLibrary library;
+        AppController state(&library);
+        QVERIFY(state.shortcutFor(QStringLiteral("toggleGuides")).isEmpty());
+    }
+}
+
+void EditorStateTest::keymapMigratesTheLegacyShortcutsGroup()
+{
+    KeymapSandbox sandbox;
+    {
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("shortcuts"));
+        settings.setValue(QStringLiteral("delete"), QStringLiteral("Ctrl+Backspace"));
+        settings.setValue(QStringLiteral("playPause"), QStringLiteral("Space"));
+        settings.setValue(QStringLiteral("stepBack"), QStringLiteral("Shift+Left"));
+        settings.setValue(QStringLiteral("save"), QString());
+        settings.setValue(QStringLiteral("nudgeLeft"), QStringLiteral("Left"));
+        settings.setValue(QStringLiteral("noSuchAction"), QStringLiteral("F9"));
+        settings.endGroup();
+    }
+    drift::Keymap keymap;
+    QCOMPARE(keymap.bindings(QStringLiteral("delete")), QStringList{QStringLiteral("Ctrl+Backspace")});
+    QVERIFY(keymap.isModified(QStringLiteral("delete")));
+    QVERIFY(!keymap.isModified(QStringLiteral("playPause")));
+    // v0 default: not a choice, so the new layout arrives.
+    QVERIFY(!keymap.isModified(QStringLiteral("stepBack")));
+    QCOMPARE(keymap.bindings(QStringLiteral("stepBack")), QStringList{});
+    QCOMPARE(keymap.bindings(QStringLiteral("jumpBack")), QStringList{QStringLiteral("Shift+Left")});
+    // An empty stored value meant "default".
+    QCOMPARE(keymap.bindings(QStringLiteral("save")), QStringList{QStringLiteral("Ctrl+S")});
+    // The stored binding keeps the chord; the default that would have duplicated it loses it.
+    QCOMPARE(keymap.bindings(QStringLiteral("nudgeLeft")), QStringList{QStringLiteral("Left")});
+
+    QSettings settings;
+    QVERIFY(!settings.childGroups().contains(QStringLiteral("shortcuts")));
+    QCOMPARE(settings.value(QStringLiteral("keymap/schemaVersion")).toInt(), 1);
+}
+
+void EditorStateTest::keymapCapturesPunctuationKeypadAndFunctionKeys()
+{
+    using drift::Keymap;
+    const auto chord = [](int key, Qt::KeyboardModifiers mods, const QString &text = QString()) {
+        return Keymap::chordFromKey(key, int(mods), 0, text, false);
+    };
+    QCOMPARE(chord(Qt::Key_Comma, Qt::ControlModifier), QStringLiteral("Ctrl+,"));
+    QCOMPARE(chord(Qt::Key_Period, Qt::NoModifier), QStringLiteral("."));
+    QCOMPARE(chord(Qt::Key_BracketLeft, Qt::NoModifier), QStringLiteral("["));
+    QCOMPARE(chord(Qt::Key_Backslash, Qt::ControlModifier), QStringLiteral("Ctrl+\\"));
+    QCOMPARE(chord(Qt::Key_QuoteLeft, Qt::AltModifier), QStringLiteral("Alt+`"));
+    QCOMPARE(chord(Qt::Key_Semicolon, Qt::NoModifier), QStringLiteral(";"));
+    QCOMPARE(chord(Qt::Key_Apostrophe, Qt::NoModifier), QStringLiteral("'"));
+    QCOMPARE(chord(Qt::Key_Slash, Qt::NoModifier), QStringLiteral("/"));
+    // Shifted symbols are stored without Shift, as Qt matches them.
+    QCOMPARE(chord(Qt::Key_Less, Qt::ShiftModifier), QStringLiteral("<"));
+    QCOMPARE(chord(Qt::Key_Question, Qt::ShiftModifier), QStringLiteral("?"));
+    QCOMPARE(chord(Qt::Key_BraceLeft, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("Ctrl+{"));
+    QCOMPARE(chord(Qt::Key_Plus, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("Ctrl++"));
+    QCOMPARE(chord(Qt::Key_Underscore, Qt::ShiftModifier), QStringLiteral("_"));
+    QCOMPARE(chord(Qt::Key_S, Qt::ShiftModifier), QStringLiteral("Shift+S"));
+    QCOMPARE(chord(Qt::Key_5, Qt::KeypadModifier), QStringLiteral("Num+5"));
+    QCOMPARE(chord(Qt::Key_Plus, Qt::KeypadModifier), QStringLiteral("Num++"));
+    QCOMPARE(chord(Qt::Key_Enter, Qt::KeypadModifier), QStringLiteral("Num+Enter"));
+    QCOMPARE(chord(Qt::Key_F1, Qt::NoModifier), QStringLiteral("F1"));
+    QCOMPARE(chord(Qt::Key_F13, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("Ctrl+Shift+F13"));
+    QCOMPARE(chord(Qt::Key_F24, Qt::NoModifier), QStringLiteral("F24"));
+    QCOMPARE(chord(Qt::Key_Insert, Qt::NoModifier), QStringLiteral("Insert"));
+    QCOMPARE(chord(Qt::Key_Left, Qt::ControlModifier | Qt::MetaModifier), QStringLiteral("Meta+Ctrl+Left"));
+    QVERIFY(chord(Qt::Key_Shift, Qt::ShiftModifier).isEmpty());
+    QVERIFY(chord(Qt::Key_Control, Qt::ControlModifier).isEmpty());
+    QVERIFY(chord(Qt::Key_unknown, Qt::NoModifier).isEmpty());
+    QCOMPARE(chord(Qt::Key_unknown, Qt::NoModifier, QStringLiteral("q")), QStringLiteral("Q"));
+
+    // macOS: Option composes characters, so the virtual key code names the key.
+    QVERIFY(Keymap::chordFromKey(0xdf, int(Qt::AltModifier), 1, QStringLiteral("ß"), false).isEmpty());
+    QCOMPARE(Keymap::chordFromKey(0xdf, int(Qt::AltModifier), 1, QStringLiteral("ß"), true), QStringLiteral("Alt+S"));
+    QCOMPARE(Keymap::chordFromKey(0xdf, int(Qt::AltModifier | Qt::ShiftModifier), 0, QString(), true), QStringLiteral("Alt+Shift+A"));
+    QCOMPARE(Keymap::chordFromKey(0xa1, int(Qt::AltModifier), 18, QStringLiteral("¡"), true), QStringLiteral("Alt+1"));
+    QCOMPARE(Keymap::chordFromKey(0xdf, int(Qt::AltModifier), 27, QString(), true), QStringLiteral("Alt+-"));
+
+    // Every chord that can be produced must read back unchanged, or the Shortcut item built
+    // from it would not match the key it was captured from.
+    const QList<Qt::KeyboardModifiers> modifierSets = {
+        Qt::NoModifier, Qt::ControlModifier, Qt::AltModifier, Qt::ShiftModifier, Qt::MetaModifier,
+        Qt::KeypadModifier, Qt::ControlModifier | Qt::AltModifier | Qt::ShiftModifier,
+        Qt::ControlModifier | Qt::MetaModifier | Qt::KeypadModifier, Qt::AltModifier | Qt::ShiftModifier | Qt::KeypadModifier,
+    };
+    QList<int> keys;
+    for (int key = Qt::Key_Space; key <= 0x7e; ++key)
+        keys << key;
+    for (int key = Qt::Key_F1; key <= Qt::Key_F35; ++key)
+        keys << key;
+    keys << Qt::Key_Escape << Qt::Key_Tab << Qt::Key_Backtab << Qt::Key_Backspace << Qt::Key_Return
+         << Qt::Key_Enter << Qt::Key_Insert << Qt::Key_Delete << Qt::Key_Pause << Qt::Key_Print << Qt::Key_Home
+         << Qt::Key_End << Qt::Key_Left << Qt::Key_Up << Qt::Key_Right << Qt::Key_Down << Qt::Key_PageUp
+         << Qt::Key_PageDown << Qt::Key_Menu;
+    int produced = 0;
+    for (const int key : std::as_const(keys)) {
+        for (const Qt::KeyboardModifiers mods : modifierSets) {
+            const QString c = chord(key, mods);
+            if (c.isEmpty())
+                continue;
+            ++produced;
+            const QKeySequence parsed = QKeySequence::fromString(c, QKeySequence::PortableText);
+            QVERIFY2(parsed.count() == 1 && parsed[0].key() != Qt::Key_unknown && parsed[0].key() != 0,
+                     qPrintable(QStringLiteral("%1 (key 0x%2)").arg(c).arg(key, 0, 16)));
+            QCOMPARE(QKeySequence::fromString(parsed.toString(QKeySequence::PortableText), QKeySequence::PortableText), parsed);
+            QCOMPARE(Keymap::normalizeChord(c), c);
+        }
+    }
+    QVERIFY(produced > 500);
+}
+
+void EditorStateTest::keymapDisplayTextParsesPlusAsAKey()
+{
+    using drift::Keymap;
+    QCOMPARE(Keymap::displayText(QStringLiteral("Ctrl++"), false), QStringLiteral("Ctrl++"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Ctrl++"), true), QStringLiteral("⌘+"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("+"), true), QStringLiteral("+"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Ctrl+Shift++"), true), QStringLiteral("⇧⌘+"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Ctrl+Alt+Shift+Left"), true), QStringLiteral("⌥⇧⌘←"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Meta+Ctrl+Backspace"), true), QStringLiteral("⌃⌘⌫"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Num+5"), true), QStringLiteral("Num 5"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Ctrl+="), true), QStringLiteral("⌘="));
+    QCOMPARE(Keymap::displayText(QString(), true), QString());
+
+    QStringList modifiers;
+    QString key;
+    drift::keymap::splitChord(QStringLiteral("Ctrl+Shift++"), &modifiers, &key);
+    QCOMPARE(modifiers, (QStringList{QStringLiteral("Ctrl"), QStringLiteral("Shift")}));
+    QCOMPARE(key, QStringLiteral("+"));
+    drift::keymap::splitChord(QStringLiteral("Ctrl+-"), &modifiers, &key);
+    QCOMPARE(key, QStringLiteral("-"));
+}
+
+void EditorStateTest::keymapTranslatesMetaOffMacAndFallsBackToDrift()
+{
+    using namespace drift::keymap;
+    QCOMPARE(translateForPlatform(QStringLiteral("Meta+K"), false), QStringLiteral("Ctrl+Alt+K"));
+    QCOMPARE(translateForPlatform(QStringLiteral("Meta+Shift+K"), false), QStringLiteral("Ctrl+Alt+Shift+K"));
+    QCOMPARE(translateForPlatform(QStringLiteral("Ctrl+Meta+K"), false), QStringLiteral("Ctrl+Alt+K"));
+    QCOMPARE(translateForPlatform(QStringLiteral("Meta++"), false), QStringLiteral("Ctrl+Alt++"));
+    QCOMPARE(translateForPlatform(QStringLiteral("Ctrl+K"), false), QStringLiteral("Ctrl+K"));
+    QCOMPARE(translateForPlatform(QStringLiteral("Meta+K"), true), QStringLiteral("Meta+K"));
+    QCOMPARE(QKeySequence::fromString(translateForPlatform(QStringLiteral("Meta+Shift+Right"), false),
+                                      QKeySequence::PortableText).toString(QKeySequence::PortableText),
+             QStringLiteral("Ctrl+Alt+Shift+Right"));
+
+    // A preset's missing actions are unbound, except panel-scoped ones, which take Drift's.
+    const Preset *drift = findPreset(QLatin1String(kDefaultPresetId));
+    QVERIFY(drift);
+    const Preset sparse{QStringLiteral("sparse"), "Sparse", {{QStringLiteral("save"), {QStringLiteral("F9")}}}};
+    QCOMPARE(presetChords(sparse, QStringLiteral("save"), QStringLiteral("global")), QStringList{QStringLiteral("F9")});
+    QVERIFY(presetChords(sparse, QStringLiteral("undo"), QStringLiteral("global")).isEmpty());
+    QCOMPARE(presetChords(sparse, QStringLiteral("undo"), QStringLiteral("keyframes")),
+             presetChords(*drift, QStringLiteral("undo"), QStringLiteral("global")));
+    const Preset cleared{QStringLiteral("cleared"), "Cleared", {{QStringLiteral("undo"), {}}}};
+    QVERIFY(presetChords(cleared, QStringLiteral("undo"), QStringLiteral("keyframes")).isEmpty());
+    QCOMPARE(drift->chords.value(QStringLiteral("saveAs")), QStringList{QStringLiteral("Ctrl+Alt+S")});
+    QVERIFY(drift->chords.size() >= 90);
+    for (const ActionDef &action : actions())
+        QVERIFY2(drift->chords.contains(QLatin1String(action.id)), action.id);
+}
+
+void EditorStateTest::keymapPresetSwitchKeepsOrDiscardsOverrides()
+{
+    KeymapSandbox sandbox;
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.presetId(), QStringLiteral("drift"));
+        QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("K")).isEmpty());
+        keymap.setPreset(QStringLiteral("nonexistent"), true);
+        QCOMPARE(keymap.presetId(), QStringLiteral("drift"));
+        keymap.setPreset(QStringLiteral("drift"), true);
+        QVERIFY(keymap.isModified(QStringLiteral("playPause")));
+        keymap.setPreset(QStringLiteral("drift"), false);
+        QVERIFY(!keymap.hasOverrides());
+        QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    }
+    QVERIFY(drift::Keymap().presets().size() >= 1);
 }
 
 void EditorStateTest::splitLeftRightUndoRestoresTheDiscardedHalf()
@@ -18182,10 +18510,12 @@ void EditorStateTest::trackerShortcutsAreRegistered()
     QCoreApplication::setApplicationName(QStringLiteral("DriftTestTrackerShortcuts"));
     const auto restore = qScopeGuard([&] {
         QSettings().remove(QStringLiteral("shortcuts"));
+        QSettings().remove(QStringLiteral("keymap"));
         QCoreApplication::setOrganizationName(org);
         QCoreApplication::setApplicationName(app);
     });
     QSettings().remove(QStringLiteral("shortcuts"));
+    QSettings().remove(QStringLiteral("keymap"));
 
     AssetLibrary library;
     AppController state(&library);
@@ -18233,10 +18563,12 @@ void EditorStateTest::everyListedActionCanBeBound()
     QCoreApplication::setApplicationName(QStringLiteral("DriftTestBindableActions"));
     const auto restore = qScopeGuard([&] {
         QSettings().remove(QStringLiteral("shortcuts"));
+        QSettings().remove(QStringLiteral("keymap"));
         QCoreApplication::setOrganizationName(org);
         QCoreApplication::setApplicationName(app);
     });
     QSettings().remove(QStringLiteral("shortcuts"));
+    QSettings().remove(QStringLiteral("keymap"));
 
     AssetLibrary library;
     AppController state(&library);

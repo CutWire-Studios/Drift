@@ -1633,15 +1633,21 @@ const QList<Op> &ops()
                        {QStringLiteral("theme")}),
           false, false, true },
         { "list_shortcuts", "ui", "List action bindings",
-          "Returns {actions:[{id, label, shortcut}], n} for every editor action.",
+          "Returns {actions:[{id, label, shortcut, shortcuts, category, scope}], n} for every editor action. "
+          "shortcuts lists every binding (shortcut is the first); scope is global or a panel.",
           objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label/shortcut"))}}),
           true, false, true },
         { "set_shortcut", "ui", "Rebind a shortcut",
-          "Bind keys to an action id from list_shortcuts. An empty keys string clears the binding. On "
-          "a clash the call FAILS with error \"conflict\" and the conflicting action's label in detail; "
+          "Bind keys to an action id from list_shortcuts. keys is one chord or an array of chords and "
+          "replaces every binding of the action; an empty string or array clears them. On "
+          "a clash (same chord, same scope) the call FAILS with error \"conflict\" and the conflicting action's label in detail; "
           "nothing is rebound. Not undoable.",
           objectSchema({{QStringLiteral("action"), stringProp(QStringLiteral("Action id from list_shortcuts"))},
-                        {QStringLiteral("keys"), stringProp(QStringLiteral("Qt key sequence, e.g. Ctrl+S; empty string clears"))}},
+                        {QStringLiteral("keys"),
+                         QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("string"), QStringLiteral("array")}},
+                                     {QStringLiteral("items"), QJsonObject{{QStringLiteral("type"), QStringLiteral("string")}}},
+                                     {QStringLiteral("description"),
+                                      QStringLiteral("Qt key sequence, e.g. Ctrl+S, or an array of them; empty string or array clears")}}}},
                        {QStringLiteral("action"), QStringLiteral("keys")}) },
         { "reset_shortcuts", "ui", "Restore default shortcuts",
           "Reset every action binding to its default. Not undoable.",

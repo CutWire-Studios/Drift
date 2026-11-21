@@ -280,6 +280,12 @@ qt_add_executable(tst_mcp
     ../src/app/editor/appcontroller/AppControllerKeyframes.cpp
     ../src/app/editor/appcontroller/AppControllerEffects.cpp
     ../src/app/editor/appcontroller/AppControllerTracks.cpp
+    ../src/app/editor/keymap/Keymap.h
+    ../src/app/editor/keymap/Keymap.cpp
+    ../src/app/editor/keymap/KeymapCatalog.h
+    ../src/app/editor/keymap/KeymapCatalog.cpp
+    ../src/app/editor/keymap/KeymapPresets.h
+    ../src/app/editor/keymap/KeymapPresets.cpp
     ../src/app/editor/appcontroller/AppControllerProject.cpp
     ../src/app/editor/appcontroller/AppControllerTextLayers.cpp
     ../src/app/mcp/McpController.cpp

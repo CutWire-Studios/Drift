@@ -1504,7 +1504,9 @@ ApplicationWindow {
             width: 0
             height: 0
             Shortcut {
-                sequence: Theme.nativeShortcutSequence(modelData.shortcut)
+                sequences: modelData.shortcuts.filter(
+                               (chord) => !Theme.shortcutSequenceUsesArrowKey(chord))
+                           .map((chord) => Theme.nativeShortcutSequence(chord))
                 context: Qt.ApplicationShortcut
                 // ApplicationShortcut fires regardless of what is on screen, so without
                 // this a key like M (toggleBookmark) still edited the document hidden
@@ -1519,7 +1521,6 @@ ApplicationWindow {
                 // call — so there is nothing editing-shaped about letting them through.
                 enabled: (modelData.id === "newProject" || modelData.id === "open"
                          || !window.showStartScreen)
-                         && !Theme.shortcutSequenceUsesArrowKey(modelData.shortcut)
                 onActivated: window.dispatchAction(modelData.id)
             }
         }
