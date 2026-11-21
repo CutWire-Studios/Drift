@@ -415,6 +415,7 @@ private slots:
     void audioRecordingVoiceoverWorkflow();
     void lockedTrackRejectsEdits();
     void splitShortcutFollowsSelection();
+    void quickActionsRunThroughTriggerAction();
     void lockedTimelineRemovalRefusedWhicheverTimelineIsOpen();
     void removeAssetsRefusesLockedTimeline();
     void dissolveLastInstanceOfLockedTimelineRefused();
@@ -2850,21 +2851,21 @@ void EditorStateTest::keymapSupportsSeveralBindingsPerAction()
     QVERIFY(!keymap.isModified(QStringLiteral("playPause")));
 
     QSignalSpy changed(&keymap, &drift::Keymap::changed);
-    QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("K")).isEmpty());
+    QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("F9")).isEmpty());
     QCOMPARE(changed.count(), 1);
-    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), (QStringList{QStringLiteral("Space"), QStringLiteral("K")}));
-    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("K")), QStringLiteral("playPause"));
+    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), (QStringList{QStringLiteral("Space"), QStringLiteral("F9")}));
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("F9")), QStringLiteral("playPause"));
     QVERIFY(keymap.isModified(QStringLiteral("playPause")));
-    QVERIFY(keymap.chords().contains(QStringLiteral("K")));
+    QVERIFY(keymap.chords().contains(QStringLiteral("F9")));
     QVERIFY(!keymap.chords().contains(QStringLiteral("Left")));
     QVERIFY(keymap.chords().contains(QStringLiteral("Ctrl+S")));
 
     // Adding what is already bound changes nothing.
-    QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("K")).isEmpty());
+    QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("F9")).isEmpty());
     QCOMPARE(changed.count(), 1);
 
     keymap.removeBinding(QStringLiteral("playPause"), QStringLiteral("Space"));
-    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("K")});
+    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("F9")});
     QVERIFY(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Space")).isEmpty());
 
     keymap.resetAction(QStringLiteral("playPause"));
@@ -2873,13 +2874,13 @@ void EditorStateTest::keymapSupportsSeveralBindingsPerAction()
 
     AssetLibrary library;
     AppController state(&library);
-    QVERIFY(state.keymap()->addBinding(QStringLiteral("playPause"), QStringLiteral("K")).isEmpty());
+    QVERIFY(state.keymap()->addBinding(QStringLiteral("playPause"), QStringLiteral("F9")).isEmpty());
     for (const QVariant &entry : state.actions()) {
         const QVariantMap map = entry.toMap();
         if (map.value(QStringLiteral("id")).toString() != QLatin1String("playPause"))
             continue;
         QCOMPARE(map.value(QStringLiteral("shortcuts")).toStringList(),
-                 (QStringList{QStringLiteral("Space"), QStringLiteral("K")}));
+                 (QStringList{QStringLiteral("Space"), QStringLiteral("F9")}));
         QCOMPARE(map.value(QStringLiteral("shortcut")).toString(), QStringLiteral("Space"));
         QCOMPARE(map.value(QStringLiteral("category")).toString(), QStringLiteral("playback"));
         QCOMPARE(map.value(QStringLiteral("scope")).toString(), QStringLiteral("global"));
@@ -2919,7 +2920,7 @@ void EditorStateTest::keymapClearedShortcutSurvivesARestart()
         drift::Keymap keymap;
         QVERIFY(keymap.setBindings(QStringLiteral("delete"), {}).isEmpty());
         QVERIFY(keymap.bindings(QStringLiteral("delete")).isEmpty());
-        QVERIFY(keymap.setBindings(QStringLiteral("selectAll"), {QStringLiteral("Ctrl+,"), QStringLiteral("Ctrl+|")}).isEmpty());
+        QVERIFY(keymap.setBindings(QStringLiteral("selectAll"), {QStringLiteral("Ctrl+;"), QStringLiteral("Ctrl+|")}).isEmpty());
     }
     {
         drift::Keymap keymap;
@@ -2927,7 +2928,7 @@ void EditorStateTest::keymapClearedShortcutSurvivesARestart()
         QVERIFY(keymap.isModified(QStringLiteral("delete")));
         QVERIFY(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Delete")).isEmpty());
         QCOMPARE(keymap.bindings(QStringLiteral("selectAll")),
-                 (QStringList{QStringLiteral("Ctrl+,"), QStringLiteral("Ctrl+|")}));
+                 (QStringList{QStringLiteral("Ctrl+;"), QStringLiteral("Ctrl+|")}));
         keymap.resetAction(QStringLiteral("delete"));
     }
     {
@@ -3117,7 +3118,7 @@ void EditorStateTest::keymapPresetSwitchKeepsOrDiscardsOverrides()
     {
         drift::Keymap keymap;
         QCOMPARE(keymap.presetId(), QStringLiteral("drift"));
-        QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("K")).isEmpty());
+        QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("F9")).isEmpty());
         keymap.setPreset(QStringLiteral("nonexistent"), true);
         QCOMPARE(keymap.presetId(), QStringLiteral("drift"));
         keymap.setPreset(QStringLiteral("drift"), true);
@@ -9980,6 +9981,136 @@ void EditorStateTest::lockedTrackRejectsEdits()
     QCOMPARE(state.trackLocked(0), false);
     state.moveClip(0, 0, 3.0);
     QCOMPARE(start(), drift::secondsToUs(3.0));
+}
+
+namespace {
+
+void appendTestClips(AppController &state, int trackCount, int clipsPerTrack)
+{
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    for (int track = 0; track < trackCount; ++track) {
+        project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+        for (int i = 0; i < clipsPerTrack; ++i) {
+            drift::Clip clip;
+            clip.id = QStringLiteral("clip-%1-%2").arg(track).arg(i);
+            clip.type = drift::ClipType::Video;
+            clip.name = clip.id;
+            clip.timelineStart = drift::secondsToUs(2.0 * i);
+            clip.timelineDuration = drift::secondsToUs(2.0);
+            clip.srcIn = 0;
+            clip.srcOut = clip.timelineDuration;
+            project.tracks()[track].clips.append(clip);
+        }
+    }
+}
+
+} // namespace
+
+void EditorStateTest::quickActionsRunThroughTriggerAction()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    appendTestClips(state, 1, 3);
+    const drift::Project &project = *state.project();
+
+    QCOMPARE(state.shortcutFor(QStringLiteral("stop")), QStringLiteral("K"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("rippleDelete")), QStringLiteral("Shift+Delete"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("openKeymap")), QStringLiteral("F1"));
+
+    state.triggerAction(QStringLiteral("speedUp"));
+    QVERIFY(!qFuzzyCompare(state.playback()->playbackRate(), 1.0));
+    state.triggerAction(QStringLiteral("stop"));
+    QVERIFY(!state.playing());
+    QCOMPARE(state.playback()->playbackRate(), 1.0);
+
+    state.triggerAction(QStringLiteral("selectNextClip"));
+    state.selectClip(0, 0);
+    state.triggerAction(QStringLiteral("selectNextClip"));
+    QCOMPARE(state.selectedClip(), 1);
+    state.triggerAction(QStringLiteral("selectPreviousClip"));
+    QCOMPARE(state.selectedClip(), 0);
+    state.triggerAction(QStringLiteral("deselectAll"));
+    QCOMPARE(state.selectedClip(), -1);
+
+    state.setPlayheadSeconds(3.0);
+    state.triggerAction(QStringLiteral("selectClipAtPlayhead"));
+    QCOMPARE(state.selectedClip(), 1);
+
+    state.triggerAction(QStringLiteral("markClip"));
+    QCOMPARE(state.workAreaInSeconds(), 2.0);
+    QCOMPARE(state.workAreaOutSeconds(), 4.0);
+    state.triggerAction(QStringLiteral("clearOut"));
+    QCOMPARE(state.workAreaOutSeconds(), -1.0);
+    QCOMPARE(state.workAreaInSeconds(), 2.0);
+    state.triggerAction(QStringLiteral("clearIn"));
+    QCOMPARE(state.workAreaInSeconds(), -1.0);
+
+    // Ripple off, yet the action closes the gap; the toggle itself is left alone.
+    QVERIFY(!state.rippleEnabled());
+    state.selectClip(0, 1);
+    state.triggerAction(QStringLiteral("rippleDelete"));
+    QCOMPARE(project.tracks().at(0).clips.size(), 2);
+    QCOMPARE(project.tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(2.0));
+    QVERIFY(!state.rippleEnabled());
+    state.undo();
+    state.selectClip(0, 1);
+    state.triggerAction(QStringLiteral("delete"));
+    QCOMPARE(project.tracks().at(0).clips.size(), 2);
+    QCOMPARE(project.tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+    state.undo();
+
+    state.triggerAction(QStringLiteral("toggleSnapping"));
+    QVERIFY(state.snapEnabled());
+    state.triggerAction(QStringLiteral("toggleRipple"));
+    QVERIFY(state.rippleEnabled());
+    state.triggerAction(QStringLiteral("toggleRipple"));
+    state.triggerAction(QStringLiteral("toggleOverlap"));
+    QVERIFY(state.allowClipOverlap());
+
+    state.selectClip(0, 0);
+    state.triggerAction(QStringLiteral("toggleTrackMuted"));
+    QVERIFY(state.trackMuted(0));
+    state.triggerAction(QStringLiteral("toggleTrackMuted"));
+    QVERIFY(!state.trackMuted(0));
+    state.triggerAction(QStringLiteral("toggleTrackLocked"));
+    QVERIFY(state.trackLocked(0));
+    // A locked track's clips cannot be selected, so the key only locks.
+    QCOMPARE(state.selectedTrack(), -1);
+    state.setTrackLocked(0, false);
+    state.selectClip(0, 0);
+    state.triggerAction(QStringLiteral("toggleTrackSolo"));
+    QVERIFY(state.trackSolo(0));
+
+    state.triggerAction(QStringLiteral("swapWithNext"));
+    QCOMPARE(drift::clipById(project.tracks().at(0), QStringLiteral("clip-0-0"))->timelineStart,
+             drift::secondsToUs(2.0));
+
+    const bool mixer = state.preferences()->audioMixerVisible();
+    state.triggerAction(QStringLiteral("toggleMixerStrip"));
+    QCOMPARE(state.preferences()->audioMixerVisible(), !mixer);
+    state.triggerAction(QStringLiteral("toggleMixerStrip"));
+
+    state.addBookmark(1.0, QStringLiteral("a"));
+    state.addBookmark(5.0, QStringLiteral("b"));
+    state.setPlayheadSeconds(1.0);
+    state.triggerAction(QStringLiteral("deleteBookmark"));
+    QCOMPARE(state.bookmarks().size(), 1);
+    state.triggerAction(QStringLiteral("deleteAllBookmarks"));
+    QCOMPARE(state.bookmarks().size(), 0);
+
+    const int trackCount = project.tracks().size();
+    state.triggerAction(QStringLiteral("addAudioTrack"));
+    QCOMPARE(project.tracks().size(), trackCount + 1);
+    state.triggerAction(QStringLiteral("addVideoTrack"));
+    QCOMPARE(project.tracks().size(), trackCount + 2);
+
+    // Nothing selected: target-dependent actions do nothing.
+    state.clearSelection();
+    state.triggerAction(QStringLiteral("toggleTrackMuted"));
+    state.triggerAction(QStringLiteral("removeAllEffects"));
+    state.triggerAction(QStringLiteral("swapWithPrevious"));
 }
 
 // S used to cut every track under the playhead even with one clip picked, so editing a stack of

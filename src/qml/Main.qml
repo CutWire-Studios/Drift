@@ -1510,7 +1510,91 @@ ApplicationWindow {
                 Workspaces.activeId = ws.id
             return
         }
+        if (dispatchPanelAction(id))
+            return
         EditorState.triggerAction(id)
+    }
+
+    // The actions that open a dialog, a panel or a timeline tool. Each acts on the current
+    // selection and does nothing when it does not apply, like the matching menu item being hidden.
+    // Returns whether the id was one of them.
+    function dispatchPanelAction(id) {
+        const track = EditorState.selectedTrack
+        const clip = EditorState.selectedClip
+        const kind = EditorState.selectedClipData.kind ?? ""
+        const hasClip = track >= 0 && clip >= 0 && kind !== ""
+        switch (id) {
+        case "importMedia":
+            if (timelinePanel?.visible)
+                timelinePanel.importMediaDirectlyToTimeline()
+            return true
+        case "export":
+            if (editorHeader.visible && !EditorState.exportInProgress)
+                editorHeader.exportVideo()
+            return true
+        case "openSettings":
+            window.openSettings()
+            return true
+        case "openKeymap":
+            window.openSettings("keymap")
+            return true
+        case "togglePreviewFullscreen":
+            window.togglePreviewFullscreen()
+            return true
+        case "zoomToFit":
+            if (timelinePanel?.visible)
+                timelinePanel.fitZoom()
+            return true
+        case "trimStart":
+        case "trimEnd":
+            if (timelinePanel?.visible) {
+                const tool = id === "trimStart" ? "trimStart" : "trimEnd"
+                timelinePanel.timelineTool = timelinePanel.timelineTool === tool ? "" : tool
+            }
+            return true
+        case "renameClip":
+            if (hasClip && timelinePanel?.visible)
+                timelinePanel.requestRenameClip(track, clip)
+            return true
+        case "replaceClip":
+            if (hasClip && timelinePanel?.visible
+                    && EditorState.replaceCandidatesForClip(track, clip).length > 0)
+                timelinePanel.requestReplaceClip(track, clip)
+            return true
+        case "editBookmark":
+            if (timelinePanel?.visible)
+                timelinePanel.requestRenameBookmarkAtPlayhead()
+            return true
+        case "crop":
+            if ((kind === "video" || kind === "image") && typeof window.openCrop === "function")
+                window.openCrop(track, clip)
+            return true
+        case "colorGrade":
+            if (hasClip && kind !== "audio" && kind !== "subtitle")
+                Workspaces.activeId = "color"
+            return true
+        case "editKeyframes":
+            if (hasClip)
+                Workspaces.activeId = "keyframes"
+            return true
+        case "maskAndTrack":
+            if (kind === "video" || kind === "image")
+                Workspaces.activeId = "masking-tracking"
+            return true
+        case "clipProperties":
+            if (hasClip)
+                ShellBridge.navigate("panel:properties")
+            return true
+        case "clipSpeed":
+            if (hasClip)
+                ShellBridge.navigate("panel:properties#speed-playback")
+            return true
+        case "autoDuck":
+            if (hasClip && EditorState.audioAlign.canDuck(track, clip) && !EditorState.audioAlign.running)
+                ShellBridge.navigate("panel:audioMixer#audio-ducking")
+            return true
+        }
+        return false
     }
 
     // One Shortcut per distinct chord across the global and panel scopes; dispatchChord decides
@@ -1543,17 +1627,6 @@ ApplicationWindow {
                 onActivated: window.dispatchChord(chordHost.modelData)
             }
         }
-    }
-
-    // There is no menu bar and no help overlay, so the only route to the shortcut
-    // list was an unlabelled icon in a vertical rail that can itself be scrolled out
-    // of view on a short window. F1 is the conventional way in and opens the
-    // keyboard shortcuts page of Settings.
-    Shortcut {
-        sequence: "F1"
-        context: Qt.ApplicationShortcut
-        enabled: !window.showStartScreen
-        onActivated: window.openSettings("keymap")
     }
 
     // Arrow-key actions (frame step, 1s/10s jump, Alt-nudge, Alt cut-point)

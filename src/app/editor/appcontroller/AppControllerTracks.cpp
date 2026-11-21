@@ -1,5 +1,7 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "app/editor/PreferencesController.h"
 #include "app/editor/keymap/KeymapCatalog.h"
+#include "app/jobs/audio/AudioAlignController.h"
 #include "engine/decode/probe/MediaProbe.h"
 #include "app/editor/sessions/MaskingController.h"
 #include "app/mcp/McpController.h"
@@ -1605,6 +1607,186 @@ void AppController::triggerAction(const QString &actionId)
         setPlaying(true);
     } else if (actionId == QStringLiteral("speedDown"))
         m_playback.stepPlaybackRate(-1);
+    else if (actionId == QStringLiteral("stop")) {
+        setPlaying(false);
+        m_playback.setPlaybackRate(1.0);
+    } else if (actionId == QStringLiteral("stepBack5"))
+        stepFrames(-5);
+    else if (actionId == QStringLiteral("stepForward5"))
+        stepFrames(5);
+    else if (actionId == QStringLiteral("rippleDelete"))
+        rippleDeleteSelection();
+    else if (actionId == QStringLiteral("deselectAll"))
+        clearSelection();
+    else if (actionId == QStringLiteral("selectClipAtPlayhead"))
+        selectClipUnderPlayhead();
+    else if (actionId == QStringLiteral("selectNextClip"))
+        selectAdjacentClip(true);
+    else if (actionId == QStringLiteral("selectPreviousClip"))
+        selectAdjacentClip(false);
+    else if (actionId == QStringLiteral("removeAllEffects"))
+        removeAllEffects(m_selectedTrack, m_selectedClip);
+    else if (actionId == QStringLiteral("moveToOwnTrack"))
+        moveAdjustmentToOwnTrack(m_selectedTrack, m_selectedClip);
+    else if (actionId == QStringLiteral("swapWithPrevious"))
+        swapWithNeighbour(m_selectedTrack, m_selectedClip, false);
+    else if (actionId == QStringLiteral("swapWithNext"))
+        swapWithNeighbour(m_selectedTrack, m_selectedClip, true);
+    else if (actionId == QStringLiteral("makeComposite")) {
+        if (canMakeCompositeFromSelection())
+            makeCompositeFromSelection();
+    } else if (actionId == QStringLiteral("openComposite")) {
+        if (isValidClipIndex(m_selectedTrack, m_selectedClip)
+            && m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip).type == drift::ClipType::Composite)
+            openCompositeClip(m_selectedTrack, m_selectedClip);
+    } else if (actionId == QStringLiteral("flattenComposite")) {
+        if (isValidClipIndex(m_selectedTrack, m_selectedClip) && !exportInProgress()
+            && m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip).type == drift::ClipType::Composite)
+            flattenComposite(m_selectedTrack, m_selectedClip);
+    } else if (actionId == QStringLiteral("freezeFrame"))
+        freezeFrameAtPlayhead();
+    else if (actionId == QStringLiteral("nudgeLeftFar"))
+        nudgeSelection(-1.0);
+    else if (actionId == QStringLiteral("nudgeRightFar"))
+        nudgeSelection(1.0);
+    else if (actionId == QStringLiteral("reverseClip")) {
+        if (isValidClipIndex(m_selectedTrack, m_selectedClip)) {
+            if (m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip).reverse)
+                setClipReverse(m_selectedTrack, m_selectedClip, false);
+            else
+                requestClipReverse(m_selectedTrack, m_selectedClip);
+        }
+    } else if (actionId == QStringLiteral("splitOnBeats")) {
+        if (beatsAvailable() && isValidClipIndex(m_selectedTrack, m_selectedClip)
+            && m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip).type != drift::ClipType::Subtitle)
+            splitSelectionOnBeats(m_selectedTrack, m_selectedClip, QStringLiteral("beat"));
+    } else if (actionId == QStringLiteral("removeSilence")) {
+        if (m_audioAlign->canRemoveSilence(m_selectedTrack, m_selectedClip) && !m_audioAlign->running())
+            m_audioAlign->removeSilence(m_selectedTrack, m_selectedClip);
+    } else if (actionId == QStringLiteral("syncByAudio")) {
+        if (m_audioAlign->canSyncByAudio() && !m_audioAlign->running())
+            m_audioAlign->syncByAudio();
+    } else if (actionId == QStringLiteral("markClip"))
+        markWorkAreaToClip();
+    else if (actionId == QStringLiteral("clearIn"))
+        clearWorkAreaIn();
+    else if (actionId == QStringLiteral("clearOut"))
+        clearWorkAreaOut();
+    else if (actionId == QStringLiteral("deleteBookmark"))
+        removeBookmarkNearPlayhead();
+    else if (actionId == QStringLiteral("deleteAllBookmarks"))
+        clearBookmarks();
+    else if (actionId == QStringLiteral("toggleSnapping"))
+        setSnapEnabled(!m_snapEnabled);
+    else if (actionId == QStringLiteral("toggleRipple"))
+        setRippleEnabled(!m_rippleEnabled);
+    else if (actionId == QStringLiteral("toggleOverlap"))
+        setAllowClipOverlap(!m_allowClipOverlap);
+    else if (actionId == QStringLiteral("toggleAutoSelect"))
+        m_preferences->setAutoSelectUnderPlayhead(!m_preferences->autoSelectUnderPlayhead());
+    else if (actionId == QStringLiteral("toggleMixerStrip"))
+        m_preferences->setAudioMixerVisible(!m_preferences->audioMixerVisible());
+    else if (actionId == QStringLiteral("toggleKeyframeStrip"))
+        m_preferences->setKeyframeStripVisible(!m_preferences->keyframeStripVisible());
+    else if (actionId == QStringLiteral("toggleOverview"))
+        m_preferences->setTimelineOverviewVisible(!m_preferences->timelineOverviewVisible());
+    else if (actionId == QStringLiteral("toggleTrackMuted"))
+        setTrackMuted(m_selectedTrack, !trackMuted(m_selectedTrack));
+    else if (actionId == QStringLiteral("toggleTrackSolo"))
+        setTrackSolo(m_selectedTrack, !trackSolo(m_selectedTrack));
+    else if (actionId == QStringLiteral("toggleTrackLocked"))
+        setTrackLocked(m_selectedTrack, !trackLocked(m_selectedTrack));
+    else if (actionId == QStringLiteral("addVideoTrack"))
+        addTrack(QStringLiteral("video"));
+    else if (actionId == QStringLiteral("addAudioTrack"))
+        addTrack(QStringLiteral("audio"));
+    else if (actionId == QStringLiteral("trackTaller"))
+        nudgeTrackHeightScale(m_selectedTrack, 1);
+    else if (actionId == QStringLiteral("trackShorter"))
+        nudgeTrackHeightScale(m_selectedTrack, -1);
+    else if (actionId == QStringLiteral("addAdjustmentLayer"))
+        addAdjustmentClip(-1, -1);
+    else if (actionId == QStringLiteral("addCamera"))
+        addCameraTrack();
+    else if (actionId == QStringLiteral("addText"))
+        addTextClip(QString(), -1);
+    else if (actionId == QStringLiteral("recordVoiceover")) {
+        if (isRecordingAudio())
+            stopAudioRecording();
+        else
+            startAudioRecording();
+    }
+}
+
+void AppController::markWorkAreaToClip()
+{
+    if (!isValidClipIndex(m_selectedTrack, m_selectedClip)) {
+        selectClipUnderPlayhead();
+        if (!isValidClipIndex(m_selectedTrack, m_selectedClip))
+            return;
+    }
+    const drift::Clip &clip = m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip);
+    const drift::TimeUs start = clip.timelineStart;
+    const drift::TimeUs end = clip.timelineEnd();
+    if (end <= start)
+        return;
+    const drift::Project before = m_project;
+    m_project.setWorkAreaInUs(start);
+    m_project.setWorkAreaOutUs(end);
+    pushProjectEdit(before, tr("Mark work area to clip"));
+    finishEdit(tr("Work area set to clip"));
+    emit workAreaChanged();
+}
+
+void AppController::clearWorkAreaIn()
+{
+    if (m_project.workAreaInUs() < 0)
+        return;
+    const drift::Project before = m_project;
+    m_project.setWorkAreaInUs(-1);
+    pushProjectEdit(before, tr("Clear work area in"));
+    finishEdit(tr("Work area in cleared"));
+    emit workAreaChanged();
+}
+
+void AppController::clearWorkAreaOut()
+{
+    if (m_project.workAreaOutUs() < 0)
+        return;
+    const drift::Project before = m_project;
+    m_project.setWorkAreaOutUs(-1);
+    pushProjectEdit(before, tr("Clear work area out"));
+    finishEdit(tr("Work area out cleared"));
+    emit workAreaChanged();
+}
+
+void AppController::clearBookmarks()
+{
+    if (m_project.bookmarks().isEmpty())
+        return;
+    const drift::Project before = m_project;
+    m_project.bookmarks().clear();
+    pushProjectEdit(before, tr("Remove all bookmarks"));
+    finishEdit(tr("Bookmarks removed"));
+}
+
+void AppController::rippleDeleteSelection()
+{
+    const bool ripple = m_rippleEnabled;
+    m_rippleEnabled = true;
+    deleteSelection(/*withPinnedAdjustments=*/false);
+    m_rippleEnabled = ripple;
+}
+
+void AppController::selectAdjacentClip(bool next)
+{
+    if (!isValidClipIndex(m_selectedTrack, m_selectedClip)) {
+        selectClipUnderPlayhead();
+        return;
+    }
+    const QString id = neighbourClipId(m_selectedTrack, m_selectedClip, next);
+    if (!id.isEmpty())
+        selectClipById(id);
 }
 
 void AppController::undo()

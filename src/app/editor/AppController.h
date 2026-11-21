@@ -1887,6 +1887,13 @@ public:
     Q_INVOKABLE void clearWorkArea();
     Q_INVOKABLE void toggleLoopWorkArea();
     Q_INVOKABLE void freezeFrameAtPlayhead();
+    // Keyboard-action helpers; triggerAction is their entry point.
+    void markWorkAreaToClip();
+    void clearWorkAreaIn();
+    void clearWorkAreaOut();
+    void clearBookmarks();
+    void rippleDeleteSelection();
+    void selectAdjacentClip(bool next);
     // The project's own media folder (created if needed): files here are bundled on save.
     static QString projectMediaDir(const QString &projectId);
     Q_INVOKABLE void previewClipRange(int trackIndex, int clipIndex);

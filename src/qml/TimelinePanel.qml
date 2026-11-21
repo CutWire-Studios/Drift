@@ -1109,6 +1109,21 @@ PanelFrame {
         convertToSubtitleDialog.open()
     }
 
+    function requestRenameBookmarkAtPlayhead() {
+        const marks = EditorState.bookmarks
+        let best = -1
+        let bestDistance = 0.15
+        for (let i = 0; i < marks.length; ++i) {
+            const distance = Math.abs(marks[i].seconds - EditorState.playheadSeconds)
+            if (distance <= bestDistance) {
+                best = i
+                bestDistance = distance
+            }
+        }
+        if (best >= 0)
+            seekStrip.openRename(best, marks[best].label)
+    }
+
     function requestReplaceClip(trackIndex, clipIndex) {
         replaceClipDialog.openFor(trackIndex, clipIndex)
     }
