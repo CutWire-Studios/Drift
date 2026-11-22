@@ -477,7 +477,7 @@
       "target": "panel:view3d#view3d-snap",
       "context": "View3dPanel",
       "source": "3D snapping",
-      "keywords": "snap step translate rotate rotation increment",
+      "keywords": "snap step translate rotate rotation scale increment",
       "needs": []
     },
     {

@@ -147,7 +147,6 @@ Slots (the `slot` string on each `ThemeSlot`):
 - TimelineToolbarBackground
 - ToastCardBackground
 - TrackHeaderRowBackground
-- TransformOverlayResizeGrip
 
 ## Finding a component's tokens
 

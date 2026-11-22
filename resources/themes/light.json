@@ -2812,11 +2812,6 @@
       "scrimOpacity": 0.65
     },
     "cropOverlayGrip": {
-      "background": "$semantic.primary",
-      "backgroundHover": "$semantic.primaryForeground",
-      "border": "$semantic.primaryForeground",
-      "borderHover": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidth",
       "radius": "$metrics.radius.xs"
     },
     "cropOverlayHint": {
@@ -3303,26 +3298,6 @@
       "border": "$semantic.clip.transform",
       "borderWidth": "$metrics.borderWidthFocus"
     },
-    "transformOverlayResizeGrip": {
-      "background": "$semantic.primary",
-      "backgroundHover": "$semantic.primaryForeground",
-      "border": "$semantic.primaryForeground",
-      "borderHover": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.xs"
-    },
-    "transformOverlayRotateHandle": {
-      "background": "$semantic.primary",
-      "border": "$semantic.onMedia",
-      "borderWidth": 1
-    },
-    "transformOverlaySizeReadout": {
-      "background": "$semantic.scrimStrong",
-      "border": "$semantic.guide.weak",
-      "borderWidth": "$metrics.borderWidth",
-      "foreground": "$semantic.onMedia",
-      "radius": "$metrics.radius.sm"
-    },
     "transformOverlaySnapGuide": {
       "background": "$semantic.primary"
     },
@@ -3357,7 +3332,6 @@
       "borderWidth": "$metrics.borderWidth",
       "foreground": "$semantic.onMedia",
       "foregroundMuted": "$semantic.guide.medium",
-      "inputBackground": "$semantic.scrim",
       "inputBorder": "$semantic.primary",
       "radius": "$metrics.radius.sm"
     },
@@ -3756,7 +3730,6 @@
       "waveMuted": "$semantic.mutedForeground"
     },
     "pathEditor": {
-      "closeHint": "$semantic.constructive",
       "ghostBackground": "$semantic.primaryForeground",
       "ghostBorder": "$semantic.primary",
       "ghostForeground": "$semantic.primary",
@@ -4009,30 +3982,6 @@
     "androidLayoutSheet": {
       "icon": "$semantic.panel.foreground"
     },
-    "androidTransformSizeReadout": {
-      "background": "$semantic.scrimStrong",
-      "border": "$semantic.guide.weak",
-      "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.sm",
-      "foreground": "$semantic.onMedia"
-    },
-    "androidTransformRotateHandle": {
-      "stem": "$semantic.primary",
-      "stemWidth": "$metrics.borderWidth",
-      "background": "$semantic.primary",
-      "backgroundActive": "$semantic.primaryForeground",
-      "border": "$semantic.onMedia",
-      "borderActive": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidth"
-    },
-    "androidTransformResizeGrip": {
-      "background": "$semantic.primary",
-      "backgroundPressed": "$semantic.primaryForeground",
-      "border": "$semantic.primaryForeground",
-      "borderPressed": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.xs"
-    },
     "androidAnimationPage": {
       "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground",
@@ -4181,32 +4130,12 @@
       "background": "$semantic.primary",
       "handleRadius": 2
     },
-    "androidTransformParentFrame": {
-      "stroke": "$semantic.clip.transform",
-      "strokeWidth": "$metrics.borderWidthFocus",
-      "background": "$semantic.clip.transform",
-      "foreground": "$semantic.onMedia"
-    },
     "androidMediaPlayBadge": {
       "background": "$semantic.scrimStrong",
       "icon": "$semantic.onMedia"
     },
-    "androidTransformLayerChip": {
-      "background": "$semantic.clip.transform",
-      "radius": "$metrics.radius.sm",
-      "foreground": "$semantic.onMedia"
-    },
     "androidTransformClipOutline": {
-      "border": "$semantic.guide.strong",
-      "borderSelected": "$semantic.primary",
-      "borderTransform": "$semantic.clip.transform",
-      "borderWidth": "$metrics.borderWidth",
-      "borderWidthSelected": "$metrics.borderWidthFocus",
-      "radius": "$metrics.radius.xs"
-    },
-    "androidTransformSnapLine": {
-      "background": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidth"
+      "border": "$semantic.guide.strong"
     },
     "androidCropHint": {
       "background": "$semantic.scrimStrong",
@@ -4390,8 +4319,7 @@
     "nodeCanvas": {
       "background": "$semantic.surface.app",
       "gridMinor": "$palette.nodeGridMinor",
-      "gridMajor": "$palette.nodeGridMajor",
-      "bandBorder": "$semantic.primary"
+      "gridMajor": "$palette.nodeGridMajor"
     },
     "nodeDelegate": {
       "radius": "$metrics.radius.lg",
