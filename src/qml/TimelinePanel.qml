@@ -1392,7 +1392,7 @@ PanelFrame {
                         && EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
                 // A Loader keeps its last height after unloading; hiding it is what makes the
                 // Column give the space back.
-                visible: !!item && item.visible
+                visible: !!item && item.shown
                 sourceComponent: Component {
                     KeyframeGraph {
                         pxPerSecond: root.pxPerSecond

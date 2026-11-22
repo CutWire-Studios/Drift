@@ -285,10 +285,14 @@ Item {
     readonly property bool hasKeys: allSeries.length > 0
     readonly property real emptyHeight: 28
 
-    height: visible ? (hasKeys ? laneHeight : emptyHeight) : 0
     // Open even if every curve is currently folded away, otherwise hiding the last one would take
     // the chips with it. A clip with nothing animated gets a slim empty lane so the toggle shows.
-    visible: keyframesTab && hasClip && !!clipData
+    // Hosts gate on `shown`, not `visible`: visible reads back false while a hidden parent (the
+    // Loader that only becomes visible once this is) holds it, which would never open the lane.
+    readonly property bool shown: keyframesTab && hasClip && !!clipData
+
+    height: shown ? (hasKeys ? laneHeight : emptyHeight) : 0
+    visible: shown
 
     // Curve editing focuses one series: it gets tangent handles and owns the value axis,
     // while the others stay drawn as dimmed context. Handles from two series normalized to
