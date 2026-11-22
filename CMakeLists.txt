@@ -1313,6 +1313,8 @@ target_sources(driftapp PRIVATE
     src/ui/manip/StrokeSmoother.cpp
     src/ui/manip/ManipQml.h
     src/ui/manip/ManipQml.cpp
+    src/ui/manip/CurveGraphModel.h
+    src/ui/manip/CurveGraphModel.cpp
     src/ui/imageproviders/segment/SegmentImageStore.h
     src/ui/imageproviders/segment/SegmentImageStore.cpp
     src/playback/preview/ClipPreviewImageStore.h
@@ -1938,6 +1940,11 @@ qt_add_qml_module(drift
         src/qml/components/preview/ClipCropOverlay.qml
         src/qml/components/preview/GuideLayer.qml
         src/qml/components/preview/GuidesPopover.qml
+        src/qml/components/manip/CurveGraphView.qml
+        src/qml/components/manip/curve/CurveGraphGrid.qml
+        src/qml/components/manip/curve/CurveGraphCurve.qml
+        src/qml/components/manip/curve/CurveGraphKnobs.qml
+        src/qml/components/manip/curve/CurveGraphPointBar.qml
         src/qml/components/manip/HandleKnob.qml
         src/qml/components/manip/TransformManip.qml
         src/qml/components/manip/transform/TransformClipBox.qml
@@ -2040,13 +2047,9 @@ qt_add_qml_module(drift
         src/qml/components/properties/SubtitleEditorHeader.qml
         src/qml/components/properties/SubtitleCueEmptyState.qml
         src/qml/components/properties/SubtitleCueCard.qml
-        src/qml/components/properties/SpeedCurveTangentHandle.qml
         src/qml/components/properties/SpeedCurvePreviewStage.qml
-        src/qml/components/properties/SpeedCurveKnob.qml
-        src/qml/components/properties/SpeedCurveGridLine.qml
         src/qml/components/properties/SpeedCurveGraphPlayhead.qml
         src/qml/components/properties/SpeedCurveFilmstrip.qml
-        src/qml/components/properties/SpeedCurveCanvas.qml
         src/qml/components/properties/ShadingLayerHeader.qml
         src/qml/components/properties/PropertiesTabRailSeparator.qml
         src/qml/components/properties/PropertiesSheetTabChip.qml
@@ -2074,8 +2077,6 @@ qt_add_qml_module(drift
         src/qml/components/properties/FontPickerFamilyRow.qml
         src/qml/components/properties/FontPickerAddRow.qml
         src/qml/components/properties/FadeCurveToolbarRule.qml
-        src/qml/components/properties/FadeCurvePlotFrame.qml
-        src/qml/components/properties/FadeCurveCanvas.qml
         src/qml/components/properties/FacePropTile.qml
         src/qml/components/properties/EmojiPickerSurface.qml
         src/qml/components/properties/EmojiPickerEmptyLabel.qml

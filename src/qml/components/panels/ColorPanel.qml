@@ -786,6 +786,7 @@ PanelFrame {
                             onBegan: root.colorState.beginEdit(qsTr("Adjust curves"))
                             onChanged: (channel, json) => root.colorState.setText(root.curveKeys[channel], json)
                             onEnded: root.colorState.commitEdit()
+                            onCancelled: root.colorState.cancelEdit()
                         }
                     }
 
@@ -815,6 +816,7 @@ PanelFrame {
                             onBegan: root.colorState.beginEdit(qsTr("Adjust hue curves"))
                             onChanged: (channel, json) => root.colorState.setText(root.hueCurveKeys[channel], json)
                             onEnded: root.colorState.commitEdit()
+                            onCancelled: root.colorState.cancelEdit()
                         }
                     }
                 }

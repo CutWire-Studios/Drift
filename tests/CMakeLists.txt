@@ -74,6 +74,7 @@ qt_add_executable(tst_manip
     ../src/ui/manip/DragSession.cpp
     ../src/ui/manip/PathEditCore.cpp
     ../src/ui/manip/StrokeSmoother.cpp
+    ../src/ui/manip/CurveGraphModel.cpp
     ../src/ui/manip/ClipFrameMapper.cpp)
 target_include_directories(tst_manip PRIVATE ../src)
 target_link_libraries(tst_manip PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftengine driftcore)

@@ -9,6 +9,7 @@
 #include "engine/render3d/editor/ClipGizmo.h"
 #include "engine/render3d/scene/ClipTransform3d.h"
 #include "ui/manip/ClipFrameMapper.h"
+#include "ui/manip/CurveGraphModel.h"
 #include "ui/manip/DragSession.h"
 #include "ui/manip/ManipModifiers.h"
 #include "ui/manip/PathEditCore.h"
@@ -91,6 +92,47 @@ QPointF px(double nx, double ny)
 {
     return {100 + nx * 200, 50 + ny * 200};
 }
+
+
+int shiftFlag() { return int(Qt::ShiftModifier); }
+int altFlag() { return int(Qt::AltModifier); }
+int ctrlFlag() { return int(Qt::ControlModifier); }
+int mouse() { return int(DragSession::Device::Mouse); }
+int touchDev() { return int(DragSession::Device::Touch); }
+
+QVariantMap gp(double x, double y, double inDx = 0, double inDy = 0, double outDx = 0, double outDy = 0,
+                      bool smooth = false)
+{
+    return {{"x", x}, {"y", y}, {"inDx", inDx}, {"inDy", inDy}, {"outDx", outDx}, {"outDy", outDy}, {"smooth", smooth}};
+}
+
+void drag(CurveGraphModel &m, const QPointF &from, const QPointF &to, int mods = 0, int device = 0)
+{
+    m.press(from, mods, device);
+    m.move(from + (to - from) * 0.5, mods);
+    m.move(to, mods);
+    m.release(to, mods);
+}
+
+CurveGraphModel *polyline(QObject *parent, bool snap = false)
+{
+    auto *m = new CurveGraphModel(parent);
+    m->setupPolyline();
+    m->setPlot(QRectF(0, 0, 200, 100));
+    m->setSnapEnabled(snap);
+    m->setPoints({gp(0, 0), gp(0.4, 0.3), gp(0.7, 0.8), gp(1, 1)});
+    return m;
+}
+
+CurveGraphModel *colorModel(QObject *parent, bool hue = false)
+{
+    auto *m = new CurveGraphModel(parent);
+    m->setupColor(hue, [](double x) { return x; });
+    m->setPlot(QRectF(0, 0, 100, 100));
+    m->setSnapEnabled(false);
+    return m;
+}
+
 
 } // namespace
 
@@ -1318,6 +1360,431 @@ private slots:
         QCOMPARE(plane.size(), 1);
         QCOMPARE(plane.first().axis, 1);
         QVERIFY(lockGuides(pose, Tool::Move, Orientation::World, 1.0, -1, false).isEmpty());
+    }
+
+    // --- CurveGraphModel --------------------------------------------------------------------
+
+    void graphMappingRoundTripsAndZooms()
+    {
+        CurveGraphModel m;
+        m.setupCubic(false);
+        m.setPlot(QRectF(10, 10, 200, 100));
+        QCOMPARE(m.toPx(0, -0.5), QPointF(10, 110));
+        QCOMPARE(m.toPx(1, 1.5), QPointF(210, 10));
+        const QPointF px = m.toPx(0.25, 0.5);
+        QVERIFY(QLineF(m.fromPx(px), QPointF(0.25, 0.5)).length() < 1e-9);
+        m.setProperty("zoomX", true);
+        m.setProperty("zoomY", true);
+        m.zoomAt(110, 60, 2.0);
+        QVERIFY(m.zoomed());
+        QVERIFY(QLineF(m.fromPx(QPointF(110, 60)), QPointF(0.5, 0.5)).length() < 1e-9);
+        m.panBy(1000, 0);
+        QVERIFY(m.fromPx(QPointF(10, 60)).x() >= -1e-9);
+        m.resetView();
+        QVERIFY(!m.zoomed());
+    }
+
+    void graphSpeedAxisIsLogarithmic()
+    {
+        CurveGraphModel m;
+        m.setupSpeed(0.1, 100);
+        m.setPlot(QRectF(0, 0, 100, 300));
+        QVERIFY(qAbs(m.toPx(0, 1).y() - 200.0) < 1e-9);
+        QVERIFY(qAbs(m.fromPx(QPointF(0, 200)).y() - 1.0) < 1e-9);
+        QVERIFY(qAbs(m.toPx(0, 0.1).y() - 300.0) < 1e-9);
+    }
+
+    void graphPointsKeepTheirOrderAndGap()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root);
+        QCOMPARE(m->press(m->toPx(0.4, 0.3), 0, mouse()), QStringLiteral("point"));
+        m->move(m->toPx(0.9, 0.3), 0);
+        m->move(m->toPx(0.95, 0.3), 0);
+        m->release(m->toPx(0.95, 0.3), 0);
+        const QVariantList pts = m->points();
+        QVERIFY(pts[1].toMap()["x"].toDouble() < pts[2].toMap()["x"].toDouble());
+        QVERIFY(qAbs(pts[1].toMap()["x"].toDouble() - (0.7 - 0.002)) < 1e-9);
+    }
+
+    void graphEndsStayPinned()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root);
+        drag(*m, m->toPx(0, 0), m->toPx(0.3, 0.5));
+        QCOMPARE(m->points()[0].toMap()["x"].toDouble(), 0.0);
+        QCOMPARE(m->points()[0].toMap()["y"].toDouble(), 0.0);
+
+        CurveGraphModel speed;
+        speed.setupSpeed(0.1, 100);
+        speed.setPlot(QRectF(0, 0, 200, 300));
+        speed.setSnapEnabled(false);
+        drag(speed, speed.toPx(1, 1), speed.toPx(0.5, 4));
+        const QVariantMap end = speed.points().last().toMap();
+        QCOMPARE(end["x"].toDouble(), 1.0);
+        QVERIFY(qAbs(end["y"].toDouble() - 4.0) < 0.2);
+    }
+
+    void graphYIsClampedToTheBackendRange()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root);
+        drag(*m, m->toPx(0.4, 0.3), QPointF(m->toPx(0.4, 0.3).x(), -500));
+        QCOMPARE(m->points()[1].toMap()["y"].toDouble(), 1.0);
+
+        CurveGraphModel c;
+        c.setupCubic(true);
+        c.setPlot(QRectF(0, 0, 100, 100));
+        c.setSnapEnabled(false);
+        drag(c, c.toPx(1.0 / 3.0, 1.0 / 3.0), c.toPx(0.5, 1.4));
+        QCOMPARE(c.cubic()[1].toDouble(), 1.0);
+        CurveGraphModel o;
+        o.setupCubic(false);
+        o.setPlot(QRectF(0, 0, 100, 200));
+        o.setSnapEnabled(false);
+        drag(o, o.toPx(1.0 / 3.0, 1.0 / 3.0), o.toPx(0.5, 1.4));
+        QVERIFY(qAbs(o.cubic()[1].toDouble() - 1.4) < 0.02);
+    }
+
+    void graphCubicHandleStaysInsideTheXRangeAndShiftFlattensIt()
+    {
+        CurveGraphModel c;
+        c.setupCubic(false);
+        c.setPlot(QRectF(0, 0, 100, 100));
+        c.setSnapEnabled(false);
+        c.setCubic({0.42, 0.0, 0.58, 1.0});
+        drag(c, c.toPx(0.42, 0.0), c.toPx(-0.3, 0.4));
+        QCOMPARE(c.cubic()[0].toDouble(), 0.0);
+        QVERIFY(qAbs(c.cubic()[1].toDouble() - 0.4) < 0.02);
+        drag(c, c.toPx(0.58, 1.0), c.toPx(0.9, 0.2), shiftFlag());
+        QVERIFY(qAbs(c.cubic()[2].toDouble() - 0.9) < 0.02);
+        QCOMPARE(c.cubic()[3].toDouble(), 1.0);
+    }
+
+    void graphSpeedTangentsAreMirroredUntilAltBreaksThem()
+    {
+        CurveGraphModel m;
+        m.setupSpeed(0.1, 100);
+        m.setPlot(QRectF(0, 0, 400, 300));
+        m.setSnapEnabled(false);
+        m.setPoints({gp(0, 1), gp(0.5, 2, -0.2, -0.5, 0.2, 0.5, true), gp(1, 1)});
+        m.selectOnly(1);
+        const QPointF out = m.toPx(0.7, 2.5);
+        drag(m, out, m.toPx(0.65, 3.0));
+        QVariantMap p = m.points()[1].toMap();
+        QVERIFY(qAbs(p["outDx"].toDouble() - 0.15) < 0.01);
+        QVERIFY(qAbs(p["inDx"].toDouble() + p["outDx"].toDouble()) < 1e-9);
+        QVERIFY(qAbs(p["inDy"].toDouble() + p["outDy"].toDouble()) < 1e-9);
+        QVERIFY(p["smooth"].toBool());
+
+        m.selectOnly(1);
+        const double inBefore = p["inDy"].toDouble();
+        drag(m, m.toPx(0.5 + p["outDx"].toDouble(), 2 + p["outDy"].toDouble()), m.toPx(0.62, 1.2), altFlag());
+        p = m.points()[1].toMap();
+        QCOMPARE(p["inDy"].toDouble(), inBefore);
+        QVERIFY(!p["smooth"].toBool());
+    }
+
+    void graphSpeedHandleStopsAtTheNeighbour()
+    {
+        CurveGraphModel m;
+        m.setupSpeed(0.1, 100);
+        m.setPlot(QRectF(0, 0, 400, 300));
+        m.setSnapEnabled(false);
+        m.setPoints({gp(0, 1), gp(0.4, 2, -0.1, 0, 0.1, 0, false), gp(0.6, 2), gp(1, 1)});
+        m.selectOnly(1);
+        drag(m, m.toPx(0.5, 2), m.toPx(0.95, 3), altFlag());
+        const QVariantMap p = m.points()[1].toMap();
+        QVERIFY(p["outDx"].toDouble() <= 0.2 + 1e-9);
+    }
+
+    void graphClickOnTheCurveAddsAPointWithoutChangingTheShape()
+    {
+        CurveGraphModel m;
+        m.setupSpeed(0.1, 100);
+        m.setPlot(QRectF(0, 0, 400, 300));
+        m.setSnapEnabled(false);
+        m.setPoints({gp(0, 1, 0, 0, 0.3, 2), gp(1, 1, -0.3, 2, 0, 0)});
+        const QPointF on = m.curvePath()[m.curvePath().size() / 2];
+        QCOMPARE(m.press(on, 0, mouse()), QStringLiteral("curve"));
+        QCOMPARE(m.release(on, 0), QStringLiteral("add"));
+        QCOMPARE(m.pointCount(), 3);
+        QCOMPARE(m.primary(), 1);
+        const QList<QPointF> after = m.curvePath();
+        QVERIFY(QLineF(after[after.size() / 2], on).length() < 3.0);
+    }
+
+    void graphDeleteAndDoubleClickRemoveInnerPointsOnly()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root);
+        m->selectOnly(0);
+        QVERIFY(!m->deleteSelected());
+        QVERIFY(!m->doubleClick(m->toPx(1, 1), mouse()));
+        m->selectOnly(1);
+        QVERIFY(m->deleteSelected());
+        QCOMPARE(m->pointCount(), 3);
+        QVERIFY(m->doubleClick(m->toPx(0.7, 0.8), mouse()));
+        QCOMPARE(m->pointCount(), 2);
+    }
+
+    void graphResetPointAndCurve()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root);
+        m->selectOnly(1);
+        m->resetSelected();
+        QVERIFY(qAbs(m->points()[1].toMap()["y"].toDouble() - 0.4) < 1e-9);
+        m->resetCurve();
+        QCOMPARE(m->pointCount(), 2);
+
+        CurveGraphModel c;
+        c.setupCubic(false);
+        c.setCubic({0.1, 0.9, 0.2, 0.3});
+        c.resetCurve();
+        QVERIFY(qAbs(c.cubic()[0].toDouble() - 1.0 / 3.0) < 1e-9);
+        QVERIFY(qAbs(c.cubic()[2].toDouble() - 2.0 / 3.0) < 1e-9);
+    }
+
+    void graphMarqueeSelectsAndMovesTogether()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root);
+        QCOMPARE(m->press(QPointF(70, 5), 0, mouse()), QStringLiteral("marquee"));
+        m->move(QPointF(150, 90), 0);
+        QVERIFY(m->marqueeActive());
+        m->release(QPointF(150, 90), 0);
+        QCOMPARE(m->selectionCount(), 2);
+        const double y1 = m->points()[1].toMap()["y"].toDouble();
+        const double y2 = m->points()[2].toMap()["y"].toDouble();
+        drag(*m, m->toPx(0.4, 0.3), m->toPx(0.4, 0.1));
+        QVERIFY(qAbs(m->points()[1].toMap()["y"].toDouble() - (y1 - 0.2)) < 0.02);
+        QVERIFY(qAbs(m->points()[2].toMap()["y"].toDouble() - (y2 - 0.2)) < 0.02);
+    }
+
+    void graphSnapsToTheGridAndCtrlSuspendsIt()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root, true);
+        const QPointF p = m->toPx(0.4, 0.3);
+        drag(*m, p, QPointF(m->toPx(0.5, 0.5).x() + 2, m->toPx(0.5, 0.5).y() + 2));
+        QCOMPARE(m->points()[1].toMap()["x"].toDouble(), 0.5);
+        QCOMPARE(m->points()[1].toMap()["y"].toDouble(), 0.5);
+        drag(*m, m->toPx(0.5, 0.5), QPointF(m->toPx(0.5, 0.5).x() + 5, m->toPx(0.5, 0.5).y() + 2), ctrlFlag());
+        QVERIFY(m->points()[1].toMap()["x"].toDouble() > 0.5);
+        m->setSnapEnabled(false);
+        drag(*m, m->toPx(m->points()[1].toMap()["x"].toDouble(), m->points()[1].toMap()["y"].toDouble()),
+             QPointF(m->toPx(0.25, 0.25).x() + 2, m->toPx(0.25, 0.25).y() + 2));
+        QVERIFY(m->points()[1].toMap()["x"].toDouble() != 0.25);
+    }
+
+    void graphOneUndoStepPerDragAndEscRestores()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root);
+        DragSession session;
+        int begun = 0, committed = 0, cancelled = 0;
+        session.setHooks({[&](const QString &) { ++begun; }, [&] { ++committed; }, [&] { ++cancelled; }});
+        m->setSession(&session);
+        QSignalSpy cancelSpy(m, &CurveGraphModel::gestureCancelled);
+
+        drag(*m, m->toPx(0.4, 0.3), m->toPx(0.45, 0.6));
+        QCOMPARE(begun, 1);
+        QCOMPARE(committed, 1);
+
+        const QVariantList before = m->points();
+        m->press(m->toPx(0.45, 0.6), 0, mouse());
+        m->move(m->toPx(0.5, 0.2), 0);
+        m->move(m->toPx(0.55, 0.1), 0);
+        QVERIFY(m->dragging());
+        QVERIFY(m->points() != before);
+        m->cancel();
+        QVERIFY(!m->dragging());
+        QCOMPARE(m->points(), before);
+        QCOMPARE(cancelled, 1);
+        QCOMPARE(committed, 1);
+        QCOMPARE(cancelSpy.size(), 1);
+
+        m->press(m->toPx(0.45, 0.6), 0, mouse());
+        m->move(m->toPx(0.5, 0.2), 0);
+        m->move(m->toPx(0.55, 0.1), 0);
+        session.cancel();
+        QCOMPARE(m->points(), before);
+        QCOMPARE(cancelSpy.size(), 2);
+    }
+
+    void graphBackendsWithoutASessionStillRevertLocally()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root);
+        const QVariantList before = m->points();
+        QSignalSpy began(m, &CurveGraphModel::gestureBegan);
+        QSignalSpy ended(m, &CurveGraphModel::gestureEnded);
+        m->press(m->toPx(0.4, 0.3), 0, mouse());
+        m->move(m->toPx(0.5, 0.6), 0);
+        m->move(m->toPx(0.55, 0.7), 0);
+        QCOMPARE(began.size(), 1);
+        m->cancel();
+        QCOMPARE(m->points(), before);
+        QCOMPARE(ended.size(), 0);
+    }
+
+    void graphHitReachDependsOnTheDevice()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root);
+        const QPointF p = m->toPx(0.4, 0.3);
+        QCOMPARE(m->pointAt(p + QPointF(18, 0), mouse()), -1);
+        QCOMPARE(m->pointAt(p + QPointF(10, 0), mouse()), 1);
+        QCOMPARE(m->pointAt(p + QPointF(20, 0), touchDev()), 1);
+        QCOMPARE(m->pointAt(p + QPointF(28, 0), touchDev()), -1);
+    }
+
+    void graphNudgeMovesByAPixelOrTen()
+    {
+        QObject root;
+        CurveGraphModel *m = polyline(&root);
+        m->selectOnly(1);
+        const double y0 = m->points()[1].toMap()["y"].toDouble();
+        m->nudge(0, 1, false);
+        QVERIFY(qAbs(m->points()[1].toMap()["y"].toDouble() - (y0 + 0.01)) < 1e-9);
+        m->nudge(0, -1, true);
+        QVERIFY(qAbs(m->points()[1].toMap()["y"].toDouble() - (y0 - 0.09)) < 1e-9);
+
+        DragSession session;
+        int begun = 0;
+        session.setHooks({[&](const QString &) { ++begun; }, [] {}, [] {}});
+        m->setSession(&session);
+        m->nudge(1, 0, false);
+        m->nudge(1, 0, false);
+        m->nudge(1, 0, false);
+        QCOMPARE(begun, 1);
+    }
+
+    void graphColorClickAddsOnTheDrawnCurveAndRefusesCrowding()
+    {
+        QObject root;
+        CurveGraphModel *m = colorModel(&root);
+        QCOMPARE(m->press(QPointF(50, 10), 0, mouse()), QStringLiteral("curve"));
+        QCOMPARE(m->release(QPointF(50, 10), 0), QStringLiteral("add"));
+        QCOMPARE(m->pointCount(), 3);
+        QCOMPARE(m->points()[1].toMap()["x"].toDouble(), 0.5);
+        QCOMPARE(m->points()[1].toMap()["y"].toDouble(), 0.5);
+        QCOMPARE(m->addPointAtX(0.505), -1);
+        while (m->pointCount() < 16)
+            QVERIFY(m->addPointAtX(0.06 * m->pointCount()) >= 0 || m->pointCount() >= 16);
+        QCOMPARE(m->addPointAtX(0.99), -1);
+    }
+
+    void graphColorDragKeepsGapAndClampsY()
+    {
+        QObject root;
+        CurveGraphModel *m = colorModel(&root);
+        m->addPointAtX(0.5);
+        drag(*m, m->toPx(0.5, 0.5), QPointF(120, 10));
+        QVERIFY(qAbs(m->points()[1].toMap()["x"].toDouble() - (1.0 - 0.01)) < 1e-9 || m->pointCount() == 2);
+    }
+
+    void graphColorDragOffShowsTheDeleteZoneAndDeletesOnRelease()
+    {
+        QObject root;
+        CurveGraphModel *m = colorModel(&root);
+        m->addPointAtX(0.5);
+        const QPointF p = m->toPx(0.5, 0.5);
+        m->press(p, 0, touchDev());
+        m->move(QPointF(50, 30), 0);
+        QVERIFY(m->deleteZoneVisible());
+        QVERIFY(!m->deleteZoneActive());
+        m->move(QPointF(50, 140), 0);
+        QVERIFY(m->deleteZoneActive());
+        QCOMPARE(m->pointCount(), 3);
+        QCOMPARE(m->hudText(), QObject::tr("Release to delete"));
+        m->move(QPointF(50, 60), 0);
+        QVERIFY(!m->deleteZoneActive());
+        m->move(QPointF(50, -40), 0);
+        QVERIFY(m->deleteZoneActive());
+        QCOMPARE(m->release(QPointF(50, -40), 0), QStringLiteral("delete"));
+        QCOMPARE(m->pointCount(), 2);
+        QVERIFY(!m->deleteZoneActive());
+    }
+
+    void graphColorDeleteZoneBackOutKeepsThePoint()
+    {
+        QObject root;
+        CurveGraphModel *m = colorModel(&root);
+        m->addPointAtX(0.5);
+        m->press(m->toPx(0.5, 0.5), 0, touchDev());
+        m->move(QPointF(50, 140), 0);
+        QVERIFY(m->deleteZoneActive());
+        m->move(QPointF(60, 40), 0);
+        m->release(QPointF(60, 40), 0);
+        QCOMPARE(m->pointCount(), 3);
+    }
+
+    void graphColorEndsNeverDeleteAndHueEndsStayTied()
+    {
+        QObject root;
+        CurveGraphModel *m = colorModel(&root);
+        m->press(m->toPx(0, 0), 0, mouse());
+        m->move(QPointF(-50, 300), 0);
+        QVERIFY(!m->deleteZoneActive());
+        m->release(QPointF(-50, 300), 0);
+        QCOMPARE(m->pointCount(), 2);
+
+        CurveGraphModel *h = colorModel(&root, true);
+        drag(*h, h->toPx(0, 0.5), h->toPx(0, 0.8));
+        QVERIFY(qAbs(h->points()[0].toMap()["y"].toDouble() - 0.8) < 0.02);
+        QCOMPARE(h->points()[1].toMap()["y"].toDouble(), h->points()[0].toMap()["y"].toDouble());
+        h->selectOnly(1);
+        h->nudge(0, -1, true);
+        QCOMPARE(h->points()[0].toMap()["y"].toDouble(), h->points()[1].toMap()["y"].toDouble());
+    }
+
+    void graphColorNudgeIsOneOver255AndShiftTen()
+    {
+        QObject root;
+        CurveGraphModel *m = colorModel(&root);
+        m->addPointAtX(0.5);
+        m->selectOnly(1);
+        m->nudge(0, 1, false);
+        QVERIFY(qAbs(m->points()[1].toMap()["y"].toDouble() - (0.5 + 1.0 / 255.0)) < 1e-12);
+        m->nudge(1, 0, true);
+        QVERIFY(qAbs(m->points()[1].toMap()["x"].toDouble() - (0.5 + 10.0 / 255.0)) < 1e-12);
+    }
+
+    void graphTypedEntryUsesBackendUnits()
+    {
+        QObject root;
+        CurveGraphModel *m = colorModel(&root);
+        m->addPointAtX(0.5);
+        m->selectOnly(1);
+        m->applyTyped(51);
+        QVERIFY(qAbs(m->points()[1].toMap()["y"].toDouble() - 0.2) < 1e-12);
+        QCOMPARE(m->hudText(), QObject::tr("In %1 \u2192 Out %2").arg(128).arg(51));
+
+        CurveGraphModel s;
+        s.setupSpeed(0.1, 100);
+        s.setPoints({gp(0, 1), gp(0.5, 1), gp(1, 1)});
+        s.selectOnly(1);
+        s.applyTyped(2.5);
+        QCOMPARE(s.points()[1].toMap()["y"].toDouble(), 2.5);
+        QVERIFY(s.hudText().contains(QStringLiteral("2.50")));
+    }
+
+    void graphSmoothCornerToggleOnSpeedPoints()
+    {
+        CurveGraphModel s;
+        s.setupSpeed(0.1, 100);
+        s.setPoints({gp(0, 1), gp(0.5, 2), gp(1, 1)});
+        s.selectOnly(1);
+        QVERIFY(s.setSelectedSmooth(true));
+        QVariantMap p = s.points()[1].toMap();
+        QVERIFY(p["smooth"].toBool());
+        QVERIFY(p["outDx"].toDouble() > 0.0);
+        QCOMPARE(p["inDx"].toDouble(), -p["outDx"].toDouble());
+        QVERIFY(s.setSelectedSmooth(false));
+        p = s.points()[1].toMap();
+        QCOMPARE(p["outDx"].toDouble(), 0.0);
     }
 };
 

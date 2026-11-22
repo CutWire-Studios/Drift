@@ -66,6 +66,7 @@
 #include "ui/keyframes/KeyframeLanesItem.h"
 #include "ui/preview/BrushStrokeItem.h"
 #include "ui/preview/ToolCursor.h"
+#include "ui/manip/CurveGraphModel.h"
 #include "ui/manip/DragSession.h"
 #include "ui/manip/ManipQml.h"
 #include "ui/manip/StrokeSmoother.h"
@@ -939,6 +940,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<ToolCursor>("Drift", 1, 0, "ToolCursor");
     qmlRegisterType<drift::manip::ClipFrameMapperItem>("Drift", 1, 0, "ClipFrameMapper");
     qmlRegisterType<drift::manip::StrokeSmoother>("Drift", 1, 0, "StrokeSmoother");
+    qmlRegisterType<drift::manip::CurveGraphModel>("Drift", 1, 0, "CurveGraphModel");
     qmlRegisterUncreatableMetaObject(drift::manip::ManipModifiers::staticMetaObject, "Drift", 1, 0,
                                      "ManipModifiers", QStringLiteral("Obtained from Manip.fromQtFlags"));
     qmlRegisterUncreatableType<drift::manip::DragSession>("Drift", 1, 0, "DragSession",

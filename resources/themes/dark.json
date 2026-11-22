@@ -679,14 +679,36 @@
       "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground",
       "gridLine": "$semantic.panel.border",
-      "handle": "$semantic.primary",
-      "handleLine": "$semantic.mutedForeground",
       "radius": "$metrics.radius.sm",
       "radiusPopup": "$metrics.radius.md",
       "tileBackground": "$semantic.panel.secondary.background",
       "tileBackgroundHover": "$semantic.panel.accent",
       "tileBackgroundSelected": "$semantic.panel.accent",
       "tileBorderSelected": "$semantic.primary"
+    },
+    "curveGraph": {
+      "arm": "$semantic.mutedForeground",
+      "armWidth": "$metrics.borderWidth",
+      "background": "$semantic.panel.accent",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "curve": "$semantic.primary",
+      "curveWidth": "$metrics.borderWidthFocus",
+      "deleteZone": "$semantic.destructive",
+      "deleteZoneActiveOpacity": 0.4,
+      "deleteZoneOpacity": 0.12,
+      "fill": "$semantic.primary",
+      "fillOpacity": 0.18,
+      "grid": "$semantic.panel.border",
+      "gridEmphasis": "$semantic.panel.secondary.foreground",
+      "gridEmphasisOpacity": 0.6,
+      "gridOpacity": 0.45,
+      "gridWidth": "$metrics.borderWidth",
+      "label": "$semantic.mutedForeground",
+      "marqueeBorder": "$semantic.primary",
+      "marqueeFill": "$semantic.primary",
+      "marqueeOpacity": 0.15,
+      "radius": "$metrics.radius.md"
     },
     "editorHeader": {
       "background": "$semantic.surface.app"
@@ -2085,9 +2107,20 @@
       "vectorOpacity": 0.5
     },
     "colorGradeTracks": {
-      "temperature": ["$palette.gradeTempCool", "$palette.gradeTrackNeutral", "$palette.gradeTempWarm"],
-      "tint": ["$palette.gradeTintGreen", "$palette.gradeTrackNeutral", "$palette.gradeTintMagenta"],
-      "luma": ["$palette.gradeTrackBlack", "$palette.gradeTrackWhite"]
+      "temperature": [
+        "$palette.gradeTempCool",
+        "$palette.gradeTrackNeutral",
+        "$palette.gradeTempWarm"
+      ],
+      "tint": [
+        "$palette.gradeTintGreen",
+        "$palette.gradeTrackNeutral",
+        "$palette.gradeTintMagenta"
+      ],
+      "luma": [
+        "$palette.gradeTrackBlack",
+        "$palette.gradeTrackWhite"
+      ]
     },
     "blendCard": {
       "background": "$semantic.panel.secondary.background",
@@ -2126,41 +2159,14 @@
       "sat": "$palette.gradeSat",
       "lum": "$palette.gradeLum"
     },
-    "fadeCurveCanvas": {
-      "curve": "$semantic.primary",
-      "curveLineWidth": "$metrics.borderWidthFocus",
-      "fill": "$semantic.primary",
-      "fillOpacity": 0.18,
-      "grid": "$semantic.panel.border",
-      "gridLineWidth": "$metrics.borderWidth",
-      "gridOpacity": 0.45,
-      "handle": "$semantic.mutedForeground",
-      "handleLineWidth": "$metrics.borderWidth"
-    },
-    "fadeCurvePlotFrame": {
-      "background": "$semantic.panel.accent",
-      "border": "$semantic.panel.border",
-      "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.md"
-    },
     "fadeCurveToolbarRule": {
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth"
     },
     "fadeCurveWindow": {
-      "anchorBackground": "$semantic.primary",
-      "anchorRadius": 4.5,
       "background": "$semantic.surface.app",
       "foreground": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
-      "handleBackground": "$semantic.surface.panel",
-      "handleBackgroundSelected": "$semantic.primary",
-      "handleBorder": "$semantic.primary",
-      "knobBorderWidth": "$metrics.borderWidthFocus",
-      "knobRadius": 7,
-      "pointBackground": "$semantic.surface.panel",
-      "pointBackgroundSelected": "$semantic.primary",
-      "pointBorder": "$semantic.primary"
+      "foregroundMuted": "$semantic.mutedForeground"
     },
     "fontPickerAddRow": {
       "backgroundHover": "$semantic.panel.accent",
@@ -2608,12 +2614,6 @@
       "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground"
     },
-    "speedCurveCanvas": {
-      "curve": "$semantic.primary",
-      "curveLineWidth": "$metrics.borderWidthFocus",
-      "handle": "$semantic.mutedForeground",
-      "handleLineWidth": "$metrics.borderWidth"
-    },
     "speedCurveFilmstrip": {
       "accent": "$semantic.primary",
       "background": "$semantic.surface.panel",
@@ -2625,37 +2625,12 @@
     "speedCurveGraphPlayhead": {
       "accent": "$semantic.primary"
     },
-    "speedCurveGridLine": {
-      "emphasis": "$semantic.panel.secondary.foreground",
-      "emphasisOpacity": 0.6,
-      "foregroundMuted": "$semantic.mutedForeground",
-      "line": "$semantic.panel.border",
-      "lineWidth": "$metrics.borderWidth",
-      "opacity": 0.35
-    },
-    "speedCurveKnob": {
-      "background": "$semantic.surface.panel",
-      "backgroundSelected": "$semantic.primary",
-      "border": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidthFocus",
-      "radius": 2
-    },
     "speedCurvePreviewStage": {
       "background": "$semantic.surface.panel",
       "radius": "$metrics.radius.md"
     },
-    "speedCurveTangentHandle": {
-      "background": "$semantic.surface.panel",
-      "border": "$semantic.mutedForeground",
-      "borderWidth": "$metrics.borderWidthFocus",
-      "radius": 4.5
-    },
     "speedCurveWindow": {
-      "background": "$semantic.surface.app",
-      "graphBackground": "$semantic.surface.panel",
-      "graphBorder": "$semantic.panel.border",
-      "graphBorderWidth": "$metrics.borderWidth",
-      "graphRadius": "$metrics.radius.sm"
+      "background": "$semantic.surface.app"
     },
     "speedFadeInspector": {
       "foregroundMuted": "$semantic.mutedForeground"
