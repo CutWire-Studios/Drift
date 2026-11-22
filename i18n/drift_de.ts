@@ -623,14 +623,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Text settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9532,6 +9524,33 @@
     </message>
 </context>
 <context>
+    <name>DemoPhone_Preview</name>
+    <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export finished</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy generation is slow on this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DenoiseController</name>
     <message>
         <source>Getting noise removal ready…</source>
@@ -11426,6 +11445,33 @@
     </message>
     <message>
         <source>GIF encoder is not available in this build</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExportDialogSizeEstimate</name>
+    <message>
+        <source>%1 KB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimated size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>≈ %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimate — varies with content</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -17289,6 +17335,18 @@
 <context>
     <name>MediaAssetsViewToolbar</name>
     <message>
+        <source>Switch to list view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to tree view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to grid view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Grid view</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20831,6 +20889,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Balanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

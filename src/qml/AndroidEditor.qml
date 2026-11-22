@@ -555,8 +555,7 @@ Item {
                     anchors.right: parent.right
                     panel: timeline
                     onMoreRequested: root.openMoreTools()
-                    onEditTextRequested: root.startInlineTextEdit(EditorState.selectedTrack,
-                                                                  EditorState.selectedClip, false)
+                    onEditTextRequested: root.openTool("textEdit")
                 }
 
                 Item {

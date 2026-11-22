@@ -514,6 +514,9 @@ private slots:
     void exporterTagsSdrBt709ColorMetadata();
     void gpuNv12MatchesSwsBt709();
     void exporterDefaultCrfIsNearLosslessForH264();
+    void exporterEstimatesSizeFromBitrate();
+    void exporterEstimatesSizeFromCrf();
+    void exporterEstimatesNothingForGif();
     void exporterHardwareCodecsListedForThisOs();
     void exporterHardwarePreferredContainerIsMp4();
     void exporterSettingsFromMapRoundTripsHardwareCodec();
@@ -15143,6 +15146,54 @@ void EngineTest::gpuNv12MatchesSwsBt709()
         }
     }
     QVERIFY2(maxUv <= 2, qPrintable(QStringLiteral("tiled interior UV delta %1").arg(maxUv)));
+}
+
+void EngineTest::exporterEstimatesSizeFromBitrate()
+{
+    ExportSettings s;
+    s.rateControl = QStringLiteral("bitrate");
+    s.videoBitrateKbps = 8000;
+    s.audioBitrateKbps = 128;
+    const ExportSizeEstimate e = Exporter::estimateSize(s, 1920, 1080, 30.0, 60.0);
+    QVERIFY(!e.approximate);
+    // (8000 + 128) kbit/s for a minute is 60.96 MB before the container's overhead.
+    QVERIFY(qAbs(e.bytes - 61'000'000) < 2'000'000);
+
+    s.audioOnly = true;
+    const ExportSizeEstimate a = Exporter::estimateSize(s, 1920, 1080, 30.0, 60.0);
+    QVERIFY(qAbs(a.bytes - 960'000) < 40'000);
+}
+
+void EngineTest::exporterEstimatesSizeFromCrf()
+{
+    ExportSettings s;
+    s.audioBitrateKbps = 128;
+    s.crf = 23;
+    const ExportSizeEstimate base = Exporter::estimateSize(s, 1920, 1080, 30.0, 60.0);
+    QVERIFY(base.approximate);
+    QVERIFY(base.bytes > 10'000'000 && base.bytes < 60'000'000);
+
+    s.crf = 29;
+    const ExportSizeEstimate lower = Exporter::estimateSize(s, 1920, 1080, 30.0, 60.0);
+    QVERIFY(lower.bytes < base.bytes);
+
+    s.crf = 23;
+    const ExportSizeEstimate half = Exporter::estimateSize(s, 1920, 1080, 30.0, 30.0);
+    QVERIFY(half.bytes < base.bytes * 6 / 10);
+    const ExportSizeEstimate small = Exporter::estimateSize(s, 960, 540, 30.0, 60.0);
+    QVERIFY(small.bytes < base.bytes / 2);
+
+    s.videoCodecId = QStringLiteral("h265");
+    s.crf = 28;
+    QVERIFY(Exporter::estimateSize(s, 1920, 1080, 30.0, 60.0).bytes < base.bytes);
+}
+
+void EngineTest::exporterEstimatesNothingForGif()
+{
+    ExportSettings s;
+    s.gifExport = true;
+    QCOMPARE(Exporter::estimateSize(s, 640, 360, 15.0, 5.0).bytes, qint64(0));
+    QCOMPARE(Exporter::estimateSize(ExportSettings(), 640, 360, 15.0, 0.0).bytes, qint64(0));
 }
 
 void EngineTest::exporterDefaultCrfIsNearLosslessForH264()

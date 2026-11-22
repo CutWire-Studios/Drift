@@ -2720,6 +2720,7 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/ExportDialogModeBar.qml
         src/qml/components/dialogs/ExportDialogGifSection.qml
         src/qml/components/dialogs/ExportDialogAudioSection.qml
+        src/qml/components/dialogs/ExportDialogSizeEstimate.qml
         src/qml/components/dialogs/DebugInfoSystemTab.qml
         src/qml/components/dialogs/DebugInfoPlaybackTab.qml
         src/qml/components/dialogs/DebugInfoBenchRow.qml

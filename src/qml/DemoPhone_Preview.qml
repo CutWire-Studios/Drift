@@ -11,7 +11,7 @@ import Drift
 //   (a sheet also saves the editor as DemoPhone_base.png + DemoPhone_overlay.png (the sheet
 //                            alone; sheets live in the overlay, composite the two at the bottom))
 //   --phone-dialog=<name>[:arg]   open a popup in the sheet window and save DemoPhone_dialog.png (whole window, popups included):
-//                            export[:audio|gif|advanced], exportprogress, notifications[:toasts], layout, easing, transition, link,
+//                            export[:audio|gif|advanced|bitrate], exportprogress, notifications[:toasts], layout, easing, transition, link,
 //                            composer, textedit, layout, share, assets:<media|sounds|effects|...>, scroll with --phone-dscroll=N|end
 //   --phone-screen=settings[:<pageId>]|extras   host the Settings / Extras sub page instead of the editor
 //   --phone-screen=home[:0|1|2]   host AndroidHome (tab index) instead of the editor
@@ -183,7 +183,8 @@ Item {
             const d = e.exportDialogItem
             a === "audio" ? d.openAudioOnly() : d.openDialog()
             if (a === "gif") { d.exportMode = "gif"; d.applyGifDefaults(); d.syncComboIndices() }
-            if (a === "advanced") d.advancedOpen = true
+            if (a === "advanced" || a === "bitrate") d.advancedOpen = true
+            if (a === "bitrate") d.rateControl = "bitrate"
         }
         else if (name === "exportprogress") e.exportProgressItem.openDialog()
         else if (name === "notifications") {

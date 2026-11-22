@@ -623,14 +623,6 @@
         <translation>Kiểu văn bản</translation>
     </message>
     <message>
-        <source>Text settings</source>
-        <translation>Cài đặt văn bản</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>Hoạt ảnh văn bản</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>Phụ đề</translation>
     </message>
@@ -9496,6 +9488,33 @@
     </message>
 </context>
 <context>
+    <name>DemoPhone_Preview</name>
+    <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished">Nhấn vào một clip để chỉnh sửa nó</translation>
+    </message>
+    <message>
+        <source>Export finished</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy generation is slow on this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">Độ mờ</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">Cài đặt</translation>
+    </message>
+</context>
+<context>
     <name>DenoiseController</name>
     <message>
         <source>Getting noise removal ready…</source>
@@ -11384,6 +11403,33 @@
     <message>
         <source>GIF encoder is not available in this build</source>
         <translation>Bộ mã hóa GIF không có sẵn trong bản dựng này</translation>
+    </message>
+</context>
+<context>
+    <name>ExportDialogSizeEstimate</name>
+    <message>
+        <source>%1 KB</source>
+        <translation type="unfinished">%1 KB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation type="unfinished">%1 MB</translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation type="unfinished">%1 GB</translation>
+    </message>
+    <message>
+        <source>Estimated size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>≈ %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimate — varies with content</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -17221,6 +17267,18 @@
 <context>
     <name>MediaAssetsViewToolbar</name>
     <message>
+        <source>Switch to list view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to tree view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to grid view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Grid view</source>
         <translation>Chế độ xem lưới</translation>
     </message>
@@ -20749,6 +20807,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Balanced</source>
         <translation>Cân bằng</translation>
+    </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">Vào %1 → Ra %2</translation>
     </message>
 </context>
 <context>

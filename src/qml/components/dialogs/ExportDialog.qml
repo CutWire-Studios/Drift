@@ -504,6 +504,11 @@ ThemedDialog {
                 id: audioSection
                 dialog: root
             }
+
+            ExportDialogSizeEstimate {
+                width: parent.width
+                dialog: root
+            }
         }
     }
 }

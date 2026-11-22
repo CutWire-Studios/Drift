@@ -2027,6 +2027,9 @@ public:
     Q_INVOKABLE QVariantList exportAudioCodecs() const;
     Q_INVOKABLE bool exportGifAvailable() const;
     Q_INVOKABLE QVariantMap exportDefaultSettings() const;
+    // {bytes, approximate} forecast for the dialog's current settings map (same keys as
+    // exportWithSettings). bytes is 0 when there is nothing to forecast, e.g. GIF.
+    Q_INVOKABLE QVariantMap estimateExportSize(const QVariantMap &settings) const;
     // Last dialog choices (scale + encode). Empty until the user has exported once.
     Q_INVOKABLE QVariantMap lastExportSettings() const;
     // Directory of the last successful save-picker choice; empty if never set or gone.

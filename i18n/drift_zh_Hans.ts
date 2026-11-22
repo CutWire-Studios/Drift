@@ -623,14 +623,6 @@
         <translation>文本样式</translation>
     </message>
     <message>
-        <source>Text settings</source>
-        <translation>文本设置</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>文本动画</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>字幕</translation>
     </message>
@@ -9496,6 +9488,33 @@
     </message>
 </context>
 <context>
+    <name>DemoPhone_Preview</name>
+    <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished">点按片段进行编辑</translation>
+    </message>
+    <message>
+        <source>Export finished</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy generation is slow on this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">不透明度</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">设置</translation>
+    </message>
+</context>
+<context>
     <name>DenoiseController</name>
     <message>
         <source>Getting noise removal ready…</source>
@@ -11384,6 +11403,33 @@
     <message>
         <source>GIF encoder is not available in this build</source>
         <translation>当前版本不含 GIF 编码器</translation>
+    </message>
+</context>
+<context>
+    <name>ExportDialogSizeEstimate</name>
+    <message>
+        <source>%1 KB</source>
+        <translation type="unfinished">%1 KB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation type="unfinished">%1 MB</translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation type="unfinished">%1 GB</translation>
+    </message>
+    <message>
+        <source>Estimated size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>≈ %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimate — varies with content</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -17221,6 +17267,18 @@
 <context>
     <name>MediaAssetsViewToolbar</name>
     <message>
+        <source>Switch to list view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to tree view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to grid view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Grid view</source>
         <translation>网格视图</translation>
     </message>
@@ -20749,6 +20807,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Balanced</source>
         <translation>平衡</translation>
+    </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">输入 %1 → 输出 %2</translation>
     </message>
 </context>
 <context>
