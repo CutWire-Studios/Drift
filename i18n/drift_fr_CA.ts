@@ -2975,6 +2975,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Nudge selected keys up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rectangle mask tool</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13809,10 +13825,6 @@
         <translation>Images clés effacées</translation>
     </message>
     <message>
-        <source>Nudge keyframes</source>
-        <translation>Décaler les images clés</translation>
-    </message>
-    <message>
         <source>Move keyframes</source>
         <translation>Déplacer les images clés</translation>
     </message>
@@ -13963,10 +13975,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit keyframe curve</source>
-        <translation>Modifier la courbe des images clés</translation>
-    </message>
-    <message>
         <source>%1 (keyframes off)</source>
         <translation>%1 (images clés désactivées)</translation>
     </message>
@@ -14067,13 +14075,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphKeyDot</name>
-    <message>
-        <source>Move keyframe</source>
-        <translation>Déplacer l&apos;image clé</translation>
-    </message>
-</context>
-<context>
     <name>KeyframeGraphLaneStatus</name>
     <message>
         <source>No keyframes</source>
@@ -14100,10 +14101,29 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphTangentHandle</name>
+    <name>KeyframeInteraction</name>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform>%n image clé</numerusform>
+            <numerusform>%n images clés</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Move keyframes</source>
+        <translation type="unfinished">Déplacer les images clés</translation>
+    </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation>Modifier la courbe des images clés</translation>
+        <translation type="unfinished">Modifier la courbe des images clés</translation>
+    </message>
+    <message>
+        <source>Stretch keyframes</source>
+        <translation type="unfinished">Étirer les images clés</translation>
+    </message>
+    <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished">Décaler les images clés</translation>
     </message>
 </context>
 <context>
@@ -14150,31 +14170,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframesCurvesInteraction</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>Déplacer les images clés</translation>
-    </message>
-    <message>
-        <source>Edit keyframe curve</source>
-        <translation>Modifier la courbe des images clés</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesInteractionSurface</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>Déplacer les images clés</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n key(s)</source>
-        <translation>
-            <numerusform>%n image clé</numerusform>
-            <numerusform>%n images clés</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>KeyframesPanel</name>
     <message>
         <source>Keyframe editor</source>
@@ -14203,13 +14198,6 @@
     <message>
         <source>This clip has no animatable properties</source>
         <translation>Ce clip n’a aucune propriété animable</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesStretchBox</name>
-    <message>
-        <source>Stretch keyframes</source>
-        <translation>Étirer les images clés</translation>
     </message>
 </context>
 <context>

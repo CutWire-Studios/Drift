@@ -2975,6 +2975,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Nudge selected keys up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rectangle mask tool</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13808,10 +13824,6 @@
         <translation>কীফ্রেম সাফ করা হয়েছে</translation>
     </message>
     <message>
-        <source>Nudge keyframes</source>
-        <translation>কীফ্রেম সামান্য সরান</translation>
-    </message>
-    <message>
         <source>Move keyframes</source>
         <translation>কীফ্রেম সরান</translation>
     </message>
@@ -13962,10 +13974,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit keyframe curve</source>
-        <translation>কীফ্রেম বক্ররেখা সম্পাদনা করুন</translation>
-    </message>
-    <message>
         <source>%1 (keyframes off)</source>
         <translation>%1 (কীফ্রেম বন্ধ)</translation>
     </message>
@@ -14066,13 +14074,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphKeyDot</name>
-    <message>
-        <source>Move keyframe</source>
-        <translation>কীফ্রেম সরান</translation>
-    </message>
-</context>
-<context>
     <name>KeyframeGraphLaneStatus</name>
     <message>
         <source>No keyframes</source>
@@ -14099,10 +14100,29 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphTangentHandle</name>
+    <name>KeyframeInteraction</name>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform>%nটি কী</numerusform>
+            <numerusform>%nটি কী</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Move keyframes</source>
+        <translation type="unfinished">কীফ্রেম সরান</translation>
+    </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation>কীফ্রেম বক্ররেখা সম্পাদনা করুন</translation>
+        <translation type="unfinished">কীফ্রেম বক্ররেখা সম্পাদনা করুন</translation>
+    </message>
+    <message>
+        <source>Stretch keyframes</source>
+        <translation type="unfinished">কীফ্রেম প্রসারিত করুন</translation>
+    </message>
+    <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished">কীফ্রেম সামান্য সরান</translation>
     </message>
 </context>
 <context>
@@ -14149,31 +14169,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframesCurvesInteraction</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>কীফ্রেম সরান</translation>
-    </message>
-    <message>
-        <source>Edit keyframe curve</source>
-        <translation>কীফ্রেম বক্ররেখা সম্পাদনা করুন</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesInteractionSurface</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>কীফ্রেম সরান</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n key(s)</source>
-        <translation>
-            <numerusform>%nটি কী</numerusform>
-            <numerusform>%nটি কী</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>KeyframesPanel</name>
     <message>
         <source>Keyframe editor</source>
@@ -14202,13 +14197,6 @@
     <message>
         <source>This clip has no animatable properties</source>
         <translation>এই ক্লিপের অ্যানিমেট করার মতো কোনো প্রোপার্টি নেই</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesStretchBox</name>
-    <message>
-        <source>Stretch keyframes</source>
-        <translation>কীফ্রেম প্রসারিত করুন</translation>
     </message>
 </context>
 <context>

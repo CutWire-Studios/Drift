@@ -2975,6 +2975,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Nudge selected keys up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rectangle mask tool</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13808,10 +13824,6 @@
         <translation>කීෆ්‍රේම හිස් කරන ලදී</translation>
     </message>
     <message>
-        <source>Nudge keyframes</source>
-        <translation>කීෆ්‍රේම මඳක් චලනය කරන්න</translation>
-    </message>
-    <message>
         <source>Move keyframes</source>
         <translation>කීෆ්‍රේම ගෙන යන්න</translation>
     </message>
@@ -13962,10 +13974,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit keyframe curve</source>
-        <translation>කීෆ්‍රේම වක්‍රය සංස්කරණය කරන්න</translation>
-    </message>
-    <message>
         <source>%1 (keyframes off)</source>
         <translation>%1 (කීෆ්‍රේම අක්‍රියයි)</translation>
     </message>
@@ -14066,13 +14074,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphKeyDot</name>
-    <message>
-        <source>Move keyframe</source>
-        <translation>කීෆ්‍රේමය ගෙනයන්න</translation>
-    </message>
-</context>
-<context>
     <name>KeyframeGraphLaneStatus</name>
     <message>
         <source>No keyframes</source>
@@ -14099,10 +14100,29 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphTangentHandle</name>
+    <name>KeyframeInteraction</name>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform>යතුරු %nක්</numerusform>
+            <numerusform>යතුරු %nක්</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Move keyframes</source>
+        <translation type="unfinished">කීෆ්‍රේම ගෙන යන්න</translation>
+    </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation>කීෆ්‍රේම වක්‍රය සංස්කරණය කරන්න</translation>
+        <translation type="unfinished">කීෆ්‍රේම වක්‍රය සංස්කරණය කරන්න</translation>
+    </message>
+    <message>
+        <source>Stretch keyframes</source>
+        <translation type="unfinished">කීෆ්‍රේම දිගු කරන්න</translation>
+    </message>
+    <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished">කීෆ්‍රේම මඳක් චලනය කරන්න</translation>
     </message>
 </context>
 <context>
@@ -14149,31 +14169,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframesCurvesInteraction</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>කීෆ්‍රේම ගෙන යන්න</translation>
-    </message>
-    <message>
-        <source>Edit keyframe curve</source>
-        <translation>කීෆ්‍රේම වක්‍රය සංස්කරණය කරන්න</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesInteractionSurface</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>කීෆ්‍රේම ගෙන යන්න</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n key(s)</source>
-        <translation>
-            <numerusform>යතුරු %nක්</numerusform>
-            <numerusform>යතුරු %nක්</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>KeyframesPanel</name>
     <message>
         <source>Keyframe editor</source>
@@ -14202,13 +14197,6 @@
     <message>
         <source>This clip has no animatable properties</source>
         <translation>මෙම ක්ලිප් එකෙහි සජීවිකරණය කළ හැකි ගුණාංග නොමැත</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesStretchBox</name>
-    <message>
-        <source>Stretch keyframes</source>
-        <translation>කීෆ්‍රේම දිගු කරන්න</translation>
     </message>
 </context>
 <context>

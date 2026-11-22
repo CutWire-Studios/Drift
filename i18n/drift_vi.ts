@@ -2973,6 +2973,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Nudge selected keys up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rectangle mask tool</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13757,10 +13773,6 @@
         <translation>Đã xóa sạch keyframe</translation>
     </message>
     <message>
-        <source>Nudge keyframes</source>
-        <translation>Dịch chuyển nhẹ keyframe</translation>
-    </message>
-    <message>
         <source>Move keyframes</source>
         <translation>Di chuyển keyframe</translation>
     </message>
@@ -13910,10 +13922,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit keyframe curve</source>
-        <translation>Chỉnh sửa đường cong keyframe</translation>
-    </message>
-    <message>
         <source>%1 (keyframes off)</source>
         <translation>%1 (keyframe tắt)</translation>
     </message>
@@ -14014,13 +14022,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphKeyDot</name>
-    <message>
-        <source>Move keyframe</source>
-        <translation>Di chuyển keyframe</translation>
-    </message>
-</context>
-<context>
     <name>KeyframeGraphLaneStatus</name>
     <message>
         <source>No keyframes</source>
@@ -14046,10 +14047,28 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphTangentHandle</name>
+    <name>KeyframeInteraction</name>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform>%n khóa</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Move keyframes</source>
+        <translation type="unfinished">Di chuyển keyframe</translation>
+    </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation>Chỉnh sửa đường cong keyframe</translation>
+        <translation type="unfinished">Chỉnh sửa đường cong keyframe</translation>
+    </message>
+    <message>
+        <source>Stretch keyframes</source>
+        <translation type="unfinished">Kéo giãn keyframe</translation>
+    </message>
+    <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished">Dịch chuyển nhẹ keyframe</translation>
     </message>
 </context>
 <context>
@@ -14096,30 +14115,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframesCurvesInteraction</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>Di chuyển keyframe</translation>
-    </message>
-    <message>
-        <source>Edit keyframe curve</source>
-        <translation>Chỉnh sửa đường cong keyframe</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesInteractionSurface</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>Di chuyển keyframe</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n key(s)</source>
-        <translation>
-            <numerusform>%n khóa</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>KeyframesPanel</name>
     <message>
         <source>Keyframe editor</source>
@@ -14148,13 +14143,6 @@
     <message>
         <source>This clip has no animatable properties</source>
         <translation>Clip này không có thuộc tính nào có thể tạo chuyển động</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesStretchBox</name>
-    <message>
-        <source>Stretch keyframes</source>
-        <translation>Kéo giãn keyframe</translation>
     </message>
 </context>
 <context>

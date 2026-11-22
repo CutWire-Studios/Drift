@@ -2973,6 +2973,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Nudge selected keys up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rectangle mask tool</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13757,10 +13773,6 @@
         <translation>已清除關鍵格</translation>
     </message>
     <message>
-        <source>Nudge keyframes</source>
-        <translation>微調關鍵影格</translation>
-    </message>
-    <message>
         <source>Move keyframes</source>
         <translation>移動關鍵格</translation>
     </message>
@@ -13910,10 +13922,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit keyframe curve</source>
-        <translation>編輯關鍵格曲線</translation>
-    </message>
-    <message>
         <source>%1 (keyframes off)</source>
         <translation>%1（關鍵格已關閉）</translation>
     </message>
@@ -14014,13 +14022,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphKeyDot</name>
-    <message>
-        <source>Move keyframe</source>
-        <translation>移動關鍵格</translation>
-    </message>
-</context>
-<context>
     <name>KeyframeGraphLaneStatus</name>
     <message>
         <source>No keyframes</source>
@@ -14046,10 +14047,28 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphTangentHandle</name>
+    <name>KeyframeInteraction</name>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform>%n 個關鍵影格</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Move keyframes</source>
+        <translation type="unfinished">移動關鍵格</translation>
+    </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation>編輯關鍵格曲線</translation>
+        <translation type="unfinished">編輯關鍵格曲線</translation>
+    </message>
+    <message>
+        <source>Stretch keyframes</source>
+        <translation type="unfinished">拉伸關鍵格</translation>
+    </message>
+    <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished">微調關鍵影格</translation>
     </message>
 </context>
 <context>
@@ -14096,30 +14115,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframesCurvesInteraction</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>移動關鍵格</translation>
-    </message>
-    <message>
-        <source>Edit keyframe curve</source>
-        <translation>編輯關鍵格曲線</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesInteractionSurface</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>移動關鍵格</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n key(s)</source>
-        <translation>
-            <numerusform>%n 個關鍵影格</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>KeyframesPanel</name>
     <message>
         <source>Keyframe editor</source>
@@ -14148,13 +14143,6 @@
     <message>
         <source>This clip has no animatable properties</source>
         <translation>此片段無可設置動畫的屬性</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesStretchBox</name>
-    <message>
-        <source>Stretch keyframes</source>
-        <translation>拉伸關鍵格</translation>
     </message>
 </context>
 <context>
