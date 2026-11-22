@@ -49,6 +49,26 @@ bool removeVertex(ShapeContour &c, int i);
 ShapeVertex applyTangentDrag(ShapeVertex v, TangentHandle which, const QPointF &newPos, TangentMode mode,
                              bool constrain45);
 
+// A change of vertex count, recorded so it can be replayed on every shape key of an animated path:
+// keys with the same count stay in step with the outline being edited.
+struct PathOp
+{
+    enum class Kind { Insert, Remove };
+    Kind kind = Kind::Insert;
+    int segment = 0; // Insert: the segment split; Remove: the vertex index
+    double t = 0.5;
+    bool heal = false;
+};
+// Replays `op` on one contour; false when it does not fit (the vertex count is off).
+bool applyPathOp(ShapeContour &c, const PathOp &op);
+
+// The handles a smooth point gets when it has none: along the line through its neighbours.
+void makeSmooth(ShapeContour &c, int i, TangentMode mode = TangentMode::Mirrored);
+// Turns the vertex into a corner: both handles go.
+void makeCorner(ShapeContour &c, int i);
+// Reverses vertex order, swapping each vertex' in and out handle so the outline is unchanged.
+void reverseContour(ShapeContour &c);
+
 // Keyframe-style handles are time/value offsets. In-handles have dx <= 0, out-handles dx >= 0.
 struct GraphTangents
 {

@@ -4,7 +4,8 @@ import Drift
 
 // Draws a new rectangle or ellipse mask on the target clip's frame. The drag shows as a dashed
 // outline in clip-frame space; the release commits one mask, then the tool drops back to select so
-// the new mask's handles (MaskOverlay) take over.
+// the new mask's handles (MaskOverlay) take over. The polygon tool is PathEditor's pen on a draft:
+// corner points, click-drag for smooth ones, click the first point or press Enter to close.
 Item {
     id: root
 
@@ -21,13 +22,8 @@ Item {
     readonly property bool drawTool: EditorState.preview.maskingTool === "rect"
                                      || EditorState.preview.maskingTool === "ellipse"
 
-    // Polygon: clip-frame pixel vertices, placed one click at a time until closed or cancelled.
     readonly property bool polyTool: EditorState.preview.maskingTool === "polygon"
     readonly property bool polyActive: polyTool && target.kind !== "none"
-    PolylineDraft {
-        id: polyDraft
-        minPoints: 3
-    }
 
     // Set once a press has moved, so a plain click draws nothing.
     property bool drawing: false
@@ -67,72 +63,9 @@ Item {
         return Qt.rect(Math.min(x0, x0 + dx), Math.min(y0, y0 + dy), Math.abs(dx), Math.abs(dy))
     }
 
-    function polyPress(p, modifiers) {
-        if (polyDraft.nearFirst(p, 8)) {
-            finishPolygon()
-            return
-        }
-        polyDraft.add(p, !!(modifiers & Qt.ShiftModifier))
-    }
-
-    function finishPolygon() {
-        if (polyDraft.count < 3 || target.kind === "none")
-            return
-        const pts = polyDraft.normalized(clipFrame.width, clipFrame.height)
-        const t = EditorState.masking.maskTarget()
-        if (t.kind === "none")
-            return
-        EditorState.masking.addPolygonMask(t.track, t.clip, pts)
-        polyDraft.clear()
-        EditorState.preview.maskingTool = ""
-    }
-
-    function cancelPolygon() {
-        polyDraft.clear()
-    }
-
     onVisibleChanged: if (visible) refresh()
     Component.onCompleted: refresh()
     Component.onDestruction: ShellBridge.pendingPolygonPoints = 0
-
-    // Escape from the Masking panel's shortcut handler, which runs before this item sees the key.
-    Connections {
-        target: ShellBridge
-        function onMaskingCancelRequested() { root.cancelPolygon() }
-    }
-
-    // Keys reach this item only while it has focus, which the polygon tool asks for.
-    focus: root.polyTool
-    onPolyToolChanged: {
-        if (polyTool)
-            forceActiveFocus()
-        else
-            cancelPolygon()
-    }
-    Connections {
-        target: polyDraft
-        function onPointsChanged() { ShellBridge.pendingPolygonPoints = polyDraft.count }
-    }
-
-    Keys.onPressed: (event) => {
-        switch (event.key) {
-        case Qt.Key_Return:
-        case Qt.Key_Enter:
-            root.finishPolygon()
-            event.accepted = true
-            break
-        case Qt.Key_Escape:
-            if (polyDraft.count === 0)
-                return
-            root.cancelPolygon()
-            event.accepted = true
-            break
-        case Qt.Key_Backspace:
-            polyDraft.undo()
-            event.accepted = true
-            break
-        }
-    }
 
     Connections {
         target: EditorState
@@ -240,77 +173,6 @@ Item {
             }
         }
 
-        Shape {
-            anchors.fill: parent
-            visible: root.polyActive && polyDraft.count >= 2
-
-            ShapePath {
-                startX: polyDraft.first.x
-                startY: polyDraft.first.y
-                strokeColor: Theme.c.maskDrawOverlay.stroke
-                strokeWidth: Theme.c.maskDrawOverlay.borderWidth
-                fillColor: "transparent"
-
-                PathPolyline {
-                    path: polyDraft.points
-                }
-            }
-        }
-
-        Shape {
-            anchors.fill: parent
-            visible: root.polyActive && polyDraft.count > 0
-
-            ShapePath {
-                startX: polyDraft.last.x
-                startY: polyDraft.last.y
-                strokeColor: Theme.c.maskDrawOverlay.stroke
-                strokeWidth: Theme.c.maskDrawOverlay.borderWidth
-                strokeStyle: ShapePath.DashLine
-                dashPattern: [4, 3]
-                fillColor: "transparent"
-
-                PathLine {
-                    x: polyDraft.hover.x
-                    y: polyDraft.hover.y
-                }
-            }
-
-            ShapePath {
-                startX: polyDraft.hover.x
-                startY: polyDraft.hover.y
-                strokeColor: polyDraft.count >= 2 ? Qt.alpha(Theme.c.maskDrawOverlay.stroke, 0.5) : "transparent"
-                strokeWidth: Theme.c.maskDrawOverlay.borderWidth
-                strokeStyle: ShapePath.DashLine
-                dashPattern: [4, 3]
-                fillColor: "transparent"
-
-                PathLine {
-                    x: polyDraft.first.x
-                    y: polyDraft.first.y
-                }
-            }
-        }
-
-        Repeater {
-            model: root.polyActive ? polyDraft.points : []
-
-            delegate: Rectangle {
-                id: vertexHandle
-                required property point modelData
-                required property int index
-                readonly property bool closing: index === 0 && polyDraft.hoverNearFirst
-                readonly property real side: index === 0 ? 11 : 7
-
-                x: modelData.x - side / 2
-                y: modelData.y - side / 2
-                width: side
-                height: side
-                color: closing ? Theme.c.maskDrawOverlay.closeHint : Theme.c.maskDrawOverlay.stroke
-                border.color: Theme.c.maskDrawOverlay.hintBackground
-                border.width: Theme.c.maskDrawOverlay.borderWidth
-            }
-        }
     }
 
     // Nothing to draw on: the tool is up, but no clip is selected, or the selected one is off the playhead.
@@ -371,36 +233,15 @@ Item {
         shape: EditorState.preview.maskingTool === "ellipse" ? "ellipse" : "rect"
     }
 
-    ToolCursor {
-        target: polyArea
-        shape: polyDraft.hoverNearFirst ? "polygonClose" : "polygon"
-    }
-
-    MouseArea {
-        id: polyArea
+    // The polygon tool: PathEditor's pen on a draft outline, in the selection's clip frame.
+    PathEditor {
         anchors.fill: parent
-        enabled: root.polyActive && root.hasFrame
-        hoverEnabled: true
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onWheel: (wheel) => { wheel.accepted = false }
-
-        onPositionChanged: (mouse) => {
-            const p = clipFrame.mapFromItem(polyArea, mouse.x, mouse.y)
-            polyDraft.moveHover(Qt.point(p.x, p.y), !!(mouse.modifiers & Qt.ShiftModifier))
-        }
-        onPressed: (mouse) => {
-            if (mouse.button === Qt.RightButton) {
-                polyDraft.undo()
-                return
-            }
-            const p = clipFrame.mapFromItem(polyArea, mouse.x, mouse.y)
-            root.polyPress(Qt.point(p.x, p.y), mouse.modifiers)
-        }
-        // The second press of a double-click is ignored by polyPress, so this only has to close.
-        onDoubleClicked: (mouse) => {
-            if (mouse.button === Qt.LeftButton)
-                root.finishPolygon()
-        }
+        z: 50
+        visible: root.polyActive && root.hasFrame
+        backend: "draft"
+        draftTarget: "mask"
+        frameData: root.editorState
+        onExited: EditorState.preview.maskingTool = ""
     }
 
     Rectangle {
@@ -417,28 +258,6 @@ Item {
             text: root.target.kind === "none"
                   ? qsTr("Select a clip on the timeline to draw a mask")
                   : qsTr("Move the playhead over the selected clip")
-            color: Theme.c.maskDrawOverlay.hintForeground
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
-        }
-    }
-
-    Rectangle {
-        visible: root.polyActive && root.editorState.inside
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Theme.spacingLg
-        width: polyHintText.width + Theme.spacingLg * 2
-        height: polyHintText.height + Theme.spacingMd * 2
-        radius: Theme.c.maskDrawOverlay.radius
-        color: Theme.c.maskDrawOverlay.hintBackground
-
-        Text {
-            id: polyHintText
-            anchors.centerIn: parent
-            text: polyDraft.count === 0
-                  ? qsTr("Click to place points. Click the first point or press Enter to close.")
-                  : qsTr("%1 points · Enter to close · Backspace to undo · Esc to cancel").arg(polyDraft.count)
             color: Theme.c.maskDrawOverlay.hintForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs

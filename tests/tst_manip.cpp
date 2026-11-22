@@ -10,6 +10,7 @@
 #include "ui/manip/ClipFrameMapper.h"
 #include "ui/manip/DragSession.h"
 #include "ui/manip/ManipModifiers.h"
+#include "ui/manip/PathEditCore.h"
 #include "ui/manip/SnapService.h"
 
 #include <QJsonArray>
@@ -54,6 +55,24 @@ double distToPoly(const QVector<QPointF> &poly, const QPointF &p)
         best = std::min(best, std::hypot((a + d * s - p).x(), (a + d * s - p).y()));
     }
     return best;
+}
+
+PathEditCore squareCore(bool closedOnly = false)
+{
+    PathEditCore core;
+    core.setClosedOnly(closedOnly);
+    core.setView(QTransform().translate(100, 50).scale(200, 200));
+    core.setFrameSize({200, 200});
+    ShapeContour c;
+    c.closed = true;
+    c.vertices = {vtx(0.2, 0.2), vtx(0.8, 0.2), vtx(0.8, 0.8), vtx(0.2, 0.8)};
+    core.setContours({c});
+    return core;
+}
+
+QPointF px(double nx, double ny)
+{
+    return {100 + nx * 200, 50 + ny * 200};
 }
 
 } // namespace
@@ -698,6 +717,364 @@ private slots:
         QCOMPARE(vertices.at(1).toObject().value(QStringLiteral("mode")).toString(), QStringLiteral("aligned"));
         QVERIFY(!vertices.at(2).toObject().value(QStringLiteral("smooth")).toBool());
         QCOMPARE(shapeStyleFromJson(written).contours, styled.contours);
+    }
+
+    // ---- PathEditCore: the geometry behind the pen / path editor ----
+
+    void pathHitTestPrefersHandleThenVertexThenSegmentThenInside()
+    {
+        PathEditCore core = squareCore();
+        const PathEditCore::Tolerances tol;
+        QCOMPARE(core.hitTest(px(0.2, 0.2) + QPointF(3, 2), tol).kind, PathEditCore::HitKind::Vertex);
+        PathEditCore::Hit seg = core.hitTest(px(0.5, 0.2) + QPointF(0, 4), tol);
+        QCOMPARE(seg.kind, PathEditCore::HitKind::Segment);
+        QCOMPARE(seg.segment, 0);
+        QVERIFY(std::abs(seg.t - 0.5) < 0.05);
+        QCOMPARE(core.hitTest(px(0.5, 0.5), tol).kind, PathEditCore::HitKind::Inside);
+        QCOMPARE(core.hitTest(px(0.05, 0.05), tol).kind, PathEditCore::HitKind::None);
+
+        // A selected vertex shows its handles, and they win over a vertex or edge beneath them.
+        ShapeContour c = core.contours().first();
+        c.vertices[0] = vtx(0.2, 0.2, -0.05, 0, 0.1, 0);
+        core.setContours({c});
+        QVERIFY(core.visibleHandles().isEmpty());
+        core.select(0, 0, PathEditCore::SelectMode::Replace);
+        QCOMPARE(core.visibleHandles().size(), 2);
+        const PathEditCore::Hit h = core.hitTest(px(0.3, 0.2), tol);
+        QCOMPARE(h.kind, PathEditCore::HitKind::Handle);
+        QCOMPARE(h.handle, geom::TangentHandle::Out);
+
+        // Touch tolerance reaches further than the mouse's.
+        PathEditCore::Tolerances touch{24, 24, 20};
+        QCOMPARE(core.hitTest(px(0.8, 0.2) + QPointF(15, 0), tol).kind != PathEditCore::HitKind::Vertex, true);
+        QCOMPARE(core.hitTest(px(0.8, 0.2) + QPointF(15, 0), touch).kind, PathEditCore::HitKind::Vertex);
+    }
+
+    void pathInsertKeepsShapeAndRecordsOp()
+    {
+        PathEditCore core;
+        core.setView(QTransform().scale(100, 100));
+        ShapeContour c = curvy();
+        core.setContours({c});
+        const QVector<QPointF> before = flatten(c, 100);
+        const int at = core.insertAt(0, 0, 0.4);
+        QCOMPARE(at, 1);
+        QCOMPARE(core.contours().first().vertices.size(), 4);
+        double worst = 0;
+        for (const QPointF &p : flatten(core.contours().first(), 100))
+            worst = std::max(worst, distToPoly(before, p));
+        QVERIFY(worst < 1e-3);
+        QCOMPARE(core.selection().size(), 1);
+        const QVector<PathOp> ops = core.takeOps();
+        QCOMPARE(ops.size(), 1);
+        QVERIFY(core.ops().isEmpty());
+
+        ShapeContour key = curvy();
+        QVERIFY(applyPathOp(key, ops.first()));
+        QCOMPARE(key.vertices, core.contours().first().vertices);
+    }
+
+    void pathDeleteHealsOrNot()
+    {
+        ShapeContour c;
+        c.closed = false;
+        c.vertices = {vtx(0, 0, 0, 0, 0.1, 0.2), vtx(0.5, 0.35, -0.1, 0, 0.1, 0), vtx(1, 0, 0, 0.2, 0, 0)};
+        const QVector<QPointF> ref = flatten(c, 200);
+
+        PathEditCore healed;
+        healed.setView(QTransform().scale(100, 100));
+        healed.setContours({c});
+        healed.select(0, 1, PathEditCore::SelectMode::Replace);
+        QVERIFY(healed.deleteSelected(true));
+        PathEditCore plain;
+        plain.setView(QTransform().scale(100, 100));
+        plain.setContours({c});
+        plain.select(0, 1, PathEditCore::SelectMode::Replace);
+        QVERIFY(plain.deleteSelected(false));
+        double h = 0, p = 0;
+        for (const QPointF &pt : flatten(healed.contours().first(), 64))
+            h = std::max(h, distToPoly(ref, pt));
+        for (const QPointF &pt : flatten(plain.contours().first(), 64))
+            p = std::max(p, distToPoly(ref, pt));
+        QVERIFY(h < p);
+        QVERIFY(healed.ops().first().heal);
+        QVERIFY(!plain.ops().first().heal);
+        QCOMPARE(healed.selection().size(), 1);
+
+        // A shape path never loses its last contour, and a short one disappears.
+        PathEditCore last;
+        last.setContours({ShapeContour{{vtx(0, 0), vtx(1, 1)}, false}});
+        last.select(0, 0, PathEditCore::SelectMode::Replace);
+        QVERIFY(!last.deleteSelected(true));
+        PathEditCore two;
+        two.setContours({ShapeContour{{vtx(0, 0), vtx(1, 1)}, false}, curvy()});
+        two.select(0, 0, PathEditCore::SelectMode::Replace);
+        QVERIFY(two.deleteSelected(false));
+        QCOMPARE(two.contours().size(), 1);
+    }
+
+    void pathMaskKeepsThreeVertices()
+    {
+        PathEditCore core = squareCore(true);
+        core.select(0, 0, PathEditCore::SelectMode::Replace);
+        QVERIFY(core.deleteSelected(false));
+        QCOMPARE(core.contours().first().vertices.size(), 3);
+        core.select(0, 0, PathEditCore::SelectMode::Replace);
+        QVERIFY(!core.deleteSelected(false));
+        QCOMPARE(core.contours().first().vertices.size(), 3);
+        QVERIFY(!core.toggleClosed(0));
+    }
+
+    void pathPenCornerSmoothAndClose()
+    {
+        PathEditCore core;
+        core.setView(QTransform().scale(100, 100));
+        core.setFrameSize({100, 100});
+        ManipModifiers none;
+        QCOMPARE(core.penPress({10, 10}, none, 8), PathEditCore::PenResult::Added);
+        QCOMPARE(core.penContour(), 0);
+        core.endGesture();
+
+        QCOMPARE(core.penPress({60, 10}, none, 8), PathEditCore::PenResult::Added);
+        core.beginPenDrag(0, 1, {60, 10});
+        QVERIFY(!core.drag({61, 10}, none));
+        QVERIFY(core.drag({80, 30}, none));
+        core.endGesture();
+        const ShapeVertex smooth = core.contours().first().vertices[1];
+        QCOMPARE(smooth.mode, TangentMode::Mirrored);
+        QVERIFY(std::abs(smooth.out.x() - 0.2) < 1e-9 && std::abs(smooth.out.y() - 0.2) < 1e-9);
+        QCOMPARE(smooth.in, -smooth.out);
+
+        QCOMPARE(core.penPress({50, 70}, none, 8), PathEditCore::PenResult::Added);
+        core.endGesture();
+        QCOMPARE(core.contours().first().vertices[2].mode, TangentMode::Corner);
+        QVERIFY(core.penNearFirst({12, 12}, 8));
+        QVERIFY(!core.penNearFirst({40, 40}, 8));
+        QCOMPARE(core.penPress({11, 11}, none, 8), PathEditCore::PenResult::Closed);
+        QVERIFY(core.contours().first().closed);
+        QCOMPARE(core.penContour(), -1);
+        QCOMPARE(core.contours().first().vertices.size(), 3);
+
+        // Shift holds the next point to 45 degrees from the last.
+        PathEditCore snapped;
+        snapped.setView(QTransform().scale(100, 100));
+        snapped.penPress({0, 0}, none, 8);
+        ManipModifiers shift;
+        shift.constrain = true;
+        snapped.penPress({50, 8}, shift, 8);
+        const QPointF p = snapped.contours().first().vertices[1].p;
+        QVERIFY(std::abs(p.y()) < 1e-9 && p.x() > 0.4);
+
+        QVERIFY(core.penUndo() == false);
+        PathEditCore draft;
+        draft.setView(QTransform().scale(100, 100));
+        draft.penPress({10, 10}, none, 8);
+        draft.penPress({50, 10}, none, 8);
+        QVERIFY(draft.penUndo());
+        QCOMPARE(draft.contours().first().vertices.size(), 1);
+        QVERIFY(draft.penUndo());
+        QVERIFY(draft.contours().isEmpty());
+    }
+
+    void pathPenContinuesAnOpenEnd()
+    {
+        PathEditCore core;
+        core.setView(QTransform().scale(100, 100));
+        core.setContours({ShapeContour{{vtx(0.1, 0.1, 0, 0, 0.1, 0), vtx(0.5, 0.5), vtx(0.9, 0.1)}, false}});
+        QVERIFY(core.isOpenEnd(0, 0));
+        QVERIFY(core.isOpenEnd(0, 2));
+        QVERIFY(!core.isOpenEnd(0, 1));
+        QVERIFY(core.penContinue(0, 0));
+        const ShapeContour &c = core.contours().first();
+        QCOMPARE(c.vertices.last().p, QPointF(0.1, 0.1));
+        QCOMPARE(c.vertices.last().in, QPointF(0.1, 0.0));
+        QCOMPARE(core.penContour(), 0);
+    }
+
+    void pathConvertAndModes()
+    {
+        PathEditCore core = squareCore();
+        QVERIFY(core.toggleSmooth(0, 1));
+        const ShapeVertex v = core.contours().first().vertices[1];
+        QCOMPARE(v.mode, TangentMode::Mirrored);
+        QVERIFY(!v.out.isNull());
+        QCOMPARE(v.in, -v.out);
+        QVERIFY(core.toggleSmooth(0, 1));
+        QCOMPARE(core.contours().first().vertices[1].mode, TangentMode::Corner);
+        QVERIFY(core.contours().first().vertices[1].out.isNull());
+
+        core.select(0, 1, PathEditCore::SelectMode::Replace);
+        core.select(0, 2, PathEditCore::SelectMode::Add);
+        QCOMPARE(core.selectedMode(), int(TangentMode::Corner));
+        QVERIFY(core.setSelectedMode(TangentMode::Aligned));
+        QCOMPARE(core.selectedMode(), int(TangentMode::Aligned));
+        QVERIFY(!core.contours().first().vertices[2].out.isNull());
+        core.select(0, 0, PathEditCore::SelectMode::Add);
+        QCOMPARE(core.selectedMode(), -2);
+        QVERIFY(core.setSelectedMode(TangentMode::Corner));
+        QVERIFY(core.contours().first().vertices[2].in.isNull());
+    }
+
+    void pathHandleDragBreaksWithAltAndConstrainsWithShift()
+    {
+        PathEditCore core;
+        core.setView(QTransform().scale(100, 100));
+        core.setFrameSize({100, 100});
+        core.setContours({ShapeContour{{vtx(0.2, 0.5, -0.1, 0, 0.1, 0), vtx(0.9, 0.5)}, false}});
+        core.select(0, 0, PathEditCore::SelectMode::Replace);
+
+        ManipModifiers none;
+        core.beginHandle(0, 0, geom::TangentHandle::Out, {30, 50}, none);
+        QVERIFY(core.drag({30, 80}, none));
+        core.endGesture();
+        ShapeVertex v = core.contours().first().vertices[0];
+        QCOMPARE(v.mode, TangentMode::Mirrored);
+        QCOMPARE(v.in, -v.out);
+
+        ManipModifiers alt;
+        alt.breakTangent = true;
+        core.beginHandle(0, 0, geom::TangentHandle::Out, {30, 80}, alt);
+        QVERIFY(core.drag({60, 50}, alt));
+        core.endGesture();
+        v = core.contours().first().vertices[0];
+        QCOMPARE(v.mode, TangentMode::Free);
+        QVERIFY(std::abs(v.in.x() + 0.1) < 1e-9 || v.in != -v.out);
+        QVERIFY(std::abs(v.out.x() - 0.4) < 1e-9);
+
+        ManipModifiers shift;
+        shift.constrain = true;
+        core.beginHandle(0, 0, geom::TangentHandle::In, {10, 50}, shift);
+        QVERIFY(core.drag({5, 59}, shift));
+        core.endGesture();
+        const QPointF in = core.contours().first().vertices[0].in;
+        QVERIFY(std::abs(std::abs(in.x()) - std::abs(in.y())) < 1e-9 || std::abs(in.y()) < 1e-9
+                || std::abs(in.x()) < 1e-9);
+    }
+
+    void pathVertexDragMovesGroupLocksAxisAndCancels()
+    {
+        PathEditCore core = squareCore();
+        core.select(0, 0, PathEditCore::SelectMode::Replace);
+        core.select(0, 1, PathEditCore::SelectMode::Add);
+        ManipModifiers noSnap;
+        noSnap.noSnap = true;
+        core.beginMove(0, 0, px(0.2, 0.2));
+        QVERIFY(core.drag(px(0.2, 0.2) + QPointF(20, 10), noSnap));
+        QCOMPARE(core.contours().first().vertices[0].p, QPointF(0.3, 0.25));
+        QCOMPARE(core.contours().first().vertices[1].p, QPointF(0.9, 0.25));
+        QCOMPARE(core.contours().first().vertices[2].p, QPointF(0.8, 0.8));
+        core.cancelGesture();
+        QCOMPARE(core.contours().first().vertices[0].p, QPointF(0.2, 0.2));
+
+        ManipModifiers lock;
+        lock.constrain = true;
+        lock.noSnap = true;
+        core.beginMove(0, 0, px(0.2, 0.2));
+        QVERIFY(core.drag(px(0.2, 0.2) + QPointF(30, 5), lock));
+        QCOMPARE(core.contours().first().vertices[0].p, QPointF(0.35, 0.2));
+        core.endGesture();
+
+        // A view change mid-gesture waits for the gesture to end.
+        const QTransform before = core.view();
+        core.beginMove(0, 0, px(0.35, 0.2));
+        core.setView(QTransform().scale(10, 10));
+        QCOMPARE(core.view(), before);
+        core.endGesture();
+        QCOMPARE(core.view(), QTransform().scale(10, 10));
+    }
+
+    void pathVertexDragSnapsToFrameUnlessCtrl()
+    {
+        PathEditCore core = squareCore();
+        core.select(0, 0, PathEditCore::SelectMode::Replace);
+        ManipModifiers snap;
+        core.beginMove(0, 0, px(0.2, 0.2));
+        // 0.5 is a frame target; two px away pulls it in.
+        QVERIFY(core.drag(px(0.5, 0.2) + QPointF(2, 0), snap));
+        QCOMPARE(core.contours().first().vertices[0].p.x(), 0.5);
+        QCOMPARE(core.snapGuideX(), 0.5);
+        core.cancelGesture();
+        ManipModifiers noSnap;
+        noSnap.noSnap = true;
+        core.beginMove(0, 0, px(0.2, 0.2));
+        QVERIFY(core.drag(px(0.5, 0.2) + QPointF(2, 0), noSnap));
+        QVERIFY(core.contours().first().vertices[0].p.x() != 0.5);
+        QCOMPARE(core.snapGuideX(), -1.0);
+        core.cancelGesture();
+    }
+
+    void pathBendSegmentKeepsEndpoints()
+    {
+        PathEditCore core = squareCore();
+        ManipModifiers noSnap;
+        noSnap.noSnap = true;
+        core.beginBend(0, 0, 0.5, px(0.5, 0.2));
+        QVERIFY(core.drag(px(0.5, 0.2) + QPointF(0, 30), noSnap));
+        core.endGesture();
+        const ShapeContour &c = core.contours().first();
+        QCOMPARE(c.vertices[0].p, QPointF(0.2, 0.2));
+        QCOMPARE(c.vertices[1].p, QPointF(0.8, 0.2));
+        const QPointF mid = cubicPoint(c.vertices[0], c.vertices[1], 0.5);
+        QVERIFY(std::abs(mid.y() - 0.35) < 1e-6);
+        QVERIFY(std::abs(mid.x() - 0.5) < 1e-6);
+    }
+
+    void pathMarqueeSelectAndNudge()
+    {
+        PathEditCore core = squareCore();
+        core.beginMarquee();
+        core.selectInRect(QRectF(px(0.1, 0.1), px(0.9, 0.5)), PathEditCore::SelectMode::Replace);
+        QCOMPARE(core.selection().size(), 2);
+        core.beginMarquee();
+        core.selectInRect(QRectF(px(0.1, 0.7), px(0.9, 0.9)), PathEditCore::SelectMode::Add);
+        QCOMPARE(core.selection().size(), 4);
+        core.beginMarquee();
+        core.selectInRect(QRectF(px(0.1, 0.1), px(0.9, 0.5)), PathEditCore::SelectMode::Toggle);
+        QCOMPARE(core.selection().size(), 2);
+
+        core.clearSelection();
+        core.select(0, 2, PathEditCore::SelectMode::Replace);
+        QVERIFY(core.nudge(10, -20));
+        QCOMPARE(core.contours().first().vertices[2].p, QPointF(0.85, 0.7));
+        QCOMPARE(core.contours().first().vertices[0].p, QPointF(0.2, 0.2));
+        core.selectAll();
+        QCOMPARE(core.selection().size(), 4);
+        core.clearSelection();
+        QVERIFY(core.nudge(20, 0));
+        QCOMPARE(core.contours().first().vertices[0].p, QPointF(0.3, 0.2));
+    }
+
+    void pathBodyDragMovesEverythingAndFlagsIt()
+    {
+        PathEditCore core = squareCore();
+        ManipModifiers noSnap;
+        noSnap.noSnap = true;
+        core.beginBody(px(0.5, 0.5));
+        QVERIFY(!core.bodyMoved());
+        QVERIFY(core.drag(px(0.5, 0.5) + QPointF(20, 0), noSnap));
+        QVERIFY(core.bodyMoved());
+        QCOMPARE(core.contours().first().vertices[0].p, QPointF(0.3, 0.2));
+        QCOMPARE(core.contours().first().vertices[2].p, QPointF(0.9, 0.8));
+    }
+
+    void pathOpsReplayKeepsAnimationKeysInStep()
+    {
+        ShapeContour a = squareCore().contours().first();
+        ShapeContour key = a;
+        key.vertices[2].p = {0.9, 0.9};
+
+        PathEditCore core;
+        core.setView(QTransform().scale(100, 100));
+        core.setContours({a});
+        core.insertAt(0, 1, 0.5);
+        core.select(0, 0, PathEditCore::SelectMode::Replace);
+        QVERIFY(core.deleteSelected(false));
+        QCOMPARE(core.contours().first().vertices.size(), 4);
+        for (const PathOp &op : core.ops())
+            QVERIFY(applyPathOp(key, op));
+        QCOMPARE(key.vertices.size(), 4);
+        QCOMPARE(key.vertices[2].p, QPointF(0.9, 0.9));
+        QVERIFY(!applyPathOp(key, PathOp{PathOp::Kind::Remove, 9, 0.0, false}));
     }
 };
 

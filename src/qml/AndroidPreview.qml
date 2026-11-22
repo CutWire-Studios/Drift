@@ -112,7 +112,9 @@ Item {
                     transform: transformTool,
                     mask: maskTool,
                     crop: cropTool,
-                    clipCrop: clipCropTool
+                    clipCrop: clipCropTool,
+                    shapePath: shapePathTool,
+                    maskDraw: maskDrawTool
                 })
                 toolHost.companion: dropCompanion
                 toolHost.companionTools: ["transform", "mask"]
@@ -248,6 +250,22 @@ Item {
     Component {
         id: maskTool
         MaskOverlay { }
+    }
+
+    Component {
+        id: maskDrawTool
+        MaskDrawOverlay { }
+    }
+
+    Component {
+        id: shapePathTool
+        PathEditor {
+            canvas: viewport.canvas
+            touch: true
+            backend: EditorState.preview.shapePathMode === "draw" ? "draft" : "shape"
+            draftTarget: "shape"
+            onExited: EditorState.preview.shapePathMode = ""
+        }
     }
 
     Component {

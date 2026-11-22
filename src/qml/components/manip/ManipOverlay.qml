@@ -64,6 +64,8 @@ Item {
     signal confirmed()
     signal escaped()
     signal hudApplied(string text, real value)
+    // A key none of the above took, for a tool's own shortcuts.
+    signal unhandledKey(var event)
 
     // The held keys merged with the chips; never reads keyboard state outside the event.
     function modifiersFor(qtFlags) {
@@ -226,6 +228,8 @@ Item {
                    && event.text.length === 1 && "0123456789-.".indexOf(event.text) >= 0) {
             hudItem.beginEntry(event.text)
             event.accepted = true
+        } else {
+            overlay.unhandledKey(event)
         }
     }
 }

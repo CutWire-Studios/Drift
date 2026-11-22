@@ -51,7 +51,6 @@ Item {
 
         Row {
             id: toolbar
-            visible: !root.pickerMode
             x: Theme.pagePadding
             width: parent.width - Theme.pagePadding * 2
             height: visible ? implicitHeight + Theme.spacingSm : 0
@@ -66,6 +65,7 @@ Item {
             }
             ThemedButton {
                 variant: "secondary"
+                visible: !root.pickerMode
                 glyph: Theme.icons.upload
                 text: qsTr("Import SVG")
                 tooltip: qsTr("Add an SVG file to My shapes")

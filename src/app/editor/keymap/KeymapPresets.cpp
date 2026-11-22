@@ -203,6 +203,10 @@ QHash<QString, QStringList> driftChords()
         {QStringLiteral("masking.brushSmaller"), {QStringLiteral("[")}},
         {QStringLiteral("masking.brushLarger"), {QStringLiteral("]")}},
         {QStringLiteral("masking.brushToggleErase"), {QStringLiteral("X")}},
+        // Path editor (shape paths and freeform masks), live while it is on screen.
+        {QStringLiteral("path.penTool"), {QStringLiteral("P")}},
+        {QStringLiteral("path.convertPoint"), {QStringLiteral("Shift+C")}},
+        {QStringLiteral("path.deleteNoHeal"), {QStringLiteral("Shift+Delete")}},
         // Tracker runs. Ctrl+Shift+Arrow is free: Ctrl+Arrow is the far jump and Shift+Arrow the 1 s jump.
         {QStringLiteral("tracking.trackerTool"), {QStringLiteral("T")}},
         {QStringLiteral("tracking.trackForward"), {QStringLiteral("Ctrl+T")}},

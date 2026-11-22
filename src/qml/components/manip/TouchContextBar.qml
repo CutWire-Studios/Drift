@@ -7,9 +7,10 @@ import Drift
 Rectangle {
     id: bar
 
-    // Any of "lockRatio", "fromCenter", "snap", "breakHandle", "exclude", in the order shown.
+    // Any of "lockRatio", "constrain", "fromCenter", "snap", "breakHandle", "exclude", in the order shown.
     property var chips: ["lockRatio", "fromCenter", "snap"]
     property bool lockRatio: false
+    property bool constrain: false
     property bool fromCenter: false
     property bool snap: true
     property bool breakHandle: false
@@ -17,7 +18,7 @@ Rectangle {
 
     // A ManipModifiers-compatible override: the same five fields, plain values.
     readonly property var modifiers: ({
-        constrain: lockRatio,
+        constrain: lockRatio || constrain,
         fromCenter: fromCenter,
         breakTangent: breakHandle,
         noSnap: !snap,
@@ -28,6 +29,7 @@ Rectangle {
 
     readonly property var labels: ({
         lockRatio: qsTr("Lock ratio"),
+        constrain: qsTr("Constrain"),
         fromCenter: qsTr("From centre"),
         snap: qsTr("Snap"),
         breakHandle: qsTr("Break handle"),
@@ -36,6 +38,7 @@ Rectangle {
 
     function toggle(id) {
         if (id === "lockRatio") lockRatio = !lockRatio
+        else if (id === "constrain") constrain = !constrain
         else if (id === "fromCenter") fromCenter = !fromCenter
         else if (id === "snap") snap = !snap
         else if (id === "breakHandle") breakHandle = !breakHandle
@@ -43,7 +46,7 @@ Rectangle {
     }
 
     function isOn(id) {
-        return id === "lockRatio" ? lockRatio : id === "fromCenter" ? fromCenter : id === "snap" ? snap
+        return id === "lockRatio" ? lockRatio : id === "constrain" ? constrain : id === "fromCenter" ? fromCenter : id === "snap" ? snap
              : id === "breakHandle" ? breakHandle : exclude
     }
 

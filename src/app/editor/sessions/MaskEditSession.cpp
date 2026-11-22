@@ -124,17 +124,19 @@ bool MaskEditSession::load(const QString &clipId)
     return true;
 }
 
-bool MaskEditSession::begin(const QString &clipId, double frameW, double frameH)
+bool MaskEditSession::begin(const QString &clipId, double frameW, double frameH, bool ownsDrag)
 {
     if (!load(clipId))
         return false;
+    m_ownsDrag = ownsDrag;
     m_frameW = std::max(1.0, frameW);
     m_frameH = std::max(1.0, frameH);
     m_active = true;
     m_bodyMoved = false;
     m_snapGuideX = m_snapGuideY = -1;
     m_startVertices = m_vertices;
-    m_app->beginPreviewDrag(tr("Mask changed"));
+    if (m_ownsDrag)
+        m_app->beginPreviewDrag(tr("Mask changed"));
     emit liveChanged();
     return true;
 }
@@ -151,7 +153,8 @@ void MaskEditSession::commit()
     m_snapGuideX = m_snapGuideY = -1;
     emit snapGuidesChanged();
     emit liveChanged();
-    m_app->commitPreviewDrag();
+    if (m_ownsDrag)
+        m_app->commitPreviewDrag();
     // Dragging a tracked mask back onto the object is the correction gesture.
     if (movedBody)
         m_app->tracking()->correctFromMask(clipId);
@@ -167,7 +170,8 @@ void MaskEditSession::cancel()
     m_snapGuideX = m_snapGuideY = -1;
     emit snapGuidesChanged();
     emit liveChanged();
-    m_app->cancelPreviewDrag();
+    if (m_ownsDrag)
+        m_app->cancelPreviewDrag();
 }
 
 void MaskEditSession::writeStatic(const drift::Mask &mask)
@@ -296,7 +300,7 @@ void MaskEditSession::beginResize(int gripDx, int gripDy, double nx, double ny)
     m_startH = m_h;
 }
 
-void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassSnap)
+void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassSnap, bool fromCenter)
 {
     if (!m_active)
         return;
@@ -306,11 +310,12 @@ void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassS
     const double lx = ddx * std::cos(a) + ddy * std::sin(a);
     const double ly = -ddx * std::sin(a) + ddy * std::cos(a);
 
-    double w = std::max(0.01, m_startW + lx * m_gripDx);
-    double h = std::max(0.01, m_startH + ly * m_gripDy);
+    const double span = fromCenter ? 2.0 : 1.0;
+    double w = std::max(0.01, m_startW + span * lx * m_gripDx);
+    double h = std::max(0.01, m_startH + span * ly * m_gripDy);
     const bool corner = m_gripDx != 0 && m_gripDy != 0;
     const bool locked = corner && lockAspect;
-    const bool snapping = !bypassSnap && std::abs(m_rotation) < 0.01;
+    const bool snapping = !bypassSnap && !fromCenter && std::abs(m_rotation) < 0.01;
     bool snapX = snapping && m_gripDx != 0;
     bool snapY = snapping && m_gripDy != 0;
     if (locked) {
@@ -353,8 +358,8 @@ void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassS
     }
     setSnapGuides(gx, gy);
 
-    const double shiftX = (w - m_startW) / 2 * m_gripDx;
-    const double shiftY = (h - m_startH) / 2 * m_gripDy;
+    const double shiftX = fromCenter ? 0.0 : (w - m_startW) / 2 * m_gripDx;
+    const double shiftY = fromCenter ? 0.0 : (h - m_startH) / 2 * m_gripDy;
     m_x = m_startX + shiftX * std::cos(a) - shiftY * std::sin(a);
     m_y = m_startY + shiftX * std::sin(a) + shiftY * std::cos(a);
     m_w = w;
@@ -383,6 +388,49 @@ void MaskEditSession::movePoint(int index, double nx, double ny)
     syncFreeformBounds();
     write(false);
     emit liveChanged();
+}
+
+void MaskEditSession::setOutline(const QVector<drift::ShapeVertex> &vertices, const QVector<drift::geom::PathOp> &ops)
+{
+    if (!m_active || !m_freeform || vertices.size() < 3)
+        return;
+    if (!ops.isEmpty() && m_pathAnimated) {
+        const Ref ref = find(m_clipId);
+        if (ref.track >= 0) {
+            drift::Mask mask = m_app->m_project.tracks().at(ref.track).clips.at(ref.clip).mask;
+            const auto replay = [&ops](QVector<drift::ShapeVertex> &list) {
+                drift::ShapeContour contour{list, true};
+                for (const drift::geom::PathOp &op : ops) {
+                    if (!drift::geom::applyPathOp(contour, op))
+                        return;
+                }
+                list = contour.vertices;
+            };
+            replay(mask.vertices);
+            for (auto it = mask.pathKeys.begin(); it != mask.pathKeys.end(); ++it)
+                replay(it.value());
+            m_app->beginImplicitPreviewDrag(tr("Mask changed"));
+            m_app->writeClipMask(ref.track, ref.clip, mask);
+        }
+    }
+    m_vertices = vertices;
+    syncFreeformBounds();
+    write(false);
+    emit liveChanged();
+}
+
+QVector<drift::ShapeVertex> MaskEditSession::outlineOf(const QString &clipId) const
+{
+    if (m_active && m_clipId == clipId)
+        return m_vertices;
+    const Ref ref = find(clipId);
+    if (ref.track < 0)
+        return {};
+    const drift::Clip &clip = m_app->m_project.tracks().at(ref.track).clips.at(ref.clip);
+    if (clip.type != drift::ClipType::Adjustment || clip.mask.shape != drift::MaskShape::Freeform)
+        return {};
+    return (clip.mask.isAnimated() ? clip.mask.resolvedAt(m_app->m_playheadUs - clip.timelineStart) : clip.mask)
+        .vertices;
 }
 
 void MaskEditSession::syncFreeformBounds()

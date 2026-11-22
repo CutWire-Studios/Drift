@@ -1305,6 +1305,8 @@ target_sources(driftapp PRIVATE
     src/ui/manip/SnapService.cpp
     src/ui/manip/DragSession.h
     src/ui/manip/DragSession.cpp
+    src/ui/manip/PathEditCore.h
+    src/ui/manip/PathEditCore.cpp
     src/ui/manip/ClipFrameMapper.h
     src/ui/manip/ClipFrameMapper.cpp
     src/ui/manip/ManipQml.h
@@ -1403,6 +1405,8 @@ target_sources(driftapp PRIVATE
     src/app/editor/sessions/KeyframeTimeView.cpp
     src/app/editor/sessions/MaskEditSession.h
     src/app/editor/sessions/MaskEditSession.cpp
+    src/app/editor/sessions/PathEditSession.h
+    src/app/editor/sessions/PathEditSession.cpp
     src/app/editor/sessions/MaskStackModel.h
     src/app/editor/sessions/MaskStackModel.cpp
     src/app/editor/sessions/MaskingController.h
@@ -1942,6 +1946,11 @@ qt_add_qml_module(drift
         src/qml/components/manip/transform/TransformParentFrame.qml
         src/qml/components/manip/LiveReadout.qml
         src/qml/components/manip/Loupe.qml
+        src/qml/components/manip/PathEditor.qml
+        src/qml/components/manip/path/PathPlane.qml
+        src/qml/components/manip/path/PathActionChips.qml
+        src/qml/components/manip/path/PathPointBar.qml
+        src/qml/components/manip/path/PathPointModeRow.qml
         src/qml/components/manip/ManipOverlay.qml
         src/qml/components/manip/TouchContextBar.qml
         src/qml/components/manip/ViewNavigation.qml
@@ -1952,7 +1961,6 @@ qt_add_qml_module(drift
         src/qml/components/manip/crop/CropThirds.qml
         src/qml/components/preview/GuideEditOverlay.qml
         src/qml/components/preview/MaskOverlay.qml
-        src/qml/components/preview/ShapePathOverlay.qml
         src/qml/components/preview/masking/MaskDrawOverlay.qml
         src/qml/components/preview/masking/MaskBrushOverlay.qml
         src/qml/components/preview/masking/MaskAiOverlay.qml
@@ -2538,10 +2546,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/media/MediaPreviewGradeChip.qml
         src/qml/components/preview/media/MediaPreviewAudioPlaceholder.qml
         src/qml/components/preview/media/MediaPreviewView.qml
-        src/qml/components/preview/mask/MaskOverlayVertexHandle.qml
-        src/qml/components/preview/shapepath/ShapePathHandle.qml
-        src/qml/components/preview/shapepath/ShapePathHintBar.qml
-        src/qml/components/preview/shapepath/ShapePathVertex.qml
         src/qml/components/preview/mask/MaskOverlayRotateHandle.qml
         src/qml/components/preview/mask/MaskOverlayResizeGrip.qml
         src/qml/components/preview/mask/MaskOverlayOutline.qml
@@ -2550,7 +2554,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/mask/MaskOverlayRoundnessHandle.qml
         src/qml/components/preview/mask/MaskOverlaySplitSide.qml
         src/qml/components/preview/mask/MaskOverlayEmptyHint.qml
-        src/qml/components/preview/mask/MaskOverlayEdgeMidpoint.qml
         src/qml/components/preview/mask/MaskOverlayClipBounds.qml
         src/qml/components/preview/mask/MaskOverlayBarEdge.qml
         src/qml/components/preview/mask/MaskOverlayBarBand.qml

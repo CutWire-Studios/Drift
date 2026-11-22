@@ -282,6 +282,7 @@ MaskingController::MaskingController(AppController *app, QObject *parent)
 {
     m_brushPool.setMaxThreadCount(1);
     m_editSession = new MaskEditSession(app, this);
+    m_pathEdit = new PathEditSession(app, this);
     m_stackModel = new MaskStackModel(app, this);
 }
 

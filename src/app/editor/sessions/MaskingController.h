@@ -2,6 +2,7 @@
 
 #include "app/editor/sessions/MaskEditSession.h"
 #include "app/editor/sessions/MaskSelection.h"
+#include "app/editor/sessions/PathEditSession.h"
 #include "core/base/Time.h"
 
 #include <QImage>
@@ -75,6 +76,7 @@ class MaskingController : public QObject
     Q_PROPERTY(bool brushSaving READ brushSaving NOTIFY brushSavingChanged)
     // Live state of a handle drag in the mask overlay.
     Q_PROPERTY(MaskEditSession *editSession READ editSession CONSTANT)
+    Q_PROPERTY(PathEditSession *pathEdit READ pathEdit CONSTANT)
     Q_PROPERTY(MaskStackModel *stackModel READ stackModel CONSTANT)
 
 public:
@@ -103,6 +105,7 @@ public:
     const BrushPreviewStroke *previewStroke(int index) const;
     bool brushSaving() const { return m_brushSavesInFlight > 0; }
     MaskEditSession *editSession() const { return m_editSession; }
+    PathEditSession *pathEdit() const { return m_pathEdit; }
     MaskStackModel *stackModel() const { return m_stackModel; }
 
     // Largest useful feather in px for a clip: half its frame's longer side (the canvas for an
@@ -347,6 +350,7 @@ private:
 
     AppController *m_app = nullptr;
     MaskEditSession *m_editSession = nullptr;
+    PathEditSession *m_pathEdit = nullptr;
     MaskStackModel *m_stackModel = nullptr;
 
     double m_brushSize = 0.05;

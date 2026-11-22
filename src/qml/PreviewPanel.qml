@@ -250,8 +250,11 @@ PanelFrame {
 
     Component {
         id: shapePathTool
-        ShapePathOverlay {
+        PathEditor {
             canvas: panelViewport.canvas
+            backend: EditorState.preview.shapePathMode === "draw" ? "draft" : "shape"
+            draftTarget: "shape"
+            onExited: EditorState.preview.shapePathMode = ""
         }
     }
 

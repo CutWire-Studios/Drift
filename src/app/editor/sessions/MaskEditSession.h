@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/effects/Mask.h"
+#include "core/geom/BezierPath.h"
 #include "core/shapes/ShapeVertex.h"
 
 #include <QList>
@@ -57,7 +58,9 @@ public:
     // Starts a preview drag on the mask adjustment `clipId`. frameW/frameH are the clip frame's
     // size in pixels: the snap tolerance, nudge steps and rotate angle are screen distances.
     // False if the clip is not an enabled mask adjustment.
-    Q_INVOKABLE bool begin(const QString &clipId, double frameW, double frameH);
+    // `ownsDrag` false leaves the preview drag to a caller that already opened one (EditorState.drag):
+    // commit() and cancel() then only close this session.
+    Q_INVOKABLE bool begin(const QString &clipId, double frameW, double frameH, bool ownsDrag = true);
     // Commits the preview drag as one undo step and clears the live state.
     Q_INVOKABLE void commit();
     // Abandons the preview drag, restoring the project.
@@ -70,13 +73,23 @@ public:
     // Resize about the opposite edge. gripDx/gripDy are -1/0/1 for the grip's side.
     Q_INVOKABLE void beginResize(int gripDx, int gripDy, double nx, double ny);
     // Edges snap to the clip frame's 0, 0.5 and 1 unless bypassSnap (Ctrl) or the mask is rotated.
-    Q_INVOKABLE void resize(double nx, double ny, bool lockAspect, bool bypassSnap = false);
+    // fromCenter (Alt) keeps the centre and moves both opposite edges, so the size changes by twice the
+    // pointer's travel; frame snapping is skipped then.
+    Q_INVOKABLE void resize(double nx, double ny, bool lockAspect, bool bypassSnap = false, bool fromCenter = false);
     // Angle of the pointer about the mask centre; snap15 rounds to 15 degrees.
     Q_INVOKABLE void rotate(double nx, double ny, bool snap15);
     Q_INVOKABLE void movePoint(int index, double nx, double ny);
     // Moves the dragged vertex to the pointer and every other selected vertex by the same offset.
     // A vertex outside the selection moves alone. Same write path as movePoint.
     Q_INVOKABLE void movePointGroup(int anchorIndex, double nx, double ny);
+    // Path editing: the whole freeform outline replaces the live one. `ops` are the vertex-count
+    // changes made since the last call; they are replayed on every shape key of an animated mask so
+    // the keys keep matching counts. Without them an animated mask writes a key at the playhead.
+    void setOutline(const QVector<drift::ShapeVertex> &vertices, const QVector<drift::geom::PathOp> &ops);
+    // The freeform's outline at the playhead, or the live one during a drag. Empty when `clipId` is not one.
+    QVector<drift::ShapeVertex> outlineOf(const QString &clipId) const;
+    // Counts the drag as a body move, so commit() offers the tracker the correction.
+    void markBodyMoved() { m_bodyMoved = true; }
     // Bars: both bands derive from h, clamped to 0..2.
     Q_INVOKABLE void setBarsHeight(double h);
 
@@ -125,6 +138,7 @@ private:
     MaskingController *m_owner = nullptr;
 
     bool m_active = false;
+    bool m_ownsDrag = true;
     QString m_clipId;
     double m_frameW = 1;
     double m_frameH = 1;

@@ -5,8 +5,10 @@ AndroidAddPage {
     id: page
 
     propertiesComponent: Component {
-        ShapeInspector { canEditPath: false }
+        ShapeInspector { }
     }
+
+    Component.onDestruction: EditorState.preview.shapePathMode = ""
 
     ShapesTab {
         anchors.fill: parent

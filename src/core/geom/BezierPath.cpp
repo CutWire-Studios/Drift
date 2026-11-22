@@ -243,6 +243,59 @@ bool removeVertexHeal(ShapeContour &c, int i)
     return true;
 }
 
+bool applyPathOp(ShapeContour &c, const PathOp &op)
+{
+    const int n = int(c.vertices.size());
+    if (op.kind == PathOp::Kind::Insert) {
+        if (op.segment < 0 || op.segment >= segmentCount(c))
+            return false;
+        splitSegment(c, op.segment, op.t);
+        return true;
+    }
+    if (op.segment < 0 || op.segment >= n)
+        return false;
+    return op.heal ? removeVertexHeal(c, op.segment) : removeVertex(c, op.segment);
+}
+
+void makeSmooth(ShapeContour &c, int i, TangentMode mode)
+{
+    const int n = int(c.vertices.size());
+    if (i < 0 || i >= n)
+        return;
+    ShapeVertex &v = c.vertices[i];
+    const bool hasPrev = i > 0 || c.closed;
+    const bool hasNext = i < n - 1 || c.closed;
+    const ShapeVertex &prev = c.vertices[(i - 1 + n) % n];
+    const ShapeVertex &next = c.vertices[(i + 1) % n];
+    QPointF t;
+    if (hasPrev && hasNext && n > 2)
+        t = (next.p - prev.p) / 6.0;
+    else if (hasNext && n > 1)
+        t = (next.p - v.p) / 3.0;
+    else if (hasPrev && n > 1)
+        t = (v.p - prev.p) / 3.0;
+    v.out = t;
+    v.in = -t;
+    v.mode = mode;
+}
+
+void makeCorner(ShapeContour &c, int i)
+{
+    if (i < 0 || i >= c.vertices.size())
+        return;
+    ShapeVertex &v = c.vertices[i];
+    v.in = {};
+    v.out = {};
+    v.mode = TangentMode::Corner;
+}
+
+void reverseContour(ShapeContour &c)
+{
+    std::reverse(c.vertices.begin(), c.vertices.end());
+    for (ShapeVertex &v : c.vertices)
+        std::swap(v.in, v.out);
+}
+
 ShapeVertex applyTangentDrag(ShapeVertex v, TangentHandle which, const QPointF &newPos, TangentMode mode,
                              bool constrain45)
 {

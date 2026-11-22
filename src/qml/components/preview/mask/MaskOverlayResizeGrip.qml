@@ -1,8 +1,10 @@
 import QtQuick
 import Drift
 
-// One resize grip. The same frame the canvas crop tool and TransformManip use.
-Rectangle {
+// One resize grip, on HandleKnob like TransformManip's: Alt resizes about the centre, Shift flips
+// the lock-aspect default on corners, Ctrl suspends snapping. The drag is one EditorState.drag
+// session, so Esc cancels it whole.
+HandleKnob {
     id: grip
 
     required property var modelData
@@ -10,60 +12,60 @@ Rectangle {
     required property var frame
     required property var overlay
 
-    readonly property real hs: Theme.spacingLg
+    property bool running: false
     readonly property bool isCorner: modelData.dx !== 0 && modelData.dy !== 0
+    readonly property real direction: isCorner ? (modelData.dx === modelData.dy ? 45 : 135)
+                                               : (modelData.dx !== 0 ? 0 : 90)
 
-    width: hs
-    height: hs
-    radius: Theme.c.maskOverlayResizeGrip.radius
-    color: gripArea.containsMouse || gripArea.pressed
-           ? Theme.c.maskOverlayResizeGrip.backgroundHover : Theme.c.maskOverlayResizeGrip.background
-    border.width: Theme.c.maskOverlayResizeGrip.borderWidth
-    border.color: gripArea.containsMouse || gripArea.pressed
-                  ? Theme.c.maskOverlayResizeGrip.borderHover : Theme.c.maskOverlayResizeGrip.border
+    shape: isCorner ? "square" : "dot"
+    space: grip.frame
+    visualSize: Theme.touchInput ? 14 : 8
+    cursor: "resize:" + (direction + (grip.overlay.editorState.rotation || 0) + grip.mask.rotation)
+    x: (modelData.dx === 0 ? grip.mask.width / 2 : (modelData.dx < 0 ? 0 : grip.mask.width)) - width / 2
+    y: (modelData.dy === 0 ? grip.mask.height / 2 : (modelData.dy < 0 ? 0 : grip.mask.height)) - height / 2
 
-    x: (modelData.dx === 0 ? grip.mask.width / 2
-                           : (modelData.dx < 0 ? 0 : grip.mask.width)) - hs / 2
-    y: (modelData.dy === 0 ? grip.mask.height / 2
-                           : (modelData.dy < 0 ? 0 : grip.mask.height)) - hs / 2
+    function norm(point) {
+        return Qt.point(point.x / Math.max(1, grip.frame.width), point.y / Math.max(1, grip.frame.height))
+    }
 
-    MouseArea {
-        id: gripArea
-        anchors.fill: parent
-        // Generous invisible margin: the visible dot stays small enough not to
-        // hide the box edge it sits on.
-        anchors.margins: -Theme.spacingMd
-        hoverEnabled: true
-        cursorShape: grip.modelData.cursor
-        // The body DragHandler would otherwise take the grab once the drag
-        // threshold is passed, turning a resize into a move.
-        preventStealing: true
-        // Zooming with the pointer on a grip should still zoom.
-        onWheel: (wheel) => { wheel.accepted = false }
-
-        onPressed: (mouse) => {
-            const p = mapToItem(grip.frame, mouse.x, mouse.y)
-            const session = EditorState.masking.editSession
-            if (!session.begin(grip.mask.layerId, grip.frame.width, grip.frame.height))
-                return
-            session.beginResize(grip.modelData.dx, grip.modelData.dy,
-                                p.x / Math.max(1, grip.frame.width), p.y / Math.max(1, grip.frame.height))
-            grip.overlay.interacting = true
-            grip.mask.forceActiveFocus()
+    onPressed: (point, modifiers, device) => {
+        const session = EditorState.masking.editSession
+        EditorState.drag.begin("maskResize", device, qsTr("Edit %1").arg(qsTr("Mask")))
+        if (!session.begin(grip.mask.layerId, grip.frame.width, grip.frame.height, false)) {
+            EditorState.drag.cancel()
+            return
         }
+        const n = norm(point)
+        session.beginResize(modelData.dx, modelData.dy, n.x, n.y)
+        running = true
+        grip.overlay.interacting = true
+        grip.mask.forceActiveFocus()
+    }
 
-        onPositionChanged: (mouse) => {
-            if (!pressed)
-                return
-            const p = mapToItem(grip.frame, mouse.x, mouse.y)
-            EditorState.masking.editSession.resize(p.x / Math.max(1, grip.frame.width),
-                                                   p.y / Math.max(1, grip.frame.height),
-                                                   grip.isCorner && (!!(grip.mask.maskData.lockAspect)
-                                                                     !== ((mouse.modifiers & Qt.ShiftModifier) !== 0)),
-                                                   (mouse.modifiers & Qt.ControlModifier) !== 0)
+    onMoved: (point, modifiers) => {
+        if (!running)
+            return
+        const m = Manip.fromQtFlags(modifiers)
+        const n = norm(point)
+        EditorState.masking.editSession.resize(n.x, n.y,
+                                               isCorner && (!!grip.mask.maskData.lockAspect !== m.constrain),
+                                               m.noSnap, m.fromCenter)
+    }
+
+    onReleased: if (running) EditorState.drag.commit()
+
+    Connections {
+        target: EditorState.drag
+        enabled: grip.running
+        function onCommitted() {
+            grip.running = false
+            grip.overlay.endInteraction()
         }
-
-        onReleased: grip.overlay.endInteraction()
-        onCanceled: grip.overlay.endInteraction()
+        function onCancelled() {
+            grip.running = false
+            EditorState.masking.editSession.cancel()
+            grip.overlay.interacting = false
+            Qt.callLater(grip.overlay.refreshOverlay)
+        }
     }
 }

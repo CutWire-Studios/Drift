@@ -72,6 +72,7 @@ qt_add_executable(tst_manip
     ../src/ui/manip/ManipModifiers.h
     ../src/ui/manip/SnapService.cpp
     ../src/ui/manip/DragSession.cpp
+    ../src/ui/manip/PathEditCore.cpp
     ../src/ui/manip/ClipFrameMapper.cpp)
 target_include_directories(tst_manip PRIVATE ../src)
 target_link_libraries(tst_manip PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftengine driftcore)
@@ -314,6 +315,7 @@ qt_add_executable(tst_mcp
     ../src/app/editor/sessions/KeyframeSelection.cpp
     ../src/app/editor/sessions/KeyframeTimeView.cpp
     ../src/app/editor/sessions/MaskEditSession.cpp
+    ../src/app/editor/sessions/PathEditSession.cpp
     ../src/app/editor/sessions/MaskStackModel.cpp
     ../src/app/editor/sessions/MaskSelection.cpp
     ../src/app/editor/sessions/MaskingController.cpp
@@ -350,6 +352,7 @@ qt_add_executable(tst_mcp
     ../src/ui/preview/PreviewController.cpp
     ../src/ui/manip/SnapService.cpp
     ../src/ui/manip/DragSession.cpp
+    ../src/ui/manip/PathEditCore.cpp
     ../src/app/online/addons/AddonCatalog.cpp
     ../src/app/online/addons/AddonManager.cpp
     ../src/app/jobs/JobRegistry.cpp

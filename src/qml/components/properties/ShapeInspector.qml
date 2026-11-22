@@ -205,6 +205,8 @@ Item {
                     }
                 }
 
+                PathPointModeRow { }
+
                 Column {
                     width: parent.width
                     spacing: Theme.spacingXs

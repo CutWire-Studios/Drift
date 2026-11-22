@@ -3022,10 +3022,6 @@
       "border": "$semantic.mutedForeground",
       "borderWidth": "$metrics.borderWidth"
     },
-    "maskOverlayEdgeMidpoint": {
-      "border": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidth"
-    },
     "maskOverlayEmptyHint": {
       "background": "$semantic.surface.panel",
       "foreground": "$semantic.mutedForeground",
@@ -3042,27 +3038,6 @@
       "borderWidth": "$metrics.borderWidth",
       "opacity": 0.5,
       "opacityDisabled": 0.25
-    },
-    "maskOverlayResizeGrip": {
-      "background": "$semantic.primary",
-      "backgroundHover": "$semantic.primaryForeground",
-      "border": "$semantic.primaryForeground",
-      "borderHover": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.xs"
-    },
-    "maskOverlayRotateHandle": {
-      "background": "$semantic.primary",
-      "backgroundHover": "$semantic.primaryForeground",
-      "border": "$semantic.primaryForeground",
-      "borderHover": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidth"
-    },
-    "maskOverlayVertexHandle": {
-      "background": "$semantic.primary",
-      "backgroundHover": "$semantic.primaryForeground",
-      "border": "$semantic.primaryForeground",
-      "borderWidth": "$metrics.borderWidth"
     },
     "mediaPreviewAudioPlaceholder": {
       "icon": "$semantic.mutedForeground"
@@ -3815,28 +3790,15 @@
       "waveAccent": "$semantic.primary",
       "waveMuted": "$semantic.mutedForeground"
     },
-    "shapePathOverlay": {
+    "pathEditor": {
       "closeHint": "$semantic.constructive",
-      "handle": "$semantic.primary",
-      "handleBorder": "$semantic.primaryForeground",
+      "ghostBackground": "$semantic.primaryForeground",
+      "ghostBorder": "$semantic.primary",
+      "ghostForeground": "$semantic.primary",
       "handleLine": "$semantic.primary",
-      "hintBackground": "$semantic.surface.panel",
-      "hintForeground": "$semantic.mutedForeground",
       "outline": "$semantic.primary",
       "outlineWidth": 1.5,
-      "rubberBand": "$semantic.primary",
-      "vertex": "$semantic.primaryForeground",
-      "vertexBorder": "$semantic.primary",
-      "vertexSelected": "$semantic.primary",
-      "vertexSelectedBorder": "$semantic.primaryForeground"
-    },
-    "shapePathHintBar": {
-      "background": "$semantic.surface.panel",
-      "border": "$semantic.panel.border",
-      "borderWidth": "$metrics.borderWidth",
-      "foreground": "$semantic.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
-      "radius": "$metrics.radius.md"
+      "rubberBand": "$semantic.primary"
     },
     "shapePresetCard": {
       "background": "$semantic.panel.accent",

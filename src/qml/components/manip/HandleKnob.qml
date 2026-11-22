@@ -26,7 +26,9 @@ Item {
     property Item space: parent
 
     readonly property bool active: area.dragging
-    readonly property bool hovered: area.hot
+    // For a caller that does its own hit-testing and so never sees the pointer enter the knob.
+    property bool highlighted: false
+    readonly property bool hovered: area.hot || highlighted
     readonly property bool pressedByTouch: area.pressedByTouch
 
     // point is in `space`; modifiers is the event's Qt.KeyboardModifiers; device is a DragSession.Device.
