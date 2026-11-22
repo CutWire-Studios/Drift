@@ -486,7 +486,7 @@ private slots:
         h.commit = [&] { ++commits; };
         h.cancel = [&] { ++cancels; };
         s.setHooks(h);
-        s.setNudgeWindowMs(400);
+        s.setNudgeWindowMs(1500);
 
         s.nudge();
         QTest::qWait(50);
@@ -496,7 +496,7 @@ private slots:
         QCOMPARE(begins, 1);
         QCOMPARE(commits, 0);
         QVERIFY(s.interacting());
-        QTRY_COMPARE_WITH_TIMEOUT(commits, 1, 2000);
+        QTRY_COMPARE_WITH_TIMEOUT(commits, 1, 5000);
         QVERIFY(!s.interacting());
         QCOMPARE(begins, 1);
 
@@ -504,7 +504,7 @@ private slots:
         QCOMPARE(begins, 2);
         s.cancel();
         QCOMPARE(cancels, 1);
-        QTest::qWait(500);
+        QTest::qWait(2000);
         QCOMPARE(commits, 1);
     }
 

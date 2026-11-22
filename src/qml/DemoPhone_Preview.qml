@@ -189,10 +189,10 @@ Item {
         else if (name === "exportprogress") e.exportProgressItem.openDialog()
         else if (name === "notifications") {
             if (a === "toasts") {
-                Toasts.info(qsTr("Tap a clip to edit it"))
-                Toasts.success(qsTr("Export finished"))
-                Toasts.warning(qsTr("Proxy generation is slow on this device"))
-                Toasts.error(qsTr("Could not open the file"))
+                Toasts.info("Tap a clip to edit it")
+                Toasts.success("Export finished")
+                Toasts.warning("Proxy generation is slow on this device")
+                Toasts.error("Could not open the file")
             }
             e.notificationsItem.open()
         }
@@ -201,7 +201,7 @@ Item {
         else if (name === "easing") {
             EditorState.setClipKeyframe(0, 0, "opacity", 0.5, 1)
             EditorState.setClipKeyframe(0, 0, "opacity", 1.5, 0.3)
-            e.openEasingSheet(0, 0, "opacity", qsTr("Opacity"), 0.5)
+            e.openEasingSheet(0, 0, "opacity", "Opacity", 0.5)
         }
         else if (name === "transition") e.openTransitionPicker(0, 0, "", "")
         else if (name === "link") e.startLinkImport("https://example.com/watch?v=abc")
@@ -344,7 +344,7 @@ Item {
         anchors.fill: parent
         active: root.screen[0] === "settings"
         sourceComponent: AndroidSubPage {
-            title: qsTr("Settings")
+            title: "Settings"
             SettingsPane {
                 id: pane
                 anchors.fill: parent

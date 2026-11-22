@@ -9543,33 +9543,6 @@
     </message>
 </context>
 <context>
-    <name>DemoPhone_Preview</name>
-    <message>
-        <source>Tap a clip to edit it</source>
-        <translation type="unfinished">Toque em um clipe para editá-lo</translation>
-    </message>
-    <message>
-        <source>Export finished</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Proxy generation is slow on this device</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not open the file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Opacity</source>
-        <translation type="unfinished">Opacidade</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation type="unfinished">Configurações</translation>
-    </message>
-</context>
-<context>
     <name>DenoiseController</name>
     <message>
         <source>Getting noise removal ready…</source>

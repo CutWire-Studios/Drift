@@ -9507,33 +9507,6 @@
     </message>
 </context>
 <context>
-    <name>DemoPhone_Preview</name>
-    <message>
-        <source>Tap a clip to edit it</source>
-        <translation type="unfinished">클립을 눌러 편집하세요</translation>
-    </message>
-    <message>
-        <source>Export finished</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Proxy generation is slow on this device</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not open the file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Opacity</source>
-        <translation type="unfinished">불투명도</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation type="unfinished">설정</translation>
-    </message>
-</context>
-<context>
     <name>DenoiseController</name>
     <message>
         <source>Getting noise removal ready…</source>
