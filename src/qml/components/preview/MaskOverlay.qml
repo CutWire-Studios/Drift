@@ -19,7 +19,7 @@ Item {
     readonly property bool hasFrame: !!editorState.hasFrame
 
     // True while a grip or body drag is running. Refreshing mid-drag would destroy the delegate
-    // that owns the active grab, exactly as in TransformOverlay.
+    // that owns the active grab, exactly as in TransformManip.
     property bool interacting: false
 
     readonly property real canvasW: Math.max(1, editorState.canvasWidth || 1)
@@ -47,7 +47,7 @@ Item {
         if (signature === layerSignature)
             return
         layerSignature = signature
-        // Set imperatively for the same reason TransformOverlay does: binding the model
+        // Set imperatively for the same reason TransformManip does: binding the model
         // re-enters when tracksChanged fires during delegate setup.
         layerModel = layers
         maskRepeater.model = layers
@@ -505,7 +505,7 @@ Item {
                                                                    "lockAspect", !maskBox.maskData.lockAspect)
                 }
 
-                // Resize grips — the same frame the canvas crop tool and TransformOverlay use.
+                // Resize grips — the same frame the canvas crop tool and TransformManip use.
                 Repeater {
                     model: (maskBox.editable && !maskBox.isSplit && maskBox.isSelected)
                            ? [

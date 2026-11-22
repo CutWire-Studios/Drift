@@ -241,17 +241,21 @@ public:
     // parents and the camera, so the grabbed point stays under the pointer. With `snap`, the
     // projected edges and centre pull to the canvas edges, centre lines and visible guides within
     // `tolerance` canvas px. Returns {valid, x, y, guideX, guideY} with the box's new rect origin;
-    // guides are canvas px, -1 when not engaged.
+    // guides are canvas px, -1 when not engaged. `options` adds {x:[…], y:[…]} target lines (canvas
+    // px; other clips' edges and centres) and {lock:"x"|"y"} to keep the pull off the locked axis.
+    // A rotated box snaps by the bounds of its projected corners.
     Q_INVOKABLE QVariantMap snapMove(const QVariantMap &box, double pressX, double pressY,
                                      double nowX, double nowY, double tolerance, bool snap,
-                                     int viewport = 0) const;
+                                     int viewport = 0, const QVariantMap &options = {}) const;
     // A resize of the box (its rect as it stood at the grab) to `width` x `height`, with the moving
     // edges along `dxSign`/`dySign` (-1 left/top, +1 right/bottom, 0 fixed). `centrePivot` says the
     // rect grows about its centre rather than the opposite edge. Returns {width, height, guideX,
     // guideY, distX, distY}: each axis snapped on its own, with how far it was pulled (-1 if not).
+    // `options` adds {x:[…], y:[…]} target lines as for snapMove.
     Q_INVOKABLE QVariantMap snapResize(const QVariantMap &box, double width, double height,
                                        int dxSign, int dySign, bool centrePivot,
-                                       double tolerance, int viewport = 0) const;
+                                       double tolerance, int viewport = 0,
+                                       const QVariantMap &options = {}) const;
     // Moves several clips as one body from where they stood at the grab (clipsAtPlayhead boxes), all
     // in canvas px: each clip's centre goes to pivot + R(rotationDeg) * S(scaleX, scaleY) * (centre -
     // pivot) + (dx, dy), its size follows the scale and its angle the rotation. Written through the

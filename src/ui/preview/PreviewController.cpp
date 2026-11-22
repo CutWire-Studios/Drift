@@ -17,6 +17,7 @@
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/render3d/models/ModelClipTransform.h"
 #include "engine/compositor/PreviewSnap.h"
+#include "ui/manip/SnapService.h"
 #include "engine/compositor/layers/TransformLayer.h"
 #include "app/editor/AppController.h"
 #include "app/editor/AppControllerDetail.h"
@@ -135,6 +136,15 @@ drift::snap::Targets canvasSnapTargets(double width, double height, const QVaria
     for (const QVariant &v : guides.value(QStringLiteral("y")).toList())
         targets.y << v.toDouble();
     return targets;
+}
+
+// Lines other clips offer, in canvas px: their edges and centres, as the overlay measured them.
+void addExtraTargets(drift::snap::Targets &targets, const QVariantMap &options)
+{
+    for (const QVariant &v : options.value(QStringLiteral("x")).toList())
+        targets.x << v.toDouble();
+    for (const QVariant &v : options.value(QStringLiteral("y")).toList())
+        targets.y << v.toDouble();
 }
 
 // A member's anchor in world space (canvas px from the top-left, y down, +z away from the viewer),
@@ -1357,7 +1367,7 @@ drift::snap::PlacedClip PreviewController::placedClip(const QVariantMap &box, in
 
 QVariantMap PreviewController::snapMove(const QVariantMap &box, double pressX, double pressY,
                                            double nowX, double nowY, double tolerance,
-                                           bool snap, int viewport) const
+                                           bool snap, int viewport, const QVariantMap &options) const
 {
     const drift::snap::PlacedClip placed = placedClip(box, viewport);
     const std::optional<QPointF> delta =
@@ -1365,12 +1375,32 @@ QVariantMap PreviewController::snapMove(const QVariantMap &box, double pressX, d
     if (!delta)
         return {{QStringLiteral("valid"), false}};
     drift::snap::MoveSnap moved{*delta, -1.0, -1.0};
-    // A spun box has no edges along the screen axes to line up, so it does not snap.
-    if (snap && qAbs(box.value(QStringLiteral("rotation")).toDouble()) < 0.01) {
+    if (snap) {
         const double w = box.value(QStringLiteral("canvasWidth")).toDouble();
         const double h = box.value(QStringLiteral("canvasHeight")).toDouble();
         const QVariantMap guides = m_guidesEnabled ? m_app.guideSnapTargets(w, h) : QVariantMap{};
-        moved = drift::snap::snapMove(placed, *delta, canvasSnapTargets(w, h, guides), tolerance);
+        drift::snap::Targets targets = canvasSnapTargets(w, h, guides);
+        addExtraTargets(targets, options);
+        // A move locked to one axis must not be pulled off it by the other axis's targets.
+        const QString lock = options.value(QStringLiteral("lock")).toString();
+        if (lock == QLatin1String("x"))
+            targets.y.clear();
+        else if (lock == QLatin1String("y"))
+            targets.x.clear();
+        if (qAbs(box.value(QStringLiteral("rotation")).toDouble()) < 0.01) {
+            moved = drift::snap::snapMove(placed, *delta, targets, tolerance);
+        } else {
+            // A spun box has no edges along the screen axes, so its bounds on screen stand in: the
+            // box of its projected corners lines up by edge and centre.
+            QPolygonF quad;
+            for (const QVariant &corner : box.value(QStringLiteral("quad")).toList())
+                quad << corner.toPointF();
+            if (quad.size() == 4) {
+                const drift::manip::RectSnap r =
+                    drift::manip::snapRectMove(quad.boundingRect(), *delta, targets, tolerance, false);
+                moved = {r.delta, r.guideX, r.guideY};
+            }
+        }
     }
     return {
         {QStringLiteral("valid"), true},
@@ -1383,7 +1413,8 @@ QVariantMap PreviewController::snapMove(const QVariantMap &box, double pressX, d
 
 QVariantMap PreviewController::snapResize(const QVariantMap &box, double width, double height,
                                              int dxSign, int dySign, bool centrePivot,
-                                             double tolerance, int viewport) const
+                                             double tolerance, int viewport,
+                                             const QVariantMap &options) const
 {
     QVariantMap out{
         {QStringLiteral("width"), width},
@@ -1399,7 +1430,8 @@ QVariantMap PreviewController::snapResize(const QVariantMap &box, double width, 
     const double cw = box.value(QStringLiteral("canvasWidth")).toDouble();
     const double ch = box.value(QStringLiteral("canvasHeight")).toDouble();
     const QVariantMap guides = m_guidesEnabled ? m_app.guideSnapTargets(cw, ch) : QVariantMap{};
-    const drift::snap::Targets targets = canvasSnapTargets(cw, ch, guides);
+    drift::snap::Targets targets = canvasSnapTargets(cw, ch, guides);
+    addExtraTargets(targets, options);
     // Where the moving edge sits in the grabbed rect's own px, as anchor + scale * size: about
     // the centre it moves half as far, about the opposite edge the whole way.
     const auto axis = [&](int sign, double start, double size, bool horizontal,

@@ -1,7 +1,7 @@
 import QtQuick
 import Drift
 
-// One resize grip. The same frame the canvas crop tool and TransformOverlay use.
+// One resize grip. The same frame the canvas crop tool and TransformManip use.
 Rectangle {
     id: grip
 

@@ -1,6 +1,7 @@
 #include <QtTest>
 
 #include "core/geom/BezierPath.h"
+#include "engine/render3d/scene/ClipTransform3d.h"
 #include "ui/manip/ClipFrameMapper.h"
 #include "ui/manip/DragSession.h"
 #include "ui/manip/ManipModifiers.h"
@@ -494,6 +495,52 @@ private slots:
         m.setPose(pose);
         const QPointF n(0.6, 0.4);
         QVERIFY(QLineF(m.canvasToClip(m.clipToCanvas(n)), n).length() < 1e-4);
+    }
+
+    // The overlay used to invert the clip's whole 4x4 pose and divide by w; the mapper inverts its
+    // z = 0 plane. A tipped, spun clip must read the same either way.
+    void mapperMatchesFullMatrixInverseOnTiltedPose()
+    {
+        const QSizeF canvas(1920, 1080);
+        const QRectF rect(120, 80, 400, 300);
+        drift::ClipPose3d pose;
+        pose.rotationX = 25.0;
+        pose.rotationY = -18.0;
+        pose.positionZ = 60.0;
+        pose.perspective = 1200.0;
+        const QMatrix4x4 layoutToCanvas = drift::clipLocalToCanvas(rect, 12.0, pose, canvas);
+
+        ClipFrameMapper m;
+        m.setViewport(canvas, QRectF(0, 0, 1920, 1080));
+        m.setClip(QRectF(0, 0, rect.width(), rect.height()), 0.0);
+        m.setPose(layoutToCanvas);
+
+        const QMatrix4x4 full = layoutToCanvas.inverted();
+        for (const QPointF &layout : {QPointF(0, 0), QPointF(400, 300), QPointF(200, 150), QPointF(37, 281)}) {
+            const QPointF onCanvas = m.layoutToCanvas(layout);
+            const QVector4D v = full.map(QVector4D(float(onCanvas.x()), float(onCanvas.y()), 0.f, 1.f));
+            const QPointF viaFull(v.x() / v.w(), v.y() / v.w());
+            QVERIFY(QLineF(m.canvasToLayout(onCanvas), viaFull).length() < 1e-2);
+            QVERIFY(QLineF(m.canvasToLayout(onCanvas), layout).length() < 1e-2);
+            QVERIFY(std::abs(v.z() / v.w()) < 1e-2);
+        }
+    }
+
+    void mapperParentMatchesFullMatrixInverse()
+    {
+        // A homography lifted to 4x4 the way the preview lifts a transform layer's matrix.
+        const QTransform t(1.1, 0.08, 0.0004, -0.05, 0.9, 0.0002, 30, -20, 1);
+        const QMatrix4x4 lifted(float(t.m11()), float(t.m21()), 0.f, float(t.m31()),
+                                float(t.m12()), float(t.m22()), 0.f, float(t.m32()),
+                                0.f, 0.f, 1.f, 0.f,
+                                float(t.m13()), float(t.m23()), 0.f, float(t.m33()));
+        ClipFrameMapper m;
+        m.setParent(lifted);
+        const QMatrix4x4 full = lifted.inverted();
+        for (const QPointF &p : {QPointF(10, 10), QPointF(640, 360), QPointF(300, 90)}) {
+            const QVector4D v = full.map(QVector4D(float(p.x()), float(p.y()), 0.f, 1.f));
+            QVERIFY(QLineF(m.toParentLocal(p), QPointF(v.x() / v.w(), v.y() / v.w())).length() < 1e-2);
+        }
     }
 };
 

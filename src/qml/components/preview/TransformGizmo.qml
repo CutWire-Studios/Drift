@@ -40,6 +40,16 @@ Item {
         return pose ? EditorState.preview.gizmoGeometry(pose, sx, handleSize, viewport) : null
     }
 
+    // Drops a drag in flight without announcing it, for when the owner has cancelled the edit.
+    function abort() {
+        if (dragging === "")
+            return
+        dragging = ""
+        livePose = null
+        area.startPose = null
+        area.startBoxes = null
+    }
+
     function pickAt(x, y) {
         if (!pose || !geometry || !geometry.valid)
             return ""

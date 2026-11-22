@@ -1279,15 +1279,6 @@ qt_add_executable(drift
     src/ui/preview/BrushStrokeItem.cpp
     src/ui/preview/ToolCursor.h
     src/ui/preview/ToolCursor.cpp
-    src/ui/manip/ManipModifiers.h
-    src/ui/manip/SnapService.h
-    src/ui/manip/SnapService.cpp
-    src/ui/manip/DragSession.h
-    src/ui/manip/DragSession.cpp
-    src/ui/manip/ClipFrameMapper.h
-    src/ui/manip/ClipFrameMapper.cpp
-    src/ui/manip/ManipQml.h
-    src/ui/manip/ManipQml.cpp
     src/ui/color/ColorWheelMath.h
     src/ui/color/ColorWheelPad.h
     src/ui/color/ColorWheelPad.cpp
@@ -1308,6 +1299,15 @@ qt_add_executable(drift
     src/ui/preview/ConfidenceStripItem.cpp
 )
 target_sources(driftapp PRIVATE
+    src/ui/manip/ManipModifiers.h
+    src/ui/manip/SnapService.h
+    src/ui/manip/SnapService.cpp
+    src/ui/manip/DragSession.h
+    src/ui/manip/DragSession.cpp
+    src/ui/manip/ClipFrameMapper.h
+    src/ui/manip/ClipFrameMapper.cpp
+    src/ui/manip/ManipQml.h
+    src/ui/manip/ManipQml.cpp
     src/ui/imageproviders/segment/SegmentImageStore.h
     src/ui/imageproviders/segment/SegmentImageStore.cpp
     src/playback/preview/ClipPreviewImageStore.h
@@ -1926,12 +1926,18 @@ qt_add_qml_module(drift
         src/qml/components/preview/modes/Preview3DFlyHint.qml
         src/qml/components/preview/modes/Preview3DFlyDeadZone.qml
         src/qml/components/preview/TransformGizmo.qml
-        src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/PreviewDropOverlay.qml
         src/qml/components/preview/CropOverlay.qml
         src/qml/components/preview/GuideLayer.qml
         src/qml/components/preview/GuidesPopover.qml
         src/qml/components/manip/HandleKnob.qml
+        src/qml/components/manip/TransformManip.qml
+        src/qml/components/manip/transform/TransformClipBox.qml
+        src/qml/components/manip/transform/TransformGrip.qml
+        src/qml/components/manip/transform/TransformRotate.qml
+        src/qml/components/manip/transform/TransformAnchor.qml
+        src/qml/components/manip/transform/TransformGroupBox.qml
+        src/qml/components/manip/transform/TransformParentFrame.qml
         src/qml/components/manip/LiveReadout.qml
         src/qml/components/manip/Loupe.qml
         src/qml/components/manip/ManipOverlay.qml
@@ -1947,7 +1953,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/DepthEffectOverlay.qml
         src/qml/components/preview/DepthLight3dOverlay.qml
         src/qml/components/preview/Checkerboard.qml
-        src/qml/components/android/AndroidTransformOverlay.qml
         src/qml/components/android/AndroidClipCropOverlay.qml
         src/qml/components/android/AndroidCropOverlay.qml
         src/qml/SegmentationWindow.qml
@@ -2495,14 +2500,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/transport/PreviewTransportGoToStartButton.qml
         src/qml/components/preview/transport/PreviewTransportGoToEndButton.qml
         src/qml/components/preview/transform/TransformOverlaySnapGuide.qml
-        src/qml/components/preview/transform/TransformOverlaySizeReadout.qml
-        src/qml/components/preview/transform/TransformOverlayRotateHandle.qml
-        src/qml/components/preview/transform/TransformOverlayResizeGrip.qml
-        src/qml/components/preview/transform/TransformOverlayParentOutline.qml
-        src/qml/components/preview/transform/TransformOverlayParentChip.qml
-        src/qml/components/preview/transform/TransformOverlayLayerChip.qml
-        src/qml/components/preview/transform/TransformOverlayBoxBorder.qml
-        src/qml/components/preview/transform/TransformOverlayGroupBox.qml
         src/qml/components/preview/text/InlineTextSelectionHandle.qml
         src/qml/components/preview/status/PreviewVoiceoverBadge.qml
         src/qml/components/preview/status/PreviewGapCaption.qml
@@ -2603,13 +2600,6 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsPane.qml
         src/qml/components/android/SheetActionRow.qml
         src/qml/components/android/SheetActionTile.qml
-        src/qml/components/android/AndroidTransformSnapLine.qml
-        src/qml/components/android/AndroidTransformSizeReadout.qml
-        src/qml/components/android/AndroidTransformRotateHandle.qml
-        src/qml/components/android/AndroidTransformResizeGrip.qml
-        src/qml/components/android/AndroidTransformParentFrame.qml
-        src/qml/components/android/AndroidTransformLayerChip.qml
-        src/qml/components/android/AndroidTransformClipOutline.qml
         src/qml/components/android/AndroidTopBarTitleButton.qml
         src/qml/components/android/AndroidTopBarExportButton.qml
         src/qml/components/android/AndroidTopBarCountBadge.qml

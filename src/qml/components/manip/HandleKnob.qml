@@ -98,9 +98,12 @@ Item {
         }
     }
 
+    // A custom cursor only over the mouse reach, not the finger-sized area around it.
     Item {
         id: cursorItem
-        anchors.fill: parent
+        anchors.centerIn: parent
+        width: knob.mouseHitSize
+        height: knob.mouseHitSize
     }
 
     ToolCursor {

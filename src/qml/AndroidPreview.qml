@@ -238,8 +238,9 @@ Item {
 
     Component {
         id: transformTool
-        AndroidTransformOverlay {
+        TransformManip {
             canvas: viewport.canvas
+            touch: true
             onTextEditRequested: (track, clip) => viewport.textEditor.start(track, clip, false)
         }
     }

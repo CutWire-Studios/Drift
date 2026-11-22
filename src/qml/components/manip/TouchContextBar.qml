@@ -55,6 +55,10 @@ Rectangle {
     border.width: Theme.c.manipContextBar.borderWidth
     border.color: Theme.c.manipContextBar.border
 
+    MouseArea {
+        anchors.fill: parent
+    }
+
     Row {
         id: row
         anchors.centerIn: parent

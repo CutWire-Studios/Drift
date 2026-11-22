@@ -877,6 +877,10 @@ public:
     Q_INVOKABLE void previewSetTextRect(int trackIndex, int clipIndex, double posX, double posY,
                                         double frameW, double frameH);
     Q_INVOKABLE void previewSetClipRotation(int trackIndex, int clipIndex, double degrees);
+    // Moves the pivot: anchorX/anchorY are frame px from the frame's top-left, and posX/posY the
+    // new place of the anchor on the canvas, which the caller solves so the picture stays put.
+    Q_INVOKABLE void previewSetClipAnchor(int trackIndex, int clipIndex, double anchorX, double anchorY,
+                                          double posX, double posY);
     Q_INVOKABLE void previewSetClipKeyframe(int trackIndex, int clipIndex, const QString &prop,
                                             double atSeconds, double value);
     Q_INVOKABLE void previewSetEffectParam(int trackIndex, int clipIndex, int effectIndex,
