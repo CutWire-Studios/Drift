@@ -1,11 +1,20 @@
 #include <QtTest>
 
+#include "core/effects/Mask.h"
 #include "core/geom/BezierPath.h"
+#include "core/project/Project.h"
+#include "core/project/Track.h"
+#include "core/shapes/ShapeStyle.h"
+#include "engine/compositor/layers/MaskApplier.h"
 #include "engine/render3d/scene/ClipTransform3d.h"
 #include "ui/manip/ClipFrameMapper.h"
 #include "ui/manip/DragSession.h"
 #include "ui/manip/ManipModifiers.h"
 #include "ui/manip/SnapService.h"
+
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QPainterPath>
 
 #include <cmath>
 
@@ -21,7 +30,7 @@ ShapeVertex vtx(double x, double y, double inX = 0, double inY = 0, double outX 
     v.p = {x, y};
     v.in = {inX, inY};
     v.out = {outX, outY};
-    v.smooth = inX != 0 || inY != 0 || outX != 0 || outY != 0;
+    v.mode = inX != 0 || inY != 0 || outX != 0 || outY != 0 ? TangentMode::Mirrored : TangentMode::Corner;
     return v;
 }
 
@@ -75,7 +84,7 @@ private slots:
         ShapeContour c;
         c.vertices = {vtx(0, 0), vtx(1, 0), vtx(1, 1)};
         splitSegment(c, 0, 0.5);
-        QVERIFY(!c.vertices[1].smooth);
+        QVERIFY(!c.vertices[1].smooth());
         QCOMPARE(c.vertices[1].p, QPointF(0.5, 0));
     }
 
@@ -159,7 +168,7 @@ private slots:
         ShapeVertex m = applyTangentDrag(v, TangentHandle::Out, target, TangentMode::Mirrored, false);
         QCOMPARE(m.out, QPointF(0.0, 0.3));
         QCOMPARE(m.in, QPointF(0.0, -0.3));
-        QVERIFY(m.smooth);
+        QVERIFY(m.smooth());
 
         ShapeVertex a = applyTangentDrag(v, TangentHandle::Out, target, TangentMode::Aligned, false);
         QCOMPARE(a.out, QPointF(0.0, 0.3));
@@ -169,7 +178,7 @@ private slots:
         ShapeVertex f = applyTangentDrag(v, TangentHandle::In, target, TangentMode::Free, false);
         QCOMPARE(f.in, QPointF(0.0, 0.3));
         QCOMPARE(f.out, v.out);
-        QVERIFY(!f.smooth);
+        QVERIFY(!f.smooth());
 
         ShapeVertex c = applyTangentDrag(v, TangentHandle::Out, target, TangentMode::Corner, false);
         QCOMPARE(c.in, v.in);
@@ -541,6 +550,154 @@ private slots:
             const QVector4D v = full.map(QVector4D(float(p.x()), float(p.y()), 0.f, 1.f));
             QVERIFY(QLineF(m.toParentLocal(p), QPointF(v.x() / v.w(), v.y() / v.w())).length() < 1e-2);
         }
+    }
+
+    // ---- format 32: bezier mask vertices ----
+
+    static drift::Project maskProject(const drift::Mask &mask)
+    {
+        drift::Project project;
+        project.tracks().clear();
+        project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+        drift::Clip clip;
+        clip.id = QStringLiteral("mask-clip");
+        clip.type = drift::ClipType::Adjustment;
+        clip.adjustmentKind = drift::AdjustmentKind::Mask;
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.mask = mask;
+        project.tracks()[0].clips.append(clip);
+        return project;
+    }
+
+    static QJsonObject &maskJson(QJsonObject &projectJson, QJsonObject &holder)
+    {
+        holder = projectJson.value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                     .value(QStringLiteral("clips")).toArray().at(0).toObject()
+                     .value(QStringLiteral("mask")).toObject();
+        return holder;
+    }
+
+    void format31PolygonMaskLoadsAsCornersAndRendersIdentically()
+    {
+        const QList<QPointF> poly = {{0.2, 0.2}, {0.8, 0.25}, {0.7, 0.8}, {0.25, 0.7}};
+        drift::Mask mask;
+        mask.shape = drift::MaskShape::Freeform;
+        mask.vertices = drift::cornerVertices(QVector<QPointF>(poly.begin(), poly.end()));
+        mask.pathKeys.insert(0, mask.vertices);
+        mask.pathKeys.insert(drift::secondsToUs(1.0),
+                             drift::cornerVertices({{0.3, 0.2}, {0.9, 0.25}, {0.7, 0.9}, {0.2, 0.7}}));
+
+        // A format 31 file: version 31 and a mask whose points and pathKeys are bare [x, y] pairs.
+        QJsonObject json = maskProject(mask).toJson();
+        json.insert(QStringLiteral("version"), 31);
+        QJsonObject legacyMask;
+        maskJson(json, legacyMask);
+        for (const QJsonValue &v : legacyMask.value(QStringLiteral("points")).toArray())
+            QCOMPARE(v.toArray().size(), 2);
+        for (const QJsonValue &key : legacyMask.value(QStringLiteral("pathKeys")).toArray()) {
+            for (const QJsonValue &v : key.toArray().at(1).toArray())
+                QCOMPARE(v.toArray().size(), 2);
+        }
+
+        QString error;
+        const drift::Project loaded = drift::Project::fromJson(json, &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        const drift::Mask &m = loaded.tracks().at(0).clips.at(0).mask;
+        QCOMPARE(m.vertices.size(), 4);
+        for (int i = 0; i < 4; ++i) {
+            QCOMPARE(m.vertices.at(i).p, poly.at(i));
+            QVERIFY(m.vertices.at(i).in.isNull() && m.vertices.at(i).out.isNull());
+            QCOMPARE(m.vertices.at(i).mode, drift::TangentMode::Corner);
+        }
+        QCOMPARE(m.pathKeys.size(), 2);
+        QCOMPARE(m.pathKeys.last().at(1).p, QPointF(0.9, 0.25));
+
+        const int w = 1920;
+        const int h = 1080;
+        QPainterPath old;
+        old.moveTo(poly.at(0).x() * w, poly.at(0).y() * h);
+        for (int i = 1; i < poly.size(); ++i)
+            old.lineTo(poly.at(i).x() * w, poly.at(i).y() * h);
+        old.closeSubpath();
+
+        const QPainterPath now = drift::maskPath(m, w, h);
+        QCOMPARE(now.elementCount(), old.elementCount());
+        for (int i = 0; i < now.elementCount(); ++i) {
+            QCOMPARE(now.elementAt(i).type, old.elementAt(i).type);
+            QCOMPARE(now.elementAt(i).x, old.elementAt(i).x);
+            QCOMPARE(now.elementAt(i).y, old.elementAt(i).y);
+        }
+
+        const drift::Mask halfway = m.resolvedAt(drift::secondsToUs(0.5));
+        QVERIFY(std::abs(halfway.vertices.at(0).p.x() - 0.25) < 1e-9);
+    }
+
+    void format32MaskRoundTripsHandlesAndModes()
+    {
+        drift::Mask mask;
+        mask.shape = drift::MaskShape::Freeform;
+        mask.vertices = {ShapeVertex{{0.2, 0.5}, {-0.1, 0.0}, {0.1, 0.0}, TangentMode::Mirrored},
+                         ShapeVertex{{0.5, 0.2}, {-0.05, 0.02}, {0.08, 0.0}, TangentMode::Aligned},
+                         ShapeVertex{{0.8, 0.5}, {0.0, -0.1}, {0.0, 0.1}, TangentMode::Free},
+                         ShapeVertex{{0.5, 0.8}, {}, {}, TangentMode::Corner}};
+        mask.pathKeys.insert(drift::secondsToUs(1.0), mask.vertices);
+        QVector<ShapeVertex> later = mask.vertices;
+        later[0].out = {0.3, 0.1};
+        mask.pathKeys.insert(drift::secondsToUs(2.0), later);
+
+        const QJsonObject json = maskProject(mask).toJson();
+        QCOMPARE(json.value(QStringLiteral("version")).toInt(), 32);
+
+        QString error;
+        const drift::Project loaded = drift::Project::fromJson(json, &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        const drift::Mask &m = loaded.tracks().at(0).clips.at(0).mask;
+        QCOMPARE(m.vertices, mask.vertices);
+        QCOMPARE(m.pathKeys, mask.pathKeys);
+
+        const drift::Mask mid = m.resolvedAt(drift::secondsToUs(1.5));
+        QVERIFY(std::abs(mid.vertices.at(0).out.x() - 0.2) < 1e-9);
+        QVERIFY(std::abs(mid.vertices.at(0).out.y() - 0.05) < 1e-9);
+        QCOMPARE(mid.vertices.at(1).mode, TangentMode::Aligned);
+
+        const QPainterPath path = drift::maskPath(m, 100, 100);
+        bool anyCurve = false;
+        for (int i = 0; i < path.elementCount(); ++i)
+            anyCurve = anyCurve || path.elementAt(i).type == QPainterPath::CurveToElement;
+        QVERIFY(anyCurve);
+    }
+
+    void shapePathVertexJsonKeepsOldSmoothMapping()
+    {
+        // A pre-mode file: smooth:true is mirrored, absent is a corner.
+        ShapeStyle style;
+        style.kind = ShapeKind::Path;
+        QJsonObject o = shapeStyleToJson(style);
+        o.insert(QStringLiteral("contours"),
+                 QJsonArray{QJsonObject{{QStringLiteral("closed"), true},
+                                        {QStringLiteral("vertices"),
+                                         QJsonArray{QJsonObject{{QStringLiteral("x"), 0.1}, {QStringLiteral("y"), 0.2},
+                                                                {QStringLiteral("inX"), -0.1}, {QStringLiteral("outX"), 0.1},
+                                                                {QStringLiteral("smooth"), true}},
+                                                    QJsonObject{{QStringLiteral("x"), 0.9}, {QStringLiteral("y"), 0.9}}}}}});
+        const ShapeStyle old = shapeStyleFromJson(o);
+        QCOMPARE(old.contours.size(), 1);
+        QCOMPARE(old.contours.at(0).vertices.at(0).mode, TangentMode::Mirrored);
+        QCOMPARE(old.contours.at(0).vertices.at(0).out, QPointF(0.1, 0.0));
+        QCOMPARE(old.contours.at(0).vertices.at(1).mode, TangentMode::Corner);
+
+        ShapeStyle styled = old;
+        styled.contours[0].vertices[1].mode = TangentMode::Aligned;
+        styled.contours[0].vertices.append(ShapeVertex{{0.5, 0.5}, {-0.1, 0.0}, {0.1, 0.0}, TangentMode::Free});
+        const QJsonObject written = shapeStyleToJson(styled);
+        const QJsonArray vertices = written.value(QStringLiteral("contours")).toArray().at(0).toObject()
+                                        .value(QStringLiteral("vertices")).toArray();
+        QVERIFY(vertices.at(0).toObject().value(QStringLiteral("smooth")).toBool());
+        QVERIFY(!vertices.at(0).toObject().contains(QStringLiteral("mode")));
+        QVERIFY(vertices.at(1).toObject().value(QStringLiteral("smooth")).toBool());
+        QCOMPARE(vertices.at(1).toObject().value(QStringLiteral("mode")).toString(), QStringLiteral("aligned"));
+        QVERIFY(!vertices.at(2).toObject().value(QStringLiteral("smooth")).toBool());
+        QCOMPARE(shapeStyleFromJson(written).contours, styled.contours);
     }
 };
 

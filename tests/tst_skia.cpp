@@ -868,7 +868,7 @@ void SkiaTest::openPathStrokesCentredWithCaps()
     ShapeStyle style = shapeStyleWith(ShapeKind::Path, QColor(255, 0, 0), 10.0, Qt::green);
     style.layers[0].enabled = false;
     style.layers[1].strokeAlign = StrokeAlign::Inside; // meaningless on an open path
-    style.contours = {ShapeContour{{{QPointF(0.2, 0.5), {}, {}, false}, {QPointF(0.8, 0.5), {}, {}, false}}, false}};
+    style.contours = {ShapeContour{{{QPointF(0.2, 0.5), {}, {}, TangentMode::Corner}, {QPointF(0.8, 0.5), {}, {}, TangentMode::Corner}}, false}};
 
     const int w = 200;
     const int h = 40;

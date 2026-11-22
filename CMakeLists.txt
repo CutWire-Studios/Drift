@@ -615,6 +615,7 @@ add_library(driftcore STATIC
     src/core/text/TextPresetStore.cpp
     src/core/effects/EffectStackStore.h
     src/core/effects/EffectStackStore.cpp
+    src/core/shapes/ShapeVertex.h
     src/core/shapes/ShapeStyle.h
     src/core/shapes/ShapeStyle.cpp
     src/core/shapes/ShapePath.h

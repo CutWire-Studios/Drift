@@ -75,13 +75,13 @@ ShapeStyle makeStyle(ShapeKind kind, const QColor &fill, const QColor &fillSecon
 
 ShapeVertex corner(double x, double y)
 {
-    return {QPointF(x, y), {}, {}, false};
+    return {QPointF(x, y), {}, {}, TangentMode::Corner};
 }
 
 // A smooth vertex with its tangent handles mirrored.
 ShapeVertex smoothVertex(double x, double y, double dx, double dy)
 {
-    return {QPointF(x, y), QPointF(-dx, -dy), QPointF(dx, dy), true};
+    return {QPointF(x, y), QPointF(-dx, -dy), QPointF(dx, dy), TangentMode::Mirrored};
 }
 
 // Open stroke-only path: fill off, round caps, centred so the width reads the same on both sides.
@@ -159,13 +159,13 @@ QList<ShapeCatalogEntry> buildCatalog()
         {QStringLiteral("line"), QCoreApplication::translate("ShapeStyle", "Line"), QStringLiteral("lines"), 12.0,
          makeLineStyle({corner(0.0, 0.5), corner(1.0, 0.5)})},
         {QStringLiteral("curve"), QCoreApplication::translate("ShapeStyle", "Curve"), QStringLiteral("lines"), 1.6,
-         makeLineStyle({{QPointF(0.0, 1.0), {}, QPointF(0.5, 0.0), true}, {QPointF(1.0, 0.0), QPointF(-0.5, 0.0), {}, true}})},
+         makeLineStyle({{QPointF(0.0, 1.0), {}, QPointF(0.5, 0.0), TangentMode::Mirrored}, {QPointF(1.0, 0.0), QPointF(-0.5, 0.0), {}, TangentMode::Mirrored}})},
         {QStringLiteral("wave"), QCoreApplication::translate("ShapeStyle", "Wave"), QStringLiteral("lines"), 4.0,
-         makeLineStyle({{QPointF(0.0, 0.5), {}, QPointF(0.0833, -0.5), true},
+         makeLineStyle({{QPointF(0.0, 0.5), {}, QPointF(0.0833, -0.5), TangentMode::Mirrored},
                         smoothVertex(0.25, 0.0, 0.0833, 0.0),
                         smoothVertex(0.5, 1.0, 0.0833, 0.0),
                         smoothVertex(0.75, 0.0, 0.0833, 0.0),
-                        {QPointF(1.0, 0.5), QPointF(-0.0833, 0.5), {}, true}})},
+                        {QPointF(1.0, 0.5), QPointF(-0.0833, 0.5), {}, TangentMode::Mirrored}})},
         {QStringLiteral("zigzag"), QCoreApplication::translate("ShapeStyle", "Zigzag"), QStringLiteral("lines"), 4.0,
          makeLineStyle({corner(0.0, 1.0), corner(0.2, 0.0), corner(0.4, 1.0), corner(0.6, 0.0), corner(0.8, 1.0),
                         corner(1.0, 0.0)})},
@@ -629,8 +629,12 @@ QJsonArray contoursToJson(const QVector<ShapeContour> &contours)
                 o.insert(QStringLiteral("outX"), v.out.x());
                 o.insert(QStringLiteral("outY"), v.out.y());
             }
-            if (v.smooth)
+            // `smooth` stays for builds that predate the mode field; they read an Aligned vertex as
+            // mirrored and a Free one as a plain corner with handles, and neither changes the outline.
+            if (v.smooth())
                 o.insert(QStringLiteral("smooth"), true);
+            if (v.mode == TangentMode::Aligned || v.mode == TangentMode::Free)
+                o.insert(QStringLiteral("mode"), tangentModeToString(v.mode));
             vertices.append(o);
         }
         out.append(QJsonObject{{QStringLiteral("closed"), c.closed}, {QStringLiteral("vertices"), vertices}});
@@ -651,7 +655,10 @@ QVector<ShapeContour> contoursFromJson(const QJsonArray &array)
             v.p = QPointF(o.value(QStringLiteral("x")).toDouble(), o.value(QStringLiteral("y")).toDouble());
             v.in = QPointF(o.value(QStringLiteral("inX")).toDouble(), o.value(QStringLiteral("inY")).toDouble());
             v.out = QPointF(o.value(QStringLiteral("outX")).toDouble(), o.value(QStringLiteral("outY")).toDouble());
-            v.smooth = o.value(QStringLiteral("smooth")).toBool(false);
+            v.mode = o.contains(QStringLiteral("mode"))
+                         ? tangentModeFromString(o.value(QStringLiteral("mode")).toString())
+                         : (o.value(QStringLiteral("smooth")).toBool(false) ? TangentMode::Mirrored
+                                                                           : TangentMode::Corner);
             c.vertices.append(v);
         }
         out.append(c);

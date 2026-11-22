@@ -2341,10 +2341,10 @@ QVariantMap PreviewController::maskEditorState() const
             {QStringLiteral("animated"), adjustment.mask.isAnimated()},
             {QStringLiteral("mask"), maskToMap(resolved, adjustment.timelineStart)},
         };
-        if (resolved.shape == drift::MaskShape::Freeform && !resolved.points.isEmpty()) {
+        if (resolved.shape == drift::MaskShape::Freeform && !resolved.vertices.isEmpty()) {
             QSizeF size;
-            const QPointF centre =
-                MaskEditSession::bounds(QList<QPointF>(resolved.points.begin(), resolved.points.end()), &size);
+            const QVector<QPointF> anchors = drift::vertexPositions(resolved.vertices);
+            const QPointF centre = MaskEditSession::bounds(QList<QPointF>(anchors.begin(), anchors.end()), &size);
             layer.insert(QStringLiteral("bounds"), QVariantMap{{QStringLiteral("x"), centre.x()},
                                                               {QStringLiteral("y"), centre.y()},
                                                               {QStringLiteral("w"), size.width()},

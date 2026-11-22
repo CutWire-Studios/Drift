@@ -348,6 +348,8 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/audio/VoiceLibrary.cpp
     ../src/ui/preview/Outliner3dModel.cpp
     ../src/ui/preview/PreviewController.cpp
+    ../src/ui/manip/SnapService.cpp
+    ../src/ui/manip/DragSession.cpp
     ../src/app/online/addons/AddonCatalog.cpp
     ../src/app/online/addons/AddonManager.cpp
     ../src/app/jobs/JobRegistry.cpp

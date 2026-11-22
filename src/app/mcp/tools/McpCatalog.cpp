@@ -129,7 +129,7 @@ QJsonObject maskSchema()
         {QStringLiteral("lockAspect"), boolProp(QStringLiteral("Editing only: the corner handles and the inspector keep w:h; rendering ignores it. Omitted: the clip's current lock is kept"))},
         {QStringLiteral("points"),
          arrayProp({{QStringLiteral("type"), QJsonArray{QStringLiteral("array"), QStringLiteral("object")}}},
-                   QStringLiteral("freeform only: [{x,y}, …] as inspect emits it, or [[x,y], …]; normalised 0..1"))},
+                   QStringLiteral("freeform only: closed bezier path as vertices [{x,y,inX?,inY?,outX?,outY?,mode?}, ...] as inspect emits them. x,y is the vertex; inX,inY / outX,outY are the handle offsets from it (omitted or 0 = straight corner); mode is corner|mirrored|aligned|free and records how the handles are kept while editing. Plain [{x,y}, ...] and [[x,y], ...] still work and give a corner polygon. Normalised 0..1 across the clip frame"))},
         {QStringLiteral("op"), enumProp(QStringLiteral("How the mask combines (default add)"),
                                         {QStringLiteral("add"), QStringLiteral("subtract"), QStringLiteral("intersect")})},
         {QStringLiteral("enabled"), boolProp(QStringLiteral("Mask on/off without losing it (default true)"))},

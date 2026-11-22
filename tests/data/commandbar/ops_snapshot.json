@@ -2728,7 +2728,7 @@
        "type": "string"
       },
       "points": {
-       "description": "freeform only: [{x,y}, \u2026] as inspect emits it, or [[x,y], \u2026]; normalised 0..1",
+       "description": "freeform only: closed bezier path as vertices [{x,y,inX?,inY?,outX?,outY?,mode?}, ...] as inspect emits them. x,y is the vertex; inX,inY / outX,outY are the handle offsets from it (omitted or 0 = straight corner); mode is corner|mirrored|aligned|free and records how the handles are kept while editing. Plain [{x,y}, ...] and [[x,y], ...] still work and give a corner polygon. Normalised 0..1 across the clip frame",
        "items": {
         "type": [
          "array",

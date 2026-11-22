@@ -1,12 +1,15 @@
 #pragma once
 
 #include "core/effects/Mask.h"
+#include "core/shapes/ShapeVertex.h"
 
 #include <QList>
 #include <QObject>
 #include <QPointF>
 #include <QRectF>
 #include <QString>
+#include <QVariantList>
+#include <QVector>
 
 class AppController;
 class MaskingController;
@@ -29,6 +32,7 @@ class MaskEditSession : public QObject
     Q_PROPERTY(double snapGuideX READ snapGuideX NOTIFY snapGuidesChanged)
     Q_PROPERTY(double snapGuideY READ snapGuideY NOTIFY snapGuidesChanged)
     Q_PROPERTY(QList<QPointF> livePoints READ livePoints NOTIFY liveChanged)
+    Q_PROPERTY(QVariantList liveVertices READ liveVertices NOTIFY liveChanged)
     Q_PROPERTY(QList<int> selectedPoints READ selectedPoints NOTIFY selectionChanged)
     Q_PROPERTY(QString selectionClipId READ selectionClipId NOTIFY selectionChanged)
 
@@ -44,7 +48,9 @@ public:
     double liveRotation() const { return m_rotation; }
     double snapGuideX() const { return m_snapGuideX; }
     double snapGuideY() const { return m_snapGuideY; }
-    QList<QPointF> livePoints() const { return m_points; }
+    // Anchor positions only; liveVertices carries the handles and tangent mode as well.
+    QList<QPointF> livePoints() const;
+    QVariantList liveVertices() const;
     QList<int> selectedPoints() const { return m_selected; }
     QString selectionClipId() const { return m_selClipId; }
 
@@ -130,10 +136,10 @@ private:
     double m_snapGuideX = -1, m_snapGuideY = -1;
 
     double m_x = 0, m_y = 0, m_w = 0, m_h = 0, m_rotation = 0;
-    QList<QPointF> m_points;
+    QVector<drift::ShapeVertex> m_vertices;
 
     double m_startX = 0, m_startY = 0, m_startW = 0, m_startH = 0;
-    QList<QPointF> m_startPoints;
+    QVector<drift::ShapeVertex> m_startVertices;
     QList<int> m_selected;
     QString m_selClipId;
     QList<int> m_marqueeBase;

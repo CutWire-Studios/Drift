@@ -7,14 +7,12 @@
 
 namespace drift::geom {
 
-enum class TangentMode { Corner, Mirrored, Aligned, Free };
+using drift::TangentMode;
 enum class TangentHandle { In, Out };
 
-// ShapeVertex only stores `smooth`, so it can say Corner or Mirrored. Aligned and Free exist for
-// callers that hold the mode themselves until the serialized format grows a field.
 inline TangentMode tangentModeOf(const ShapeVertex &v)
 {
-    return v.smooth ? TangentMode::Mirrored : TangentMode::Corner;
+    return v.mode;
 }
 
 int segmentCount(const ShapeContour &c);

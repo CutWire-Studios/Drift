@@ -97,7 +97,7 @@ int splitSegment(ShapeContour &c, int seg, double t)
     if (curved) {
         nv.in = r0 - s;
         nv.out = r1 - s;
-        nv.smooth = true;
+        nv.mode = TangentMode::Aligned;
     }
     c.vertices.insert(seg + 1, nv);
     return seg + 1;
@@ -266,7 +266,7 @@ ShapeVertex applyTangentDrag(ShapeVertex v, TangentHandle which, const QPointF &
     case TangentMode::Free:
         break;
     }
-    v.smooth = mode == TangentMode::Mirrored || mode == TangentMode::Aligned;
+    v.mode = mode;
     return v;
 }
 

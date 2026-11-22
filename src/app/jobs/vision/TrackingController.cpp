@@ -450,7 +450,7 @@ bool stripChannel(drift::KeyframeTrack<double> &track, TimeUs lo, TimeUs hi, Tim
 struct PathPose
 {
     TimeUs t = 0;
-    QVector<QPointF> points; // normalized
+    QVector<drift::ShapeVertex> points; // normalized
 };
 
 QVector<QPointF> resampled(const QPolygonF &polygon, int count)
@@ -477,9 +477,10 @@ QVector<QPointF> resampled(const QPolygonF &polygon, int count)
     return out;
 }
 
-// The mask's outline in clip-frame pixels, as a polygon the tracker can move. Empty with `error`
-// set when the shape has no such outline.
-QVector<QPointF> restVertices(const drift::Mask &rest, QSizeF px, QString *error)
+// The mask's outline in clip-frame pixels, as vertices the tracker can move. A freeform keeps its
+// handles; every other shape comes out as a polygon of corners. Empty with `error` set when the
+// shape has no such outline.
+QVector<drift::ShapeVertex> restVertices(const drift::Mask &rest, QSizeF px, QString *error)
 {
     const QPointF centre(rest.x * px.width(), rest.y * px.height());
     QTransform spin;
@@ -489,10 +490,22 @@ QVector<QPointF> restVertices(const drift::Mask &rest, QSizeF px, QString *error
 
     QVector<QPointF> out;
     switch (rest.shape) {
-    case drift::MaskShape::Freeform:
-        for (const QPointF &p : rest.points)
-            out.append(QPointF(p.x() * px.width(), p.y() * px.height()));
-        break;
+    case drift::MaskShape::Freeform: {
+        QVector<drift::ShapeVertex> vertices;
+        for (const drift::ShapeVertex &v : rest.vertices) {
+            drift::ShapeVertex scaled = v;
+            scaled.p = QPointF(v.p.x() * px.width(), v.p.y() * px.height());
+            scaled.in = QPointF(v.in.x() * px.width(), v.in.y() * px.height());
+            scaled.out = QPointF(v.out.x() * px.width(), v.out.y() * px.height());
+            vertices.append(scaled);
+        }
+        if (vertices.size() < 3) {
+            if (error)
+                *error = TrackingController::tr("This mask shape cannot follow a perspective or planar track");
+            return {};
+        }
+        return vertices;
+    }
     case drift::MaskShape::Rectangle: {
         const double hw = rest.w * px.width() / 2.0;
         const double hh = rest.h * px.height() / 2.0;
@@ -540,7 +553,18 @@ QVector<QPointF> restVertices(const drift::Mask &rest, QSizeF px, QString *error
     }
     if (out.size() < 3 && error)
         *error = TrackingController::tr("This mask shape cannot follow a perspective or planar track");
-    return out.size() < 3 ? QVector<QPointF>() : out;
+    return out.size() < 3 ? QVector<drift::ShapeVertex>() : drift::cornerVertices(out);
+}
+
+QVector<drift::ShapeVertex> normalizedVertices(const QVector<drift::ShapeVertex> &pixels, QSizeF space)
+{
+    QVector<drift::ShapeVertex> out = pixels;
+    for (drift::ShapeVertex &v : out) {
+        v.p = QPointF(v.p.x() / space.width(), v.p.y() / space.height());
+        v.in = QPointF(v.in.x() / space.width(), v.in.y() / space.height());
+        v.out = QPointF(v.out.x() / space.width(), v.out.y() / space.height());
+    }
+    return out;
 }
 
 QPointF rotated(QPointF p, double degrees)
@@ -2042,11 +2066,11 @@ QPointF maskCentreInHost(const drift::Project &project, const Clip &host, const 
 {
     const drift::Mask at = owner.mask.resolvedAt(timelineUs - owner.timelineStart);
     QPointF centre(at.x, at.y);
-    if (at.shape == drift::MaskShape::Freeform && !at.points.isEmpty()) {
+    if (at.shape == drift::MaskShape::Freeform && !at.vertices.isEmpty()) {
         centre = QPointF();
-        for (const QPointF &p : at.points)
-            centre += p;
-        centre /= double(at.points.size());
+        for (const drift::ShapeVertex &v : at.vertices)
+            centre += v.p;
+        centre /= double(at.vertices.size());
     }
     return owner.adjustmentKind == drift::AdjustmentKind::VideoEffects
                ? drift::canvasToHostFrame(project, host, timelineUs, centre)
@@ -2211,7 +2235,7 @@ QString TrackingController::addMaskForTracker(const QString &clipId, const QStri
         if (frame.region.size() < 3)
             return {};
         mask.shape = drift::MaskShape::Freeform;
-        mask.points = frame.region;
+        mask.vertices = drift::cornerVertices(frame.region);
     } else {
         if (frame.points.isEmpty())
             return {};
@@ -3459,7 +3483,7 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
             }
 
             QString error;
-            const QVector<QPointF> vertices = restVertices(rest, space, &error);
+            const QVector<drift::ShapeVertex> vertices = restVertices(rest, space, &error);
             if (vertices.isEmpty()) {
                 if (firstError.isEmpty())
                     firstError = error;
@@ -3467,9 +3491,7 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
             }
             if (mask.shape != drift::MaskShape::Freeform) {
                 mask.shape = drift::MaskShape::Freeform;
-                mask.points.clear();
-                for (const QPointF &v : vertices)
-                    mask.points.append(QPointF(v.x() / space.width(), v.y() / space.height()));
+                mask.vertices = normalizedVertices(vertices, space);
                 for (const QString &key : {QStringLiteral("x"), QStringLiteral("y"), QStringLiteral("w"),
                                            QStringLiteral("h"), QStringLiteral("rotation")}) {
                     mask.keyframes.remove(key);
@@ -3482,11 +3504,14 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
                     PathPose pose;
                     pose.t = frames[i].timelineUs - owner.timelineStart;
                     const HostFrame now = onCanvas ? hostFrameAt(project, host, frames[i].timelineUs) : HostFrame();
-                    for (const QPointF &v : vertices) {
-                        const QPointF moved = onCanvas ? carryThroughHost(hostRef, now, frames[i].h, px, v)
-                                                       : drift::tracking::applyHomography(frames[i].h, v);
-                        pose.points.append(QPointF(moved.x() / space.width(), moved.y() / space.height()));
-                    }
+                    const auto carry = [&](const QPointF &q) {
+                        return onCanvas ? carryThroughHost(hostRef, now, frames[i].h, px, q)
+                                        : drift::tracking::applyHomography(frames[i].h, q);
+                    };
+                    QVector<drift::ShapeVertex> moved;
+                    for (const drift::ShapeVertex &v : vertices)
+                        moved.append(drift::mapVertex(v, carry));
+                    pose.points = normalizedVertices(moved, space);
                     poses.append(pose);
                 }
                 pathRuns.append(poses);
@@ -3500,9 +3525,16 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
                     const double u = double(poses[k].t - poses[a].t) / double(poses[b].t - poses[a].t);
                     double worst = 0;
                     for (int v = 0; v < vertices.size(); ++v) {
-                        const QPointF expected = poses[a].points[v] + (poses[b].points[v] - poses[a].points[v]) * u;
-                        worst = qMax(worst, std::hypot((poses[k].points[v].x() - expected.x()) * space.width(),
-                                                       (poses[k].points[v].y() - expected.y()) * space.height()));
+                        const auto off = [&](const QPointF drift::ShapeVertex::*field) {
+                            const QPointF pa = poses[a].points[v].*field;
+                            const QPointF pb = poses[b].points[v].*field;
+                            const QPointF pk = poses[k].points[v].*field;
+                            const QPointF expected = pa + (pb - pa) * u;
+                            return std::hypot((pk.x() - expected.x()) * space.width(),
+                                              (pk.y() - expected.y()) * space.height());
+                        };
+                        worst = qMax(worst, qMax(off(&drift::ShapeVertex::p),
+                                                 qMax(off(&drift::ShapeVertex::in), off(&drift::ShapeVertex::out))));
                     }
                     return worst;
                 });

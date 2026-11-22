@@ -166,6 +166,7 @@ public:
     // Creates a Freeform mask from >= 3 normalized vertices (QVariantList of {x, y} maps) on the
     // target, exactly like addShapeMask does for kinds "clip" / "adjustment" (clip: addLinkedMask +
     // select new adjustment; adjustment: assign its mask directly). Undo text tr("Draw polygon mask").
+    // `points` are {x, y} maps (a polygon of corners) or full vertex maps, see setMaskPathKey.
     Q_INVOKABLE void addPolygonMask(int trackIndex, int clipIndex, const QVariantList &points);
 
     // Paints one stroke (normalized {x,y} points in the target clip's frame) into the target's brush
@@ -240,8 +241,9 @@ public:
 
     // Writes the vertex list as a key at timeline time `atSeconds` (converted to mask time =
     // secondsToUs(atSeconds) - adjustment.timelineStart). If an existing key lies within half a frame,
-    // that key is replaced instead of adding a new one. Also sets mask.points to the same list when the
-    // mask has only that one key (so the static shape and the single key agree).
+    // that key is replaced instead of adding a new one. Also sets mask.vertices to the same list when the
+    // mask has only that one key (so the static shape and the single key agree). `points` are
+    // {x, y, inX, inY, outX, outY, mode} maps; handles and mode are optional, so {x, y} is a corner.
     Q_INVOKABLE void setMaskPathKey(int trackIndex, int clipIndex, double atSeconds, const QVariantList &points);
     // Same, as a live drag: preview edit pattern, committed by EditorState.commitPreviewDrag().
     Q_INVOKABLE void previewSetMaskPathKey(int trackIndex, int clipIndex, double atSeconds,
