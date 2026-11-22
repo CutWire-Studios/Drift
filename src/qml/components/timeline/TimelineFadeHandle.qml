@@ -28,12 +28,12 @@ Item {
     Rectangle {
         anchors.fill: parent
         anchors.margins: -1.5
-        radius: width / 2
+        radius: Theme.radiusPill
         color: Theme.c.timelineFadeHandle.shadow
     }
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Theme.radiusPill
         color: Theme.c.timelineFadeHandle.background
         border.width: Theme.c.timelineFadeHandle.borderWidth
         border.color: Theme.c.timelineFadeHandle.border
@@ -45,7 +45,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: fadeLabel.implicitWidth + 10
         height: fadeLabel.implicitHeight + 4
-        radius: height / 2
+        radius: Theme.radiusPill
         color: Theme.c.timelineFadeHandle.labelBackground
 
         Text {

@@ -29,7 +29,7 @@ Item {
         width: Math.max(0, parent.outX - parent.inX)
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        color: Qt.rgba(Theme.c.androidTimelineWorkArea.background.r, Theme.c.androidTimelineWorkArea.background.g, Theme.c.androidTimelineWorkArea.background.b, 0.08)
+        color: Qt.alpha(Theme.c.androidTimelineWorkArea.background, Theme.c.androidTimelineWorkArea.backgroundOpacity)
     }
 
     Rectangle {
@@ -39,7 +39,7 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         color: Theme.c.androidTimelineWorkArea.edge
-        opacity: 0.85
+        opacity: Theme.c.androidTimelineWorkArea.edgeOpacity
     }
 
     Rectangle {
@@ -49,6 +49,6 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         color: Theme.c.androidTimelineWorkArea.edge
-        opacity: 0.85
+        opacity: Theme.c.androidTimelineWorkArea.edgeOpacity
     }
 }

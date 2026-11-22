@@ -47,9 +47,9 @@ Item {
         y: Math.max(0, parentFrame.corner(0).y - height - Theme.spacingSm)
         width: chipLabel.implicitWidth + (parentFrame.manip.touch ? Theme.spacingXl * 2 : Theme.spacingLg)
         height: parentFrame.manip.touch ? Theme.androidMinTouchTarget : chipLabel.implicitHeight + Theme.spacingSm
-        radius: height / 2
+        radius: Theme.radiusPill
         color: chipMouse.containsMouse || chipMouse.pressed
-               ? Qt.lighter(Theme.c.transformOverlayParentChip.background, 1.15)
+               ? Theme.c.transformOverlayParentChip.backgroundHover
                : Theme.c.transformOverlayParentChip.background
 
         Text {

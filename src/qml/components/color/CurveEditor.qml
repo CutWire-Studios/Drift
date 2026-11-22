@@ -69,7 +69,7 @@ Item {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         height: 2
-                        radius: 1
+                        radius: Theme.radiusPill
                         color: root.channelColors?.[tab.modelData] ?? "transparent"
                         opacity: tab.selected ? 1 : 0.4
                     }

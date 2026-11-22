@@ -565,9 +565,7 @@ Item {
                                 return false
                             return EditorState.clipCount === 0
                         }
-                        color: Qt.rgba(Theme.c.androidEditor.emptyBackground.r,
-                                       Theme.c.androidEditor.emptyBackground.g,
-                                       Theme.c.androidEditor.emptyBackground.b, 0.82)
+                        color: Qt.alpha(Theme.c.androidEditor.emptyBackground, Theme.c.androidEditor.emptyBackgroundOpacity)
                         z: 5
 
                         Column {

@@ -55,11 +55,13 @@ AbstractButton {
             return variant === "outline" ? "transparent" : Theme.c.themedChip.backgroundDisabled
         if (selected) {
             switch (variant) {
-            case "secondary": return down ? Qt.darker(Theme.c.themedChip.secondaryBackground, 1.2)
+            case "secondary": return down ? Theme.c.themedChip.secondaryBackgroundPressed
                                           : Theme.c.themedChip.secondaryBackground
             case "outline": return down ? Theme.c.themedChip.outlineBackgroundPressed
                                         : Theme.c.themedChip.outlineBackground
-            default: return down ? Qt.darker(accentColor, 1.15) : accentColor
+            default: return down ? (accentColor === Theme.c.themedChip.primaryBackground ? Theme.c.themedChip.primaryBackgroundPressed
+                                                                           : Qt.darker(accentColor, 1.15))
+                       : accentColor
             }
         }
         if (down)

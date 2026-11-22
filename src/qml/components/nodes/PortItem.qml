@@ -35,9 +35,9 @@ Item {
         anchors.centerIn: parent
         width: root.hovered && root.compatible ? 14 : (root.compatible ? 12 : parent.width)
         height: width
-        radius: width / 2
+        radius: Theme.radiusPill
         color: "transparent"
-        border.width: 2
+        border.width: Theme.c.portItem.ringBorderWidth
         border.color: root.hue
         opacity: root.compatible ? 0.8 : 0
         Behavior on width { NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing } }
@@ -45,9 +45,9 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Theme.radiusPill
         color: root.connected || root.hovered || root.isSource ? root.hue : Theme.c.portItem.fill
-        border.width: 1.5
+        border.width: Theme.c.portItem.borderWidth
         border.color: root.hue
         opacity: root.incompatible ? 0.3 : 1
         Behavior on opacity { NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing } }

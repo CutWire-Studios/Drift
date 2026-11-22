@@ -102,7 +102,7 @@ Item {
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
-                strokeColor: edge.picked ? Qt.alpha(Theme.c.edgeLayer.selected, 0.25) : "transparent"
+                strokeColor: edge.picked ? Qt.alpha(Theme.c.edgeLayer.selected, Theme.c.edgeLayer.selectedOpacity) : "transparent"
                 strokeWidth: 8
                 fillColor: "transparent"
                 capStyle: ShapePath.RoundCap

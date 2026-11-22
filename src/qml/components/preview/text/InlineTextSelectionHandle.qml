@@ -26,7 +26,7 @@ Item {
         height: handle.knobSize
         x: (handle.width - width) / 2
         y: width * (Math.SQRT2 - 1) / 2 + 2
-        radius: width / 2
+        radius: Theme.radiusPill
         topLeftRadius: handle.kind === "start" ? radius : 0
         topRightRadius: handle.kind === "start" ? 0 : radius
         rotation: handle.kind === "start" ? -45 : 45

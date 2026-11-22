@@ -27,7 +27,7 @@ AbstractButton {
     onClicked: ShellBridge.goBack()
 
     background: Rectangle {
-        radius: height / 2
+        radius: Theme.radiusPill
         color: Theme.c.workspaceBackPill.background
         border.width: Theme.c.workspaceBackPill.borderWidth
         border.color: Theme.c.workspaceBackPill.border

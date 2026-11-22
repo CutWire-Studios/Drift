@@ -62,7 +62,7 @@ Item {
 
                 background: Rectangle {
                     radius: Theme.c.androidHomeStartTile.radius
-                    color: hero.down ? Qt.darker(Theme.c.androidHomeStartTile.primaryBackground, 1.15)
+                    color: hero.down ? Theme.c.androidHomeStartTile.primaryBackgroundPressed
                                      : Theme.c.androidHomeStartTile.primaryBackground
                 }
 

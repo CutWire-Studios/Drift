@@ -19,9 +19,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(Theme.c.androidTimelineAdjustmentStrip.background.r,
-                       Theme.c.androidTimelineAdjustmentStrip.background.g,
-                       Theme.c.androidTimelineAdjustmentStrip.background.b, 0.12)
+        color: Qt.alpha(Theme.c.androidTimelineAdjustmentStrip.background, Theme.c.androidTimelineAdjustmentStrip.backgroundOpacity)
     }
 
     TimelineTrackArea {

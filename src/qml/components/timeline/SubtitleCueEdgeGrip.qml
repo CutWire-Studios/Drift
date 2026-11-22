@@ -18,7 +18,7 @@ Item {
         width: grip.cue.gripW
         height: parent.height
         color: grip.cue.isSelected ? Theme.c.subtitleCueEdgeGrip.background : "transparent"
-        opacity: 0.6
+        opacity: Theme.c.subtitleCueEdgeGrip.backgroundOpacity
     }
 
     HandleKnob {

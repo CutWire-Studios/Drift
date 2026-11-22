@@ -481,6 +481,18 @@ Item {
             "gapOutline": Theme.c.androidTimeline.gapOutline,
             "keyframeMarker": Theme.c.androidTimeline.keyframeMarker,
             "keyframeMarkerRim": Theme.c.androidTimeline.keyframeMarkerRim,
+            "waveformBarBackground": Theme.c.androidTimeline.waveformBarBackground,
+            "fadeFill": Theme.c.androidTimeline.fadeFill,
+            "fadeStroke": Theme.c.androidTimeline.fadeStroke,
+            "disabledChipForegroundOpacity": Theme.c.androidTimeline.disabledChipForegroundOpacity,
+            "clipEdgeOpacity": Theme.c.androidTimeline.clipEdgeOpacity,
+            "effectDropTintOpacity": Theme.c.androidTimeline.effectDropTintOpacity,
+            "rippleTintOpacity": Theme.c.androidTimeline.rippleTintOpacity,
+            "rippleOutlineOpacity": Theme.c.androidTimeline.rippleOutlineOpacity,
+            "waveformDividerOpacity": Theme.c.androidTimeline.waveformDividerOpacity,
+            "clipEdgeWidth": Theme.c.androidTimeline.clipEdgeWidth,
+            "rippleOutlineWidth": Theme.c.androidTimeline.rippleOutlineWidth,
+            "fadeStrokeWidth": Theme.c.androidTimeline.fadeStrokeWidth,
             "fontFamily": Theme.fontFamily,
             "fontSizeTiny": Theme.fontSizeTiny,
             "fontSizeXs": Theme.fontSizeXs,
@@ -1369,7 +1381,7 @@ Item {
                                 width: Math.max(0, (EditorState.workAreaOutSeconds
                                                     - EditorState.workAreaInSeconds)
                                              * root.pxPerSecond)
-                                color: Qt.rgba(Theme.c.androidTimeline.primary.r, Theme.c.androidTimeline.primary.g, Theme.c.androidTimeline.primary.b, 0.18)
+                                color: Qt.alpha(Theme.c.androidTimeline.primary, Theme.c.androidTimeline.primaryOpacity)
                             }
 
                             ThemedContextMenu {
@@ -1474,9 +1486,7 @@ Item {
                                 visible: !root.tracks[trackIndex].isAdjustmentLane
                                 width: flick.contentWidth
                                 height: root.trackHeight(trackIndex)
-                                color: Qt.rgba(Theme.c.androidTimeline.track.r,
-                                               Theme.c.androidTimeline.track.g,
-                                               Theme.c.androidTimeline.track.b, 0.22)
+                                color: Qt.alpha(Theme.c.androidTimeline.track, Theme.c.androidTimeline.trackOpacity)
 
                                 // A transform layer's row carries a faint wash of its colour.
                                 AndroidTimelineTrackWash {

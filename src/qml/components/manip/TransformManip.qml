@@ -647,7 +647,7 @@ ManipOverlay {
             width: root.marqueeRect.width
             height: root.marqueeRect.height
             z: 890
-            color: Qt.rgba(Theme.c.timelineMarqueeRect.background.r, Theme.c.timelineMarqueeRect.background.g, Theme.c.timelineMarqueeRect.background.b, 0.12)
+            color: Qt.alpha(Theme.c.timelineMarqueeRect.background, Theme.c.timelineMarqueeRect.backgroundOpacity)
             border.width: Theme.c.timelineMarqueeRect.borderWidth
             border.color: Theme.c.timelineMarqueeRect.border
         }

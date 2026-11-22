@@ -104,7 +104,7 @@ PanelFrame {
         visible: EditorState.color.bypass
         height: 22
         width: originalText.implicitWidth + Theme.spacingLg * 2
-        radius: height / 2
+        radius: Theme.radiusPill
         color: Theme.c.previewOriginalBadge.background
         border.width: Theme.c.previewOriginalBadge.borderWidth
         border.color: Theme.c.previewOriginalBadge.border

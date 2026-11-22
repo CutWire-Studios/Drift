@@ -12,6 +12,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | foreground | #dedede | #1c1c1c |
 | border | #292929 | #e8e8e8 |
 | accent | #242424 | #f5f5f5 |
+| accentHover | #212121 | #E3E3E3 |
 | accentForeground | #f2f2f2 | #050505 |
 | mutedForeground | #808080 | #7a7a7a |
 | popoverHover | #212121 | #f5f5f5 |
@@ -22,6 +23,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | panelAccentForeground | #ededed | #0d0d0d |
 | panelMuted | #383838 | #d4d4d4 |
 | panelSecondaryBg | #26200a | #fff6da |
+| panelSecondaryBgPressed | #201B08 | #D4CDB6 |
 | panelSecondaryBorder | #4a3d00 | #ffe7a3 |
 | panelSecondaryForeground | #ffcf4a | #9a6f00 |
 | sliderTrack | #505050 | #505050 |
@@ -39,6 +41,12 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | beatOnset | #ffffff8c | #2121218c |
 | textStylePreviewBorder | #3a3a3a | #2a2a2a |
 | primary | #F8B81C | #F8B81C |
+| primaryLiftedStrong | #FFCD54 | #FFCD54 |
+| primaryLifted | #FFC63B | #FFC63B |
+| primaryDisabled | #A57B13 | #A57B13 |
+| primaryPressedStrong | #D8A018 | #D8A018 |
+| primaryPressed | #DDA419 | #DDA419 |
+| primaryHover | #FFC12A | #FFC12A |
 | searchHighlight | #4DF8B81C | #4DF8B81C |
 | primaryForeground | #221900 | #221900 |
 | destructive | #e91616 | #e91616 |
@@ -57,6 +65,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | snapGuide | #f5c542 | #f5c542 |
 | clipText | #5DBAA0 | #5DBAA0 |
 | clipSubtitle | #4A9FD4 | #4A9FD4 |
+| clipSubtitleActive | #55B7F4 | #55B7F4 |
 | clipAudio | #8F5DBA | #8F5DBA |
 | clipGraphic | #BA5D7A | #BA5D7A |
 | clipEffect | #5d93ba | #5d93ba |
@@ -72,6 +81,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | clipAdjustmentAudio | #9B6BC9 | #9B6BC9 |
 | clipAdjustmentMask | #BA9B5D | #BA9B5D |
 | clipTransform | #8FBA5D | #8FBA5D |
+| clipTransformHover | #A4D66B | #A4D66B |
 | clipVideoOverview | #6E7A85 | #6E7A85 |
 | transitionOverlap | #9B5DE5 | #9B5DE5 |
 | waveform | #ffffffb3 | #ffffffb3 |
@@ -79,8 +89,11 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | previewLetterbox | #333333 | #333333 |
 | textStylePreviewBg | #1c1c1c | #1c1c1c |
 | gizmoX | #f0475a | #f0475a |
+| gizmoXNegative | #852732 | #852732 |
 | gizmoY | #5ccf5a | #5ccf5a |
+| gizmoYNegative | #337332 | #337332 |
 | gizmoZ | #4f8ff7 | #4f8ff7 |
+| gizmoZNegative | #2C4F89 | #2C4F89 |
 | gizmoUniform | #f2f2f2 | #f2f2f2 |
 | gizmoHot | #ffd43b | #ffd43b |
 | curveX | #16a9f3 | #16a9f3 |
@@ -342,6 +355,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | themedButton | focusBorder | $semantic.focusRing | $semantic.focusRing |
 | themedButton | focusBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | themedButton | radius | $metrics.radius.sm | $metrics.radius.sm |
+| themedButton | primaryBackgroundHover | $palette.primaryHover | $palette.primaryHover |
+| themedButton | primaryBackgroundPressed | $palette.primaryPressed | $palette.primaryPressed |
+| themedButton | primaryBackgroundDisabled | $palette.primaryDisabled | $palette.primaryDisabled |
 | assetQuickAddButton | background | $semantic.primary | $semantic.primary |
 | assetQuickAddButton | backgroundHover | $semantic.primary | $semantic.primary |
 | assetQuickAddButton | backgroundPressed | $semantic.primary | $semantic.primary |
@@ -372,12 +388,13 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | themedSlider | trackBackground | $semantic.panel.sliderTrack | $semantic.panel.sliderTrack |
 | themedSlider | trackRadius | $metrics.radius.pill | $metrics.radius.pill |
 | themedSlider | fillBackground | $semantic.primary | $semantic.primary |
-| themedSliderHandle | background | $semantic.primary | $semantic.primary |
+| themedSliderHandle | background | $palette.primaryLifted | $palette.primaryLifted |
 | themedSliderHandle | backgroundPressed | $semantic.panel.secondary.foreground | $semantic.panel.secondary.foreground |
 | themedSliderHandle | border | $semantic.primaryForeground | $semantic.primaryForeground |
 | themedSliderHandle | borderFocus | $semantic.focusRing | $semantic.focusRing |
 | themedSliderHandle | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | themedSliderHandle | radius | $metrics.radius.pill | $metrics.radius.pill |
+| themedSliderHandle | backgroundHover | $palette.primaryLiftedStrong | $palette.primaryLiftedStrong |
 | themedComboBox | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | themedComboBox | icon | $semantic.mutedForeground | $semantic.mutedForeground |
 | themedComboBox | background | $semantic.panel.accent | $semantic.panel.accent |
@@ -436,6 +453,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | themedToggleButton | focusBorder | $semantic.focusRing | $semantic.focusRing |
 | themedToggleButton | focusBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | themedToggleButton | radius | $metrics.radius.sm | $metrics.radius.sm |
+| themedToggleButton | backgroundCheckedPressed | $palette.panelSecondaryBgPressed | $palette.panelSecondaryBgPressed |
 | workspaceLink | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
 | workspaceLink | foregroundHover | $semantic.panel.foreground | $semantic.panel.foreground |
 | workspaceBackPill | background | $semantic.panel.accent | $semantic.panel.accent |
@@ -468,6 +486,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | themedChip | focusBorder | $semantic.focusRing | $semantic.focusRing |
 | themedChip | focusBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | themedChip | radius | $metrics.radius.sm | $metrics.radius.sm |
+| themedChip | primaryBackgroundPressed | $palette.primaryPressedStrong | $palette.primaryPressedStrong |
+| themedChip | secondaryBackgroundPressed | $palette.panelSecondaryBgPressed | $palette.panelSecondaryBgPressed |
 | themedContextMenu | background | $semantic.surface.panel | $semantic.surface.panel |
 | themedContextMenu | border | $semantic.panel.border | $semantic.panel.border |
 | themedContextMenu | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -758,6 +778,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | notificationUpdateRow | background | $semantic.accent | $semantic.accent |
 | notificationUpdateRow | icon | $semantic.primary | $semantic.primary |
 | notificationUpdateRow | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| notificationUpdateRow | backgroundHover | $palette.accentHover | $palette.accentHover |
 | notificationList | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | notificationList | accentError | $semantic.destructive | $semantic.destructive |
 | notificationList | accentWarning | $semantic.warning | $semantic.warning |
@@ -923,6 +944,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | agentViews | tileRadius | $metrics.radius.md | $metrics.radius.md |
 | agentViews | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | agentViews | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| agentViews | tileBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | audioSheetPanel | statBackground | $semantic.panel.muted | $semantic.panel.muted |
 | audioSheetPanel | statBorder | $semantic.panel.border | $semantic.panel.border |
 | audioSheetPanel | statRadius | $metrics.radius.md | $metrics.radius.md |
@@ -938,6 +960,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | audioSheetPanel | speech | $semantic.primary | $semantic.primary |
 | audioSheetPanel | music | $semantic.accentOnPanel | $semantic.accentOnPanel |
 | audioSheetPanel | silence | $semantic.panel.accent | $semantic.panel.accent |
+| audioSheetPanel | statBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| audioSheetPanel | listBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | emptyState | radius | $metrics.radius.md | $metrics.radius.md |
 | emptyState | background | $semantic.panel.accent | $semantic.panel.accent |
 | emptyState | icon | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -976,6 +1000,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | debugInfoDialog | divider | $semantic.panel.border | $semantic.panel.border |
 | debugInfoDialog | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | debugInfoDialog | link | $semantic.primary | $semantic.primary |
+| debugInfoDialog | cellOpacity | 0.16 | 0.16 |
+| debugInfoDialog | cellOpacityStriped | 0.1 | 0.1 |
 | layoutChooserDialog | listBackground | $semantic.surface.app | $semantic.surface.app |
 | layoutChooserDialog | listBorder | $semantic.panel.border | $semantic.panel.border |
 | layoutChooserDialog | listBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -1055,6 +1081,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | audioMixerStrip | handleBackgroundRest | $semantic.panel.border | $semantic.panel.border |
 | audioMixerStrip | handleBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | audioMixerStrip | handleBorderWidthRest | $metrics.borderWidth | $metrics.borderWidth |
+| audioMixerStrip | masterBackgroundOpacity | 0.5 | 0.5 |
 | clipFilmstrip | radius | 0 | 0 |
 | mixerChannelArmTint | background | $semantic.timeline.recordWash | $semantic.timeline.recordWash |
 | mixerChannelDivider | border | $semantic.panel.border | $semantic.panel.border |
@@ -1090,6 +1117,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | mixerMeterChannel | peakHot | $semantic.destructive | $semantic.destructive |
 | mixerMeterChannel | peak | $semantic.panel.foreground | $semantic.panel.foreground |
 | mixerMeterTick | foreground | $semantic.surface.panel | $semantic.surface.panel |
+| mixerMeterTick | foregroundOpacity | 0.7 | 0.7 |
 | mixerPanControl | track | $semantic.panel.sliderTrack | $semantic.panel.sliderTrack |
 | mixerPanControl | accent | $semantic.primary | $semantic.primary |
 | mixerPanControl | knobBackgroundHover | $semantic.panel.muted | $semantic.panel.muted |
@@ -1112,6 +1140,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | mixerStripToggle | activeBorder | $semantic.panel.secondary.border | $semantic.panel.secondary.border |
 | mixerStripToggle | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | mixerStripToggle | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| mixerStripToggle | destructiveOpacity | 0.16 | 0.16 |
+| mixerStripToggle | destructiveOpacityBorder | 0.45 | 0.45 |
 | mixerZoneGradient | red | $semantic.destructive | $semantic.destructive |
 | mixerZoneGradient | yellow | $semantic.primary | $semantic.primary |
 | mixerZoneGradient | green | $semantic.constructive | $semantic.constructive |
@@ -1134,19 +1164,25 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | subtitleCueBlock | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | subtitleCueBlock | border | $semantic.primary | $semantic.primary |
 | subtitleCueBlock | foreground | $semantic.onMedia | $semantic.onMedia |
+| subtitleCueBlock | backgroundActive | $palette.clipSubtitleActive | $palette.clipSubtitleActive |
 | subtitleCueEdgeGrip | background | $semantic.primary | $semantic.primary |
+| subtitleCueEdgeGrip | backgroundOpacity | 0.6 | 0.6 |
 | subtitleCueGutter | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | subtitleCueGutter | border | $semantic.panel.border | $semantic.panel.border |
+| subtitleCueGutter | foregroundMutedOpacity | 0.8 | 0.8 |
 | subtitleCueLane | background | $semantic.surface.panel | $semantic.surface.panel |
 | subtitleCueLane | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | subtitleCueLane | border | $semantic.panel.border | $semantic.panel.border |
 | subtitleCuePlayhead | foreground | $semantic.primary | $semantic.primary |
 | subtitleCueSpan | background | $semantic.panel.accent | $semantic.panel.accent |
+| subtitleCueSpan | backgroundOpacity | 0.4 | 0.4 |
 | subtitleCueWaveform | foreground | $semantic.clip.panelWaveform | $semantic.clip.panelWaveform |
+| subtitleCueWaveform | foregroundOpacity | 0.75 | 0.75 |
 | timelineAdjustmentLaneChrome | edge | $semantic.timeline.scrimSoft | $semantic.timeline.scrimSoft |
 | timelineAdjustmentLaneChrome | videoTint | $semantic.clip.adjustment.video | $semantic.clip.adjustment.video |
 | timelineAdjustmentLaneChrome | audioTint | $semantic.clip.adjustment.audio | $semantic.clip.adjustment.audio |
 | timelineAdjustmentLaneChrome | maskTint | $semantic.clip.adjustment.mask | $semantic.clip.adjustment.mask |
+| timelineAdjustmentLaneChrome | tintOpacity | 0.14 | 0.14 |
 | bakesDialogRow | backgroundHover | $semantic.panel.muted | $semantic.panel.muted |
 | bakesDialogRow | divider | $semantic.panel.border | $semantic.panel.border |
 | bakesDialogRow | radius | $metrics.radius.sm | $metrics.radius.sm |
@@ -1167,6 +1203,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineLaneRibbons | audio | $semantic.clip.adjustment.audio | $semantic.clip.adjustment.audio |
 | timelineLaneRibbons | mask | $semantic.clip.adjustment.mask | $semantic.clip.adjustment.mask |
 | timelineBookmarkLaneHighlight | background | $semantic.primary | $semantic.primary |
+| timelineBookmarkLaneHighlight | backgroundOpacity | 0.18 | 0.18 |
 | timelineBookmarkMarker | foreground | $semantic.primary | $semantic.primary |
 | timelineBookmarkMarker | radius | 1 | 1 |
 | timelineBookmarkMarker | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -1191,6 +1228,18 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineClipItem | gapOutline | $semantic.clip.gapOutline | $semantic.clip.gapOutline |
 | timelineClipItem | keyframeMarker | $semantic.clip.keyframeMarker | $semantic.clip.keyframeMarker |
 | timelineClipItem | keyframeMarkerRim | $semantic.clip.keyframeMarkerRim | $semantic.clip.keyframeMarkerRim |
+| timelineClipItem | waveformBarBackground | #59000000 | #59000000 |
+| timelineClipItem | fadeFill | #61000000 | #61000000 |
+| timelineClipItem | fadeStroke | #e6ffffff | #e6ffffff |
+| timelineClipItem | disabledChipForegroundOpacity | 0.55 | 0.55 |
+| timelineClipItem | clipEdgeOpacity | 0.7255 | 0.7255 |
+| timelineClipItem | effectDropTintOpacity | 0.28 | 0.28 |
+| timelineClipItem | rippleTintOpacity | 0.2 | 0.2 |
+| timelineClipItem | rippleOutlineOpacity | 0.9 | 0.9 |
+| timelineClipItem | waveformDividerOpacity | 0.5 | 0.5 |
+| timelineClipItem | clipEdgeWidth | 1.25 | 1.25 |
+| timelineClipItem | rippleOutlineWidth | 1.5 | 1.5 |
+| timelineClipItem | fadeStrokeWidth | 1.5 | 1.5 |
 | timelineClipItem | foreground | $semantic.onMedia | $semantic.onMedia |
 | timelineClipItem | waveform | $semantic.clip.waveform | $semantic.clip.waveform |
 | timelineClipItem | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -1208,6 +1257,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineCutDash | foreground | $semantic.destructive | $semantic.destructive |
 | timelineCutDoomGradient | foreground | $semantic.destructive | $semantic.destructive |
 | timelineCutDoomGradient | radius | $metrics.radius.sm | $metrics.radius.sm |
+| timelineCutDoomGradient | foregroundOpacity | 0.55 | 0.55 |
 | timelineFadeHandle | background | $semantic.primary | $semantic.primary |
 | timelineFadeHandle | border | $semantic.onMedia | $semantic.onMedia |
 | timelineFadeHandle | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
@@ -1215,11 +1265,13 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineFadeHandle | labelBackground | $semantic.timeline.scrimStrong | $semantic.timeline.scrimStrong |
 | timelineFadeHandle | labelForeground | $semantic.onMedia | $semantic.onMedia |
 | timelineGapHover | background | $semantic.panel.accent | $semantic.panel.accent |
+| timelineGapHover | backgroundOpacity | 0.35 | 0.35 |
 | timelineLandingOutline | radius | $metrics.radius.sm | $metrics.radius.sm |
 | timelineLandingOutline | background | $semantic.primary | $semantic.primary |
 | timelineLandingOutline | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | timelineLandingOutline | border | $semantic.primary | $semantic.primary |
 | timelineLandingOutline | foreground | $semantic.primary | $semantic.primary |
+| timelineLandingOutline | backgroundOpacity | 0.12 | 0.12 |
 | timelineLiveRecordingBlock | background | $semantic.destructive | $semantic.destructive |
 | timelineLiveRecordingBlock | borderPaused | $semantic.timeline.recordPaused | $semantic.timeline.recordPaused |
 | timelineLiveRecordingBlock | border | $semantic.destructive | $semantic.destructive |
@@ -1232,19 +1284,23 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineLiveRecordingBlock | dotRadius | $metrics.radius.xs | $metrics.radius.xs |
 | timelineLiveRecordingBlock | recordPaused | $semantic.timeline.recordPaused | $semantic.timeline.recordPaused |
 | timelineLiveRecordingBlock | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| timelineLiveRecordingBlock | backgroundOpacity | 0.25 | 0.25 |
 | timelineMarqueeRect | background | $semantic.primary | $semantic.primary |
 | timelineMarqueeRect | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | timelineMarqueeRect | border | $semantic.primary | $semantic.primary |
+| timelineMarqueeRect | backgroundOpacity | 0.12 | 0.12 |
 | timelineNewTrackGhostBoundary | foreground | $semantic.primary | $semantic.primary |
 | timelineNewTrackGhostClip | radius | $metrics.radius.sm | $metrics.radius.sm |
 | timelineNewTrackGhostClip | background | $semantic.primary | $semantic.primary |
 | timelineNewTrackGhostClip | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | timelineNewTrackGhostClip | border | $semantic.primary | $semantic.primary |
 | timelineNewTrackGhostClip | foreground | $semantic.primary | $semantic.primary |
+| timelineNewTrackGhostClip | backgroundOpacity | 0.3 | 0.3 |
 | timelineNewTrackGhostLane | radius | $metrics.radius.sm | $metrics.radius.sm |
 | timelineNewTrackGhostLane | background | $semantic.surface.panel | $semantic.surface.panel |
 | timelineNewTrackGhostLane | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | timelineNewTrackGhostLane | border | $semantic.primary | $semantic.primary |
+| timelineNewTrackGhostLane | backgroundOpacity | 0.92 | 0.92 |
 | timelineOverview | audioBackground | $semantic.clip.audio | $semantic.clip.audio |
 | timelineOverview | textBackground | $semantic.clip.text | $semantic.clip.text |
 | timelineOverview | subtitleBackground | $semantic.clip.subtitle | $semantic.clip.subtitle |
@@ -1258,16 +1314,20 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineOverviewFrame | border | $semantic.primary | $semantic.primary |
 | timelineOverviewPlayhead | foreground | $semantic.destructive | $semantic.destructive |
 | timelineOverviewShade | background | $semantic.surface.panel | $semantic.surface.panel |
+| timelineOverviewShade | backgroundOpacity | 0.6 | 0.6 |
 | timelinePanel | background | $semantic.surface.panel | $semantic.surface.panel |
 | timelinePanel | headerBorder | $semantic.panel.border | $semantic.panel.border |
 | timelinePanel | trackBackground | $semantic.panel.accent | $semantic.panel.accent |
 | timelinePanel | lockedOverlay | $semantic.timeline.scrimSoft | $semantic.timeline.scrimSoft |
+| timelinePanel | trackBackgroundOpacityHover | 0.5 | 0.5 |
+| timelinePanel | trackBackgroundOpacity | 0.22 | 0.22 |
 | timelinePlayheadHead | background | $semantic.primary | $semantic.primary |
 | timelinePlayheadHead | radius | 2 | 2 |
 | timelinePlayheadLine | foreground | $semantic.primary | $semantic.primary |
 | timelinePlayheadTip | background | $semantic.primary | $semantic.primary |
 | timelineRulerTick | tick | $semantic.mutedForeground | $semantic.mutedForeground |
 | timelineRulerTick | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| timelineRulerTick | tickOpacity | 0.28 | 0.28 |
 | timelineSeekStripEdge | border | $semantic.panel.border | $semantic.panel.border |
 | timelineSeekStripFill | background | $semantic.surface.panel | $semantic.surface.panel |
 | timelineSnapGuide | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -1311,10 +1371,12 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineToolbarTimecode | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | timelineToolbarZoomReadout | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | timelineTrackTransformWash | background | $semantic.clip.transform | $semantic.clip.transform |
+| timelineTrackTransformWash | backgroundOpacity | 0.07 | 0.07 |
 | timelineTransitionDropOutline | radius | $metrics.radius.sm | $metrics.radius.sm |
 | timelineTransitionDropOutline | background | $semantic.primary | $semantic.primary |
 | timelineTransitionDropOutline | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | timelineTransitionDropOutline | border | $semantic.clip.transitionOverlap | $semantic.clip.transitionOverlap |
+| timelineTransitionDropOutline | backgroundOpacity | 0.12 | 0.12 |
 | timelineTransitionToffee | background | $semantic.clip.transitionOverlap | $semantic.clip.transitionOverlap |
 | timelineTransitionToffee | border | $semantic.onMedia | $semantic.onMedia |
 | timelineTransitionToffee | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -1324,19 +1386,32 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineTransitionToffee | chevron | $semantic.onMedia | $semantic.onMedia |
 | timelineTransitionToffee | handle | $semantic.primary | $semantic.primary |
 | timelineTransitionToffee | handleGrip | $semantic.primaryForeground | $semantic.primaryForeground |
+| timelineTransitionToffee | backgroundOpacitySelected | 1 | 1 |
+| timelineTransitionToffee | backgroundOpacity | 0.9 | 0.9 |
+| timelineTransitionToffee | borderOpacityActive | 1 | 1 |
+| timelineTransitionToffee | borderOpacity | 0.75 | 0.75 |
+| timelineTransitionToffee | chevronOpacity | 0.3 | 0.3 |
+| timelineTransitionToffee | outlineWidth | $metrics.borderWidth | $metrics.borderWidth |
+| timelineTransitionToffee | labelPaddingX | 10 | 10 |
+| timelineTransitionToffee | labelPaddingY | 2 | 2 |
 | timelineCutButton | background | $semantic.clip.transitionOverlap | $semantic.clip.transitionOverlap |
 | timelineCutButton | border | $semantic.onMedia | $semantic.onMedia |
 | timelineCutButton | outline | $semantic.timeline.scrimStrong | $semantic.timeline.scrimStrong |
 | timelineCutButton | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | timelineCutButton | foreground | $semantic.onMedia | $semantic.onMedia |
+| timelineCutButton | outlineWidth | $metrics.borderWidth | $metrics.borderWidth |
 | timelineTrimGrip | radius | 1.5 | 1.5 |
 | timelineTrimGrip | foreground | $semantic.onMedia | $semantic.onMedia |
+| timelineTrimGrip | foregroundOpacity | 0.9 | 0.9 |
 | timelineTrimHandle | radius | $metrics.radius.xs | $metrics.radius.xs |
 | timelineTrimHandle | background | $semantic.primary | $semantic.primary |
 | timelineTrimHandle | loopBackground | $palette.categoryCyan | $palette.categoryCyan |
 | timelineTrimHandle | loopForeground | $semantic.primaryForeground | $semantic.primaryForeground |
+| timelineTrimHandle | backgroundOpacity | 0.55 | 0.55 |
 | timelineWorkAreaEdge | foreground | $semantic.primary | $semantic.primary |
+| timelineWorkAreaEdge | foregroundOpacity | 0.85 | 0.85 |
 | timelineWorkAreaShade | background | $semantic.primary | $semantic.primary |
+| timelineWorkAreaShade | backgroundOpacity | 0.08 | 0.08 |
 | trackHeaderChannelLanesButton | accent | $semantic.primary | $semantic.primary |
 | trackHeaderChannelLanesButton | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | trackHeaderClipDisplayButton | accent | $semantic.primary | $semantic.primary |
@@ -1382,6 +1457,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | trackHeaderStateTint | hover | $semantic.foreground | $semantic.foreground |
 | trackHeaderStateTint | locked | $semantic.warning | $semantic.warning |
 | trackHeaderStateTint | selected | $semantic.primary | $semantic.primary |
+| trackHeaderStateTint | lockedOpacity | 0.1 | 0.1 |
+| trackHeaderStateTint | hoverOpacity | 0.05 | 0.05 |
+| trackHeaderStateTint | selectedOpacity | 0.16 | 0.16 |
 | trackHeaderTypeStrip | audio | $semantic.clip.audio | $semantic.clip.audio |
 | trackHeaderTypeStrip | effect | $semantic.clip.effect | $semantic.clip.effect |
 | trackHeaderTypeStrip | graphic | $semantic.clip.graphic | $semantic.clip.graphic |
@@ -1390,16 +1468,21 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | trackHeaderTypeStrip | transform | $semantic.clip.transform | $semantic.clip.transform |
 | trackHeaderTypeStrip | video | $semantic.clip.videoPlaceholder | $semantic.clip.videoPlaceholder |
 | trackHeaderWash | background | $semantic.clip.transform | $semantic.clip.transform |
+| trackHeaderWash | backgroundOpacitySpan | 0.18 | 0.18 |
+| trackHeaderWash | backgroundOpacityTransform | 0.08 | 0.08 |
 | transformCoverageTint | background | $semantic.clip.transform | $semantic.clip.transform |
 | transformCoverageTint | border | $semantic.clip.transform | $semantic.clip.transform |
 | transformCoverageTint | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | transformCoverageTint | radius | $metrics.radius.sm | $metrics.radius.sm |
+| transformCoverageTint | backgroundOpacity | 0.14 | 0.14 |
+| transformCoverageTint | borderOpacity | 0.45 | 0.45 |
 | voiceoverBarDivider | foreground | $semantic.panel.border | $semantic.panel.border |
 | voiceoverControlBar | radius | $metrics.radius.sm | $metrics.radius.sm |
 | voiceoverControlBar | background | $semantic.surface.panel | $semantic.surface.panel |
 | voiceoverControlBar | borderPaused | $semantic.timeline.recordPaused | $semantic.timeline.recordPaused |
 | voiceoverControlBar | border | $semantic.destructive | $semantic.destructive |
 | voiceoverControlBar | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| voiceoverControlBar | backgroundOpacity | 0.96 | 0.96 |
 | voiceoverGainControl | icon | $semantic.mutedForeground | $semantic.mutedForeground |
 | voiceoverGainControl | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | voiceoverGlow | borderPaused | $semantic.timeline.recordGlowPaused | $semantic.timeline.recordGlowPaused |
@@ -1421,6 +1504,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | voiceoverMicPicker | icon | $semantic.panel.foreground | $semantic.panel.foreground |
 | voiceoverMicPicker | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | voiceoverMicPicker | iconMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| voiceoverMicPicker | backgroundOpacity | 0.05 | 0.05 |
 | voiceoverRecDot | radius | 4 | 4 |
 | voiceoverRecDot | paused | $semantic.timeline.recordPaused | $semantic.timeline.recordPaused |
 | voiceoverRecDot | recording | $semantic.destructive | $semantic.destructive |
@@ -1904,7 +1988,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | subtitleEditorHeader | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | subtitleEditorHeader | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | subtitleEditorPanel | applyBackground | $semantic.primary | $semantic.primary |
-| subtitleEditorPanel | applyBackgroundHover | $semantic.primary | $semantic.primary |
+| subtitleEditorPanel | applyBackgroundHover | $palette.primaryHover | $palette.primaryHover |
 | subtitleEditorPanel | background | $semantic.surface.panel | $semantic.surface.panel |
 | subtitleEditorPanel | border | $semantic.panel.border | $semantic.panel.border |
 | subtitleEditorPanel | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -2048,6 +2132,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | depthLight3dKnob | foreground | $semantic.preview.lightKnobForeground | $semantic.preview.lightKnobForeground |
 | depthLight3dKnob | radius | 9 | 9 |
 | guideEditAddStrip | background | $semantic.surface.panel | $semantic.surface.panel |
+| guideEditAddStrip | backgroundOpacity | 0.6 | 0.6 |
 | guideEditBar | background | $semantic.surface.panel | $semantic.surface.panel |
 | guideEditBar | border | $semantic.panel.border | $semantic.panel.border |
 | guideEditBar | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -2079,11 +2164,14 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | maskAiOverlay | include | $semantic.constructive | $semantic.constructive |
 | maskAiOverlay | pointBorder | $semantic.onMedia | $semantic.onMedia |
 | maskAiOverlay | tint | $semantic.primary | $semantic.primary |
+| maskAiOverlay | tintOpacity | 0.45 | 0.45 |
 | maskBrushOverlay | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | maskBrushOverlay | cursor | $semantic.onMedia | $semantic.onMedia |
 | maskBrushOverlay | cursorInner | $semantic.onMedia | $semantic.onMedia |
 | maskBrushOverlay | eraseStroke | $semantic.destructive | $semantic.destructive |
 | maskBrushOverlay | stroke | $semantic.constructive | $semantic.constructive |
+| maskBrushOverlay | cursorOpacity | 0.8 | 0.8 |
+| maskBrushOverlay | cursorInnerOpacity | 0.5 | 0.5 |
 | trackingPanel | stripEmpty | $semantic.panel.muted | $semantic.panel.muted |
 | trackingPanel | stripGood | $semantic.constructive | $semantic.constructive |
 | trackingPanel | stripWarn | $semantic.warning | $semantic.warning |
@@ -2106,6 +2194,10 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | maskDrawOverlay | hintForeground | $semantic.mutedForeground | $semantic.mutedForeground |
 | maskDrawOverlay | radius | $metrics.radius.sm | $metrics.radius.sm |
 | maskDrawOverlay | stroke | $semantic.primary | $semantic.primary |
+| maskDrawOverlay | fillOpacity | 0.15 | 0.15 |
+| maskDrawOverlay | fillOpacitySplit | 0.08 | 0.08 |
+| maskDrawOverlay | fillOpacitySplitSelected | 0.18 | 0.18 |
+| maskDrawOverlay | strokeOpacity | 0.7 | 0.7 |
 | maskOverlayBarBand | border | $semantic.mutedForeground | $semantic.mutedForeground |
 | maskOverlayBarBand | borderSelected | $semantic.primary | $semantic.primary |
 | maskOverlayBarBand | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -2118,12 +2210,14 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | maskOverlayBarEdge | radius | $metrics.radius.xs | $metrics.radius.xs |
 | maskOverlayClipBounds | border | $semantic.mutedForeground | $semantic.mutedForeground |
 | maskOverlayClipBounds | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| maskOverlayClipBounds | borderOpacity | 0.35 | 0.35 |
 | maskOverlayEmptyHint | background | $semantic.surface.panel | $semantic.surface.panel |
 | maskOverlayEmptyHint | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
 | maskOverlayEmptyHint | opacity | 0.9 | 0.9 |
 | maskOverlayEmptyHint | radius | $metrics.radius.sm | $metrics.radius.sm |
 | maskOverlayFeatherRing | border | $semantic.primary | $semantic.primary |
 | maskOverlayFeatherRing | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| maskOverlayFeatherRing | borderOpacity | 0.35 | 0.35 |
 | maskOverlayOutline | border | $semantic.mutedForeground | $semantic.mutedForeground |
 | maskOverlayOutline | borderSelected | $semantic.primary | $semantic.primary |
 | maskOverlayOutline | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -2139,6 +2233,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | mediaPreviewResolutionPill | constructiveForeground | $semantic.preview.resolutionConstructiveInk | $semantic.preview.resolutionConstructiveInk |
 | mediaPreviewResolutionPill | warning | $semantic.warning | $semantic.warning |
 | mediaPreviewResolutionPill | warningForeground | $semantic.preview.resolutionWarningInk | $semantic.preview.resolutionWarningInk |
+| mediaPreviewResolutionPill | tintOpacity | 0.12 | 0.12 |
+| mediaPreviewResolutionPill | tintOpacityBorder | 0.55 | 0.55 |
 | mediaPreviewRulerTick | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
 | mediaPreviewRulerTick | opacity | 0.35 | 0.35 |
 | mediaPreviewSavingScrim | background | $semantic.scrim | $semantic.scrim |
@@ -2164,6 +2260,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | sourceLabStrip | rangeReject | $semantic.destructive | $semantic.destructive |
 | sourceLabStrip | rangeOpacity | 0.28 | 0.28 |
 | sourceLabStrip | marker | $semantic.warning | $semantic.warning |
+| sourceLabStrip | windowBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| sourceLabStrip | rangeBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | sourceLabPanel | rowHover | $semantic.popoverHover | $semantic.popoverHover |
 | sourceLabPanel | rowSelected | $semantic.panel.accent | $semantic.panel.accent |
 | sourceLabPanel | rowSelectedBorder | $semantic.primary | $semantic.primary |
@@ -2246,10 +2344,13 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | previewDropCanvasFrame | background | $semantic.primary | $semantic.primary |
 | previewDropCanvasFrame | border | $semantic.primary | $semantic.primary |
 | previewDropCanvasFrame | borderWidth | 2 | 2 |
+| previewDropCanvasFrame | backgroundOpacity | 0.08 | 0.08 |
 | previewDropClipFrame | background | $semantic.primary | $semantic.primary |
 | previewDropClipFrame | border | $semantic.primary | $semantic.primary |
 | previewDropClipFrame | borderWidth | 2 | 2 |
+| previewDropClipFrame | backgroundOpacity | 0.12 | 0.12 |
 | previewFullscreenTransportScrim | background | $semantic.surface.panel | $semantic.surface.panel |
+| previewFullscreenTransportScrim | backgroundOpacity | 0.9 | 0.9 |
 | previewGapCaption | foreground | $semantic.guide.medium | $semantic.guide.medium |
 | previewOptionsDecodeWarning | icon | $semantic.warning | $semantic.warning |
 | previewOptionsMenu | background | $semantic.surface.panel | $semantic.surface.panel |
@@ -2315,6 +2416,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | transformOverlayLayerChip | radius | $metrics.radius.sm | $metrics.radius.sm |
 | transformOverlayParentChip | background | $semantic.clip.transform | $semantic.clip.transform |
 | transformOverlayParentChip | foreground | $semantic.onMedia | $semantic.onMedia |
+| transformOverlayParentChip | backgroundHover | $palette.clipTransformHover | $palette.clipTransformHover |
 | transformOverlayParentOutline | border | $semantic.clip.transform | $semantic.clip.transform |
 | transformOverlayParentOutline | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | transformOverlaySnapGuide | background | $semantic.primary | $semantic.primary |
@@ -2332,6 +2434,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | manipHandle | borderHover | $semantic.primary | $semantic.primary |
 | manipHandle | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | manipHandle | outline | $semantic.scrimStrong | $semantic.scrimStrong |
+| manipHandle | outlineWidth | $metrics.borderWidth | $metrics.borderWidth |
 | manipHint | background | $semantic.scrimStrong | $semantic.scrimStrong |
 | manipHint | border | $semantic.guide.weak | $semantic.guide.weak |
 | manipHint | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -2359,6 +2462,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | viewAxisWidget | x | $semantic.gizmo.x | $semantic.gizmo.x |
 | viewAxisWidget | y | $semantic.gizmo.y | $semantic.gizmo.y |
 | viewAxisWidget | z | $semantic.gizmo.z | $semantic.gizmo.z |
+| viewAxisWidget | xNegative | $palette.gizmoXNegative | $palette.gizmoXNegative |
+| viewAxisWidget | yNegative | $palette.gizmoYNegative | $palette.gizmoYNegative |
+| viewAxisWidget | zNegative | $palette.gizmoZNegative | $palette.gizmoZNegative |
 | scrollStrip | fade | $semantic.surface.panel | $semantic.surface.panel |
 | assetCategoryChips | divider | $semantic.panel.border | $semantic.panel.border |
 | assetCategoryChips | dividerWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -2384,6 +2490,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | assetsPanelDropOverlay | accent | $semantic.primary | $semantic.primary |
 | assetsPanelDropOverlay | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | assetsPanelDropOverlay | radius | $metrics.radius.md | $metrics.radius.md |
+| assetsPanelDropOverlay | accentOpacity | 0.08 | 0.08 |
 | assetsPanelHeader | background | $semantic.surface.panel | $semantic.surface.panel |
 | assetsPanelHeader | border | $semantic.panel.border | $semantic.panel.border |
 | assetsPanelHeader | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -2467,6 +2574,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | effectTemplateCard | mosaicDividerWidth | $metrics.borderWidth | $metrics.borderWidth |
 | effectTemplateCard | radius | $metrics.radius.sm | $metrics.radius.sm |
 | effectTemplateCard | scrim | $semantic.scrimStrong | $semantic.scrimStrong |
+| effectTemplateCard | accentOpacityBorder | 0.35 | 0.35 |
 | marketSearchField | background | $semantic.panel.accent | $semantic.panel.accent |
 | marketSearchField | borderFocus | $semantic.focusRing | $semantic.focusRing |
 | marketSearchField | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
@@ -2571,6 +2679,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | masksTab | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | mediaAssetsAddedBadge | background | $semantic.scrimStrong | $semantic.scrimStrong |
 | mediaAssetsAddedBadge | foreground | $semantic.onMedia | $semantic.onMedia |
+| mediaAssetsAddedBadge | radius | $metrics.radius.xs | $metrics.radius.xs |
 | mediaAssetsDurationBadge | background | $semantic.scrimStrong | $semantic.scrimStrong |
 | mediaAssetsDurationBadge | foreground | $semantic.onMedia | $semantic.onMedia |
 | mediaAssetsDurationBadge | radius | $metrics.radius.xs | $metrics.radius.xs |
@@ -2646,6 +2755,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | pathEditor | outline | $semantic.primary | $semantic.primary |
 | pathEditor | outlineWidth | 1.5 | 1.5 |
 | pathEditor | rubberBand | $semantic.primary | $semantic.primary |
+| pathEditor | ghostBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | shapePresetCard | background | $semantic.panel.accent | $semantic.panel.accent |
 | shapePresetCard | backgroundHover | $semantic.popoverHover | $semantic.popoverHover |
 | shapePresetCard | borderHover | $semantic.accent | $semantic.accent |
@@ -2738,6 +2848,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | upscaleModelCard | scaleBorder | $semantic.panel.border | $semantic.panel.border |
 | upscaleModelCard | scaleBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | upscaleModelCard | scaleRadius | $metrics.radius.pill | $metrics.radius.pill |
+| upscaleModelCard | accentOpacity | 0.1 | 0.1 |
 | androidMain | background | $semantic.surface.app | $semantic.surface.app |
 | androidMain | paletteWindow | $semantic.surface.panel | $semantic.surface.panel |
 | androidMain | paletteWindowText | $semantic.panel.foreground | $semantic.panel.foreground |
@@ -2762,6 +2873,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidEditor | emptyBackground | $semantic.surface.app | $semantic.surface.app |
 | androidEditor | foreground | $semantic.foreground | $semantic.foreground |
 | androidEditor | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| androidEditor | emptyBackgroundOpacity | 0.82 | 0.82 |
 | androidClipToolbar | background | $semantic.surface.panel | $semantic.surface.panel |
 | androidClipToolbar | border | $semantic.panel.border | $semantic.panel.border |
 | androidClipToolbar | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -2805,6 +2917,18 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimeline | gapOutline | $semantic.clip.gapOutline | $semantic.clip.gapOutline |
 | androidTimeline | keyframeMarker | $semantic.clip.keyframeMarker | $semantic.clip.keyframeMarker |
 | androidTimeline | keyframeMarkerRim | $semantic.clip.keyframeMarkerRim | $semantic.clip.keyframeMarkerRim |
+| androidTimeline | waveformBarBackground | #59000000 | #59000000 |
+| androidTimeline | fadeFill | #61000000 | #61000000 |
+| androidTimeline | fadeStroke | #e6ffffff | #e6ffffff |
+| androidTimeline | disabledChipForegroundOpacity | 0.55 | 0.55 |
+| androidTimeline | clipEdgeOpacity | 0.7255 | 0.7255 |
+| androidTimeline | effectDropTintOpacity | 0.28 | 0.28 |
+| androidTimeline | rippleTintOpacity | 0.2 | 0.2 |
+| androidTimeline | rippleOutlineOpacity | 0.9 | 0.9 |
+| androidTimeline | waveformDividerOpacity | 0.5 | 0.5 |
+| androidTimeline | clipEdgeWidth | 1.25 | 1.25 |
+| androidTimeline | rippleOutlineWidth | 1.5 | 1.5 |
+| androidTimeline | fadeStrokeWidth | 1.5 | 1.5 |
 | androidTimeline | onMedia | $semantic.onMedia | $semantic.onMedia |
 | androidTimeline | waveform | $semantic.clip.waveform | $semantic.clip.waveform |
 | androidTimeline | mutedForeground | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -2827,6 +2951,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimeline | beatBar | $semantic.clip.beat.bar | $semantic.clip.beat.bar |
 | androidTimeline | beatGrid | $semantic.clip.beat.grid | $semantic.clip.beat.grid |
 | androidTimeline | beatOnset | $semantic.clip.beat.onset | $semantic.clip.beat.onset |
+| androidTimeline | primaryOpacity | 0.18 | 0.18 |
+| androidTimeline | trackOpacity | 0.22 | 0.22 |
 | androidBottomRail | background | $semantic.surface.panel | $semantic.surface.panel |
 | androidBottomRail | border | $semantic.panel.border | $semantic.panel.border |
 | androidBottomRail | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -2866,6 +2992,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimelineRulerTick | tick | $semantic.mutedForeground | $semantic.mutedForeground |
 | androidTimelineRulerTick | tickWidth | $metrics.borderWidth | $metrics.borderWidth |
 | androidTimelineRulerTick | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
+| androidTimelineRulerTick | tickOpacity | 0.28 | 0.28 |
 | sheetActionRow | backgroundPressed | $semantic.panel.accent | $semantic.panel.accent |
 | sheetActionRow | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | sheetActionRow | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -2885,6 +3012,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidMediaTrimHandle | radius | $metrics.radius.xs | $metrics.radius.xs |
 | androidMediaTrimHandle | grip | $semantic.primaryForeground | $semantic.primaryForeground |
 | androidMediaTrimHandle | gripRadius | 1 | 1 |
+| androidMediaTrimHandle | gripOpacity | 0.9 | 0.9 |
 | androidTimelineLiveRecording | background | $semantic.destructive | $semantic.destructive |
 | androidTimelineLiveRecording | border | $semantic.destructive | $semantic.destructive |
 | androidTimelineLiveRecording | borderPaused | $semantic.androidShell.recordingPaused | $semantic.androidShell.recordingPaused |
@@ -2898,8 +3026,11 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimelineLiveRecording | indicatorPaused | $semantic.androidShell.recordingPaused | $semantic.androidShell.recordingPaused |
 | androidTimelineLiveRecording | indicatorRadius | $metrics.radius.xs | $metrics.radius.xs |
 | androidTimelineLiveRecording | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| androidTimelineLiveRecording | backgroundOpacity | 0.25 | 0.25 |
 | androidTimelineAdjustmentStrip | background | $semantic.clip.effect | $semantic.clip.effect |
+| androidTimelineAdjustmentStrip | backgroundOpacity | 0.12 | 0.12 |
 | androidTimelineGapPress | background | $semantic.panel.accent | $semantic.panel.accent |
+| androidTimelineGapPress | backgroundOpacity | 0.35 | 0.35 |
 | androidTimelineTransitionMark | background | $semantic.clip.transitionOverlap | $semantic.clip.transitionOverlap |
 | androidTimelineTransitionMark | border | $semantic.onMedia | $semantic.onMedia |
 | androidTimelineTransitionMark | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -2913,6 +3044,14 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimelineTransitionMark | addBorder | $semantic.onMedia | $semantic.onMedia |
 | androidTimelineTransitionMark | addBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | androidTimelineTransitionMark | addForeground | $semantic.onMedia | $semantic.onMedia |
+| androidTimelineTransitionMark | backgroundOpacitySelected | 1 | 1 |
+| androidTimelineTransitionMark | backgroundOpacity | 0.9 | 0.9 |
+| androidTimelineTransitionMark | borderOpacitySelected | 1 | 1 |
+| androidTimelineTransitionMark | borderOpacity | 0.75 | 0.75 |
+| androidTimelineTransitionMark | chevronOpacity | 0.3 | 0.3 |
+| androidTimelineTransitionMark | outlineWidth | $metrics.borderWidth | $metrics.borderWidth |
+| androidTimelineTransitionMark | labelPaddingX | 10 | 10 |
+| androidTimelineTransitionMark | labelPaddingY | 2 | 2 |
 | androidTimelineNewTrackGhost | background | $semantic.surface.panel | $semantic.surface.panel |
 | androidTimelineNewTrackGhost | radius | $metrics.radius.sm | $metrics.radius.sm |
 | androidTimelineNewTrackGhost | border | $semantic.primary | $semantic.primary |
@@ -2923,14 +3062,20 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidTimelineNewTrackGhost | dropBorder | $semantic.primary | $semantic.primary |
 | androidTimelineNewTrackGhost | dropBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | androidTimelineNewTrackGhost | foreground | $semantic.primary | $semantic.primary |
+| androidTimelineNewTrackGhost | backgroundOpacity | 0.92 | 0.92 |
+| androidTimelineNewTrackGhost | dropBackgroundOpacity | 0.18 | 0.18 |
 | androidTimelineDropGhost | background | $semantic.primary | $semantic.primary |
 | androidTimelineDropGhost | radius | $metrics.radius.sm | $metrics.radius.sm |
 | androidTimelineDropGhost | border | $semantic.primary | $semantic.primary |
 | androidTimelineDropGhost | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
+| androidTimelineDropGhost | backgroundOpacity | 0.12 | 0.12 |
 | androidTimelineWorkArea | background | $semantic.primary | $semantic.primary |
 | androidTimelineWorkArea | edge | $semantic.primary | $semantic.primary |
 | androidTimelineWorkArea | edgeWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
+| androidTimelineWorkArea | backgroundOpacity | 0.08 | 0.08 |
+| androidTimelineWorkArea | edgeOpacity | 0.85 | 0.85 |
 | androidTimelineTrackWash | background | $semantic.clip.transform | $semantic.clip.transform |
+| androidTimelineTrackWash | backgroundOpacity | 0.07 | 0.07 |
 | androidTimelineLaneBar | background | $semantic.surface.panel | $semantic.surface.panel |
 | androidTimelineLaneBar | border | $semantic.panel.border | $semantic.panel.border |
 | androidTimelineLaneBar | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -2967,6 +3112,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidSheetActionTileFace | radius | $metrics.radius.md | $metrics.radius.md |
 | androidSheetActionTileFace | icon | $semantic.panel.foreground | $semantic.panel.foreground |
 | androidSheetActionTileFace | iconToggled | $semantic.accentOnPanel | $semantic.accentOnPanel |
+| androidSheetActionTileFace | backgroundToggledOpacity | 0.22 | 0.22 |
 | androidSheetActionMark | background | $semantic.destructive | $semantic.destructive |
 | androidSheetActionMark | radius | 4 | 4 |
 | androidSheetActionIconTile | background | $semantic.panel.accent | $semantic.panel.accent |
@@ -2999,6 +3145,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidHomeStartTile | radius | $metrics.radius.md | $metrics.radius.md |
 | androidHomeStartTile | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | androidHomeStartTile | primaryForeground | $semantic.primaryForeground | $semantic.primaryForeground |
+| androidHomeStartTile | primaryBackgroundPressed | $palette.primaryPressedStrong | $palette.primaryPressedStrong |
 | androidLayoutTemplateCard | background | $semantic.panel.accent | $semantic.panel.accent |
 | androidLayoutTemplateCard | backgroundSelected | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
 | androidLayoutTemplateCard | border | $semantic.panel.border | $semantic.panel.border |
@@ -3047,6 +3194,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidRailAddButton | background | $semantic.primary | $semantic.primary |
 | androidRailAddButton | radius | $metrics.radius.lg | $metrics.radius.lg |
 | androidRailAddButton | icon | $semantic.primaryForeground | $semantic.primaryForeground |
+| androidRailAddButton | backgroundPressed | $palette.primaryPressed | $palette.primaryPressed |
 | androidRailButton | backgroundSelected | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
 | androidRailButton | backgroundPressed | $semantic.panel.accent | $semantic.panel.accent |
 | androidRailButton | radius | $metrics.radius.pill | $metrics.radius.pill |
@@ -3089,9 +3237,12 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | nodeDelegate | accent.orange | $palette.categoryOrange | $palette.categoryOrange |
 | nodeDelegate | accent.indigo | $palette.categoryIndigo | $palette.categoryIndigo |
 | nodeDelegate | accent.neutral | $semantic.mutedForeground | $semantic.mutedForeground |
+| nodeDelegate | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| nodeDelegate | selectionBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | nodeAngleDial | background | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
 | nodeAngleDial | border | $semantic.panel.border | $semantic.panel.border |
 | nodeAngleDial | needle | $semantic.primary | $semantic.primary |
+| nodeAngleDial | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | portItem | fill | $semantic.panel.accent | $semantic.panel.accent |
 | portItem | float | $palette.categoryAmber | $palette.categoryAmber |
 | portItem | int | $palette.categoryLime | $palette.categoryLime |
@@ -3104,17 +3255,25 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | portItem | audio | $palette.categoryBlue | $palette.categoryBlue |
 | portItem | mod | $palette.categoryViolet | $palette.categoryViolet |
 | portItem | other | $semantic.mutedForeground | $semantic.mutedForeground |
+| portItem | ringBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
+| portItem | borderWidth | 1.5 | 1.5 |
 | edgeLayer | selected | $semantic.primary | $semantic.primary |
+| edgeLayer | selectedOpacity | 0.25 | 0.25 |
 | nodeMinimap | radius | $metrics.radius.md | $metrics.radius.md |
 | nodeMinimap | background | $semantic.surface.panel | $semantic.surface.panel |
 | nodeMinimap | border | $semantic.panel.border | $semantic.panel.border |
 | nodeMinimap | node | $semantic.mutedForeground | $semantic.mutedForeground |
 | nodeMinimap | viewport | $semantic.primary | $semantic.primary |
 | nodeMinimap | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
+| nodeMinimap | viewportOpacity | 0.16 | 0.16 |
+| nodeMinimap | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| nodeMinimap | viewportBorderWidth | 1.5 | 1.5 |
+| nodeMinimap | nodeRadius | 1 | 1 |
 | nodeGraphEditor | radius | $metrics.radius.md | $metrics.radius.md |
 | nodeGraphEditor | controlsBackground | $semantic.surface.panel | $semantic.surface.panel |
 | nodeGraphEditor | controlsBorder | $semantic.panel.border | $semantic.panel.border |
 | nodeGraphEditor | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
+| nodeGraphEditor | controlsBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | forgePanel | border | $semantic.panel.border | $semantic.panel.border |
 | forgePanel | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | forgePanel | headerBackground | $semantic.panel.accent | $semantic.panel.accent |
@@ -3125,6 +3284,61 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | forgePanel | error | $semantic.destructive | $semantic.destructive |
 | forgePanel | success | $semantic.constructive | $semantic.constructive |
 | forgePanel | codeBackground | $semantic.surface.app | $semantic.surface.app |
+| timelineTransitionEar | width | 8 | 8 |
+| timelineTransitionEar | radius | $metrics.radius.xs | $metrics.radius.xs |
+| timelineTransitionEar | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| timelineTransitionEar | gripWidth | 1 | 1 |
+| designerSlot | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| designerSlot | indicator | $semantic.accent | $semantic.accent |
+| designerSlot | indicatorOpacity | 0.35 | 0.35 |
+| designerSlot | indicatorBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
+| workspaceDesigner | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| workspaceDesigner | removing | $semantic.destructive | $semantic.destructive |
+| workspaceDesigner | removingOpacity | 0.15 | 0.15 |
+| workspaceDesigner | emptyHover | $semantic.accent | $semantic.accent |
+| workspaceDesigner | emptyHoverOpacity | 0.15 | 0.15 |
+| recorderPanel | micBackground | $semantic.panel.foreground | $semantic.panel.foreground |
+| recorderPanel | micBackgroundOpacity | 0.05 | 0.05 |
+| recorderPanel | recordBackground | $semantic.destructive | $semantic.destructive |
+| recorderPanel | recordOpacity | 1.0 | 1.0 |
+| recorderPanel | recordOpacityHover | 0.92 | 0.92 |
+| recorderPanel | recordOpacityPressed | 0.8 | 0.8 |
+| recorderPanel | recordRing | #40FFFFFF | #40FFFFFF |
+| recorderPanel | recordRingWidth | 3 | 3 |
+| recorderPanel | recordIcon | #FFFFFF | #FFFFFF |
+| audioForgeNodeTab | stepRadius | 2 | 2 |
+| agentLogPanel | thumbRadius | 2 | 2 |
+| agentLogPanel | thumbBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| colorPanel | swatchFocusBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
+| timelineBookmarkContextMenu | swatches | ["#e5484d", "#f5a524", "#46a758", "#3e9bff", "#8e4ec6", "#e93d82"] | ["#e5484d", "#f5a524", "#46a758", "#3e9bff", "#8e4ec6", "#e93d82"] |
+| adjustmentLayerIllustration | mutedOpacity | 0.18 | 0.18 |
+| adjustmentLayerIllustration | accentOpacity | 0.25 | 0.25 |
+| aiObjectIllustration | mutedOpacity | 0.22 | 0.22 |
+| aiObjectIllustration | accentOpacity | 0.4 | 0.4 |
+| autoSelectIllustration | mutedOpacity | 0.18 | 0.18 |
+| freezeFrameIllustration | mutedOpacity | 0.18 | 0.18 |
+| guidesIllustration | mutedOpacity | 0.22 | 0.22 |
+| guidesIllustration | mutedOpacityStrong | 0.45 | 0.45 |
+| linkClipsIllustration | mutedOpacity | 0.18 | 0.18 |
+| maskBrushIllustration | mutedOpacity | 0.22 | 0.22 |
+| maskBrushIllustration | accentOpacity | 0.45 | 0.45 |
+| maskPolygonIllustration | mutedOpacity | 0.22 | 0.22 |
+| maskPolygonIllustration | accentOpacity | 0.28 | 0.28 |
+| maskShapeIllustration | mutedOpacity | 0.22 | 0.22 |
+| maskShapeIllustration | accentOpacity | 0.28 | 0.28 |
+| onboardingAgenticIllustration | mutedOpacity | 0.18 | 0.18 |
+| onboardingExperienceIllustration | mutedOpacity | 0.18 | 0.18 |
+| onboardingFinishIllustration | accentOpacity | 0.3 | 0.3 |
+| onboardingMakeIllustration | mutedOpacity | 0.45 | 0.45 |
+| rippleIllustration | mutedOpacity | 0.18 | 0.18 |
+| snappingIllustration | mutedOpacity | 0.18 | 0.18 |
+| toolCutIllustration | mutedOpacity | 0.18 | 0.18 |
+| toolSelectIllustration | mutedOpacity | 0.18 | 0.18 |
+| trackerIllustration | mutedOpacity | 0.22 | 0.22 |
+| trackerIllustration | accentOpacity | 0.6 | 0.6 |
+| transformLayerIllustration | mutedOpacity | 0.18 | 0.18 |
+| trimEndIllustration | mutedOpacity | 0.18 | 0.18 |
+| trimStartIllustration | mutedOpacity | 0.18 | 0.18 |
 
 ## metrics
 

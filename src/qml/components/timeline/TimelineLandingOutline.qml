@@ -11,7 +11,7 @@ Rectangle {
     width: panel.dropDurationSeconds * panel.pxPerSecond
     height: parent.height
     radius: Theme.c.timelineLandingOutline.radius
-    color: Qt.rgba(Theme.c.timelineLandingOutline.background.r, Theme.c.timelineLandingOutline.background.g, Theme.c.timelineLandingOutline.background.b, 0.12)
+    color: Qt.alpha(Theme.c.timelineLandingOutline.background, Theme.c.timelineLandingOutline.backgroundOpacity)
     border.width: Theme.c.timelineLandingOutline.borderWidth
     border.color: Theme.c.timelineLandingOutline.border
     z: 5

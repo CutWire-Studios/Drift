@@ -136,7 +136,7 @@ Item {
                 strokeWidth: Theme.c.maskDrawOverlay.borderWidth
                 strokeStyle: ShapePath.DashLine
                 dashPattern: [4, 3]
-                fillColor: Qt.alpha(Theme.c.maskDrawOverlay.fill, 0.15)
+                fillColor: Qt.alpha(Theme.c.maskDrawOverlay.fill, Theme.c.maskDrawOverlay.fillOpacity)
 
                 PathRectangle {
                     x: root.dragBox.x
@@ -156,7 +156,7 @@ Item {
                 strokeWidth: Theme.c.maskDrawOverlay.borderWidth
                 strokeStyle: ShapePath.DashLine
                 dashPattern: [4, 3]
-                fillColor: Qt.alpha(Theme.c.maskDrawOverlay.fill, 0.15)
+                fillColor: Qt.alpha(Theme.c.maskDrawOverlay.fill, Theme.c.maskDrawOverlay.fillOpacity)
 
                 PathMove {
                     x: root.dragBox.x + root.dragBox.width

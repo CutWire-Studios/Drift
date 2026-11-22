@@ -14,7 +14,7 @@ Rectangle {
     width: badge.grow ? Math.max(Theme.spacingXl, label.implicitWidth + Theme.spacingSm)
                       : Theme.spacingXl
     height: Theme.spacingXl
-    radius: height / 2
+    radius: Theme.radiusPill
     color: Theme.c.androidTopBarCountBadge.background
 
     Text {

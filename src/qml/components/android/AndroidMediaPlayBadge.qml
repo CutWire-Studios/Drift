@@ -10,7 +10,7 @@ Rectangle {
 
     width: 64
     height: 64
-    radius: width / 2
+    radius: Theme.radiusPill
     color: Theme.c.androidMediaPlayBadge.background
     opacity: badge.playing ? 0 : 1
 

@@ -125,7 +125,7 @@ Item {
                                                             && Qt.colorEqual(modelData, root.currentHex)
                             width: 36
                             height: 36
-                            radius: width / 2
+                            radius: Theme.radiusPill
                             color: modelData
                             border.width: current ? 3 : Theme.c.androidToolPage.borderWidth
                             border.color: current ? Theme.c.androidToolPage.foreground

@@ -41,7 +41,7 @@ Item {
             ShapePath {
                 id: _qt_node6_path_fill_stroke
                 strokeColor: "transparent"
-                fillColor: Qt.alpha(Theme.c.illustration.muted, 0.18)
+                fillColor: Qt.alpha(Theme.c.illustration.muted, Theme.c.adjustmentLayerIllustration.mutedOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 6 28 Q 6 27.1716 6.58579 26.5858 Q 7.17157 26 8 26 L 152 26 Q 152.828 26 153.414 26.5858 Q 154 27.1716 154 28 L 154 40 Q 154 40.8284 153.414 41.4142 Q 152.828 42 152 42 L 8 42 Q 7.17157 42 6.58579 41.4142 Q 6 40.8284 6 40 L 6 28 " }
@@ -59,7 +59,7 @@ Item {
             ShapePath {
                 id: _qt_node9_path_fill_stroke
                 strokeColor: "transparent"
-                fillColor: Qt.alpha(Theme.c.illustration.muted, 0.18)
+                fillColor: Qt.alpha(Theme.c.illustration.muted, Theme.c.adjustmentLayerIllustration.mutedOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 6 52 Q 6 51.1716 6.58579 50.5858 Q 7.17157 50 8 50 L 152 50 Q 152.828 50 153.414 50.5858 Q 154 51.1716 154 52 L 154 64 Q 154 64.8284 153.414 65.4142 Q 152.828 66 152 66 L 8 66 Q 7.17157 66 6.58579 65.4142 Q 6 64.8284 6 64 L 6 52 " }
@@ -171,7 +171,7 @@ Item {
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
                 miterLimit: 0
-                fillColor: Qt.alpha(Theme.c.illustration.accent, 0.25)
+                fillColor: Qt.alpha(Theme.c.illustration.accent, Theme.c.adjustmentLayerIllustration.accentOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 0 2 Q 0 1.17157 0.585786 0.585786 Q 1.17157 1.11022e-16 2 0 L 130 0 Q 130.828 0 131.414 0.585786 Q 132 1.17157 132 2 L 132 14 Q 132 14.8284 131.414 15.4142 Q 130.828 16 130 16 L 2 16 Q 1.17157 16 0.585786 15.4142 Q 1.11022e-16 14.8284 0 14 L 0 2 " }

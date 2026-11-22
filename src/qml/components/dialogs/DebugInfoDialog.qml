@@ -54,7 +54,7 @@ ThemedDialog {
             return striped ? Theme.c.debugInfoDialog.rowStripe : "transparent"
         const c = state === "supported" ? Theme.c.debugInfoDialog.cellSupported
                                         : Theme.c.debugInfoDialog.cellUnsupported
-        return Qt.rgba(c.r, c.g, c.b, striped ? 0.10 : 0.16)
+        return Qt.alpha(c, striped ? Theme.c.debugInfoDialog.cellOpacityStriped : Theme.c.debugInfoDialog.cellOpacity)
     }
 
     function cellTextColor(state) {

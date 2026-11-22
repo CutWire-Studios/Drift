@@ -108,7 +108,7 @@ Popup {
             width: hintText.implicitWidth + Theme.spacing2xl * 2
                    + (cancelButton.visible ? cancelButton.width : 0)
             height: Theme.controlHeight
-            radius: height / 2
+            radius: Theme.radiusPill
             color: Theme.c.colorEyedropper.hintBackground
             border.width: Theme.c.colorEyedropper.hintBorderWidth
             border.color: Theme.c.colorEyedropper.hintBorder
@@ -172,7 +172,7 @@ Popup {
                 id: lensMask
                 width: root.lensSize
                 height: root.lensSize
-                radius: width / 2
+                radius: Theme.radiusPill
                 visible: false
                 layer.enabled: true
             }
@@ -209,14 +209,14 @@ Popup {
             Rectangle {
                 width: root.lensSize
                 height: root.lensSize
-                radius: width / 2
+                radius: Theme.radiusPill
                 color: "transparent"
                 border.width: Theme.c.colorEyedropper.ringBorderWidth
                 border.color: root._color
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: -1
-                    radius: width / 2
+                    radius: Theme.radiusPill
                     color: "transparent"
                     border.width: Theme.c.colorEyedropper.ringShadowWidth
                     border.color: Theme.c.colorEyedropper.ringShadow
@@ -224,7 +224,7 @@ Popup {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 4
-                    radius: width / 2
+                    radius: Theme.radiusPill
                     color: "transparent"
                     border.width: Theme.c.colorEyedropper.ringHighlightWidth
                     border.color: Theme.c.colorEyedropper.ringHighlight
@@ -237,7 +237,7 @@ Popup {
                 anchors.bottom: parent.bottom
                 width: hexText.implicitWidth + Theme.spacingXl * 2
                 height: 24
-                radius: height / 2
+                radius: Theme.radiusPill
                 color: Theme.c.colorEyedropper.pillBackground
                 border.width: Theme.c.colorEyedropper.pillBorderWidth
                 border.color: Theme.c.colorEyedropper.pillBorder

@@ -166,7 +166,7 @@ ManipOverlay {
             visible: root.aiActive && EditorState.segmentation.previewMaskUrl !== ""
             colorization: 1.0
             colorizationColor: Theme.c.maskAiOverlay.tint
-            opacity: 0.45
+            opacity: Theme.c.maskAiOverlay.tintOpacity
         }
 
         // Clicks on the frame: left adds a point in the chips' mode; right, Ctrl or Alt exclude for that
@@ -218,7 +218,7 @@ ManipOverlay {
 
                 width: 12
                 height: 12
-                radius: width / 2
+                radius: Theme.radiusPill
                 x: modelData.x * clipFrame.width - width / 2
                 y: modelData.y * clipFrame.height - height / 2
                 scale: index === root.hoverIndex ? 1.35 : 1

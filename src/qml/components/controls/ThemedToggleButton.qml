@@ -56,7 +56,7 @@ AbstractButton {
                     if (!root.enabled)
                         return Theme.c.themedToggleButton.backgroundDisabled
                     if (root.checked)
-                        return root.down ? Qt.darker(Theme.c.themedToggleButton.backgroundChecked, 1.2)
+                        return root.down ? Theme.c.themedToggleButton.backgroundCheckedPressed
                                          : Theme.c.themedToggleButton.backgroundChecked
                     if (root.down)
                         return Theme.c.themedToggleButton.backgroundPressed

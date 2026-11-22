@@ -190,7 +190,7 @@ Item {
                 anchors.centerIn: parent
                 width: parent.width
                 height: parent.height - Theme.spacingSm
-                radius: height / 2
+                radius: Theme.radiusPill
                 color: Theme.c.androidToolPage.actionBackground
             }
 

@@ -575,8 +575,7 @@ ManipOverlay {
             visible: active
             border.width: Theme.c.timelineMarqueeRect.borderWidth
             border.color: Theme.c.timelineMarqueeRect.border
-            color: Qt.rgba(Theme.c.timelineMarqueeRect.background.r, Theme.c.timelineMarqueeRect.background.g,
-                           Theme.c.timelineMarqueeRect.background.b, 0.12)
+            color: Qt.alpha(Theme.c.timelineMarqueeRect.background, Theme.c.timelineMarqueeRect.backgroundOpacity)
 
             function begin(x, y, add) {
                 origin = Qt.point(x, y)
@@ -663,7 +662,7 @@ ManipOverlay {
                 y: (info.y || 0) - (info.ph || 0) / 2 - height - Theme.spacingXs
                 width: badgeLabel.implicitWidth + Theme.spacingMd * 2
                 height: badgeLabel.implicitHeight + Theme.spacingXs * 2
-                radius: height / 2
+                radius: Theme.radiusPill
                 color: tint
                 border.width: Theme.c.maskDrawOverlay.borderWidth
                 border.color: Theme.c.trackerOverlay.badgeBackground

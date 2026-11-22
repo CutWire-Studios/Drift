@@ -29,6 +29,10 @@ Item {
         return axis === "x" ? Theme.c.viewAxisWidget.x : axis === "y" ? Theme.c.viewAxisWidget.y : Theme.c.viewAxisWidget.z
     }
 
+    function negativeColorFor(axis) {
+        return axis === "x" ? Theme.c.viewAxisWidget.xNegative : axis === "y" ? Theme.c.viewAxisWidget.yNegative : Theme.c.viewAxisWidget.zNegative
+    }
+
     width: radius * 2 + 16
     height: width
 
@@ -61,6 +65,7 @@ Item {
                 tipX: end.tipX
                 tipY: end.tipY
                 ink: widget.colorFor(end.modelData.axis)
+                negativeInk: widget.negativeColorFor(end.modelData.axis)
                 letter: end.modelData.axis.toUpperCase()
                 viewName: end.modelData.view
             }

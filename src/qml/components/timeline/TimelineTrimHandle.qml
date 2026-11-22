@@ -22,7 +22,7 @@ Rectangle {
     radius: looping ? width / 2 : owner.touchMode ? Theme.c.timelineTrimHandle.radius : 0
     color: !owner.showTrimHandles ? "transparent"
            : looping ? Theme.c.timelineTrimHandle.loopBackground
-           : owner.touchMode ? Qt.alpha(Theme.c.timelineTrimHandle.background, 0.55)
+           : owner.touchMode ? Qt.alpha(Theme.c.timelineTrimHandle.background, Theme.c.timelineTrimHandle.backgroundOpacity)
                              : "transparent"
 
     readonly property color accent: Theme.c.timelineTrimHandle.background

@@ -222,6 +222,18 @@ PanelFrame {
             "gapOutline": Theme.c.timelineClipItem.gapOutline,
             "keyframeMarker": Theme.c.timelineClipItem.keyframeMarker,
             "keyframeMarkerRim": Theme.c.timelineClipItem.keyframeMarkerRim,
+            "waveformBarBackground": Theme.c.timelineClipItem.waveformBarBackground,
+            "fadeFill": Theme.c.timelineClipItem.fadeFill,
+            "fadeStroke": Theme.c.timelineClipItem.fadeStroke,
+            "disabledChipForegroundOpacity": Theme.c.timelineClipItem.disabledChipForegroundOpacity,
+            "clipEdgeOpacity": Theme.c.timelineClipItem.clipEdgeOpacity,
+            "effectDropTintOpacity": Theme.c.timelineClipItem.effectDropTintOpacity,
+            "rippleTintOpacity": Theme.c.timelineClipItem.rippleTintOpacity,
+            "rippleOutlineOpacity": Theme.c.timelineClipItem.rippleOutlineOpacity,
+            "waveformDividerOpacity": Theme.c.timelineClipItem.waveformDividerOpacity,
+            "clipEdgeWidth": Theme.c.timelineClipItem.clipEdgeWidth,
+            "rippleOutlineWidth": Theme.c.timelineClipItem.rippleOutlineWidth,
+            "fadeStrokeWidth": Theme.c.timelineClipItem.fadeStrokeWidth,
             "fontFamily": Theme.fontFamily,
             "fontSizeTiny": Theme.fontSizeTiny,
             "fontSizeXs": Theme.fontSizeXs,
@@ -1796,12 +1808,8 @@ PanelFrame {
                                 // Faint row tint on hover, and an empty track now
                                 // reads as a track rather than as blank space.
                                 color: trackHover.hovered
-                                       ? Qt.rgba(Theme.c.timelinePanel.trackBackground.r,
-                                                 Theme.c.timelinePanel.trackBackground.g,
-                                                 Theme.c.timelinePanel.trackBackground.b, 0.5)
-                                       : Qt.rgba(Theme.c.timelinePanel.trackBackground.r,
-                                                 Theme.c.timelinePanel.trackBackground.g,
-                                                 Theme.c.timelinePanel.trackBackground.b, 0.22)
+                                       ? Qt.alpha(Theme.c.timelinePanel.trackBackground, Theme.c.timelinePanel.trackBackgroundOpacityHover)
+                                       : Qt.alpha(Theme.c.timelinePanel.trackBackground, Theme.c.timelinePanel.trackBackgroundOpacity)
 
                                 Behavior on color {
                                     ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }

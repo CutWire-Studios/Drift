@@ -417,9 +417,9 @@ ManipOverlay {
         y: root.hoverInfo.y - height / 2
         width: 14
         height: 14
-        radius: width / 2
+        radius: Theme.radiusPill
         color: Theme.c.pathEditor.ghostBackground
-        border.width: 1
+        border.width: Theme.c.pathEditor.ghostBorderWidth
         border.color: Theme.c.pathEditor.ghostBorder
 
         Rectangle {
@@ -477,8 +477,7 @@ ManipOverlay {
         y: root.session.marquee.y
         width: root.session.marquee.width
         height: root.session.marquee.height
-        color: Qt.rgba(Theme.c.timelineMarqueeRect.background.r, Theme.c.timelineMarqueeRect.background.g,
-                       Theme.c.timelineMarqueeRect.background.b, 0.12)
+        color: Qt.alpha(Theme.c.timelineMarqueeRect.background, Theme.c.timelineMarqueeRect.backgroundOpacity)
         border.width: Theme.c.timelineMarqueeRect.borderWidth
         border.color: Theme.c.timelineMarqueeRect.border
     }

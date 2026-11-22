@@ -38,7 +38,7 @@ ThemedContextMenu {
             spacing: Theme.spacingXs
 
             Repeater {
-                model: ["", "#e5484d", "#f5a524", "#46a758", "#3e9bff", "#8e4ec6", "#e93d82"]
+                model: [""].concat(Array.from(Theme.c.timelineBookmarkContextMenu.swatches, c => Qt.color(c).toString()))
 
                 delegate: Rectangle {
                     id: swatch
@@ -50,7 +50,7 @@ ThemedContextMenu {
 
                     width: 18
                     height: 18
-                    radius: width / 2
+                    radius: Theme.radiusPill
                     color: swatch.modelData.length > 0 ? swatch.modelData
                                                        : Theme.c.timelineBookmarkMarker.foreground
                     border.width: swatch.current || swatchHover.hovered

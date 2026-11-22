@@ -141,7 +141,7 @@ Item {
                     anchors.centerIn: parent
                     width: 2
                     height: parent.height * 0.8
-                    radius: 1
+                    radius: Theme.radiusPill
                     color: Theme.c.androidToolPage.foreground
                 }
 

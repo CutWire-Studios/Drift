@@ -35,10 +35,7 @@ Item {
     readonly property real bodyW: Math.max(10, (shownEnd - shownStart) * panel.pxPerSecond)
     readonly property bool active: selected || toffeeHover.hovered || dragging
     readonly property bool dragging: liveDuration >= 0
-    readonly property color fill: Qt.rgba(Theme.c.timelineTransitionToffee.background.r,
-                                          Theme.c.timelineTransitionToffee.background.g,
-                                          Theme.c.timelineTransitionToffee.background.b,
-                                          selected ? 1.0 : 0.9)
+    readonly property color fill: Qt.alpha(Theme.c.timelineTransitionToffee.background, selected ? Theme.c.timelineTransitionToffee.backgroundOpacitySelected : Theme.c.timelineTransitionToffee.backgroundOpacity)
 
     x: shownStart * panel.pxPerSecond
     y: clipAreaHeight - barH - bottomInset
@@ -53,37 +50,34 @@ Item {
     Rectangle {
         anchors.fill: parent
         anchors.margins: -1
-        radius: height / 2
+        radius: Theme.radiusPill
         color: "transparent"
-        border.width: 1
+        border.width: Theme.c.timelineTransitionToffee.outlineWidth
         border.color: Theme.c.timelineTransitionToffee.outline
     }
 
     Rectangle {
         id: body
         anchors.fill: parent
-        radius: height / 2
+        radius: Theme.radiusPill
         color: toffee.fill
         border.width: toffee.selected ? Theme.c.timelineTransitionToffee.borderWidthSelected
                                       : Theme.c.timelineTransitionToffee.borderWidth
-        border.color: Qt.rgba(Theme.c.timelineTransitionToffee.border.r,
-                              Theme.c.timelineTransitionToffee.border.g,
-                              Theme.c.timelineTransitionToffee.border.b,
-                              toffee.active ? 1.0 : 0.75)
+        border.color: Qt.alpha(Theme.c.timelineTransitionToffee.border, toffee.active ? Theme.c.timelineTransitionToffee.borderOpacityActive : Theme.c.timelineTransitionToffee.borderOpacity)
 
         TimelineTransitionChevrons {
             anchors.fill: parent
             anchors.leftMargin: toffee.barH * 0.45
             anchors.rightMargin: toffee.barH * 0.45
             visible: width >= toffee.barH * 0.6
-            color: Qt.alpha(Theme.c.timelineTransitionToffee.chevron, 0.3)
+            color: Qt.alpha(Theme.c.timelineTransitionToffee.chevron, Theme.c.timelineTransitionToffee.chevronOpacity)
         }
 
         Rectangle {
             anchors.centerIn: content
-            width: content.implicitWidth + 10
-            height: content.implicitHeight + 2
-            radius: height / 2
+            width: content.implicitWidth + Theme.c.timelineTransitionToffee.labelPaddingX
+            height: content.implicitHeight + Theme.c.timelineTransitionToffee.labelPaddingY
+            radius: Theme.radiusPill
             color: toffee.fill
             visible: content.visible
         }

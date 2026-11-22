@@ -9,11 +9,6 @@ Item {
     property rect frame: Qt.rect(0, 0, 0, 0)
     property rect extent: Qt.rect(0, 0, 0, 0)
 
-    readonly property real left: Math.max(extent.x, frame.x)
-    readonly property real right: Math.min(extent.x + extent.width, frame.x + frame.width)
-    readonly property real top: Math.max(extent.y, frame.y)
-    readonly property real bottom: Math.min(extent.y + extent.height, frame.y + frame.height)
-
     Rectangle {
         color: Theme.c.cropFrame.scrim
         opacity: Theme.c.cropFrame.scrimOpacity

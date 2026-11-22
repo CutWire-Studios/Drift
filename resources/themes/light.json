@@ -7,6 +7,7 @@
     "foreground": "#1c1c1c",
     "border": "#e8e8e8",
     "accent": "#f5f5f5",
+    "accentHover": "#E3E3E3",
     "accentForeground": "#050505",
     "mutedForeground": "#7a7a7a",
     "popoverHover": "#f5f5f5",
@@ -17,6 +18,7 @@
     "panelAccentForeground": "#0d0d0d",
     "panelMuted": "#d4d4d4",
     "panelSecondaryBg": "#fff6da",
+    "panelSecondaryBgPressed": "#D4CDB6",
     "panelSecondaryBorder": "#ffe7a3",
     "panelSecondaryForeground": "#9a6f00",
     "sliderTrack": "#505050",
@@ -34,6 +36,12 @@
     "beatOnset": "#2121218c",
     "textStylePreviewBorder": "#2a2a2a",
     "primary": "#F8B81C",
+    "primaryLiftedStrong": "#FFCD54",
+    "primaryLifted": "#FFC63B",
+    "primaryDisabled": "#A57B13",
+    "primaryPressedStrong": "#D8A018",
+    "primaryPressed": "#DDA419",
+    "primaryHover": "#FFC12A",
     "searchHighlight": "#4DF8B81C",
     "primaryForeground": "#221900",
     "destructive": "#e91616",
@@ -52,6 +60,7 @@
     "snapGuide": "#f5c542",
     "clipText": "#5DBAA0",
     "clipSubtitle": "#4A9FD4",
+    "clipSubtitleActive": "#55B7F4",
     "clipAudio": "#8F5DBA",
     "clipGraphic": "#BA5D7A",
     "clipEffect": "#5d93ba",
@@ -67,6 +76,7 @@
     "clipAdjustmentAudio": "#9B6BC9",
     "clipAdjustmentMask": "#BA9B5D",
     "clipTransform": "#8FBA5D",
+    "clipTransformHover": "#A4D66B",
     "clipVideoOverview": "#6E7A85",
     "transitionOverlap": "#9B5DE5",
     "waveform": "#ffffffb3",
@@ -74,8 +84,11 @@
     "previewLetterbox": "#333333",
     "textStylePreviewBg": "#1c1c1c",
     "gizmoX": "#f0475a",
+    "gizmoXNegative": "#852732",
     "gizmoY": "#5ccf5a",
+    "gizmoYNegative": "#337332",
     "gizmoZ": "#4f8ff7",
+    "gizmoZNegative": "#2C4F89",
     "gizmoUniform": "#f2f2f2",
     "gizmoHot": "#ffd43b",
     "curveX": "#16a9f3",
@@ -385,7 +398,10 @@
       "borderWidth": "$metrics.borderWidth",
       "focusBorder": "$semantic.focusRing",
       "focusBorderWidth": "$metrics.borderWidthFocus",
-      "radius": "$metrics.radius.sm"
+      "radius": "$metrics.radius.sm",
+      "primaryBackgroundHover": "$palette.primaryHover",
+      "primaryBackgroundPressed": "$palette.primaryPressed",
+      "primaryBackgroundDisabled": "$palette.primaryDisabled"
     },
     "assetQuickAddButton": {
       "background": "$semantic.primary",
@@ -428,12 +444,13 @@
       "fillBackground": "$semantic.primary"
     },
     "themedSliderHandle": {
-      "background": "$semantic.primary",
+      "background": "$palette.primaryLifted",
       "backgroundPressed": "$semantic.panel.secondary.foreground",
       "border": "$semantic.primaryForeground",
       "borderFocus": "$semantic.focusRing",
       "borderWidth": "$metrics.borderWidthFocus",
-      "radius": "$metrics.radius.pill"
+      "radius": "$metrics.radius.pill",
+      "backgroundHover": "$palette.primaryLiftedStrong"
     },
     "themedComboBox": {
       "foreground": "$semantic.panel.foreground",
@@ -503,7 +520,8 @@
       "borderWidth": "$metrics.borderWidth",
       "focusBorder": "$semantic.focusRing",
       "focusBorderWidth": "$metrics.borderWidthFocus",
-      "radius": "$metrics.radius.sm"
+      "radius": "$metrics.radius.sm",
+      "backgroundCheckedPressed": "$palette.panelSecondaryBgPressed"
     },
     "workspaceLink": {
       "foreground": "$semantic.mutedForeground",
@@ -545,7 +563,9 @@
       "borderWidth": "$metrics.borderWidth",
       "focusBorder": "$semantic.focusRing",
       "focusBorderWidth": "$metrics.borderWidthFocus",
-      "radius": "$metrics.radius.sm"
+      "radius": "$metrics.radius.sm",
+      "primaryBackgroundPressed": "$palette.primaryPressedStrong",
+      "secondaryBackgroundPressed": "$palette.panelSecondaryBgPressed"
     },
     "themedContextMenu": {
       "background": "$semantic.surface.panel",
@@ -921,7 +941,8 @@
     "notificationUpdateRow": {
       "background": "$semantic.accent",
       "icon": "$semantic.primary",
-      "foreground": "$semantic.panel.foreground"
+      "foreground": "$semantic.panel.foreground",
+      "backgroundHover": "$palette.accentHover"
     },
     "notificationList": {
       "foreground": "$semantic.panel.foreground",
@@ -1148,7 +1169,8 @@
       "tileHover": "$semantic.popoverHover",
       "tileRadius": "$metrics.radius.md",
       "foreground": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground"
+      "foregroundMuted": "$semantic.mutedForeground",
+      "tileBorderWidth": "$metrics.borderWidth"
     },
     "audioSheetPanel": {
       "statBackground": "$semantic.panel.muted",
@@ -1165,7 +1187,9 @@
       "rowTime": "$semantic.mutedForeground",
       "speech": "$semantic.primary",
       "music": "$semantic.accentOnPanel",
-      "silence": "$semantic.panel.accent"
+      "silence": "$semantic.panel.accent",
+      "statBorderWidth": "$metrics.borderWidth",
+      "listBorderWidth": "$metrics.borderWidth"
     },
     "emptyState": {
       "radius": "$metrics.radius.md",
@@ -1227,7 +1251,9 @@
       "foregroundMuted": "$semantic.mutedForeground",
       "divider": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
-      "link": "$semantic.primary"
+      "link": "$semantic.primary",
+      "cellOpacity": 0.16,
+      "cellOpacityStriped": 0.1
     },
     "layoutChooserDialog": {
       "listBackground": "$semantic.surface.app",
@@ -1320,7 +1346,8 @@
       "handleBackground": "$semantic.primary",
       "handleBackgroundRest": "$semantic.panel.border",
       "handleBorderWidth": "$metrics.borderWidthFocus",
-      "handleBorderWidthRest": "$metrics.borderWidth"
+      "handleBorderWidthRest": "$metrics.borderWidth",
+      "masterBackgroundOpacity": 0.5
     },
     "clipFilmstrip": {
       "radius": 0
@@ -1375,7 +1402,8 @@
       "peak": "$semantic.panel.foreground"
     },
     "mixerMeterTick": {
-      "foreground": "$semantic.surface.panel"
+      "foreground": "$semantic.surface.panel",
+      "foregroundOpacity": 0.7
     },
     "mixerPanControl": {
       "track": "$semantic.panel.sliderTrack",
@@ -1401,7 +1429,9 @@
       "borderFocus": "$semantic.focusRing",
       "activeBorder": "$semantic.panel.secondary.border",
       "foreground": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground"
+      "foregroundMuted": "$semantic.mutedForeground",
+      "destructiveOpacity": 0.16,
+      "destructiveOpacityBorder": 0.45
     },
     "mixerZoneGradient": {
       "red": "$semantic.destructive",
@@ -1431,14 +1461,17 @@
       "background": "$semantic.clip.subtitle",
       "borderWidth": "$metrics.borderWidthFocus",
       "border": "$semantic.primary",
-      "foreground": "$semantic.onMedia"
+      "foreground": "$semantic.onMedia",
+      "backgroundActive": "$palette.clipSubtitleActive"
     },
     "subtitleCueEdgeGrip": {
-      "background": "$semantic.primary"
+      "background": "$semantic.primary",
+      "backgroundOpacity": 0.6
     },
     "subtitleCueGutter": {
       "foregroundMuted": "$semantic.mutedForeground",
-      "border": "$semantic.panel.border"
+      "border": "$semantic.panel.border",
+      "foregroundMutedOpacity": 0.8
     },
     "subtitleCueLane": {
       "background": "$semantic.surface.panel",
@@ -1449,16 +1482,19 @@
       "foreground": "$semantic.primary"
     },
     "subtitleCueSpan": {
-      "background": "$semantic.panel.accent"
+      "background": "$semantic.panel.accent",
+      "backgroundOpacity": 0.4
     },
     "subtitleCueWaveform": {
-      "foreground": "$semantic.clip.panelWaveform"
+      "foreground": "$semantic.clip.panelWaveform",
+      "foregroundOpacity": 0.75
     },
     "timelineAdjustmentLaneChrome": {
       "edge": "$semantic.timeline.scrimSoft",
       "videoTint": "$semantic.clip.adjustment.video",
       "audioTint": "$semantic.clip.adjustment.audio",
-      "maskTint": "$semantic.clip.adjustment.mask"
+      "maskTint": "$semantic.clip.adjustment.mask",
+      "tintOpacity": 0.14
     },
     "bakesDialogRow": {
       "backgroundHover": "$semantic.panel.muted",
@@ -1490,7 +1526,8 @@
       "mask": "$semantic.clip.adjustment.mask"
     },
     "timelineBookmarkLaneHighlight": {
-      "background": "$semantic.primary"
+      "background": "$semantic.primary",
+      "backgroundOpacity": 0.18
     },
     "timelineBookmarkMarker": {
       "foreground": "$semantic.primary",
@@ -1519,6 +1556,18 @@
       "gapOutline": "$semantic.clip.gapOutline",
       "keyframeMarker": "$semantic.clip.keyframeMarker",
       "keyframeMarkerRim": "$semantic.clip.keyframeMarkerRim",
+      "waveformBarBackground": "#59000000",
+      "fadeFill": "#61000000",
+      "fadeStroke": "#e6ffffff",
+      "disabledChipForegroundOpacity": 0.55,
+      "clipEdgeOpacity": 0.7255,
+      "effectDropTintOpacity": 0.28,
+      "rippleTintOpacity": 0.2,
+      "rippleOutlineOpacity": 0.9,
+      "waveformDividerOpacity": 0.5,
+      "clipEdgeWidth": 1.25,
+      "rippleOutlineWidth": 1.5,
+      "fadeStrokeWidth": 1.5,
       "foreground": "$semantic.onMedia",
       "waveform": "$semantic.clip.waveform",
       "foregroundMuted": "$semantic.mutedForeground",
@@ -1539,7 +1588,8 @@
     },
     "timelineCutDoomGradient": {
       "foreground": "$semantic.destructive",
-      "radius": "$metrics.radius.sm"
+      "radius": "$metrics.radius.sm",
+      "foregroundOpacity": 0.55
     },
     "timelineFadeHandle": {
       "background": "$semantic.primary",
@@ -1550,14 +1600,16 @@
       "labelForeground": "$semantic.onMedia"
     },
     "timelineGapHover": {
-      "background": "$semantic.panel.accent"
+      "background": "$semantic.panel.accent",
+      "backgroundOpacity": 0.35
     },
     "timelineLandingOutline": {
       "radius": "$metrics.radius.sm",
       "background": "$semantic.primary",
       "borderWidth": "$metrics.borderWidthFocus",
       "border": "$semantic.primary",
-      "foreground": "$semantic.primary"
+      "foreground": "$semantic.primary",
+      "backgroundOpacity": 0.12
     },
     "timelineLiveRecordingBlock": {
       "background": "$semantic.destructive",
@@ -1571,12 +1623,14 @@
       "badgeBackground": "$semantic.timeline.scrimStrong",
       "dotRadius": "$metrics.radius.xs",
       "recordPaused": "$semantic.timeline.recordPaused",
-      "foreground": "$semantic.panel.foreground"
+      "foreground": "$semantic.panel.foreground",
+      "backgroundOpacity": 0.25
     },
     "timelineMarqueeRect": {
       "background": "$semantic.primary",
       "borderWidth": "$metrics.borderWidth",
-      "border": "$semantic.primary"
+      "border": "$semantic.primary",
+      "backgroundOpacity": 0.12
     },
     "timelineNewTrackGhostBoundary": {
       "foreground": "$semantic.primary"
@@ -1586,13 +1640,15 @@
       "background": "$semantic.primary",
       "borderWidth": "$metrics.borderWidthFocus",
       "border": "$semantic.primary",
-      "foreground": "$semantic.primary"
+      "foreground": "$semantic.primary",
+      "backgroundOpacity": 0.3
     },
     "timelineNewTrackGhostLane": {
       "radius": "$metrics.radius.sm",
       "background": "$semantic.surface.panel",
       "borderWidth": "$metrics.borderWidth",
-      "border": "$semantic.primary"
+      "border": "$semantic.primary",
+      "backgroundOpacity": 0.92
     },
     "timelineOverview": {
       "audioBackground": "$semantic.clip.audio",
@@ -1617,13 +1673,16 @@
       "foreground": "$semantic.destructive"
     },
     "timelineOverviewShade": {
-      "background": "$semantic.surface.panel"
+      "background": "$semantic.surface.panel",
+      "backgroundOpacity": 0.6
     },
     "timelinePanel": {
       "background": "$semantic.surface.panel",
       "headerBorder": "$semantic.panel.border",
       "trackBackground": "$semantic.panel.accent",
-      "lockedOverlay": "$semantic.timeline.scrimSoft"
+      "lockedOverlay": "$semantic.timeline.scrimSoft",
+      "trackBackgroundOpacityHover": 0.5,
+      "trackBackgroundOpacity": 0.22
     },
     "timelinePlayheadHead": {
       "background": "$semantic.primary",
@@ -1637,7 +1696,8 @@
     },
     "timelineRulerTick": {
       "tick": "$semantic.mutedForeground",
-      "foregroundMuted": "$semantic.mutedForeground"
+      "foregroundMuted": "$semantic.mutedForeground",
+      "tickOpacity": 0.28
     },
     "timelineSeekStripEdge": {
       "border": "$semantic.panel.border"
@@ -1720,13 +1780,15 @@
       "foregroundMuted": "$semantic.mutedForeground"
     },
     "timelineTrackTransformWash": {
-      "background": "$semantic.clip.transform"
+      "background": "$semantic.clip.transform",
+      "backgroundOpacity": 0.07
     },
     "timelineTransitionDropOutline": {
       "radius": "$metrics.radius.sm",
       "background": "$semantic.primary",
       "borderWidth": "$metrics.borderWidthFocus",
-      "border": "$semantic.clip.transitionOverlap"
+      "border": "$semantic.clip.transitionOverlap",
+      "backgroundOpacity": 0.12
     },
     "timelineTransitionToffee": {
       "background": "$semantic.clip.transitionOverlap",
@@ -1737,30 +1799,43 @@
       "foreground": "$semantic.onMedia",
       "chevron": "$semantic.onMedia",
       "handle": "$semantic.primary",
-      "handleGrip": "$semantic.primaryForeground"
+      "handleGrip": "$semantic.primaryForeground",
+      "backgroundOpacitySelected": 1,
+      "backgroundOpacity": 0.9,
+      "borderOpacityActive": 1,
+      "borderOpacity": 0.75,
+      "chevronOpacity": 0.3,
+      "outlineWidth": "$metrics.borderWidth",
+      "labelPaddingX": 10,
+      "labelPaddingY": 2
     },
     "timelineCutButton": {
       "background": "$semantic.clip.transitionOverlap",
       "border": "$semantic.onMedia",
       "outline": "$semantic.timeline.scrimStrong",
       "borderWidth": "$metrics.borderWidth",
-      "foreground": "$semantic.onMedia"
+      "foreground": "$semantic.onMedia",
+      "outlineWidth": "$metrics.borderWidth"
     },
     "timelineTrimGrip": {
       "radius": 1.5,
-      "foreground": "$semantic.onMedia"
+      "foreground": "$semantic.onMedia",
+      "foregroundOpacity": 0.9
     },
     "timelineTrimHandle": {
       "radius": "$metrics.radius.xs",
       "background": "$semantic.primary",
       "loopBackground": "$palette.categoryCyan",
-      "loopForeground": "$semantic.primaryForeground"
+      "loopForeground": "$semantic.primaryForeground",
+      "backgroundOpacity": 0.55
     },
     "timelineWorkAreaEdge": {
-      "foreground": "$semantic.primary"
+      "foreground": "$semantic.primary",
+      "foregroundOpacity": 0.85
     },
     "timelineWorkAreaShade": {
-      "background": "$semantic.primary"
+      "background": "$semantic.primary",
+      "backgroundOpacity": 0.08
     },
     "trackHeaderChannelLanesButton": {
       "accent": "$semantic.primary",
@@ -1847,7 +1922,10 @@
     "trackHeaderStateTint": {
       "hover": "$semantic.foreground",
       "locked": "$semantic.warning",
-      "selected": "$semantic.primary"
+      "selected": "$semantic.primary",
+      "lockedOpacity": 0.1,
+      "hoverOpacity": 0.05,
+      "selectedOpacity": 0.16
     },
     "trackHeaderTypeStrip": {
       "audio": "$semantic.clip.audio",
@@ -1859,13 +1937,17 @@
       "video": "$semantic.clip.videoPlaceholder"
     },
     "trackHeaderWash": {
-      "background": "$semantic.clip.transform"
+      "background": "$semantic.clip.transform",
+      "backgroundOpacitySpan": 0.18,
+      "backgroundOpacityTransform": 0.08
     },
     "transformCoverageTint": {
       "background": "$semantic.clip.transform",
       "border": "$semantic.clip.transform",
       "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.sm"
+      "radius": "$metrics.radius.sm",
+      "backgroundOpacity": 0.14,
+      "borderOpacity": 0.45
     },
     "voiceoverBarDivider": {
       "foreground": "$semantic.panel.border"
@@ -1875,7 +1957,8 @@
       "background": "$semantic.surface.panel",
       "borderPaused": "$semantic.timeline.recordPaused",
       "border": "$semantic.destructive",
-      "borderWidth": "$metrics.borderWidth"
+      "borderWidth": "$metrics.borderWidth",
+      "backgroundOpacity": 0.96
     },
     "voiceoverGainControl": {
       "icon": "$semantic.mutedForeground",
@@ -1904,7 +1987,8 @@
       "borderWidth": "$metrics.borderWidth",
       "icon": "$semantic.panel.foreground",
       "foreground": "$semantic.panel.foreground",
-      "iconMuted": "$semantic.mutedForeground"
+      "iconMuted": "$semantic.mutedForeground",
+      "backgroundOpacity": 0.05
     },
     "voiceoverRecDot": {
       "radius": 4,
@@ -2637,7 +2721,7 @@
     },
     "subtitleEditorPanel": {
       "applyBackground": "$semantic.primary",
-      "applyBackgroundHover": "$semantic.primary",
+      "applyBackgroundHover": "$palette.primaryHover",
       "background": "$semantic.surface.panel",
       "border": "$semantic.panel.border",
       "foregroundMuted": "$semantic.mutedForeground",
@@ -2856,7 +2940,8 @@
       "radius": 9
     },
     "guideEditAddStrip": {
-      "background": "$semantic.surface.panel"
+      "background": "$semantic.surface.panel",
+      "backgroundOpacity": 0.6
     },
     "guideEditBar": {
       "background": "$semantic.surface.panel",
@@ -2909,14 +2994,17 @@
       "exclude": "$semantic.destructive",
       "include": "$semantic.constructive",
       "pointBorder": "$semantic.onMedia",
-      "tint": "$semantic.primary"
+      "tint": "$semantic.primary",
+      "tintOpacity": 0.45
     },
     "maskBrushOverlay": {
       "borderWidth": "$metrics.borderWidth",
       "cursor": "$semantic.onMedia",
       "cursorInner": "$semantic.onMedia",
       "eraseStroke": "$semantic.destructive",
-      "stroke": "$semantic.constructive"
+      "stroke": "$semantic.constructive",
+      "cursorOpacity": 0.8,
+      "cursorInnerOpacity": 0.5
     },
     "trackingPanel": {
       "stripEmpty": "$semantic.panel.muted",
@@ -2944,7 +3032,11 @@
       "hintBackground": "$semantic.surface.panel",
       "hintForeground": "$semantic.mutedForeground",
       "radius": "$metrics.radius.sm",
-      "stroke": "$semantic.primary"
+      "stroke": "$semantic.primary",
+      "fillOpacity": 0.15,
+      "fillOpacitySplit": 0.08,
+      "fillOpacitySplitSelected": 0.18,
+      "strokeOpacity": 0.7
     },
     "maskOverlayBarBand": {
       "border": "$semantic.mutedForeground",
@@ -2962,7 +3054,8 @@
     },
     "maskOverlayClipBounds": {
       "border": "$semantic.mutedForeground",
-      "borderWidth": "$metrics.borderWidth"
+      "borderWidth": "$metrics.borderWidth",
+      "borderOpacity": 0.35
     },
     "maskOverlayEmptyHint": {
       "background": "$semantic.surface.panel",
@@ -2972,7 +3065,8 @@
     },
     "maskOverlayFeatherRing": {
       "border": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidth"
+      "borderWidth": "$metrics.borderWidth",
+      "borderOpacity": 0.35
     },
     "maskOverlayOutline": {
       "border": "$semantic.mutedForeground",
@@ -2999,7 +3093,9 @@
       "constructive": "$semantic.constructive",
       "constructiveForeground": "$semantic.preview.resolutionConstructiveInk",
       "warning": "$semantic.warning",
-      "warningForeground": "$semantic.preview.resolutionWarningInk"
+      "warningForeground": "$semantic.preview.resolutionWarningInk",
+      "tintOpacity": 0.12,
+      "tintOpacityBorder": 0.55
     },
     "mediaPreviewRulerTick": {
       "foreground": "$semantic.mutedForeground",
@@ -3038,7 +3134,9 @@
       "rangeFavorite": "$semantic.constructive",
       "rangeReject": "$semantic.destructive",
       "rangeOpacity": 0.28,
-      "marker": "$semantic.warning"
+      "marker": "$semantic.warning",
+      "windowBorderWidth": "$metrics.borderWidth",
+      "rangeBorderWidth": "$metrics.borderWidth"
     },
     "sourceLabPanel": {
       "rowHover": "$semantic.popoverHover",
@@ -3162,15 +3260,18 @@
     "previewDropCanvasFrame": {
       "background": "$semantic.primary",
       "border": "$semantic.primary",
-      "borderWidth": 2
+      "borderWidth": 2,
+      "backgroundOpacity": 0.08
     },
     "previewDropClipFrame": {
       "background": "$semantic.primary",
       "border": "$semantic.primary",
-      "borderWidth": 2
+      "borderWidth": 2,
+      "backgroundOpacity": 0.12
     },
     "previewFullscreenTransportScrim": {
-      "background": "$semantic.surface.panel"
+      "background": "$semantic.surface.panel",
+      "backgroundOpacity": 0.9
     },
     "previewGapCaption": {
       "foreground": "$semantic.guide.medium"
@@ -3273,7 +3374,8 @@
     },
     "transformOverlayParentChip": {
       "background": "$semantic.clip.transform",
-      "foreground": "$semantic.onMedia"
+      "foreground": "$semantic.onMedia",
+      "backgroundHover": "$palette.clipTransformHover"
     },
     "transformOverlayParentOutline": {
       "border": "$semantic.clip.transform",
@@ -3298,7 +3400,8 @@
       "border": "$semantic.primary",
       "borderHover": "$semantic.primary",
       "borderWidth": "$metrics.borderWidthFocus",
-      "outline": "$semantic.scrimStrong"
+      "outline": "$semantic.scrimStrong",
+      "outlineWidth": "$metrics.borderWidth"
     },
     "manipHint": {
       "background": "$semantic.scrimStrong",
@@ -3341,7 +3444,10 @@
       "radius": 34,
       "x": "$semantic.gizmo.x",
       "y": "$semantic.gizmo.y",
-      "z": "$semantic.gizmo.z"
+      "z": "$semantic.gizmo.z",
+      "xNegative": "$palette.gizmoXNegative",
+      "yNegative": "$palette.gizmoYNegative",
+      "zNegative": "$palette.gizmoZNegative"
     },
     "scrollStrip": {
       "fade": "$semantic.surface.panel"
@@ -3376,7 +3482,8 @@
     "assetsPanelDropOverlay": {
       "accent": "$semantic.primary",
       "borderWidth": "$metrics.borderWidthFocus",
-      "radius": "$metrics.radius.md"
+      "radius": "$metrics.radius.md",
+      "accentOpacity": 0.08
     },
     "assetsPanelHeader": {
       "background": "$semantic.surface.panel",
@@ -3491,7 +3598,8 @@
       "mosaicDivider": "$semantic.surface.panel",
       "mosaicDividerWidth": "$metrics.borderWidth",
       "radius": "$metrics.radius.sm",
-      "scrim": "$semantic.scrimStrong"
+      "scrim": "$semantic.scrimStrong",
+      "accentOpacityBorder": 0.35
     },
     "marketSearchField": {
       "background": "$semantic.panel.accent",
@@ -3609,7 +3717,8 @@
     },
     "mediaAssetsAddedBadge": {
       "background": "$semantic.scrimStrong",
-      "foreground": "$semantic.onMedia"
+      "foreground": "$semantic.onMedia",
+      "radius": "$metrics.radius.xs"
     },
     "mediaAssetsDurationBadge": {
       "background": "$semantic.scrimStrong",
@@ -3716,7 +3825,8 @@
       "handleLine": "$semantic.primary",
       "outline": "$semantic.primary",
       "outlineWidth": 1.5,
-      "rubberBand": "$semantic.primary"
+      "rubberBand": "$semantic.primary",
+      "ghostBorderWidth": "$metrics.borderWidth"
     },
     "shapePresetCard": {
       "background": "$semantic.panel.accent",
@@ -3834,7 +3944,8 @@
       "scaleBackground": "$semantic.panel.secondary.background",
       "scaleBorder": "$semantic.panel.border",
       "scaleBorderWidth": "$metrics.borderWidth",
-      "scaleRadius": "$metrics.radius.pill"
+      "scaleRadius": "$metrics.radius.pill",
+      "accentOpacity": 0.1
     },
     "androidMain": {
       "background": "$semantic.surface.app",
@@ -3862,7 +3973,8 @@
       "handleRadius": "$metrics.radius.xs",
       "emptyBackground": "$semantic.surface.app",
       "foreground": "$semantic.foreground",
-      "foregroundMuted": "$semantic.mutedForeground"
+      "foregroundMuted": "$semantic.mutedForeground",
+      "emptyBackgroundOpacity": 0.82
     },
     "androidClipToolbar": {
       "background": "$semantic.surface.panel",
@@ -3916,6 +4028,18 @@
       "gapOutline": "$semantic.clip.gapOutline",
       "keyframeMarker": "$semantic.clip.keyframeMarker",
       "keyframeMarkerRim": "$semantic.clip.keyframeMarkerRim",
+      "waveformBarBackground": "#59000000",
+      "fadeFill": "#61000000",
+      "fadeStroke": "#e6ffffff",
+      "disabledChipForegroundOpacity": 0.55,
+      "clipEdgeOpacity": 0.7255,
+      "effectDropTintOpacity": 0.28,
+      "rippleTintOpacity": 0.2,
+      "rippleOutlineOpacity": 0.9,
+      "waveformDividerOpacity": 0.5,
+      "clipEdgeWidth": 1.25,
+      "rippleOutlineWidth": 1.5,
+      "fadeStrokeWidth": 1.5,
       "onMedia": "$semantic.onMedia",
       "waveform": "$semantic.clip.waveform",
       "mutedForeground": "$semantic.mutedForeground",
@@ -3937,7 +4061,9 @@
       "track": "$semantic.panel.accent",
       "beatBar": "$semantic.clip.beat.bar",
       "beatGrid": "$semantic.clip.beat.grid",
-      "beatOnset": "$semantic.clip.beat.onset"
+      "beatOnset": "$semantic.clip.beat.onset",
+      "primaryOpacity": 0.18,
+      "trackOpacity": 0.22
     },
     "androidBottomRail": {
       "background": "$semantic.surface.panel",
@@ -3996,7 +4122,8 @@
     "androidTimelineRulerTick": {
       "tick": "$semantic.mutedForeground",
       "tickWidth": "$metrics.borderWidth",
-      "foreground": "$semantic.mutedForeground"
+      "foreground": "$semantic.mutedForeground",
+      "tickOpacity": 0.28
     },
     "sheetActionRow": {
       "backgroundPressed": "$semantic.panel.accent",
@@ -4027,7 +4154,8 @@
       "background": "$semantic.primary",
       "radius": "$metrics.radius.xs",
       "grip": "$semantic.primaryForeground",
-      "gripRadius": 1
+      "gripRadius": 1,
+      "gripOpacity": 0.9
     },
     "androidTimelineLiveRecording": {
       "background": "$semantic.destructive",
@@ -4042,13 +4170,16 @@
       "indicator": "$semantic.destructive",
       "indicatorPaused": "$semantic.androidShell.recordingPaused",
       "indicatorRadius": "$metrics.radius.xs",
-      "foreground": "$semantic.panel.foreground"
+      "foreground": "$semantic.panel.foreground",
+      "backgroundOpacity": 0.25
     },
     "androidTimelineAdjustmentStrip": {
-      "background": "$semantic.clip.effect"
+      "background": "$semantic.clip.effect",
+      "backgroundOpacity": 0.12
     },
     "androidTimelineGapPress": {
-      "background": "$semantic.panel.accent"
+      "background": "$semantic.panel.accent",
+      "backgroundOpacity": 0.35
     },
     "androidTimelineTransitionMark": {
       "background": "$semantic.clip.transitionOverlap",
@@ -4063,7 +4194,15 @@
       "addBackground": "$semantic.clip.transitionOverlap",
       "addBorder": "$semantic.onMedia",
       "addBorderWidth": "$metrics.borderWidth",
-      "addForeground": "$semantic.onMedia"
+      "addForeground": "$semantic.onMedia",
+      "backgroundOpacitySelected": 1,
+      "backgroundOpacity": 0.9,
+      "borderOpacitySelected": 1,
+      "borderOpacity": 0.75,
+      "chevronOpacity": 0.3,
+      "outlineWidth": "$metrics.borderWidth",
+      "labelPaddingX": 10,
+      "labelPaddingY": 2
     },
     "androidTimelineNewTrackGhost": {
       "background": "$semantic.surface.panel",
@@ -4075,21 +4214,27 @@
       "dropBackground": "$semantic.primary",
       "dropBorder": "$semantic.primary",
       "dropBorderWidth": "$metrics.borderWidthFocus",
-      "foreground": "$semantic.primary"
+      "foreground": "$semantic.primary",
+      "backgroundOpacity": 0.92,
+      "dropBackgroundOpacity": 0.18
     },
     "androidTimelineDropGhost": {
       "background": "$semantic.primary",
       "radius": "$metrics.radius.sm",
       "border": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidthFocus"
+      "borderWidth": "$metrics.borderWidthFocus",
+      "backgroundOpacity": 0.12
     },
     "androidTimelineWorkArea": {
       "background": "$semantic.primary",
       "edge": "$semantic.primary",
-      "edgeWidth": "$metrics.borderWidthFocus"
+      "edgeWidth": "$metrics.borderWidthFocus",
+      "backgroundOpacity": 0.08,
+      "edgeOpacity": 0.85
     },
     "androidTimelineTrackWash": {
-      "background": "$semantic.clip.transform"
+      "background": "$semantic.clip.transform",
+      "backgroundOpacity": 0.07
     },
     "androidTimelineLaneBar": {
       "background": "$semantic.surface.panel",
@@ -4147,7 +4292,8 @@
       "borderWidth": "$metrics.borderWidth",
       "radius": "$metrics.radius.md",
       "icon": "$semantic.panel.foreground",
-      "iconToggled": "$semantic.accentOnPanel"
+      "iconToggled": "$semantic.accentOnPanel",
+      "backgroundToggledOpacity": 0.22
     },
     "androidSheetActionMark": {
       "background": "$semantic.destructive",
@@ -4191,7 +4337,8 @@
       "borderWidth": "$metrics.borderWidth",
       "radius": "$metrics.radius.md",
       "foreground": "$semantic.panel.foreground",
-      "primaryForeground": "$semantic.primaryForeground"
+      "primaryForeground": "$semantic.primaryForeground",
+      "primaryBackgroundPressed": "$palette.primaryPressedStrong"
     },
     "androidLayoutTemplateCard": {
       "background": "$semantic.panel.accent",
@@ -4259,7 +4406,8 @@
     "androidRailAddButton": {
       "background": "$semantic.primary",
       "radius": "$metrics.radius.lg",
-      "icon": "$semantic.primaryForeground"
+      "icon": "$semantic.primaryForeground",
+      "backgroundPressed": "$palette.primaryPressed"
     },
     "androidRailButton": {
       "backgroundSelected": "$semantic.panel.secondary.background",
@@ -4321,12 +4469,15 @@
         "orange": "$palette.categoryOrange",
         "indigo": "$palette.categoryIndigo",
         "neutral": "$semantic.mutedForeground"
-      }
+      },
+      "borderWidth": "$metrics.borderWidth",
+      "selectionBorderWidth": "$metrics.borderWidthFocus"
     },
     "nodeAngleDial": {
       "background": "$semantic.panel.secondary.background",
       "border": "$semantic.panel.border",
-      "needle": "$semantic.primary"
+      "needle": "$semantic.primary",
+      "borderWidth": "$metrics.borderWidth"
     },
     "portItem": {
       "fill": "$semantic.panel.accent",
@@ -4340,10 +4491,13 @@
       "image": "$palette.categoryRed",
       "audio": "$palette.categoryBlue",
       "mod": "$palette.categoryViolet",
-      "other": "$semantic.mutedForeground"
+      "other": "$semantic.mutedForeground",
+      "ringBorderWidth": "$metrics.borderWidthFocus",
+      "borderWidth": 1.5
     },
     "edgeLayer": {
-      "selected": "$semantic.primary"
+      "selected": "$semantic.primary",
+      "selectedOpacity": 0.25
     },
     "nodeMinimap": {
       "radius": "$metrics.radius.md",
@@ -4351,13 +4505,18 @@
       "border": "$semantic.panel.border",
       "node": "$semantic.mutedForeground",
       "viewport": "$semantic.primary",
-      "foreground": "$semantic.mutedForeground"
+      "foreground": "$semantic.mutedForeground",
+      "viewportOpacity": 0.16,
+      "borderWidth": "$metrics.borderWidth",
+      "viewportBorderWidth": 1.5,
+      "nodeRadius": 1
     },
     "nodeGraphEditor": {
       "radius": "$metrics.radius.md",
       "controlsBackground": "$semantic.surface.panel",
       "controlsBorder": "$semantic.panel.border",
-      "foreground": "$semantic.mutedForeground"
+      "foreground": "$semantic.mutedForeground",
+      "controlsBorderWidth": "$metrics.borderWidth"
     },
     "forgePanel": {
       "border": "$semantic.panel.border",
@@ -4370,6 +4529,126 @@
       "error": "$semantic.destructive",
       "success": "$semantic.constructive",
       "codeBackground": "$semantic.surface.app"
+    },
+    "timelineTransitionEar": {
+      "width": 8,
+      "radius": "$metrics.radius.xs",
+      "borderWidth": "$metrics.borderWidth",
+      "gripWidth": 1
+    },
+    "designerSlot": {
+      "borderWidth": "$metrics.borderWidth",
+      "indicator": "$semantic.accent",
+      "indicatorOpacity": 0.35,
+      "indicatorBorderWidth": "$metrics.borderWidthFocus"
+    },
+    "workspaceDesigner": {
+      "borderWidth": "$metrics.borderWidth",
+      "removing": "$semantic.destructive",
+      "removingOpacity": 0.15,
+      "emptyHover": "$semantic.accent",
+      "emptyHoverOpacity": 0.15
+    },
+    "recorderPanel": {
+      "micBackground": "$semantic.panel.foreground",
+      "micBackgroundOpacity": 0.05,
+      "recordBackground": "$semantic.destructive",
+      "recordOpacity": 1.0,
+      "recordOpacityHover": 0.92,
+      "recordOpacityPressed": 0.8,
+      "recordRing": "#40FFFFFF",
+      "recordRingWidth": 3,
+      "recordIcon": "#FFFFFF"
+    },
+    "audioForgeNodeTab": {
+      "stepRadius": 2
+    },
+    "agentLogPanel": {
+      "thumbRadius": 2,
+      "thumbBorderWidth": "$metrics.borderWidth"
+    },
+    "colorPanel": {
+      "swatchFocusBorderWidth": "$metrics.borderWidthFocus"
+    },
+    "timelineBookmarkContextMenu": {
+      "swatches": [
+        "#e5484d",
+        "#f5a524",
+        "#46a758",
+        "#3e9bff",
+        "#8e4ec6",
+        "#e93d82"
+      ]
+    },
+    "adjustmentLayerIllustration": {
+      "mutedOpacity": 0.18,
+      "accentOpacity": 0.25
+    },
+    "aiObjectIllustration": {
+      "mutedOpacity": 0.22,
+      "accentOpacity": 0.4
+    },
+    "autoSelectIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "freezeFrameIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "guidesIllustration": {
+      "mutedOpacity": 0.22,
+      "mutedOpacityStrong": 0.45
+    },
+    "linkClipsIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "maskBrushIllustration": {
+      "mutedOpacity": 0.22,
+      "accentOpacity": 0.45
+    },
+    "maskPolygonIllustration": {
+      "mutedOpacity": 0.22,
+      "accentOpacity": 0.28
+    },
+    "maskShapeIllustration": {
+      "mutedOpacity": 0.22,
+      "accentOpacity": 0.28
+    },
+    "onboardingAgenticIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "onboardingExperienceIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "onboardingFinishIllustration": {
+      "accentOpacity": 0.3
+    },
+    "onboardingMakeIllustration": {
+      "mutedOpacity": 0.45
+    },
+    "rippleIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "snappingIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "toolCutIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "toolSelectIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "trackerIllustration": {
+      "mutedOpacity": 0.22,
+      "accentOpacity": 0.6
+    },
+    "transformLayerIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "trimEndIllustration": {
+      "mutedOpacity": 0.18
+    },
+    "trimStartIllustration": {
+      "mutedOpacity": 0.18
     }
   },
   "metrics": {

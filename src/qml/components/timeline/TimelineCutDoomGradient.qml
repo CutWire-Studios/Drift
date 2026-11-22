@@ -17,7 +17,7 @@ Rectangle {
         ? (host.hoverClip.start + host.hoverClip.duration) * panel.pxPerSecond : 0
     readonly property real cutX: Math.max(clipStartX,
         Math.min(clipEndX, panel.cutHoverSeconds * panel.pxPerSecond))
-    readonly property color solid: Qt.rgba(Theme.c.timelineCutDoomGradient.foreground.r, Theme.c.timelineCutDoomGradient.foreground.g, Theme.c.timelineCutDoomGradient.foreground.b, 0.55)
+    readonly property color solid: Qt.alpha(Theme.c.timelineCutDoomGradient.foreground, Theme.c.timelineCutDoomGradient.foregroundOpacity)
     readonly property color clear: Qt.rgba(Theme.c.timelineCutDoomGradient.foreground.r, Theme.c.timelineCutDoomGradient.foreground.g, Theme.c.timelineCutDoomGradient.foreground.b, 0.0)
 
     x: panel.timelineTool === "trimStart"

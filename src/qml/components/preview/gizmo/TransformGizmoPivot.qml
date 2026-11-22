@@ -13,7 +13,7 @@ Rectangle {
     visible: pivot.shown
     width: pivot.touch ? 10 : 7
     height: width
-    radius: width / 2
+    radius: Theme.radiusPill
     x: pivot.shown ? pivot.originX - width / 2 : 0
     y: pivot.shown ? pivot.originY - height / 2 : 0
     color: Theme.c.transformGizmoPivot.background

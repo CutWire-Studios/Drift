@@ -31,7 +31,7 @@ Rectangle {
                 height: 2
                 radius: Theme.c.androidMediaTrimHandle.gripRadius
                 color: Theme.c.androidMediaTrimHandle.grip
-                opacity: 0.9
+                opacity: Theme.c.androidMediaTrimHandle.gripOpacity
             }
         }
     }

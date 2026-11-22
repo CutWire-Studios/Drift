@@ -62,9 +62,9 @@ Button {
         switch (variant) {
         case "primary":
             if (!enabled)
-                return Qt.darker(Theme.c.themedButton.primaryBackground, 1.5)
-            return down ? Qt.darker(Theme.c.themedButton.primaryBackground, 1.12)
-                        : (hovered ? Qt.lighter(Theme.c.themedButton.primaryBackground, 1.08)
+                return Theme.c.themedButton.primaryBackgroundDisabled
+            return down ? Theme.c.themedButton.primaryBackgroundPressed
+                        : (hovered ? Theme.c.themedButton.primaryBackgroundHover
                                    : Theme.c.themedButton.primaryBackground)
         case "ghost":
             if (!enabled)

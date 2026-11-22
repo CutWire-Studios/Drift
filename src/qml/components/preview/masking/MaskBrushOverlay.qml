@@ -489,7 +489,7 @@ ManipOverlay {
             }
 
             ShapePath {
-                strokeColor: Qt.alpha(Theme.c.maskDrawOverlay.stroke, 0.7)
+                strokeColor: Qt.alpha(Theme.c.maskDrawOverlay.stroke, Theme.c.maskDrawOverlay.strokeOpacity)
                 strokeWidth: Theme.c.maskDrawOverlay.borderWidth
                 strokeStyle: ShapePath.DashLine
                 dashPattern: [4, 3]
@@ -525,7 +525,7 @@ ManipOverlay {
             visible: root.brushTool && root.painting && EditorState.masking.brushSmoothing > 0
 
             ShapePath {
-                strokeColor: Qt.alpha(Theme.c.maskBrushOverlay.cursor, 0.8)
+                strokeColor: Qt.alpha(Theme.c.maskBrushOverlay.cursor, Theme.c.maskBrushOverlay.cursorOpacity)
                 strokeWidth: Theme.c.maskBrushOverlay.borderWidth
                 strokeStyle: ShapePath.DashLine
                 dashPattern: [3, 3]
@@ -557,7 +557,7 @@ ManipOverlay {
                 readonly property real reach: Math.max(ring.radius, 8) * 0.7071
                 width: 14
                 height: 14
-                radius: 7
+                radius: Theme.radiusPill
                 x: ring.width / 2 + reach - width / 2
                 y: ring.height / 2 + reach - height / 2
                 color: root.modeColor
@@ -577,11 +577,11 @@ ManipOverlay {
             visible: ring.visible
             width: root.brushDiameter * EditorState.masking.brushHardness
             height: width
-            radius: width / 2
+            radius: Theme.radiusPill
             x: root.hoverPoint.x - width / 2
             y: root.hoverPoint.y - height / 2
             color: "transparent"
-            border.color: Qt.alpha(Theme.c.maskBrushOverlay.cursorInner, 0.5)
+            border.color: Qt.alpha(Theme.c.maskBrushOverlay.cursorInner, Theme.c.maskBrushOverlay.cursorInnerOpacity)
             border.width: Theme.c.maskBrushOverlay.borderWidth
         }
     }

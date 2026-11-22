@@ -89,7 +89,7 @@ Item {
             height: Theme.c.manipHandle.borderWidth * 2
             rotation: knob.bracketAngle
             color: knob.fill
-            border.width: 1
+            border.width: Theme.c.manipHandle.outlineWidth
             border.color: Theme.c.manipHandle.outline
         }
 
@@ -104,7 +104,7 @@ Item {
                 width: parent.width
                 height: Theme.c.manipHandle.borderWidth * 2
                 color: knob.fill
-                border.width: 1
+                border.width: Theme.c.manipHandle.outlineWidth
                 border.color: Theme.c.manipHandle.outline
             }
             Rectangle {
@@ -113,7 +113,7 @@ Item {
                 width: Theme.c.manipHandle.borderWidth * 2
                 height: parent.height
                 color: knob.fill
-                border.width: 1
+                border.width: Theme.c.manipHandle.outlineWidth
                 border.color: Theme.c.manipHandle.outline
             }
         }

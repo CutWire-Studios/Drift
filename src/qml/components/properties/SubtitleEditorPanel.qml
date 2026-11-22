@@ -103,7 +103,7 @@ Rectangle {
                         radius: Theme.c.subtitleEditorPanel.radius
                         readonly property bool dirty: editor.selectedCue !== null
                                                       && cueText.text !== (editor.selectedCue ? editor.selectedCue.text : "")
-                        color: applyMouse.containsMouse ? Qt.lighter(Theme.c.subtitleEditorPanel.applyBackgroundHover, 1.08) : Theme.c.subtitleEditorPanel.applyBackground
+                        color: applyMouse.containsMouse ? Theme.c.subtitleEditorPanel.applyBackgroundHover : Theme.c.subtitleEditorPanel.applyBackground
                         opacity: (dirty || applyMouse.containsMouse) ? 1 : 0.5
 
                         // Was a raw "✓" glyph while every other button in the app
