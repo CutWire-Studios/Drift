@@ -14,7 +14,7 @@ Column {
         text: row.paramData.label
         color: Theme.c.effectsEnumParam.foregroundMuted
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeXs
+        font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
     }
     ThemedComboBox {
         width: parent.width

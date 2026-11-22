@@ -319,6 +319,25 @@ PanelFrame {
                 font.pixelSize: Theme.fontSizeXs
             }
 
+            Row {
+                width: parent.width
+                spacing: Theme.spacingSm
+
+                Repeater {
+                    model: EditorState.masking.brushPresets()
+
+                    delegate: ThemedChip {
+                        required property var modelData
+                        text: modelData.name
+                        variant: "outline"
+                        tooltip: qsTr("%1 brush: %2 % size, %3 % hardness").arg(modelData.name)
+                                     .arg((modelData.size * 100).toFixed(1)).arg(Math.round(modelData.hardness * 100))
+                        selected: EditorState.masking.brushPreset === modelData.id
+                        onClicked: EditorState.masking.applyBrushPreset(modelData.id)
+                    }
+                }
+            }
+
             RowLayout {
                 width: parent.width
                 spacing: Theme.spacingSm
@@ -403,6 +422,35 @@ PanelFrame {
                         value: EditorState.masking.brushOpacity * 100
                     }
                     onMoved: EditorState.masking.brushOpacity = value / 100
+                }
+            }
+
+            RowLayout {
+                width: parent.width
+                spacing: Theme.spacingSm
+
+                Text {
+                    Layout.preferredWidth: 56
+                    Layout.alignment: Qt.AlignVCenter
+                    text: qsTr("Smoothing")
+                    color: Theme.c.maskingPanel.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
+                ThemedSlider {
+                    id: brushSmoothingSlider
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    label: qsTr("Brush smoothing")
+                    from: 0
+                    to: 100
+                    valueFormatter: function (v) { return Math.round(v) + " %" }
+                    Binding on value {
+                        when: !brushSmoothingSlider.pressed
+                        value: EditorState.masking.brushSmoothing * 100
+                    }
+                    onMoved: EditorState.masking.brushSmoothing = value / 100
                 }
             }
 
@@ -797,8 +845,10 @@ PanelFrame {
                 ShellBridge.trackerPlaceMode = ""
                 return true
             }
-            if (ShellBridge.brushStrokeActive)
+            if (ShellBridge.brushStrokeActive) {
+                ShellBridge.maskingCancelRequested()
                 return true
+            }
             if (ShellBridge.pendingPolygonPoints > 0) {
                 ShellBridge.maskingCancelRequested()
                 return true
@@ -821,8 +871,18 @@ PanelFrame {
                 return false
             EditorState.masking.brushSize = Math.min(0.5, EditorState.masking.brushSize * 1.25)
             return true
-        case "masking.brushToggleErase":
+        case "masking.brushSofter":
             if (EditorState.preview.maskingTool !== "brush")
+                return false
+            EditorState.masking.brushHardness -= 0.1
+            return true
+        case "masking.brushHarder":
+            if (EditorState.preview.maskingTool !== "brush")
+                return false
+            EditorState.masking.brushHardness += 0.1
+            return true
+        case "masking.brushToggleErase":
+            if (!paintingTool)
                 return false
             EditorState.masking.brushErase = !EditorState.masking.brushErase
             return true

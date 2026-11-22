@@ -31,34 +31,39 @@ Rectangle {
                 height: 2
                 radius: Theme.c.androidMediaTrimHandle.gripRadius
                 color: Theme.c.androidMediaTrimHandle.grip
-                opacity: 0.9
+                opacity: Theme.c.androidMediaTrimHandle.gripOpacity
             }
         }
     }
 
-    MouseArea {
-        anchors.fill: parent
-        anchors.margins: -12
+    // The knob only supplies the hit area and the pointer events; the bar above is its look.
+    HandleKnob {
+        id: knob
+        anchors.centerIn: parent
+        shape: "none"
         enabled: !handle.preview.saving
-        preventStealing: true
-        onPressed: {
+        space: handle.parent
+        mouseHitSize: handle.width + 24
+        touchHitSize: handle.width + 24
+        mouseHitHeight: handle.height + 24
+        touchHitHeight: handle.height + 24
+
+        property real grab: 0
+
+        onPressed: (point) => {
+            grab = point.x - (handle.isIn ? handle.inX : handle.outX)
             EditorState.assetPreview.pause()
             Haptics.pickUp()
         }
         onReleased: Haptics.drop()
-        onCanceled: Haptics.drop()
-        onPositionChanged: (mouse) => {
-            if (!pressed)
-                return
-            const t = ((parent.x + mouse.x + (parent.isIn ? 0 : parent.width))
-                       / Math.max(1, handle.stripWidth)) * handle.preview.durationSeconds
-            if (parent.isIn)
+        onMoved: (point) => {
+            const t = ((point.x - grab) / Math.max(1, handle.stripWidth)) * handle.preview.durationSeconds
+            if (handle.isIn)
                 handle.preview.inSeconds = t
             else
                 handle.preview.outSeconds = t
             handle.preview.clampRange()
-            handle.preview.seekTo(parent.isIn ? handle.preview.inSeconds
-                                              : handle.preview.outSeconds)
+            handle.preview.seekTo(handle.isIn ? handle.preview.inSeconds : handle.preview.outSeconds)
         }
     }
 }

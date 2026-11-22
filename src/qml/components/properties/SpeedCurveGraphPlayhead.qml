@@ -35,7 +35,7 @@ Item {
     Rectangle {
         width: Theme.playheadHandleSize
         height: Theme.playheadHandleSize
-        radius: Theme.playheadHandleSize / 2
+        radius: Theme.radiusPill
         x: -width / 2 + Theme.playheadLineWidth / 2
         color: Theme.c.speedCurveGraphPlayhead.accent
     }

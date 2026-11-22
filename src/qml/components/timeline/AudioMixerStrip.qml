@@ -665,7 +665,7 @@ Rectangle {
                             z: -1
                             anchors.fill: parent
                             color: Theme.c.audioMixerStrip.masterBackground
-                            opacity: 0.5
+                            opacity: Theme.c.audioMixerStrip.masterBackgroundOpacity
                         }
                     }
                 }

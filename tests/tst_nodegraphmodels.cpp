@@ -29,6 +29,7 @@ public:
     bool canRedo() const override { return false; }
     void moveNodes(const QStringList &, qreal, qreal) override {}
     void endMove() override {}
+    void cancelMove() override {}
     bool canConnect(const QString &, const QString &, const QString &, const QString &) const override { return false; }
     bool connectPorts(const QString &, const QString &, const QString &, const QString &) override { return false; }
     void disconnectInput(const QString &, const QString &) override {}

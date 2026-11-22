@@ -286,7 +286,7 @@ Item {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: Math.max(2, parent.width - 3)
                                     height: Math.max(2, stepEditor.steps[stepBar.index] * parent.height)
-                                    radius: 2
+                                    radius: Theme.c.audioForgeNodeTab.stepRadius
                                     color: Theme.c.forgePanel.selection
                                 }
                             }

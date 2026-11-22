@@ -54,7 +54,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: root.mobile ? 88 : 72
                 height: width
-                radius: width / 2
+                radius: Theme.radiusPill
                 color: Theme.c.quickSetup.iconBackground
                 visible: root.glyph.length > 0 && root.illustration === null
 

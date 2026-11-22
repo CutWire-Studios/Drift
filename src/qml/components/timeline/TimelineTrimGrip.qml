@@ -13,7 +13,7 @@ Row {
             height: Math.min(14, parent.parent.height * 0.35)
             radius: Theme.c.timelineTrimGrip.radius
             color: Theme.c.timelineTrimGrip.foreground
-            opacity: 0.9
+            opacity: Theme.c.timelineTrimGrip.foregroundOpacity
         }
     }
 }

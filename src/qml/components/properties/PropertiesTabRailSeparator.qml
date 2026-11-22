@@ -17,7 +17,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.iconSizeSm
         height: Theme.c.propertiesTabRailSeparator.borderWidth
-        radius: height / 2
+        radius: Theme.radiusPill
         color: Theme.c.propertiesTabRailSeparator.border
         opacity: 0.85
     }

@@ -1155,7 +1155,7 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
                           rect.width(),
                           showWaveformBar ? barHeight : std::max(0.0, rect.height() - band));
         if (showWaveformBar)
-            appendRoundedRect(m_over, area, clipRadius, QColor(0, 0, 0, 89), ox,
+            appendRoundedRect(m_over, area, clipRadius, s.waveformBarBackground, ox,
                               clipCorners & (BottomLeft | BottomRight));
         for (const Pass &p : std::as_const(passes)) {
             const QRectF passArea(p.left, area.top(), p.width, area.height());
@@ -1322,7 +1322,7 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
                 if (enabled) {
                     appendRoundedRect(m_over, chip, s.radiusXs, s.scrim, ox);
                 } else {
-                    fg.setAlphaF(0.55);
+                    fg.setAlphaF(s.disabledChipForegroundOpacity);
                     appendStripes(m_over, chip, s.radiusXs, AllCorners, s.disabledStripe, ox, m_window.left,
                                   m_window.right);
                 }
@@ -1389,8 +1389,8 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
         return out ? drift::shapedProgress(t, row.fadeOutCurveTyped, row.fadeOutShapeTyped)
                    : drift::shapedProgress(t, row.fadeInCurveTyped, row.fadeInShapeTyped);
     };
-    const QColor fadeFill(0, 0, 0, 97);
-    const QColor fadeStroke(255, 255, 255, 230);
+    const QColor &fadeFill = s.fadeFill;
+    const QColor &fadeStroke = s.fadeStroke;
     const auto appendFade = [&](double left, double w, bool out) {
         if (w <= 0.5 || rect.height() <= 0.5)
             return;
@@ -1419,7 +1419,7 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
                        vertex(b.x() - ox, rect.top() + inset(b.x()), fadeFill), vertex(b.x() - ox, b.y(), fadeFill),
                        vertex(a.x() - ox, a.y(), fadeFill));
         }
-        appendStroke(m_over, curve, 1.5, fadeStroke, ox);
+        appendStroke(m_over, curve, s.fadeStrokeWidth, fadeStroke, ox);
     };
     const double fadeInW = std::clamp(row.fadeIn * pps, 0.0, rect.width());
     const double fadeOutW = std::clamp(row.fadeOut * pps, 0.0, rect.width());
@@ -1439,15 +1439,15 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
 
     // Give adjacent clips a visible edge even when neither is selected.
     QColor clipEdge = s.scrim;
-    clipEdge.setAlpha(185);
-    appendOutline(m_over, rect, s.radiusSm, 1.25, clipEdge, ox, clipCorners);
+    clipEdge.setAlphaF(s.clipEdgeOpacity);
+    appendOutline(m_over, rect, s.radiusSm, s.clipEdgeWidth, clipEdge, ox, clipCorners);
 
     // --- effect drop and selection -----------------------------------------------------------
     const bool dropTarget = m_viewState->effectDropTrack() == m_trackIndex
                             && m_viewState->effectDropClip() == index;
     if (dropTarget) {
         QColor tint = s.clipEffect;
-        tint.setAlphaF(0.28);
+        tint.setAlphaF(s.effectDropTintOpacity);
         appendRoundedRect(m_over, rect, s.radiusSm, tint, ox, clipCorners);
         appendOutline(m_over, rect, s.radiusSm, s.borderWidthFocus, s.clipEffect, ox, clipCorners);
     } else if (selected) {
@@ -1458,11 +1458,11 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     // where it will land.
     if (!attached && m_viewState->rippleShiftIds().contains(row.id)) {
         QColor tint = s.primary;
-        tint.setAlphaF(0.2);
+        tint.setAlphaF(s.rippleTintOpacity);
         appendRoundedRect(m_over, rect, s.radiusSm, tint, ox, clipCorners);
         QColor dash = s.primary;
-        dash.setAlphaF(0.9);
-        appendDashedOutline(m_over, rect, 1.5, dash, ox, m_window.left, m_window.right);
+        dash.setAlphaF(s.rippleOutlineOpacity);
+        appendDashedOutline(m_over, rect, s.rippleOutlineWidth, dash, ox, m_window.left, m_window.right);
     }
 
     m_visible.append(visual);
@@ -1628,7 +1628,7 @@ void TimelineTrackItem::buildWaveform(int index, const QRectF &area, double clip
             }
         }
         QColor divider = s.panelBorder;
-        divider.setAlphaF(divider.alphaF() * 0.5);
+        divider.setAlphaF(divider.alphaF() * s.waveformDividerOpacity);
         for (int d = 1; d < laneCount; ++d)
             appendRect(m_over, QRectF(left, area.top() + std::round(d * laneH), w, 1.0), divider, ox);
         if (laneH >= 14.0) {

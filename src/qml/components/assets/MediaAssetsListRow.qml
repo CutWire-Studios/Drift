@@ -258,7 +258,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         width: rowAddedText.implicitWidth + 10
         height: rowAddedText.implicitHeight + 4
-        radius: 3
+        radius: Theme.c.mediaAssetsAddedBadge.radius
         color: Theme.c.mediaAssetsAddedBadge.background
         Text {
             id: rowAddedText

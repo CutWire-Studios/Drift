@@ -31,7 +31,7 @@ Item {
             color: Theme.c.subtitleCueGutter.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
-            opacity: 0.8
+            opacity: Theme.c.subtitleCueGutter.foregroundMutedOpacity
         }
     }
 

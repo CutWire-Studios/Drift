@@ -2816,14 +2816,14 @@ QVariantMap AppController::trimPreviewToMap(int trackIndex, int clipIndex,
     };
 }
 
-QVariantMap AppController::previewTrimLeft(int trackIndex, int clipIndex, double newStart) const
+QVariantMap AppController::previewTrimLeft(int trackIndex, int clipIndex, double newStart, bool snap) const
 {
-    return trimPreviewToMap(trackIndex, clipIndex, computeTrimLeft(trackIndex, clipIndex, newStart));
+    return trimPreviewToMap(trackIndex, clipIndex, computeTrimLeft(trackIndex, clipIndex, newStart, snap));
 }
 
-QVariantMap AppController::previewTrimRight(int trackIndex, int clipIndex, double newEnd) const
+QVariantMap AppController::previewTrimRight(int trackIndex, int clipIndex, double newEnd, bool snap) const
 {
-    return trimPreviewToMap(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd));
+    return trimPreviewToMap(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd, snap));
 }
 
 // Writes a computed trim back to the project and brings everything that hangs off the clip with
@@ -2897,14 +2897,14 @@ int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputatio
     return m_trimGestureLastOutcome = computed.outcome;
 }
 
-void AppController::commitTrim(int trackIndex, int clipIndex, int side, double seconds)
+void AppController::commitTrim(int trackIndex, int clipIndex, int side, double seconds, bool snap)
 {
     beginTracksBatch();
     if (seconds >= 0) {
         if (side < 0)
-            trimClipLeft(trackIndex, clipIndex, seconds);
+            trimClipLeft(trackIndex, clipIndex, seconds, snap);
         else
-            trimClipRight(trackIndex, clipIndex, seconds);
+            trimClipRight(trackIndex, clipIndex, seconds, snap);
     }
     // A press and release that never moved the edge is a click, not an edit: committing it would
     // push an undo step that restores nothing and mark the project dirty for having done nothing.
@@ -2941,24 +2941,24 @@ int AppController::nudgeTrimEdge(int trackIndex, int clipIndex, int side, int fr
     return outcome;
 }
 
-int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
+int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart, bool snap)
 {
     const drift::TimeUs rawUs = drift::secondsToUs(newStart);
     // Same pointer position, same project state, same answer.
     if (m_trimGestureActive && rawUs == m_trimGestureLastInputUs)
         return m_trimGestureLastOutcome;
     m_trimGestureLastInputUs = rawUs;
-    return applyTrim(trackIndex, clipIndex, computeTrimLeft(trackIndex, clipIndex, newStart), -1);
+    return applyTrim(trackIndex, clipIndex, computeTrimLeft(trackIndex, clipIndex, newStart, snap), -1);
 }
 
-int AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
+int AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd, bool snap)
 {
     const drift::TimeUs rawUs = drift::secondsToUs(newEnd);
     // See the note in trimClipLeft.
     if (m_trimGestureActive && rawUs == m_trimGestureLastInputUs)
         return m_trimGestureLastOutcome;
     m_trimGestureLastInputUs = rawUs;
-    return applyTrim(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd), 1);
+    return applyTrim(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd, snap), 1);
 }
 
 void AppController::setClipTrim(int trackIndex, int clipIndex, double inPoint, double outPoint)

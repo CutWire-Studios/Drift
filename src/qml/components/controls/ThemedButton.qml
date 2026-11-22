@@ -29,8 +29,16 @@ Button {
     font.weight: variant === "primary" ? Font.Medium : Font.Normal
     leftPadding: glyph.length > 0 ? Theme.spacingXl : Theme.spacing2xl - Theme.spacingXs
     rightPadding: Theme.spacing2xl - Theme.spacingXs
-    topPadding: Theme.spacingMd + 1
-    bottomPadding: Theme.spacingMd + 1
+    topPadding: Theme.phone ? Theme.spacingSm : Theme.spacingMd + 1
+    bottomPadding: topPadding
+    containmentMask: Theme.phone ? buttonHit : null
+
+    Item {
+        id: buttonHit
+        anchors.fill: parent
+        anchors.topMargin: -Math.max(0, (Theme.androidMinTouchTarget - root.height) / 2)
+        anchors.bottomMargin: anchors.topMargin
+    }
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
 
@@ -62,9 +70,9 @@ Button {
         switch (variant) {
         case "primary":
             if (!enabled)
-                return Qt.darker(Theme.c.themedButton.primaryBackground, 1.5)
-            return down ? Qt.darker(Theme.c.themedButton.primaryBackground, 1.12)
-                        : (hovered ? Qt.lighter(Theme.c.themedButton.primaryBackground, 1.08)
+                return Theme.c.themedButton.primaryBackgroundDisabled
+            return down ? Theme.c.themedButton.primaryBackgroundPressed
+                        : (hovered ? Theme.c.themedButton.primaryBackgroundHover
                                    : Theme.c.themedButton.primaryBackground)
         case "ghost":
             if (!enabled)
@@ -94,7 +102,8 @@ Button {
 
         // Space the glyph occupies, including the gap before the label.
         readonly property real glyphSpace: root.glyph.length > 0
-                                           ? buttonGlyph.implicitWidth + row.spacing : 0
+                                           ? buttonGlyph.implicitWidth + (root.text.length > 0 ? row.spacing : 0)
+                                           : 0
 
         // Sized from the children's *implicit* widths, never their laid-out
         // widths: the label's width is clamped against this item, so measuring

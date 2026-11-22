@@ -19,7 +19,7 @@ AbstractButton {
     property string tooltipShortcut: ""
     property string tooltipBody: ""
     property string tooltipState: ""
-    property real toggleHeight: Theme.controlHeightSm
+    property real toggleHeight: Theme.controlHeight
 
     checkable: true
     hoverEnabled: true
@@ -28,8 +28,17 @@ AbstractButton {
     // Control.horizontalPadding is per-side and FINAL — used directly, not shadowed.
     horizontalPadding: Theme.spacingMd
     // Never narrower than it is tall, so icon-only toggles stay square.
-    implicitWidth: Math.max(toggleHeight, implicitContentWidth + leftPadding + rightPadding)
-    implicitHeight: toggleHeight
+    implicitWidth: Math.max(_drawnHeight, implicitContentWidth + leftPadding + rightPadding)
+    readonly property real _drawnHeight: Theme.phone ? Math.min(toggleHeight, Theme.androidControlHeight) : toggleHeight
+    implicitHeight: _drawnHeight
+    containmentMask: Theme.phone ? toggleHit : null
+
+    Item {
+        id: toggleHit
+        anchors.fill: parent
+        anchors.topMargin: -Math.max(0, (Theme.androidMinTouchTarget - root.height) / 2)
+        anchors.bottomMargin: anchors.topMargin
+    }
 
     // Press feedback — see the note in ThemedButton.qml.
     scale: root.down ? Theme.pressScale : 1.0
@@ -56,7 +65,7 @@ AbstractButton {
                     if (!root.enabled)
                         return Theme.c.themedToggleButton.backgroundDisabled
                     if (root.checked)
-                        return root.down ? Qt.darker(Theme.c.themedToggleButton.backgroundChecked, 1.2)
+                        return root.down ? Theme.c.themedToggleButton.backgroundCheckedPressed
                                          : Theme.c.themedToggleButton.backgroundChecked
                     if (root.down)
                         return Theme.c.themedToggleButton.backgroundPressed

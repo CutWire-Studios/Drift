@@ -50,12 +50,13 @@ class PreviewController : public QObject
     Q_PROPERTY(bool orthographic READ orthographic WRITE setOrthographic NOTIFY viewChanged)
     Q_PROPERTY(double editorFov READ editorFov WRITE setEditorFov NOTIFY viewChanged)
     // The editor viewport's floor grid (its spacing in px, 0 for automatic) and the gizmo's snap steps:
-    // moves by translateSnap px (0 for none) and turns by rotationSnap degrees. A drag snaps unless
-    // Ctrl is held.
+    // moves by translateSnap px, turns by rotationSnap degrees and scales by scaleSnap (0 for no step).
+    // A drag is free unless Ctrl is held (or the phone's Snap chip is on).
     Q_PROPERTY(bool showGrid READ showGrid WRITE setShowGrid NOTIFY viewChanged)
     Q_PROPERTY(double gridSize READ gridSize WRITE setGridSize NOTIFY viewChanged)
     Q_PROPERTY(double translateSnap READ translateSnap WRITE setTranslateSnap NOTIFY gizmoChanged)
     Q_PROPERTY(double rotationSnap READ rotationSnap WRITE setRotationSnap NOTIFY gizmoChanged)
+    Q_PROPERTY(double scaleSnap READ scaleSnap WRITE setScaleSnap NOTIFY gizmoChanged)
     // Navigation: "blender" (middle-drag orbits, Shift pans, Ctrl dollies) or "maya" (Alt with the
     // left, middle or right button orbits, pans or dollies); the wheel zooms toward the pointer in both.
     Q_PROPERTY(QString navigationScheme READ navigationScheme WRITE setNavigationScheme NOTIFY navigationChanged)
@@ -127,6 +128,8 @@ public:
     void setTranslateSnap(double px);
     double rotationSnap() const { return m_rotationSnap; }
     void setRotationSnap(double degrees);
+    double scaleSnap() const { return m_scaleSnap; }
+    void setScaleSnap(double step);
     QString navigationScheme() const { return m_navigationScheme; }
     void setNavigationScheme(const QString &scheme);
     bool orbitAroundSelection() const { return m_orbitAroundSelection; }
@@ -213,15 +216,24 @@ public:
     // The 3D gizmo for a clipsAtPlayhead box (or a live pose of the same shape), in overlay px at
     // `scale` overlay px per canvas px. `size` enlarges the handles for touch. Every call below
     // that takes `viewport` measures through that viewport's view (0 camera, 1 editor).
-    // Geometry: {valid, origin:{x,y}, handles:[{id, kind, front:[[{x,y}…]…], back:[…], head:[…]}]}.
+    // Geometry: {valid, origin:{x,y}, handles:[{id, kind, alpha, front:[[{x,y}…]…], back:[…], head:[…]}]}.
     Q_INVOKABLE QVariantMap gizmoGeometry(const QVariantMap &box, double scale, double size, int viewport = 0) const;
     Q_INVOKABLE QString gizmoPick(const QVariantMap &box, double scale, double size, double x,
                                   double y, double tolerance, int viewport = 0) const;
     // Drags `handle` from press to now (overlay px) starting at `start`, writes the result to the
-    // clip the way the other preview setters do, and returns the new pose in the box's shape.
+    // clip the way the other preview setters do, and returns the new pose in the box's shape, plus
+    // amount and amount2 (see DragResult) for a readout.
+    // `options`: snap (bool, steps by the snap settings), axis
+    // ("x", "y" or "z" to constrain), plane (bool, with axis: the plane without it), orientation
+    // ("world", "local" or "view", replacing the gizmo's for the lock), typed (a number that
+    // replaces the pointer: units, degrees or a factor).
     Q_INVOKABLE QVariantMap applyGizmoDrag(const QVariantMap &start, const QString &handle,
                                            double pressX, double pressY, double nowX, double nowY,
-                                           bool snap, double scale, int viewport = 0);
+                                           const QVariantMap &options, double scale, int viewport = 0);
+    // The guide lines of an axis or plane lock in `options` (as applyGizmoDrag): [{axis ("x"…), x1, y1, x2, y2}] in
+    // overlay px, from the origin to one handle-length along each locked axis.
+    Q_INVOKABLE QVariantList gizmoLockGuides(const QVariantMap &box, double scale, const QVariantMap &options,
+                                             int viewport = 0) const;
     // The 3D gizmo's frame for several 3D layers: a box (kind "group") at the centroid of their
     // centres in world space, unturned. Empty when none of the boxes can take part.
     Q_INVOKABLE QVariantMap groupGizmoPivot(const QVariantList &boxes, int viewport = 0) const;
@@ -230,7 +242,7 @@ public:
     // frame's new pose is returned. Scale handles all grow the group uniformly.
     Q_INVOKABLE QVariantMap applyGroupGizmoDrag(const QVariantMap &pivot, const QVariantList &startBoxes,
                                                 const QString &handle, double pressX, double pressY,
-                                                double nowX, double nowY, bool snap, double scale, int viewport = 0);
+                                                double nowX, double nowY, const QVariantMap &options, double scale, int viewport = 0);
     // For a clipsAtPlayhead box with a 3D pose: the QtQuick transform of an item laid out at
     // (x, y, w, h) * scale in overlay px, placing its content where the clip renders.
     Q_INVOKABLE QMatrix4x4 clipPoseMatrix(const QVariantMap &box, double x, double y, double w,
@@ -241,17 +253,21 @@ public:
     // parents and the camera, so the grabbed point stays under the pointer. With `snap`, the
     // projected edges and centre pull to the canvas edges, centre lines and visible guides within
     // `tolerance` canvas px. Returns {valid, x, y, guideX, guideY} with the box's new rect origin;
-    // guides are canvas px, -1 when not engaged.
+    // guides are canvas px, -1 when not engaged. `options` adds {x:[…], y:[…]} target lines (canvas
+    // px; other clips' edges and centres) and {lock:"x"|"y"} to keep the pull off the locked axis.
+    // A rotated box snaps by the bounds of its projected corners.
     Q_INVOKABLE QVariantMap snapMove(const QVariantMap &box, double pressX, double pressY,
                                      double nowX, double nowY, double tolerance, bool snap,
-                                     int viewport = 0) const;
+                                     int viewport = 0, const QVariantMap &options = {}) const;
     // A resize of the box (its rect as it stood at the grab) to `width` x `height`, with the moving
     // edges along `dxSign`/`dySign` (-1 left/top, +1 right/bottom, 0 fixed). `centrePivot` says the
     // rect grows about its centre rather than the opposite edge. Returns {width, height, guideX,
     // guideY, distX, distY}: each axis snapped on its own, with how far it was pulled (-1 if not).
+    // `options` adds {x:[…], y:[…]} target lines as for snapMove.
     Q_INVOKABLE QVariantMap snapResize(const QVariantMap &box, double width, double height,
                                        int dxSign, int dySign, bool centrePivot,
-                                       double tolerance, int viewport = 0) const;
+                                       double tolerance, int viewport = 0,
+                                       const QVariantMap &options = {}) const;
     // Moves several clips as one body from where they stood at the grab (clipsAtPlayhead boxes), all
     // in canvas px: each clip's centre goes to pivot + R(rotationDeg) * S(scaleX, scaleY) * (centre -
     // pivot) + (dx, dy), its size follows the scale and its angle the rotation. Written through the
@@ -388,8 +404,9 @@ private:
     double m_editorFov = 32.0;
     bool m_showGrid = true;
     double m_gridSize = 0.0;
-    double m_translateSnap = 0.0;
+    double m_translateSnap = 10.0;
     double m_rotationSnap = 15.0;
+    double m_scaleSnap = 0.1;
     QString m_gizmoTool = QStringLiteral("move");
     QString m_gizmoOrientation = QStringLiteral("world");
     bool m_guidesEnabled = false;

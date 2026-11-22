@@ -32,6 +32,13 @@ void refreshClipFrame(const drift::Project &project, drift::Clip &clip);
 // A text, shape or sticker box: the frame is the box and the position its centre.
 void setClipFrameBox(drift::Clip &clip, double x, double y, double w, double h);
 QVariantMap maskToMap(const drift::Mask &m, drift::TimeUs timelineStart = 0);
+// A mask vertex as the {x, y, inX, inY, outX, outY, mode} map QML and MCP exchange; x/y is the
+// anchor, so code that only reads a point's position keeps working. The reverse also takes a bare
+// [x, y] pair, and anything without handles becomes a corner.
+QVariantMap maskVertexToMap(const drift::ShapeVertex &v);
+drift::ShapeVertex maskVertexFromVariant(const QVariant &value);
+QVariantList maskVerticesToVariant(const QVector<drift::ShapeVertex> &vertices);
+QVector<drift::ShapeVertex> maskVerticesFromVariant(const QVariantList &list);
 QVariantList transformToList(const QTransform &t);
 // A 2D homography as a 4x4 on (x, y, z, w) that leaves z alone: what a QtQuick Matrix4x4 needs.
 QMatrix4x4 liftHomography(const QTransform &t);

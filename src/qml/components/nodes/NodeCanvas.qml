@@ -45,6 +45,9 @@ FocusScope {
     property point hoverPos: Qt.point(NaN, NaN)
     property bool spaceDown: false
     property bool spacePanned: false
+    // The node delegate whose body is being dragged, and the selection a rubber band started from.
+    property var movingNode: null
+    property var marqueeBase: []
 
     signal nodeDoubleClicked(string id)
     signal nodeMenuRequested(string id, point screenPos)
@@ -192,6 +195,21 @@ FocusScope {
 
     function clearEdgeSelection() {
         selectedEdge = ""
+    }
+
+    function applyMarquee(r, additive, toggle) {
+        const a = toWorld(r.x, r.y)
+        const b = toWorld(r.x + r.width, r.y + r.height)
+        const hits = controller.nodesInRect(Qt.rect(a.x, a.y, b.x - a.x, b.y - a.y))
+        const ids = marqueeBase.slice()
+        for (const id of hits) {
+            const i = ids.indexOf(id)
+            if (toggle && i >= 0)
+                ids.splice(i, 1)
+            else if (i < 0)
+                ids.push(id)
+        }
+        controller.setSelection(ids)
     }
 
     // ── Connections ────────────────────────────────────────────────────────
@@ -355,6 +373,12 @@ FocusScope {
             controller.selectAll()
             break
         case "nodes.cancel":
+            if (movingNode)
+                movingNode.cancelMove()
+            else if (marquee.active) {
+                marquee.cancel()
+                controller.setSelection(marqueeBase)
+            }
             cancelPending()
             selectedEdge = ""
             break
@@ -484,8 +508,6 @@ FocusScope {
             return root.edgeLayer.edgeAt(w.x, w.y, tol / root.zoom)
         }
 
-        property var baseSelection: []
-
         TapHandler {
             id: bgTap
             acceptedButtons: Qt.LeftButton
@@ -541,26 +563,14 @@ FocusScope {
                 if (active) {
                     root.forceActiveFocus()
                     const additive = (centroid.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0
-                    background.baseSelection = additive ? root.controller.selection : []
-                    if (!additive)
-                        root.controller.clearSelection()
+                    root.marqueeBase = additive ? root.controller.selection : []
                     root.selectedEdge = ""
+                    marquee.begin(centroid.pressPosition, centroid.modifiers)
+                } else {
+                    marquee.end()
                 }
             }
-            onCentroidChanged: {
-                if (!active)
-                    return
-                const a = root.toWorld(Math.min(centroid.pressPosition.x, centroid.position.x),
-                                       Math.min(centroid.pressPosition.y, centroid.position.y))
-                const b = root.toWorld(Math.max(centroid.pressPosition.x, centroid.position.x),
-                                       Math.max(centroid.pressPosition.y, centroid.position.y))
-                const hits = root.controller.nodesInRect(Qt.rect(a.x, a.y, b.x - a.x, b.y - a.y))
-                const ids = background.baseSelection.slice()
-                for (const id of hits)
-                    if (ids.indexOf(id) < 0)
-                        ids.push(id)
-                root.controller.setSelection(ids)
-            }
+            onCentroidChanged: if (active) marquee.update(centroid.position)
         }
 
         DragHandler {
@@ -622,16 +632,10 @@ FocusScope {
         }
     }
 
-    Rectangle {
-        id: bandRect
-        visible: band.active
-        x: Math.min(band.centroid.pressPosition.x, band.centroid.position.x)
-        y: Math.min(band.centroid.pressPosition.y, band.centroid.position.y)
-        width: Math.abs(band.centroid.position.x - band.centroid.pressPosition.x)
-        height: Math.abs(band.centroid.position.y - band.centroid.pressPosition.y)
-        color: Qt.alpha(Theme.c.nodeCanvas.bandBorder, 0.12)
-        border.width: 1
-        border.color: Theme.c.nodeCanvas.bandBorder
+    MarqueeSelector {
+        id: marquee
+        anchors.fill: parent
+        onRectChanged: (r, additive, toggle) => root.applyMarquee(r, additive, toggle)
     }
 
     MouseArea {

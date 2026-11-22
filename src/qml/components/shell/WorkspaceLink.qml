@@ -34,7 +34,7 @@ Item {
         return _workspaceId === Workspaces.activeId
     }
 
-    visible: active && !ShellBridge.phoneShell && !_alreadyShown && (label.length > 0 || _workspaceName.length > 0)
+    visible: active && !ShellBridge.phoneShell && !Theme.phone && !_alreadyShown && (label.length > 0 || _workspaceName.length > 0)
     implicitWidth: linkText.implicitWidth
     implicitHeight: Math.max(linkText.implicitHeight, rowHeight)
 

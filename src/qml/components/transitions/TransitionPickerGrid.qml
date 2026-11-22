@@ -152,11 +152,12 @@ Item {
             historyKey: "transitions"
         }
 
-        Item { width: 1; height: Theme.spacingSm }
+        Item { width: 1; height: Theme.phone ? 0 : Theme.spacingSm }
 
         AssetCategoryChips {
             id: chips
             width: parent.width
+            flickable: transitionGrid
             sections: transitionGrid.visibleSections
             activeCategory: root.activeCategory
             searching: root.query.length > 0

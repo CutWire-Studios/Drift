@@ -1,8 +1,9 @@
 import QtQuick
 import Drift
 
-// Rotation handle, 28px above the box.
-Rectangle {
+// Rotation handle, 28px above the box. Free; Shift steps 15 degrees. One EditorState.drag session,
+// so Esc cancels it.
+HandleKnob {
     id: knob
 
     // The mask box delegate, the clip frame it is normalized to, and the overlay.
@@ -10,47 +11,51 @@ Rectangle {
     required property var frame
     required property var overlay
 
+    property bool running: false
+
     visible: knob.mask.editable && knob.mask.isSelected
-    width: Theme.spacingLg
-    height: Theme.spacingLg
-    radius: width / 2
-    color: rotateArea.containsMouse || rotateArea.pressed
-           ? Theme.c.maskOverlayRotateHandle.backgroundHover : Theme.c.maskOverlayRotateHandle.background
-    border.width: Theme.c.maskOverlayRotateHandle.borderWidth
-    border.color: rotateArea.containsMouse || rotateArea.pressed
-                  ? Theme.c.maskOverlayRotateHandle.borderHover : Theme.c.maskOverlayRotateHandle.border
+    shape: "dot"
+    space: knob.frame
+    visualSize: Theme.touchInput ? 16 : 9
+    cursor: "rotate:" + (-90 + (knob.overlay.editorState.rotation || 0) + knob.mask.rotation)
     x: parent.width / 2 - width / 2
     y: (mask.isSplit ? mask.height / 2 - 64 : -28) - height / 2
 
-    MouseArea {
-        id: rotateArea
-        anchors.fill: parent
-        anchors.margins: -Theme.spacingMd
-        hoverEnabled: true
-        cursorShape: Qt.CrossCursor
-        preventStealing: true
-        onWheel: (wheel) => { wheel.accepted = false }
-
-        onPressed: {
-            if (!EditorState.masking.editSession.begin(knob.mask.layerId, knob.frame.width,
-                                                       knob.frame.height))
-                return
-            knob.overlay.interacting = true
-            knob.mask.forceActiveFocus()
+    onPressed: (point, modifiers, device) => {
+        const session = EditorState.masking.editSession
+        EditorState.drag.begin("maskRotate", device, qsTr("Edit %1").arg(qsTr("Mask")))
+        if (!session.begin(knob.mask.layerId, knob.frame.width, knob.frame.height, false)) {
+            EditorState.drag.cancel()
+            return
         }
+        running = true
+        knob.overlay.interacting = true
+        knob.mask.forceActiveFocus()
+    }
 
-        onPositionChanged: (mouse) => {
-            if (!pressed)
-                return
-            // Angle is measured in the clip frame, so map through it rather than
-            // through the rotating box.
-            const p = mapToItem(knob.frame, mouse.x, mouse.y)
-            EditorState.masking.editSession.rotate(p.x / Math.max(1, knob.frame.width),
-                                                   p.y / Math.max(1, knob.frame.height),
-                                                   (mouse.modifiers & Qt.ShiftModifier) !== 0)
+    // The angle is measured in the clip frame, which `space` already is.
+    onMoved: (point, modifiers) => {
+        if (!running)
+            return
+        EditorState.masking.editSession.rotate(point.x / Math.max(1, knob.frame.width),
+                                               point.y / Math.max(1, knob.frame.height),
+                                               Manip.fromQtFlags(modifiers).constrain)
+    }
+
+    onReleased: if (running) EditorState.drag.commit()
+
+    Connections {
+        target: EditorState.drag
+        enabled: knob.running
+        function onCommitted() {
+            knob.running = false
+            knob.overlay.endInteraction()
         }
-
-        onReleased: knob.overlay.endInteraction()
-        onCanceled: knob.overlay.endInteraction()
+        function onCancelled() {
+            knob.running = false
+            EditorState.masking.editSession.cancel()
+            knob.overlay.interacting = false
+            Qt.callLater(knob.overlay.refreshOverlay)
+        }
     }
 }

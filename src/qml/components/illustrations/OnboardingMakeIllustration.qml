@@ -45,7 +45,7 @@ Item {
             ShapePath {
                 id: _qt_node6_path_fill_stroke
                 strokeColor: "transparent"
-                fillColor: Qt.alpha(Theme.c.illustration.muted, 0.45)
+                fillColor: Qt.alpha(Theme.c.illustration.muted, Theme.c.onboardingMakeIllustration.mutedOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M -50 -46 Q -50 -47.6569 -48.8284 -48.8284 Q -47.6569 -50 -46 -50 L 46 -50 Q 47.6569 -50 48.8284 -48.8284 Q 50 -47.6569 50 -46 L 50 46 Q 50 47.6569 48.8284 48.8284 Q 47.6569 50 46 50 L -46 50 Q -47.6569 50 -48.8284 48.8284 Q -50 47.6569 -50 46 L -50 -46 " }

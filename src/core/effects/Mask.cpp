@@ -204,11 +204,11 @@ double Mask::valueAt(const QString &key, TimeUs maskTimeUs) const
 
 namespace {
 
-// Positions between the two bracketing keys. A vertex-count mismatch means the polygon was
+// Vertices between the two bracketing keys. A vertex-count mismatch means the path was
 // reshaped rather than moved, and there is no honest correspondence between the two lists, so the
 // earlier key holds until the later one arrives.
-QVector<QPointF> pointsAt(const QMap<TimeUs, QVector<QPointF>> &pathKeys, TimeUs maskTimeUs,
-                          const QVector<QPointF> &fallback)
+QVector<ShapeVertex> verticesAt(const QMap<TimeUs, QVector<ShapeVertex>> &pathKeys, TimeUs maskTimeUs,
+                                const QVector<ShapeVertex> &fallback)
 {
     if (pathKeys.isEmpty())
         return fallback;
@@ -222,18 +222,20 @@ QVector<QPointF> pointsAt(const QMap<TimeUs, QVector<QPointF>> &pathKeys, TimeUs
         return after.value();
 
     const auto before = std::prev(after);
-    const QVector<QPointF> &a = before.value();
-    const QVector<QPointF> &b = after.value();
+    const QVector<ShapeVertex> &a = before.value();
+    const QVector<ShapeVertex> &b = after.value();
     if (a.size() != b.size())
         return a;
 
     const double span = double(after.key() - before.key());
     const double t = span > 0.0 ? double(maskTimeUs - before.key()) / span : 0.0;
 
-    QVector<QPointF> out;
-    out.reserve(a.size());
-    for (int i = 0; i < a.size(); ++i)
-        out.append(a.at(i) + (b.at(i) - a.at(i)) * t);
+    QVector<ShapeVertex> out = a;
+    for (int i = 0; i < a.size(); ++i) {
+        out[i].p = a.at(i).p + (b.at(i).p - a.at(i).p) * t;
+        out[i].in = a.at(i).in + (b.at(i).in - a.at(i).in) * t;
+        out[i].out = a.at(i).out + (b.at(i).out - a.at(i).out) * t;
+    }
     return out;
 }
 
@@ -263,7 +265,7 @@ Mask Mask::resolvedAt(TimeUs maskTimeUs) const
             out.roundness = value;
     }
     if (!pathKeys.isEmpty())
-        out.points = pointsAt(pathKeys, maskTimeUs, points);
+        out.vertices = verticesAt(pathKeys, maskTimeUs, vertices);
     return out;
 }
 

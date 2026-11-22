@@ -9,6 +9,10 @@ Item {
     property int trackIndex: -1
     property int clipIndex: -1
 
+    readonly property var preview: scaffold ? scaffold.previewItem : null
+    onPreviewChanged: if (preview) preview.toolBarsShown = true
+    Component.onDestruction: if (preview) preview.toolBarsShown = false
+
     Flickable {
         id: scroll
         anchors.fill: parent

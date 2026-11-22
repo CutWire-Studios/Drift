@@ -12,13 +12,34 @@ Item {
     // Driven by AndroidEditor, which owns the panes that hide around the preview.
     property bool fullscreen: false
     signal fullscreenToggleRequested()
+    signal addMediaRequested()
 
     property bool optionsOpen: false
+
+    // The flat transform's chip bar. Only the Transform page turns it on: elsewhere it sat over the
+    // picture whenever a clip was selected.
+    property bool toolBarsShown: false
+
+    // The editor's free 3D view in place of the camera output, with the 3D gizmo on the selected clip.
+    // Switched from the options strip, and off whenever the preview goes away.
+    property bool view3d: false
+    onView3dChanged: {
+        EditorState.playback.setStreamEnabled(1, view3d)
+        EditorState.preview.viewport3dOpen = view3d
+        viewport.resetView()
+    }
+    Component.onDestruction: {
+        if (!view3d)
+            return
+        EditorState.playback.setStreamEnabled(1, false)
+        EditorState.preview.viewport3dOpen = false
+    }
 
     // Typing on the clip itself: the compositor draws the text and caret, a hidden field takes input.
     readonly property alias textEditor: viewport.textEditor
     // The tool overlay on the preview now, for pages that drive it (the crop page).
     readonly property alias toolHost: viewport.toolHost
+    readonly property alias previewViewport: viewport
 
     // PointerHandlers (clip DragHandler, view pinch) hit-test their parent's
     // bounds, not z-order. A sheet in Overlay is visually on top of this preview
@@ -107,13 +128,34 @@ Item {
                 anchors.margins: Theme.spacing2xl
                 pixelRatio: 1
                 compactStatus: true
+                stream: root.view3d ? 1 : 0
+
+                toolHost.forcedTool: root.view3d ? "transform" : ""
 
                 toolHost.tools: ({
                     transform: transformTool,
                     mask: maskTool,
                     crop: cropTool,
-                    clipCrop: clipCropTool
+                    clipCrop: clipCropTool,
+                    shapePath: shapePathTool,
+                    maskDraw: maskDrawTool,
+                    maskBrush: maskBrushTool,
+                    maskAi: maskAiTool,
+                    tracker: trackerTool
                 })
+                // The tool's touch bar sits under the canvas rather than over the picture, with the
+                // same gutter the viewport margin leaves for grips that overflow the canvas.
+                readonly property var toolTouchBar: {
+                    const t = toolHost.item
+                    if (!t)
+                        return null
+                    return t.cropFrame ? t.cropFrame.touchBarItem : (t.touchBarItem ?? null)
+                }
+                bottomInset: toolHost.item && toolHost.item.belowExtent > 0
+                             ? toolHost.item.belowExtent + Theme.spacing2xl
+                             : toolTouchBar && toolTouchBar.visible && toolTouchBar.height > 0
+                               ? toolTouchBar.height + Theme.spacingLg + Theme.spacing2xl : 0
+
                 toolHost.companion: dropCompanion
                 toolHost.companionTools: ["transform", "mask"]
                 // Disables every DragHandler / TapHandler / MouseArea in the tools:
@@ -128,7 +170,7 @@ Item {
                 PinchHandler {
                     id: viewPinch
                     target: null
-                    enabled: !root.overlayBlocksPreview
+                    enabled: !root.overlayBlocksPreview && !root.view3d
 
                     property real lastScale: 1
                     property point lastCentroid
@@ -167,12 +209,34 @@ Item {
                     onCentroidChanged: viewPinch.step()
                 }
 
+                // One finger on empty space orbits, two dolly and pan; a handle of the gizmo takes its own
+                // finger first.
+                Loader {
+                    anchors.fill: parent
+                    z: -1
+                    active: root.view3d
+                    sourceComponent: Preview3DMode {
+                        viewport: root.previewViewport
+                    }
+                }
+
                 // Composition guides. Which sets are active lives in the
                 // Settings tab; this is the layer that draws them.
                 GuideLayer {
                     parent: viewport.canvas
                     anchors.fill: parent
                 }
+            }
+            EmptyState {
+                anchors.centerIn: parent
+                width: Math.min(parent.width - Theme.spacing3xl, 280)
+                visible: EditorState.clipCount === 0 && !root.view3d
+                glyph: Theme.icons.film
+                title: qsTr("No media yet")
+                hint: qsTr("Add a video, photo or audio file to start.")
+                actionText: qsTr("Add media")
+                actionVariant: "primary"
+                onActionTriggered: root.addMediaRequested()
             }
             AndroidPreviewOptionsStrip {
                 id: optionsStrip
@@ -183,7 +247,9 @@ Item {
                 optionsOpen: root.optionsOpen
                 viewMoved: viewport.viewMoved
                 userZoom: viewport.userZoom
+                view3d: root.view3d
                 onResetViewRequested: viewport.resetView()
+                onView3dToggled: root.view3d = !root.view3d
             }
         }
 
@@ -238,15 +304,60 @@ Item {
 
     Component {
         id: transformTool
-        AndroidTransformOverlay {
-            canvas: viewport.canvas
-            onTextEditRequested: (track, clip) => viewport.textEditor.start(track, clip, false)
+        TransformManip {
+            canvas: root.previewViewport.canvas
+            touch: true
+            showTouchBar: root.toolBarsShown
+            viewport: root.view3d ? 1 : 0
+            onTextEditRequested: (track, clip) => root.textEditor.start(track, clip, false)
         }
     }
 
     Component {
         id: maskTool
         MaskOverlay { }
+    }
+
+    Component {
+        id: maskDrawTool
+        MaskDrawOverlay { }
+    }
+
+    Component {
+        id: maskBrushTool
+        MaskBrushOverlay {
+            touch: true
+            touchBarBelow: true
+            navTarget: viewport
+        }
+    }
+
+    Component {
+        id: maskAiTool
+        MaskAiOverlay {
+            touch: true
+            touchBarBelow: true
+        }
+    }
+
+    Component {
+        id: trackerTool
+        TrackerOverlay {
+            touch: true
+            touchBarBelow: true
+            canvas: viewport.canvas
+        }
+    }
+
+    Component {
+        id: shapePathTool
+        PathEditor {
+            canvas: viewport.canvas
+            touch: true
+            backend: EditorState.preview.shapePathMode === "draw" ? "draft" : "shape"
+            draftTarget: "shape"
+            onExited: EditorState.preview.shapePathMode = ""
+        }
     }
 
     Component {
@@ -258,8 +369,10 @@ Item {
 
     Component {
         id: clipCropTool
-        AndroidClipCropOverlay {
-            canvas: viewport.canvas
+        ClipCropOverlay {
+            // Not `viewport.canvas`: the overlay's own `viewport` property shadows the id.
+            canvas: root.previewViewport.canvas
+            touch: true
         }
     }
 

@@ -10,7 +10,7 @@ Rectangle {
     x: (EditorState.playheadSeconds - EditorState.audioRecordSeconds) * panel.pxPerSecond
     width: Math.max(2, EditorState.audioRecordSeconds * panel.pxPerSecond)
     height: parent.height
-    color: Qt.rgba(Theme.c.timelineLiveRecordingBlock.background.r, Theme.c.timelineLiveRecordingBlock.background.g, Theme.c.timelineLiveRecordingBlock.background.b, 0.25)
+    color: Qt.alpha(Theme.c.timelineLiveRecordingBlock.background, Theme.c.timelineLiveRecordingBlock.backgroundOpacity)
     border.color: EditorState.isAudioRecordingPaused ? Theme.c.timelineLiveRecordingBlock.borderPaused : Theme.c.timelineLiveRecordingBlock.border
     border.width: Theme.c.timelineLiveRecordingBlock.borderWidth
     radius: Theme.c.timelineLiveRecordingBlock.radius

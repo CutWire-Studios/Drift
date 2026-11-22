@@ -42,13 +42,15 @@ Column {
     }
 
     Item {
+        id: chipGap
         width: 1
-        height: Theme.spacingSm
+        height: Theme.phone ? 0 : Theme.spacingSm
     }
 
     AssetCategoryChips {
         id: categoryChips
         width: parent.width
+        flickable: presetGrid
         sections: [{ id: root.mineId, label: qsTr("My presets") }].concat(presetGrid.visibleSections)
         activeCategory: root.activeCategory
         searching: root.query.length > 0
@@ -57,7 +59,7 @@ Column {
 
     Item {
         width: parent.width
-        height: Math.max(0, parent.height - search.height - Theme.spacingSm
+        height: Math.max(0, parent.height - search.height - chipGap.height
                          - categoryChips.height)
 
         EffectStacksSection {

@@ -66,7 +66,7 @@ Column {
             text: row.paramData.label
             color: Theme.c.effectsColorParam.foregroundMuted
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
             anchors.verticalCenter: parent.verticalCenter
         }
         ColorSwatchField {

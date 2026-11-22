@@ -268,6 +268,17 @@ void AudioForgeController::endMove()
     ++m_moveSerial;
 }
 
+void AudioForgeController::cancelMove()
+{
+    const int top = m_undo.index() - 1;
+    const auto *cmd = top >= 0 ? dynamic_cast<const DocSnapshotCommand *>(m_undo.command(top)) : nullptr;
+    if (cmd && cmd->key() == QStringLiteral("move#%1").arg(m_moveSerial)) {
+        const_cast<QUndoCommand *>(m_undo.command(top))->setObsolete(true);
+        m_undo.undo();
+    }
+    ++m_moveSerial;
+}
+
 bool AudioForgeController::canConnect(const QString &fromNode, const QString &fromPort, const QString &toNode,
                                       const QString &toPort) const
 {

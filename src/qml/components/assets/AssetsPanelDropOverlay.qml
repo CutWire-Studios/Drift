@@ -10,7 +10,7 @@ Rectangle {
     anchors.fill: parent
     z: 50
     radius: Theme.c.assetsPanelDropOverlay.radius
-    color: Qt.rgba(Theme.c.assetsPanelDropOverlay.accent.r, Theme.c.assetsPanelDropOverlay.accent.g, Theme.c.assetsPanelDropOverlay.accent.b, 0.08)
+    color: Qt.alpha(Theme.c.assetsPanelDropOverlay.accent, Theme.c.assetsPanelDropOverlay.accentOpacity)
     border.width: Theme.c.assetsPanelDropOverlay.borderWidth
     border.color: Theme.c.assetsPanelDropOverlay.accent
     visible: opacity > 0

@@ -23,7 +23,7 @@ Item {
         y: parent.height - 10
         width: 1
         height: 8
-        color: Qt.rgba(Theme.c.timelineRulerTick.tick.r, Theme.c.timelineRulerTick.tick.g, Theme.c.timelineRulerTick.tick.b, 0.28)
+        color: Qt.alpha(Theme.c.timelineRulerTick.tick, Theme.c.timelineRulerTick.tickOpacity)
     }
 
     Text {

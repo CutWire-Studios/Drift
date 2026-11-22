@@ -10974,7 +10974,7 @@ void McpTest::setTransformWrites3dPose()
     state.previewSetClipKeyframe(loc.first, loc.second, QStringLiteral("rotationY"), 0.0, 0.0);
     const QVariantMap turned = state.preview()->applyGizmoDrag(box, QStringLiteral("z"), origin.x() + radius,
                                                            origin.y(), origin.x(), origin.y() + radius,
-                                                           true, 1.0);
+                                                           QVariantMap{{QStringLiteral("snap"), true}}, 1.0);
     state.commitPreviewDrag();
     QCOMPARE(turned.value(QStringLiteral("rotation")).toDouble(), 90.0);
     QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("rotation"), 0.0, 0.0), 90.0);

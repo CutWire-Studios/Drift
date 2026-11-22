@@ -175,6 +175,10 @@ Item {
             title: qsTr("Roundness")
             keywords: "rounded corners radius pill"
         }
+        PathPointModeRow {
+            visible: root.maskShape === "freeform" && EditorState.masking.pathEdit.attached
+                     && EditorState.masking.pathEdit.selectionCount > 0
+        }
         Repeater {
             // `shapes` is what the rasterizer actually reads for each shape (see
             // MaskApplier::maskPath): Bars derives both bands from `h` alone and ignores the

@@ -98,8 +98,18 @@ Item {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.WordWrap
-        visible: Toasts.history.count === 0
+        visible: Toasts.history.count === 0 && !emptyState.visible
         text: qsTr("No notifications yet.")
+    }
+
+    EmptyState {
+        id: emptyState
+        anchors.top: updateRow.bottom
+        anchors.bottom: parent.bottom
+        visible: Toasts.history.count === 0 && Theme.touchInput && Theme.compact
+        glyph: Theme.icons.bell
+        title: qsTr("No notifications yet")
+        hint: qsTr("Messages about exports, downloads and errors show up here.")
     }
 
     ListView {

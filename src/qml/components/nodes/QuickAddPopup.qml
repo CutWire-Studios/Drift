@@ -164,7 +164,7 @@ Popup {
                     y: Theme.spacingMd + 2
                     width: 6
                     height: 6
-                    radius: 3
+                    radius: Theme.radiusPill
                     color: Theme.c.nodeDelegate.accent[row.modelData.accent] ?? Theme.c.nodeDelegate.accent.neutral
                 }
 

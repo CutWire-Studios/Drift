@@ -142,7 +142,7 @@ AndroidBottomSheet {
                 // page margin carried by the Row's own padding.
                 Flickable {
                     width: parent.width
-                    height: Theme.controlHeight
+                    height: Theme.androidRowHeight
                     contentWidth: categoryRow.implicitWidth
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
@@ -157,7 +157,7 @@ AndroidBottomSheet {
                         IconButton {
                             glyph: Theme.icons.star
                             variant: "ghost"
-                            buttonSize: Theme.controlHeight
+                            buttonSize: Theme.androidMinTouchTarget
                             iconSize: 14
                             active: root.favoritesOnly
                             tooltip: qsTr("Favorites")
@@ -170,7 +170,6 @@ AndroidBottomSheet {
                             delegate: ThemedChip {
                                 required property var modelData
                                 text: modelData.label
-                                chipHeight: Theme.controlHeight
                                 selected: modelData.id === root.activeCategory && !root.favoritesOnly
                                 onClicked: root.selectCategory(modelData.id)
                             }
@@ -256,7 +255,7 @@ AndroidBottomSheet {
 
                 Flickable {
                     width: parent.width
-                    height: Theme.controlHeightSm
+                    height: Theme.androidRowHeight
                     contentWidth: qualityRow.implicitWidth
                     clip: true
                     visible: !root.customSize
@@ -275,8 +274,7 @@ AndroidBottomSheet {
                             delegate: ThemedChip {
                                 required property var modelData
                                 text: modelData.label
-                                chipHeight: Theme.controlHeightSm
-                                selected: root.qualityId === modelData.id
+                                                                selected: root.qualityId === modelData.id
                                 onClicked: root.qualityId = modelData.id
                             }
                         }
@@ -287,7 +285,7 @@ AndroidBottomSheet {
 
                 Flickable {
                     width: parent.width
-                    height: Theme.controlHeightSm
+                    height: Theme.androidRowHeight
                     contentWidth: fpsRow.implicitWidth
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
@@ -305,8 +303,7 @@ AndroidBottomSheet {
                             delegate: ThemedChip {
                                 required property int modelData
                                 text: String(modelData)
-                                chipHeight: Theme.controlHeightSm
-                                selected: !root.customFps && root.fps === modelData
+                                                                selected: !root.customFps && root.fps === modelData
                                 onClicked: {
                                     root.customFps = false
                                     root.fps = modelData
@@ -316,8 +313,7 @@ AndroidBottomSheet {
 
                         ThemedChip {
                             text: qsTr("Custom")
-                            chipHeight: Theme.controlHeightSm
-                            selected: root.customFps
+                                                        selected: root.customFps
                             onClicked: root.customFps = true
                         }
                     }

@@ -8,5 +8,5 @@ Rectangle {
     width: Math.max(2, lane.clipDuration * lane.pxPerSecond)
     height: parent.height
     color: Theme.c.subtitleCueSpan.background
-    opacity: 0.4
+    opacity: Theme.c.subtitleCueSpan.backgroundOpacity
 }
