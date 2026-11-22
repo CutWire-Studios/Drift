@@ -2140,7 +2140,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | maskBrushOverlay | cursor | $semantic.onMedia | $semantic.onMedia |
 | maskBrushOverlay | cursorInner | $semantic.onMedia | $semantic.onMedia |
 | maskBrushOverlay | eraseStroke | $semantic.destructive | $semantic.destructive |
-| maskBrushOverlay | stroke | $semantic.primary | $semantic.primary |
+| maskBrushOverlay | stroke | $semantic.constructive | $semantic.constructive |
 | trackingPanel | stripEmpty | $semantic.panel.muted | $semantic.panel.muted |
 | trackingPanel | stripGood | $semantic.constructive | $semantic.constructive |
 | trackingPanel | stripWarn | $semantic.warning | $semantic.warning |

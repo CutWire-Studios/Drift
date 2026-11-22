@@ -202,6 +202,8 @@ QHash<QString, QStringList> driftChords()
         {QStringLiteral("masking.aiTool"), {QStringLiteral("A")}},
         {QStringLiteral("masking.brushSmaller"), {QStringLiteral("[")}},
         {QStringLiteral("masking.brushLarger"), {QStringLiteral("]")}},
+        {QStringLiteral("masking.brushSofter"), {QStringLiteral("Shift+[")}},
+        {QStringLiteral("masking.brushHarder"), {QStringLiteral("Shift+]")}},
         {QStringLiteral("masking.brushToggleErase"), {QStringLiteral("X")}},
         // Path editor (shape paths and freeform masks), live while it is on screen.
         {QStringLiteral("path.penTool"), {QStringLiteral("P")}},

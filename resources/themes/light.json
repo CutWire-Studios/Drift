@@ -2974,7 +2974,7 @@
       "cursor": "$semantic.onMedia",
       "cursorInner": "$semantic.onMedia",
       "eraseStroke": "$semantic.destructive",
-      "stroke": "$semantic.primary"
+      "stroke": "$semantic.constructive"
     },
     "trackingPanel": {
       "stripEmpty": "$semantic.panel.muted",

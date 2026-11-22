@@ -1309,6 +1309,8 @@ target_sources(driftapp PRIVATE
     src/ui/manip/PathEditCore.cpp
     src/ui/manip/ClipFrameMapper.h
     src/ui/manip/ClipFrameMapper.cpp
+    src/ui/manip/StrokeSmoother.h
+    src/ui/manip/StrokeSmoother.cpp
     src/ui/manip/ManipQml.h
     src/ui/manip/ManipQml.cpp
     src/ui/imageproviders/segment/SegmentImageStore.h
@@ -1964,6 +1966,8 @@ qt_add_qml_module(drift
         src/qml/components/preview/masking/MaskDrawOverlay.qml
         src/qml/components/preview/masking/MaskBrushOverlay.qml
         src/qml/components/preview/masking/MaskAiOverlay.qml
+        src/qml/components/preview/masking/MaskModeChips.qml
+        src/qml/components/preview/masking/BrushSideSliders.qml
         src/qml/components/preview/masking/TrackerOverlay.qml
         src/qml/components/preview/DepthEffectOverlay.qml
         src/qml/components/preview/DepthLight3dOverlay.qml

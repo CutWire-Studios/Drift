@@ -196,6 +196,8 @@ const QList<ActionDef> kActions = {
     {"masking.aiTool", QT_TRANSLATE_NOOP("AppController", "AI object mask tool"), "masking"},
     {"masking.brushSmaller", QT_TRANSLATE_NOOP("AppController", "Decrease brush size"), "masking"},
     {"masking.brushLarger", QT_TRANSLATE_NOOP("AppController", "Increase brush size"), "masking"},
+    {"masking.brushSofter", QT_TRANSLATE_NOOP("AppController", "Decrease brush hardness"), "masking"},
+    {"masking.brushHarder", QT_TRANSLATE_NOOP("AppController", "Increase brush hardness"), "masking"},
     {"masking.brushToggleErase", QT_TRANSLATE_NOOP("AppController", "Brush: switch between paint and erase"), "masking"},
     {"path.penTool", QT_TRANSLATE_NOOP("AppController", "Pen tool: add points to a path"), "path"},
     {"path.convertPoint", QT_TRANSLATE_NOOP("AppController", "Convert point between corner and smooth"), "path"},

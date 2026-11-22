@@ -318,6 +318,66 @@ void MaskingController::setBrushOpacity(double opacity)
     emit brushSettingsChanged();
 }
 
+void MaskingController::setBrushSmoothing(double smoothing)
+{
+    const double clamped = std::clamp(smoothing, 0.0, 1.0);
+    if (clamped == m_brushSmoothing)
+        return;
+    m_brushSmoothing = clamped;
+    emit brushSettingsChanged();
+}
+
+namespace {
+
+struct BrushPreset
+{
+    const char *id;
+    double size;
+    double hardness;
+};
+
+constexpr BrushPreset kBrushPresets[] = {
+    {"hard", 0.05, 1.0},
+    {"soft", 0.12, 0.2},
+    {"detail", 0.012, 0.9},
+};
+
+} // namespace
+
+QString MaskingController::brushPreset() const
+{
+    for (const BrushPreset &p : kBrushPresets) {
+        if (qFuzzyCompare(m_brushSize, p.size) && qFuzzyCompare(m_brushHardness, p.hardness))
+            return QString::fromLatin1(p.id);
+    }
+    return {};
+}
+
+QVariantList MaskingController::brushPresets() const
+{
+    const QStringList names = {tr("Hard"), tr("Soft"), tr("Detail")};
+    QVariantList out;
+    int i = 0;
+    for (const BrushPreset &p : kBrushPresets) {
+        out.append(QVariantMap{{QStringLiteral("id"), QString::fromLatin1(p.id)},
+                               {QStringLiteral("name"), names.at(i++)},
+                               {QStringLiteral("size"), p.size},
+                               {QStringLiteral("hardness"), p.hardness}});
+    }
+    return out;
+}
+
+void MaskingController::applyBrushPreset(const QString &id)
+{
+    for (const BrushPreset &p : kBrushPresets) {
+        if (id == QLatin1String(p.id)) {
+            setBrushSize(p.size);
+            setBrushHardness(p.hardness);
+            return;
+        }
+    }
+}
+
 void MaskingController::setBrushPressureSize(bool on)
 {
     if (on == m_brushPressureSize)

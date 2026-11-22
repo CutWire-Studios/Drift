@@ -63,6 +63,10 @@ class MaskingController : public QObject
     Q_PROPERTY(double brushOpacity READ brushOpacity WRITE setBrushOpacity NOTIFY brushSettingsChanged)
     Q_PROPERTY(bool brushErase READ brushErase WRITE setBrushErase NOTIFY brushSettingsChanged)
     // Whether a pen's pressure scales the dab radius (0.3..1 of the brush size).
+    // Lazy-string stabiliser strength, 0..1 (0 off); applied by the overlay (StrokeSmoother).
+    Q_PROPERTY(double brushSmoothing READ brushSmoothing WRITE setBrushSmoothing NOTIFY brushSettingsChanged)
+    // Id of the preset matching the current size and hardness, empty when they match none.
+    Q_PROPERTY(QString brushPreset READ brushPreset NOTIFY brushSettingsChanged)
     Q_PROPERTY(bool brushPressureSize READ brushPressureSize WRITE setBrushPressureSize NOTIFY brushSettingsChanged)
     // Whether a stroke that closes on itself also fills what it encloses.
     Q_PROPERTY(bool brushFillLoops READ brushFillLoops WRITE setBrushFillLoops NOTIFY selectionSettingsChanged)
@@ -91,6 +95,12 @@ public:
     void setBrushOpacity(double opacity);
     bool brushErase() const { return m_brushErase; }
     void setBrushErase(bool erase);
+    double brushSmoothing() const { return m_brushSmoothing; }
+    void setBrushSmoothing(double smoothing);
+    QString brushPreset() const;
+    // {id, name, size, hardness} for Hard, Soft and Detail.
+    Q_INVOKABLE QVariantList brushPresets() const;
+    Q_INVOKABLE void applyBrushPreset(const QString &id);
     bool brushPressureSize() const { return m_brushPressureSize; }
     void setBrushPressureSize(bool on);
     bool brushFillLoops() const { return m_brushFillLoops; }
@@ -357,6 +367,7 @@ private:
     double m_brushHardness = 0.7;
     double m_brushOpacity = 1.0;
     bool m_brushErase = false;
+    double m_brushSmoothing = 0.0;
     bool m_brushPressureSize = true;
     bool m_brushFillLoops = true;
     double m_wandTolerance = 25.0;

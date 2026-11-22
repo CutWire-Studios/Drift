@@ -12,6 +12,7 @@
 #include "ui/manip/ManipModifiers.h"
 #include "ui/manip/PathEditCore.h"
 #include "ui/manip/SnapService.h"
+#include "ui/manip/StrokeSmoother.h"
 
 #include <QJsonArray>
 #include <QJsonObject>
@@ -1075,6 +1076,34 @@ private slots:
         QCOMPARE(key.vertices.size(), 4);
         QCOMPARE(key.vertices[2].p, QPointF(0.9, 0.9));
         QVERIFY(!applyPathOp(key, PathOp{PathOp::Kind::Remove, 9, 0.0, false}));
+    }
+
+    void strokeSmootherOffFollowsTheCursor()
+    {
+        StrokeSmoother s;
+        s.begin(0, 0);
+        QCOMPARE(s.follow(30, 40, 0.0), QPointF(30, 40));
+    }
+
+    void strokeSmootherHeadStaysSlackInsideTheString()
+    {
+        StrokeSmoother s;
+        s.begin(0, 0);
+        const double length = 0.5 * StrokeSmoother::kMaxStringPx;
+        const QPointF head = s.follow(length * 0.5, 0, 0.5);
+        QCOMPARE(head, QPointF(0, 0));
+    }
+
+    void strokeSmootherPullsTheHeadTautAlongTheCursorLine()
+    {
+        StrokeSmoother s;
+        s.begin(0, 0);
+        const double length = 0.5 * StrokeSmoother::kMaxStringPx;
+        const QPointF head = s.follow(100, 0, 0.5);
+        QVERIFY(qFuzzyCompare(head.x(), 100 - length));
+        QVERIFY(qFuzzyIsNull(head.y()));
+        const QPointF next = s.follow(100, 100, 0.5);
+        QVERIFY(std::abs(std::hypot(next.x() - 100, next.y() - 100) - length) < 1e-9);
     }
 };
 

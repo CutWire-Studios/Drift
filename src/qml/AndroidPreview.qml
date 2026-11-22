@@ -114,7 +114,9 @@ Item {
                     crop: cropTool,
                     clipCrop: clipCropTool,
                     shapePath: shapePathTool,
-                    maskDraw: maskDrawTool
+                    maskDraw: maskDrawTool,
+                    maskBrush: maskBrushTool,
+                    maskAi: maskAiTool
                 })
                 toolHost.companion: dropCompanion
                 toolHost.companionTools: ["transform", "mask"]
@@ -255,6 +257,21 @@ Item {
     Component {
         id: maskDrawTool
         MaskDrawOverlay { }
+    }
+
+    Component {
+        id: maskBrushTool
+        MaskBrushOverlay {
+            touch: true
+            navTarget: viewport
+        }
+    }
+
+    Component {
+        id: maskAiTool
+        MaskAiOverlay {
+            touch: true
+        }
     }
 
     Component {
