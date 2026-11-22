@@ -19,6 +19,7 @@
 #include "engine/packages/assets/StickerCatalog.h"
 #include "engine/packages/animations/AnimationCatalog.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
+#include "ui/theme/ThemeManager.h"
 #include "engine/packages/transitions/TransitionPackageLoader.h"
 #include "engine/packages/animations/AnimationPackageLoader.h"
 #include "core/base/ZipArchive.h"
@@ -1335,9 +1336,10 @@ void AddonManager::reloadForKinds(const QStringList &kinds)
     for (const QString &kind : kinds) {
         // reloadFontCatalog touches QFontDatabase, so it has to be here on the GUI thread rather
         // than on the extraction worker — same constraint as the call in main().
-        if (kind == QLatin1String("fonts"))
+        if (kind == QLatin1String("fonts")) {
             reloadFontCatalog();
-        else if (kind == QLatin1String("stickers"))
+            ThemeManager::shared()->refreshFonts();
+        } else if (kind == QLatin1String("stickers"))
             reloadStickerCatalog();
         else if (kind == QLatin1String("face-props"))
             reloadFacePropCatalog();

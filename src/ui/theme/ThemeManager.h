@@ -47,6 +47,11 @@ class ThemeManager : public QObject
     // Set when the theme on screen declares a newer schemaVersion than this
     // build reads. It still loads; unknown keys are ignored.
     Q_PROPERTY(QString lastWarning READ lastWarning NOTIFY lastWarningChanged)
+    // typography.fontFamily / monoFontFamily after checking they are installed. fontFamily is
+    // empty when the theme leaves it unset or names a missing font: Theme.qml then uses the
+    // bundled Inter UI. monoFontFamily falls back to the system fixed-width font.
+    Q_PROPERTY(QString fontFamily READ fontFamily NOTIFY fontsChanged)
+    Q_PROPERTY(QString monoFontFamily READ monoFontFamily NOTIFY fontsChanged)
     Q_PROPERTY(bool hotReload READ hotReload WRITE setHotReload NOTIFY hotReloadChanged)
     // "#RRGGBB" replacing semantic.primary (and a matching primaryForeground) on whatever theme is
     // active, or empty for the theme's own. QSettings Theme/accent.
@@ -85,6 +90,11 @@ public:
     QVariantList themes() const;
     QString lastError() const { return m_lastError; }
     QString lastWarning() const { return m_lastWarning; }
+    QString fontFamily() const { return m_fontFamily; }
+    QString monoFontFamily() const { return m_monoFontFamily; }
+    // Re-checks the theme's fonts against QFontDatabase. Call after fonts are registered at
+    // runtime (a fonts addon install), since QFontDatabase does not signal it.
+    void refreshFonts();
     bool hotReload() const { return m_hotReload; }
     void setHotReload(bool enabled);
     QString accentOverride() const { return m_accentOverride; }
@@ -147,6 +157,7 @@ signals:
     void selectionChanged();
     void lastErrorChanged();
     void lastWarningChanged();
+    void fontsChanged();
 
 private:
     struct Loaded {
@@ -192,6 +203,8 @@ private:
 
     QFileSystemWatcher m_watcher;
     QString m_currentTheme;
+    QString m_fontFamily;
+    QString m_monoFontFamily;
     QString m_sourcePath;
     QString m_selection = QStringLiteral("system");
     QString m_effectiveVariant = QStringLiteral("dark");

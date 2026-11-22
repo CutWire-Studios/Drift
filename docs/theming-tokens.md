@@ -3458,6 +3458,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | fontWeight.medium | 500 | 500 |
 | fontWeight.semibold | 600 | 600 |
 | fontWeight.bold | 700 | 700 |
+| fontFamily |  |  |
 | monoFontFamily | monospace | monospace |
 
 ## motion

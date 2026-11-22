@@ -92,8 +92,8 @@ QtObject {
     property FontLoader _interBold: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Bold.ttf" }
     property FontLoader _interItalic: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Italic.ttf" }
 
-    readonly property string fontFamily: _interRegular.name || "sans-serif"
-    readonly property string monoFontFamily: ThemeManager.typography.monoFontFamily
+    readonly property string fontFamily: ThemeManager.fontFamily || _interRegular.name || "sans-serif"
+    readonly property string monoFontFamily: ThemeManager.monoFontFamily
 
     // --- Light/dark mode: follows the OS until the user picks a side -----------
     // Qt.styleHints.colorScheme is live-updated by the platform theme (Qt 6.5+).
