@@ -94,7 +94,8 @@ Button {
 
         // Space the glyph occupies, including the gap before the label.
         readonly property real glyphSpace: root.glyph.length > 0
-                                           ? buttonGlyph.implicitWidth + row.spacing : 0
+                                           ? buttonGlyph.implicitWidth + (root.text.length > 0 ? row.spacing : 0)
+                                           : 0
 
         // Sized from the children's *implicit* widths, never their laid-out
         // widths: the label's width is clamped against this item, so measuring

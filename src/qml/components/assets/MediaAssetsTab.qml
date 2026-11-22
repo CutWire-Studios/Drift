@@ -810,6 +810,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+        // Declared after the empty state, so without this it sat on top and ate its buttons' clicks.
+        z: -1
         enabled: !Theme.touchUi
         onDoubleClicked: root.importRequested()
     }
