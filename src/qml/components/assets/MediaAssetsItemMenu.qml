@@ -123,6 +123,8 @@ ThemedContextMenu {
         visible: root.kind === "video" && root.host.selectedAssetIds.length <= 1
                  && !root.host.editFriendlyOf(root.assetId)
         onTriggered: EditorState.bin.convertToConstantFrameRate([root.assetId])
+    }
+    ThemedMenuItem {
         text: qsTr("Save a copy…")
         icon.name: Theme.icons.save
         visible: root.kind !== "composite" && root.single
