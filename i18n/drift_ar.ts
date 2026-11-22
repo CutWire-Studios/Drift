@@ -14182,6 +14182,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>No keyframes on this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 (keyframes off)</source>
         <translation>%1 (الإطارات المفتاحية متوقفة)</translation>
     </message>
