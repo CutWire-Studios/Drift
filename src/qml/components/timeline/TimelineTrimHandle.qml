@@ -160,6 +160,8 @@ Rectangle {
         // outside the edge, so without it the edge would snap under the finger on the first move.
         property real grabOffset: 0
         property real fingerSceneX: 0
+        // Ctrl/Cmd held on the latest press or move: the edge goes where the pointer is.
+        property bool noSnap: false
         property real fingerSceneY: 0
 
         function endTrimLock() {
@@ -188,12 +190,12 @@ Rectangle {
             // and every limit that can stop this edge live inside it, and the one the user
             // needs told, the source running out, has no cue on screen at all.
             const p = handle.edge < 0
-                    ? EditorState.previewTrimLeft(owner.trackIndex, owner.clipIndex, target)
-                    : EditorState.previewTrimRight(owner.trackIndex, owner.clipIndex, target)
+                    ? EditorState.previewTrimLeft(owner.trackIndex, owner.clipIndex, target, !noSnap)
+                    : EditorState.previewTrimRight(owner.trackIndex, owner.clipIndex, target, !noSnap)
             // The engine applies the same snap target to audio and video edges. Show the
             // vertical ruler across every track while this edge is magnetically aligned.
             const edgeSeconds = handle.edge < 0 ? p.start : p.start + p.duration
-            owner.panel.snapGuideSeconds = p.ok && EditorState.snapEnabled
+            owner.panel.snapGuideSeconds = p.ok && EditorState.snapEnabled && !noSnap
                     && p.outcome === 2 && Math.abs(edgeSeconds - target) > 0.0005
                     ? edgeSeconds : -1
             if (p.ok && p.changed) {
@@ -245,6 +247,7 @@ Rectangle {
             Qt.callLater(function() { owner.forceActiveFocus() })
             const wasSelected = owner.selected
             Haptics.reset()
+            noSnap = Manip.fromQtFlags(modifiers).noSnap
             owner.beginEdgeGesture(trimMouse, point, device)
             if (!owner.selected)
                 EditorState.selectClip(owner.trackIndex, owner.clipIndex)
@@ -283,6 +286,11 @@ Rectangle {
             const scene = mapToItem(null, point.x, point.y)
             fingerSceneX = scene.x
             fingerSceneY = scene.y
+            const ns = Manip.fromQtFlags(modifiers).noSnap
+            if (ns !== noSnap) {
+                noSnap = ns
+                lastTrimPx = -2147483647
+            }
             applyTrim()
         }
         onReleased: {
@@ -298,7 +306,7 @@ Rectangle {
                 // One call, so the edit, the undo push and finishEdit announce the timeline
                 // once between them rather than three times.
                 EditorState.commitTrim(owner.trackIndex, owner.clipIndex,
-                                       handle.edge, lastTrimSeconds)
+                                       handle.edge, lastTrimSeconds, !noSnap)
             }
             EditorState.drag.commit()
         }

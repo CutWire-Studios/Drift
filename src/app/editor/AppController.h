@@ -1017,8 +1017,8 @@ public:
     //
     // Returns { ok, changed, outcome, start, duration, inPoint, outPoint } in seconds, or
     // { ok: false } for an out-of-range clip.
-    Q_INVOKABLE QVariantMap previewTrimLeft(int trackIndex, int clipIndex, double newStart) const;
-    Q_INVOKABLE QVariantMap previewTrimRight(int trackIndex, int clipIndex, double newEnd) const;
+    Q_INVOKABLE QVariantMap previewTrimLeft(int trackIndex, int clipIndex, double newStart, bool snap = true) const;
+    Q_INVOKABLE QVariantMap previewTrimRight(int trackIndex, int clipIndex, double newEnd, bool snap = true) const;
 
     // Opens and closes a trim drag. Scoping the gesture lets a repeated pointer position be
     // rejected before any work is done, and lets the caller find out whether the edge ever
@@ -1030,7 +1030,7 @@ public:
     // edit, one for the undo push, one from finishEdit -- and each rebuilt the entire timeline
     // model. `side` < 0 is the left edge. `seconds` < 0 means the gesture never moved the edge,
     // so there is nothing to commit.
-    Q_INVOKABLE void commitTrim(int trackIndex, int clipIndex, int side, double seconds);
+    Q_INVOKABLE void commitTrim(int trackIndex, int clipIndex, int side, double seconds, bool snap = true);
     Q_INVOKABLE bool trimGestureChangedProject() const { return m_trimGestureChanged; }
     // Moves one edge by whole project frames as its own undo step. Unlike a drag it never snaps,
     // which would swallow a one-frame move. Returns the TrimOutcome; TrimBlocked or TrimNone mean
@@ -1041,8 +1041,8 @@ public:
     // snapping and every limit that can stop this edge live inside these, and the one the user
     // most needs told — the source running out — has no cue on screen at all. Haptics::trimStep
     // has always been handed this return value; until the enum existed it was reading undefined.
-    Q_INVOKABLE int trimClipLeft(int trackIndex, int clipIndex, double newStart);
-    Q_INVOKABLE int trimClipRight(int trackIndex, int clipIndex, double newEnd);
+    Q_INVOKABLE int trimClipLeft(int trackIndex, int clipIndex, double newStart, bool snap = true);
+    Q_INVOKABLE int trimClipRight(int trackIndex, int clipIndex, double newEnd, bool snap = true);
     // With `ripple`, the clip's linked partners take the same trim, and the clips after its old end
     // (on its track and the tracks holding linked partners of those clips) move by the change in
     // length, whatever the project's ripple setting. Returns the ids of the clips that moved.

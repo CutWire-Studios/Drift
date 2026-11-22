@@ -253,6 +253,7 @@ private slots:
     void splitLeftKeepsLinkedAudioInSync();
     void splitRightKeepsLinkedAudioInSync();
     void edgeTrimRipplesFollowers();
+    void edgeTrimSnapCanBeSuspended();
     void rippleDeleteMovesLinkedFollowersOnce();
     void rippleDeleteClosesOverlappingRangesByTheirUnion();
     void rippleDeleteMovesTracksJoinedThroughAThirdTrack();
@@ -17159,6 +17160,24 @@ void EditorStateTest::splitRightKeepsLinkedAudioInSync()
         QCOMPARE(state.project()->tracks().at(t).clips.at(0).timelineDuration, drift::secondsToUs(3.0));
         QCOMPARE(state.project()->tracks().at(t).clips.at(1).timelineStart, drift::secondsToUs(4.0));
     }
+}
+
+// Ctrl suspends snapping on a trim: the preview and the commit both keep the raw edge.
+void EditorStateTest::edgeTrimSnapCanBeSuspended()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+    state.setSnapEnabled(true);
+    state.setPlayheadSeconds(2.5);
+
+    QCOMPARE(state.previewTrimRight(0, 0, 2.51).value(QStringLiteral("duration")).toDouble(), 2.5);
+    const QVariantMap raw = state.previewTrimRight(0, 0, 2.51, false);
+    QVERIFY(qAbs(raw.value(QStringLiteral("duration")).toDouble() - 2.51) < 1e-6);
+
+    state.beginTrimGesture(0, 0, 1);
+    state.commitTrim(0, 0, 1, 2.51, false);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(2.51));
 }
 
 // #249: dragging a clip edge with "Close gaps when trimming" on used to leave the gap behind.
