@@ -28,6 +28,9 @@ Item {
         visible: !slot.isSeparator
         glyph: slot.isSeparator ? "" : slot.host.actionMeta[slot.modelData].glyph
         tooltip: slot.isSeparator ? "" : slot.host.actionTooltip(slot.modelData)
+        tooltipIllustration: slot.isSeparator ? null : (slot.host.actionMeta[slot.modelData].illustration ?? null)
+        tooltipBody: slot.isSeparator ? "" : (slot.host.actionMeta[slot.modelData].body ?? "")
+        tooltipActionId: slot.isSeparator ? "" : (slot.host.actionMeta[slot.modelData].shortcut ?? "")
         active: slot.host.actionActive(slot.modelData)
         enabled: slot.host.actionEnabled(slot.modelData)
         onClicked: slot.host.triggerAction(slot.modelData)

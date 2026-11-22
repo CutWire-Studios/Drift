@@ -7,26 +7,49 @@ import Drift
 QtObject {
     id: actions
 
+    readonly property Component illToolSelect: Component { ToolSelectIllustration { } }
+    readonly property Component illToolCut: Component { ToolCutIllustration { } }
+    readonly property Component illLinkClips: Component { LinkClipsIllustration { } }
+    readonly property Component illTrimStart: Component { TrimStartIllustration { } }
+    readonly property Component illTrimEnd: Component { TrimEndIllustration { } }
+    readonly property Component illFreezeFrame: Component { FreezeFrameIllustration { } }
+    readonly property Component illAdjustmentLayer: Component { AdjustmentLayerIllustration { } }
+    readonly property Component illTransformLayer: Component { TransformLayerIllustration { } }
+
     // Every customisable edit action, keyed by the id stored in the toolbar layout.
-    // `tip` is the longer toolbar tooltip where the menu label alone would be too terse.
+    // `body` is the one-line explanation shown under the label in the toolbar tooltip.
     readonly property var actionMeta: ({
-        "select": { glyph: Theme.icons.mousePointer, label: qsTr("Select"),
-                    tip: qsTr("Select — normal editing"), shortcut: "selectTool" },
-        "cut": { glyph: Theme.icons.scissors, label: qsTr("Cut mode"),
-                 tip: qsTr("Cut mode — click a clip to split it"), shortcut: "bladeTool" },
+        "select": { glyph: Theme.icons.mousePointer, label: qsTr("Select"), shortcut: "selectTool",
+                    body: qsTr("Click, drag and trim clips as normal. Switch back here after using Cut."),
+                    illustration: illToolSelect },
+        "cut": { glyph: Theme.icons.scissors, label: qsTr("Cut mode"), shortcut: "bladeTool",
+                    body: qsTr("Click a clip to split it there. Fast for chopping out the parts you do not need."),
+                    illustration: illToolCut },
         "separateAudio": { glyph: Theme.icons.audioLines, label: qsTr("Show audio on separate track"),
-                           shortcut: "separateAudio" },
+                           shortcut: "separateAudio",
+                    body: qsTr("Pull the sound out of a video onto its own track to edit it separately.") },
         "unlink": { glyph: Theme.icons.unlink, label: qsTr("Unlink video and audio"),
-                    shortcut: "unlink" },
-        "link": { glyph: Theme.icons.link, label: qsTr("Link selected clips"), shortcut: "link" },
+                    shortcut: "unlink",
+                    body: qsTr("Move or trim the picture and its sound separately.") },
+        "link": { glyph: Theme.icons.link, label: qsTr("Link selected clips"), shortcut: "link",
+                    body: qsTr("Keep the selected clips moving, trimming and deleting together."),
+                    illustration: illLinkClips },
         "trimStart": { glyph: Theme.icons.trimStart, label: qsTr("Trim start"),
-                       tip: qsTr("Trim start — click a clip to drop everything left of the cut") },
+                    body: qsTr("Click a clip to drop everything before that point."),
+                    shortcut: "trimStart",
+                    illustration: illTrimStart },
         "trimEnd": { glyph: Theme.icons.trimEnd, label: qsTr("Trim end"),
-                     tip: qsTr("Trim end — click a clip to drop everything right of the cut") },
+                    body: qsTr("Click a clip to drop everything after that point."),
+                    shortcut: "trimEnd",
+                    illustration: illTrimEnd },
         "deleteLeft": { glyph: Theme.icons.trimStart, label: qsTr("Trim start to playhead"),
-                        shortcut: "deleteLeft" },
+                        shortcut: "deleteLeft",
+                    body: qsTr("Drop everything before the playhead from the selected clip."),
+                    illustration: illTrimStart },
         "deleteRight": { glyph: Theme.icons.trimEnd, label: qsTr("Trim end to playhead"),
-                         shortcut: "deleteRight" },
+                         shortcut: "deleteRight",
+                    body: qsTr("Drop everything after the playhead from the selected clip."),
+                    illustration: illTrimEnd },
         "undo": { glyph: Theme.icons.undo, label: qsTr("Undo"), shortcut: "undo" },
         "redo": { glyph: Theme.icons.redo, label: qsTr("Redo"), shortcut: "redo" },
         "delete": { glyph: Theme.icons.trash, label: qsTr("Delete clip"), shortcut: "delete" },
@@ -44,13 +67,20 @@ QtObject {
         "clearWorkArea": { glyph: Theme.icons.x, label: qsTr("Clear work area"),
                            shortcut: "clearInOut" },
         "merge": { glyph: Theme.icons.linkTwo, label: qsTr("Merge adjacent clips"), shortcut: "merge" },
-        "freeze": { glyph: Theme.icons.snowflake, label: qsTr("Freeze frame at current time") },
-        "adjustmentLayer": { glyph: Theme.icons.wand, label: qsTr("Add adjustment layer") },
+        "freeze": { glyph: Theme.icons.snowflake, label: qsTr("Freeze frame at current time"),
+                    shortcut: "freezeFrame",
+                    body: qsTr("Hold the current frame as a still. Good for emphasis or a title card."),
+                    illustration: illFreezeFrame },
+        "adjustmentLayer": { glyph: Theme.icons.wand, label: qsTr("Add adjustment layer"),
+                    shortcut: "addAdjustmentLayer",
+                    body: qsTr("An empty layer whose effects apply to everything under it."),
+                    illustration: illAdjustmentLayer },
         "transformLayer": { glyph: Theme.icons.group, label: qsTr("Add transform layer"),
-                            tip: qsTr("Add transform layer — moves the selected clips' tracks as one"),
-                            shortcut: "transformTogether" },
-        "camera": { glyph: Theme.icons.video, label: qsTr("Add camera"),
-                    tip: qsTr("Add camera — one viewpoint the whole timeline is seen through. With a camera already there, adds a new camera clip (a cut to a new framing) at the playhead") }
+                            shortcut: "transformTogether",
+                    body: qsTr("Move, scale and rotate the selected clips together as one."),
+                    illustration: illTransformLayer },
+        "camera": { glyph: Theme.icons.video, label: qsTr("Add camera"), shortcut: "addCamera",
+                    body: qsTr("One viewpoint the whole timeline is seen through. Use it for pans and zooms.") }
     })
 
     readonly property var defaultToolbarItems: [

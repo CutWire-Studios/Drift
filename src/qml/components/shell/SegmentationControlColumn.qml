@@ -105,7 +105,7 @@ Column {
               ? qsTr("Cutting out… %1%").arg(Math.round(EditorState.segmentation.progress * 100))
               : (EditorState.segmentation.forTemplate
                  ? qsTr("Cut out & apply effect")
-                 : qsTr("Cut out subject"))
+                 : qsTr("Remove background"))
         enabled: (!EditorState.segmentation.backendUsesPoints
                   || EditorState.segmentation.points.length > 0)
                  && !EditorState.segmentation.running && !EditorState.segmentation.encoding

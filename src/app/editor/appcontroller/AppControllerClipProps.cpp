@@ -278,6 +278,34 @@ void AppController::previewSetClipRotation(int trackIndex, int clipIndex, double
     emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("rotation")});
 }
 
+void AppController::previewSetClipAnchor(int trackIndex, int clipIndex, double anchorX, double anchorY,
+                                          double posX, double posY)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return;
+
+    drift::Clip &clip = track.clips[clipIndex];
+    beginImplicitPreviewDrag(tr("Move anchor"));
+    const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
+    bool wrote = false;
+    wrote = writeKeyframeValue(clip.anchorX, relative, anchorX, m_autoKeyEnabled, false) || wrote;
+    wrote = writeKeyframeValue(clip.anchorY, relative, anchorY, m_autoKeyEnabled, false) || wrote;
+    wrote = writeKeyframeValue(clip.positionX, relative, posX, m_autoKeyEnabled, false) || wrote;
+    wrote = writeKeyframeValue(clip.positionY, relative, posY, m_autoKeyEnabled, false) || wrote;
+    if (!wrote) {
+        emit transformBlocked(tr("Turn on Auto keyframes to change this"));
+        return;
+    }
+
+    emitPreviewEdit(trackIndex, clipIndex,
+                    {QStringLiteral("anchorX"), QStringLiteral("anchorY"), QStringLiteral("positionX"),
+                     QStringLiteral("positionY")});
+}
+
 void AppController::previewSetClipKeyframe(int trackIndex, int clipIndex, const QString &prop,
                                            double atSeconds, double value)
 {

@@ -51,6 +51,8 @@ struct Series
     double ownMax = 1;
     double valueMin = 0;
     double valueMax = 1;
+    // The axis is the property's own legal range, so a dragged key is held inside it.
+    bool fixedRange = false;
 };
 
 struct Range
@@ -75,6 +77,8 @@ QVariantMap toMap(const Series &series);
 QList<Series> seriesFromList(const QVariantList &list);
 QVariantList toList(const QList<Series> &series);
 
+// Whether `valueRange` gives the property a fixed range rather than fitting it to its keys.
+bool hasFixedRange(const QString &id, bool hasRange);
 // The axis a property's curve is fitted to, from its fixed range when it has one, else from its
 // keys and the overshoot of its easing. `hasRange` makes `min`..`max` the range (effect params).
 Range valueRange(const QString &id, const QList<Point> &points, double base, bool hasRange, double min,
@@ -109,9 +113,6 @@ QList<Handle> tangentHandles(const QList<Point> &points);
 double handleSeconds(const Point &point, bool outgoing);
 double handleValue(const Point &point, bool outgoing);
 
-// The key with one handle moved to `dx` seconds / `value` (absolute). dx keeps its side of the key,
-// and unless the key is a corner its other handle turns to the same slope.
-Point withHandle(Point point, bool outgoing, double dx, double value);
 // Where a handle-shaped segment `a`..`b` is at `seconds`: its bezier parameter and its value,
 // as the engine evaluates it.
 double segmentParameter(const Point &a, const Point &b, double seconds);

@@ -6,6 +6,7 @@
 #include "engine/media/thumbnails/FilmstripTileCache.h"
 #include "engine/media/waveforms/WaveformBlockCache.h"
 #include "app/editor/TimelineClipsModel.h"
+#include "app/editor/keymap/Keymap.h"
 #include "app/mcp/tools/McpMarket.h"
 #include "core/project/GuideSet.h"
 #include <QAtomicInt>
@@ -78,6 +79,7 @@ struct TransformParent;
 
 #include "playback/PlaybackEngine.h"
 #include "engine/audio/AudioRecorder.h"
+#include "ui/manip/DragSession.h"
 
 // QML-facing controller over the core project model and undo stack.
 class AppController : public QObject
@@ -156,6 +158,8 @@ class AppController : public QObject
     Q_PROPERTY(PlaybackEngine *playback READ playback CONSTANT)
     // The preview area's editor state, tools and overlay maths.
     Q_PROPERTY(PreviewController *preview READ preview CONSTANT)
+    // The one drag/undo/cancel session for on-canvas manipulators. QML: EditorState.drag.
+    Q_PROPERTY(drift::manip::DragSession *drag READ drag CONSTANT)
     // App-wide preferences and persisted UI layout. QML: EditorState.preferences.
     Q_PROPERTY(PreferencesController *preferences READ preferences CONSTANT)
     // Project file lifecycle and project setup. QML: EditorState.projectFile.
@@ -345,6 +349,7 @@ class AppController : public QObject
     Q_PROPERTY(QVariantList guideItems READ guideItems NOTIFY guidesChanged)
     Q_PROPERTY(bool inlineTextEditing READ inlineTextEditing NOTIFY inlineTextEditingChanged)
     Q_PROPERTY(QVariantList actions READ actions NOTIFY shortcutsChanged)
+    Q_PROPERTY(drift::Keymap *keymap READ keymap CONSTANT)
     Q_PROPERTY(QVariantList bookmarks READ bookmarks NOTIFY bookmarksChanged)
     Q_PROPERTY(bool workAreaActive READ workAreaActive NOTIFY workAreaChanged)
     Q_PROPERTY(double workAreaInSeconds READ workAreaInSeconds NOTIFY workAreaChanged)
@@ -397,6 +402,7 @@ public:
     SourceLabController *sourceLab() const { return m_sourceLab; }
     PlaybackEngine *playback() { return &m_playback; }
     PreviewController *preview() const { return m_preview; }
+    drift::manip::DragSession *drag() const { return m_drag; }
     PreferencesController *preferences() const { return m_preferences; }
     ProjectFileController *projectFile() const { return m_projectFile; }
     AssetPreviewController *assetPreview() const { return m_assetPreview; }
@@ -422,6 +428,7 @@ public:
     TtsController *tts() const { return m_tts; }
     VoiceLibrary *voices() const { return m_voices; }
     McpController *mcp() const { return m_mcpController; }
+    drift::Keymap *keymap() const { return m_keymap; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
     void setAudioOutputDeviceId(const QString &id);
@@ -870,6 +877,10 @@ public:
     Q_INVOKABLE void previewSetTextRect(int trackIndex, int clipIndex, double posX, double posY,
                                         double frameW, double frameH);
     Q_INVOKABLE void previewSetClipRotation(int trackIndex, int clipIndex, double degrees);
+    // Moves the pivot: anchorX/anchorY are frame px from the frame's top-left, and posX/posY the
+    // new place of the anchor on the canvas, which the caller solves so the picture stays put.
+    Q_INVOKABLE void previewSetClipAnchor(int trackIndex, int clipIndex, double anchorX, double anchorY,
+                                          double posX, double posY);
     Q_INVOKABLE void previewSetClipKeyframe(int trackIndex, int clipIndex, const QString &prop,
                                             double atSeconds, double value);
     Q_INVOKABLE void previewSetEffectParam(int trackIndex, int clipIndex, int effectIndex,
@@ -1006,8 +1017,8 @@ public:
     //
     // Returns { ok, changed, outcome, start, duration, inPoint, outPoint } in seconds, or
     // { ok: false } for an out-of-range clip.
-    Q_INVOKABLE QVariantMap previewTrimLeft(int trackIndex, int clipIndex, double newStart) const;
-    Q_INVOKABLE QVariantMap previewTrimRight(int trackIndex, int clipIndex, double newEnd) const;
+    Q_INVOKABLE QVariantMap previewTrimLeft(int trackIndex, int clipIndex, double newStart, bool snap = true) const;
+    Q_INVOKABLE QVariantMap previewTrimRight(int trackIndex, int clipIndex, double newEnd, bool snap = true) const;
 
     // Opens and closes a trim drag. Scoping the gesture lets a repeated pointer position be
     // rejected before any work is done, and lets the caller find out whether the edge ever
@@ -1019,7 +1030,7 @@ public:
     // edit, one for the undo push, one from finishEdit -- and each rebuilt the entire timeline
     // model. `side` < 0 is the left edge. `seconds` < 0 means the gesture never moved the edge,
     // so there is nothing to commit.
-    Q_INVOKABLE void commitTrim(int trackIndex, int clipIndex, int side, double seconds);
+    Q_INVOKABLE void commitTrim(int trackIndex, int clipIndex, int side, double seconds, bool snap = true);
     Q_INVOKABLE bool trimGestureChangedProject() const { return m_trimGestureChanged; }
     // Moves one edge by whole project frames as its own undo step. Unlike a drag it never snaps,
     // which would swallow a one-frame move. Returns the TrimOutcome; TrimBlocked or TrimNone mean
@@ -1030,8 +1041,8 @@ public:
     // snapping and every limit that can stop this edge live inside these, and the one the user
     // most needs told — the source running out — has no cue on screen at all. Haptics::trimStep
     // has always been handed this return value; until the enum existed it was reading undefined.
-    Q_INVOKABLE int trimClipLeft(int trackIndex, int clipIndex, double newStart);
-    Q_INVOKABLE int trimClipRight(int trackIndex, int clipIndex, double newEnd);
+    Q_INVOKABLE int trimClipLeft(int trackIndex, int clipIndex, double newStart, bool snap = true);
+    Q_INVOKABLE int trimClipRight(int trackIndex, int clipIndex, double newEnd, bool snap = true);
     // With `ripple`, the clip's linked partners take the same trim, and the clips after its old end
     // (on its track and the tracks holding linked partners of those clips) move by the change in
     // length, whatever the project's ripple setting. Returns the ids of the clips that moved.
@@ -1856,6 +1867,8 @@ public:
     Q_INVOKABLE double trackHeightScaleMax() const { return 4.0; }
     Q_INVOKABLE void moveTrack(int fromIndex, int toIndex);
     Q_INVOKABLE void addTrack(const QString &type);
+    // Same whitelist as addTrack; `index` is the project track index the new track takes.
+    Q_INVOKABLE void insertTrack(const QString &type, int index);
     Q_INVOKABLE void removeTrack(int trackIndex);
     Q_INVOKABLE int removeEmptyTracks();
     Q_INVOKABLE bool hasEmptyTracks() const;
@@ -1884,6 +1897,13 @@ public:
     Q_INVOKABLE void clearWorkArea();
     Q_INVOKABLE void toggleLoopWorkArea();
     Q_INVOKABLE void freezeFrameAtPlayhead();
+    // Keyboard-action helpers; triggerAction is their entry point.
+    void markWorkAreaToClip();
+    void clearWorkAreaIn();
+    void clearWorkAreaOut();
+    void clearBookmarks();
+    void rippleDeleteSelection();
+    void selectAdjacentClip(bool next);
     // The project's own media folder (created if needed): files here are bundled on save.
     static QString projectMediaDir(const QString &projectId);
     Q_INVOKABLE void previewClipRange(int trackIndex, int clipIndex);
@@ -1911,12 +1931,9 @@ public:
     // shortcut by firing *neither* action, so a silent double-binding would break
     // both with no indication anywhere.
     Q_INVOKABLE QString setShortcut(const QString &actionId, const QString &keys);
-    // Restores every default binding. Backspace clears a binding and persists the
-    // empty string, so without this there was no route back from having cleared one.
+    // Drops every override and returns to the current preset.
     Q_INVOKABLE void resetShortcuts();
-    // Canonical chord string for a key event (Ctrl+Shift+Left, …). Same names the
-    // Shortcut items and the shortcut-capture field use, so a rebound chord still
-    // matches when it is dispatched from Keys.onPressed rather than Shortcut {}.
+    // Canonical chord string for a key event (Ctrl+Shift+Left, …); see Keymap::chordFromKey.
     Q_INVOKABLE QString shortcutChord(int key, int modifiers) const;
     // The action bound to this arrow-key chord, or an empty string when the key is
     // not an arrow or nothing claims it. ApplicationShortcut matching for Left/Right
@@ -2010,6 +2027,9 @@ public:
     Q_INVOKABLE QVariantList exportAudioCodecs() const;
     Q_INVOKABLE bool exportGifAvailable() const;
     Q_INVOKABLE QVariantMap exportDefaultSettings() const;
+    // {bytes, approximate} forecast for the dialog's current settings map (same keys as
+    // exportWithSettings). bytes is 0 when there is nothing to forecast, e.g. GIF.
+    Q_INVOKABLE QVariantMap estimateExportSize(const QVariantMap &settings) const;
     // Last dialog choices (scale + encode). Empty until the user has exported once.
     Q_INVOKABLE QVariantMap lastExportSettings() const;
     // Directory of the last successful save-picker choice; empty if never set or gone.
@@ -2248,10 +2268,6 @@ protected:
     // Publishes a finished beat analysis into m_beatAnalysis / m_beatSnapTargets.
     void applyBeatAnalysis(const AudioBeatAnalysis &analysis, double startSeconds, double durSeconds,
                            const QByteArray &fingerprint);
-    // Builds m_shortcuts from the defaults plus whatever QSettings holds, migrating
-    // stored values that a new release has superseded and dropping any default that
-    // would end up sharing a chord with a stored one.
-    void loadShortcuts();
     void loadAssetFavorites();
     void saveAssetFavorites(const QString &tabId);
     void applyEffectTemplateInternal(int trackIndex, int clipIndex, const EffectTemplateEntry &entry,
@@ -2727,6 +2743,7 @@ protected:
     int m_timelineCursorOwner = 0;
     int m_trimCursorTokenSeq = 0;
     PreviewController *m_preview = nullptr;
+    drift::manip::DragSession *m_drag = nullptr;
     PreferencesController *m_preferences = nullptr;
     ProjectFileController *m_projectFile = nullptr;
     AssetPreviewController *m_assetPreview = nullptr;
@@ -2762,7 +2779,7 @@ protected:
     drift::GuideSet *libraryGuideSet(const QString &id);
     // Persists the library; an edit to an active set also changes what the project saves.
     void guideLibraryEdited(const QString &id);
-    QHash<QString, QString> m_shortcuts;
+    drift::Keymap *m_keymap = nullptr;
     QHash<QString, QSet<QString>> m_assetFavorites;
     int m_draggingAssetIndex = -1;
     QString m_lastMessage;

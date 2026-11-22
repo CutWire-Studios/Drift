@@ -2,6 +2,7 @@
   "id": "stylize.ripple",
   "displayName": "Ripple",
   "category": "glitch",
+  "keywords": ["wave", "distort", "ripple", "wobble"],
   "thumbnail": "thumbnail.webp",
   "order": 350,
   "parameters": [

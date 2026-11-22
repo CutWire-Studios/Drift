@@ -74,7 +74,8 @@ Item {
                      && root.selectedAudioEffects.length === 0
             glyph: Theme.icons.audioLines
             title: qsTr("No audio effects yet")
-            hint: qsTr("Drag a preset from Audio FX onto this clip, or click a preset card.")
+            hint: Theme.touchInput ? qsTr("Tap Browse audio effects and pick a preset.")
+                                   : qsTr("Drag a preset from Audio FX onto this clip, or click a preset card.")
             actionText: qsTr("Browse audio effects")
             onActionTriggered: root.browseAudioEffectsRequested()
         }
@@ -85,18 +86,38 @@ Item {
             visible: root.hasAudio && root.selectedAudioEffects.length > 0
 
             Text {
+                visible: !(Theme.touchInput && Theme.compact)
                 width: parent.width
                 wrapMode: Text.WordWrap
-                text: qsTr("Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.")
+                text: Theme.touchInput ? qsTr("Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.")
+                                   : qsTr("Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.")
                 color: Theme.c.audioEffectsInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
             }
 
-            ThemedChip {
-                text: qsTr("Auto keyframes")
-                selected: EditorState.autoKeyEnabled
-                onClicked: EditorState.autoKeyEnabled = !EditorState.autoKeyEnabled
+            Row {
+                width: parent.width
+                spacing: Theme.spacingMd
+
+                ThemedChip {
+                    id: autoKeyChip
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Auto keyframes")
+                    selected: EditorState.autoKeyEnabled
+                    onClicked: EditorState.autoKeyEnabled = !EditorState.autoKeyEnabled
+                }
+
+                Text {
+                    visible: Theme.touchInput && Theme.compact
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - autoKeyChip.width - parent.spacing
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Tap a diamond to keyframe a value, or let Auto add one as you drag.")
+                    color: Theme.c.audioEffectsInspector.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSm
+                }
             }
         }
 
@@ -166,7 +187,7 @@ Item {
                                     text: audioParamRow.paramData.label
                                     color: Theme.c.audioEffectsInspector.foregroundMuted
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSizeXs
+                                    font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 ThemedSwitch {

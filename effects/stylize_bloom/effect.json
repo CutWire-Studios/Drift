@@ -2,6 +2,7 @@
   "id": "stylize.bloom",
   "displayName": "Bloom",
   "category": "dreamy",
+  "keywords": ["glow", "bloom", "soft", "glow dreamy"],
   "thumbnail": "thumbnail.webp",
   "backend": "gpu",
   "order": 120,

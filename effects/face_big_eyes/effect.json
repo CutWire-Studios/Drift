@@ -2,6 +2,7 @@
   "id": "face_big_eyes",
   "displayName": "Big Eyes",
   "category": "funny",
+  "keywords": ["cartoon", "eyes", "enlarge eyes", "funny face"],
   "thumbnail": "thumbnail.webp",
   "order": 600,
   "requires": "face",

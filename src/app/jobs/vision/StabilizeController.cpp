@@ -82,6 +82,25 @@ QString StabilizeController::analysisPath(const QString &sourcePath, drift::Time
             .arg(QString::fromLatin1(QCryptographicHash::hash(key, QCryptographicHash::Sha1).toHex())));
 }
 
+bool StabilizeController::hasAnalysis(int trackIndex, int clipIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_app->m_project.tracks().size())
+        return false;
+    const drift::Track &track = m_app->m_project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return false;
+    const drift::Clip &clip = track.clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Video || clip.path.isEmpty())
+        return false;
+    const std::optional<StabilizeOrigin> origin = stabilizeOrigin(m_app->m_project, clip);
+    if (!origin)
+        return false;
+    const drift::TimeUs rangeIn = drift::secondsToUs(drift::usToSeconds(clip.srcIn + origin->offsetUs));
+    const drift::TimeUs rangeOut = drift::secondsToUs(drift::usToSeconds(clip.srcOut + origin->offsetUs));
+    const QString path = analysisPath(origin->path, rangeIn, rangeOut);
+    return !path.isEmpty() && QFile::exists(path);
+}
+
 void StabilizeController::migrateLegacyClips()
 {
     // Clips split from one stabilized clip share its render, and so share one asset.

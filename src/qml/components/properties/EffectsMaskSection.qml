@@ -42,9 +42,7 @@ Column {
             }
             return
         }
-        EditorState.selectClip(target.track, target.clip)
-        Workspaces.activeId = "masking-tracking"
-        Qt.callLater(() => EditorState.preview.maskingTool = tool)
+        ShellBridge.goDeeper({ panel: "masking", track: target.track, clip: target.clip, tool: tool })
     }
 
     Text {
@@ -65,7 +63,7 @@ Column {
 
     ThemedButton {
         width: parent.width
-        text: qsTr("Cutout subject")
+        text: qsTr("Remove background")
         variant: "secondary"
         onClicked: maskSection.openMasking("ai")
     }

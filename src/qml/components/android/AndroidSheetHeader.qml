@@ -12,6 +12,7 @@ Rectangle {
     property real safeRight: 0
     // beginDrag / updateDrag / finishDrag / collapse / dismiss / doneRequested.
     required property var sheet
+    property alias actions: actionRow.data
 
     anchors.left: parent.left
     anchors.right: parent.right
@@ -32,7 +33,7 @@ Rectangle {
         // without this the title ran under the notch on one rotation and
         // the Close button under the nav bar on the other.
         anchors.leftMargin: Theme.pagePadding + header.safeLeft
-        anchors.right: doneBtn.visible ? doneBtn.left : closeBtn.left
+        anchors.right: actionRow.visible ? actionRow.left : (doneBtn.visible ? doneBtn.left : closeBtn.left)
         anchors.rightMargin: Theme.spacingMd
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 10
@@ -92,5 +93,14 @@ Rectangle {
                                 ? doneBtn.width + Theme.spacingSm : 0)
         stealTouches: true
         sheet: header.sheet
+    }
+
+    Row {
+        id: actionRow
+        anchors.right: doneBtn.visible ? doneBtn.left : closeBtn.left
+        anchors.rightMargin: Theme.spacingXs
+        anchors.verticalCenter: closeBtn.verticalCenter
+        spacing: Theme.spacingXs
+        visible: children.length > 0 && Theme.phone
     }
 }

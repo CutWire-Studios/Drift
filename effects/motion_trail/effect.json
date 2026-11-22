@@ -2,6 +2,7 @@
   "id": "motion_trail",
   "displayName": "Directional Smear",
   "category": "impact",
+  "keywords": ["smear", "streak", "directional blur", "trail", "ghost"],
   "thumbnail": "thumbnail.webp",
   "order": 95,
   "description": "Smears the picture in one fixed direction. It does not follow movement in the footage: for that, use Motion Blur.",

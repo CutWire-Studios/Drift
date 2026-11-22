@@ -609,7 +609,8 @@ QString runSam2Job(const Sam2Job &job, const std::function<bool()> &isCancelled,
     const int work = job.range.size();
     int done = 0;
     const auto tick = [&] {
-        progress(double(++done) / work,
+        ++done;
+        progress(double(done) / work,
                  QCoreApplication::translate("SegmentationController",
                                              "Processing frame %1 of %2…")
                      .arg(done)
@@ -1231,8 +1232,8 @@ void SegmentationController::finalizeSegmentation(const QString &clipId, const Q
     // one more layer on whatever masks the clip already carries.
     drift::addLinkedMask(m_app->m_project, trackIndex, clipIndex, matte);
 
-    m_app->pushProjectEdit(before, tr("Cut out subject"));
-    m_app->finishEdit(tr("Cut out subject"));
+    m_app->pushProjectEdit(before, tr("Remove background"));
+    m_app->finishEdit(tr("Remove background"));
 
     // Minting a lane inserts a track, and normalization can reorder the list again, so the
     // indices captured above are stale — re-resolve by id before selecting.

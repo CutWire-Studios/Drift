@@ -74,7 +74,6 @@ PanelFrame {
 
     property int activeTab: locked ? tabIndexOf(lockedTab) : 0
     readonly property string currentTabId: tabs[activeTab].id
-    readonly property bool keyframesTab: !!tabs[activeTab].keyframes
 
     // Kept for SubtitleEditor, which formats cue times through it.
     function formatSeconds(value) {
@@ -136,38 +135,36 @@ PanelFrame {
     // `group` drives hairlines between the next *visible* tab of a different group.
     // A tab shows only when the clip has every cap in `needs`, so a tab or clip kind that nobody
     // described stays hidden instead of turning up on every clip. `opens` is the adjustment
-    // payload the tab edits: selecting that adjustment jumps straight to it. `keyframes` marks a
-    // tab that edits keyframeable properties, which is when the timeline opens its keyframe lane.
-    // Audio is one: volume is keyframeable and edited there.
+    // payload the tab edits: selecting that adjustment jumps straight to it.
     readonly property var tabs: [
-        { id: "general", label: qsTr("General"), icon: Theme.icons.info, group: 0, needs: [] },
-        { id: "text", label: qsTr("Text"), icon: Theme.icons.type, group: 0, needs: ["textStyled"], keyframes: true },
-        { id: "shape", label: qsTr("Shape"), icon: Theme.icons.shapes, group: 0, needs: ["shape"], keyframes: true },
-        { id: "vector", label: qsTr("Motion"), icon: Theme.icons.layers, group: 0, needs: ["vector"], keyframes: true },
-        { id: "model3d", label: qsTr("3D Model"), icon: Theme.icons.box, group: 0, needs: ["model3d"], keyframes: true },
-        { id: "pdf", label: qsTr("PDF"), icon: Theme.icons.fileText, group: 0, needs: ["pdf"], keyframes: true },
-        { id: "procedural", label: qsTr("Procedural"), icon: Theme.icons.box, group: 0, needs: ["procedural"], keyframes: true },
-        { id: "subtitles", label: qsTr("Subtitles"), icon: Theme.icons.captions, group: 0, needs: ["subtitle"] },
-        { id: "transform", label: qsTr("Transform"), icon: Theme.icons.maximize, group: 1,
-          needs: ["transformable"], opens: "adj:transform", keyframes: true },
-        { id: "camera", label: qsTr("Camera"), icon: Theme.icons.video, group: 1,
-          needs: ["adj:camera"], opens: "adj:camera", keyframes: true },
-        { id: "stabilize", label: qsTr("Stabilization"), icon: Theme.icons.locateFixed, group: 1,
-          needs: ["stabilizable"], keyframes: true },
-        { id: "animation", label: qsTr("Animation"), icon: Theme.icons.sparkles, group: 1, needs: ["animatable"] },
-        { id: "audio", label: qsTr("Audio"), icon: Theme.icons.volumeHigh, group: 1, needs: ["audible"], keyframes: true },
-        { id: "speed", label: qsTr("Speed"), icon: Theme.icons.gauge, group: 1, needs: ["retimable"] },
-        { id: "blending", label: qsTr("Blending"), icon: Theme.icons.blend, group: 2, needs: ["blendable"] },
+        { id: "general", label: qsTr("General"), icon: Theme.icons.info, group: 0, body: qsTr("Name, notes and basic details of the clip."), needs: [] },
+        { id: "text", label: qsTr("Text"), icon: Theme.icons.type, group: 0, body: qsTr("Edit the words, font, colour and animation."), needs: ["textStyled"] },
+        { id: "shape", label: qsTr("Shape"), icon: Theme.icons.shapes, group: 0, body: qsTr("Fill, outline and corners of the shape."), needs: ["shape"] },
+        { id: "vector", label: qsTr("Motion"), icon: Theme.icons.layers, group: 0, body: qsTr("Edit the animated vector graphic."), needs: ["vector"] },
+        { id: "model3d", label: qsTr("3D Model"), icon: Theme.icons.box, group: 0, body: qsTr("Position and light the 3D model."), needs: ["model3d"] },
+        { id: "pdf", label: qsTr("PDF"), icon: Theme.icons.fileText, group: 0, body: qsTr("Choose the pages to show."), needs: ["pdf"] },
+        { id: "procedural", label: qsTr("Procedural"), icon: Theme.icons.box, group: 0, body: qsTr("Adjust the generated visual."), needs: ["procedural"] },
+        { id: "subtitles", label: qsTr("Subtitles"), icon: Theme.icons.captions, group: 0, body: qsTr("Edit caption lines and their timing."), needs: ["subtitle"] },
+        { id: "transform", label: qsTr("Transform"), icon: Theme.icons.maximize, group: 1, body: qsTr("Move, scale, rotate and crop the clip on the canvas."),
+          needs: ["transformable"], opens: "adj:transform" },
+        { id: "camera", label: qsTr("Camera"), icon: Theme.icons.video, group: 1, body: qsTr("Pan, zoom and move the viewpoint."),
+          needs: ["adj:camera"], opens: "adj:camera" },
+        { id: "stabilize", label: qsTr("Stabilization"), icon: Theme.icons.locateFixed, group: 1, body: qsTr("Smooth out shaky handheld footage."),
+          needs: ["stabilizable"] },
+        { id: "animation", label: qsTr("Animation"), icon: Theme.icons.sparkles, group: 1, body: qsTr("Add intro, outro and looping motion."), needs: ["animatable"] },
+        { id: "audio", label: qsTr("Audio"), icon: Theme.icons.volumeHigh, group: 1, body: qsTr("Volume, fades, noise removal and ducking."), needs: ["audible"] },
+        { id: "speed", label: qsTr("Speed"), icon: Theme.icons.gauge, group: 1, body: qsTr("Slow down, speed up, reverse or ramp the speed."), needs: ["retimable"] },
+        { id: "blending", label: qsTr("Blending"), icon: Theme.icons.blend, group: 2, body: qsTr("Opacity and how the clip mixes with layers below."), needs: ["blendable"] },
         // Masks and effect stacks live on the adjustments pinned to a clip, and those adjustments
         // are what you select to edit them. A clip can carry several mask adjustments, and
         // reporting one clip-shaped stack for it could only ever show the first.
-        { id: "masks", label: qsTr("Masks"), icon: Theme.icons.mask, group: 2,
-          needs: ["maskable"], opens: "adj:mask", keyframes: true },
-        { id: "effects", label: qsTr("Effects"), icon: Theme.icons.wand, group: 2,
-          needs: ["effectable"], opens: "adj:videoEffects", keyframes: true },
-        { id: "audioEffects", label: qsTr("Audio FX"), icon: Theme.icons.audioLines, group: 2,
-          needs: ["adj:audioEffects"], opens: "adj:audioEffects", keyframes: true },
-        { id: "transition", label: qsTr("Transition"), icon: Theme.icons.chevronsRight, group: 2,
+        { id: "masks", label: qsTr("Masks"), icon: Theme.icons.mask, group: 2, body: qsTr("Show only part of the clip, or remove its background."),
+          needs: ["maskable"], opens: "adj:mask" },
+        { id: "effects", label: qsTr("Effects"), icon: Theme.icons.wand, group: 2, body: qsTr("Filters, blurs and colour looks on this clip."),
+          needs: ["effectable"], opens: "adj:videoEffects" },
+        { id: "audioEffects", label: qsTr("Audio FX"), icon: Theme.icons.audioLines, group: 2, body: qsTr("Echo, EQ and other sound effects."),
+          needs: ["adj:audioEffects"], opens: "adj:audioEffects" },
+        { id: "transition", label: qsTr("Transition"), icon: Theme.icons.chevronsRight, group: 2, body: qsTr("How this clip blends into the next one."),
           needs: ["transitionable"] }
     ]
 
@@ -232,11 +229,34 @@ PanelFrame {
         value: root.currentTabId === "subtitles" && root.clipKind === "subtitle"
     }
 
+    function openFromEmptyState(chip) {
+        if (chip === "captions") {
+            ShellBridge.goDeeper({ panel: "subtitles" })
+            return
+        }
+        if (chip === "background") {
+            ShellBridge.goDeeper({ panel: "masking", tool: "ai" })
+            return
+        }
+        const tabId = chip === "look" ? "effects" : chip
+        EditorState.selectClipUnderPlayhead()
+        if (!root.hasSelection) {
+            Toasts.info(qsTr("Move the playhead over a clip first"))
+            return
+        }
+        if (!root.tabVisible(tabId)) {
+            Toasts.info(qsTr("The clip at the playhead has no %1 tab").arg(root.tabs[root.tabIndexOf(tabId)].label))
+            return
+        }
+        root.activeTab = root.tabIndexOf(tabId)
+    }
+
     PropertiesEmptyState {
         anchors.centerIn: parent
         panelWidth: root.width
         sheetMode: root.sheetMode
         visible: !root.hasSelection || !root.tabApplies
+        onChipRequested: (id) => root.openFromEmptyState(id)
         hint: !root.locked ? ""
               : !root.hasSelection ? qsTr("Select a clip to edit its %1").arg(root.tabs[root.activeTab].label)
               : qsTr("%1 doesn't apply to this clip").arg(root.tabs[root.activeTab].label)
@@ -334,7 +354,8 @@ PanelFrame {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.left: parent.left
-            width: root.railHidden ? 0 : Theme.tabRailWidth
+            width: root.railHidden ? 0 : (EditorState.preferences.showRailLabels ? Theme.tabRailLabelWidth
+                                                                                  : Theme.tabRailWidth)
             visible: !root.railHidden
             vertical: true
 
@@ -386,12 +407,29 @@ PanelFrame {
                             glyph: modelData.icon
                             variant: "ghost"
                             tooltip: modelData.label
+                            tooltipBody: modelData.body ?? ""
                             active: root.activeTab === index
                             onClicked: root.activeTab = index
 
                             Accessible.role: Accessible.PageTab
                             Accessible.name: modelData.label
                             Accessible.checked: root.activeTab === index
+                        }
+
+                        Text {
+                            width: parent.width - Theme.spacingXs * 2
+                            x: Theme.spacingXs
+                            visible: EditorState.preferences.showRailLabels
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            text: modelData.label
+                            color: root.activeTab === index ? Theme.c.propertiesPanel.railLabelActive
+                                                            : Theme.c.propertiesPanel.railLabel
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSizeXs
+                            font.weight: root.activeTab === index ? Font.Medium : Font.Normal
+
+                            TapHandler { onTapped: root.activeTab = index }
                         }
 
                         PropertiesTabRailSeparator {
@@ -412,9 +450,18 @@ PanelFrame {
             color: Theme.c.propertiesPanel.border
         }
 
+        PropertiesSuggestionStrip {
+            id: suggestionStrip
+            anchors.top: tabStripHost.bottom
+            anchors.left: railDivider.right
+            anchors.right: parent.right
+            anchors.margins: visible ? Theme.spacingMd : 0
+            visible: !root.railHidden && suggestion !== null
+        }
+
         Flickable {
             id: tabFlick
-            anchors.top: tabStripHost.bottom
+            anchors.top: suggestionStrip.bottom
             anchors.left: railDivider.right
             anchors.right: parent.right
             anchors.bottom: parent.bottom
@@ -630,7 +677,7 @@ PanelFrame {
         // Full-height editor with its own internal cue list scrolling, so it
         // sits beside the tab Flickable rather than inside it.
         Loader {
-            anchors.top: tabStripHost.bottom
+            anchors.top: suggestionStrip.bottom
             anchors.left: railDivider.right
             anchors.right: parent.right
             anchors.bottom: parent.bottom

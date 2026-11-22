@@ -19,6 +19,14 @@ Item {
 
     readonly property bool hasClip: root.clipId !== "" && root.clipIndex >= 0
     property bool showProperties: false
+    // True when the library child puts these tabs in its own header row (stickers, shapes, text);
+    // the page then only draws a strip over the Properties view.
+    property bool pickerHostsTabs: false
+    readonly property bool tabsAvailable: root.hasClip && root.propertiesComponent !== null
+    readonly property var tabList: root.tabsAvailable
+        ? [{ id: "library", label: qsTr("Library") }, { id: "properties", label: qsTr("Properties") }] : []
+    readonly property string currentTab: root.showProperties ? "properties" : "library"
+    function selectTab(tabId) { root.showProperties = tabId === "properties" }
 
     // Call after a tab has added a clip: the new clip is the selection.
     function adopt() {
@@ -59,28 +67,14 @@ Item {
         EditorState.previewClipRange(EditorState.selectedTrack, EditorState.selectedClip)
     }
 
-    Row {
+    AndroidTabStrip {
         id: chips
-        visible: root.hasClip && root.propertiesComponent !== null
-        x: Theme.pagePadding
-        height: visible ? Theme.controlHeight : 0
-        spacing: Theme.spacingSm
-
-        ThemedChip {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Library")
-            variant: "outline"
-            selected: !root.showProperties
-            onClicked: root.showProperties = false
-        }
-
-        ThemedChip {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Properties")
-            variant: "outline"
-            selected: root.showProperties
-            onClicked: root.showProperties = true
-        }
+        visible: root.tabsAvailable && (!root.pickerHostsTabs || root.showProperties)
+        width: parent.width
+        height: visible ? implicitHeight : 0
+        tabs: root.tabList
+        currentId: root.currentTab
+        onTabSelected: tabId => root.selectTab(tabId)
     }
 
     Item {
@@ -89,7 +83,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        visible: !(root.showProperties && chips.visible)
+        visible: !(root.showProperties && root.tabsAvailable)
     }
 
     Flickable {
@@ -99,7 +93,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        visible: root.showProperties && chips.visible
+        visible: root.showProperties && root.tabsAvailable
         clip: true
         contentWidth: width
         contentHeight: propsLoader.item ? propsLoader.item.implicitHeight + Theme.pagePadding : 0

@@ -2,6 +2,7 @@
   "id": "digital_glitch",
   "displayName": "Digital Glitch",
   "category": "glitch",
+  "keywords": ["glitch", "error", "corrupt", "distortion", "tv signal"],
   "thumbnail": "thumbnail.webp",
   "order": 340,
   "parameters": [

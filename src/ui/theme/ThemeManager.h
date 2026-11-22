@@ -47,7 +47,15 @@ class ThemeManager : public QObject
     // Set when the theme on screen declares a newer schemaVersion than this
     // build reads. It still loads; unknown keys are ignored.
     Q_PROPERTY(QString lastWarning READ lastWarning NOTIFY lastWarningChanged)
+    // typography.fontFamily / monoFontFamily after checking they are installed. fontFamily is
+    // empty when the theme leaves it unset or names a missing font: Theme.qml then uses the
+    // bundled Inter UI. monoFontFamily falls back to the system fixed-width font.
+    Q_PROPERTY(QString fontFamily READ fontFamily NOTIFY fontsChanged)
+    Q_PROPERTY(QString monoFontFamily READ monoFontFamily NOTIFY fontsChanged)
     Q_PROPERTY(bool hotReload READ hotReload WRITE setHotReload NOTIFY hotReloadChanged)
+    // "#RRGGBB" replacing semantic.primary (and a matching primaryForeground) on whatever theme is
+    // active, or empty for the theme's own. QSettings Theme/accent.
+    Q_PROPERTY(QString accentOverride READ accentOverride WRITE setAccentOverride NOTIFY accentOverrideChanged)
 
 public:
     // Bump when a release adds tokens a theme author should know about or changes
@@ -82,8 +90,15 @@ public:
     QVariantList themes() const;
     QString lastError() const { return m_lastError; }
     QString lastWarning() const { return m_lastWarning; }
+    QString fontFamily() const { return m_fontFamily; }
+    QString monoFontFamily() const { return m_monoFontFamily; }
+    // Re-checks the theme's fonts against QFontDatabase. Call after fonts are registered at
+    // runtime (a fonts addon install), since QFontDatabase does not signal it.
+    void refreshFonts();
     bool hotReload() const { return m_hotReload; }
     void setHotReload(bool enabled);
+    QString accentOverride() const { return m_accentOverride; }
+    void setAccentOverride(const QString &color);
 
     Q_INVOKABLE QVariant token(const QString &dottedPath) const;
     // Built-in dark/light documents, independent of whichever theme is active.
@@ -137,10 +152,12 @@ signals:
     void effectiveVariantChanged();
     void appearanceFollowsThemeChanged();
     void hotReloadChanged();
+    void accentOverrideChanged();
     void availableThemesChanged();
     void selectionChanged();
     void lastErrorChanged();
     void lastWarningChanged();
+    void fontsChanged();
 
 private:
     struct Loaded {
@@ -186,12 +203,15 @@ private:
 
     QFileSystemWatcher m_watcher;
     QString m_currentTheme;
+    QString m_fontFamily;
+    QString m_monoFontFamily;
     QString m_sourcePath;
     QString m_selection = QStringLiteral("system");
     QString m_effectiveVariant = QStringLiteral("dark");
     QString m_requestedVariant = QStringLiteral("dark");
     QString m_lastError;
     QString m_lastWarning;
+    QString m_accentOverride;
     QVariantMap m_resolved;
     QVariantMap m_builtinDark;
     QVariantMap m_builtinLight;

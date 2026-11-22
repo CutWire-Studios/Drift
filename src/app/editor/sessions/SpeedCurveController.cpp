@@ -47,7 +47,7 @@ void SpeedCurveController::begin(int trackIndex, int clipIndex, bool allowNested
     if ((clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio
          && clip.type != drift::ClipType::Composite)
         || (nested && !allowNested)) {
-        m_app->setLastMessage(tr("Custom speed works on video and audio clips"), QStringLiteral("warning"));
+        m_app->setLastMessage(tr("Speed ramp works on video and audio clips"), QStringLiteral("warning"));
         return;
     }
     if ((clip.path.isEmpty() && !nested) || clip.srcOut <= clip.srcIn) {
@@ -214,7 +214,7 @@ void SpeedCurveController::apply()
     // The timeline stays editable while the window is open, so the indices captured at the start
     // of the session can point at a different clip by now.
     if (source.id != m_clip.id) {
-        m_app->setLastMessage(tr("That clip moved — open Custom speed again"), QStringLiteral("warning"));
+        m_app->setLastMessage(tr("That clip moved — open Speed ramp again"), QStringLiteral("warning"));
         return;
     }
 
@@ -256,8 +256,8 @@ void SpeedCurveController::apply()
     }
 
     drift::retimeLinkedSubtitles(before, m_app->m_project, {{source.id, retimed.id}});
-    m_app->pushProjectEdit(before, tr("Custom speed applied"));
-    m_app->finishEdit(tr("Custom speed applied"));
+    m_app->pushProjectEdit(before, tr("Speed ramp applied"));
+    m_app->finishEdit(tr("Speed ramp applied"));
     m_app->selectClip(newTrack, m_app->m_project.tracks().at(newTrack).clips.size() - 1);
     emit applied();
 }

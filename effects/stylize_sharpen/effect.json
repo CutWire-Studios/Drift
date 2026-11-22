@@ -1,7 +1,8 @@
 {
   "id": "stylize.sharpen",
   "displayName": "Sharpen",
-  "category": "impact",
+  "category": "fix",
+  "keywords": ["sharpen", "crisp", "detail", "clarity", "unblur", "fix soft footage", "enhance"],
   "thumbnail": "thumbnail.webp",
   "order": 70,
   "parameters": [

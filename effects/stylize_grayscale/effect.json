@@ -2,6 +2,7 @@
   "id": "stylize.grayscale",
   "displayName": "Grayscale",
   "category": "retro",
+  "keywords": ["black and white", "b&w", "monochrome", "greyscale", "gray", "desaturate"],
   "thumbnail": "thumbnail.webp",
   "order": 200,
   "parameters": [],

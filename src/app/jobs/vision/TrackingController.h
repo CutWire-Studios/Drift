@@ -48,7 +48,7 @@ public:
     // patternH, searchW, searchH, has}], region: [{x, y}], trail: [[{x, y}], ...]}. Positions are
     // normalized to the clip frame. region is the planar outline mapped through the homography
     // (the reference outline when untracked there); empty for point trackers. trail is the
-    // tracked path over +-15 frames, one list per point.
+    // tracked path over +-10 frames, one list per point.
     Q_INVOKABLE QVariantMap trackerFrame(int trackIndex, int clipIndex, const QString &id,
                                          double timelineSeconds) const;
     // Per bucket over the clip's timeline span: -1 = no data, else the lowest confidence in it.
@@ -197,6 +197,9 @@ public:
         QVector<FramePoint> points;
         QVector<QPointF> region;
         QVector<QVector<QPointF>> trails;
+        // Per trail entry: its frame offset from the one shown, and whether it is a user key.
+        QVector<QVector<int>> trailOffsets;
+        QVector<QVector<bool>> trailKeys;
     };
     FrameView frameView(int trackIndex, int clipIndex, const QString &id, double timelineSeconds) const;
     FrameView frameView(const QString &clipId, const QString &id, double timelineSeconds) const;

@@ -441,7 +441,8 @@ QVector<ShapeContour> contoursFromPainterPath(const QPainterPath &path, const QR
             for (ShapeVertex &v : current.vertices) {
                 const double cross = v.in.x() * v.out.y() - v.in.y() * v.out.x();
                 const double dot = v.in.x() * v.out.x() + v.in.y() * v.out.y();
-                v.smooth = !v.in.isNull() && !v.out.isNull() && qAbs(cross) < 1e-6 && dot < 0.0;
+                if (!v.in.isNull() && !v.out.isNull() && qAbs(cross) < 1e-6 && dot < 0.0)
+                    v.mode = TangentMode::Mirrored;
             }
             if (current.vertices.size() >= 2)
                 out.append(current);
@@ -454,15 +455,15 @@ QVector<ShapeContour> contoursFromPainterPath(const QPainterPath &path, const QR
         switch (e.type) {
         case QPainterPath::MoveToElement:
             finish();
-            current.vertices.append({norm(e.x, e.y), {}, {}, false});
+            current.vertices.append({norm(e.x, e.y), {}, {}, TangentMode::Corner});
             break;
         case QPainterPath::LineToElement:
-            current.vertices.append({norm(e.x, e.y), {}, {}, false});
+            current.vertices.append({norm(e.x, e.y), {}, {}, TangentMode::Corner});
             break;
         case QPainterPath::CurveToElement: {
             const QPainterPath::Element c2 = path.elementAt(i + 1);
             const QPainterPath::Element end = path.elementAt(i + 2);
-            ShapeVertex v{norm(end.x, end.y), {}, {}, false};
+            ShapeVertex v{norm(end.x, end.y), {}, {}, TangentMode::Corner};
             v.in = offset(c2, v.p);
             current.vertices.last().out = offset(e, current.vertices.last().p);
             current.vertices.append(v);

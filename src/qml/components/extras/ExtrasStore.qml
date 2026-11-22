@@ -574,6 +574,7 @@ Item {
 
                         ThemedLabel {
                             width: parent.width
+                            visible: !Theme.phone
                             text: root.headerInfo.title
                             tone: "default"
                             size: "base"

@@ -45,6 +45,12 @@ Item {
         width: root.width
         spacing: Theme.spacingXl
 
+        WorkspaceLink {
+            x: parent.width - width
+            label: qsTr("Draw & track ↗")
+            target: ({ panel: "masking" })
+        }
+
         // The tab used to open with a lone unlabelled combo box
         // and no explanation of what a mask does.
         Text {
@@ -168,6 +174,10 @@ Item {
             searchId: "masks-roundness"
             title: qsTr("Roundness")
             keywords: "rounded corners radius pill"
+        }
+        PathPointModeRow {
+            visible: root.maskShape === "freeform" && EditorState.masking.pathEdit.attached
+                     && EditorState.masking.pathEdit.selectionCount > 0
         }
         Repeater {
             // `shapes` is what the rasterizer actually reads for each shape (see

@@ -41,6 +41,8 @@ IconGlyph {
         id: waveMouse
         anchors.fill: parent
         anchors.margins: displayButton.corner ? -8 : -4
+        anchors.topMargin: Theme.touchInput ? -14 : (displayButton.corner ? -8 : -4)
+        anchors.bottomMargin: Theme.touchInput ? -14 : (displayButton.corner ? -8 : -4)
         hoverEnabled: !displayButton.corner
         cursorShape: displayButton.corner ? Qt.ArrowCursor : Qt.PointingHandCursor
         onClicked: {

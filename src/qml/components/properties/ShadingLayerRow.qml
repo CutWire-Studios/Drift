@@ -71,12 +71,13 @@ Column {
         leftPadding: Theme.spacingSm
         rightPadding: Theme.spacingSm
 
-        Row {
+        Grid {
             width: parent.width - parent.leftPadding - parent.rightPadding
+            columns: Theme.touchInput && Theme.compact ? 1 : 2
             spacing: 8
 
             PropertyKeyframeRow {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 propDef: row.prop("opacity", qsTr("Opacity"), 2)
                 keyframeList: row.keyframes("opacity")
                 useSlider: true
@@ -85,12 +86,12 @@ Column {
             }
 
             Column {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 spacing: 4
                 Text {
                     text: qsTr("Blend")
                     color: Theme.c.shadingLayerRow.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.family: Theme.fontFamily
                 }
                 ThemedComboBox {
@@ -113,13 +114,14 @@ Column {
             keyPrefix: row.keyPrefix
         }
 
-        Row {
+        Grid {
             width: parent.width - parent.leftPadding - parent.rightPadding
+            columns: Theme.touchInput && Theme.compact ? 1 : 2
             spacing: 8
             visible: row.kind === "stroke"
 
             PropertyKeyframeRow {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 propDef: row.prop("width", qsTr("Width"), 1)
                 keyframeList: row.keyframes("width")
                 useSlider: true
@@ -129,12 +131,12 @@ Column {
             }
 
             Column {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 spacing: 4
                 Text {
                     text: qsTr("Placement")
                     color: Theme.c.shadingLayerRow.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.family: Theme.fontFamily
                 }
                 ThemedComboBox {
@@ -147,18 +149,19 @@ Column {
             }
         }
 
-        Row {
+        Grid {
             width: parent.width - parent.leftPadding - parent.rightPadding
+            columns: Theme.touchInput && Theme.compact ? 1 : 2
             spacing: 8
             visible: row.kind === "stroke"
 
             Column {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 spacing: 4
                 Text {
                     text: qsTr("Dash")
                     color: Theme.c.shadingLayerRow.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.family: Theme.fontFamily
                 }
                 ThemedComboBox {
@@ -170,7 +173,7 @@ Column {
             }
 
             PropertyKeyframeRow {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 visible: (row.layerData.dash || "solid") !== "solid"
                 propDef: row.prop("dashOffset", qsTr("Dash offset"), 2)
                 keyframeList: row.keyframes("dashOffset")
@@ -180,18 +183,19 @@ Column {
             }
         }
 
-        Row {
+        Grid {
             width: parent.width - parent.leftPadding - parent.rightPadding
+            columns: Theme.touchInput && Theme.compact ? 1 : 2
             spacing: 8
             visible: row.kind === "stroke"
 
             Column {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 spacing: 4
                 Text {
                     text: qsTr("Join")
                     color: Theme.c.shadingLayerRow.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.family: Theme.fontFamily
                 }
                 ThemedComboBox {
@@ -204,12 +208,12 @@ Column {
             }
 
             Column {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 spacing: 4
                 Text {
                     text: qsTr("Cap")
                     color: Theme.c.shadingLayerRow.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.family: Theme.fontFamily
                 }
                 ThemedComboBox {
@@ -229,7 +233,7 @@ Column {
             Text {
                 text: qsTr("Miter limit")
                 color: Theme.c.shadingLayerRow.foregroundMuted
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
             ThemedNumberField {
@@ -247,13 +251,14 @@ Column {
             }
         }
 
-        Row {
+        Grid {
             width: parent.width - parent.leftPadding - parent.rightPadding
+            columns: Theme.touchInput && Theme.compact ? 1 : 2
             spacing: 8
             visible: row.kind === "stroke"
 
             PropertyKeyframeRow {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 propDef: row.prop("trimStart", qsTr("Trim start"), 2)
                 keyframeList: row.keyframes("trimStart")
                 useSlider: true
@@ -262,7 +267,7 @@ Column {
                 percent: true
             }
             PropertyKeyframeRow {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 propDef: { "key": row.keyPrefix + ".layer." + row.layerId + ".trimEnd", "label": qsTr("Trim end"),
                            "def": row.layerData.trimEnd !== undefined ? Number(row.layerData.trimEnd) : 1, "decimals": 2 }
                 keyframeList: row.keyframes("trimEnd")
@@ -293,7 +298,7 @@ Column {
                     text: qsTr("Sketchy")
                     anchors.verticalCenter: parent.verticalCenter
                     color: row.sketchy ? Theme.c.shadingLayerRow.foreground : Theme.c.shadingLayerRow.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.family: Theme.fontFamily
                     MouseArea {
                         anchors.fill: parent
@@ -307,11 +312,12 @@ Column {
                 spacing: Theme.spacingMd
                 visible: row.sketchExpanded || row.sketchy
 
-                Row {
+                Grid {
                     width: parent.width
+                    columns: Theme.touchInput && Theme.compact ? 1 : 2
                     spacing: 8
                     PropertyKeyframeRow {
-                        width: (parent.width - parent.spacing) / 2
+                        width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                         propDef: row.prop("sketchLength", qsTr("Segment"), 1)
                         keyframeList: row.keyframes("sketchLength")
                         useSlider: true
@@ -320,7 +326,7 @@ Column {
                         unit: "px"
                     }
                     PropertyKeyframeRow {
-                        width: (parent.width - parent.spacing) / 2
+                        width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                         propDef: row.prop("sketchDeviation", qsTr("Wobble"), 1)
                         keyframeList: row.keyframes("sketchDeviation")
                         useSlider: true
@@ -336,7 +342,7 @@ Column {
                     Text {
                         text: qsTr("Seed")
                         color: Theme.c.shadingLayerRow.foregroundMuted
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                         font.family: Theme.fontFamily
                     }
                     ThemedNumberField {
@@ -363,7 +369,7 @@ Column {
             Text {
                 text: qsTr("Colour")
                 color: Theme.c.shadingLayerRow.foregroundMuted
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
             ColorSwatchField {
@@ -376,13 +382,14 @@ Column {
             }
         }
 
-        Row {
+        Grid {
             width: parent.width - parent.leftPadding - parent.rightPadding
+            columns: Theme.touchInput && Theme.compact ? 1 : 2
             spacing: 8
             visible: row.kind === "shadow"
 
             PropertyKeyframeRow {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 propDef: row.prop("offsetX", qsTr("Offset X"), 1)
                 keyframeList: row.keyframes("offsetX")
                 useSlider: true
@@ -391,7 +398,7 @@ Column {
                 unit: "px"
             }
             PropertyKeyframeRow {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 propDef: row.prop("offsetY", qsTr("Offset Y"), 1)
                 keyframeList: row.keyframes("offsetY")
                 useSlider: true
@@ -401,13 +408,14 @@ Column {
             }
         }
 
-        Row {
+        Grid {
             width: parent.width - parent.leftPadding - parent.rightPadding
+            columns: Theme.touchInput && Theme.compact ? 1 : 2
             spacing: 8
             visible: row.kind === "shadow" || row.kind === "glow"
 
             PropertyKeyframeRow {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 propDef: row.prop("blur", row.kind === "glow" ? qsTr("Radius") : qsTr("Blur"), 1)
                 keyframeList: row.keyframes("blur")
                 useSlider: true
@@ -416,7 +424,7 @@ Column {
                 unit: "px"
             }
             PropertyKeyframeRow {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 propDef: row.prop("spread", qsTr("Spread"), 1)
                 keyframeList: row.keyframes("spread")
                 useSlider: true
@@ -426,13 +434,14 @@ Column {
             }
         }
 
-        Row {
+        Grid {
             width: parent.width - parent.leftPadding - parent.rightPadding
+            columns: Theme.touchInput && Theme.compact ? 1 : 2
             spacing: 8
             visible: row.kind === "extrude"
 
             PropertyKeyframeRow {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 propDef: row.prop("width", qsTr("Depth"), 1)
                 keyframeList: row.keyframes("width")
                 useSlider: true
@@ -442,12 +451,12 @@ Column {
             }
 
             Column {
-                width: (parent.width - parent.spacing) / 2
+                width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                 spacing: 4
                 Text {
                     text: qsTr("Angle")
                     color: Theme.c.shadingLayerRow.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.family: Theme.fontFamily
                 }
                 ThemedNumberField {
@@ -479,7 +488,7 @@ Column {
                     visible: darkenHover.hovered
                 }
                 color: Theme.c.shadingLayerRow.foregroundMuted
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
             ThemedSlider {

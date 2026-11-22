@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "displayName": "Audio Waveform Line",
   "category": "artistic",
+  "keywords": ["music visualizer", "oscilloscope", "waveform", "audio reactive", "sound"],
   "description": "An oscilloscope line drawn from the waveform of an audio source.",
   "backend": "gpu",
   "order": 960,

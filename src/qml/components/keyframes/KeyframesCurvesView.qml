@@ -10,6 +10,7 @@ Item {
     readonly property var timeView: panel.timeView
     readonly property alias curves: curvesModel
     readonly property bool busy: surface.busy
+    readonly property var interaction: surface.interaction
     readonly property real graphMargin: Theme.spacingLg
     readonly property real graphHeight: curvesModel.graphHeight
 
@@ -27,6 +28,10 @@ Item {
 
     function cancelDrag() {
         surface.cancelDrag()
+    }
+
+    function handleKey(event) {
+        return surface.handleKey(event)
     }
 
     clip: true

@@ -48,7 +48,7 @@ Button {
     }
 
     background: Rectangle {
-        radius: width / 2
+        radius: Theme.radiusPill
         color: !root.enabled ? Theme.c.assetQuickAddButton.backgroundDisabled
                : root.down ? Theme.c.assetQuickAddButton.backgroundPressed
                : root.hovered ? Theme.c.assetQuickAddButton.backgroundHover

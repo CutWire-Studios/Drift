@@ -138,8 +138,8 @@ Item {
     // tooltip keeps its own visible binding inside, so the reveal delay and the conditions are
     // exactly what they were.
     readonly property bool tooltipsActive:
-        leftTrimHandle.areaContainsMouse || leftTrimHandle.areaPressed || leftTrimHandle.areaHovered
-        || rightTrimHandle.areaContainsMouse || rightTrimHandle.areaPressed || rightTrimHandle.areaHovered
+        leftTrimHandle.areaContainsMouse || leftTrimHandle.areaPressed
+        || rightTrimHandle.areaContainsMouse || rightTrimHandle.areaPressed
         || fadeInHandle.areaContainsMouse || fadeInHandle.areaPressed
         || fadeOutHandle.areaContainsMouse || fadeOutHandle.areaPressed
 
@@ -225,11 +225,11 @@ Item {
     property real edgePressSceneY: 0
     property real edgeLastSceneY: 0
 
-    function beginEdgeGesture(area, mouse) {
-        const p = area.mapToItem(null, mouse.x, mouse.y)
+    function beginEdgeGesture(area, point, device) {
+        const p = area.mapToItem(null, point.x, point.y)
         // A pointer has a scroll wheel and never needed this; starting it already decided keeps
         // every branch below dead for it. A finger on the desktop timeline arbitrates too.
-        edgeAxis = (touchMode || mouse.source !== Qt.MouseEventNotSynthesized) ? 0 : 1
+        edgeAxis = (touchMode || device !== DragSession.Mouse) ? 0 : 1
         edgePressSceneX = p.x
         edgePressSceneY = p.y
         edgeLastSceneY = p.y
@@ -237,10 +237,10 @@ Item {
 
     // True when this move belongs to the timeline rather than to the strip, in which case it
     // has already been applied and the caller must not also trim.
-    function edgeGestureScrolled(area, mouse) {
+    function edgeGestureScrolled(area, point) {
         if (edgeAxis === 1)
             return false
-        const p = area.mapToItem(null, mouse.x, mouse.y)
+        const p = area.mapToItem(null, point.x, point.y)
         if (edgeAxis === 0) {
             const dx = Math.abs(p.x - edgePressSceneX)
             const dy = Math.abs(p.y - edgePressSceneY)

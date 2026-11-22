@@ -17,6 +17,9 @@
 #include "app/jobs/vision/TrackingController.h"
 #include "app/jobs/audio/TtsController.h"
 #include "app/jobs/audio/VoiceLibrary.h"
+#include "app/editor/keymap/Keymap.h"
+#include "app/editor/keymap/KeymapCatalog.h"
+#include "app/editor/keymap/KeymapPresets.h"
 #include "app/editor/sessions/CurveEditorController.h"
 #include "app/editor/sessions/SubtitleController.h"
 #include "app/jobs/vision/StabilizeController.h"
@@ -24,6 +27,7 @@
 #include "app/editor/sessions/SpeedCurveController.h"
 #include "ui/preview/PreviewController.h"
 #include "ui/preview/Outliner3dModel.h"
+#include <QKeyEvent>
 #include <QtTest>
 
 #include "core/project/media/SourceFrameFit.h"
@@ -73,6 +77,7 @@
 #include "app/editor/PreferencesController.h"
 #include "app/editor/sessions/KeyframeController.h"
 #include "app/editor/sessions/KeyframeCurvesModel.h"
+#include "app/editor/sessions/KeyframeInteraction.h"
 #include "app/editor/sessions/KeyframeRowsModel.h"
 #include "app/editor/sessions/KeyframeSelection.h"
 #include "app/editor/sessions/KeyframeTimeView.h"
@@ -231,10 +236,24 @@ private slots:
     void editPointNavigationWalksEveryClipEdge();
     void arrowKeysJogAndJumpThePlayhead();
     void storedArrowShortcutsMigrateOntoTheNewJogLayout();
+    void keymapSupportsSeveralBindingsPerAction();
+    void keymapRefusesAChordTakenInTheSameScope();
+    void keymapClearedShortcutSurvivesARestart();
+    void keymapMigratesTheLegacyShortcutsGroup();
+    void keymapCapturesPunctuationKeypadAndFunctionKeys();
+    void keymapDisplayTextParsesPlusAsAKey();
+    void keymapTranslatesMetaOffMacAndFallsBackToDrift();
+    void keymapPresetSwitchKeepsOrDiscardsOverrides();
+    void keymapPresetSwitchResolvesConflictsInFavourOfOverrides();
+    void keymapScopesShareChordsButNotWithinOneScope();
+    void keymapCatalogIsConsistent();
+    void keymapEveryPresetIsConsistent();
+    void keymapCarriesBindingsOfSplitActionIds();
     void splitLeftRightUndoRestoresTheDiscardedHalf();
     void splitLeftKeepsLinkedAudioInSync();
     void splitRightKeepsLinkedAudioInSync();
     void edgeTrimRipplesFollowers();
+    void edgeTrimSnapCanBeSuspended();
     void rippleDeleteMovesLinkedFollowersOnce();
     void rippleDeleteClosesOverlappingRangesByTheirUnion();
     void rippleDeleteMovesTracksJoinedThroughAThirdTrack();
@@ -401,6 +420,7 @@ private slots:
     void audioRecordingVoiceoverWorkflow();
     void lockedTrackRejectsEdits();
     void splitShortcutFollowsSelection();
+    void quickActionsRunThroughTriggerAction();
     void lockedTimelineRemovalRefusedWhicheverTimelineIsOpen();
     void removeAssetsRefusesLockedTimeline();
     void dissolveLastInstanceOfLockedTimelineRefused();
@@ -499,7 +519,10 @@ private slots:
     void maskEditSessionMovesVertexOnStaticMask();
     void maskEditSessionMovesVertexOnPathKeyedMask();
     void maskEditSessionMovesKeyframedRect();
+    void pathEditSessionEditsPathKeyedMaskOutline();
+    void pathEditSessionEditsShapePathAndCancels();
     void maskEditSessionResizeRotateAndSnap();
+    void maskEditSessionResizeFromCenter();
     void maskLockAspectPersistsAndGatesCornerResize();
     void maskEditSessionNudgeAndBars();
     void trackingTranslationDrivesMaskKeys();
@@ -1198,7 +1221,7 @@ void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
     const QPointF press = onOverlay(eye);
     const QPointF now = onOverlay(eye + QVector3D(150, 0, 0));
     const QVariantMap moved = state.preview()->applyGizmoDrag(start, QStringLiteral("x"), press.x(), press.y(),
-                                                          now.x(), now.y(), false, 1.0, 1);
+                                                          now.x(), now.y(), {}, 1.0, 1);
     state.commitPreviewDrag();
     const drift::Clip &camera = state.project()->tracks().at(track).clips.at(clip);
     QVERIFY2(std::abs(camera.positionX.evaluateAt(0) - 650.0) < 0.5,
@@ -1213,7 +1236,7 @@ void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
     state.beginPreviewDrag();
     const QPointF a = onOverlay(eyeNow + QVector3D(60, 0, 0));
     const QPointF b = onOverlay(eyeNow + QVector3D(0, 0, 60));
-    state.preview()->applyGizmoDrag(before, QStringLiteral("y"), a.x(), a.y(), b.x(), b.y(), false, 1.0, 1);
+    state.preview()->applyGizmoDrag(before, QStringLiteral("y"), a.x(), a.y(), b.x(), b.y(), {}, 1.0, 1);
     state.commitPreviewDrag();
     const QVariantMap after = state.preview()->cameraBox(1);
     QVERIFY(std::abs(after.value(QStringLiteral("rotationY")).toDouble()) > 1.0);
@@ -2656,10 +2679,12 @@ void EditorStateTest::arrowKeysJogAndJumpThePlayhead()
     QCoreApplication::setApplicationName(QStringLiteral("DriftTestArrowKeys"));
     const auto restore = qScopeGuard([&] {
         QSettings().remove(QStringLiteral("shortcuts"));
+        QSettings().remove(QStringLiteral("keymap"));
         QCoreApplication::setOrganizationName(org);
         QCoreApplication::setApplicationName(app);
     });
     QSettings().remove(QStringLiteral("shortcuts"));
+    QSettings().remove(QStringLiteral("keymap"));
 
     AssetLibrary library;
     AppController state(&library);
@@ -2737,6 +2762,7 @@ void EditorStateTest::storedArrowShortcutsMigrateOntoTheNewJogLayout()
     QCoreApplication::setApplicationName(QStringLiteral("DriftTestShortcutMigration"));
     const auto restore = qScopeGuard([&] {
         QSettings().remove(QStringLiteral("shortcuts"));
+        QSettings().remove(QStringLiteral("keymap"));
         QCoreApplication::setOrganizationName(org);
         QCoreApplication::setApplicationName(app);
     });
@@ -2744,6 +2770,7 @@ void EditorStateTest::storedArrowShortcutsMigrateOntoTheNewJogLayout()
     const auto seed = [](const QHash<QString, QString> &values) {
         QSettings settings;
         settings.remove(QStringLiteral("shortcuts"));
+        settings.remove(QStringLiteral("keymap"));
         settings.beginGroup(QStringLiteral("shortcuts"));
         for (auto it = values.cbegin(); it != values.cend(); ++it)
             settings.setValue(it.key(), it.value());
@@ -2767,11 +2794,11 @@ void EditorStateTest::storedArrowShortcutsMigrateOntoTheNewJogLayout()
                  QStringLiteral("stepBack"));
         QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ShiftModifier),
                  QStringLiteral("jumpBack"));
-        // Stamped, so the next launch leaves the (now deliberate) bindings alone.
+        // Stamped, so the next launch leaves the (now deliberate) bindings alone, and the
+        // legacy group is gone.
         QSettings settings;
-        settings.beginGroup(QStringLiteral("shortcuts"));
-        QCOMPARE(settings.value(QStringLiteral("schemaVersion")).toInt(), 1);
-        settings.endGroup();
+        QCOMPARE(settings.value(QStringLiteral("keymap/schemaVersion")).toInt(), 1);
+        QVERIFY(!settings.childGroups().contains(QStringLiteral("shortcuts")));
     }
 
     // A deliberate rebinding of the same action is not the superseded default, so it
@@ -2796,6 +2823,588 @@ void EditorStateTest::storedArrowShortcutsMigrateOntoTheNewJogLayout()
         QVERIFY(state.shortcutFor(QStringLiteral("stepBack")).isEmpty());
         // Nothing else was disturbed.
         QCOMPARE(state.shortcutFor(QStringLiteral("stepForward")), QStringLiteral("Right"));
+    }
+}
+
+namespace {
+struct KeymapSandbox {
+    QString org = QCoreApplication::organizationName();
+    QString app = QCoreApplication::applicationName();
+    KeymapSandbox()
+    {
+        QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+        QCoreApplication::setApplicationName(QStringLiteral("DriftTestKeymap"));
+        clear();
+    }
+    ~KeymapSandbox()
+    {
+        clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    }
+    static void clear()
+    {
+        QSettings settings;
+        settings.remove(QStringLiteral("keymap"));
+        settings.remove(QStringLiteral("shortcuts"));
+        settings.sync();
+    }
+};
+} // namespace
+
+void EditorStateTest::keymapSupportsSeveralBindingsPerAction()
+{
+    KeymapSandbox sandbox;
+    drift::Keymap keymap;
+    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    QVERIFY(!keymap.isModified(QStringLiteral("playPause")));
+
+    QSignalSpy changed(&keymap, &drift::Keymap::changed);
+    QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("F9")).isEmpty());
+    QCOMPARE(changed.count(), 1);
+    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), (QStringList{QStringLiteral("Space"), QStringLiteral("F9")}));
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("F9")), QStringLiteral("playPause"));
+    QVERIFY(keymap.isModified(QStringLiteral("playPause")));
+    QVERIFY(keymap.chords().contains(QStringLiteral("F9")));
+    QVERIFY(!keymap.chords().contains(QStringLiteral("Left")));
+    QVERIFY(keymap.chords().contains(QStringLiteral("Ctrl+S")));
+
+    // Adding what is already bound changes nothing.
+    QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("F9")).isEmpty());
+    QCOMPARE(changed.count(), 1);
+
+    keymap.removeBinding(QStringLiteral("playPause"), QStringLiteral("Space"));
+    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("F9")});
+    QVERIFY(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Space")).isEmpty());
+
+    keymap.resetAction(QStringLiteral("playPause"));
+    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    QVERIFY(!keymap.isModified(QStringLiteral("playPause")));
+
+    AssetLibrary library;
+    AppController state(&library);
+    QVERIFY(state.keymap()->addBinding(QStringLiteral("playPause"), QStringLiteral("F9")).isEmpty());
+    for (const QVariant &entry : state.actions()) {
+        const QVariantMap map = entry.toMap();
+        if (map.value(QStringLiteral("id")).toString() != QLatin1String("playPause"))
+            continue;
+        QCOMPARE(map.value(QStringLiteral("shortcuts")).toStringList(),
+                 (QStringList{QStringLiteral("Space"), QStringLiteral("F9")}));
+        QCOMPARE(map.value(QStringLiteral("shortcut")).toString(), QStringLiteral("Space"));
+        QCOMPARE(map.value(QStringLiteral("category")).toString(), QStringLiteral("playback"));
+        QCOMPARE(map.value(QStringLiteral("scope")).toString(), QStringLiteral("global"));
+        QVERIFY(map.value(QStringLiteral("modified")).toBool());
+    }
+    QCOMPARE(state.shortcutFor(QStringLiteral("playPause")), QStringLiteral("Space"));
+    state.resetShortcuts();
+    QCOMPARE(state.keymap()->bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+}
+
+void EditorStateTest::keymapRefusesAChordTakenInTheSameScope()
+{
+    KeymapSandbox sandbox;
+    drift::Keymap keymap;
+    QCOMPARE(keymap.addBinding(QStringLiteral("undo"), QStringLiteral("Ctrl+S")), QStringLiteral("Save project"));
+    QCOMPARE(keymap.bindings(QStringLiteral("undo")), QStringList{QStringLiteral("Ctrl+Z")});
+    QCOMPARE(keymap.setBindings(QStringLiteral("undo"), {QStringLiteral("F9"), QStringLiteral("Ctrl+S")}),
+             QStringLiteral("Save project"));
+    QCOMPARE(keymap.bindings(QStringLiteral("undo")), QStringList{QStringLiteral("Ctrl+Z")});
+    QVERIFY(!keymap.isModified(QStringLiteral("undo")));
+
+    // Taking it back from its owner first makes it free.
+    keymap.removeBinding(QStringLiteral("save"), QStringLiteral("Ctrl+S"));
+    QVERIFY(keymap.addBinding(QStringLiteral("undo"), QStringLiteral("Ctrl+S")).isEmpty());
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Ctrl+S")), QStringLiteral("undo"));
+
+    // A chord is stored once, whatever spelling it arrived in.
+    QVERIFY(keymap.addBinding(QStringLiteral("save"), QStringLiteral("ctrl+shift+f9")).isEmpty());
+    QCOMPARE(keymap.bindings(QStringLiteral("save")), QStringList{QStringLiteral("Ctrl+Shift+F9")});
+    QCOMPARE(keymap.addBinding(QStringLiteral("undo"), QStringLiteral("ctrl+shift+f9")), QStringLiteral("Save project"));
+}
+
+void EditorStateTest::keymapClearedShortcutSurvivesARestart()
+{
+    KeymapSandbox sandbox;
+    {
+        drift::Keymap keymap;
+        QVERIFY(keymap.setBindings(QStringLiteral("delete"), {}).isEmpty());
+        QVERIFY(keymap.bindings(QStringLiteral("delete")).isEmpty());
+        QVERIFY(keymap.setBindings(QStringLiteral("selectAll"), {QStringLiteral("Ctrl+;"), QStringLiteral("Ctrl+|")}).isEmpty());
+    }
+    {
+        drift::Keymap keymap;
+        QVERIFY(keymap.bindings(QStringLiteral("delete")).isEmpty());
+        QVERIFY(keymap.isModified(QStringLiteral("delete")));
+        QVERIFY(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Delete")).isEmpty());
+        QCOMPARE(keymap.bindings(QStringLiteral("selectAll")),
+                 (QStringList{QStringLiteral("Ctrl+;"), QStringLiteral("Ctrl+|")}));
+        keymap.resetAction(QStringLiteral("delete"));
+    }
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.bindings(QStringLiteral("delete")), QStringList{QStringLiteral("Delete")});
+        keymap.resetAll();
+    }
+    {
+        drift::Keymap keymap;
+        QVERIFY(!keymap.hasOverrides());
+        QCOMPARE(keymap.bindings(QStringLiteral("selectAll")), QStringList{QStringLiteral("Ctrl+A")});
+    }
+
+    // Through AppController: setShortcut("") is the old "clear" call.
+    {
+        AssetLibrary library;
+        AppController state(&library);
+        QVERIFY(state.setShortcut(QStringLiteral("toggleGuides"), QString()).isEmpty());
+    }
+    {
+        AssetLibrary library;
+        AppController state(&library);
+        QVERIFY(state.shortcutFor(QStringLiteral("toggleGuides")).isEmpty());
+    }
+}
+
+void EditorStateTest::keymapMigratesTheLegacyShortcutsGroup()
+{
+    KeymapSandbox sandbox;
+    {
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("shortcuts"));
+        settings.setValue(QStringLiteral("delete"), QStringLiteral("Ctrl+Backspace"));
+        settings.setValue(QStringLiteral("playPause"), QStringLiteral("Space"));
+        settings.setValue(QStringLiteral("stepBack"), QStringLiteral("Shift+Left"));
+        settings.setValue(QStringLiteral("save"), QString());
+        settings.setValue(QStringLiteral("nudgeLeft"), QStringLiteral("Left"));
+        settings.setValue(QStringLiteral("noSuchAction"), QStringLiteral("F9"));
+        settings.endGroup();
+    }
+    drift::Keymap keymap;
+    QCOMPARE(keymap.bindings(QStringLiteral("delete")), QStringList{QStringLiteral("Ctrl+Backspace")});
+    QVERIFY(keymap.isModified(QStringLiteral("delete")));
+    QVERIFY(!keymap.isModified(QStringLiteral("playPause")));
+    // v0 default: not a choice, so the new layout arrives.
+    QVERIFY(!keymap.isModified(QStringLiteral("stepBack")));
+    QCOMPARE(keymap.bindings(QStringLiteral("stepBack")), QStringList{});
+    QCOMPARE(keymap.bindings(QStringLiteral("jumpBack")), QStringList{QStringLiteral("Shift+Left")});
+    // An empty stored value meant "default".
+    QCOMPARE(keymap.bindings(QStringLiteral("save")), QStringList{QStringLiteral("Ctrl+S")});
+    // The stored binding keeps the chord; the default that would have duplicated it loses it.
+    QCOMPARE(keymap.bindings(QStringLiteral("nudgeLeft")), QStringList{QStringLiteral("Left")});
+
+    QSettings settings;
+    QVERIFY(!settings.childGroups().contains(QStringLiteral("shortcuts")));
+    QCOMPARE(settings.value(QStringLiteral("keymap/schemaVersion")).toInt(), 1);
+}
+
+void EditorStateTest::keymapCapturesPunctuationKeypadAndFunctionKeys()
+{
+    using drift::Keymap;
+    const auto chord = [](int key, Qt::KeyboardModifiers mods, const QString &text = QString()) {
+        return Keymap::chordFromKey(key, int(mods), 0, text, false);
+    };
+    QCOMPARE(chord(Qt::Key_Comma, Qt::ControlModifier), QStringLiteral("Ctrl+,"));
+    QCOMPARE(chord(Qt::Key_Period, Qt::NoModifier), QStringLiteral("."));
+    QCOMPARE(chord(Qt::Key_BracketLeft, Qt::NoModifier), QStringLiteral("["));
+    QCOMPARE(chord(Qt::Key_Backslash, Qt::ControlModifier), QStringLiteral("Ctrl+\\"));
+    QCOMPARE(chord(Qt::Key_QuoteLeft, Qt::AltModifier), QStringLiteral("Alt+`"));
+    QCOMPARE(chord(Qt::Key_Semicolon, Qt::NoModifier), QStringLiteral(";"));
+    QCOMPARE(chord(Qt::Key_Apostrophe, Qt::NoModifier), QStringLiteral("'"));
+    QCOMPARE(chord(Qt::Key_Slash, Qt::NoModifier), QStringLiteral("/"));
+    // Shifted symbols are stored without Shift, as Qt matches them.
+    QCOMPARE(chord(Qt::Key_Less, Qt::ShiftModifier), QStringLiteral("<"));
+    QCOMPARE(chord(Qt::Key_Question, Qt::ShiftModifier), QStringLiteral("?"));
+    QCOMPARE(chord(Qt::Key_BraceLeft, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("Ctrl+{"));
+    QCOMPARE(chord(Qt::Key_Plus, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("Ctrl++"));
+    QCOMPARE(chord(Qt::Key_Underscore, Qt::ShiftModifier), QStringLiteral("_"));
+    QCOMPARE(chord(Qt::Key_S, Qt::ShiftModifier), QStringLiteral("Shift+S"));
+    QCOMPARE(chord(Qt::Key_5, Qt::KeypadModifier), QStringLiteral("Num+5"));
+    QCOMPARE(chord(Qt::Key_Plus, Qt::KeypadModifier), QStringLiteral("Num++"));
+    QCOMPARE(chord(Qt::Key_Enter, Qt::KeypadModifier), QStringLiteral("Num+Enter"));
+    QCOMPARE(chord(Qt::Key_F1, Qt::NoModifier), QStringLiteral("F1"));
+    QCOMPARE(chord(Qt::Key_F13, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("Ctrl+Shift+F13"));
+    QCOMPARE(chord(Qt::Key_F24, Qt::NoModifier), QStringLiteral("F24"));
+    QCOMPARE(chord(Qt::Key_Insert, Qt::NoModifier), QStringLiteral("Insert"));
+    QCOMPARE(chord(Qt::Key_Left, Qt::ControlModifier | Qt::MetaModifier), QStringLiteral("Meta+Ctrl+Left"));
+    QVERIFY(chord(Qt::Key_Shift, Qt::ShiftModifier).isEmpty());
+    QVERIFY(chord(Qt::Key_Control, Qt::ControlModifier).isEmpty());
+    QVERIFY(chord(Qt::Key_unknown, Qt::NoModifier).isEmpty());
+    QCOMPARE(chord(Qt::Key_unknown, Qt::NoModifier, QStringLiteral("q")), QStringLiteral("Q"));
+
+    {
+        drift::Keymap recorder;
+        QObject target;
+        QKeyEvent press(QEvent::KeyPress, 0xdf, Qt::AltModifier, 1, 0, 0, QStringLiteral("ß"));
+        QCoreApplication::sendEvent(&target, &press);
+        QCOMPARE(recorder.nativeKeyFor(0xdf, 99), 0);
+        QCOMPARE(recorder.nativeKeyFor(Qt::Key_A, 99), 99);
+    }
+
+    // macOS: Option composes characters, so the virtual key code names the key.
+    QVERIFY(Keymap::chordFromKey(0xdf, int(Qt::AltModifier), 1, QStringLiteral("ß"), false).isEmpty());
+    QCOMPARE(Keymap::chordFromKey(0xdf, int(Qt::AltModifier), 1, QStringLiteral("ß"), true), QStringLiteral("Alt+S"));
+    QCOMPARE(Keymap::chordFromKey(0xdf, int(Qt::AltModifier | Qt::ShiftModifier), 0, QString(), true), QStringLiteral("Alt+Shift+A"));
+    QCOMPARE(Keymap::chordFromKey(0xa1, int(Qt::AltModifier), 18, QStringLiteral("¡"), true), QStringLiteral("Alt+1"));
+    QCOMPARE(Keymap::chordFromKey(0xdf, int(Qt::AltModifier), 27, QString(), true), QStringLiteral("Alt+-"));
+
+    // Every chord that can be produced must read back unchanged, or the Shortcut item built
+    // from it would not match the key it was captured from.
+    const QList<Qt::KeyboardModifiers> modifierSets = {
+        Qt::NoModifier, Qt::ControlModifier, Qt::AltModifier, Qt::ShiftModifier, Qt::MetaModifier,
+        Qt::KeypadModifier, Qt::ControlModifier | Qt::AltModifier | Qt::ShiftModifier,
+        Qt::ControlModifier | Qt::MetaModifier | Qt::KeypadModifier, Qt::AltModifier | Qt::ShiftModifier | Qt::KeypadModifier,
+    };
+    QList<int> keys;
+    for (int key = Qt::Key_Space; key <= 0x7e; ++key)
+        keys << key;
+    for (int key = Qt::Key_F1; key <= Qt::Key_F35; ++key)
+        keys << key;
+    keys << Qt::Key_Escape << Qt::Key_Tab << Qt::Key_Backtab << Qt::Key_Backspace << Qt::Key_Return
+         << Qt::Key_Enter << Qt::Key_Insert << Qt::Key_Delete << Qt::Key_Pause << Qt::Key_Print << Qt::Key_Home
+         << Qt::Key_End << Qt::Key_Left << Qt::Key_Up << Qt::Key_Right << Qt::Key_Down << Qt::Key_PageUp
+         << Qt::Key_PageDown << Qt::Key_Menu;
+    int produced = 0;
+    for (const int key : std::as_const(keys)) {
+        for (const Qt::KeyboardModifiers mods : modifierSets) {
+            const QString c = chord(key, mods);
+            if (c.isEmpty())
+                continue;
+            ++produced;
+            const QKeySequence parsed = QKeySequence::fromString(c, QKeySequence::PortableText);
+            QVERIFY2(parsed.count() == 1 && parsed[0].key() != Qt::Key_unknown && parsed[0].key() != 0,
+                     qPrintable(QStringLiteral("%1 (key 0x%2)").arg(c).arg(key, 0, 16)));
+            QCOMPARE(QKeySequence::fromString(parsed.toString(QKeySequence::PortableText), QKeySequence::PortableText), parsed);
+            QCOMPARE(Keymap::normalizeChord(c), c);
+        }
+    }
+    QVERIFY(produced > 500);
+}
+
+void EditorStateTest::keymapDisplayTextParsesPlusAsAKey()
+{
+    using drift::Keymap;
+    QCOMPARE(Keymap::displayText(QStringLiteral("Ctrl++"), false), QStringLiteral("Ctrl++"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Ctrl++"), true), QStringLiteral("⌘+"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("+"), true), QStringLiteral("+"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Ctrl+Shift++"), true), QStringLiteral("⇧⌘+"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Ctrl+Alt+Shift+Left"), true), QStringLiteral("⌥⇧⌘←"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Meta+Ctrl+Backspace"), true), QStringLiteral("⌃⌘⌫"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Num+5"), true), QStringLiteral("Num 5"));
+    QCOMPARE(Keymap::displayText(QStringLiteral("Ctrl+="), true), QStringLiteral("⌘="));
+    QCOMPARE(Keymap::displayText(QString(), true), QString());
+
+    QStringList modifiers;
+    QString key;
+    drift::keymap::splitChord(QStringLiteral("Ctrl+Shift++"), &modifiers, &key);
+    QCOMPARE(modifiers, (QStringList{QStringLiteral("Ctrl"), QStringLiteral("Shift")}));
+    QCOMPARE(key, QStringLiteral("+"));
+    drift::keymap::splitChord(QStringLiteral("Ctrl+-"), &modifiers, &key);
+    QCOMPARE(key, QStringLiteral("-"));
+}
+
+void EditorStateTest::keymapTranslatesMetaOffMacAndFallsBackToDrift()
+{
+    using namespace drift::keymap;
+    QCOMPARE(translateForPlatform(QStringLiteral("Meta+K"), false), QStringLiteral("Ctrl+Alt+K"));
+    QCOMPARE(translateForPlatform(QStringLiteral("Meta+Shift+K"), false), QStringLiteral("Ctrl+Alt+Shift+K"));
+    QCOMPARE(translateForPlatform(QStringLiteral("Ctrl+Meta+K"), false), QStringLiteral("Ctrl+Alt+K"));
+    QCOMPARE(translateForPlatform(QStringLiteral("Meta++"), false), QStringLiteral("Ctrl+Alt++"));
+    QCOMPARE(translateForPlatform(QStringLiteral("Ctrl+K"), false), QStringLiteral("Ctrl+K"));
+    QCOMPARE(translateForPlatform(QStringLiteral("Meta+K"), true), QStringLiteral("Meta+K"));
+    QCOMPARE(QKeySequence::fromString(translateForPlatform(QStringLiteral("Meta+Shift+Right"), false),
+                                      QKeySequence::PortableText).toString(QKeySequence::PortableText),
+             QStringLiteral("Ctrl+Alt+Shift+Right"));
+
+    // A preset's missing actions are unbound, except panel-scoped ones, which take Drift's.
+    const Preset *drift = findPreset(QLatin1String(kDefaultPresetId));
+    QVERIFY(drift);
+    const Preset sparse{QStringLiteral("sparse"), "Sparse", {{QStringLiteral("save"), {QStringLiteral("F9")}}}};
+    QCOMPARE(presetChords(sparse, QStringLiteral("save"), QStringLiteral("global")), QStringList{QStringLiteral("F9")});
+    QVERIFY(presetChords(sparse, QStringLiteral("undo"), QStringLiteral("global")).isEmpty());
+    QCOMPARE(presetChords(sparse, QStringLiteral("undo"), QStringLiteral("keyframes")),
+             presetChords(*drift, QStringLiteral("undo"), QStringLiteral("global")));
+    const Preset cleared{QStringLiteral("cleared"), "Cleared", {{QStringLiteral("undo"), {}}}};
+    QVERIFY(presetChords(cleared, QStringLiteral("undo"), QStringLiteral("keyframes")).isEmpty());
+    QCOMPARE(drift->chords.value(QStringLiteral("saveAs")), QStringList{QStringLiteral("Ctrl+Alt+S")});
+    QVERIFY(drift->chords.size() >= 90);
+    for (const ActionDef &action : actions())
+        QVERIFY2(drift->chords.contains(QLatin1String(action.id)), action.id);
+}
+
+void EditorStateTest::keymapPresetSwitchKeepsOrDiscardsOverrides()
+{
+    KeymapSandbox sandbox;
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.presetId(), QStringLiteral("drift"));
+        QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("F9")).isEmpty());
+        keymap.setPreset(QStringLiteral("nonexistent"), true);
+        QCOMPARE(keymap.presetId(), QStringLiteral("drift"));
+        keymap.setPreset(QStringLiteral("drift"), true);
+        QVERIFY(keymap.isModified(QStringLiteral("playPause")));
+        keymap.setPreset(QStringLiteral("drift"), false);
+        QVERIFY(!keymap.hasOverrides());
+        QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    }
+    QVERIFY(drift::Keymap().presets().size() >= 1);
+}
+
+void EditorStateTest::keymapPresetSwitchResolvesConflictsInFavourOfOverrides()
+{
+    KeymapSandbox sandbox;
+    {
+        drift::Keymap keymap;
+        QVERIFY(keymap.addBinding(QStringLiteral("zoomToFit"), QStringLiteral("D")).isEmpty());
+        QVERIFY(keymap.setBindings(QStringLiteral("playPause"), {QStringLiteral("F9")}).isEmpty());
+        keymap.setPreset(QStringLiteral("premiere"), true);
+        QCOMPARE(keymap.presetId(), QStringLiteral("premiere"));
+        QVERIFY(keymap.hasOverrides());
+        // Premiere gives D to selectClipAtPlayhead; the user's binding keeps it and the preset's
+        // loses it in memory only.
+        QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("D")), QStringLiteral("zoomToFit"));
+        QVERIFY(keymap.bindings(QStringLiteral("selectClipAtPlayhead")).isEmpty());
+        QVERIFY(!keymap.isModified(QStringLiteral("selectClipAtPlayhead")));
+        QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("F9")});
+        QCOMPARE(keymap.bindings(QStringLiteral("split")), QStringList{QStringLiteral("Ctrl+K")});
+    }
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.presetId(), QStringLiteral("premiere"));
+        QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("D")), QStringLiteral("zoomToFit"));
+        keymap.setPreset(QStringLiteral("premiere"), false);
+        QVERIFY(!keymap.hasOverrides());
+        QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("D")), QStringLiteral("selectClipAtPlayhead"));
+        QCOMPARE(keymap.bindings(QStringLiteral("zoomToFit")), QStringList{QStringLiteral("\\")});
+        QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    }
+}
+
+void EditorStateTest::keymapScopesShareChordsButNotWithinOneScope()
+{
+    KeymapSandbox sandbox;
+    drift::Keymap keymap;
+
+    // A global action and a panel action may share a chord: F is the masking lasso and also the
+    // keyframes panel's fit key, Home is both goToStart and the keyframes and 3D view fit.
+    QCOMPARE(keymap.actionFor(QStringLiteral("masking"), QStringLiteral("F")), QStringLiteral("masking.lassoTool"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("keyframes"), QStringLiteral("F")), QStringLiteral("keyframes.fitSelection"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Home")), QStringLiteral("goToStart"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("keyframes"), QStringLiteral("Home")), QStringLiteral("keyframes.fitAll"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("viewport3d"), QStringLiteral("Home")), QStringLiteral("viewport3d.frameAll"));
+    QVERIFY(keymap.actionFor(QStringLiteral("global"), QStringLiteral("F")).isEmpty());
+    QCOMPARE(keymap.actionFor(QStringLiteral("masking"), QStringLiteral("V")), QStringLiteral("masking.selectTool"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("V")), QStringLiteral("selectTool"));
+
+    QVERIFY(keymap.addBinding(QStringLiteral("masking.rectTool"), QStringLiteral("Ctrl+S")).isEmpty());
+    QVERIFY(keymap.addBinding(QStringLiteral("viewport3d.frameAll"), QStringLiteral("Ctrl+S")).isEmpty());
+    QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Ctrl+S")), QStringLiteral("save"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("masking"), QStringLiteral("Ctrl+S")), QStringLiteral("masking.rectTool"));
+    QCOMPARE(keymap.actionFor(QStringLiteral("viewport3d"), QStringLiteral("Ctrl+S")), QStringLiteral("viewport3d.frameAll"));
+
+    // Inside one scope the chord has a single owner and the refusal names it.
+    QCOMPARE(keymap.addBinding(QStringLiteral("masking.ellipseTool"), QStringLiteral("R")), QStringLiteral("Rectangle mask tool"));
+    QCOMPARE(keymap.bindings(QStringLiteral("masking.ellipseTool")), QStringList{QStringLiteral("E")});
+    QCOMPARE(keymap.addBinding(QStringLiteral("keyframes.addKey"), QStringLiteral("F")), keymap.labelFor(QStringLiteral("keyframes.fitSelection")));
+    QCOMPARE(keymap.setBindings(QStringLiteral("viewport3d.gizmoScale"), {QStringLiteral("F9"), QStringLiteral("T")}),
+             keymap.labelFor(QStringLiteral("viewport3d.gizmoMove")));
+    QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("E")});
+
+    // Window-local scopes stay out of the app-wide shortcut list, panel scopes are in it.
+    QVERIFY(keymap.chords().contains(QStringLiteral("K")));
+    QVERIFY(keymap.chords().contains(QStringLiteral("Num+5")));
+    QVERIFY(keymap.chords().contains(QStringLiteral("Num+1")));
+    QVERIFY(!keymap.chords().contains(QStringLiteral("D")));
+    QVERIFY(!keymap.chords().contains(QStringLiteral("Backspace")));
+    QVERIFY(!keymap.chordsFor(QStringLiteral("fly3d")).isEmpty());
+}
+
+void EditorStateTest::keymapCatalogIsConsistent()
+{
+    using namespace drift::keymap;
+    QSet<QString> ids;
+    for (const ActionDef &action : actions()) {
+        const QString id = QLatin1String(action.id);
+        QVERIFY2(!ids.contains(id), qPrintable(id));
+        ids.insert(id);
+        const CategoryDef *category = findCategory(QLatin1String(action.category));
+        QVERIFY2(category, qPrintable(id));
+        const QString scope = scopeOf(action);
+        if (scope == QLatin1String(kGlobalScope)) {
+            QVERIFY2(!id.contains(QLatin1Char('.')) || id.startsWith(QLatin1String("workspace.")), qPrintable(id));
+        } else {
+            QVERIFY2(id.startsWith(scope + QLatin1Char('.')), qPrintable(id));
+            QVERIFY2(!id.mid(scope.size() + 1).contains(QLatin1Char('.')), qPrintable(id));
+        }
+        QVERIFY2(!QString(QLatin1String(action.label)).contains(QLatin1String(" / ")), qPrintable(id));
+    }
+    QSet<QString> categoryIds;
+    for (const CategoryDef &category : categories())
+    {
+        QVERIFY2(!categoryIds.contains(QLatin1String(category.id)), category.id);
+        categoryIds.insert(QLatin1String(category.id));
+    }
+
+    // The Drift preset binds no chord twice within a scope. A preset table is complete, so a chord
+    // that is missing or doubled here would silently lose an action at load time.
+    const Preset *drift = findPreset(QLatin1String(kDefaultPresetId));
+    QVERIFY(drift);
+    QHash<QString, QHash<QString, QString>> seen;
+    for (const ActionDef &action : actions()) {
+        const QString id = QLatin1String(action.id);
+        const QString scope = scopeOf(action);
+        for (const QString &chord : drift->chords.value(id)) {
+            QCOMPARE(drift::Keymap::normalizeChord(chord), chord);
+            QVERIFY2(!seen[scope].contains(chord),
+                     qPrintable(QStringLiteral("%1 and %2 both bind %3").arg(seen[scope].value(chord), id, chord)));
+            seen[scope].insert(chord, id);
+        }
+    }
+
+    // Everything the preset binds is in the catalog.
+    for (auto it = drift->chords.cbegin(); it != drift->chords.cend(); ++it)
+        QVERIFY2(ids.contains(it.key()), qPrintable(it.key()));
+
+    // So the effective bindings equal the preset's, in every scope.
+    KeymapSandbox sandbox;
+    drift::Keymap keymap;
+    for (const ActionDef &action : actions()) {
+        const QString id = QLatin1String(action.id);
+        QCOMPARE(keymap.bindings(id), drift->chords.value(id));
+    }
+}
+
+void EditorStateTest::keymapEveryPresetIsConsistent()
+{
+    using namespace drift::keymap;
+    QCOMPARE(presets().size(), 7);
+    const QStringList essentials = {QStringLiteral("undo"), QStringLiteral("redo"), QStringLiteral("save"),
+                                    QStringLiteral("open"), QStringLiteral("newProject"), QStringLiteral("copy"),
+                                    QStringLiteral("paste"), QStringLiteral("cut"), QStringLiteral("selectAll"),
+                                    QStringLiteral("playPause"), QStringLiteral("delete")};
+    QSet<QString> ids;
+    QHash<QString, QString> scopes;
+    for (const ActionDef &action : actions()) {
+        ids.insert(QLatin1String(action.id));
+        scopes.insert(QLatin1String(action.id), scopeOf(action));
+    }
+    for (const Preset &preset : presets()) {
+        for (const bool mac : {true, false}) {
+            const QString label = QStringLiteral("%1 mac=%2").arg(preset.id).arg(mac);
+            QHash<QString, QHash<QString, QString>> seen;
+            for (auto it = preset.chords.cbegin(); it != preset.chords.cend(); ++it) {
+                QVERIFY2(ids.contains(it.key()), qPrintable(label + QLatin1Char(' ') + it.key()));
+                for (const QString &raw : it.value()) {
+                    const QString chord = translateForPlatform(raw, mac);
+                    const QString where = QStringLiteral("%1 %2 %3").arg(label, it.key(), chord);
+                    QCOMPARE(drift::Keymap::normalizeChord(raw), raw);
+                    QCOMPARE(drift::Keymap::normalizeChord(chord), chord);
+                    const QKeySequence parsed = QKeySequence::fromString(chord, QKeySequence::PortableText);
+                    QVERIFY2(parsed.count() == 1, qPrintable(where));
+                    QCOMPARE(QKeySequence::fromString(parsed.toString(QKeySequence::PortableText),
+                                                      QKeySequence::PortableText), parsed);
+                    const QString scope = scopes.value(it.key());
+                    QVERIFY2(!seen[scope].contains(chord),
+                             qPrintable(where + QStringLiteral(" already on ") + seen[scope].value(chord)));
+                    seen[scope].insert(chord, it.key());
+                }
+            }
+        }
+        for (const QString &id : essentials)
+            QVERIFY2(!preset.chords.value(id).isEmpty(), qPrintable(preset.id + QLatin1Char(' ') + id));
+    }
+
+    // The keymap built from each preset gives every listed chord to its action: nothing is dropped
+    // by the in-memory conflict rule.
+#ifdef Q_OS_MACOS
+    constexpr bool hostMac = true;
+#else
+    constexpr bool hostMac = false;
+#endif
+    for (const Preset &preset : presets()) {
+        KeymapSandbox sandbox;
+        drift::Keymap keymap;
+        keymap.setPreset(preset.id, false);
+        for (auto it = preset.chords.cbegin(); it != preset.chords.cend(); ++it) {
+            QStringList expected;
+            for (const QString &raw : it.value())
+                expected << translateForPlatform(raw, hostMac);
+            QCOMPARE(keymap.bindings(it.key()), expected);
+        }
+    }
+}
+
+void EditorStateTest::keymapCarriesBindingsOfSplitActionIds()
+{
+    KeymapSandbox sandbox;
+    const auto seedOverrides = [](const QHash<QString, QStringList> &values) {
+        QSettings settings;
+        settings.remove(QStringLiteral("shortcuts"));
+        settings.remove(QStringLiteral("keymap"));
+        settings.setValue(QStringLiteral("keymap/schemaVersion"), 1);
+        for (auto it = values.cbegin(); it != values.cend(); ++it)
+            settings.setValue(QStringLiteral("keymap/overrides/") + it.key(), it.value());
+        settings.sync();
+    };
+
+    // The old ids were one action doing a 3D gizmo job and a mask or tracker job at once, so a
+    // rebinding lands on both.
+    seedOverrides({{QStringLiteral("gizmoMove"), {QStringLiteral("F7")}},
+                   {QStringLiteral("gizmoRotate"), {QStringLiteral("none")}},
+                   {QStringLiteral("bladeTool"), {QStringLiteral("F8")}},
+                   {QStringLiteral("maskingWandTool"), {QStringLiteral("F9")}},
+                   {QStringLiteral("trackFrameForward"), {QStringLiteral("Ctrl+Alt+Right")}},
+                   {QStringLiteral("masking.polygonTool"), {QStringLiteral("F10")}},
+                   {QStringLiteral("maskingPolygonTool"), {QStringLiteral("F11")}}});
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoMove")), QStringList{QStringLiteral("F7")});
+        QCOMPARE(keymap.bindings(QStringLiteral("tracking.trackerTool")), QStringList{QStringLiteral("F7")});
+        QVERIFY(keymap.bindings(QStringLiteral("viewport3d.gizmoRotate")).isEmpty());
+        QVERIFY(keymap.bindings(QStringLiteral("masking.rectTool")).isEmpty());
+        QVERIFY(keymap.isModified(QStringLiteral("masking.rectTool")));
+        // bladeTool still exists, and the brush mask tool follows it.
+        QCOMPARE(keymap.bindings(QStringLiteral("bladeTool")), QStringList{QStringLiteral("F8")});
+        QCOMPARE(keymap.bindings(QStringLiteral("masking.brushTool")), QStringList{QStringLiteral("F8")});
+        QCOMPARE(keymap.bindings(QStringLiteral("masking.wandTool")), QStringList{QStringLiteral("F9")});
+        QCOMPARE(keymap.bindings(QStringLiteral("tracking.trackFrameForward")), QStringList{QStringLiteral("Ctrl+Alt+Right")});
+        // A binding already stored under the new id wins over the carried one.
+        QCOMPARE(keymap.bindings(QStringLiteral("masking.polygonTool")), QStringList{QStringLiteral("F10")});
+        QVERIFY(!keymap.actionFor(QStringLiteral("viewport3d"), QStringLiteral("F7")).isEmpty());
+        // Untouched actions keep their defaults.
+        QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("E")});
+    }
+    // Persisted under the new ids; the removed ones are gone from the settings.
+    {
+        QSettings settings;
+        QVERIFY(!settings.contains(QStringLiteral("keymap/overrides/gizmoMove")));
+        QVERIFY(!settings.contains(QStringLiteral("keymap/overrides/maskingWandTool")));
+        QCOMPARE(settings.value(QStringLiteral("keymap/overrides/tracking.trackerTool")).toStringList(),
+                 QStringList{QStringLiteral("F7")});
+        QCOMPARE(settings.value(QStringLiteral("keymap/overrides/masking.rectTool")).toStringList(),
+                 QStringList{QStringLiteral("none")});
+    }
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.bindings(QStringLiteral("masking.wandTool")), QStringList{QStringLiteral("F9")});
+    }
+
+    // The same through the legacy group.
+    {
+        QSettings settings;
+        settings.remove(QStringLiteral("keymap"));
+        settings.beginGroup(QStringLiteral("shortcuts"));
+        settings.setValue(QStringLiteral("gizmoScale"), QStringLiteral("F6"));
+        settings.setValue(QStringLiteral("maskingBrushSmaller"), QStringLiteral("["));
+        settings.setValue(QStringLiteral("trackForward"), QStringLiteral("F5"));
+        settings.endGroup();
+        settings.sync();
+    }
+    {
+        drift::Keymap keymap;
+        QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("F6")});
+        QCOMPARE(keymap.bindings(QStringLiteral("masking.ellipseTool")), QStringList{QStringLiteral("F6")});
+        QCOMPARE(keymap.bindings(QStringLiteral("tracking.trackForward")), QStringList{QStringLiteral("F5")});
+        // Equal to the default, so not an override.
+        QVERIFY(!keymap.isModified(QStringLiteral("masking.brushSmaller")));
     }
 }
 
@@ -6129,19 +6738,11 @@ void EditorStateTest::keyframeRowsModelDiffsRebuildsAndNavigates()
     QCOMPARE(model.targetTracks(targets), QStringList{QStringLiteral("rotation")});
 
     view.setPxPerSecond(100);
-    const double lanePx = 40;
-    const QVariantMap hit = model.hitTest(view.xFor(1.0) + 2, rotationRow * lanePx + 5, 0, lanePx, 6);
-    QCOMPARE(hit.value(QStringLiteral("row")).toInt(), rotationRow);
-    QCOMPARE(hit.value(QStringLiteral("seconds")).toDouble(), 1.0);
 
-    // Snapping lands on the frame grid and the playhead; the moved key itself is no target.
-    view.setClipStart(0.0);
-    view.setClipDuration(10.0);
-    const QVariantList self{QVariantMap{{QStringLiteral("prop"), QStringLiteral("rotation")},
-                                        {QStringLiteral("seconds"), 1.0}}};
+    // With snapping suspended a key still lands on the frame grid.
     const double fps = state.projectFile()->projectFps();
-    QCOMPARE(model.moveDelta(1.0, 0.0, self, true, false), 0.0);
-    QVERIFY(qAbs(model.moveDelta(1.0, 50.3, self, true, false) - std::round(0.503 * fps) / fps) < 1e-9);
+    QCOMPARE(state.keyframes()->gestureTime(1.0, 100, {}, true, false), 1.0);
+    QVERIFY(qAbs(state.keyframes()->gestureTime(1.503, 100, {}, true, false) - std::round(1.503 * fps) / fps) < 1e-9);
 
     model.setProperty("animatedOnly", true);
     model.rebuild();
@@ -6190,15 +6791,24 @@ void EditorStateTest::keyframeNudgesFoldIntoOneUndoStep()
     state.setClipKeyframe(track, clip, rotation, 1.0, 10.0);
     state.setClipKeyframe(track, clip, rotation, 3.0, 20.0);
 
-    const double step = 1.0 / std::max(1, state.projectFile()->projectFps());
-    QVariantList sel{QVariantMap{{QStringLiteral("prop"), rotation}, {QStringLiteral("seconds"), 1.0}}};
+    const int fps = std::max(1, state.projectFile()->projectFps());
+    const double step = 1.0 / fps;
+    KeyframeSelection selection;
+    KeyframeInteraction interaction;
+    interaction.setSelection(&selection);
+    interaction.setProperty("track", track);
+    interaction.setProperty("clip", clip);
+    interaction.setProperty("fps", double(fps));
+    interaction.attach(nullptr, nullptr, nullptr, state.keyframes());
+    selection.replace({QVariantMap{{QStringLiteral("prop"), rotation}, {QStringLiteral("seconds"), 1.0}}});
     for (int i = 0; i < 3; ++i) {
-        sel = state.keyframes()->nudgeKeys(track, clip, sel, step);
-        QCOMPARE(sel.size(), 1);
+        QVERIFY(interaction.nudge(1, 0, false));
+        QCOMPARE(selection.count(), 1);
     }
-    QVERIFY(qAbs(sel.first().toMap().value(QStringLiteral("seconds")).toDouble() - (1.0 + 3 * step)) < 1e-4);
+    QVERIFY(qAbs(selection.refs().first().toMap().value(QStringLiteral("seconds")).toDouble() - (1.0 + 3 * step)) < 1e-4);
     QVERIFY(state.previewDragActive());
-    state.commitPreviewDrag();
+    state.drag()->commit();
+    QVERIFY(!state.previewDragActive());
 
     state.undo();
     const QVariantList keys = state.clipKeyframes(track, clip, rotation);
@@ -6281,22 +6891,6 @@ void EditorStateTest::keyframeCurvesModelHitTestsMarqueesAndFits()
     QVERIFY(qAbs(curves.vMax() - 21.0) < 1e-9);
     QVERIFY(qAbs(curves.screenY(10.0, 0) - (8 + 100 - 100.0 / 12)) < 1e-6);
     QVERIFY(qAbs(curves.valueForY(curves.screenY(15.0, 0) - 8, 0) - 15.0) < 1e-6);
-
-    const double y1 = curves.screenY(10.0, 0);
-    const QVariantMap hit = curves.hitTest(view.xFor(1.0) + 2, y1 + 1, 6);
-    QCOMPARE(hit.value(QStringLiteral("seconds")).toDouble(), 1.0);
-    QCOMPARE(hit.value(QStringLiteral("entryIndex")).toInt(), 0);
-    QCOMPARE(hit.value(QStringLiteral("refs")).toList().size(), 1);
-    const QVariantMap miss = curves.hitTest(view.xFor(1.0) + 40, y1, 6);
-    QVERIFY(!miss.value(QStringLiteral("dot")).isValid() || miss.value(QStringLiteral("dot")).isNull());
-    QCOMPARE(miss.value(QStringLiteral("row")).toInt(), -1);
-    QCOMPARE(miss.value(QStringLiteral("seconds")).toDouble(), 1.4);
-
-    const QVariantList base{QVariantMap{{QStringLiteral("prop"), QStringLiteral("z")}, {QStringLiteral("seconds"), 9.0}}};
-    QCOMPARE(curves.marqueeRefs(50, 150, 0, 200, base).size(), 2);
-    QCOMPARE(curves.marqueeRefs(50, 250, 0, 200, base).size(), 3);
-    QCOMPARE(curves.marqueeRefs(150, 250, 0, 40, {}).size(), 1);
-    QCOMPARE(curves.marqueeRefs(150, 250, 150, 200, {}).size(), 0);
 
     selection.replace({QVariantMap{{QStringLiteral("prop"), rotation}, {QStringLiteral("seconds"), 2.0}}});
     curves.fitValues(true);
@@ -9480,6 +10074,136 @@ void EditorStateTest::lockedTrackRejectsEdits()
     QCOMPARE(state.trackLocked(0), false);
     state.moveClip(0, 0, 3.0);
     QCOMPARE(start(), drift::secondsToUs(3.0));
+}
+
+namespace {
+
+void appendTestClips(AppController &state, int trackCount, int clipsPerTrack)
+{
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    for (int track = 0; track < trackCount; ++track) {
+        project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+        for (int i = 0; i < clipsPerTrack; ++i) {
+            drift::Clip clip;
+            clip.id = QStringLiteral("clip-%1-%2").arg(track).arg(i);
+            clip.type = drift::ClipType::Video;
+            clip.name = clip.id;
+            clip.timelineStart = drift::secondsToUs(2.0 * i);
+            clip.timelineDuration = drift::secondsToUs(2.0);
+            clip.srcIn = 0;
+            clip.srcOut = clip.timelineDuration;
+            project.tracks()[track].clips.append(clip);
+        }
+    }
+}
+
+} // namespace
+
+void EditorStateTest::quickActionsRunThroughTriggerAction()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    appendTestClips(state, 1, 3);
+    const drift::Project &project = *state.project();
+
+    QCOMPARE(state.shortcutFor(QStringLiteral("stop")), QStringLiteral("K"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("rippleDelete")), QStringLiteral("Shift+Delete"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("openKeymap")), QStringLiteral("F1"));
+
+    state.triggerAction(QStringLiteral("speedUp"));
+    QVERIFY(!qFuzzyCompare(state.playback()->playbackRate(), 1.0));
+    state.triggerAction(QStringLiteral("stop"));
+    QVERIFY(!state.playing());
+    QCOMPARE(state.playback()->playbackRate(), 1.0);
+
+    state.triggerAction(QStringLiteral("selectNextClip"));
+    state.selectClip(0, 0);
+    state.triggerAction(QStringLiteral("selectNextClip"));
+    QCOMPARE(state.selectedClip(), 1);
+    state.triggerAction(QStringLiteral("selectPreviousClip"));
+    QCOMPARE(state.selectedClip(), 0);
+    state.triggerAction(QStringLiteral("deselectAll"));
+    QCOMPARE(state.selectedClip(), -1);
+
+    state.setPlayheadSeconds(3.0);
+    state.triggerAction(QStringLiteral("selectClipAtPlayhead"));
+    QCOMPARE(state.selectedClip(), 1);
+
+    state.triggerAction(QStringLiteral("markClip"));
+    QCOMPARE(state.workAreaInSeconds(), 2.0);
+    QCOMPARE(state.workAreaOutSeconds(), 4.0);
+    state.triggerAction(QStringLiteral("clearOut"));
+    QCOMPARE(state.workAreaOutSeconds(), -1.0);
+    QCOMPARE(state.workAreaInSeconds(), 2.0);
+    state.triggerAction(QStringLiteral("clearIn"));
+    QCOMPARE(state.workAreaInSeconds(), -1.0);
+
+    // Ripple off, yet the action closes the gap; the toggle itself is left alone.
+    QVERIFY(!state.rippleEnabled());
+    state.selectClip(0, 1);
+    state.triggerAction(QStringLiteral("rippleDelete"));
+    QCOMPARE(project.tracks().at(0).clips.size(), 2);
+    QCOMPARE(project.tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(2.0));
+    QVERIFY(!state.rippleEnabled());
+    state.undo();
+    state.selectClip(0, 1);
+    state.triggerAction(QStringLiteral("delete"));
+    QCOMPARE(project.tracks().at(0).clips.size(), 2);
+    QCOMPARE(project.tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+    state.undo();
+
+    state.triggerAction(QStringLiteral("toggleSnapping"));
+    QVERIFY(state.snapEnabled());
+    state.triggerAction(QStringLiteral("toggleRipple"));
+    QVERIFY(state.rippleEnabled());
+    state.triggerAction(QStringLiteral("toggleRipple"));
+    state.triggerAction(QStringLiteral("toggleOverlap"));
+    QVERIFY(state.allowClipOverlap());
+
+    state.selectClip(0, 0);
+    state.triggerAction(QStringLiteral("toggleTrackMuted"));
+    QVERIFY(state.trackMuted(0));
+    state.triggerAction(QStringLiteral("toggleTrackMuted"));
+    QVERIFY(!state.trackMuted(0));
+    state.triggerAction(QStringLiteral("toggleTrackLocked"));
+    QVERIFY(state.trackLocked(0));
+    // A locked track's clips cannot be selected, so the key only locks.
+    QCOMPARE(state.selectedTrack(), -1);
+    state.setTrackLocked(0, false);
+    state.selectClip(0, 0);
+    state.triggerAction(QStringLiteral("toggleTrackSolo"));
+    QVERIFY(state.trackSolo(0));
+
+    state.triggerAction(QStringLiteral("swapWithNext"));
+    QCOMPARE(drift::clipById(project.tracks().at(0), QStringLiteral("clip-0-0"))->timelineStart,
+             drift::secondsToUs(2.0));
+
+    const bool mixer = state.preferences()->audioMixerVisible();
+    state.triggerAction(QStringLiteral("toggleMixerStrip"));
+    QCOMPARE(state.preferences()->audioMixerVisible(), !mixer);
+    state.triggerAction(QStringLiteral("toggleMixerStrip"));
+
+    state.addBookmark(1.0, QStringLiteral("a"));
+    state.addBookmark(5.0, QStringLiteral("b"));
+    state.setPlayheadSeconds(1.0);
+    state.triggerAction(QStringLiteral("deleteBookmark"));
+    QCOMPARE(state.bookmarks().size(), 1);
+    state.triggerAction(QStringLiteral("deleteAllBookmarks"));
+    QCOMPARE(state.bookmarks().size(), 0);
+
+    const int trackCount = project.tracks().size();
+    state.triggerAction(QStringLiteral("addAudioTrack"));
+    QCOMPARE(project.tracks().size(), trackCount + 1);
+    state.triggerAction(QStringLiteral("addVideoTrack"));
+    QCOMPARE(project.tracks().size(), trackCount + 2);
+
+    // Nothing selected: target-dependent actions do nothing.
+    state.clearSelection();
+    state.triggerAction(QStringLiteral("toggleTrackMuted"));
+    state.triggerAction(QStringLiteral("removeAllEffects"));
+    state.triggerAction(QStringLiteral("swapWithPrevious"));
 }
 
 // S used to cut every track under the playhead even with one clip picked, so editing a stack of
@@ -13474,8 +14198,7 @@ void EditorStateTest::resetMaskRestoresDefaultsInOneUndoStep()
     edited.op = drift::MaskOp::Subtract;
     edited.enabled = false;
     edited.keyframes[QStringLiteral("x")].setKeyframe(0, 0.2);
-    edited.pathKeys.insert(0, QVector<QPointF>{QPointF(0.1, 0.1), QPointF(0.9, 0.1),
-                                               QPointF(0.5, 0.9)});
+    edited.pathKeys.insert(0, drift::cornerVertices({QPointF(0.1, 0.1), QPointF(0.9, 0.1), QPointF(0.5, 0.9)}));
     state.project()->tracks()[track].clips[clip].mask = edited;
 
     state.masking()->resetMask(track, clip);
@@ -13612,10 +14335,10 @@ void EditorStateTest::maskEditsKeepTheirKeyframes()
 
     drift::Mask poly;
     poly.shape = drift::MaskShape::Freeform;
-    poly.points = {QPointF(0.2, 0.2), QPointF(0.8, 0.2), QPointF(0.5, 0.8)};
-    poly.pathKeys.insert(0, poly.points);
+    poly.vertices = drift::cornerVertices({QPointF(0.2, 0.2), QPointF(0.8, 0.2), QPointF(0.5, 0.8)});
+    poly.pathKeys.insert(0, poly.vertices);
     poly.pathKeys.insert(drift::secondsToUs(1.0),
-                         {QPointF(0.3, 0.2), QPointF(0.9, 0.2), QPointF(0.6, 0.8)});
+                         drift::cornerVertices({QPointF(0.3, 0.2), QPointF(0.9, 0.2), QPointF(0.6, 0.8)}));
     drift::setLinkedMask(*state.project(), 0, 0, poly);
     state.setClipKeyframe(0, 0, QStringLiteral("mask.feather"), 0.0, 2.0);
     state.setClipKeyframe(0, 0, QStringLiteral("mask.feather"), 1.0, 8.0);
@@ -13642,10 +14365,10 @@ void EditorStateTest::replacingMaskGeometryDropsItsAnimation()
 
     drift::Mask poly;
     poly.shape = drift::MaskShape::Freeform;
-    poly.points = {QPointF(0.2, 0.2), QPointF(0.8, 0.2), QPointF(0.5, 0.8)};
-    poly.pathKeys.insert(0, poly.points);
+    poly.vertices = drift::cornerVertices({QPointF(0.2, 0.2), QPointF(0.8, 0.2), QPointF(0.5, 0.8)});
+    poly.pathKeys.insert(0, poly.vertices);
     poly.pathKeys.insert(drift::secondsToUs(1.0),
-                         {QPointF(0.3, 0.2), QPointF(0.9, 0.2), QPointF(0.6, 0.8)});
+                         drift::cornerVertices({QPointF(0.3, 0.2), QPointF(0.9, 0.2), QPointF(0.6, 0.8)}));
     drift::setLinkedMask(*state.project(), 0, 0, poly);
     state.setClipKeyframe(0, 0, QStringLiteral("mask.feather"), 0.0, 2.0);
     state.setClipKeyframe(0, 0, QStringLiteral("mask.feather"), 1.0, 8.0);
@@ -13662,7 +14385,7 @@ void EditorStateTest::replacingMaskGeometryDropsItsAnimation()
     QCOMPARE(pinned.size(), 1);
     const drift::Mask &stored = state.project()->tracks().at(pinned.constFirst().trackIndex)
                                     .clips.at(pinned.constFirst().clipIndex).mask;
-    QCOMPARE(stored.points.size(), 5);
+    QCOMPARE(stored.vertices.size(), 5);
     QVERIFY(stored.pathKeys.isEmpty());
     QCOMPARE(stored.keyframes.value(QStringLiteral("feather")).keyframes().size(), 2);
 }
@@ -13718,23 +14441,23 @@ void EditorStateTest::freeformMaskPointsAreEditable()
     const auto points = [&state]() {
         const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
         if (pinned.isEmpty())
-            return QVector<QPointF>{};
+            return QVector<drift::ShapeVertex>{};
         return state.project()
             ->tracks()
             .at(pinned.constFirst().trackIndex)
             .clips.at(pinned.constFirst().clipIndex)
-            .mask.points;
+            .mask.vertices;
     };
 
     // Seeded from the rect it would have had, not left empty.
     QCOMPARE(points().size(), 4);
-    QCOMPARE(points().at(0), QPointF(0.2, 0.2));
-    QCOMPARE(points().at(2), QPointF(0.8, 0.8));
+    QCOMPARE(points().at(0).p, QPointF(0.2, 0.2));
+    QCOMPARE(points().at(2).p, QPointF(0.8, 0.8));
 
     // Splitting an edge inserts at the requested slot.
     state.insertMaskPoint(0, 0, 1, 0.5, 0.2);
     QCOMPARE(points().size(), 5);
-    QCOMPARE(points().at(1), QPointF(0.5, 0.2));
+    QCOMPARE(points().at(1).p, QPointF(0.5, 0.2));
 
     state.removeMaskPoint(0, 0, 1);
     QCOMPARE(points().size(), 4);
@@ -13911,7 +14634,7 @@ void EditorStateTest::droppingAMaskOnAClipStacksAndSelectsIt()
                                       .at(pinned.constLast().trackIndex)
                                       .clips.at(pinned.constLast().clipIndex);
     QCOMPARE(freeform.mask.shape, drift::MaskShape::Freeform);
-    QCOMPARE(freeform.mask.points.size(), 4);
+    QCOMPARE(freeform.mask.vertices.size(), 4);
 
     state.undo();
     QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 2);
@@ -14384,8 +15107,8 @@ void EditorStateTest::maskingPolygonMaskIsCreated()
     const drift::Mask &mask = state.project()->tracks().at(pinned.constFirst().trackIndex)
                                   .clips.at(pinned.constFirst().clipIndex).mask;
     QCOMPARE(mask.shape, drift::MaskShape::Freeform);
-    QCOMPARE(mask.points.size(), 3);
-    QCOMPARE(mask.points.at(2), QPointF(0.5, 0.8));
+    QCOMPARE(mask.vertices.size(), 3);
+    QCOMPARE(mask.vertices.at(2).p, QPointF(0.5, 0.8));
 }
 
 // The Shape picker owns one mask per clip: a new shape replaces it, and Original removes only it.
@@ -14413,7 +15136,7 @@ void EditorStateTest::clipShapeReplacesItsMaskAndOriginalRemovesOnlyIt()
     QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("hexagon"));
     QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 2);
     QCOMPARE(shapeMasks().size(), 1);
-    QCOMPARE(shapeMasks().constFirst().points.size(), 6);
+    QCOMPARE(shapeMasks().constFirst().vertices.size(), 6);
     QCOMPARE(shapeMasks().constFirst().op, drift::MaskOp::Intersect);
 
     for (const drift::ClipRef &ref : drift::linkedMaskAdjustments(*state.project(), 0, 0)) {
@@ -14508,10 +15231,10 @@ void EditorStateTest::maskingPathKeysAnimateShape()
                                     QVariantList{maskVertex(0.3, 0.2), maskVertex(0.9, 0.2),
                                                  maskVertex(0.6, 0.8)});
     QCOMPARE(maskOf().pathKeys.size(), 2);
-    const QVector<QPointF> halfway = maskOf().resolvedAt(drift::secondsToUs(0.5)).points;
+    const QVector<drift::ShapeVertex> halfway = maskOf().resolvedAt(drift::secondsToUs(0.5)).vertices;
     QCOMPARE(halfway.size(), 3);
-    QVERIFY(qFuzzyCompare(halfway.at(0).x(), 0.25));
-    QVERIFY(qFuzzyCompare(halfway.at(2).y(), 0.8));
+    QVERIFY(qFuzzyCompare(halfway.at(0).p.x(), 0.25));
+    QVERIFY(qFuzzyCompare(halfway.at(2).p.y(), 0.8));
 
     const QVariantList times = state.masking()->maskPathKeyTimes(track, clip);
     QCOMPARE(times.size(), 2);
@@ -14524,15 +15247,15 @@ void EditorStateTest::maskingPathKeysAnimateShape()
                                     QVariantList{maskVertex(0.4, 0.2), maskVertex(0.9, 0.2),
                                                  maskVertex(0.6, 0.8)});
     QCOMPARE(maskOf().pathKeys.size(), 2);
-    QCOMPARE(maskOf().pathKeys.last().at(0), QPointF(0.4, 0.2));
+    QCOMPARE(maskOf().pathKeys.last().at(0).p, QPointF(0.4, 0.2));
 
     state.masking()->removeMaskPathKey(track, clip, 1.0);
     QCOMPARE(maskOf().pathKeys.size(), 1);
 
-    const QVector<QPointF> remaining = maskOf().pathKeys.first();
+    const QVector<drift::ShapeVertex> remaining = maskOf().pathKeys.first();
     state.masking()->setMaskPathAnimated(track, clip, false);
     QCOMPARE(maskOf().pathKeys.size(), 0);
-    QVERIFY(maskOf().points == remaining);
+    QVERIFY(maskOf().vertices == remaining);
 }
 
 namespace {
@@ -14560,23 +15283,23 @@ void EditorStateTest::maskEditSessionMovesVertexOnStaticMask()
     QVERIFY(session->active());
     session->movePoint(0, 0.1, 0.3);
     QCOMPARE(session->livePoints().at(0), QPointF(0.1, 0.3));
-    QCOMPARE(pinnedMaskClip(state).mask.points.at(0), QPointF(0.1, 0.3));
-    QCOMPARE(pinnedMaskClip(state).mask.points.at(1), QPointF(0.8, 0.2));
+    QCOMPARE(pinnedMaskClip(state).mask.vertices.at(0).p, QPointF(0.1, 0.3));
+    QCOMPARE(pinnedMaskClip(state).mask.vertices.at(1).p, QPointF(0.8, 0.2));
     session->movePoint(7, 0.0, 0.0);
     session->commit();
     QVERIFY(!session->active());
-    QCOMPARE(pinnedMaskClip(state).mask.points.at(0), QPointF(0.1, 0.3));
+    QCOMPARE(pinnedMaskClip(state).mask.vertices.at(0).p, QPointF(0.1, 0.3));
 
     state.undo();
-    QCOMPARE(pinnedMaskClip(state).mask.points.at(0), QPointF(0.2, 0.2));
+    QCOMPARE(pinnedMaskClip(state).mask.vertices.at(0).p, QPointF(0.2, 0.2));
 
     state.redo();
     session->insertPoint(id, 1, 0.5, 0.1);
-    QCOMPARE(pinnedMaskClip(state).mask.points.size(), 4);
+    QCOMPARE(pinnedMaskClip(state).mask.vertices.size(), 4);
     session->removePoint(id, 1);
-    QCOMPARE(pinnedMaskClip(state).mask.points.size(), 3);
+    QCOMPARE(pinnedMaskClip(state).mask.vertices.size(), 3);
     session->removePoint(id, 0);
-    QCOMPARE(pinnedMaskClip(state).mask.points.size(), 3);
+    QCOMPARE(pinnedMaskClip(state).mask.vertices.size(), 3);
 }
 
 void EditorStateTest::maskEditSessionMovesVertexOnPathKeyedMask()
@@ -14597,8 +15320,125 @@ void EditorStateTest::maskEditSessionMovesVertexOnPathKeyedMask()
 
     const drift::Mask &mask = pinnedMaskClip(state).mask;
     QCOMPARE(mask.pathKeys.size(), 2);
-    QCOMPARE(mask.pathKeys.last().at(2), QPointF(0.6, 0.9));
-    QCOMPARE(mask.pathKeys.first().at(2), QPointF(0.5, 0.8));
+    QCOMPARE(mask.pathKeys.last().at(2).p, QPointF(0.6, 0.9));
+    QCOMPARE(mask.pathKeys.first().at(2).p, QPointF(0.5, 0.8));
+}
+
+void EditorStateTest::pathEditSessionEditsPathKeyedMaskOutline()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->addPolygonMask(0, 0, QVariantList{maskVertex(0.2, 0.2), maskVertex(0.8, 0.2),
+                                                       maskVertex(0.5, 0.8)});
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    state.masking()->setMaskPathAnimated(pinned.constFirst().trackIndex, pinned.constFirst().clipIndex, true);
+    state.setPlayheadSeconds(1.0);
+    PathEditSession *path = state.masking()->pathEdit();
+    const QString id = pinnedMaskClip(state).id;
+    QVERIFY(path->attachMask(id));
+    QCOMPARE(path->vertexCount(), 3);
+    path->setView({0, 0}, {1000, 0}, {1000, 500}, {0, 500}, 1000, 500);
+
+    // Moving a vertex writes the key at the playhead only; one undo step.
+    QCOMPARE(path->press({200, 100}, 0, 0, 1), QStringLiteral("vertex"));
+    path->move({300, 150}, 0);
+    QCOMPARE(path->release({300, 150}, 0), QStringLiteral("drag"));
+    QVERIFY(!state.drag()->interacting());
+    QCOMPARE(pinnedMaskClip(state).mask.pathKeys.size(), 2);
+    QCOMPARE(pinnedMaskClip(state).mask.pathKeys.last().at(0).p, QPointF(0.3, 0.3));
+    QCOMPARE(pinnedMaskClip(state).mask.pathKeys.first().at(0).p, QPointF(0.2, 0.2));
+    state.undo();
+    QCOMPARE(pinnedMaskClip(state).mask.pathKeys.last().at(0).p, QPointF(0.2, 0.2));
+    state.redo();
+
+    // A click on an edge inserts into every key.
+    QCOMPARE(path->press({550, 125}, 0, 0, 1), QStringLiteral("segment"));
+    QCOMPARE(path->release({550, 125}, 0), QStringLiteral("insert"));
+    for (const QVector<drift::ShapeVertex> &key : pinnedMaskClip(state).mask.pathKeys)
+        QCOMPARE(key.size(), 4);
+    QCOMPARE(pinnedMaskClip(state).mask.vertices.size(), 4);
+    QCOMPARE(path->vertexCount(), 4);
+
+    // Delete takes the selected (new) vertex out of every key; a triangle is the floor.
+    QCOMPARE(path->selectionCount(), 1);
+    QVERIFY(path->deleteSelected(true));
+    for (const QVector<drift::ShapeVertex> &key : pinnedMaskClip(state).mask.pathKeys)
+        QCOMPARE(key.size(), 3);
+    path->selectAll();
+    QVERIFY(!path->deleteSelected(false));
+    QCOMPARE(pinnedMaskClip(state).mask.vertices.size(), 3);
+
+    // Esc during a drag restores the project and leaves no undo entry.
+    const drift::Mask before = pinnedMaskClip(state).mask;
+    const int undoDepth = state.undoIndex();
+    QCOMPARE(path->press({300, 150}, 0, 0, 1), QStringLiteral("vertex"));
+    path->move({600, 400}, 0);
+    QVERIFY(state.drag()->interacting());
+    state.drag()->cancel();
+    QCOMPARE(state.undoIndex(), undoDepth);
+    QCOMPARE(pinnedMaskClip(state).mask.pathKeys, before.pathKeys);
+    path->release({600, 400}, 0);
+    path->detach();
+    QVERIFY(!path->attached());
+}
+
+void EditorStateTest::pathEditSessionEditsShapePathAndCancels()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addShapeClip(QStringLiteral("rectangle"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    state.convertShapeToPath(track, clip);
+    PathEditSession *path = state.masking()->pathEdit();
+    QVERIFY(path->attachShape(track, clip));
+    const int count = path->vertexCount();
+    QVERIFY(count >= 4);
+    path->setView({0, 0}, {400, 0}, {400, 400}, {0, 400}, 400, 400);
+    const auto shapeVertices = [&] {
+        return state.shapeContoursAt(track, clip).first().toMap().value("vertices").toList();
+    };
+
+    // A click on the outline's edge adds a point without changing the shape; Delete heals it away.
+    const QVariantMap top = path->hover({200, 0}, 0, 0);
+    QCOMPARE(top.value("kind").toString(), QStringLiteral("segment"));
+    QCOMPARE(top.value("cursor").toString(), QStringLiteral("penPlus"));
+    QCOMPARE(path->press({200, 0}, 0, 0, 1), QStringLiteral("segment"));
+    QCOMPARE(path->release({200, 0}, 0), QStringLiteral("insert"));
+    QCOMPARE(shapeVertices().size(), count + 1);
+    QVERIFY(path->deleteSelected(false));
+    QCOMPARE(shapeVertices().size(), count);
+    state.undo();
+    QCOMPARE(shapeVertices().size(), count + 1);
+    state.undo();
+    QCOMPARE(shapeVertices().size(), count);
+
+    // Converting a corner to a smooth point gives it handles.
+    path->setView({0, 0}, {400, 0}, {400, 400}, {0, 400}, 400, 400);
+    QVERIFY(path->reload());
+    path->clearSelection();
+    const QVariantMap corner = path->vertexList().first().toMap();
+    path->press({corner.value("x").toDouble(), corner.value("y").toDouble()}, int(Qt::AltModifier), 0, 1);
+    QCOMPARE(path->release({corner.value("x").toDouble(), corner.value("y").toDouble()}, int(Qt::AltModifier)),
+             QStringLiteral("convert"));
+    const QVariantMap smooth = shapeVertices().first().toMap();
+    QVERIFY(smooth.value("outX").toDouble() != 0.0 || smooth.value("outY").toDouble() != 0.0);
+    QCOMPARE(smooth.value("mode").toString(), QStringLiteral("mirrored"));
+
+    // Esc mid-drag: the shape is exactly as it was.
+    const QVariantList beforeDrag = state.shapeContoursAt(track, clip);
+    const int undoDepth = state.undoIndex();
+    const QVariantMap v0 = path->vertexList().first().toMap();
+    const QPointF at(v0.value("x").toDouble(), v0.value("y").toDouble());
+    QCOMPARE(path->press(at, 0, 0, 1), QStringLiteral("vertex"));
+    path->move(at + QPointF(60, 40), 0);
+    QVERIFY(state.drag()->interacting());
+    state.drag()->cancel();
+    QCOMPARE(state.undoIndex(), undoDepth);
+    QCOMPARE(state.shapeContoursAt(track, clip), beforeDrag);
+    path->release(at, 0);
+    path->detach();
 }
 
 void EditorStateTest::maskEditSessionMovesKeyframedRect()
@@ -14623,6 +15463,33 @@ void EditorStateTest::maskEditSessionMovesKeyframedRect()
     const drift::Mask &mask = pinnedMaskClip(state).mask;
     QVERIFY(qAbs(mask.resolvedAt(drift::secondsToUs(1.0)).x - 0.6) < 1e-9);
     QVERIFY(qAbs(mask.valueAt(QStringLiteral("x"), 0) - 0.2) < 1e-9);
+}
+
+void EditorStateTest::maskEditSessionResizeFromCenter()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->addShapeMask(0, 0, QStringLiteral("rectangle"), 0.5, 0.5, 0.2, 0.2);
+    MaskEditSession *session = state.masking()->editSession();
+    const QString id = pinnedMaskClip(state).id;
+
+    // Alt: the right grip moving 0.05 grows the width by 0.1 about the same centre.
+    QVERIFY(session->begin(id, 1000, 1000));
+    session->beginResize(1, 0, 0.6, 0.5);
+    session->resize(0.65, 0.5, false, false, true);
+    QVERIFY(qAbs(session->liveW() - 0.3) < 1e-9);
+    QVERIFY(qAbs(session->liveX() - 0.5) < 1e-9);
+    QVERIFY(qAbs(session->liveH() - 0.2) < 1e-9);
+    // A corner grows both axes symmetrically, from the size the previous grab left.
+    session->beginResize(1, 1, 0.6, 0.6);
+    session->resize(0.65, 0.65, false, false, true);
+    QVERIFY(qAbs(session->liveW() - 0.4) < 1e-9);
+    QVERIFY(qAbs(session->liveH() - 0.3) < 1e-9);
+    QVERIFY(qAbs(session->liveX() - 0.5) < 1e-9);
+    QVERIFY(qAbs(session->liveY() - 0.5) < 1e-9);
+    session->commit();
+    QVERIFY(qAbs(pinnedMaskClip(state).mask.w - 0.4) < 1e-9);
 }
 
 void EditorStateTest::maskEditSessionResizeRotateAndSnap()
@@ -14794,7 +15661,7 @@ void EditorStateTest::maskingInsertPointUpdatesPathKeys()
     state.insertMaskPoint(0, 0, 1, 0.5, 0.2);
 
     const drift::Mask &mask = state.project()->tracks().at(track).clips.at(clip).mask;
-    QCOMPARE(mask.points.size(), 4);
+    QCOMPARE(mask.vertices.size(), 4);
     QCOMPARE(mask.pathKeys.size(), 2);
     for (auto it = mask.pathKeys.constBegin(); it != mask.pathKeys.constEnd(); ++it)
         QCOMPARE(it.value().size(), 4);
@@ -16296,6 +17163,24 @@ void EditorStateTest::splitRightKeepsLinkedAudioInSync()
     }
 }
 
+// Ctrl suspends snapping on a trim: the preview and the commit both keep the raw edge.
+void EditorStateTest::edgeTrimSnapCanBeSuspended()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+    state.setSnapEnabled(true);
+    state.setPlayheadSeconds(2.5);
+
+    QCOMPARE(state.previewTrimRight(0, 0, 2.51).value(QStringLiteral("duration")).toDouble(), 2.5);
+    const QVariantMap raw = state.previewTrimRight(0, 0, 2.51, false);
+    QVERIFY(qAbs(raw.value(QStringLiteral("duration")).toDouble() - 2.51) < 1e-6);
+
+    state.beginTrimGesture(0, 0, 1);
+    state.commitTrim(0, 0, 1, 2.51, false);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(2.51));
+}
+
 // #249: dragging a clip edge with "Close gaps when trimming" on used to leave the gap behind.
 void EditorStateTest::edgeTrimRipplesFollowers()
 {
@@ -17090,10 +17975,10 @@ void EditorStateTest::trackingPlanarConvertsRectangleToFreeform()
     state.tracking()->setTarget(0, 0, id, maskId, QStringLiteral("mask"));
     const drift::Mask &mask = fx.clipById(maskId)->mask;
     QCOMPARE(mask.shape, drift::MaskShape::Freeform);
-    QCOMPARE(mask.points.size(), 4);
+    QCOMPARE(mask.vertices.size(), 4);
     QCOMPARE(mask.pathKeys.size(), 2);
-    QVERIFY(qAbs(mask.pathKeys.last().at(0).x() - (0.2 + 0.29)) < 1e-6);
-    QVERIFY(qAbs(mask.pathKeys.last().at(0).y() - 0.2) < 1e-6);
+    QVERIFY(qAbs(mask.pathKeys.last().at(0).p.x() - (0.2 + 0.29)) < 1e-6);
+    QVERIFY(qAbs(mask.pathKeys.last().at(0).p.y() - 0.2) < 1e-6);
 }
 
 void EditorStateTest::trackingCorrectPlanarCornersAwayFromReference()
@@ -18183,43 +19068,52 @@ void EditorStateTest::trackerShortcutsAreRegistered()
     QCoreApplication::setApplicationName(QStringLiteral("DriftTestTrackerShortcuts"));
     const auto restore = qScopeGuard([&] {
         QSettings().remove(QStringLiteral("shortcuts"));
+        QSettings().remove(QStringLiteral("keymap"));
         QCoreApplication::setOrganizationName(org);
         QCoreApplication::setApplicationName(app);
     });
     QSettings().remove(QStringLiteral("shortcuts"));
+    QSettings().remove(QStringLiteral("keymap"));
 
     AssetLibrary library;
     AppController state(&library);
-    QCOMPARE(state.shortcutFor(QStringLiteral("trackForward")), QStringLiteral("Ctrl+T"));
-    QCOMPARE(state.shortcutFor(QStringLiteral("trackBackward")), QStringLiteral("Ctrl+Shift+T"));
-    QCOMPARE(state.shortcutFor(QStringLiteral("trackFrameForward")), QStringLiteral("Ctrl+Shift+Right"));
-    QCOMPARE(state.shortcutFor(QStringLiteral("trackFrameBackward")), QStringLiteral("Ctrl+Shift+Left"));
-    QVERIFY(state.shortcutFor(QStringLiteral("trackBoth")).isEmpty());
+    QCOMPARE(state.shortcutFor(QStringLiteral("tracking.trackForward")), QStringLiteral("Ctrl+T"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("tracking.trackBackward")), QStringLiteral("Ctrl+Shift+T"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("tracking.trackFrameForward")), QStringLiteral("Ctrl+Shift+Right"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("tracking.trackFrameBackward")), QStringLiteral("Ctrl+Shift+Left"));
+    QVERIFY(state.shortcutFor(QStringLiteral("tracking.trackBoth")).isEmpty());
+    QCOMPARE(state.shortcutFor(QStringLiteral("tracking.trackerTool")), QStringLiteral("T"));
 
     QStringList registered;
     QSet<QString> trackerKeys;
     for (const QVariant &action : state.actions()) {
         const QVariantMap map = action.toMap();
         registered.append(map.value(QStringLiteral("id")).toString());
-        if (map.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("track")))
+        if (map.value(QStringLiteral("scope")).toString() == QLatin1String("tracking"))
             trackerKeys.insert(map.value(QStringLiteral("shortcut")).toString());
     }
-    for (const char *id : {"trackForward", "trackBackward", "trackFrameForward", "trackFrameBackward", "trackBoth"})
+    for (const char *id : {"tracking.trackForward", "tracking.trackBackward", "tracking.trackFrameForward",
+                           "tracking.trackFrameBackward", "tracking.trackBoth"})
         QVERIFY2(registered.contains(QLatin1String(id)), id);
     trackerKeys.remove(QString());
+    // Only the global scope has to stay clear of the tracker keys: a panel scope may reuse a chord.
     for (const QVariant &action : state.actions()) {
         const QVariantMap map = action.toMap();
-        if (map.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("track")))
+        if (map.value(QStringLiteral("scope")).toString() != QLatin1String("global"))
             continue;
         QVERIFY2(!trackerKeys.contains(map.value(QStringLiteral("shortcut")).toString()),
                  qPrintable(map.value(QStringLiteral("id")).toString()));
     }
 
-    QCOMPARE(state.actionForArrowChord(Qt::Key_Right, Qt::ControlModifier | Qt::ShiftModifier),
-             QStringLiteral("trackFrameForward"));
-    QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier | Qt::ShiftModifier),
-             QStringLiteral("trackFrameBackward"));
+    const auto trackerAction = [&state](int key, Qt::KeyboardModifiers mods) {
+        return state.keymap()->actionFor(QStringLiteral("tracking"), state.shortcutChord(key, int(mods)));
+    };
+    QCOMPARE(trackerAction(Qt::Key_Right, Qt::ControlModifier | Qt::ShiftModifier),
+             QStringLiteral("tracking.trackFrameForward"));
+    QCOMPARE(trackerAction(Qt::Key_Left, Qt::ControlModifier | Qt::ShiftModifier),
+             QStringLiteral("tracking.trackFrameBackward"));
     QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier), QStringLiteral("jumpBackFar"));
+    QVERIFY(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier | Qt::ShiftModifier).isEmpty());
 }
 
 // Every action the keymap page lists has to be bindable. setShortcut() refuses an id that
@@ -18234,10 +19128,12 @@ void EditorStateTest::everyListedActionCanBeBound()
     QCoreApplication::setApplicationName(QStringLiteral("DriftTestBindableActions"));
     const auto restore = qScopeGuard([&] {
         QSettings().remove(QStringLiteral("shortcuts"));
+        QSettings().remove(QStringLiteral("keymap"));
         QCoreApplication::setOrganizationName(org);
         QCoreApplication::setApplicationName(app);
     });
     QSettings().remove(QStringLiteral("shortcuts"));
+    QSettings().remove(QStringLiteral("keymap"));
 
     AssetLibrary library;
     AppController state(&library);

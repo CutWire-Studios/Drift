@@ -16,11 +16,6 @@ Item {
     property var formatTimecode: function (seconds) { return "" }
     signal fullscreenRequested()
 
-    function withShortcut(label, actionId) {
-        const key = EditorState.shortcutFor(actionId)
-        return key.length > 0 ? qsTr("%1 (%2)").arg(label).arg(key) : label
-    }
-
     implicitHeight: Theme.iconButtonSize + Theme.previewTransportPadding * 2
 
     ThemeSlot {
@@ -58,20 +53,24 @@ Item {
             spacing: Theme.spacingXs
 
             PreviewTransportGoToStartButton {
-                shortcutTip: bar.withShortcut(qsTr("Go to start"), "goToStart")
+                shortcutTip: qsTr("Go to start")
+                shortcutActionId: "goToStart"
             }
             PreviewTransportRewindButton { }
             PreviewTransportStepBackButton {
-                shortcutTip: bar.withShortcut(qsTr("Previous frame"), "stepBack")
+                shortcutTip: qsTr("Previous frame")
+                shortcutActionId: "stepBack"
             }
             PreviewTransportPlayButton { }
             PreviewTransportStepForwardButton {
-                shortcutTip: bar.withShortcut(qsTr("Next frame"), "stepForward")
+                shortcutTip: qsTr("Next frame")
+                shortcutActionId: "stepForward"
             }
             PreviewTransportLoopButton { }
             PreviewTransportFastForwardButton { }
             PreviewTransportGoToEndButton {
-                shortcutTip: bar.withShortcut(qsTr("Go to end"), "goToEnd")
+                shortcutTip: qsTr("Go to end")
+                shortcutActionId: "goToEnd"
             }
         }
 

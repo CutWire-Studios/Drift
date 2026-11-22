@@ -92,7 +92,25 @@ PanelFrame {
     }
 
     onHasClipChanged: refreshDuck()
-    Component.onCompleted: refreshDuck()
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "audioMixer")
+            return
+        ShellBridge.panelRequest = null
+        if (request.track === undefined || EditorState.selectedTrack === request.track)
+            return
+        const box = EditorState.preview.clipsAtPlayhead().find(b => b.track === request.track)
+        if (box)
+            EditorState.selectClip(box.track, box.clip)
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+    Component.onCompleted: {
+        refreshDuck()
+        applyPanelRequest()
+    }
 
     Connections {
         target: EditorState.audioAlign

@@ -21,6 +21,9 @@ class KeyframeCurvesModel : public QObject
 
     Q_PROPERTY(KeyframeRowsModel *rowsModel READ rowsModel WRITE setRowsModel NOTIFY rowsModelChanged)
     Q_PROPERTY(KeyframeSelection *selection READ selection WRITE setSelection NOTIFY selectionChanged)
+    // Series maps as KeyframeCurves::toMap gives them, each on its own axis (`valueMin`..`valueMax`), in
+    // place of the ones the rows produce. Set to a list (even an empty one) to replace the rows.
+    Q_PROPERTY(QVariantList externalSeries READ externalSeries WRITE setExternalSeries NOTIFY externalSeriesChanged)
     Q_PROPERTY(bool normalize READ normalize WRITE setNormalize NOTIFY inputsChanged)
     Q_PROPERTY(QVariantMap curveShown READ curveShown WRITE setCurveShown NOTIFY inputsChanged)
     Q_PROPERTY(QString focusedProp READ focusedProp WRITE setFocusedProp NOTIFY changed)
@@ -46,6 +49,8 @@ public:
     void setRowsModel(KeyframeRowsModel *rows);
     KeyframeSelection *selection() const { return m_selection; }
     void setSelection(KeyframeSelection *selection);
+    QVariantList externalSeries() const { return m_externalList; }
+    void setExternalSeries(const QVariantList &series);
     bool normalize() const { return m_normalize; }
     void setNormalize(bool normalize);
     QVariantMap curveShown() const { return m_curveShown; }
@@ -86,26 +91,13 @@ public:
 
     Q_INVOKABLE double screenY(double value, int seriesIndex) const;
     Q_INVOKABLE double valueForY(double y, int seriesIndex) const;
-    // {row, dot, refs, seconds, value, label, entryIndex}; `dot` is null when no key is within `slop`.
-    Q_INVOKABLE QVariantMap hitTest(double x, double y, double slop) const;
-    Q_INVOKABLE QVariantList marqueeRefs(double x0, double x1, double y0, double y1, const QVariantList &base) const;
-    // The refs with the value offset a vertical drag of `dy` px gives each, from the locked axes.
-    Q_INVOKABLE QVariantList dragRefs(const QVariantList &refs, double dy) const;
+    // The value a vertical drag of `dy` px gives a property, from the locked axes; 0 when not locked.
     Q_INVOKABLE double valueDelta(const QString &prop, double dy) const;
-    // The shown handle under the pointer: {entryIndex, outgoing, point, dx, value} with the handle's
-    // offset in seconds and its value, or an empty map.
-    Q_INVOKABLE QVariantMap handleAt(double x, double y, double radius) const;
-    // The handle-shaped segment under the pointer, the focused curve first: {entryIndex, t, a, b}
-    // with its bezier parameter and its two keys, or an empty map. Holds and Penner presets have none.
-    Q_INVOKABLE QVariantMap segmentAt(double x, double y, double slop) const;
-    // KeyframeCurves::withHandle / deformSegment on point maps; deformSegment returns [a, b].
-    Q_INVOKABLE QVariantMap moveHandle(const QVariantMap &point, bool outgoing, double dx, double value) const;
-    Q_INVOKABLE QVariantList deformSegment(const QVariantMap &a, const QVariantMap &b, double t, double dSeconds,
-                                           double dValue) const;
 
 signals:
     void rowsModelChanged();
     void selectionChanged();
+    void externalSeriesChanged();
     void inputsChanged();
     void layoutChanged();
     void changed();
@@ -115,11 +107,12 @@ private:
     void applyRanges();
     void setRange(const KeyframeCurves::Range &range);
     const KeyframeCurves::Series *focusedSeries() const;
-    double xFor(double seconds) const;
     bool selected(const QString &prop, double seconds) const;
 
     QPointer<KeyframeRowsModel> m_rows;
     QPointer<KeyframeSelection> m_selection;
+    QVariantList m_externalList;
+    bool m_external = false;
     bool m_normalize = false;
     QVariantMap m_curveShown;
     QString m_focusedProp;

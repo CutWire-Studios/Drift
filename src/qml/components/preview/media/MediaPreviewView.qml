@@ -402,12 +402,12 @@ Item {
     }
 
     Shortcut {
-        sequence: "Space"
+        sequences: Theme.shortcutSequences("mediaPreview.playPause")
         enabled: root.shortcutsEnabled && root.page === 0
         onActivated: root.togglePlay()
     }
     Shortcut {
-        sequence: "I"
+        sequences: Theme.shortcutSequences("mediaPreview.markIn")
         enabled: root.shortcutsEnabled && root.canTrim && !root.saving && root.page === 0
         onActivated: {
             root.inSeconds = Math.max(0, root.position)
@@ -415,7 +415,7 @@ Item {
         }
     }
     Shortcut {
-        sequence: "O"
+        sequences: Theme.shortcutSequences("mediaPreview.markOut")
         enabled: root.shortcutsEnabled && root.canTrim && !root.saving && root.page === 0
         onActivated: {
             root.outSeconds = Math.max(root.inSeconds, root.position)
@@ -509,51 +509,20 @@ Item {
                 width: still.paintedWidth
                 height: still.paintedHeight
 
-                readonly property real frameX: root.cropX * width
-                readonly property real frameY: root.cropY * height
-                readonly property real frameW: root.cropW * width
-                readonly property real frameH: root.cropH * height
-                readonly property real minFrac: 0.08
-
-                function setCrop(nx, ny, nw, nh) {
-                    const min = cropHost.minFrac
-                    nw = Math.max(min, Math.min(1, nw))
-                    nh = Math.max(min, Math.min(1, nh))
-                    nx = Math.max(0, Math.min(1 - nw, nx))
-                    ny = Math.max(0, Math.min(1 - nh, ny))
-                    root.straightenBase = null
-                    root.cropX = nx
-                    root.cropY = ny
-                    root.cropW = nw
-                    root.cropH = nh
-                }
-
-                // Dim outside the keep-rect.
-                MediaPreviewCropScrim {
-                    host: cropHost
-                }
-
-                MediaPreviewCropFrame {
-                    host: cropHost
-                    editor: root
-                    editing: !root.saving
-                }
-
-                Repeater {
-                    model: [
-                        { x: 0, y: 0, dx: -1, dy: -1 },
-                        { x: 0.5, y: 0, dx: 0, dy: -1 },
-                        { x: 1, y: 0, dx: 1, dy: -1 },
-                        { x: 0, y: 0.5, dx: -1, dy: 0 },
-                        { x: 1, y: 0.5, dx: 1, dy: 0 },
-                        { x: 0, y: 1, dx: -1, dy: 1 },
-                        { x: 0.5, y: 1, dx: 0, dy: 1 },
-                        { x: 1, y: 1, dx: 1, dy: 1 }
-                    ]
-                    MediaPreviewCropGrip {
-                        host: cropHost
-                        editor: root
-                        editing: !root.saving
+                CropFrame {
+                    anchors.fill: parent
+                    spaceSize: Qt.size(1, 1)
+                    contentSize: Qt.size(Math.max(1, root.displayW), Math.max(1, root.displayH))
+                    crop: Qt.rect(root.cropX, root.cropY, root.cropW, root.cropH)
+                    aspect: root.cropRatioLocked ? root.displayW / Math.max(1, root.displayH) : 0
+                    minSize: 0.08
+                    editable: !root.saving
+                    onEdited: (c) => {
+                        root.straightenBase = null
+                        root.cropX = c.x
+                        root.cropY = c.y
+                        root.cropW = c.width
+                        root.cropH = c.height
                     }
                 }
             }

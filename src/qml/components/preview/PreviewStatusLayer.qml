@@ -59,7 +59,7 @@ Item {
         Text {
             id: bakeBadgeLabel
             anchors.centerIn: parent
-            text: bakeBadge.stale ? qsTr("Stale bake") : qsTr("Baked")
+            text: bakeBadge.stale ? qsTr("Stale pre-render") : qsTr("Pre-rendered")
             color: Theme.c.previewBakeBadge.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeTiny

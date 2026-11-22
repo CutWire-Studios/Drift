@@ -30,7 +30,7 @@ Rectangle {
             x: modelData.in * root.pxPerSecond
             width: Math.max(2, (modelData.out - modelData.in) * root.pxPerSecond)
             height: parent.height
-            color: Qt.rgba(tint.r, tint.g, tint.b, Theme.c.sourceLabStrip.rangeOpacity)
+            color: Qt.alpha(tint, Theme.c.sourceLabStrip.rangeOpacity)
         }
     }
 
@@ -69,9 +69,8 @@ Rectangle {
         x: root.panel.viewStart * root.pxPerSecond
         width: Math.max(4, root.panel.viewDur * root.pxPerSecond)
         height: parent.height
-        color: Qt.rgba(Theme.c.sourceLabStrip.windowFill.r, Theme.c.sourceLabStrip.windowFill.g,
-                       Theme.c.sourceLabStrip.windowFill.b, Theme.c.sourceLabStrip.windowFillOpacity)
-        border.width: 1
+        color: Qt.alpha(Theme.c.sourceLabStrip.windowFill, Theme.c.sourceLabStrip.windowFillOpacity)
+        border.width: Theme.c.sourceLabStrip.windowBorderWidth
         border.color: Theme.c.sourceLabStrip.windowBorder
         z: 2
     }

@@ -2,6 +2,7 @@
   "id": "droste_zoom",
   "displayName": "Infinite Zoom",
   "category": "glitch",
+  "keywords": ["infinite zoom", "tunnel", "recursive zoom", "endless"],
   "thumbnail": "thumbnail.webp",
   "order": 390,
   "parameters": [

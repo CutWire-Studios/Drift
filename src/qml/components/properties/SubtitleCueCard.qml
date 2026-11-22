@@ -17,7 +17,7 @@ Item {
     Rectangle {
         id: card
         width: parent.width
-        height: lineCol.implicitHeight + 14
+        height: Math.max(lineCol.implicitHeight + 14, Theme.touchInput && Theme.compact ? Theme.androidRowHeight : 0)
         radius: Theme.c.subtitleCueCard.radius
         color: cueDelegate.isSelected ? Theme.c.subtitleCueCard.backgroundSelected : (rowHover.containsMouse ? Theme.c.subtitleCueCard.backgroundHover : "transparent")
         border.width: (cueDelegate.isSelected || cueDelegate.isActive || rowHover.containsMouse) ? Theme.c.subtitleCueCard.borderWidth : 0
@@ -41,7 +41,7 @@ Item {
         Column {
             id: lineCol
             x: 12
-            y: 7
+            anchors.verticalCenter: parent.verticalCenter
             // The bin's slot is reserved even while it is hidden, so the wrapped
             // caption text doesn't reflow as the pointer moves down the list.
             width: parent.width - 24 - deleteButton.width
@@ -51,8 +51,8 @@ Item {
                 text: editor.formatCueTime(cueDelegate.start) + "  →  "
                       + editor.formatCueTime(cueDelegate.end)
                 color: Theme.c.subtitleCueCard.foregroundMuted
-                font.family: Theme.monoFontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.family: Theme.touchInput && Theme.compact ? Theme.fontFamily : Theme.monoFontFamily
+                font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
                 opacity: (cueDelegate.isActive || cueDelegate.isSelected) ? 0.95 : (rowHover.containsMouse ? 0.85 : 0.65)
                 Behavior on opacity { NumberAnimation { duration: 150 } }
             }
@@ -96,7 +96,7 @@ Item {
         id: addRow
         anchors.top: card.bottom
         width: parent.width
-        height: 30
+        height: Theme.touchInput && Theme.compact ? Theme.androidRowHeight : 30
         visible: cueDelegate.isSelected
 
         IconButton {

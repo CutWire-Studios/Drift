@@ -150,16 +150,26 @@ PanelFrame {
     }
 
     readonly property var focusItem: Window.activeFocusItem
-    readonly property bool wantsActions: shown && isSubtitle && (activeFocus || hover.hovered)
+    readonly property bool focusWithin: ShellBridge.focusWithin(root, focusItem)
+    readonly property bool wantsActions: shown && isSubtitle && (focusWithin || hover.hovered)
 
     function textFieldFocused() {
         const f = focusItem
         return !!f && f.cursorPosition !== undefined
     }
 
-    function handleAction(id) {
+    function handleAction(id, force) {
         if (!shown || !isSubtitle || textFieldFocused())
             return false
+        if (id.startsWith("subtitles.")) {
+            if (!(force || focusWithin))
+                return false
+            if (id === "subtitles.findCues")
+                return false
+            const step = id.endsWith("Coarse") ? 0.1 : 1 / Math.max(1, EditorState.subtitles.projectFps())
+            root.nudgeSelected((id.indexOf("Left") >= 0 ? -1 : 1) * step)
+            return true
+        }
         if (id === "selectAll") {
             EditorState.subtitles.selectAll(track, clipIndex)
             return true
@@ -171,16 +181,15 @@ PanelFrame {
         return false
     }
 
+    readonly property string scope: "subtitles"
+    readonly property int priority: 4
     onWantsActionsChanged: {
         if (wantsActions)
-            ShellBridge.subtitleActionHandler = root
-        else if (ShellBridge.subtitleActionHandler === root)
-            ShellBridge.subtitleActionHandler = null
+            ShellBridge.registerActionHandler(root)
+        else
+            ShellBridge.unregisterActionHandler(root)
     }
-    Component.onDestruction: {
-        if (ShellBridge.subtitleActionHandler === root)
-            ShellBridge.subtitleActionHandler = null
-    }
+    Component.onDestruction: ShellBridge.unregisterActionHandler(root)
 
     HoverHandler { id: hover }
 
@@ -203,12 +212,8 @@ PanelFrame {
     Keys.onPressed: (event) => {
         if (!root.isSubtitle)
             return
-        const mods = event.modifiers
         if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace) {
             root.deleteSelected()
-            event.accepted = true
-        } else if (event.key === Qt.Key_A && (mods & Qt.ControlModifier)) {
-            EditorState.subtitles.selectAll(root.track, root.clipIndex)
             event.accepted = true
         } else if (event.key === Qt.Key_Escape) {
             if (!view.surface.busy)
@@ -216,11 +221,10 @@ PanelFrame {
             else
                 view.surface.cancelGesture()
             event.accepted = true
-        } else if ((event.key === Qt.Key_Left || event.key === Qt.Key_Right) && (mods & Qt.AltModifier)) {
-            const step = (mods & Qt.ShiftModifier) ? 0.1
-                                                   : 1 / Math.max(1, EditorState.subtitles.projectFps())
-            root.nudgeSelected((event.key === Qt.Key_Left ? -1 : 1) * step)
-            event.accepted = true
+        } else {
+            const id = ShellBridge.scopedAction("subtitles", event)
+            if (id !== "" && root.handleAction(id, true))
+                event.accepted = true
         }
     }
 

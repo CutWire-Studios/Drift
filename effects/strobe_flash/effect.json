@@ -2,6 +2,7 @@
   "id": "strobe_flash",
   "displayName": "Strobe",
   "category": "impact",
+  "keywords": ["flash", "strobe", "flicker", "white flash", "blink"],
   "thumbnail": "thumbnail.webp",
   "order": 90,
   "parameters": [

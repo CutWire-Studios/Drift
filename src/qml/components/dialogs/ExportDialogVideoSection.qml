@@ -11,6 +11,7 @@ Column {
     property alias audioCodecCombo: audioCodecCombo
     property alias audioBitrateCombo: audioBitrateCombo
     property alias presetCombo: presetCombo
+    readonly property bool phone: Theme.touchInput && Theme.compact
 
     width: parent.width
     spacing: Theme.spacingXl
@@ -21,7 +22,54 @@ Column {
     ThemedLabel {
         width: parent.width
         size: "sm"
+        visible: !section.phone
         text: qsTr("Saves what you see in the preview. Pick a size — the picture shape stays the same.")
+    }
+
+    Column {
+        width: parent.width
+        spacing: Theme.spacingSm
+
+        ThemedLabel {
+            text: qsTr("Format")
+        }
+
+        ThemedLabel {
+            width: parent.width
+            size: "sm"
+            wrapMode: Text.WordWrap
+            text: {
+                void EditorState.tracksRevision
+                return (section.phone ? qsTr("%1×%2") : qsTr("%1×%2. Vertical for TikTok, Reels and Shorts, wide for YouTube."))
+                    .arg(EditorState.projectFile.projectWidth()).arg(EditorState.projectFile.projectHeight())
+            }
+        }
+
+        Row {
+            spacing: Theme.spacingMd
+
+            ThemedButton {
+                text: qsTr("Choose layout…")
+                tooltip: qsTr("Pick a platform template (YouTube, Instagram, TikTok, …) and quality")
+                onClicked: {
+                    dialog.close()
+                    ShellBridge.main.openLayoutChooser()
+                }
+            }
+
+            ThemedButton {
+                readonly property var timeline: ShellBridge.main ? ShellBridge.main.timelinePanel : null
+                visible: !!timeline
+                enabled: EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
+                text: qsTr("Auto reframe…")
+                tooltip: enabled ? qsTr("Crop the selected clip to follow its subject in a new shape")
+                                 : qsTr("Select a video clip on the timeline first")
+                onClicked: {
+                    dialog.close()
+                    timeline.requestAutoReframe(EditorState.selectedTrack, EditorState.selectedClip)
+                }
+            }
+        }
     }
 
     ThemedLabel {
@@ -37,7 +85,8 @@ Column {
 
             delegate: ThemedChip {
                 required property var modelData
-                text: modelData.label
+                width: section.phone ? Math.floor((parent.width - Theme.spacingMd) / 2) : implicitWidth
+                text: (Theme.touchInput && Theme.compact) ? modelData.label.replace(" · ", "\n") : modelData.label
                 selected: dialog.scaleId === modelData.id
                 tooltip: qsTr("Export at %1×%2").arg(modelData.width).arg(modelData.height)
                 onClicked: {
@@ -94,26 +143,27 @@ Column {
             width: parent.width
             size: "sm"
             visible: dialog.fpsNum > 0
-            height: visible ? implicitHeight : 0
-            text: qsTr("Exporting above the project rate pulls extra frames from the source footage where it has them — this is what makes slowed clips look smooth. Where it doesn't, frames repeat.")
+            text: section.phone ? qsTr("Above the project rate, extra frames come from the source footage, which keeps slowed clips smooth.")
+                                : qsTr("Exporting above the project rate pulls extra frames from the source footage where it has them — this is what makes slowed clips look smooth. Where it doesn't, frames repeat.")
         }
     }
 
     ThemedLabel {
         width: parent.width
         size: "sm"
-        visible: dialog.currentVideoCodec && dialog.currentVideoCodec.hardware
+        visible: !!(dialog.currentVideoCodec && dialog.currentVideoCodec.hardware)
         text: qsTr("Hardware-accelerated export: %1").arg(dialog.currentVideoCodec.label || "")
     }
 
     Item {
         width: parent.width
-        height: advancedHeader.implicitHeight
+        height: section.phone ? Theme.androidRowHeight : advancedHeader.implicitHeight
 
         Row {
             id: advancedHeader
             spacing: Theme.spacingSm
             anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
 
             IconGlyph {
                 anchors.verticalCenter: parent.verticalCenter
@@ -194,10 +244,14 @@ Column {
             visible: !dialog.videoLossless
 
             Row {
+                id: rateRow
+                width: parent.width
                 spacing: Theme.spacingMd
+                readonly property real halfWidth: section.phone ? Math.floor((width - spacing) / 2) : -1
 
                 ThemedToggleButton {
-                    text: qsTr("Constant Quality")
+                    width: rateRow.halfWidth > 0 ? rateRow.halfWidth : implicitWidth
+                    text: section.phone ? qsTr("Quality") : qsTr("Constant Quality")
                     checked: dialog.rateControl === "crf"
                     enabled: dialog.videoSupportsCrf
                     onClicked: {
@@ -207,6 +261,7 @@ Column {
                 }
 
                 ThemedToggleButton {
+                    width: rateRow.halfWidth > 0 ? rateRow.halfWidth : implicitWidth
                     text: qsTr("Bitrate")
                     checked: dialog.rateControl === "bitrate"
                     enabled: dialog.videoSupportsBitrate

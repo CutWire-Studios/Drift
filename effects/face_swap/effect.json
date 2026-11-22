@@ -2,6 +2,7 @@
   "id": "face_swap",
   "displayName": "Face Swap",
   "category": "funny",
+  "keywords": ["swap faces", "deepfake", "replace face"],
   "thumbnail": "thumbnail.webp",
   "order": 620,
   "backend": "faceswap",

@@ -2,6 +2,7 @@
   "id": "spin_blur",
   "displayName": "Spin Blur",
   "category": "impact",
+  "keywords": ["radial blur", "rotate", "blur", "spin", "whirl"],
   "thumbnail": "thumbnail.webp",
   "order": 85,
   "parameters": [

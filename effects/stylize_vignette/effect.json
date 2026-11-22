@@ -2,6 +2,7 @@
   "id": "stylize.vignette",
   "displayName": "Vignette",
   "category": "dreamy",
+  "keywords": ["dark corners", "edges", "focus", "vignette", "frame"],
   "thumbnail": "thumbnail.webp",
   "order": 110,
   "parameters": [

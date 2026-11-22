@@ -10,6 +10,6 @@ Rectangle {
     height: Theme.timelineBookmarkRowHeight
     x: EditorState.workAreaInSeconds * pxPerSecond
     width: Math.max(0, (EditorState.workAreaOutSeconds - EditorState.workAreaInSeconds) * pxPerSecond)
-    color: Qt.rgba(Theme.c.timelineBookmarkLaneHighlight.background.r, Theme.c.timelineBookmarkLaneHighlight.background.g, Theme.c.timelineBookmarkLaneHighlight.background.b, 0.18)
+    color: Qt.alpha(Theme.c.timelineBookmarkLaneHighlight.background, Theme.c.timelineBookmarkLaneHighlight.backgroundOpacity)
     z: 1
 }

@@ -12,6 +12,9 @@ Item {
     property bool canAdvance: true
     property string nextLabel: ""
     property real contentMaxWidth: 720
+    // Onboarding art, drawn above the title. Empty until the illustration batch lands; the
+    // glyph badge shows instead.
+    property Component illustration: null
     readonly property bool mobile: Window.window ? Window.window.shellPreference === "mobile" : false
 
     default property alias content: contentColumn.data
@@ -38,13 +41,22 @@ Item {
             bottomPadding: Theme.spacing2xl
             spacing: Theme.spacingLg
 
+            Loader {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: Math.min(root.mobile ? 240 : 320, body.width)
+                height: width * 3 / 4
+                active: root.illustration !== null
+                visible: active
+                sourceComponent: root.illustration
+            }
+
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: root.mobile ? 88 : 72
                 height: width
-                radius: width / 2
+                radius: Theme.radiusPill
                 color: Theme.c.quickSetup.iconBackground
-                visible: root.glyph.length > 0
+                visible: root.glyph.length > 0 && root.illustration === null
 
                 IconGlyph {
                     anchors.centerIn: parent

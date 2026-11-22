@@ -19,7 +19,8 @@ PanelFrame {
     readonly property bool hasAsset: root.lab.currentAssetId.length > 0
     readonly property bool useTimecode: root.lab.kind !== "audio"
     readonly property real fps: root.lab.fps > 0 ? root.lab.fps : 30
-    readonly property bool wantsActions: root.shown && (list.activeFocus || hover.hovered)
+    readonly property var focusItem: Window.activeFocusItem
+    readonly property bool wantsActions: root.shown && (ShellBridge.focusWithin(root, focusItem) || hover.hovered)
 
     readonly property var rows: {
         const out = []
@@ -134,16 +135,15 @@ PanelFrame {
         return true
     }
 
+    readonly property string scope: "global"
+    readonly property int priority: 6
     onWantsActionsChanged: {
         if (root.wantsActions)
-            ShellBridge.sourceLabRangesHandler = root
-        else if (ShellBridge.sourceLabRangesHandler === root)
-            ShellBridge.sourceLabRangesHandler = null
+            ShellBridge.registerActionHandler(root)
+        else
+            ShellBridge.unregisterActionHandler(root)
     }
-    Component.onDestruction: {
-        if (ShellBridge.sourceLabRangesHandler === root)
-            ShellBridge.sourceLabRangesHandler = null
-    }
+    Component.onDestruction: ShellBridge.unregisterActionHandler(root)
 
     Connections {
         target: root.lab
@@ -219,17 +219,22 @@ PanelFrame {
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: AppScrollBar { }
 
+        // The scope's keys are not app-wide shortcuts (Backspace would take the key from every other
+        // item), so the list claims them from the shortcut matcher while it has focus.
+        Keys.onShortcutOverride: event => {
+            if (root.editingId.length === 0 && ShellBridge.scopedAction("sourceLabRanges", event) !== "")
+                event.accepted = true
+        }
         Keys.onPressed: event => {
             if (root.editingId.length > 0)
                 return
-            const shift = event.modifiers & Qt.ShiftModifier
-            if (event.key === Qt.Key_F && !event.modifiers) {
+            const id = ShellBridge.scopedAction("sourceLabRanges", event)
+            if (id === "sourceLabRanges.favoriteRange") {
                 root.toggleRating(1)
-            } else if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace) {
-                if (shift)
-                    root.removeSelected()
-                else
-                    root.toggleRating(-1)
+            } else if (id === "sourceLabRanges.rejectRange") {
+                root.toggleRating(-1)
+            } else if (id === "sourceLabRanges.removeRange") {
+                root.removeSelected()
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
                        || event.key === Qt.Key_F2) {
                 root.renameSelected()

@@ -12,7 +12,7 @@ Rectangle {
     y: parent.height / 2 - height / 2
     width: zone.fraction * parent.width
     height: zone.fraction * parent.height
-    radius: Math.min(width, height) / 2
+    radius: Theme.radiusPill
     color: "transparent"
     border.width: Theme.c.preview3DFlyDeadZone.borderWidth
     border.color: zone.steering ? Theme.c.preview3DFlyDeadZone.borderActive : Theme.c.preview3DFlyDeadZone.border

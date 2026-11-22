@@ -2,6 +2,7 @@
   "id": "bokeh_dream",
   "displayName": "Bokeh Dream",
   "category": "dreamy",
+  "keywords": ["dreamy", "soft focus", "bokeh", "lights", "blur", "highlights"],
   "thumbnail": "thumbnail.webp",
   "order": 195,
   "parameters": [

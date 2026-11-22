@@ -2,6 +2,7 @@
   "id": "cinematic_grade",
   "displayName": "Cinematic",
   "category": "retro",
+  "keywords": ["movie look", "film look", "teal orange", "color grade", "cinematic"],
   "thumbnail": "thumbnail.webp",
   "order": 255,
   "parameters": [

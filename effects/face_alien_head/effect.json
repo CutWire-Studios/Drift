@@ -2,6 +2,7 @@
   "id": "face_alien_head",
   "displayName": "Alien Head",
   "category": "funny",
+  "keywords": ["alien", "funny face", "big head", "stretch"],
   "thumbnail": "thumbnail.webp",
   "order": 640,
   "requires": "face",

@@ -2,38 +2,40 @@ import QtQuick
 import QtQuick.Controls.Basic
 import Drift
 
-// The app-level Settings menu: the infrequent project tools, help, and the full Settings dialog.
-// None of it needs a project, so the editor header and the start screen both offer it; each wires
-// the signals to its own window.
+// The app-level Help menu. None of it needs a project, so the editor header and the start
+// screen both offer it; each wires the signals to its own window.
 ThemedContextMenu {
     id: root
     implicitWidth: 248
 
-    // Multicam acts on the open timeline; the start screen has none.
-    property bool projectTools: true
-
-    signal multicamRequested()
-    signal moreSettingsRequested()
     signal helpRequested()
-
-    // Infrequent tools. They were icon-only header buttons of their own,
-    // unlabelled and easy to hit by accident next to Export.
-    ThemedMenuItem {
-        visible: root.projectTools
-        text: qsTr("Multicam")
-        icon.name: Theme.icons.shuffle
-        onTriggered: root.multicamRequested()
-    }
+    signal shortcutsRequested()
+    signal updatesRequested()
+    signal debugInfoRequested()
+    signal aboutRequested()
 
     ThemedMenuItem {
-        text: qsTr("Help…")
+        text: qsTr("Help")
         icon.name: Theme.icons.help
         onTriggered: root.helpRequested()
     }
 
     ThemedMenuItem {
-        text: qsTr("Save diagnostics…")
+        text: qsTr("Keyboard shortcuts")
+        icon.name: Theme.icons.keyboard
+        shortcutId: "openKeymap"
+        onTriggered: root.shortcutsRequested()
+    }
+
+    ThemedMenuItem {
+        text: qsTr("Check for updates…")
         icon.name: Theme.icons.download
+        onTriggered: root.updatesRequested()
+    }
+
+    ThemedMenuItem {
+        text: qsTr("Save diagnostics…")
+        icon.name: Theme.icons.fileText
         onTriggered: {
             CrashReports.saveDiagnostics()
             if (CrashReports.saveMessage.length > 0)
@@ -41,11 +43,17 @@ ThemedContextMenu {
         }
     }
 
+    ThemedMenuItem {
+        text: qsTr("Debug info…")
+        icon.name: Theme.icons.bug
+        onTriggered: root.debugInfoRequested()
+    }
+
     ThemedMenuSeparator { }
 
     ThemedMenuItem {
-        text: qsTr("Settings…")
-        icon.name: Theme.icons.sliders
-        onTriggered: root.moreSettingsRequested()
+        text: qsTr("About Drift")
+        icon.name: Theme.icons.info
+        onTriggered: root.aboutRequested()
     }
 }

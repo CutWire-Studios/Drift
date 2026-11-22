@@ -34,6 +34,7 @@ Item {
         tooltip: extrasButton.attention
                  ? qsTr("Recommended packs and updates")
                  : qsTr("Extras")
+        tooltipBody: qsTr("Optional AI engines, models and add-ons that unlock more features")
         onClicked: ShellBridge.main.openExtras()
     }
 }

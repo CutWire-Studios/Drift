@@ -10,5 +10,5 @@ Rectangle {
 
     visible: scrim.shown
     opacity: scrim.plateOpacity
-    color: Qt.rgba(Theme.c.previewFullscreenTransportScrim.background.r, Theme.c.previewFullscreenTransportScrim.background.g, Theme.c.previewFullscreenTransportScrim.background.b, 0.9)
+    color: Qt.alpha(Theme.c.previewFullscreenTransportScrim.background, Theme.c.previewFullscreenTransportScrim.backgroundOpacity)
 }

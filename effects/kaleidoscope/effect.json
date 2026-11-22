@@ -2,6 +2,7 @@
   "id": "kaleidoscope",
   "displayName": "Kaleidoscope",
   "category": "glitch",
+  "keywords": ["mirror", "symmetry", "psychedelic", "kaleido", "pattern"],
   "thumbnail": "thumbnail.webp",
   "order": 380,
   "parameters": [

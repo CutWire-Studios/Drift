@@ -20,9 +20,9 @@ Item {
         anchors.centerIn: parent
         width: root._size
         height: width
-        radius: width / 2
+        radius: Theme.radiusPill
         color: Theme.c.nodeAngleDial.background
-        border.width: 1
+        border.width: Theme.c.nodeAngleDial.borderWidth
         border.color: Theme.c.nodeAngleDial.border
     }
 
@@ -31,7 +31,7 @@ Item {
         y: (root.height - root._size) / 2 + 3
         width: 2
         height: root._size / 2 - 3
-        radius: 1
+        radius: Theme.radiusPill
         color: Theme.c.nodeAngleDial.needle
         transformOrigin: Item.Bottom
         rotation: root.value

@@ -9,6 +9,17 @@ Item {
 
     signal backRequested()
 
+    readonly property alias previewItem: preview
+    readonly property alias projectSheetItem: projectSheet
+    readonly property alias addMenuItem: addMenu
+    readonly property alias moreToolsItem: moreToolsSheet
+    readonly property alias exportDialogItem: exportDialog
+    readonly property alias exportProgressItem: exportProgressDialog
+    readonly property alias notificationsItem: notificationsSheet
+    readonly property alias transitionPickerItem: transitionPickerSheet
+    readonly property alias easingItem: easingSheet
+    readonly property alias linkImportItem: linkImportSheet
+    readonly property alias composerItem: composer
     property string sheetKind: "" // "" | "assets"
 
     // How much of the window bottom a sheet that does not blank the editor is covering.
@@ -64,12 +75,12 @@ Item {
                    editLabel: qsTr("Add shape"), showRangeBar: true, addPage: true },
         "text": { url: "pages/AndroidTextPage.qml", title: qsTr("Text"),
                   editLabel: qsTr("Add text"), showRangeBar: true, addPage: true },
-        "textStyle": { url: "pages/AndroidTextStylePage.qml", title: qsTr("Text style"),
-                       editLabel: qsTr("Text style"), showRangeBar: true, needsClip: true },
-        "textSettings": { url: "pages/AndroidTextSettingsPage.qml", title: qsTr("Text settings"),
-                          editLabel: qsTr("Text settings"), showRangeBar: false, needsClip: true },
-        "textAnim": { url: "pages/AndroidTextAnimationPage.qml", title: qsTr("Text animation"),
-                      editLabel: qsTr("Text animation"), showRangeBar: true, needsClip: true },
+        "textEdit": { url: "pages/AndroidTextEditPage.qml", title: qsTr("Text"),
+                      editLabel: qsTr("Text"), showRangeBar: true, needsClip: true, previewFraction: 0.4 },
+        // Older tool ids for the tabs of the text page.
+        "textStyle": { alias: "textEdit", tab: "font" },
+        "textSettings": { alias: "textEdit", tab: "settings" },
+        "textAnim": { alias: "textEdit", tab: "animate" },
         "animation": { url: "pages/AndroidAnimationPage.qml", title: qsTr("Animation"),
                        editLabel: qsTr("Animation"), showRangeBar: true, needsClip: true },
         "blending": { url: "pages/AndroidBlendingPage.qml", title: qsTr("Blending"),
@@ -111,7 +122,11 @@ Item {
     }
 
     function openTool(toolId, props) {
-        const spec = root.toolSpecs[toolId]
+        let spec = root.toolSpecs[toolId]
+        if (spec && spec.alias) {
+            props = Object.assign({ tab: spec.tab }, props || {})
+            spec = root.toolSpecs[spec.alias]
+        }
         if (!spec)
             return false
         if (spec.needsClip && !root.ensureClipSelected())
@@ -120,7 +135,7 @@ Item {
             title: spec.title,
             editLabel: spec.editLabel,
             showRangeBar: spec.showRangeBar,
-            previewFraction: spec.addPage ? 0.4 : undefined,
+            previewFraction: spec.addPage ? 0.4 : spec.previewFraction,
             trackIndex: spec.addPage ? -1 : undefined,
             clipIndex: spec.addPage ? -1 : undefined,
             props: props
@@ -335,6 +350,9 @@ Item {
     // window's, and the sheet should not have to know which is which.
     function runProjectAction(actionId) {
         switch (actionId) {
+        case "notifications":
+            notificationsSheet.open()
+            break
         case "export":
             if (EditorState.exportInProgress) {
                 exportProgressDialog.dismissed = false
@@ -499,6 +517,7 @@ Item {
                 id: preview
                 fullscreen: root.previewFullscreen
                 onFullscreenToggleRequested: root.previewFullscreen = !root.previewFullscreen
+                onAddMediaRequested: root.openAddMenu()
 
                 // With the timeline pane hidden the preview is the only item left, and
                 // its ceiling would otherwise still hold it to 72% of the split.
@@ -536,8 +555,7 @@ Item {
                     anchors.right: parent.right
                     panel: timeline
                     onMoreRequested: root.openMoreTools()
-                    onEditTextRequested: root.startInlineTextEdit(EditorState.selectedTrack,
-                                                                  EditorState.selectedClip, false)
+                    onEditTextRequested: root.openTool("textEdit")
                 }
 
                 Item {
@@ -565,9 +583,7 @@ Item {
                                 return false
                             return EditorState.clipCount === 0
                         }
-                        color: Qt.rgba(Theme.c.androidEditor.emptyBackground.r,
-                                       Theme.c.androidEditor.emptyBackground.g,
-                                       Theme.c.androidEditor.emptyBackground.b, 0.82)
+                        color: Qt.alpha(Theme.c.androidEditor.emptyBackground, Theme.c.androidEditor.emptyBackgroundOpacity)
                         z: 5
 
                         Column {
@@ -589,18 +605,10 @@ Item {
                                 width: parent.width
                                 horizontalAlignment: Text.AlignHCenter
                                 wrapMode: Text.WordWrap
-                                text: qsTr("Import media or open the Media library to start editing.")
+                                text: qsTr("Clips you add appear here as layers.")
                                 color: Theme.c.androidEditor.foregroundMuted
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontSizeSm
-                            }
-
-                            ThemedButton {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: qsTr("Open Media")
-                                glyph: Theme.icons.film
-                                variant: "primary"
-                                onClicked: root.openAssetsTab("media")
                             }
                         }
                     }
@@ -686,6 +694,32 @@ Item {
 
     AndroidBottomSheet {
         id: assetsSheet
+        headerActions: [
+            IconButton {
+                visible: assetsPanel.phoneHeaderActions
+                buttonSize: Theme.androidIconButtonVisual
+                glyph: Theme.icons.folder
+                variant: "text"
+                tooltip: qsTr("Create a new folder here")
+                onClicked: assetsPanel.openNewFolder()
+            },
+            IconButton {
+                visible: assetsPanel.phoneHeaderActions
+                buttonSize: Theme.androidIconButtonVisual
+                glyph: Theme.icons.layers
+                variant: "text"
+                tooltip: qsTr("Create an empty timeline and open it")
+                onClicked: EditorState.newTimeline()
+            },
+            AssetsPanelImportSplit {
+                visible: assetsPanel.phoneHeaderActions
+                compact: true
+                importing: assetsPanel.importing
+                onImportFilesRequested: assetsPanel.importMedia()
+                onImportFolderRequested: assetsPanel.importFolder()
+                onCollectMediaRequested: assetsPanel.collectMedia()
+            }
+        ]
         onClosed: {
             if (sheetKind === "assets") {
                 sheetKind = ""
@@ -725,7 +759,9 @@ Item {
         anchors.bottom: parent.bottom
         anchors.leftMargin: root.SafeArea.margins.left
         anchors.rightMargin: root.SafeArea.margins.right
+        // A tool page's footer row also sits right above the keyboard, so the bar goes over it.
         anchors.bottomMargin: Math.max(root.SafeArea.margins.bottom, Theme.keyboardInset)
+                              + (toolPage.isOpen ? Theme.androidTopBarHeight : 0)
         z: 101
     }
 

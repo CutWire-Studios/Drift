@@ -15,6 +15,10 @@ MenuItem {
     // Group label for a menu that mixes several settings (the header's Settings
     // menu). Not an entry: it never highlights and never takes a click.
     property bool sectionHeader: false
+    // Action id whose live binding is shown right-aligned and muted.
+    property string shortcutId: ""
+    readonly property string _shortcutText: shortcutId.length > 0
+        ? Theme.shortcutDisplay(EditorState.shortcutFor(shortcutId)) : ""
     enabled: !sectionHeader
 
     // A section header is a label, not a target: giving it the MenuItem role would have
@@ -30,33 +34,53 @@ MenuItem {
     height: implicitHeight
     hoverEnabled: true
 
-    contentItem: Row {
-        spacing: Theme.spacingLg
-        leftPadding: Theme.spacingLg
-        rightPadding: Theme.spacingLg
+    contentItem: Item {
+        implicitWidth: row.implicitWidth + (shortcutLabel.visible ? shortcutLabel.implicitWidth + Theme.spacingLg * 2 : 0)
+        implicitHeight: row.implicitHeight
 
-        IconGlyph {
+        Row {
+            id: row
             anchors.verticalCenter: parent.verticalCenter
-            visible: root.icon.name.length > 0
-            width: visible ? implicitWidth : 0
-            glyph: root.icon.name
-            iconSize: Theme.iconSizeMd
-            iconColor: root.enabled ? Theme.c.themedMenuItem.foreground
-                                    : Theme.c.themedMenuItem.foregroundDisabled
-            opacity: root.enabled ? 1 : 0.5
+            spacing: Theme.spacingLg
+            leftPadding: Theme.spacingLg
+            rightPadding: Theme.spacingLg
+
+            IconGlyph {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.icon.name.length > 0
+                width: visible ? implicitWidth : 0
+                glyph: root.icon.name
+                iconSize: Theme.iconSizeMd
+                iconColor: root.enabled ? Theme.c.themedMenuItem.foreground
+                                        : Theme.c.themedMenuItem.foregroundDisabled
+                opacity: root.enabled ? 1 : 0.5
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.text
+                color: root.sectionHeader ? Theme.c.themedMenuItem.sectionForeground
+                                          : Theme.c.themedMenuItem.foreground
+                // A header is dimmer by design, so it must not also take the disabled dimming.
+                opacity: root.sectionHeader || root.enabled ? 1 : 0.5
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+                font.weight: root.sectionHeader ? Font.DemiBold : Font.Normal
+                elide: Text.ElideRight
+            }
         }
 
         Text {
+            id: shortcutLabel
+            visible: root._shortcutText.length > 0
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spacingLg
             anchors.verticalCenter: parent.verticalCenter
-            text: root.text
-            color: root.sectionHeader ? Theme.c.themedMenuItem.sectionForeground
-                                      : Theme.c.themedMenuItem.foreground
-            // A header is dimmer by design, so it must not also take the disabled dimming.
-            opacity: root.sectionHeader || root.enabled ? 1 : 0.5
+            text: root._shortcutText
+            color: Theme.c.themedMenuItem.shortcutForeground
+            opacity: root.enabled ? 1 : 0.5
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
-            font.weight: root.sectionHeader ? Font.DemiBold : Font.Normal
-            elide: Text.ElideRight
         }
     }
 

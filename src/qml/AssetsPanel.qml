@@ -710,6 +710,12 @@ PanelFrame {
         }
     }
 
+    readonly property bool phoneHeaderActions: sheetMode && Theme.phone && assetsHeader.hasActions
+
+    function openNewFolder() {
+        newFolderDialog.open()
+    }
+
     function importMedia() {
         var urls = FileDialogs.openFiles(qsTr("Import Media"),
                                          [AssetLibrary.mediaNameFilter(),
@@ -800,6 +806,21 @@ PanelFrame {
         "sounds": qsTr("Audio FX")
     })
 
+    property var tabHints: ({
+        "media": qsTr("Your imported video, audio and images. Drag them onto the timeline."),
+        "text": qsTr("Titles and captions with ready-made styles."),
+        "subtitles": qsTr("Generate captions from speech, or import a subtitle file."),
+        "speech": qsTr("Turn text into a voiceover, or clone a voice."),
+        "stickers": qsTr("Emoji and stickers to place over your video."),
+        "shapes": qsTr("Shapes and arrows for callouts and backgrounds."),
+        "scenes": qsTr("Find the cuts in a long clip so you can jump to each scene."),
+        "masks": qsTr("Show only part of a clip, or cut a subject out of its background."),
+        "effects": qsTr("Looks, glitches, blurs and more. Click one to apply it."),
+        "templates": qsTr("Ready-made effect combinations you can apply in one click."),
+        "transitions": qsTr("Fades, wipes and zooms between two clips."),
+        "sounds": qsTr("Audio effects like echo, EQ and noise gate.")
+    })
+
     // Rail order: project media → on-canvas graphics → processing → prefs.
     // `separatorAfter` draws a hairline under the tab so groups read as sections.
     // tabId "sounds" is kept for favorites persistence (settings key).
@@ -868,9 +889,11 @@ PanelFrame {
     // only clamp what is shown; the saved value is rewritten by a drag alone.
     property real railUnits: Math.max(1, LayoutMemory.layoutNumber("assets/railUnits", 1))
     property real railDragWidth: -1
-    readonly property real maxRailWidth: Math.max(Theme.tabRailWidth,
+    readonly property real railCell: EditorState.preferences.showRailLabels ? Theme.tabRailLabelWidth
+                                                                            : Theme.tabRailWidth
+    readonly property real maxRailWidth: Math.max(railCell,
         root.width - Theme.assetCardWidth * 2 - Theme.pagePadding * 2)
-    readonly property real railWidth: Math.max(Theme.tabRailWidth,
+    readonly property real railWidth: Math.max(railCell,
         Math.min(maxRailWidth, railDragWidth >= 0 ? railDragWidth : railUnits * Theme.tabRailWidth))
 
     onActiveTabChanged: {
@@ -918,9 +941,11 @@ PanelFrame {
             id: tabRail
             sheetMode: root.railHidden
             railWidth: root.railWidth
+            cellWidth: root.railCell
             activeTab: root.activeTab
             tabCount: tabsModel.count
             tabLabels: root.tabLabels
+            tabHints: root.tabHints
             tabIcons: root.tabIcons
             tabs: tabsModel
             onTabSelected: (index) => root.activeTab = index
@@ -941,7 +966,7 @@ PanelFrame {
                 onPositionChanged: (mouse) => {
                     if (!pressed)
                         return
-                    root.railDragWidth = Math.max(Theme.tabRailWidth,
+                    root.railDragWidth = Math.max(root.railCell,
                         Math.min(root.maxRailWidth, mapToItem(tabRail, mouse.x, 0).x))
                 }
                 onReleased: {
@@ -966,7 +991,7 @@ PanelFrame {
                 readonly property bool searchBarTab: ["text", "stickers", "shapes", "effects", "templates",
                                                       "transitions", "sounds"].indexOf(tabId) >= 0
                 width: parent.width
-                height: (searchBarTab && !root.locked) || (root.sheetMode && !hasActions) ? 0 : Theme.panelHeaderHeight
+                height: (searchBarTab && !root.locked) || (root.sheetMode && (!hasActions || Theme.phone)) ? 0 : Theme.panelHeaderHeight
                 visible: height > 0
                 title: tabLabels[tabId]
                 showTitle: !root.sheetMode

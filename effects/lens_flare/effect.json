@@ -2,6 +2,7 @@
   "id": "lens_flare",
   "displayName": "Lens Flare",
   "category": "dreamy",
+  "keywords": ["sun flare", "anamorphic light", "streak", "lens glare"],
   "thumbnail": "thumbnail.webp",
   "order": 185,
   "parameters": [

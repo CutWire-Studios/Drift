@@ -9,8 +9,8 @@ Item {
     required property var owner
     property bool outgoing: false
 
-    readonly property bool areaContainsMouse: fadeMouse.containsMouse
-    readonly property bool areaPressed: fadeMouse.pressed
+    readonly property bool areaContainsMouse: fadeMouse.hovered
+    readonly property bool areaPressed: fadeMouse.active
     width: owner.fadeHandleWidth
     height: owner.fadeHandleHeight
     // Inside the clip: above its top edge the first track sits under the ruler, which takes the press.
@@ -28,24 +28,24 @@ Item {
     Rectangle {
         anchors.fill: parent
         anchors.margins: -1.5
-        radius: width / 2
+        radius: Theme.radiusPill
         color: Theme.c.timelineFadeHandle.shadow
     }
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Theme.radiusPill
         color: Theme.c.timelineFadeHandle.background
         border.width: Theme.c.timelineFadeHandle.borderWidth
         border.color: Theme.c.timelineFadeHandle.border
     }
 
     Rectangle {
-        visible: fadeMouse.pressed
+        visible: fadeMouse.active
         x: handle.outgoing ? -width - 8 : handle.width + 8
         anchors.verticalCenter: parent.verticalCenter
         width: fadeLabel.implicitWidth + 10
         height: fadeLabel.implicitHeight + 4
-        radius: height / 2
+        radius: Theme.radiusPill
         color: Theme.c.timelineFadeHandle.labelBackground
 
         Text {
@@ -63,7 +63,7 @@ Item {
     Binding {
         target: handle
         property: "x"
-        when: !fadeMouse.pressed
+        when: !fadeMouse.active || fadeMouse.reverted
         value: {
             const inset = owner.fadeHandleInset
             const maxX = owner.width - inset - handle.width
@@ -74,46 +74,54 @@ Item {
         }
     }
 
-    MouseArea {
+    HandleKnob {
         id: fadeMouse
-        anchors.fill: parent
-        anchors.leftMargin: -6
-        anchors.rightMargin: -6
-        anchors.topMargin: -2
-        anchors.bottomMargin: -4
-        z: 1
-        preventStealing: true
-        hoverEnabled: true
-        onPressed: (mouse) => {
-            Qt.callLater(function() { owner.forceActiveFocus() })
-            mouse.accepted = true
-            pointerSceneX = mapToItem(null, mouse.x, mouse.y).x
-            EditorState.beginPreviewDrag(qsTr("Adjust fade"))
-        }
+        releaseOnCancel: false
+        onCanceled: EditorState.drag.cancel()
+        anchors.centerIn: parent
+        shape: "none"
+        cursor: Qt.ArrowCursor
+        space: null
+        // Set when Esc puts the fade back mid-drag: the handle then follows the project again.
+        property bool reverted: false
         property real pointerSceneX: 0
+        property real pointerSceneY: 0
+
+        onPressed: (point, modifiers, device) => {
+            Qt.callLater(function() { owner.forceActiveFocus() })
+            reverted = false
+            pointerSceneX = mapToItem(null, point.x, point.y).x
+            pointerSceneY = mapToItem(null, point.x, point.y).y
+            EditorState.drag.begin(handle.outgoing ? "fadeOut" : "fadeIn", device, qsTr("Adjust fade"))
+        }
 
         function applyFade() {
+            if (reverted)
+                return
             const local = mapFromItem(null, pointerSceneX, 0)
             const px = Math.max(0, Math.min(owner.width, mapToItem(owner, local.x, 0).x))
             handle.x = Math.max(owner.fadeHandleInset,
                                 Math.min(owner.width - owner.fadeHandleInset - handle.width,
                                          px - handle.width / 2))
+            let fadeIn, fadeOut
             if (handle.outgoing) {
-                EditorState.previewSetClipFade(owner.trackIndex, owner.clipIndex,
-                                               owner.clipData.fadeIn || 0,
-                                               Math.max(0, (owner.width - px) / owner.panel.pxPerSecond))
+                fadeIn = owner.clipData.fadeIn || 0
+                fadeOut = Math.max(0, (owner.width - px) / owner.panel.pxPerSecond)
             } else {
-                EditorState.previewSetClipFade(owner.trackIndex, owner.clipIndex,
-                                               px / owner.panel.pxPerSecond,
-                                               owner.clipData.fadeOut || 0)
+                fadeIn = px / owner.panel.pxPerSecond
+                fadeOut = owner.clipData.fadeOut || 0
             }
+            EditorState.previewSetClipFade(owner.trackIndex, owner.clipIndex, fadeIn, fadeOut)
+            const length = handle.outgoing ? fadeOut : fadeIn
+            EditorState.drag.update(qsTr("%1 s").arg(length.toFixed(2)))
+            owner.panel.setDragPointer(pointerSceneX, pointerSceneY)
         }
 
         // A fade on a clip wider than the pane could otherwise only be dragged as far as is on screen.
         Timer {
             interval: 16
             repeat: true
-            running: fadeMouse.pressed && typeof owner.panel.dragEdgeScroll === "function"
+            running: fadeMouse.active && typeof owner.panel.dragEdgeScroll === "function"
             onTriggered: {
                 const panel = owner.panel
                 const px = fadeMouse.mapToItem(owner.parent, fadeMouse.mapFromItem(null, fadeMouse.pointerSceneX, 0).x, 0).x
@@ -129,18 +137,28 @@ Item {
             }
         }
 
-        onPositionChanged: (mouse) => {
-            if (!pressed)
-                return
-            pointerSceneX = mapToItem(null, mouse.x, mouse.y).x
+        onMoved: (point, modifiers, device) => {
+            pointerSceneX = mapToItem(null, point.x, point.y).x
+            pointerSceneY = mapToItem(null, point.x, point.y).y
             applyFade()
         }
-        onReleased: EditorState.commitPreviewDrag()
-        onCanceled: EditorState.cancelPreviewDrag()
+        onReleased: {
+            reverted = false
+            EditorState.drag.commit()
+        }
+
+
+        Connections {
+            target: EditorState.drag
+            function onCancelled() {
+                if (fadeMouse.active)
+                    fadeMouse.reverted = true
+            }
+        }
 
         TimelineCursorRequest {
             kind: handle.outgoing ? "fadeOut" : "fadeIn"
-            active: fadeMouse.containsMouse || fadeMouse.pressed
+            active: fadeMouse.hovered
         }
 
         Loader {
@@ -148,7 +166,7 @@ Item {
             active: owner.tooltipsActive
             sourceComponent: Component {
                 ThemedToolTip {
-                    visible: fadeMouse.containsMouse && !fadeMouse.pressed
+                    visible: fadeMouse.hovered && !fadeMouse.active
                     text: handle.outgoing
                           ? qsTr("Fade out %1s").arg((owner.clipData.fadeOut || 0).toFixed(2))
                           : qsTr("Fade in %1s").arg((owner.clipData.fadeIn || 0).toFixed(2))

@@ -3,9 +3,7 @@ import QtQuick.Controls.Basic
 import Drift
 import QtQuick.Window
 
-// --- Centre: workspace switcher + global search -------------------------
-// One bar, two targets: the left segment switches workspaces, the rest is the search field.
-// An empty search lists the workspaces too, so switching works from the keyboard.
+// --- Centre: global search ----------------------------------------------
 Rectangle {
     id: searchBox
     signal exportRequested()
@@ -50,119 +48,10 @@ Rectangle {
                                           : Theme.c.editorHeaderSearchField.borderWidth
     border.color: Theme.c.editorHeaderSearchField.border
 
-    readonly property string activeWorkspaceName: {
-        const list = Workspaces.workspaces
-        for (let i = 0; i < list.length; ++i) {
-            if (list[i].id === Workspaces.activeId)
-                return list[i].name
-        }
-        return ""
-    }
-
-    Item {
-        id: workspaceSegment
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        width: workspaceRow.implicitWidth + Theme.spacingXl * 2
-
-        Accessible.role: Accessible.Button
-        Accessible.name: qsTr("Workspace: %1").arg(searchBox.activeWorkspaceName)
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: 2
-            radius: Math.max(0, searchBox.radius - 2)
-            color: Theme.c.editorHeaderSearchField.workspaceBackgroundHover
-            visible: workspaceArea.containsMouse || workspaceMenu.opened
-        }
-
-        Row {
-            id: workspaceRow
-            anchors.left: parent.left
-            anchors.leftMargin: Theme.spacingXl
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spacingSm
-
-            Text {
-                text: qsTr("Workspace:")
-                color: Theme.c.editorHeaderSearchField.workspacePrefix
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeSm
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Text {
-                text: searchBox.activeWorkspaceName
-                color: Theme.c.editorHeaderSearchField.workspaceForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeSm
-                font.weight: Font.Medium
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            IconGlyph {
-                glyph: Theme.icons.chevronsUpDown
-                iconSize: Theme.iconSizeSm
-                iconColor: Theme.c.editorHeaderSearchField.icon
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
-        ThemedToolTip {
-            visible: workspaceArea.containsMouse && !workspaceMenu.opened
-            text: qsTr("Switch workspace")
-        }
-
-        MouseArea {
-            id: workspaceArea
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: workspaceMenu.popup(0, searchBox.height + Theme.spacingMd)
-        }
-
-        ThemedContextMenu {
-            id: workspaceMenu
-            implicitWidth: 248
-
-            Instantiator {
-                model: Workspaces.workspaces
-
-                ThemedMenuItem {
-                    required property var modelData
-                    text: modelData.name
-                    icon.name: modelData.id === Workspaces.activeId ? Theme.icons.check : ""
-                    onTriggered: Workspaces.activeId = modelData.id
-                }
-
-                onObjectAdded: (index, object) => workspaceMenu.insertItem(index, object)
-                onObjectRemoved: (index, object) => workspaceMenu.removeItem(object)
-            }
-
-            ThemedMenuSeparator { }
-
-            ThemedMenuItem {
-                text: qsTr("Customize layouts in Settings…")
-                icon.name: Theme.icons.sliders
-                onTriggered: Qt.callLater(() => ShellBridge.main.openSettings("workspaces"))
-            }
-        }
-    }
-
-    Rectangle {
-        id: segmentDivider
-        anchors.left: workspaceSegment.right
-        anchors.verticalCenter: parent.verticalCenter
-        width: 1
-        height: parent.height - Theme.spacingMd * 2
-        color: Theme.c.editorHeaderSearchField.divider
-    }
-
     IconGlyph {
         id: searchLens
-        anchors.left: segmentDivider.right
-        anchors.leftMargin: Theme.spacingLg
+        anchors.left: parent.left
+        anchors.leftMargin: Theme.spacingXl
         anchors.verticalCenter: parent.verticalCenter
         glyph: searchBox.askMode ? Theme.icons.sparkles : Theme.icons.search
         iconSize: Theme.iconSizeMd
@@ -221,7 +110,8 @@ Rectangle {
         height: parent.height - Theme.spacingSm * 2
         width: askRow.implicitWidth + Theme.spacingLg * 2
         radius: Math.max(0, searchBox.radius - 2)
-        visible: EditorState.preferences.commandBarEnabled && !searchInput.activeFocus
+        visible: EditorState.preferences.commandBarEnabled && EditorState.preferences.agenticUse !== "none"
+                 && !searchInput.activeFocus
                  && !EditorState.commandBar.busy
         color: askArea.containsMouse ? Theme.c.editorHeaderSearchField.workspaceBackgroundHover : "transparent"
 
@@ -250,13 +140,11 @@ Rectangle {
             }
         }
 
-        ThemedToolTip {
+        RichToolTip {
             visible: askArea.containsMouse
-            text: {
-                const keys = EditorState.shortcutFor("askCommand")
-                return keys.length > 0 ? qsTr("Ask Drift to make an edit  %1").arg(Theme.shortcutDisplay(keys))
-                                       : qsTr("Ask Drift to make an edit")
-            }
+            title: qsTr("Ask")
+            actionId: "askCommand"
+            body: qsTr("Describe an edit in plain words and Drift does it, e.g. “fade in over half a second”.")
         }
 
         MouseArea {
@@ -291,6 +179,11 @@ Rectangle {
         x: (searchBox.width - width) / 2
         width: Math.max(searchBox.width, 480)
         onFinished: searchBox.searchFinished()
+        onQueryPicked: (text) => {
+            searchInput.text = text
+            searchInput.forceActiveFocus()
+            searchPopup.search(text)
+        }
     }
 
     Connections {

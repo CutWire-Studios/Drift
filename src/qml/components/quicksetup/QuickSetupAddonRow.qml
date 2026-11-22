@@ -5,17 +5,18 @@ import Drift
 Rectangle {
     id: row
 
-    required property var page
+    required property var downloads
+    property bool mobile: false
     property var entry
     property bool optional: false
     property bool checked: false
-    readonly property string installState: entry ? page.rowState(entry) : "queued"
+    readonly property string installState: entry ? downloads.rowState(entry) : "queued"
     readonly property bool pending: !optional || checked
-    readonly property real fraction: entry && page.transfers[entry.id] ? page.transfers[entry.id].fraction : 0
+    readonly property real fraction: entry && downloads.transfers[entry.id] ? downloads.transfers[entry.id].fraction : 0
 
     signal toggled(bool on)
 
-    implicitHeight: body.implicitHeight + (page.mobile ? Theme.spacing2xl : Theme.spacingXl) * 2
+    implicitHeight: body.implicitHeight + (row.mobile ? Theme.spacing2xl : Theme.spacingXl) * 2
     radius: Theme.c.quickSetupCard.radius
     color: Theme.c.quickSetupCard.background
     border.width: Theme.c.quickSetupCard.borderWidth
@@ -27,7 +28,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.margins: page.mobile ? Theme.spacingXl : Theme.spacingXl
+        anchors.margins: row.mobile ? Theme.spacingXl : Theme.spacingXl
         spacing: Theme.spacingMd
 
         RowLayout {
@@ -47,7 +48,7 @@ Rectangle {
 
                 ThemedLabel {
                     Layout.fillWidth: true
-                    size: page.mobile ? "base" : "sm"
+                    size: row.mobile ? "base" : "sm"
                     tone: "default"
                     font.weight: Font.Medium
                     text: row.entry ? (row.entry.name || row.entry.id) : ""
@@ -56,7 +57,7 @@ Rectangle {
                 ThemedLabel {
                     Layout.fillWidth: true
                     visible: text.length > 0
-                    size: page.mobile ? "sm" : "xs"
+                    size: row.mobile ? "sm" : "xs"
                     text: {
                         if (!row.entry)
                             return ""
@@ -74,12 +75,12 @@ Rectangle {
                 IconGlyph {
                     visible: row.installState === "installed" || row.installState === "failed"
                     glyph: row.installState === "installed" ? Theme.icons.success : Theme.icons.error
-                    iconSize: page.mobile ? 22 : 18
+                    iconSize: row.mobile ? 22 : 18
                     iconColor: row.installState === "installed" ? Theme.c.quickSetup.success : Theme.c.quickSetup.danger
                 }
 
                 ThemedLabel {
-                    size: page.mobile ? "sm" : "xs"
+                    size: row.mobile ? "sm" : "xs"
                     tone: row.installState === "installed" ? "default" : "muted"
                     wrapMode: Text.NoWrap
                     text: {
@@ -105,8 +106,8 @@ Rectangle {
         ThemedLabel {
             Layout.fillWidth: true
             visible: row.pending && row.installState === "failed"
-            size: page.mobile ? "sm" : "xs"
-            text: row.entry ? page.rowError(row.entry) : ""
+            size: row.mobile ? "sm" : "xs"
+            text: row.entry ? downloads.rowError(row.entry) : ""
             color: Theme.c.quickSetup.danger
         }
     }

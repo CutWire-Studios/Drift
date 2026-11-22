@@ -8,7 +8,7 @@ PanelFrame {
     id: root
     SearchAnchor {
         searchId: "color-looks"
-        title: qsTr("Color Grading LUTs")
+        title: qsTr("Looks")
         keywords: "lut filter preset cube"
     }
 
@@ -33,7 +33,7 @@ PanelFrame {
         for (let i = 1; i < list.length; ++i) {
             if (list[i].userInstalled)
                 continue
-            const name = list[i].category || qsTr("Color Grading LUTs")
+            const name = list[i].category || qsTr("Looks")
             if (!seen[name]) {
                 seen[name] = true
                 out.push({ id: name, label: name })
@@ -45,7 +45,7 @@ PanelFrame {
     function lookCategory(look) {
         if (look.id === "")
             return categories.length > 0 ? categories[0].id : ""
-        return look.category || qsTr("Color Grading LUTs")
+        return look.category || qsTr("Looks")
     }
 
     property var menuLook: ({})
@@ -85,7 +85,7 @@ PanelFrame {
         id: header
         width: parent.width
         height: Theme.panelHeaderHeight
-        title: qsTr("Color Grading LUTs")
+        title: qsTr("Looks")
     }
 
     readonly property bool nothingInstalled: colorState.looks.length <= 1

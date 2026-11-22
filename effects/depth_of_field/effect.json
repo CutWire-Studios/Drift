@@ -2,6 +2,7 @@
   "id": "depth.focus",
   "displayName": "Depth of Field",
   "category": "depth",
+  "keywords": ["background", "blur", "portrait", "mode", "bokeh", "lens", "blur", "focus", "fake", "blur"],
   "thumbnail": "thumbnail.webp",
   "order": 910,
   "description": "Lens blur that follows the clip's estimated depth: keep one distance sharp and let the rest fall out of focus.",

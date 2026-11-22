@@ -172,4 +172,21 @@ QtObject {
     function defaultCategoryId(touch) {
         return touch ? "tiktok" : "youtube"
     }
+
+    // What the Quick Setup "What you make" answer implies for a new project's canvas.
+    function templateIdForMake(make) {
+        switch (make) {
+        case "shorts": return "yt_short"
+        case "films": return "landscape"
+        case "youtube":
+        case "podcasts":
+        case "tutorials": return "yt_video"
+        default: return ""
+        }
+    }
+
+    function makeCanvas(make) {
+        const id = presets.templateIdForMake(make)
+        return id === "" ? null : presets.sizeFor(id, "1080p", 0, 0)
+    }
 }

@@ -10,13 +10,15 @@ ScrollStrip {
     property int activeTab: 0
     property int tabCount: 0
     property var tabLabels: ({})
+    property var tabHints: ({})
     property var tabIcons: []
     property var tabs: null
 
     signal tabSelected(int index)
 
     property real railWidth: Theme.tabRailWidth
-    readonly property int columns: Math.max(1, Math.floor(railWidth / Theme.tabRailWidth))
+    property real cellWidth: Theme.tabRailWidth
+    readonly property int columns: Math.max(1, Math.floor(railWidth / cellWidth))
 
     width: sheetMode ? 0 : railWidth
     height: parent ? parent.height : 0
@@ -79,6 +81,7 @@ ScrollStrip {
                 showSeparator: root.columns === 1
                 activeTab: root.activeTab
                 tabLabels: root.tabLabels
+                tabHints: root.tabHints
                 tabIcons: root.tabIcons
                 onTabSelected: (index) => root.tabSelected(index)
             }

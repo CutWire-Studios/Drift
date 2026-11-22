@@ -14,6 +14,7 @@ Popup {
     signal closeProjectRequested()
     signal openRecentRequested(string path)
     signal saveAsRequested()
+    signal exportRequested()
     signal packageRequested()
     signal saveJsonRequested()
     signal openJsonRequested()
@@ -204,14 +205,16 @@ Popup {
         RecentProjectsActionRow {
             popup: root
             glyph: Theme.icons.plus
-            text: qsTr("Initialize new project")
+            text: qsTr("New project")
+            shortcutId: "newProject"
             onTriggered: root.newProjectRequested()
         }
 
         RecentProjectsActionRow {
             popup: root
             glyph: Theme.icons.folder
-            text: qsTr("Open project…")
+            text: qsTr("Open…")
+            shortcutId: "open"
             onTriggered: root.openFileRequested()
         }
 
@@ -222,11 +225,12 @@ Popup {
             opacity: 0.5
         }
 
-        // --- Project utilities -----------------------------------------------
+        // --- Save and export -------------------------------------------------
         RecentProjectsActionRow {
             popup: root
             glyph: Theme.icons.copy
             text: qsTr("Save as…")
+            shortcutId: "saveAs"
             onTriggered: root.saveAsRequested()
         }
 
@@ -239,58 +243,53 @@ Popup {
 
         RecentProjectsActionRow {
             popup: root
-            glyph: Theme.icons.download
-            text: qsTr("Save as JSON…")
-            onTriggered: root.saveJsonRequested()
-        }
-
-        RecentProjectsActionRow {
-            popup: root
             glyph: Theme.icons.upload
-            text: qsTr("Open JSON…")
-            onTriggered: root.openJsonRequested()
+            text: qsTr("Export video…")
+            onTriggered: root.exportRequested()
         }
 
         RecentProjectsActionRow {
+            id: importExportRow
             popup: root
-            glyph: Theme.icons.film
-            text: qsTr("Import Kdenlive / Shotcut project (experimental)…")
-            onTriggered: root.importKdenliveRequested()
+            glyph: Theme.icons.download
+            text: qsTr("Import / Export")
+            hasSubmenu: true
+            onTriggered: importExportMenu.popup(importExportRow, importExportRow.width - Theme.spacingMd, 0)
+
+            ThemedContextMenu {
+                id: importExportMenu
+                implicitWidth: 280
+
+                ThemedMenuItem {
+                    text: qsTr("Save project as JSON…")
+                    onTriggered: { root.close(); root.saveJsonRequested() }
+                }
+
+                ThemedMenuItem {
+                    text: qsTr("Open project from JSON…")
+                    onTriggered: { root.close(); root.openJsonRequested() }
+                }
+
+                ThemedMenuItem {
+                    text: qsTr("Import Kdenlive / Shotcut project (experimental)…")
+                    onTriggered: { root.close(); root.importKdenliveRequested() }
+                }
+
+                ThemedMenuItem {
+                    text: qsTr("Import OpenTimelineIO (.otio) (experimental)…")
+                    onTriggered: { root.close(); root.importOtioRequested() }
+                }
+            }
         }
 
-        RecentProjectsActionRow {
-            popup: root
-            glyph: Theme.icons.listTree
-            text: qsTr("Import OpenTimelineIO (.otio) (experimental)…")
-            onTriggered: root.importOtioRequested()
+        Rectangle {
+            width: parent.width
+            height: Theme.c.recentProjectsPopup.borderWidth
+            color: Theme.c.recentProjectsPopup.divider
+            opacity: 0.5
         }
 
-        // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML, .mogrt, EDL).
-        // Uncomment to re-enable once the readers are stable.
-        // ActionRow {
-        //     glyph: Theme.icons.film
-        //     text: qsTr("Import Premiere project…")
-        //     onTriggered: root.importPremiereRequested()
-        // }
-        //
-        // ActionRow {
-        //     glyph: Theme.icons.layers
-        //     text: qsTr("Import Motion Graphics (.mogrt)…")
-        //     onTriggered: root.importMogrtRequested()
-        // }
-        //
-        // ActionRow {
-        //     glyph: Theme.icons.film
-        //     text: qsTr("Import DaVinci Resolve project / FCPXML…")
-        //     onTriggered: root.importResolveRequested()
-        // }
-        //
-        // ActionRow {
-        //     glyph: Theme.icons.list
-        //     text: qsTr("Import Edit Decision List (.edl)…")
-        //     onTriggered: root.importEdlRequested()
-        // }
-
+        // --- Project utilities -----------------------------------------------
         RecentProjectsActionRow {
             popup: root
             glyph: Theme.icons.fileText
@@ -301,7 +300,7 @@ Popup {
         RecentProjectsActionRow {
             popup: root
             glyph: Theme.icons.warning
-            text: qsTr("Project health…")
+            text: qsTr("Check for missing media…")
             onTriggered: root.healthRequested()
         }
 

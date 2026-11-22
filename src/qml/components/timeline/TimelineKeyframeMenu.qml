@@ -72,8 +72,8 @@ Item {
     }
 
     function openKeyframesTab() {
-        EditorState.selectClip(trackIndex, clipIndex)
-        Workspaces.activeId = "keyframes"
+        ShellBridge.goDeeper({ panel: "keyframes", track: trackIndex, clip: clipIndex,
+                               prop: refs.length > 0 ? refs[0].prop : undefined })
     }
 
     Item {
@@ -125,6 +125,7 @@ Item {
         ThemedMenuItem {
             text: qsTr("Edit keyframes…")
             icon.name: Theme.icons.diamondPlus
+            visible: !ShellBridge.phoneShell
             onTriggered: root.openKeyframesTab()
         }
     }

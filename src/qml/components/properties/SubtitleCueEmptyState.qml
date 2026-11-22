@@ -21,6 +21,6 @@ Column {
         text: qsTr("No subtitles yet. Move to a time inside this clip and add one below.")
         color: Theme.c.subtitleCueEmptyState.foregroundMuted
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeXs
+        font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
     }
 }

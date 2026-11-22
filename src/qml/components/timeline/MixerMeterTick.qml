@@ -13,5 +13,5 @@ Rectangle {
     height: 1
     y: 1 + meterItem.innerH * (1.0 - meterItem.mixer.dbToRatio(modelData))
     color: Theme.c.mixerMeterTick.foreground
-    opacity: 0.7
+    opacity: Theme.c.mixerMeterTick.foregroundOpacity
 }

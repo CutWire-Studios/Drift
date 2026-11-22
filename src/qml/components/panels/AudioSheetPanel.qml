@@ -248,7 +248,7 @@ PanelFrame {
                 radius: Theme.c.audioSheetPanel.statRadius
                 color: Theme.c.audioSheetPanel.statBackground
                 border.color: Theme.c.audioSheetPanel.statBorder
-                border.width: 1
+                border.width: Theme.c.audioSheetPanel.statBorderWidth
 
                 Column {
                     id: statColumn
@@ -291,7 +291,7 @@ PanelFrame {
             radius: Theme.c.audioSheetPanel.statRadius
             color: Theme.c.audioSheetPanel.statBackground
             border.color: Theme.c.audioSheetPanel.statBorder
-            border.width: 1
+            border.width: Theme.c.audioSheetPanel.statBorderWidth
 
             Row {
                 id: promptRow
@@ -382,7 +382,7 @@ PanelFrame {
                 radius: Theme.c.audioSheetPanel.statRadius
                 color: Theme.c.audioSheetPanel.listBackground
                 border.color: Theme.c.audioSheetPanel.listBorder
-                border.width: 1
+                border.width: Theme.c.audioSheetPanel.listBorderWidth
                 clip: true
 
                 Repeater {
@@ -439,7 +439,7 @@ PanelFrame {
                 radius: Theme.c.audioSheetPanel.statRadius
                 color: Theme.c.audioSheetPanel.listBackground
                 border.color: Theme.c.audioSheetPanel.listBorder
-                border.width: 1
+                border.width: Theme.c.audioSheetPanel.listBorderWidth
                 clip: true
 
                 ListView {

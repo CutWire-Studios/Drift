@@ -76,7 +76,7 @@ SettingsPage {
                 visible: page.activeHasVariants
                 wrapMode: Text.WordWrap
                 color: Theme.c.settingsRow.foreground
-                text: qsTr("This theme has a dark and a light variant. The header toggle switches between them.")
+                text: qsTr("This theme has a dark and a light variant, and follows your system’s light or dark setting.")
             }
 
             SettingsAppearanceActions {
@@ -202,42 +202,6 @@ SettingsPage {
                 variant: "secondary"
                 text: qsTr("Restart now")
                 onClicked: ShellBridge.main.restartToApplyShell()
-            }
-        }
-    }
-
-    SettingsGroupHeader {
-        text: qsTr("Workspace")
-        query: page.query
-    }
-
-    SettingsRow {
-        title: qsTr("Workspace orientation")
-        searchId: "appearance-workspace-orientation"
-        description: qsTr("Landscape or portrait workspace. Auto follows the shape of the canvas.")
-        keywords: "landscape portrait rotate layout"
-        query: page.query
-
-        ThemedComboBox {
-            width: Theme.c.settingsRow.controlWidth
-            textRole: "label"
-            valueRole: "id"
-            model: [
-                { id: "auto",      label: qsTr("Auto (follow canvas)") },
-                { id: "landscape", label: qsTr("Landscape") },
-                { id: "portrait",  label: qsTr("Portrait") }
-            ]
-            currentIndex: {
-                if (!EditorState.preferences.workspaceLayoutOverridden)
-                    return 0
-                return EditorState.preferences.workspaceLayoutPreferred === "portrait" ? 2 : 1
-            }
-            onActivated: {
-                const id = model[currentIndex].id
-                if (id === "auto")
-                    EditorState.preferences.clearWorkspaceLayoutPreference()
-                else
-                    EditorState.preferences.setWorkspaceLayoutPreference(id)
             }
         }
     }

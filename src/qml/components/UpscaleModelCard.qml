@@ -36,7 +36,7 @@ AbstractButton {
 
     background: Rectangle {
         radius: Theme.c.upscaleModelCard.radius
-        color: root.selected ? Qt.rgba(Theme.c.upscaleModelCard.accent.r, Theme.c.upscaleModelCard.accent.g, Theme.c.upscaleModelCard.accent.b, 0.10)
+        color: root.selected ? Qt.alpha(Theme.c.upscaleModelCard.accent, Theme.c.upscaleModelCard.accentOpacity)
                              : root.hovered ? Theme.c.upscaleModelCard.backgroundHover : Theme.c.upscaleModelCard.background
         border.width: root.selected || root.visualFocus ? Theme.c.upscaleModelCard.borderWidthFocus : Theme.c.upscaleModelCard.borderWidth
         border.color: root.selected || root.visualFocus ? Theme.c.upscaleModelCard.borderFocus : Theme.c.upscaleModelCard.border

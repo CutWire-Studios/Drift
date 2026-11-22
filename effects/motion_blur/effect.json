@@ -2,6 +2,7 @@
   "id": "motion.blur",
   "displayName": "Motion Blur",
   "category": "impact",
+  "keywords": ["motion blur", "speed blur", "shutter", "smooth", "movement", "fast"],
   "thumbnail": "thumbnail.webp",
   "order": 94,
   "description": "Blurs movement inside the footage along its direction, as a camera shutter would, by measuring the motion towards the previous and the next frame of the footage (optical flow). Footage shot at twice the timeline's frame rate or more, or sped up that far, is instead blurred by averaging its real frames across the shutter: Auto picks between the two, or choose one. Moving objects smear past their outline onto what is behind them. Strength exaggerates the smear beyond a real shutter. Looks one frame ahead as well as behind, so acceleration bends the smear; the first and last frames of a clip blur from one side only, and frames while scrubbing are not blurred. The clip's own keyframed movement is not blurred.",

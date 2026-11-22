@@ -2,6 +2,7 @@
   "id": "color.grade",
   "displayName": "Color Grade",
   "category": "color",
+  "keywords": ["color correction", "grading", "lut", "exposure", "white balance", "tint", "wheels", "curves"],
   "thumbnail": "thumbnail.webp",
   "order": 5,
   "nextFeatures": ["param:curve", "curve:spline", "param:lut"],

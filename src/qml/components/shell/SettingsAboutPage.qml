@@ -93,20 +93,6 @@ SettingsPage {
     }
 
     SettingsRow {
-        title: qsTr("About Drift")
-        searchId: "about-drift"
-        description: qsTr("Open-source video editor by CutWire Studios.")
-        keywords: "license credits version"
-        query: page.query
-
-        ThemedButton {
-            variant: "secondary"
-            text: qsTr("Show about dialog")
-            onClicked: ShellBridge.main.openAboutDialog()
-        }
-    }
-
-    SettingsRow {
         title: qsTr("Debug info")
         searchId: "about-debug-info"
         description: qsTr("System, playback and codec details for bug reports.")

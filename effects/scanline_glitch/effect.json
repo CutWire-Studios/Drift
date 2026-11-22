@@ -2,6 +2,7 @@
   "id": "scanline_glitch",
   "displayName": "Scanline Glitch",
   "category": "glitch",
+  "keywords": ["tv glitch", "scan lines", "jitter", "crt", "signal"],
   "thumbnail": "thumbnail.webp",
   "order": 330,
   "parameters": [

@@ -5,6 +5,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "recorder-panel"
+        title: qsTr("Recorder")
+        keywords: "record voiceover microphone narration audio teleprompter noise"
+    }
 
     readonly property bool recording: EditorState.isRecordingAudio
     readonly property bool paused: EditorState.isAudioRecordingPaused
@@ -57,7 +62,7 @@ PanelFrame {
                             id: dot
                             width: 10
                             height: 10
-                            radius: 5
+                            radius: Theme.radiusPill
                             anchors.verticalCenter: parent.verticalCenter
                             color: !root.recording ? Theme.panelMuted
                                    : (root.paused ? Theme.c.voiceoverRecDot.paused : Theme.c.voiceoverRecDot.recording)
@@ -125,7 +130,7 @@ PanelFrame {
                         radius: Theme.c.voiceoverMicPicker.radius
                         color: micMouse.containsMouse || micMenu.opened
                                ? Theme.c.voiceoverMicPicker.backgroundHover
-                               : Qt.rgba(Theme.c.voiceoverMicPicker.background.r, Theme.c.voiceoverMicPicker.background.g, Theme.c.voiceoverMicPicker.background.b, 0.05)
+                               : Qt.alpha(Theme.c.recorderPanel.micBackground, Theme.c.recorderPanel.micBackgroundOpacity)
                         border.color: Theme.c.voiceoverMicPicker.border
                         border.width: Theme.c.voiceoverMicPicker.borderWidth
                     }
@@ -213,12 +218,12 @@ PanelFrame {
                     id: bigBtn
                     Layout.preferredWidth: root.compact ? 56 : 76
                     Layout.preferredHeight: Layout.preferredWidth
-                    radius: width / 2
-                    color: Theme.destructive
-                    opacity: bigMouse.pressed ? 0.8 : (bigMouse.containsMouse ? 0.92 : 1.0)
+                    radius: Theme.radiusPill
+                    color: Theme.c.recorderPanel.recordBackground
+                    opacity: bigMouse.pressed ? Theme.c.recorderPanel.recordOpacityPressed : (bigMouse.containsMouse ? Theme.c.recorderPanel.recordOpacityHover : Theme.c.recorderPanel.recordOpacity)
                     scale: bigMouse.pressed ? Theme.pressScale : 1.0
-                    border.width: 3
-                    border.color: Qt.rgba(1, 1, 1, 0.25)
+                    border.width: Theme.c.recorderPanel.recordRingWidth
+                    border.color: Theme.c.recorderPanel.recordRing
 
                     Behavior on scale {
                         NumberAnimation { duration: Theme.durationPress; easing.type: Theme.easing }
@@ -228,7 +233,7 @@ PanelFrame {
                         anchors.centerIn: parent
                         glyph: root.recording ? Theme.icons.square : Theme.icons.mic
                         iconSize: bigBtn.width * 0.4
-                        iconColor: "white"
+                        iconColor: Theme.c.recorderPanel.recordIcon
                     }
 
                     MouseArea {

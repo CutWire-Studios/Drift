@@ -1,7 +1,8 @@
 {
   "id": "stylize.pixelate",
   "displayName": "Pixelate",
-  "category": "glitch",
+  "category": "privacy",
+  "keywords": ["mosaic", "censor", "pixelate", "8-bit", "retro", "pixels", "hide face", "blur out"],
   "thumbnail": "thumbnail.webp",
   "order": 300,
   "parameters": [

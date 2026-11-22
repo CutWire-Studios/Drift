@@ -64,6 +64,11 @@ SettingsPage {
         }
     }
 
+    SettingsGroupHeader {
+        text: qsTr("Animation")
+        query: page.query
+    }
+
     SettingsRow {
         title: qsTr("Auto keyframes")
         searchId: "timeline-auto-keyframes"
@@ -74,19 +79,6 @@ SettingsPage {
         ThemedSwitch {
             checked: EditorState.autoKeyEnabled
             onToggled: EditorState.autoKeyEnabled = checked
-        }
-    }
-
-    SettingsRow {
-        title: qsTr("Loop work area")
-        searchId: "timeline-loop-work-area"
-        description: qsTr("Playback repeats between the work area in and out points.")
-        keywords: "repeat in out"
-        query: page.query
-
-        ThemedSwitch {
-            checked: EditorState.loopWorkAreaEnabled
-            onToggled: EditorState.loopWorkAreaEnabled = checked
         }
     }
 
@@ -174,6 +166,27 @@ SettingsPage {
         ThemedSwitch {
             checked: EditorState.preferences.audioMixerVisible
             onToggled: EditorState.preferences.audioMixerVisible = checked
+        }
+    }
+
+    SettingsGroupHeader {
+        text: qsTr("Toolbar")
+        available: !ShellBridge.phoneShell
+        query: page.query
+    }
+
+    SettingsRow {
+        stacked: true
+        title: qsTr("Toolbar layout")
+        searchId: "toolbar-layout"
+        description: qsTr("Choose which actions appear on the toolbar above the timeline and which go in its overflow menu.")
+        keywords: "buttons actions overflow menu customize"
+        available: !ShellBridge.phoneShell
+        query: page.query
+
+        TimelineToolbarCustomizer {
+            autoSave: true
+            width: parent.width
         }
     }
 }

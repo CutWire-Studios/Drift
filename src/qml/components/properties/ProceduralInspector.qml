@@ -103,6 +103,12 @@ Item {
             }
         }
 
+        WorkspaceLink {
+            active: root.errorText.length > 0 && !root.procedural.packageMissing
+            label: qsTr("Edit package ↗")
+            target: ({ panel: "proceduralEditor" })
+        }
+
         Column {
             width: parent.width
             spacing: Theme.spacingSm

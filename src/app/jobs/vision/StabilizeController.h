@@ -27,6 +27,8 @@ public:
     Q_INVOKABLE void setSmoothing(int trackIndex, int clipIndex, int value);
     Q_INVOKABLE void setTripod(int trackIndex, int clipIndex, bool enabled);
     Q_INVOKABLE void setMode(int trackIndex, int clipIndex, const QString &mode);
+    // Whether a motion analysis for this clip's source range is already cached. Scans nothing.
+    Q_INVOKABLE bool hasAnalysis(int trackIndex, int clipIndex) const;
 
     // The two vid.stab passes' filter chains and the cached motion-analysis file for a source
     // range, shared with the clip stabilizer so a range analysed by one is not scanned again by

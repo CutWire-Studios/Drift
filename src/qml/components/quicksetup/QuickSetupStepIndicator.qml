@@ -19,7 +19,7 @@ Row {
             anchors.verticalCenter: parent.verticalCenter
             width: active ? 22 : 8
             height: 8
-            radius: height / 2
+            radius: Theme.radiusPill
             color: active ? Theme.c.quickSetup.dotActive : Theme.c.quickSetup.dotInactive
 
             Behavior on width {

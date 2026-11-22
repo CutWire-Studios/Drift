@@ -5,6 +5,7 @@
 #include "engine/packages/effects/EffectCatalog.h"
 #include "core/base/CacheRoot.h"
 #include "app/editor/PreferencesController.h"
+#include "app/editor/keymap/KeymapPresets.h"
 #include "app/editor/sessions/SpeedCurveController.h"
 #include "app/mcp/McpController.h"
 #include "app/mcp/tools/McpCatalog.h"
@@ -1328,7 +1329,7 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
     if (tool == QLatin1String("set_shortcut"))
         return opSetShortcut(args);
     if (tool == QLatin1String("reset_shortcuts"))
-        return opResetShortcuts();
+        return opResetShortcuts(args);
     const QJsonObject extended = applyOneExtended(tool, args);
     if (!extended.value(QStringLiteral("error")).toString().startsWith(QLatin1String("unknown_op")))
         return extended;
@@ -3619,16 +3620,26 @@ QJsonObject McpDispatcher::opListShortcuts(const QJsonObject &args) const
         const QString id = map.value(QStringLiteral("id")).toString();
         const QString label = map.value(QStringLiteral("label")).toString();
         const QString shortcut = map.value(QStringLiteral("shortcut")).toString();
+        const QStringList shortcuts = map.value(QStringLiteral("shortcuts")).toStringList();
         if (!q.isEmpty() && !id.contains(q, Qt::CaseInsensitive) && !label.contains(q, Qt::CaseInsensitive)
-            && !shortcut.contains(q, Qt::CaseInsensitive))
+            && !shortcuts.join(QLatin1Char(' ')).contains(q, Qt::CaseInsensitive))
             continue;
         actions.append(QJsonObject{
             {QStringLiteral("id"), id},
             {QStringLiteral("label"), label},
             {QStringLiteral("shortcut"), shortcut},
+            {QStringLiteral("shortcuts"), QJsonArray::fromStringList(shortcuts)},
+            {QStringLiteral("category"), map.value(QStringLiteral("category")).toString()},
+            {QStringLiteral("scope"), map.value(QStringLiteral("scope")).toString()},
         });
     }
-    return ok({{QStringLiteral("actions"), actions}, {QStringLiteral("n"), actions.size()}});
+    QJsonArray presets;
+    for (const QVariant &entry : m_controller->keymap()->presets())
+        presets.append(QJsonObject::fromVariantMap(entry.toMap()));
+    return ok({{QStringLiteral("actions"), actions},
+               {QStringLiteral("n"), actions.size()},
+               {QStringLiteral("preset"), m_controller->keymap()->presetId()},
+               {QStringLiteral("presets"), presets}});
 }
 
 QJsonObject McpDispatcher::opSetShortcut(const QJsonObject &args)
@@ -3638,17 +3649,39 @@ QJsonObject McpDispatcher::opSetShortcut(const QJsonObject &args)
         return err("bad_args", QStringLiteral("action required"));
     if (!args.contains(QStringLiteral("keys")))
         return err("bad_args", QStringLiteral("keys required"));
-    const QString keys = args.value(QStringLiteral("keys")).toString();
-    const QString conflict = m_controller->setShortcut(action, keys);
+    if (m_controller->keymap()->scopeOf(action).isEmpty())
+        return err("bad_args", QStringLiteral("unknown action: %1").arg(action));
+    const QJsonValue keysValue = args.value(QStringLiteral("keys"));
+    QStringList keys;
+    if (keysValue.isArray()) {
+        for (const QJsonValue &key : keysValue.toArray())
+            keys << key.toString();
+    } else {
+        keys << keysValue.toString();
+    }
+    keys.removeAll(QString());
+    for (const QString &key : std::as_const(keys)) {
+        if (drift::Keymap::normalizeChord(key).isEmpty())
+            return err("bad_args", QStringLiteral("not a valid key sequence: %1").arg(key));
+    }
+    const QString conflict = m_controller->keymap()->setBindings(action, keys);
     if (!conflict.isEmpty())
         return err("conflict", conflict);
-    return ok({{QStringLiteral("action"), action}, {QStringLiteral("keys"), keys}});
+    return ok({{QStringLiteral("action"), action},
+               {QStringLiteral("keys"), QJsonArray::fromStringList(m_controller->keymap()->bindings(action))}});
 }
 
-QJsonObject McpDispatcher::opResetShortcuts()
+QJsonObject McpDispatcher::opResetShortcuts(const QJsonObject &args)
 {
-    m_controller->resetShortcuts();
-    return ok({{QStringLiteral("reset"), true}});
+    const QString preset = args.value(QStringLiteral("preset")).toString().trimmed();
+    if (preset.isEmpty()) {
+        m_controller->resetShortcuts();
+    } else {
+        if (!drift::keymap::findPreset(preset))
+            return err("bad_args", QStringLiteral("unknown preset: %1").arg(preset));
+        m_controller->keymap()->setPreset(preset, jsonBool(args.value(QStringLiteral("keep_overrides"))));
+    }
+    return ok({{QStringLiteral("reset"), true}, {QStringLiteral("preset"), m_controller->keymap()->presetId()}});
 }
 
 } // namespace drift::mcp

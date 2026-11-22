@@ -10,9 +10,7 @@ Rectangle {
     x: (EditorState.playheadSeconds - EditorState.audioRecordSeconds) * liveRecordingBlock.pxPerSecond
     width: Math.max(2, EditorState.audioRecordSeconds * liveRecordingBlock.pxPerSecond)
     height: parent.height
-    color: Qt.rgba(Theme.c.androidTimelineLiveRecording.background.r,
-                   Theme.c.androidTimelineLiveRecording.background.g,
-                   Theme.c.androidTimelineLiveRecording.background.b, 0.25)
+    color: Qt.alpha(Theme.c.androidTimelineLiveRecording.background, Theme.c.androidTimelineLiveRecording.backgroundOpacity)
     border.color: EditorState.isAudioRecordingPaused
                   ? Theme.c.androidTimelineLiveRecording.borderPaused
                   : Theme.c.androidTimelineLiveRecording.border

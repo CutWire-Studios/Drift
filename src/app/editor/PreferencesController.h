@@ -56,6 +56,17 @@ class PreferencesController : public QObject
     // Opt-in: on launch, restore the last open project (saved .drift or unsaved recovery snapshot).
     Q_PROPERTY(bool reopenLastProject READ reopenLastProject WRITE setReopenLastProject NOTIFY reopenLastProjectChanged)
     // Ctrl+K offers "Ask" rows that run a typed sentence as an editing command. QSettings("commandBar/enabled").
+    Q_PROPERTY(bool showRailLabels READ showRailLabels WRITE setShowRailLabels NOTIFY showRailLabelsChanged)
+    // Personalisation. whatYouMake is "" (not chosen), "youtube", "shorts", "films", "podcasts" or
+    // "tutorials". experienceLevel is "first", "some" (default) or "pro". agenticUse is "none",
+    // "some" (default) or "lots". Changing the last two rewrites hiddenWorkspaces; the user can
+    // still toggle individual workspaces afterwards. "edit" is never hidden.
+    Q_PROPERTY(QString whatYouMake READ whatYouMake WRITE setWhatYouMake NOTIFY whatYouMakeChanged)
+    Q_PROPERTY(QString experienceLevel READ experienceLevel WRITE setExperienceLevel NOTIFY experienceLevelChanged)
+    Q_PROPERTY(QString agenticUse READ agenticUse WRITE setAgenticUse NOTIFY agenticUseChanged)
+    Q_PROPERTY(bool showTips READ showTips WRITE setShowTips NOTIFY showTipsChanged)
+    Q_PROPERTY(QStringList hiddenWorkspaces READ hiddenWorkspaces WRITE setHiddenWorkspaces NOTIFY hiddenWorkspacesChanged)
+    Q_PROPERTY(QStringList studioWorkspaceIds READ studioWorkspaceIds CONSTANT)
     Q_PROPERTY(bool commandBarEnabled READ commandBarEnabled WRITE setCommandBarEnabled NOTIFY commandBarEnabledChanged)
     // Which notifications raised during an agent's (MCP) call reach the screen: "all", "problems"
     // (warnings and errors, the default) or "none" (errors only -- an error is never hidden).
@@ -208,6 +219,23 @@ public:
 
     bool reopenLastProject() const { return m_reopenLastProject; }
     void setReopenLastProject(bool enabled);
+    bool showRailLabels() const { return m_showRailLabels; }
+    void setShowRailLabels(bool enabled);
+    // Dismissed inline tips and suggestions live under QSettings "tips/<id>".
+    Q_INVOKABLE bool tipDismissed(const QString &id) const;
+    Q_INVOKABLE void dismissTip(const QString &id);
+    Q_INVOKABLE void resetDismissedTips();
+    QString whatYouMake() const { return m_whatYouMake; }
+    void setWhatYouMake(const QString &value);
+    QString experienceLevel() const { return m_experienceLevel; }
+    void setExperienceLevel(const QString &level);
+    QString agenticUse() const { return m_agenticUse; }
+    void setAgenticUse(const QString &level);
+    bool showTips() const { return m_showTips; }
+    void setShowTips(bool enabled);
+    QStringList hiddenWorkspaces() const { return m_hiddenWorkspaces; }
+    void setHiddenWorkspaces(const QStringList &ids);
+    static QStringList studioWorkspaceIds();
     bool commandBarEnabled() const { return m_commandBarEnabled; }
     void setCommandBarEnabled(bool enabled);
     QString agentNotifications() const { return m_agentNotifications; }
@@ -341,7 +369,10 @@ public:
     bool canRestart() const;
     // False once the first-run Quick Setup has been completed (and always on wasm, which skips it).
     static bool quickSetupNeeded();
-    Q_INVOKABLE void completeQuickSetup();
+    // startProject asks the editor that opens next to begin on a fresh project with the canvas
+    // implied by whatYouMake instead of the usual startup choice; takeStartProject() consumes it.
+    Q_INVOKABLE void completeQuickSetup(bool startProject = false);
+    Q_INVOKABLE bool takeStartProject();
     // Clears the done flag and relaunches into setup; the caller handles unsaved work first.
     Q_INVOKABLE void rerunQuickSetup();
     // Android relaunches the activity right away; flush recovery first. Elsewhere this only
@@ -368,6 +399,12 @@ signals:
     void proxyNamePatternsChanged();
     void timelineToolbarLayoutChanged();
     void reopenLastProjectChanged();
+    void showRailLabelsChanged();
+    void whatYouMakeChanged();
+    void experienceLevelChanged();
+    void agenticUseChanged();
+    void showTipsChanged();
+    void hiddenWorkspacesChanged();
     void commandBarEnabledChanged();
     void agentNotificationsChanged();
     void proxySuggestionChanged();
@@ -415,6 +452,12 @@ private:
     QStringList m_timelineMenuItems;
     bool m_reopenLastProject = false;
     bool m_commandBarEnabled = true;
+    bool m_showRailLabels = true;
+    bool m_showTips = true;
+    QString m_whatYouMake;
+    QString m_experienceLevel = QStringLiteral("some");
+    QString m_agenticUse = QStringLiteral("some");
+    QStringList m_hiddenWorkspaces;
     QString m_agentNotifications = QStringLiteral("problems");
     QString m_proxySuggestion = QStringLiteral("ask");
     QString m_proxyLocation = QStringLiteral("beside");

@@ -44,7 +44,7 @@ Item {
 
         ShapePath {
             strokeColor: "transparent"
-            fillColor: Qt.alpha(Theme.c.maskDrawOverlay.fill, side.selected ? 0.18 : 0.08)
+            fillColor: Qt.alpha(Theme.c.maskDrawOverlay.fill, side.selected ? Theme.c.maskDrawOverlay.fillOpacitySplitSelected : Theme.c.maskDrawOverlay.fillOpacitySplit)
             PathPolyline { path: side.clipped.polygon }
         }
 

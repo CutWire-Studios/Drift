@@ -257,16 +257,56 @@ QVariantMap vectorSourceToMap(const drift::VectorSource &v, drift::TimeUs timeli
 namespace drift::appdetail {
 
 
+QVariantMap maskVertexToMap(const drift::ShapeVertex &v)
+{
+    return {{QStringLiteral("x"), v.p.x()},       {QStringLiteral("y"), v.p.y()},
+            {QStringLiteral("inX"), v.in.x()},    {QStringLiteral("inY"), v.in.y()},
+            {QStringLiteral("outX"), v.out.x()},  {QStringLiteral("outY"), v.out.y()},
+            {QStringLiteral("mode"), drift::tangentModeToString(v.mode)}};
+}
+
+drift::ShapeVertex maskVertexFromVariant(const QVariant &value)
+{
+    drift::ShapeVertex v;
+    if (value.typeId() == QMetaType::QVariantList || value.typeId() == QMetaType::QStringList) {
+        const QVariantList pair = value.toList();
+        if (pair.size() >= 2)
+            v.p = QPointF(pair.at(0).toDouble(), pair.at(1).toDouble());
+        return v;
+    }
+    const QVariantMap map = value.toMap();
+    const auto num = [&map](const char *key) { return map.value(QLatin1String(key)).toDouble(); };
+    v.p = QPointF(num("x"), num("y"));
+    v.in = QPointF(num("inX"), num("inY"));
+    v.out = QPointF(num("outX"), num("outY"));
+    v.mode = drift::tangentModeFromString(map.value(QStringLiteral("mode")).toString());
+    return v;
+}
+
+QVariantList maskVerticesToVariant(const QVector<drift::ShapeVertex> &vertices)
+{
+    QVariantList out;
+    out.reserve(vertices.size());
+    for (const drift::ShapeVertex &v : vertices)
+        out.append(maskVertexToMap(v));
+    return out;
+}
+
+QVector<drift::ShapeVertex> maskVerticesFromVariant(const QVariantList &list)
+{
+    QVector<drift::ShapeVertex> out;
+    out.reserve(list.size());
+    for (const QVariant &value : list)
+        out.append(maskVertexFromVariant(value));
+    return out;
+}
+
 QVariantMap maskToMap(const drift::Mask &m, drift::TimeUs timelineStart)
 {
     // {x, y} objects rather than [x, y] pairs: a Repeater delegate's `modelData` does not index
     // a nested array reliably, so a freeform's vertices came through as undefined and piled up in
     // the corner. Named fields are also what every other point-ish map in this file uses.
-    QVariantList points;
-    for (const QPointF &pt : m.points) {
-        points.append(QVariantMap{{QStringLiteral("x"), pt.x()},
-                                  {QStringLiteral("y"), pt.y()}});
-    }
+    const QVariantList points = maskVerticesToVariant(m.vertices);
 
     QVariantMap maskKeyframes;
     for (auto it = m.keyframes.constBegin(); it != m.keyframes.constEnd(); ++it) {
@@ -1777,109 +1817,7 @@ QVariantList AppController::selection() const
 
 QVariantList AppController::actions() const
 {
-    auto action = [this](const QString &id, const QString &label) {
-        return QVariantMap{
-            {QStringLiteral("id"), id},
-            {QStringLiteral("label"), label},
-            {QStringLiteral("shortcut"), m_shortcuts.value(id)},
-        };
-    };
-
-    return {
-        action(QStringLiteral("newProject"), tr("New project")),
-        action(QStringLiteral("open"), tr("Open project")),
-        action(QStringLiteral("save"), tr("Save project")),
-        action(QStringLiteral("saveAs"), tr("Save project as…")),
-        action(QStringLiteral("playPause"), tr("Play/Pause")),
-        action(QStringLiteral("delete"), tr("Delete selection")),
-        action(QStringLiteral("deleteWithEffects"), tr("Delete selection with its effects")),
-        action(QStringLiteral("undo"), tr("Undo")),
-        action(QStringLiteral("redo"), tr("Redo")),
-        action(QStringLiteral("copy"), tr("Copy selection")),
-        action(QStringLiteral("cut"), tr("Cut selection")),
-        action(QStringLiteral("paste"), tr("Paste at current time")),
-        action(QStringLiteral("duplicate"), tr("Duplicate selected clip")),
-        action(QStringLiteral("copyEffects"), tr("Copy effects from clip")),
-        action(QStringLiteral("pasteEffects"), tr("Paste effects onto clip")),
-        action(QStringLiteral("pasteAttributes"), tr("Paste attributes…")),
-        action(QStringLiteral("split"), tr("Split selection, or every track, at current time")),
-        action(QStringLiteral("splitSelection"), tr("Split selected clip at current time")),
-        action(QStringLiteral("splitAllTracks"), tr("Split every track at current time")),
-        action(QStringLiteral("addTransitionAtPlayhead"), tr("Add transition at playhead")),
-        action(QStringLiteral("merge"), tr("Merge adjacent clips")),
-        action(QStringLiteral("transformTogether"), tr("Transform selection together")),
-        action(QStringLiteral("selectTransformLayer"), tr("Select transform layer")),
-        action(QStringLiteral("separateAudio"), tr("Separate audio")),
-        action(QStringLiteral("unlink"), tr("Unlink audio")),
-        action(QStringLiteral("link"), tr("Link clips")),
-        action(QStringLiteral("toggleClipEnabled"), tr("Enable or disable selected clips")),
-        action(QStringLiteral("clearSelection"), tr("Clear selection")),
-        action(QStringLiteral("selectAll"), tr("Select all clips")),
-        action(QStringLiteral("nudgeLeft"), tr("Move selection left a little")),
-        action(QStringLiteral("nudgeRight"), tr("Move selection right a little")),
-        action(QStringLiteral("previousEdit"), tr("Go to previous cut point")),
-        action(QStringLiteral("nextEdit"), tr("Go to next cut point")),
-        action(QStringLiteral("stepBack"), tr("Step back one frame")),
-        action(QStringLiteral("stepForward"), tr("Step forward one frame")),
-        action(QStringLiteral("jumpBack"), tr("Jump back 1 second")),
-        action(QStringLiteral("jumpForward"), tr("Jump forward 1 second")),
-        action(QStringLiteral("jumpBackFar"), tr("Jump back 10 seconds")),
-        action(QStringLiteral("jumpForwardFar"), tr("Jump forward 10 seconds")),
-        action(QStringLiteral("goToStart"), tr("Go to start of timeline")),
-        action(QStringLiteral("goToEnd"), tr("Go to end of timeline")),
-        action(QStringLiteral("deleteLeft"), tr("Delete left of the playhead")),
-        action(QStringLiteral("deleteRight"), tr("Delete right of the playhead")),
-        action(QStringLiteral("speedUp"), tr("Increase playback speed")),
-        action(QStringLiteral("speedDown"), tr("Decrease playback speed")),
-        action(QStringLiteral("toggleGuides"), tr("Toggle guides")),
-        action(QStringLiteral("toggleTrackHidden"), tr("Hide/show selected clip's track")),
-        action(QStringLiteral("gizmoMove"), tr("3D gizmo: move / Tracker tool")),
-        action(QStringLiteral("gizmoRotate"), tr("3D gizmo: rotate / Rectangle mask")),
-        action(QStringLiteral("gizmoScale"), tr("3D gizmo: scale / Ellipse mask")),
-        action(QStringLiteral("gizmoOrientation"), tr("3D gizmo: cycle world/local/view axes")),
-        action(QStringLiteral("addSpeedPoint"), tr("Add speed point at playhead")),
-        action(QStringLiteral("toggleBookmark"), tr("Add/remove bookmark at current time")),
-        action(QStringLiteral("nextBookmark"), tr("Go to next bookmark")),
-        action(QStringLiteral("previousBookmark"), tr("Go to previous bookmark")),
-        action(QStringLiteral("markIn"), tr("Mark work area in")),
-        action(QStringLiteral("markOut"), tr("Mark work area out")),
-        action(QStringLiteral("goToIn"), tr("Go to work area in")),
-        action(QStringLiteral("goToOut"), tr("Go to work area out")),
-        action(QStringLiteral("clearInOut"), tr("Clear work area")),
-        action(QStringLiteral("toggleLoop"), tr("Loop work area playback")),
-        action(QStringLiteral("selectTool"), tr("Select tool")),
-        action(QStringLiteral("bladeTool"), tr("Cut tool / Brush mask")),
-        action(QStringLiteral("maskingPolygonTool"), tr("Polygon mask tool")),
-        action(QStringLiteral("maskingAiTool"), tr("AI object mask tool")),
-        action(QStringLiteral("maskingLassoTool"), tr("Lasso mask tool")),
-        action(QStringLiteral("maskingScissorsTool"), tr("Intelligent scissors mask tool")),
-        action(QStringLiteral("maskingWandTool"), tr("Magic wand mask tool")),
-        action(QStringLiteral("maskingBrushSmaller"), tr("Decrease brush size")),
-        action(QStringLiteral("maskingBrushLarger"), tr("Increase brush size")),
-        action(QStringLiteral("maskingBrushToggleErase"), tr("Brush: switch paint / erase")),
-        action(QStringLiteral("trackForward"), tr("Track forward")),
-        action(QStringLiteral("trackBackward"), tr("Track backward")),
-        action(QStringLiteral("trackFrameForward"), tr("Track one frame forward")),
-        action(QStringLiteral("trackFrameBackward"), tr("Track one frame backward")),
-        action(QStringLiteral("trackBoth"), tr("Track whole clip")),
-        action(QStringLiteral("zoomIn"), tr("Zoom in")),
-        action(QStringLiteral("zoomOut"), tr("Zoom out")),
-        action(QStringLiteral("multicam"), tr("Multicam window")),
-        action(QStringLiteral("search"), tr("Search…")),
-        action(QStringLiteral("askCommand"), tr("Ask (editing command)…")),
-        action(QStringLiteral("workspace.restoreWindows"), tr("Restore Workspace Windows")),
-        action(QStringLiteral("workspace.next"), tr("Next workspace")),
-        action(QStringLiteral("workspace.prev"), tr("Previous workspace")),
-        action(QStringLiteral("workspace.1"), tr("Workspace 1")),
-        action(QStringLiteral("workspace.2"), tr("Workspace 2")),
-        action(QStringLiteral("workspace.3"), tr("Workspace 3")),
-        action(QStringLiteral("workspace.4"), tr("Workspace 4")),
-        action(QStringLiteral("workspace.5"), tr("Workspace 5")),
-        action(QStringLiteral("workspace.6"), tr("Workspace 6")),
-        action(QStringLiteral("workspace.7"), tr("Workspace 7")),
-        action(QStringLiteral("workspace.8"), tr("Workspace 8")),
-        action(QStringLiteral("workspace.9"), tr("Workspace 9")),
-    };
+    return m_keymap->actions();
 }
 
 void AppController::setPlayheadUs(drift::TimeUs us)

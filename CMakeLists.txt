@@ -6,7 +6,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Oldest macOS release Drift 
 
 # C is enabled for JUCE only: its modules compile a handful of C sources (zlib, flac, oggvorbis)
 # and its CMake refuses to configure without it.
-project(Drift VERSION 0.9.2 LANGUAGES CXX C)
+project(Drift VERSION 0.9.3 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -615,10 +615,13 @@ add_library(driftcore STATIC
     src/core/text/TextPresetStore.cpp
     src/core/effects/EffectStackStore.h
     src/core/effects/EffectStackStore.cpp
+    src/core/shapes/ShapeVertex.h
     src/core/shapes/ShapeStyle.h
     src/core/shapes/ShapeStyle.cpp
     src/core/shapes/ShapePath.h
     src/core/shapes/ShapePath.cpp
+    src/core/geom/BezierPath.h
+    src/core/geom/BezierPath.cpp
     src/core/project/sources/VectorSource.h
     src/core/project/sources/VectorSource.cpp
     src/core/project/sources/Model3dSource.h
@@ -1297,6 +1300,21 @@ qt_add_executable(drift
     src/ui/preview/ConfidenceStripItem.cpp
 )
 target_sources(driftapp PRIVATE
+    src/ui/manip/ManipModifiers.h
+    src/ui/manip/SnapService.h
+    src/ui/manip/SnapService.cpp
+    src/ui/manip/DragSession.h
+    src/ui/manip/DragSession.cpp
+    src/ui/manip/PathEditCore.h
+    src/ui/manip/PathEditCore.cpp
+    src/ui/manip/ClipFrameMapper.h
+    src/ui/manip/ClipFrameMapper.cpp
+    src/ui/manip/StrokeSmoother.h
+    src/ui/manip/StrokeSmoother.cpp
+    src/ui/manip/ManipQml.h
+    src/ui/manip/ManipQml.cpp
+    src/ui/manip/CurveGraphModel.h
+    src/ui/manip/CurveGraphModel.cpp
     src/ui/imageproviders/segment/SegmentImageStore.h
     src/ui/imageproviders/segment/SegmentImageStore.cpp
     src/playback/preview/ClipPreviewImageStore.h
@@ -1351,6 +1369,12 @@ target_sources(driftapp PRIVATE
     src/app/editor/appcontroller/AppControllerKeyframes.cpp
     src/app/editor/appcontroller/AppControllerEffects.cpp
     src/app/editor/appcontroller/AppControllerTracks.cpp
+    src/app/editor/keymap/Keymap.h
+    src/app/editor/keymap/Keymap.cpp
+    src/app/editor/keymap/KeymapCatalog.h
+    src/app/editor/keymap/KeymapCatalog.cpp
+    src/app/editor/keymap/KeymapPresets.h
+    src/app/editor/keymap/KeymapPresets.cpp
     src/app/editor/appcontroller/AppControllerProject.cpp
     src/app/editor/appcontroller/AppControllerTextLayers.cpp
     src/app/mcp/AgentImageLog.h
@@ -1379,12 +1403,17 @@ target_sources(driftapp PRIVATE
     src/app/editor/sessions/KeyframeCurves.cpp
     src/app/editor/sessions/KeyframeCurvesModel.h
     src/app/editor/sessions/KeyframeCurvesModel.cpp
+    src/app/editor/sessions/KeyframeInteraction.h
+    src/app/editor/sessions/KeyframeInteraction.cpp
+    src/app/editor/sessions/KeyframeInteractionBinding.cpp
     src/app/editor/sessions/KeyframeSelection.h
     src/app/editor/sessions/KeyframeSelection.cpp
     src/app/editor/sessions/KeyframeTimeView.h
     src/app/editor/sessions/KeyframeTimeView.cpp
     src/app/editor/sessions/MaskEditSession.h
     src/app/editor/sessions/MaskEditSession.cpp
+    src/app/editor/sessions/PathEditSession.h
+    src/app/editor/sessions/PathEditSession.cpp
     src/app/editor/sessions/MaskStackModel.h
     src/app/editor/sessions/MaskStackModel.cpp
     src/app/editor/sessions/MaskingController.h
@@ -1848,6 +1877,28 @@ qt_add_qml_module(drift
         src/qml/BlendModes.qml
         src/qml/AndroidNotificationsSheet.qml
         src/qml/components/shell/NavRailButton.qml
+        src/qml/components/illustrations/AdjustmentLayerIllustration.qml
+        src/qml/components/illustrations/AiObjectIllustration.qml
+        src/qml/components/illustrations/AutoSelectIllustration.qml
+        src/qml/components/illustrations/FreezeFrameIllustration.qml
+        src/qml/components/illustrations/GuidesIllustration.qml
+        src/qml/components/illustrations/LinkClipsIllustration.qml
+        src/qml/components/illustrations/MaskBrushIllustration.qml
+        src/qml/components/illustrations/MaskPolygonIllustration.qml
+        src/qml/components/illustrations/MaskShapeIllustration.qml
+        src/qml/components/illustrations/OnboardingAgenticIllustration.qml
+        src/qml/components/illustrations/OnboardingExperienceIllustration.qml
+        src/qml/components/illustrations/OnboardingFinishIllustration.qml
+        src/qml/components/illustrations/OnboardingMakeIllustration.qml
+        src/qml/components/illustrations/OnboardingWelcomeIllustration.qml
+        src/qml/components/illustrations/RippleIllustration.qml
+        src/qml/components/illustrations/SnappingIllustration.qml
+        src/qml/components/illustrations/ToolCutIllustration.qml
+        src/qml/components/illustrations/ToolSelectIllustration.qml
+        src/qml/components/illustrations/TrackerIllustration.qml
+        src/qml/components/illustrations/TransformLayerIllustration.qml
+        src/qml/components/illustrations/TrimEndIllustration.qml
+        src/qml/components/illustrations/TrimStartIllustration.qml
         # Touch entry point, loaded instead of Main.qml on Android (see src/app/main.cpp).
         src/qml/AndroidLayoutSheet.qml
         src/qml/AndroidMain.qml
@@ -1887,23 +1938,51 @@ qt_add_qml_module(drift
         src/qml/components/preview/modes/Preview3DFlyHint.qml
         src/qml/components/preview/modes/Preview3DFlyDeadZone.qml
         src/qml/components/preview/TransformGizmo.qml
-        src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/PreviewDropOverlay.qml
         src/qml/components/preview/CropOverlay.qml
+        src/qml/components/preview/ClipCropOverlay.qml
         src/qml/components/preview/GuideLayer.qml
         src/qml/components/preview/GuidesPopover.qml
+        src/qml/components/manip/CurveGraphView.qml
+        src/qml/components/manip/curve/CurveGraphGrid.qml
+        src/qml/components/manip/curve/CurveGraphCurve.qml
+        src/qml/components/manip/curve/CurveGraphKnobs.qml
+        src/qml/components/manip/curve/CurveGraphPointBar.qml
+        src/qml/components/manip/HandleKnob.qml
+        src/qml/components/manip/MarqueeSelector.qml
+        src/qml/components/manip/TransformManip.qml
+        src/qml/components/manip/transform/TransformClipBox.qml
+        src/qml/components/manip/transform/TransformGrip.qml
+        src/qml/components/manip/transform/TransformRotate.qml
+        src/qml/components/manip/transform/TransformAnchor.qml
+        src/qml/components/manip/transform/TransformGroupBox.qml
+        src/qml/components/manip/transform/TransformParentFrame.qml
+        src/qml/components/manip/LiveReadout.qml
+        src/qml/components/manip/Loupe.qml
+        src/qml/components/manip/PathEditor.qml
+        src/qml/components/manip/path/PathPlane.qml
+        src/qml/components/manip/path/PathActionChips.qml
+        src/qml/components/manip/path/PathPointBar.qml
+        src/qml/components/manip/path/PathPointModeRow.qml
+        src/qml/components/manip/ManipOverlay.qml
+        src/qml/components/manip/TouchContextBar.qml
+        src/qml/components/manip/ViewNavigation.qml
+        src/qml/components/manip/CropFrame.qml
+        src/qml/components/manip/crop/CropGrip.qml
+        src/qml/components/manip/crop/CropPresets.qml
+        src/qml/components/manip/crop/CropScrim.qml
+        src/qml/components/manip/crop/CropThirds.qml
         src/qml/components/preview/GuideEditOverlay.qml
         src/qml/components/preview/MaskOverlay.qml
-        src/qml/components/preview/ShapePathOverlay.qml
         src/qml/components/preview/masking/MaskDrawOverlay.qml
         src/qml/components/preview/masking/MaskBrushOverlay.qml
         src/qml/components/preview/masking/MaskAiOverlay.qml
+        src/qml/components/preview/masking/MaskModeChips.qml
+        src/qml/components/preview/masking/BrushSideSliders.qml
         src/qml/components/preview/masking/TrackerOverlay.qml
         src/qml/components/preview/DepthEffectOverlay.qml
         src/qml/components/preview/DepthLight3dOverlay.qml
         src/qml/components/preview/Checkerboard.qml
-        src/qml/components/android/AndroidTransformOverlay.qml
-        src/qml/components/android/AndroidClipCropOverlay.qml
         src/qml/components/android/AndroidCropOverlay.qml
         src/qml/SegmentationWindow.qml
         src/qml/MulticamWindow.qml
@@ -1972,24 +2051,19 @@ qt_add_qml_module(drift
         src/qml/components/properties/SubtitleEditorHeader.qml
         src/qml/components/properties/SubtitleCueEmptyState.qml
         src/qml/components/properties/SubtitleCueCard.qml
-        src/qml/components/properties/SpeedCurveTangentHandle.qml
         src/qml/components/properties/SpeedCurvePreviewStage.qml
-        src/qml/components/properties/SpeedCurveKnob.qml
-        src/qml/components/properties/SpeedCurveGridLine.qml
         src/qml/components/properties/SpeedCurveGraphPlayhead.qml
         src/qml/components/properties/SpeedCurveFilmstrip.qml
-        src/qml/components/properties/SpeedCurveCanvas.qml
         src/qml/components/properties/ShadingLayerHeader.qml
         src/qml/components/properties/PropertiesTabRailSeparator.qml
         src/qml/components/properties/PropertiesSheetTabChip.qml
         src/qml/components/properties/PropertiesInspectorHeading.qml
         src/qml/components/properties/PropertiesEmptyState.qml
+        src/qml/components/properties/PropertiesSuggestionStrip.qml
         src/qml/components/properties/KeyframeGraphValueAxis.qml
-        src/qml/components/properties/KeyframeGraphTangentHandle.qml
         src/qml/components/properties/KeyframeGraphResizeGrip.qml
         src/qml/components/properties/KeyframeGraphPlayhead.qml
         src/qml/components/properties/KeyframeGraphLaneStatus.qml
-        src/qml/components/properties/KeyframeGraphKeyDot.qml
         src/qml/components/properties/KeyframeGraphHeaderBar.qml
         src/qml/components/properties/KeyframeGraphGutterRule.qml
         src/qml/components/properties/KeyframeGraphFrame.qml
@@ -2005,8 +2079,6 @@ qt_add_qml_module(drift
         src/qml/components/properties/FontPickerFamilyRow.qml
         src/qml/components/properties/FontPickerAddRow.qml
         src/qml/components/properties/FadeCurveToolbarRule.qml
-        src/qml/components/properties/FadeCurvePlotFrame.qml
-        src/qml/components/properties/FadeCurveCanvas.qml
         src/qml/components/properties/FacePropTile.qml
         src/qml/components/properties/EmojiPickerSurface.qml
         src/qml/components/properties/EmojiPickerEmptyLabel.qml
@@ -2165,11 +2237,11 @@ qt_add_qml_module(drift
         src/qml/components/subtitles/SubtitleCueGridRow.qml
         src/qml/components/subtitles/SubtitleTime.js
         src/qml/components/panels/SubtitleTimingPanel.qml
+        src/qml/components/keyframes/KeyframeInputArea.qml
         src/qml/components/keyframes/KeyframesContextMenu.qml
         src/qml/components/keyframes/KeyframesCurvesInteraction.qml
         src/qml/components/keyframes/KeyframesCurvesView.qml
         src/qml/components/keyframes/KeyframesInteractionSurface.qml
-        src/qml/components/keyframes/KeyframesDragReadout.qml
         src/qml/components/keyframes/KeyframesLanesView.qml
         src/qml/components/keyframes/KeyframesMarquee.qml
         src/qml/components/keyframes/KeyframesPlayheadLine.qml
@@ -2341,6 +2413,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineTransitionEar.qml
         src/qml/components/timeline/TimelineCutDoomGradient.qml
         src/qml/components/timeline/TimelineCutDash.qml
+        src/qml/components/suggestions/ClipSuggestions.js
         src/qml/components/timeline/TimelineClipContextMenu.qml
         src/qml/components/timeline/TimelineKeyframeMenu.qml
         src/qml/components/timeline/TimelineAutoReframeDialog.qml
@@ -2392,6 +2465,10 @@ qt_add_qml_module(drift
         src/qml/components/KeyframeGraph.qml
         src/qml/components/SubtitleCueLane.qml
         src/qml/components/shell/ShortcutCaptureField.qml
+        src/qml/components/shell/ShortcutChip.qml
+        src/qml/components/shell/WorkspaceLink.qml
+        src/qml/components/shell/WorkspaceMenuItem.qml
+        src/qml/components/shell/WorkspaceBackPill.qml
         src/qml/components/ColorSwatchField.qml
         src/qml/components/controls/ThemedColorDialog.qml
         src/qml/components/ColorEyedropper.qml
@@ -2414,6 +2491,8 @@ qt_add_qml_module(drift
         src/qml/components/EmojiPicker.qml
         src/qml/components/controls/ThemedButton.qml
         src/qml/components/controls/ThemedChip.qml
+        src/qml/components/controls/AccentSwatches.qml
+        src/qml/components/controls/InlineTip.qml
         src/qml/components/controls/ScrollStrip.qml
         src/qml/components/controls/ThemedProgressBar.qml
         src/qml/components/MediaPill.qml
@@ -2442,14 +2521,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/transport/PreviewTransportGoToStartButton.qml
         src/qml/components/preview/transport/PreviewTransportGoToEndButton.qml
         src/qml/components/preview/transform/TransformOverlaySnapGuide.qml
-        src/qml/components/preview/transform/TransformOverlaySizeReadout.qml
-        src/qml/components/preview/transform/TransformOverlayRotateHandle.qml
-        src/qml/components/preview/transform/TransformOverlayResizeGrip.qml
-        src/qml/components/preview/transform/TransformOverlayParentOutline.qml
-        src/qml/components/preview/transform/TransformOverlayParentChip.qml
-        src/qml/components/preview/transform/TransformOverlayLayerChip.qml
-        src/qml/components/preview/transform/TransformOverlayBoxBorder.qml
-        src/qml/components/preview/transform/TransformOverlayGroupBox.qml
         src/qml/components/preview/text/InlineTextSelectionHandle.qml
         src/qml/components/preview/status/PreviewVoiceoverBadge.qml
         src/qml/components/preview/status/PreviewGapCaption.qml
@@ -2480,15 +2551,8 @@ qt_add_qml_module(drift
         src/qml/components/preview/media/MediaPreviewPlayheadLine.qml
         src/qml/components/preview/media/MediaPreviewPlayheadCap.qml
         src/qml/components/preview/media/MediaPreviewGradeChip.qml
-        src/qml/components/preview/media/MediaPreviewCropScrim.qml
-        src/qml/components/preview/media/MediaPreviewCropGrip.qml
-        src/qml/components/preview/media/MediaPreviewCropFrame.qml
         src/qml/components/preview/media/MediaPreviewAudioPlaceholder.qml
         src/qml/components/preview/media/MediaPreviewView.qml
-        src/qml/components/preview/mask/MaskOverlayVertexHandle.qml
-        src/qml/components/preview/shapepath/ShapePathHandle.qml
-        src/qml/components/preview/shapepath/ShapePathHintBar.qml
-        src/qml/components/preview/shapepath/ShapePathVertex.qml
         src/qml/components/preview/mask/MaskOverlayRotateHandle.qml
         src/qml/components/preview/mask/MaskOverlayResizeGrip.qml
         src/qml/components/preview/mask/MaskOverlayOutline.qml
@@ -2497,7 +2561,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/mask/MaskOverlayRoundnessHandle.qml
         src/qml/components/preview/mask/MaskOverlaySplitSide.qml
         src/qml/components/preview/mask/MaskOverlayEmptyHint.qml
-        src/qml/components/preview/mask/MaskOverlayEdgeMidpoint.qml
         src/qml/components/preview/mask/MaskOverlayClipBounds.qml
         src/qml/components/preview/mask/MaskOverlayBarEdge.qml
         src/qml/components/preview/mask/MaskOverlayBarBand.qml
@@ -2512,7 +2575,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/guides/GuidesPopoverDivider.qml
         src/qml/components/preview/guides/GuidesPopoverColorRow.qml
         src/qml/components/preview/guides/GuidesPopoverAspectFields.qml
-        src/qml/components/preview/guides/GuideEditReadout.qml
         src/qml/components/preview/guides/GuideEditHighlight.qml
         src/qml/components/preview/guides/GuideEditBar.qml
         src/qml/components/preview/guides/GuideEditAddStrip.qml
@@ -2526,12 +2588,8 @@ qt_add_qml_module(drift
         src/qml/components/preview/depth/DepthEffectFocusReticle.qml
         src/qml/components/preview/depth/DepthEffectAimRing.qml
         src/qml/components/preview/depth/DepthEffectAimLine.qml
-        src/qml/components/preview/crop/CropOverlayThirdGuides.qml
         src/qml/components/preview/crop/CropOverlaySizeBadge.qml
-        src/qml/components/preview/crop/CropOverlayScrim.qml
         src/qml/components/preview/crop/CropOverlayHint.qml
-        src/qml/components/preview/crop/CropOverlayGrip.qml
-        src/qml/components/preview/crop/CropOverlayFrame.qml
         src/qml/components/preview/axis/ViewAxisShaft.qml
         src/qml/components/preview/axis/ViewAxisKnob.qml
         src/qml/components/preview/axis/ViewAxisDisc.qml
@@ -2551,13 +2609,6 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsPane.qml
         src/qml/components/android/SheetActionRow.qml
         src/qml/components/android/SheetActionTile.qml
-        src/qml/components/android/AndroidTransformSnapLine.qml
-        src/qml/components/android/AndroidTransformSizeReadout.qml
-        src/qml/components/android/AndroidTransformRotateHandle.qml
-        src/qml/components/android/AndroidTransformResizeGrip.qml
-        src/qml/components/android/AndroidTransformParentFrame.qml
-        src/qml/components/android/AndroidTransformLayerChip.qml
-        src/qml/components/android/AndroidTransformClipOutline.qml
         src/qml/components/android/AndroidTopBarTitleButton.qml
         src/qml/components/android/AndroidTopBarExportButton.qml
         src/qml/components/android/AndroidTopBarCountBadge.qml
@@ -2596,15 +2647,16 @@ qt_add_qml_module(drift
         src/qml/components/android/AndroidMediaSavingScrim.qml
         src/qml/components/android/AndroidMediaPreviewHeader.qml
         src/qml/components/android/AndroidMediaPlayBadge.qml
-        src/qml/components/android/AndroidMediaCropShade.qml
-        src/qml/components/android/AndroidMediaCropOverlay.qml
-        src/qml/components/android/AndroidMediaCropGrip.qml
         src/qml/components/android/AndroidLinkBusyStatus.qml
         src/qml/components/android/AndroidLayoutTemplateCard.qml
         src/qml/components/android/AndroidLayoutSummarySwatch.qml
         src/qml/components/android/AndroidLayoutSectionLabel.qml
         src/qml/components/android/AndroidHomeRecentCard.qml
-        src/qml/components/android/AndroidFadeSliderRow.qml
+        src/qml/components/android/AndroidPageSection.qml
+        src/qml/components/android/AndroidTabStrip.qml
+        src/qml/components/android/AndroidTextTabs.qml
+        src/qml/components/android/AndroidInfoButton.qml
+        src/qml/components/android/AndroidSliderRow.qml
         src/qml/components/android/AndroidDownloadJobRow.qml
         src/qml/components/android/AndroidToolPage.qml
         src/qml/components/android/AndroidClipRangeBar.qml
@@ -2616,9 +2668,7 @@ qt_add_qml_module(drift
         src/qml/components/android/pages/AndroidExtrasPage.qml
         src/qml/components/android/pages/AndroidStickerPage.qml
         src/qml/components/android/pages/AndroidTransformPage.qml
-        src/qml/components/android/pages/AndroidTextStylePage.qml
-        src/qml/components/android/pages/AndroidTextSettingsPage.qml
-        src/qml/components/android/pages/AndroidTextAnimationPage.qml
+        src/qml/components/android/pages/AndroidTextEditPage.qml
         src/qml/components/android/pages/AndroidAnimationPage.qml
         src/qml/components/android/pages/AndroidBlendingPage.qml
         src/qml/components/android/pages/AndroidDetailsPage.qml
@@ -2642,9 +2692,6 @@ qt_add_qml_module(drift
         src/qml/components/android/pages/AndroidCropPage.qml
         src/qml/components/android/pages/AndroidBackgroundPage.qml
         src/qml/components/android/AndroidCropHint.qml
-        src/qml/components/android/AndroidCropGrip.qml
-        src/qml/components/android/AndroidCropFrame.qml
-        src/qml/components/android/AndroidCropDimMask.qml
         src/qml/components/android/AndroidComposerTimingEdge.qml
         src/qml/components/android/AndroidClipToolbarSlot.qml
         src/qml/components/android/AndroidClipToolbarHint.qml
@@ -2674,6 +2721,7 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/ExportDialogModeBar.qml
         src/qml/components/dialogs/ExportDialogGifSection.qml
         src/qml/components/dialogs/ExportDialogAudioSection.qml
+        src/qml/components/dialogs/ExportDialogSizeEstimate.qml
         src/qml/components/dialogs/DebugInfoSystemTab.qml
         src/qml/components/dialogs/DebugInfoPlaybackTab.qml
         src/qml/components/dialogs/DebugInfoBenchRow.qml
@@ -2694,6 +2742,7 @@ qt_add_qml_module(drift
         src/qml/components/controls/ThemedCheckBox.qml
         src/qml/components/controls/ThemedToggleButton.qml
         src/qml/components/controls/ThemedToolTip.qml
+        src/qml/components/controls/RichToolTip.qml
         src/qml/components/controls/ThemedContextMenu.qml
         src/qml/components/controls/ThemedMenuItem.qml
         src/qml/components/controls/ThemedMenuSeparator.qml
@@ -2715,7 +2764,11 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsGeneralPage.qml
         src/qml/components/shell/SettingsGroupHeader.qml
         src/qml/components/shell/SettingsKeymapPage.qml
+        src/qml/components/shell/SettingsExportPage.qml
         src/qml/components/shell/SettingsNetworkPage.qml
+        src/qml/components/shell/SettingsNotificationsPage.qml
+        src/qml/components/shell/SettingsPersonalizePage.qml
+        src/qml/components/shell/SettingsStoragePage.qml
         src/qml/components/shell/SettingsPage.qml
         src/qml/components/shell/SettingsPerformancePage.qml
         src/qml/components/shell/SettingsPreviewPage.qml
@@ -2727,12 +2780,14 @@ qt_add_qml_module(drift
         src/qml/components/quicksetup/QuickSetupWelcomePage.qml
         src/qml/components/quicksetup/QuickSetupThemePage.qml
         src/qml/components/quicksetup/QuickSetupScalePage.qml
-        src/qml/components/quicksetup/QuickSetupAddonsPage.qml
+        src/qml/components/quicksetup/QuickSetupMakePage.qml
+        src/qml/components/quicksetup/QuickSetupExperiencePage.qml
+        src/qml/components/quicksetup/QuickSetupAgenticPage.qml
+        src/qml/components/quicksetup/QuickSetupFinishPage.qml
+        src/qml/components/quicksetup/QuickSetupChoiceCard.qml
+        src/qml/components/quicksetup/QuickSetupDownloads.qml
         src/qml/components/quicksetup/QuickSetupAddonRow.qml
-        src/qml/components/quicksetup/QuickSetupTipsPage.qml
-        src/qml/components/quicksetup/QuickSetupCommunityPage.qml
         src/qml/components/quicksetup/QuickSetupMockEditor.qml
-        src/qml/components/quicksetup/QuickSetupTipArt.qml
         src/qml/components/extras/ExtrasIcon.qml
         src/qml/components/extras/ExtrasIconTile.qml
         src/qml/components/extras/ExtrasCard.qml
@@ -2742,7 +2797,6 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsThemeEntry.qml
         src/qml/components/shell/SettingsThemeList.qml
         src/qml/components/shell/SettingsTimelinePage.qml
-        src/qml/components/shell/SettingsToolbarPage.qml
         src/qml/components/shell/SegmentationFrameColumn.qml
         src/qml/components/shell/SegmentationControlColumn.qml
         src/qml/components/shell/RestoreUpscalerPicker.qml
@@ -2773,6 +2827,8 @@ qt_add_qml_module(drift
         src/qml/components/shell/workspaces/designer/WorkspaceDesigner.qml
         src/qml/components/shell/SettingsWorkspacesPage.qml
         src/qml/components/shell/EditorHeaderSettingsButton.qml
+        src/qml/components/shell/EditorHeaderHelpButton.qml
+        src/qml/components/shell/EditorHeaderWorkspaceButton.qml
         src/qml/components/shell/AppSettingsMenu.qml
         src/qml/components/shell/EditorHeaderVideoButton.qml
         src/qml/components/shell/VideoMenu.qml

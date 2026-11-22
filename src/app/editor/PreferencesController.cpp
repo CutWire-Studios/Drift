@@ -242,12 +242,40 @@ void clearCacheFolder(const QString &root)
 }
 } // namespace
 
+namespace {
+const QStringList kWhatYouMake = {QString(), QStringLiteral("youtube"), QStringLiteral("shorts"),
+                                  QStringLiteral("films"), QStringLiteral("podcasts"),
+                                  QStringLiteral("tutorials")};
+const QStringList kExperienceLevels = {QStringLiteral("first"), QStringLiteral("some"), QStringLiteral("pro")};
+const QStringList kAgenticLevels = {QStringLiteral("none"), QStringLiteral("some"), QStringLiteral("lots")};
+const QStringList kAgenticWorkspaceIds = {QStringLiteral("ai"), QStringLiteral("procedural")};
+} // namespace
+
+QStringList PreferencesController::studioWorkspaceIds()
+{
+    return {QStringLiteral("3d"), QStringLiteral("procedural"), QStringLiteral("forge"),
+            QStringLiteral("audio-forge"), QStringLiteral("ai")};
+}
+
 PreferencesController::PreferencesController(QObject *parent)
     : QObject(parent)
 {
     QSettings settings;
     m_reopenLastProject = settings.value(QStringLiteral("editor/reopenLastProject"), false).toBool();
     m_commandBarEnabled = settings.value(QStringLiteral("commandBar/enabled"), true).toBool();
+    m_showRailLabels = settings.value(QStringLiteral("ui/railLabels"), true).toBool();
+    m_showTips = settings.value(QStringLiteral("ui/showTips"), true).toBool();
+    m_whatYouMake = settings.value(QStringLiteral("personalize/whatYouMake")).toString();
+    if (!kWhatYouMake.contains(m_whatYouMake))
+        m_whatYouMake.clear();
+    m_experienceLevel = settings.value(QStringLiteral("personalize/experienceLevel"), m_experienceLevel).toString();
+    if (!kExperienceLevels.contains(m_experienceLevel))
+        m_experienceLevel = QStringLiteral("some");
+    m_agenticUse = settings.value(QStringLiteral("personalize/agenticUse"), m_agenticUse).toString();
+    if (!kAgenticLevels.contains(m_agenticUse))
+        m_agenticUse = QStringLiteral("some");
+    m_hiddenWorkspaces = settings.value(QStringLiteral("ui/hiddenWorkspaces")).toStringList();
+    m_hiddenWorkspaces.removeAll(QStringLiteral("edit"));
     m_agentNotifications = settings.value(QStringLiteral("agent/notifications"), QStringLiteral("problems")).toString();
     if (!agentNotificationLevels().contains(m_agentNotifications))
         m_agentNotifications = QStringLiteral("problems");
@@ -276,7 +304,7 @@ PreferencesController::PreferencesController(QObject *parent)
     m_trackLabelsWidth = qBound(64.0,
         settings.value(QStringLiteral("ui/trackLabelsWidth"), 170.0).toDouble(), 360.0);
     m_androidTrackLabelsWidth = qBound(56.0,
-        settings.value(QStringLiteral("ui/androidTrackLabelsWidth"), 80.0).toDouble(), 200.0);
+        settings.value(QStringLiteral("ui/androidTrackLabelsWidth"), 68.0).toDouble(), 200.0);
     m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();
     m_timelineMenuItems = settings.value(QStringLiteral("ui/timelineMenuItems")).toStringList();
     m_proxyNamePatterns = settings.contains(QStringLiteral("proxy/namePatterns"))
@@ -488,6 +516,97 @@ void PreferencesController::setTimelineToolbarLayout(const QStringList &toolbarI
         settings.setValue(QStringLiteral("ui/timelineMenuItems"), menuItems);
     }
     emit timelineToolbarLayoutChanged();
+}
+
+void PreferencesController::setShowRailLabels(bool enabled)
+{
+    if (m_showRailLabels == enabled)
+        return;
+    m_showRailLabels = enabled;
+    QSettings().setValue(QStringLiteral("ui/railLabels"), m_showRailLabels);
+    emit showRailLabelsChanged();
+}
+
+bool PreferencesController::tipDismissed(const QString &id) const
+{
+    return QSettings().value(QStringLiteral("tips/") + id, false).toBool();
+}
+
+void PreferencesController::dismissTip(const QString &id)
+{
+    QSettings().setValue(QStringLiteral("tips/") + id, true);
+}
+
+void PreferencesController::resetDismissedTips()
+{
+    QSettings settings;
+    settings.remove(QStringLiteral("tips"));
+}
+
+void PreferencesController::setShowTips(bool enabled)
+{
+    if (m_showTips == enabled)
+        return;
+    m_showTips = enabled;
+    QSettings().setValue(QStringLiteral("ui/showTips"), m_showTips);
+    emit showTipsChanged();
+}
+
+void PreferencesController::setWhatYouMake(const QString &value)
+{
+    if (!kWhatYouMake.contains(value) || m_whatYouMake == value)
+        return;
+    m_whatYouMake = value;
+    QSettings().setValue(QStringLiteral("personalize/whatYouMake"), m_whatYouMake);
+    emit whatYouMakeChanged();
+}
+
+void PreferencesController::setHiddenWorkspaces(const QStringList &ids)
+{
+    QStringList cleaned;
+    for (const QString &id : ids) {
+        if (id != QLatin1String("edit") && !cleaned.contains(id))
+            cleaned.append(id);
+    }
+    if (cleaned == m_hiddenWorkspaces)
+        return;
+    m_hiddenWorkspaces = cleaned;
+    QSettings().setValue(QStringLiteral("ui/hiddenWorkspaces"), m_hiddenWorkspaces);
+    emit hiddenWorkspacesChanged();
+}
+
+void PreferencesController::setExperienceLevel(const QString &level)
+{
+    if (!kExperienceLevels.contains(level) || m_experienceLevel == level)
+        return;
+    m_experienceLevel = level;
+    QSettings().setValue(QStringLiteral("personalize/experienceLevel"), m_experienceLevel);
+    QStringList hidden = m_hiddenWorkspaces;
+    for (const QString &id : studioWorkspaceIds()) {
+        if (level == QLatin1String("first"))
+            hidden.append(id);
+        else if (!(m_agenticUse == QLatin1String("none") && kAgenticWorkspaceIds.contains(id)))
+            hidden.removeAll(id);
+    }
+    emit experienceLevelChanged();
+    setHiddenWorkspaces(hidden);
+}
+
+void PreferencesController::setAgenticUse(const QString &level)
+{
+    if (!kAgenticLevels.contains(level) || m_agenticUse == level)
+        return;
+    m_agenticUse = level;
+    QSettings().setValue(QStringLiteral("personalize/agenticUse"), m_agenticUse);
+    QStringList hidden = m_hiddenWorkspaces;
+    for (const QString &id : kAgenticWorkspaceIds) {
+        if (level == QLatin1String("none"))
+            hidden.append(id);
+        else if (m_experienceLevel != QLatin1String("first"))
+            hidden.removeAll(id);
+    }
+    emit agenticUseChanged();
+    setHiddenWorkspaces(hidden);
 }
 
 void PreferencesController::setCommandBarEnabled(bool enabled)
@@ -1343,10 +1462,21 @@ bool PreferencesController::quickSetupNeeded()
 #endif
 }
 
-void PreferencesController::completeQuickSetup()
+bool PreferencesController::takeStartProject()
+{
+    QSettings settings;
+    const bool pending = settings.value(QStringLiteral("setup/startProject"), false).toBool();
+    if (pending)
+        settings.remove(QStringLiteral("setup/startProject"));
+    return pending;
+}
+
+void PreferencesController::completeQuickSetup(bool startProject)
 {
     QSettings settings;
     settings.setValue(QStringLiteral("setup/quickSetupDone"), true);
+    if (startProject)
+        settings.setValue(QStringLiteral("setup/startProject"), true);
     settings.sync();
     if (m_needsUiLanguagePrompt) {
         markUiLanguageChosen();

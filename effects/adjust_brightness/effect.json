@@ -2,6 +2,7 @@
   "id": "adjust.brightness",
   "displayName": "Brightness",
   "category": "color",
+  "keywords": ["lighten", "darken", "exposure", "brighter", "darker", "lighter"],
   "thumbnail": "thumbnail.webp",
   "order": 20,
   "parameters": [

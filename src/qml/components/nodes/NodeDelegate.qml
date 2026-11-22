@@ -65,7 +65,7 @@ Item {
         anchors.fill: parent
         radius: Theme.c.nodeDelegate.radius
         color: Theme.c.nodeDelegate.background
-        border.width: 1
+        border.width: Theme.c.nodeDelegate.borderWidth
         border.color: Theme.c.nodeDelegate.border
     }
 
@@ -95,7 +95,7 @@ Item {
             x: card.radius
             width: parent.width - 2 * card.radius
             height: 3
-            radius: 1.5
+            radius: Theme.radiusPill
             color: root.accentColor
         }
 
@@ -183,12 +183,26 @@ Item {
         }
     }
 
+    // Each drag's moves merge into one undo step (see ForgeController::moveNodes). Esc drops that
+    // step, which leaves the graph where it started until the button is released.
+    function cancelMove() {
+        drag.revert()
+    }
+
     DragHandler {
         id: drag
         target: null
         acceptedButtons: Qt.LeftButton
         property point last
         property var ids: []
+        property bool reverted: false
+
+        function revert() {
+            if (!active || reverted)
+                return
+            reverted = true
+            root.controller.cancelMove()
+        }
 
         onActiveChanged: {
             if (active) {
@@ -198,19 +212,23 @@ Item {
                     root.controller.select(root.nodeId, false)
                 ids = root.controller.selection
                 last = centroid.scenePosition
+                reverted = false
+                root.canvas.movingNode = root
             } else {
                 root.controller.endMove()
+                root.canvas.movingNode = null
             }
         }
         onCentroidChanged: {
-            if (!active)
+            if (!active || reverted)
                 return
             const p = centroid.scenePosition
             const dx = (p.x - last.x) / root.canvas.zoom
             const dy = (p.y - last.y) / root.canvas.zoom
             last = p
-            if (dx !== 0 || dy !== 0)
+            if (dx !== 0 || dy !== 0) {
                 root.controller.moveNodes(ids, dx, dy)
+            }
         }
     }
 
@@ -270,7 +288,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(chipText.implicitWidth + 2 * Theme.spacingMd, root.width - x - root.pad)
                 height: root.rowH - 8
-                radius: height / 2
+                radius: Theme.radiusPill
                 color: Theme.c.nodeDelegate.chipBackground
 
                 Text {
@@ -342,7 +360,7 @@ Item {
         anchors.fill: parent
         radius: card.radius
         color: "transparent"
-        border.width: 2
+        border.width: Theme.c.nodeDelegate.selectionBorderWidth
         border.color: root.error.length > 0 ? Theme.c.nodeDelegate.error : Theme.c.nodeDelegate.selection
         visible: root.selected || root.error.length > 0
         opacity: root.selected ? 1 : 0.7

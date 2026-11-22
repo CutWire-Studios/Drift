@@ -2,6 +2,7 @@
   "id": "star_filter",
   "displayName": "Star Filter",
   "category": "dreamy",
+  "keywords": ["starburst", "light", "stars", "cross screen", "filter", "sparkle"],
   "thumbnail": "thumbnail.webp",
   "order": 175,
   "parameters": [

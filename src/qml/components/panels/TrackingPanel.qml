@@ -6,6 +6,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "tracking-panel"
+        title: qsTr("Motion tracking")
+        keywords: "motion tracking tracker follow object attach track point stabilize planar"
+    }
 
     property bool shown: false
     readonly property bool wantsActions: shown
@@ -49,11 +54,6 @@ PanelFrame {
         "translateRotateScale": qsTr("Position, rotation + size"),
         "perspective": qsTr("Perspective")
     })
-
-    function withShortcut(label, actionId) {
-        const key = EditorState.shortcutFor(actionId)
-        return key.length > 0 ? qsTr("%1 (%2)").arg(label).arg(key) : label
-    }
 
     function refresh() {
         const selectedId = EditorState.selectedClipData.id || ""
@@ -135,18 +135,18 @@ PanelFrame {
     // not in the layout.
     function handleAction(id) {
         switch (id) {
-        case "trackForward":
-        case "trackBackward":
-        case "trackFrameForward":
-        case "trackFrameBackward":
-        case "trackBoth":
+        case "tracking.trackForward":
+        case "tracking.trackBackward":
+        case "tracking.trackFrameForward":
+        case "tracking.trackFrameBackward":
+        case "tracking.trackBoth":
             if (!shown || !hasTarget || selectedId === "" || EditorState.tracking.busy)
                 return false
-            if (id === "trackBoth")
+            if (id === "tracking.trackBoth")
                 trackBoth(selectedId)
             else
-                runTrack(selectedId, id === "trackForward" || id === "trackFrameForward",
-                         id === "trackFrameForward" || id === "trackFrameBackward")
+                runTrack(selectedId, id === "tracking.trackForward" || id === "tracking.trackFrameForward",
+                         id === "tracking.trackFrameForward" || id === "tracking.trackFrameBackward")
             return true
         }
         if (id !== "clearSelection")
@@ -161,16 +161,15 @@ PanelFrame {
         return true
     }
 
+    readonly property string scope: "tracking"
+    readonly property int priority: 3
     onWantsActionsChanged: {
         if (wantsActions)
-            ShellBridge.trackingActionHandler = root
-        else if (ShellBridge.trackingActionHandler === root)
-            ShellBridge.trackingActionHandler = null
+            ShellBridge.registerActionHandler(root)
+        else
+            ShellBridge.unregisterActionHandler(root)
     }
-    Component.onDestruction: {
-        if (ShellBridge.trackingActionHandler === root)
-            ShellBridge.trackingActionHandler = null
-    }
+    Component.onDestruction: ShellBridge.unregisterActionHandler(root)
 
     onShownChanged: {
         if (shown) {
@@ -184,12 +183,29 @@ PanelFrame {
 
     onSelectedIdChanged: ShellBridge.selectedTrackerId = selectedId
 
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "tracking")
+            return
+        ShellBridge.panelRequest = null
+        if (request.followerId && EditorState.selectedClipData.id === request.followerId) {
+            refresh()
+            if (followerSelected && videoUnderFollower.clipId)
+                startFollow()
+        }
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+
     Component.onCompleted: {
         if (wantsActions)
-            ShellBridge.trackingActionHandler = root
+            ShellBridge.registerActionHandler(root)
         trackerList.selectedId = ShellBridge.selectedTrackerId
         if (shown)
             refresh()
+        applyPanelRequest()
     }
 
     Connections {
@@ -278,7 +294,8 @@ PanelFrame {
                     width: parent.width
                     variant: "primary"
                     text: qsTr("Follow an object")
-                    tooltip: qsTr("Click an object on the video; this clip will follow it through the clip")
+                    tooltip: qsTr("Follow an object")
+                    tooltipBody: qsTr("Click something in the preview and this clip follows it, such as a label on a moving car.")
                     onClicked: root.startFollow()
                 }
             }
@@ -351,7 +368,8 @@ PanelFrame {
                     checked: root.placeMode === "point"
                     checkable: false
                     enabled: !EditorState.tracking.busy
-                    tooltip: qsTr("Track a feature with one point")
+                    tooltip: qsTr("Point tracker")
+                    tooltipBody: qsTr("Follows one spot, such as a corner or a face, for position-only following.")
                     onClicked: {
                         if (root.placeMode === "point")
                             ShellBridge.trackerPlaceMode = ""
@@ -367,7 +385,8 @@ PanelFrame {
                     checked: root.placeMode === "planar"
                     checkable: false
                     enabled: !EditorState.tracking.busy
-                    tooltip: qsTr("Track a flat surface outlined by its corners")
+                    tooltip: qsTr("Planar tracker")
+                    tooltipBody: qsTr("Follows a flat surface, such as a screen or sign, including its rotation and scale.")
                     onClicked: {
                         if (root.placeMode === "planar")
                             ShellBridge.trackerPlaceMode = ""
@@ -559,7 +578,9 @@ PanelFrame {
                             width: parent.width
                             variant: "primary"
                             text: qsTr("Track whole clip")
-                            tooltip: root.withShortcut(qsTr("Follow the feature backward and forward through the whole clip"), "trackBoth")
+                            tooltip: qsTr("Track whole clip")
+                            tooltipBody: qsTr("Follows the feature backward and forward from here through the whole clip.")
+                            tooltipActionId: "tracking.trackBoth"
                             enabled: !EditorState.tracking.busy
                             onClicked: root.trackBoth(trackerRow.model.id)
                         }
@@ -591,14 +612,16 @@ PanelFrame {
 
                             IconButton {
                                 glyph: Theme.icons.skipBack
-                                tooltip: root.withShortcut(qsTr("Track back to the start"), "trackBackward")
+                                tooltip: qsTr("Track back to the start")
+                                tooltipActionId: "tracking.trackBackward"
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, false, false)
                             }
 
                             IconButton {
                                 glyph: Theme.icons.stepBack
-                                tooltip: root.withShortcut(qsTr("Track one frame back"), "trackFrameBackward")
+                                tooltip: qsTr("Track one frame back")
+                                tooltipActionId: "tracking.trackFrameBackward"
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, false, true)
                             }
@@ -612,14 +635,16 @@ PanelFrame {
 
                             IconButton {
                                 glyph: Theme.icons.stepForward
-                                tooltip: root.withShortcut(qsTr("Track one frame forward"), "trackFrameForward")
+                                tooltip: qsTr("Track one frame forward")
+                                tooltipActionId: "tracking.trackFrameForward"
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, true, true)
                             }
 
                             IconButton {
                                 glyph: Theme.icons.skipForward
-                                tooltip: root.withShortcut(qsTr("Track to the end"), "trackForward")
+                                tooltip: qsTr("Track to the end")
+                                tooltipActionId: "tracking.trackForward"
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, true, false)
                             }

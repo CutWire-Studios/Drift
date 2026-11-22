@@ -2,6 +2,7 @@
   "id": "super8_film",
   "displayName": "Super 8",
   "category": "retro",
+  "keywords": ["super 8", "old film", "home movie", "scratches", "8mm", "vintage"],
   "thumbnail": "thumbnail.webp",
   "order": 250,
   "parameters": [

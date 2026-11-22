@@ -19,7 +19,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Theme.radiusPill
         color: "transparent"
         border.width: Theme.c.depthEffectFocusReticle.borderWidth
         border.color: focusArea.containsMouse || focusArea.pressed

@@ -19,6 +19,8 @@ ItemDelegate {
     height: Theme.iconButtonSize + sectionHeight
     topInset: sectionHeight
     topPadding: sectionHeight
+    // The Basic style's bottom padding would stay, so the label sat above the row's centre.
+    bottomPadding: 0
     highlighted: combo.highlightedIndex === index
     // ItemDelegate defaults to hoverEnabled: false in Controls.Basic, so the
     // hover fill below never rendered.

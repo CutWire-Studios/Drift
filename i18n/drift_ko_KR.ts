@@ -52,6 +52,45 @@
     </message>
 </context>
 <context>
+    <name>AccentSwatches</name>
+    <message>
+        <source>Amber</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished">주황색</translation>
+    </message>
+    <message>
+        <source>Red</source>
+        <translation type="unfinished">빨강</translation>
+    </message>
+    <message>
+        <source>Pink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Purple</source>
+        <translation type="unfinished">보라색</translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation type="unfinished">파랑</translation>
+    </message>
+    <message>
+        <source>Teal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation type="unfinished">초록</translation>
+    </message>
+    <message>
+        <source>Theme default</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AddonManager</name>
     <message>
         <source>Automatic (recommended)</source>
@@ -431,10 +470,6 @@
         <translation>%1 조정</translation>
     </message>
     <message>
-        <source>Reset</source>
-        <translation>초기화</translation>
-    </message>
-    <message>
         <source>Reset %1</source>
         <translation>%1 초기화</translation>
     </message>
@@ -476,6 +511,10 @@
     <message>
         <source>Fade curve</source>
         <translation>페이드 곡선</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished">곡선</translation>
     </message>
     <message>
         <source>Animation</source>
@@ -588,14 +627,6 @@
         <translation>텍스트 스타일</translation>
     </message>
     <message>
-        <source>Text settings</source>
-        <translation>텍스트 설정</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>텍스트 애니메이션</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>자막</translation>
     </message>
@@ -652,14 +683,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>일시정지</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>재생</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>이동</translation>
@@ -769,6 +792,10 @@
 <context>
     <name>AndroidCropOverlay</name>
     <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">캔버스 크롭</translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>초기화</translation>
     </message>
@@ -784,20 +811,16 @@
 <context>
     <name>AndroidCropPage</name>
     <message>
-        <source>Free</source>
-        <translation>자유</translation>
-    </message>
-    <message>
-        <source>Original</source>
-        <translation>원본</translation>
-    </message>
-    <message>
         <source>Clip</source>
         <translation>클립</translation>
     </message>
     <message>
         <source>Video</source>
         <translation>동영상</translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished">수평 맞추기</translation>
     </message>
     <message>
         <source>Rotate</source>
@@ -889,18 +912,6 @@
         <translation>텍스트 추가</translation>
     </message>
     <message>
-        <source>Text style</source>
-        <translation>텍스트 스타일</translation>
-    </message>
-    <message>
-        <source>Text settings</source>
-        <translation>텍스트 설정</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>텍스트 애니메이션</translation>
-    </message>
-    <message>
         <source>Animation</source>
         <translation>애니메이션</translation>
     </message>
@@ -985,12 +996,16 @@
         <translation>타임라인이 비어 있습니다</translation>
     </message>
     <message>
-        <source>Import media or open the Media library to start editing.</source>
-        <translation>미디어를 가져오거나 미디어 라이브러리를 열어 편집을 시작하세요.</translation>
+        <source>Clips you add appear here as layers.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open Media</source>
-        <translation>미디어 열기</translation>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">여기에 새 폴더 만들기</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">빈 타임라인을 만들고 엽니다</translation>
     </message>
 </context>
 <context>
@@ -1114,6 +1129,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>아직 아무것도 없습니다 — 저장한 프로젝트가 이 목록에 표시됩니다.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1318,6 +1340,41 @@
     <message>
         <source>Marketplace</source>
         <translation>마켓플레이스</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMaskPage</name>
+    <message>
+        <source>Rectangle</source>
+        <translation type="unfinished">사각형</translation>
+    </message>
+    <message>
+        <source>Ellipse</source>
+        <translation type="unfinished">타원</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation type="unfinished">다각형</translation>
+    </message>
+    <message>
+        <source>Brush</source>
+        <translation type="unfinished">브러시</translation>
+    </message>
+    <message>
+        <source>AI select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track</source>
+        <translation type="unfinished">트래킹</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished">편집</translation>
+    </message>
+    <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1797,6 +1854,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidMotionPage</name>
+    <message>
+        <source>Not an animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Motion settings apply to Lottie and SVG clips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidMyVideosTab</name>
     <message>
         <source>Video actions</source>
@@ -1829,6 +1897,18 @@
 <context>
     <name>AndroidPreview</name>
     <message>
+        <source>No media yet</source>
+        <translation type="unfinished">아직 미디어가 없습니다</translation>
+    </message>
+    <message>
+        <source>Add a video, photo or audio file to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Seek</source>
         <translation>이동</translation>
     </message>
@@ -1858,6 +1938,14 @@
     <message>
         <source>Quality: %1</source>
         <translation>화질: %1</translation>
+    </message>
+    <message>
+        <source>Hardware</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D view</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Guides</source>
@@ -1962,8 +2050,8 @@
         <translation>동영상 크기 자르기</translation>
     </message>
     <message>
-        <source>Drag the preview edges to change what’s included</source>
-        <translation>미리보기 가장자리를 드래그하여 포함할 영역 변경</translation>
+        <source>Trim the frame to a smaller area</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties</source>
@@ -1980,6 +2068,14 @@
     <message>
         <source>Sync and switch between angles</source>
         <translation>각도 동기화 및 전환</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation type="unfinished">알림</translation>
+    </message>
+    <message>
+        <source>Recent messages and finished jobs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -2119,10 +2215,10 @@
     </message>
 </context>
 <context>
-    <name>AndroidSpeedPage</name>
+    <name>AndroidSliderRow</name>
     <message>
-        <source>Speed curve</source>
-        <translation>속도 곡선</translation>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
     </message>
 </context>
 <context>
@@ -2187,10 +2283,30 @@
     </message>
 </context>
 <context>
-    <name>AndroidTextPage</name>
+    <name>AndroidTextTabs</name>
     <message>
-        <source>Edit text</source>
-        <translation>텍스트 편집</translation>
+        <source>Font</source>
+        <translation type="unfinished">글꼴</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">스타일</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">애니메이션</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation type="unfinished">레이아웃</translation>
+    </message>
+    <message>
+        <source>Tap to type text</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2354,8 +2470,24 @@
         <translation>시작</translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished">시작 부분 자르기</translation>
+    </message>
+    <message>
         <source>Out</source>
         <translation>끝</translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished">끝 부분 자르기</translation>
+    </message>
+    <message>
+        <source>%1 one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 one frame later</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2416,30 +2548,6 @@
     <message>
         <source>Untitled</source>
         <translation>제목 없음</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · 클립 %n개</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>변환</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformParentFrame</name>
-    <message>
-        <source>Select %1</source>
-        <translation>%1 선택</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>변환</translation>
     </message>
 </context>
 <context>
@@ -2675,10 +2783,6 @@
         <translation>선택한 클립의 트랙 숨기기/표시</translation>
     </message>
     <message>
-        <source>3D gizmo: cycle world/local/view axes</source>
-        <translation>3D 기즈모: 월드/로컬/뷰 축 순환</translation>
-    </message>
-    <message>
         <source>Add speed point at playhead</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2719,8 +2823,240 @@
         <translation>작업 영역 반복 재생</translation>
     </message>
     <message>
+        <source>Rename bookmark at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete bookmark at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all bookmarks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move selection left one second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move selection right one second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim start tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim end tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split selected clip on beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap with previous clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap with next clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add text at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace clip with…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move adjustment to its own track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make composite from selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open composite</source>
+        <translation type="unfinished">컴포지트 열기</translation>
+    </message>
+    <message>
+        <source>Flatten composite</source>
+        <translation type="unfinished">컴포지트 병합</translation>
+    </message>
+    <message>
+        <source>Clip speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reverse clip</source>
+        <translation type="unfinished">클립 반전</translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished">자르기…</translation>
+    </message>
+    <message>
+        <source>Color grade</source>
+        <translation type="unfinished">색보정</translation>
+    </message>
+    <message>
+        <source>Edit keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask &amp; track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip properties</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto duck</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sync by audio</source>
+        <translation type="unfinished">오디오로 동기화</translation>
+    </message>
+    <message>
+        <source>Mute/unmute selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo/unsolo selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add video track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add audio track</source>
+        <translation type="unfinished">오디오 트랙 추가</translation>
+    </message>
+    <message>
+        <source>Make selected track taller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make selected track shorter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start/stop voiceover recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select tool</source>
         <translation>선택 도구</translation>
+    </message>
+    <message>
+        <source>Zoom timeline to fit project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle ripple editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle clip overlap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle auto-select under playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle audio mixer strip</source>
+        <translation type="unfinished">오디오 믹서 스트립 전환</translation>
+    </message>
+    <message>
+        <source>Toggle keyframe strip</source>
+        <translation type="unfinished">키프레임 스트립 전환</translation>
+    </message>
+    <message>
+        <source>Toggle timeline overview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle preview fullscreen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add or remove keyframe at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit view to the selected keys, or all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit view to the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten frames earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten frames later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rectangle mask tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ellipse mask tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brush mask tool</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Lasso mask tool</source>
@@ -2735,11 +3071,323 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Decrease brush hardness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Increase brush hardness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brush: switch between paint and erase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pen tool: add points to a path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert point between corner and smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete point without keeping the curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected cues earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected cues later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected cues 0.1 s earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected cues 0.1 s later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find in cues</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop shuttle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle before/after compare</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorite the selected ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reject the selected ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the selected ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bypass color grade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo: move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo: rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo: scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo: cycle world/local/view axes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation type="unfinished">선택 항목에 프레임 맞추기</translation>
+    </message>
+    <message>
+        <source>Frame everything</source>
+        <translation type="unfinished">전체 화면에 맞추기</translation>
+    </message>
+    <message>
+        <source>Reset the view</source>
+        <translation type="unfinished">뷰 초기화</translation>
+    </message>
+    <message>
+        <source>Fly mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle orthographic projection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look through the scene camera</source>
+        <translation type="unfinished">장면 카메라를 통해 보기</translation>
+    </message>
+    <message>
+        <source>Front view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Redo (alternate)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel the pending connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit all nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom in (alternate)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hold to pan, tap for quick add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 6</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 7</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 8</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to angle 9</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set in point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set out point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search…</source>
         <translation>검색…</translation>
     </message>
     <message>
+        <source>Import media to timeline…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation type="unfinished">내보내기…</translation>
+    </message>
+    <message>
+        <source>Open settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open keyboard shortcuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Ask (editing command)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deselect all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select next clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select previous clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple delete selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove all effects from clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename clip…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop and reset speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step back five frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step forward five frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark work area to selected clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock selected clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut tool</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3265,22 +3913,6 @@
         <translation>재생 속도 낮추기</translation>
     </message>
     <message>
-        <source>3D gizmo: move / Tracker tool</source>
-        <translation>3D 기즈모: 이동 / 트래커 도구</translation>
-    </message>
-    <message>
-        <source>3D gizmo: rotate / Rectangle mask</source>
-        <translation>3D 기즈모: 회전 / 직사각형 마스크</translation>
-    </message>
-    <message>
-        <source>3D gizmo: scale / Ellipse mask</source>
-        <translation>3D 기즈모: 배율 / 타원 마스크</translation>
-    </message>
-    <message>
-        <source>Cut tool / Brush mask</source>
-        <translation>자르기 도구 / 브러시 마스크</translation>
-    </message>
-    <message>
         <source>Polygon mask tool</source>
         <translation>다각형 마스크 도구</translation>
     </message>
@@ -3297,8 +3929,8 @@
         <translation>브러시 크기 늘리기</translation>
     </message>
     <message>
-        <source>Brush: switch paint / erase</source>
-        <translation>브러시: 그리기 / 지우기 전환</translation>
+        <source>Tracker tool</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track forward</source>
@@ -3657,6 +4289,10 @@
     <message>
         <source>Rotate clip</source>
         <translation>클립 회전</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to edit this</source>
@@ -5023,6 +5659,42 @@
         </translation>
     </message>
     <message>
+        <source>Not a valid key combination</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark work area to clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Work area set to clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear work area in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Work area in cleared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear work area out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Work area out cleared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove all bookmarks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bookmarks removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation>내보내는 중…</translation>
     </message>
@@ -5422,20 +6094,28 @@
 <context>
     <name>AppSettingsMenu</name>
     <message>
-        <source>Help…</source>
-        <translation>도움말…</translation>
+        <source>Help</source>
+        <translation type="unfinished">도움말</translation>
+    </message>
+    <message>
+        <source>Keyboard shortcuts</source>
+        <translation type="unfinished">키보드 단축키</translation>
+    </message>
+    <message>
+        <source>Check for updates…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save diagnostics…</source>
         <translation>진단 정보 저장…</translation>
     </message>
     <message>
-        <source>Settings…</source>
-        <translation>설정…</translation>
+        <source>Debug info…</source>
+        <translation type="unfinished">디버그 정보…</translation>
     </message>
     <message>
-        <source>Multicam</source>
-        <translation>멀티캠</translation>
+        <source>About Drift</source>
+        <translation type="unfinished">Drift 정보</translation>
     </message>
 </context>
 <context>
@@ -5499,6 +6179,14 @@
     <message>
         <source>Remove from history</source>
         <translation>기록에서 제거</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">검색</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5756,6 +6444,54 @@
     <message>
         <source>Audio FX</source>
         <translation>오디오 효과</translation>
+    </message>
+    <message>
+        <source>Your imported video, audio and images. Drag them onto the timeline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Titles and captions with ready-made styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate captions from speech, or import a subtitle file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn text into a voiceover, or clone a voice.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Emoji and stickers to place over your video.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shapes and arrows for callouts and backgrounds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find the cuts in a long clip so you can jump to each scene.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show only part of a clip, or cut a subject out of its background.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Looks, glitches, blurs and more. Click one to apply it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready-made effect combinations you can apply in one click.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fades, wipes and zooms between two clips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio effects like echo, EQ and noise gate.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>New folder</source>
@@ -6063,6 +6799,34 @@
 <context>
     <name>AudioEffectHeader</name>
     <message>
+        <source>Disable effect</source>
+        <translation type="unfinished">효과 사용 안 함</translation>
+    </message>
+    <message>
+        <source>Enable effect</source>
+        <translation type="unfinished">효과 사용</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished">위로 이동</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">아래로 이동</translation>
+    </message>
+    <message>
+        <source>Copy effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove effect</source>
+        <translation type="unfinished">효과 제거</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1(설치되지 않음)</translation>
     </message>
@@ -6089,6 +6853,10 @@
     <message>
         <source>Remove audio effect</source>
         <translation>오디오 효과 제거</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">더 보기</translation>
     </message>
 </context>
 <context>
@@ -6141,6 +6909,10 @@
         <translation>아직 오디오 효과가 없습니다</translation>
     </message>
     <message>
+        <source>Tap Browse audio effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag a preset from Audio FX onto this clip, or click a preset card.</source>
         <translation>Audio FX에서 프리셋을 이 클립으로 드래그하거나 프리셋 카드를 클릭하세요.</translation>
     </message>
@@ -6149,12 +6921,20 @@
         <translation>오디오 효과 찾아보기</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>시간 위치로 이동하고 값을 설정한 다음 다이아몬드를 클릭하여 키프레임을 추가하세요. 자동 키프레임이 켜져 있으면 슬라이더를 드래그해도 키프레임이 생성됩니다.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>자동 키프레임</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effect settings</source>
@@ -6600,6 +7380,10 @@
         <translation>캡션당 %1단어</translation>
     </message>
     <message>
+        <source>Mixer ↗</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pan</source>
         <translation>패닝</translation>
     </message>
@@ -6640,12 +7424,28 @@
         <translation>노이즈 제거…</translation>
     </message>
     <message>
+        <source>Remove noise</source>
+        <translation type="unfinished">노이즈 제거</translation>
+    </message>
+    <message>
+        <source>Cleans hiss, hum and background noise from speech.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Download noise removal (about 9 MB)</source>
         <translation>노이즈 제거 다운로드(약 9MB)</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
         <translation>먼저 AI 엔진을 설치하세요</translation>
+    </message>
+    <message>
+        <source>Needs noise model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Auto subtitles</source>
@@ -6876,6 +7676,10 @@
     <message>
         <source>Close audio mixer</source>
         <translation>오디오 믹서 닫기</translation>
+    </message>
+    <message>
+        <source>Open in Audio workspace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Resume recording</source>
@@ -7143,47 +7947,47 @@
 <context>
     <name>BakeController</name>
     <message>
-        <source>Set a work area to bake</source>
-        <translation>베이크할 작업 영역을 설정하세요</translation>
+        <source>Pre-rendered sections are of the main timeline. Switch to it to pre-render.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not open the bake cache</source>
-        <translation>베이크 캐시를 열 수 없습니다</translation>
+        <source>Set a work area to pre-render</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the pre-render cache</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Baking…</source>
         <translation>베이크 중…</translation>
     </message>
     <message>
-        <source>Bake cancelled</source>
-        <translation>베이크 취소됨</translation>
+        <source>Pre-render cancelled</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bake failed</source>
-        <translation>베이크 실패</translation>
+        <source>Pre-render failed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bake complete</source>
-        <translation>베이크 완료</translation>
+        <source>Pre-render complete</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Set work area to bake</source>
-        <translation>베이크할 작업 영역 설정</translation>
+        <source>Set work area to pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Work area set</source>
         <translation>작업 영역 설정됨</translation>
     </message>
-    <message>
-        <source>Bakes are of the main timeline. Switch to it to bake.</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>BakesDialog</name>
     <message>
-        <source>Bakes</source>
-        <translation>베이크</translation>
+        <source>Pre-rendered sections</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>
@@ -7210,8 +8014,58 @@
         <translation>%1초</translation>
     </message>
     <message>
-        <source>Baking %1%</source>
-        <translation>베이크 중 %1%</translation>
+        <source>Pre-rendering %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all pre-rendered sections?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-render at current quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set work area to pre-render</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality for new pre-rendered sections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-render work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-rendered sections are of the main timeline. Switch to it to pre-render.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-render a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Pre-render.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-render</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete pre-rendered section</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n pre-rendered section(s) · %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Re-render all stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all pre-rendered sections</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stale</source>
@@ -7222,10 +8076,6 @@
         <translation>최신</translation>
     </message>
     <message>
-        <source>Delete all bakes?</source>
-        <translation>모든 베이크를 삭제하시겠습니까?</translation>
-    </message>
-    <message>
         <source>Delete</source>
         <translation>삭제</translation>
     </message>
@@ -7234,28 +8084,12 @@
         <translation>재생 및 내보내기 시 이 범위를 다시 실시간으로 렌더링합니다. 프로젝트는 변경되지 않습니다.</translation>
     </message>
     <message>
-        <source>Re-bake at current quality</source>
-        <translation>현재 품질로 다시 베이크</translation>
-    </message>
-    <message>
-        <source>Set work area to bake</source>
-        <translation>베이크할 작업 영역 설정</translation>
-    </message>
-    <message>
-        <source>Quality for new bakes</source>
-        <translation>새 베이크 품질</translation>
-    </message>
-    <message>
         <source>≈ %1 per minute</source>
         <translation>분당 ≈ %1</translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>취소</translation>
-    </message>
-    <message>
-        <source>Bake work area</source>
-        <translation>작업 영역 베이크</translation>
     </message>
     <message>
         <source>Set a work area on the timeline first</source>
@@ -7268,10 +8102,6 @@
     <message>
         <source>O</source>
         <translation>O</translation>
-    </message>
-    <message>
-        <source>Bake a finished part of your timeline to play and export it smoothly. Set a work area with %1 and %2, then press Bake.</source>
-        <translation>타임라인의 완성된 부분을 베이크하여 부드럽게 재생하고 내보내세요. %1 및 %2 키로 작업 영역을 설정한 후 [베이크]를 누르세요.</translation>
     </message>
     <message>
         <source>Range</source>
@@ -7294,38 +8124,12 @@
         <translation>상태</translation>
     </message>
     <message>
-        <source>Re-bake</source>
-        <translation>다시 베이크</translation>
-    </message>
-    <message>
         <source>More</source>
         <translation>더 보기</translation>
     </message>
     <message>
-        <source>Delete bake</source>
-        <translation>베이크 삭제</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n bake(s) · %1</source>
-        <translation>
-            <numerusform>%n개 베이크 · %1</numerusform>
-        </translation>
-    </message>
-    <message>
         <source>0 B</source>
         <translation>0 B</translation>
-    </message>
-    <message>
-        <source>Re-bake all stale</source>
-        <translation>만료된 모든 항목 다시 베이크</translation>
-    </message>
-    <message>
-        <source>Delete all bakes</source>
-        <translation>모든 베이크 삭제</translation>
-    </message>
-    <message>
-        <source>Bakes are of the main timeline. Switch to it to bake.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7467,6 +8271,29 @@
     <message>
         <source>Reset to Normal</source>
         <translation>일반으로 초기화</translation>
+    </message>
+</context>
+<context>
+    <name>BrushSideSliders</name>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">크기</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">불투명도</translation>
+    </message>
+    <message>
+        <source>Brush size</source>
+        <translation type="unfinished">브러시 크기</translation>
+    </message>
+    <message>
+        <source>Brush opacity</source>
+        <translation type="unfinished">브러시 불투명도</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <translation type="unfinished">%1 %</translation>
     </message>
 </context>
 <context>
@@ -7659,6 +8486,44 @@
     <message>
         <source>Bounce</source>
         <translation>바운스</translation>
+    </message>
+</context>
+<context>
+    <name>ClipCropOverlay</name>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished">클립 자르기</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
+    </message>
+    <message>
+        <source>Show the whole source again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+    <message>
+        <source>Leave the crop tool (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ClipSuggestions</name>
+    <message>
+        <source>Generate captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto reframe…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilize this shaky clip</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8030,6 +8895,10 @@
         <translation>색상</translation>
     </message>
     <message>
+        <source>None. Choose one in the Looks panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Color wheels</source>
         <translation>색상 휠</translation>
     </message>
@@ -8072,10 +8941,6 @@
     <message>
         <source>LUT</source>
         <translation>LUT</translation>
-    </message>
-    <message>
-        <source>None. Choose one in the Color Grading LUTs panel.</source>
-        <translation>없음. 컬러 그레이딩 LUT 패널에서 선택하세요.</translation>
     </message>
     <message>
         <source>LUT Intensity</source>
@@ -8250,7 +9115,26 @@
     </message>
 </context>
 <context>
+    <name>CropFrame</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
+    </message>
+    <message>
+        <source>Nudge crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CropOverlay</name>
+    <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">캔버스 크롭</translation>
+    </message>
     <message>
         <source>Fit view</source>
         <translation>보기 맞춤</translation>
@@ -8285,6 +9169,21 @@
     <message>
         <source>Middle-drag to pan</source>
         <translation>가운데 버튼으로 드래그하여 패닝</translation>
+    </message>
+</context>
+<context>
+    <name>CropPresets</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">자유</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">원본</translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8330,8 +9229,12 @@
         <translation>입력 %1 → 출력 %2</translation>
     </message>
     <message>
-        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation>클릭하여 점을 추가합니다. 드래그하여 이동합니다. 더블 클릭하거나 바깥으로 드래그하여 제거합니다.</translation>
+        <source>Tap to add a point. Drag to move it. Hold a point for more, or drag it off the plot to remove.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click, Delete or drag it off to remove. Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8370,6 +9273,40 @@
     <message>
         <source>Bezier</source>
         <translation>베지어</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">삭제</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">부드럽게</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphView</name>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">곡선 편집</translation>
+    </message>
+    <message>
+        <source>Reset view</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8646,6 +9583,10 @@
 </context>
 <context>
     <name>DenoisePanel</name>
+    <message>
+        <source>Remove noise</source>
+        <translation type="unfinished">노이즈 제거</translation>
+    </message>
     <message>
         <source>Noise Removal</source>
         <translation>노이즈 제거</translation>
@@ -9102,6 +10043,10 @@
         <translation>%1의 모든 키프레임 사이에 이 이징 적용</translation>
     </message>
     <message>
+        <source>Edit curve in graph ↗</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename…</source>
         <translation>이름 변경…</translation>
     </message>
@@ -9312,8 +10257,20 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save Shareable Copy</source>
-        <translation>공유 가능한 복사본 저장</translation>
+        <source>Save with media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project not saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project couldn&apos;t be saved, and your changes are not on disk yet: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project couldn&apos;t be saved, and your changes are not on disk yet.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project not saved</source>
@@ -9365,6 +10322,10 @@
         </translation>
     </message>
     <message>
+        <source>Effects, transitions, sound effects and stock media to add to projects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Marketplace</source>
         <translation>마켓플레이스</translation>
     </message>
@@ -9400,6 +10361,25 @@
     <message>
         <source>Recommended packs and updates</source>
         <translation>추천 팩 및 업데이트</translation>
+    </message>
+    <message>
+        <source>Optional AI engines, models and add-ons that unlock more features</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>EditorHeaderHelpButton</name>
+    <message>
+        <source>Help</source>
+        <translation type="unfinished">도움말</translation>
+    </message>
+    <message>
+        <source>Help and support</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Guides, keyboard shortcuts, updates and diagnostics</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9439,22 +10419,6 @@
 <context>
     <name>EditorHeaderSearchField</name>
     <message>
-        <source>Workspace: %1</source>
-        <translation>작업 영역: %1</translation>
-    </message>
-    <message>
-        <source>Workspace:</source>
-        <translation>작업 영역:</translation>
-    </message>
-    <message>
-        <source>Switch workspace</source>
-        <translation>작업 영역 전환</translation>
-    </message>
-    <message>
-        <source>Customize layouts in Settings…</source>
-        <translation>설정에서 레이아웃 맞춤 설정…</translation>
-    </message>
-    <message>
         <source>Describe an edit, e.g. “fade in over half a second”</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9471,11 +10435,7 @@
         <translation type="unfinished">확인</translation>
     </message>
     <message>
-        <source>Ask Drift to make an edit  %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ask Drift to make an edit</source>
+        <source>Describe an edit in plain words and Drift does it, e.g. “fade in over half a second”.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9489,6 +10449,10 @@
         <source>Settings</source>
         <translation>설정</translation>
     </message>
+    <message>
+        <source>Preferences, appearance, shortcuts and workspaces</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorHeaderVideoButton</name>
@@ -9497,8 +10461,35 @@
         <translation>동영상</translation>
     </message>
     <message>
-        <source>Bakes, crop and video layout</source>
-        <translation>베이크, 자르기 및 비디오 레이아웃</translation>
+        <source>Video size, crop, multicam and pre-rendered sections</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>EditorHeaderWorkspaceButton</name>
+    <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">작업 영역: %1</translation>
+    </message>
+    <message>
+        <source>Switch workspace</source>
+        <translation type="unfinished">작업 영역 전환</translation>
+    </message>
+    <message>
+        <source>Each workspace arranges the panels for one kind of task</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everyday</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Customize layouts in Settings…</source>
+        <translation type="unfinished">설정에서 레이아웃 맞춤 설정…</translation>
     </message>
 </context>
 <context>
@@ -9518,6 +10509,18 @@
     <message>
         <source>Search effects</source>
         <translation>효과 검색</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">더 보기</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">보정 레이어 추가</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Adjustment layer</source>
@@ -9609,6 +10612,18 @@
         <translation>깊이 및 조명</translation>
     </message>
     <message>
+        <source>Fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation type="unfinished">개인정보 보호</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">배경</translation>
+    </message>
+    <message>
         <source>Other</source>
         <translation>기타</translation>
     </message>
@@ -9616,12 +10631,12 @@
 <context>
     <name>EffectPresetCard</name>
     <message>
-        <source>%1 — click to apply to the selection, or drag onto a clip</source>
-        <translation>%1 — 선택 항목에 적용하려면 클릭하거나 클립으로 드래그하세요</translation>
+        <source>Click to apply to the selection, or drag onto a clip</source>
+        <translation type="unfinished">클릭하여 선택 항목에 적용하거나 클립으로 드래그</translation>
     </message>
     <message>
-        <source>%1 — click to add as an adjustment layer, or drag onto a clip</source>
-        <translation>%1 — 조정 레이어로 추가하려면 클릭하거나 클립으로 드래그하세요</translation>
+        <source>Click to add as an adjustment layer, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -9826,12 +10841,20 @@
 <context>
     <name>EffectsAutoKeyHint</name>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>시간 위치로 이동하고 값을 설정한 다음 다이아몬드를 클릭하여 키프레임을 추가하세요. 자동 키프레임이 켜져 있으면 슬라이더를 드래그해도 키프레임이 생성됩니다.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>자동 키프레임</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9939,6 +10962,26 @@
         <translation>프리셋으로 저장…</translation>
     </message>
     <message>
+        <source>Move up</source>
+        <translation type="unfinished">위로 이동</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">아래로 이동</translation>
+    </message>
+    <message>
+        <source>Copy effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1(설치되지 않음)</translation>
     </message>
@@ -9949,6 +10992,10 @@
     <message>
         <source>Move effect down</source>
         <translation>효과 아래로 이동</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">더 보기</translation>
     </message>
     <message>
         <source>Disable effect</source>
@@ -10058,6 +11105,10 @@
         <translation>아직 효과가 없습니다</translation>
     </message>
     <message>
+        <source>Tap Browse effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag a preset from the Effects library onto this clip, or click a preset card.</source>
         <translation>효과 라이브러리에서 프리셋을 이 클립으로 드래그하거나 프리셋 카드를 클릭하세요.</translation>
     </message>
@@ -10068,6 +11119,14 @@
     <message>
         <source>Effect settings</source>
         <translation>효과 설정</translation>
+    </message>
+    <message>
+        <source>Blurring something that moves?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track it in Mask &amp; track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>This clip already has a frame for every project frame, so Motion Smoothing adds nothing here. It helps footage with a lower frame rate than the project, or slowed down.</source>
@@ -10108,8 +11167,8 @@
         <translation>새 마스크 추가</translation>
     </message>
     <message>
-        <source>Cutout subject</source>
-        <translation>피사체 분리</translation>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10231,18 +11290,22 @@
         <translation>내보내기가 취소되었습니다.</translation>
     </message>
     <message>
-        <source>Some bakes are out of date</source>
-        <translation>일부 베이크가 만료되었습니다</translation>
+        <source>Some pre-rendered sections are out of date</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>%n baked range(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
-        <translation>
-            <numerusform>%n개의 베이크된 범위가 편집 내용과 더 이상 일치하지 않습니다. 그대로 내보내면 이전 이미지가 사용됩니다.</numerusform>
+        <source>%n pre-rendered section(s) no longer match your edits. Exporting them as is uses the old pictures.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Re-bake first</source>
-        <translation>먼저 다시 베이크</translation>
+        <source>Re-render first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use pre-rendered sections</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Re-baking. Export again when it finishes.</source>
@@ -10259,10 +11322,6 @@
     <message>
         <source>Cancel</source>
         <translation>취소</translation>
-    </message>
-    <message>
-        <source>Use baked ranges</source>
-        <translation>베이크된 범위 사용</translation>
     </message>
     <message>
         <source>Read pre-rendered ranges instead of compositing them again</source>
@@ -10359,10 +11418,69 @@
     </message>
 </context>
 <context>
+    <name>ExportDialogSizeEstimate</name>
+    <message>
+        <source>%1 KB</source>
+        <translation type="unfinished">%1 KB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation type="unfinished">%1 MB</translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation type="unfinished">%1 GB</translation>
+    </message>
+    <message>
+        <source>Estimated size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>≈ %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimate — varies with content</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ExportDialogVideoSection</name>
     <message>
         <source>Saves what you see in the preview. Pick a size — the picture shape stays the same.</source>
         <translation>미리보기에서 보이는 내용을 저장합니다. 크기를 선택해도 화면 비율은 그대로 유지됩니다.</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1×%2. Vertical for TikTok, Reels and Shorts, wide for YouTube.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1×%2</source>
+        <translation type="unfinished">%1×%2</translation>
+    </message>
+    <message>
+        <source>Choose layout…</source>
+        <translation type="unfinished">레이아웃 선택…</translation>
+    </message>
+    <message>
+        <source>Pick a platform template (YouTube, Instagram, TikTok, …) and quality</source>
+        <translation type="unfinished">플랫폼 템플릿(YouTube, Instagram, TikTok, …)과 화질을 선택하세요</translation>
+    </message>
+    <message>
+        <source>Auto reframe…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop the selected clip to follow its subject in a new shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a video clip on the timeline first</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Downscale</source>
@@ -10379,6 +11497,10 @@
     <message>
         <source>fps</source>
         <translation>fps</translation>
+    </message>
+    <message>
+        <source>Above the project rate, extra frames come from the source footage, which keeps slowed clips smooth.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Exporting above the project rate pulls extra frames from the source footage where it has them — this is what makes slowed clips look smooth. Where it doesn&apos;t, frames repeat.</source>
@@ -10403,6 +11525,10 @@
     <message>
         <source>Constant Quality</source>
         <translation>고정 화질</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">화질</translation>
     </message>
     <message>
         <source>Bitrate</source>
@@ -11166,12 +12292,16 @@
         <translation>이징 아웃</translation>
     </message>
     <message>
-        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
-        <translation>두 핸들을 드래그하여 3차 곡선의 모양을 만드세요. 양 끝은 고정되며 핸들은 상자 안에만 있을 수 있어 곡선이 스스로 접히지 않습니다.</translation>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself. Shift keeps a handle flat, Ctrl suspends snapping, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation>가운데 점을 드래그하여 램프 모양을 만듭니다(끝점은 고정됨). 더블 클릭하여 점을 추가하고, Delete 키를 누르면 선택 항목이 제거됩니다.</translation>
+        <source>Click the curve to add a point and drag the points to shape the ramp (ends stay pinned). Delete or double-click removes, drag an empty spot to select several, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">곡선 편집</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -11840,6 +12970,10 @@
         <translation>수평 맞추기</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>시작 시점</translation>
     </message>
@@ -11998,6 +13132,38 @@
         <source>No matches</source>
         <translation>일치하는 항목 없음</translation>
     </message>
+    <message>
+        <source>No matches for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular searches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">속도</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">흔들림 보정</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">내보내기</translation>
+    </message>
 </context>
 <context>
     <name>GradeSlider</name>
@@ -12140,6 +13306,10 @@
     <message>
         <source>Release to remove</source>
         <translation>놓아서 제거</translation>
+    </message>
+    <message>
+        <source>Move guide</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12580,6 +13750,13 @@
     </message>
 </context>
 <context>
+    <name>InlineTip</name>
+    <message>
+        <source>Hide this tip</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>JobRegistry</name>
     <message>
         <source>Queued</source>
@@ -12757,10 +13934,6 @@
         <translation>키프레임 지워짐</translation>
     </message>
     <message>
-        <source>Nudge keyframes</source>
-        <translation>키프레임 미세 이동</translation>
-    </message>
-    <message>
         <source>Move keyframes</source>
         <translation>키프레임 이동</translation>
     </message>
@@ -12910,8 +14083,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit keyframe curve</source>
-        <translation>키프레임 곡선 편집</translation>
+        <source>No keyframes on this clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (keyframes off)</source>
@@ -12930,8 +14103,20 @@
         <translation>내 이징 %1</translation>
     </message>
     <message>
+        <source>Interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">부드럽게</translation>
+    </message>
+    <message>
         <source>Straight</source>
         <translation>직선</translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <translation type="unfinished">유지</translation>
     </message>
     <message>
         <source>Easing…</source>
@@ -12940,10 +14125,6 @@
     <message>
         <source>Save curve as preset…</source>
         <translation>곡선을 사전 설정으로 저장…</translation>
-    </message>
-    <message>
-        <source>Jump</source>
-        <translation>점프</translation>
     </message>
 </context>
 <context>
@@ -13006,13 +14187,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphKeyDot</name>
-    <message>
-        <source>Move keyframe</source>
-        <translation>키프레임 이동</translation>
-    </message>
-</context>
-<context>
     <name>KeyframeGraphLaneStatus</name>
     <message>
         <source>No keyframes</source>
@@ -13038,10 +14212,28 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphTangentHandle</name>
+    <name>KeyframeInteraction</name>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform>%n개 키</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Move keyframes</source>
+        <translation type="unfinished">키프레임 이동</translation>
+    </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation>키프레임 곡선 편집</translation>
+        <translation type="unfinished">키프레임 곡선 편집</translation>
+    </message>
+    <message>
+        <source>Stretch keyframes</source>
+        <translation type="unfinished">키프레임 늘이기</translation>
+    </message>
+    <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished">키프레임 미세 이동</translation>
     </message>
 </context>
 <context>
@@ -13051,8 +14243,16 @@
         <translation>직선</translation>
     </message>
     <message>
-        <source>Jump</source>
-        <translation>점프</translation>
+        <source>Interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">부드럽게</translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <translation type="unfinished">유지</translation>
     </message>
     <message>
         <source>Easing…</source>
@@ -13077,30 +14277,6 @@
     <message>
         <source>Set playhead here</source>
         <translation>여기에 재생 헤드 배치</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesCurvesInteraction</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>키프레임 이동</translation>
-    </message>
-    <message>
-        <source>Edit keyframe curve</source>
-        <translation>키프레임 곡선 편집</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesInteractionSurface</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>키프레임 이동</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n key(s)</source>
-        <translation>
-            <numerusform>%n개 키</numerusform>
-        </translation>
     </message>
 </context>
 <context>
@@ -13132,13 +14308,6 @@
     <message>
         <source>This clip has no animatable properties</source>
         <translation>이 클립에는 애니메이션을 적용할 수 있는 속성이 없습니다</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesStretchBox</name>
-    <message>
-        <source>Stretch keyframes</source>
-        <translation>키프레임 늘이기</translation>
     </message>
 </context>
 <context>
@@ -13259,6 +14428,113 @@
     </message>
 </context>
 <context>
+    <name>Keymap</name>
+    <message>
+        <source>File &amp; app</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished">편집</translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished">재생</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation type="unfinished">내비게이션</translation>
+    </message>
+    <message>
+        <source>Marking &amp; work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Markers</source>
+        <translation type="unfinished">마커</translation>
+    </message>
+    <message>
+        <source>Timeline editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracks &amp; audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview &amp; view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workspaces</source>
+        <translation type="unfinished">작업 영역</translation>
+    </message>
+    <message>
+        <source>Keyframes panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Masking</source>
+        <translation type="unfinished">마스킹</translation>
+    </message>
+    <message>
+        <source>Path editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracking</source>
+        <translation type="unfinished">트래킹</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">자막</translation>
+    </message>
+    <message>
+        <source>Source Lab viewer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source Lab ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D viewport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D fly mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam window</source>
+        <translation type="unfinished">멀티캠 창</translation>
+    </message>
+    <message>
+        <source>Media preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift</source>
+        <translation type="unfinished">Drift</translation>
+    </message>
+</context>
+<context>
     <name>LanguageChooserDialog</name>
     <message>
         <source>Choose your language</source>
@@ -13308,8 +14584,8 @@
         <translation>플랫폼 템플릿과 화질을 선택합니다. 프로젝트 동영상 크기가 업데이트됩니다.</translation>
     </message>
     <message>
-        <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
-        <translation>카테고리를 선택한 다음 템플릿과 화질을 선택하세요. 설정 → 레이아웃 선택에서 언제든지 변경할 수 있습니다.</translation>
+        <source>Pick a category, then a template and quality. You can change this anytime from Video → Size, aspect &amp; frame rate….</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Favorites</source>
@@ -13462,10 +14738,6 @@
         <translation>제거</translation>
     </message>
     <message>
-        <source>Color Grading LUTs</source>
-        <translation>컬러 그레이딩 LUT</translation>
-    </message>
-    <message>
         <source>Import LUTs</source>
         <translation>LUT 가져오기</translation>
     </message>
@@ -13484,6 +14756,10 @@
     <message>
         <source>Missing LUT</source>
         <translation>누락된 LUT</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>LUT Intensity</source>
@@ -13563,6 +14839,10 @@
         <translation>내보내기가 완료되었습니다.</translation>
     </message>
     <message>
+        <source>Review captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>공유 가능한 복사본을 만들 수 없습니다: %1</translation>
     </message>
@@ -13626,8 +14906,8 @@
         <translation>비디오 내보내기(&amp;E)…</translation>
     </message>
     <message>
-        <source>&amp;Package Project…</source>
-        <translation>프로젝트 패키징(&amp;P)…</translation>
+        <source>Save with &amp;Media…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>&amp;Close Project</source>
@@ -13800,6 +15080,10 @@
     <message>
         <source>&amp;Help</source>
         <translation>도움말(&amp;H)</translation>
+    </message>
+    <message>
+        <source>Drift Help</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keyboard Shortcuts</source>
@@ -14357,6 +15641,22 @@
 <context>
     <name>MaskAiOverlay</name>
     <message>
+        <source>Tap the object to select it. Switch to Exclude to mark what to leave out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click the object to select it. Right-click, Alt-click or X to exclude.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add points to refine, then press “Cut out through whole clip” in the Masking panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People are found automatically. Press “Cut out people” in the Masking panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tracking object… %1%</source>
         <translation>개체 트래킹 중… %1%</translation>
     </message>
@@ -14373,51 +15673,59 @@
         <translation>선택한 클립 위로 재생 헤드를 이동하세요</translation>
     </message>
     <message>
-        <source>Click the object to select it · Right-click or Ctrl-click to exclude</source>
-        <translation>개체를 클릭하여 선택 · 우클릭 또는 Ctrl+클릭하여 제외</translation>
-    </message>
-    <message>
-        <source>Add points to refine · then press “Cut out through whole clip” in the Masking panel</source>
-        <translation>점을 추가하여 다듬은 후 · 마스킹 패널에서 “전체 클립 오려내기”를 누르세요</translation>
-    </message>
-    <message>
         <source>Install a cutout model in the Masking panel first</source>
         <translation>먼저 마스킹 패널에서 오려내기 모델을 설치하세요</translation>
-    </message>
-    <message>
-        <source>People are found automatically · press “Cut out people” in the Masking panel</source>
-        <translation>사람이 자동으로 감지됩니다 · 마스킹 패널에서 “인물 오려내기”를 누르세요</translation>
     </message>
 </context>
 <context>
     <name>MaskBrushOverlay</name>
     <message>
-        <source>%1 %</source>
-        <translation>%1 %</translation>
-    </message>
-    <message>
-        <source>Drag to draw an outline, release to fill it · Right-drag or Alt to subtract</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click along an edge to place points · Right-click or Alt to subtract</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 points · Click the first point or Enter to close · Backspace to undo · Esc to cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click to select a region of similar colour · Shift adds, Alt or right-click subtracts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
-        <translation>페인트하여 추가 · 오른쪽 드래그 또는 %1(으)로 지우기 · [ ] 또는 Shift-드래그로 크기 조절 · Ctrl+스크롤로 확대/축소</translation>
-    </message>
-    <message>
         <source>Move the playhead over the selected clip</source>
         <translation>선택한 클립 위로 재생 헤드를 이동하세요</translation>
+    </message>
+    <message>
+        <source>Drag to draw an outline, release to fill it. Right-drag or Alt to subtract.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click along an edge to place points. Right-click or Alt to subtract.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 points. Click the first point or Enter to close, Backspace to undo, Esc to cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to select a region of similar colour. Shift adds, Alt or right-click subtracts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint with one finger, or switch to Navigate to pan. Two fingers always zoom and pan.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint to add. Right-drag, Alt or %1 to subtract. [ ] sizes, Shift+[ ] sets hardness. Shift-drag or Alt+right-drag resizes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size %1 %   Hardness %2 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint</source>
+        <translation type="unfinished">페인트</translation>
+    </message>
+    <message>
+        <source>One finger paints. Two fingers always zoom and pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One finger pans the preview. A stylus still paints</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a video or image clip to paint a mask</source>
@@ -14435,16 +15743,12 @@
         <translation>선택한 클립 위로 재생 헤드를 이동하세요</translation>
     </message>
     <message>
-        <source>Click to place points. Click the first point or press Enter to close.</source>
-        <translation>점을 배치하려면 클릭하세요. 첫 번째 점을 클릭하거나 Enter 키를 눌러 닫습니다.</translation>
-    </message>
-    <message>
-        <source>%1 points · Enter to close · Backspace to undo · Esc to cancel</source>
-        <translation>점 %1개 · Enter 키로 닫기 · Backspace 키로 취소 · Esc 키로 취소</translation>
-    </message>
-    <message>
         <source>Drawing replaces this layer&apos;s mask</source>
         <translation>그리면 이 레이어의 마스크가 대체됩니다</translation>
+    </message>
+    <message>
+        <source>Drag on the picture to draw</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag to draw · Shift for square/circle · Alt from centre</source>
@@ -14459,6 +15763,25 @@
     </message>
 </context>
 <context>
+    <name>MaskModeChips</name>
+    <message>
+        <source>Include</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to the mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take away from the mask. Alt or right-drag does this for one stroke</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MaskOverlay</name>
     <message>
         <source>Unlock aspect ratio</source>
@@ -14467,14 +15790,6 @@
     <message>
         <source>Lock aspect ratio</source>
         <translation>가로세로 비율 잠금</translation>
-    </message>
-    <message>
-        <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
-        <translation>점을 드래그하여 모양 변경 · 가장자리의 ○를 탭하여 점 추가 · 점을 길게 눌러 삭제</translation>
-    </message>
-    <message>
-        <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
-        <translation>점을 드래그하여 모양 변경 · 가장자리의 ○를 클릭하여 점 추가 · 점을 마우스 오른쪽 버튼으로 클릭하여 삭제</translation>
     </message>
 </context>
 <context>
@@ -14501,6 +15816,28 @@
     <message>
         <source>Feather</source>
         <translation>페더</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayResizeGrip</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 편집</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">마스크</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRotateHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 편집</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">마스크</translation>
     </message>
 </context>
 <context>
@@ -14535,6 +15872,18 @@
 </context>
 <context>
     <name>MaskingController</name>
+    <message>
+        <source>Hard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detail</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Use as mask</source>
         <translation>마스크로 사용</translation>
@@ -14831,10 +16180,6 @@
         <translation>트래커</translation>
     </message>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1(%2)</translation>
-    </message>
-    <message>
         <source>Off</source>
         <translation>끄기</translation>
     </message>
@@ -14871,6 +16216,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 brush: %2 % size, %3 % hardness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Size</source>
         <translation>크기</translation>
     </message>
@@ -14893,6 +16242,14 @@
     <message>
         <source>Brush opacity</source>
         <translation>브러시 불투명도</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation type="unfinished">부드러움</translation>
+    </message>
+    <message>
+        <source>Brush smoothing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Paint</source>
@@ -15015,6 +16372,10 @@
         <translation>선택한 마스크 세부 조정</translation>
     </message>
     <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Invert</source>
         <translation>반전</translation>
     </message>
@@ -15133,6 +16494,50 @@
     <message>
         <source>Add</source>
         <translation>더하기</translation>
+    </message>
+    <message>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move and reshape masks you have already drawn.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw a rectangular mask to keep or hide a box-shaped area.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw an oval mask, such as a spotlight or a vignette.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click out a shape point by point for precise edges.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint the mask by hand and fix the edges.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw around an object freehand to select it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click along an edge and it snaps to the outline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a colour to select all similar pixels next to it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click what you want and AI finds its outline. Use it to remove a background.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pin a point to something moving so a mask or object can follow it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Subtract</source>
@@ -15288,6 +16693,10 @@
         <translation>도형</translation>
     </message>
     <message>
+        <source>Draw &amp; track ↗</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rectangle</source>
         <translation>사각형</translation>
     </message>
@@ -15427,8 +16836,8 @@
         <translation>피사체</translation>
     </message>
     <message>
-        <source>Cut out subject…</source>
-        <translation>피사체 분리…</translation>
+        <source>Remove background…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trace the subject and pin the result as a mask layer</source>
@@ -15619,12 +17028,12 @@
         <translation>타임라인에 추가</translation>
     </message>
     <message>
-        <source>Trim, crop and upscale…</source>
-        <translation>트리밍, 자르기 및 업스케일…</translation>
-    </message>
-    <message>
         <source>Preview and edit…</source>
         <translation>미리보기 및 편집…</translation>
+    </message>
+    <message>
+        <source>Preview and trim…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename…</source>
@@ -15641,6 +17050,18 @@
     <message>
         <source>Couldn’t reload this media. It may not be a file on disk, or is already being read.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prepare in Source Lab…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save a copy…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished">재생</translation>
     </message>
     <message>
         <source>Use as mask</source>
@@ -15703,10 +17124,6 @@
     <message>
         <source>Export image…</source>
         <translation>이미지 내보내기…</translation>
-    </message>
-    <message>
-        <source>Save As…</source>
-        <translation>다른 이름으로 저장…</translation>
     </message>
     <message numerus="yes">
         <source>Remove %n items from project</source>
@@ -15865,6 +17282,18 @@
 </context>
 <context>
     <name>MediaAssetsViewToolbar</name>
+    <message>
+        <source>Switch to list view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to tree view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to grid view</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Grid view</source>
         <translation>격자 보기</translation>
@@ -16932,6 +18361,14 @@
         <source>No notifications yet.</source>
         <translation>아직 알림이 없습니다.</translation>
     </message>
+    <message>
+        <source>No notifications yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Messages about exports, downloads and errors show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NotificationUpdateRow</name>
@@ -17183,6 +18620,157 @@
     <message>
         <source>Video Effects (none)</source>
         <translation>동영상 효과(없음)</translation>
+    </message>
+</context>
+<context>
+    <name>PathActionChips</name>
+    <message>
+        <source>Pen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+</context>
+<context>
+    <name>PathEditSession</name>
+    <message>
+        <source>Close path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bend segment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">점 추가</translation>
+    </message>
+    <message>
+        <source>Convert point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">점 삭제</translation>
+    </message>
+    <message>
+        <source>Change point type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove point</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathEditor</name>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap for a corner point, drag for a smooth one. Tap the first point to close.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click for a corner point, drag for a smooth one. Shift snaps to 45 degrees. Click the first point to close, Enter to finish, Esc to cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click or drag to extend the path. Enter or Esc ends it, Backspace removes the last point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag points and handles. Tap an edge to add a point, hold a point for more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag points and handles. Click an edge to add a point, Alt-click a point to switch corner and smooth, Alt-drag a handle to break it, Delete heals.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This path is keyframed: edits are stored as a key at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead over the selected clip</source>
+        <translation type="unfinished">선택한 클립 위로 재생 헤드를 이동하세요</translation>
+    </message>
+</context>
+<context>
+    <name>PathPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">삭제</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">부드럽게</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Heal</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathPointModeRow</name>
+    <message>
+        <source>Point type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mirrored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aligned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">자유</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">부드럽게</translation>
     </message>
 </context>
 <context>
@@ -17554,8 +19142,12 @@ If playback stutters, try another.</source>
 <context>
     <name>PreviewOsdGuidesButton</name>
     <message>
-        <source>Toggle guides</source>
-        <translation>안내선 전환</translation>
+        <source>Guides</source>
+        <translation type="unfinished">안내선</translation>
+    </message>
+    <message>
+        <source>Overlay safe areas and grids so titles and subjects stay framed.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -17594,12 +19186,12 @@ If playback stutters, try another.</source>
 <context>
     <name>PreviewStatusLayer</name>
     <message>
-        <source>Stale bake</source>
-        <translation>오래된 베이크</translation>
+        <source>Stale pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Baked</source>
-        <translation>베이크됨</translation>
+        <source>Pre-rendered</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing to preview yet</source>
@@ -17636,10 +19228,6 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>PreviewTransportBar</name>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1(%2)</translation>
-    </message>
     <message>
         <source>Go to start</source>
         <translation>시작 위치로 이동</translation>
@@ -17960,6 +19548,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Package &quot;%1&quot; is not installed; the clip renders nothing until it returns.</source>
         <translation>패키지 &quot;%1&quot;이(가) 설치되지 않았습니다. 패키지가 복원될 때까지 클립이 아무것도 렌더링하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Edit package ↗</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Package</source>
@@ -18649,8 +20241,48 @@ If playback stutters, try another.</source>
         <translation>타임라인에서 클립을 눌러 속성을 편집하세요</translation>
     </message>
     <message>
-        <source>Click a clip on the timeline to edit its properties</source>
-        <translation>타임라인에서 클립을 클릭하여 속성을 편집하세요</translation>
+        <source>Select a clip to…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the subtitle cues to generate or edit captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">속도</translation>
+    </message>
+    <message>
+        <source>Select the clip at the playhead and open its Speed tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the clip at the playhead and open its Effects tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">텍스트</translation>
+    </message>
+    <message>
+        <source>Select the clip at the playhead and open its Text tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">배경</translation>
+    </message>
+    <message>
+        <source>Open Masking to remove or replace the background</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -18660,76 +20292,160 @@ If playback stutters, try another.</source>
         <translation>일반</translation>
     </message>
     <message>
+        <source>Name, notes and basic details of the clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation>텍스트</translation>
+    </message>
+    <message>
+        <source>Edit the words, font, colour and animation.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Shape</source>
         <translation>도형</translation>
     </message>
     <message>
+        <source>Fill, outline and corners of the shape.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Motion</source>
         <translation>모션</translation>
+    </message>
+    <message>
+        <source>Edit the animated vector graphic.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>3D Model</source>
         <translation>3D 모델</translation>
     </message>
     <message>
+        <source>Position and light the 3D model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>PDF</source>
         <translation>PDF</translation>
+    </message>
+    <message>
+        <source>Choose the pages to show.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Procedural</source>
         <translation>프로시저럴</translation>
     </message>
     <message>
+        <source>Adjust the generated visual.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>자막</translation>
+    </message>
+    <message>
+        <source>Edit caption lines and their timing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transform</source>
         <translation>변환</translation>
     </message>
     <message>
+        <source>Move, scale, rotate and crop the clip on the canvas.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Camera</source>
         <translation>카메라</translation>
+    </message>
+    <message>
+        <source>Pan, zoom and move the viewpoint.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization</source>
         <translation>안정화</translation>
     </message>
     <message>
+        <source>Smooth out shaky handheld footage.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>애니메이션</translation>
+    </message>
+    <message>
+        <source>Add intro, outro and looping motion.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio</source>
         <translation>오디오</translation>
     </message>
     <message>
+        <source>Volume, fades, noise removal and ducking.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Speed</source>
         <translation>속도</translation>
+    </message>
+    <message>
+        <source>Slow down, speed up, reverse or ramp the speed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Blending</source>
         <translation>혼합</translation>
     </message>
     <message>
+        <source>Opacity and how the clip mixes with layers below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Masks</source>
         <translation>마스크</translation>
+    </message>
+    <message>
+        <source>Show only part of the clip, or remove its background.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Effects</source>
         <translation>효과</translation>
     </message>
     <message>
+        <source>Filters, blurs and colour looks on this clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio FX</source>
         <translation>오디오 효과</translation>
     </message>
     <message>
+        <source>Echo, EQ and other sound effects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transition</source>
         <translation>전환</translation>
+    </message>
+    <message>
+        <source>How this clip blends into the next one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead over a clip first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clip at the playhead has no %1 tab</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip to edit its %1</source>
@@ -18753,6 +20469,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>PropertiesSuggestionStrip</name>
+    <message>
+        <source>Do it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation type="unfinished">나중에</translation>
+    </message>
+</context>
+<context>
     <name>PropertyKeyframeRow</name>
     <message>
         <source>%1 has no keyframes yet</source>
@@ -18769,6 +20496,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Custom</source>
         <translation>사용자 지정</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">%1 초기화</translation>
     </message>
     <message>
         <source>Easing: %1 — click to change</source>
@@ -19128,6 +20859,14 @@ If playback stutters, try another.</source>
         <source>Balanced</source>
         <translation>균형</translation>
     </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">입력 %1 → 출력 %2</translation>
+    </message>
 </context>
 <context>
     <name>QuickAddPopup</name>
@@ -19191,97 +20930,270 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>QuickSetupAddonsPage</name>
+    <name>QuickSetupAgenticPage</name>
     <message>
-        <source>Install the essentials</source>
-        <translation>기본 필수 구성 요소 설치</translation>
+        <source>None</source>
+        <translation type="unfinished">없음</translation>
     </message>
     <message>
-        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and color grading LUTs come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
-        <translation>Drift의 기본 효과, 전환, 오디오 효과, 글꼴 및 색보정 LUT는 추가 기능으로 제공됩니다. 추가 기능이 없으면 편집기에 필요한 대부분의 기능이 누락되므로 지금 설치합니다.</translation>
+        <source>Hide the AI workspaces and the Ask button</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Needs a newer version of Drift.</source>
-        <translation>더 최신 버전의 Drift가 필요합니다.</translation>
+        <source>Some</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not available in the download store.</source>
-        <translation>다운로드 스토어에서 사용할 수 없습니다.</translation>
+        <source>Keep AI tools and Ask within reach</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The download failed.</source>
-        <translation>다운로드에 실패했습니다.</translation>
+        <source>Lots</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 of %2 installed</source>
-        <translation>%2개 중 %1개 설치됨</translation>
+        <source>AI agents are part of how I edit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Couldn&apos;t reach the download store. Until the essentials are installed the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation>다운로드 스토어에 연결할 수 없습니다. 필수 구성 요소가 설치될 때까지 편집기에서 기본 효과, 전환 및 글꼴이 누락됩니다. 나중에 Extras에서 설치할 수 있습니다.</translation>
+        <source>Will you work with AI agents?</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Some packs didn&apos;t install. Until they are, the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation>일부 팩이 설치되지 않았습니다. 설치될 때까지 편집기에서 기본 효과, 전환 및 글꼴이 누락됩니다. 나중에 Extras에서 설치할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Optional</source>
-        <translation>선택 사항</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>다시 시도</translation>
-    </message>
-    <message>
-        <source>Skip for now</source>
-        <translation>지금은 건너뛰기</translation>
-    </message>
-    <message>
-        <source>Continue without the essentials?</source>
-        <translation>필수 구성 요소 없이 계속하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Continue</source>
-        <translation>계속</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>취소</translation>
-    </message>
-    <message>
-        <source>You can find more effects, models and stickers later in Extras.</source>
-        <translation>나중에 Extras에서 더 많은 효과, 모델 및 스티커를 찾을 수 있습니다.</translation>
+        <source>Drift can be driven by assistants such as Claude through MCP. Choose how much of that to show.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>QuickSetupCommunityPage</name>
+    <name>QuickSetupDownloads</name>
+    <message>
+        <source>Needs a newer version of Drift.</source>
+        <translation type="unfinished">더 최신 버전의 Drift가 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Not available in the download store.</source>
+        <translation type="unfinished">다운로드 스토어에서 사용할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The download failed.</source>
+        <translation type="unfinished">다운로드에 실패했습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupExperiencePage</name>
+    <message>
+        <source>First time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer workspaces, labelled tabs and hints as you go</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some experience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All the usual tools, labels and hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every workspace, compact tabs and no hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How much editing have you done?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This decides how much Drift shows at first. Anything hidden stays reachable from search (Ctrl+K) and in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupFinishPage</name>
+    <message>
+        <source>YouTube</source>
+        <translation type="unfinished">YouTube</translation>
+    </message>
+    <message>
+        <source>Shorts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Films</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Podcasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tutorials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>First time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some experience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a YouTube project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a vertical project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a widescreen project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a podcast project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a tutorial project</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>You&apos;re all set</source>
-        <translation>모든 설정이 완료되었습니다</translation>
+        <translation type="unfinished">모든 설정이 완료되었습니다</translation>
     </message>
     <message>
-        <source>Need help or have an idea? We&apos;d love to hear from you.</source>
-        <translation>도움이 필요하거나 아이디어가 있으신가요? 여러분의 의견을 환영합니다.</translation>
+        <source>Your Drift: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Finish</source>
-        <translation>완료</translation>
+        <source>Open the editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing add-ons: %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You can continue now. Downloads carry on in the editor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach the download store. Until the essentials are installed the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
+        <translation type="unfinished">다운로드 스토어에 연결할 수 없습니다. 필수 구성 요소가 설치될 때까지 편집기에서 기본 효과, 전환 및 글꼴이 누락됩니다. 나중에 Extras에서 설치할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Some packs didn&apos;t install. Until they are, the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
+        <translation type="unfinished">일부 팩이 설치되지 않았습니다. 설치될 때까지 편집기에서 기본 효과, 전환 및 글꼴이 누락됩니다. 나중에 Extras에서 설치할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">다시 시도</translation>
+    </message>
+    <message>
+        <source>Hide details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional</source>
+        <translation type="unfinished">선택 사항</translation>
+    </message>
+    <message>
+        <source>Drift will restart to apply the interface size. Downloads still running will stop and can be resumed from Extras.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift will restart to apply the interface size.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Just open the editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Questions or ideas?</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Join our Discord</source>
-        <translation>Discord 참여</translation>
-    </message>
-    <message>
-        <source>Copied</source>
-        <translation>복사됨</translation>
-    </message>
-    <message>
-        <source>Copy email address</source>
-        <translation>이메일 주소 복사</translation>
+        <translation type="unfinished">Discord 참여</translation>
     </message>
     <message>
         <source>If Drift crashes, it sends an error report to help fix it. No project files or media are included. You can turn this off in Settings.</source>
-        <translation>Drift가 충돌하여 종료되면 문제 해결을 돕기 위해 오류 보고서를 전송합니다. 프로젝트 파일이나 미디어는 포함되지 않습니다. 설정에서 이 기능을 끌 수 있습니다.</translation>
+        <translation type="unfinished">Drift가 충돌하여 종료되면 문제 해결을 돕기 위해 오류 보고서를 전송합니다. 프로젝트 파일이나 미디어는 포함되지 않습니다. 설정에서 이 기능을 끌 수 있습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupMakePage</name>
+    <message>
+        <source>YouTube videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Long videos in widescreen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorts and Reels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical videos for phones</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Films</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cinematic edits and color grading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Podcasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Talking heads, captions and clean audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tutorials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Screen recordings and walkthroughs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What do you make?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift sets up new projects, the workspace and suggested add-ons to match. You can skip this and change it later in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished">건너뛰기</translation>
     </message>
 </context>
 <context>
@@ -19302,8 +21214,8 @@ If playback stutters, try another.</source>
         <translation>인터페이스 크기</translation>
     </message>
     <message>
-        <source>Make buttons, text and icons larger or smaller.</source>
-        <translation>버튼, 텍스트 및 아이콘을 더 크거나 작게 만듭니다.</translation>
+        <source>Drift looks cramped or oversized at this screen resolution. We picked a size that fits; change it if you like.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Windows</source>
@@ -19332,8 +21244,8 @@ If playback stutters, try another.</source>
         <translation>외관 선택</translation>
     </message>
     <message>
-        <source>Choose how Drift looks. You can change this any time in Settings.</source>
-        <translation>Drift의 표시 모양을 선택하세요. 설정에서 언제든지 변경할 수 있습니다.</translation>
+        <source>Choose how Drift looks, and an accent colour. You can change both any time in Settings.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Match system</source>
@@ -19355,179 +21267,9 @@ If playback stutters, try another.</source>
         <source>Dark</source>
         <translation>어두운</translation>
     </message>
-</context>
-<context>
-    <name>QuickSetupTipArt</name>
     <message>
-        <source>Edit</source>
-        <translation>편집</translation>
-    </message>
-    <message>
-        <source>Color</source>
-        <translation>색상</translation>
-    </message>
-    <message>
-        <source>Keyframes</source>
-        <translation>키프레임</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>자막</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>효과</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>전환</translation>
-    </message>
-    <message>
-        <source>LUTs</source>
-        <translation>LUT</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation>글꼴</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>스티커</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation>AI 도구</translation>
-    </message>
-    <message>
-        <source>color</source>
-        <translation>색상</translation>
-    </message>
-    <message>
-        <source>Color workspace</source>
-        <translation>색상 작업 영역</translation>
-    </message>
-    <message>
-        <source>Color grade effect</source>
-        <translation>색보정 효과</translation>
-    </message>
-    <message>
-        <source>Appearance settings</source>
-        <translation>외관 설정</translation>
-    </message>
-    <message>
-        <source>Auto subtitles</source>
-        <translation>자동 자막</translation>
-    </message>
-    <message>
-        <source>People cutout</source>
-        <translation>인물 분리</translation>
-    </message>
-    <message>
-        <source>Find scenes</source>
-        <translation>장면 찾기</translation>
-    </message>
-    <message>
-        <source>Hello and welcome back</source>
-        <translation>안녕하세요, 다시 오신 것을 환영합니다</translation>
-    </message>
-    <message>
-        <source>Select multiple</source>
-        <translation>여러 항목 선택</translation>
-    </message>
-</context>
-<context>
-    <name>QuickSetupTipsPage</name>
-    <message>
-        <source>Search anything</source>
-        <translation>무엇이든 검색</translation>
-    </message>
-    <message>
-        <source>Press %1 to search actions, workspaces, add-ons, themes and settings from anywhere, then jump straight to the result.</source>
-        <translation>어디서나 %1을(를) 눌러 동작, 작업 영역, 추가 기능, 테마 및 설정을 검색하고 결과로 바로 이동하세요.</translation>
-    </message>
-    <message>
-        <source>Use the search field in the header to find actions, workspaces, add-ons, themes and settings, then jump straight to the result.</source>
-        <translation>헤더의 검색 필드를 사용하여 동작, 작업 영역, 추가 기능, 테마 및 설정을 찾고 결과로 바로 이동하세요.</translation>
-    </message>
-    <message>
-        <source>Switch workspaces</source>
-        <translation>작업 영역 전환</translation>
-    </message>
-    <message>
-        <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header, or press %1 to %2 to jump to one.</source>
-        <translation>각 작업 영역은 편집, 색상, 키프레임 또는 자막과 같은 작업에 맞춰 패널을 배치합니다. 헤더의 작업 영역 메뉴를 열거나 %1~%2을(를) 눌러 바로 이동하세요.</translation>
-    </message>
-    <message>
-        <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header to switch.</source>
-        <translation>각 작업 영역은 편집, 색상, 키프레임 또는 자막과 같은 작업에 맞춰 패널을 배치합니다. 헤더의 작업 영역 메뉴를 열어 전환하세요.</translation>
-    </message>
-    <message>
-        <source>Get more from Extras</source>
-        <translation>Extras에서 더 많은 항목 다운로드</translation>
-    </message>
-    <message>
-        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
-        <translation>더 많은 효과, 전환, 색보정 LUT, 글꼴, 스티커 및 AI 모델은 상단 표시줄의 Extras에서 설치할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>More effects, transitions, color grading LUTs, fonts, stickers and AI models are installed from Extras, in the header.</source>
-        <translation>더 많은 효과, 전환, 색보정 LUT, 글꼴, 스티커 및 AI 모델은 헤더의 Extras에서 설치할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Use your fingers</source>
-        <translation>터치 제스처 사용</translation>
-    </message>
-    <message>
-        <source>Pinch the timeline to zoom it, and pinch the preview to zoom and pan the picture. Long-press a clip and choose Select multiple to pick several clips at once.</source>
-        <translation>타임라인을 핀치하여 확대/축소하고, 미리보기를 핀치하여 화면을 확대/축소 및 이동하세요. 클립을 길게 누르고 여러 개 선택을 선택하면 여러 클립을 한 번에 선택할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Play/Pause</source>
-        <translation>재생/일시정지</translation>
-    </message>
-    <message>
-        <source>Split at current time</source>
-        <translation>현재 시점에서 분할</translation>
-    </message>
-    <message>
-        <source>Delete selection</source>
-        <translation>선택 항목 삭제</translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation>실행 취소</translation>
-    </message>
-    <message>
-        <source>Edit from the keyboard</source>
-        <translation>키보드로 편집</translation>
-    </message>
-    <message>
-        <source>A few shortcuts cover most of an edit. See and change every shortcut in Settings, under Keyboard shortcuts.</source>
-        <translation>몇 가지 단축키로 편집 작업의 대부분을 처리할 수 있습니다. 설정의 단축키에서 모든 단축키를 확인하고 변경하세요.</translation>
-    </message>
-    <message>
-        <source>AI tools on your device</source>
-        <translation>기기 내 AI 도구</translation>
-    </message>
-    <message>
-        <source>Auto subtitles, people cutout and scene finding run locally. Install their add-ons from Extras, under AI tools.</source>
-        <translation>자동 자막, 인물 분리 및 장면 감지는 로컬에서 실행됩니다. Extras의 AI 도구에서 해당 추가 기능을 설치하세요.</translation>
-    </message>
-    <message>
-        <source>A few tips before you start</source>
-        <translation>시작하기 전 몇 가지 팁</translation>
-    </message>
-    <message>
-        <source>Quick pointers to the parts of Drift people tend to miss.</source>
-        <translation>사용자가 자주 놓치기 쉬운 Drift의 주요 기능에 대한 간단한 안내입니다.</translation>
-    </message>
-    <message>
-        <source>Previous tip</source>
-        <translation>이전 팁</translation>
-    </message>
-    <message>
-        <source>Next tip</source>
-        <translation>다음 팁</translation>
+        <source>Accent colour</source>
+        <translation type="unfinished">강조 색상</translation>
     </message>
 </context>
 <context>
@@ -19569,12 +21311,32 @@ If playback stutters, try another.</source>
         <translation>이 파일이 이동되었거나 삭제되었습니다:\n%1</translation>
     </message>
     <message>
-        <source>Initialize new project</source>
-        <translation>새 프로젝트 초기화</translation>
+        <source>New project</source>
+        <translation type="unfinished">새 프로젝트</translation>
     </message>
     <message>
-        <source>Open project…</source>
-        <translation>프로젝트 열기…</translation>
+        <source>Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import / Export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save project as JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open project from JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check for missing media…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save as…</source>
@@ -19583,14 +21345,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Save with media…</source>
         <translation>미디어와 함께 저장…</translation>
-    </message>
-    <message>
-        <source>Save as JSON…</source>
-        <translation>JSON으로 저장…</translation>
-    </message>
-    <message>
-        <source>Open JSON…</source>
-        <translation>JSON 열기…</translation>
     </message>
     <message>
         <source>Import Kdenlive / Shotcut project (experimental)…</source>
@@ -19603,10 +21357,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Project properties…</source>
         <translation>프로젝트 속성…</translation>
-    </message>
-    <message>
-        <source>Project health…</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close project</source>
@@ -20280,8 +22030,12 @@ If playback stutters, try another.</source>
         <translation>동영상 크기 및 레이아웃</translation>
     </message>
     <message>
-        <source>Bakes</source>
-        <translation>베이크</translation>
+        <source>Pre-rendered sections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">설치</translation>
     </message>
     <message>
         <source>Crop video</source>
@@ -20434,8 +22188,8 @@ If playback stutters, try another.</source>
         <translation>분리하고 효과 적용</translation>
     </message>
     <message>
-        <source>Cut out subject</source>
-        <translation>피사체 분리</translation>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -20483,6 +22237,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Clip is too short to cut out</source>
         <translation>클립이 너무 짧아 피사체를 분리할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not create a cutout file</source>
@@ -20536,10 +22294,6 @@ If playback stutters, try another.</source>
         <source>Cutout</source>
         <translation>피사체 분리</translation>
     </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>피사체 분리</translation>
-    </message>
 </context>
 <context>
     <name>SegmentationFrameColumn</name>
@@ -20559,8 +22313,8 @@ If playback stutters, try another.</source>
 <context>
     <name>SegmentationWindow</name>
     <message>
-        <source>Cut out subject</source>
-        <translation>피사체 분리</translation>
+        <source>Remove background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything (click to pick)</source>
@@ -20650,18 +22404,6 @@ If playback stutters, try another.</source>
         <translation>다시 실행</translation>
     </message>
     <message>
-        <source>About Drift</source>
-        <translation>Drift 정보</translation>
-    </message>
-    <message>
-        <source>Open-source video editor by CutWire Studios.</source>
-        <translation>CutWire Studios에서 개발한 오픈 소스 비디오 편집기입니다.</translation>
-    </message>
-    <message>
-        <source>Show about dialog</source>
-        <translation>정보 대화상자 표시</translation>
-    </message>
-    <message>
         <source>Debug info</source>
         <translation>디버그 정보</translation>
     </message>
@@ -20727,26 +22469,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Type a sentence such as &quot;split at 12 seconds&quot; in search and run it as an editing command. Needs the Command Bar Model and llama.cpp runtime add-ons; runs on this device.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Notifications for agent actions</source>
-        <translation>에이전트 작업 알림</translation>
-    </message>
-    <message>
-        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
-        <translation>에이전트가 직접 편집할 때 표시할 팝업을 선택합니다. 오류는 항상 표시됩니다.</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>모두</translation>
-    </message>
-    <message>
-        <source>Problems only</source>
-        <translation>문제 발생 시에만</translation>
-    </message>
-    <message>
-        <source>None (errors still show)</source>
-        <translation>표시 안 함(오류는 계속 표시)</translation>
     </message>
     <message>
         <source>Cloud</source>
@@ -20899,8 +22621,8 @@ If playback stutters, try another.</source>
         <translation>라이트</translation>
     </message>
     <message>
-        <source>This theme has a dark and a light variant. The header toggle switches between them.</source>
-        <translation>이 테마에는 다크 및 라이트 변형이 있습니다. 상단 토글을 사용하여 전환할 수 있습니다.</translation>
+        <source>This theme has a dark and a light variant, and follows your system’s light or dark setting.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Translucent windows</source>
@@ -20969,30 +22691,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Restart now</source>
         <translation>지금 다시 시작</translation>
-    </message>
-    <message>
-        <source>Workspace</source>
-        <translation>작업 공간</translation>
-    </message>
-    <message>
-        <source>Workspace orientation</source>
-        <translation>작업 영역 방향</translation>
-    </message>
-    <message>
-        <source>Landscape or portrait workspace. Auto follows the shape of the canvas.</source>
-        <translation>가로 또는 세로 작업 영역입니다. [자동]은 캔버스의 모양을 따릅니다.</translation>
-    </message>
-    <message>
-        <source>Auto (follow canvas)</source>
-        <translation>자동(캔버스 따름)</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>가로</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>세로</translation>
     </message>
 </context>
 <context>
@@ -21124,18 +22822,29 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SettingsExportPage</name>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">내보내기</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prefer hardware encoder for new exports</source>
+        <translation type="unfinished">새 내보내기 시 하드웨어 인코더 우선 사용</translation>
+    </message>
+    <message>
+        <source>Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder.</source>
+        <translation type="unfinished">사용 가능한 경우 GPU H.264 인코더로 새 내보내기를 시작합니다. 더 빠르지만 비트레이트 대비 품질은 일반적으로 기본 소프트웨어 인코더보다 낮습니다.</translation>
+    </message>
+</context>
+<context>
     <name>SettingsGeneralPage</name>
     <message>
         <source>General</source>
         <translation>일반</translation>
-    </message>
-    <message>
-        <source>%1 GB</source>
-        <translation>%1 GB</translation>
-    </message>
-    <message>
-        <source>%1 MB</source>
-        <translation>%1 MB</translation>
     </message>
     <message>
         <source>Language &amp; region</source>
@@ -21238,26 +22947,6 @@ If playback stutters, try another.</source>
         <translation>50단계</translation>
     </message>
     <message>
-        <source>Extras</source>
-        <translation>추가 기능</translation>
-    </message>
-    <message>
-        <source>Remind about essential packs</source>
-        <translation>필수 팩 알림</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed.</source>
-        <translation>비디오, 전환 및 오디오 팩이 설치되지 않았을 때 부가 기능 아이콘을 깜빡입니다.</translation>
-    </message>
-    <message>
-        <source>Remind about pack updates</source>
-        <translation>팩 업데이트 알림</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when updates are available for packs you already have installed.</source>
-        <translation>이미 설치된 팩의 업데이트가 있을 때 부가 기능 아이콘을 깜빡입니다.</translation>
-    </message>
-    <message>
         <source>Feedback</source>
         <translation>피드백</translation>
     </message>
@@ -21280,38 +22969,6 @@ If playback stutters, try another.</source>
     <message>
         <source>After a crash, send the error details, a short scrubbed log and your system and graphics information to help fix it. No project files or media.</source>
         <translation>충돌 발생 후 문제 해결을 돕기 위해 오류 세부 정보, 간략한 익명 로그, 시스템 및 그래픽 정보를 전송합니다. 프로젝트 파일이나 미디어는 전송되지 않습니다.</translation>
-    </message>
-    <message>
-        <source>Storage</source>
-        <translation>저장소</translation>
-    </message>
-    <message>
-        <source>Cache</source>
-        <translation>캐시</translation>
-    </message>
-    <message>
-        <source>%1 used</source>
-        <translation>%1 사용됨</translation>
-    </message>
-    <message>
-        <source>Clear cache</source>
-        <translation>캐시 지우기</translation>
-    </message>
-    <message>
-        <source>Cache location</source>
-        <translation>캐시 위치</translation>
-    </message>
-    <message>
-        <source>%1. Takes effect after restart.</source>
-        <translation>%1. 다시 시작한 후 적용됩니다.</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>초기화</translation>
-    </message>
-    <message>
-        <source>Change…</source>
-        <translation>변경…</translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -21357,35 +23014,79 @@ If playback stutters, try another.</source>
         <translation>키보드 단축키</translation>
     </message>
     <message>
-        <source>Click a shortcut, then press the keys. Esc cancels, Backspace clears.</source>
-        <translation>단축키를 클릭한 다음 키를 누르세요. Esc는 취소하고 Backspace는 지웁니다.</translation>
+        <source>%1 — only while it is in focus</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reset to defaults</source>
-        <translation>기본값으로 초기화</translation>
+        <source>Click + to add a shortcut, × to remove. Esc cancels.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Restores every shortcut to its original key.</source>
-        <translation>모든 단축키를 기본 키로 복원합니다.</translation>
+        <source>Shortcut preset</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Shortcuts reset to defaults.</source>
-        <translation>단축키가 기본값으로 초기화되었습니다.</translation>
+        <source>The set of keys your changes are applied on top of.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset to preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removes every change you made and restores the preset&apos;s keys.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcuts reset to the preset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Modified</source>
+        <translation type="unfinished">수정됨</translation>
+    </message>
+    <message>
+        <source>Reset this shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset shortcut for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You have changed some shortcuts. Keep those changes on top of the new preset, or discard them?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
+    </message>
+    <message>
+        <source>Discard my changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep my changes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>SettingsNetworkPage</name>
     <message>
-        <source>Network</source>
-        <translation>네트워크</translation>
-    </message>
-    <message>
         <source>Connection</source>
         <translation>연결</translation>
     </message>
     <message>
-        <source>Proxy</source>
-        <translation>프록시</translation>
+        <source>Network &amp; internet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Internet proxy server</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>How Drift reaches the internet for downloads, updates, and online services. Applies immediately.</source>
@@ -21408,8 +23109,8 @@ If playback stutters, try another.</source>
         <translation>SOCKS5 프록시</translation>
     </message>
     <message>
-        <source>Proxy server</source>
-        <translation>프록시 서버</translation>
+        <source>Proxy server details</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Host and port of the proxy. The username and password are optional.</source>
@@ -21433,10 +23134,65 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SettingsNotificationsPage</name>
+    <message>
+        <source>Notifications</source>
+        <translation type="unfinished">알림</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">추가 기능</translation>
+    </message>
+    <message>
+        <source>Remind about essential packs</source>
+        <translation type="unfinished">필수 팩 알림</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed.</source>
+        <translation type="unfinished">비디오, 전환 및 오디오 팩이 설치되지 않았을 때 부가 기능 아이콘을 깜빡입니다.</translation>
+    </message>
+    <message>
+        <source>Remind about pack updates</source>
+        <translation type="unfinished">팩 업데이트 알림</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when updates are available for packs you already have installed.</source>
+        <translation type="unfinished">이미 설치된 팩의 업데이트가 있을 때 부가 기능 아이콘을 깜빡입니다.</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation type="unfinished">에이전트</translation>
+    </message>
+    <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished">에이전트 작업 알림</translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished">에이전트가 직접 편집할 때 표시할 팝업을 선택합니다. 오류는 항상 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">모두</translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished">문제 발생 시에만</translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished">표시 안 함(오류는 계속 표시)</translation>
+    </message>
+</context>
+<context>
     <name>SettingsPane</name>
     <message>
         <source>General</source>
         <translation>일반</translation>
+    </message>
+    <message>
+        <source>Personalize</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Appearance</source>
@@ -21451,10 +23207,6 @@ If playback stutters, try another.</source>
         <translation>타임라인</translation>
     </message>
     <message>
-        <source>Timeline toolbar</source>
-        <translation>타임라인 도구 모음</translation>
-    </message>
-    <message>
         <source>Keyboard shortcuts</source>
         <translation>키보드 단축키</translation>
     </message>
@@ -21467,6 +23219,14 @@ If playback stutters, try another.</source>
         <translation>성능</translation>
     </message>
     <message>
+        <source>Storage &amp; media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">내보내기</translation>
+    </message>
+    <message>
         <source>Audio</source>
         <translation>오디오</translation>
     </message>
@@ -21475,8 +23235,12 @@ If playback stutters, try another.</source>
         <translation>AI 및 클라우드</translation>
     </message>
     <message>
-        <source>Network</source>
-        <translation>네트워크</translation>
+        <source>Notifications</source>
+        <translation type="unfinished">알림</translation>
+    </message>
+    <message>
+        <source>Network &amp; internet</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>About</source>
@@ -21496,14 +23260,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Performance</source>
         <translation>성능</translation>
-    </message>
-    <message>
-        <source>For advanced users</source>
-        <translation>고급 사용자용</translation>
-    </message>
-    <message>
-        <source>These tune memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately.</source>
-        <translation>메모리 사용량과 재생 동작을 조정합니다. 기본값은 대부분의 컴퓨터에 적합하며, 이를 변경하면 재생이 끊기거나 훨씬 많은 메모리를 사용할 수 있습니다. 대부분의 변경 사항은 즉시 적용됩니다.</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
@@ -21538,20 +23294,108 @@ If playback stutters, try another.</source>
         <translation>Metal(macOS 기본값)</translation>
     </message>
     <message>
+        <source>Graphics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Faster preview (experimental)</source>
+        <translation type="unfinished">더 빠른 미리보기(실험적)</translation>
+    </message>
+    <message>
+        <source>Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.</source>
+        <translation type="unfinished">동영상을 그래픽 카드에 유지하여 재생을 더 부드럽게 만들 수 있습니다. 화면이 이상하게 보이면 끄세요. 다시 시작한 후 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Graphics card</source>
+        <translation type="unfinished">그래픽 카드</translation>
+    </message>
+    <message>
+        <source>Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.</source>
+        <translation type="unfinished">Drift에서 사용할 그래픽 카드를 선택합니다. 고성능은 동영상을 NVIDIA 카드에서 해당 카드로 디코딩하도록 유지하고, 절전은 배터리를 덜 사용합니다. 다시 시작한 후 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Windows default</source>
+        <translation type="unfinished">Windows 기본값</translation>
+    </message>
+    <message>
+        <source>Power saving (integrated GPU)</source>
+        <translation type="unfinished">절전(통합 GPU)</translation>
+    </message>
+    <message>
+        <source>High performance (discrete GPU)</source>
+        <translation type="unfinished">고성능(독립 GPU)</translation>
+    </message>
+    <message>
+        <source>Choose which graphics card Drift runs on in Windows Settings, under Display &gt; Graphics. Takes effect after restart.</source>
+        <translation type="unfinished">Windows 설정의 디스플레이 &gt; 그래픽에서 Drift가 실행될 그래픽 카드를 선택하세요. 다시 시작한 후 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Open graphics settings</source>
+        <translation type="unfinished">그래픽 설정 열기</translation>
+    </message>
+    <message>
+        <source>Advanced tuning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation type="unfinished">숨기기</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Playback</source>
         <translation>재생</translation>
     </message>
     <message>
-        <source>Drop late frames</source>
-        <translation>지연된 프레임 삭제(드롭)</translation>
+        <source>Skip frames when playback falls behind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip frames that are late by more than</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback buffer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the playback buffer full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview memory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scrubbing memory per clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects workspace: buffer count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects workspace: video memory limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graphics card image cache: image count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graphics card image cache: video memory limit</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip preview frames that finish this far behind the playhead, instead of showing them late. Can reduce slow-motion at clip cuts on slow machines. Off never drops a frame for being late.</source>
         <translation>재생 헤드보다 늦게 완성된 미리보기 프레임을 지연 표시하는 대신 건너뜁니다. 성능이 낮은 기기에서 클립 컷 전환 시 슬로우 모션 현상을 줄일 수 있습니다. 끄면 프레임이 지연되어도 삭제하지 않습니다.</translation>
-    </message>
-    <message>
-        <source>Drop frames lagging behind playback by more than</source>
-        <translation>다음 시간 이상 지연된 프레임 삭제:</translation>
     </message>
     <message>
         <source>ms</source>
@@ -21562,16 +23406,8 @@ If playback stutters, try another.</source>
         <translation>끄기</translation>
     </message>
     <message>
-        <source>Read-ahead</source>
-        <translation>미리 읽기(Read-ahead)</translation>
-    </message>
-    <message>
         <source>How much video each clip decodes ahead of the playhead during playback. More absorbs slow-to-decode footage but competes with the frames on screen. Default 2000 ms.</source>
         <translation>재생 중에 각 클립이 재생 헤드보다 앞서 디코딩할 비디오 양입니다. 값을 늘리면 디코딩이 느린 영상의 버퍼링을 완화하지만 화면 프레임과 리소스를 경쟁합니다. 기본값 2000 ms.</translation>
-    </message>
-    <message>
-        <source>Continuous read-ahead</source>
-        <translation>연속 미리 읽기</translation>
     </message>
     <message>
         <source>Keep decoding until the whole read-ahead window is full. Off decodes one frame ahead per displayed frame, which leaves more decoder time for the clip on screen but buffers less.</source>
@@ -21580,10 +23416,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Memory &amp; caches</source>
         <translation>메모리 및 캐시</translation>
-    </message>
-    <message>
-        <source>Decoded frame cache</source>
-        <translation>디코딩된 프레임 캐시</translation>
     </message>
     <message>
         <source>Memory shared by all clips for decoded preview frames. Automatic uses an eighth of system memory (a sixteenth on Android), at least 128 MiB.</source>
@@ -21598,20 +23430,12 @@ If playback stutters, try another.</source>
         <translation>자동</translation>
     </message>
     <message>
-        <source>CPU frame history per clip</source>
-        <translation>클립당 CPU 프레임 기록</translation>
-    </message>
-    <message>
         <source>Limit the decoded images each clip keeps in memory for scrubbing and effects. Unlimited keeps up to 16 frames per clip, which is large for 4K footage.</source>
         <translation>스크러빙 및 효과를 위해 각 클립이 메모리에 보관하는 디코딩된 이미지 수를 제한합니다. [무제한]은 클립당 최대 16프레임을 유지하므로 4K 영상에서는 용량이 큽니다.</translation>
     </message>
     <message>
         <source>Unlimited</source>
         <translation>무제한</translation>
-    </message>
-    <message>
-        <source>Render target pool: count</source>
-        <translation>렌더 타깃 풀: 개수</translation>
     </message>
     <message>
         <source>Idle GPU render targets kept for reuse. Fewer saves video memory; more avoids reallocating while effects and transitions play.</source>
@@ -21622,16 +23446,8 @@ If playback stutters, try another.</source>
         <translation>개 타깃</translation>
     </message>
     <message>
-        <source>Render target pool: size</source>
-        <translation>렌더 타깃 풀: 크기</translation>
-    </message>
-    <message>
         <source>Cap on the video memory held by idle render targets, in addition to the count.</source>
         <translation>개수 외에 유휴 렌더 타깃이 점유하는 비디오 메모리의 최대 한도입니다.</translation>
-    </message>
-    <message>
-        <source>Image upload cache: count</source>
-        <translation>이미지 업로드 캐시: 개수</translation>
     </message>
     <message>
         <source>Stills and converted frames kept on the GPU so they are not uploaded again every frame.</source>
@@ -21642,24 +23458,151 @@ If playback stutters, try another.</source>
         <translation>개 이미지</translation>
     </message>
     <message>
-        <source>Image upload cache: size</source>
-        <translation>이미지 업로드 캐시: 크기</translation>
-    </message>
-    <message>
         <source>Cap on the video memory used by the image upload cache, in addition to the count. 48 uploads of 4K frames take about 1.5 GiB.</source>
         <translation>개수 외에 이미지 업로드 캐시가 사용하는 비디오 메모리의 최대 한도입니다. 4K 프레임 48개 업로드는 약 1.5 GiB를 차지합니다.</translation>
     </message>
+</context>
+<context>
+    <name>SettingsPersonalizePage</name>
     <message>
-        <source>Export</source>
-        <translation>내보내기</translation>
+        <source>Personalize</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Prefer hardware encoder for new exports</source>
-        <translation>새 내보내기 시 하드웨어 인코더 우선 사용</translation>
+        <source>About you</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder.</source>
-        <translation>사용 가능한 경우 GPU H.264 인코더로 새 내보내기를 시작합니다. 더 빠르지만 비트레이트 대비 품질은 일반적으로 기본 소프트웨어 인코더보다 낮습니다.</translation>
+        <source>What you make</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Used to suggest sensible defaults for new projects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>YouTube videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorts and Reels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Films</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Podcasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tutorials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experience with video editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>First time hides the Studio workspaces. You can show any of them again below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>First time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some experience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Working with AI agents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None hides the AI and Procedural workspaces and the Ask button in the header.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">없음</translation>
+    </message>
+    <message>
+        <source>Some</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lots</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accent colour</source>
+        <translation type="unfinished">강조 색상</translation>
+    </message>
+    <message>
+        <source>Colours buttons, selections and highlights on top of the current theme.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Labels under panel tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show a name under each icon on the side tab rails.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Short tips and suggestions that appear as you work.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset dismissed tips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bring back every tip and suggestion you closed. They reappear the next time you open the panel they belong to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset tips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tips will show again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workspaces</source>
+        <translation type="unfinished">작업 영역</translation>
+    </message>
+    <message>
+        <source>Workspaces in the switcher</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden workspaces stay reachable from search (Ctrl+K) and their Alt+number shortcuts. Edit is always shown.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -21764,80 +23707,107 @@ If playback stutters, try another.</source>
         <source>How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K.</source>
         <translation>미리보기를 위한 비디오 디코딩 방식입니다. 소프트웨어는 대부분의 클립에서 더 부드럽지만 CPU를 더 많이 사용합니다. 하드웨어는 고화질 4K에 적합합니다.</translation>
     </message>
+</context>
+<context>
+    <name>SettingsStoragePage</name>
     <message>
-        <source>Faster preview (experimental)</source>
-        <translation>더 빠른 미리보기(실험적)</translation>
+        <source>Storage &amp; media</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.</source>
-        <translation>동영상을 그래픽 카드에 유지하여 재생을 더 부드럽게 만들 수 있습니다. 화면이 이상하게 보이면 끄세요. 다시 시작한 후 적용됩니다.</translation>
+        <source>%1 GB</source>
+        <translation type="unfinished">%1 GB</translation>
     </message>
     <message>
-        <source>Graphics card</source>
-        <translation>그래픽 카드</translation>
+        <source>%1 MB</source>
+        <translation type="unfinished">%1 MB</translation>
     </message>
     <message>
-        <source>Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.</source>
-        <translation>Drift에서 사용할 그래픽 카드를 선택합니다. 고성능은 동영상을 NVIDIA 카드에서 해당 카드로 디코딩하도록 유지하고, 절전은 배터리를 덜 사용합니다. 다시 시작한 후 적용됩니다.</translation>
+        <source>Cache</source>
+        <translation type="unfinished">캐시</translation>
     </message>
     <message>
-        <source>Windows default</source>
-        <translation>Windows 기본값</translation>
+        <source>%1 used</source>
+        <translation type="unfinished">%1 사용됨</translation>
     </message>
     <message>
-        <source>Power saving (integrated GPU)</source>
-        <translation>절전(통합 GPU)</translation>
+        <source>Clear cache</source>
+        <translation type="unfinished">캐시 지우기</translation>
     </message>
     <message>
-        <source>High performance (discrete GPU)</source>
-        <translation>고성능(독립 GPU)</translation>
+        <source>Cache location</source>
+        <translation type="unfinished">캐시 위치</translation>
     </message>
     <message>
-        <source>Choose which graphics card Drift runs on in Windows Settings, under Display &gt; Graphics. Takes effect after restart.</source>
-        <translation>Windows 설정의 디스플레이 &gt; 그래픽에서 Drift가 실행될 그래픽 카드를 선택하세요. 다시 시작한 후 적용됩니다.</translation>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished">%1. 다시 시작한 후 적용됩니다.</translation>
     </message>
     <message>
-        <source>Open graphics settings</source>
-        <translation>그래픽 설정 열기</translation>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
     </message>
     <message>
-        <source>Proxies</source>
-        <translation>프록시</translation>
+        <source>Change…</source>
+        <translation type="unfinished">변경…</translation>
     </message>
     <message>
-        <source>Use proxies for preview</source>
-        <translation>미리보기에 프록시 사용</translation>
+        <source>Preview copies (proxies)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
-        <translation>가능한 경우 저해상도 프록시에서 클립을 재생합니다. 내보내기에는 항상 원본 미디어가 사용됩니다.</translation>
+        <source>Use preview copies for playback</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Suggest proxies on import</source>
-        <translation>가져올 때 프록시 제안</translation>
+        <source>Play clips from their low-resolution preview copies (proxies) where one exists. Export always uses the original media.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest preview copies on import</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>What to do when imported footage may preview slowly.</source>
-        <translation>가져온 영상의 미리보기 속도가 느릴 수 있을 때 수행할 작업입니다.</translation>
+        <translation type="unfinished">가져온 영상의 미리보기 속도가 느릴 수 있을 때 수행할 작업입니다.</translation>
     </message>
     <message>
         <source>Ask</source>
-        <translation>확인</translation>
+        <translation type="unfinished">확인</translation>
     </message>
     <message>
-        <source>Always create proxies</source>
-        <translation>항상 프록시 생성</translation>
+        <source>Always create preview copies</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Never ask</source>
-        <translation>묻지 않음</translation>
+        <translation type="unfinished">묻지 않음</translation>
     </message>
     <message>
-        <source>Proxy resolution</source>
-        <translation>프록시 해상도</translation>
+        <source>Preview copy resolution</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save proxies and reversed clips</source>
+        <source>Size of new preview copies. Copies made at another size are not used until you create them again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>360p</source>
+        <translation type="unfinished">360p</translation>
+    </message>
+    <message>
+        <source>540p</source>
+        <translation type="unfinished">540p</translation>
+    </message>
+    <message>
+        <source>720p</source>
+        <translation type="unfinished">720p</translation>
+    </message>
+    <message>
+        <source>1080p</source>
+        <translation type="unfinished">1080p</translation>
+    </message>
+    <message>
+        <source>Save preview copies and reversed clips</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21881,40 +23851,20 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Size of new proxies. Proxies made at another size are not used until you create them again.</source>
-        <translation>새 프록시의 크기입니다. 다른 크기로 만든 프록시는 다시 생성할 때까지 사용되지 않습니다.</translation>
-    </message>
-    <message>
-        <source>360p</source>
-        <translation>360p</translation>
-    </message>
-    <message>
-        <source>540p</source>
-        <translation>540p</translation>
-    </message>
-    <message>
-        <source>720p</source>
-        <translation>720p</translation>
-    </message>
-    <message>
-        <source>1080p</source>
-        <translation>1080p</translation>
-    </message>
-    <message>
-        <source>Proxy name patterns</source>
-        <translation>프록시 이름 패턴</translation>
+        <source>Preview copy name patterns</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Linking a proxy teaches Drift its name pattern. Proxies next to your media that match a pattern below link automatically.</source>
-        <translation>프록시를 연결하면 Drift가 이름 패턴을 학습합니다. 미디어 옆에 있는 프록시 중 아래 패턴과 일치하는 프록시는 자동으로 연결됩니다.</translation>
+        <translation type="unfinished">프록시를 연결하면 Drift가 이름 패턴을 학습합니다. 미디어 옆에 있는 프록시 중 아래 패턴과 일치하는 프록시는 자동으로 연결됩니다.</translation>
     </message>
     <message>
         <source>Remove pattern</source>
-        <translation>패턴 제거</translation>
+        <translation type="unfinished">패턴 제거</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
-        <translation>기본값으로 초기화</translation>
+        <translation type="unfinished">기본값으로 초기화</translation>
     </message>
 </context>
 <context>
@@ -22010,6 +23960,10 @@ If playback stutters, try another.</source>
         <translation>재생 헤드가 이동할 때 재생 헤드 아래에 있는 클립을 자동으로 선택합니다.</translation>
     </message>
     <message>
+        <source>Animation</source>
+        <translation type="unfinished">애니메이션</translation>
+    </message>
+    <message>
         <source>Auto keyframes</source>
         <translation>자동 키프레임</translation>
     </message>
@@ -22018,12 +23972,16 @@ If playback stutters, try another.</source>
         <translation>슬라이더를 드래그할 때도 키프레임이 생성됩니다.</translation>
     </message>
     <message>
-        <source>Loop work area</source>
-        <translation>작업 영역 반복 재생</translation>
+        <source>Toolbar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Playback repeats between the work area in and out points.</source>
-        <translation>작업 영역의 시작점(In)과 종료점(Out) 사이를 반복 재생합니다.</translation>
+        <source>Toolbar layout</source>
+        <translation type="unfinished">도구 모음 레이아웃</translation>
+    </message>
+    <message>
+        <source>Choose which actions appear on the toolbar above the timeline and which go in its overflow menu.</source>
+        <translation type="unfinished">타임라인 상단 도구 모음에 표시할 작업과 더보기 메뉴로 보낼 작업을 선택하세요.</translation>
     </message>
     <message>
         <source>Defaults</source>
@@ -22067,21 +24025,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsToolbarPage</name>
-    <message>
-        <source>Timeline toolbar</source>
-        <translation>타임라인 도구 모음</translation>
-    </message>
-    <message>
-        <source>Toolbar layout</source>
-        <translation>도구 모음 레이아웃</translation>
-    </message>
-    <message>
-        <source>Choose which actions appear on the toolbar above the timeline and which go in its overflow menu.</source>
-        <translation>타임라인 상단 도구 모음에 표시할 작업과 더보기 메뉴로 보낼 작업을 선택하세요.</translation>
-    </message>
-</context>
-<context>
     <name>SettingsWorkspacesPage</name>
     <message>
         <source>Workspaces</source>
@@ -22090,6 +24033,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Arrange panels into layouts, optionally across several windows. Drag a panel onto an edge of another block to split it, or onto its middle to add a tab. Nothing changes in the editor until you save.</source>
         <translation>패널을 여러 창에 걸쳐 레이아웃으로 정렬합니다. 패널을 다른 블록의 가장자리로 드래그하여 분할하거나 가운데로 드래그하여 탭으로 추가할 수 있습니다. 저장할 때까지 편집기에는 아무것도 변경되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workspace orientation</source>
+        <translation type="unfinished">작업 영역 방향</translation>
+    </message>
+    <message>
+        <source>Landscape or portrait workspace. Auto follows the shape of the canvas.</source>
+        <translation type="unfinished">가로 또는 세로 작업 영역입니다. [자동]은 캔버스의 모양을 따릅니다.</translation>
+    </message>
+    <message>
+        <source>Auto (follow canvas)</source>
+        <translation type="unfinished">자동(캔버스 따름)</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation type="unfinished">가로</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation type="unfinished">세로</translation>
+    </message>
+    <message>
+        <source>Layouts</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout designer</source>
@@ -22175,6 +24146,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Show layer</source>
         <translation>레이어 표시</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">더 보기</translation>
     </message>
     <message>
         <source>Duplicate layer</source>
@@ -22701,64 +24676,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>ShapePathHintBar</name>
-    <message>
-        <source>Add points</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep drawing from the selected end of the path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove the segment joining the last point to the first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Join the last point back to the first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation type="unfinished">완료</translation>
-    </message>
-</context>
-<context>
-    <name>ShapePathOverlay</name>
-    <message>
-        <source>Move the playhead over the selected clip</source>
-        <translation type="unfinished">선택한 클립 위로 재생 헤드를 이동하세요</translation>
-    </message>
-    <message>
-        <source>Drawing a path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Editing path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click for a corner point, drag for a smooth one. Shift snaps to 45 degrees. Click the first point to close, Enter to finish, Esc to cancel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drag points and handles. Click a segment to add a point, double-click a point to switch corner and smooth, Alt-drag a handle to break it, Delete removes a point.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This path is keyframed: edits are stored as a key at the playhead.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>ShapePresetCard</name>
     <message>
         <source>%1 — click to add, or drag to the timeline or preview</source>
@@ -23148,24 +25065,27 @@ If playback stutters, try another.</source>
 <context>
     <name>ShortcutCaptureField</name>
     <message>
-        <source>Shortcut for %1</source>
-        <translation>%1 단축키</translation>
-    </message>
-    <message>
-        <source>Not set</source>
-        <translation>설정되지 않음</translation>
+        <source>Add shortcut for %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Press keys…</source>
         <translation>키를 누르세요…</translation>
     </message>
     <message>
-        <source>Click to set</source>
-        <translation>클릭하여 설정</translation>
-    </message>
-    <message>
         <source>“%1” is already used by %2.</source>
         <translation>“%1”은(는) 이미 %2에서 사용 중입니다.</translation>
+    </message>
+</context>
+<context>
+    <name>ShortcutChip</name>
+    <message>
+        <source>Remove this shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove shortcut %1 from %2</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23615,6 +25535,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Shot %1</source>
         <translation>샷 %1</translation>
+    </message>
+</context>
+<context>
+    <name>SourceLabCropOverlay</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
     </message>
 </context>
 <context>
@@ -24479,20 +26406,20 @@ If playback stutters, try another.</source>
 <context>
     <name>SpeedCurveController</name>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>사용자 지정 속도는 동영상 및 오디오 클립에서 작동합니다</translation>
+        <source>Speed ramp works on video and audio clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>This clip has no media to speed up or slow down</source>
         <translation>이 클립에는 속도를 높이거나 낮출 미디어가 없습니다</translation>
     </message>
     <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>클립이 이동했습니다 — 사용자 지정 속도를 다시 열어주세요</translation>
+        <source>That clip moved — open Speed ramp again</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Custom speed applied</source>
-        <translation>사용자 지정 속도가 적용됨</translation>
+        <source>Speed ramp applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24505,8 +26432,8 @@ If playback stutters, try another.</source>
 <context>
     <name>SpeedCurveWindow</name>
     <message>
-        <source>Custom speed</source>
-        <translation>사용자 지정 속도</translation>
+        <source>Speed ramp</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pause</source>
@@ -24549,6 +26476,10 @@ If playback stutters, try another.</source>
         <translation>초기화</translation>
     </message>
     <message>
+        <source>Edit speed curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Applied as a copy on a new track — the original clip is left alone.</source>
         <translation>새 트랙에 복사본으로 적용되며 원본 클립은 그대로 유지됩니다.</translation>
     </message>
@@ -24568,14 +26499,6 @@ If playback stutters, try another.</source>
         <translation>재생 속도</translation>
     </message>
     <message>
-        <source>Custom speed…</source>
-        <translation>사용자 지정 속도…</translation>
-    </message>
-    <message>
-        <source>Custom speed active — remove</source>
-        <translation>사용자 지정 속도 활성 — 제거</translation>
-    </message>
-    <message>
         <source>Speed</source>
         <translation>속도</translation>
     </message>
@@ -24584,8 +26507,28 @@ If playback stutters, try another.</source>
         <translation>속도가 변경됨</translation>
     </message>
     <message>
-        <source>Custom speed</source>
-        <translation>사용자 지정 속도</translation>
+        <source>Speed ramp…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed ramp active — remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split (%1) to speed up only part of a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split the clip to speed up only part of it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ramp</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed ramp</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source> (reversed)</source>
@@ -24793,12 +26736,28 @@ If playback stutters, try another.</source>
         <translation>카메라 흔들림을 부드럽게 보정합니다. Drift가 클립을 한 번 스캔한 다음 흔들림 보정된 사본을 미디어 보관함에 렌더링하고 클립을 해당 사본으로 전환합니다. 부드러움 또는 삼각대 설정을 변경해도 적용하기 전까지는 미리보기가 업데이트되지 않습니다.</translation>
     </message>
     <message>
+        <source>Smooths camera shake with position keyframes. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooths camera shake by rendering a stabilized copy of the clip. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilize</source>
         <translation>흔들림 보정</translation>
     </message>
     <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
         <translation>흔들림 보정된 사본을 렌더링하거나 희소 변형 키로 클립에 애니메이션을 적용합니다</translation>
+    </message>
+    <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Smoothing</source>
@@ -24842,6 +26801,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Settings</source>
         <translation>설정</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation type="unfinished">도움말</translation>
+    </message>
+    <message>
+        <source>Help and support</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Debug info</source>
@@ -25057,6 +27024,10 @@ If playback stutters, try another.</source>
         <translation>설치된 스티커 팩이 없습니다</translation>
     </message>
     <message>
+        <source>Install the emoji pack, or import your own images with the upload button.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install the emoji pack to add stickers.</source>
         <translation>스티커를 추가하려면 이모지 팩을 설치하세요.</translation>
     </message>
@@ -25203,6 +27174,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SubtitleCueEdgeGrip</name>
+    <message>
+        <source>Adjust subtitle timing</source>
+        <translation type="unfinished">자막 타이밍 조정</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
@@ -25341,6 +27323,18 @@ If playback stutters, try another.</source>
         <translation>WebVTT 자막 (*.vtt)</translation>
     </message>
     <message>
+        <source>Import and export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Timestamps from the start of the video</source>
         <translation>동영상 시작부터의 타임스탬프</translation>
     </message>
@@ -25386,6 +27380,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Move to a time inside this clip to add a subtitle</source>
         <translation>자막을 추가하려면 이 클립 안의 시점으로 이동하세요</translation>
+    </message>
+    <message>
+        <source>Add subtitle at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead into this clip to add</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add subtitle at current time</source>
@@ -25868,6 +27870,10 @@ If playback stutters, try another.</source>
 <context>
     <name>SubtitlesPanel</name>
     <message>
+        <source>Captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No cues yet</source>
         <translation>아직 큐가 없습니다</translation>
     </message>
@@ -25935,12 +27941,28 @@ If playback stutters, try another.</source>
         <translation>짧은 캡션은 각 구문을 동일한 간격으로 나누어 타이밍을 맞추므로 음성과 약간 어긋날 수 있습니다.</translation>
     </message>
     <message>
-        <source>Create captions from the selected clips&apos; speech — several clips become one caption clip</source>
-        <translation>선택한 클립의 음성에서 캡션 생성 — 여러 클립이 하나의 캡션 클립이 됩니다</translation>
+        <source>Auto captions</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select a video or audio clip first</source>
-        <translation>먼저 동영상 또는 오디오 클립을 선택하세요</translation>
+        <source>Writes captions from the selected clips&apos; speech.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a video or audio clip first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writes captions from the speech in your clips, on your computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs speech model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Creating captions… %1%</source>
@@ -25961,10 +27983,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Install AI engine first</source>
         <translation>먼저 AI 엔진을 설치하세요</translation>
-    </message>
-    <message>
-        <source>Needed for auto captions from speech</source>
-        <translation>음성에서 자동 캡션을 만들려면 필요합니다</translation>
     </message>
     <message>
         <source>Recommended caption length</source>
@@ -26061,6 +28079,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Export text style</source>
         <translation>텍스트 스타일 내보내기</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -27178,27 +29204,27 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineBakeContextMenu</name>
     <message>
-        <source>Re-bake</source>
-        <translation>다시 베이크</translation>
+        <source>Re-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Set work area to bake</source>
-        <translation>작업 영역을 베이크 영역으로 설정</translation>
+        <source>Set work area to pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Delete bake</source>
-        <translation>베이크 삭제</translation>
+        <source>Delete pre-rendered section</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Manage bakes…</source>
-        <translation>베이크 관리…</translation>
+        <source>Manage pre-rendered sections…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>TimelineBakeStrip</name>
     <message>
-        <source>Baking %1%</source>
-        <translation>베이크 중 %1%</translation>
+        <source>Pre-rendering %1%</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stale</source>
@@ -27243,12 +29269,72 @@ If playback stutters, try another.</source>
         <translation>트랙으로 이동</translation>
     </message>
     <message>
+        <source>Paste at current time</source>
+        <translation type="unfinished">현재 시점에 붙여넣기</translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>속성</translation>
     </message>
     <message>
         <source>Select multiple</source>
         <translation>여러 항목 선택</translation>
+    </message>
+    <message>
+        <source>Speed and reverse…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame</source>
+        <translation type="unfinished">정지 화면</translation>
+    </message>
+    <message>
+        <source>Detach audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detach all audio tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink video and audio</source>
+        <translation type="unfinished">동영상과 오디오 연결 해제</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>Blur area</source>
+        <translation type="unfinished">영역 블러</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">오디오</translation>
+    </message>
+    <message>
+        <source>Generate captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">변환</translation>
+    </message>
+    <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilize…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">더 보기</translation>
     </message>
     <message>
         <source>Open composite</source>
@@ -27291,10 +29377,6 @@ If playback stutters, try another.</source>
         <translation>현재 시점에서 분할</translation>
     </message>
     <message>
-        <source>Split item at current time</source>
-        <translation>현재 시점에서 항목 분할</translation>
-    </message>
-    <message>
         <source>Split on beats</source>
         <translation type="unfinished"></translation>
     </message>
@@ -27309,14 +29391,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Swap with next clip</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Separate audio</source>
-        <translation>오디오 분리</translation>
-    </message>
-    <message>
-        <source>Separate all audio tracks</source>
-        <translation>모든 오디오 트랙 분리</translation>
     </message>
     <message>
         <source>Enable clip</source>
@@ -27383,10 +29457,6 @@ If playback stutters, try another.</source>
         <translation>비디오 화질 개선…</translation>
     </message>
     <message>
-        <source>Unlink</source>
-        <translation>연결 해제</translation>
-    </message>
-    <message>
         <source>Link</source>
         <translation>연결</translation>
     </message>
@@ -27451,10 +29521,6 @@ If playback stutters, try another.</source>
         <translation>색보정…</translation>
     </message>
     <message>
-        <source>Blur area…</source>
-        <translation>영역 블러…</translation>
-    </message>
-    <message>
         <source>Edit keyframes…</source>
         <translation>키프레임 편집…</translation>
     </message>
@@ -27500,8 +29566,12 @@ If playback stutters, try another.</source>
         <translation>타임라인이 비어 있습니다</translation>
     </message>
     <message>
-        <source>Drag media here from the library, or add an empty track to start.</source>
-        <translation>라이브러리에서 미디어를 여기로 드래그하거나 빈 트랙을 추가하여 시작하세요.</translation>
+        <source>Drag media here from the library, or import a file to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import media</source>
+        <translation type="unfinished">미디어 가져오기</translation>
     </message>
     <message>
         <source>New track</source>
@@ -27517,6 +29587,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Adjust fade</source>
         <translation>페이드 조정</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1초</translation>
     </message>
     <message>
         <source>Fade out %1s</source>
@@ -27651,11 +29725,55 @@ If playback stutters, try another.</source>
         <translation>여기에 붙여넣기</translation>
     </message>
     <message>
+        <source>Close gap</source>
+        <translation type="unfinished">간격 닫기</translation>
+    </message>
+    <message>
+        <source>Close gap on all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close gaps in work area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close all gaps on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add track</source>
+        <translation type="unfinished">트랙 추가</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">동영상</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">오디오</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">텍스트</translation>
+    </message>
+    <message>
+        <source>Subtitle</source>
+        <translation type="unfinished">자막</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation type="unfinished">그래픽</translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished">보정</translation>
+    </message>
+    <message>
+        <source>Split all tracks here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete all empty tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -27673,34 +29791,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Select all clips</source>
         <translation>모든 클립 선택</translation>
-    </message>
-    <message>
-        <source>Unmute track</source>
-        <translation>트랙 음소거 해제</translation>
-    </message>
-    <message>
-        <source>Mute track</source>
-        <translation>트랙 음소거</translation>
-    </message>
-    <message>
-        <source>Show track</source>
-        <translation>트랙 표시</translation>
-    </message>
-    <message>
-        <source>Hide track</source>
-        <translation>트랙 숨기기</translation>
-    </message>
-    <message>
-        <source>Unlock track</source>
-        <translation>트랙 잠금 해제</translation>
-    </message>
-    <message>
-        <source>Lock track</source>
-        <translation>트랙 잠금</translation>
-    </message>
-    <message>
-        <source>Remove empty tracks</source>
-        <translation>빈 트랙 제거</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -27749,14 +29839,6 @@ If playback stutters, try another.</source>
     <message>
         <source>My look</source>
         <translation>내 룩</translation>
-    </message>
-    <message>
-        <source>Close Gap</source>
-        <translation>간격 닫기</translation>
-    </message>
-    <message>
-        <source>Close Gap on All Tracks</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -27808,10 +29890,6 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineToolbar</name>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1(%2)</translation>
-    </message>
-    <message>
         <source>Import media</source>
         <translation>미디어 가져오기</translation>
     </message>
@@ -27828,16 +29906,32 @@ If playback stutters, try another.</source>
         <translation>재생</translation>
     </message>
     <message>
-        <source>Auto-select: select the clip under the playhead</source>
-        <translation>자동 선택: 재생 헤드 아래 클립 선택</translation>
+        <source>Let clips sit on top of each other on one track instead of pushing apart.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Magnetic snapping: align video and audio edges across tracks</source>
-        <translation>자석 스냅: 트랙 간 비디오 및 오디오 가장자리 정렬</translation>
+        <source>Auto-select</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Ripple editing: keep following clips together when trimming</source>
-        <translation>리플 편집: 트리밍 시 후속 클립 위치 유지</translation>
+        <source>Selects the clip under the playhead as you move it, so the inspector follows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished">스냅</translation>
+    </message>
+    <message>
+        <source>Clips and the playhead snap to neighbouring edges so cuts line up exactly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When you trim or delete, later clips shift to close or open the gap.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Toggle audio mixer strip</source>
@@ -27863,16 +29957,8 @@ If playback stutters, try another.</source>
         <translation>선택</translation>
     </message>
     <message>
-        <source>Select — normal editing</source>
-        <translation>선택 — 일반 편집</translation>
-    </message>
-    <message>
         <source>Cut mode</source>
         <translation>자르기 모드</translation>
-    </message>
-    <message>
-        <source>Cut mode — click a clip to split it</source>
-        <translation>자르기 모드 — 클립을 클릭하여 분할</translation>
     </message>
     <message>
         <source>Show audio on separate track</source>
@@ -27891,24 +29977,52 @@ If playback stutters, try another.</source>
         <translation>시작 부분 자르기</translation>
     </message>
     <message>
-        <source>Trim start — click a clip to drop everything left of the cut</source>
-        <translation>시작 부분 자르기 — 클립을 클릭하여 컷 왼쪽의 모든 항목 삭제</translation>
-    </message>
-    <message>
         <source>Trim end</source>
         <translation>끝 부분 자르기</translation>
     </message>
     <message>
-        <source>Trim end — click a clip to drop everything right of the cut</source>
-        <translation>끝 부분 자르기 — 클립을 클릭하여 컷 오른쪽의 모든 항목 삭제</translation>
+        <source>Click, drag and trim clips as normal. Switch back here after using Cut.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a clip to split it there. Fast for chopping out the parts you do not need.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pull the sound out of a video onto its own track to edit it separately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move or trim the picture and its sound separately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the selected clips moving, trimming and deleting together.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a clip to drop everything before that point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a clip to drop everything after that point.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start to playhead</source>
         <translation>시작점을 재생 헤드 위치까지 트리밍</translation>
     </message>
     <message>
+        <source>Drop everything before the playhead from the selected clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim end to playhead</source>
         <translation>끝점을 재생 헤드 위치까지 트리밍</translation>
+    </message>
+    <message>
+        <source>Drop everything after the playhead from the selected clip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -27963,24 +30077,32 @@ If playback stutters, try another.</source>
         <translation>현재 시점에서 정지 화면 만들기</translation>
     </message>
     <message>
+        <source>Hold the current frame as a still. Good for emphasis or a title card.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add adjustment layer</source>
         <translation>보정 레이어 추가</translation>
+    </message>
+    <message>
+        <source>An empty layer whose effects apply to everything under it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add transform layer</source>
         <translation>변환 레이어 추가</translation>
     </message>
     <message>
-        <source>Add transform layer — moves the selected clips&apos; tracks as one</source>
-        <translation>변환 레이어 추가 — 선택한 클립의 트랙을 하나처럼 이동</translation>
+        <source>Move, scale and rotate the selected clips together as one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One viewpoint the whole timeline is seen through. Use it for pans and zooms.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera</source>
         <translation>카메라 추가</translation>
-    </message>
-    <message>
-        <source>Add camera — one viewpoint the whole timeline is seen through. With a camera already there, adds a new camera clip (a cut to a new framing) at the playhead</source>
-        <translation>카메라 추가 — 전체 타임라인을 투영하는 하나의 시점입니다. 이미 카메라가 있는 경우 재생 헤드 위치에 새 카메라 클립(새 프레이밍으로의 컷)을 추가합니다</translation>
     </message>
 </context>
 <context>
@@ -28119,6 +30241,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Resize transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
@@ -28133,6 +30266,10 @@ If playback stutters, try another.</source>
         <translation>드래그하여 끝 부분 자르기</translation>
     </message>
     <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim clip</source>
         <translation>클립 자르기</translation>
     </message>
@@ -28140,24 +30277,24 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineWorkAreaBakeChip</name>
     <message>
-        <source>Baking %1%</source>
-        <translation>베이크 중 %1%</translation>
+        <source>Pre-rendering %1%</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bake</source>
-        <translation>베이크</translation>
+        <source>Pre-render</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel baking</source>
         <translation>베이크 취소</translation>
     </message>
     <message>
-        <source>Pre-render the work area for smooth playback and export</source>
-        <translation>원활한 재생과 내보내기를 위해 작업 영역을 사전 렌더링합니다</translation>
+        <source>Pre-rendered sections are of the main timeline. Switch to it to pre-render.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bakes are of the main timeline. Switch to it to bake.</source>
-        <translation type="unfinished"></translation>
+        <source>Pre-render the work area for smooth playback and export</source>
+        <translation>원활한 재생과 내보내기를 위해 작업 영역을 사전 렌더링합니다</translation>
     </message>
 </context>
 <context>
@@ -28187,6 +30324,44 @@ If playback stutters, try another.</source>
     <message>
         <source>Dismiss</source>
         <translation>닫기</translation>
+    </message>
+</context>
+<context>
+    <name>TouchContextBar</name>
+    <message>
+        <source>Lock ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Constrain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderBottomResize</name>
+    <message>
+        <source>Resize track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -28345,6 +30520,10 @@ If playback stutters, try another.</source>
         <translation>트랙 표시</translation>
     </message>
     <message>
+        <source>Show in clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide track</source>
         <translation>트랙 숨기기</translation>
     </message>
@@ -28363,6 +30542,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Exclude from export</source>
         <translation>내보내기에서 제외</translation>
+    </message>
+    <message>
+        <source>Recording setup (teleprompter, noise)…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
@@ -28409,12 +30592,28 @@ If playback stutters, try another.</source>
         <translation>더 짧은 행</translation>
     </message>
     <message>
-        <source>Delete track</source>
-        <translation>트랙 삭제</translation>
+        <source>Add track above</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove empty tracks</source>
-        <translation>빈 트랙 제거</translation>
+        <source>Add track below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished">위로 이동</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">아래로 이동</translation>
+    </message>
+    <message>
+        <source>Select clips on track</source>
+        <translation type="unfinished">트랙의 클립 선택</translation>
+    </message>
+    <message>
+        <source>Delete track</source>
+        <translation>트랙 삭제</translation>
     </message>
 </context>
 <context>
@@ -28568,6 +30767,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TrackHeaderResizeHandle</name>
+    <message>
+        <source>Resize track labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TrackHeaderRow</name>
     <message>
         <source>Turn transform on</source>
@@ -28612,8 +30822,52 @@ If playback stutters, try another.</source>
 <context>
     <name>TrackerOverlay</name>
     <message>
+        <source>Nudge tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trackers need a video clip</source>
         <translation>트래커에는 비디오 클립이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Move tracking outline corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize pattern box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize search box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tracking point</source>
+        <translation type="unfinished">트래킹 포인트 이동</translation>
+    </message>
+    <message>
+        <source>Corner %1   X %2 %   Y %3 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pattern %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X %1 %   Y %2 %   Box %3 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confidence %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This tracker drives other clips. Remove it from the Tracking panel to choose what happens to their keys.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip on the timeline to track motion in it</source>
@@ -28628,12 +30882,28 @@ If playback stutters, try another.</source>
         <translation>미리보기에서 트래킹할 지점을 클릭하세요.</translation>
     </message>
     <message>
+        <source>Tap the feature to track on the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the feature to add to this tracker.</source>
         <translation>이 트래커에 추가할 지점을 클릭하세요.</translation>
     </message>
     <message>
+        <source>Tap the feature to add to this tracker.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the object the clip should follow.</source>
         <translation>클립이 따라갈 개체를 클릭하세요.</translation>
+    </message>
+    <message>
+        <source>Tap the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 corners · tap Done when you have four</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
@@ -28644,12 +30914,68 @@ If playback stutters, try another.</source>
         <translation>모서리 %1개 · Enter 완료 · Backspace 실행 취소 · Esc 취소</translation>
     </message>
     <message>
+        <source>Pick Point or Planar, then tap the feature to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a marker to correct it, then track from this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use Point or Planar in the Tracking panel to start a track</source>
         <translation>트래킹 패널에서 [포인트] 또는 [평면]을 사용하여 트래킹을 시작하세요</translation>
     </message>
     <message>
-        <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
-        <translation>마커를 드래그하여 보정 · 트래킹 패널의 ◀ ▶를 눌러 트래킹</translation>
+        <source>Drag a marker to correct it · Right-click to re-track from here · ◀ ▶ in the Tracking panel to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-track forward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-track backward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete tracker</source>
+        <translation type="unfinished">트래커 삭제</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished">포인트</translation>
+    </message>
+    <message>
+        <source>Tap the feature to follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Planar</source>
+        <translation type="unfinished">평면</translation>
+    </message>
+    <message>
+        <source>Tap the corners of a flat surface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+    <message>
+        <source>Track back to the start</source>
+        <translation type="unfinished">시작 위치까지 뒤로 트래킹</translation>
+    </message>
+    <message>
+        <source>Track one frame back</source>
+        <translation type="unfinished">한 프레임 뒤로 트래킹</translation>
+    </message>
+    <message>
+        <source>Track one frame forward</source>
+        <translation type="unfinished">한 프레임 앞으로 트래킹</translation>
+    </message>
+    <message>
+        <source>Track to the end</source>
+        <translation type="unfinished">끝 위치까지 트래킹</translation>
     </message>
     <message>
         <source>Tracking… %1%</source>
@@ -28870,10 +31196,6 @@ If playback stutters, try another.</source>
         <translation>원근</translation>
     </message>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1(%2)</translation>
-    </message>
-    <message>
         <source>No clip selected</source>
         <translation>선택된 클립 없음</translation>
     </message>
@@ -28898,10 +31220,6 @@ If playback stutters, try another.</source>
         <translation>개체 따라가기</translation>
     </message>
     <message>
-        <source>Click an object on the video; this clip will follow it through the clip</source>
-        <translation>비디오에서 개체를 클릭하면 이 클립이 클립 전체에서 해당 개체를 따라갑니다</translation>
-    </message>
-    <message>
         <source>Follows %1 on %2</source>
         <translation>%2의 %1 따라감</translation>
     </message>
@@ -28922,16 +31240,8 @@ If playback stutters, try another.</source>
         <translation>포인트</translation>
     </message>
     <message>
-        <source>Track a feature with one point</source>
-        <translation>한 개의 점으로 지점 트래킹</translation>
-    </message>
-    <message>
         <source>Planar</source>
         <translation>평면</translation>
-    </message>
-    <message>
-        <source>Track a flat surface outlined by its corners</source>
-        <translation>모서리로 지정된 평면 트래킹</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -28964,10 +31274,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Track whole clip</source>
         <translation>전체 클립 트래킹</translation>
-    </message>
-    <message>
-        <source>Follow the feature backward and forward through the whole clip</source>
-        <translation>클립 전체에서 앞뒤로 특징점 따라가기</translation>
     </message>
     <message>
         <source>Corrected at this frame. Track ▶ to continue.</source>
@@ -29062,12 +31368,40 @@ If playback stutters, try another.</source>
         <translation>트래킹 중지</translation>
     </message>
     <message>
+        <source>Motion tracking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position + rotation</source>
         <translation>위치 + 회전</translation>
     </message>
     <message>
         <source>Position, rotation + size</source>
         <translation>위치, 회전 + 크기</translation>
+    </message>
+    <message>
+        <source>Click something in the preview and this clip follows it, such as a label on a moving car.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows one spot, such as a corner or a face, for position-only following.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Planar tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows a flat surface, such as a screen or sign, including its rotation and scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows the feature backward and forward from here through the whole clip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track one frame forward</source>
@@ -29335,6 +31669,93 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransformClipBox</name>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">클립 이동</translation>
+    </message>
+    <message>
+        <source>X %1   Y %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clip</source>
+        <translation type="unfinished">클립 크기 조정</translation>
+    </message>
+    <message>
+        <source>Rotate clip</source>
+        <translation type="unfinished">클립 회전</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform>%1 · 클립 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">변환</translation>
+    </message>
+</context>
+<context>
+    <name>TransformGizmo</name>
+    <message>
+        <source>%1 %2 / %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rot %1 %2°</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1 %2×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">로컬</translation>
+    </message>
+    <message>
+        <source>World</source>
+        <translation type="unfinished">월드</translation>
+    </message>
+</context>
+<context>
+    <name>TransformGroupBox</name>
+    <message>
+        <source>Δ %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
@@ -29355,6 +31776,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Select</source>
         <translation>선택</translation>
+    </message>
+    <message>
+        <source>Move the playhead, set a value, then tap the diamond to keyframe it. Auto keyframes does this as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider or the preview also creates them.</source>
@@ -29405,6 +31830,10 @@ If playback stutters, try another.</source>
         <translation>위치 초기화</translation>
     </message>
     <message>
+        <source>Follow an object…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset size</source>
         <translation>크기 초기화</translation>
     </message>
@@ -29415,6 +31844,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Scale width and height together</source>
         <translation>너비와 높이를 함께 크기 조정</translation>
+    </message>
+    <message>
+        <source>To animate Scale, move to a time and change it. Auto keyframes adds the keyframes for you.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on Auto keyframes</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Previous scale keyframe</source>
@@ -29461,14 +31898,6 @@ If playback stutters, try another.</source>
         <translation>미리보기의 3D 조절점을 사용하여 클립을 3D로 회전하고 깊이 방향으로 이동합니다. 끄면 클립이 다시 평면화됩니다.</translation>
     </message>
     <message>
-        <source>Open 3D workspace</source>
-        <translation>3D 작업 영역 열기</translation>
-    </message>
-    <message>
-        <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
-        <translation>위치, 회전, 앵커 포인트 및 심도 가림은 3D 작업 영역의 3D 변환 패널에 있습니다</translation>
-    </message>
-    <message>
         <source>Reset all</source>
         <translation>모두 초기화</translation>
     </message>
@@ -29479,6 +31908,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Rotate 90°</source>
         <translation>90° 회전</translation>
+    </message>
+    <message>
+        <source>Open 3D workspace ↗</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Corrects the source&apos;s own rotation losslessly — unlike Rotation above, this changes decoding, not just the on-screen box.</source>
@@ -29583,31 +32016,73 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TransformOverlayLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · 클립 %n개</numerusform>
-        </translation>
+    <name>TransformManip</name>
+    <message>
+        <source>Nudge clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Transform</source>
-        <translation>변환</translation>
+        <source>Multi-select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">이동</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">회전</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">크기 조정</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">로컬</translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation type="unfinished">X</translation>
+    </message>
+    <message>
+        <source>Y</source>
+        <translation type="unfinished">Y</translation>
+    </message>
+    <message>
+        <source>Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">자유</translation>
+    </message>
+    <message>
+        <source>Move clip in 3D</source>
+        <translation type="unfinished">3D에서 클립 이동</translation>
+    </message>
+    <message>
+        <source>Rotate clip in 3D</source>
+        <translation type="unfinished">3D에서 클립 회전</translation>
+    </message>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished">클립 크기 조정</translation>
     </message>
 </context>
 <context>
-    <name>TransformOverlayParentChip</name>
+    <name>TransformParentFrame</name>
     <message>
         <source>Select %1</source>
-        <translation>%1 선택</translation>
+        <translation type="unfinished">%1 선택</translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation>변환</translation>
+        <translation type="unfinished">변환</translation>
     </message>
     <message>
         <source>Select the transform layer moving this clip (%1)</source>
-        <translation>이 클립을 움직이는 변환 레이어 선택(%1)</translation>
+        <translation type="unfinished">이 클립을 움직이는 변환 레이어 선택(%1)</translation>
     </message>
 </context>
 <context>
@@ -29621,6 +32096,10 @@ If playback stutters, try another.</source>
         <translation>
             <numerusform>트랙 %n개 포함</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Change transform span</source>
+        <translation type="unfinished">변환 범위 변경</translation>
     </message>
 </context>
 <context>
@@ -29653,6 +32132,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
+        <source>Tap the + on the cut between two clips to add a transition.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hover the cut between two clips and click + to add a transition.</source>
         <translation>두 클립 사이의 컷 위로 마우스를 올리고 +를 클릭하여 전환을 추가하세요.</translation>
     </message>
@@ -29669,8 +32152,16 @@ If playback stutters, try another.</source>
         <translation>전환 추가…</translation>
     </message>
     <message>
+        <source>Overlap transition. Tap the type to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
         <translation>겹침 전환입니다. 전환 탭에서 다른 종류를 드래그하여 교체하세요.</translation>
+    </message>
+    <message>
+        <source>Transition to the next clip. Scrub across the cut to preview it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transition to the next clip. Move across the cut to preview it.</source>
@@ -29683,6 +32174,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Type</source>
         <translation>유형</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>
@@ -29761,8 +32256,12 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionPresetCard</name>
     <message>
-        <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
-        <translation>%1 — 두 클립이 만나는 곳으로 드래그하거나 터치 시 길게 누른 후 드래그하세요</translation>
+        <source>Drag onto where two clips meet. On touch, hold then drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to use this transition</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from favorites</source>
@@ -30379,20 +32878,24 @@ If playback stutters, try another.</source>
 <context>
     <name>VideoMenu</name>
     <message>
-        <source>Bakes…</source>
-        <translation>베이크…</translation>
+        <source>Size, aspect &amp; frame rate…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel crop</source>
         <translation>크롭 취소</translation>
     </message>
     <message>
-        <source>Crop video</source>
-        <translation>비디오 자르기</translation>
+        <source>Crop canvas</source>
+        <translation type="unfinished">캔버스 크롭</translation>
     </message>
     <message>
-        <source>Adjust video layout…</source>
-        <translation>비디오 레이아웃 조정…</translation>
+        <source>Multicam…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pre-rendered sections…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -30492,8 +32995,12 @@ If playback stutters, try another.</source>
         <translation>회전 단계</translation>
     </message>
     <message>
-        <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
-        <translation>기즈모 드래그 시 이 단계 단위로 이동 및 회전합니다. Ctrl 키를 누르면 자유롭게 이동할 수 있습니다. 0으로 설정하면 단계를 끕니다.</translation>
+        <source>Scale step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo drags are free; hold Ctrl to move, turn and scale in these steps, and Shift for fine control. 0 turns a step off.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Navigation</source>
@@ -30587,8 +33094,8 @@ If playback stutters, try another.</source>
         <translation>장면 카메라</translation>
     </message>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1(%2)</translation>
+        <source>3D viewport</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>View</source>
@@ -30605,10 +33112,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Orthographic projection</source>
         <translation>직교 투영</translation>
-    </message>
-    <message>
-        <source>Numpad 5</source>
-        <translation>숫자 키패드 5</translation>
     </message>
     <message>
         <source>Move</source>
@@ -30639,16 +33142,8 @@ If playback stutters, try another.</source>
         <translation>플라이 모드 (WASD 이동, Q/E 하/상, 포인터 방향으로 조종)</translation>
     </message>
     <message>
-        <source>Shift+F</source>
-        <translation>Shift+F</translation>
-    </message>
-    <message>
         <source>Look through the scene camera</source>
         <translation>장면 카메라를 통해 보기</translation>
-    </message>
-    <message>
-        <source>Numpad 0</source>
-        <translation>Numpad 0</translation>
     </message>
     <message>
         <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
@@ -30663,24 +33158,12 @@ If playback stutters, try another.</source>
         <translation>선택 항목에 프레임 맞추기</translation>
     </message>
     <message>
-        <source>F</source>
-        <translation>F</translation>
-    </message>
-    <message>
         <source>Frame everything</source>
         <translation>전체 화면에 맞추기</translation>
     </message>
     <message>
-        <source>Home</source>
-        <translation>Home</translation>
-    </message>
-    <message>
         <source>Reset the view</source>
         <translation>뷰 초기화</translation>
-    </message>
-    <message>
-        <source>Shift+Home</source>
-        <translation>Shift+Home</translation>
     </message>
 </context>
 <context>
@@ -30856,6 +33339,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>WorkspaceBackPill</name>
+    <message>
+        <source>← Back to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceDesigner</name>
     <message>
         <source>Panels</source>
@@ -30952,6 +33442,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+</context>
+<context>
+    <name>WorkspaceLink</name>
+    <message>
+        <source>Open in %1 ↗</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31062,6 +33559,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Color</source>
         <translation>색상</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Scopes</source>
@@ -31202,10 +33703,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Camera</source>
         <translation>카메라</translation>
-    </message>
-    <message>
-        <source>Color Grading LUTs</source>
-        <translation>색보정 LUT</translation>
     </message>
     <message>
         <source>Stabilization</source>
@@ -31418,6 +33915,53 @@ If playback stutters, try another.</source>
     <message>
         <source>Unexpected reply from llama-server.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::manip::CurveGraphModel</name>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished">색조 %1° → %2</translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">입력 %1 → 출력 %2</translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">점 추가</translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">점 삭제</translation>
+    </message>
+    <message>
+        <source>Smooth point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">곡선 편집</translation>
     </message>
 </context>
 <context>

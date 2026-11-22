@@ -5,6 +5,11 @@ import Drift
 // the Edit preview's camera output. The tools sit in a header above the image, not on it.
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "viewport3d-panel"
+        title: qsTr("3D viewport")
+        keywords: "3d viewport scene view orbit free camera perspective world"
+    }
 
     property bool shown: false
 
@@ -21,10 +26,6 @@ PanelFrame {
     readonly property bool hasCamera: {
         void EditorState.tracksRevision
         return EditorState.preview.projectHasCamera()
-    }
-
-    function withShortcut(label, key) {
-        return key.length > 0 ? qsTr("%1 (%2)").arg(label).arg(key) : label
     }
 
     function applyViewPreset(id) {
@@ -45,11 +46,50 @@ PanelFrame {
     border.width: Theme.c.previewPanel.borderWidth
     radius: Theme.c.previewPanel.radius
 
+    readonly property string scope: "viewport3d"
+    readonly property int priority: 8
+    readonly property var focusItem: Window.activeFocusItem
+
+    function cycleGizmoOrientation() {
+        const order = ["world", "local", "view"]
+        const preview = EditorState.preview
+        preview.gizmoOrientation = order[(order.indexOf(preview.gizmoOrientation) + 1) % order.length]
+    }
+
+    // The viewport is in use while the panel is shown or the preview is in 3D mode (which can be
+    // requested before the panel is on screen).
+    readonly property bool engaged: shown || EditorState.preview.viewport3dOpen
+
+    // The gizmo tools work whenever the viewport is in use; the view keys (F, Home, the numpad)
+    // share chords with the masking and timeline keys, so they need the keyboard in the panel.
+    function handleAction(id, force) {
+        if (!engaged || (focusItem && focusItem.cursorPosition !== undefined))
+            return false
+        switch (id) {
+        case "viewport3d.gizmoMove": EditorState.preview.gizmoTool = "move"; return true
+        case "viewport3d.gizmoRotate": EditorState.preview.gizmoTool = "rotate"; return true
+        case "viewport3d.gizmoScale": EditorState.preview.gizmoTool = "scale"; return true
+        case "viewport3d.gizmoOrientation": cycleGizmoOrientation(); return true
+        }
+        return id.startsWith("viewport3d.") && (force || ShellBridge.focusWithin(root, focusItem)) && mode.handleViewAction(id)
+    }
+
     onShownChanged: {
         EditorState.playback.setStreamEnabled(1, shown)
         EditorState.preview.viewport3dOpen = shown
     }
+    onEngagedChanged: {
+        if (engaged)
+            ShellBridge.registerActionHandler(root)
+        else
+            ShellBridge.unregisterActionHandler(root)
+    }
+    Component.onCompleted: {
+        if (engaged)
+            ShellBridge.registerActionHandler(root)
+    }
     Component.onDestruction: {
+        ShellBridge.unregisterActionHandler(root)
         EditorState.playback.setStreamEnabled(1, false)
         EditorState.preview.viewport3dOpen = false
     }
@@ -88,7 +128,8 @@ PanelFrame {
 
             ThemedChip {
                 text: qsTr("Ortho")
-                tooltip: root.withShortcut(qsTr("Orthographic projection"), qsTr("Numpad 5"))
+                tooltip: qsTr("Orthographic projection")
+                tooltipActionId: "viewport3d.toggleOrthographic"
                 selected: EditorState.preview.orthographic
                 onClicked: EditorState.preview.toggleOrthographic()
             }
@@ -97,15 +138,16 @@ PanelFrame {
 
             Repeater {
                 model: [
-                    { value: "move", glyph: Theme.icons.move3d, label: qsTr("Move"), action: "gizmoMove" },
-                    { value: "rotate", glyph: Theme.icons.rotate3d, label: qsTr("Rotate"), action: "gizmoRotate" },
-                    { value: "scale", glyph: Theme.icons.scale3d, label: qsTr("Scale"), action: "gizmoScale" }
+                    { value: "move", glyph: Theme.icons.move3d, label: qsTr("Move"), action: "viewport3d.gizmoMove" },
+                    { value: "rotate", glyph: Theme.icons.rotate3d, label: qsTr("Rotate"), action: "viewport3d.gizmoRotate" },
+                    { value: "scale", glyph: Theme.icons.scale3d, label: qsTr("Scale"), action: "viewport3d.gizmoScale" }
                 ]
                 delegate: IconButton {
                     required property var modelData
                     glyph: modelData.glyph
                     variant: "text"
-                    tooltip: root.withShortcut(modelData.label, EditorState.shortcutFor(modelData.action))
+                    tooltip: modelData.label
+                    tooltipActionId: modelData.action
                     Accessible.name: modelData.label
                     active: EditorState.preview.gizmoTool === modelData.value
                     onClicked: EditorState.preview.gizmoTool = modelData.value
@@ -118,8 +160,8 @@ PanelFrame {
                 width: Math.max(84, widestContentWidth)
                 model: [qsTr("World"), qsTr("Local"), qsTr("View")]
                 currentIndex: Math.max(0, ids.indexOf(EditorState.preview.gizmoOrientation))
-                tooltip: root.withShortcut(qsTr("Which axes the gizmo follows: the scene's, the selected object's or the screen's"),
-                                           EditorState.shortcutFor("gizmoOrientation"))
+                tooltip: qsTr("Which axes the gizmo follows: the scene's, the selected object's or the screen's")
+                tooltipActionId: "viewport3d.gizmoOrientation"
                 onActivated: EditorState.preview.gizmoOrientation = ids[currentIndex]
             }
 
@@ -127,13 +169,15 @@ PanelFrame {
 
             IconButton {
                 glyph: Theme.icons.fly
-                tooltip: root.withShortcut(qsTr("Fly (WASD to move, Q/E down/up, steer toward the pointer)"), qsTr("Shift+F"))
+                tooltip: qsTr("Fly (WASD to move, Q/E down/up, steer toward the pointer)")
+                tooltipActionId: "viewport3d.toggleFly"
                 active: EditorState.preview.flying
                 onClicked: EditorState.preview.flying = !EditorState.preview.flying
             }
             IconButton {
                 glyph: Theme.icons.video
-                tooltip: root.withShortcut(qsTr("Look through the scene camera"), qsTr("Numpad 0"))
+                tooltip: qsTr("Look through the scene camera")
+                tooltipActionId: "viewport3d.lookThrough"
                 active: EditorState.preview.lookThrough
                 onClicked: EditorState.preview.toggleLookThrough()
             }
@@ -154,17 +198,20 @@ PanelFrame {
 
             IconButton {
                 glyph: Theme.icons.zoomFit
-                tooltip: root.withShortcut(qsTr("Frame the selection"), qsTr("F"))
+                tooltip: qsTr("Frame the selection")
+                tooltipActionId: "viewport3d.frameSelected"
                 onClicked: EditorState.preview.frameSelection()
             }
             IconButton {
                 glyph: Theme.icons.maximize
-                tooltip: root.withShortcut(qsTr("Frame everything"), qsTr("Home"))
+                tooltip: qsTr("Frame everything")
+                tooltipActionId: "viewport3d.frameAll"
                 onClicked: EditorState.preview.frameAll()
             }
             IconButton {
                 glyph: Theme.icons.reset
-                tooltip: root.withShortcut(qsTr("Reset the view"), qsTr("Shift+Home"))
+                tooltip: qsTr("Reset the view")
+                tooltipActionId: "viewport3d.resetView"
                 onClicked: EditorState.preview.resetView()
             }
         }
@@ -183,7 +230,11 @@ PanelFrame {
         toolHost.tools: ({ transform: transformTool })
         toolHost.companion: lightsCompanion
 
-        Keys.onPressed: (event) => mode.handleKey(event)
+        Keys.onPressed: (event) => {
+            const id = ShellBridge.scopedAction("viewport3d", event)
+            if (id !== "" && root.handleAction(id, true))
+                event.accepted = true
+        }
 
         Preview3DMode {
             id: mode
@@ -195,7 +246,7 @@ PanelFrame {
 
     Component {
         id: transformTool
-        TransformOverlay {
+        TransformManip {
             canvas: editorView.canvas
             viewport: 1
         }

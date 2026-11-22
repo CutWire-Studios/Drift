@@ -2,6 +2,7 @@
   "id": "duotone",
   "displayName": "Duotone",
   "category": "artistic",
+  "keywords": ["two color", "gradient map", "poster", "spotify", "two tone"],
   "thumbnail": "thumbnail.webp",
   "order": 530,
   "parameters": [

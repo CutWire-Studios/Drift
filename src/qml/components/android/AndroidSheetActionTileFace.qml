@@ -9,13 +9,11 @@ Rectangle {
     property bool toggled: false
     property bool pressed: false
 
-    width: Theme.androidMinTouchTarget
-    height: Theme.androidMinTouchTarget
+    width: Theme.phone ? Theme.androidControlHeight + 4 : Theme.androidMinTouchTarget
+    height: width
     radius: Theme.c.androidSheetActionTileFace.radius
     color: face.toggled
-           ? Qt.rgba(Theme.c.androidSheetActionTileFace.backgroundToggled.r,
-                     Theme.c.androidSheetActionTileFace.backgroundToggled.g,
-                     Theme.c.androidSheetActionTileFace.backgroundToggled.b, 0.22)
+           ? Qt.alpha(Theme.c.androidSheetActionTileFace.backgroundToggled, Theme.c.androidSheetActionTileFace.backgroundToggledOpacity)
            : (face.pressed ? Theme.c.androidSheetActionTileFace.backgroundPressed
                            : Theme.c.androidSheetActionTileFace.background)
     border.width: face.toggled ? Theme.c.androidSheetActionTileFace.borderWidth : 0

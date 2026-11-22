@@ -182,11 +182,19 @@ PanelFrame {
 
     focus: true
     activeFocusOnTab: true
-    Shortcut {
-        sequence: "\\"
-        context: Qt.WindowShortcut
-        enabled: root.visible
-        onActivated: root.setBypass(!root.colorState.bypass)
+    readonly property string scope: "color"
+    readonly property int priority: 7
+    function handleAction(id) {
+        if (!root.visible || id !== "color.toggleBypass")
+            return false
+        root.setBypass(!root.colorState.bypass)
+        return true
+    }
+    onVisibleChanged: {
+        if (root.visible)
+            ShellBridge.registerActionHandler(root)
+        else
+            ShellBridge.unregisterActionHandler(root)
     }
 
     onShownChanged: {
@@ -206,6 +214,8 @@ PanelFrame {
         function onPanelRequestChanged() { root.applyPanelRequest() }
     }
     Component.onCompleted: {
+        if (root.visible)
+            ShellBridge.registerActionHandler(root)
         applyPanelRequest()
         const specs = {}
         const catalog = colorState.finishingCatalog()
@@ -213,7 +223,10 @@ PanelFrame {
             specs[catalog[i].id] = colorState.finishingParamSpecs(catalog[i].id)
         finishingSpecs = specs
     }
-    Component.onDestruction: setBypass(false)
+    Component.onDestruction: {
+        ShellBridge.unregisterActionHandler(root)
+        setBypass(false)
+    }
 
     TapHandler {
         acceptedButtons: Qt.LeftButton
@@ -624,7 +637,7 @@ PanelFrame {
                         readonly property bool none: (root.params.look || "") === ""
                         wrapMode: none ? Text.WordWrap : Text.NoWrap
                         elide: none ? Text.ElideNone : Text.ElideRight
-                        text: none ? qsTr("None. Choose one in the Color Grading LUTs panel.") : root.target.lookLabel
+                        text: none ? qsTr("None. Choose one in the Looks panel.") : root.target.lookLabel
                         color: Theme.mutedForeground
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeXs
@@ -773,6 +786,7 @@ PanelFrame {
                             onBegan: root.colorState.beginEdit(qsTr("Adjust curves"))
                             onChanged: (channel, json) => root.colorState.setText(root.curveKeys[channel], json)
                             onEnded: root.colorState.commitEdit()
+                            onCancelled: root.colorState.cancelEdit()
                         }
                     }
 
@@ -802,6 +816,7 @@ PanelFrame {
                             onBegan: root.colorState.beginEdit(qsTr("Adjust hue curves"))
                             onChanged: (channel, json) => root.colorState.setText(root.hueCurveKeys[channel], json)
                             onEnded: root.colorState.commitEdit()
+                            onCancelled: root.colorState.cancelEdit()
                         }
                     }
                 }
@@ -855,9 +870,9 @@ PanelFrame {
                                 Rectangle {
                                     width: swatch.width
                                     height: width
-                                    radius: width / 2
+                                    radius: Theme.radiusPill
                                     color: "transparent"
-                                    border.width: 2
+                                    border.width: Theme.c.colorPanel.swatchFocusBorderWidth
                                     border.color: Theme.focusRing
                                     visible: swatch.selected || swatch.activeFocus
                                 }
@@ -867,7 +882,7 @@ PanelFrame {
                                     y: swatch.inset
                                     width: Theme.controlHeightSm
                                     height: width
-                                    radius: width / 2
+                                    radius: Theme.radiusPill
                                     color: Theme.c.colorGradeBands[swatch.modelData.name]
                                 }
 
@@ -876,7 +891,7 @@ PanelFrame {
                                     y: swatch.width + 1
                                     width: 5
                                     height: width
-                                    radius: width / 2
+                                    radius: Theme.radiusPill
                                     color: Theme.accentOnPanel
                                     visible: root.hslBandModified(swatch.modelData.param)
                                 }

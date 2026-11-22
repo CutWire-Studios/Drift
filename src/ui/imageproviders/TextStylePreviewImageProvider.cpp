@@ -12,6 +12,7 @@
 #include <QCache>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QtMath>
 #include <QPainter>
 #include <QUrl>
 #include <QUrlQuery>
@@ -216,6 +217,24 @@ QImage TextAnimPreviewImageProvider::requestImage(const QString &id, QSize *size
         clip.textStyle.animation.in = animation;
 
     const double scale = frameH / kTileReferenceHeight;
+    // A long sample or word would wrap mid-word and run off a 104 px tile; shrink until the longest
+    // word fits the width and the wrapped lines fit the height (average glyph about 0.6 em, bold).
+    {
+        const double availW = frameW * 0.88;
+        const double availH = frameH * 0.88;
+        int longest = 1;
+        for (const QString &word : sample.split(QLatin1Char(' '), Qt::SkipEmptyParts))
+            longest = qMax(longest, int(word.size()));
+        double px = clip.textStyle.pixelSize;
+        while (px > 12) {
+            const double em = px * scale;
+            const double lines = qCeil(sample.size() * em * 0.6 / availW);
+            if (longest * em * 0.6 <= availW && qMax(1.0, lines) * em * 1.2 <= availH)
+                break;
+            px *= 0.92;
+        }
+        clip.textStyle.pixelSize = px;
+    }
     if (still) {
         // Text fully in for an entrance; not yet leaving for an exit; the rest pose for a loop.
         const bool settledAtEnd = slot != QLatin1String("out") && slot != QLatin1String("loop");

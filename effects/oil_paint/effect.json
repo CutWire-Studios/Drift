@@ -2,6 +2,7 @@
   "id": "oil_paint",
   "displayName": "Oil Paint",
   "category": "artistic",
+  "keywords": ["painting", "painterly", "paint", "artistic", "brush"],
   "thumbnail": "thumbnail.webp",
   "order": 520,
   "parameters": [

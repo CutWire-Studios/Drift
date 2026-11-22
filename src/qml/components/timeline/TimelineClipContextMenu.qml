@@ -1,5 +1,6 @@
 import QtQuick
 import Drift
+import "../suggestions/ClipSuggestions.js" as ClipSuggestions
 
 // Right-click menu for one timeline clip. The owning clip is passed in; the loader unloads it on close.
 ThemedContextMenu {
@@ -17,6 +18,31 @@ ThemedContextMenu {
     property bool canDeleteWithEffects: false
     property bool hasPrevious: false
     property bool hasNext: false
+    property bool canPasteClips: false
+    property var suggestions: []
+    implicitWidth: 240
+
+    readonly property string kind: owner.clipData.kind
+    readonly property bool showSpeed: kind === "video" || kind === "audio"
+    readonly property bool showVolume: (kind === "video" || kind === "audio") && !owner.clipData.sequenceId
+    readonly property bool showFreeze: kind === "video"
+            && EditorState.playheadSeconds > owner.clipData.start
+            && EditorState.playheadSeconds < owner.clipData.start + owner.clipData.duration
+    readonly property bool showAudioMenu: (kind === "video" || kind === "audio")
+            && !owner.clipData.sequenceId
+
+    function goTarget(extra) {
+        return Object.assign(owner.selected ? {} : { track: owner.trackIndex, clip: owner.clipIndex }, extra)
+    }
+
+    function openProperties(tab) {
+        if (!owner.selected)
+            EditorState.selectClip(owner.trackIndex, owner.clipIndex)
+        if (!ShellBridge.phoneShell)
+            ShellBridge.goDeeper({ panel: "properties", tab: tab })
+        else if (typeof owner.panel.openClipProperties === "function")
+            owner.panel.openClipProperties()
+    }
     onAboutToShow: {
         canRemoveSilence = EditorState.audioAlign.canRemoveSilence(owner.trackIndex, owner.clipIndex)
         canSyncByAudio = EditorState.audioAlign.canSyncByAudio()
@@ -30,16 +56,46 @@ ThemedContextMenu {
         hasNext = EditorState.hasClipNeighbour(owner.trackIndex, owner.clipIndex, true)
         canMergeTrackSubtitles = owner.trackType === "subtitle"
                 && EditorState.canMergeAllSubtitlesOnTrack(owner.trackIndex)
-        rebuildMoveToTrackMenu()
+        canPasteClips = EditorState.canPasteClips()
+        suggestions = ClipSuggestions.suggest({
+            editor: EditorState, addons: Addons, tracks: owner.panel.tracks,
+            reframe: typeof owner.panel.requestAutoReframe === "function"
+                     ? owner.panel.requestAutoReframe : null
+        }, {
+            clipData: owner.clipData, trackType: owner.trackType, trackIndex: owner.trackIndex,
+            clipIndex: owner.clipIndex, selected: owner.selected
+        }, 2)
+        rebuildSubMenus()
     }
 
-    property var moveToTrackMenu: null
+    property var subMenus: []
 
-    function rebuildMoveToTrackMenu() {
-        if (moveToTrackMenu) {
-            removeMenu(moveToTrackMenu)
-            moveToTrackMenu = null
+    function rebuildSubMenus() {
+        for (let i = 0; i < subMenus.length; i++)
+            removeMenu(subMenus[i])
+        subMenus = []
+        const specs = [
+            { anchor: effectsAnchor, component: effectsMenuComponent, show: true },
+            { anchor: audioAnchor, component: audioMenuComponent, show: showAudioMenu },
+            { anchor: transformAnchor, component: transformMenuComponent,
+              show: kind === "video" || kind === "image" },
+            { anchor: moreAnchor, component: moreMenuComponent, show: true }
+        ]
+        for (let s = 0; s < specs.length; s++) {
+            if (!specs[s].show)
+                continue
+            const sub = specs[s].component.createObject(null)
+            for (let i = 0; i < count; i++) {
+                if (itemAt(i) === specs[s].anchor) {
+                    insertMenu(i + 1, sub)
+                    break
+                }
+            }
+            subMenus.push(sub)
         }
+    }
+
+    function rebuildMoveToTrackMenu(more) {
         const targets = EditorState.compatibleTracksForClip(owner.trackIndex, owner.clipIndex)
         if (targets.length === 0)
             return
@@ -49,15 +105,7 @@ ThemedContextMenu {
             sub.addItem(moveToTrackItemComponent.createObject(null,
                 { text: label, targetTrack: targets[i].index }))
         }
-        let at = count
-        for (let i = 0; i < count; i++) {
-            if (itemAt(i) === moveToOwnTrackItem) {
-                at = i + 1
-                break
-            }
-        }
-        insertMenu(at, sub)
-        moveToTrackMenu = sub
+        more.addMenu(sub)
     }
 
     Component {
@@ -80,6 +128,105 @@ ThemedContextMenu {
     // Loader's item there would destroy an object still unwinding.
     onClosed: unloadRequested()
 
+
+    Item {
+        id: quickRow
+        implicitWidth: quickButtons.implicitWidth + Theme.spacingSm * 2
+        implicitHeight: Theme.iconButtonSize + Theme.spacingSm
+        width: ListView.view ? ListView.view.width : implicitWidth
+
+        Row {
+            id: quickButtons
+            anchors.centerIn: parent
+            spacing: Theme.spacingXs
+
+            IconButton {
+                glyph: Theme.icons.scissors
+                tooltip: qsTr("Split at current time")
+                tooltipActionId: "splitSelection"
+                enabled: EditorState.playheadSeconds > clipContextMenu.owner.clipData.start
+                         && EditorState.playheadSeconds < clipContextMenu.owner.clipData.start
+                                                          + clipContextMenu.owner.clipData.duration
+                onClicked: {
+                    clipContextMenu.close()
+                    EditorState.splitClipAt(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex,
+                                            EditorState.playheadSeconds)
+                }
+            }
+            IconButton {
+                glyph: Theme.icons.scissors
+                tooltip: qsTr("Cut")
+                tooltipActionId: "cut"
+                onClicked: {
+                    clipContextMenu.close()
+                    EditorState.cutSelection()
+                }
+            }
+            IconButton {
+                glyph: Theme.icons.copy
+                tooltip: qsTr("Copy")
+                tooltipActionId: "copy"
+                onClicked: {
+                    clipContextMenu.close()
+                    EditorState.copySelection()
+                }
+            }
+            IconButton {
+                glyph: Theme.icons.clipboardPaste
+                tooltip: qsTr("Paste at current time")
+                tooltipActionId: "paste"
+                enabled: clipContextMenu.canPasteClips
+                onClicked: {
+                    clipContextMenu.close()
+                    EditorState.pasteAtPlayhead()
+                }
+            }
+            IconButton {
+                glyph: Theme.icons.copyPlus
+                tooltip: qsTr("Duplicate")
+                tooltipActionId: "duplicate"
+                onClicked: {
+                    clipContextMenu.close()
+                    EditorState.duplicateSelectedClip()
+                }
+            }
+            IconButton {
+                readonly property bool off: clipContextMenu.owner.clipData.enabled === false
+                glyph: off ? Theme.icons.eye : Theme.icons.eyeOff
+                tooltip: off ? qsTr("Enable clip") : qsTr("Disable clip")
+                tooltipActionId: "toggleClipEnabled"
+                onClicked: {
+                    clipContextMenu.close()
+                    EditorState.setClipEnabled(clipContextMenu.owner.trackIndex,
+                                               clipContextMenu.owner.clipIndex, off)
+                }
+            }
+            IconButton {
+                glyph: Theme.icons.trash
+                tooltip: qsTr("Delete")
+                tooltipActionId: "delete"
+                onClicked: {
+                    clipContextMenu.close()
+                    EditorState.deleteSelectedClip()
+                }
+            }
+        }
+    }
+    ThemedMenuSeparator { }
+    ThemedMenuItem {
+        text: clipContextMenu.suggestions.length > 0 ? clipContextMenu.suggestions[0].label : ""
+        icon.name: Theme.icons.sparkles
+        visible: clipContextMenu.suggestions.length > 0
+        onTriggered: clipContextMenu.suggestions[0].run()
+    }
+    ThemedMenuItem {
+        text: clipContextMenu.suggestions.length > 1 ? clipContextMenu.suggestions[1].label : ""
+        icon.name: Theme.icons.sparkles
+        visible: clipContextMenu.suggestions.length > 1
+        onTriggered: clipContextMenu.suggestions[1].run()
+    }
+    ThemedMenuSeparator { visible: clipContextMenu.suggestions.length > 0 }
+
     ThemedMenuItem {
         text: qsTr("Properties")
         icon.name: Theme.icons.sliders
@@ -99,107 +246,38 @@ ThemedContextMenu {
         onTriggered: owner.panel.multiSelectActive = true
     }
     ThemedMenuItem {
-        text: qsTr("Open composite")
-        icon.name: Theme.icons.layers
-        visible: owner.clipData.kind === "composite"
-        onTriggered: EditorState.openCompositeClip(owner.trackIndex, owner.clipIndex)
+        text: qsTr("Speed and reverse…")
+        icon.name: Theme.icons.gauge
+        visible: clipContextMenu.showSpeed
+        onTriggered: clipContextMenu.openProperties("speed")
     }
     ThemedMenuItem {
-        text: qsTr("Flatten composite")
-        icon.name: Theme.icons.film
-        visible: owner.clipData.kind === "composite"
-        enabled: !EditorState.exportInProgress
-        onTriggered: EditorState.flattenComposite(owner.trackIndex, owner.clipIndex)
+        text: qsTr("Volume…")
+        icon.name: Theme.icons.volumeHigh
+        visible: clipContextMenu.showVolume
+        onTriggered: clipContextMenu.openProperties("audio")
     }
     ThemedMenuItem {
-        text: qsTr("Dissolve composite")
-        icon.name: Theme.icons.layers
-        visible: owner.clipData.kind === "composite"
-        enabled: EditorState.canDissolveComposite(owner.trackIndex, owner.clipIndex)
-        onTriggered: EditorState.dissolveComposite(owner.trackIndex, owner.clipIndex)
-    }
-    ThemedMenuItem {
-        text: qsTr("Make composite")
-        icon.name: Theme.icons.layers
-        visible: EditorState.makeCompositeAvailable
-        onTriggered: EditorState.makeCompositeFromSelection()
-    }
-    ThemedMenuItem {
-        text: EditorState.selection.length > 1 ? qsTr("Transform together")
-                                               : qsTr("Add transform layer")
-        icon.name: Theme.icons.group
-        visible: EditorState.transformTogetherAvailable && !owner.isTransformClip
-        onTriggered: EditorState.makeTransformLayerFromSelection()
-    }
-    ThemedMenuItem {
-        text: qsTr("Select transform layer")
-        icon.name: Theme.icons.maximize
-        visible: owner.hasTransformParent && !owner.isTransformClip
-        onTriggered: {
-            EditorState.selectClip(owner.trackIndex, owner.clipIndex)
-            EditorState.selectTransformParent()
-        }
-    }
-    ThemedMenuItem {
-        text: qsTr("Covers…")
-        icon.name: Theme.icons.layers
-        visible: owner.isTransformClip
-        onTriggered: {
-            if (!owner.selected)
-                EditorState.selectClip(owner.trackIndex, owner.clipIndex)
-            if (typeof owner.panel.openClipProperties === "function")
-                owner.panel.openClipProperties()
-        }
-    }
-    ThemedMenuItem {
-        text: qsTr("Select covered clips")
-        icon.name: Theme.icons.maximize
-        visible: owner.isTransformClip
-        onTriggered: EditorState.selectTransformChildren(owner.trackIndex, owner.clipIndex)
+        text: qsTr("Freeze frame")
+        icon.name: Theme.icons.snowflake
+        visible: clipContextMenu.showFreeze
+        onTriggered: EditorState.freezeFrameAtPlayhead()
     }
     ThemedMenuSeparator { }
     ThemedMenuItem {
-        text: qsTr("Split at current time")
-        icon.name: Theme.icons.scissors
-        onTriggered: EditorState.splitAtPlayhead()
+        text: qsTr("Rename…")
+        icon.name: Theme.icons.pencil
+        onTriggered: owner.panel.requestRenameClip(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
-        text: qsTr("Split item at current time")
-        icon.name: Theme.icons.scissors
-        // Scoped to just this clip (and its linked partner, e.g. companion
-        // audio) — splitAtPlayhead() above cuts every clip under the playhead
-        // across every track, which is surprising when picked from one clip's menu.
-        visible: EditorState.playheadSeconds > owner.clipData.start
-                && EditorState.playheadSeconds < owner.clipData.start + owner.clipData.duration
-        onTriggered: EditorState.splitClipAt(owner.trackIndex, owner.clipIndex,
-                                             EditorState.playheadSeconds)
-    }
-    ThemedMenuItem {
-        text: qsTr("Split on beats")
-        icon.name: Theme.icons.scissors
-        visible: EditorState.beatsAvailable && owner.clipData.kind !== "subtitle"
-        onTriggered: EditorState.splitSelectionOnBeats(owner.trackIndex, owner.clipIndex, "beat")
-    }
-    ThemedMenuItem {
-        text: qsTr("Snap clips to beats")
-        icon.name: Theme.icons.music
-        visible: EditorState.beatsAvailable
-        onTriggered: EditorState.snapSelectionToBeats(owner.trackIndex, owner.clipIndex, "beat")
-    }
-    ThemedMenuItem {
-        text: qsTr("Swap with previous clip")
+        text: qsTr("Replace with…")
         icon.name: Theme.icons.repeat
-        visible: clipContextMenu.hasPrevious
-        onTriggered: EditorState.swapWithNeighbour(owner.trackIndex, owner.clipIndex, false)
+        visible: clipContextMenu.canReplaceMedia
+        onTriggered: owner.panel.requestReplaceClip(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
-        text: qsTr("Swap with next clip")
-        icon.name: Theme.icons.repeat
-        visible: clipContextMenu.hasNext
-        onTriggered: EditorState.swapWithNeighbour(owner.trackIndex, owner.clipIndex, true)
-    }
-    ThemedMenuItem {
-        text: qsTr("Separate audio")
+        text: qsTr("Detach audio")
+        shortcutId: "separateAudio"
         icon.name: Theme.icons.audioLines
         // CapCut: only offer extract when the clip still has embedded audio.
         visible: owner.trackType === "video"
@@ -207,7 +285,7 @@ ThemedContextMenu {
         onTriggered: EditorState.separateAudioFromClip(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
-        text: qsTr("Separate all audio tracks")
+        text: qsTr("Detach all audio tracks")
         icon.name: Theme.icons.audioLines
         visible: owner.trackType === "video"
                  && EditorState.canSeparateAudioClip(owner.trackIndex, owner.clipIndex)
@@ -317,92 +395,26 @@ ThemedContextMenu {
     }
     ThemedMenuItem {
         text: qsTr("Unlink")
+        text: qsTr("Unlink video and audio")
+        shortcutId: "unlink"
         icon.name: Theme.icons.unlink
         visible: !!owner.clipData.linked && EditorState.unlinkAvailable
         onTriggered: EditorState.unlinkSelectedClips()
     }
     ThemedMenuItem {
         text: qsTr("Link")
+        shortcutId: "link"
         icon.name: Theme.icons.link
         // Needs two or more unlinked clips selected (Shift+click to add).
         visible: EditorState.linkAvailable
         onTriggered: EditorState.linkSelectedClips()
     }
-    ThemedMenuItem {
-        text: qsTr("Merge subtitle clips")
-        icon.name: Theme.icons.linkTwo
-        visible: owner.trackType === "subtitle"
-        enabled: EditorState.mergeAvailable
-        onTriggered: EditorState.mergeSelectedClips()
-    }
-    ThemedMenuItem {
-        text: qsTr("Merge all subtitles on this track")
-        icon.name: Theme.icons.linkTwo
-        visible: owner.trackType === "subtitle"
-        enabled: clipContextMenu.canMergeTrackSubtitles
-        onTriggered: EditorState.mergeAllSubtitlesOnTrack(owner.trackIndex)
-    }
-    ThemedMenuItem {
-        text: qsTr("Convert to text clips")
-        icon.name: Theme.icons.type
-        visible: owner.trackType === "subtitle"
-        onTriggered: EditorState.convertSubtitleToTextClips(owner.trackIndex, owner.clipIndex)
-    }
-    ThemedMenuItem {
-        text: qsTr("Convert to subtitle")
-        icon.name: Theme.icons.captions
-        visible: owner.trackType === "text" && EditorState.textToSubtitleAvailable
-        onTriggered: owner.panel.requestConvertTextToSubtitle()
-    }
     ThemedMenuSeparator { }
-    ThemedMenuItem {
-        text: qsTr("Cut")
-        icon.name: Theme.icons.scissors
-        onTriggered: EditorState.cutSelection()
-    }
-    ThemedMenuItem {
-        text: qsTr("Copy")
-        icon.name: Theme.icons.copy
-        onTriggered: EditorState.copySelection()
-    }
-    ThemedMenuItem {
-        text: qsTr("Paste attributes…")
-        icon.name: Theme.icons.clipboardPaste
-        enabled: clipContextMenu.canPasteAttributes
-        onTriggered: EditorState.requestPasteAttributes()
-    }
-    ThemedMenuItem {
-        text: qsTr("Duplicate")
-        icon.name: Theme.icons.copyPlus
-        onTriggered: EditorState.duplicateSelectedClip()
-    }
-    ThemedMenuItem {
-        text: qsTr("Rename…")
-        icon.name: Theme.icons.pencil
-        onTriggered: owner.panel.requestRenameClip(owner.trackIndex, owner.clipIndex)
-    }
-    ThemedMenuItem {
-        text: qsTr("Replace with…")
-        icon.name: Theme.icons.repeat
-        visible: clipContextMenu.canReplaceMedia
-        onTriggered: owner.panel.requestReplaceClip(owner.trackIndex, owner.clipIndex)
-    }
-    ThemedMenuSeparator { visible: !owner.isTransformClip }
-    ThemedMenuItem {
-        text: qsTr("Copy effects")
-        icon.name: Theme.icons.wand
-        visible: owner.hasAnyEffects
-        onTriggered: EditorState.copyClipEffectsToClipboard(owner.trackIndex,
-                                                            owner.clipIndex)
-    }
-    ThemedMenuItem {
-        text: qsTr("Paste effects")
-        icon.name: Theme.icons.clipboardPaste
-        visible: !owner.isTransformClip
-        enabled: clipContextMenu.canPasteEffects
-        onTriggered: EditorState.pasteEffectsFromClipboard(owner.trackIndex,
-                                                           owner.clipIndex)
-    }
+    ThemedMenuItem { id: effectsAnchor; visible: false }
+    ThemedMenuItem { id: audioAnchor; visible: false }
+    ThemedMenuItem { id: transformAnchor; visible: false }
+    ThemedMenuItem { id: moreAnchor; visible: false }
+    ThemedMenuSeparator { visible: owner.hasAnyEffects || clipContextMenu.canDeleteWithEffects }
     ThemedMenuItem {
         text: qsTr("Remove all effects")
         icon.name: Theme.icons.trash
@@ -410,77 +422,344 @@ ThemedContextMenu {
         onTriggered: EditorState.removeAllEffects(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
-        text: qsTr("Save effects as preset…")
-        icon.name: Theme.icons.save
-        visible: owner.hasAnyEffects
-        onTriggered: owner.panel.requestSaveEffectPreset(owner.trackIndex,
-                                                             owner.clipIndex)
-    }
-    ThemedMenuItem {
-        text: qsTr("Color grade…")
-        icon.name: Theme.icons.blend
-        visible: owner.clipData.kind !== "audio" && owner.clipData.kind !== "subtitle"
-        onTriggered: {
-            if (!owner.selected)
-                EditorState.selectClip(owner.trackIndex, owner.clipIndex)
-            Workspaces.activeId = "color"
-        }
-    }
-    ThemedMenuItem {
-        text: qsTr("Blur area…")
-        icon.name: Theme.icons.eyeOff
-        visible: owner.trackType === "video" && !owner.isTransformClip
-        onTriggered: EditorState.addEffect(owner.trackIndex, owner.clipIndex,
-                                           "builtin.effects.privacy_blur")
-    }
-    ThemedMenuItem {
-        text: qsTr("Edit keyframes…")
-        icon.name: Theme.icons.diamondPlus
-        onTriggered: {
-            if (!owner.selected)
-                EditorState.selectClip(owner.trackIndex, owner.clipIndex)
-            Workspaces.activeId = "keyframes"
-        }
-    }
-    ThemedMenuItem {
-        text: qsTr("Mask & track…")
-        icon.name: Theme.icons.mask
-        visible: owner.trackType === "video"
-        onTriggered: {
-            if (!owner.selected)
-                EditorState.selectClip(owner.trackIndex, owner.clipIndex)
-            Workspaces.activeId = "masking-tracking"
-        }
-    }
-    ThemedMenuSeparator { visible: owner.clipData.kind === "adjustment" && !owner.isTransformClip }
-    ThemedMenuItem {
-        text: qsTr("Unlink from clip")
-        icon.name: Theme.icons.unlink
-        visible: owner.pinnedToClip
-        onTriggered: EditorState.unlinkAdjustment(owner.trackIndex, owner.clipIndex)
-    }
-    ThemedMenuItem {
-        id: moveToOwnTrackItem
-        text: qsTr("Move to its own track")
-        icon.name: Theme.icons.layers
-        // Only meaningful for a nested one: a standalone adjustment already has one.
-        visible: owner.clipData.kind === "adjustment"
-                 && owner.panel.tracks[owner.trackIndex].isAdjustmentLane === true
-        onTriggered: EditorState.moveAdjustmentToOwnTrack(owner.trackIndex,
-                                                          owner.clipIndex)
-    }
-    ThemedMenuSeparator { }
-    ThemedMenuItem {
-        text: qsTr("Delete")
-        icon.name: Theme.icons.trash
-        onTriggered: EditorState.deleteSelectedClip()
-    }
-    ThemedMenuItem {
         // Plain Delete leaves a graded clip's effects on the timeline, unlinked; this takes them
         // (and its masks) with it, in the same undo step.
         text: qsTr("Delete with effects")
+        shortcutId: "deleteWithEffects"
         icon.name: Theme.icons.trash
         visible: clipContextMenu.canDeleteWithEffects
         onTriggered: EditorState.deleteSelectedClipWithEffects()
+    }
+
+    Component {
+        id: effectsMenuComponent
+        ThemedContextMenu {
+            title: qsTr("Effects")
+            ThemedMenuItem {
+                text: qsTr("Copy effects")
+                shortcutId: "copyEffects"
+                icon.name: Theme.icons.wand
+                visible: clipContextMenu.owner.hasAnyEffects
+                onTriggered: EditorState.copyClipEffectsToClipboard(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Paste effects")
+                shortcutId: "pasteEffects"
+                icon.name: Theme.icons.clipboardPaste
+                visible: !clipContextMenu.owner.isTransformClip
+                enabled: clipContextMenu.canPasteEffects
+                onTriggered: EditorState.pasteEffectsFromClipboard(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Paste attributes…")
+                shortcutId: "pasteAttributes"
+                icon.name: Theme.icons.clipboardPaste
+                enabled: clipContextMenu.canPasteAttributes
+                onTriggered: EditorState.requestPasteAttributes()
+            }
+            ThemedMenuItem {
+                text: qsTr("Save effects as preset…")
+                icon.name: Theme.icons.save
+                visible: clipContextMenu.owner.hasAnyEffects
+                onTriggered: clipContextMenu.owner.panel.requestSaveEffectPreset(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuSeparator { }
+            WorkspaceMenuItem {
+                text: qsTr("Color grade…")
+                icon.name: Theme.icons.blend
+                visible: clipContextMenu.owner.clipData.kind !== "audio" && clipContextMenu.owner.clipData.kind !== "subtitle"
+                         && !ShellBridge.phoneShell
+                target: clipContextMenu.goTarget({ panel: "color" })
+            }
+            ThemedMenuItem {
+                text: qsTr("Blur area")
+                icon.name: Theme.icons.eyeOff
+                visible: clipContextMenu.owner.trackType === "video" && !clipContextMenu.owner.isTransformClip
+                onTriggered: EditorState.addEffect(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex,
+                                                   "builtin.effects.privacy_blur")
+            }
+            WorkspaceMenuItem {
+                text: qsTr("Edit keyframes…")
+                icon.name: Theme.icons.diamondPlus
+                visible: !ShellBridge.phoneShell
+                target: clipContextMenu.goTarget({ panel: "keyframes" })
+            }
+            WorkspaceMenuItem {
+                text: qsTr("Mask & track…")
+                icon.name: Theme.icons.mask
+                visible: clipContextMenu.owner.trackType === "video" && !ShellBridge.phoneShell
+                target: clipContextMenu.goTarget({ panel: "masking" })
+            }
+        }
+    }
+
+    Component {
+        id: audioMenuComponent
+        ThemedContextMenu {
+            title: qsTr("Audio")
+            ThemedMenuItem {
+                text: qsTr("Remove silence")
+                icon.name: Theme.icons.audioLines
+                visible: clipContextMenu.canRemoveSilence
+                enabled: !EditorState.audioAlign.running
+                onTriggered: EditorState.audioAlign.removeSilence(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Auto duck…")
+                icon.name: Theme.icons.audioLines
+                visible: EditorState.audioAlign.canDuck(clipContextMenu.owner.trackIndex,
+                                                        clipContextMenu.owner.clipIndex)
+                enabled: !EditorState.audioAlign.running
+                onTriggered: {
+                    if (ShellBridge.phoneShell) {
+                        if (!clipContextMenu.owner.selected)
+                            EditorState.selectClip(clipContextMenu.owner.trackIndex,
+                                                   clipContextMenu.owner.clipIndex)
+                        ShellBridge.navigate("panel:audioMixer#audio-ducking")
+                    } else {
+                        ShellBridge.goDeeper(clipContextMenu.goTarget({ panel: "audioMixer",
+                                                                         anchor: "audio-ducking" }))
+                    }
+                }
+            }
+            ThemedMenuItem {
+                text: qsTr("Sync by audio")
+                icon.name: Theme.icons.audioLines
+                visible: clipContextMenu.canSyncByAudio
+                enabled: !EditorState.audioAlign.running
+                onTriggered: EditorState.audioAlign.syncByAudio()
+            }
+            ThemedMenuItem {
+                text: qsTr("Generate captions")
+                icon.name: Theme.icons.captions
+                visible: Addons.hasKind("whisper-model")
+                enabled: !EditorState.subtitleGenerating
+                onTriggered: {
+                    if (!clipContextMenu.owner.selected)
+                        EditorState.selectClip(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+                    EditorState.generateSubtitlesForSelection()
+                }
+            }
+            ThemedMenuItem {
+                text: qsTr("Cancel audio analysis")
+                icon.name: Theme.icons.x
+                visible: EditorState.audioAlign.running
+                onTriggered: EditorState.audioAlign.cancel()
+            }
+        }
+    }
+
+    Component {
+        id: transformMenuComponent
+        ThemedContextMenu {
+            title: qsTr("Transform")
+            ThemedMenuItem {
+                text: qsTr("Crop…")
+                icon.name: Theme.icons.crop
+                // Desktop only: AndroidMain has no crop window for timeline clips.
+                visible: typeof ShellBridge.main?.openCrop === "function"
+                onTriggered: ShellBridge.main.openCrop(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Crop on canvas")
+                icon.name: Theme.icons.crop
+                visible: clipContextMenu.owner.clipData.kind === "video" || clipContextMenu.owner.clipData.kind === "image"
+                onTriggered: {
+                    EditorState.selectClip(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+                    EditorState.preview.clipCropMode = true
+                }
+            }
+            ThemedMenuItem {
+                text: qsTr("Auto reframe…")
+                icon.name: Theme.icons.crop
+                visible: typeof clipContextMenu.owner.panel.requestAutoReframe === "function"
+                onTriggered: clipContextMenu.owner.panel.requestAutoReframe(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Enhance video…")
+                icon.name: Theme.icons.sparkles
+                // Desktop only: AndroidMain has no restore window.
+                visible: clipContextMenu.owner.clipData.kind === "video"
+                         && typeof ShellBridge.main?.openRestore === "function"
+                onTriggered: ShellBridge.main.openRestore(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Stabilize…")
+                icon.name: Theme.icons.locateFixed
+                visible: clipContextMenu.owner.clipData.kind === "video"
+                onTriggered: clipContextMenu.openProperties("stabilize")
+            }
+        }
+    }
+
+    Component {
+        id: moreMenuComponent
+        ThemedContextMenu {
+            title: qsTr("More")
+            Component.onCompleted: clipContextMenu.rebuildMoveToTrackMenu(this)
+
+            ThemedMenuItem {
+                text: clipContextMenu.owner.clipData.loop ? qsTr("Stop looping") : qsTr("Loop")
+                icon.name: Theme.icons.repeat
+                visible: clipContextMenu.owner.clipData.kind === "video" || clipContextMenu.owner.clipData.kind === "audio"
+                onTriggered: EditorState.setClipLoop(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, !clipContextMenu.owner.clipData.loop)
+            }
+            ThemedMenuItem {
+                text: qsTr("Split on beats")
+                icon.name: Theme.icons.scissors
+                visible: EditorState.beatsAvailable && clipContextMenu.owner.clipData.kind !== "subtitle"
+                onTriggered: EditorState.splitSelectionOnBeats(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, "beat")
+            }
+            ThemedMenuItem {
+                text: qsTr("Snap clips to beats")
+                icon.name: Theme.icons.music
+                visible: EditorState.beatsAvailable
+                onTriggered: EditorState.snapSelectionToBeats(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, "beat")
+            }
+            ThemedMenuItem {
+                text: qsTr("Swap with previous clip")
+                icon.name: Theme.icons.repeat
+                visible: clipContextMenu.hasPrevious
+                onTriggered: EditorState.swapWithNeighbour(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, false)
+            }
+            ThemedMenuItem {
+                text: qsTr("Swap with next clip")
+                icon.name: Theme.icons.repeat
+                visible: clipContextMenu.hasNext
+                onTriggered: EditorState.swapWithNeighbour(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, true)
+            }
+            ThemedMenuItem {
+                readonly property string blocker: EditorState.masking.convertClipToMaskBlocker(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+                text: blocker !== "" ? qsTr("Convert to mask") + " — " + blocker : qsTr("Convert to mask")
+                icon.name: Theme.icons.mask
+                visible: clipContextMenu.owner.trackType === "video"
+                enabled: EditorState.masking.canConvertClipToMask(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+                onTriggered: EditorState.masking.convertClipToMask(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                readonly property var refs: clipContextMenu.owner.selected ? [] : [{ "track": clipContextMenu.owner.trackIndex, "clip": clipContextMenu.owner.clipIndex }]
+                text: qsTr("Use as mask (nested timeline)")
+                icon.name: Theme.icons.mask
+                visible: clipContextMenu.owner.trackType === "video" && clipContextMenu.owner.clipData.kind !== "adjustment"
+                enabled: EditorState.masking.canConvertClipsToSequenceMask(refs)
+                onTriggered: EditorState.masking.convertClipsToSequenceMask(refs)
+            }
+            ThemedMenuItem {
+                readonly property string sequenceId: EditorState.masking.maskSequenceId(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+                text: qsTr("Open mask timeline")
+                icon.name: Theme.icons.layers
+                visible: sequenceId !== ""
+                onTriggered: EditorState.openSequence(sequenceId)
+            }
+            ThemedMenuItem {
+                text: qsTr("Convert to edit-friendly format")
+                icon.name: Theme.icons.rabbit
+                // Converts the bin media, so every clip using it follows along.
+                visible: clipContextMenu.owner.mediaAssetId.length > 0 && !clipContextMenu.owner.mediaEditFriendly
+                onTriggered: EditorState.bin.convertToConstantFrameRate([clipContextMenu.owner.mediaAssetId])
+            }
+            ThemedMenuItem {
+                text: qsTr("Open composite")
+                icon.name: Theme.icons.layers
+                visible: clipContextMenu.owner.clipData.kind === "composite"
+                onTriggered: EditorState.openCompositeClip(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Flatten composite")
+                icon.name: Theme.icons.film
+                visible: clipContextMenu.owner.clipData.kind === "composite"
+                enabled: !EditorState.exportInProgress
+                onTriggered: EditorState.flattenComposite(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Dissolve composite")
+                icon.name: Theme.icons.layers
+                visible: clipContextMenu.owner.clipData.kind === "composite"
+                enabled: EditorState.canDissolveComposite(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+                onTriggered: EditorState.dissolveComposite(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Make composite")
+                icon.name: Theme.icons.layers
+                visible: EditorState.makeCompositeAvailable
+                onTriggered: EditorState.makeCompositeFromSelection()
+            }
+            ThemedMenuItem {
+                text: EditorState.selection.length > 1 ? qsTr("Transform together")
+                                                       : qsTr("Add transform layer")
+                shortcutId: "transformTogether"
+                icon.name: Theme.icons.group
+                visible: EditorState.transformTogetherAvailable && !clipContextMenu.owner.isTransformClip
+                onTriggered: EditorState.makeTransformLayerFromSelection()
+            }
+            ThemedMenuItem {
+                text: qsTr("Select transform layer")
+                shortcutId: "selectTransformLayer"
+                icon.name: Theme.icons.maximize
+                visible: clipContextMenu.owner.hasTransformParent && !clipContextMenu.owner.isTransformClip
+                onTriggered: {
+                    EditorState.selectClip(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+                    EditorState.selectTransformParent()
+                }
+            }
+            ThemedMenuItem {
+                text: qsTr("Covers…")
+                icon.name: Theme.icons.layers
+                visible: clipContextMenu.owner.isTransformClip
+                onTriggered: {
+                    if (!clipContextMenu.owner.selected)
+                        EditorState.selectClip(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+                    if (typeof clipContextMenu.owner.panel.openClipProperties === "function")
+                        clipContextMenu.owner.panel.openClipProperties()
+                }
+            }
+            ThemedMenuItem {
+                text: qsTr("Select covered clips")
+                icon.name: Theme.icons.maximize
+                visible: clipContextMenu.owner.isTransformClip
+                onTriggered: EditorState.selectTransformChildren(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Merge subtitle clips")
+                shortcutId: "merge"
+                icon.name: Theme.icons.linkTwo
+                visible: clipContextMenu.owner.trackType === "subtitle"
+                enabled: EditorState.mergeAvailable
+                onTriggered: EditorState.mergeSelectedClips()
+            }
+            ThemedMenuItem {
+                text: qsTr("Merge all subtitles on this track")
+                icon.name: Theme.icons.linkTwo
+                visible: clipContextMenu.owner.trackType === "subtitle"
+                enabled: clipContextMenu.canMergeTrackSubtitles
+                onTriggered: EditorState.mergeAllSubtitlesOnTrack(clipContextMenu.owner.trackIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Convert to text clips")
+                icon.name: Theme.icons.type
+                visible: clipContextMenu.owner.trackType === "subtitle"
+                onTriggered: EditorState.convertSubtitleToTextClips(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Convert to subtitle")
+                icon.name: Theme.icons.captions
+                visible: clipContextMenu.owner.trackType === "text" && EditorState.textToSubtitleAvailable
+                onTriggered: clipContextMenu.owner.panel.requestConvertTextToSubtitle()
+            }
+            ThemedMenuItem {
+                text: qsTr("Unlink from clip")
+                icon.name: Theme.icons.unlink
+                visible: clipContextMenu.owner.pinnedToClip
+                onTriggered: EditorState.unlinkAdjustment(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Move to its own track")
+                icon.name: Theme.icons.layers
+                // Only meaningful for a nested one: a standalone adjustment already has one.
+                visible: clipContextMenu.owner.clipData.kind === "adjustment"
+                         && clipContextMenu.owner.panel.tracks[clipContextMenu.owner.trackIndex].isAdjustmentLane === true
+                onTriggered: EditorState.moveAdjustmentToOwnTrack(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+        }
     }
 }

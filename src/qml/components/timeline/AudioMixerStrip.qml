@@ -237,7 +237,7 @@ Rectangle {
                     Row {
                         anchors.left: parent.left
                         anchors.leftMargin: Theme.spacingLg + 2
-                        anchors.right: headerCloseBtn.left
+                        anchors.right: mixerLinkBtn.visible ? mixerLinkBtn.left : headerCloseBtn.left
                         anchors.rightMargin: Theme.spacingSm
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingMd
@@ -260,6 +260,19 @@ Rectangle {
                             width: Math.max(0, parent.width - Theme.iconSizeMd - parent.spacing)
                             anchors.verticalCenter: parent.verticalCenter
                         }
+                    }
+
+                    IconButton {
+                        id: mixerLinkBtn
+                        visible: !ShellBridge.phoneShell
+                        anchors.right: headerCloseBtn.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        buttonSize: 24
+                        iconSize: Theme.iconSizeMd
+                        glyph: Theme.icons.externalLink
+                        variant: "text"
+                        tooltip: qsTr("Open in Audio workspace")
+                        onClicked: ShellBridge.goDeeper({ panel: "audioMixer" })
                     }
 
                     IconButton {
@@ -652,7 +665,7 @@ Rectangle {
                             z: -1
                             anchors.fill: parent
                             color: Theme.c.audioMixerStrip.masterBackground
-                            opacity: 0.5
+                            opacity: Theme.c.audioMixerStrip.masterBackgroundOpacity
                         }
                     }
                 }

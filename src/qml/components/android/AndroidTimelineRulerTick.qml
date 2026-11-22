@@ -22,9 +22,7 @@ Item {
         y: parent.height - 10
         width: Theme.c.androidTimelineRulerTick.tickWidth
         height: 8
-        color: Qt.rgba(Theme.c.androidTimelineRulerTick.tick.r,
-                       Theme.c.androidTimelineRulerTick.tick.g,
-                       Theme.c.androidTimelineRulerTick.tick.b, 0.28)
+        color: Qt.alpha(Theme.c.androidTimelineRulerTick.tick, Theme.c.androidTimelineRulerTick.tickOpacity)
     }
     Text {
         x: 4

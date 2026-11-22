@@ -6,6 +6,11 @@ import "../subtitles/SubtitleTime.js" as SubtitleTime
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "subtitles-panel"
+        title: qsTr("Captions")
+        keywords: "subtitles captions cues transcript speech text list review"
+    }
 
     property bool shown: true
     property bool follow: true
@@ -237,16 +242,23 @@ PanelFrame {
     }
 
     readonly property var focusItem: Window.activeFocusItem
-    readonly property bool wantsActions: shown && isSubtitle && (activeFocus || hover.hovered)
+    readonly property bool focusWithin: ShellBridge.focusWithin(root, focusItem)
+    readonly property bool wantsActions: shown && isSubtitle && (focusWithin || hover.hovered)
 
     function textFieldFocused() {
         const f = focusItem
         return !!f && f.cursorPosition !== undefined
     }
 
-    function handleAction(id) {
+    function handleAction(id, force) {
         if (!shown || !isSubtitle || textFieldFocused())
             return false
+        if (id === "subtitles.findCues") {
+            if (!(force || focusWithin))
+                return false
+            toolbar.focusFilter()
+            return true
+        }
         if (id === "selectAll") {
             EditorState.subtitles.selectAll(track, clipIndex)
             return true
@@ -258,21 +270,41 @@ PanelFrame {
         return false
     }
 
+    readonly property string scope: "subtitles"
+    readonly property int priority: 4
     onWantsActionsChanged: {
         if (wantsActions)
-            ShellBridge.subtitleActionHandler = root
-        else if (ShellBridge.subtitleActionHandler === root)
-            ShellBridge.subtitleActionHandler = null
+            ShellBridge.registerActionHandler(root)
+        else
+            ShellBridge.unregisterActionHandler(root)
     }
-    Component.onDestruction: {
-        if (ShellBridge.subtitleActionHandler === root)
-            ShellBridge.subtitleActionHandler = null
-    }
+    Component.onDestruction: ShellBridge.unregisterActionHandler(root)
 
     HoverHandler { id: hover }
 
     focus: true
     activeFocusOnTab: true
+
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "subtitles")
+            return
+        ShellBridge.panelRequest = null
+        if (request.time === undefined)
+            return
+        EditorState.playheadSeconds = request.time
+        Qt.callLater(() => {
+            if (root.activeCue >= 0) {
+                root.selectOnly(root.activeCue, false)
+                root.scrollToCue(root.activeCue)
+            }
+        })
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+    Component.onCompleted: applyPanelRequest()
 
     onTrackChanged: onClipSwitched()
     onClipIndexChanged: onClipSwitched()
@@ -291,10 +323,6 @@ PanelFrame {
         const mods = event.modifiers
         if (event.key === Qt.Key_Delete) {
             root.deleteSelected()
-        } else if (event.key === Qt.Key_A && (mods & Qt.ControlModifier)) {
-            EditorState.subtitles.selectAll(root.track, root.clipIndex)
-        } else if (event.key === Qt.Key_F && (mods & Qt.ControlModifier)) {
-            toolbar.focusFilter()
         } else if (event.key === Qt.Key_Escape) {
             EditorState.subtitles.clearSelection()
             root.cursorCue = -1
@@ -303,7 +331,7 @@ PanelFrame {
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             const target = root.cursorCue >= 0 ? root.cursorCue : EditorState.subtitles.anchorCue
             root.beginEdit(target, "text")
-        } else {
+        } else if (!root.handleAction(ShellBridge.scopedAction("subtitles", event), true)) {
             return
         }
         event.accepted = true

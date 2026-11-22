@@ -11,6 +11,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QFontDatabase>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -776,6 +777,9 @@ ThemeManager::ThemeManager(QObject *parent)
         QSettings settings;
         settings.beginGroup(QStringLiteral("Theme"));
         m_hotReload = settings.value(QStringLiteral("hotReload"), false).toBool();
+        const QColor accent(settings.value(QStringLiteral("accent")).toString());
+        if (accent.isValid())
+            m_accentOverride = accent.name();
     }
 
     QString error;
@@ -1062,6 +1066,23 @@ void ThemeManager::setHotReload(bool enabled)
     emit hotReloadChanged();
 }
 
+void ThemeManager::setAccentOverride(const QString &color)
+{
+    const QColor parsed(color);
+    const QString normalized = parsed.isValid() ? parsed.name() : QString();
+    if (normalized == m_accentOverride)
+        return;
+    m_accentOverride = normalized;
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("Theme"));
+    if (m_accentOverride.isEmpty())
+        settings.remove(QStringLiteral("accent"));
+    else
+        settings.setValue(QStringLiteral("accent"), m_accentOverride);
+    reload();
+    emit accentOverrideChanged();
+}
+
 void ThemeManager::setLastError(const QString &error)
 {
     if (m_lastError == error)
@@ -1296,6 +1317,19 @@ std::optional<ThemeManager::Loaded> ThemeManager::readTheme(const QString &nameO
         leafName = fallbackName(path);
     merged.insert(QStringLiteral("name"), leafName);
 
+    if (!m_accentOverride.isEmpty()) {
+        const QColor accent(m_accentOverride);
+        const QString foreground = accent.lightnessF() > 0.55 ? QStringLiteral("#1a1a1a") : QStringLiteral("#ffffff");
+        QVariantMap palette = merged.value(QStringLiteral("palette")).toMap();
+        palette.insert(QStringLiteral("primary"), m_accentOverride);
+        palette.insert(QStringLiteral("primaryForeground"), foreground);
+        merged.insert(QStringLiteral("palette"), palette);
+        QVariantMap semantic = merged.value(QStringLiteral("semantic")).toMap();
+        semantic.insert(QStringLiteral("primary"), m_accentOverride);
+        semantic.insert(QStringLiteral("primaryForeground"), foreground);
+        merged.insert(QStringLiteral("semantic"), semantic);
+    }
+
     QStringList refs;
     const QVariant resolved = resolveTree(merged, merged, &refs, QString(), path);
     const QVariant coerced = coerceTree(resolved, QString(), path);
@@ -1351,6 +1385,7 @@ void ThemeManager::apply(const Loaded &loaded)
     for (int i = 0; i < kGroups.size(); ++i)
         syncMap(maps[i], loaded.document.value(kGroups.at(i)).toMap());
 
+    refreshFonts();
     updateWatch();
     emit themeChanged();
     emit availableThemesChanged();
@@ -1360,6 +1395,41 @@ void ThemeManager::apply(const Loaded &loaded)
         emit effectiveVariantChanged();
     if (appearanceFollowsTheme() != previousFollows)
         emit appearanceFollowsThemeChanged();
+}
+
+namespace {
+
+// Empty when the theme names nothing or a family that is not installed. Generic names are
+// fontconfig/Qt aliases, never listed by QFontDatabase::families(), but always resolve.
+QString installedFamily(const QVariant &value, const char *key)
+{
+    const QString family = value.toString().trimmed();
+    if (family.isEmpty())
+        return {};
+    static const QStringList generic = {QStringLiteral("sans-serif"), QStringLiteral("serif"),
+                                        QStringLiteral("monospace")};
+    if (generic.contains(family, Qt::CaseInsensitive))
+        return family;
+    if (QFontDatabase::families().contains(family, Qt::CaseInsensitive))
+        return family;
+    qWarning("theme: typography.%s \"%s\" is not installed, using the default", key,
+             qPrintable(family));
+    return {};
+}
+
+} // namespace
+
+void ThemeManager::refreshFonts()
+{
+    const QString family = installedFamily(m_typography->value(QStringLiteral("fontFamily")), "fontFamily");
+    QString mono = installedFamily(m_typography->value(QStringLiteral("monoFontFamily")), "monoFontFamily");
+    if (mono.isEmpty())
+        mono = QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
+    if (family == m_fontFamily && mono == m_monoFontFamily)
+        return;
+    m_fontFamily = family;
+    m_monoFontFamily = mono;
+    emit fontsChanged();
 }
 
 void ThemeManager::updateWatch()

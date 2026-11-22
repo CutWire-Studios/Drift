@@ -161,7 +161,7 @@ private:
     QJsonObject opSetTheme(const QJsonObject &args);
     QJsonObject opListShortcuts(const QJsonObject &args) const;
     QJsonObject opSetShortcut(const QJsonObject &args);
-    QJsonObject opResetShortcuts();
+    QJsonObject opResetShortcuts(const QJsonObject &args);
 
     static QJsonArray speedPointsToJson(const QVariantList &points);
     static QVariantList speedPointsFromJson(const QJsonArray &points);

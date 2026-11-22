@@ -14,7 +14,7 @@ Item {
     height: Theme.timelineBakeStripHeight
 
     function stateLabel(bake) {
-        return bake.state === "baking" ? qsTr("Baking %1%").arg(Math.round(bake.progress * 100))
+        return bake.state === "baking" ? qsTr("Pre-rendering %1%").arg(Math.round(bake.progress * 100))
                : bake.state === "stale" ? qsTr("Stale") : qsTr("Fresh")
     }
 

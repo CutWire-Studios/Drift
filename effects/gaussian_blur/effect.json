@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "displayName": "Gaussian Blur (GPU)",
   "category": "dreamy",
+  "keywords": ["blur", "soften", "defocus", "gaussian"],
   "thumbnail": "thumbnail.webp",
   "description": "A high-performance two-pass hardware-accelerated blur.",
   "backend": "gpu",

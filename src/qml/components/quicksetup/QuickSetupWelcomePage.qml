@@ -7,6 +7,8 @@ QuickSetupPage {
 
     title: qsTr("Welcome to Drift")
     subtitle: qsTr("Let's get you set up. First, pick your language.")
+    // Illustration slot "illustration": greeting bubbles in several scripts, no readable text.
+    illustration: Component { OnboardingWelcomeIllustration { } }
     glyph: Theme.icons.languages
     contentMaxWidth: 520
 

@@ -2,6 +2,7 @@
   "id": "bling_sparkle",
   "displayName": "Bling",
   "category": "dreamy",
+  "keywords": ["sparkle", "glitter", "shine", "twinkle", "shimmer", "star", "glints"],
   "thumbnail": "thumbnail.webp",
   "order": 170,
   "parameters": [

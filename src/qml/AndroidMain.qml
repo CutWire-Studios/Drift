@@ -1072,6 +1072,19 @@ ApplicationWindow {
             })
             return
         }
+        // Quick Setup's "Start a project" finish: a fresh project on the canvas the user's
+        // answer implies, straight into the editor. Recovery is left alone: newProject() would
+        // delete the snapshot.
+        if (!EditorState.projectFile.recoveryAvailable && EditorState.preferences.takeStartProject()) {
+            const canvas = LayoutPresets.makeCanvas(EditorState.preferences.whatYouMake)
+            EditorState.projectFile.newProject(true)
+            if (canvas) {
+                EditorState.projectFile.setProjectSetup(canvas.width, canvas.height, EditorState.projectFile.projectFps())
+                EditorState.markProjectLayoutChosen()
+            }
+            Qt.callLater(window.showEditor)
+            return
+        }
         // "Reopen last project" restores the autosave or the last clean .drift silently and
         // lands straight in the editor; the home page would be a step backwards from it.
         if (EditorState.projectFile.restoreLastSessionIfEnabled()) {

@@ -11,9 +11,14 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
-    // Composites (and audio separated from one) read a nested timeline, which the Custom speed
+    // Composites (and audio separated from one) read a nested timeline, which the Speed ramp
     // preview and the reverse render cannot decode.
     readonly property bool nestedSource: hasSelection && !!clipData.sequenceId
+
+    // A host that must close its own edit group before the ramp window opens sets rampHandled
+    // and does the opening itself on rampRequested.
+    property bool rampHandled: false
+    signal rampRequested()
 
     height: speedColumn.height
     implicitHeight: speedColumn.height
@@ -30,18 +35,20 @@ Item {
     Column {
         id: speedColumn
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: Theme.phone ? Theme.spacingMd : Theme.spacingXl
 
         Text {
+            visible: !Theme.phone
             text: qsTr("Playback speed")
             SearchAnchor {
                 searchId: "speed-playback"
                 title: qsTr("Playback speed")
                 keywords: "fast slow motion"
             }
-            color: Theme.c.speedFadeInspector.foregroundMuted
+            color: Theme.touchInput ? Theme.c.speedFadeInspector.foreground : Theme.c.speedFadeInspector.foregroundMuted
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
+            font.weight: Theme.touchInput ? Font.Medium : Font.Normal
         }
 
         // A ramp supersedes the constant rate outright, so the controls below
@@ -51,29 +58,31 @@ Item {
             return !!root.clipData.hasSpeedCurve
         }
 
-        Row {
+        Flow {
+            id: rampRow
             width: parent.width
             spacing: 6
 
             SearchAnchor {
                 searchId: "speed-custom"
-                title: qsTr("Custom speed…")
+                title: qsTr("Speed ramp…")
                 keywords: "ramp curve"
                 target: speedCustomButton
             }
             ThemedButton {
                 id: speedCustomButton
                 visible: !root.nestedSource
-                text: qsTr("Custom speed…")
+                text: qsTr("Speed ramp…")
                 variant: "secondary"
-                onClicked: ShellBridge.main.openSpeedCurve(
-                               EditorState.selectedTrack, EditorState.selectedClip)
+                onClicked: root.rampHandled
+                           ? root.rampRequested()
+                           : ShellBridge.main.openSpeedCurve(EditorState.selectedTrack, EditorState.selectedClip)
             }
 
             ThemedChip {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: speedColumn.hasSpeedCurve
-                text: qsTr("Custom speed active — remove")
+                text: qsTr("Speed ramp active — remove")
                 selected: true
                 onClicked: EditorState.clearClipSpeedCurve(
                                EditorState.selectedTrack, EditorState.selectedClip)
@@ -93,6 +102,7 @@ Item {
                     ]
                     delegate: ThemedChip {
                         required property var modelData
+                        width: Theme.touchInput ? (parent.width - parent.spacing * 4) / 5 : implicitWidth
                         text: modelData.label
                         enabled: !speedColumn.hasSpeedCurve
                         selected: !speedColumn.hasSpeedCurve
@@ -104,8 +114,33 @@ Item {
                 }
             }
 
+        InlineTip {
+            tipId: "speed.split"
+            readonly property var keys: EditorState.shortcutFor("split")
+            text: keys.length > 0 && !Theme.touchInput ? qsTr("Split (%1) to speed up only part of a clip").arg(Theme.shortcutDisplay(keys))
+                                  : qsTr("Split the clip to speed up only part of it")
+        }
+
+        AndroidSliderRow {
+            id: speedRow
+            visible: Theme.touchInput
+            enabled: !speedColumn.hasSpeedCurve && !EditorState.playing
+            label: qsTr("Speed")
+            from: Math.log(0.25)
+            to: Math.log(100)
+            stepSize: 0.01
+            value: Math.log(root.clipData.speed || 1.0)
+            valueText: speedColumn.hasSpeedCurve ? qsTr("Ramp") : ""
+            valueFormatter: function (v) { return Math.exp(v).toFixed(2) + "×" }
+            onMoved: (v) => EditorState.previewSetClipSpeed(
+                         EditorState.selectedTrack, EditorState.selectedClip, Math.exp(v))
+            onDragBegan: EditorState.beginPreviewDrag(qsTr("Speed changed"))
+            onDragEnded: EditorState.commitPreviewDrag()
+        }
+
         ThemedSlider {
             id: speedSlider
+            visible: !Theme.touchInput
             label: qsTr("Speed")
             enabled: !speedColumn.hasSpeedCurve && !EditorState.playing
             width: parent.width
@@ -128,8 +163,9 @@ Item {
         }
 
         Text {
+            visible: !Theme.touchInput
             text: (speedColumn.hasSpeedCurve
-                   ? qsTr("Custom speed")
+                   ? qsTr("Speed ramp")
                    : (root.clipData.speed || 1).toFixed(2) + "×")
                     + (root.clipData.reverse ? qsTr(" (reversed)") : "")
             color: Theme.c.speedFadeInspector.foregroundMuted
@@ -145,6 +181,7 @@ Item {
         }
         ThemedChip {
             id: speedReverseChip
+            parent: Theme.phone ? rampRow : speedColumn
             visible: !root.nestedSource
             text: qsTr("Reverse")
             selected: {
@@ -161,6 +198,11 @@ Item {
                     EditorState.requestClipReverse(EditorState.selectedTrack,
                                                    EditorState.selectedClip)
             }
+        }
+
+        AndroidInfoButton {
+            Component.onCompleted: parent = rampRow
+            hint: qsTr("Split the clip to speed up only part of it")
         }
 
         // Shown when a reversed video clip has no rendered copy covering it — after a cancelled

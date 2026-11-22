@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "displayName": "Outline",
   "category": "artistic",
+  "keywords": ["border", "stroke", "sticker outline", "cutout outline", "edge"],
   "thumbnail": "thumbnail.webp",
   "description": "Sticker outlines, borders and strokes around images, video, cutouts and text: double outlines, dashes, gradients, hand-drawn wobble, torn, burnt and stamp edges, shadows and glows.",
   "order": 50,

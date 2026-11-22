@@ -53,7 +53,7 @@ Platform.MenuBar {
             onTriggered: menuBar.header.exportVideo()
         }
         Platform.MenuItem {
-            text: qsTr("&Package Project…")
+            text: qsTr("Save with &Media…")
             enabled: !menuBar.appWindow.showStartScreen
             onTriggered: menuBar.header.packageProject()
         }
@@ -316,6 +316,10 @@ Platform.MenuBar {
     Platform.Menu {
         title: qsTr("&Help")
 
+        Platform.MenuItem {
+            text: qsTr("Drift Help")
+            onTriggered: menuBar.appWindow.openHelpDialog()
+        }
         Platform.MenuItem {
             text: qsTr("Keyboard Shortcuts")
             shortcut: "F1"

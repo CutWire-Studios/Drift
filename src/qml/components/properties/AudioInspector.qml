@@ -41,13 +41,18 @@ Item {
     Column {
         id: audioTabColumn
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: Theme.phone ? Theme.spacingMd : Theme.spacingXl
 
         SearchAnchor {
             searchId: "audio-volume"
             title: qsTr("Volume")
             keywords: "loud gain level mute"
             target: audioVolumeRow
+        }
+        WorkspaceLink {
+            x: root.width - width
+            label: qsTr("Mixer ↗")
+            target: ({ panel: "audioMixer", track: EditorState.selectedTrack })
         }
         PropertyKeyframeRow {
             id: audioVolumeRow
@@ -74,7 +79,15 @@ Item {
                        ? root.clipData.pan : 0.0
             }
 
+            readonly property string panText: {
+                const v = panValue
+                if (Math.abs(v) < 0.005)
+                    return qsTr("C")
+                return (v < 0 ? qsTr("L %1") : qsTr("R %1")).arg(Math.round(Math.abs(v) * 100))
+            }
+
             Row {
+                visible: !Theme.touchInput
                 width: parent.width
 
                 Text {
@@ -108,8 +121,27 @@ Item {
                 }
             }
 
+            AndroidSliderRow {
+                visible: Theme.touchInput
+                label: qsTr("Pan")
+                value: panSection.panValue
+                from: -1
+                to: 1
+                valueText: panSection.panText
+                resettable: true
+                resetEnabled: Math.abs(panSection.panValue) >= 0.005
+                resetTooltip: qsTr("Centre")
+                onMoved: (v) => EditorState.previewSetClipPan(
+                             EditorState.selectedTrack, EditorState.selectedClip, v)
+                onDragBegan: EditorState.beginPreviewDrag(qsTr("Pan changed"))
+                onDragEnded: EditorState.commitPreviewDrag()
+                onResetRequested: EditorState.setClipPan(
+                               EditorState.selectedTrack, EditorState.selectedClip, 0)
+            }
+
             ThemedSlider {
                 id: panSlider
+                visible: !Theme.touchInput
                 label: qsTr("Pan")
                 width: parent.width
                 from: -1
@@ -129,6 +161,7 @@ Item {
             }
 
             ThemedButton {
+                visible: !Theme.touchInput
                 text: qsTr("Centre")
                 enabled: Math.abs(panSection.panValue) >= 0.005
                 onClicked: EditorState.setClipPan(
@@ -158,9 +191,10 @@ Item {
                     title: qsTr("Audio track")
                     keywords: "extract stream"
                 }
-                color: Theme.c.audioInspector.foregroundMuted
+                color: Theme.touchInput ? Theme.c.audioInspector.foreground : Theme.c.audioInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
+                font.weight: Theme.touchInput ? Font.Medium : Font.Normal
             }
 
             ThemedComboBox {
@@ -229,15 +263,16 @@ Item {
             Text {
                 width: parent.width
                 text: qsTr("Noise")
-                color: Theme.c.audioInspector.foregroundMuted
+                color: Theme.touchInput ? Theme.c.audioInspector.foreground : Theme.c.audioInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
+                font.weight: Theme.touchInput ? Font.Medium : Font.Normal
             }
 
             SearchAnchor {
                 searchId: "audio-remove-noise"
                 title: qsTr("Remove noise…")
-                keywords: "denoise hiss background clean"
+                keywords: "denoise hiss clean"
                 target: audioRemoveNoiseButton
             }
             ThemedButton {
@@ -245,6 +280,8 @@ Item {
                 visible: denoiseSection.denoiseReady && denoiseSection.runtimeReady
                 width: parent.width
                 text: qsTr("Remove noise…")
+                tooltip: qsTr("Remove noise")
+                tooltipBody: qsTr("Cleans hiss, hum and background noise from speech.")
                 enabled: !EditorState.denoise.running
                 onClicked: {
                     const data = EditorState.selectedClipData
@@ -261,6 +298,9 @@ Item {
                       ? qsTr("Download noise removal (about 9 MB)")
                       : qsTr("Install AI engine first")
                 variant: "primary"
+                tooltip: qsTr("Remove noise")
+                tooltipBody: qsTr("Cleans hiss, hum and background noise from speech.")
+                tooltipState: denoiseSection.runtimeReady ? qsTr("Needs noise model") : qsTr("Needs AI Engine")
                 onClicked: ShellBridge.main.openAddonManager(
                     denoiseSection.runtimeReady ? "denoise-model" : "onnxruntime")
             }
@@ -282,9 +322,10 @@ Item {
                 title: qsTr("Auto subtitles")
                 keywords: "captions transcribe speech whisper"
             }
-            color: Theme.c.audioInspector.foregroundMuted
+            color: Theme.touchInput ? Theme.c.audioInspector.foreground : Theme.c.audioInspector.foregroundMuted
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
+            font.weight: Theme.touchInput ? Font.Medium : Font.Normal
         }
 
         // The transcriber is an addon, and so is the runtime it needs; without
@@ -337,7 +378,7 @@ Item {
             text: qsTr("Shorter captions are timed by splitting each phrase evenly, so they can drift slightly out of sync with the speech.")
             color: Theme.c.audioInspector.foregroundMuted
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
         }
 
         ThemedButton {

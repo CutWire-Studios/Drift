@@ -2,6 +2,7 @@
   "id": "adjust.hue",
   "displayName": "Hue",
   "category": "color",
+  "keywords": ["color shift", "rotate", "colors", "change color"],
   "thumbnail": "thumbnail.webp",
   "order": 50,
   "parameters": [

@@ -7,6 +7,9 @@ SettingsPage {
     pageId: "performance"
     title: qsTr("Performance")
 
+    property bool showAdvanced: false
+    readonly property bool advancedShown: showAdvanced || query.length > 0
+
     // A slider with its current value spelled out beside it. zeroText replaces the readout at 0
     // for settings where 0 means off, unlimited or automatic.
     component TunableSlider: Row {
@@ -56,20 +59,6 @@ SettingsPage {
         }
     }
 
-    SettingsRow {
-        title: qsTr("For advanced users")
-        searchId: "performance-advanced-users"
-        description: qsTr("These tune memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately.")
-        keywords: "performance advanced tuning power user memory cache"
-        query: page.query
-
-        ThemedButton {
-            variant: "secondary"
-            text: qsTr("Reset to defaults")
-            onClicked: EditorState.preferences.resetPerformanceDefaults()
-        }
-    }
-
     SettingsGroupHeader {
         text: qsTr("Interface")
         query: page.query
@@ -111,21 +100,131 @@ SettingsPage {
     }
 
     SettingsGroupHeader {
-        text: qsTr("Playback")
+        text: qsTr("Graphics")
+        query: page.query
+        available: EditorState.preferences.vaapiZeroCopySupported || EditorState.preferences.mediaCodecZeroCopySupported
+                   || EditorState.preferences.gpuPreferenceSupported || EditorState.preferences.gpuPreferenceInSystemSettings
+    }
+
+    SettingsRow {
+        title: qsTr("Faster preview (experimental)")
+        searchId: "preview-faster-vaapi"
+        description: qsTr("Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.")
+        keywords: "zero copy vaapi gpu hardware"
+        available: EditorState.preferences.vaapiZeroCopySupported
+        query: page.query
+
+        ThemedSwitch {
+            checked: EditorState.preferences.vaapiZeroCopy
+            onToggled: EditorState.preferences.vaapiZeroCopy = checked
+        }
+    }
+
+    SettingsRow {
+        title: qsTr("Faster preview (experimental)")
+        searchId: "preview-faster-mediacodec"
+        description: qsTr("Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.")
+        keywords: "zero copy mediacodec gpu hardware"
+        available: EditorState.preferences.mediaCodecZeroCopySupported
+        query: page.query
+
+        ThemedSwitch {
+            checked: EditorState.preferences.mediaCodecZeroCopy
+            onToggled: EditorState.preferences.mediaCodecZeroCopy = checked
+        }
+    }
+
+    SettingsRow {
+        title: qsTr("Graphics card")
+        searchId: "preview-graphics-card"
+        description: qsTr("Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.")
+        keywords: "gpu integrated discrete nvidia power battery"
+        available: EditorState.preferences.gpuPreferenceSupported
+        query: page.query
+
+        ThemedComboBox {
+            width: Theme.c.settingsRow.controlWidth
+            textRole: "label"
+            valueRole: "id"
+            model: [
+                { id: "auto", label: qsTr("Windows default") },
+                { id: "integrated", label: qsTr("Power saving (integrated GPU)") },
+                { id: "discrete", label: qsTr("High performance (discrete GPU)") }
+            ]
+            currentIndex: {
+                for (var i = 0; i < model.length; ++i) {
+                    if (model[i].id === EditorState.preferences.preferredGpu)
+                        return i
+                }
+                return 0
+            }
+            onActivated: EditorState.preferences.preferredGpu = model[currentIndex].id
+        }
+    }
+
+    SettingsRow {
+        title: qsTr("Graphics card")
+        searchId: "preview-graphics-card-system-settings"
+        description: qsTr("Choose which graphics card Drift runs on in Windows Settings, under Display > Graphics. Takes effect after restart.")
+        keywords: "gpu windows display nvidia"
+        available: EditorState.preferences.gpuPreferenceInSystemSettings
+        query: page.query
+
+        ThemedButton {
+            variant: "secondary"
+            text: qsTr("Open graphics settings")
+            onClicked: Qt.openUrlExternally("ms-settings:display-advancedgraphics")
+        }
+    }
+
+    SettingsGroupHeader {
+        text: qsTr("Advanced tuning")
         query: page.query
     }
 
     SettingsRow {
-        title: qsTr("Drop late frames")
+        title: qsTr("Advanced tuning")
+        searchId: "performance-advanced-users"
+        description: qsTr("Memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately.")
+        keywords: "performance advanced tuning power user memory cache buffer"
+        query: page.query
+
+        Row {
+            spacing: Theme.spacingMd
+
+            ThemedButton {
+                variant: "secondary"
+                text: qsTr("Reset to defaults")
+                visible: page.showAdvanced
+                onClicked: EditorState.preferences.resetPerformanceDefaults()
+            }
+
+            ThemedButton {
+                variant: "secondary"
+                text: page.showAdvanced ? qsTr("Hide") : qsTr("Show")
+                onClicked: page.showAdvanced = !page.showAdvanced
+            }
+        }
+    }
+
+    SettingsGroupHeader {
+        text: qsTr("Playback")
+        available: page.showAdvanced
+        query: page.query
+    }
+
+    SettingsRow {
+        title: qsTr("Skip frames when playback falls behind")
         searchId: "performance-drop-late-frames"
         description: qsTr("Skip preview frames that finish this far behind the playhead, instead of showing them late. Can reduce slow-motion at clip cuts on slow machines. Off never drops a frame for being late.")
         keywords: "stale lag late drop skip frames stutter slow motion cut"
         stacked: true
+        available: page.advancedShown
         query: page.query
 
         TunableSlider {
             width: parent.width
-            label: qsTr("Drop frames lagging behind playback by more than")
+            label: qsTr("Skip frames that are late by more than")
             from: 0
             to: 1000
             step: 50
@@ -137,16 +236,17 @@ SettingsPage {
     }
 
     SettingsRow {
-        title: qsTr("Read-ahead")
+        title: qsTr("Playback buffer")
         searchId: "performance-read-ahead"
         description: qsTr("How much video each clip decodes ahead of the playhead during playback. More absorbs slow-to-decode footage but competes with the frames on screen. Default 2000 ms.")
         keywords: "buffer prefetch decode ahead playback"
         stacked: true
+        available: page.advancedShown
         query: page.query
 
         TunableSlider {
             width: parent.width
-            label: qsTr("Read-ahead")
+            label: qsTr("Playback buffer")
             from: 0
             to: 5000
             step: 100
@@ -158,10 +258,11 @@ SettingsPage {
     }
 
     SettingsRow {
-        title: qsTr("Continuous read-ahead")
+        title: qsTr("Keep the playback buffer full")
         searchId: "performance-continuous-read-ahead"
         description: qsTr("Keep decoding until the whole read-ahead window is full. Off decodes one frame ahead per displayed frame, which leaves more decoder time for the clip on screen but buffers less.")
         keywords: "prefetch buffer decode ahead"
+        available: page.advancedShown
         query: page.query
 
         ThemedSwitch {
@@ -172,20 +273,22 @@ SettingsPage {
 
     SettingsGroupHeader {
         text: qsTr("Memory & caches")
+        available: page.showAdvanced
         query: page.query
     }
 
     SettingsRow {
-        title: qsTr("Decoded frame cache")
+        title: qsTr("Preview memory")
         searchId: "performance-decoded-frame-cache"
         description: qsTr("Memory shared by all clips for decoded preview frames. Automatic uses an eighth of system memory (a sixteenth on Android), at least 128 MiB.")
         keywords: "ram memory preview frames buffer"
         stacked: true
+        available: page.advancedShown
         query: page.query
 
         TunableSlider {
             width: parent.width
-            label: qsTr("Decoded frame cache")
+            label: qsTr("Preview memory")
             from: 0
             to: 8192
             step: 128
@@ -197,16 +300,17 @@ SettingsPage {
     }
 
     SettingsRow {
-        title: qsTr("CPU frame history per clip")
+        title: qsTr("Scrubbing memory per clip")
         searchId: "performance-cpu-frame-history"
         description: qsTr("Limit the decoded images each clip keeps in memory for scrubbing and effects. Unlimited keeps up to 16 frames per clip, which is large for 4K footage.")
         keywords: "ram memory history reader image"
         stacked: true
+        available: page.advancedShown
         query: page.query
 
         TunableSlider {
             width: parent.width
-            label: qsTr("CPU frame history per clip")
+            label: qsTr("Scrubbing memory per clip")
             from: 0
             to: 1024
             step: 32
@@ -218,16 +322,17 @@ SettingsPage {
     }
 
     SettingsRow {
-        title: qsTr("Render target pool: count")
+        title: qsTr("Effects workspace: buffer count")
         searchId: "performance-render-target-pool-count"
         description: qsTr("Idle GPU render targets kept for reuse. Fewer saves video memory; more avoids reallocating while effects and transitions play.")
         keywords: "gpu vram framebuffer texture pool"
         stacked: true
+        available: page.advancedShown
         query: page.query
 
         TunableSlider {
             width: parent.width
-            label: qsTr("Render target pool: count")
+            label: qsTr("Effects workspace: buffer count")
             from: 4
             to: 64
             step: 1
@@ -238,16 +343,17 @@ SettingsPage {
     }
 
     SettingsRow {
-        title: qsTr("Render target pool: size")
+        title: qsTr("Effects workspace: video memory limit")
         searchId: "performance-render-target-pool-size"
         description: qsTr("Cap on the video memory held by idle render targets, in addition to the count.")
         keywords: "gpu vram framebuffer texture pool bytes"
         stacked: true
+        available: page.advancedShown
         query: page.query
 
         TunableSlider {
             width: parent.width
-            label: qsTr("Render target pool: size")
+            label: qsTr("Effects workspace: video memory limit")
             from: 0
             to: 4096
             step: 64
@@ -259,16 +365,17 @@ SettingsPage {
     }
 
     SettingsRow {
-        title: qsTr("Image upload cache: count")
+        title: qsTr("Graphics card image cache: image count")
         searchId: "performance-image-upload-cache-count"
         description: qsTr("Stills and converted frames kept on the GPU so they are not uploaded again every frame.")
         keywords: "gpu vram texture upload images"
         stacked: true
+        available: page.advancedShown
         query: page.query
 
         TunableSlider {
             width: parent.width
-            label: qsTr("Image upload cache: count")
+            label: qsTr("Graphics card image cache: image count")
             from: 8
             to: 96
             step: 1
@@ -279,16 +386,17 @@ SettingsPage {
     }
 
     SettingsRow {
-        title: qsTr("Image upload cache: size")
+        title: qsTr("Graphics card image cache: video memory limit")
         searchId: "performance-image-upload-cache-size"
         description: qsTr("Cap on the video memory used by the image upload cache, in addition to the count. 48 uploads of 4K frames take about 1.5 GiB.")
         keywords: "gpu vram texture upload images bytes"
         stacked: true
+        available: page.advancedShown
         query: page.query
 
         TunableSlider {
             width: parent.width
-            label: qsTr("Image upload cache: size")
+            label: qsTr("Graphics card image cache: video memory limit")
             from: 0
             to: 4096
             step: 64
@@ -296,24 +404,6 @@ SettingsPage {
             zeroText: qsTr("Unlimited")
             current: EditorState.preferences.uploadCacheMiB
             onPicked: (v) => EditorState.preferences.uploadCacheMiB = v
-        }
-    }
-
-    SettingsGroupHeader {
-        text: qsTr("Export")
-        query: page.query
-    }
-
-    SettingsRow {
-        title: qsTr("Prefer hardware encoder for new exports")
-        searchId: "performance-hardware-encoder-exports"
-        description: qsTr("Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder.")
-        keywords: "nvenc qsv amf vaapi videotoolbox mediacodec gpu encode h264 x264"
-        query: page.query
-
-        ThemedSwitch {
-            checked: EditorState.preferences.preferHardwareExport
-            onToggled: EditorState.preferences.preferHardwareExport = checked
         }
     }
 }

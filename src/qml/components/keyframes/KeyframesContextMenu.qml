@@ -22,6 +22,12 @@ Item {
         EditorState.keyframes.setSegmentsEasing(panel.track, panel.clipIndex, panel.selection.refs(), spec)
     }
 
+    function setSmooth() {
+        const refs = panel.selection.refs()
+        for (let i = 0; i < refs.length; i++)
+            EditorState.setKeyframeSmooth(panel.track, panel.clipIndex, refs[i].prop, refs[i].seconds, false)
+    }
+
     function openEasing() {
         const refs = panel.selection.refs()
         if (refs.length === 0)
@@ -56,15 +62,24 @@ Item {
     ThemedContextMenu {
         id: menu
 
-        ThemedMenuItem {
-            text: qsTr("Straight")
-            enabled: root.hasSelection
-            onTriggered: root.setEasing({ "kind": "linear" })
-        }
-        ThemedMenuItem {
-            text: qsTr("Jump")
-            enabled: root.hasSelection
-            onTriggered: root.setEasing({ "kind": "hold" })
+        ThemedContextMenu {
+            title: qsTr("Interpolation")
+
+            ThemedMenuItem {
+                text: qsTr("Smooth")
+                enabled: root.hasSelection
+                onTriggered: root.setSmooth()
+            }
+            ThemedMenuItem {
+                text: qsTr("Straight")
+                enabled: root.hasSelection
+                onTriggered: root.setEasing({ "kind": "linear" })
+            }
+            ThemedMenuItem {
+                text: qsTr("Hold")
+                enabled: root.hasSelection
+                onTriggered: root.setEasing({ "kind": "hold" })
+            }
         }
         ThemedMenuItem {
             text: qsTr("Easing…")
@@ -74,16 +89,19 @@ Item {
         ThemedMenuSeparator { }
         ThemedMenuItem {
             text: qsTr("Copy")
+            shortcutId: "copy"
             enabled: root.hasSelection
             onTriggered: root.panel.handleAction("copy", true)
         }
         ThemedMenuItem {
             text: qsTr("Paste at playhead")
+            shortcutId: "paste"
             enabled: EditorState.keyframes.clipboardCount > 0
             onTriggered: root.panel.handleAction("paste", true)
         }
         ThemedMenuItem {
             text: qsTr("Delete")
+            shortcutId: "delete"
             enabled: root.hasSelection
             onTriggered: root.panel.handleAction("delete", true)
         }

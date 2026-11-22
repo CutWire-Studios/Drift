@@ -1,7 +1,8 @@
 {
   "id": "motion.smooth",
   "displayName": "Motion Smoothing",
-  "category": "impact",
+  "category": "fix",
+  "keywords": ["slow motion", "interpolation", "frame interpolation", "smooth", "60fps", "optical flow", "fix choppy", "fix stutter"],
   "thumbnail": "thumbnail.webp",
   "order": 95,
   "description": "Makes footage play smoother by inventing the frames between its own: the picture is moved along the measured motion (optical flow) between the frame shown and the next one, so the result behaves like footage shot at the clip's frame rate times the multiplier. It only helps when the clip's frame rate is lower than the project's, or the clip is slowed down: use about the project's frame rate divided by the clip's, for example x2 for 15 fps footage in a 30 fps project. On footage that already has a frame for every project frame it adds nothing and can only introduce artefacts. Where something is covered or uncovered the frame whose view is intact is used. It needs the next frame, so the last frame of a clip and frames while scrubbing are shown unchanged. Place it first in the effect list: the frames it blends are the clip's own, so effects above it are not seen in the frames it invents.",

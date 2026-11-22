@@ -4,6 +4,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "agent-log-panel"
+        title: qsTr("Agent log")
+        keywords: "agent log ai commands history mcp tool calls activity"
+    }
 
     property int expandedId: -1
     property bool followTail: true
@@ -36,7 +41,7 @@ PanelFrame {
             anchors.verticalCenter: parent.verticalCenter
             width: 8
             height: 8
-            radius: 4
+            radius: Theme.radiusPill
             color: EditorState.mcp.error.length > 0 ? Theme.destructive
                    : (EditorState.mcp.running ? Theme.constructive : Theme.mutedForeground)
         }
@@ -136,7 +141,7 @@ PanelFrame {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 6
                     height: 6
-                    radius: 3
+                    radius: Theme.radiusPill
                     color: row.modelData.pending ? Theme.accent
                            : (row.failed ? Theme.destructive : Theme.constructive)
                     SequentialAnimation on opacity {
@@ -169,10 +174,10 @@ PanelFrame {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 40
                     height: 22
-                    radius: 2
+                    radius: Theme.c.agentLogPanel.thumbRadius
                     color: Theme.c.agentViews.tileBackground
                     border.color: Theme.c.agentViews.tileBorder
-                    border.width: 1
+                    border.width: Theme.c.agentLogPanel.thumbBorderWidth
                     clip: true
 
                     Image {

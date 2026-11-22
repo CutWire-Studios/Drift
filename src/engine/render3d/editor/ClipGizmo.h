@@ -2,6 +2,7 @@
 
 #include "engine/render3d/scene/ClipTransform3d.h"
 
+#include <QLineF>
 #include <QList>
 #include <QPointF>
 #include <QPolygonF>
@@ -10,6 +11,8 @@
 #include <QString>
 #include <QTransform>
 #include <QVector3D>
+
+#include <optional>
 
 // The preview's 3D transform gizmo for a clip that is a 3D layer: arrows to move, rings to
 // rotate, square-tipped handles to scale. Pure geometry, so the maths is testable without QML.
@@ -75,7 +78,24 @@ struct Handle
     QList<QPolygonF> front; // polylines facing the viewer
     QList<QPolygonF> back;  // polylines on the far side of a ring, drawn faded
     QPolygonF head;         // filled: an arrow's cone, a scale handle's square
+    // 1 when the handle faces the viewer, falling to 0 as its axis lines up with the view
+    // direction. Drawn at this opacity, and not pickable once it is below kPickableAlpha.
+    double alpha = 1.0;
 };
+
+// An axis whose direction makes less than ~32 degrees with the view direction starts to fade
+// (|cos| = kFadeStart), and is gone by ~18 degrees (kFadeEnd).
+constexpr double kFadeStart = 0.85;
+constexpr double kFadeEnd = 0.95;
+constexpr double kPickableAlpha = 0.25;
+// A plane drag whose plane is viewed more edge-on than this (|cos| of the view ray with the
+// plane's normal) gives no usable motion and is ignored.
+constexpr double kPlaneEdgeOn = 0.1;
+
+// The opacity of an axis handle whose axis makes |cos| = `facing` with the view direction.
+double handleAlpha(double facing);
+// `value` rounded to a multiple of `step`; unchanged for a step of zero or less.
+double snapToStep(double value, double step);
 
 struct Geometry
 {
@@ -99,17 +119,46 @@ Geometry geometry(const Pose &pose, Tool tool, Orientation orientation, double s
 // The handle within `tolerance` overlay px of `point`, nearest first; empty for none.
 QString pick(const Geometry &geometry, QPointF point, double tolerance);
 
+// What a drag adds to the plain handle drag. A lock replaces the handle's own axis: pressing X, Y
+// or Z during the drag. The orientation override flips the axes the lock follows (local <-> world).
+struct DragExtras
+{
+    double scaleStep = 0.0;  // snapped scale factors, e.g. 0.1; used with `snap`
+    int lockAxis = -1;       // 0..2 to constrain to that axis, -1 for the handle's own
+    bool lockPlane = false;  // with lockAxis: the plane without that axis instead
+    std::optional<Orientation> orientation; // replaces the orientation the lock follows
+    // A typed value in place of the pointer: units along the axis for a move, degrees for a
+    // rotation, a factor for a scale.
+    std::optional<double> typed;
+};
+
+// One axis of a lock, drawn: the overlay px of the origin and of a point one handle-length along it.
+struct LockGuide
+{
+    int axis = 0;
+    QLineF line;
+};
+// The guides for a lock: the axis, or the two others for a plane. An axis that points at the viewer
+// gives none.
+QList<LockGuide> lockGuides(const Pose &pose, Tool tool, Orientation orientation, double scale,
+                         int lockAxis, bool lockPlane, const View &view = {});
+
 struct DragResult
 {
     Pose pose;
     double uniformFactor = 1.0; // Scale "xy" only: how much both edges grew
+    // What the drag came to, for a readout: units moved along the axis (a plane lock: along each of its
+    // two axes, amount and amount2), degrees turned, or the factor scaled by.
+    double amount = 0.0;
+    double amount2 = 0.0;
 };
 
 // The pose after dragging `handle` from `press` to `now` (overlay px), starting from `start`.
-// `snap` steps rotations by `rotateStep` degrees and, when `moveStep` is above zero, moves by that many px.
+// `snap` steps rotations by `rotateStep` degrees, moves by `moveStep` px and scales by
+// `extras.scaleStep`; a step of zero leaves that one free.
 DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QString &handle,
                 QPointF press, QPointF now, bool snap, double scale, const View &view = {},
-                double moveStep = 0.0, double rotateStep = 15.0);
+                double moveStep = 0.0, double rotateStep = 15.0, const DragExtras &extras = {});
 
 // Where a homogeneous projection's eye sits in the space it projects from: the point it maps to
 // w = 0 at the screen's centre lines. For a world -> canvas matrix that is the camera position.

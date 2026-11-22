@@ -129,7 +129,7 @@ QJsonObject maskSchema()
         {QStringLiteral("lockAspect"), boolProp(QStringLiteral("Editing only: the corner handles and the inspector keep w:h; rendering ignores it. Omitted: the clip's current lock is kept"))},
         {QStringLiteral("points"),
          arrayProp({{QStringLiteral("type"), QJsonArray{QStringLiteral("array"), QStringLiteral("object")}}},
-                   QStringLiteral("freeform only: [{x,y}, …] as inspect emits it, or [[x,y], …]; normalised 0..1"))},
+                   QStringLiteral("freeform only: closed bezier path as vertices [{x,y,inX?,inY?,outX?,outY?,mode?}, ...] as inspect emits them. x,y is the vertex; inX,inY / outX,outY are the handle offsets from it (omitted or 0 = straight corner); mode is corner|mirrored|aligned|free and records how the handles are kept while editing. Plain [{x,y}, ...] and [[x,y], ...] still work and give a corner polygon. Normalised 0..1 across the clip frame"))},
         {QStringLiteral("op"), enumProp(QStringLiteral("How the mask combines (default add)"),
                                         {QStringLiteral("add"), QStringLiteral("subtract"), QStringLiteral("intersect")})},
         {QStringLiteral("enabled"), boolProp(QStringLiteral("Mask on/off without losing it (default true)"))},
@@ -1633,19 +1633,30 @@ const QList<Op> &ops()
                        {QStringLiteral("theme")}),
           false, false, true },
         { "list_shortcuts", "ui", "List action bindings",
-          "Returns {actions:[{id, label, shortcut}], n} for every editor action.",
+          "Returns {actions:[{id, label, shortcut, shortcuts, category, scope}], n} for every editor action. "
+          "shortcuts lists every binding (shortcut is the first); scope is global or a panel. Also returns preset "
+          "(the active preset id) and presets:[{id, name}].",
           objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label/shortcut"))}}),
           true, false, true },
         { "set_shortcut", "ui", "Rebind a shortcut",
-          "Bind keys to an action id from list_shortcuts. An empty keys string clears the binding. On "
-          "a clash the call FAILS with error \"conflict\" and the conflicting action's label in detail; "
+          "Bind keys to an action id from list_shortcuts. keys is one chord or an array of chords and "
+          "replaces every binding of the action; an empty string or array clears them. On "
+          "a clash (same chord, same scope) the call FAILS with error \"conflict\" and the conflicting action's label in detail; "
           "nothing is rebound. Not undoable.",
           objectSchema({{QStringLiteral("action"), stringProp(QStringLiteral("Action id from list_shortcuts"))},
-                        {QStringLiteral("keys"), stringProp(QStringLiteral("Qt key sequence, e.g. Ctrl+S; empty string clears"))}},
+                        {QStringLiteral("keys"),
+                         QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("string"), QStringLiteral("array")}},
+                                     {QStringLiteral("items"), QJsonObject{{QStringLiteral("type"), QStringLiteral("string")}}},
+                                     {QStringLiteral("description"),
+                                      QStringLiteral("Qt key sequence, e.g. Ctrl+S, or an array of them; empty string or array clears")}}}},
                        {QStringLiteral("action"), QStringLiteral("keys")}) },
         { "reset_shortcuts", "ui", "Restore default shortcuts",
-          "Reset every action binding to its default. Not undoable.",
-          objectSchema({}), false, true }
+          "Drop every custom binding and return to the active preset. With preset (an id from list_shortcuts) "
+          "it switches to that preset first; keep_overrides true keeps the custom bindings through the switch. "
+          "Not undoable.",
+          objectSchema({{QStringLiteral("preset"), stringProp(QStringLiteral("Preset id from list_shortcuts, e.g. premiere"))},
+                        {QStringLiteral("keep_overrides"), boolProp(QStringLiteral("Keep custom bindings when switching preset (default false)"))}}),
+          false, true }
 #include "app/mcp/tools/McpCatalogExtendedOps.inl"
     };
     return k;

@@ -12,11 +12,11 @@ Rectangle {
 
     readonly property real overlap: 2
 
-    implicitWidth: 8
-    radius: 3
+    implicitWidth: Theme.c.timelineTransitionEar.width
+    radius: Theme.c.timelineTransitionEar.radius
     opacity: shown ? 1 : 0
     scale: shown ? 1 : 0.7
-    border.width: 1
+    border.width: Theme.c.timelineTransitionEar.borderWidth
     border.color: outlineColor
 
     Behavior on opacity {
@@ -30,7 +30,7 @@ Rectangle {
         model: 2
         delegate: Rectangle {
             required property int index
-            width: 1
+            width: Theme.c.timelineTransitionEar.gripWidth
             height: Math.max(4, Math.round(ear.height * 0.45))
             anchors.verticalCenter: parent.verticalCenter
             x: Math.round(ear.width / 2) - 2 + index * 2

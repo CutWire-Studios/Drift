@@ -19,8 +19,8 @@ Rectangle {
     Text {
         id: chipLabel
         anchors.centerIn: parent
-        text: chip.busy ? qsTr("Baking %1%").arg(Math.round(EditorState.bakes.progress * 100))
-                        : qsTr("Bake")
+        text: chip.busy ? qsTr("Pre-rendering %1%").arg(Math.round(EditorState.bakes.progress * 100))
+                        : qsTr("Pre-render")
         color: Theme.c.timelineBakeChip.foreground
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeTiny
@@ -41,7 +41,7 @@ Rectangle {
     ThemedToolTip {
         visible: chipMouse.containsMouse
         text: chip.busy ? qsTr("Cancel baking")
-              : chip.inComposite ? qsTr("Bakes are of the main timeline. Switch to it to bake.")
+              : chip.inComposite ? qsTr("Pre-rendered sections are of the main timeline. Switch to it to pre-render.")
               : qsTr("Pre-render the work area for smooth playback and export")
     }
 }

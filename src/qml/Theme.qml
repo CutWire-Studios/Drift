@@ -48,59 +48,20 @@ QtObject {
         return key === "Left" || key === "Right" || key === "Up" || key === "Down"
     }
 
+    function isArrowKey(key) {
+        return key === Qt.Key_Left || key === Qt.Key_Right || key === Qt.Key_Up || key === Qt.Key_Down
+    }
+
+    // The Shortcut sequences for a window-local action, following the keymap as it changes.
+    function shortcutSequences(actionId) {
+        void EditorState.keymap.chords
+        return EditorState.keymap.bindings(actionId).map(nativeShortcutSequence)
+    }
+
     function shortcutDisplay(sequence) {
         if (!sequence || sequence.length === 0)
             return ""
-
-        if (!isMacOS)
-            return sequence
-
-        const parts = sequence.split("+")
-
-        let control = false
-        let option = false
-        let shift = false
-        let command = false
-        let key = ""
-
-        for (let i = 0; i < parts.length; ++i) {
-            const part = parts[i]
-
-            // Qt's native Apple mapping:
-            // Ctrl = Command, Meta = physical Control.
-            if (part === "Ctrl")
-                command = true
-            else if (part === "Meta")
-                control = true
-            else if (part === "Alt")
-                option = true
-            else if (part === "Shift")
-                shift = true
-            else
-                key = part
-        }
-
-        const keySymbols = {
-            "Left": "←",
-            "Right": "→",
-            "Up": "↑",
-            "Down": "↓",
-            "Backspace": "⌫",
-            "Delete": "⌦",
-            "Escape": "⎋",
-            "Return": "↩",
-            "Enter": "⌅"
-        }
-
-        if (keySymbols[key] !== undefined)
-            key = keySymbols[key]
-
-        // Ordem visual tradicional da Apple.
-        return (control ? "⌃" : "")
-             + (option ? "⌥" : "")
-             + (shift ? "⇧" : "")
-             + (command ? "⌘" : "")
-             + key
+        return EditorState.keymap.displayText(sequence)
     }
 
     function platformShortcutText(text) {
@@ -131,8 +92,8 @@ QtObject {
     property FontLoader _interBold: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Bold.ttf" }
     property FontLoader _interItalic: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Italic.ttf" }
 
-    readonly property string fontFamily: _interRegular.name || "sans-serif"
-    readonly property string monoFontFamily: ThemeManager.typography.monoFontFamily
+    readonly property string fontFamily: ThemeManager.fontFamily || _interRegular.name || "sans-serif"
+    readonly property string monoFontFamily: ThemeManager.monoFontFamily
 
     // --- Light/dark mode: follows the OS until the user picks a side -----------
     // Qt.styleHints.colorScheme is live-updated by the platform theme (Qt 6.5+).
@@ -402,9 +363,12 @@ QtObject {
         return touchUi ? metric.touch : metric.pointer
     }
 
-    readonly property real controlHeight: inputMetric(ThemeManager.metrics.controlHeight)
-    readonly property real controlHeightSm: inputMetric(ThemeManager.metrics.controlHeightSm)
-    readonly property real iconButtonSize: inputMetric(ThemeManager.metrics.iconButtonSize)
+    // The phone layout draws controls small and keeps the finger area at androidMinTouchTarget
+    // through an invisible hit region in each control, never by inflating the layout.
+    readonly property bool phone: touchInput && compact
+    readonly property real controlHeight: phone ? androidControlHeight : inputMetric(ThemeManager.metrics.controlHeight)
+    readonly property real controlHeightSm: phone ? androidChipHeight : inputMetric(ThemeManager.metrics.controlHeightSm)
+    readonly property real iconButtonSize: phone ? androidIconButtonVisual : inputMetric(ThemeManager.metrics.iconButtonSize)
     readonly property real borderWidth: ThemeManager.metrics.borderWidth
     readonly property real borderWidthFocus: ThemeManager.metrics.borderWidthFocus
 
@@ -468,6 +432,7 @@ QtObject {
     // --- Layout: assets panel -----------------------------------------------
     readonly property real panelHeaderHeight: inputMetric(ThemeManager.metrics.panelHeaderHeight)
     readonly property real tabRailWidth: inputMetric(ThemeManager.metrics.tabRailWidth)
+    readonly property real tabRailLabelWidth: Math.round(tabRailWidth * 1.75)
     readonly property real assetCardWidth: ThemeManager.metrics.assetCardWidth
     readonly property real assetCardGap: ThemeManager.metrics.assetCardGap
 
@@ -485,10 +450,10 @@ QtObject {
     // --- Layout: timeline ------------------------------------------------------
     readonly property real timelineToolbarHeight: ThemeManager.metrics.timeline.toolbarHeight
     readonly property real timelineOverviewHeight: ThemeManager.metrics.timeline.overviewHeight
-    readonly property real timelineRulerHeight: ThemeManager.metrics.timeline.rulerHeight
+    readonly property real timelineRulerHeight: phone ? ThemeManager.metrics.android.rulerHeight : ThemeManager.metrics.timeline.rulerHeight
     readonly property real timelineBookmarkRowHeight: ThemeManager.metrics.timeline.bookmarkRowHeight
-    readonly property real trackHeightVideo: ThemeManager.metrics.timeline.trackHeightVideo
-    readonly property real trackHeightAudio: ThemeManager.metrics.timeline.trackHeightAudio
+    readonly property real trackHeightVideo: phone ? ThemeManager.metrics.android.trackHeightVideo : ThemeManager.metrics.timeline.trackHeightVideo
+    readonly property real trackHeightAudio: phone ? ThemeManager.metrics.android.trackHeightAudio : ThemeManager.metrics.timeline.trackHeightAudio
     readonly property real trackHeightText: inputMetric(ThemeManager.metrics.timeline.trackHeightText)
     readonly property real trackHeightSubtitle: inputMetric(ThemeManager.metrics.timeline.trackHeightSubtitle)
     readonly property real trackHeightShape: ThemeManager.metrics.timeline.trackHeightShape
@@ -536,6 +501,12 @@ QtObject {
     readonly property real androidPreviewMaxScreenFraction: ThemeManager.metrics.android.previewMaxScreenFraction
     readonly property real androidPreviewMinFraction: ThemeManager.metrics.android.previewMinFraction
     readonly property real androidPagePadding: ThemeManager.metrics.android.pagePadding
+    readonly property real androidChipHeight: ThemeManager.metrics.android.chipHeight
+    readonly property real androidControlHeight: ThemeManager.metrics.android.controlHeight
+    readonly property real androidIconButtonVisual: ThemeManager.metrics.android.iconButtonVisual
+    readonly property real androidRowHeight: ThemeManager.metrics.android.rowHeight
+    // Width of the label column on phone rows that put the label beside the control.
+    readonly property real phoneLabelWidth: 88
     readonly property real androidMinTouchTarget: ThemeManager.metrics.android.minTouchTarget
     readonly property real androidTouchGap: ThemeManager.metrics.android.touchGap
     readonly property real androidLayoutCardWidth: ThemeManager.metrics.android.layoutCardWidth
