@@ -3052,6 +3052,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Pen tool: add points to a path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert point between corner and smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete point without keeping the curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nudge selected cues earlier</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14479,6 +14491,10 @@
         <translation type="unfinished">الأقنعة</translation>
     </message>
     <message>
+        <source>Path editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tracking</source>
         <translation type="unfinished">التتبع</translation>
     </message>
@@ -15738,14 +15754,6 @@
         <translation>حرّك مؤشر التشغيل فوق المقطع المحدد</translation>
     </message>
     <message>
-        <source>Click to place points. Click the first point or press Enter to close.</source>
-        <translation>انقر لوضع النقاط. انقر على النقطة الأولى أو اضغط Enter للإغلاق.</translation>
-    </message>
-    <message>
-        <source>%1 points · Enter to close · Backspace to undo · Esc to cancel</source>
-        <translation>%1 نقطة · اضغط Enter للإغلاق · Backspace للتراجع · Esc للإلغاء</translation>
-    </message>
-    <message>
         <source>Drawing replaces this layer&apos;s mask</source>
         <translation>الرسم يستبدل قناع هذه الطبقة</translation>
     </message>
@@ -15770,14 +15778,6 @@
     <message>
         <source>Lock aspect ratio</source>
         <translation>قفل نسبة الارتفاع إلى العرض</translation>
-    </message>
-    <message>
-        <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
-        <translation>اسحب النقاط لتغيير الشكل · اضغط على ○ على الحافة لإضافة نقطة · اضغط مطولاً على نقطة لحذفها</translation>
-    </message>
-    <message>
-        <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
-        <translation>اسحب النقاط لتغيير الشكل · انقر فوق ○ على الحافة لإضافة نقطة · انقر بزر الماوس الأيمن على نقطة لحذفها</translation>
     </message>
 </context>
 <context>
@@ -15804,6 +15804,28 @@
     <message>
         <source>Feather</source>
         <translation>تنعيم الحواف</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayResizeGrip</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">تعديل %1</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">قناع</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRotateHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">تعديل %1</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">قناع</translation>
     </message>
 </context>
 <context>
@@ -18591,6 +18613,157 @@
     <message>
         <source>Video Effects (none)</source>
         <translation>تأثيرات الفيديو (لا يوجد)</translation>
+    </message>
+</context>
+<context>
+    <name>PathActionChips</name>
+    <message>
+        <source>Pen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">تم</translation>
+    </message>
+</context>
+<context>
+    <name>PathEditSession</name>
+    <message>
+        <source>Close path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bend segment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">إضافة نقطة</translation>
+    </message>
+    <message>
+        <source>Convert point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">حذف النقطة</translation>
+    </message>
+    <message>
+        <source>Change point type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove point</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathEditor</name>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap for a corner point, drag for a smooth one. Tap the first point to close.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click for a corner point, drag for a smooth one. Shift snaps to 45 degrees. Click the first point to close, Enter to finish, Esc to cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click or drag to extend the path. Enter or Esc ends it, Backspace removes the last point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag points and handles. Tap an edge to add a point, hold a point for more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag points and handles. Click an edge to add a point, Alt-click a point to switch corner and smooth, Alt-drag a handle to break it, Delete heals.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This path is keyframed: edits are stored as a key at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead over the selected clip</source>
+        <translation type="unfinished">حرّك مؤشر التشغيل فوق المقطع المحدد</translation>
+    </message>
+</context>
+<context>
+    <name>PathPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">حذف</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">سلس</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Heal</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathPointModeRow</name>
+    <message>
+        <source>Point type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mirrored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aligned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">حر</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">سلس</translation>
     </message>
 </context>
 <context>
@@ -24562,64 +24735,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>ShapePathHintBar</name>
-    <message>
-        <source>Add points</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep drawing from the selected end of the path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove the segment joining the last point to the first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Join the last point back to the first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation type="unfinished">تم</translation>
-    </message>
-</context>
-<context>
-    <name>ShapePathOverlay</name>
-    <message>
-        <source>Move the playhead over the selected clip</source>
-        <translation type="unfinished">حرّك مؤشر التشغيل فوق المقطع المحدد</translation>
-    </message>
-    <message>
-        <source>Drawing a path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Editing path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click for a corner point, drag for a smooth one. Shift snaps to 45 degrees. Click the first point to close, Enter to finish, Esc to cancel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drag points and handles. Click a segment to add a point, double-click a point to switch corner and smooth, Alt-drag a handle to break it, Delete removes a point.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This path is keyframed: edits are stored as a key at the playhead.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>ShapePresetCard</name>
     <message>
         <source>%1 — click to add, or drag to the timeline or preview</source>
@@ -30240,6 +30355,10 @@ If playback stutters, try another.</source>
     <name>TouchContextBar</name>
     <message>
         <source>Lock ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Constrain</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
