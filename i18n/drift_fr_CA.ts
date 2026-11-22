@@ -10011,6 +10011,10 @@
         <translation>Tous les fichiers (*)</translation>
     </message>
     <message>
+        <source>Sony / MAGIX VEGAS Pro (*.veg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name your project</source>
         <translation>Nommez votre projet</translation>
     </message>
@@ -19286,6 +19290,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Failed to open VEGAS Pro project</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>

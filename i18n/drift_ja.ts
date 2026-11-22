@@ -9970,6 +9970,10 @@
         <translation>すべてのファイル (*)</translation>
     </message>
     <message>
+        <source>Sony / MAGIX VEGAS Pro (*.veg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name your project</source>
         <translation>プロジェクトに名前を付ける</translation>
     </message>
@@ -19203,6 +19207,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Failed to open VEGAS Pro project</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>

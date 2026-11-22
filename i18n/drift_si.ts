@@ -10011,6 +10011,10 @@
         <translation>සියලු ගොනු (*)</translation>
     </message>
     <message>
+        <source>Sony / MAGIX VEGAS Pro (*.veg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name your project</source>
         <translation>ඔබේ ව්‍යාපෘතිය නම් කරන්න</translation>
     </message>
@@ -19285,6 +19289,10 @@ If playback stutters, try another.</source>
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Failed to open VEGAS Pro project</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>

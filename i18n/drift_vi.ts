@@ -9970,6 +9970,10 @@
         <translation>Tất cả tệp (*)</translation>
     </message>
     <message>
+        <source>Sony / MAGIX VEGAS Pro (*.veg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import Kdenlive / Shotcut Project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19203,6 +19207,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Failed to open VEGAS Pro project</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>

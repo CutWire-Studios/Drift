@@ -10011,6 +10011,10 @@
         <translation>Todos os ficheiros (*)</translation>
     </message>
     <message>
+        <source>Sony / MAGIX VEGAS Pro (*.veg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name your project</source>
         <translation>Dê um nome ao projeto</translation>
     </message>
@@ -19286,6 +19290,10 @@ Se a reprodução engasgar, experimente outro.</translation>
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Failed to open VEGAS Pro project</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project JSON loaded</source>
