@@ -78,6 +78,7 @@
 #include "ui/timeline/TimelineTrackItem.h"
 #include "ui/timeline/TimelineViewState.h"
 #include "app/editor/sessions/KeyframeCurvesModel.h"
+#include "app/editor/sessions/KeyframeInteraction.h"
 #include "app/editor/sessions/KeyframeRowsModel.h"
 #include "app/editor/sessions/KeyframeSelection.h"
 #include "app/editor/sessions/PolylineDraft.h"
@@ -936,6 +937,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<KeyframeTimeView>("Drift", 1, 0, "KeyframeTimeView");
     qmlRegisterType<KeyframeRowsModel>("Drift", 1, 0, "KeyframeRowsModel");
     qmlRegisterType<KeyframeCurvesModel>("Drift", 1, 0, "KeyframeCurvesModel");
+    qmlRegisterType<KeyframeInteraction>("Drift", 1, 0, "KeyframeInteraction");
     qmlRegisterType<BrushStrokeItem>("Drift", 1, 0, "BrushStrokeItem");
     qmlRegisterType<ToolCursor>("Drift", 1, 0, "ToolCursor");
     qmlRegisterType<drift::manip::ClipFrameMapperItem>("Drift", 1, 0, "ClipFrameMapper");

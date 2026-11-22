@@ -2264,10 +2264,7 @@
       "foregroundMuted": "$semantic.mutedForeground"
     },
     "keyframeGraphKeyDot": {
-      "border": "$semantic.onMedia",
-      "borderWidth": "$metrics.borderWidth",
-      "opacityUnfocused": 0.4,
-      "radius": 1
+      "opacityUnfocused": 0.4
     },
     "keyframeGraphLaneStatus": {
       "foregroundAccent": "$semantic.primary",
@@ -2403,13 +2400,6 @@
       "backgroundOpacity": 0.12,
       "border": "$semantic.primary",
       "borderWidth": "$metrics.borderWidth"
-    },
-    "keyframesReadout": {
-      "background": "$semantic.panel.secondary.background",
-      "foreground": "$semantic.panel.secondary.foreground",
-      "border": "$semantic.panel.border",
-      "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.sm"
     },
     "keyframesRuler": {
       "background": "$semantic.surface.panel",

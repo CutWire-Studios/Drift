@@ -1641,10 +1641,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | keyframeGraphGutterRule | border | $semantic.panel.border | $semantic.panel.border |
 | keyframeGraphGutterRule | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | keyframeGraphHeaderBar | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
-| keyframeGraphKeyDot | border | $semantic.onMedia | $semantic.onMedia |
-| keyframeGraphKeyDot | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | keyframeGraphKeyDot | opacityUnfocused | 0.4 | 0.4 |
-| keyframeGraphKeyDot | radius | 1 | 1 |
 | keyframeGraphLaneStatus | foregroundAccent | $semantic.primary | $semantic.primary |
 | keyframeGraphLaneStatus | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | keyframeGraphPlayhead | accent | $semantic.primary | $semantic.primary |
@@ -1752,11 +1749,6 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | keyframesMarquee | backgroundOpacity | 0.12 | 0.12 |
 | keyframesMarquee | border | $semantic.primary | $semantic.primary |
 | keyframesMarquee | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
-| keyframesReadout | background | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
-| keyframesReadout | foreground | $semantic.panel.secondary.foreground | $semantic.panel.secondary.foreground |
-| keyframesReadout | border | $semantic.panel.border | $semantic.panel.border |
-| keyframesReadout | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
-| keyframesReadout | radius | $metrics.radius.sm | $metrics.radius.sm |
 | keyframesRuler | background | $semantic.surface.panel | $semantic.surface.panel |
 | keyframesRuler | border | $semantic.panel.border | $semantic.panel.border |
 | keyframesRuler | borderWidth | $metrics.borderWidth | $metrics.borderWidth |

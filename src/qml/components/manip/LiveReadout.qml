@@ -20,6 +20,8 @@ Rectangle {
 
     signal applied(string text, real value)
     signal entryFinished()
+    // Tab while typing: a tool with two values to type (time and value) switches the field.
+    signal tabPressed()
 
     function beginEntry(seed) {
         if (!editable)
@@ -93,6 +95,10 @@ Rectangle {
             }
             Keys.onEscapePressed: (event) => {
                 readout.cancelEntry()
+                event.accepted = true
+            }
+            Keys.onTabPressed: (event) => {
+                readout.tabPressed()
                 event.accepted = true
             }
         }

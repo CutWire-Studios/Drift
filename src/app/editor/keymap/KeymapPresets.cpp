@@ -189,6 +189,10 @@ QHash<QString, QStringList> driftChords()
         {QStringLiteral("keyframes.nudgeRight"), {QStringLiteral("Right")}},
         {QStringLiteral("keyframes.nudgeLeftFar"), {QStringLiteral("Shift+Left")}},
         {QStringLiteral("keyframes.nudgeRightFar"), {QStringLiteral("Shift+Right")}},
+        {QStringLiteral("keyframes.nudgeUp"), {QStringLiteral("Up")}},
+        {QStringLiteral("keyframes.nudgeDown"), {QStringLiteral("Down")}},
+        {QStringLiteral("keyframes.nudgeUpFar"), {QStringLiteral("Shift+Up")}},
+        {QStringLiteral("keyframes.nudgeDownFar"), {QStringLiteral("Shift+Down")}},
         // Masking tools. The panel claims these only while the pointer is over the preview or it has
         // focus or hover, so they stay free on the timeline.
         {QStringLiteral("masking.selectTool"), {QStringLiteral("V")}},

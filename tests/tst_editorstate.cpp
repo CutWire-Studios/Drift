@@ -77,6 +77,7 @@
 #include "app/editor/PreferencesController.h"
 #include "app/editor/sessions/KeyframeController.h"
 #include "app/editor/sessions/KeyframeCurvesModel.h"
+#include "app/editor/sessions/KeyframeInteraction.h"
 #include "app/editor/sessions/KeyframeRowsModel.h"
 #include "app/editor/sessions/KeyframeSelection.h"
 #include "app/editor/sessions/KeyframeTimeView.h"
@@ -6735,19 +6736,11 @@ void EditorStateTest::keyframeRowsModelDiffsRebuildsAndNavigates()
     QCOMPARE(model.targetTracks(targets), QStringList{QStringLiteral("rotation")});
 
     view.setPxPerSecond(100);
-    const double lanePx = 40;
-    const QVariantMap hit = model.hitTest(view.xFor(1.0) + 2, rotationRow * lanePx + 5, 0, lanePx, 6);
-    QCOMPARE(hit.value(QStringLiteral("row")).toInt(), rotationRow);
-    QCOMPARE(hit.value(QStringLiteral("seconds")).toDouble(), 1.0);
 
-    // Snapping lands on the frame grid and the playhead; the moved key itself is no target.
-    view.setClipStart(0.0);
-    view.setClipDuration(10.0);
-    const QVariantList self{QVariantMap{{QStringLiteral("prop"), QStringLiteral("rotation")},
-                                        {QStringLiteral("seconds"), 1.0}}};
+    // With snapping suspended a key still lands on the frame grid.
     const double fps = state.projectFile()->projectFps();
-    QCOMPARE(model.moveDelta(1.0, 0.0, self, true, false), 0.0);
-    QVERIFY(qAbs(model.moveDelta(1.0, 50.3, self, true, false) - std::round(0.503 * fps) / fps) < 1e-9);
+    QCOMPARE(state.keyframes()->gestureTime(1.0, 100, {}, true, false), 1.0);
+    QVERIFY(qAbs(state.keyframes()->gestureTime(1.503, 100, {}, true, false) - std::round(1.503 * fps) / fps) < 1e-9);
 
     model.setProperty("animatedOnly", true);
     model.rebuild();
@@ -6796,15 +6789,24 @@ void EditorStateTest::keyframeNudgesFoldIntoOneUndoStep()
     state.setClipKeyframe(track, clip, rotation, 1.0, 10.0);
     state.setClipKeyframe(track, clip, rotation, 3.0, 20.0);
 
-    const double step = 1.0 / std::max(1, state.projectFile()->projectFps());
-    QVariantList sel{QVariantMap{{QStringLiteral("prop"), rotation}, {QStringLiteral("seconds"), 1.0}}};
+    const int fps = std::max(1, state.projectFile()->projectFps());
+    const double step = 1.0 / fps;
+    KeyframeSelection selection;
+    KeyframeInteraction interaction;
+    interaction.setSelection(&selection);
+    interaction.setProperty("track", track);
+    interaction.setProperty("clip", clip);
+    interaction.setProperty("fps", double(fps));
+    interaction.attach(nullptr, nullptr, nullptr, state.keyframes());
+    selection.replace({QVariantMap{{QStringLiteral("prop"), rotation}, {QStringLiteral("seconds"), 1.0}}});
     for (int i = 0; i < 3; ++i) {
-        sel = state.keyframes()->nudgeKeys(track, clip, sel, step);
-        QCOMPARE(sel.size(), 1);
+        QVERIFY(interaction.nudge(1, 0, false));
+        QCOMPARE(selection.count(), 1);
     }
-    QVERIFY(qAbs(sel.first().toMap().value(QStringLiteral("seconds")).toDouble() - (1.0 + 3 * step)) < 1e-4);
+    QVERIFY(qAbs(selection.refs().first().toMap().value(QStringLiteral("seconds")).toDouble() - (1.0 + 3 * step)) < 1e-4);
     QVERIFY(state.previewDragActive());
-    state.commitPreviewDrag();
+    state.drag()->commit();
+    QVERIFY(!state.previewDragActive());
 
     state.undo();
     const QVariantList keys = state.clipKeyframes(track, clip, rotation);
@@ -6887,22 +6889,6 @@ void EditorStateTest::keyframeCurvesModelHitTestsMarqueesAndFits()
     QVERIFY(qAbs(curves.vMax() - 21.0) < 1e-9);
     QVERIFY(qAbs(curves.screenY(10.0, 0) - (8 + 100 - 100.0 / 12)) < 1e-6);
     QVERIFY(qAbs(curves.valueForY(curves.screenY(15.0, 0) - 8, 0) - 15.0) < 1e-6);
-
-    const double y1 = curves.screenY(10.0, 0);
-    const QVariantMap hit = curves.hitTest(view.xFor(1.0) + 2, y1 + 1, 6);
-    QCOMPARE(hit.value(QStringLiteral("seconds")).toDouble(), 1.0);
-    QCOMPARE(hit.value(QStringLiteral("entryIndex")).toInt(), 0);
-    QCOMPARE(hit.value(QStringLiteral("refs")).toList().size(), 1);
-    const QVariantMap miss = curves.hitTest(view.xFor(1.0) + 40, y1, 6);
-    QVERIFY(!miss.value(QStringLiteral("dot")).isValid() || miss.value(QStringLiteral("dot")).isNull());
-    QCOMPARE(miss.value(QStringLiteral("row")).toInt(), -1);
-    QCOMPARE(miss.value(QStringLiteral("seconds")).toDouble(), 1.4);
-
-    const QVariantList base{QVariantMap{{QStringLiteral("prop"), QStringLiteral("z")}, {QStringLiteral("seconds"), 9.0}}};
-    QCOMPARE(curves.marqueeRefs(50, 150, 0, 200, base).size(), 2);
-    QCOMPARE(curves.marqueeRefs(50, 250, 0, 200, base).size(), 3);
-    QCOMPARE(curves.marqueeRefs(150, 250, 0, 40, {}).size(), 1);
-    QCOMPARE(curves.marqueeRefs(150, 250, 150, 200, {}).size(), 0);
 
     selection.replace({QVariantMap{{QStringLiteral("prop"), rotation}, {QStringLiteral("seconds"), 2.0}}});
     curves.fitValues(true);

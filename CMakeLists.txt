@@ -1403,6 +1403,9 @@ target_sources(driftapp PRIVATE
     src/app/editor/sessions/KeyframeCurves.cpp
     src/app/editor/sessions/KeyframeCurvesModel.h
     src/app/editor/sessions/KeyframeCurvesModel.cpp
+    src/app/editor/sessions/KeyframeInteraction.h
+    src/app/editor/sessions/KeyframeInteraction.cpp
+    src/app/editor/sessions/KeyframeInteractionBinding.cpp
     src/app/editor/sessions/KeyframeSelection.h
     src/app/editor/sessions/KeyframeSelection.cpp
     src/app/editor/sessions/KeyframeTimeView.h
@@ -2057,11 +2060,9 @@ qt_add_qml_module(drift
         src/qml/components/properties/PropertiesEmptyState.qml
         src/qml/components/properties/PropertiesSuggestionStrip.qml
         src/qml/components/properties/KeyframeGraphValueAxis.qml
-        src/qml/components/properties/KeyframeGraphTangentHandle.qml
         src/qml/components/properties/KeyframeGraphResizeGrip.qml
         src/qml/components/properties/KeyframeGraphPlayhead.qml
         src/qml/components/properties/KeyframeGraphLaneStatus.qml
-        src/qml/components/properties/KeyframeGraphKeyDot.qml
         src/qml/components/properties/KeyframeGraphHeaderBar.qml
         src/qml/components/properties/KeyframeGraphGutterRule.qml
         src/qml/components/properties/KeyframeGraphFrame.qml
@@ -2239,7 +2240,6 @@ qt_add_qml_module(drift
         src/qml/components/keyframes/KeyframesCurvesInteraction.qml
         src/qml/components/keyframes/KeyframesCurvesView.qml
         src/qml/components/keyframes/KeyframesInteractionSurface.qml
-        src/qml/components/keyframes/KeyframesDragReadout.qml
         src/qml/components/keyframes/KeyframesLanesView.qml
         src/qml/components/keyframes/KeyframesMarquee.qml
         src/qml/components/keyframes/KeyframesPlayheadLine.qml

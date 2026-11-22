@@ -13,6 +13,10 @@
 
 class AppController;
 
+namespace drift::manip {
+class DragSession;
+}
+
 // Keyframe editing for the Keyframes panel, reached from QML as EditorState.keyframes. Keys are
 // addressed by {prop, seconds} on the clip's timeline; fx, afx and mask keys resolve to the host
 // clip that owns them. Every batch op is one undo step.
@@ -46,6 +50,15 @@ public:
 
     Q_INVOKABLE double snapKeyTime(double seconds, double pxPerSecond, const QVariantList &otherKeyTimes,
                                    bool snap) const;
+    // The time a dragged key lands on: snapKeyTime, and with `timeline` also what the timeline snaps to
+    // (clip edges, markers, beats). The toolbar's snap toggle and `suspend` (Ctrl) both turn snapping off.
+    double gestureTime(double seconds, double pxPerSecond, const QVariantList &otherKeyTimes, bool suspend,
+                       bool timeline) const;
+    // The app's drag session, which every keyframe gesture runs in.
+    drift::manip::DragSession *dragSession() const;
+    // Writes one key's tangents without an undo entry; the caller holds a drag session open.
+    void previewTangents(int track, int clip, const QString &prop, double seconds, double inDx, double inDy,
+                         double outDx, double outDy, bool corner);
 
     Q_INVOKABLE QVariantList previewMoveKeys(int track, int clip, const QVariantList &keys,
                                              double dtSeconds);
@@ -57,9 +70,6 @@ public:
     // The axis a property's curve is drawn in; `hasRange` makes `min`..`max` the range.
     Q_INVOKABLE QVariantMap curveRange(const QString &prop, const QVariantList &points, double base, bool hasRange,
                                        double min, double max) const;
-    // Keyboard nudge: successive calls with the selection the previous call returned fold into one
-    // auto-committed undo step.
-    Q_INVOKABLE QVariantList nudgeKeys(int track, int clip, const QVariantList &keys, double dtSeconds);
     Q_INVOKABLE QVariantList moveKeys(int track, int clip, const QVariantList &keys,
                                       double dtSeconds);
     Q_INVOKABLE QVariantList previewStretchKeys(int track, int clip, const QVariantList &keys,
@@ -117,14 +127,8 @@ private:
     QVariantList applyStretch(const QList<KeyTarget> &own, double pivotSeconds, double factor);
 
     void setCollisions(const QVariantList &collisions);
-    static bool sameRefs(const QVariantList &a, const QVariantList &b);
 
     AppController *m_app = nullptr;
     QList<ClipKey> m_clipboard;
     QVariantList m_collisions;
-    QVariantList m_nudgeBase;
-    QVariantList m_nudgeResult;
-    double m_nudgeTotal = 0.0;
-    int m_nudgeTrack = -1;
-    int m_nudgeClip = -1;
 };
