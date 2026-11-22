@@ -15,6 +15,11 @@ Item {
     // preview and the reverse render cannot decode.
     readonly property bool nestedSource: hasSelection && !!clipData.sequenceId
 
+    // A host that must close its own edit group before the ramp window opens sets rampHandled
+    // and does the opening itself on rampRequested.
+    property bool rampHandled: false
+    signal rampRequested()
+
     height: speedColumn.height
     implicitHeight: speedColumn.height
 
@@ -39,9 +44,10 @@ Item {
                 title: qsTr("Playback speed")
                 keywords: "fast slow motion"
             }
-            color: Theme.c.speedFadeInspector.foregroundMuted
+            color: Theme.touchInput ? Theme.c.speedFadeInspector.foreground : Theme.c.speedFadeInspector.foregroundMuted
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
+            font.weight: Theme.touchInput ? Font.Medium : Font.Normal
         }
 
         // A ramp supersedes the constant rate outright, so the controls below
@@ -66,13 +72,15 @@ Item {
                 visible: !root.nestedSource
                 text: qsTr("Speed ramp…")
                 variant: "secondary"
-                onClicked: ShellBridge.main.openSpeedCurve(
-                               EditorState.selectedTrack, EditorState.selectedClip)
+                onClicked: root.rampHandled
+                           ? root.rampRequested()
+                           : ShellBridge.main.openSpeedCurve(EditorState.selectedTrack, EditorState.selectedClip)
             }
 
             ThemedChip {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: speedColumn.hasSpeedCurve
+                chipHeight: Theme.touchInput ? Theme.androidMinTouchTarget : Theme.controlHeightSm
                 text: qsTr("Speed ramp active — remove")
                 selected: true
                 onClicked: EditorState.clearClipSpeedCurve(
@@ -93,6 +101,8 @@ Item {
                     ]
                     delegate: ThemedChip {
                         required property var modelData
+                        chipHeight: Theme.touchInput ? Theme.androidMinTouchTarget : Theme.controlHeightSm
+                        width: Theme.touchInput ? (parent.width - parent.spacing * 4) / 5 : implicitWidth
                         text: modelData.label
                         enabled: !speedColumn.hasSpeedCurve
                         selected: !speedColumn.hasSpeedCurve
@@ -107,12 +117,30 @@ Item {
         InlineTip {
             tipId: "speed.split"
             readonly property var keys: EditorState.shortcutFor("split")
-            text: keys.length > 0 ? qsTr("Split (%1) to speed up only part of a clip").arg(Theme.shortcutDisplay(keys))
+            text: keys.length > 0 && !Theme.touchInput ? qsTr("Split (%1) to speed up only part of a clip").arg(Theme.shortcutDisplay(keys))
                                   : qsTr("Split the clip to speed up only part of it")
+        }
+
+        AndroidSliderRow {
+            id: speedRow
+            visible: Theme.touchInput
+            enabled: !speedColumn.hasSpeedCurve && !EditorState.playing
+            label: qsTr("Speed")
+            from: Math.log(0.25)
+            to: Math.log(100)
+            stepSize: 0.01
+            value: Math.log(root.clipData.speed || 1.0)
+            valueText: speedColumn.hasSpeedCurve ? qsTr("Ramp") : ""
+            valueFormatter: function (v) { return Math.exp(v).toFixed(2) + "×" }
+            onMoved: (v) => EditorState.previewSetClipSpeed(
+                         EditorState.selectedTrack, EditorState.selectedClip, Math.exp(v))
+            onDragBegan: EditorState.beginPreviewDrag(qsTr("Speed changed"))
+            onDragEnded: EditorState.commitPreviewDrag()
         }
 
         ThemedSlider {
             id: speedSlider
+            visible: !Theme.touchInput
             label: qsTr("Speed")
             enabled: !speedColumn.hasSpeedCurve && !EditorState.playing
             width: parent.width
@@ -135,6 +163,7 @@ Item {
         }
 
         Text {
+            visible: !Theme.touchInput
             text: (speedColumn.hasSpeedCurve
                    ? qsTr("Speed ramp")
                    : (root.clipData.speed || 1).toFixed(2) + "×")
@@ -153,6 +182,7 @@ Item {
         ThemedChip {
             id: speedReverseChip
             visible: !root.nestedSource
+            chipHeight: Theme.touchInput ? Theme.androidMinTouchTarget : Theme.controlHeightSm
             text: qsTr("Reverse")
             selected: {
                 void root.clipDataRevision

@@ -10,27 +10,13 @@ Item {
     property int clipIndex: -1
     property bool showBrowse: false
 
-    Row {
+    AndroidTabStrip {
         id: chips
-        x: Theme.pagePadding
-        height: Theme.controlHeight
-        spacing: Theme.spacingSm
-
-        ThemedChip {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Applied")
-            variant: "outline"
-            selected: !root.showBrowse
-            onClicked: root.showBrowse = false
-        }
-
-        ThemedChip {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Browse")
-            variant: "outline"
-            selected: root.showBrowse
-            onClicked: root.showBrowse = true
-        }
+        y: Theme.spacingSm
+        width: parent.width
+        tabs: [{ id: "applied", label: qsTr("Applied") }, { id: "browse", label: qsTr("Browse") }]
+        currentId: root.showBrowse ? "browse" : "applied"
+        onTabSelected: tabId => root.showBrowse = tabId === "browse"
     }
 
     Flickable {
@@ -62,8 +48,6 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: Theme.pagePadding
-        anchors.rightMargin: Theme.pagePadding
         visible: root.showBrowse
     }
 }

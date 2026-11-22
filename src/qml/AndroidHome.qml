@@ -97,7 +97,7 @@ Item {
                     onClicked: ShellBridge.main.openExtras()
 
                     AndroidAttentionDot {
-                        visible: ShellBridge.main?.addonAttentionNeeded
+                        visible: ShellBridge.main?.addonAttentionNeeded ?? false
                         anchors.right: parent.right
                         anchors.top: parent.top
                         anchors.margins: Theme.spacingSm

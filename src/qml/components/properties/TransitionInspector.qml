@@ -57,6 +57,9 @@ Item {
         return false
     }
 
+    readonly property bool phone: Theme.touchInput && Theme.compact
+    readonly property real labelSize: phone ? Theme.fontSizeSm : Theme.fontSizeXs
+
     height: contentCol.height
     implicitHeight: contentCol.height
 
@@ -112,7 +115,8 @@ Item {
             wrapMode: Text.WordWrap
             visible: !root.hasActiveTransition && !root.canAddOutgoingTransition
             text: root.clipKind === "video" || root.clipKind === "shape" || root.clipKind === "text"
-                  ? qsTr("Hover the cut between two clips and click + to add a transition.")
+                  ? (Theme.touchInput ? qsTr("Tap the + on the cut between two clips to add a transition.")
+                                      : qsTr("Hover the cut between two clips and click + to add a transition."))
                   : qsTr("Transitions work between two clips on a video, shape, or text track.")
             color: Theme.c.transitionInspector.foregroundMuted
             font.family: Theme.fontFamily
@@ -136,6 +140,7 @@ Item {
             ThemedButton {
                 id: addTransitionButton
                 text: qsTr("Add transition…")
+                width: root.phone ? parent.width : implicitWidth
                 variant: "primary"
                 onClicked: {
                     const track = EditorState.selectedTrack
@@ -165,8 +170,10 @@ Item {
                 text: {
                     const t = root.activeTransition
                     let line = t.overlapping
-                        ? qsTr("Overlap transition. Drag another kind from Transitions to replace it.")
-                        : qsTr("Transition to the next clip. Move across the cut to preview it.")
+                        ? (Theme.touchInput ? qsTr("Overlap transition. Tap the type to replace it.")
+                                            : qsTr("Overlap transition. Drag another kind from Transitions to replace it."))
+                        : (Theme.touchInput ? qsTr("Transition to the next clip. Scrub across the cut to preview it.")
+                                            : qsTr("Transition to the next clip. Move across the cut to preview it."))
                     const h = t.handles || {}
                     if (!t.overlapping && (h.out === false || h.in === false))
                         line += " " + qsTr("One side has no media past the cut, so its sound fades through silence instead of crossfading.")
@@ -174,7 +181,7 @@ Item {
                 }
                 color: Theme.c.transitionInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
 
             Column {
@@ -184,7 +191,7 @@ Item {
                     text: qsTr("Type")
                     color: Theme.c.transitionInspector.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                 }
                 // A thumbnail picker instead of a name list: many kinds are only told apart by how they look.
                 Rectangle {
@@ -303,7 +310,7 @@ Item {
                     }
                     color: Theme.c.transitionInspector.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                 }
                 ThemedNumberField {
                     id: transitionDurationField
@@ -336,7 +343,7 @@ Item {
                     }
                     color: Theme.c.transitionInspector.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                 }
                 CurveField {
                     id: transitionCurveBox
@@ -370,6 +377,7 @@ Item {
                     spacing: 4
 
                     Row {
+                        visible: !root.phone || !!trParamRow.paramData.isBoolean
                         width: parent.width
                         spacing: 8
                         Text {
@@ -389,10 +397,27 @@ Item {
                                   : Number(trParamSlider.value).toFixed(
                                         Math.abs(trParamRow.paramData.max - trParamRow.paramData.min) >= 10 ? 1 : 2)
                             color: Theme.c.transitionInspector.foreground
-                            font.family: Theme.monoFontFamily
-                            font.pixelSize: Theme.fontSizeXs
+                            font.family: root.phone ? Theme.fontFamily : Theme.monoFontFamily
+                            font.pixelSize: root.labelSize
                             anchors.verticalCenter: parent.verticalCenter
                         }
+                    }
+
+                    AndroidSliderRow {
+                        visible: root.phone && !trParamRow.paramData.isBoolean
+                        lockWhilePlaying: true
+                        label: trParamRow.paramData.label
+                        from: trParamRow.paramData.min
+                        to: trParamRow.paramData.max
+                        value: trParamRow.paramData.value
+                        valueFormatter: function (v) {
+                            return Number(v).toFixed(Math.abs(trParamRow.paramData.max - trParamRow.paramData.min) >= 10 ? 1 : 2)
+                        }
+                        onDragBegan: EditorState.beginPreviewDrag(qsTr("Edit transition"))
+                        onDragEnded: EditorState.commitPreviewDrag()
+                        onMoved: v => EditorState.previewSetTransitionParam(
+                                     root.transitionEditTrack, root.activeTransition.id,
+                                     trParamRow.paramData.key, v)
                     }
 
                     ThemedSwitch {
@@ -407,7 +432,7 @@ Item {
                         id: trParamSlider
                         lockWhilePlaying: true
                         label: trParamRow.paramData.label
-                        visible: !trParamRow.paramData.isBoolean
+                        visible: !root.phone && !trParamRow.paramData.isBoolean
                         width: parent.width
                         from: trParamRow.paramData.min
                         to: trParamRow.paramData.max
@@ -430,6 +455,7 @@ Item {
 
             ThemedButton {
                 text: qsTr("Remove transition")
+                width: root.phone ? parent.width : implicitWidth
                 variant: "destructive"
                 onClicked: EditorState.removeTransition(
                                root.transitionEditTrack, root.activeTransition.id)

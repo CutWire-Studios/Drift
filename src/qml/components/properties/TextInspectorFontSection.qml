@@ -8,6 +8,7 @@ CollapsibleSection {
     title: inspector.mode === "settings" ? qsTr("Alignment") : qsTr("Font")
     collapsible: false
     visible: inspector.hasTextStyle
+    readonly property bool phone: Theme.touchInput && Theme.compact
 
     Text {
         visible: inspector.mode !== "settings"
@@ -19,7 +20,7 @@ CollapsibleSection {
         }
         color: Theme.c.textInspectorFontSection.foregroundMuted
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeXs
+        font.pixelSize: root.phone ? Theme.fontSizeSm : Theme.fontSizeXs
     }
 
     FontPicker {
@@ -35,12 +36,12 @@ CollapsibleSection {
         spacing: 8
 
         Column {
-            width: (parent.width - parent.spacing) / 2
+            width: root.phone ? parent.width : (parent.width - parent.spacing) / 2
             spacing: 4
             Text {
                 text: qsTr("Weight")
                 color: Theme.c.textInspectorFontSection.foregroundMuted
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.phone ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
             ThemedComboBox {
@@ -54,6 +55,7 @@ CollapsibleSection {
         }
 
         PropertyKeyframeRow {
+            visible: !root.phone
             width: (parent.width - parent.spacing) / 2
             propDef: inspector.textProp("pixelSize", qsTr("Size"), 0)
             keyframeList: inspector.textKeyframes("pixelSize")
@@ -62,6 +64,17 @@ CollapsibleSection {
             sliderTo: 500
             unit: "px"
         }
+    }
+
+    PropertyKeyframeRow {
+        visible: root.phone && inspector.mode !== "settings"
+        width: parent.width
+        propDef: inspector.textProp("pixelSize", qsTr("Size"), 0)
+        keyframeList: inspector.textKeyframes("pixelSize")
+        useSlider: true
+        sliderFrom: 1
+        sliderTo: 500
+        unit: "px"
     }
 
     Row {
@@ -80,7 +93,7 @@ CollapsibleSection {
                     keywords: "color outline shadow"
                 }
                 color: Theme.c.textInspectorFontSection.foregroundMuted
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.phone ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
             ColorSwatchField {
@@ -99,7 +112,7 @@ CollapsibleSection {
                 text: qsTr("Edits the first gradient stop")
                 wrapMode: Text.WordWrap
                 color: Theme.c.textInspectorFontSection.foregroundMuted
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.phone ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
             ThemedChip {
@@ -122,7 +135,7 @@ CollapsibleSection {
             Text {
                 text: qsTr("Style")
                 color: Theme.c.textInspectorFontSection.foregroundMuted
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.phone ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
             Row {
@@ -149,7 +162,7 @@ CollapsibleSection {
     }
 
     Row {
-        visible: inspector.mode === ""
+        visible: inspector.mode === "" || inspector.mode === "font"
         width: parent.width
         spacing: 8
 
@@ -159,7 +172,7 @@ CollapsibleSection {
             Text {
                 text: qsTr("Case")
                 color: Theme.c.textInspectorFontSection.foregroundMuted
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.phone ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
             ThemedComboBox {
@@ -172,7 +185,7 @@ CollapsibleSection {
     }
 
     Row {
-        visible: inspector.mode !== "style"
+        visible: inspector.mode !== "font"
         width: parent.width
         spacing: Theme.spacingMd
 
@@ -184,7 +197,7 @@ CollapsibleSection {
             ]
             delegate: ThemedToggleButton {
                 required property var modelData
-                width: 34
+                width: root.phone ? Theme.androidMinTouchTarget : 34
                 glyph: modelData.glyph
                 checked: inspector.textStyle.align === modelData.value
                 tooltip: modelData.label
@@ -202,7 +215,7 @@ CollapsibleSection {
             ]
             delegate: ThemedToggleButton {
                 required property var modelData
-                width: 34
+                width: root.phone ? Theme.androidMinTouchTarget : 34
                 glyph: modelData.glyph
                 checked: inspector.textStyle.valign === modelData.value
                 tooltip: modelData.label

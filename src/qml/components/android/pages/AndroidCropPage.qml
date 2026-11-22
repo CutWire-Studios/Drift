@@ -25,9 +25,11 @@ Item {
         // The previous tool can still be loaded for a moment after the mode switches.
         if (!o || o.aspect === undefined)
             return
-        if (!root.clipMode)
-            o.hostedByPage = true
+        o.hostedByPage = true
     }
+
+    // The frame the page's ratio chips drive, once the overlay for the mode is loaded.
+    readonly property var cropFrame: overlay && overlay.cropFrame ? overlay.cropFrame : null
 
     function enter(next) {
         root.mode = next
@@ -79,35 +81,79 @@ Item {
         width: root.width - Theme.pagePadding * 2
         spacing: Theme.spacingLg
 
-        Row {
-            spacing: Theme.spacingSm
+        Item {
+            width: parent.width
+            height: modeRow.height
 
-            ThemedChip {
-                text: qsTr("Clip")
-                variant: "outline"
-                enabled: root.canCropClip
-                selected: root.clipMode
-                onClicked: root.enter("clip")
+            Row {
+                id: modeRow
+                spacing: Theme.spacingSm
+
+                ThemedChip {
+                    text: qsTr("Clip")
+                    variant: "outline"
+                    enabled: root.canCropClip
+                    selected: root.clipMode
+                    onClicked: root.enter("clip")
+                }
+
+                ThemedChip {
+                    text: qsTr("Video")
+                    variant: "outline"
+                    selected: !root.clipMode
+                    onClicked: root.enter("video")
+                }
             }
 
             ThemedChip {
-                text: qsTr("Video")
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Reset")
                 variant: "outline"
-                selected: !root.clipMode
-                onClicked: root.enter("video")
+                onClicked: root.resetAll()
+            }
+        }
+
+        Flickable {
+            width: parent.width
+            height: presets.implicitHeight
+            contentWidth: presets.implicitWidth
+            contentHeight: presets.implicitHeight
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            clip: true
+            enabled: root.cropFrame !== null
+
+            CropPresets {
+                id: presets
+                variant: "outline"
+                aspect: root.cropFrame ? root.cropFrame.aspect : 0
+                originalAspect: root.cropFrame ? root.cropFrame.originalAspect : 0
+                thirds: root.cropFrame ? root.cropFrame.thirds : false
+                onPicked: (ratio) => root.cropFrame.aspect = ratio
+                onThirdsToggled: root.cropFrame.toggleThirds()
             }
         }
 
         Item {
             id: rulerRow
             width: parent.width
-            height: Theme.controlHeight + Theme.spacingLg
+            visible: root.clipMode
+            height: Theme.controlHeight + Theme.spacingLg + degreeLabel.implicitHeight
+
+            Text {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                text: qsTr("Straighten")
+                color: Theme.c.androidToolPage.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
+            }
 
             Item {
                 id: ruler
                 anchors.left: parent.left
-                anchors.right: resetChip.left
-                anchors.rightMargin: Theme.spacingMd
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 height: parent.height
                 clip: true
@@ -129,7 +175,7 @@ Item {
                         readonly property real deg: index - ruler.limit
                         readonly property bool major: index % 5 === 0
                         x: ruler.width / 2 + (deg - ruler.shown) * ruler.pxPerDeg - width / 2
-                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenter: needle.verticalCenter
                         width: 1
                         height: major ? Theme.spacing2xl : Theme.spacingMd
                         color: Theme.c.androidToolPage.foregroundMuted
@@ -138,20 +184,24 @@ Item {
                 }
 
                 Rectangle {
-                    anchors.centerIn: parent
+                    id: needle
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: degreeLabel.bottom
+                    anchors.topMargin: Theme.spacingXs
+                    anchors.bottom: parent.bottom
                     width: 2
-                    height: parent.height * 0.8
                     radius: Theme.radiusPill
                     color: Theme.c.androidToolPage.foreground
                 }
 
                 Text {
+                    id: degreeLabel
                     anchors.top: parent.top
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: Math.round(ruler.shown * 10) / 10 + "°"
                     color: Theme.c.androidToolPage.foreground
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.fontSizeSm
                 }
 
                 DragHandler {
@@ -180,15 +230,6 @@ Item {
                         EditorState.previewSetClipRotation(EditorState.selectedTrack, EditorState.selectedClip, v)
                     }
                 }
-            }
-
-            ThemedChip {
-                id: resetChip
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Reset")
-                variant: "outline"
-                onClicked: root.resetAll()
             }
         }
     }

@@ -283,12 +283,15 @@ ManipOverlay {
             return qsTr("Move the playhead over the selected clip")
         switch (placeMode) {
         case "point":
-            return qsTr("Click the feature to track on the preview.")
+            return touch ? qsTr("Tap the feature to track on the preview.") : qsTr("Click the feature to track on the preview.")
         case "addPoint":
-            return qsTr("Click the feature to add to this tracker.")
+            return touch ? qsTr("Tap the feature to add to this tracker.") : qsTr("Click the feature to add to this tracker.")
         case "follow":
-            return qsTr("Click the object the clip should follow.")
+            return touch ? qsTr("Tap the object the clip should follow.") : qsTr("Click the object the clip should follow.")
         case "planar":
+            if (touch)
+                return planarDraft.count === 0 ? qsTr("Tap the corners of a flat surface")
+                                               : qsTr("%1 corners · tap Done when you have four").arg(planarDraft.count)
             return planarDraft.count === 0
                    ? qsTr("Click the corners of a flat surface, Enter to finish.")
                    : qsTr("%1 corners · Enter to finish · Backspace to undo · Esc to cancel").arg(planarDraft.count)

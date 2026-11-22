@@ -772,9 +772,12 @@ ManipOverlay {
     }
 
     BrushSideSliders {
+        // Beside the canvas when the viewport has room there, so the picture stays clear.
+        readonly property var cv: root.navTarget ? root.navTarget.canvas : null
+        readonly property real canvasRight: cv ? cv.x + cv.width : root.width
+        readonly property bool outside: root.navTarget && root.navTarget.width - canvasRight >= width + Theme.spacingSm * 2
         visible: root.touch && root.brushTool && root.clipTarget && root.hasFrame
-        anchors.right: parent.right
-        anchors.rightMargin: Theme.spacingSm
+        x: outside ? root.width + Theme.spacingSm : root.width - width - Theme.spacingSm
         anchors.verticalCenter: parent.verticalCenter
         z: 95
     }

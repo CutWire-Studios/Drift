@@ -470,10 +470,6 @@
         <translation>%1 を調整</translation>
     </message>
     <message>
-        <source>Reset</source>
-        <translation>リセット</translation>
-    </message>
-    <message>
         <source>Reset %1</source>
         <translation>%1 をリセット</translation>
     </message>
@@ -835,6 +831,10 @@
         <translation>ビデオ</translation>
     </message>
     <message>
+        <source>Straighten</source>
+        <translation type="unfinished">水平補正</translation>
+    </message>
+    <message>
         <source>Rotate</source>
         <translation>回転</translation>
     </message>
@@ -924,18 +924,6 @@
         <translation>テキストを追加</translation>
     </message>
     <message>
-        <source>Text style</source>
-        <translation>テキストスタイル</translation>
-    </message>
-    <message>
-        <source>Text settings</source>
-        <translation>テキストの設定</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>テキストアニメーション</translation>
-    </message>
-    <message>
         <source>Animation</source>
         <translation>アニメーション</translation>
     </message>
@@ -1020,12 +1008,8 @@
         <translation>タイムラインは空です</translation>
     </message>
     <message>
-        <source>Import media or open the Media library to start editing.</source>
-        <translation>メディアをインポートするか、メディアライブラリを開いて編集を開始してください。</translation>
-    </message>
-    <message>
-        <source>Open Media</source>
-        <translation>メディアを開く</translation>
+        <source>Clips you add appear here as layers.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1867,6 +1851,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidMotionPage</name>
+    <message>
+        <source>Not an animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Motion settings apply to Lottie and SVG clips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidMyVideosTab</name>
     <message>
         <source>Video actions</source>
@@ -1899,6 +1894,18 @@
 <context>
     <name>AndroidPreview</name>
     <message>
+        <source>No media yet</source>
+        <translation type="unfinished">メディアはまだありません</translation>
+    </message>
+    <message>
+        <source>Add a video, photo or audio file to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Seek</source>
         <translation>シーク</translation>
     </message>
@@ -1928,6 +1935,10 @@
     <message>
         <source>Quality: %1</source>
         <translation>品質 : %1</translation>
+    </message>
+    <message>
+        <source>Hardware</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>3D view</source>
@@ -2036,8 +2047,8 @@
         <translation>ビデオサイズをクロップ</translation>
     </message>
     <message>
-        <source>Drag the preview edges to change what’s included</source>
-        <translation>プレビューの端をドラッグして含まれる範囲を変更</translation>
+        <source>Trim the frame to a smaller area</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties</source>
@@ -2054,6 +2065,14 @@
     <message>
         <source>Sync and switch between angles</source>
         <translation>アングル間で同期して切り替える</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation type="unfinished">通知</translation>
+    </message>
+    <message>
+        <source>Recent messages and finished jobs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -2193,10 +2212,10 @@
     </message>
 </context>
 <context>
-    <name>AndroidSpeedPage</name>
+    <name>AndroidSliderRow</name>
     <message>
-        <source>Speed curve</source>
-        <translation>スピードカーブ</translation>
+        <source>Reset</source>
+        <translation type="unfinished">リセット</translation>
     </message>
 </context>
 <context>
@@ -2261,10 +2280,30 @@
     </message>
 </context>
 <context>
-    <name>AndroidTextPage</name>
+    <name>AndroidTextTabs</name>
     <message>
-        <source>Edit text</source>
-        <translation>テキストを編集</translation>
+        <source>Font</source>
+        <translation type="unfinished">フォント</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">スタイル</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">アニメーション</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation type="unfinished">レイアウト</translation>
+    </message>
+    <message>
+        <source>Tap to type text</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2428,8 +2467,24 @@
         <translation>イン</translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished">トリム開始</translation>
+    </message>
+    <message>
         <source>Out</source>
         <translation>アウト</translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished">トリム終了</translation>
+    </message>
+    <message>
+        <source>%1 one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 one frame later</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6788,6 +6843,10 @@
         <source>Remove audio effect</source>
         <translation>オーディオエフェクトを削除</translation>
     </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">その他</translation>
+    </message>
 </context>
 <context>
     <name>AudioEffectPresetCard</name>
@@ -6839,6 +6898,10 @@
         <translation>オーディオエフェクトはまだありません</translation>
     </message>
     <message>
+        <source>Tap Browse audio effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag a preset from Audio FX onto this clip, or click a preset card.</source>
         <translation>オーディオ FX からプリセットをこのクリップにドラッグするか、プリセットカードをクリックしてください。</translation>
     </message>
@@ -6847,12 +6910,20 @@
         <translation>オーディオエフェクトを参照</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>時間を移動し、値を設定して、ダイヤモンドをクリックしてキーフレームを追加します。自動キーフレームがオンの場合、スライダーをドラッグしてもキーフレームが作成されます。</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>自動キーフレーム</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effect settings</source>
@@ -10441,6 +10512,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Import</source>
+        <translation type="unfinished">インポート</translation>
+    </message>
+    <message>
         <source>Delete effect</source>
         <translation>エフェクトを削除</translation>
     </message>
@@ -10735,12 +10810,20 @@
 <context>
     <name>EffectsAutoKeyHint</name>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>時間を移動し、値を設定して、ダイヤモンドをクリックしてキーフレームを追加します。自動キーフレームがオンの場合、スライダーをドラッグしてもキーフレームが作成されます。</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>自動キーフレーム</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10880,6 +10963,10 @@
         <translation>エフェクトを下に移動</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">その他</translation>
+    </message>
+    <message>
         <source>Disable effect</source>
         <translation>エフェクトを無効化</translation>
     </message>
@@ -10985,6 +11072,10 @@
     <message>
         <source>No effects yet</source>
         <translation>エフェクトはまだありません</translation>
+    </message>
+    <message>
+        <source>Tap Browse effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag a preset from the Effects library onto this clip, or click a preset card.</source>
@@ -11310,6 +11401,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1×%2</source>
+        <translation type="unfinished">%1×%2</translation>
+    </message>
+    <message>
         <source>Choose layout…</source>
         <translation type="unfinished">レイアウトを選択…</translation>
     </message>
@@ -11346,6 +11441,10 @@
         <translation>fps</translation>
     </message>
     <message>
+        <source>Above the project rate, extra frames come from the source footage, which keeps slowed clips smooth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting above the project rate pulls extra frames from the source footage where it has them — this is what makes slowed clips look smooth. Where it doesn&apos;t, frames repeat.</source>
         <translation>プロジェクトレートより高いフレームレートでエクスポートすると、ソース映像に余分なフレームがあればそれを利用します — これによりスロー再生が滑らかになります。ない場合はフレームが繰り返されます。</translation>
     </message>
@@ -11368,6 +11467,10 @@
     <message>
         <source>Constant Quality</source>
         <translation>固定品質</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">品質</translation>
     </message>
     <message>
         <source>Bitrate</source>
@@ -15586,6 +15689,10 @@
         <translation>描画するとこのレイヤーのマスクが置き換えられます</translation>
     </message>
     <message>
+        <source>Drag on the picture to draw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag to draw · Shift for square/circle · Alt from centre</source>
         <translation>ドラッグで描画 · Shift で正方形/円 · Alt で中心から</translation>
     </message>
@@ -18138,6 +18245,14 @@
         <source>No notifications yet.</source>
         <translation>通知はまだありません。</translation>
     </message>
+    <message>
+        <source>No notifications yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Messages about exports, downloads and errors show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NotificationUpdateRow</name>
@@ -20274,6 +20389,10 @@ If playback stutters, try another.</source>
         <translation>カスタム</translation>
     </message>
     <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">%1 をリセット</translation>
+    </message>
+    <message>
         <source>Easing: %1 — click to change</source>
         <translation>イージング: %1 — クリックして変更</translation>
     </message>
@@ -20630,14 +20749,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Balanced</source>
         <translation>バランス</translation>
-    </message>
-    <message>
-        <source>Release to delete</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>In %1 → Out %2</source>
-        <translation type="unfinished">入力 %1 → 出力 %2</translation>
     </message>
 </context>
 <context>
@@ -23921,6 +24032,10 @@ If playback stutters, try another.</source>
         <translation>レイヤーを表示</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">その他</translation>
+    </message>
+    <message>
         <source>Duplicate layer</source>
         <translation>レイヤーを複製</translation>
     </message>
@@ -26292,6 +26407,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Ramp</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Speed ramp</source>
         <translation type="unfinished"></translation>
     </message>
@@ -26499,6 +26618,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
         <translation>カメラのぶれを滑らかにします。Drift はクリップを一度スキャンし、手ぶれ補正済みのコピーをメディアビンにレンダリングして、クリップをそれに切り替えます。滑らかさや三脚の設定を変更しても、適用するまでプレビューは更新されません。</translation>
+    </message>
+    <message>
+        <source>Smooths camera shake with position keyframes. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooths camera shake by rendering a stabilized copy of the clip. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilize</source>
@@ -26772,6 +26899,10 @@ If playback stutters, try another.</source>
     <message>
         <source>No sticker packs installed</source>
         <translation>スタンプパックがインストールされていません</translation>
+    </message>
+    <message>
+        <source>Install the emoji pack, or import your own images with the upload button.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Install the emoji pack to add stickers.</source>
@@ -27069,6 +27200,18 @@ If playback stutters, try another.</source>
         <translation>WebVTT 字幕 (*.vtt)</translation>
     </message>
     <message>
+        <source>Import and export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Timestamps from the start of the video</source>
         <translation>ビデオの先頭からのタイムスタンプ</translation>
     </message>
@@ -27114,6 +27257,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Move to a time inside this clip to add a subtitle</source>
         <translation>このクリップ内の時間に移動して字幕を追加</translation>
+    </message>
+    <message>
+        <source>Add subtitle at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead into this clip to add</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add subtitle at current time</source>
@@ -30596,12 +30747,28 @@ If playback stutters, try another.</source>
         <translation>プレビュー上でトラッキングする特徴点をクリックしてください。</translation>
     </message>
     <message>
+        <source>Tap the feature to track on the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the feature to add to this tracker.</source>
         <translation>クリックしてこのトラッカーに特徴点を追加してください。</translation>
     </message>
     <message>
+        <source>Tap the feature to add to this tracker.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the object the clip should follow.</source>
         <translation>クリップに追従させるオブジェクトをクリックしてください。</translation>
+    </message>
+    <message>
+        <source>Tap the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 corners · tap Done when you have four</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
@@ -31476,6 +31643,10 @@ If playback stutters, try another.</source>
         <translation>選択</translation>
     </message>
     <message>
+        <source>Move the playhead, set a value, then tap the diamond to keyframe it. Auto keyframes does this as you drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider or the preview also creates them.</source>
         <translation>時間を移動し、値を設定して、ダイヤモンドをクリックしてキーフレームを追加します。自動キーフレームがオンの場合、スライダーやプレビューをドラッグしてもキーフレームが作成されます。</translation>
     </message>
@@ -31716,8 +31887,8 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add</source>
-        <translation type="unfinished">加算</translation>
+        <source>Multi-select</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>
@@ -31826,6 +31997,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
+        <source>Tap the + on the cut between two clips to add a transition.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hover the cut between two clips and click + to add a transition.</source>
         <translation>2 つのクリップ間のカットにカーソルを合わせて + をクリックすると、トランジションを追加できます。</translation>
     </message>
@@ -31842,8 +32017,16 @@ If playback stutters, try another.</source>
         <translation>トランジションを追加…</translation>
     </message>
     <message>
+        <source>Overlap transition. Tap the type to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
         <translation>重なりトランジション。トランジションから別の種類をドラッグして置き換えます。</translation>
+    </message>
+    <message>
+        <source>Transition to the next clip. Scrub across the cut to preview it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transition to the next clip. Move across the cut to preview it.</source>

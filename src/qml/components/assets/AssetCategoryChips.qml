@@ -43,7 +43,7 @@ Item {
     onActiveCategoryChanged: _revealActive()
 
     width: parent ? parent.width : 0
-    height: visible ? Theme.controlHeightSm : 0
+    height: visible ? (Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : Theme.controlHeightSm) : 0
     visible: !searching && sections.length > 1
 
     Row {
@@ -63,7 +63,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 glyph: Theme.icons.star
                 variant: "ghost"
-                buttonSize: Theme.controlHeightSm
+                buttonSize: root.height
                 iconSize: 14
                 active: root.activeCategory === root.favoritesId
                 tooltip: qsTr("Favorites")

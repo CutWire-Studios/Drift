@@ -36,22 +36,33 @@ Rectangle {
 
         Repeater {
             model: [
-                { label: qsTr("In"), side: -1 },
-                { label: qsTr("Out"), side: 1 }
+                { label: qsTr("In"), side: -1, name: qsTr("Trim start") },
+                { label: qsTr("Out"), side: 1, name: qsTr("Trim end") }
             ]
 
             delegate: Row {
                 id: group
                 required property var modelData
+                required property int index
                 spacing: 0
+
+                Rectangle {
+                    visible: group.index > 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.c.androidTimelineTrimNudge.borderWidth
+                    height: nudge.height - Theme.spacingMd * 2
+                    color: Theme.c.androidTimelineTrimNudge.border
+                }
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
+                    leftPadding: group.index > 0 ? Theme.spacingSm : 0
                     rightPadding: Theme.spacingXs
                     text: group.modelData.label
                     color: Theme.c.androidTimelineTrimNudge.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeTiny
+                    font.pixelSize: Theme.fontSizeXs
+                    font.weight: Font.Medium
                 }
 
                 Repeater {
@@ -65,12 +76,16 @@ Rectangle {
                         radius: nudge.radius
                         color: tap.pressed ? Theme.c.androidTimelineTrimNudge.pressed : "transparent"
 
-                        Text {
+                        Accessible.role: Accessible.Button
+                        Accessible.name: button.modelData < 0
+                            ? qsTr("%1 one frame earlier").arg(group.modelData.name)
+                            : qsTr("%1 one frame later").arg(group.modelData.name)
+
+                        IconGlyph {
                             anchors.centerIn: parent
-                            text: button.modelData < 0 ? "‹" : "›"
-                            color: Theme.c.androidTimelineTrimNudge.foreground
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeBase * 1.6
+                            glyph: button.modelData < 0 ? Theme.icons.chevronLeft : Theme.icons.chevronRight
+                            iconSize: Theme.iconSizeMd
+                            iconColor: Theme.c.androidTimelineTrimNudge.foreground
                         }
 
                         MouseArea {

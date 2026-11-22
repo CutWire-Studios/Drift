@@ -234,8 +234,14 @@ Item {
     }
 
     // The polygon tool: PathEditor's pen on a draft outline, in the selection's clip frame.
+    readonly property var touchBarItem: polyEditor.touchBarItem
+    readonly property real belowExtent: polyEditor.visible ? polyEditor.belowExtent
+                                        : (Theme.touchInput && drawHint.wanted ? drawHint.height + Theme.spacingSm : 0)
+
     PathEditor {
+        id: polyEditor
         anchors.fill: parent
+        touchBarBelow: Theme.touchInput
         z: 50
         visible: root.polyActive && root.hasFrame
         backend: "draft"
@@ -265,12 +271,16 @@ Item {
     }
 
     Rectangle {
+        id: drawHint
         readonly property bool replaces: root.target.kind === "adjustment"
                                          && EditorState.masking.maskStack(root.target.track, root.target.clip).length > 0
-        visible: root.drawTool && root.target.kind !== "none" && root.editorState.inside && !root.drawing
+        // Held through a drag on touch so the canvas, which leaves room for it below, does not resize.
+        readonly property bool wanted: root.drawTool && root.target.kind !== "none" && root.editorState.inside
+        visible: wanted && !root.drawing
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
+        anchors.bottom: Theme.touchInput ? undefined : parent.bottom
         anchors.bottomMargin: Theme.spacingLg
+        y: Theme.touchInput ? parent.height + Theme.spacingSm : 0
         width: drawHintText.width + Theme.spacingLg * 2
         height: drawHintText.height + Theme.spacingMd * 2
         radius: Theme.c.maskDrawOverlay.radius
@@ -280,7 +290,8 @@ Item {
             id: drawHintText
             anchors.centerIn: parent
             text: parent.replaces ? qsTr("Drawing replaces this layer's mask")
-                                  : qsTr("Drag to draw · Shift for square/circle · Alt from centre")
+                                  : Theme.touchInput ? qsTr("Drag on the picture to draw")
+                                                     : qsTr("Drag to draw · Shift for square/circle · Alt from centre")
             color: Theme.c.maskDrawOverlay.hintForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs

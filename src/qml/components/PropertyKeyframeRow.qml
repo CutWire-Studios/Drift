@@ -32,6 +32,8 @@ Column {
     property bool percent: false
     // Stored value times this is what the row shows and accepts (a scale factor edited as pixels).
     property real displayFactor: 1
+    // Phone layout: a reset button after the readout, running this EditorState transform group reset.
+    property string resetGroup: ""
     property string unit: "" // e.g. "°" — appended to the numeric readout
     // Show the slider readout in decibels with the percentage after it, for gain properties
     // where dB is the scale the value is actually read on. Only meaningful with `percent`,
@@ -50,7 +52,13 @@ Column {
     }
     readonly property color graphColor: Theme.keyframeCurveColor(propDef.key)
 
-    spacing: 4
+    spacing: Theme.touchInput ? Theme.spacingXs : 4
+
+    // On a phone the readout joins the label above the slider and the slider takes the full width,
+    // and the key buttons grow to finger size.
+    readonly property bool phoneLayout: Theme.touchInput && useSlider
+    readonly property real keyButtonSize: Theme.touchInput ? Theme.androidMinTouchTarget : 24
+    readonly property real navButtonSize: Theme.touchInput ? Theme.androidMinTouchTarget - Theme.spacingMd : 20
 
     // Bumped whenever external state that affects the displayed value changes.
     // TextField/Slider bindings are fragile once the user interacts; this forces
@@ -377,16 +385,39 @@ Column {
 
     Item {
         width: root.width
-        height: headerRow.height
+        height: Math.max(headerRow.height, root.phoneLayout ? headerReadout.height : 0, headerReset.visible ? headerReset.height : 0)
+
+        IconButton {
+            id: headerReset
+            visible: root.phoneLayout && root.resetGroup !== ""
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            buttonSize: Theme.androidMinTouchTarget
+            iconSize: Theme.iconSizeBase
+            glyph: Theme.icons.reset
+            Accessible.name: qsTr("Reset %1").arg(root.propDef.label.toLowerCase())
+            onClicked: EditorState.resetClipTransformGroup(
+                           EditorState.selectedTrack, EditorState.selectedClip, root.resetGroup)
+        }
+
+        Item {
+            id: headerReadout
+            anchors.right: headerReset.visible ? headerReset.left : parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: root.phoneLayout ? readoutBox.width : 0
+            height: root.phoneLayout ? readoutBox.height : 0
+        }
 
         Row {
             id: headerRow
+            anchors.verticalCenter: parent.verticalCenter
             width: parent.width
             spacing: 6
 
             KeyframeDiamond {
                 id: diamond
                 anchors.verticalCenter: parent.verticalCenter
+                visible: !root.phoneLayout || root.animated
                 accentColor: root.graphColor
                 animated: root.animated
                 keysEnabled: root.keyframesEnabled
@@ -406,15 +437,18 @@ Column {
                 height: labelText.implicitHeight
                 width: Math.max(24, parent.width - diamond.width
                                       - (easingButton.visible ? easingButton.width + parent.spacing : 0)
+                                      - (root.phoneLayout ? headerReadout.width + parent.spacing : 0)
+                                      - (headerReset.visible ? headerReset.width : 0)
                                       - parent.spacing)
 
                 Text {
                     id: labelText
                     text: root.propDef.label
-                    color: root.animated && root.keyframesEnabled ? Theme.c.propertyKeyframeRow.foreground
-                                                                  : Theme.c.propertyKeyframeRow.foregroundMuted
+                    color: root.animated && root.keyframesEnabled || root.phoneLayout
+                           ? Theme.c.propertyKeyframeRow.foreground
+                           : Theme.c.propertyKeyframeRow.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.phoneLayout ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.weight: root.animated && root.keyframesEnabled ? Font.Medium : Font.Normal
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
@@ -425,7 +459,7 @@ Column {
 
             Item {
                 id: easingButton
-                readonly property real buttonSize: Theme.touchInput ? 28 : 22
+                readonly property real buttonSize: Theme.touchInput ? Theme.androidMinTouchTarget - Theme.spacingMd : 22
                 visible: root.activeKey !== null && root.keyframeList.length >= 2
                 anchors.verticalCenter: parent.verticalCenter
                 width: buttonSize
@@ -487,14 +521,14 @@ Column {
 
         Row {
             id: keyframeNavRow
-            spacing: 2
+            spacing: Theme.touchInput ? 0 : 2
             anchors.verticalCenter: parent.verticalCenter
             visible: root.animated
 
             IconButton {
                 id: prevKeyButton
-                buttonSize: 20
-                iconSize: 12
+                buttonSize: root.navButtonSize
+                iconSize: root.phoneLayout ? Theme.iconSizeBase : 12
                 glyph: Theme.icons.chevronLeft
                 tooltip: qsTr("Previous keyframe")
                 enabled: root.hasPrevKeyframe
@@ -506,8 +540,8 @@ Column {
 
             IconButton {
                 id: keyButton
-                buttonSize: 24
-                iconSize: 16
+                buttonSize: root.keyButtonSize
+                iconSize: root.phoneLayout ? Theme.iconSizeLg : 16
                 glyph: root.activeKey ? Theme.icons.diamondMinus : Theme.icons.diamondPlus
                 tooltip: root.activeKey
                          ? qsTr("Remove %1's keyframe at the playhead").arg(root.propDef.label)
@@ -526,8 +560,8 @@ Column {
 
             IconButton {
                 id: nextKeyButton
-                buttonSize: 20
-                iconSize: 12
+                buttonSize: root.navButtonSize
+                iconSize: root.phoneLayout ? Theme.iconSizeBase : 12
                 glyph: Theme.icons.chevronRight
                 tooltip: qsTr("Next keyframe")
                 enabled: root.hasNextKeyframe
@@ -542,8 +576,8 @@ Column {
             id: singleKeyButton
             visible: !root.animated
             anchors.verticalCenter: parent.verticalCenter
-            buttonSize: 24
-            iconSize: 16
+            buttonSize: root.keyButtonSize
+            iconSize: root.phoneLayout ? Theme.iconSizeLg : 16
             glyph: Theme.icons.diamondPlus
             tooltip: qsTr("Add a keyframe for %1 at the playhead").arg(root.propDef.label)
             onClicked: {
@@ -617,6 +651,7 @@ Column {
 
         // Slider (opt-in), in place of the numeric field.
         Row {
+            id: sliderRow
             visible: root.useSlider
             width: valueRow.editorWidth
             spacing: 8
@@ -625,7 +660,8 @@ Column {
                 id: valueSlider
                 lockWhilePlaying: !root.editableWhilePlaying || root.animated || EditorState.autoKeyEnabled
                 label: root.propDef.label
-                width: parent.width - readoutBox.width - parent.spacing
+                width: root.phoneLayout ? parent.width : parent.width - readoutBox.width - parent.spacing
+                height: root.phoneLayout ? Theme.androidMinTouchTarget : implicitHeight
                 anchors.verticalCenter: parent.verticalCenter
                 from: root.sliderFrom
                 to: root.sliderTo
@@ -703,12 +739,13 @@ Column {
             // Escape discards.
             Item {
                 id: readoutBox
+                parent: root.phoneLayout ? headerReadout : sliderRow
                 // The dB readout's width swings with the value ("0.0 dB (100%)" vs "-∞ dB
                 // (0%)"), and the slider is sized off this — so hold a floor wide enough for
                 // the longest form, or the track resizes under the thumb mid-drag.
                 width: Math.max(root.decibels ? 112 : 48,
                                 readout.implicitWidth + Theme.spacingMd * 2)
-                height: Theme.controlHeightSm
+                height: root.phoneLayout ? readout.implicitHeight + Theme.spacingMd : Theme.controlHeightSm
                 anchors.verticalCenter: parent.verticalCenter
 
                 property bool typing: false
@@ -752,7 +789,7 @@ Column {
                     horizontalAlignment: Text.AlignRight
                     text: root.sliderReadout(root.displayedValue)
                     color: Theme.c.propertyKeyframeRow.foreground
-                    font.family: Theme.monoFontFamily
+                    font.family: root.phoneLayout ? Theme.fontFamily : Theme.monoFontFamily
                     font.pixelSize: Theme.fontSizeSm
                 }
 

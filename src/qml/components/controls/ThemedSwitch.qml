@@ -16,6 +16,9 @@ Switch {
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
     spacing: Theme.spacingLg
+    implicitHeight: Math.max(implicitContentHeight + topPadding + bottomPadding,
+                             implicitIndicatorHeight + topPadding + bottomPadding,
+                             Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : 0)
 
     Accessible.role: Accessible.CheckBox
     Accessible.name: text.length > 0 ? text : tooltip

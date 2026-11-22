@@ -47,6 +47,15 @@ AndroidAddPage {
 
     Component.onDestruction: EditorState.preview.maskingTool = ""
 
+    // A drawing tool's touch bars hang under the canvas, so the preview needs the room.
+    Binding {
+        target: root.scaffold
+        property: "previewFraction"
+        value: EditorState.preview.maskingTool !== "" ? 0.66 : 0.4
+        when: root.scaffold !== null
+        restoreMode: Binding.RestoreNone
+    }
+
     Connections {
         target: EditorState
         function onSelectionChanged() { Qt.callLater(root.adoptToolMask) }
@@ -67,63 +76,73 @@ AndroidAddPage {
         MasksInspector { }
     }
 
-    Flow {
-        id: toolRow
-        x: Theme.pagePadding
-        y: Theme.spacingSm
-        width: parent.width - Theme.pagePadding * 2
-        spacing: Theme.spacingSm
-
-        Repeater {
-            model: root.tools
-
-            ThemedChip {
-                required property var modelData
-                readonly property bool unavailable: modelData.id === "ai" && !root.aiRuntimeReady
-                chipHeight: Theme.androidMinTouchTarget
-                text: modelData.label
-                variant: "outline"
-                enabled: !unavailable && (modelData.id === "" || root.targetId !== "")
-                selected: EditorState.preview.maskingTool === modelData.id
-                tooltip: modelData.label
-                tooltipState: unavailable ? qsTr("Needs AI Engine") : ""
-                onClicked: root.useTool(modelData.id, modelData.draw)
-            }
-        }
-    }
-
     Flickable {
-        id: scroll
-        anchors.top: toolRow.bottom
-        anchors.topMargin: Theme.spacingSm
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        contentHeight: maskGrid.height + Theme.pagePadding * 2
+        id: toolRow
+        y: Theme.spacingSm
+        width: parent.width
+        height: Theme.androidMinTouchTarget
+        contentWidth: toolChips.width + Theme.pagePadding * 2
+        contentHeight: height
         clip: true
+        flickableDirection: Flickable.HorizontalFlick
         boundsBehavior: Flickable.StopAtBounds
-        ScrollBar.vertical: AppScrollBar { }
 
-        Grid {
-            id: maskGrid
+        Row {
+            id: toolChips
             x: Theme.pagePadding
-            y: Theme.pagePadding
-            width: scroll.width - Theme.pagePadding * 2
-            columns: Math.max(1, Math.round((width + Theme.assetCardGap) / (Theme.assetCardWidth + Theme.assetCardGap)))
-            readonly property real cardSize: Math.floor((width + Theme.assetCardGap) / columns) - Theme.assetCardGap
-            columnSpacing: Theme.assetCardGap
-            rowSpacing: Theme.assetCardGap
+            spacing: Theme.spacingSm
 
             Repeater {
-                model: root.masks
-                delegate: MaskPresetCard {
-                    cardSize: maskGrid.cardSize
-                    hasVisualSelection: root.targetId !== ""
-                    pickerMode: true
-                    picked: root.pickedMask === modelData.id
-                    onApplyRequested: (maskId) => root.applyMask(maskId)
+                model: root.tools
+
+                ThemedChip {
+                    required property var modelData
+                    readonly property bool unavailable: modelData.id === "ai" && !root.aiRuntimeReady
+                    chipHeight: Theme.androidMinTouchTarget
+                    text: modelData.label
+                    variant: "outline"
+                    enabled: !unavailable && (modelData.id === "" || root.targetId !== "")
+                    selected: EditorState.preview.maskingTool === modelData.id
+                    tooltip: modelData.label
+                    tooltipState: unavailable ? qsTr("Needs AI Engine") : ""
+                    onClicked: root.useTool(modelData.id, modelData.draw)
                 }
             }
+            }
+        }
+
+        Flickable {
+            id: scroll
+            anchors.top: toolRow.bottom
+            anchors.topMargin: Theme.spacingSm
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            contentHeight: maskGrid.height + Theme.pagePadding * 2
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: AppScrollBar { }
+
+            Grid {
+                id: maskGrid
+                x: Theme.pagePadding
+                y: Theme.pagePadding
+                width: scroll.width - Theme.pagePadding * 2
+                columns: Math.max(1, Math.round((width + Theme.assetCardGap) / (Theme.assetCardWidth + Theme.assetCardGap)))
+                readonly property real cardSize: Math.floor((width + Theme.assetCardGap) / columns) - Theme.assetCardGap
+                columnSpacing: Theme.assetCardGap
+                rowSpacing: Theme.assetCardGap
+
+                Repeater {
+                    model: root.masks
+                    delegate: MaskPresetCard {
+                        cardSize: maskGrid.cardSize
+                        hasVisualSelection: root.targetId !== ""
+                        pickerMode: true
+                        picked: root.pickedMask === modelData.id
+                        onApplyRequested: (maskId) => root.applyMask(maskId)
+                    }
+                }
         }
     }
 }

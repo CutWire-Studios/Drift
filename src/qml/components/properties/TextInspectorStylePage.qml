@@ -18,16 +18,19 @@ Column {
     visible: inspector.showStyle && inspector.hasTextStyle
 
     TextInspectorPresetSection {
+        visible: inspector.showPreset && inspector.hasTextStyle
         width: parent.width
         inspector: root.inspector
     }
     TextInspectorLookSection {
         id: lookSection
+        visible: inspector.showLook && inspector.hasTextStyle
         width: parent.width
         inspector: root.inspector
     }
     TextInspectorAccentSection {
         id: accentSection
+        visible: inspector.showLook && inspector.hasTextStyle
         width: parent.width
         inspector: root.inspector
     }

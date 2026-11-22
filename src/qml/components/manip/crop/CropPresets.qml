@@ -11,7 +11,7 @@ Row {
     // False leaves just the thirds toggle, for a crop whose ratio something else sets.
     property bool aspectChips: true
     property bool thirds: true
-    property real chipHeight: Theme.controlHeightSm
+    property real chipHeight: Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : Theme.controlHeightSm
     property string variant: "secondary"
 
     signal picked(real ratio)

@@ -7,6 +7,7 @@ Item {
 
     property int clipDataRevision: 0
     property bool sourceBoxRatioLocked: true
+    readonly property real labelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
     readonly property var clipData: {
         void clipDataRevision
         return EditorState.selectedClipData
@@ -245,7 +246,7 @@ Item {
                 }
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
             Row {
                 width: parent.width
@@ -284,7 +285,7 @@ Item {
                 }
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
             Row {
                 width: parent.width
@@ -316,7 +317,7 @@ Item {
                 text: qsTr("Type")
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
             Text {
                 // Human label rather than the raw internal id.
@@ -356,7 +357,7 @@ Item {
                         }
                         color: Theme.c.generalInspector.foregroundMuted
                         font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: root.labelSize
                         font.weight: Font.Medium
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - ratioLockButton.width - parent.spacing
@@ -393,7 +394,7 @@ Item {
                         Text {
                             text: "X"
                             color: Theme.c.generalInspector.foregroundMuted
-                            font.pixelSize: Theme.fontSizeXs
+                            font.pixelSize: root.labelSize
                             font.family: Theme.fontFamily
                         }
                         ThemedNumberField {
@@ -417,7 +418,7 @@ Item {
                         Text {
                             text: "Y"
                             color: Theme.c.generalInspector.foregroundMuted
-                            font.pixelSize: Theme.fontSizeXs
+                            font.pixelSize: root.labelSize
                             font.family: Theme.fontFamily
                         }
                         ThemedNumberField {
@@ -446,7 +447,7 @@ Item {
                         Text {
                             text: qsTr("Width")
                             color: Theme.c.generalInspector.foregroundMuted
-                            font.pixelSize: Theme.fontSizeXs
+                            font.pixelSize: root.labelSize
                             font.family: Theme.fontFamily
                         }
                         ThemedNumberField {
@@ -467,7 +468,7 @@ Item {
                         Text {
                             text: qsTr("Height")
                             color: Theme.c.generalInspector.foregroundMuted
-                            font.pixelSize: Theme.fontSizeXs
+                            font.pixelSize: root.labelSize
                             font.family: Theme.fontFamily
                         }
                         ThemedNumberField {
@@ -490,7 +491,7 @@ Item {
                     Text {
                         text: qsTr("Straighten")
                         color: Theme.c.generalInspector.foregroundMuted
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: root.labelSize
                         font.family: Theme.fontFamily
                     }
                     ThemedNumberField {
@@ -532,7 +533,7 @@ Item {
                 Text {
                     text: qsTr("Starts at")
                     color: Theme.c.generalInspector.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                     font.family: Theme.fontFamily
                 }
                 ThemedNumberField {
@@ -559,7 +560,7 @@ Item {
                         keywords: "length"
                     }
                     color: Theme.c.generalInspector.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                     font.family: Theme.fontFamily
                 }
                 ThemedNumberField {
@@ -599,7 +600,7 @@ Item {
                 ThemedToolTip { id: tip1217; property bool held: false; text: qsTr("Which part of the original file this clip plays"); visible: tipHover1217.hovered || held }
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
 
             Row {
@@ -620,7 +621,7 @@ Item {
                         }
                         ThemedToolTip { id: tip1231; property bool held: false; text: qsTr("Seconds into the file where this clip starts"); visible: tipHover1231.hovered || held }
                         color: Theme.c.generalInspector.foregroundMuted
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: root.labelSize
                         font.family: Theme.fontFamily
                     }
                     ThemedNumberField {
@@ -650,7 +651,7 @@ Item {
                         }
                         ThemedToolTip { id: tip1252; property bool held: false; text: qsTr("Seconds into the file where this clip ends"); visible: tipHover1252.hovered || held }
                         color: Theme.c.generalInspector.foregroundMuted
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: root.labelSize
                         font.family: Theme.fontFamily
                     }
                     ThemedNumberField {
@@ -698,7 +699,7 @@ Item {
                 text: qsTr("File")
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
 
             Text {

@@ -5,7 +5,8 @@ ScrollStrip {
     id: root
     property var inspector
     width: parent.width
-    height: Theme.controlHeightSm
+    readonly property bool phone: Theme.touchInput && Theme.compact
+    height: phone ? Theme.androidMinTouchTarget : Theme.controlHeightSm
     visible: inspector.animCategories.length > 1
 
     Row {
@@ -17,8 +18,8 @@ ScrollStrip {
             anchors.verticalCenter: parent.verticalCenter
             glyph: Theme.icons.star
             variant: "ghost"
-            buttonSize: Theme.controlHeightSm
-            iconSize: 14
+            buttonSize: root.phone ? Theme.androidMinTouchTarget : Theme.controlHeightSm
+            iconSize: root.phone ? Theme.iconSizeMd : 14
             active: inspector.animFavoritesOnly
             tooltip: qsTr("Favorites")
             onClicked: inspector.animFavoritesOnly = !inspector.animFavoritesOnly

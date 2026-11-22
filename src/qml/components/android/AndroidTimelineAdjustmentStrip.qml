@@ -15,7 +15,7 @@ Item {
     property int trackIndex: modelData
 
     height: Theme.adjustmentLaneHeight
-    opacity: laneStrip.panel.tracks[trackIndex].hidden === true ? 0.4 : 1
+    opacity: laneStrip.panel.tracks[trackIndex]?.hidden === true ? 0.4 : 1
 
     Rectangle {
         anchors.fill: parent

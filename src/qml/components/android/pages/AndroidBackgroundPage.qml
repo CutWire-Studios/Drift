@@ -110,31 +110,37 @@ Item {
 
             ScrollStrip {
                 width: parent.width
-                height: 44
+                height: Theme.androidMinTouchTarget
 
                 Row {
-                    spacing: Theme.spacingMd
                     anchors.verticalCenter: parent.verticalCenter
 
                     Repeater {
                         model: root.swatches
 
-                        delegate: Rectangle {
+                        delegate: Item {
+                            id: swatch
                             required property string modelData
                             readonly property bool current: root.background.kind === "color"
                                                             && Qt.colorEqual(modelData, root.currentHex)
-                            width: 36
-                            height: 36
-                            radius: Theme.radiusPill
-                            color: modelData
-                            border.width: current ? 3 : Theme.c.androidToolPage.borderWidth
-                            border.color: current ? Theme.c.androidToolPage.foreground
-                                                  : Theme.c.androidToolPage.border
+                            width: Theme.androidMinTouchTarget
+                            height: Theme.androidMinTouchTarget
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: Theme.androidMinTouchTarget - Theme.spacingXl
+                                height: width
+                                radius: Theme.radiusPill
+                                color: swatch.modelData
+                                border.width: swatch.current ? 3 : Theme.c.androidToolPage.borderWidth
+                                border.color: swatch.current ? Theme.c.androidToolPage.foreground
+                                                             : Theme.c.androidToolPage.border
+                            }
 
                             TapHandler {
                                 onTapped: {
                                     Haptics.press()
-                                    root.setColor(parent.modelData)
+                                    root.setColor(swatch.modelData)
                                 }
                             }
                         }
@@ -148,8 +154,8 @@ Item {
             }
         }
 
-        ThemedSlider {
-            width: parent.width
+        AndroidSliderRow {
+            id: blurRow
             visible: root.section === "blur"
             label: qsTr("Blur strength")
             from: 1
@@ -157,10 +163,7 @@ Item {
             stepSize: 1
             valueFormatter: function (v) { return Math.round(v) }
             value: root.background.blurStrength || 20
-            onPressedChanged: {
-                if (!pressed)
-                    EditorState.projectFile.setBackground({ kind: "blur", blurStrength: value })
-            }
+            onDragEnded: EditorState.projectFile.setBackground({ kind: "blur", blurStrength: blurRow.liveValue })
         }
 
         Column {
@@ -180,7 +183,7 @@ Item {
                 text: qsTr("The image is added on a new bottom track for the length of the video, scaled to fill the frame.")
                 color: Theme.c.androidToolPage.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: Theme.fontSizeSm
             }
         }
     }

@@ -4,8 +4,9 @@ import Drift
 Rectangle {
     property var card
     property var inspector
+    readonly property bool phone: Theme.touchInput && Theme.compact
     width: parent.width
-    height: effectHeader.implicitHeight + 8
+    height: phone ? Theme.androidMinTouchTarget : effectHeader.implicitHeight + 8
     radius: Theme.c.effectsEffectHeader.radius
     color: Theme.c.effectsEffectHeader.background
 
@@ -106,9 +107,9 @@ Rectangle {
             color: card.effectEnabled
                    ? Theme.c.effectsEffectHeader.foreground : Theme.c.effectsEffectHeader.foregroundDisabled
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeSm
+            font.pixelSize: phone ? Theme.fontSizeBase : Theme.fontSizeSm
             font.weight: Font.Medium
-            width: parent.width - 22 * 5 - 8
+            width: parent.width - (phone ? Theme.androidMinTouchTarget * 2 : 22 * 5) - 8
             elide: Text.ElideRight
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -118,6 +119,7 @@ Rectangle {
             buttonSize: 22
             iconSize: 12
             enabled: card.index > 0
+            visible: !phone
             tooltip: qsTr("Move effect up")
             onClicked: EditorState.moveEffect(
                            EditorState.selectedTrack, EditorState.selectedClip,
@@ -129,6 +131,7 @@ Rectangle {
             buttonSize: 22
             iconSize: 12
             enabled: card.index < inspector.selectedEffects.length - 1
+            visible: !phone
             tooltip: qsTr("Move effect down")
             onClicked: EditorState.moveEffect(
                            EditorState.selectedTrack, EditorState.selectedClip,
@@ -137,8 +140,8 @@ Rectangle {
         IconButton {
             glyph: card.effectEnabled ? Theme.icons.eye : Theme.icons.eyeOff
             variant: "ghost"
-            buttonSize: 22
-            iconSize: 12
+            buttonSize: phone ? Theme.androidMinTouchTarget : 22
+            iconSize: phone ? Theme.iconSizeMd : 12
             tooltip: card.effectEnabled
                      ? qsTr("Disable effect") : qsTr("Enable effect")
             onClicked: EditorState.setEffectEnabled(
@@ -150,6 +153,7 @@ Rectangle {
             variant: "ghost"
             buttonSize: 22
             iconSize: 12
+            visible: !phone
             tooltip: qsTr("Copy this effect")
             onClicked: EditorState.copyEffectToClipboard(
                            EditorState.selectedTrack, EditorState.selectedClip,
@@ -160,10 +164,21 @@ Rectangle {
             variant: "ghost"
             buttonSize: 22
             iconSize: 12
+            visible: !phone
             tooltip: qsTr("Remove effect")
             onClicked: EditorState.removeEffect(
                            EditorState.selectedTrack, EditorState.selectedClip,
                            card.index)
+        }
+        IconButton {
+            id: moreButton
+            visible: phone
+            glyph: Theme.icons.ellipsis
+            variant: "ghost"
+            buttonSize: Theme.androidMinTouchTarget
+            iconSize: Theme.iconSizeMd
+            tooltip: qsTr("More")
+            onClicked: effectCardMenu.popup(moreButton, 0, moreButton.height)
         }
     }
 }

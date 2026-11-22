@@ -7,6 +7,7 @@ import Drift
 Column {
     id: root
     spacing: 0
+    readonly property bool phone: Theme.touchInput && Theme.compact
 
     // Bumped when an addon changes the effects on disk (an imported .driftfx, a pack install).
     property int catalogTick: 0
@@ -53,6 +54,7 @@ Column {
             historyKey: "effects"
 
             IconButton {
+                visible: !root.phone
                 glyph: Theme.icons.wand
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
@@ -72,6 +74,7 @@ Column {
             }
 
             IconButton {
+                visible: !root.phone
                 glyph: Theme.icons.download
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
@@ -80,12 +83,34 @@ Column {
             }
 
             IconButton {
-                visible: !ShellBridge.phoneShell
+                visible: !ShellBridge.phoneShell && !root.phone
                 glyph: Theme.icons.sparkles
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
                 tooltip: qsTr("Create a new effect in Forge")
                 onClicked: Forge.createNew("effect")
+            }
+        }
+
+        Row {
+            id: phoneActions
+            visible: root.phone
+            x: Theme.pagePadding
+            height: visible ? Theme.androidMinTouchTarget : 0
+            spacing: Theme.spacingSm
+
+            ThemedChip {
+                text: qsTr("Adjustment layer")
+                glyph: Theme.icons.wand
+                variant: "outline"
+                onClicked: EditorState.addAdjustmentClip(-1, -1)
+            }
+
+            ThemedChip {
+                text: qsTr("Import")
+                glyph: Theme.icons.download
+                variant: "outline"
+                onClicked: ShellBridge.main.importUserPackage("")
             }
         }
 
@@ -106,7 +131,7 @@ Column {
         Item {
             width: parent.width
             height: Math.max(0, parent.height - search.height - Theme.spacingSm
-                             - categoryChips.height)
+                             - phoneActions.height - categoryChips.height)
 
             Text {
                 id: emptySearchHint

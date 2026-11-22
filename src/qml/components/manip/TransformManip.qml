@@ -58,7 +58,9 @@ ManipOverlay {
     hudEditable: activeBox !== null ? !touchDrag : gizmo.dragging !== ""
     hudUnit: activeBox ? activeBox.typedUnit : (gizmo.dragging !== "" ? gizmoUnit : "")
     chipModifiers: touchBarItem && !mode3d ? touchBarItem.modifiers : null
-    touchBar: touch ? (mode3d ? touchBar3dComponent : touchBarComponent) : null
+    // False drops the flat view's chip bar; the 3D view's bar is how its gizmo is driven, so it stays.
+    property bool showTouchBar: true
+    touchBar: touch ? (mode3d ? touchBar3dComponent : showTouchBar ? touchBarComponent : null) : null
 
     // What a number typed into the HUD of a gizmo drag means.
     readonly property string gizmoUnit: {
@@ -497,7 +499,7 @@ ManipOverlay {
 
             ThemedChip {
                 chipHeight: Theme.androidMinTouchTarget
-                text: qsTr("Add")
+                text: qsTr("Multi-select")
                 selected: root.addToSelection
                 onClicked: root.addToSelection = !root.addToSelection
             }

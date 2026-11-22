@@ -176,7 +176,6 @@ Item {
             model: root.curveModel
             delegate: ThemedChip {
                 required property var modelData
-                chipHeight: Theme.androidMinTouchTarget
                 text: modelData.label
                 selected: modelData.id === chips.curve
                           || (modelData.id === "custom" && chips.curve === "bezier")
@@ -213,7 +212,6 @@ Item {
                     delegate: ThemedChip {
                         required property var modelData
                         width: (parent.width - Theme.spacingSm) / 2
-                        chipHeight: Theme.androidMinTouchTarget
                         text: modelData.label
                         selected: root.edge === modelData.id
                         onClicked: root.edge = modelData.id
@@ -223,22 +221,27 @@ Item {
 
             Column {
                 width: parent.width
-                spacing: Theme.spacingXl
+                spacing: Theme.spacingMd
 
-                ThemedLabel {
+                Text {
                     width: parent.width
+                    wrapMode: Text.WordWrap
                     text: root.supportsAnim ? qsTr("Fade also ramps the volume.") : qsTr("Fade ramps the volume.")
+                    color: Theme.c.androidAnimationPage.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSm
                 }
 
-                AndroidFadeSliderRow {
+                AndroidSliderRow {
                     id: fadeRow
-                    width: parent.width
-                    modelData: ({ label: root.isIn ? qsTr("Fade in") : qsTr("Fade out") })
-                    current: root.isIn ? root.fadeIn : root.fadeOut
-                    maxFade: root.maxLength
-                    formatSeconds: function(v) { return root.formatSeconds(v) }
-                    onPreviewBegan: EditorState.beginPreviewDrag(fadeRow.modelData.label)
-                    onPreviewEnded: EditorState.commitPreviewDrag()
+                    label: root.isIn ? qsTr("Fade in") : qsTr("Fade out")
+                    value: root.isIn ? root.fadeIn : root.fadeOut
+                    from: 0
+                    to: root.maxLength
+                    stepSize: 0.1
+                    valueFormatter: root.formatSeconds
+                    onDragBegan: EditorState.beginPreviewDrag(fadeRow.label)
+                    onDragEnded: EditorState.commitPreviewDrag()
                     onMoved: (value) => {
                         if (root.isIn)
                             root.setFades(value, root.fadeOut)
@@ -247,7 +250,7 @@ Item {
                     }
                 }
 
-                ThemedLabel {
+                AndroidPageSection {
                     text: qsTr("Fade curve")
                 }
 
@@ -260,9 +263,9 @@ Item {
             Column {
                 visible: root.supportsAnim
                 width: parent.width
-                spacing: Theme.spacingXl
+                spacing: Theme.spacingMd
 
-                ThemedLabel {
+                AndroidPageSection {
                     text: qsTr("Animation")
                 }
 
@@ -317,7 +320,7 @@ Item {
                                     color: tile.chosen ? Theme.c.androidAnimationPage.tileForegroundSelected
                                                        : Theme.c.androidAnimationPage.foreground
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSizeXs
+                                    font.pixelSize: Theme.fontSizeSm
                                     horizontalAlignment: Text.AlignHCenter
                                     elide: Text.ElideRight
                                 }
@@ -334,59 +337,29 @@ Item {
                     }
                 }
 
-                Column {
-                    width: parent.width
-                    spacing: Theme.spacingSm
+                AndroidSliderRow {
+                    id: durationRow
                     enabled: root.animKind !== "none"
-                    opacity: enabled ? 1 : 0.5
-
-                    Item {
-                        width: parent.width
-                        height: Math.max(durationLabel.implicitHeight, durationValue.implicitHeight)
-
-                        ThemedLabel {
-                            id: durationLabel
-                            anchors.left: parent.left
-                            text: qsTr("Duration")
-                            size: "sm"
-                        }
-                        Text {
-                            id: durationValue
-                            anchors.right: parent.right
-                            text: root.formatSeconds(durationSlider.value)
-                            color: Theme.c.androidAnimationPage.foregroundMuted
-                            font.family: Theme.monoFontFamily
-                            font.pixelSize: Theme.fontSizeSm
-                        }
-                    }
-
-                    ThemedSlider {
-                        id: durationSlider
-                        width: parent.width
-                        from: 0.1
-                        to: root.maxLength
-                        stepSize: 0.05
-                        label: qsTr("Duration")
-                        valueFormatter: root.formatSeconds
-                        Binding on value {
-                            when: !durationSlider.pressed
-                            value: Math.min(root.maxLength, root.anim.duration || 0.5)
-                        }
-                        onPressedChanged: {
-                            if (pressed)
-                                return
-                            EditorState.setClipAnimation(EditorState.selectedTrack, EditorState.selectedClip,
-                                                         root.animKey, { duration: durationSlider.value })
-                            root.previewAnimation(root.animKey, root.animKind, durationSlider.value)
-                        }
+                    label: qsTr("Duration")
+                    value: Math.min(root.maxLength, root.anim.duration || 0.5)
+                    from: 0.1
+                    to: root.maxLength
+                    stepSize: 0.05
+                    valueFormatter: root.formatSeconds
+                    onPressedChanged: {
+                        if (pressed)
+                            return
+                        EditorState.setClipAnimation(EditorState.selectedTrack, EditorState.selectedClip,
+                                                     root.animKey, { duration: durationRow.liveValue })
+                        root.previewAnimation(root.animKey, root.animKind, durationRow.liveValue)
                     }
                 }
 
                 Column {
                     width: parent.width
-                    spacing: Theme.spacingSm
+                    spacing: Theme.spacingMd
 
-                    ThemedLabel {
+                    AndroidPageSection {
                         text: qsTr("Animation curve")
                     }
 
@@ -397,10 +370,14 @@ Item {
                     }
                 }
 
-                ThemedLabel {
+                Text {
                     visible: root.clipKind === "text"
                     width: parent.width
+                    wrapMode: Text.WordWrap
                     text: qsTr("Letter and word animations live in Text animation. This moves the whole clip.")
+                    color: Theme.c.androidAnimationPage.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSm
                 }
             }
         }

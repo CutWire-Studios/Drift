@@ -110,7 +110,8 @@ Item {
             visible: root.selectedEffects.length === 0
             glyph: Theme.icons.wand
             title: qsTr("No effects yet")
-            hint: qsTr("Drag a preset from the Effects library onto this clip, or click a preset card.")
+            hint: Theme.touchInput ? qsTr("Tap Browse effects and pick a preset.")
+                                   : qsTr("Drag a preset from the Effects library onto this clip, or click a preset card.")
             actionText: qsTr("Browse effects")
             onActionTriggered: root.browseEffectsRequested()
         }

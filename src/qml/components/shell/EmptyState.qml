@@ -27,8 +27,12 @@ Item {
     signal secondaryTriggered()
 
     // Parents that size from this item's height report exactly the full layout, so they
-    // always fit; a zero-height parent is treated as not laid out yet.
-    readonly property real available: parent && parent.height > 0 ? parent.height : Infinity
+    // always fit; a zero-height parent is treated as not laid out yet. A positioner (Column,
+    // Row, Flow) is sized by its children, this one included, so its height is no budget: read
+    // as one, it hid the action that would have grown it (the phone Audio FX page lost its only
+    // way to add an effect).
+    readonly property real available: !parent || parent.height <= 0 || typeof parent.forceLayout === "function"
+                                      ? Infinity : parent.height
     function layoutHeight(icon, hint, action) {
         let n = 0
         let h = 0

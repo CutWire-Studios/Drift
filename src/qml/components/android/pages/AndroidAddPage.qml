@@ -59,28 +59,14 @@ Item {
         EditorState.previewClipRange(EditorState.selectedTrack, EditorState.selectedClip)
     }
 
-    Row {
+    AndroidTabStrip {
         id: chips
         visible: root.hasClip && root.propertiesComponent !== null
-        x: Theme.pagePadding
-        height: visible ? Theme.controlHeight : 0
-        spacing: Theme.spacingSm
-
-        ThemedChip {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Library")
-            variant: "outline"
-            selected: !root.showProperties
-            onClicked: root.showProperties = false
-        }
-
-        ThemedChip {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Properties")
-            variant: "outline"
-            selected: root.showProperties
-            onClicked: root.showProperties = true
-        }
+        width: parent.width
+        height: visible ? implicitHeight : 0
+        tabs: [{ id: "library", label: qsTr("Library") }, { id: "properties", label: qsTr("Properties") }]
+        currentId: root.showProperties ? "properties" : "library"
+        onTabSelected: tabId => root.showProperties = tabId === "properties"
     }
 
     Item {

@@ -470,10 +470,6 @@
         <translation>Regola %1</translation>
     </message>
     <message>
-        <source>Reset</source>
-        <translation>Reimposta</translation>
-    </message>
-    <message>
         <source>Reset %1</source>
         <translation>Reimposta %1</translation>
     </message>
@@ -836,6 +832,10 @@
         <translation>Video</translation>
     </message>
     <message>
+        <source>Straighten</source>
+        <translation type="unfinished">Raddrizza</translation>
+    </message>
+    <message>
         <source>Rotate</source>
         <translation>Ruota</translation>
     </message>
@@ -925,18 +925,6 @@
         <translation>Aggiungi testo</translation>
     </message>
     <message>
-        <source>Text style</source>
-        <translation>Stile testo</translation>
-    </message>
-    <message>
-        <source>Text settings</source>
-        <translation>Impostazioni testo</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>Animazione testo</translation>
-    </message>
-    <message>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -1021,12 +1009,8 @@
         <translation>La timeline è vuota</translation>
     </message>
     <message>
-        <source>Import media or open the Media library to start editing.</source>
-        <translation>Importa elementi multimediali o apri la libreria multimediale per iniziare a modificare.</translation>
-    </message>
-    <message>
-        <source>Open Media</source>
-        <translation>Apri elementi multimediali</translation>
+        <source>Clips you add appear here as layers.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1868,6 +1852,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidMotionPage</name>
+    <message>
+        <source>Not an animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Motion settings apply to Lottie and SVG clips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidMyVideosTab</name>
     <message>
         <source>Video actions</source>
@@ -1900,6 +1895,18 @@
 <context>
     <name>AndroidPreview</name>
     <message>
+        <source>No media yet</source>
+        <translation type="unfinished">Nessun elemento multimediale finora</translation>
+    </message>
+    <message>
+        <source>Add a video, photo or audio file to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Seek</source>
         <translation>Cerca</translation>
     </message>
@@ -1929,6 +1936,10 @@
     <message>
         <source>Quality: %1</source>
         <translation>Qualità: %1</translation>
+    </message>
+    <message>
+        <source>Hardware</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>3D view</source>
@@ -2037,8 +2048,8 @@
         <translation>Ritaglia dimensioni video</translation>
     </message>
     <message>
-        <source>Drag the preview edges to change what’s included</source>
-        <translation>Trascina i bordi dell&apos;anteprima per modificare cosa includere</translation>
+        <source>Trim the frame to a smaller area</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties</source>
@@ -2055,6 +2066,14 @@
     <message>
         <source>Sync and switch between angles</source>
         <translation>Sincronizza e passa da un&apos;angolazione all&apos;altra</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation type="unfinished">Notifiche</translation>
+    </message>
+    <message>
+        <source>Recent messages and finished jobs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -2194,10 +2213,10 @@
     </message>
 </context>
 <context>
-    <name>AndroidSpeedPage</name>
+    <name>AndroidSliderRow</name>
     <message>
-        <source>Speed curve</source>
-        <translation>Curva di velocità</translation>
+        <source>Reset</source>
+        <translation type="unfinished">Reimposta</translation>
     </message>
 </context>
 <context>
@@ -2262,10 +2281,30 @@
     </message>
 </context>
 <context>
-    <name>AndroidTextPage</name>
+    <name>AndroidTextTabs</name>
     <message>
-        <source>Edit text</source>
-        <translation>Modifica testo</translation>
+        <source>Font</source>
+        <translation type="unfinished">Carattere</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">Stile</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Effetti</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animazione</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation type="unfinished">Layout</translation>
+    </message>
+    <message>
+        <source>Tap to type text</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2430,8 +2469,24 @@
         <translation>In entrata</translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Out</source>
         <translation>In uscita</translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 one frame later</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6818,6 +6873,10 @@
         <source>Remove audio effect</source>
         <translation>Rimuovi effetto audio</translation>
     </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">Altro</translation>
+    </message>
 </context>
 <context>
     <name>AudioEffectPresetCard</name>
@@ -6869,6 +6928,10 @@
         <translation>Nessun effetto audio finora</translation>
     </message>
     <message>
+        <source>Tap Browse audio effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag a preset from Audio FX onto this clip, or click a preset card.</source>
         <translation>Trascina un predefinito da Effetti audio su questa clip o fai clic sulla scheda di un predefinito.</translation>
     </message>
@@ -6877,12 +6940,20 @@
         <translation>Sfoglia effetti audio</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>Spostati su un punto temporale, imposta un valore, quindi fai clic sul rombo per aggiungere un fotogramma chiave. Con i Fotogrammi chiave automatici attivi, anche trascinare un dispositivo di scorrimento li creerà.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>Fotogrammi chiave automatici</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effect settings</source>
@@ -10482,6 +10553,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Import</source>
+        <translation type="unfinished">Importa</translation>
+    </message>
+    <message>
         <source>Delete effect</source>
         <translation>Elimina effetto</translation>
     </message>
@@ -10777,12 +10852,20 @@
 <context>
     <name>EffectsAutoKeyHint</name>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>Spostati su un punto temporale, imposta un valore, quindi fai clic sul rombo per aggiungere un fotogramma chiave. Con i Fotogrammi chiave automatici attivi, anche trascinare un dispositivo di scorrimento li creerà.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>Fotogrammi chiave automatici</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10922,6 +11005,10 @@
         <translation>Sposta effetto verso il basso</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">Altro</translation>
+    </message>
+    <message>
         <source>Disable effect</source>
         <translation>Disabilita effetto</translation>
     </message>
@@ -11027,6 +11114,10 @@
     <message>
         <source>No effects yet</source>
         <translation>Nessun effetto finora</translation>
+    </message>
+    <message>
+        <source>Tap Browse effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag a preset from the Effects library onto this clip, or click a preset card.</source>
@@ -11353,6 +11444,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1×%2</source>
+        <translation type="unfinished">%1×%2</translation>
+    </message>
+    <message>
         <source>Choose layout…</source>
         <translation type="unfinished">Scegli layout…</translation>
     </message>
@@ -11389,6 +11484,10 @@
         <translation>fps</translation>
     </message>
     <message>
+        <source>Above the project rate, extra frames come from the source footage, which keeps slowed clips smooth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting above the project rate pulls extra frames from the source footage where it has them — this is what makes slowed clips look smooth. Where it doesn&apos;t, frames repeat.</source>
         <translation>Esportare a una frequenza superiore rispetto al progetto estrae fotogrammi aggiuntivi dal filmato sorgente ove disponibili: questo rende fluide le clip rallentate. Ove non disponibili, i fotogrammi si ripetono.</translation>
     </message>
@@ -11411,6 +11510,10 @@
     <message>
         <source>Constant Quality</source>
         <translation>Qualità costante</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">Qualità</translation>
     </message>
     <message>
         <source>Bitrate</source>
@@ -15646,6 +15749,10 @@
         <translation>Il disegno sostituisce la maschera di questo livello</translation>
     </message>
     <message>
+        <source>Drag on the picture to draw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag to draw · Shift for square/circle · Alt from centre</source>
         <translation>Trascina per disegnare · Maiusc per quadrato/cerchio · Alt dal centro</translation>
     </message>
@@ -18213,6 +18320,14 @@
         <source>No notifications yet.</source>
         <translation>Nessuna notifica finora.</translation>
     </message>
+    <message>
+        <source>No notifications yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Messages about exports, downloads and errors show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NotificationUpdateRow</name>
@@ -20363,6 +20478,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Personalizzato</translation>
     </message>
     <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">Reimposta %1</translation>
+    </message>
+    <message>
         <source>Easing: %1 — click to change</source>
         <translation>Attenuazione: %1 — fai clic per modificare</translation>
     </message>
@@ -20719,14 +20838,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Balanced</source>
         <translation>Bilanciato</translation>
-    </message>
-    <message>
-        <source>Release to delete</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>In %1 → Out %2</source>
-        <translation type="unfinished">Ingresso %1 → Uscita %2</translation>
     </message>
 </context>
 <context>
@@ -24013,6 +24124,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Mostra livello</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">Altro</translation>
+    </message>
+    <message>
         <source>Duplicate layer</source>
         <translation>Duplica livello</translation>
     </message>
@@ -26387,6 +26502,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Ramp</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Speed ramp</source>
         <translation type="unfinished"></translation>
     </message>
@@ -26594,6 +26713,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
         <translation>Attenua le oscillazioni della telecamera. Drift analizza la clip, esegue il rendering di una copia stabilizzata nel cestino multimediale e sostituisce la clip. La modifica di fluidità o cavalletto non aggiorna l&apos;anteprima finché non applichi.</translation>
+    </message>
+    <message>
+        <source>Smooths camera shake with position keyframes. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooths camera shake by rendering a stabilized copy of the clip. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilize</source>
@@ -26867,6 +26994,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>No sticker packs installed</source>
         <translation>Nessun pacchetto adesivi installato</translation>
+    </message>
+    <message>
+        <source>Install the emoji pack, or import your own images with the upload button.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Install the emoji pack to add stickers.</source>
@@ -27166,6 +27297,18 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Sottotitoli WebVTT (*.vtt)</translation>
     </message>
     <message>
+        <source>Import and export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Timestamps from the start of the video</source>
         <translation>Timestamp dall&apos;inizio del video</translation>
     </message>
@@ -27211,6 +27354,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Move to a time inside this clip to add a subtitle</source>
         <translation>Spostati su una posizione temporale all&apos;interno di questa clip per aggiungere un sottotitolo</translation>
+    </message>
+    <message>
+        <source>Add subtitle at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead into this clip to add</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add subtitle at current time</source>
@@ -30701,12 +30852,28 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Fai clic sull&apos;elemento da tracciare nell&apos;anteprima.</translation>
     </message>
     <message>
+        <source>Tap the feature to track on the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the feature to add to this tracker.</source>
         <translation>Fai clic sull&apos;elemento da aggiungere a questo tracker.</translation>
     </message>
     <message>
+        <source>Tap the feature to add to this tracker.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the object the clip should follow.</source>
         <translation>Fai clic sull&apos;oggetto che la clip deve seguire.</translation>
+    </message>
+    <message>
+        <source>Tap the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 corners · tap Done when you have four</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
@@ -31583,6 +31750,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Seleziona</translation>
     </message>
     <message>
+        <source>Move the playhead, set a value, then tap the diamond to keyframe it. Auto keyframes does this as you drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider or the preview also creates them.</source>
         <translation>Spostati su un punto temporale, imposta un valore, quindi fai clic sul rombo per aggiungere un fotogramma chiave. Con i Fotogrammi chiave automatici attivi, anche trascinare un dispositivo di scorrimento o l&apos;anteprima li creerà.</translation>
     </message>
@@ -31824,8 +31995,8 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add</source>
-        <translation type="unfinished">Aggiungi</translation>
+        <source>Multi-select</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>
@@ -31935,6 +32106,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
 <context>
     <name>TransitionInspector</name>
     <message>
+        <source>Tap the + on the cut between two clips to add a transition.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hover the cut between two clips and click + to add a transition.</source>
         <translation>Passa con il cursore sopra il taglio tra due clip e fai clic su + per aggiungere una transizione.</translation>
     </message>
@@ -31951,8 +32126,16 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Aggiungi transizione…</translation>
     </message>
     <message>
+        <source>Overlap transition. Tap the type to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
         <translation>Transizione di sovrapposizione. Trascina un altro tipo da Transizioni per sostituirla.</translation>
+    </message>
+    <message>
+        <source>Transition to the next clip. Scrub across the cut to preview it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transition to the next clip. Move across the cut to preview it.</source>

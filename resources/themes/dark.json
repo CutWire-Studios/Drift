@@ -2021,6 +2021,7 @@
       "ruleWidth": "$metrics.borderWidth"
     },
     "blendingInspector": {
+      "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground"
     },
     "cameraInspector": {
@@ -2689,6 +2690,7 @@
       "background": "$semantic.surface.app"
     },
     "speedFadeInspector": {
+      "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground"
     },
     "stabilizeInspector": {
@@ -4096,7 +4098,11 @@
       "tileRadius": "$metrics.radius.md",
       "tileBorderWidth": "$metrics.borderWidth"
     },
-    "androidFadeSliderRow": {
+    "androidPageSection": {
+      "foreground": "$semantic.panel.foreground"
+    },
+    "androidSliderRow": {
+      "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground"
     },
     "androidPreviewTransport": {
@@ -4314,6 +4320,14 @@
       "foregroundMuted": "$semantic.mutedForeground",
       "missingDot": "$semantic.mutedForeground",
       "presentDot": "$semantic.constructive"
+    },
+    "androidTabStrip": {
+      "foreground": "$semantic.mutedForeground",
+      "foregroundActive": "$semantic.panel.foreground",
+      "indicator": "$semantic.primary",
+      "indicatorHeight": "$metrics.borderWidthFocus",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth"
     },
     "androidHomeTabBar": {
       "background": "$semantic.surface.panel",

@@ -94,7 +94,7 @@ Item {
                 id: actionGrid
                 x: Theme.androidPagePadding
                 width: pageColumn.contentWidth
-                columns: 4
+                columns: 3
                 rowSpacing: Theme.spacingLg
                 columnSpacing: Theme.spacingMd
 
@@ -128,7 +128,7 @@ Item {
 
                             Rectangle {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                width: Math.min(tile.width, 64)
+                                width: Math.min(tile.width, 72)
                                 height: width
                                 radius: Theme.c.androidHomeStartTile.radius
                                 color: tile.down ? Theme.c.androidHomeStartTile.backgroundPressed
@@ -185,6 +185,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: root.recents.length > 0
                         variant: "ghost"
+                        flat: true
                         text: qsTr("See all")
                         onClicked: root.seeAllRequested()
                     }

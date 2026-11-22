@@ -21,7 +21,7 @@ Column {
             text: row.paramData.label
             color: Theme.c.effectsBoolParam.foregroundMuted
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
             anchors.verticalCenter: parent.verticalCenter
         }
         Text {
@@ -29,8 +29,8 @@ Column {
             horizontalAlignment: Text.AlignRight
             text: row.paramData.value ? qsTr("On") : qsTr("Off")
             color: Theme.c.effectsBoolParam.foreground
-            font.family: Theme.monoFontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.family: Theme.touchInput && Theme.compact ? Theme.fontFamily : Theme.monoFontFamily
+            font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
             anchors.verticalCenter: parent.verticalCenter
         }
     }

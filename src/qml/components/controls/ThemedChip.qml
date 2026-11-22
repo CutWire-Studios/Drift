@@ -17,7 +17,8 @@ AbstractButton {
 
     property bool selected: false
     property string variant: "primary"
-    property real chipHeight: Theme.controlHeightSm
+    property real chipHeight: Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : Theme.controlHeightSm
+    property string glyph: ""
     property string tooltip: ""
     property string tooltipActionId: ""
     property string tooltipShortcut: ""
@@ -35,6 +36,7 @@ AbstractButton {
     // Control.horizontalPadding is per-side and FINAL, so it is used directly
     // rather than shadowed. Width falls out of contentItem + padding.
     horizontalPadding: Theme.spacingLg
+    leftPadding: glyph !== "" ? Theme.spacingLg + Theme.iconSizeSm + Theme.spacingXs : Theme.spacingLg
     implicitHeight: chipHeight
     height: chipHeight
 
@@ -131,6 +133,15 @@ AbstractButton {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
+    }
+
+    IconGlyph {
+        visible: root.glyph !== ""
+        x: Theme.spacingLg
+        anchors.verticalCenter: parent.verticalCenter
+        glyph: root.glyph
+        iconSize: Theme.iconSizeSm
+        iconColor: root._fg
     }
 
     RichToolTip {

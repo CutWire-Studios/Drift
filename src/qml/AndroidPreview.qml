@@ -12,8 +12,13 @@ Item {
     // Driven by AndroidEditor, which owns the panes that hide around the preview.
     property bool fullscreen: false
     signal fullscreenToggleRequested()
+    signal addMediaRequested()
 
     property bool optionsOpen: false
+
+    // The flat transform's chip bar. Only the Transform page turns it on: elsewhere it sat over the
+    // picture whenever a clip was selected.
+    property bool toolBarsShown: false
 
     // The editor's free 3D view in place of the camera output, with the 3D gizmo on the selected clip.
     // Switched from the options strip, and off whenever the preview goes away.
@@ -138,6 +143,19 @@ Item {
                     maskAi: maskAiTool,
                     tracker: trackerTool
                 })
+                // The tool's touch bar sits under the canvas rather than over the picture, with the
+                // same gutter the viewport margin leaves for grips that overflow the canvas.
+                readonly property var toolTouchBar: {
+                    const t = toolHost.item
+                    if (!t)
+                        return null
+                    return t.cropFrame ? t.cropFrame.touchBarItem : (t.touchBarItem ?? null)
+                }
+                bottomInset: toolHost.item && toolHost.item.belowExtent > 0
+                             ? toolHost.item.belowExtent + Theme.spacing2xl
+                             : toolTouchBar && toolTouchBar.visible && toolTouchBar.height > 0
+                               ? toolTouchBar.height + Theme.spacingLg + Theme.spacing2xl : 0
+
                 toolHost.companion: dropCompanion
                 toolHost.companionTools: ["transform", "mask"]
                 // Disables every DragHandler / TapHandler / MouseArea in the tools:
@@ -209,6 +227,17 @@ Item {
                     anchors.fill: parent
                 }
             }
+            EmptyState {
+                anchors.centerIn: parent
+                width: Math.min(parent.width - Theme.spacing3xl, 280)
+                visible: EditorState.clipCount === 0 && !root.view3d
+                glyph: Theme.icons.film
+                title: qsTr("No media yet")
+                hint: qsTr("Add a video, photo or audio file to start.")
+                actionText: qsTr("Add media")
+                actionVariant: "primary"
+                onActionTriggered: root.addMediaRequested()
+            }
             AndroidPreviewOptionsStrip {
                 id: optionsStrip
                 anchors.top: parent.top
@@ -278,6 +307,7 @@ Item {
         TransformManip {
             canvas: root.previewViewport.canvas
             touch: true
+            showTouchBar: root.toolBarsShown
             viewport: root.view3d ? 1 : 0
             onTextEditRequested: (track, clip) => root.textEditor.start(track, clip, false)
         }
@@ -297,6 +327,7 @@ Item {
         id: maskBrushTool
         MaskBrushOverlay {
             touch: true
+            touchBarBelow: true
             navTarget: viewport
         }
     }
@@ -305,6 +336,7 @@ Item {
         id: maskAiTool
         MaskAiOverlay {
             touch: true
+            touchBarBelow: true
         }
     }
 
@@ -312,6 +344,7 @@ Item {
         id: trackerTool
         TrackerOverlay {
             touch: true
+            touchBarBelow: true
             canvas: viewport.canvas
         }
     }
@@ -337,7 +370,8 @@ Item {
     Component {
         id: clipCropTool
         ClipCropOverlay {
-            canvas: viewport.canvas
+            // Not `viewport.canvas`: the overlay's own `viewport` property shadows the id.
+            canvas: root.previewViewport.canvas
             touch: true
         }
     }

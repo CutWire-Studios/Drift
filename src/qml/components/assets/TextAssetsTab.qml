@@ -9,6 +9,7 @@ Item {
 
     // A clip landed on the timeline. The phone shell closes the sheet on this —
     // the thing you came for is behind it.
+    property bool pickerMode: false
     signal added()
 
     property string section: "builtin"
@@ -117,6 +118,7 @@ Item {
 
         delegate: TextStylePackCard {
             cardSize: packGrid.cardSize
+            pickerMode: root.pickerMode
             onAdded: root.added()
         }
     }

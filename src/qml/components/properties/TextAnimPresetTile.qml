@@ -41,6 +41,6 @@ Column {
         horizontalAlignment: Text.AlignHCenter
         color: tile.selected ? Theme.c.textAnimPresetTile.foregroundSelected : Theme.c.textAnimPresetTile.foreground
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeXs
+        font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
     }
 }

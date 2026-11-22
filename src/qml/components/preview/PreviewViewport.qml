@@ -38,7 +38,11 @@ Item {
     property real panX: 0
     property real panY: 0
 
-    readonly property real baseWidth: Math.min(width, height * aspect)
+    // Kept clear under the canvas, for a tool's touch bar that would otherwise cover the picture.
+    property real bottomInset: 0
+    readonly property real fitAreaHeight: Math.max(1, height - bottomInset)
+
+    readonly property real baseWidth: Math.min(width, fitAreaHeight * aspect)
     readonly property real baseHeight: baseWidth / aspect
     readonly property real fitWidth: baseWidth * cropZoom * userZoom
     readonly property real fitHeight: baseHeight * cropZoom * userZoom
@@ -60,12 +64,12 @@ Item {
         const w = fitWidth
         const h = fitHeight
         const fx = w > 0 ? (mx - ((width - w) / 2 + panX)) / w : 0.5
-        const fy = h > 0 ? (my - ((height - h) / 2 + panY)) / h : 0.5
+        const fy = h > 0 ? (my - ((fitAreaHeight - h) / 2 + panY)) / h : 0.5
         const nw = baseWidth * cropZoom * next
         const nh = baseHeight * cropZoom * next
         userZoom = next
         panX = (mx - fx * nw) - (width - nw) / 2
-        panY = (my - fy * nh) - (height - nh) / 2
+        panY = (my - fy * nh) - (fitAreaHeight - nh) / 2
     }
 
     Behavior on cropZoom {
@@ -96,7 +100,7 @@ Item {
         width: viewport.fitWidth
         height: viewport.fitHeight
         x: (viewport.width - width) / 2 + viewport.panX
-        y: (viewport.height - height) / 2 + viewport.panY
+        y: (viewport.fitAreaHeight - height) / 2 + viewport.panY
         // The 3D view draws the whole panel, with its own outline of the stage; this rect only
         // keeps the project frame's place for the tools.
         // Explicit backing for the composited frame. The window clear color is

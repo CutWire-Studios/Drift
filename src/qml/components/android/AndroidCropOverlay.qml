@@ -32,6 +32,7 @@ Item {
 
     // Locked w / h of the frame; 0 leaves it free. Set by the ratio chips and the crop page.
     property alias aspect: frame.aspect
+    readonly property alias cropFrame: frame
     // The phone crop page owns Apply/Cancel and the readout, so the overlay shows only the frame.
     property bool hostedByPage: false
 
@@ -69,6 +70,7 @@ Item {
         overflow: true
         scrimFillsViewport: true
         showPresets: true
+        touchPresets: !root.hostedByPage
         undoText: qsTr("Crop canvas")
         onEdited: (c) => {
             root.cropX = c.x

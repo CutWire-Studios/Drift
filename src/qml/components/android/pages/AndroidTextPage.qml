@@ -5,26 +5,14 @@ AndroidAddPage {
     id: page
 
     propertiesComponent: Component {
-        Column {
-            spacing: Theme.spacingXl
-
-            ThemedButton {
-                width: parent.width
-                text: qsTr("Edit text")
-                glyph: Theme.icons.type
-                variant: "secondary"
-                onClicked: ShellBridge.main.editorPage.startInlineTextEdit(
-                               EditorState.selectedTrack, EditorState.selectedClip, false)
-            }
-
-            TextInspector {
-                width: parent.width
-            }
+        AndroidTextTabs {
+            embedded: true
         }
     }
 
     TextAssetsTab {
         anchors.fill: parent
+        pickerMode: true
         onAdded: page.adopt()
     }
 }

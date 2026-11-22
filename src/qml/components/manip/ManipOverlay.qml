@@ -57,6 +57,14 @@ Item {
         }
     }
     property Component touchBar: null
+    // For a tool that covers only the canvas: the touch bar hangs below it instead of over the picture.
+    property bool touchBarBelow: false
+    // The hint pill holds its place under the canvas through a drag, so the picture does not resize mid-gesture.
+    readonly property bool hintBelowReserved: touchBarBelow && hintVisible && hint.length > 0
+    // Height the canvas must leave free under itself for the bar and hint; the preview reads it.
+    readonly property real belowExtent: !touchBarBelow ? 0
+        : (hintBelowReserved ? hintPill.height + Theme.spacingSm : 0)
+          + (touchBarLoader.item && touchBarLoader.item.visible ? touchBarLoader.item.height + Theme.spacingSm : 0)
     readonly property var hudItem: hudLoader.item
     readonly property var touchBarItem: touchBarLoader.item
 
@@ -165,9 +173,11 @@ Item {
         id: hintPill
         visible: overlay.hintVisible && !overlay.interacting
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
+        anchors.top: overlay.touchBarBelow ? undefined : parent.top
         anchors.topMargin: Theme.spacingLg
-        width: Math.min(parent.width * 0.8, hintText.implicitWidth + Theme.spacingLg * 2)
+        y: overlay.touchBarBelow ? parent.height + Theme.spacingSm : 0
+        width: overlay.touchBarBelow ? Math.max(parent.width, 300)
+                                     : Math.min(parent.width * 0.8, hintText.implicitWidth + Theme.spacingLg * 2)
         height: hintText.implicitHeight + Theme.spacingSm * 2
         radius: Theme.c.manipHint.radius
         color: Theme.c.manipHint.background
@@ -181,7 +191,8 @@ Item {
             anchors.margins: Theme.spacingSm
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            elide: Text.ElideRight
+            elide: overlay.touchBarBelow ? Text.ElideNone : Text.ElideRight
+            wrapMode: overlay.touchBarBelow ? Text.WordWrap : Text.NoWrap
             text: overlay.hint
             color: Theme.c.manipHint.foreground
             font.family: Theme.fontFamily
@@ -192,8 +203,9 @@ Item {
     Loader {
         id: touchBarLoader
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
+        anchors.bottom: overlay.touchBarBelow ? undefined : parent.bottom
         anchors.bottomMargin: Theme.spacingLg
+        y: overlay.touchBarBelow ? parent.height + (overlay.hintBelowReserved ? hintPill.height + Theme.spacingSm : 0) + Theme.spacingSm : 0
         z: 95
         sourceComponent: overlay.touchBar
     }

@@ -31,7 +31,10 @@ Item {
         if (above - half >= 0)
             return 0
         const below = clipBox.mapToItem(manip, clipBox.width / 2, clipBox.height + stalk).y
-        return below + half <= manip.height ? 1 : 2
+        // The touch bar along the bottom would cover a handle below the box.
+        const bar = manip.touchBarItem
+        const floor = bar && bar.visible ? manip.height - bar.height - Theme.spacingLg : manip.height
+        return below + half <= floor ? 1 : 2
     }
 
     Rectangle {

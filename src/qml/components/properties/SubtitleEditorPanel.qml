@@ -223,6 +223,7 @@ Rectangle {
             }
 
             Text {
+                visible: !editor.compactEdit
                 width: parent.width
                 text: editor.localPlayhead >= 0
                       ? qsTr("At %1").arg(editor.formatCueTime(editor.localPlayhead))
@@ -237,7 +238,11 @@ Rectangle {
                 variant: "primary"
                 glyph: Theme.icons.plus
                 enabled: editor.localPlayhead >= 0
-                text: qsTr("Add subtitle at current time")
+                text: editor.compactEdit
+                      ? (editor.localPlayhead >= 0
+                         ? qsTr("Add subtitle at %1").arg(editor.formatCueTime(editor.localPlayhead))
+                         : qsTr("Move the playhead into this clip to add"))
+                      : qsTr("Add subtitle at current time")
                 onClicked: editor.addCueAtPlayhead()
             }
         }

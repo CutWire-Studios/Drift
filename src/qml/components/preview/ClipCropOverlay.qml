@@ -20,6 +20,9 @@ Item {
     readonly property var clipData: { void clipRevision; return EditorState.selectedClipData }
 
     property alias aspect: frame.aspect
+    readonly property alias cropFrame: frame
+    // The phone crop page shows the ratio presets in its own controls.
+    property bool hostedByPage: false
 
     readonly property int sourceW: {
         if (!clipData || !clipData.sourceWidth)
@@ -123,6 +126,7 @@ Item {
         crop: Qt.rect(root.cropX, root.cropY, root.cropW, root.cropH)
         minSize: 16
         showPresets: true
+        touchPresets: !root.hostedByPage
         undoText: qsTr("Crop clip")
 
         readonly property var box: root.box

@@ -10,7 +10,7 @@ Rectangle {
     signal toggled()
 
     width: parent ? parent.width : implicitWidth
-    height: groupLabel.implicitHeight + 8
+    height: Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : groupLabel.implicitHeight + 8
     radius: Theme.c.effectsParamGroupHeader.radius
     color: groupMouse.containsMouse ? Theme.c.effectsParamGroupHeader.backgroundHover : "transparent"
 
@@ -22,7 +22,7 @@ Rectangle {
         text: (root.groupOpen ? "▾  " : "▸  ") + root.groupTitle
         color: Theme.c.effectsParamGroupHeader.foreground
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeXs
+        font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
         font.weight: Font.Medium
     }
     MouseArea {

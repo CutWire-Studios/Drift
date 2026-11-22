@@ -25,7 +25,7 @@ Item {
     readonly property var clips: panel.tracks[trackIndex].clips
     readonly property var leftClip: clips[leftClipIndex]
     readonly property var rightClip: clips[region.rightClip]
-    readonly property bool roomy: leftClip && rightClip
+    readonly property bool roomy: !!(leftClip && rightClip)
         && Math.min(leftClip.duration, rightClip.duration) * pxPerSecond
            >= Math.max(Theme.androidIconButtonSize, addW) * 1.5
     readonly property bool neighbourSelected: EditorState.selectionRevision >= 0

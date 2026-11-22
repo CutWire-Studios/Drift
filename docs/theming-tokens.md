@@ -1523,6 +1523,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | audioInspector | rule | $semantic.panel.border | $semantic.panel.border |
 | audioInspector | ruleOpacity | 0.5 | 0.5 |
 | audioInspector | ruleWidth | $metrics.borderWidth | $metrics.borderWidth |
+| blendingInspector | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | blendingInspector | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | cameraInspector | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | channelKeyButton | backgroundSelected | $semantic.primary | $semantic.primary |
@@ -1968,6 +1969,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | speedCurvePreviewStage | background | $semantic.surface.panel | $semantic.surface.panel |
 | speedCurvePreviewStage | radius | $metrics.radius.md | $metrics.radius.md |
 | speedCurveWindow | background | $semantic.surface.app | $semantic.surface.app |
+| speedFadeInspector | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | speedFadeInspector | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | stabilizeInspector | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | stabilizeInspector | iconWarning | $semantic.warning | $semantic.warning |
@@ -2976,7 +2978,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidAnimationPage | tileForegroundSelected | $semantic.primary | $semantic.primary |
 | androidAnimationPage | tileRadius | $metrics.radius.md | $metrics.radius.md |
 | androidAnimationPage | tileBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
-| androidFadeSliderRow | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| androidPageSection | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| androidSliderRow | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| androidSliderRow | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | androidPreviewTransport | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | androidTimelineSnapGuide | background | $semantic.timeline.snapGuide | $semantic.timeline.snapGuide |
 | androidTimelineSnapGuide | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
@@ -3129,6 +3133,12 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | androidHomeRecentCard | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | androidHomeRecentCard | missingDot | $semantic.mutedForeground | $semantic.mutedForeground |
 | androidHomeRecentCard | presentDot | $semantic.constructive | $semantic.constructive |
+| androidTabStrip | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
+| androidTabStrip | foregroundActive | $semantic.panel.foreground | $semantic.panel.foreground |
+| androidTabStrip | indicator | $semantic.primary | $semantic.primary |
+| androidTabStrip | indicatorHeight | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
+| androidTabStrip | border | $semantic.panel.border | $semantic.panel.border |
+| androidTabStrip | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | androidHomeTabBar | background | $semantic.surface.panel | $semantic.surface.panel |
 | androidHomeTabBar | border | $semantic.panel.border | $semantic.panel.border |
 | androidHomeTabBar | borderWidth | $metrics.borderWidth | $metrics.borderWidth |

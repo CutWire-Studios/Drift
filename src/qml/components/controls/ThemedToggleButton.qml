@@ -19,7 +19,7 @@ AbstractButton {
     property string tooltipShortcut: ""
     property string tooltipBody: ""
     property string tooltipState: ""
-    property real toggleHeight: Theme.controlHeightSm
+    property real toggleHeight: Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : Theme.controlHeightSm
 
     checkable: true
     hoverEnabled: true

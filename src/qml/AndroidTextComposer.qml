@@ -211,13 +211,14 @@ Item {
 
         Item {
             width: parent.width
-            height: Theme.iconButtonSize
+            height: Theme.androidMinTouchTarget
 
             Row {
                 id: navRow
                 spacing: Theme.spacingSm
 
                 IconButton {
+                    buttonSize: Theme.androidMinTouchTarget
                     glyph: Theme.icons.chevronLeft
                     tooltip: qsTr("Previous caption")
                     enabled: root.cueIndex > 0
@@ -225,6 +226,7 @@ Item {
                 }
 
                 IconButton {
+                    buttonSize: Theme.androidMinTouchTarget
                     glyph: Theme.icons.chevronRight
                     tooltip: qsTr("Next caption")
                     enabled: root.cueIndex < root.cueCount - 1

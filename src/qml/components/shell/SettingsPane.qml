@@ -81,6 +81,9 @@ Item {
 
     function selectPage(pageId) {
         currentPage = pageAliases[pageId] || pageId
+        const i = visiblePages.findIndex(p => p.id === currentPage)
+        if (i >= 0)
+            tabStrip.positionViewAtIndex(i, ListView.Contain)
         searchField.text = ""
     }
 
@@ -104,6 +107,7 @@ Item {
         y: Theme.spacingLg
         width: root.narrow ? root.width - Theme.pagePadding * 2 : root.sidebarWidth - Theme.spacingLg * 2
         placeholderText: qsTr("Search settings…")
+        font.family: root.mobile ? Theme.fontFamily : Theme.monoFontFamily
     }
 
     ListView {
@@ -162,7 +166,7 @@ Item {
         x: Theme.pagePadding
         y: searchField.y + searchField.height + Theme.spacingMd
         width: root.width - Theme.pagePadding * 2
-        height: Theme.controlHeightSm
+        height: Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : Theme.controlHeightSm
         clip: true
         spacing: Theme.spacingSm
         orientation: ListView.Horizontal

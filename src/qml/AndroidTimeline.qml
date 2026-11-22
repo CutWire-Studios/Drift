@@ -1217,6 +1217,7 @@ Item {
             // `y: flick.contentY` compensations the old head needed to stay put while the
             // tracks panned vertically.
             AndroidTimelineTrimNudge {
+                id: trimNudge
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.margins: Theme.spacingSm
@@ -1225,6 +1226,7 @@ Item {
 
             AndroidTimelinePlayhead {
                 id: playhead
+                visible: EditorState.clipCount > 0
                 x: root.labelsWidth + flick.width / 2 - Theme.androidPlayheadCentreWidth / 2
                 y: 0
                 z: 30
@@ -1239,8 +1241,11 @@ Item {
                 height: parent.height
                 contentWidth: Math.max(width, EditorState.durationSeconds * root.pxPerSecond
                                               + root.timelineEndPadPx)
+                // Room under the last track for the trim nudge, which floats over the bottom right:
+                // without it the nudge covered the lowest clips with nowhere to scroll them to.
                 contentHeight: Math.max(height,
-                                        root.seekHeaderHeight + root.totalTracksHeight() + Theme.trackGap)
+                                        root.seekHeaderHeight + root.totalTracksHeight() + Theme.trackGap
+                                        + (trimNudge.shown ? trimNudge.height + Theme.spacingSm * 2 : 0))
                 clip: true
                 interactive: !root.scrollLocked
                 boundsBehavior: Flickable.StopAtBounds

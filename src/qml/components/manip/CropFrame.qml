@@ -42,6 +42,9 @@ ManipOverlay {
     property bool scrimFillsViewport: false
     // The ratio chips; off leaves only the thirds toggle.
     property bool showPresets: false
+    // False leaves the ratio chips and the thirds toggle to the host (the phone crop page shows
+    // them in its own controls), so the touch bar is only the modifier chips.
+    property bool touchPresets: true
     property bool touch: Theme.touchInput
     // A PreviewViewport (zoomAt/panX/panY) to zoom and pan with Ctrl+wheel, middle-drag and pinch.
     property var viewport: null
@@ -509,7 +512,7 @@ ManipOverlay {
                 color: Theme.c.manipContextBar.background
                 border.width: Theme.c.manipContextBar.borderWidth
                 border.color: Theme.c.manipContextBar.border
-                visible: root.showPresets
+                visible: root.showPresets && root.touchPresets
 
                 MouseArea {
                     anchors.fill: parent
@@ -552,7 +555,7 @@ ManipOverlay {
                 }
 
                 ThemedChip {
-                    visible: !root.showPresets
+                    visible: !root.showPresets && root.touchPresets
                     chipHeight: Theme.androidMinTouchTarget
                     text: qsTr("Thirds")
                     selected: root.thirds

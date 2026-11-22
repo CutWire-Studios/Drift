@@ -8,7 +8,7 @@ HandleKnob {
 
     required property var modelData
     required property var clipBox
-    readonly property var manip: clipBox.manip
+    readonly property var manip: clipBox?.manip ?? null
     readonly property int dx: modelData.dx
     readonly property int dy: modelData.dy
     readonly property bool isCorner: dx !== 0 && dy !== 0
@@ -16,9 +16,9 @@ HandleKnob {
     readonly property real direction: isCorner ? (dx === dy ? 45 : 135) : (dx !== 0 ? 0 : 90)
 
     shape: isCorner ? "square" : "dot"
-    space: clipBox.stage
-    visualSize: manip.touch ? 14 : 8
-    cursor: "resize:" + (direction + clipBox.layoutRotation)
+    space: clipBox?.stage ?? null
+    visualSize: manip?.touch ? 14 : 8
+    cursor: "resize:" + (direction + (clipBox?.layoutRotation ?? 0))
     x: (dx === 0 ? clipBox.width / 2 : (dx < 0 ? 0 : clipBox.width)) - width / 2
     y: (dy === 0 ? clipBox.height / 2 : (dy < 0 ? 0 : clipBox.height)) - height / 2
 

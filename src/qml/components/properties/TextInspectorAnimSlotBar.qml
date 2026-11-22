@@ -5,6 +5,7 @@ Row {
     id: root
     property var inspector
     spacing: Theme.spacingSm
+    width: parent ? parent.width : implicitWidth
 
     Repeater {
         model: [
@@ -14,7 +15,7 @@ Row {
         ]
         delegate: ThemedToggleButton {
             required property var modelData
-            width: 64
+            width: Theme.touchInput && Theme.compact ? Math.floor((root.width - root.spacing * 2) / 3) : 64
             text: modelData.label
             checked: inspector.animSlot === modelData.id
             onClicked: {

@@ -14,7 +14,7 @@ Item {
 
     readonly property string displayFamily: family === "" ? "Select a font" : family
 
-    implicitHeight: 30
+    implicitHeight: Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : 30
     implicitWidth: 200
 
     // One model shape whatever the source, so the delegate has a single contract: name is what the

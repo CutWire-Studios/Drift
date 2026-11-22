@@ -470,10 +470,6 @@
         <translation>Dostosuj %1</translation>
     </message>
     <message>
-        <source>Reset</source>
-        <translation>Resetuj</translation>
-    </message>
-    <message>
         <source>Reset %1</source>
         <translation>Zresetuj %1</translation>
     </message>
@@ -837,6 +833,10 @@
         <translation>Wideo</translation>
     </message>
     <message>
+        <source>Straighten</source>
+        <translation type="unfinished">Wyprostuj</translation>
+    </message>
+    <message>
         <source>Rotate</source>
         <translation>Obróć</translation>
     </message>
@@ -926,18 +926,6 @@
         <translation>Dodaj tekst</translation>
     </message>
     <message>
-        <source>Text style</source>
-        <translation>Styl tekstu</translation>
-    </message>
-    <message>
-        <source>Text settings</source>
-        <translation>Ustawienia tekstu</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>Animacja tekstu</translation>
-    </message>
-    <message>
         <source>Animation</source>
         <translation>Animacja</translation>
     </message>
@@ -1022,12 +1010,8 @@
         <translation>Twoja oś czasu jest pusta</translation>
     </message>
     <message>
-        <source>Import media or open the Media library to start editing.</source>
-        <translation>Zaimportuj media lub otwórz bibliotekę mediów, aby rozpocząć edycję.</translation>
-    </message>
-    <message>
-        <source>Open Media</source>
-        <translation>Otwórz media</translation>
+        <source>Clips you add appear here as layers.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1869,6 +1853,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidMotionPage</name>
+    <message>
+        <source>Not an animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Motion settings apply to Lottie and SVG clips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidMyVideosTab</name>
     <message>
         <source>Video actions</source>
@@ -1901,6 +1896,18 @@
 <context>
     <name>AndroidPreview</name>
     <message>
+        <source>No media yet</source>
+        <translation type="unfinished">Brak jeszcze mediów</translation>
+    </message>
+    <message>
+        <source>Add a video, photo or audio file to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Seek</source>
         <translation>Przeszukaj</translation>
     </message>
@@ -1930,6 +1937,10 @@
     <message>
         <source>Quality: %1</source>
         <translation>Jakość: %1</translation>
+    </message>
+    <message>
+        <source>Hardware</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>3D view</source>
@@ -2038,8 +2049,8 @@
         <translation>Przytnij rozmiar wideo</translation>
     </message>
     <message>
-        <source>Drag the preview edges to change what’s included</source>
-        <translation>Przeciągnij krawędzie podglądu, aby zmienić to, co jest uwzględnione</translation>
+        <source>Trim the frame to a smaller area</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties</source>
@@ -2056,6 +2067,14 @@
     <message>
         <source>Sync and switch between angles</source>
         <translation>Synchronizuj i przełączaj między ujęciami</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation type="unfinished">Powiadomienia</translation>
+    </message>
+    <message>
+        <source>Recent messages and finished jobs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -2195,10 +2214,10 @@
     </message>
 </context>
 <context>
-    <name>AndroidSpeedPage</name>
+    <name>AndroidSliderRow</name>
     <message>
-        <source>Speed curve</source>
-        <translation>Krzywa prędkości</translation>
+        <source>Reset</source>
+        <translation type="unfinished">Resetuj</translation>
     </message>
 </context>
 <context>
@@ -2263,10 +2282,30 @@
     </message>
 </context>
 <context>
-    <name>AndroidTextPage</name>
+    <name>AndroidTextTabs</name>
     <message>
-        <source>Edit text</source>
-        <translation>Edytuj tekst</translation>
+        <source>Font</source>
+        <translation type="unfinished">Czcionka</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">Styl</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Efekty</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animacja</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation type="unfinished">Układ</translation>
+    </message>
+    <message>
+        <source>Tap to type text</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2432,8 +2471,24 @@
         <translation>Początek</translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished">Przytnij początek</translation>
+    </message>
+    <message>
         <source>Out</source>
         <translation>Koniec</translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished">Przytnij koniec</translation>
+    </message>
+    <message>
+        <source>%1 one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 one frame later</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6848,6 +6903,10 @@
         <source>Remove audio effect</source>
         <translation>Usuń efekt audio</translation>
     </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">Więcej</translation>
+    </message>
 </context>
 <context>
     <name>AudioEffectPresetCard</name>
@@ -6899,6 +6958,10 @@
         <translation>Brak jeszcze efektów audio</translation>
     </message>
     <message>
+        <source>Tap Browse audio effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag a preset from Audio FX onto this clip, or click a preset card.</source>
         <translation>Przeciągnij preset z Efektów Audio na ten klip lub kliknij kartę presetu.</translation>
     </message>
@@ -6907,12 +6970,20 @@
         <translation>Przeglądaj efekty audio</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>Przejdź do czasu, ustaw wartość, a następnie kliknij diament, aby dodać klatkę kluczową. Przy włączonych Auto klatkach kluczowych przeciąganie suwaka też je tworzy.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>Auto klatki kluczowe</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effect settings</source>
@@ -10523,6 +10594,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Import</source>
+        <translation type="unfinished">Importuj</translation>
+    </message>
+    <message>
         <source>Delete effect</source>
         <translation>Usuń efekt</translation>
     </message>
@@ -10819,12 +10894,20 @@
 <context>
     <name>EffectsAutoKeyHint</name>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>Przejdź do czasu, ustaw wartość, a następnie kliknij diament, aby dodać klatkę kluczową. Przy włączonych Auto klatkach kluczowych przeciąganie suwaka też je tworzy.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>Auto klatki kluczowe</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10964,6 +11047,10 @@
         <translation>Przenieś efekt w dół</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">Więcej</translation>
+    </message>
+    <message>
         <source>Disable effect</source>
         <translation>Wyłącz efekt</translation>
     </message>
@@ -11069,6 +11156,10 @@
     <message>
         <source>No effects yet</source>
         <translation>Brak jeszcze efektów</translation>
+    </message>
+    <message>
+        <source>Tap Browse effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag a preset from the Effects library onto this clip, or click a preset card.</source>
@@ -11396,6 +11487,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1×%2</source>
+        <translation type="unfinished">%1×%2</translation>
+    </message>
+    <message>
         <source>Choose layout…</source>
         <translation type="unfinished">Wybierz układ…</translation>
     </message>
@@ -11432,6 +11527,10 @@
         <translation>kl./s</translation>
     </message>
     <message>
+        <source>Above the project rate, extra frames come from the source footage, which keeps slowed clips smooth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting above the project rate pulls extra frames from the source footage where it has them — this is what makes slowed clips look smooth. Where it doesn&apos;t, frames repeat.</source>
         <translation>Eksport powyżej częstotliwości projektu pobiera dodatkowe klatki z materiału źródłowego, jeśli je ma — dzięki temu spowolnione klipy wyglądają płynnie. Tam gdzie ich nie ma, klatki się powtarzają.</translation>
     </message>
@@ -11454,6 +11553,10 @@
     <message>
         <source>Constant Quality</source>
         <translation>Stała jakość</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">Jakość</translation>
     </message>
     <message>
         <source>Bitrate</source>
@@ -15706,6 +15809,10 @@
         <translation>Rysowanie zastępuje maskę tej warstwy</translation>
     </message>
     <message>
+        <source>Drag on the picture to draw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag to draw · Shift for square/circle · Alt from centre</source>
         <translation>Przeciągnij, aby narysować · Shift dla kwadratu/koła · Alt od środka</translation>
     </message>
@@ -18288,6 +18395,14 @@
         <source>No notifications yet.</source>
         <translation>Brak powiadomień.</translation>
     </message>
+    <message>
+        <source>No notifications yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Messages about exports, downloads and errors show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NotificationUpdateRow</name>
@@ -20454,6 +20569,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Własne</translation>
     </message>
     <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">Zresetuj %1</translation>
+    </message>
+    <message>
         <source>Easing: %1 — click to change</source>
         <translation>Łagodzenie: %1 — kliknij, aby zmienić</translation>
     </message>
@@ -20810,14 +20929,6 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Balanced</source>
         <translation>Zrównoważony</translation>
-    </message>
-    <message>
-        <source>Release to delete</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>In %1 → Out %2</source>
-        <translation type="unfinished">Wejście %1 → Wyjście %2</translation>
     </message>
 </context>
 <context>
@@ -24107,6 +24218,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Pokaż warstwę</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">Więcej</translation>
+    </message>
+    <message>
         <source>Duplicate layer</source>
         <translation>Duplikuj warstwę</translation>
     </message>
@@ -26484,6 +26599,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Ramp</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Speed ramp</source>
         <translation type="unfinished"></translation>
     </message>
@@ -26691,6 +26810,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
         <translation>Wygładza drgania kamery. Drift analizuje klip, a następnie renderuje jego ustabilizowaną kopię w bibliotece multimediów i przełącza klip na tę kopię. Zmiana płynności lub trybu statywu nie aktualizuje podglądu do momentu zastosowania ustawień.</translation>
+    </message>
+    <message>
+        <source>Smooths camera shake with position keyframes. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooths camera shake by rendering a stabilized copy of the clip. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilize</source>
@@ -26964,6 +27091,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>No sticker packs installed</source>
         <translation>Brak zainstalowanych paczek naklejek</translation>
+    </message>
+    <message>
+        <source>Install the emoji pack, or import your own images with the upload button.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Install the emoji pack to add stickers.</source>
@@ -27265,6 +27396,18 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Napisy WebVTT (*.vtt)</translation>
     </message>
     <message>
+        <source>Import and export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Timestamps from the start of the video</source>
         <translation>Znaczniki czasu od początku wideo</translation>
     </message>
@@ -27310,6 +27453,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Move to a time inside this clip to add a subtitle</source>
         <translation>Przejdź do czasu wewnątrz tego klipu, aby dodać napis</translation>
+    </message>
+    <message>
+        <source>Add subtitle at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead into this clip to add</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add subtitle at current time</source>
@@ -30808,12 +30959,28 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Kliknij element do śledzenia na podglądzie.</translation>
     </message>
     <message>
+        <source>Tap the feature to track on the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the feature to add to this tracker.</source>
         <translation>Kliknij element, aby dodać go do tego narzędzia śledzenia.</translation>
     </message>
     <message>
+        <source>Tap the feature to add to this tracker.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the object the clip should follow.</source>
         <translation>Kliknij obiekt, za którym ma podążać klip.</translation>
+    </message>
+    <message>
+        <source>Tap the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 corners · tap Done when you have four</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
@@ -31692,6 +31859,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Zaznacz</translation>
     </message>
     <message>
+        <source>Move the playhead, set a value, then tap the diamond to keyframe it. Auto keyframes does this as you drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider or the preview also creates them.</source>
         <translation>Przejdź do czasu, ustaw wartość, a następnie kliknij diament, aby dodać klatkę kluczową. Przy włączonych Auto klatkach kluczowych przeciąganie suwaka lub podglądu też je tworzy.</translation>
     </message>
@@ -31934,8 +32105,8 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add</source>
-        <translation type="unfinished">Dodaj</translation>
+        <source>Multi-select</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>
@@ -32046,6 +32217,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
 <context>
     <name>TransitionInspector</name>
     <message>
+        <source>Tap the + on the cut between two clips to add a transition.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hover the cut between two clips and click + to add a transition.</source>
         <translation>Najedź kursorem na cięcie między dwoma klipami i kliknij +, aby dodać przejście.</translation>
     </message>
@@ -32062,8 +32237,16 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Dodaj przejście…</translation>
     </message>
     <message>
+        <source>Overlap transition. Tap the type to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
         <translation>Przejście nakładane. Przeciągnij inny rodzaj z Przejść, aby je zastąpić.</translation>
+    </message>
+    <message>
+        <source>Transition to the next clip. Scrub across the cut to preview it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transition to the next clip. Move across the cut to preview it.</source>

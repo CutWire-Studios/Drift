@@ -9,8 +9,8 @@ Rectangle {
     property string tip: qsTr("Choose colour")
     signal activated()
 
-    width: Theme.spacing3xl
-    height: Theme.spacing3xl
+    width: Theme.touchInput ? Theme.controlHeight : Theme.spacing3xl
+    height: width
     radius: Theme.c.colorSwatchButton.radius
     anchors.verticalCenter: parent.verticalCenter
     color: root.hex

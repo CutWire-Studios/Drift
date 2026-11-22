@@ -603,7 +603,8 @@ Item {
         anchors.margins: Theme.pagePadding
         // Shares its row with the view/sort toggles, which the panel header no
         // longer has room for alongside the import actions.
-        anchors.rightMargin: Theme.pagePadding + viewControls.width + soundToggle.width + Theme.spacingMd + Theme.spacingSm
+        anchors.rightMargin: root.toolsBelowSearch ? Theme.pagePadding
+                             : Theme.pagePadding + viewControls.width + soundToggle.width + Theme.spacingMd + Theme.spacingSm
         visible: AssetLibrary.count > 0 || BinFolderModel.count > 0
         placeholderText: root.soundMode ? qsTr("Search by sound, e.g. heavy rain") : qsTr("Search media")
         font.family: Theme.fontFamily
@@ -621,11 +622,22 @@ Item {
         }
     }
 
+    // On a phone the field would be left a third of the width by five icon buttons, so they get
+    // their own row under it.
+    readonly property bool toolsBelowSearch: Theme.touchInput && Theme.compact
+
+    Item {
+        id: searchBottom
+        anchors.top: search.bottom
+        anchors.left: parent.left
+        height: root.toolsBelowSearch && search.visible ? viewControls.height + Theme.spacingSm : 0
+    }
+
     IconButton {
         id: soundToggle
         anchors.right: viewControls.left
         anchors.rightMargin: Theme.spacingSm
-        anchors.verticalCenter: search.verticalCenter
+        y: viewControls.y + (viewControls.height - height) / 2
         visible: search.visible
         glyph: Theme.icons.audioLines
         variant: "ghost"
@@ -659,7 +671,7 @@ Item {
         id: viewControls
         anchors.right: parent.right
         anchors.rightMargin: Theme.pagePadding
-        anchors.verticalCenter: search.verticalCenter
+        y: root.toolsBelowSearch ? search.y + search.height + Theme.spacingSm : search.y + (search.height - height) / 2
         visible: search.visible
         gridMode: root.gridMode
         viewMode: root.viewMode
@@ -677,7 +689,7 @@ Item {
     // Where you are in the bin, and — in tree view — what the whole tree does at once.
     Item {
         id: binNavRow
-        anchors.top: soundHintText.visible ? soundHintText.bottom : (search.visible ? search.bottom : parent.top)
+        anchors.top: soundHintText.visible ? soundHintText.bottom : (search.visible ? searchBottom.bottom : parent.top)
         anchors.topMargin: visible ? Theme.spacingSm : 0
         anchors.left: parent.left
         anchors.right: parent.right
@@ -730,7 +742,7 @@ Item {
 
     Text {
         id: soundHintText
-        anchors.top: search.bottom
+        anchors.top: searchBottom.bottom
         anchors.topMargin: Theme.spacingSm
         anchors.left: search.left
         anchors.right: parent.right

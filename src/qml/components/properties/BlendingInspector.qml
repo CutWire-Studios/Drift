@@ -20,7 +20,7 @@ Item {
     FontMetrics {
         id: nameMetrics
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeXs
+        font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
     }
 
     function syncActive() {
@@ -55,9 +55,10 @@ Item {
                 title: qsTr("Blend mode")
                 keywords: "multiply screen overlay add difference exclusion dodge burn soft hard light hue saturation color luminosity"
             }
-            color: Theme.c.blendingInspector.foregroundMuted
+            color: Theme.touchInput ? Theme.c.blendingInspector.foreground : Theme.c.blendingInspector.foregroundMuted
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
+            font.weight: Theme.touchInput ? Font.Medium : Font.Normal
         }
 
         // The tab was a label plus one combo with no description.
@@ -67,7 +68,7 @@ Item {
             text: qsTr("How this clip's colours combine with the tracks beneath it.")
             color: Theme.c.blendingInspector.foregroundMuted
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
             opacity: 0.8
         }
 
@@ -85,9 +86,10 @@ Item {
                 Text {
                     visible: group.modelData.label !== ""
                     text: group.modelData.label
-                    color: Theme.c.blendingInspector.foregroundMuted
+                    color: Theme.touchInput ? Theme.c.blendingInspector.foreground : Theme.c.blendingInspector.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
+                    font.weight: Theme.touchInput ? Font.Medium : Font.Normal
                 }
 
                 Flow {
@@ -145,7 +147,7 @@ Item {
                                 text: card.modelData.label
                                 color: card.current ? Theme.c.blendCard.labelSelected : Theme.c.blendCard.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSizeXs
+                                font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
                             }
 
                             HoverHandler {

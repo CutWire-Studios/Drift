@@ -1458,7 +1458,7 @@ void applyDefaultVisualLayout(drift::Clip &clip, int canvasW, int canvasH, doubl
             w = canvasW * 0.6;
             h = w / aspect;
         }
-        setClipFrameBox(clip, 0, 0, w, h);
+        setClipFrameBox(clip, (canvasW - w) / 2.0, (canvasH - h) / 2.0, w, h);
         return;
     }
     if (clip.type == drift::ClipType::Text) {
@@ -1469,9 +1469,9 @@ void applyDefaultVisualLayout(drift::Clip &clip, int canvasW, int canvasH, doubl
         setClipFrameBox(clip, 0, canvasH * 0.78, canvasW, canvasH * 0.18);
         return;
     }
-    // Stickers / generic images without metadata: modest top-left box.
+    // Stickers / generic images without metadata: a modest box on the canvas centre.
     const double side = qMin(canvasW, canvasH) * 0.25;
-    setClipFrameBox(clip, 0, 0, side, side);
+    setClipFrameBox(clip, (canvasW - side) / 2.0, (canvasH - side) / 2.0, side, side);
 }
 
 bool assetHasAudioStreams(const drift::Project &project, AssetLibrary *library, const QString &assetId)

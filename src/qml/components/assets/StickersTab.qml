@@ -77,7 +77,7 @@ Item {
             // The sticker packs are a curated subset of the emoji set, so the rest live behind
             // this button rather than being unreachable.
             IconButton {
-                glyph: Theme.icons.plus
+                glyph: Theme.touchInput && Theme.compact ? Theme.icons.smile : Theme.icons.plus
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
                 tooltip: qsTr("More emoji")
@@ -151,7 +151,8 @@ Item {
                 compact: true
                 glyph: Theme.icons.smile
                 title: qsTr("No sticker packs installed")
-                hint: qsTr("Install the emoji pack to add stickers.")
+                hint: Theme.touchInput && Theme.compact ? qsTr("Install the emoji pack, or import your own images with the upload button.")
+                                                 : qsTr("Install the emoji pack to add stickers.")
                 actionText: qsTr("Get extras")
                 actionVariant: "primary"
                 onActionTriggered: ShellBridge.main.openAddonManager("stickers")
