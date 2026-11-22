@@ -9,7 +9,7 @@ Item {
     id: viewport
 
     // Which preview stream this shows: 0 the scene camera, 1 the editor's free viewpoint. The editor
-    // stream fills the whole viewport around the project frame. Desktop only.
+    // stream fills the whole viewport around the project frame.
     property int stream: 0
     property bool mode3d: stream === 1
     // Canvas size is derived from this, so it has to be real screen pixels: item geometry is in
@@ -142,6 +142,7 @@ Item {
             }
 
             Component.onCompleted: updateRenderSize()
+            onStreamChanged: updateRenderSize()
             onWidthChanged: updateRenderSize()
             onHeightChanged: updateRenderSize()
             onPixelRatioChanged: updateRenderSize()

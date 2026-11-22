@@ -206,6 +206,28 @@ QVector3D axisFor(const Pose &pose, const Space &s, Tool tool, Orientation orien
     return s.hasView ? s.parentInverse.mapVector(world).normalized() : world;
 }
 
+// Overlay px per world px at the origin, so handles keep their on-screen size at any depth and
+// under any parent scale.
+double magnification(const Space &s, const QVector3D &origin, QPointF screenOrigin, double scale)
+{
+    double magnify = s.hasView ? 0.0 : scale / s.w(origin);
+    if (s.hasView) {
+        // The longest of the three axes on screen: whichever way the view looks, at least one of
+        // them lies close to the screen plane.
+        for (int axis = 0; axis < 3; ++axis) {
+            QPointF step;
+            if (s.project(origin + basis(axis), &step))
+                magnify = std::max(magnify, QLineF(screenOrigin, step).length());
+        }
+        magnify = std::max(1e-6, magnify);
+    } else if (!s.parent.isIdentity()) {
+        QPointF step;
+        if (s.project(origin + QVector3D(1.f, 0.f, 0.f), &step))
+            magnify = std::max(1e-6, QLineF(screenOrigin, step).length());
+    }
+    return magnify;
+}
+
 QString idFor(int axis)
 {
     return axis == 0 ? QStringLiteral("x") : axis == 1 ? QStringLiteral("y") : QStringLiteral("z");
@@ -345,23 +367,7 @@ Geometry geometry(const Pose &pose, Tool tool, Orientation orientation, double s
     if (!s.project(origin, &g.origin))
         return g;
     g.valid = true;
-    // Overlay px per world px at the origin, so handles keep their on-screen size at any depth
-    // and under any parent scale.
-    double magnify = s.hasView ? 0.0 : scale / s.w(origin);
-    if (s.hasView) {
-        // The longest of the three axes on screen: whichever way the view looks, at least one of
-        // them lies close to the screen plane.
-        for (int axis = 0; axis < 3; ++axis) {
-            QPointF step;
-            if (s.project(origin + basis(axis), &step))
-                magnify = std::max(magnify, QLineF(g.origin, step).length());
-        }
-        magnify = std::max(1e-6, magnify);
-    } else if (!s.parent.isIdentity()) {
-        QPointF step;
-        if (s.project(origin + QVector3D(1.f, 0.f, 0.f), &step))
-            magnify = std::max(1e-6, QLineF(g.origin, step).length());
-    }
+    const double magnify = magnification(s, origin, g.origin, scale);
 
     if (tool == Tool::Rotate) {
         const double radius = kRingRadius * size / magnify;
@@ -422,6 +428,7 @@ Geometry geometry(const Pose &pose, Tool tool, Orientation orientation, double s
             continue;
         }
         const QPointF dir = unit(tip - g.origin);
+        h.alpha = handleAlpha(std::abs(double(QVector3D::dotProduct(a, s.toEye(origin)))));
         h.kind = tool == Tool::Scale ? HandleKind::Scale : HandleKind::Arrow;
         h.front << QPolygonF({g.origin, tip});
         h.head = tool == Tool::Scale ? square(tip, dir, size) : arrowHead(tip, dir, size);
@@ -443,11 +450,46 @@ Geometry geometry(const Pose &pose, Tool tool, Orientation orientation, double s
     return g;
 }
 
+double handleAlpha(double facing)
+{
+    return std::clamp((kFadeEnd - facing) / (kFadeEnd - kFadeStart), 0.0, 1.0);
+}
+
+double snapToStep(double value, double step)
+{
+    return step > 0.0 ? std::round(value / step) * step : value;
+}
+
+QList<LockGuide> lockGuides(const Pose &pose, Tool tool, Orientation orientation, double scale,
+                         int lockAxis, bool lockPlane, const View &view)
+{
+    QList<LockGuide> out;
+    if (lockAxis < 0 || lockAxis > 2 || (view.valid && !pose.parent.isAffine()))
+        return out;
+    const Space s = spaceFor(pose, scale, view);
+    const QVector3D origin = originOf(pose);
+    QPointF screenOrigin;
+    if (!s.project(origin, &screenOrigin))
+        return out;
+    const double length = kArrowLength / magnification(s, origin, screenOrigin, scale);
+    for (int axis = 0; axis < 3; ++axis) {
+        if (lockPlane ? axis == lockAxis : axis != lockAxis)
+            continue;
+        QPointF tip;
+        if (s.project(origin + axisFor(pose, s, tool, orientation, axis) * float(length), &tip)
+            && QLineF(screenOrigin, tip).length() > 1.0)
+            out.append({axis, QLineF(screenOrigin, tip)});
+    }
+    return out;
+}
+
 QString pick(const Geometry &geometry, QPointF point, double tolerance)
 {
     QString best;
     double bestDistance = tolerance;
     for (const Handle &h : geometry.handles) {
+        if (h.alpha < kPickableAlpha)
+            continue;
         double distance = std::numeric_limits<double>::infinity();
         for (const QPolygonF &line : h.front)
             distance = std::min(distance, polylineDistance(point, line));
@@ -511,7 +553,8 @@ void eulerFromMatrix(const QMatrix4x4 &r, double nearest[3], double out[3])
 }
 
 DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QString &handle,
-                QPointF press, QPointF now, bool snap, double scale, const View &view, double moveStep, double rotateStep)
+                QPointF press, QPointF now, bool snap, double scale, const View &view, double moveStep, double rotateStep,
+                const DragExtras &extras)
 {
     DragResult result;
     result.pose = start;
@@ -523,33 +566,54 @@ DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QSt
         Pose own = start;
         own.parent = QTransform();
         result = drag(own, tool, orientation, handle, parented.unparent(press),
-                      parented.unparent(now), snap, scale, {}, moveStep, rotateStep);
+                      parented.unparent(now), snap, scale, {}, moveStep, rotateStep, extras);
         result.pose.parent = start.parent;
         return result;
     }
+    const bool locked = extras.lockAxis >= 0 && extras.lockAxis <= 2;
+    if (locked && extras.orientation)
+        orientation = *extras.orientation;
     const Space s = spaceFor(start, scale, view);
     const QVector3D origin = originOf(start);
     const double d = s.ortho ? 1000.0
                      : s.hasView ? std::max(1.0, double((s.eye() - origin).length())) : s.d;
 
     if (tool == Tool::Scale) {
-        const bool uniform = handle == QLatin1String("xy");
-        const int axis = axisFromId(handle);
+        bool uniform = handle == QLatin1String("xy");
+        int axis = axisFromId(handle);
+        if (locked) {
+            if (extras.lockPlane) {
+                uniform = extras.lockAxis == 2;
+                axis = uniform ? -1 : (extras.lockAxis == 0 ? 1 : 0);
+            } else if (extras.lockAxis < 2) {
+                uniform = false;
+                axis = extras.lockAxis;
+            } else {
+                return result;
+            }
+        }
         if (!uniform && axis < 0)
             return result;
-        const QVector3D a = uniform ? (axisFor(start, s, tool, orientation, 0)
-                                       + axisFor(start, s, tool, orientation, 1)).normalized()
-                                    : axisFor(start, s, tool, orientation, axis);
-        double t0 = 0.0;
-        double t1 = 0.0;
         double factor = 1.0;
-        if (lineParam(s, origin, a, press, &t0) && lineParam(s, origin, a, now, &t1)
-            && std::abs(t0) > 1e-3) {
-            factor = t1 / t0;
+        if (extras.typed) {
+            factor = *extras.typed;
         } else {
-            factor = 1.0 - (now.y() - press.y()) / 100.0;
+            const QVector3D a = uniform ? (axisFor(start, s, tool, orientation, 0)
+                                           + axisFor(start, s, tool, orientation, 1)).normalized()
+                                        : axisFor(start, s, tool, orientation, axis);
+            double t0 = 0.0;
+            double t1 = 0.0;
+            if (lineParam(s, origin, a, press, &t0) && lineParam(s, origin, a, now, &t1)
+                && std::abs(t0) > 1e-3) {
+                factor = t1 / t0;
+            } else {
+                factor = 1.0 - (now.y() - press.y()) / 100.0;
+            }
+            if (snap)
+                factor = snapToStep(factor, extras.scaleStep);
         }
         factor = std::max(0.01, factor);
+        result.amount = factor;
         QSizeF size = start.rect.size();
         if (uniform || axis == 0)
             size.setWidth(std::max(1.0, size.width() * factor));
@@ -562,28 +626,64 @@ DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QSt
         return result;
     }
 
-    const int axis = axisFromId(handle);
+    const int axis = locked ? extras.lockAxis : axisFromId(handle);
     if (axis < 0)
         return result;
     const QVector3D a = axisFor(start, s, tool, orientation, axis);
 
     if (tool == Tool::Move) {
-        double delta = 0.0;
-        double t0 = 0.0;
-        double t1 = 0.0;
-        const Geometry g = geometry(start, tool, orientation, scale, 1.0, view);
-        const bool dolly = std::any_of(g.handles.cbegin(), g.handles.cend(), [&](const Handle &h) {
-            return h.id == handle && h.kind == HandleKind::Dolly;
-        });
-        if (!dolly && lineParam(s, origin, a, press, &t0) && lineParam(s, origin, a, now, &t1)) {
-            delta = t1 - t0;
+        QVector3D moved = origin;
+        if (locked && extras.lockPlane) {
+            // Both in-plane axes move freely: the pointer's travel on the plane through the origin.
+            const int u = axis == 0 ? 1 : 0;
+            const int v = axis == 2 ? 1 : 2;
+            const QVector3D au = axisFor(start, s, tool, orientation, u);
+            const QVector3D av = axisFor(start, s, tool, orientation, v);
+            const auto hit = [&](QPointF at) {
+                const QVector3D r = s.ray(at);
+                const QVector3D from = s.rayOrigin(at, origin);
+                return from + r * (QVector3D::dotProduct(origin - from, a) / QVector3D::dotProduct(r, a));
+            };
+            if (std::abs(QVector3D::dotProduct(s.ray(press).normalized(), a)) < kPlaneEdgeOn
+                || std::abs(QVector3D::dotProduct(s.ray(now).normalized(), a)) < kPlaneEdgeOn)
+                return result;
+            const QVector3D travel = hit(now) - hit(press);
+            double du = QVector3D::dotProduct(travel, au);
+            double dv = QVector3D::dotProduct(travel, av);
+            if (extras.typed) {
+                du = *extras.typed;
+                dv = 0.0;
+            } else if (snap) {
+                du = snapToStep(du, moveStep);
+                dv = snapToStep(dv, moveStep);
+            }
+            moved = origin + au * float(du) + av * float(dv);
+            result.amount = du;
+            result.amount2 = dv;
         } else {
-            // 300 px of vertical drag moves one perspective distance; down comes toward the viewer.
-            delta = (now.y() - press.y()) * d / 300.0 * (a.z() >= 0.f ? -1.0 : 1.0);
+            double delta = 0.0;
+            double t0 = 0.0;
+            double t1 = 0.0;
+            const Geometry g = geometry(start, tool, orientation, scale, 1.0, view);
+            const QString id = idFor(axis);
+            const bool dolly = std::any_of(g.handles.cbegin(), g.handles.cend(), [&](const Handle &h) {
+                return h.id == id && h.kind == HandleKind::Dolly;
+            });
+            if (extras.typed) {
+                delta = *extras.typed;
+            } else {
+                if (!dolly && lineParam(s, origin, a, press, &t0) && lineParam(s, origin, a, now, &t1)) {
+                    delta = t1 - t0;
+                } else {
+                    // 300 px of vertical drag moves one perspective distance; down comes toward the viewer.
+                    delta = (now.y() - press.y()) * d / 300.0 * (a.z() >= 0.f ? -1.0 : 1.0);
+                }
+                if (snap)
+                    delta = snapToStep(delta, moveStep);
+            }
+            moved = origin + a * float(delta);
+            result.amount = delta;
         }
-        if (snap && moveStep > 0.0)
-            delta = std::round(delta / moveStep) * moveStep;
-        QVector3D moved = origin + a * float(delta);
         // Stop short of the eye, where the clip would vanish. A view's eye can be anywhere, and the
         // clip is free to pass it.
         const double maxZ = d * 0.8;
@@ -599,33 +699,38 @@ DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QSt
     // Rotate about `a` through the anchor, by the angle the pointer sweeps on the ring's
     // plane. World, view and local all come to Rot(a)·R0: a local axis is R0 applied to a basis axis.
     double degrees = 0.0;
-    const QVector3D r0 = s.ray(press);
-    const QVector3D r1 = s.ray(now);
-    const double facing = std::abs(QVector3D::dotProduct(r0.normalized(), a));
-    if (facing < 0.08) {
-        // The ring is edge-on: its plane gives no angle, so read it off the drag along the line
-        // it projects to. A +turn carries the ring's nearest point along a × toEye.
-        const QVector3D along = QVector3D::crossProduct(a, s.toEye(origin));
-        QPointF p0;
-        QPointF p1;
-        QPointF dir(1, 0);
-        if (s.project(origin, &p0) && s.project(origin + along * 10.f, &p1))
-            dir = unit(p1 - p0);
-        degrees = QPointF::dotProduct(now - press, dir) * 0.5;
+    if (extras.typed) {
+        degrees = *extras.typed;
     } else {
-        const auto hit = [&](const QVector3D &r, QPointF at) {
-            const QVector3D from = s.rayOrigin(at, origin);
-            const double t = QVector3D::dotProduct(origin - from, a) / QVector3D::dotProduct(r, a);
-            return from + r * float(t) - origin;
-        };
-        const QVector3D v0 = hit(r0, press);
-        const QVector3D v1 = hit(r1, now);
-        degrees = std::atan2(double(QVector3D::dotProduct(a, QVector3D::crossProduct(v0, v1))),
-                             double(QVector3D::dotProduct(v0, v1)))
-                  * 180.0 / std::numbers::pi;
+        const QVector3D r0 = s.ray(press);
+        const QVector3D r1 = s.ray(now);
+        const double facing = std::abs(QVector3D::dotProduct(r0.normalized(), a));
+        if (facing < 0.08) {
+            // The ring is edge-on: its plane gives no angle, so read it off the drag along the line
+            // it projects to. A +turn carries the ring's nearest point along a × toEye.
+            const QVector3D along = QVector3D::crossProduct(a, s.toEye(origin));
+            QPointF p0;
+            QPointF p1;
+            QPointF dir(1, 0);
+            if (s.project(origin, &p0) && s.project(origin + along * 10.f, &p1))
+                dir = unit(p1 - p0);
+            degrees = QPointF::dotProduct(now - press, dir) * 0.5;
+        } else {
+            const auto hit = [&](const QVector3D &r, QPointF at) {
+                const QVector3D from = s.rayOrigin(at, origin);
+                const double t = QVector3D::dotProduct(origin - from, a) / QVector3D::dotProduct(r, a);
+                return from + r * float(t) - origin;
+            };
+            const QVector3D v0 = hit(r0, press);
+            const QVector3D v1 = hit(r1, now);
+            degrees = std::atan2(double(QVector3D::dotProduct(a, QVector3D::crossProduct(v0, v1))),
+                                 double(QVector3D::dotProduct(v0, v1)))
+                      * 180.0 / std::numbers::pi;
+        }
+        if (snap)
+            degrees = snapToStep(degrees, rotateStep);
     }
-    if (snap && rotateStep > 0.0)
-        degrees = std::round(degrees / rotateStep) * rotateStep;
+    result.amount = degrees;
     QMatrix4x4 turn;
     turn.rotate(float(degrees), a);
     const QMatrix4x4 rotated = turn * rotationOf(start);

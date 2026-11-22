@@ -55,6 +55,12 @@ Rectangle {
     border.color: entry.visible ? Theme.c.manipHud.inputBorder : Theme.c.manipHud.border
     z: 100
 
+    // A finger has no digit keys: tapping the value (with another finger, while one is dragging) opens the entry.
+    TapHandler {
+        enabled: readout.editable && readout.touch && !readout.entering
+        onTapped: readout.beginEntry()
+    }
+
     Text {
         id: label
         anchors.centerIn: parent

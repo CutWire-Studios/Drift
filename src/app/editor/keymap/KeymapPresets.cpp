@@ -234,7 +234,7 @@ QHash<QString, QStringList> driftChords()
         {QStringLiteral("viewport3d.gizmoRotate"), {QStringLiteral("R")}},
         {QStringLiteral("viewport3d.gizmoScale"), {QStringLiteral("E")}},
         {QStringLiteral("viewport3d.gizmoOrientation"), {QStringLiteral("Shift+T")}},
-        {QStringLiteral("viewport3d.frameSelected"), {QStringLiteral("F")}},
+        {QStringLiteral("viewport3d.frameSelected"), {QStringLiteral("F"), QStringLiteral("Num+.")}},
         {QStringLiteral("viewport3d.frameAll"), {QStringLiteral("Home")}},
         {QStringLiteral("viewport3d.resetView"), {QStringLiteral("Shift+Home")}},
         {QStringLiteral("viewport3d.toggleFly"), {QStringLiteral("Shift+F")}},

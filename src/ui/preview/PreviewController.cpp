@@ -126,6 +126,23 @@ QVariantList polylineToVariant(const QPolygonF &line)
     return out;
 }
 
+drift::gizmo::DragExtras dragExtras(const QVariantMap &options, double scaleStep)
+{
+    using namespace drift::gizmo;
+    DragExtras extras;
+    extras.scaleStep = scaleStep;
+    const QString axis = options.value(QStringLiteral("axis")).toString();
+    extras.lockAxis = axis == QLatin1String("x") ? 0 : axis == QLatin1String("y") ? 1 : axis == QLatin1String("z") ? 2 : -1;
+    extras.lockPlane = options.value(QStringLiteral("plane")).toBool();
+    const QString orientation = options.value(QStringLiteral("orientation")).toString();
+    if (!orientation.isEmpty())
+        extras.orientation = orientationFromString(orientation);
+    const QVariant typed = options.value(QStringLiteral("typed"));
+    if (typed.isValid() && typed.canConvert<double>() && !typed.isNull())
+        extras.typed = typed.toDouble();
+    return extras;
+}
+
 drift::snap::Targets canvasSnapTargets(double width, double height, const QVariantMap &guides)
 {
     drift::snap::Targets targets;
@@ -182,6 +199,7 @@ PreviewController::PreviewController(AppController &app, QObject *parent)
     m_gridSize = std::max(0.0, settings.value(QStringLiteral("preview/gridSize"), m_gridSize).toDouble());
     m_translateSnap = std::max(0.0, settings.value(QStringLiteral("preview/translateSnap"), m_translateSnap).toDouble());
     m_rotationSnap = std::max(0.0, settings.value(QStringLiteral("preview/rotationSnap"), m_rotationSnap).toDouble());
+    m_scaleSnap = std::max(0.0, settings.value(QStringLiteral("preview/scaleSnap"), m_scaleSnap).toDouble());
 
     // Selecting a mask clip turns the handles on, so anything that can change what is selected —
     // or move a mask out from under the playhead — has to re-ask.
@@ -399,6 +417,16 @@ void PreviewController::setRotationSnap(double degrees)
     emit gizmoChanged();
 }
 
+void PreviewController::setScaleSnap(double step)
+{
+    step = std::max(0.0, step);
+    if (qFuzzyCompare(m_scaleSnap, step))
+        return;
+    m_scaleSnap = step;
+    QSettings().setValue(QStringLiteral("preview/scaleSnap"), step);
+    emit gizmoChanged();
+}
+
 void PreviewController::setNavigationScheme(const QString &scheme)
 {
     if (m_navigationScheme == scheme || (scheme != QLatin1String("blender") && scheme != QLatin1String("maya")))
@@ -467,6 +495,7 @@ QVariantMap PreviewController::gizmoGeometry(const QVariantMap &box, double scal
         handles.append(QVariantMap{
             {QStringLiteral("id"), h.id},
             {QStringLiteral("kind"), QString::fromLatin1(kinds[int(h.kind)])},
+            {QStringLiteral("alpha"), h.alpha},
             {QStringLiteral("front"), front},
             {QStringLiteral("back"), back},
             {QStringLiteral("head"), polylineToVariant(h.head)},
@@ -494,9 +523,27 @@ QString PreviewController::gizmoPick(const QVariantMap &box, double scale, doubl
     return pick(g, QPointF(x, y), tolerance);
 }
 
+QVariantList PreviewController::gizmoLockGuides(const QVariantMap &box, double scale, const QVariantMap &options,
+                                                int viewport) const
+{
+    using namespace drift::gizmo;
+    const DragExtras extras = dragExtras(options, m_scaleSnap);
+    if (extras.lockAxis < 0)
+        return {};
+    const Orientation orientation = extras.orientation.value_or(orientationFromString(m_gizmoOrientation));
+    QVariantList out;
+    for (const LockGuide &guide : lockGuides(gizmoPoseOfBox(box), toolFromString(m_gizmoTool), orientation, scale,
+                                             extras.lockAxis, extras.lockPlane, gizmoView(viewport))) {
+        out.append(QVariantMap{{QStringLiteral("axis"), QString(QChar(u'x' + guide.axis))},
+                               {QStringLiteral("x1"), guide.line.x1()}, {QStringLiteral("y1"), guide.line.y1()},
+                               {QStringLiteral("x2"), guide.line.x2()}, {QStringLiteral("y2"), guide.line.y2()}});
+    }
+    return out;
+}
+
 QVariantMap PreviewController::applyGizmoDrag(const QVariantMap &start, const QString &handle,
                                                  double pressX, double pressY, double nowX,
-                                                 double nowY, bool snap, double scale, int viewport)
+                                                 double nowY, const QVariantMap &options, double scale, int viewport)
 {
     using namespace drift::gizmo;
     const int trackIndex = start.value(QStringLiteral("track")).toInt();
@@ -507,8 +554,10 @@ QVariantMap PreviewController::applyGizmoDrag(const QVariantMap &start, const QS
 
     const Tool tool = toolFromString(m_gizmoTool);
     const DragResult result = drag(gizmoPoseOfBox(start), tool, orientationFromString(m_gizmoOrientation),
-                                   handle, QPointF(pressX, pressY), QPointF(nowX, nowY), snap, scale,
-                                   gizmoView(viewport), m_translateSnap, m_rotationSnap);
+                                   handle, QPointF(pressX, pressY), QPointF(nowX, nowY),
+                                   options.value(QStringLiteral("snap")).toBool(), scale,
+                                   gizmoView(viewport), m_translateSnap, m_rotationSnap,
+                                   dragExtras(options, m_scaleSnap));
     const Pose pose = hasBoundsCentre(start) ? anchoredLike(result.pose, gizmoPoseFromBox(start)) : result.pose;
 
     if (start.value(QStringLiteral("kind")).toString() == QLatin1String("camera")) {
@@ -565,6 +614,8 @@ QVariantMap PreviewController::applyGizmoDrag(const QVariantMap &start, const QS
         out.insert(QStringLiteral("rotationX"), pose.pose3d.rotationX);
         out.insert(QStringLiteral("rotationY"), pose.pose3d.rotationY);
         out.insert(QStringLiteral("rotation"), pose.rotation);
+        out.insert(QStringLiteral("amount"), result.amount);
+        out.insert(QStringLiteral("amount2"), result.amount2);
         return out;
     }
 
@@ -614,6 +665,8 @@ QVariantMap PreviewController::applyGizmoDrag(const QVariantMap &start, const QS
     out.insert(QStringLiteral("rotationX"), pose.pose3d.rotationX);
     out.insert(QStringLiteral("rotationY"), pose.pose3d.rotationY);
     out.insert(QStringLiteral("z"), pose.pose3d.positionZ);
+    out.insert(QStringLiteral("amount"), result.amount);
+    out.insert(QStringLiteral("amount2"), result.amount2);
     return out;
 }
 
@@ -660,13 +713,15 @@ QVariantMap PreviewController::groupGizmoPivot(const QVariantList &boxes, int) c
 
 QVariantMap PreviewController::applyGroupGizmoDrag(const QVariantMap &pivot, const QVariantList &startBoxes,
                                                    const QString &handle, double pressX, double pressY,
-                                                   double nowX, double nowY, bool snap, double scale, int viewport)
+                                                   double nowX, double nowY, const QVariantMap &options, double scale, int viewport)
 {
     using namespace drift::gizmo;
     const Tool tool = toolFromString(m_gizmoTool);
     const Pose start = gizmoPoseFromBox(pivot);
     const DragResult result = drag(start, tool, orientationFromString(m_gizmoOrientation), handle,
-                                   QPointF(pressX, pressY), QPointF(nowX, nowY), snap, scale, gizmoView(viewport), m_translateSnap, m_rotationSnap);
+                                   QPointF(pressX, pressY), QPointF(nowX, nowY), options.value(QStringLiteral("snap")).toBool(),
+                                   scale, gizmoView(viewport), m_translateSnap, m_rotationSnap,
+                                   dragExtras(options, m_scaleSnap));
     const Pose &pose = result.pose;
 
     const QVector3D centre0 = start.pose3d.pivot(start.rect);
@@ -752,6 +807,8 @@ QVariantMap PreviewController::applyGroupGizmoDrag(const QVariantMap &pivot, con
     out.insert(QStringLiteral("width"), pose.rect.width());
     out.insert(QStringLiteral("height"), pose.rect.height());
     out.insert(QStringLiteral("z"), pose.pose3d.positionZ);
+    out.insert(QStringLiteral("amount"), result.amount);
+    out.insert(QStringLiteral("amount2"), result.amount2);
     return out;
 }
 

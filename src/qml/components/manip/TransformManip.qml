@@ -55,10 +55,18 @@ ManipOverlay {
 
     nudgeEnabled: !mode3d && (groupMode || selectedBox !== null)
     nudgeText: qsTr("Nudge clip")
-    hudEditable: activeBox !== null && !touchDrag
-    hudUnit: activeBox ? activeBox.typedUnit : ""
-    chipModifiers: touchBarItem ? touchBarItem.modifiers : null
-    touchBar: touch && !mode3d ? touchBarComponent : null
+    hudEditable: activeBox !== null ? !touchDrag : gizmo.dragging !== ""
+    hudUnit: activeBox ? activeBox.typedUnit : (gizmo.dragging !== "" ? gizmoUnit : "")
+    chipModifiers: touchBarItem && !mode3d ? touchBarItem.modifiers : null
+    touchBar: touch ? (mode3d ? touchBar3dComponent : touchBarComponent) : null
+
+    // What a number typed into the HUD of a gizmo drag means.
+    readonly property string gizmoUnit: {
+        const tool = EditorState.preview.gizmoTool
+        return tool === "move" ? "px" : tool === "rotate" ? "°" : "×"
+    }
+    // The phone's axis chips: the axis the gizmo's next drag is constrained to, empty for free.
+    property string touchAxisLock: ""
 
     // The clip box whose gesture is running, for the HUD's typed value.
     property var activeBox: null
@@ -408,10 +416,41 @@ ManipOverlay {
     }
 
     onHudApplied: (text, value) => {
+        if (gizmo.dragging !== "") {
+            gizmo.solve(value)
+            endGesture()
+            return
+        }
         if (!activeBox)
             return
         activeBox.applyTyped(value)
         endGesture()
+    }
+
+    // X, Y and Z constrain a gizmo drag (Shift: to the plane without it), and Ctrl snaps it.
+    onUnhandledKey: (event) => {
+        if (gizmo.dragging === "")
+            return
+        const plain = !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+        const axis = event.key === Qt.Key_X ? "x" : event.key === Qt.Key_Y ? "y" : event.key === Qt.Key_Z ? "z" : ""
+        if (axis !== "" && plain && !event.isAutoRepeat) {
+            event.accepted = gizmo.lockKey(axis, (event.modifiers & Qt.ShiftModifier) !== 0)
+        } else if (event.key === Qt.Key_Control) {
+            gizmo.setModifiers(event.modifiers | Qt.ControlModifier)
+        }
+    }
+
+    Keys.onReleased: (event) => {
+        if (gizmo.dragging !== "" && event.key === Qt.Key_Control)
+            gizmo.setModifiers(event.modifiers & ~Qt.ControlModifier)
+    }
+
+    Keys.onShortcutOverride: (event) => {
+        if (gizmo.dragging === "")
+            return
+        if (event.key === Qt.Key_X || event.key === Qt.Key_Y || event.key === Qt.Key_Z
+                || (event.text.length === 1 && "0123456789-.".indexOf(event.text) >= 0))
+            event.accepted = true
     }
 
     onEscaped: {
@@ -425,7 +464,10 @@ ManipOverlay {
 
     Connections {
         target: EditorState.drag
-        function onCommitted() { root.resetGestures() }
+        function onCommitted() {
+            gizmo.abort()
+            root.resetGestures()
+        }
         function onCancelled() {
             gizmo.abort()
             root.resetGestures()
@@ -458,6 +500,77 @@ ManipOverlay {
                 text: qsTr("Add")
                 selected: root.addToSelection
                 onClicked: root.addToSelection = !root.addToSelection
+            }
+        }
+    }
+
+    Component {
+        id: touchBar3dComponent
+
+        Column {
+            id: bar3d
+            spacing: Theme.spacingSm
+            visible: root.gizmoBox !== null
+
+            TouchContextBar {
+                width: Math.min(implicitWidth, root.width - Theme.spacingLg * 2)
+                anchors.horizontalCenter: parent.horizontalCenter
+                chips: []
+
+                Repeater {
+                    model: [
+                        { id: "move", label: qsTr("Move") },
+                        { id: "rotate", label: qsTr("Rotate") },
+                        { id: "scale", label: qsTr("Scale") }
+                    ]
+
+                    ThemedChip {
+                        required property var modelData
+                        chipHeight: Theme.androidMinTouchTarget
+                        text: modelData.label
+                        selected: EditorState.preview.gizmoTool === modelData.id
+                        onClicked: EditorState.preview.gizmoTool = modelData.id
+                    }
+                }
+
+                ThemedChip {
+                    chipHeight: Theme.androidMinTouchTarget
+                    text: qsTr("Local")
+                    selected: EditorState.preview.gizmoOrientation === "local"
+                    onClicked: EditorState.preview.gizmoOrientation =
+                               EditorState.preview.gizmoOrientation === "local" ? "world" : "local"
+                }
+            }
+
+            TouchContextBar {
+                id: lockBar
+                width: Math.min(implicitWidth, root.width - Theme.spacingLg * 2)
+                anchors.horizontalCenter: parent.horizontalCenter
+                chips: ["snap"]
+                snap: false
+
+                Binding {
+                    target: gizmo
+                    property: "snapOn"
+                    value: lockBar.snap
+                }
+
+                Repeater {
+                    model: [
+                        { id: "x", label: qsTr("X") },
+                        { id: "y", label: qsTr("Y") },
+                        { id: "z", label: qsTr("Z") },
+                        { id: "", label: qsTr("Free") }
+                    ]
+
+                    ThemedChip {
+                        required property var modelData
+                        chipHeight: Theme.androidMinTouchTarget
+                        text: modelData.label
+                        selected: root.touchAxisLock === modelData.id
+                        onClicked: root.touchAxisLock = modelData.id
+                    }
+                }
             }
         }
     }
@@ -553,9 +666,13 @@ ManipOverlay {
             // Hidden while the box itself is dragged, which it would not follow.
             box: root.interacting && dragging === "" ? null : root.gizmoBox
             groupBoxes: root.group3dBoxes
-            onDragStarted: {
-                // The gizmo does not say which device pressed it.
-                root.beginGesture("gizmo", root.touch ? DragSession.Touch : DragSession.Mouse, "", null)
+            lockPreset: root.touchAxisLock
+            onPointerMoved: (position) => root.pointerAt(position)
+            onDragStarted: (byTouch) => {
+                const tool = EditorState.preview.gizmoTool
+                root.beginGesture("gizmo", byTouch ? DragSession.Touch : DragSession.Mouse,
+                                  tool === "move" ? qsTr("Move clip in 3D") : tool === "rotate" ? qsTr("Rotate clip in 3D")
+                                                                                              : qsTr("Scale clip"), null)
                 // A group keeps its selection; picking one member would collapse it.
                 if (box.kind !== "group")
                     EditorState.selectClip(box.track, box.clip)

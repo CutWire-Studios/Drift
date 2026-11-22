@@ -10,8 +10,10 @@ Rectangle {
     property bool optionsOpen: false
     property bool viewMoved: false
     property real userZoom: 1
+    property bool view3d: false
 
     signal resetViewRequested()
+    signal view3dToggled()
 
     height: optionsFlow.height + Theme.spacingLg * 2
     color: Theme.c.androidPreviewOptionsStrip.background
@@ -77,6 +79,12 @@ Rectangle {
             text: modes[currentIndex].label
             onClicked: EditorState.playback.decodeMode =
                        values[(currentIndex + 1) % values.length]
+        }
+
+        ThemedChip {
+            selected: strip.view3d
+            text: qsTr("3D view")
+            onClicked: strip.view3dToggled()
         }
 
         ThemedChip {

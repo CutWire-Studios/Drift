@@ -6,6 +6,7 @@
 #include "core/project/Track.h"
 #include "core/shapes/ShapeStyle.h"
 #include "engine/compositor/layers/MaskApplier.h"
+#include "engine/render3d/editor/ClipGizmo.h"
 #include "engine/render3d/scene/ClipTransform3d.h"
 #include "ui/manip/ClipFrameMapper.h"
 #include "ui/manip/DragSession.h"
@@ -19,6 +20,7 @@
 #include <QPainterPath>
 
 #include <cmath>
+#include <numbers>
 
 using namespace drift;
 using namespace drift::geom;
@@ -42,6 +44,20 @@ ShapeContour curvy()
     c.closed = false;
     c.vertices = {vtx(0, 0, 0, 0, 0.2, 0.3), vtx(0.5, 0.4, -0.1, 0.2, 0.1, -0.2), vtx(1, 0, 0.2, 0.3, 0, 0)};
     return c;
+}
+
+// A clip centred on the canvas, so the eye looks straight down at it and the overlay is canvas px.
+drift::gizmo::Pose centredPose()
+{
+    drift::gizmo::Pose pose;
+    pose.canvas = QSizeF(1920, 1080);
+    pose.rect = QRectF(760, 390, 400, 300);
+    return pose;
+}
+
+QPointF gizmoOrigin(const drift::gizmo::Pose &pose)
+{
+    return drift::gizmo::geometry(pose, drift::gizmo::Tool::Move, drift::gizmo::Orientation::World, 1.0).origin;
 }
 
 // Distance from p to the polyline.
@@ -1104,6 +1120,204 @@ private slots:
         QVERIFY(qFuzzyIsNull(head.y()));
         const QPointF next = s.follow(100, 100, 0.5);
         QVERIFY(std::abs(std::hypot(next.x() - 100, next.y() - 100) - length) < 1e-9);
+    }
+
+    void gizmoSnapStepsRoundAndZeroLeavesFree()
+    {
+        using drift::gizmo::snapToStep;
+        QCOMPARE(snapToStep(47.0, 10.0), 50.0);
+        QCOMPARE(snapToStep(-0.04, 0.1), 0.0);
+        QVERIFY(std::abs(snapToStep(1.27, 0.1) - 1.3) < 1e-9);
+        QCOMPARE(snapToStep(37.0, 15.0), 30.0);
+        QCOMPARE(snapToStep(37.5, 0.0), 37.5);
+        QCOMPARE(snapToStep(37.5, -5.0), 37.5);
+    }
+
+    void gizmoIsFreeUntilSnapIsAsked()
+    {
+        using namespace drift::gizmo;
+        const Pose pose = centredPose();
+        const QPointF o = gizmoOrigin(pose);
+
+        const DragResult freeMove = drag(pose, Tool::Move, Orientation::World, QStringLiteral("x"), o,
+                                         o + QPointF(47, 0), false, 1.0, {}, 10.0, 15.0);
+        QVERIFY(std::abs(freeMove.pose.rect.x() - (pose.rect.x() + 47.0)) < 1e-6);
+        const DragResult snapMove = drag(pose, Tool::Move, Orientation::World, QStringLiteral("x"), o,
+                                         o + QPointF(47, 0), true, 1.0, {}, 10.0, 15.0);
+        QVERIFY(std::abs(snapMove.pose.rect.x() - (pose.rect.x() + 50.0)) < 1e-6);
+        QVERIFY(std::abs(snapMove.amount - 50.0) < 1e-6);
+
+        const QPointF from = o + QPointF(100, 0);
+        const double radians = 37.0 * std::numbers::pi / 180.0;
+        const QPointF to = o + QPointF(100 * std::cos(radians), 100 * std::sin(radians));
+        const DragResult freeTurn = drag(pose, Tool::Rotate, Orientation::World, QStringLiteral("z"), from, to,
+                                         false, 1.0, {}, 0.0, 15.0);
+        QVERIFY2(std::abs(std::abs(freeTurn.pose.rotation) - 37.0) < 0.1, qPrintable(QString::number(freeTurn.pose.rotation)));
+        const DragResult snapTurn = drag(pose, Tool::Rotate, Orientation::World, QStringLiteral("z"), from, to,
+                                         true, 1.0, {}, 0.0, 15.0);
+        QVERIFY2(std::abs(std::abs(snapTurn.pose.rotation) - 30.0) < 0.1, qPrintable(QString::number(snapTurn.pose.rotation)));
+
+        DragExtras step;
+        step.scaleStep = 0.1;
+        const QPointF tip = o + QPointF(84, 0);
+        const DragResult freeScale = drag(pose, Tool::Scale, Orientation::Local, QStringLiteral("x"), tip,
+                                          o + QPointF(84 * 1.27, 0), false, 1.0, {}, 0.0, 15.0, step);
+        QVERIFY(std::abs(freeScale.pose.rect.width() - 400 * 1.27) < 0.5);
+        const DragResult snapScale = drag(pose, Tool::Scale, Orientation::Local, QStringLiteral("x"), tip,
+                                          o + QPointF(84 * 1.27, 0), true, 1.0, {}, 0.0, 15.0, step);
+        QVERIFY(std::abs(snapScale.pose.rect.width() - 400 * 1.3) < 0.5);
+        QVERIFY(std::abs(snapScale.amount - 1.3) < 1e-6);
+    }
+
+    void gizmoAxisLockReplacesTheHandlesAxis()
+    {
+        using namespace drift::gizmo;
+        const Pose pose = centredPose();
+        const QPointF o = gizmoOrigin(pose);
+
+        DragExtras lockY;
+        lockY.lockAxis = 1;
+        const DragResult onY = drag(pose, Tool::Move, Orientation::World, QStringLiteral("x"), o,
+                                    o + QPointF(30, 40), false, 1.0, {}, 0.0, 15.0, lockY);
+        QVERIFY(std::abs(onY.pose.rect.x() - pose.rect.x()) < 1e-6);
+        QVERIFY(std::abs(onY.pose.rect.y() - (pose.rect.y() + 40.0)) < 1.0);
+
+        DragExtras planeXY;
+        planeXY.lockAxis = 2;
+        planeXY.lockPlane = true;
+        const DragResult inPlane = drag(pose, Tool::Move, Orientation::World, QStringLiteral("x"), o,
+                                        o + QPointF(30, 40), false, 1.0, {}, 0.0, 15.0, planeXY);
+        QVERIFY(std::abs(inPlane.pose.rect.x() - (pose.rect.x() + 30.0)) < 1e-6);
+        QVERIFY(std::abs(inPlane.pose.rect.y() - (pose.rect.y() + 40.0)) < 1e-6);
+        QVERIFY(std::abs(inPlane.pose.pose3d.positionZ) < 1e-6);
+    }
+
+    void gizmoPlaneLockIgnoresAnEdgeOnPlane()
+    {
+        using namespace drift::gizmo;
+        const Pose pose = centredPose();
+        const QPointF o = gizmoOrigin(pose);
+        // The eye looks along z, so the plane without X is seen edge-on.
+        DragExtras planeYZ;
+        planeYZ.lockAxis = 0;
+        planeYZ.lockPlane = true;
+        const DragResult r = drag(pose, Tool::Move, Orientation::World, QStringLiteral("y"), o,
+                                  o + QPointF(30, 40), false, 1.0, {}, 0.0, 15.0, planeYZ);
+        QCOMPARE(r.pose.rect, pose.rect);
+        QCOMPARE(r.pose.pose3d.positionZ, pose.pose3d.positionZ);
+    }
+
+    void gizmoLockFollowsTheOrientationOverride()
+    {
+        using namespace drift::gizmo;
+        Pose pose = centredPose();
+        pose.pose3d.rotationY = 45.0;
+        const QPointF o = gizmoOrigin(pose);
+
+        DragExtras world;
+        world.lockAxis = 0;
+        const DragResult onWorld = drag(pose, Tool::Move, Orientation::World, QStringLiteral("y"), o,
+                                        o + QPointF(50, 0), false, 1.0, {}, 0.0, 15.0, world);
+        QVERIFY(std::abs(onWorld.pose.pose3d.positionZ) < 1e-6);
+
+        DragExtras local = world;
+        local.orientation = Orientation::Local;
+        const DragResult onLocal = drag(pose, Tool::Move, Orientation::World, QStringLiteral("y"), o,
+                                        o + QPointF(50, 0), false, 1.0, {}, 0.0, 15.0, local);
+        QVERIFY(std::abs(onLocal.pose.pose3d.positionZ) > 1.0);
+    }
+
+    void gizmoTypedValueReplacesThePointer()
+    {
+        using namespace drift::gizmo;
+        const Pose pose = centredPose();
+        const QPointF o = gizmoOrigin(pose);
+
+        DragExtras typed;
+        typed.typed = 12.5;
+        const DragResult moved = drag(pose, Tool::Move, Orientation::World, QStringLiteral("x"), o, o + QPointF(300, 90),
+                                      true, 1.0, {}, 10.0, 15.0, typed);
+        QVERIFY(std::abs(moved.pose.rect.x() - (pose.rect.x() + 12.5)) < 1e-6);
+        QVERIFY(std::abs(moved.pose.rect.y() - pose.rect.y()) < 1e-6);
+
+        typed.typed = 30.0;
+        const DragResult turned = drag(pose, Tool::Rotate, Orientation::World, QStringLiteral("z"), o, o,
+                                       false, 1.0, {}, 0.0, 15.0, typed);
+        QVERIFY(std::abs(turned.pose.rotation - 30.0) < 1e-6);
+
+        typed.typed = 1.5;
+        const DragResult scaled = drag(pose, Tool::Scale, Orientation::Local, QStringLiteral("y"), o, o,
+                                       false, 1.0, {}, 0.0, 15.0, typed);
+        QVERIFY(std::abs(scaled.pose.rect.height() - 300 * 1.5) < 1e-6);
+        QVERIFY(std::abs(scaled.pose.rect.width() - 400) < 1e-6);
+    }
+
+    void gizmoHandleAlphaThresholds()
+    {
+        using namespace drift::gizmo;
+        QCOMPARE(handleAlpha(0.0), 1.0);
+        QCOMPARE(handleAlpha(kFadeStart), 1.0);
+        QCOMPARE(handleAlpha(kFadeEnd), 0.0);
+        QCOMPARE(handleAlpha(1.0), 0.0);
+        const double mid = handleAlpha((kFadeStart + kFadeEnd) / 2);
+        QVERIFY(std::abs(mid - 0.5) < 1e-9);
+        QVERIFY(handleAlpha(0.9) > handleAlpha(0.92));
+    }
+
+    void gizmoFadesAndStopsPickingAnAxisAlongTheView()
+    {
+        using namespace drift::gizmo;
+        const auto xHandle = [](const Geometry &g) -> const Handle * {
+            for (const Handle &h : g.handles) {
+                if (h.id == QLatin1String("x"))
+                    return &h;
+            }
+            return nullptr;
+        };
+        const auto tipOf = [](const Handle &h) { return h.front.first().last(); };
+        // Alone, so a neighbouring handle drawn over its tip cannot answer for it.
+        const auto pickX = [&](const Geometry &g) {
+            Geometry only = g;
+            only.handles = {*xHandle(g)};
+            return pick(only, tipOf(*xHandle(g)), 8.0);
+        };
+
+        Pose pose = centredPose();
+        Geometry g = geometry(pose, Tool::Move, Orientation::Local, 1.0);
+        QVERIFY(xHandle(g));
+        QCOMPARE(xHandle(g)->alpha, 1.0);
+        QCOMPARE(pickX(g), QStringLiteral("x"));
+
+        // Local X leans 25 degrees off the view direction: faded, still grabbable.
+        pose.pose3d.rotationY = 65.0;
+        g = geometry(pose, Tool::Move, Orientation::Local, 1.0);
+        QVERIFY(xHandle(g));
+        QVERIFY(xHandle(g)->alpha > kPickableAlpha && xHandle(g)->alpha < 1.0);
+        QCOMPARE(pickX(g), QStringLiteral("x"));
+
+        // 20 degrees off: nearly gone and no longer pickable.
+        pose.pose3d.rotationY = 70.0;
+        g = geometry(pose, Tool::Move, Orientation::Local, 1.0);
+        QVERIFY(xHandle(g));
+        QVERIFY(xHandle(g)->alpha < kPickableAlpha);
+        QVERIFY(pickX(g).isEmpty());
+    }
+
+    void gizmoLockGuidesFollowTheLock()
+    {
+        using namespace drift::gizmo;
+        const Pose pose = centredPose();
+        const QPointF o = gizmoOrigin(pose);
+        const QList<LockGuide> axis = lockGuides(pose, Tool::Move, Orientation::World, 1.0, 0, false);
+        QCOMPARE(axis.size(), 1);
+        QCOMPARE(axis.first().axis, 0);
+        QVERIFY(QLineF(o, axis.first().line.p1()).length() < 1e-6);
+        QVERIFY(std::abs(axis.first().line.dy()) < 1e-6 && axis.first().line.dx() > 1.0);
+        // The plane without X is the Y and Z axes; Z points at the viewer, so only Y is drawn.
+        const QList<LockGuide> plane = lockGuides(pose, Tool::Move, Orientation::World, 1.0, 0, true);
+        QCOMPARE(plane.size(), 1);
+        QCOMPARE(plane.first().axis, 1);
+        QVERIFY(lockGuides(pose, Tool::Move, Orientation::World, 1.0, -1, false).isEmpty());
     }
 };
 

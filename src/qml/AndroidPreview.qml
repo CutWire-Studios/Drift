@@ -15,10 +15,26 @@ Item {
 
     property bool optionsOpen: false
 
+    // The editor's free 3D view in place of the camera output, with the 3D gizmo on the selected clip.
+    // Switched from the options strip, and off whenever the preview goes away.
+    property bool view3d: false
+    onView3dChanged: {
+        EditorState.playback.setStreamEnabled(1, view3d)
+        EditorState.preview.viewport3dOpen = view3d
+        viewport.resetView()
+    }
+    Component.onDestruction: {
+        if (!view3d)
+            return
+        EditorState.playback.setStreamEnabled(1, false)
+        EditorState.preview.viewport3dOpen = false
+    }
+
     // Typing on the clip itself: the compositor draws the text and caret, a hidden field takes input.
     readonly property alias textEditor: viewport.textEditor
     // The tool overlay on the preview now, for pages that drive it (the crop page).
     readonly property alias toolHost: viewport.toolHost
+    readonly property alias previewViewport: viewport
 
     // PointerHandlers (clip DragHandler, view pinch) hit-test their parent's
     // bounds, not z-order. A sheet in Overlay is visually on top of this preview
@@ -107,6 +123,9 @@ Item {
                 anchors.margins: Theme.spacing2xl
                 pixelRatio: 1
                 compactStatus: true
+                stream: root.view3d ? 1 : 0
+
+                toolHost.forcedTool: root.view3d ? "transform" : ""
 
                 toolHost.tools: ({
                     transform: transformTool,
@@ -133,7 +152,7 @@ Item {
                 PinchHandler {
                     id: viewPinch
                     target: null
-                    enabled: !root.overlayBlocksPreview
+                    enabled: !root.overlayBlocksPreview && !root.view3d
 
                     property real lastScale: 1
                     property point lastCentroid
@@ -172,6 +191,17 @@ Item {
                     onCentroidChanged: viewPinch.step()
                 }
 
+                // One finger on empty space orbits, two dolly and pan; a handle of the gizmo takes its own
+                // finger first.
+                Loader {
+                    anchors.fill: parent
+                    z: -1
+                    active: root.view3d
+                    sourceComponent: Preview3DMode {
+                        viewport: root.previewViewport
+                    }
+                }
+
                 // Composition guides. Which sets are active lives in the
                 // Settings tab; this is the layer that draws them.
                 GuideLayer {
@@ -188,7 +218,9 @@ Item {
                 optionsOpen: root.optionsOpen
                 viewMoved: viewport.viewMoved
                 userZoom: viewport.userZoom
+                view3d: root.view3d
                 onResetViewRequested: viewport.resetView()
+                onView3dToggled: root.view3d = !root.view3d
             }
         }
 
@@ -244,9 +276,10 @@ Item {
     Component {
         id: transformTool
         TransformManip {
-            canvas: viewport.canvas
+            canvas: root.previewViewport.canvas
             touch: true
-            onTextEditRequested: (track, clip) => viewport.textEditor.start(track, clip, false)
+            viewport: root.view3d ? 1 : 0
+            onTextEditRequested: (track, clip) => root.textEditor.start(track, clip, false)
         }
     }
 

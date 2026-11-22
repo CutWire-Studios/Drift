@@ -1218,7 +1218,7 @@ void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
     const QPointF press = onOverlay(eye);
     const QPointF now = onOverlay(eye + QVector3D(150, 0, 0));
     const QVariantMap moved = state.preview()->applyGizmoDrag(start, QStringLiteral("x"), press.x(), press.y(),
-                                                          now.x(), now.y(), false, 1.0, 1);
+                                                          now.x(), now.y(), {}, 1.0, 1);
     state.commitPreviewDrag();
     const drift::Clip &camera = state.project()->tracks().at(track).clips.at(clip);
     QVERIFY2(std::abs(camera.positionX.evaluateAt(0) - 650.0) < 0.5,
@@ -1233,7 +1233,7 @@ void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
     state.beginPreviewDrag();
     const QPointF a = onOverlay(eyeNow + QVector3D(60, 0, 0));
     const QPointF b = onOverlay(eyeNow + QVector3D(0, 0, 60));
-    state.preview()->applyGizmoDrag(before, QStringLiteral("y"), a.x(), a.y(), b.x(), b.y(), false, 1.0, 1);
+    state.preview()->applyGizmoDrag(before, QStringLiteral("y"), a.x(), a.y(), b.x(), b.y(), {}, 1.0, 1);
     state.commitPreviewDrag();
     const QVariantMap after = state.preview()->cameraBox(1);
     QVERIFY(std::abs(after.value(QStringLiteral("rotationY")).toDouble()) > 1.0);
