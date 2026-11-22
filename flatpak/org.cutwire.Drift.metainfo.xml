@@ -93,22 +93,37 @@
       <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.9.3</url>
       <description>
         <p>Drift 0.9.3 adds node-based Video and Audio effect makers, auto ducking, keyboard
-        shortcut presets from other editors and better masking tools.</p>
+        shortcut presets from other editors, reworked on-canvas editing handles and better masking
+        tools.</p>
         <ul>
           <li>Video and Audio effect makers: build effects, transitions and in/out animations in
           a node graph and export them as packages</li>
           <li>Auto ducking lowers music under speech, with presets and voice detection</li>
           <li>Keyboard shortcuts: presets for Premiere, Resolve, Final Cut, CapCut, Kdenlive and
           Shotcut, several shortcuts per action, per-action reset and many new quick actions</li>
+          <li>On-canvas editing: transform, crop, path, tracker and 3D gizmo handles are rebuilt
+          on one shared set of tools, with snapping, a drag readout, a loupe, numeric entry and
+          Esc to cancel any drag without leaving an undo step</li>
+          <li>Crop: one crop frame for canvas, clips, media and Source Lab, with presets, moving
+          the whole box and crop on desktop clips</li>
           <li>Masking: lasso, loop fill, intelligent scissors and magic wand selection, subject
-          cutout on images, larger feather and a reset mask option</li>
+          cutout on images, bezier freeform masks with smoothing, include/exclude chips, brush
+          presets, a stylus eraser, larger feather and a reset mask option</li>
+          <li>Tracking: search area handles, a loupe, an onion-skin path and a re-track menu</li>
+          <li>Curves: easing, fade, speed, effect and colour curves share one editor, and the
+          keyframe workspace, lanes and properties graph stay in sync</li>
           <li>Effects: Motion Blur uses optical flow and real frames from high frame rate
           footage, a new Motion Smoothing effect, and chroma key can key black and grey</li>
           <li>Shapes: a bezier path editor, more shapes and a library of your own SVG shapes</li>
           <li>Ctrl+K understands plain-language editing commands, with an Ask mode</li>
           <li>Timeline: keyframe markers on clips and adjustment layers with easing presets,
           coloured bookmarks, close a gap on every track, split only the selected clips, speed
-          up to 100x and Shift+K to add a speed point</li>
+          up to 100x, Shift+K to add a speed point, a timecode readout on trim and fade handles,
+          and hold Ctrl/Cmd while trimming to turn off snapping</li>
+          <li>Choose your own interface and monospace fonts</li>
+          <li>Android: touch-sized controls and tool bars under the canvas, a tabbed text page,
+          one Edit text button, tap-to-apply effect cards, an export size estimate, a 3D view
+          and brush, AI and draw mask tools on phones</li>
           <li>Kdenlive, Shotcut and OpenTimelineIO import is back as an experimental feature</li>
           <li>Custom sticker packs from a zip or folder, double-click the empty bin to import,
           drop a folder onto the media pool, and choose where proxies are saved</li>
@@ -121,7 +136,8 @@
           <li>MCP: range bakes, timelines, teleprompter, slip edits, masks from clips and solo</li>
           <li>Fixes: failed saves are reported and undo history is kept for the session only by
           default, mouse wheel panning works again, range bakes go stale only when they should,
-          solo applies everywhere, and several crashes on exit and when dragging assets are gone</li>
+          solo applies everywhere, the keyframe strip opens from any tab, menus and tab strips no
+          longer overflow, and several crashes on exit and when dragging assets are gone</li>
         </ul>
         <p>Thanks to @jmn8718 for range bake, proxy, timeline and MCP work and many fixes; to
         @Kalana-Pankaja for keyframe markers, bookmark colours, subtitle editing and timeline
