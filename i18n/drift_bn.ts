@@ -1379,6 +1379,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Track</source>
+        <translation type="unfinished">ট্র্যাক</translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation type="unfinished">সম্পাদনা</translation>
     </message>
@@ -30535,8 +30539,52 @@ If playback stutters, try another.</source>
 <context>
     <name>TrackerOverlay</name>
     <message>
+        <source>Nudge tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trackers need a video clip</source>
         <translation>ট্র্যাকারের জন্য একটি ভিডিও ক্লিপ প্রয়োজন</translation>
+    </message>
+    <message>
+        <source>Move tracking outline corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize pattern box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize search box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tracking point</source>
+        <translation type="unfinished">ট্র্যাকিং পয়েন্ট সরান</translation>
+    </message>
+    <message>
+        <source>Corner %1   X %2 %   Y %3 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pattern %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X %1 %   Y %2 %   Box %3 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confidence %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This tracker drives other clips. Remove it from the Tracking panel to choose what happens to their keys.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip on the timeline to track motion in it</source>
@@ -30567,12 +30615,68 @@ If playback stutters, try another.</source>
         <translation>%1টি কোণ · শেষ করতে Enter · পূর্বাবস্থায় আনতে Backspace · বাতিল করতে Esc</translation>
     </message>
     <message>
+        <source>Pick Point or Planar, then tap the feature to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a marker to correct it, then track from this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use Point or Planar in the Tracking panel to start a track</source>
         <translation>ট্র্যাক শুরু করতে ট্র্যাকিং প্যানেলে পয়েন্ট বা প্ল্যানার ব্যবহার করুন</translation>
     </message>
     <message>
-        <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
-        <translation>সংশোধন করতে একটি মার্কার টানুন · ট্র্যাক করতে ট্র্যাকিং প্যানেলে ◀ ▶</translation>
+        <source>Drag a marker to correct it · Right-click to re-track from here · ◀ ▶ in the Tracking panel to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-track forward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-track backward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete tracker</source>
+        <translation type="unfinished">ট্র্যাকার মুছুন</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished">পয়েন্ট</translation>
+    </message>
+    <message>
+        <source>Tap the feature to follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Planar</source>
+        <translation type="unfinished">প্ল্যানার</translation>
+    </message>
+    <message>
+        <source>Tap the corners of a flat surface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">সম্পন্ন</translation>
+    </message>
+    <message>
+        <source>Track back to the start</source>
+        <translation type="unfinished">শুরু পর্যন্ত পেছনে ট্র্যাক করুন</translation>
+    </message>
+    <message>
+        <source>Track one frame back</source>
+        <translation type="unfinished">এক ফ্রেম পেছনে ট্র্যাক করুন</translation>
+    </message>
+    <message>
+        <source>Track one frame forward</source>
+        <translation type="unfinished">এক ফ্রেম সামনে ট্র্যাক করুন</translation>
+    </message>
+    <message>
+        <source>Track to the end</source>
+        <translation type="unfinished">শেষ পর্যন্ত ট্র্যাক করুন</translation>
     </message>
     <message>
         <source>Tracking… %1%</source>

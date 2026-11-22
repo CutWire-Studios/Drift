@@ -1379,6 +1379,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Track</source>
+        <translation type="unfinished">ලුහුබඳින්න</translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation type="unfinished">සංස්කරණය</translation>
     </message>
@@ -30535,8 +30539,52 @@ If playback stutters, try another.</source>
 <context>
     <name>TrackerOverlay</name>
     <message>
+        <source>Nudge tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trackers need a video clip</source>
         <translation>ට්‍රැකරයන් සඳහා වීඩියෝ ක්ලිපයක් අවශ්‍ය වේ</translation>
+    </message>
+    <message>
+        <source>Move tracking outline corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize pattern box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize search box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tracking point</source>
+        <translation type="unfinished">ලුහුබැඳීමේ ලක්ෂ්‍යය ගෙන යන්න</translation>
+    </message>
+    <message>
+        <source>Corner %1   X %2 %   Y %3 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pattern %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X %1 %   Y %2 %   Box %3 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confidence %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This tracker drives other clips. Remove it from the Tracking panel to choose what happens to their keys.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip on the timeline to track motion in it</source>
@@ -30567,12 +30615,68 @@ If playback stutters, try another.</source>
         <translation>කොන් %1ක් · නිම කිරීමට Enter · අහෝසි කිරීමට Backspace · අවලංගු කිරීමට Esc</translation>
     </message>
     <message>
+        <source>Pick Point or Planar, then tap the feature to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a marker to correct it, then track from this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use Point or Planar in the Tracking panel to start a track</source>
         <translation>ලුහුබැඳීම ආරම්භ කිරීමට Tracking පැනලයෙහි Point හෝ Planar භාවිතා කරන්න</translation>
     </message>
     <message>
-        <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
-        <translation>එය නිවැරදි කිරීමට සලකුණක් අදින්න · ලුහුබැඳීමට Tracking පැනලයේ ◀ ▶ ඔබන්න</translation>
+        <source>Drag a marker to correct it · Right-click to re-track from here · ◀ ▶ in the Tracking panel to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-track forward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-track backward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete tracker</source>
+        <translation type="unfinished">ට්‍රැකර් එක මකන්න</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished">ලක්ෂ්‍යය (Point)</translation>
+    </message>
+    <message>
+        <source>Tap the feature to follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Planar</source>
+        <translation type="unfinished">Planar</translation>
+    </message>
+    <message>
+        <source>Tap the corners of a flat surface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track back to the start</source>
+        <translation type="unfinished">නැවත ආරම්භය දක්වා ලුහුබඳින්න</translation>
+    </message>
+    <message>
+        <source>Track one frame back</source>
+        <translation type="unfinished">එක් රාමුවක් පසුපසට ලුහුබඳින්න</translation>
+    </message>
+    <message>
+        <source>Track one frame forward</source>
+        <translation type="unfinished">එක් රාමුවක් ඉදිරියට ලුහුබඳින්න</translation>
+    </message>
+    <message>
+        <source>Track to the end</source>
+        <translation type="unfinished">අවසානය දක්වා ලුහුබඳින්න</translation>
     </message>
     <message>
         <source>Tracking… %1%</source>
