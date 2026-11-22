@@ -109,6 +109,8 @@ QJsonObject maskToJson(const Mask &m)
         object.insert(QStringLiteral("lockAspect"), true);
     if (!m.sequenceId.isEmpty())
         object.insert(QStringLiteral("sequenceId"), m.sequenceId);
+    if (m.faceSlot >= 0)
+        object.insert(QStringLiteral("faceSlot"), m.faceSlot);
     if (!m.mediaPatches.isEmpty()) {
         QJsonArray patches;
         for (auto it = m.mediaPatches.constBegin(); it != m.mediaPatches.constEnd(); ++it)
@@ -139,6 +141,7 @@ Mask maskFromJson(const QJsonObject &o)
     m.enabled = o.value(QStringLiteral("enabled")).toBool(m.enabled);
     m.name = o.value(QStringLiteral("name")).toString(m.name);
     m.cropShape = o.value(QStringLiteral("cropShape")).toString();
+    m.faceSlot = o.value(QStringLiteral("faceSlot")).toInt(m.faceSlot);
     // Media was called "matte" before v5 and only ever backed a segmentation cutout, so the old
     // keys map straight across.
     m.mediaPath = o.value(QStringLiteral("mediaPath"))
@@ -1755,6 +1758,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
     // Version 28 added the Sequence mask shape. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
+    // Version 33 added Mask::faceSlot, the marker on a mask generated from a face track. Nothing
+    // to migrate; the bump is a gate, as for versions 6 and 9. An older build would drop the
+    // marker and then lay a second set of face masks over the first instead of replacing them.
     // Version 32 made Freeform mask vertices bezier (handles and a tangent mode). A format 31 polygon
     // point is already a valid corner vertex, so there is nothing to migrate; an older build would
     // drop the handles and draw the curve as a polygon.
