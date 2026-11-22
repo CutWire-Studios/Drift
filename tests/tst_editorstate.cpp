@@ -3308,6 +3308,11 @@ void EditorStateTest::keymapEveryPresetIsConsistent()
 
     // The keymap built from each preset gives every listed chord to its action: nothing is dropped
     // by the in-memory conflict rule.
+#ifdef Q_OS_MACOS
+    constexpr bool hostMac = true;
+#else
+    constexpr bool hostMac = false;
+#endif
     for (const Preset &preset : presets()) {
         KeymapSandbox sandbox;
         drift::Keymap keymap;
@@ -3315,7 +3320,7 @@ void EditorStateTest::keymapEveryPresetIsConsistent()
         for (auto it = preset.chords.cbegin(); it != preset.chords.cend(); ++it) {
             QStringList expected;
             for (const QString &raw : it.value())
-                expected << translateForPlatform(raw, false);
+                expected << translateForPlatform(raw, hostMac);
             QCOMPARE(keymap.bindings(it.key()), expected);
         }
     }
