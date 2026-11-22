@@ -9167,7 +9167,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
+        <source>Tap to add a point. Drag to move it. Hold a point for more, or drag it off the plot to remove.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click, Delete or drag it off to remove. Esc cancels a drag.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9206,6 +9210,40 @@
     </message>
     <message>
         <source>Bezier</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphView</name>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset view</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -12122,11 +12160,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself. Shift keeps a handle flat, Ctrl suspends snapping, Esc cancels a drag.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
+        <source>Click the curve to add a point and drag the points to shape the ramp (ends stay pinned). Delete or double-click removes, drag an empty spot to select several, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -20680,6 +20722,14 @@ If playback stutters, try another.</source>
         <source>Balanced</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QuickAddPopup</name>
@@ -26288,6 +26338,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit speed curve</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -33594,6 +33648,53 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unexpected reply from llama-server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::manip::CurveGraphModel</name>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

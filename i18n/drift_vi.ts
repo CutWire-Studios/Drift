@@ -9131,8 +9131,12 @@
         <translation>Vào %1 → Ra %2</translation>
     </message>
     <message>
-        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation>Nhấp để thêm điểm. Kéo thả để di chuyển. Nhấp đúp hoặc kéo ra ngoài để xóa.</translation>
+        <source>Tap to add a point. Drag to move it. Hold a point for more, or drag it off the plot to remove.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click, Delete or drag it off to remove. Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9171,6 +9175,40 @@
     <message>
         <source>Bezier</source>
         <translation>Bezier</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Xóa</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Mượt</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">Đặt lại</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Hoàn tất</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphView</name>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">Chỉnh sửa đường cong</translation>
+    </message>
+    <message>
+        <source>Reset view</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12077,12 +12115,16 @@
         <translation>Ra mềm</translation>
     </message>
     <message>
-        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
-        <translation>Kéo hai tay cầm để tạo hình dạng. Hai điểm đầu cuối được giữ cố định, và các tay cầm chỉ di chuyển trong hộp giới hạn để đường cong không bị gập ngược lại.</translation>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself. Shift keeps a handle flat, Ctrl suspends snapping, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation>Kéo các điểm ở giữa để định hình đường dốc (hai đầu được giữ cố định). Nhấp đúp để thêm điểm; Delete để xóa vùng chọn.</translation>
+        <source>Click the curve to add a point and drag the points to shape the ramp (ends stay pinned). Delete or double-click removes, drag an empty spot to select several, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">Chỉnh sửa đường cong</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -20597,6 +20639,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <source>Balanced</source>
         <translation>Cân bằng</translation>
     </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">Vào %1 → Ra %2</translation>
+    </message>
 </context>
 <context>
     <name>QuickAddPopup</name>
@@ -26201,6 +26251,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Reset</source>
         <translation>Đặt lại</translation>
+    </message>
+    <message>
+        <source>Edit speed curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Applied as a copy on a new track — the original clip is left alone.</source>
@@ -33491,6 +33545,53 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Unexpected reply from llama-server.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::manip::CurveGraphModel</name>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished">Sắc màu %1° → %2</translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">Vào %1 → Ra %2</translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">Thêm điểm</translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">Xóa điểm</translation>
+    </message>
+    <message>
+        <source>Smooth point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">Chỉnh sửa đường cong</translation>
     </message>
 </context>
 <context>

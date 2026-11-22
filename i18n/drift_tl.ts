@@ -9167,8 +9167,12 @@
         <translation>In %1 → Out %2</translation>
     </message>
     <message>
-        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation>I-click upang magdagdag ng point. I-drag upang ilipat ito. Mag-double click o i-drag palabas upang alisin.</translation>
+        <source>Tap to add a point. Drag to move it. Hold a point for more, or drag it off the plot to remove.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click, Delete or drag it off to remove. Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9207,6 +9211,40 @@
     <message>
         <source>Bezier</source>
         <translation>Bezier</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Burahin</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Makinis</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">I-reset</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Tapos na</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphView</name>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">I-edit ang curve</translation>
+    </message>
+    <message>
+        <source>Reset view</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12122,12 +12160,16 @@
         <translation>Ease Out</translation>
     </message>
     <message>
-        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
-        <translation>I-drag ang dalawang handle upang hubugin ang cubic. Nananatiling naka-pin ang mga dulo, at hinahawakan ang mga handle sa loob ng kahon upang hindi mabaluktot ang curve sa sarili nito.</translation>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself. Shift keeps a handle flat, Ctrl suspends snapping, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation>I-drag ang mga gitnang point upang hubugin ang ramp (mananatiling naka-pin ang mga dulo). Mag-double click upang magdagdag ng point; inaalis ng Delete ang pinili.</translation>
+        <source>Click the curve to add a point and drag the points to shape the ramp (ends stay pinned). Delete or double-click removes, drag an empty spot to select several, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">I-edit ang curve</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -20687,6 +20729,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <source>Balanced</source>
         <translation>Balanse</translation>
     </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">In %1 → Out %2</translation>
+    </message>
 </context>
 <context>
     <name>QuickAddPopup</name>
@@ -26297,6 +26347,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Reset</source>
         <translation>I-reset</translation>
+    </message>
+    <message>
+        <source>Edit speed curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Applied as a copy on a new track — the original clip is left alone.</source>
@@ -33604,6 +33658,53 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Unexpected reply from llama-server.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::manip::CurveGraphModel</name>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished">Hue %1° → %2</translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">In %1 → Out %2</translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">Magdagdag ng punto</translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">Tanggalin ang punto</translation>
+    </message>
+    <message>
+        <source>Smooth point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">I-edit ang curve</translation>
     </message>
 </context>
 <context>

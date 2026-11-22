@@ -9203,8 +9203,12 @@
         <translation>Wejście %1 → Wyjście %2</translation>
     </message>
     <message>
-        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation>Kliknij, aby dodać punkt. Przeciągnij, aby go przesunąć. Kliknij dwukrotnie lub przeciągnij poza obszar, aby go usunąć.</translation>
+        <source>Tap to add a point. Drag to move it. Hold a point for more, or drag it off the plot to remove.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click, Delete or drag it off to remove. Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9243,6 +9247,40 @@
     <message>
         <source>Bezier</source>
         <translation>Parametryczna krzywa</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Usuń</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Płynny</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">Resetuj</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Gotowe</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphView</name>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">Edytuj krzywą</translation>
+    </message>
+    <message>
+        <source>Reset view</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12167,12 +12205,16 @@
         <translation>Łagodne wyjście</translation>
     </message>
     <message>
-        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
-        <translation>Przeciągnij dwa uchwyty, aby ukształtować krzywą sześcienną. Końce pozostają przypięte, a uchwyty są utrzymywane wewnątrz ramki, aby krzywa nie mogła się złożyć.</translation>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself. Shift keeps a handle flat, Ctrl suspends snapping, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation>Przeciągaj środkowe punkty, aby ukształtować rampę (końce pozostają zablokowane). Kliknij dwukrotnie, aby dodać punkt; klawisz Delete usuwa zaznaczenie.</translation>
+        <source>Click the curve to add a point and drag the points to shape the ramp (ends stay pinned). Delete or double-click removes, drag an empty spot to select several, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">Edytuj krzywą</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -20777,6 +20819,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <source>Balanced</source>
         <translation>Zrównoważony</translation>
     </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">Wejście %1 → Wyjście %2</translation>
+    </message>
 </context>
 <context>
     <name>QuickAddPopup</name>
@@ -26393,6 +26443,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Reset</source>
         <translation>Resetuj</translation>
+    </message>
+    <message>
+        <source>Edit speed curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Applied as a copy on a new track — the original clip is left alone.</source>
@@ -33717,6 +33771,53 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Unexpected reply from llama-server.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::manip::CurveGraphModel</name>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished">Odcień %1° → %2</translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">Wejście %1 → Wyjście %2</translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">Dodaj punkt</translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">Usuń punkt</translation>
+    </message>
+    <message>
+        <source>Smooth point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">Edytuj krzywą</translation>
     </message>
 </context>
 <context>

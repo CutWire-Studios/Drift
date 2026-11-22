@@ -9131,8 +9131,12 @@
         <translation>入力 %1 → 出力 %2</translation>
     </message>
     <message>
-        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation>クリックでポイントを追加、ドラッグで移動、ダブルクリックまたは枠外へドラッグで削除します。</translation>
+        <source>Tap to add a point. Drag to move it. Hold a point for more, or drag it off the plot to remove.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click, Delete or drag it off to remove. Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9171,6 +9175,40 @@
     <message>
         <source>Bezier</source>
         <translation>ベジェ</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">削除</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">スムーズ</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">リセット</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">完了</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphView</name>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">カーブを編集</translation>
+    </message>
+    <message>
+        <source>Reset view</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12077,12 +12115,16 @@
         <translation>イーズアウト</translation>
     </message>
     <message>
-        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
-        <translation>2 つのハンドルをドラッグして立方体の形を整えます。端はピンで固定されたままで、ハンドルはボックスの内側に保持されているため、カーブが折り返されることはありません。</translation>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself. Shift keeps a handle flat, Ctrl suspends snapping, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation>中間ポイントをドラッグしてランプの形状を整えます (端はピンで固定されたままです)。ダブルクリックでポイントを追加し、Delete で選択項目を削除します。</translation>
+        <source>Click the curve to add a point and drag the points to shape the ramp (ends stay pinned). Delete or double-click removes, drag an empty spot to select several, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">カーブを編集</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -20597,6 +20639,14 @@ If playback stutters, try another.</source>
         <source>Balanced</source>
         <translation>バランス</translation>
     </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">入力 %1 → 出力 %2</translation>
+    </message>
 </context>
 <context>
     <name>QuickAddPopup</name>
@@ -26201,6 +26251,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Reset</source>
         <translation>リセット</translation>
+    </message>
+    <message>
+        <source>Edit speed curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Applied as a copy on a new track — the original clip is left alone.</source>
@@ -33491,6 +33545,53 @@ If playback stutters, try another.</source>
     <message>
         <source>Unexpected reply from llama-server.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::manip::CurveGraphModel</name>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished">色相 %1° → %2</translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">入力 %1 → 出力 %2</translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">ポイントを追加</translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">ポイントを削除</translation>
+    </message>
+    <message>
+        <source>Smooth point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">カーブを編集</translation>
     </message>
 </context>
 <context>

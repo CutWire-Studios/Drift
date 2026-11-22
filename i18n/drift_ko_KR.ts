@@ -9131,8 +9131,12 @@
         <translation>입력 %1 → 출력 %2</translation>
     </message>
     <message>
-        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation>클릭하여 점을 추가합니다. 드래그하여 이동합니다. 더블 클릭하거나 바깥으로 드래그하여 제거합니다.</translation>
+        <source>Tap to add a point. Drag to move it. Hold a point for more, or drag it off the plot to remove.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click, Delete or drag it off to remove. Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9171,6 +9175,40 @@
     <message>
         <source>Bezier</source>
         <translation>베지어</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">삭제</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">부드럽게</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphView</name>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">곡선 편집</translation>
+    </message>
+    <message>
+        <source>Reset view</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12077,12 +12115,16 @@
         <translation>이징 아웃</translation>
     </message>
     <message>
-        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
-        <translation>두 핸들을 드래그하여 3차 곡선의 모양을 만드세요. 양 끝은 고정되며 핸들은 상자 안에만 있을 수 있어 곡선이 스스로 접히지 않습니다.</translation>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself. Shift keeps a handle flat, Ctrl suspends snapping, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation>가운데 점을 드래그하여 램프 모양을 만듭니다(끝점은 고정됨). 더블 클릭하여 점을 추가하고, Delete 키를 누르면 선택 항목이 제거됩니다.</translation>
+        <source>Click the curve to add a point and drag the points to shape the ramp (ends stay pinned). Delete or double-click removes, drag an empty spot to select several, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">곡선 편집</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -20590,6 +20632,14 @@ If playback stutters, try another.</source>
         <source>Balanced</source>
         <translation>균형</translation>
     </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">입력 %1 → 출력 %2</translation>
+    </message>
 </context>
 <context>
     <name>QuickAddPopup</name>
@@ -26193,6 +26243,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Reset</source>
         <translation>초기화</translation>
+    </message>
+    <message>
+        <source>Edit speed curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Applied as a copy on a new track — the original clip is left alone.</source>
@@ -33482,6 +33536,53 @@ If playback stutters, try another.</source>
     <message>
         <source>Unexpected reply from llama-server.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::manip::CurveGraphModel</name>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished">색조 %1° → %2</translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">입력 %1 → 출력 %2</translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">점 추가</translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">점 삭제</translation>
+    </message>
+    <message>
+        <source>Smooth point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">곡선 편집</translation>
     </message>
 </context>
 <context>
