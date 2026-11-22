@@ -10313,18 +10313,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Project not saved</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The project couldn&apos;t be saved, and your changes are not on disk yet: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The project couldn&apos;t be saved, and your changes are not on disk yet.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Untitled Project</source>
         <translation>Progetto senza titolo</translation>
     </message>
