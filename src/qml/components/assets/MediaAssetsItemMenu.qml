@@ -102,29 +102,6 @@ ThemedContextMenu {
         target: ({ panel: "sourceLab.viewer", assetId: root.assetId })
     }
     ThemedMenuItem {
-        readonly property var ids: root.host.selectedWithProxyState(["ready", "queued", "building"])
-        text: ids.length > 1 ? qsTr("Remove %n proxies", "", ids.length) : qsTr("Remove proxy")
-        icon.name: Theme.icons.x
-        visible: ids.length > 0
-        onTriggered: AssetLibrary.removeProxies(ids)
-    }
-    ThemedMenuItem {
-        text: qsTr("Convert to Apple ProRes 422…")
-        icon.name: Theme.icons.rabbit
-        visible: root.kind === "video" && !root.host.editFriendlyOf(root.assetId)
-        onTriggered: {
-            const targets = root.host.selectedAssetIds.length > 0 ? root.host.selectedAssetIds : [root.assetId]
-            EditorState.bin.convertToProRes(targets)
-        }
-    }
-    ThemedMenuItem {
-        text: qsTr("Convert to edit-friendly format")
-        icon.name: Theme.icons.rabbit
-        visible: root.kind === "video" && root.host.selectedAssetIds.length <= 1
-                 && !root.host.editFriendlyOf(root.assetId)
-        onTriggered: EditorState.bin.convertToConstantFrameRate([root.assetId])
-    }
-    ThemedMenuItem {
         text: qsTr("Save a copy…")
         icon.name: Theme.icons.save
         visible: root.kind !== "composite" && root.single
@@ -170,6 +147,15 @@ ThemedContextMenu {
                 icon.name: Theme.icons.x
                 visible: ids.length > 0
                 onTriggered: AssetLibrary.removeProxies(ids)
+            }
+            ThemedMenuItem {
+                text: qsTr("Convert to Apple ProRes 422…")
+                icon.name: Theme.icons.rabbit
+                visible: root.kind === "video" && !root.host.editFriendlyOf(root.assetId)
+                onTriggered: {
+                    const targets = root.host.selectedAssetIds.length > 0 ? root.host.selectedAssetIds : [root.assetId]
+                    EditorState.bin.convertToProRes(targets)
+                }
             }
             ThemedMenuItem {
                 text: qsTr("Convert to edit-friendly format")

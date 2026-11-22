@@ -293,108 +293,6 @@ ThemedContextMenu {
         onTriggered: EditorState.separateAllAudioTracks(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
-        text: owner.clipData.enabled === false ? qsTr("Enable clip") : qsTr("Disable clip")
-        icon.name: owner.clipData.enabled === false ? Theme.icons.eye : Theme.icons.eyeOff
-        onTriggered: EditorState.setClipEnabled(owner.trackIndex, owner.clipIndex, owner.clipData.enabled === false)
-    }
-    ThemedMenuItem {
-        text: owner.clipData.loop ? qsTr("Stop looping") : qsTr("Loop")
-        icon.name: Theme.icons.repeat
-        visible: owner.clipData.kind === "video" || owner.clipData.kind === "audio"
-        onTriggered: EditorState.setClipLoop(owner.trackIndex, owner.clipIndex, !owner.clipData.loop)
-    }
-    ThemedMenuItem {
-        text: qsTr("Remove silence")
-        icon.name: Theme.icons.audioLines
-        visible: clipContextMenu.canRemoveSilence
-        enabled: !EditorState.audioAlign.running
-        onTriggered: EditorState.audioAlign.removeSilence(owner.trackIndex, owner.clipIndex)
-    }
-    ThemedMenuItem {
-        text: qsTr("Auto duck…")
-        icon.name: Theme.icons.audioLines
-        visible: EditorState.audioAlign.canDuck(owner.trackIndex, owner.clipIndex)
-        enabled: !EditorState.audioAlign.running
-        onTriggered: {
-            if (!owner.selected)
-                EditorState.selectClip(owner.trackIndex, owner.clipIndex)
-            ShellBridge.navigate("panel:audioMixer#audio-ducking")
-        }
-    }
-    ThemedMenuItem {
-        text: qsTr("Sync by audio")
-        icon.name: Theme.icons.audioLines
-        visible: clipContextMenu.canSyncByAudio
-        enabled: !EditorState.audioAlign.running
-        onTriggered: EditorState.audioAlign.syncByAudio()
-    }
-    ThemedMenuItem {
-        text: qsTr("Cancel audio analysis")
-        icon.name: Theme.icons.x
-        visible: EditorState.audioAlign.running
-        onTriggered: EditorState.audioAlign.cancel()
-    }
-    ThemedMenuItem {
-        readonly property string blocker: EditorState.masking.convertClipToMaskBlocker(owner.trackIndex, owner.clipIndex)
-        text: blocker !== "" ? qsTr("Convert to mask") + " — " + blocker : qsTr("Convert to mask")
-        icon.name: Theme.icons.mask
-        visible: owner.trackType === "video"
-        enabled: EditorState.masking.canConvertClipToMask(owner.trackIndex, owner.clipIndex)
-        onTriggered: EditorState.masking.convertClipToMask(owner.trackIndex, owner.clipIndex)
-    }
-    ThemedMenuItem {
-        readonly property var refs: owner.selected ? [] : [{ "track": owner.trackIndex, "clip": owner.clipIndex }]
-        text: qsTr("Use as mask (nested timeline)")
-        icon.name: Theme.icons.mask
-        visible: owner.trackType === "video" && owner.clipData.kind !== "adjustment"
-        enabled: EditorState.masking.canConvertClipsToSequenceMask(refs)
-        onTriggered: EditorState.masking.convertClipsToSequenceMask(refs)
-    }
-    ThemedMenuItem {
-        readonly property string sequenceId: EditorState.masking.maskSequenceId(owner.trackIndex, owner.clipIndex)
-        text: qsTr("Open mask timeline")
-        icon.name: Theme.icons.layers
-        visible: sequenceId !== ""
-        onTriggered: EditorState.openSequence(sequenceId)
-    }
-    ThemedMenuItem {
-        text: qsTr("Convert to Apple ProRes 422…")
-        icon.name: Theme.icons.rabbit
-        visible: owner.mediaAssetId.length > 0 && !owner.mediaEditFriendly
-        onTriggered: EditorState.bin.convertToProRes([owner.mediaAssetId])
-    }
-    ThemedMenuItem {
-        text: qsTr("Convert to edit-friendly format")
-        icon.name: Theme.icons.rabbit
-        // Converts the bin media, so every clip using it follows along.
-        visible: owner.mediaAssetId.length > 0 && !owner.mediaEditFriendly
-        onTriggered: EditorState.bin.convertToConstantFrameRate([owner.mediaAssetId])
-    }
-    ThemedMenuItem {
-        text: qsTr("Crop…")
-        icon.name: Theme.icons.crop
-        // Desktop only: AndroidMain has no crop window for timeline clips.
-        visible: (owner.clipData.kind === "video" || owner.clipData.kind === "image")
-                 && typeof ShellBridge.main?.openCrop === "function"
-        onTriggered: ShellBridge.main.openCrop(owner.trackIndex, owner.clipIndex)
-    }
-    ThemedMenuItem {
-        text: qsTr("Auto reframe…")
-        icon.name: Theme.icons.crop
-        visible: (owner.clipData.kind === "video" || owner.clipData.kind === "image")
-                 && typeof owner.panel.requestAutoReframe === "function"
-        onTriggered: owner.panel.requestAutoReframe(owner.trackIndex, owner.clipIndex)
-    }
-    ThemedMenuItem {
-        text: qsTr("Enhance video…")
-        icon.name: Theme.icons.sparkles
-        // Desktop only: AndroidMain has no restore window.
-        visible: owner.clipData.kind === "video"
-                 && typeof ShellBridge.main?.openRestore === "function"
-        onTriggered: ShellBridge.main.openRestore(owner.trackIndex, owner.clipIndex)
-    }
-    ThemedMenuItem {
-        text: qsTr("Unlink")
         text: qsTr("Unlink video and audio")
         shortcutId: "unlink"
         icon.name: Theme.icons.unlink
@@ -650,6 +548,12 @@ ThemedContextMenu {
                 icon.name: Theme.icons.layers
                 visible: sequenceId !== ""
                 onTriggered: EditorState.openSequence(sequenceId)
+            }
+            ThemedMenuItem {
+                text: qsTr("Convert to Apple ProRes 422…")
+                icon.name: Theme.icons.rabbit
+                visible: clipContextMenu.owner.mediaAssetId.length > 0 && !clipContextMenu.owner.mediaEditFriendly
+                onTriggered: EditorState.bin.convertToProRes([clipContextMenu.owner.mediaAssetId])
             }
             ThemedMenuItem {
                 text: qsTr("Convert to edit-friendly format")
